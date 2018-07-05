@@ -1,0 +1,18 @@
+﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
+
+namespace Ark.Tools.Core.DataKey
+{
+    public class DataKeyHashSet<T> : HashSet<T> where T:class
+    {
+        public DataKeyHashSet() : base(new DataKeyComparer<T>())
+        { }
+
+        public DataKeyHashSet(IEnumerable<T> collection) : base(collection, new DataKeyComparer<T>())
+        { }
+
+        protected DataKeyHashSet(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
+}

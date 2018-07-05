@@ -1,0 +1,75 @@
+﻿namespace Ark.Tools.NLog
+{
+    using Microsoft.Azure;
+    using static Ark.Tools.NLog.NLogConfigurer;
+
+    public static class NLogConfigurerCloudConfigurationManager
+    {
+        public static Configurer WithMailTargetFromCloudConfiguration(this Configurer @this, string to, bool async = true)
+        {
+            return @this.WithMailTarget(
+                  NLogConfigurer.MailFromDefault
+                , to
+                , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpServer)
+                , int.Parse(CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpPort))
+                , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUserName)
+                , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpPassword)
+                , bool.Parse(CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUseSsl))
+                );
+        }
+
+        public static Configurer WithMailTargetFromCloudConfiguration(this Configurer @this, string from, string to, bool async = true)
+        {
+            return @this.WithMailTarget(
+                  from
+                , to
+                , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpServer)
+                , int.Parse(CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpPort))
+                , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUserName)
+                , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpPassword)
+                , bool.Parse(CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUseSsl))
+                );
+        }
+
+        public static Configurer WithDatabaseTargetFromCloudConfiguration(this Configurer @this, string logTableName, bool async = true)
+        {
+            return @this.WithDatabaseTarget(logTableName, CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.ConnStringName), async: async);
+        }
+
+        public static Configurer WithDefaultTargetsFromCloudConfiguration(this Configurer @this, string logTableName, string mailTo, bool async = true)
+        {
+            return @this.WithConsoleTarget(async)
+                        .WithFileTarget(async)
+                        .WithDatabaseTargetFromCloudConfiguration(logTableName, async)
+                        .WithMailTargetFromCloudConfiguration(mailTo, async: false)
+                        ;
+        }
+        public static Configurer WithDefaultTargetsFromCloudConfiguration(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
+        {
+            return @this.WithConsoleTarget(async)
+                        .WithFileTarget(async)
+                        .WithDatabaseTargetFromCloudConfiguration(logTableName, async)
+                        .WithMailTargetFromCloudConfiguration(mailFrom, mailTo, async: false)
+                        ;
+        }
+
+        public static Configurer WithDefaultTargetsAndRulesFromCloudConfiguration(this Configurer @this, string logTableName, string mailTo, bool async = true, bool disableMailInDevelop = true)
+        {
+            @this.WithDefaultTargetsFromCloudConfiguration(logTableName, mailTo, async);
+            @this.WithDefaultRules();
+            if (disableMailInDevelop)
+                @this.DisableMailRuleWhenInVisualStudio();
+            @this.ThrowInternalExceptionsInVisualStudio();
+            return @this;
+        }
+        public static Configurer WithDefaultTargetsAndRulesFromCloudConfiguration(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true, bool disableMailInDevelop = true)
+        {
+            @this.WithDefaultTargetsFromCloudConfiguration(logTableName, mailFrom, mailTo, async);
+            @this.WithDefaultRules();
+            if (disableMailInDevelop)
+                @this.DisableMailRuleWhenInVisualStudio();
+            @this.ThrowInternalExceptionsInVisualStudio();
+            return @this;
+        }
+    }
+}

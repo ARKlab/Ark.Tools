@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+  <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ArxOne.Ftp" Version="1.12.1" />
+    <ProjectReference Include="..\Ark.Tools.FtpClient\Ark.Tools.FtpClient.csproj" />
+  </ItemGroup>
+
+</Project>

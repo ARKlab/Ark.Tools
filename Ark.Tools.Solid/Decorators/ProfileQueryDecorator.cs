@@ -1,0 +1,46 @@
+﻿using EnsureThat;
+using NLog;
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Ark.Tools.Solid.Decorators
+{
+    public sealed class ProfileQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>
+    {
+        // We use Logger to trace the profile results. Could be written to a Db but I'm lazy atm.
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+        private readonly IQueryHandler<TQuery, TResult> _decorated;
+
+        public ProfileQueryDecorator(IQueryHandler<TQuery, TResult> decorated)
+        {
+            Ensure.Any.IsNotNull(decorated, nameof(decorated));
+
+            _decorated = decorated;
+        }
+
+        public TResult Execute(TQuery query)
+        {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            var result = _decorated.Execute(query);
+            stopWatch.Stop();
+            _logger.Trace(() => string.Format("Query<{0}> executed in {1}ms", query.GetType(), stopWatch.ElapsedMilliseconds));
+
+            return result;
+        }
+
+        public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default(CancellationToken))
+        {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            var result = await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
+            stopWatch.Stop();
+            _logger.Trace(() => string.Format("Query<{0}> executed in {1}ms", query.GetType(), stopWatch.ElapsedMilliseconds));
+
+            return result;
+        }
+    }
+}
