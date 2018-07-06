@@ -5,43 +5,57 @@ VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Core", "Ark.Tools.Core\Ark.Tools.Core.csproj", "{4A1CC7FA-F4D9-45E4-894D-3B758A7284EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Sql", "Ark.Tools.Sql\Ark.Tools.Sql.csproj", "{A55CC3FC-85A4-4ADA-9613-41458F4DD676}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Sql", "Ark.Tools.Sql\Ark.Tools.Sql.csproj", "{A55CC3FC-85A4-4ADA-9613-41458F4DD676}"
 	ProjectSection(ProjectDependencies) = postProject
 		{4A1CC7FA-F4D9-45E4-894D-3B758A7284EE} = {4A1CC7FA-F4D9-45E4-894D-3B758A7284EE}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Sql.SqlServer", "Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj", "{25678406-941A-42B8-A7C5-2DE31E02145A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Sql.SqlServer", "Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj", "{25678406-941A-42B8-A7C5-2DE31E02145A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A55CC3FC-85A4-4ADA-9613-41458F4DD676} = {A55CC3FC-85A4-4ADA-9613-41458F4DD676}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Sql.Oracle", "Ark.Tools.Sql.Oracle\Ark.Tools.Sql.Oracle.csproj", "{B3134BB7-161B-4FAF-B586-9E4496754566}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Sql.Oracle", "Ark.Tools.Sql.Oracle\Ark.Tools.Sql.Oracle.csproj", "{B3134BB7-161B-4FAF-B586-9E4496754566}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Solid", "Ark.Tools.Solid\Ark.Tools.Solid.csproj", "{36C2F538-755E-4C89-9D3A-4D39BC3CE9B7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Solid", "Ark.Tools.Solid\Ark.Tools.Solid.csproj", "{36C2F538-755E-4C89-9D3A-4D39BC3CE9B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Solid.SimpleInjector", "Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj", "{E5647BEE-7532-4A1B-A272-C0EE2F5661B7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Solid.SimpleInjector", "Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj", "{E5647BEE-7532-4A1B-A272-C0EE2F5661B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Solid.FluentValidator", "Ark.Tools.Solid.FluentValidator\Ark.Tools.Solid.FluentValidator.csproj", "{7D92A1E8-970D-4988-8FA0-D08E9740BD8C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Solid.FluentValidator", "Ark.Tools.Solid.FluentValidator\Ark.Tools.Solid.FluentValidator.csproj", "{7D92A1E8-970D-4988-8FA0-D08E9740BD8C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.SimpleInjector", "Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj", "{DF78D64F-9548-430A-BFEA-B20E95D77D94}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.SimpleInjector", "Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj", "{DF78D64F-9548-430A-BFEA-B20E95D77D94}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.FtpClient", "Ark.Tools.FtpClient\Ark.Tools.FtpClient.csproj", "{5EB7F672-5F67-49BF-80A6-8C4732AB4459}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient", "Ark.Tools.FtpClient\Ark.Tools.FtpClient.csproj", "{5EB7F672-5F67-49BF-80A6-8C4732AB4459}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.NLog", "Ark.Tools.NLog\Ark.Tools.NLog.csproj", "{CDE67097-0312-427B-B225-10501317FD71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.NLog", "Ark.Tools.NLog\Ark.Tools.NLog.csproj", "{CDE67097-0312-427B-B225-10501317FD71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.NLog.ConfigurationManager", "Ark.Tools.NLog.ConfigurationManager\Ark.Tools.NLog.ConfigurationManager.csproj", "{4C0750C7-9AB3-4A28-AE4C-78247A2CBF31}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.NLog.ConfigurationManager", "Ark.Tools.NLog.ConfigurationManager\Ark.Tools.NLog.ConfigurationManager.csproj", "{4C0750C7-9AB3-4A28-AE4C-78247A2CBF31}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.NLog.CloudConfigurationManager", "Ark.Tools.NLog.CloudConfigurationManager\Ark.Tools.NLog.CloudConfigurationManager.csproj", "{17140DD0-EAB6-40F2-B9BE-80E71687C051}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.NLog.CloudConfigurationManager", "Ark.Tools.NLog.CloudConfigurationManager\Ark.Tools.NLog.CloudConfigurationManager.csproj", "{17140DD0-EAB6-40F2-B9BE-80E71687C051}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.FtpClient.SystemNetFtpClient", "Ark.Tools.FtpClient.SystemNetFtpClient\Ark.Tools.FtpClient.SystemNetFtpClient.csproj", "{4D3AF9B8-5D73-46B5-A19D-B38CB1975EFE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient.SystemNetFtpClient", "Ark.Tools.FtpClient.SystemNetFtpClient\Ark.Tools.FtpClient.SystemNetFtpClient.csproj", "{4D3AF9B8-5D73-46B5-A19D-B38CB1975EFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.FtpClient.ArxOne", "Ark.Tools.FtpClient.ArxOne\Ark.Tools.FtpClient.ArxOne.csproj", "{D308F341-F5C2-4E54-966D-ED7BD1C508EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient.ArxOne", "Ark.Tools.FtpClient.ArxOne\Ark.Tools.FtpClient.ArxOne.csproj", "{D308F341-F5C2-4E54-966D-ED7BD1C508EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.FtpClient.FtpProxy", "Ark.Tools.FtpClient.FtpProxy\Ark.Tools.FtpClient.FtpProxy.csproj", "{0ED902EC-C186-4227-9AFA-8EFF1CA75D63}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient.FtpProxy", "Ark.Tools.FtpClient.FtpProxy\Ark.Tools.FtpClient.FtpProxy.csproj", "{0ED902EC-C186-4227-9AFA-8EFF1CA75D63}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.FtpClient.SftpClient", "Ark.Tools.FtpClient.SftpClient\Ark.Tools.FtpClient.SftpClient.csproj", "{C7793D90-FA78-4D03-AAE1-4A372B08F60B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient.SftpClient", "Ark.Tools.FtpClient.SftpClient\Ark.Tools.FtpClient.SftpClient.csproj", "{C7793D90-FA78-4D03-AAE1-4A372B08F60B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient.FtpRequest", "Ark.Tools.FtpClient.FtpRequest\Ark.Tools.FtpClient.FtpRequest.csproj", "{F227C274-5271-481C-8BB1-C5630B21C330}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.ResourceWatcher", "Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj", "{55F881AD-7603-4E45-8396-7F6C2391597C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.ResourceWatcher.WorkerHost", "Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj", "{A132E4CD-E43F-40F7-A45F-A4240EF97DB5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.ResourceWatcher.Sql", "Ark.Tools.ResourceWatcher.Sql\Ark.Tools.ResourceWatcher.Sql.csproj", "{8116504C-7A92-454C-8D37-53BFC336C8F1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.ResourceWatcher.WorkerHost.Sql", "Ark.Tools.ResourceWatcher.WorkerHost.Sql\Ark.Tools.ResourceWatcher.WorkerHost.Sql.csproj", "{70C84E00-6F68-4A8B-AF52-D23DE81A9C43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.ResourceWatcher.WorkerHost.Ftp", "Ark.Tools.ResourceWatcher.WorkerHost.Ftp\Ark.Tools.ResourceWatcher.WorkerHost.Ftp.csproj", "{0A4B28B5-E204-4654-9408-99407ECA5601}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Nodatime", "Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj", "{FA5F93E8-5FE0-47E2-B0D9-A90A64F423FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Nodatime.Json", "Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj", "{13F2136B-A01A-414C-B61F-CD2B82A46025}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -117,6 +131,34 @@ Global
 		{F227C274-5271-481C-8BB1-C5630B21C330}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F227C274-5271-481C-8BB1-C5630B21C330}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F227C274-5271-481C-8BB1-C5630B21C330}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55F881AD-7603-4E45-8396-7F6C2391597C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55F881AD-7603-4E45-8396-7F6C2391597C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55F881AD-7603-4E45-8396-7F6C2391597C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55F881AD-7603-4E45-8396-7F6C2391597C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A132E4CD-E43F-40F7-A45F-A4240EF97DB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A132E4CD-E43F-40F7-A45F-A4240EF97DB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A132E4CD-E43F-40F7-A45F-A4240EF97DB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A132E4CD-E43F-40F7-A45F-A4240EF97DB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8116504C-7A92-454C-8D37-53BFC336C8F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8116504C-7A92-454C-8D37-53BFC336C8F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8116504C-7A92-454C-8D37-53BFC336C8F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8116504C-7A92-454C-8D37-53BFC336C8F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70C84E00-6F68-4A8B-AF52-D23DE81A9C43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70C84E00-6F68-4A8B-AF52-D23DE81A9C43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70C84E00-6F68-4A8B-AF52-D23DE81A9C43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70C84E00-6F68-4A8B-AF52-D23DE81A9C43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A4B28B5-E204-4654-9408-99407ECA5601}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A4B28B5-E204-4654-9408-99407ECA5601}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A4B28B5-E204-4654-9408-99407ECA5601}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A4B28B5-E204-4654-9408-99407ECA5601}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA5F93E8-5FE0-47E2-B0D9-A90A64F423FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA5F93E8-5FE0-47E2-B0D9-A90A64F423FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA5F93E8-5FE0-47E2-B0D9-A90A64F423FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA5F93E8-5FE0-47E2-B0D9-A90A64F423FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13F2136B-A01A-414C-B61F-CD2B82A46025}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13F2136B-A01A-414C-B61F-CD2B82A46025}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13F2136B-A01A-414C-B61F-CD2B82A46025}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13F2136B-A01A-414C-B61F-CD2B82A46025}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

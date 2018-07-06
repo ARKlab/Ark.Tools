@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="1.50.5" />
+    <PackageReference Include="Dapper-NodaTime" Version="0.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="NodaTime.Serialization.JsonNet" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
+  </ItemGroup>
+
+</Project>

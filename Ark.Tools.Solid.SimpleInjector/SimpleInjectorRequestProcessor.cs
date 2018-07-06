@@ -1,5 +1,4 @@
 ﻿using SimpleInjector;
-using System;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Threading;

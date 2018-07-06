@@ -1,0 +1,18 @@
+﻿using NodaTime;
+using System;
+
+namespace Ark.Tools.ResourceWatcher.WorkerHost
+{
+    public class DefaultHostConfig : IHostConfig
+    {
+        public virtual string WorkerName { get; set; }
+        public virtual uint DegreeOfParallelism { get; set; } = (uint)Environment.ProcessorCount;
+        public virtual bool IgnoreState { get; set; } = false;
+        public virtual TimeSpan Sleep { get; set; } = TimeSpan.FromMinutes(5);
+        public virtual uint MaxRetries { get; set; } = 5;
+        public virtual uint? SkipResourcesOlderThanDays { get; set; } = null;
+        public virtual Duration BanDuration { get; set; } = Duration.FromHours(24);
+        public TimeSpan RunDurationNotificationLimit { get; set; } = TimeSpan.FromMinutes(60);
+        public TimeSpan ResourceDurationNotificationLimit { get; set; } = TimeSpan.FromMinutes(10);
+    }
+}

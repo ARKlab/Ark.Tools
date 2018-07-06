@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
+    <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
+  </ItemGroup>
+
+</Project>

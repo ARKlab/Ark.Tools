@@ -1,14 +1,13 @@
 ﻿using EnsureThat;
 using Polly;
 using System.Collections.Generic;
-
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace System.Net.FtpClient
 {
-    public static class FtpClientExtensions
+    public static class Ex
     {
         public static IEnumerable<FtpListItem> GetFileListingRecursive(this FtpClient client, string startPath, FtpListOption options)
         {
