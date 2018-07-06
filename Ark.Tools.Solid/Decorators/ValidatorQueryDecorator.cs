@@ -1,4 +1,5 @@
-﻿using EnsureThat;
+﻿using Ark.Tools.Solid.Abstractions;
+using EnsureThat;
 using System.Threading;
 using System.Threading.Tasks;
 

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using NodaTime;
-using Ark.Tools.Nodatime.Intervals;
 using EnsureThat;
 
 namespace Ark.Tools.Nodatime

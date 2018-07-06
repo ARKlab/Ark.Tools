@@ -1,4 +1,4 @@
-﻿namespace Ark.Tools.Solid.Decorators
+﻿namespace Ark.Tools.Solid.Abstractions
 {
     public interface IValidator<T>
     {
