@@ -161,7 +161,7 @@ namespace Ark.Tools.NLog
             public Configurer WithConsoleTarget(bool async = true)
             {
                 var consoleTarget = new ColoredConsoleTarget();
-                consoleTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message} ${onexception:${exception}}";
+                consoleTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message} ${onexception:${newline}EXCEPTION\: ${exception:format=ToString}}";
                 _config.AddTarget(ConsoleTarget, async ? _wrapWithAsyncTargetWrapper(consoleTarget) as Target : consoleTarget);
                 return this;
             }

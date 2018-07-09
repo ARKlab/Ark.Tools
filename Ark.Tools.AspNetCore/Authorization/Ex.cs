@@ -1,4 +1,4 @@
-﻿using Ark.AspNetCore.Authorization;
+﻿using Ark.Tools.AspNetCore.Authorization;
 using Ark.Tools.Solid.Abstractions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SimpleInjector;
 using System.Security.Claims;
 
-namespace Ark.AspNetCore
+namespace Ark.Tools.AspNetCore
 {
     public static partial class Ex    
     {

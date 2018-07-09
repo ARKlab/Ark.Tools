@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
-namespace Ark.AspNetCore.Authorization
+namespace Ark.Tools.AspNetCore.Authorization
 {
     public class AspNetCoreUserContextProvider : IContextProvider<ClaimsPrincipal>
     {

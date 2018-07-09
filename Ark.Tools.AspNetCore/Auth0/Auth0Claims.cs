@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace Ark.AspNetCore.Auth0
+namespace Ark.Tools.AspNetCore.Auth0
 {
     public static class Auth0ClaimTypes
     {

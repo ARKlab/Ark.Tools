@@ -15,7 +15,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ark.AspNetCore.Auth0
+namespace Ark.Tools.AspNetCore.Auth0
 {
     public class Auth0AccessTokenJwtEvents : JwtBearerEvents
     {

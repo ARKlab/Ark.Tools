@@ -1,9 +1,9 @@
-﻿using Ark.AspNetCore.Auth0;
+﻿using Ark.Tools.AspNetCore.Auth0;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 
-namespace Ark.AspNetCore
+namespace Ark.Tools.AspNetCore
 {
     public static partial class Ex
     {

@@ -11,7 +11,7 @@ using Auth0.AuthenticationApi;
 using Auth0.ManagementApi.Models;
 using Newtonsoft.Json;
 
-namespace Ark.AspNetCore.Auth0
+namespace Ark.Tools.AspNetCore.Auth0
 {
     public class Auth0IdTokenJwtEvents : JwtBearerEvents
     {

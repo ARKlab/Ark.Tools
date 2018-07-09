@@ -30,6 +30,11 @@ namespace Ark.Tools.Sql.SqlServer
             }
         }
 
+        public static bool IsPrimaryKeyOrUniqueKeyViolation(SqlException ex)
+        {
+            return ex.Class == 14 && (ex.Number == 2627 || ex.Number == 2601);
+        }
+
         public static void LogSqlError(SqlError e)
         {
             if (e != null)
