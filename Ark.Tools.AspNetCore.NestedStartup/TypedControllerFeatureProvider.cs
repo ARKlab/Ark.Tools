@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Controllers;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Microsoft.AspNetCore.Mvc.Controllers;
 using System.Reflection;
 
 namespace Ark.Tools.AspNetCore.NestedStartup

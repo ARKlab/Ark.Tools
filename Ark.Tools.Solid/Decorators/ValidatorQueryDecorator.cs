@@ -1,4 +1,6 @@
-﻿using Ark.Tools.Solid.Abstractions;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Solid.Abstractions;
 using EnsureThat;
 using System.Threading;
 using System.Threading.Tasks;

@@ -1,4 +1,6 @@
-﻿using Swashbuckle.AspNetCore.Swagger;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle

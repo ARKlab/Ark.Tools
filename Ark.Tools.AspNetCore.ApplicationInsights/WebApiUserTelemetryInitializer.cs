@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Microsoft.AspNetCore.Http;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Channel;
 using System.Security.Claims;

@@ -1,4 +1,6 @@
-﻿using Ark.Tools.Core;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;

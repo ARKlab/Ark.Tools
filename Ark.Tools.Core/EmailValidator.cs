@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using System.Text.RegularExpressions;
 
 namespace Ark.Tools.Core
 {

@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NodaTime;
 using System;

@@ -1,4 +1,6 @@
-﻿using Ark.Tools.Sql;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 using Dapper.NodaTime;
 using System;

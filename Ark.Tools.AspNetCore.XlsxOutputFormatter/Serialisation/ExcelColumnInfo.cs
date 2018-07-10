@@ -1,4 +1,6 @@
-﻿using Ark.Tools.AspNetCore.XlsxOutputFormatter.Attributes;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.AspNetCore.XlsxOutputFormatter.Attributes;
 
 namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Serialisation
 {

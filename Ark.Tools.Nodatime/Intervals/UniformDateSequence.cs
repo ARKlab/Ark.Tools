@@ -1,4 +1,6 @@
-﻿using Ark.Tools.Nodatime.Intervals;
+﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Nodatime.Intervals;
 using EnsureThat;
 using NodaTime;
 using System.Collections.Generic;
