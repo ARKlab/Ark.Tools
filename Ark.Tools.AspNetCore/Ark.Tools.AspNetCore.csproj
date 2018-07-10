@@ -6,24 +6,34 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="5.6.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="5.6.0" />
     <PackageReference Include="FluentValidation" Version="7.6.104" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.1.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.HttpsPolicy" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.1.1" />    
+    <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders" Version="0.7.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="2.2.0" />
+    
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.PlatformAbstractions" Version="1.1.0" />
     <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.ApplicationInsights\Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.Auth0\Ark.Tools.AspNetCore.Auth0.csproj" />
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.CommaSeparatedParameters\Ark.Tools.AspNetCore.CommaSeparatedParameters.csproj" />
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.MessagePack\Ark.Tools.AspNetCore.MessagePack.csproj" />
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.NestedStartup\Ark.Tools.AspNetCore.NestedStartup.csproj" />
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.Swashbuckle\Ark.Tools.AspNetCore.Swashbuckle.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />
+    <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />
   </ItemGroup>
 
 </Project>

@@ -2,7 +2,10 @@
 {
     public abstract class NLogDefaultConfigKeys
     {
-        public const string ConnStringName = "NLog.Database";
+        public const string SqlConnStringName = "NLog.Database";
+        public const string SmtpConnStringName = "NLog.Smtp";
+        public const string MailNotificationAddresses = "NLog.NotificationList";
+
         public const string SmtpServer = "NLog.SmtpServer";
         public const string SmtpPort = "NLog.SmtpPort";
         public const string SmtpUserName = "NLog.SmtpUserName";

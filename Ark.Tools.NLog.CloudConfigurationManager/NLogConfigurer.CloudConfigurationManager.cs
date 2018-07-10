@@ -33,7 +33,7 @@
 
         public static Configurer WithDatabaseTargetFromCloudConfiguration(this Configurer @this, string logTableName, bool async = true)
         {
-            return @this.WithDatabaseTarget(logTableName, CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.ConnStringName), async: async);
+            return @this.WithDatabaseTarget(logTableName, CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SqlConnStringName), async: async);
         }
 
         public static Configurer WithDefaultTargetsFromCloudConfiguration(this Configurer @this, string logTableName, string mailTo, bool async = true)

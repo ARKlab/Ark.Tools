@@ -21,7 +21,7 @@ namespace Ark.Tools.AspNetCore
         /// <param name="clientSecret">The paired WebApp secret</param>
         /// <param name="authzApiUrl">The base uri of the AuthorizationExtension API</param>
         /// <param name="enableIdTokenAuthentication">If true, enable support authentication using also IdToken from the paired WebApp.</param>
-        public static void AddAuth0ApiAuthentication(this AuthenticationBuilder builder, string domain, string apiAudience, string clientId, string clientSecret, string authzApiUrl, bool enableIdTokenAuthentication = false)
+        public static void AddAuth0ApiAuthenticationWithAuthz(this AuthenticationBuilder builder, string domain, string apiAudience, string clientId, string clientSecret, string authzApiUrl, bool enableIdTokenAuthentication = false)
         {
             if (enableIdTokenAuthentication)
             {
@@ -39,7 +39,6 @@ namespace Ark.Tools.AspNetCore
                     };
                 });
             }
-
 
             builder.AddJwtBearer(opt =>
             {

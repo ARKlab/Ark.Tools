@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using util = Ark.Tools.AspNetCore.XlsxOutputFormatter.FormatterUtils;
 
 namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Serialisation
 {

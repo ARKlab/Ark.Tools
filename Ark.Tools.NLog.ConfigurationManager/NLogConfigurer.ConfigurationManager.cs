@@ -24,7 +24,7 @@ namespace Ark.Tools.NLog
 
         public static Configurer WithDatabaseTargetFromAppSettings(this Configurer @this, string logTableName, bool async = true)
         {
-            return @this.WithDatabaseTarget(logTableName, ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.ConnStringName].ConnectionString, async: async);
+            return @this.WithDatabaseTarget(logTableName, ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SqlConnStringName].ConnectionString, async: async);
         }
 
         public static Configurer WithDefaultTargetsFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)

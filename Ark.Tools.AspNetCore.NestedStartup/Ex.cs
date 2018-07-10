@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.NestedStartup
@@ -48,5 +50,18 @@ namespace Ark.Tools.AspNetCore.NestedStartup
             });
         }
 
+        public static IServiceCollection ConfigureControllerArea<TArea>(this IServiceCollection services)
+            where TArea : IArea
+        {
+            services.AddMvcCore().ConfigureApplicationPartManager(manager =>
+            {
+                var controllers = manager.FeatureProviders.OfType<ControllerFeatureProvider>();
+                foreach (var item in controllers)
+                    manager.FeatureProviders.Remove(item);
+                manager.FeatureProviders.Add(new TypedControllerFeatureProvider<TArea>());
+            });
+
+            return services;
+        }
     }
 }
