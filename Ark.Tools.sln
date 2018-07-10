@@ -77,9 +77,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.XlsxOu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.Auth0", "Ark.Tools.AspNetCore.Auth0\Ark.Tools.AspNetCore.Auth0.csproj", "{E61C2704-F957-4B58-9E3A-6D45F66F26A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.NLog.Configuration", "Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj", "{E1D65725-E469-446D-8584-F8360610A163}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.NLog.Configuration", "Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj", "{E1D65725-E469-446D-8584-F8360610A163}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.AspNetCore.BasicAuthAuth0Proxy", "Ark.Tools.AspNetCore.BasicAuthAuth0Proxy\Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj", "{47CD66F2-46E6-4A01-8DD4-872254F466BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.BasicAuthAuth0Proxy", "Ark.Tools.AspNetCore.BasicAuthAuth0Proxy\Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj", "{47CD66F2-46E6-4A01-8DD4-872254F466BE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{157C2BDE-AA77-4AFE-8194-5E049B6AFC96}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

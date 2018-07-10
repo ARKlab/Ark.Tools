@@ -1,8 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+
+    <Description>This library adds support for NodaTime types to MessagePack C#.</Description>
+    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>1.0.0</Version>
+    <VersionSuffix></VersionSuffix>
+
   </PropertyGroup>
+  <!--===============================================================================-->
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />

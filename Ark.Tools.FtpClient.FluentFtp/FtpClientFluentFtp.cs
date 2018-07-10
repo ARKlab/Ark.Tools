@@ -11,7 +11,7 @@ using FluentFTP;
 using System.Linq;
 using Polly;
 using Ark.Tools.Core;
-using HellBrick.Collections;
+using Sunlighter.AsyncQueueLib;
 
 namespace Ark.Tools.FtpClient.FluentFtp
 {
@@ -71,17 +71,17 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
             using (var d = new DisposableContainer())
             {
-                var clientsQueue = new AsyncQueue<FluentFTP.IFtpClient>();
+                var clientsQueue = new AsyncQueue<FluentFTP.IFtpClient>(5);
                 for (int i = 0; i<5; i++)
                 {
                     var c = _getClient();
                     d.Add(c);
-                    clientsQueue.Add(c);
+                    await clientsQueue.Enqueue(c, ctk);
                 }
 
                 Func<string, CancellationToken, Task<IEnumerable<FtpEntry>>> listFolderAsync = async (string path, CancellationToken ct) =>
                 {
-                    var c = await clientsQueue.TakeAsync(ct);
+                    var c = await clientsQueue.Dequeue(ct);
                     try
                     {
                         var retrier = Policy
@@ -97,7 +97,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
                             });
                         var res = await retrier.ExecuteAsync(ct1 =>
                         {
-                            return c.GetListingAsync(path);
+                            return c.Value.GetListingAsync(path);
                         }, ct).ConfigureAwait(false);
 
                         return res.Select(x => new FtpEntry()
@@ -111,7 +111,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
                     } finally
                     {
-                        clientsQueue.Add(c);
+                        await clientsQueue.Enqueue(c.Value, ct);
                     }
                 };
 

@@ -1,0 +1,39 @@
+<Project>
+  
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+
+
+    <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/ARKlab/Ark.Tools/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageIconUrl>http://www.ark-energy.eu/wp-content/uploads/ark-dark.png</PackageIconUrl>
+    <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
+      
+    <Authors>ARK Labs</Authors>
+    <Copyright>Copyright (C) 2018 ARK S.r.l</Copyright>
+    
+  
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+
+    <IncludeSymbols>true</IncludeSymbols>    
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(DebugType)' == 'portable'">
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+  
+  <Target Name="PushNugetPackage" AfterTargets="Pack" Condition="('$(Configuration)' == 'Release' And $(VersionSuffix) == '') Or ('$(Configuration)' == 'Debug' And $(VersionSuffix) != '')">
+    <Exec Command="dotnet nuget push $(OutputPath)$(PackageId).$(PackageVersion).nupkg" />
+  </Target>
+</Project>

@@ -89,8 +89,10 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter
         /// Determine whether a type is simple (<c>String</c>, <c>Decimal</c>, <c>DateTime</c> etc.)
         /// or complex (i.e. custom class with public properties and methods).
         /// </summary>
-        /// <see cref="https://gist.github.com/jonathanconway/3330614"/>
-        /// <see cref="http://stackoverflow.com/questions/2442534/how-to-test-if-type-is-primitive"/>
+        /// <remarks>
+        /// https://gist.github.com/jonathanconway/3330614
+        /// http://stackoverflow.com/questions/2442534/how-to-test-if-type-is-primitive
+        /// </remarks>
         public static bool IsSimpleType(Type type)
         {
             return

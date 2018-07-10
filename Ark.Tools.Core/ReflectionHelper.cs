@@ -7,6 +7,9 @@ using System.Reflection;
 
 namespace Ark.Tools.Core
 {
+    /// <summary>
+    /// Reflection utilities
+    /// </summary>
     public static class ReflectionHelper
     {
         /// <summary>
@@ -113,6 +116,11 @@ namespace Ark.Tools.Core
             return (T)value;
         }
 
+        /// <summary>
+        /// Return the name of the type as it is written in CS code
+        /// </summary>
+        /// <param name="type">the type</param>
+        /// <returns></returns>
         public static string GetCSTypeName(this Type type)
         {
             if (type == typeof(string))
