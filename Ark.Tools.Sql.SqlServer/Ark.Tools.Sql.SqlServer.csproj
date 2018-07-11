@@ -4,8 +4,8 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>This library adds support for NodaTime types to MessagePack C#.</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
+    <Description>Extensions and helpers of Ark.Tools.Sql for SqlServer</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Sql;SqlServer;</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />
   </ItemGroup>
 

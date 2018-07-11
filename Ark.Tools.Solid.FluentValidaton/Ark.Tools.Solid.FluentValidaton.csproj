@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  
+
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    
+    <Description>Extension to integrate Ark.Tools.Solid framework with FluentValidation</Description>
+    <PackageTags>Ark;C#;.NET;Framework;SOLID;Handler;FluentValidation</PackageTags>
 
-    <Description>This library adds support for NodaTime types to MessagePack C#.</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -16,8 +17,12 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
-  <ItemGroup>    
-    <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="7.6.104" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
   </ItemGroup>
 
 </Project>

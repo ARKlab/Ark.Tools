@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 
-namespace Ark.Tools.FtpClient
+namespace Ark.Tools.FtpClient.Core
 {
     public struct FtpEntry
     {

@@ -4,8 +4,8 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>This library adds support for NodaTime types to MessagePack C#.</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
+    <Description>Extension of WorkerHost for a Ftp Watcher</Description>
+    <PackageTags>Ark;C#;.NET;Framework;ResourceWatcher;ETL;Poller;WorkerHost;Ftp;FtpWatcher;</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -17,7 +17,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.FtpClient\Ark.Tools.FtpClient.csproj" />
+    <ProjectReference Include="..\Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
   </ItemGroup>
   

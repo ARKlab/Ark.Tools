@@ -6,7 +6,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.FtpClient
+namespace Ark.Tools.FtpClient.Core
 {
 
     public interface IFtpClient

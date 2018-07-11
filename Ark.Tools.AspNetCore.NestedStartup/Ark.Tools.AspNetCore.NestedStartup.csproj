@@ -2,11 +2,11 @@
 
   <!-- the other props are defined in Directory.Build.props -->
 
-  <!--===================Configuration for Nuget Package=========================-->
+  <!-- ===================Configuration for Nuget Package========================= -->
   <PropertyGroup>
 
-    <Description>This library adds support for NodaTime types to MessagePack C#.</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
+    <Description>Extensions of AspNetCore for supporting nested Startups, with separate Services</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mvc;AspNetCore</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -15,7 +15,7 @@
     <VersionSuffix></VersionSuffix>
 
   </PropertyGroup>
-  <!--===============================================================================-->
+  <!-- =============================================================================== -->
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore" Version="2.1.1" />

@@ -3,7 +3,6 @@
 using NLog;
 using System;
 using System.Collections.Generic;
-
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -15,6 +14,7 @@ namespace Ark.Tools.FtpClient
     using System.IO;
     using ArxOne.Ftp;
     using EnsureThat;
+    using Ark.Tools.FtpClient.Core;
 
     public class FtpClientArxOneFactory : IFtpClientFactory
     {
@@ -79,15 +79,15 @@ namespace Ark.Tools.FtpClient
             }
         }
 
-        public Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default(CancellationToken))
+        public Task<IEnumerable<Core.FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default(CancellationToken))
         {
             path = path ?? "./";
-            return Task.Run<IEnumerable<FtpEntry>>(() =>
+            return Task.Run<IEnumerable<Core.FtpEntry>>(() =>
             {
                 using (var client = _getClient())
                 {
                     var list = _list(client, path);
-                    return list.Select(x => new FtpEntry
+                    return list.Select(x => new Core.FtpEntry
                     {
                         FullPath = x.Path.ToString(),
                         IsDirectory = x.Type == FtpEntryType.Directory,
@@ -99,20 +99,20 @@ namespace Ark.Tools.FtpClient
             }, ctk);
         }
 
-        public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default(CancellationToken))
+        public async Task<IEnumerable<Core.FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<Core.FtpEntry> skipFolder = null, CancellationToken ctk = default(CancellationToken))
         {
             startPath = startPath ?? "./";
 
             if (skipFolder == null)
                 skipFolder = x => false;
 
-            List<Task<IEnumerable<FtpEntry>>> pending = new List<Task<IEnumerable<FtpEntry>>>();
-            IEnumerable<FtpEntry> files = new List<FtpEntry>();
+            List<Task<IEnumerable<Core.FtpEntry>>> pending = new List<Task<IEnumerable<Core.FtpEntry>>>();
+            IEnumerable<Core.FtpEntry> files = new List<Core.FtpEntry>();
 
             using (var client = _getClient())
             using (var semaphore = new SemaphoreSlim(3))
             {
-                Func<string, CancellationToken, Task<IEnumerable<FtpEntry>>> listFolderAsync = async (string path, CancellationToken ct) =>
+                Func<string, CancellationToken, Task<IEnumerable<Core.FtpEntry>>> listFolderAsync = async (string path, CancellationToken ct) =>
                 {
                     try
                     {
@@ -133,7 +133,7 @@ namespace Ark.Tools.FtpClient
                         {
                             return Task.Run(() => _list(client, path), ct1);
                         }, ct).ConfigureAwait(false);
-                        return res.Select(x => new FtpEntry
+                        return res.Select(x => new Core.FtpEntry
                         {
                             FullPath = x.Path.ToString(),
                             IsDirectory = x.Type == FtpEntryType.Directory,

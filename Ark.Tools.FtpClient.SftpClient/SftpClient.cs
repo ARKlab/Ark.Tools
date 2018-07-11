@@ -16,6 +16,7 @@ using Renci.SshNet;
 using Renci.SshNet.Sftp;
 using Renci.SshNet.Async;
 using EnsureThat;
+using Ark.Tools.FtpClient.Core;
 
 namespace Ark.Tools.FtpClient.SftpClient
 {

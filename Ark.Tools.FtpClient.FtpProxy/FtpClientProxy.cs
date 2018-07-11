@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.FtpClient.Core;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 using EnsureThat;

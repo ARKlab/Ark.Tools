@@ -8,7 +8,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>This library adds support for NodaTime types to MessagePack C#.</Description>
+    <Description>Implementation of FtpClient.Core based on ArxOne.Ftp</Description>
     <PackageTags>Ark;C#;.NET;Framework</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
@@ -22,7 +22,11 @@
 
   <ItemGroup>
     <PackageReference Include="ArxOne.Ftp" Version="1.12.1" />
-    <ProjectReference Include="..\Ark.Tools.FtpClient\Ark.Tools.FtpClient.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
   </ItemGroup>
 
 </Project>

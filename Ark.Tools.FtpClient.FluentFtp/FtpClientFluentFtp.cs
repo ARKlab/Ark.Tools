@@ -12,10 +12,11 @@ using System.Linq;
 using Polly;
 using Ark.Tools.Core;
 using Sunlighter.AsyncQueueLib;
+using Ark.Tools.FtpClient.Core;
 
 namespace Ark.Tools.FtpClient.FluentFtp
 {
-    public class FtpClientFluentFtp : IFtpClient
+    public class FtpClientFluentFtp : Core.IFtpClient
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 

@@ -4,9 +4,10 @@
 
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    
+    <Description>Extensions of Swashbuckle.AspNetCore</Description>
+    <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Swashbuckle;Swagger</PackageTags>
 
-    <Description>This library adds support for NodaTime types to MessagePack C#.</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>

@@ -4,8 +4,8 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>This library adds support for NodaTime types to MessagePack C#.</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
+    <Description>Implementation of FtpClient.Core based on System.Net.WebRequest</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Ftp;FtpClient</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -14,10 +14,10 @@
     <VersionSuffix></VersionSuffix>
 
   </PropertyGroup>
-  <!--===============================================================================-->
-
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.FtpClient\Ark.Tools.FtpClient.csproj" />
+    <ProjectReference Include="..\Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
   </ItemGroup>
+  <!--===============================================================================-->
 
 </Project>

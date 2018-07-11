@@ -64,7 +64,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                             string userName = parts[0];
                             string password = parts[1];
 
-                            var r = await _policy.ExecuteAsync(async (ctx, ct) =>
+                            var (AccessToken, ExpiresOn) = await _policy.ExecuteAsync(async (ctx, ct) =>
                                 {
                                     var result = await _auth0.GetTokenAsync(new ResourceOwnerTokenRequest()
                                     {
@@ -86,7 +86,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                                     return (result.AccessToken, DateTimeOffset.FromUnixTimeSeconds(exp) - TimeSpan.FromMinutes(2));
                                 }, new Context(parameter), context.RequestAborted);
 
-                            context.Request.Headers["Authorization"] = $@"Bearer {r.AccessToken}";
+                            context.Request.Headers["Authorization"] = $@"Bearer {AccessToken}";
                         }
                     }
                     catch
@@ -94,7 +94,6 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
 
                     }
                 }
-
             }
 
             await _next(context);

@@ -11,6 +11,7 @@ using System.Threading;
 
 namespace Ark.Tools.FtpClient.SystemNetFtpClient
 {
+    using Ark.Tools.FtpClient.Core;
     using EnsureThat;
     using Polly;
     using System.IO;
@@ -19,7 +20,7 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
 
     public class SystemNetFtpClientFactory : IFtpClientFactory
     {
-        public Ark.Tools.FtpClient.IFtpClient Create(string host, NetworkCredential credentials)
+        public Ark.Tools.FtpClient.Core.IFtpClient Create(string host, NetworkCredential credentials)
         {
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credentials);
@@ -27,7 +28,7 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
         }
     }
 
-    public class SystemNetFtpClient : Ark.Tools.FtpClient.IFtpClient
+    public class SystemNetFtpClient : Ark.Tools.FtpClient.Core.IFtpClient
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
