@@ -34,6 +34,6 @@
   </PropertyGroup>
   
   <Target Name="PushNugetPackage" AfterTargets="Pack" Condition="('$(Configuration)' == 'Release' And $(VersionSuffix) == '') Or ('$(Configuration)' == 'Debug' And $(VersionSuffix) != '')">
-    <Exec Command="dotnet nuget push $(OutputPath)$(PackageId).$(PackageVersion).nupkg" />
+    <Exec Command="dotnet nuget push -s https://api.nuget.org/v3/index.json $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).nupkg" />
   </Target>
 </Project>
