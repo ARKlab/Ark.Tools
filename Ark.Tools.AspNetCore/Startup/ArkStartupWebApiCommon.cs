@@ -42,8 +42,15 @@ namespace Ark.Tools.AspNetCore.Startup
         {
             services.AddLocalization();
 
-            // Add framework services.
-            services.AddMvcCore().AddVersionedApiExplorer(o => o.GroupNameFormat = "'v'VVVV");
+            // Add minumum framework services.
+            services.AddMvcCore()
+                .AddVersionedApiExplorer(o => o.GroupNameFormat = "'v'VVVV")
+                .AddAuthorization()
+                .AddFormatterMappings()
+                .AddDataAnnotations()
+                .AddJsonFormatters()
+            ;
+
             services.AddApiVersioning(o =>
             {
                 o.ReportApiVersions = true;
@@ -83,7 +90,6 @@ namespace Ark.Tools.AspNetCore.Startup
                 });
             ;
 
-            services.AddMvc();
 
             services.AddSwaggerGen(c =>
             {
