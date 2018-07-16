@@ -108,8 +108,6 @@ namespace Ark.Tools.AspNetCore
             Exception e = context.Exception;
             var requestUri = context.HttpContext.Request.Path;
             logger.Error(e, "Exception for {0}: {1}", requestUri, e.Message);
-            if (e.InnerException != null)
-                logger.Error(e.InnerException, "InnerException for {0}: {1}", requestUri, e.InnerException.Message);
         }
     }
 }
