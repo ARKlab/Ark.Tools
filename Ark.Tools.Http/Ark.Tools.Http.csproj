@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>Core tools around Flurl and HttpClient</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Flurl;HttpClient;CacheCow</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>1.0.0</Version>
+    <VersionSuffix></VersionSuffix>
+
+  </PropertyGroup>
+  <!--===============================================================================-->
+  
+  <ItemGroup>
+    <PackageReference Include="CacheCow.Client" Version="2.4.1" />
+    <PackageReference Include="Flurl.Http" Version="2.3.2" />
+    <PackageReference Include="MessagePack.NodaTime" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
+  </ItemGroup>
+
+</Project>
