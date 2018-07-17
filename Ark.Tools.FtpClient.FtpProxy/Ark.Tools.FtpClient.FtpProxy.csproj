@@ -10,14 +10,14 @@
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <VersionSuffix></VersionSuffix>
 
   </PropertyGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="5.6.0" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="5.7.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.8" />
     <PackageReference Include="Flurl.Http" Version="2.3.2" />
     <PackageReference Include="Polly.Caching.Memory" Version="2.0.0" />
