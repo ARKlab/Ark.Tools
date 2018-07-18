@@ -11,7 +11,7 @@
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <VersionSuffix></VersionSuffix>
 
   </PropertyGroup>
