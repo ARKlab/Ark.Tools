@@ -1,13 +1,11 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Auth0;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
-using JWT.Builder;
 using Microsoft.AspNetCore.Http;
 using Polly;
-using Polly.Caching;
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,25 +15,18 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
     {
         private readonly RequestDelegate _next;
         private readonly BasicAuthAuth0ProxyConfig _config;
-        private readonly Policy<(string AccessToken, DateTimeOffset ExpiresOn)> _policy;
-        private readonly AuthenticationApiClient _auth0;
-        private readonly Polly.Caching.Memory.MemoryCacheProvider _memoryCacheProvider
-   = new Polly.Caching.Memory.MemoryCacheProvider(new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()));
-
+        private readonly Policy _policy;
+        private readonly IAuthenticationApiClient _auth0;
 
         public BasicAuthAuth0ProxyMiddleware(RequestDelegate next, BasicAuthAuth0ProxyConfig config)
         {
             _next = next;
             _config = config;
-            var cachePolicy = Policy.CacheAsync(
-                _memoryCacheProvider.AsyncFor<(string AccessToken, DateTimeOffset ExpiresOn)>(), 
-                new ResultTtl<(string AccessToken, DateTimeOffset ExpiresOn)>(r => new Ttl(r.ExpiresOn - DateTimeOffset.Now, false)));
 
-            var retryPolicy = Policy.Handle<Exception>()
+            _policy = Policy.Handle<Exception>()
                 .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(r));
 
-            _policy = Policy.WrapAsync(cachePolicy, retryPolicy.AsAsyncPolicy<(string AccessToken, DateTimeOffset ExpiresOn)>());
-            _auth0 = new AuthenticationApiClient($"{_config.Domain}");
+            _auth0 = new AuthenticationApiClientCachingDecorator(new AuthenticationApiClient($"{_config.Domain}"));
         }
 
         public async Task Invoke(HttpContext context)
@@ -64,7 +55,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                             string userName = parts[0];
                             string password = parts[1];
 
-                            var (AccessToken, ExpiresOn) = await _policy.ExecuteAsync(async (ctx, ct) =>
+                            var accessToken = await _policy.ExecuteAsync(async (ct) =>
                                 {
                                     var result = await _auth0.GetTokenAsync(new ResourceOwnerTokenRequest()
                                     {
@@ -77,16 +68,10 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                                         Scope = "openid profile email",
                                     });
 
-                                    var decode = new JwtBuilder()
-                                        .DoNotVerifySignature()
-                                        .Decode<IDictionary<string, object>>(result.AccessToken);
+                                    return result.AccessToken;
+                                }, context.RequestAborted);
 
-                                    var exp = (long)decode["exp"];
-
-                                    return (result.AccessToken, DateTimeOffset.FromUnixTimeSeconds(exp) - TimeSpan.FromMinutes(2));
-                                }, new Context(parameter), context.RequestAborted);
-
-                            context.Request.Headers["Authorization"] = $@"Bearer {AccessToken}";
+                            context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
                         }
                     }
                     catch

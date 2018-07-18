@@ -12,7 +12,7 @@
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <VersionSuffix></VersionSuffix>
 
   </PropertyGroup>
@@ -25,6 +25,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.1.1" />
     <PackageReference Include="Polly.Caching.Memory" Version="2.0.0" />
     <PackageReference Include="Polly" Version="6.1.0" />
+  </ItemGroup>
+  
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Auth0\Ark.Tools.Auth0.csproj" />
   </ItemGroup>
 
 </Project>

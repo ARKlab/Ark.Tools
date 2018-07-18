@@ -6,14 +6,8 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Core", "Ark.Tools.Core\Ark.Tools.Core.csproj", "{4A1CC7FA-F4D9-45E4-894D-3B758A7284EE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Sql", "Ark.Tools.Sql\Ark.Tools.Sql.csproj", "{A55CC3FC-85A4-4ADA-9613-41458F4DD676}"
-	ProjectSection(ProjectDependencies) = postProject
-		{4A1CC7FA-F4D9-45E4-894D-3B758A7284EE} = {4A1CC7FA-F4D9-45E4-894D-3B758A7284EE}
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Sql.SqlServer", "Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj", "{25678406-941A-42B8-A7C5-2DE31E02145A}"
-	ProjectSection(ProjectDependencies) = postProject
-		{A55CC3FC-85A4-4ADA-9613-41458F4DD676} = {A55CC3FC-85A4-4ADA-9613-41458F4DD676}
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Sql.Oracle", "Ark.Tools.Sql.Oracle\Ark.Tools.Sql.Oracle.csproj", "{B3134BB7-161B-4FAF-B586-9E4496754566}"
 EndProject
@@ -89,6 +83,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Http", "Ark.Tools.Http\Ark.Tools.Http.csproj", "{112606E3-BD24-40B7-B13A-C070EFF5B15E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Auth0", "Ark.Tools.Auth0\Ark.Tools.Auth0.csproj", "{94A058C8-178D-4425-BF60-99E4A1659EF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -244,6 +240,10 @@ Global
 		{112606E3-BD24-40B7-B13A-C070EFF5B15E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{112606E3-BD24-40B7-B13A-C070EFF5B15E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{112606E3-BD24-40B7-B13A-C070EFF5B15E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

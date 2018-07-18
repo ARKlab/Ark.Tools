@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+    <Description>Extensions of Auth0</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Auth0</PackageTags>
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes>
+    </PackageReleaseNotes>
+    <Version>1.0.0</Version>
+    <VersionSuffix>
+    </VersionSuffix>
+  </PropertyGroup>
+  <!--===============================================================================-->
+  <ItemGroup>
+    <PackageReference Include="Auth0.AuthenticationApi" Version="5.7.0" />
+    <PackageReference Include="Auth0.ManagementApi" Version="5.7.0" />
+    <PackageReference Include="JWT" Version="4.0.0" />
+    <PackageReference Include="Polly" Version="6.1.0" />
+    <PackageReference Include="Polly.Caching.Memory" Version="2.0.0" />
+  </ItemGroup>
+</Project>
