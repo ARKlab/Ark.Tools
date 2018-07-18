@@ -176,7 +176,6 @@ namespace Ark.Tools.AspNetCore.Startup
         {
             Container.AutoCrossWireAspNetComponents(app);
             Container.RegisterMvcControllers(app);
-            Container.RegisterMvcViewComponents(app);
             Container.RegisterAuthorizationAspNetCoreUser(app);
         }
     }
