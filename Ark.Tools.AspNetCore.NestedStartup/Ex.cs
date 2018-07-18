@@ -57,7 +57,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
         {
             services.AddMvcCore().ConfigureApplicationPartManager(manager =>
             {
-                var controllers = manager.FeatureProviders.OfType<ControllerFeatureProvider>();
+                var controllers = manager.FeatureProviders.OfType<ControllerFeatureProvider>().ToArray();
                 foreach (var item in controllers)
                     manager.FeatureProviders.Remove(item);
                 manager.FeatureProviders.Add(new TypedControllerFeatureProvider<TArea>());
