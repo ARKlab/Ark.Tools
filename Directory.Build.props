@@ -21,10 +21,6 @@
       
     <Authors>ARK Labs</Authors>
     <Copyright>Copyright (C) 2018 ARK S.r.l</Copyright>
-    
-  
-
-    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
 
     <IncludeSymbols>true</IncludeSymbols>    
   </PropertyGroup>
@@ -32,6 +28,7 @@
   <PropertyGroup Condition="'$(DebugType)' == 'portable'">
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
+ 
   
   <Target Name="PushNugetPackage" AfterTargets="Pack" Condition="('$(Configuration)' == 'Release' And $(VersionSuffix) == '') Or ('$(Configuration)' == 'Debug' And $(VersionSuffix) != '')">
     <Exec Command="dotnet nuget push -s https://api.nuget.org/v3/index.json $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).nupkg" />
