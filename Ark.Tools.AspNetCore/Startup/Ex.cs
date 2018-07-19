@@ -23,13 +23,13 @@ namespace Ark.Tools.AspNetCore.Startup
             services.ConfigureSwaggerGen(c =>
             {
                 foreach (var v in versions)
-                    c.SwaggerDoc(v.ToString("VVVV"), infoBuilder(v));
+                    c.SwaggerDoc($"v{v.ToString("VVVV")}", infoBuilder(v));
             });
 
             services.ArkConfigureSwaggerUI(c =>
             {
                 foreach (var v in versions)
-                    c.SwaggerEndpoint($@"docs/{v.ToString("VVVV")}", $@"{v.ToString("VVVV")} Docs");
+                    c.SwaggerEndpoint($@"docs/v{v.ToString("VVVV")}", $@"v{v.ToString("VVVV")} Docs");
             });
 
             return services;
