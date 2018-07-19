@@ -18,43 +18,40 @@ namespace Ark.Tools.AspNetCore
         {
             _log(context);
             var message = context.Exception.Message;
+            IActionResult result = null;
 
             switch (context.Exception)
             {
                 case UnauthorizedAccessException ex:
                     {
-                        context.Result = new ObjectResult(new
+                        result = new ObjectResult(new
                         {
                             ErrorMessage = message
                         })
                         {
                             StatusCode = 403
                         };
-                        context.Exception = null;
                         break;
                     }
                 case EntityNotFoundException ex:
                     {
-                        context.Result = new NotFoundObjectResult(message);
-                        context.Exception = null;
+                        result = new NotFoundObjectResult(message);
                         break;
                     }
                 case EntityTagMismatchException ex:
                     {
-                        context.Result = new StatusCodeResult(412);
-                        context.Exception = null;
+                        result = new StatusCodeResult(412);
                         break;
                     }
                 case OptimisticConcurrencyException ex:
                     {
-                        context.Result = new ObjectResult(new
+                        result = new ObjectResult(new
                         {
                             ErrorMessage = message
                         })
                         {
                             StatusCode = 409
                         };
-                        context.Exception = null;
                         break;
                     }
                 case FluentValidation.ValidationException ex:
@@ -66,31 +63,35 @@ namespace Ark.Tools.AspNetCore
                             msd.AddModelError(key, error.ErrorMessage);
                         }
 
-                        context.Result = new BadRequestObjectResult(msd);
-                        context.Exception = null;
+                        result = new BadRequestObjectResult(msd);
                         break;
                     }
                 case SqlException ex:
                     {
                         if (SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex))
                         {
-                            context.Result = new ObjectResult(new
+                            result = new ObjectResult(new
                             {
                                 ErrorMessage = message
                             })
                             {
                                 StatusCode = 409
                             };
-                            context.Exception = null;
                         }
                         break;
                     }
             }
 
-            if (context.Result is ObjectResult o)
+            if (result != null)
             {
-                o.ContentTypes.Clear();
-                o.ContentTypes.Add("application/json");
+                if (result is ObjectResult o)
+                {
+                    o.ContentTypes.Clear();
+                    o.ContentTypes.Add("application/json");
+                }
+
+                context.Result = result;
+                context.Exception = null;
             }
 
             base.OnException(context);
