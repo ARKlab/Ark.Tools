@@ -44,8 +44,13 @@ namespace Ark.Tools.AspNetCore.Startup
 
             // Add minumum framework services.
             services.AddMvcCore()
-                .AddVersionedApiExplorer(o => o.GroupNameFormat = "'v'VVVV")
+                .AddVersionedApiExplorer(o => {
+                    o.GroupNameFormat = "'v'VVVV";
+                    o.SubstituteApiVersionInUrl = true;
+                    o.SubstitutionFormat = "VVVV";                    
+                    })
                 .AddAuthorization()
+                .AddApiExplorer()
                 .AddFormatterMappings()
                 .AddDataAnnotations()
                 .AddJsonFormatters()
@@ -97,13 +102,13 @@ namespace Ark.Tools.AspNetCore.Startup
 
                 c.MapNodaTimeTypes();
 
-                c.OperationFilter<RemoveVersionParameters>();
+                //c.OperationFilter<RemoveVersionParameters>();
                 c.OperationFilter<SupportFlaggedEnums>();
                 c.OperationFilter<PrettifyOperationIdOperationFilter>();
 
                 c.SchemaFilter<RequiredSchemaFilter>();
 
-                c.DocumentFilter<SetVersionInPaths>();
+                //c.DocumentFilter<SetVersionInPaths>();
 
                 c.OperationFilter<DefaultResponsesOperationFilter>();
 
