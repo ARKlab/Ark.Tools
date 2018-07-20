@@ -79,7 +79,6 @@ namespace Ark.Tools.Http
         {
             var cnt = formatters.Count;
             var step = 1.0 / (cnt+1);
-            var sb = new StringBuilder();
             var headers = formatters.Select((x, i) => new MediaTypeWithQualityHeaderValue(x.SupportedMediaTypes.First().MediaType, 1 - (step * i)));
 
             return request.WithHeader("Accept", string.Join(",", headers));
