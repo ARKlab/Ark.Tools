@@ -17,6 +17,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
                 .Select(s => Char.ToLowerInvariant(s.Name[0]) + s.Name.Substring(1));
 
             model.Required = requiredProperties.ToList();
+            if (model.Required.Count == 0)
+                model.Required = null;
         }
     }
 }
