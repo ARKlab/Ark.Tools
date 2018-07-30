@@ -46,11 +46,16 @@ namespace Ark.Tools.Core
             return ByteArrayToHexViaLookup32UnsafeDirect(bytes);
         }
 
-        public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct, System.Enum
+        public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct
         {
             if (string.IsNullOrWhiteSpace(inputString)) return null;
 
-            return (TEnum)Enum.Parse(typeof(TEnum), inputString, ignoreCase);
+            if (Enum.TryParse<TEnum>(inputString, ignoreCase, out var retVal))
+            {
+                return retVal;
+            }
+
+            return null;
         }
 
         public static string Left(this string sValue, int iMaxLength)
