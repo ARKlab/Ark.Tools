@@ -5,6 +5,7 @@ using Flurl.Http;
 using Flurl.Http.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
 using System;
@@ -30,6 +31,7 @@ namespace Ark.Tools.Http
                 jsonSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
                 jsonSettings.ConfigureForNodaTimeRanges();
                 jsonSettings.Converters.Add(new StringEnumConverter());
+                jsonSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
 
