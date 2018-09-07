@@ -12,7 +12,7 @@
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 
-    <Version>1.0.1</Version>
+    <Version>$(AspNetCoreGroupVersion)</Version>
     <VersionSuffix></VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
@@ -20,7 +20,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="NodaTime" Version="2.3.0" />
+    <PackageReference Include="NodaTime" Version="2.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="3.0.0" />
   </ItemGroup>
 

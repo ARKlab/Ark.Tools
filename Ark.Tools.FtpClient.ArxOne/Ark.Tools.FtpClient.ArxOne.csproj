@@ -14,7 +14,7 @@
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 
-    <Version>1.0.2</Version>
+    <Version>$(FtpClientGroupVersion)</Version>
     <VersionSuffix></VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
@@ -22,7 +22,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="ArxOne.Ftp" Version="1.12.1" />
+    <PackageReference Include="ArxOne.Ftp" Version="1.14.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -11,7 +11,7 @@
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 
-    <Version>1.0.1</Version>
+    <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix></VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
@@ -20,7 +20,7 @@
   
   <ItemGroup>
     <PackageReference Include="CacheCow.Client" Version="2.4.1" />
-    <PackageReference Include="Flurl.Http" Version="2.3.2" />
+    <PackageReference Include="Flurl.Http" Version="2.4.0" />
     <PackageReference Include="MessagePack.NodaTime" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.6" />
   </ItemGroup>

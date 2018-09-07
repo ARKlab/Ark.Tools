@@ -10,7 +10,7 @@
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 
-    <Version>1.0.2</Version>
+    <Version>$(FtpClientGroupVersion)</Version>
     <VersionSuffix></VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
@@ -18,14 +18,14 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="5.7.0" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="5.10.0" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="3.19.8" />
-    <PackageReference Include="Flurl.Http" Version="2.3.2" />
     <PackageReference Include="Polly.Caching.Memory" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
   </ItemGroup>
 

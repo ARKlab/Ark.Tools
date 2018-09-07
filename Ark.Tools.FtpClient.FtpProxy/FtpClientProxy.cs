@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
+using Ark.Tools.Http;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 using EnsureThat;
@@ -24,7 +25,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
     public class FtpClientProxyFactory : IFtpClientFactory
     {
         private readonly IFtpClientProxyConfig _config;
-        private static readonly IFlurlClientFactory _flurlClientFactory = new PerHostFlurlClientFactory();
+        private static readonly IFlurlClientFactory _flurlClientFactory = new ArkFlurlClientFactory();
 
         static FtpClientProxyFactory()
         {
