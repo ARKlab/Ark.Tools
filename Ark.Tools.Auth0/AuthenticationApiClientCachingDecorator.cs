@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace Ark.Tools.Auth0
         private readonly CachePolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
         private readonly CachePolicy<UserInfo> _userInfoCachePolicy;
         private readonly MemoryCacheProvider _memoryCacheProvider = new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions()));
+        private readonly ConcurrentDictionary<string, Task> _pendingTasks = new ConcurrentDictionary<string, Task>();
 
         public AuthenticationApiClientCachingDecorator(IAuthenticationApiClient inner)
         {
@@ -122,10 +124,28 @@ namespace Ark.Tools.Auth0
         #endregion
 
         #region Caching
+
+        private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request)
+        {
+            var key = (string)_getKey((dynamic)request);
+            var task = _pendingTasks.GetOrAdd(
+                key, 
+                k => _accessTokenResponseCachePolicy.ExecuteAsync(
+                    ctx => _inner.GetTokenAsync((dynamic)request), 
+                    new Context(k)
+                )
+            ) as Task<AccessTokenResponse>;
+
+            var res = await task;
+
+            _pendingTasks.TryRemove(key, out var _);
+
+            return res;
+        }
         
         public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodeTokenRequest request)
         {
-            return _accessTokenResponseCachePolicy.ExecuteAsync(ctx => _inner.GetTokenAsync(request), new Context(_getKey(request)));
+            return _getToken(request);
         }
 
         private string _getKey(AuthorizationCodeTokenRequest r)
@@ -135,7 +155,7 @@ namespace Ark.Tools.Auth0
 
         public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodePkceTokenRequest request)
         {
-            return _accessTokenResponseCachePolicy.ExecuteAsync(ctx => _inner.GetTokenAsync(request), new Context(_getKey(request)));
+            return _getToken(request);
         }
 
         private string _getKey(AuthorizationCodePkceTokenRequest r)
@@ -145,7 +165,7 @@ namespace Ark.Tools.Auth0
 
         public Task<AccessTokenResponse> GetTokenAsync(ClientCredentialsTokenRequest request)
         {
-            return _accessTokenResponseCachePolicy.ExecuteAsync(ctx => _inner.GetTokenAsync(request), new Context(_getKey(request)));
+            return _getToken(request);
         }
 
         private string _getKey(ClientCredentialsTokenRequest r)
@@ -155,7 +175,7 @@ namespace Ark.Tools.Auth0
 
         public Task<AccessTokenResponse> GetTokenAsync(RefreshTokenRequest request)
         {
-            return _accessTokenResponseCachePolicy.ExecuteAsync(ctx => _inner.GetTokenAsync(request), new Context(_getKey(request)));
+            return _getToken(request);
         }
 
         private string _getKey(RefreshTokenRequest r)
@@ -165,7 +185,7 @@ namespace Ark.Tools.Auth0
 
         public Task<AccessTokenResponse> GetTokenAsync(ResourceOwnerTokenRequest request)
         {
-            return _accessTokenResponseCachePolicy.ExecuteAsync(ctx => _inner.GetTokenAsync(request), new Context(_getKey(request)));
+            return _getToken(request);
         }
 
         private string _getKey(ResourceOwnerTokenRequest r)
