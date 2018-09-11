@@ -21,7 +21,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
         public static void IncludeXmlCommentsForAssembly(this SwaggerGenOptions o, Assembly assembly)
         {
-            var baseDirectory = PlatformServices.Default.Application.ApplicationBasePath;
+            var baseDirectory = System.AppContext.BaseDirectory;
             var commentsFileName = assembly.GetName().Name + ".xml";
             var path = Path.Combine(baseDirectory, commentsFileName);
             if (File.Exists(path))
