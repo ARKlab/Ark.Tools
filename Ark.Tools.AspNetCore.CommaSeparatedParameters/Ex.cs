@@ -10,5 +10,10 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
         {
             return builder.AddMvcOptions(o => o.Conventions.Add(new CommaSeparatedConvention()));
         }
+
+        public static IMvcCoreBuilder AddCommaSeparatedValues(this IMvcCoreBuilder builder)
+        {
+            return builder.AddMvcOptions(o => o.Conventions.Add(new CommaSeparatedConvention()));
+        }
     }
 }
