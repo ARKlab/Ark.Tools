@@ -47,7 +47,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
 
                         var parts = parameter.Split(':');
 
-                        if (parts.Length == 2)
+                        if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
                         {
                             string username = parts[0];
                             string password = parts[1];
