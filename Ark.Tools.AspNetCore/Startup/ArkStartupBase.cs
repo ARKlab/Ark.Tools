@@ -3,6 +3,7 @@
 using Ark.Tools.AspNetCore.ApplicationInsights;
 using Microsoft.ApplicationInsights.AspNetCore;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -36,10 +37,22 @@ namespace Ark.Tools.AspNetCore.Startup
                 {
                     o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
                     o.EnableAdaptiveSampling = true;
+                    o.EnableHeartbeat = true;
+                    o.AddAutoCollectedMetricExtractor = true;
+                    o.RequestCollectionOptions.InjectResponseHeaders = true;
+                    o.RequestCollectionOptions.TrackExceptions = true;
                     o.DeveloperMode = Debugger.IsAttached;
                     o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
+
                 });
                 services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
+
+                services.Configure<SnapshotCollectorConfiguration>(o =>
+                {                    
+                });
+                services.Configure<SnapshotCollectorConfiguration>(Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
+                
+
                 services.AddSingleton<ITelemetryProcessorFactory, SnapshotCollectorTelemetryProcessorFactory>();
             }
 
@@ -66,6 +79,7 @@ namespace Ark.Tools.AspNetCore.Startup
                     context.Response.ContentType = "application/json";
                     var json = JToken.FromObject(ex);
                     await context.Response.WriteAsync(json.ToString());
+                    throw;
                 }
             });
 
@@ -89,4 +103,5 @@ namespace Ark.Tools.AspNetCore.Startup
             app.UseCors(p => p.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
         }
     }
+
 }

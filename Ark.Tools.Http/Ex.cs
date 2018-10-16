@@ -21,17 +21,7 @@ namespace Ark.Tools.Http
             {
                 s.CookiesEnabled = true;
                 s.HttpClientFactory = ArkHttpClientFactory.Instance;
-                var jsonSettings = new JsonSerializerSettings
-                {
-                    NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
-                    ObjectCreationHandling = ObjectCreationHandling.Replace,
-                };
-                jsonSettings.TypeNameHandling = TypeNameHandling.None;
-                jsonSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                jsonSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-                jsonSettings.ConfigureForNodaTimeRanges();
-                jsonSettings.Converters.Add(new StringEnumConverter());
-                jsonSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                var jsonSettings = new ArkJsonSerializerSettings();
 
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
 
@@ -44,16 +34,7 @@ namespace Ark.Tools.Http
         {
             return request.ConfigureRequest(s =>
             {
-                var jsonSettings = new JsonSerializerSettings
-                {
-                    NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
-                    ObjectCreationHandling = ObjectCreationHandling.Replace,
-                };
-                jsonSettings.TypeNameHandling = TypeNameHandling.None;
-                jsonSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                jsonSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-                jsonSettings.ConfigureForNodaTimeRanges();
-                jsonSettings.Converters.Add(new StringEnumConverter());
+                var jsonSettings = new ArkJsonSerializerSettings();
 
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
 
