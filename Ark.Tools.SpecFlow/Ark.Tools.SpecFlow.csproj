@@ -15,7 +15,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(ArkToolsCoreVersion)</Version>
-    <VersionSuffix>beta02</VersionSuffix>
+    <VersionSuffix>beta03</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
