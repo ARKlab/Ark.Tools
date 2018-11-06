@@ -86,6 +86,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Http", "Ark.Tools
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Auth0", "Ark.Tools.Auth0\Ark.Tools.Auth0.csproj", "{94A058C8-178D-4425-BF60-99E4A1659EF9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.SpecFlow", "Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj", "{15B13245-D437-4C49-9D0C-13FA96E0018F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -244,6 +246,10 @@ Global
 		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15B13245-D437-4C49-9D0C-13FA96E0018F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15B13245-D437-4C49-9D0C-13FA96E0018F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15B13245-D437-4C49-9D0C-13FA96E0018F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15B13245-D437-4C49-9D0C-13FA96E0018F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

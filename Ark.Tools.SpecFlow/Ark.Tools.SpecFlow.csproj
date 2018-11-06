@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net461;</TargetFrameworks>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <PackageTags>Ark;C#;.NET;Framework;SpecFlow</PackageTags>
+    <Description>SpecfFow utility</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SpecFlow" Version="2.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
+  </ItemGroup>
+
+</Project>
