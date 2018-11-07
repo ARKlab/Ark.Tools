@@ -78,6 +78,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{157C2BDE-AA77-4AFE-8194-5E049B6AFC96}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
+		Group_Pack_AspnetCore.bat = Group_Pack_AspnetCore.bat
+		Group_Pack_Core.bat = Group_Pack_Core.bat
+		Group_Pack_FTPClient.bat = Group_Pack_FTPClient.bat
+		Group_Pack_ResourceWatcher.bat = Group_Pack_ResourceWatcher.bat
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
@@ -86,7 +90,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Http", "Ark.Tools
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Auth0", "Ark.Tools.Auth0\Ark.Tools.Auth0.csproj", "{94A058C8-178D-4425-BF60-99E4A1659EF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.SpecFlow", "Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj", "{15B13245-D437-4C49-9D0C-13FA96E0018F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.SpecFlow", "Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj", "{15B13245-D437-4C49-9D0C-13FA96E0018F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
