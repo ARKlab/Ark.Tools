@@ -4,7 +4,7 @@
     <TargetFrameworks>net461;netstandard2.0;</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1591</NoWarn>
+    <NoWarn>1591;NU5125</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -31,10 +31,10 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>1.1.0</ArkToolsCoreVersion>
-    <AspNetCoreGroupVersion>1.1.5</AspNetCoreGroupVersion>
-    <FtpClientGroupVersion>1.0.4</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>1.0.5</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>1.1.1</ArkToolsCoreVersion>
+    <AspNetCoreGroupVersion>1.1.6</AspNetCoreGroupVersion>
+    <FtpClientGroupVersion>1.0.5</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>1.0.6</ResourceWatcherGroupVersion>
     
   </PropertyGroup>
   
