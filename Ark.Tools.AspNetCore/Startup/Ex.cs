@@ -111,9 +111,9 @@ namespace Ark.Tools.AspNetCore.Startup
             {
                 c.OAuthClientId(clientId);
                 c.OAuthAppName("WebApi");
-                c.OAuthAdditionalQueryStringParams(new
+                c.OAuthAdditionalQueryStringParams(new Dictionary<string, string>()
                 {
-                    audience
+                    { "audience", audience }
                 });
             });
 
