@@ -19,7 +19,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="8.0.100" />
+    <PackageReference Include="FluentValidation" Version="8.0.101" />
   </ItemGroup>
 
   <ItemGroup>

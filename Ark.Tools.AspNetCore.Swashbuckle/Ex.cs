@@ -3,7 +3,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.PlatformAbstractions;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -62,26 +61,16 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
             return services.Configure(setup);
         }
 
+        [Obsolete("Use UseSwagger() without a setup action", true)]
         public static IApplicationBuilder ArkUseSwagger(this IApplicationBuilder app, Action<SwaggerOptions> setup = null)
         {
-            return app.UseSwagger(c =>
-            {
-                foreach (var conf in app.ApplicationServices.GetServices<IConfigureOptions<SwaggerOptions>>())
-                    conf.Configure(c);
-
-                setup?.Invoke(c);
-            });
+            throw new NotImplementedException();
         }
 
+        [Obsolete("Use UseSwaggerUI() without a setup action", true)]
         public static IApplicationBuilder ArkUseSwaggerUI(this IApplicationBuilder app, Action<SwaggerUIOptions> setup = null)
         {
-            return app.UseSwaggerUI(c =>
-            {
-                foreach (var conf in app.ApplicationServices.GetServices<IConfigureOptions<SwaggerUIOptions>>())
-                    conf.Configure(c);
-
-                setup?.Invoke(c);
-            });
+            throw new NotImplementedException();
         }
     }
 }

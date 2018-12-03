@@ -22,6 +22,7 @@ using SimpleInjector;
 using SimpleInjector.Integration.AspNetCore.Mvc;
 using SimpleInjector.Lifestyles;
 using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.SwaggerUI;
 using System.Collections.Generic;
 using System.Globalization;
 
@@ -171,8 +172,8 @@ namespace Ark.Tools.AspNetCore.Startup
                 SupportedCultures = CultureInfo.GetCultures(CultureTypes.InstalledWin32Cultures | CultureTypes.NeutralCultures | CultureTypes.SpecificCultures)
             });
 
-            app.ArkUseSwagger();
-            app.ArkUseSwaggerUI();
+            app.UseSwagger();
+            app.UseSwaggerUI();
             app.UseAuthentication();
             app.UseMvc();
         }
