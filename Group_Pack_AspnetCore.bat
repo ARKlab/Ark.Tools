@@ -19,6 +19,7 @@ setlocal
 "%MSBUILD%" "Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj"																			/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.AspNetCore.ApplicationInsights\Ark.Tools.AspNetCore.ApplicationInsights.csproj"									/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.AspNetCore.Auth0\Ark.Tools.AspNetCore.Auth0.csproj"																/t:Pack /p:Configuration=Release
+"%MSBUILD%" "Ark.Tools.AspNetCore.BasicAuthAuth0Proxy\Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj"									/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy\Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy.csproj"	/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.AspNetCore.CommaSeparatedParameters\Ark.Tools.AspNetCore.CommaSeparatedParameters.csproj"						/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.AspNetCore.MessagePack\Ark.Tools.AspNetCore.MessagePack.csproj"												    /t:Pack /p:Configuration=Release
