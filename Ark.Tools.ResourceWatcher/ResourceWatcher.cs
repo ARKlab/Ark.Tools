@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 
+using Ark.Tools.Core;
 using EnsureThat;
 using Nito.AsyncEx;
 using NLog;
@@ -30,7 +31,6 @@ namespace Ark.Tools.ResourceWatcher
             EnsureArg.IsNotNull(config);
             EnsureArg.IsNotNull(stateProvider);
 
-
             _config = config;
             _stateProvider = stateProvider;
         }
@@ -56,7 +56,15 @@ namespace Ark.Tools.ResourceWatcher
             }
 
             _cts = new CancellationTokenSource();
-            _task = Task.Run(() => _runAsync(_cts.Token), _cts.Token);
+            _task = Task.Run(async () =>
+            {
+                try
+                {
+                    await _runAsync(_cts.Token);
+                }
+                catch (TaskCanceledException) { }
+            }
+            , _cts.Token).FailFastOnException();
         }
 
         protected virtual void _onBeforeStart()
