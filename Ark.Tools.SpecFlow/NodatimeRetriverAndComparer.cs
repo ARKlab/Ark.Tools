@@ -89,8 +89,14 @@ namespace Ark.Tools.SpecFlow
             if (t == typeof(LocalDateTime))
             {
                 var res = LocalDateTimePattern.ExtendedIso.Parse(keyValuePair.Value);
-                if (!res.Success) throw GetInvalidOperationException(keyValuePair.Value);
-                return res.Value;
+                if (res.Success) return res.Value;
+
+                if (DateTime.TryParse(keyValuePair.Value, out var d))
+                {
+                    return LocalDateTime.FromDateTime(d);
+                }
+
+                throw GetInvalidOperationException(keyValuePair.Value);
             }
 
             if (t == typeof(Instant))
