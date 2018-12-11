@@ -64,7 +64,7 @@ namespace Ark.Tools.AspNetCore.Startup
             });
 
             services.AddMvcCore()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddMvcOptions(opt =>
                 {
                     opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
