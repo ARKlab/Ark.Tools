@@ -4,7 +4,7 @@
     <TargetFrameworks>net461;netstandard2.0;</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1591;NU5125</NoWarn>
+    <NoWarn>1591</NoWarn>	
   </PropertyGroup>
 
   <PropertyGroup>
@@ -15,14 +15,17 @@
 
 
     <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/ARKlab/Ark.Tools/blob/master/LICENSE</PackageLicenseUrl>
+	
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  
     <PackageIconUrl>http://www.ark-energy.eu/wp-content/uploads/ark-dark.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
       
     <Authors>ARK Labs</Authors>
     <Copyright>Copyright (C) 2018 ARK S.r.l</Copyright>
 
-    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSymbols>True</IncludeSymbols>
+	<SymbolsPackageFormat>snupkg</SymbolsPackageFormat>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(DebugType)' == 'portable'">
@@ -40,7 +43,7 @@
   
   <Target Name="PushNugetPackage" AfterTargets="Pack" Condition="('$(Configuration)' == 'Release' And $(VersionSuffix) == '') Or ('$(Configuration)' == 'Debug' And $(VersionSuffix) != '')">
     <Exec Command="dotnet nuget push -s https://api.nuget.org/v3/index.json $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).nupkg" />
-    <Exec Command="dotnet nuget push -s https://nuget.smbsrc.net/ $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" />
+    <!--<Exec Command="dotnet nuget push -s https://nuget.smbsrc.net/ $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" />-->
   </Target>
 
 </Project>
