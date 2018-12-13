@@ -29,15 +29,24 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(DebugType)' == 'portable'">
+	<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+
+	<!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	  
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All"/>
+	</ItemGroup>
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>1.1.3</ArkToolsCoreVersion>
-    <AspNetCoreGroupVersion>1.2.0</AspNetCoreGroupVersion>
-    <FtpClientGroupVersion>1.0.6</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>1.0.7</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>1.1.4</ArkToolsCoreVersion>
+    <AspNetCoreGroupVersion>1.2.1</AspNetCoreGroupVersion>
+    <FtpClientGroupVersion>1.0.7</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>1.0.8</ResourceWatcherGroupVersion>
     
   </PropertyGroup>
   
@@ -45,5 +54,7 @@
     <Exec Command="dotnet nuget push -s https://api.nuget.org/v3/index.json $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).nupkg" />
     <!--<Exec Command="dotnet nuget push -s https://nuget.smbsrc.net/ $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" />-->
   </Target>
+	
+
 
 </Project>
