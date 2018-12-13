@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -25,6 +27,7 @@ using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
@@ -71,7 +74,8 @@ namespace Ark.Tools.AspNetCore.Startup
 
                     opt.Filters.Add(new ArkDefaultExceptionFilter());
                     opt.Filters.Add(new ProducesAttribute("application/json"));
-                    opt.Filters.Add(new ConsumesAttribute("application/json"));
+                    // opt.Filters.Add(new ConsumesAttribute("application/json")); // broken in aspnetcore 2.2 as is enforced on GET too
+                    opt.Conventions.Add(new FixBrokenAspNetCoreConsume());
                     opt.Filters.Add(new ResponseCacheAttribute()
                     {
                         Location = ResponseCacheLocation.Any,
@@ -185,4 +189,21 @@ namespace Ark.Tools.AspNetCore.Startup
             Container.RegisterAuthorizationAspNetCoreUser(app);
         }
     }
+    class FixBrokenAspNetCoreConsume : IActionModelConvention
+    {
+        private static HashSet<string> _methods = new HashSet<string> { "POST", "PUT", "PATCH" };
+
+        public void Apply(ActionModel action)
+        {
+            var model = action.Selectors.OfType<SelectorModel>().SingleOrDefault();
+            var mm = model?.EndpointMetadata.OfType<HttpMethodMetadata>().SingleOrDefault();
+            if (mm != null && _methods.Intersect(mm.HttpMethods).Any() && action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any()))
+            {
+                action.Filters.Add(new ConsumesAttribute("application/json"));
+            }
+
+        }
+    }
+
+
 }
