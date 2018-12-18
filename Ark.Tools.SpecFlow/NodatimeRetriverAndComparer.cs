@@ -27,34 +27,48 @@ namespace Ark.Tools.SpecFlow
             switch (actualValue)
             {
                 case LocalDate ld:
-                    var res1 = LocalDatePattern.Iso.Parse(expectedValue);
-                    if (res1.Success) return res1.Value == ld;
-
-                    var res4 = LocalDateTimePattern.ExtendedIso.Parse(expectedValue);
-                    if (res4.Success && res4.Value.TimeOfDay == LocalTime.Midnight) return res4.Value.Date == ld;
-
-                    if (DateTime.TryParse(expectedValue, out var d) && d == d.Date)
                     {
-                        return LocalDate.FromDateTime(d) == ld;
-                    }
+                        var res1 = LocalDatePattern.Iso.Parse(expectedValue);
+                        if (res1.Success) return res1.Value == ld;
 
-                    return false;
+                        var res4 = LocalDateTimePattern.ExtendedIso.Parse(expectedValue);
+                        if (res4.Success && res4.Value.TimeOfDay == LocalTime.Midnight) return res4.Value.Date == ld;
+
+                        if (DateTime.TryParse(expectedValue, out var d) && d == d.Date)
+                        {
+                            return LocalDate.FromDateTime(d) == ld;
+                        }
+                        return false;
+                    }
                 case LocalDateTime ldt:
-                    var res2 = LocalDateTimePattern.ExtendedIso.Parse(expectedValue);
-                    if (!res2.Success) return false;
-                    return res2.Value == ldt;
+                    {
+                        var res2 = LocalDateTimePattern.ExtendedIso.Parse(expectedValue);
+                        if (res2.Success) return res2.Value == ldt;
+
+                        if (DateTime.TryParse(expectedValue, out var d))
+                        {
+                            return LocalDateTime.FromDateTime(d) == ldt;
+                        }
+                        return false;
+                    }
                 case Instant i:
-                    var res3 = InstantPattern.ExtendedIso.Parse(expectedValue);
-                    if (!res3.Success) return false;
-                    return res3.Value == i;
+                    {
+                        var res3 = InstantPattern.ExtendedIso.Parse(expectedValue);
+                        if (!res3.Success) return false;
+                        return res3.Value == i;
+                    }
                 case LocalTime t:
-                    var res5 = LocalTimePattern.ExtendedIso.Parse(expectedValue);
-                    if (!res5.Success) return false;
-                    return res5.Value == t;
+                    {
+                        var res5 = LocalTimePattern.ExtendedIso.Parse(expectedValue);
+                        if (!res5.Success) return false;
+                        return res5.Value == t;
+                    }
                 case OffsetDateTime odt:
-                    var res6 = OffsetDateTimePattern.ExtendedIso.Parse(expectedValue);
-                    if (!res6.Success) return false;
-                    return res6.Value == odt;
+                    {
+                        var res6 = OffsetDateTimePattern.ExtendedIso.Parse(expectedValue);
+                        if (!res6.Success) return false;
+                        return res6.Value == odt;
+                    }
             }
 
             return false;
