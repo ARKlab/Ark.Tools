@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
-    <PackageReference Include="NodaTime.Serialization.JsonNet" Version="2.0.0" />
+    <PackageReference Include="NodaTime.Serialization.JsonNet" Version="2.1.0" />
   </ItemGroup>
 
   <ItemGroup>

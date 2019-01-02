@@ -48,11 +48,6 @@ namespace Ark.Tools.AspNetCore.Startup
 
             // Add minumum framework services.
             services.AddMvcCore()
-                .AddVersionedApiExplorer(o => {
-                    o.GroupNameFormat = "'v'VVVV";
-                    o.SubstituteApiVersionInUrl = true;
-                    o.SubstitutionFormat = "VVVV";                    
-                    })
                 .AddAuthorization()
                 .AddApiExplorer()
                 .AddFormatterMappings()
@@ -64,6 +59,13 @@ namespace Ark.Tools.AspNetCore.Startup
             {
                 o.ReportApiVersions = true;
                 o.AssumeDefaultVersionWhenUnspecified = false;
+            });
+
+            services.AddVersionedApiExplorer(o =>
+            {
+                o.GroupNameFormat = "'v'VVVV";
+                o.SubstituteApiVersionInUrl = true;
+                o.SubstitutionFormat = "VVVV";
             });
 
             services.AddMvcCore()
@@ -85,7 +87,7 @@ namespace Ark.Tools.AspNetCore.Startup
                     });
                     opt.Filters.Add(new ModelStateValidationFilter());
                     opt.Filters.Add(new ETagHeaderBasicSupportFilter());
-
+                    opt.Filters.Add(new ApiControllerAttribute());
                     opt.ReturnHttpNotAcceptable = true;
                     opt.RespectBrowserAcceptHeader = true;
                 })
