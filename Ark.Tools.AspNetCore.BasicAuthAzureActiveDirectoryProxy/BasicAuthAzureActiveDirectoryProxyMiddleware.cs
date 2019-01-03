@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
@@ -68,13 +69,13 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                             var result = await Policy
                                 .Handle<Exception>()
                                 .RetryAsync(2)
-                                .ExecuteAsync(async () => {
+                                .ExecuteAsync(async ct => {
                                     var res = await _client.PostAsync(url, content);
                                     res.EnsureSuccessStatusCode();
 
                                     var payload = await res.Content.ReadAsStringAsync();
                                     return JsonConvert.DeserializeObject<OAuthResult>(payload);
-                                });
+                                }, context.RequestAborted, true);
 
                             context.Request.Headers["Authorization"] = $"Bearer {result.Access_Token}";
                         }

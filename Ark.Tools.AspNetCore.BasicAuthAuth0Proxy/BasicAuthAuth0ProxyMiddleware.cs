@@ -69,7 +69,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                                     });
 
                                     return result.AccessToken;
-                                }, context.RequestAborted);
+                                }, context.RequestAborted, true);
 
                             context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
                         }
