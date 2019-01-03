@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,7 +19,9 @@ namespace Ark.Tools.AspNetCore.NestedStartup
         public static IApplicationBuilder UseBranchWithServices<TStartup>(this IApplicationBuilder app, string url, IConfiguration configuration) where TStartup : class
         {
             var feature = app.ServerFeatures;
-            var webHost = WebHost.CreateDefaultBuilder()
+            var webHost = new WebHostBuilder()
+                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseConfiguration(configuration)
                 .UseParentServiceProvider(app.ApplicationServices, configuration)
                 .UseFakeServer(feature)
                 .UseStartup<TStartup>()
