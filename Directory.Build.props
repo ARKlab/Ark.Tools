@@ -28,7 +28,7 @@
 	<SymbolsPackageFormat>snupkg</SymbolsPackageFormat>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(DebugType)' == 'portable'">
+  <PropertyGroup>
 	<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
 	<PublishRepositoryUrl>true</PublishRepositoryUrl>
 
@@ -43,10 +43,10 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>1.1.6</ArkToolsCoreVersion>
-    <AspNetCoreGroupVersion>1.2.4</AspNetCoreGroupVersion>
-    <FtpClientGroupVersion>1.0.8</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>1.0.9</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>1.1.7</ArkToolsCoreVersion>
+    <AspNetCoreGroupVersion>1.2.5</AspNetCoreGroupVersion>
+    <FtpClientGroupVersion>1.0.9</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>1.0.10</ResourceWatcherGroupVersion>
     
   </PropertyGroup>
   
@@ -55,6 +55,22 @@
     <!--<Exec Command="dotnet nuget push -s https://nuget.smbsrc.net/ $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" />-->
   </Target>
 	
-
+	<Target Name="_ResolvePublishNuGetPackagePdbsAndXml"
+			AfterTargets="RunResolvePublishAssemblies">
+		<ItemGroup>
+			<ResolvedFileToPublish 
+			Include="@(ResolvedAssembliesToPublish->'%(RootDir)%(Directory)%(Filename).pdb')" 
+			RelativePath="$([System.IO.Path]::ChangeExtension(%(ResolvedAssembliesToPublish.DestinationSubPath), '.pdb'))"
+			DestinationSubPath="$([System.IO.Path]::ChangeExtension(%(ResolvedAssembliesToPublish.DestinationSubPath), '.pdb'))"
+			Condition="'%(ResolvedAssembliesToPublish.PackageName)' != ''
+						and Exists('%(RootDir)%(Directory)%(Filename).pdb')" />
+			<ResolvedFileToPublish 
+			Include="@(ResolvedAssembliesToPublish->'%(RootDir)%(Directory)%(Filename).xml')" 
+			RelativePath="$([System.IO.Path]::ChangeExtension(%(ResolvedAssembliesToPublish.DestinationSubPath), '.xml'))"
+			DestinationSubPath="$([System.IO.Path]::ChangeExtension(%(ResolvedAssembliesToPublish.DestinationSubPath), '.xml'))"
+			Condition="'%(ResolvedAssembliesToPublish.PackageName)' != ''
+						and Exists('%(RootDir)%(Directory)%(Filename).xml')" />
+		</ItemGroup>
+	</Target>
 
 </Project>
