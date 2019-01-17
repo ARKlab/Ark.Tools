@@ -16,7 +16,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public DateInterval(LocalDate point, DatePeriod period)
         {
-            Ensure.Bool.IsTrue(point == StartOfInterval(point, period));
+            Ensure.Comparable.Is(point, StartOfInterval(point, period), nameof(point));
 
             _period = period;
             _start = point;

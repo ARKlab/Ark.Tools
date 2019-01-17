@@ -16,7 +16,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public TimeInterval(ZonedDateTime point, TimePeriod period)
         {
-            Ensure.Bool.IsTrue(TimeInterval.StartOfInterval(point, period) == point);
+            Ensure.Comparable.Is(point.ToInstant(), TimeInterval.StartOfInterval(point, period).ToInstant(), nameof(point));
 
             _period = period;
             _start = point;

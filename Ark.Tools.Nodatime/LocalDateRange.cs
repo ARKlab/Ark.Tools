@@ -15,7 +15,7 @@ namespace Ark.Tools.Nodatime
 
         public LocalDateRange(LocalDate start, LocalDate end)
         {
-            Ensure.Bool.IsTrue(start < end);
+            Ensure.Comparable.IsLt(start, end, nameof(start));
 
             _start = start;
             _end = end;
