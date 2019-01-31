@@ -227,7 +227,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                         Info = _connectionInfo,
                         Paths = startPath != null ? new[] { startPath } : null,
                         Recursive = false,
-                    })
+                    }, ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
                     ;
 
@@ -243,7 +243,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                             Info = _connectionInfo,
                             Paths = folders.Select(f => f.FullPath).ToArray(),
                             Recursive = false,
-                        })
+                        }, ctk)
                         .ReceiveJson<IEnumerable<FtpEntry>>()
                         ;
 

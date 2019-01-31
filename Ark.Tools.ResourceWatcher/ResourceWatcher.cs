@@ -126,16 +126,15 @@ namespace Ark.Tools.ResourceWatcher
 
                 var parallelism = _config.DegreeOfParallelism;
 
+                _logger.Info("Found {0} resources to process with parallelism {1}", list.Count, parallelism);
                 using (SemaphoreSlim throttler = new SemaphoreSlim(initialCount: (int)parallelism))
                 {
-                    int idx = 0;
                     int total = toProcess.Count;
-                    var tasks = toProcess.Select(async x =>
+                    var tasks = toProcess.Select(async (x,i) =>
                     {
                         await throttler.WaitAsync(ctk).ConfigureAwait(false);
                         try
                         {
-                            var i = Interlocked.Increment(ref idx);
                             await _processEntry(i, total, x.CurrentInfo, x.Match, ctk).ConfigureAwait(false);
                         }
                         finally
