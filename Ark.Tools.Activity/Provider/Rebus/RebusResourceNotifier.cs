@@ -39,7 +39,7 @@ namespace Ark.Tools.Activity.Provider
 
                     var cfg = new JsonSerializerSettings();
                     cfg = cfg.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-                    cfg.TypeNameHandling = TypeNameHandling.Auto;
+                    cfg.TypeNameHandling = TypeNameHandling.None;
                     cfg.ObjectCreationHandling = ObjectCreationHandling.Replace;
                     s.UseNewtonsoftJson(cfg);
                 })

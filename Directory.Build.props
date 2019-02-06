@@ -43,7 +43,7 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>1.1.8</ArkToolsCoreVersion>
+    <ArkToolsCoreVersion>1.1.9</ArkToolsCoreVersion>
     <AspNetCoreGroupVersion>1.2.6</AspNetCoreGroupVersion>
     <FtpClientGroupVersion>1.0.10</FtpClientGroupVersion>
     <ResourceWatcherGroupVersion>1.0.11</ResourceWatcherGroupVersion>

@@ -1,10 +1,34 @@
 ﻿using Ark.Tools.Nodatime;
+using EnsureThat;
+using Newtonsoft.Json;
 using NodaTime;
+using NodaTime.Serialization.JsonNet;
+using NodaTime.Text;
 using System;
 
 
 namespace Ark.Tools.Activity
 {
+    internal sealed class ZonedDateTimeTzdbConverter : JsonConverter
+    {
+        private JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
+                ZonedDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<G> z", DateTimeZoneProviders.Tzdb)
+            , x => Ensure.Bool.IsTrue(x.Calendar == CalendarSystem.Iso)
+            );
+
+        public override bool CanRead => _converter.CanRead;
+        public override bool CanWrite => _converter.CanWrite;
+
+        public override bool CanConvert(Type objectType) 
+            => _converter.CanConvert(objectType);
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            => _converter.ReadJson(reader, objectType, existingValue, serializer);
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            => _converter.WriteJson(writer, value, serializer);
+    }
+
     public struct Slice : IEquatable<Slice>
     {
         internal Slice(ZonedDateTime start)
@@ -12,6 +36,7 @@ namespace Ark.Tools.Activity
             SliceStart = start;
         }
 
+        [JsonConverter(typeof(ZonedDateTimeTzdbConverter))]
         public ZonedDateTime SliceStart;
 
         public Slice MoveDays(int days)
