@@ -43,7 +43,7 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>1.1.10</ArkToolsCoreVersion>
+    <ArkToolsCoreVersion>1.1.11</ArkToolsCoreVersion>
     <AspNetCoreGroupVersion>1.2.6</AspNetCoreGroupVersion>
     <FtpClientGroupVersion>1.0.10</FtpClientGroupVersion>
     <ResourceWatcherGroupVersion>1.0.11</ResourceWatcherGroupVersion>
@@ -72,5 +72,15 @@
 						and Exists('%(RootDir)%(Directory)%(Filename).xml')" />
 		</ItemGroup>
 	</Target>
+	
+
+  <PropertyGroup>
+	<TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+		<BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')-&gt;WithMetadataValue('PrivateAssets', 'All'))" />
+    </ItemGroup>
+  </Target>
 
 </Project>

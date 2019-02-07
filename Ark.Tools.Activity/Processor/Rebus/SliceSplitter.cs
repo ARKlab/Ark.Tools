@@ -54,8 +54,8 @@ namespace Ark.Tools.Activity.Processor
         {
             return Handle(new ResourceSliceReady
             {
-                Resource = message.Resource,
-                Slice = message.Slice
+                Resource = Resource.Create(message.Resource.Provider, message.Resource.Id),
+                Slice = Slice.From(message.Slice.SliceStart)
             });
         }
     }

@@ -21,6 +21,7 @@
 		<PackageReference Include="Rebus.SqlServer" Version="5.0.3" />
 	</ItemGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\Ark.Tasks\Ark.Tasks.csproj" PrivateAssets="All"  />
 		<ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
 		<ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
 		<ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />

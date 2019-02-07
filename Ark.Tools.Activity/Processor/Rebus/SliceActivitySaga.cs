@@ -60,9 +60,9 @@ namespace Ark.Tools.Activity.Processor
         {
             return Handle(new SliceReady()
             {
-                ActivitySlice = message.ActivitySlice,
-                Resource = message.Resource,
-                ResourceSlice = message.ResourceSlice
+                ActivitySlice = Slice.From(message.ActivitySlice.SliceStart),
+                Resource = Resource.Create(message.Resource.Provider, message.Resource.Id),
+                ResourceSlice = Slice.From(message.ResourceSlice.SliceStart)
             });
         }
 

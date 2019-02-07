@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.Nodatime.Json" Version="1.1.10" />
+  </ItemGroup>
+
+</Project>
