@@ -62,7 +62,9 @@ namespace Ark.Tools.Activity.Processor
                 ;
 
             _container.Register<IHandleMessages<ResourceSliceReady>, SliceSplitter>();
+            _container.Register<IHandleMessages<Ark.Tasks.Messages.ResourceSliceReady>, SliceSplitter>();
             _container.Register<IHandleMessages<SliceReady>, SliceActivitySaga>();
+            _container.Register<IHandleMessages<Ark.Tasks.Messages.SliceReady>, SliceActivitySaga>();
             _container.Register<ISliceActivity>(_activityFactory);
 
             var bus = busConfigurer.Start();

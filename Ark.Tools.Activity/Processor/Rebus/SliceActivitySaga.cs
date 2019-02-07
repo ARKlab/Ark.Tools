@@ -1,6 +1,5 @@
 ﻿using Ark.Tools.Activity.Messages;
 using NLog;
-
 using System.Linq;
 using System.Threading.Tasks;
 using Rebus.Sagas;
@@ -13,6 +12,7 @@ namespace Ark.Tools.Activity.Processor
     public sealed class SliceActivitySaga
         : Saga<SliceActivitySagaData>
         , IAmInitiatedBy<SliceReady>
+        , IAmInitiatedBy<Ark.Tasks.Messages.SliceReady>
 
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
@@ -56,9 +56,20 @@ namespace Ark.Tools.Activity.Processor
             }
         }
 
+        public Task Handle(Tasks.Messages.SliceReady message)
+        {
+            return Handle(new SliceReady()
+            {
+                ActivitySlice = message.ActivitySlice,
+                Resource = message.Resource,
+                ResourceSlice = message.ResourceSlice
+            });
+        }
+
         protected override void CorrelateMessages(ICorrelationConfig<SliceActivitySagaData> config)
         {
             config.Correlate<SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
+            config.Correlate<Ark.Tasks.Messages.SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
         }
 
     }
