@@ -19,8 +19,8 @@
 
   <ItemGroup>
     <PackageReference Include="Auth0.AuthenticationApi" Version="5.11.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="4.5.0" />
-    <PackageReference Include="Polly.Caching.Memory" Version="2.0.2" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="4.5.1" />
+    <PackageReference Include="Polly.Caching.Memory" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>

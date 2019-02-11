@@ -72,7 +72,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         private readonly Polly.Caching.Memory.MemoryCacheProvider _memoryCacheProvider
            = new Polly.Caching.Memory.MemoryCacheProvider(new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()));
 
-        private readonly Policy<(string AccessToken, DateTimeOffset ExpiresOn)> _cachePolicy;
+        private readonly AsyncPolicy<(string AccessToken, DateTimeOffset ExpiresOn)> _cachePolicy;
 
         public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, string host, NetworkCredential credentials)
         {

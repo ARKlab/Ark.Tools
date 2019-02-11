@@ -20,8 +20,8 @@ namespace Ark.Tools.Auth0
     public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient
     {
         private IAuthenticationApiClient _inner;
-        private readonly CachePolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
-        private readonly CachePolicy<UserInfo> _userInfoCachePolicy;
+        private readonly AsyncCachePolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
+        private readonly AsyncCachePolicy<UserInfo> _userInfoCachePolicy;
         private readonly MemoryCacheProvider _memoryCacheProvider = new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions()));
         private readonly ConcurrentDictionary<string, Task> _pendingTasks = new ConcurrentDictionary<string, Task>();
 

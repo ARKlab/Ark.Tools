@@ -18,7 +18,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="19.2.4" />
+    <PackageReference Include="FluentFTP" Version="21.0.0" />
     <PackageReference Include="Sunlighter.AsyncQueueLib" Version="1.0.5" />
   </ItemGroup>
 

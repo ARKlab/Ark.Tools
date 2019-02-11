@@ -15,7 +15,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
     {
         private readonly RequestDelegate _next;
         private readonly BasicAuthAuth0ProxyConfig _config;
-        private readonly Policy _policy;
+        private readonly AsyncPolicy _policy;
         private readonly IAuthenticationApiClient _auth0;
 
         public BasicAuthAuth0ProxyMiddleware(RequestDelegate next, BasicAuthAuth0ProxyConfig config)
