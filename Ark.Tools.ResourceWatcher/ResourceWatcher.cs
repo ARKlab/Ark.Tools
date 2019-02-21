@@ -101,6 +101,10 @@ namespace Ark.Tools.ResourceWatcher
             {
                 var infos = await _getResourcesInfo(ctk).ConfigureAwait(false);
 
+                var bad = infos.GroupBy(x => x.ResourceId).FirstOrDefault(x => x.Count() > 1);
+                if (bad != null)
+                    throw new InvalidOperationException($"Found multiple entries for ResouceId:{bad.Key}");
+
                 if (_config.SkipResourcesOlderThanDays.HasValue)
                     infos = infos
                             .Where(x => x.Modified.Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
