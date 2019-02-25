@@ -3,6 +3,7 @@
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
 using Ark.Tools.Nodatime;
+using Hellang.Middleware.ProblemDetails;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -45,6 +46,11 @@ namespace Ark.Tools.AspNetCore.Startup
         public virtual void ConfigureServices(IServiceCollection services)
         {
             services.AddLocalization();
+
+            //ProblemDetails
+            services.AddHttpContextAccessor();
+            services.ConfigureOptions<ArkProblemDetailsOptionsSetup>();
+            services.AddProblemDetails();
 
             // Add minumum framework services.
             services.AddMvcCore()
@@ -101,6 +107,16 @@ namespace Ark.Tools.AspNetCore.Startup
                     //s.SerializerSettings.ContractResolver = new DefaultContractResolver();
                 });
             ;
+
+            //CONVENTION??
+            //To add with MvcCore
+            //services.AddMvc(o =>
+            //    {
+            //        // optional tweaks to built-in mvc non-success http responses
+            //        o.Conventions.Add(new NotFoundResultApiConvention());
+            //        o.Conventions.Add(new ProblemDetailsResultApiConvention());
+            //    })
+            //    .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
 
             services.AddSwaggerGen(c =>
@@ -177,6 +193,9 @@ namespace Ark.Tools.AspNetCore.Startup
                 DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture),
                 SupportedCultures = CultureInfo.GetCultures(CultureTypes.InstalledWin32Cultures | CultureTypes.NeutralCultures | CultureTypes.SpecificCultures)
             });
+
+            //ProblemDetails
+            app.UseProblemDetails();
 
             app.UseSwagger();
             app.UseSwaggerUI();
