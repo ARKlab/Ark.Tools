@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.AspNetCore.ProbDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
 using Ark.Tools.Nodatime;
@@ -26,9 +27,11 @@ using SimpleInjector.Integration.AspNetCore.Mvc;
 using SimpleInjector.Lifestyles;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
@@ -74,7 +77,12 @@ namespace Ark.Tools.AspNetCore.Startup
                 o.SubstitutionFormat = "VVVV";
             });
 
-            services.AddMvcCore()
+            services.AddMvcCore(o =>
+                {
+                    // optional tweaks to built-in mvc non-success http responses
+                    //o.Conventions.Add(new NotFoundResultApiConvention());
+                    o.Conventions.Add(new ProblemDetailsResultApiConvention());
+                })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddMvcOptions(opt =>
                 {
@@ -107,17 +115,6 @@ namespace Ark.Tools.AspNetCore.Startup
                     //s.SerializerSettings.ContractResolver = new DefaultContractResolver();
                 });
             ;
-
-            //CONVENTION??
-            //To add with MvcCore
-            //services.AddMvc(o =>
-            //    {
-            //        // optional tweaks to built-in mvc non-success http responses
-            //        o.Conventions.Add(new NotFoundResultApiConvention());
-            //        o.Conventions.Add(new ProblemDetailsResultApiConvention());
-            //    })
-            //    .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
 
             services.AddSwaggerGen(c =>
             {
@@ -162,6 +159,8 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.EnableValidator();
             });
 
+            services.ConfigureOptions<ApiBehaviourOptionsSetup>();
+
             services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
             _integrateSimpleInjectorContainer(services);
             
@@ -196,6 +195,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
             //ProblemDetails
             app.UseProblemDetails();
+            app.UseMiddleware<HostedPageMiddleware>();
 
             app.UseSwagger();
             app.UseSwaggerUI();

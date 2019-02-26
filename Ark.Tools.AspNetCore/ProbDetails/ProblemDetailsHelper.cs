@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Ark.Tools.AspNetCore
+namespace Ark.Tools.AspNetCore.ProbDetails
 {
     public static class ProblemDetailsHelper
     {
@@ -10,9 +10,14 @@ namespace Ark.Tools.AspNetCore
         {
             // this is the same behaviour that Asp.Net core uses
             var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
-            //details.Extensions["traceId"] = traceId;
+            details.Extensions["traceId"] = traceId;
 
-            details.Instance = traceId;
+            //details.Instance = traceId;
+        }
+
+        public static void SetType(ProblemDetails details, int statusCode)
+        {
+            details.Type = $"https://httpstatuses.com/{statusCode}";
         }
     }
 }

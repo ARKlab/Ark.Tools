@@ -1,4 +1,5 @@
-﻿using Ark.Tools.Solid;
+﻿using Ark.Tools.Core;
+using Ark.Tools.Solid;
 using EnsureThat;
 using NodaTime;
 using ProblemDetailsSample.Common.Dto;
@@ -20,16 +21,15 @@ namespace ProblemDetailsSample.Api.Queries
         public async Task<Entity.V1.Output> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)
         {
             EnsureArg.IsNotNull(query, nameof(query));
+            EnsureArg.IsNot(query.EntityId, "ensure");
+            
+            if (query.EntityId == "null") return null;
+            if (query.EntityId == "throw") throw new EntityNotFoundException("");
 
-            Entity.V1.Output entity = default;
-
-            if (!query.EntityId.Contains("null"))
+            var entity = new Entity.V1.Output()
             {
-                entity = new Entity.V1.Output()
-                {
-                    EntityId = query.EntityId
-                };
-            }
+                EntityId = query.EntityId
+            };
 
             return await Task.FromResult(entity);
         }

@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Data;
 using System.Net.Http;
+using Ark.Tools.Core;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
-namespace Ark.Tools.AspNetCore
+namespace Ark.Tools.AspNetCore.ProbDetails
 {
     public class ArkProblemDetailsOptionsSetup : IConfigureOptions<ProblemDetailsOptions>
     {
@@ -25,9 +26,10 @@ namespace Ark.Tools.AspNetCore
 
         public void Configure(ProblemDetailsOptions options)
         {
+            // This is the default behavior; only include exception details in a development environment.
             options.IncludeExceptionDetails = ctx => Environment.IsDevelopment();
 
-            options.MapStatusCode = _mapStatusCode;
+            options.MapStatusCode = (ctx, statusCode) => new StatusCodeProblemDetails(statusCode);
 
             options.OnBeforeWriteDetails = (ctx, details) =>
             {
@@ -36,15 +38,17 @@ namespace Ark.Tools.AspNetCore
             };
 
             _configureProblemDetails(options);
+
+            if (options.IsProblem == null)
+            {
+                options.IsProblem = _isProblem;
+            }
         }
 
         private void _configureProblemDetails(ProblemDetailsOptions options)
         {
-            // This is the default behavior; only include exception details in a development environment.
-            options.IncludeExceptionDetails = ctx => Environment.IsDevelopment(); 
-
             // This will map DBConcurrencyException to the 409 Conflict status code.
-            options.Map<DBConcurrencyException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict));
+            options.Map<EntityNotFoundException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status404NotFound));
 
             // This will map NotImplementedException to the 501 Not Implemented status code.
             options.Map<NotImplementedException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status501NotImplemented));
@@ -67,7 +71,7 @@ namespace Ark.Tools.AspNetCore
                 {
                     Status = statusCode,
                     Title = errorData.Title,
-                    Type = errorData.Link
+                    Type = $"https://httpstatuses.com/{statusCode}" //errorData.Link
                 };
             }
             else
@@ -75,6 +79,31 @@ namespace Ark.Tools.AspNetCore
                 // use Hellang.Middleware.ProblemDetails mapping
                 return new StatusCodeProblemDetails(statusCode);
             }
+        }
+
+        private static bool _isProblem(HttpContext context)
+        {
+            if (context.Response.StatusCode < 400)
+            {
+                return false;
+            }
+
+            if (context.Response.StatusCode >= 600)
+            {
+                return false;
+            }
+
+            if (context.Response.ContentLength.HasValue)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(context.Response.ContentType))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

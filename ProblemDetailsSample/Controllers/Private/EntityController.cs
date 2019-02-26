@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using ProblemDetailsSample.Api.Queries;
 using ProblemDetailsSample.Common.Dto;
 using ProblemDetailsSample.Models;
+using ProblemDetailsSample.Api.Requests;
 
 namespace ProblemDetailsSample.Controllers.Private
 {
@@ -39,7 +40,6 @@ namespace ProblemDetailsSample.Controllers.Private
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
         public async Task<IActionResult> Get_Entity([FromRoute] string entityId, CancellationToken ctk = default)
         {
-
             var query = new Get_EntityByIdQuery.V1()
             {
                 EntityId = entityId
@@ -55,21 +55,33 @@ namespace ProblemDetailsSample.Controllers.Private
 
         /// <summary>
         /// Returns a BadRequest with Payload
-        /// Try with text 'null' for returning a null entity
         /// </summary>
-        /// <param name="ctk"></param>
+        /// <param name="body"></param>
         /// <returns></returns>
-        [HttpGet(@"BadRequestPayload")]
+        [HttpPost(@"PostEntityOK")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Get_EntityBadRequestPayload(CancellationToken ctk = default)
+        public IActionResult Post_EntityOK([FromBody]Entity.V1.Input body)
         {
+            return this.Ok();
+        }
 
-            var error = new Error()
+        /// <summary>
+        /// Returns a BadRequest with Payload
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        [HttpPost(@"BadRequestPayload")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Post_EntityBadRequestPayload([FromBody]Entity.V1.Input body)
+        {
+            var request = new Post_EntityRequest.V1()
             {
-                Message = "error"
+                EntityId = body.EntityId
             };
 
-            return await Task.FromResult(BadRequest(error));
+            var res = await _requestProcessor.ExecuteAsync(request, default);
+
+            return this.Ok(res);
         }
 
         /// <summary>
@@ -89,6 +101,28 @@ namespace ProblemDetailsSample.Controllers.Private
             var res = await _queryProcessor.ExecuteAsync(query, ctk);
 
             return this.Ok(res);
+        }
+
+        /// <summary>
+        /// Returns Handler NotImplementedException
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("ValidationResult")]
+        [ProducesResponseType(typeof(OutOfCreditProblemDetails), StatusCodes.Status400BadRequest)]
+        public IActionResult Result()
+        {
+            var problem = new OutOfCreditProblemDetails
+            {
+                Type = "https://example.com/probs/out-of-credit",
+                Title = "You do not have enough credit.",
+                Detail = "Your current balance is 30, but that costs 50.",
+                Instance = "/account/12345/msgs/abc",
+                Balance = 30.0m,
+                Accounts = { "/account/12345", "/account/67890" },
+                Status = StatusCodes.Status400BadRequest
+            };
+
+            return BadRequest(problem);
         }
     }
 

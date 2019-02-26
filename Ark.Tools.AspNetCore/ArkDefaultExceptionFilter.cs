@@ -33,11 +33,11 @@ namespace Ark.Tools.AspNetCore
                         };
                         break;
                     }
-                case EntityNotFoundException ex:
-                    {
-                        result = new NotFoundObjectResult(message);
-                        break;
-                    }
+                //case EntityNotFoundException ex:
+                //    {
+                //        result = new NotFoundObjectResult(message);
+                //        break;
+                //    }
                 case EntityTagMismatchException ex:
                     {
                         result = new StatusCodeResult(412);

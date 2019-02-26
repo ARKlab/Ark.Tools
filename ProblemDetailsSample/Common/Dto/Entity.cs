@@ -19,7 +19,7 @@ namespace ProblemDetailsSample.Common.Dto
 
             public class Output : Input
             {
-
+                public int Value { get; set; }
             }
         }
 
