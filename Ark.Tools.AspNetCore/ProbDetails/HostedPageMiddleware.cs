@@ -1,24 +1,25 @@
-﻿using System.Data;
+﻿using System;
 using System.Threading.Tasks;
+using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 
 namespace Ark.Tools.AspNetCore.ProbDetails
 {
     public class HostedPageMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ProblemDetailsOptions _options;
 
-        public HostedPageMiddleware(RequestDelegate next)
+        public HostedPageMiddleware(RequestDelegate next, IOptions<ProblemDetailsOptions> options)
         {
             _next = next;
+            _options = options.Value;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // Todo: Our logic that we need to put in when the request is coming in
-            // Call the next delegate/middleware in the pipeline
             await _next(context);
-            // Todo: Our logic that we need to put in when the response is going back
         }
-    }
+    } 
 }

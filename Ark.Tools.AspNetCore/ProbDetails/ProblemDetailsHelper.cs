@@ -11,13 +11,16 @@ namespace Ark.Tools.AspNetCore.ProbDetails
             // this is the same behaviour that Asp.Net core uses
             var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
             details.Extensions["traceId"] = traceId;
-
-            //details.Instance = traceId;
         }
 
         public static void SetType(ProblemDetails details, int statusCode)
         {
             details.Type = $"https://httpstatuses.com/{statusCode}";
+        }
+
+        public static void SetType(ProblemDetails details, string name)
+        {
+            details.Type = $"https://httpstatuses.com/{name}";
         }
     }
 }

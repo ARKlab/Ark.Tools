@@ -6,6 +6,7 @@ using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
 
 namespace Ark.Tools.AspNetCore.ProbDetails
@@ -13,36 +14,57 @@ namespace Ark.Tools.AspNetCore.ProbDetails
     public class ArkProblemDetailsOptionsSetup : IConfigureOptions<ProblemDetailsOptions>
     {
         public ArkProblemDetailsOptionsSetup(IHostingEnvironment environment,
-            IHttpContextAccessor httpContextAccessor, IOptions<ApiBehaviorOptions> apiOptions)
+            /*IHttpContextAccessor httpContextAccessor, IOptions<ApiBehaviorOptions> apiOptions*/
+            LinkGenerator router, IEndpointAddressScheme<RouteValuesAddress> endpointAddress)
         {
             Environment = environment;
-            HttpContextAccessor = httpContextAccessor;
-            ApiOptions = apiOptions.Value;
+            Router = router;
+            _asdfasdfsa = endpointAddress;
+            //ApiOptions = apiOptions.Value;
         }
 
         private IHostingEnvironment Environment { get; }
-        private IHttpContextAccessor HttpContextAccessor { get; }
-        private ApiBehaviorOptions ApiOptions { get; }
+        private LinkGenerator Router { get; }
+
+        private readonly IEndpointAddressScheme<RouteValuesAddress> _asdfasdfsa;
+
+        //private ApiBehaviorOptions ApiOptions { get; }
 
         public void Configure(ProblemDetailsOptions options)
         {
             // This is the default behavior; only include exception details in a development environment.
-            options.IncludeExceptionDetails = ctx => Environment.IsDevelopment();
+            //options.IncludeExceptionDetails = ctx => Environment.IsDevelopment();
+
+            options.ShouldLogUnhandledException = (ctx, e, d) => IsServerError(d.Status);
 
             options.MapStatusCode = (ctx, statusCode) => new StatusCodeProblemDetails(statusCode);
+
+            options.IsProblem = IsProblem;
 
             options.OnBeforeWriteDetails = (ctx, details) =>
             {
                 // keep consistent with asp.net core 2.2 conventions that adds a tracing value
-                ProblemDetailsHelper.SetTraceId(details, HttpContextAccessor.HttpContext);
+                ProblemDetailsHelper.SetTraceId(details, ctx);
+
+                if (details is ArkProblemDetails)
+                {
+                    //var dict = new RouteValueDictionary
+                    //{
+                    //    { "name" , details.GetType().AssemblyQualifiedName }
+                    //};
+                    //var path = Router.GetUriByAddress(ctx, "problemdetails/{name}", dict);
+
+                    var path = Router.GetUriByRouteValues(ctx, "ProblemDetails", new
+                    {
+                        name = details.GetType().AssemblyQualifiedName
+                    });
+
+                    details.Type = details.Type ?? path;
+                }
+                    
             };
 
             _configureProblemDetails(options);
-
-            if (options.IsProblem == null)
-            {
-                options.IsProblem = _isProblem;
-            }
         }
 
         private void _configureProblemDetails(ProblemDetailsOptions options)
@@ -61,27 +83,33 @@ namespace Ark.Tools.AspNetCore.ProbDetails
             options.Map<Exception>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
         }
 
-        private ProblemDetails _mapStatusCode(HttpContext context, int statusCode)
+        private static bool IsServerError(int? statusCode)
         {
-            if (!ApiOptions.SuppressMapClientErrors &&
-                ApiOptions.ClientErrorMapping.TryGetValue(statusCode, out var errorData))
-            {
-                // prefer the built-in mapping in asp.net core
-                return new ProblemDetails
-                {
-                    Status = statusCode,
-                    Title = errorData.Title,
-                    Type = $"https://httpstatuses.com/{statusCode}" //errorData.Link
-                };
-            }
-            else
-            {
-                // use Hellang.Middleware.ProblemDetails mapping
-                return new StatusCodeProblemDetails(statusCode);
-            }
+            // Err on the side of caution and treat missing status code as server error.
+            return !statusCode.HasValue || statusCode.Value >= 500;
         }
 
-        private static bool _isProblem(HttpContext context)
+        //private ProblemDetails _mapStatusCode(HttpContext context, int statusCode)
+        //{
+        //    if (!ApiOptions.SuppressMapClientErrors &&
+        //        ApiOptions.ClientErrorMapping.TryGetValue(statusCode, out var errorData))
+        //    {
+        //        // prefer the built-in mapping in asp.net core
+        //        return new ProblemDetails
+        //        {
+        //            Status = statusCode,
+        //            Title = errorData.Title,
+        //            Type = $"https://httpstatuses.com/{statusCode}" //errorData.Link
+        //        };
+        //    }
+        //    else
+        //    {
+        //        // use Hellang.Middleware.ProblemDetails mapping
+        //        return new StatusCodeProblemDetails(statusCode);
+        //    }
+        //}
+
+        private static bool IsProblem(HttpContext context)
         {
             if (context.Response.StatusCode < 400)
             {

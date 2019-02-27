@@ -31,6 +31,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.Startup
@@ -48,10 +49,11 @@ namespace Ark.Tools.AspNetCore.Startup
 
         public virtual void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpContextAccessor();
             services.AddLocalization();
+            services.AddRouting(o => o.LowercaseUrls = true);
 
             //ProblemDetails
-            services.AddHttpContextAccessor();
             services.ConfigureOptions<ArkProblemDetailsOptionsSetup>();
             services.AddProblemDetails();
 
@@ -195,11 +197,36 @@ namespace Ark.Tools.AspNetCore.Startup
 
             //ProblemDetails
             app.UseProblemDetails();
-            app.UseMiddleware<HostedPageMiddleware>();
+
+            //Page for custom exceptions
+            app.UseRouter(r =>
+            {
+                r.DefaultHandler = new RouteHandler(context =>
+                {
+                    var typename = context.GetRouteValue("name") as string;
+                    context.Response.ContentType = "text/html";
+                    return context.Response.WriteAsync(
+                        $"<html><body><span>{WebUtility.HtmlEncode(typename)}</span></body></html>");
+                });
+                r.MapRoute("ProblemDetails", "problemdetails/{name}");
+            });
+
+            //Page for custom exceptions
+            //app.UseRouter(r =>
+            //{
+            //    r.MapGet("problemdetails/{name}", (req, res, rd) =>
+            //    {
+            //        var typename = req.HttpContext.GetRouteValue("name") as string;
+            //        res.ContentType = "text/html";
+            //        return res.WriteAsync(
+            //            $"<html><body><span>{WebUtility.HtmlEncode(typename)}</span></body></html>");
+            //    });
+            //});
 
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseAuthentication();
+
             app.UseMvc();
         }
 
@@ -222,9 +249,6 @@ namespace Ark.Tools.AspNetCore.Startup
             {
                 action.Filters.Add(new ConsumesAttribute("application/json"));
             }
-
         }
     }
-
-
 }

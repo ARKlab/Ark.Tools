@@ -18,6 +18,7 @@ namespace ProblemDetailsSample
         public override void Configure(IApplicationBuilder app)
         {
             base.Configure(app);
+
             app.UseBranchWithServices<PrivateStartup>("/private", Configuration);
             //app.UseBranchWithServices<PublicStartup>("/public", Configuration);
         }

@@ -66,15 +66,34 @@ namespace ProblemDetailsSample.Controllers.Private
         }
 
         /// <summary>
-        /// Returns a BadRequest with Payload
+        /// Returns a Validation Fails
         /// </summary>
         /// <param name="body"></param>
         /// <returns></returns>
-        [HttpPost(@"BadRequestPayload")]
+        [HttpPost(@"ValidationFails")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Post_EntityBadRequestPayload([FromBody]Entity.V1.Input body)
+        public async Task<IActionResult> Post_ValidationFails([FromBody]Entity.V1.Input body)
         {
             var request = new Post_EntityRequest.V1()
+            {
+                EntityId = "StringLongerThan10"
+            };
+
+            var res = await _requestProcessor.ExecuteAsync(request, default);
+
+            return this.Ok(res);
+        }
+
+        /// <summary>
+        /// Returns a ArkProblemDetails
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        [HttpPost(@"ArkProblemDetails")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Post_ArkProblemDetails([FromBody]Entity.V1.Input body)
+        {
+            var request = new Post_EntityRequestProblemDetails.V1()
             {
                 EntityId = body.EntityId
             };

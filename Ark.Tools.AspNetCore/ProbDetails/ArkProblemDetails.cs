@@ -9,11 +9,6 @@ namespace Ark.Tools.AspNetCore.ProbDetails
 {
     public class ArkProblemDetails : ProblemDetails
     {
-        public ArkProblemDetails(string type, string title)
-        {
-            Type = type;
-            Title = title;
-        }
 
     }
 }
