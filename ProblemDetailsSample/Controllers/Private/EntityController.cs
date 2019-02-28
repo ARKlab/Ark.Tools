@@ -30,8 +30,7 @@ namespace ProblemDetailsSample.Controllers.Private
         }
 
         /// <summary>
-        /// Get a Entity by Id
-        /// - Try with text 'null' for a null entity
+        /// Get a Entity by Id - Try with text 'null' for a null entity
         /// </summary>
         /// <param name="entityId">The Entity identifier</param>
         /// <param name="ctk"></param>
@@ -49,6 +48,38 @@ namespace ProblemDetailsSample.Controllers.Private
 
             if (res == null)
                 return this.NotFound();
+
+            return this.Ok(res);
+        }
+
+        /// <summary>
+        /// Returns Handler EntityNotFoundException
+        /// </summary>
+        /// <param name="ctk"></param>
+        /// <returns></returns>
+        [HttpGet(@"EntityNotFound")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Get_EntityHandlerNotFound(CancellationToken ctk = default)
+        {
+            var query = new Get_EntityByIdNotFoundQuery.V1();
+
+            var res = await _queryProcessor.ExecuteAsync(query, ctk);
+
+            return this.Ok(res);
+        }
+
+        /// <summary>
+        /// Returns Handler NotImplementedException
+        /// </summary>
+        /// <param name="ctk"></param>
+        /// <returns></returns>
+        [HttpGet(@"NotImplemented")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Get_EntityHandlerException(CancellationToken ctk = default)
+        {
+            var query = new Get_EntityByIdExceptionQuery.V1();
+
+            var res = await _queryProcessor.ExecuteAsync(query, ctk);
 
             return this.Ok(res);
         }
@@ -101,47 +132,6 @@ namespace ProblemDetailsSample.Controllers.Private
             var res = await _requestProcessor.ExecuteAsync(request, default);
 
             return this.Ok(res);
-        }
-
-        /// <summary>
-        /// Returns Handler NotImplementedException
-        /// </summary>
-        /// <param name="ctk"></param>
-        /// <returns></returns>
-        [HttpGet(@"NotImplemented")]
-        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Get_EntityHandlerException(CancellationToken ctk = default)
-        {
-            var query = new Get_EntityByIdExceptionQuery.V1()
-            {
-                EntityId = "Test"
-            };
-
-            var res = await _queryProcessor.ExecuteAsync(query, ctk);
-
-            return this.Ok(res);
-        }
-
-        /// <summary>
-        /// Returns Handler NotImplementedException
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("ValidationResult")]
-        [ProducesResponseType(typeof(OutOfCreditProblemDetails), StatusCodes.Status400BadRequest)]
-        public IActionResult Result()
-        {
-            var problem = new OutOfCreditProblemDetails
-            {
-                Type = "https://example.com/probs/out-of-credit",
-                Title = "You do not have enough credit.",
-                Detail = "Your current balance is 30, but that costs 50.",
-                Instance = "/account/12345/msgs/abc",
-                Balance = 30.0m,
-                Accounts = { "/account/12345", "/account/67890" },
-                Status = StatusCodes.Status400BadRequest
-            };
-
-            return BadRequest(problem);
         }
     }
 

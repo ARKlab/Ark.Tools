@@ -8,11 +8,6 @@ using System.Threading;
 using Ark.Tools.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql.SqlServer;
-using System;
-using Newtonsoft.Json;
-using NodaTime;
-using Ark.Tools.Nodatime;
-using NodaTime.Serialization.JsonNet;
 
 namespace ProblemDetailsSample.Application.Handlers.Host
 {

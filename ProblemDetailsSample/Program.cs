@@ -16,18 +16,6 @@ using Ark.Tools.Nodatime;
 
 namespace ProblemDetailsSample
 {
-    //public class Program
-    //{
-    //    public static void Main(string[] args)
-    //    {
-    //        CreateWebHostBuilder(args).Build().Run();
-    //    }
-
-    //    public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-    //        WebHost.CreateDefaultBuilder(args)
-    //            .UseStartup<Startup>();
-    //}
-
     public static class Program
     {
         public static IWebHostBuilder GetWebHostBuilder(string[] args)

@@ -17,10 +17,5 @@ namespace Ark.Tools.AspNetCore.ProbDetails
         {
             details.Type = $"https://httpstatuses.com/{statusCode}";
         }
-
-        public static void SetType(ProblemDetails details, string name)
-        {
-            details.Type = $"https://httpstatuses.com/{name}";
-        }
     }
 }

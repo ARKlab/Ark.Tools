@@ -26,9 +26,8 @@ namespace ProblemDetailsSample.Api.Queries
         {
             EnsureArg.IsNotNull(request, nameof(request));
 
-            var problem = new OutOfCreditProblemDetails
+            var problem = new OutOfCreditProblemDetails("You do not have enough credit.")
             {
-                Title = "You do not have enough credit.",
                 Detail = "Your current balance is 30, but that costs 50.",
                 Instance = "/account/12345/msgs/abc",
                 Balance = 30.0m,

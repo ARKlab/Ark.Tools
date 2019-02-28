@@ -13,20 +13,19 @@ namespace Ark.Tools.AspNetCore.ProbDetails
 {
     public class ArkProblemDetailsOptionsSetup : IConfigureOptions<ProblemDetailsOptions>
     {
-        public ArkProblemDetailsOptionsSetup(IHostingEnvironment environment,
-            /*IHttpContextAccessor httpContextAccessor, IOptions<ApiBehaviorOptions> apiOptions*/
-            LinkGenerator router, IEndpointAddressScheme<RouteValuesAddress> endpointAddress)
+        public ArkProblemDetailsOptionsSetup(IHostingEnvironment environment, IProblemDetailsLinkGenerator linkGenerator,
+            IProblemDetailsRouterProvider problemDetailsRouter)
         {
             Environment = environment;
-            Router = router;
-            _asdfasdfsa = endpointAddress;
-            //ApiOptions = apiOptions.Value;
+            LinkGenerator = linkGenerator;
+            _problemDetailsRouter = problemDetailsRouter;
         }
 
         private IHostingEnvironment Environment { get; }
-        private LinkGenerator Router { get; }
+        private IProblemDetailsLinkGenerator LinkGenerator { get; }
 
-        private readonly IEndpointAddressScheme<RouteValuesAddress> _asdfasdfsa;
+        //private readonly IEndpointAddressScheme<RouteValuesAddress> _endpointAddress;
+        private readonly IProblemDetailsRouterProvider _problemDetailsRouter;
 
         //private ApiBehaviorOptions ApiOptions { get; }
 
@@ -48,16 +47,7 @@ namespace Ark.Tools.AspNetCore.ProbDetails
 
                 if (details is ArkProblemDetails)
                 {
-                    //var dict = new RouteValueDictionary
-                    //{
-                    //    { "name" , details.GetType().AssemblyQualifiedName }
-                    //};
-                    //var path = Router.GetUriByAddress(ctx, "problemdetails/{name}", dict);
-
-                    var path = Router.GetUriByRouteValues(ctx, "ProblemDetails", new
-                    {
-                        name = details.GetType().AssemblyQualifiedName
-                    });
+                    var path = LinkGenerator.GetLink(details as ArkProblemDetails, ctx);
 
                     details.Type = details.Type ?? path;
                 }

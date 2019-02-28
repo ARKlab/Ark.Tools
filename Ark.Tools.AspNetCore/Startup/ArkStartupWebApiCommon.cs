@@ -8,6 +8,8 @@ using Hellang.Middleware.ProblemDetails;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -56,6 +58,7 @@ namespace Ark.Tools.AspNetCore.Startup
             //ProblemDetails
             services.ConfigureOptions<ArkProblemDetailsOptionsSetup>();
             services.AddProblemDetails();
+            services.AddArkProblemDetailsDescriptor();
 
             // Add minumum framework services.
             services.AddMvcCore()
@@ -81,8 +84,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
             services.AddMvcCore(o =>
                 {
-                    // optional tweaks to built-in mvc non-success http responses
-                    //o.Conventions.Add(new NotFoundResultApiConvention());
+                    //Conventions
                     o.Conventions.Add(new ProblemDetailsResultApiConvention());
                 })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
@@ -199,17 +201,17 @@ namespace Ark.Tools.AspNetCore.Startup
             app.UseProblemDetails();
 
             //Page for custom exceptions
-            app.UseRouter(r =>
-            {
-                r.DefaultHandler = new RouteHandler(context =>
-                {
-                    var typename = context.GetRouteValue("name") as string;
-                    context.Response.ContentType = "text/html";
-                    return context.Response.WriteAsync(
-                        $"<html><body><span>{WebUtility.HtmlEncode(typename)}</span></body></html>");
-                });
-                r.MapRoute("ProblemDetails", "problemdetails/{name}");
-            });
+            //app.UseRouter(r =>
+            //{
+            //    r.DefaultHandler = new RouteHandler(context =>
+            //    {
+            //        var typename = context.GetRouteValue("name") as string;
+            //        context.Response.ContentType = "text/html";
+            //        return context.Response.WriteAsync(
+            //            $"<html><body><span>{WebUtility.HtmlEncode(typename)}</span></body></html>");
+            //    });
+            //    r.MapRoute("ProblemDetails", "problemdetails/{name}");
+            //});
 
             //Page for custom exceptions
             //app.UseRouter(r =>
@@ -222,6 +224,39 @@ namespace Ark.Tools.AspNetCore.Startup
             //            $"<html><body><span>{WebUtility.HtmlEncode(typename)}</span></body></html>");
             //    });
             //});
+
+            /////////////////////////////////////////////////////////////////////////
+            //var pageRouteHandler = new RouteHandler(context =>
+            //{
+            //    var typename = context.GetRouteValue("name") as string;
+            //    context.Response.ContentType = "text/html";
+            //    var routeValues = context.GetRouteData().Values;
+            //    return context.Response.WriteAsync(
+            //            $"<html><body><span>{WebUtility.HtmlEncode(typename)}</span></body></html>");
+            //});
+
+            //var routeBuilder = new RouteBuilder(app, pageRouteHandler);
+
+            //routeBuilder.MapRoute("ProblemDetails", "problemdetails/{name}");
+
+            //var routes = routeBuilder.Build();
+
+            //app.Use((ctx, next) =>
+            //{
+            //    var dictionary = new RouteValueDictionary
+            //    {
+            //        { "name" , "antani" }
+            //    };
+            //    var av = ctx?.Features.Get<IRouteValuesFeature>()?.RouteValues;
+            //    var path = routes.GetVirtualPath(new VirtualPathContext(ctx, av, dictionary, "ProblemDetails"));
+
+            //    var link = UriHelper.BuildAbsolute(ctx.Request.Scheme, ctx.Request.Host, ctx.Request.PathBase, path.VirtualPath);
+            //    return next();
+            //});
+
+            //app.UseRouter(routes);
+
+            app.UseArkProblemDetailsDescriptor();
 
             app.UseSwagger();
             app.UseSwaggerUI();
