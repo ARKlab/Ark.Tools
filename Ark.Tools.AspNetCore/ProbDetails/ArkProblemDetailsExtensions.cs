@@ -11,15 +11,13 @@ namespace Ark.Tools.AspNetCore.ProbDetails
     {
         public static IServiceCollection AddArkProblemDetails(this IServiceCollection services)
         {
-            return services.AddArkProblemDetails(configure: null);
+            return services.AddArkProblemDetails(configureOption: false);
         }
 
-        public static IServiceCollection AddArkProblemDetails(this IServiceCollection services, Action<ProblemDetailsOptions> configure)
+        public static IServiceCollection AddArkProblemDetails(this IServiceCollection services, bool configureOption)
         {
-            if (configure != null)
-            {
-                services.Configure(configure);
-            }
+            if (configureOption)
+                services.ConfigureOptions<ArkProblemDetailsOptionsSetup>();
 
             services.TryAddSingleton<ArkProblemDetailsMarkerService, ArkProblemDetailsMarkerService>();
             services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigureOptions<ProblemDetailsOptions>, ArkProblemDetailsOptionsSetup>());
