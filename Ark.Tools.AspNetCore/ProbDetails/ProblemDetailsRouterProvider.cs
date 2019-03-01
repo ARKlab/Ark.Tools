@@ -7,10 +7,16 @@ namespace Ark.Tools.AspNetCore.ProbDetails
 {
     public class ProblemDetailsRouterProvider : IProblemDetailsRouterProvider
     {
-        //Inserire le OPTION ==> template
+        private readonly string _template;
 
         public ProblemDetailsRouterProvider()
         {
+            _template = "problemdetails";
+        }
+
+        public ProblemDetailsRouterProvider(string template)
+        {
+            _template = template;
         }
 
         public IRouter Router { get; private set; }
@@ -28,7 +34,7 @@ namespace Ark.Tools.AspNetCore.ProbDetails
 
             var routeBuilder = new RouteBuilder(app, pageRouteHandler);
 
-            routeBuilder.MapRoute("ProblemDetails", "problemdetails/{name}");
+            routeBuilder.MapRoute("ProblemDetails", _template + "/{name}");
 
             Router = routeBuilder.Build();
 

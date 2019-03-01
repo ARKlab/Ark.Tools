@@ -42,11 +42,11 @@ namespace Ark.Tools.AspNetCore.ProbDetails
                 }  
             };
 
-            _configureProblemDetails(options);
+            _configureExceptionProblemDetails(options);
         }
 
         // This will map Exceptions to the corresponding Conflict status code.
-        private void _configureProblemDetails(ProblemDetailsOptions options)
+        private void _configureExceptionProblemDetails(ProblemDetailsOptions options)
         {
             options.Map<EntityNotFoundException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status404NotFound));
 
