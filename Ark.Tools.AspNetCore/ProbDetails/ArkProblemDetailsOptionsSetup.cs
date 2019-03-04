@@ -66,7 +66,6 @@ namespace Ark.Tools.AspNetCore.ProbDetails
             options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex) ? new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict)
             : new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
 
-            // Because exceptions are handled polymorphically, this will act as a "catch all" mapping, which is why it's added last.
             // If an exception other than above specified is thrown, this will handle it.
             options.Map<Exception>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
         }
@@ -80,24 +79,16 @@ namespace Ark.Tools.AspNetCore.ProbDetails
         private static bool IsProblem(HttpContext context)
         {
             if (context.Response.StatusCode < 400)
-            {
                 return false;
-            }
 
             if (context.Response.StatusCode >= 600)
-            {
                 return false;
-            }
 
             if (context.Response.ContentLength.HasValue)
-            {
                 return false;
-            }
 
             if (string.IsNullOrEmpty(context.Response.ContentType))
-            {
                 return true;
-            }
 
             return false;
         }

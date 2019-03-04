@@ -29,7 +29,7 @@ namespace ProblemDetailsSample.Controllers.Private
         }
 
         /// <summary>
-        /// Get a Entity by Id - Try with text 'null' for a null entity
+        /// Get a Entity by Id - Try with text: 'null' for a null entity - 'ensure' for ensure error
         /// </summary>
         /// <param name="entityId">The Entity identifier</param>
         /// <param name="ctk"></param>
@@ -83,18 +83,27 @@ namespace ProblemDetailsSample.Controllers.Private
             return this.Ok(res);
         }
 
+        /// <summary>
+        /// Returns UnauthorizedAccessException
+        /// </summary>
         [HttpGet(@"UnauthorizedAccessException")]
         public IActionResult Get_UnauthorizedAccessException()
         {
             throw new UnauthorizedAccessException("This is an UnauthorizedAccessException thrown from an Web API controller.");
         }
 
+        /// <summary>
+        /// Returns EntityTagMismatchException
+        /// </summary>
         [HttpGet(@"EntityTagMismatchException")]
         public IActionResult Get_EntityTagMismatchException()
         {
             throw new EntityTagMismatchException("This is an EntityTagMismatchException thrown from an Web API controller.");
         }
 
+        /// <summary>
+        /// Returns OptimisticConcurrencyException
+        /// </summary>
         [HttpGet(@"OptimisticConcurrencyException")]
         public IActionResult Get_OptimisticConcurrencyException()
         {

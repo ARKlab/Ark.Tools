@@ -48,7 +48,7 @@ namespace Ark.Tools.AspNetCore.Startup
         {
             services.AddHttpContextAccessor();
             services.AddLocalization();
-            services.AddRouting(/*o => o.LowercaseUrls = true*/);
+            services.AddRouting();
 
             //ProblemDetails
             services.AddArkProblemDetailsDescriptor();
@@ -158,6 +158,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.EnableValidator();
             });
 
+            //Api Behaviour override for disabling automatic Problem details
             services.ConfigureOptions<ApiBehaviourOptionsSetup>();
 
             services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
