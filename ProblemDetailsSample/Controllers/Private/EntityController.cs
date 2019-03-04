@@ -11,6 +11,9 @@ using ProblemDetailsSample.Api.Queries;
 using ProblemDetailsSample.Common.Dto;
 using ProblemDetailsSample.Models;
 using ProblemDetailsSample.Api.Requests;
+using Ark.Tools.Core.EntityTag;
+using Ark.Tools.Core;
+using System.Data.SqlClient;
 
 namespace ProblemDetailsSample.Controllers.Private
 {
@@ -74,7 +77,7 @@ namespace ProblemDetailsSample.Controllers.Private
         /// <param name="ctk"></param>
         /// <returns></returns>
         [HttpGet(@"NotImplemented")]
-        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        [ProducesResponseType(typeof(Entity.V1.Output), StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> Get_EntityHandlerException(CancellationToken ctk = default)
         {
             var query = new Get_EntityByIdExceptionQuery.V1();
@@ -82,6 +85,24 @@ namespace ProblemDetailsSample.Controllers.Private
             var res = await _queryProcessor.ExecuteAsync(query, ctk);
 
             return this.Ok(res);
+        }
+
+        [HttpGet(@"UnauthorizedAccessException")]
+        public IActionResult Get_UnauthorizedAccessException()
+        {
+            throw new UnauthorizedAccessException("This is an UnauthorizedAccessException thrown from an Web API controller.");
+        }
+
+        [HttpGet(@"EntityTagMismatchException")]
+        public IActionResult Get_EntityTagMismatchException()
+        {
+            throw new EntityTagMismatchException("This is an EntityTagMismatchException thrown from an Web API controller.");
+        }
+
+        [HttpGet(@"OptimisticConcurrencyException")]
+        public IActionResult Get_OptimisticConcurrencyException()
+        {
+            throw new OptimisticConcurrencyException("This is an OptimisticConcurrencyException thrown from an Web API controller.");
         }
 
         /// <summary>

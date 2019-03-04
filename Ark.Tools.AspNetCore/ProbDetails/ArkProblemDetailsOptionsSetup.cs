@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Data.SqlClient;
 using System.Net.Http;
 using Ark.Tools.Core;
+using Ark.Tools.Core.EntityTag;
+using Ark.Tools.Sql.SqlServer;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -53,6 +56,15 @@ namespace Ark.Tools.AspNetCore.ProbDetails
             options.Map<NotImplementedException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status501NotImplemented));
 
             options.Map<HttpRequestException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status503ServiceUnavailable));
+
+            options.Map<UnauthorizedAccessException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status403Forbidden));
+
+            options.Map<EntityTagMismatchException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status412PreconditionFailed));
+
+            options.Map<OptimisticConcurrencyException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict));
+
+            options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex) ? new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict)
+            : new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
 
             // Because exceptions are handled polymorphically, this will act as a "catch all" mapping, which is why it's added last.
             // If an exception other than above specified is thrown, this will handle it.

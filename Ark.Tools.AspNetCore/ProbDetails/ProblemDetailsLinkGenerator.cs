@@ -18,7 +18,7 @@ namespace Ark.Tools.AspNetCore.ProbDetails
         {
             var dictionary = new RouteValueDictionary
                 {
-                    { "name" , type.GetType().Name }
+                    { "name" , type.GetType().AssemblyQualifiedName }
                 };
             var av = ctx?.Features.Get<IRouteValuesFeature>()?.RouteValues;
             var path = _provider.Router.GetVirtualPath(new VirtualPathContext(ctx, av, dictionary, "ProblemDetails"));

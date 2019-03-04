@@ -22,38 +22,6 @@ namespace Ark.Tools.AspNetCore
 
             switch (context.Exception)
             {
-                case UnauthorizedAccessException ex:
-                    {
-                        result = new ObjectResult(new
-                        {
-                            ErrorMessage = message
-                        })
-                        {
-                            StatusCode = 403
-                        };
-                        break;
-                    }
-                //case EntityNotFoundException ex:
-                //    {
-                //        result = new NotFoundObjectResult(message);
-                //        break;
-                //    }
-                case EntityTagMismatchException ex:
-                    {
-                        result = new StatusCodeResult(412);
-                        break;
-                    }
-                case OptimisticConcurrencyException ex:
-                    {
-                        result = new ObjectResult(new
-                        {
-                            ErrorMessage = message
-                        })
-                        {
-                            StatusCode = 409
-                        };
-                        break;
-                    }
                 case FluentValidation.ValidationException ex:
                     {
                         var msd = new ModelStateDictionary();
@@ -64,20 +32,6 @@ namespace Ark.Tools.AspNetCore
                         }
 
                         result = new BadRequestObjectResult(msd);
-                        break;
-                    }
-                case SqlException ex:
-                    {
-                        if (SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex))
-                        {
-                            result = new ObjectResult(new
-                            {
-                                ErrorMessage = message
-                            })
-                            {
-                                StatusCode = 409
-                            };
-                        }
                         break;
                     }
             }
