@@ -1,15 +1,7 @@
-﻿using Ark.Tools.Core;
-using Ark.Tools.Solid;
+﻿using Ark.Tools.Solid;
 using EnsureThat;
-using Hellang.Middleware.ProblemDetails;
-using Microsoft.AspNetCore.Http;
-using NodaTime;
 using ProblemDetailsSample.Api.Requests;
 using ProblemDetailsSample.Common.Dto;
-using ProblemDetailsSample.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,7 +20,7 @@ namespace ProblemDetailsSample.Api.Queries
 
             var entity = new Entity.V1.Output()
             {
-                EntityId = "StringLongerThan10"
+                EntityId = request.EntityId
             };
 
             return await Task.FromResult(entity);

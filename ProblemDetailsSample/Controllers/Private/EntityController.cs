@@ -3,17 +3,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ark.Tools.AspNetCore.NestedStartup;
 using Ark.Tools.Solid;
-using NLog;
-using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ProblemDetailsSample.Api.Queries;
 using ProblemDetailsSample.Common.Dto;
-using ProblemDetailsSample.Models;
 using ProblemDetailsSample.Api.Requests;
 using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Core;
-using System.Data.SqlClient;
 
 namespace ProblemDetailsSample.Controllers.Private
 {
@@ -112,9 +108,16 @@ namespace ProblemDetailsSample.Controllers.Private
         /// <returns></returns>
         [HttpPost(@"PostEntityOK")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public IActionResult Post_EntityOK([FromBody]Entity.V1.Input body)
+        public async Task<IActionResult> Post_EntityOK([FromBody]Entity.V1.Input body)
         {
-            return this.Ok();
+            var request = new Post_EntityRequest.V1()
+            {
+                EntityId = body.EntityId
+            };
+
+            var res = await _requestProcessor.ExecuteAsync(request, default);
+
+            return this.Ok(res);
         }
 
         /// <summary>

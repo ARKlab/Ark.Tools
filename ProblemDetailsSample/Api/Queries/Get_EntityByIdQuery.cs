@@ -1,10 +1,6 @@
 ﻿using Ark.Tools.Solid;
 using NodaTime;
 using ProblemDetailsSample.Common.Dto;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ProblemDetailsSample.Api.Queries
 {

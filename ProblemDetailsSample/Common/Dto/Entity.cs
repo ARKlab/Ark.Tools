@@ -1,8 +1,4 @@
 ﻿using Ark.Tools.Core.EntityTag;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ProblemDetailsSample.Common.Dto
 {

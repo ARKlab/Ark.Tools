@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Ark.Tools.AspNetCore.ProbDetails;
-using Microsoft.AspNetCore.Mvc;
 
 namespace ProblemDetailsSample.Models
 {

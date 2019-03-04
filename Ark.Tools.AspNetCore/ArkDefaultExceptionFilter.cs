@@ -1,14 +1,10 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.Core;
-using Ark.Tools.Core.EntityTag;
-using Ark.Tools.Sql.SqlServer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using NLog;
 using System;
-using System.Data.SqlClient;
 
 namespace Ark.Tools.AspNetCore
 {

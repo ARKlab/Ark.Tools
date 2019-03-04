@@ -10,7 +10,6 @@ using SimpleInjector;
 using System;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.AspNetCore.Startup;
-using System.Reflection;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using ProblemDetailsSample.Application.Handlers.Host;
 using ProblemDetailsSample.Application.Handlers;

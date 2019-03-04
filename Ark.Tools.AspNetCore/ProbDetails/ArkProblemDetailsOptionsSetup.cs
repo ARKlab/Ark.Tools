@@ -25,7 +25,7 @@ namespace Ark.Tools.AspNetCore.ProbDetails
         public void Configure(ProblemDetailsOptions options)
         {
             // This is the default behavior; only include exception details in a development environment.
-            //options.IncludeExceptionDetails = ctx => Environment.IsDevelopment();
+            options.IncludeExceptionDetails = ctx => Environment.IsDevelopment();
 
             options.ShouldLogUnhandledException = (ctx, e, d) => IsServerError(d.Status);
 

@@ -1,8 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.AspNetCore.ApplicationInsights;
-using Ark.Tools.AspNetCore.ProbDetails;
-using Hellang.Middleware.ProblemDetails;
 using Microsoft.ApplicationInsights.AspNetCore;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.SnapshotCollector;

@@ -2,10 +2,8 @@
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 namespace Ark.Tools.AspNetCore.ProbDetails
 {
@@ -27,9 +25,7 @@ namespace Ark.Tools.AspNetCore.ProbDetails
             
             services.TryAddSingleton<IProblemDetailsRouterProvider, ProblemDetailsRouterProvider>();
             services.TryAddSingleton<IProblemDetailsLinkGenerator, ProblemDetailsLinkGenerator>();
-
             services.AddTransient<IStartupFilter, ProblemDetailsStartupFilter>();
-            //services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigureOptions<ProblemDetailsOptions>, ArkProblemDetailsOptionsSetup>());
 
             return services;
         }
