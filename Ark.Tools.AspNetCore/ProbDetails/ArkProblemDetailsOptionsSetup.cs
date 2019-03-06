@@ -63,8 +63,11 @@ namespace Ark.Tools.AspNetCore.ProbDetails
 
             options.Map<OptimisticConcurrencyException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict));
 
-            options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex) ? new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict)
-            : new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
+            options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex) 
+                ? new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict)
+                : new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
+
+            options.Map<FluentValidation.ValidationException>(ex => new FluentValidationProblemDetails(ex, StatusCodes.Status400BadRequest));
 
             // If an exception other than above specified is thrown, this will handle it.
             options.Map<Exception>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
