@@ -27,7 +27,7 @@ namespace ProblemDetailsSample.Api.Queries
                 Instance = "/account/12345/msgs/abc",
                 Balance = 30.0m,
                 Accounts = { "/account/12345", "/account/67890" },
-                Status = StatusCodes.Status400BadRequest
+                Status = StatusCodes.Status400BadRequest,
             };
 
             throw new ProblemDetailsException(problem);

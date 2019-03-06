@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
-namespace Ark.Tools.AspNetCore.ProbDetails
+namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     public class ArkProblemDetailsOptionsSetup : IConfigureOptions<ProblemDetailsOptions>
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 
-namespace Ark.Tools.AspNetCore.ProbDetails
+namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     public interface IProblemDetailsRouterProvider
     {

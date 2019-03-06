@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
 
-namespace Ark.Tools.AspNetCore.ProbDetails
+namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     public class ProblemDetailsLinkGenerator : IProblemDetailsLinkGenerator
     {

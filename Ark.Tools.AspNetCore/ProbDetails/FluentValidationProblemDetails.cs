@@ -1,7 +1,7 @@
 ﻿using Hellang.Middleware.ProblemDetails;
 using System.Collections.Generic;
 
-namespace Ark.Tools.AspNetCore.ProbDetails
+namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     public class FluentValidationProblemDetails : StatusCodeProblemDetails
     {

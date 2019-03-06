@@ -3,7 +3,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-namespace Ark.Tools.AspNetCore.ProbDetails
+namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     public abstract class ApiConventionBase : IControllerModelConvention
     {

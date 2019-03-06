@@ -3,7 +3,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Ark.Tools.AspNetCore.ProbDetails
+namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     /// <summary>
     ///     Ensure <see cref="BadRequestResult" /> explicity returned by a controller action
@@ -28,7 +28,7 @@ namespace Ark.Tools.AspNetCore.ProbDetails
                 ProblemDetailsHelper.SetType(problemDetails, badRequest.StatusCode.HasValue == true ? badRequest.StatusCode.Value : default);
             }
 
-            if (badRequest.Value is ProblemDetails details)
+            if (badRequest.Value is Microsoft.AspNetCore.Mvc.ProblemDetails details)
             {
                 // keep consistent with asp.net core 2.2 conventions that adds a tracing value
                 ProblemDetailsHelper.SetTraceId(details, context.HttpContext); 
