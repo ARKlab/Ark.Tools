@@ -11,7 +11,9 @@ using Microsoft.Extensions.Options;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
-    public class ArkProblemDetailsOptionsSetup : IConfigureOptions<ProblemDetailsOptions>
+    public class ArkProblemDetailsOptionsSetup 
+        : IConfigureOptions<ProblemDetailsOptions>
+        , IPostConfigureOptions<ProblemDetailsOptions>
     {
         public ArkProblemDetailsOptionsSetup(IHostingEnvironment environment, IProblemDetailsLinkGenerator linkGenerator)
         {
@@ -69,8 +71,6 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
             options.Map<FluentValidation.ValidationException>(ex => new FluentValidationProblemDetails(ex, StatusCodes.Status400BadRequest));
 
-            // If an exception other than above specified is thrown, this will handle it.
-            options.Map<Exception>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
         }
 
         private static bool IsServerError(int? statusCode)
@@ -94,6 +94,12 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                 return true;
 
             return false;
+        }
+
+        public void PostConfigure(string name, ProblemDetailsOptions options)
+        {
+            // If an exception other than above specified is thrown, this will handle it.
+            options.Map<Exception>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
         }
     }
 }

@@ -51,9 +51,7 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddRouting();
 
             //ProblemDetails
-            services.AddArkProblemDetailsDescriptor();
-            services.ConfigureOptions<ArkProblemDetailsOptionsSetup>();
-            services.AddProblemDetails();
+            services.AddArkProblemDetails();
 
             // Add minumum framework services.
             services.AddMvcCore()
@@ -193,9 +191,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 SupportedCultures = CultureInfo.GetCultures(CultureTypes.InstalledWin32Cultures | CultureTypes.NeutralCultures | CultureTypes.SpecificCultures)
             });
 
-            //ProblemDetails
-            app.UseArkProblemDetailsDescriptor();
-            app.UseProblemDetails();
+            app.UseArkProblemDetails();
 
             app.UseSwagger();
             app.UseSwaggerUI();

@@ -11,21 +11,25 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
     {
         public static IServiceCollection AddArkProblemDetailsDescriptor(this IServiceCollection services)
         {
-            return services.AddArkProblemDetailsDescriptor(configure: null);
+            services.TryAddSingleton<ArkProblemDetailsDescriptorMarkerService, ArkProblemDetailsDescriptorMarkerService>();
+
+            services.TryAddSingleton<IProblemDetailsRouterProvider, ProblemDetailsRouterProvider>();
+            services.TryAddSingleton<IProblemDetailsLinkGenerator, ProblemDetailsLinkGenerator>();
+            services.AddTransient<IStartupFilter, ProblemDetailsStartupFilter>();
+
+            return services;
         }
 
-        public static IServiceCollection AddArkProblemDetailsDescriptor(this IServiceCollection services, Action<ProblemDetailsOptions> configure)
+        public static IServiceCollection AddArkProblemDetails(this IServiceCollection services, Action<ProblemDetailsOptions> configure = null)
         {
             if (configure != null)
             {
                 services.Configure(configure);
             }
 
-            services.TryAddSingleton<ArkProblemDetailsDescriptorMarkerService, ArkProblemDetailsDescriptorMarkerService>();
-            
-            services.TryAddSingleton<IProblemDetailsRouterProvider, ProblemDetailsRouterProvider>();
-            services.TryAddSingleton<IProblemDetailsLinkGenerator, ProblemDetailsLinkGenerator>();
-            services.AddTransient<IStartupFilter, ProblemDetailsStartupFilter>();
+            services.AddArkProblemDetailsDescriptor();
+            services.ConfigureOptions<ArkProblemDetailsOptionsSetup>();
+            services.AddProblemDetails();
 
             return services;
         }
@@ -46,6 +50,11 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
             return app.UseRouter(provider.Router);
         }
 
+        public static IApplicationBuilder UseArkProblemDetails(this IApplicationBuilder app)
+        {
+            return app.UseArkProblemDetailsDescriptor().UseProblemDetails();
+        }
+
         /// <summary>
         /// A marker class used to determine if the required services were added
         /// to the <see cref="IServiceCollection"/> before the middleware is configured.
@@ -53,5 +62,6 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         private class ArkProblemDetailsDescriptorMarkerService
         {
         }
+
     }
 }
