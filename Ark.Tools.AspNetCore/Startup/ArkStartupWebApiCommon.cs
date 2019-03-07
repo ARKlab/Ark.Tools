@@ -1,8 +1,10 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
 using Ark.Tools.Nodatime;
+using Hellang.Middleware.ProblemDetails;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -44,7 +46,14 @@ namespace Ark.Tools.AspNetCore.Startup
 
         public virtual void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpContextAccessor();
             services.AddLocalization();
+            services.AddRouting();
+
+            //ProblemDetails
+            services.AddArkProblemDetailsDescriptor();
+            services.ConfigureOptions<ArkProblemDetailsOptionsSetup>();
+            services.AddProblemDetails();
 
             // Add minumum framework services.
             services.AddMvcCore()
@@ -68,7 +77,11 @@ namespace Ark.Tools.AspNetCore.Startup
                 o.SubstitutionFormat = "VVVV";
             });
 
-            services.AddMvcCore()
+            services.AddMvcCore(o =>
+                {
+                    //Conventions
+                    o.Conventions.Add(new ProblemDetailsResultApiConvention());
+                })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddMvcOptions(opt =>
                 {
@@ -101,7 +114,6 @@ namespace Ark.Tools.AspNetCore.Startup
                     //s.SerializerSettings.ContractResolver = new DefaultContractResolver();
                 });
             ;
-
 
             services.AddSwaggerGen(c =>
             {
@@ -146,6 +158,9 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.EnableValidator();
             });
 
+            //Api Behaviour override for disabling automatic Problem details
+            services.ConfigureOptions<ApiBehaviourOptionsSetup>();
+
             services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
             _integrateSimpleInjectorContainer(services);
             
@@ -178,9 +193,14 @@ namespace Ark.Tools.AspNetCore.Startup
                 SupportedCultures = CultureInfo.GetCultures(CultureTypes.InstalledWin32Cultures | CultureTypes.NeutralCultures | CultureTypes.SpecificCultures)
             });
 
+            //ProblemDetails
+            app.UseArkProblemDetailsDescriptor();
+            app.UseProblemDetails();
+
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseAuthentication();
+
             app.UseMvc();
         }
 
@@ -203,9 +223,6 @@ namespace Ark.Tools.AspNetCore.Startup
             {
                 action.Filters.Add(new ConsumesAttribute("application/json"));
             }
-
         }
     }
-
-
 }

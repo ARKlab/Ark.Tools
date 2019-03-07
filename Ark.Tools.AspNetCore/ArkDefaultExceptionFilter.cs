@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.Core;
-using Ark.Tools.Core.EntityTag;
-using Ark.Tools.Sql.SqlServer;
+using Ark.Tools.AspNetCore.ProblemDetails;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.WebUtilities;
 using NLog;
 using System;
-using System.Data.SqlClient;
+using System.Collections.Generic;
 
 namespace Ark.Tools.AspNetCore
 {
@@ -19,68 +19,6 @@ namespace Ark.Tools.AspNetCore
             _log(context);
             var message = context.Exception.Message;
             IActionResult result = null;
-
-            switch (context.Exception)
-            {
-                case UnauthorizedAccessException ex:
-                    {
-                        result = new ObjectResult(new
-                        {
-                            ErrorMessage = message
-                        })
-                        {
-                            StatusCode = 403
-                        };
-                        break;
-                    }
-                case EntityNotFoundException ex:
-                    {
-                        result = new NotFoundObjectResult(message);
-                        break;
-                    }
-                case EntityTagMismatchException ex:
-                    {
-                        result = new StatusCodeResult(412);
-                        break;
-                    }
-                case OptimisticConcurrencyException ex:
-                    {
-                        result = new ObjectResult(new
-                        {
-                            ErrorMessage = message
-                        })
-                        {
-                            StatusCode = 409
-                        };
-                        break;
-                    }
-                case FluentValidation.ValidationException ex:
-                    {
-                        var msd = new ModelStateDictionary();
-                        foreach (var error in ex.Errors)
-                        {
-                            string key = error.PropertyName;
-                            msd.AddModelError(key, error.ErrorMessage);
-                        }
-
-                        result = new BadRequestObjectResult(msd);
-                        break;
-                    }
-                case SqlException ex:
-                    {
-                        if (SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex))
-                        {
-                            result = new ObjectResult(new
-                            {
-                                ErrorMessage = message
-                            })
-                            {
-                                StatusCode = 409
-                            };
-                        }
-                        break;
-                    }
-            }
 
             if (result != null)
             {

@@ -27,9 +27,9 @@ namespace Ark.Tools.AspNetCore.Startup
         public virtual void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpContextAccessor();
-
+            
             // Application Insights
-            if (Configuration["ApplicationInsights:InstrumentationKey"] != null)
+            if (Configuration["ApplicationInsights:InstrumentationKey"] != null || Debugger.IsAttached)
             {
                 services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
                 services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
@@ -43,7 +43,9 @@ namespace Ark.Tools.AspNetCore.Startup
                     o.RequestCollectionOptions.TrackExceptions = true;
                     o.DeveloperMode = Debugger.IsAttached;
                     o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
-
+                    o.RequestCollectionOptions.EnableW3CDistributedTracing = true;
+                    o.RequestCollectionOptions.InjectResponseHeaders = true;
+                    o.RequestCollectionOptions.TrackExceptions = true;
                 });
                 services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
 
@@ -82,19 +84,14 @@ namespace Ark.Tools.AspNetCore.Startup
                     throw;
                 }
             });
-
+            
             app.Use((context, next) =>
             {
                 if (context.Request.Headers.TryGetValue("X-Forwarded-PathBase", out var pathbase) && pathbase != "/")
                     context.Request.PathBase = pathbase + context.Request.PathBase;
                 return next();
             });
-
-            if (env.IsDevelopment())
-                app.UseDeveloperExceptionPage();
-            else
-                app.UseStatusCodePages();
-
+            
             app.UseSecurityHeaders();
             app.UseHttpsRedirection();
 
