@@ -1,5 +1,6 @@
 ﻿using Hellang.Middleware.ProblemDetails;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -7,28 +8,21 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
     {
         public FluentValidationProblemDetails(FluentValidation.ValidationException ex, int statusCode) : base(statusCode)
         {
-            var dict = new Dictionary<string, FluentValidationErrors>();
-
-            foreach (var error in ex.Errors)
-            {
-                string key = error.PropertyName;
-                var value = new FluentValidationErrors()
-                {
-                    AttemptedValue = error.AttemptedValue,
-                    CustomState = error.CustomState,
-                    ErrorCode = error.ErrorCode,
-                    ErrorMessage = error.ErrorMessage,
-                    FormattedMessagePlaceholderValues = error.FormattedMessagePlaceholderValues,
-                    ResourceName = error.ResourceName,
-                };
-
-                dict.Add(key, value);
-            }
-
-            Errors = dict;
+            Errors = ex.Errors?.GroupBy(x => x.PropertyName)
+                .ToDictionary(x => x.Key, x => x.Select(error =>
+                    new FluentValidationErrors()
+                    {
+                        AttemptedValue = error.AttemptedValue,
+                        CustomState = error.CustomState,
+                        ErrorCode = error.ErrorCode,
+                        ErrorMessage = error.ErrorMessage,
+                        FormattedMessagePlaceholderValues = error.FormattedMessagePlaceholderValues,
+                        ResourceName = error.ResourceName,
+                    }
+                ).ToArray());
         }
 
-        public Dictionary<string, FluentValidationErrors> Errors { get; set; }
+        public Dictionary<string, FluentValidationErrors[]> Errors { get; set; }
     }
 
     public class FluentValidationErrors

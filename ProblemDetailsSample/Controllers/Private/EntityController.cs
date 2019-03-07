@@ -149,6 +149,25 @@ namespace ProblemDetailsSample.Controllers.Private
         }
 
         /// <summary>
+        /// Returns a Validation Fails with 2 errors
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        [HttpPost(@"ValidationFails2Errors")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Post_ValidationFails2Errors([FromBody]Entity.V1.Input body)
+        {
+            var request = new Post_EntityRequest.V1()
+            {
+                EntityId = "StringLongerLongerThan20"
+            };
+
+            var res = await _requestProcessor.ExecuteAsync(request, default);
+
+            return this.Ok(res);
+        }
+
+        /// <summary>
         /// Returns a ArkProblemDetails
         /// </summary>
         /// <param name="body"></param>

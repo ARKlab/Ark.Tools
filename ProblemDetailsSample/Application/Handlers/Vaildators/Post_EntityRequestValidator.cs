@@ -11,6 +11,11 @@ namespace ProblemDetailsSample.Application.Handlers.Vaildators
                 .NotEmpty()
                 .MaximumLength(10)
                 ;
+
+            RuleFor(x => x.EntityId)
+                .NotEmpty()
+                .MaximumLength(20)
+                ;
         }
     }
 }
