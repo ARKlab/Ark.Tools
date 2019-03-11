@@ -9,7 +9,6 @@ using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +24,8 @@ namespace Ark.Tools.ResourceWatcher
         private volatile bool _isStarted = false;
         private CancellationTokenSource _cts;
         private Task _task;
-        
+        private readonly ResourceWatcherDiagnosticSource _diagnosticSource;
+
         public ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
         {
             EnsureArg.IsNotNull(config);
@@ -33,6 +33,7 @@ namespace Ark.Tools.ResourceWatcher
 
             _config = config;
             _stateProvider = stateProvider;
+            _diagnosticSource = new ResourceWatcherDiagnosticSource(config.Tenant);
         }
 
         public void Start()
@@ -55,6 +56,8 @@ namespace Ark.Tools.ResourceWatcher
                 _isStarted = true;
             }
 
+
+
             _cts = new CancellationTokenSource();
             _task = Task.Run(async () =>
             {
@@ -62,7 +65,10 @@ namespace Ark.Tools.ResourceWatcher
                 {
                     await _runAsync(_cts.Token);
                 }
-                catch (TaskCanceledException) { }
+                catch (TaskCanceledException)
+                {
+
+                }
             }
             , _cts.Token).FailFastOnException();
         }
@@ -105,6 +111,9 @@ namespace Ark.Tools.ResourceWatcher
                 if (bad != null)
                     throw new InvalidOperationException($"Found multiple entries for ResouceId:{bad.Key}");
 
+
+
+
                 if (_config.SkipResourcesOlderThanDays.HasValue)
                     infos = infos
                             .Where(x => x.Modified.Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
@@ -127,6 +136,9 @@ namespace Ark.Tools.ResourceWatcher
                             && x.Match.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()) // BAN expired and new version                
                         )
                     .ToList();
+
+
+
 
                 var parallelism = _config.DegreeOfParallelism;
 
@@ -168,18 +180,27 @@ namespace Ark.Tools.ResourceWatcher
 
             while (!ctk.IsCancellationRequested)
             {
-                try {
+                //var activity = _diagnosticSource.RunStart("normal");
+
+                try
+                {
                     await _runOnce(ctk);
                     
                     exConsecutiveCount = 0;
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     if (++exConsecutiveCount == 10)
                     {
                         _logger.Fatal(ex, "Failed 10 times consecutively");
                         throw;
                     }
+                    //activity?.AddTag("error", "error");
                 }
+                //finally
+                //{
+                //    _diagnosticSource.RunSuccessful(activity, );
+                //}
 
                 ctk.ThrowIfCancellationRequested();
 
