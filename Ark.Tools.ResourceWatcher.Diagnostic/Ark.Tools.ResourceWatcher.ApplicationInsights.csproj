@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
+    <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
   </ItemGroup>
   
 </Project>

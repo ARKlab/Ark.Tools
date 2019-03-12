@@ -271,11 +271,11 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 }
             }
 
-            protected override async Task _runOnce(CancellationToken ctk = default)
+            protected override async Task _runOnce(RunType runType, CancellationToken ctk = default)
             {
                 using (var scope = AsyncScopedLifestyle.BeginScope(_container))
                 {
-                    await base._runOnce(ctk);
+                    await base._runOnce(runType, ctk);
                 }
             }
 

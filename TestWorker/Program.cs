@@ -11,7 +11,7 @@ namespace TestWorker
         {
 
             var cfg = TelemetryConfiguration.CreateDefault();
-            var listener = new ActivityTrackerListener(cfg);
+            var listener = new ResourceWatcherDiagnosticListener(cfg);
 
             Test_Host
                 .ConfigureFromAppSettings()

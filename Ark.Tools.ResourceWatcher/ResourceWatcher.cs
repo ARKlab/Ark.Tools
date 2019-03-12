@@ -33,7 +33,7 @@ namespace Ark.Tools.ResourceWatcher
 
             _config = config;
             _stateProvider = stateProvider;
-            _diagnosticSource = new ResourceWatcherDiagnosticSource(config.Tenant);
+            _diagnosticSource = new ResourceWatcherDiagnosticSource(config.Tenant, _logger);
         }
 
         public void Start()
@@ -87,8 +87,9 @@ namespace Ark.Tools.ResourceWatcher
                 _isStarted = true;
             }
 
-            try {
-                await _runOnce(ctk).ConfigureAwait(false);
+            try
+            {
+                await _runOnce(RunType.Once, ctk).ConfigureAwait(false);
             }
             finally
             {
@@ -96,23 +97,24 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        protected virtual async Task _runOnce(CancellationToken ctk = default)
+        protected virtual async Task _runOnce(RunType runType, CancellationToken ctk = default)
         {
             var now = DateTime.UtcNow;
             var sw = Stopwatch.StartNew();
 
             MappedDiagnosticsLogicalContext.Set("RequestID", Guid.NewGuid().ToString());
-            _logger.Info("Check started for tenant {0} at {1}", _config.Tenant, now);
+            var activityRun = _diagnosticSource.RunStart(runType, now);
+
             try
             {
+                var activityResource = _diagnosticSource.GetResourcesStart();
+
                 var infos = await _getResourcesInfo(ctk).ConfigureAwait(false);
 
                 var bad = infos.GroupBy(x => x.ResourceId).FirstOrDefault(x => x.Count() > 1);
                 if (bad != null)
-                    throw new InvalidOperationException($"Found multiple entries for ResouceId:{bad.Key}");
-
-
-
+                    _diagnosticSource.ThrowInvalidOperationException(bad.Key);
+                //throw new InvalidOperationException($"Found multiple entries for ResouceId:{bad.Key}");
 
                 if (_config.SkipResourcesOlderThanDays.HasValue)
                     infos = infos
@@ -120,34 +122,30 @@ namespace Ark.Tools.ResourceWatcher
                             ;
 
                 var list = infos.ToList();
+                _diagnosticSource.GetResourcesSuccessful(activityResource, list.Count, sw.Elapsed);
 
-                _logger.Info("Found {0} resources in {1}", list.Count, sw.Elapsed);
-
+                //Check State
                 // check which entries are new or have been modified.
+                var activityCheckState = _diagnosticSource.CheckStateStart();
 
                 var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
 
-                var toProcess = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) => new { CurrentInfo = i, Match = s.SingleOrDefault() })
-                    .Where(x => x.Match == null  // new resource                        
-                        || (x.Match.RetryCount > 0 && x.Match.RetryCount <= _config.MaxRetries) // retry 
-                        || (x.Match.RetryCount == 0 && x.CurrentInfo.Modified > x.Match.Modified) // new version
-                        || (x.Match.RetryCount > _config.MaxRetries 
-                            && x.CurrentInfo.Modified > x.Match.Modified
-                            && x.Match.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()) // BAN expired and new version                
-                        )
-                    .ToList();
+                var toEvaluate = _createEvalueteList(list, states);
 
+                var toProcess = toEvaluate.Where(w => w.ProcessDataType != ProcessDataType.NothingToDo).ToList();
 
+                _diagnosticSource.CheckStateSuccessful(activityCheckState, toEvaluate);
 
-
+                //Process
                 var parallelism = _config.DegreeOfParallelism;
-
                 _logger.Info("Found {0} resources to process with parallelism {1}", list.Count, parallelism);
+
+                // TODO partioner
                 using (SemaphoreSlim throttler = new SemaphoreSlim(initialCount: (int)parallelism))
                 {
-                    int total = toProcess.Count;
-                    var tasks = toProcess.Select(async (x,i) =>
+                    var tasks = toProcess.Select(async (x, i) =>
                     {
+                        int total = toProcess.Count;
                         await throttler.WaitAsync(ctk).ConfigureAwait(false);
                         try
                         {
@@ -162,14 +160,59 @@ namespace Ark.Tools.ResourceWatcher
                     await Task.WhenAll(tasks).ConfigureAwait(false);
                 }
 
-                _logger.Info("Check successful for tenant {0} in {1}", _config.Tenant, sw.Elapsed);
+                _diagnosticSource.RunSuccessful(activityRun, toProcess, sw.Elapsed);
+
                 if (sw.Elapsed > _config.RunDurationNotificationLimit)
-                    _logger.Fatal("Check for tenant {0} took too much: {1}", _config.Tenant, sw.Elapsed);
-            } catch(Exception ex)
+                    _diagnosticSource.RunTookTooLong(sw.Elapsed);
+            }
+            catch (Exception ex)
             {
-                _logger.Error(ex, "Check failed for tenant {0} in {1}", _config.Tenant, sw.Elapsed);
+                _diagnosticSource.RunFailed(activityRun, ex, sw.Elapsed);
                 throw;
             }
+        }
+
+        private IEnumerable<ProcessData> _createEvalueteList(List<IResourceMetadata> list, IEnumerable<ResourceState> states)
+        {
+            var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
+            {
+                var x = new ProcessData { CurrentInfo = i, Match = s.SingleOrDefault() };
+                if (x.Match == null)
+                {
+                    x.ProcessDataType = ProcessDataType.New;
+                }
+                else if (x.Match.RetryCount > 0 && x.Match.RetryCount <= _config.MaxRetries)
+                {
+                    x.ProcessDataType = ProcessDataType.Retry;
+                }
+                else if (x.Match.RetryCount == 0 && x.CurrentInfo.Modified > x.Match.Modified)
+                {
+                    x.ProcessDataType = ProcessDataType.Updated;
+                }
+                else if (x.Match.RetryCount > _config.MaxRetries
+                    && x.CurrentInfo.Modified > x.Match.Modified
+                    && x.Match.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant() // BAN expired and new version                
+                    )
+                {
+                    x.ProcessDataType = ProcessDataType.RetryAfterBan;
+                }
+                else
+                    x.ProcessDataType = ProcessDataType.NothingToDo;
+                return x;
+            });
+
+            //toProcess
+
+            //.Where(x => x.Match == null  // new resource                        
+            //    || (x.Match.RetryCount > 0 && x.Match.RetryCount <= _config.MaxRetries) // retry 
+            //    || (x.Match.RetryCount == 0 && x.CurrentInfo.Modified > x.Match.Modified) // new version
+            //    || (x.Match.RetryCount > _config.MaxRetries 
+            //        && x.CurrentInfo.Modified > x.Match.Modified
+            //        && x.Match.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()) // BAN expired and new version                
+            //    )
+            //.ToList();
+
+            return ev;
         }
 
         private async Task _runAsync(CancellationToken ctk = default)
@@ -180,11 +223,9 @@ namespace Ark.Tools.ResourceWatcher
 
             while (!ctk.IsCancellationRequested)
             {
-                //var activity = _diagnosticSource.RunStart("normal");
-
                 try
                 {
-                    await _runOnce(ctk);
+                    await _runOnce(RunType.Normal ,ctk);
                     
                     exConsecutiveCount = 0;
                 }
@@ -192,15 +233,10 @@ namespace Ark.Tools.ResourceWatcher
                 {
                     if (++exConsecutiveCount == 10)
                     {
-                        _logger.Fatal(ex, "Failed 10 times consecutively");
+                        _diagnosticSource.ReportRunConsecutiveFailureLimitReached(ex, exConsecutiveCount);
                         throw;
                     }
-                    //activity?.AddTag("error", "error");
                 }
-                //finally
-                //{
-                //    _diagnosticSource.RunSuccessful(activity, );
-                //}
 
                 ctk.ThrowIfCancellationRequested();
 
@@ -215,6 +251,8 @@ namespace Ark.Tools.ResourceWatcher
 
         private async Task _processEntry(int idx, int total, IResourceMetadata info, ResourceState lastState, CancellationToken ctk = default)
         {
+            var processActivity = _diagnosticSource.ProcessResourceStart(info, lastState);
+
             try
             {
                 _logger.Info("({4}/{5}) Detected change on Resource.Id=\"{0}\", Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
@@ -262,9 +300,12 @@ namespace Ark.Tools.ResourceWatcher
 
                                 state.CheckSum = newState.CheckSum;
                                 state.RetrievedAt = newState.RetrievedAt;
+
+                                _diagnosticSource.ProcessResourceSuccessful(processActivity, newState, ProcessType.Normal);
                             }
                             else // no payload retrived, so no new state. Generally due to a same-checksum
                             {
+                                _diagnosticSource.ProcessResourceSuccessful(processActivity, null, ProcessType.NoPayload);
                             }
 
                             state.Modified = info.Modified;
@@ -272,7 +313,7 @@ namespace Ark.Tools.ResourceWatcher
                         }
                     } else // for some reason, no action has been and payload has not been retrieved. We do not change the state
                     {
-
+                        _diagnosticSource.ProcessResourceSuccessful(processActivity, null, ProcessType.NoAction);
                     }
                 }
                 catch (Exception ex)
@@ -285,17 +326,23 @@ namespace Ark.Tools.ResourceWatcher
                     // if we're in BAN and we tried to exit BAN and we failed, update the Modified anw
                     if (state.RetryCount > _config.MaxRetries)
                         state.Modified = info.Modified;
+
+                    _diagnosticSource.ProcessResourceFailed(processActivity, ex);
                 }
                 
                 await _stateProvider.SaveStateAsync(new[] { state }, ctk).ConfigureAwait(false);
 
-                _logger.Info("({3}/{4}) ResourceId=\"{0}\" handled {2}successfully in {1}", state.ResourceId, sw.Elapsed, state.RetryCount == 0 ? "" : "not ", idx
-                    , total);
+                _logger.Info("({3}/{4}) ResourceId=\"{0}\" handled {2}successfully in {1}", state.ResourceId, sw.Elapsed, state.RetryCount == 0 ? "" : "not ", idx, total);
+
                 if (sw.Elapsed > _config.ResourceDurationNotificationLimit)
-                    _logger.Fatal("Processing of ResourceId=\"{0}\" took too much: {1}", state.ResourceId, sw.Elapsed);
+                {
+                    _diagnosticSource.ProcessResourceTookTooLong(state.ResourceId, sw.Elapsed);
+                }
 
             } catch (Exception ex)
             {
+                _diagnosticSource.ProcessResourceFailed(processActivity, ex);
+
                 // chomp it, we'll retry this file next time, forever, fuckit
                 _logger.Error(ex, "({4}/{5}) Error in processing the ResourceId=\"{0}\". The execution will be automatically retried.", info.ResourceId);
             }
@@ -314,7 +361,37 @@ namespace Ark.Tools.ResourceWatcher
         TimeSpan RunDurationNotificationLimit { get; }
         TimeSpan ResourceDurationNotificationLimit { get; }
     }
-    
+
+    public enum RunType
+    {
+        Once,
+        Normal
+    }
+
+    public enum ProcessType
+    {
+        Normal,
+        NoAction,
+        NoPayload,
+        TookTooLong
+    }
+
+    public enum ProcessDataType
+    {
+        New,
+        Updated,
+        Retry,
+        RetryAfterBan,
+        NothingToDo
+    }
+
+    public class ProcessData
+    {
+        public IResourceMetadata CurrentInfo { get; set; }
+        public ResourceState Match { get; set; }
+        public ProcessDataType ProcessDataType { get; set; }
+    }
+
     public sealed class ChangedStateContext<T> where T : IResourceState
     {
         public ChangedStateContext(IResourceMetadata info, IResourceTrackedState lastState, AsyncLazy<T> payload)
