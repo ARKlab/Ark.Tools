@@ -24,6 +24,38 @@ namespace Ark.Tools.ResourceWatcher
             _logger = logger;
         }
 
+        #region Event
+        public void HostStartEvent()
+        {
+            _reportEvent("HostStartEvent", () => new { });
+        }
+
+        public void RunTookTooLong(TimeSpan elapsed)
+        {
+            _logger.Fatal($"Check for tenant {_tenant} took too much:{elapsed}");
+
+            _reportEvent("RunTookTooLong",
+                () => new
+                {
+                    Elapsed = elapsed,
+                    Tenant = _tenant,
+                });
+        }
+
+        public void ProcessResourceTookTooLong(string resourceId, TimeSpan elapsed)
+        {
+            _logger.Fatal($"Processing of ResourceId=\"{resourceId}\" took too much: {elapsed}");
+
+            _reportEvent("ProcessResourceTookTooLong",
+                () => new
+                {
+                    ResourceId = resourceId,
+                    Elapsed = elapsed,
+                    Tenant = _tenant,
+                });
+        }
+        #endregion
+
         #region Run
         public Activity RunStart(RunType type, DateTime now)
         {
@@ -65,18 +97,6 @@ namespace Ark.Tools.ResourceWatcher
                 Tenant = _tenant,
             }
             );
-        }
-
-        //Event
-        public void RunTookTooLong(TimeSpan elapsed)
-        {
-            _logger.Fatal($"Check for tenant {_tenant} took too much:{elapsed}");
-
-            _reportException("RunTookTooLong",
-                () => new
-                {
-                    Elapsed = elapsed
-                });
         }
         #endregion
 
@@ -128,16 +148,6 @@ namespace Ark.Tools.ResourceWatcher
             return activity;
         }
 
-        //public void CheckStateFailed(Activity activity, Exception ex)
-        //{
-        //    _stop(activity, () => new
-        //    {
-        //        Exception = ex,
-        //        Tenant = _tenant,
-        //    }
-        //    );
-        //}
-
         public void CheckStateSuccessful(Activity activity, IEnumerable<ProcessData> toEvaluate)
         {
             _stop(activity, () =>
@@ -163,7 +173,7 @@ namespace Ark.Tools.ResourceWatcher
         #region ProcessResource
         public Activity ProcessResourceStart(IResourceMetadata metadata, ResourceState state)
         {
-            Activity activity = _start(".Process", () => new
+            Activity activity = _start(".ProcessResource", () => new
             {
                 Metadata = metadata,
                 State = state,
@@ -175,66 +185,78 @@ namespace Ark.Tools.ResourceWatcher
             return activity;
         }
 
-        public void ProcessResourceFailed(Activity activity, Exception ex)
+        public void ProcessResourceFailed(Activity activity, LogLevel lvl, string resourceId, ProcessDataType processDataType, ProcessType processType, Exception ex)
         {
+            _logger.Log(lvl, ex, $"Error while processing ResourceId=\"{resourceId}\"");
+
             _stop(activity, () => new
             {
+                ProcessDataType = processDataType,
+                ResourceIdId = resourceId,
                 Exception = ex,
                 Tenant = _tenant,
             }
             );
         }
 
-        public void ProcessResourceSuccessful(Activity activity, object payload, ProcessType processType)
+        public void ProcessResourceSuccessful(    Activity activity
+                                                , int idx
+                                                , string resourceId
+                                                , TimeSpan elapsed
+                                                , int retryCount
+                                                , int total
+                                                , IResourceState state
+                                                , ProcessDataType processDataType
+                                                , ProcessType processType)
         {
-            //_logger.Warn
-            _setTags(activity, processType.ToString(), processType.ToString());
+            if (processType == ProcessType.NoPayload)
+            {
+                _logger.Info($"({idx}/{total}) ResourceId=\"{resourceId}\" No payload retrived, so no new state. Generally due to a same-checksum");
+            }
+            else if (processType == ProcessType.NoAction)
+            {
+                _logger.Info($"({idx}/{total}) ResourceId=\"{resourceId}\" No action has been triggered and payload has not been retrieved. We do not change the state");
+            }
+            else if (processType == ProcessType.Normal)
+            {
+                _logger.Info($"({idx}/{total}) ResourceId=\"{resourceId}\" handled {(retryCount == 0 ? "" : "not ")}successfully in {elapsed}");
+            }
+
+            //_setTags(activity, processType.ToString(), processType.ToString());
 
             _stop(activity, () => new
             {
-                Payload = payload,
+                ProcessDataType = processDataType,
+                ResourceIdId = resourceId,
+                State = state,
                 Tenant = _tenant,
             }
             );
         }
-
-        //Event
-        public void ProcessResourceTookTooLong(string resourceId, TimeSpan elapsed)
-        {
-            _logger.Fatal($"Processing of ResourceId=\"{resourceId}\" took too much: {elapsed}");
-
-            _reportException("ProcessResourceTookTooLong",
-                () => new
-                {
-                    Elapsed = elapsed
-                });
-        }
         #endregion
 
         #region Exception
-        public void ThrowInvalidOperationException(string badKey)
+        public void ProcessResourceSaveFailed(string resourceId, Exception ex)
         {
-            var ex = new InvalidOperationException($"Found multiple entries for ResouceId:{badKey}");
+            _logger.Error(ex, $"Saving of ResourceId=\"{resourceId}\" failed");
 
-            _reportException("ThrowInvalidOperationException", () => ex);
-
-            throw ex;
+            _reportException("ProcessResourceSaveFailed", ex);
         }
 
-        public void ThrowDuplicateResourceIdRetrived(string activityName, string duplicateId)
+        public void ThrowDuplicateResourceIdRetrived(string duplicateId)
         {
-            var ex = new ApplicationException("");
+            var ex = new InvalidOperationException($"Found multiple entries for ResouceId: {duplicateId}");
 
-            _reportException("DuplicateResourceIdRetrived", () => ex);
+            _reportException("ThrowDuplicateResourceIdRetrived", ex);
 
             throw ex;            
         }
 
-        public void ReportRunConsecutiveFailureLimitReached(Exception lastEx, int count)
+        public void ReportRunConsecutiveFailureLimitReached(Exception ex, int count)
         {
             _logger.Fatal($"Failed {count} times consecutively");
 
-            _reportException(BaseActivityName + ".Run", () => lastEx);
+            _reportException("ReportRunConsecutiveFailureLimitReached", ex);
         }
         #endregion
 
@@ -282,14 +304,26 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        internal void _reportException(string eventName, Func<object> getPayload)
+        internal void _reportEvent(string eventName, Func<object> getPayload)
         {
-            if (_source.IsEnabled(eventName))
+            var name = BaseActivityName + "." + eventName;
+
+            if (_source.IsEnabled(name))
             {
-                _source.Write(eventName,
+                _source.Write(name, getPayload());
+            }
+        }
+
+        internal void _reportException(string exceptionName, Exception ex)
+        {
+            var name = BaseActivityName + "." + exceptionName;
+
+            if (_source.IsEnabled(name))
+            {
+                _source.Write(name,
                     new
                     {
-                        Exception = getPayload(),
+                        Exception = ex,
                         Tenant = _tenant
                     });
             }
