@@ -61,7 +61,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             _logger.Info($"Check started for tenant {_tenant} at {now}");
 
-            Activity activity = _start(".Run", () => new
+            Activity activity = _start("Run", () => new
             {
                 Type = type,
                 Now = now,
@@ -86,14 +86,13 @@ namespace Ark.Tools.ResourceWatcher
             );
         }
 
-        public void RunSuccessful(Activity activity, List<ProcessData> toProcess, TimeSpan elapsed)
+        public void RunSuccessful(Activity activity, int totalResources, TimeSpan elapsed)
         {
             _logger.Info($"Check successful for tenant {_tenant} in {elapsed}");
 
             _stop(activity, () => new
             {
-                TotalResources = toProcess.Count,
-                NewResources = toProcess.Where(w => w.ProcessDataType == ProcessDataType.New).Count(),
+                TotalResources = totalResources,
                 Tenant = _tenant,
             }
             );
@@ -103,7 +102,7 @@ namespace Ark.Tools.ResourceWatcher
         #region GetResources
         public Activity GetResourcesStart()
         {
-            Activity activity = _start(".GetResources", () => new
+            Activity activity = _start("GetResources", () => new
             {
             },
                 null
@@ -139,7 +138,7 @@ namespace Ark.Tools.ResourceWatcher
         #region CheckState
         public Activity CheckStateStart()
         {
-            Activity activity = _start(".CheckState", () => new
+            Activity activity = _start("CheckState", () => new
             {
             },
                 null
@@ -173,7 +172,7 @@ namespace Ark.Tools.ResourceWatcher
         #region ProcessResource
         public Activity ProcessResourceStart(IResourceMetadata metadata, ResourceState state)
         {
-            Activity activity = _start(".ProcessResource", () => new
+            Activity activity = _start("ProcessResource", () => new
             {
                 Metadata = metadata,
                 State = state,
@@ -263,7 +262,7 @@ namespace Ark.Tools.ResourceWatcher
         private Activity _start(string operationName, Func<object> getPayload, Action<Activity> setTags)
         {
             Activity activity = null;
-            string activityName = BaseActivityName + operationName;
+            string activityName = BaseActivityName + "." +operationName;
 
             if (_source.IsEnabled(activityName))
             {

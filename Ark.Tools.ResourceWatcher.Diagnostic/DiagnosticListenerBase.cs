@@ -86,13 +86,13 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Start")]
-        public virtual void OnRunStart(RunType runType, DateTime now)
+        public virtual void OnRunStart(RunType runType)
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
-        public virtual void OnRunStop(int totalResources, int newResources, string tenant, Exception exception)
+        public virtual void OnRunStop(int totalResources, string tenant, Exception exception)
         {
 
         }

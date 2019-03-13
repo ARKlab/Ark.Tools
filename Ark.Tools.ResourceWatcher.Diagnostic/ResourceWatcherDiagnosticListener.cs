@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 { 
-    public class ResourceWatcherDiagnosticListener : IObserver<DiagnosticListener>, IDisposable
+    public class ResourceWatcherDiagnosticListener : DiagnosticListenerBase, IObserver<DiagnosticListener>, IDisposable
     {
         protected readonly TelemetryClient Client;
         protected readonly TelemetryConfiguration Configuration;
@@ -56,7 +56,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
         #region Event
         [DiagnosticName("Ark.Tools.ResourceWatcher.HostStartEvent")]
-        public virtual void OnHostStartEvent()
+        public override void OnHostStartEvent()
         {
             var telemetry = new EventTelemetry
             {
@@ -67,7 +67,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.RunTookTooLong")]
-        public virtual void RunTookTooLong(string tenant, TimeSpan elapsed)
+        public override void RunTookTooLong(string tenant, TimeSpan elapsed)
         {
             Activity currentActivity = Activity.Current;
 
@@ -89,7 +89,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceTookTooLong")]
-        public virtual void OnProcessResourceTookTooLong(string tenant, string resourceId, TimeSpan elapsed)
+        public override void OnProcessResourceTookTooLong(string tenant, string resourceId, TimeSpan elapsed)
         {
             Activity currentActivity = Activity.Current;
 
@@ -114,7 +114,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
         #region Exception
         [DiagnosticName("Ark.Tools.ResourceWatcher.ThrowDuplicateResourceIdRetrived")]
-        public virtual void OnDuplicateResourceIdRetrived(string tenant, Exception exception)
+        public override void OnDuplicateResourceIdRetrived(string tenant, Exception exception)
         {
             var telemetryException = new ExceptionTelemetry
             {
@@ -128,7 +128,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ReportRunConsecutiveFailureLimitReached")]
-        public virtual void OnReportRunConsecutiveFailureLimitReached(string tenant, Exception exception)
+        public override void OnReportRunConsecutiveFailureLimitReached(string tenant, Exception exception)
         {
             var telemetryException = new ExceptionTelemetry
             {
@@ -142,7 +142,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceSaveFailed")]
-        public virtual void OnProcessResourceSaveFailed(string resourceId, string tenant, Exception exception)
+        public override void OnProcessResourceSaveFailed(string resourceId, string tenant, Exception exception)
         {
             var telemetryException = new ExceptionTelemetry
             {
@@ -158,18 +158,18 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
         #region Run
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run")]
-        public virtual void OnRun()
+        public override void OnRun()
         {
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Start")]
-        public virtual void OnRunStart(RunType runType, DateTime now)
+        public override void OnRunStart(RunType runType)
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
-        public virtual void OnRunStop(int totalResources, int newResources, string tenant, Exception exception)
+        public override void OnRunStop(int totalResources, string tenant, Exception exception)
         {
             Activity currentActivity = Activity.Current;
 
@@ -189,11 +189,21 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
             telemetry.Metrics.Add("TotalResources", totalResources);
-            telemetry.Metrics.Add("NewResources", newResources);
 
             //Exception
             if (exception != null)
-                telemetry.Properties.Add("Exception", exception.ToString());
+            {
+                var telemetryException = new ExceptionTelemetry
+                {
+                    Exception = exception,
+                    Message = exception.Message
+                };
+
+                telemetryException.Properties.Add("Tenant", tenant);
+                telemetryException.Metrics.Add("TotalResources", totalResources);
+
+                this.Client.TrackException(telemetryException);
+            }
 
             this.Client.TrackRequest(telemetry);
         }
@@ -201,19 +211,19 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
         #region GetResources
         [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources")]
-        public virtual void OnGetResources()
+        public override void OnGetResources()
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources.Start")]
-        public virtual void OnGetResourcesStart()
+        public override void OnGetResourcesStart()
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources.Stop")]
-        public virtual void OnGetResourcesStop(int resourcesFound, TimeSpan elapsed, string tenant, Exception exception)
+        public override void OnGetResourcesStop(int resourcesFound, TimeSpan elapsed, string tenant, Exception exception)
         {
             Activity currentActivity = Activity.Current;
 
@@ -256,19 +266,19 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
         #region CheckState
         [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState")]
-        public virtual void OnCheckState()
+        public override void OnCheckState()
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState.Start")]
-        public virtual void OnCheckStateStart()
+        public override void OnCheckStateStart()
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState.Stop")]
-        public virtual void OnCheckStateStop(     int resourcesNew
+        public override void OnCheckStateStop(     int resourcesNew
                                                 , int resourcesUpdated
                                                 , int resourcesRetried
                                                 , int resourcesRetriedAfterBan
@@ -318,19 +328,19 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
         #region ProcessResource
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource")]
-        public virtual void OnProcessResource()
+        public override void OnProcessResource()
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Start")]
-        public virtual void OnProcessResourceStart()
+        public override void OnProcessResourceStart()
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
-        public virtual void OnProcessResourceStop(string resourceId, ProcessDataType processDataType, IResourceState state, string tenant, Exception exception)
+        public override void OnProcessResourceStop(string resourceId, ProcessDataType processDataType, IResourceState state, string tenant, Exception exception)
         {
             Activity currentActivity = Activity.Current;
 
