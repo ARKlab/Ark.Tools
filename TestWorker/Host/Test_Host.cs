@@ -11,6 +11,7 @@ using TestWorker.Writer;
 using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Extensions.Hosting;
 
 namespace TestWorker.Host
 {
@@ -20,15 +21,34 @@ namespace TestWorker.Host
         {
             try
             {
+                //var host = new HostBuilder()
+                //    .AddWorkerHostInfrastracture()
+                //    .AddApplicationInsightsForWorkerHost()
+                //    .AddWorkerHost<Host>(cfg =>
+                //    {
+                //        var baseCfg = new Test_Host_Config()
+                //        {
+                //            StateDbConnectionString = config.GetConnectionString("boh")
+                //        };
+
+                //        configurationOverrider?.Invoke(baseCfg);
+
+                //        return new Host(baseCfg)
+                //            .WithTestWriter();
+                //    });
+
+
                 var baseCfg = new Test_Host_Config()
                 {
-                    StateDbConnectionString = ""
+                    StateDbConnectionString = "boh"
                 };
 
                 configurationOverrider?.Invoke(baseCfg);
 
                 return new Host(baseCfg)
                     .WithTestWriter();
+
+
             }
             catch (Exception e)
             {

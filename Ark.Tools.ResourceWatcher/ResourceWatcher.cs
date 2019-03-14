@@ -171,27 +171,10 @@ namespace Ark.Tools.ResourceWatcher
                 //Process
                 _logger.Info($"Found {list.Count} resources to process with parallelism {_config.DegreeOfParallelism}");
 
-                //var tasks = toProcess.Parallel(Environment.ProcessorCount * 2, async (i,x) =>
-                //    await _processEntry((int)i, toProcess.Count, x.CurrentInfo, x.Match, x.ProcessDataType, ctk));
+                var tasks = toProcess.Parallel((int)_config.DegreeOfParallelism, async (i, x) =>
+                    await _processEntry((int)i, toProcess.Count, x.CurrentInfo, x.Match, x.ProcessDataType, ctk));
 
-                using (SemaphoreSlim throttler = new SemaphoreSlim(initialCount: (int)_config.DegreeOfParallelism))
-                {
-                    var tasks = toProcess.Select(async (x, i) =>
-                    {
-                        int total = toProcess.Count;
-                        await throttler.WaitAsync(ctk).ConfigureAwait(false);
-                        try
-                        {
-                            await _processEntry(i, total, x.CurrentInfo, x.Match, x.ProcessDataType, ctk).ConfigureAwait(false);
-                        }
-                        finally
-                        {
-                            throttler.Release();
-                        }
-                    });
-
-                    await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
+                await Task.WhenAll(tasks).ConfigureAwait(false);
 
                 _diagnosticSource.RunSuccessful(activityRun, toProcess.Count, sw.Elapsed);
 

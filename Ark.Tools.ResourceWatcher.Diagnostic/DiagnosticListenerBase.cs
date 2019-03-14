@@ -1,14 +1,6 @@
-﻿using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Common;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.Extensions.DiagnosticAdapter;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.DiagnosticAdapter;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 { 
