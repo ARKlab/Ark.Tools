@@ -156,9 +156,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         {
             if (this.applicationInsightsServiceOptions.EnableAdaptiveSampling)
             {
-                //TODO MJ
-                //configuration.DefaultTelemetrySink.TelemetryProcessorChainBuilder.UseAdaptiveSampling(5, excludedTypes: "Event");
-                //configuration.DefaultTelemetrySink.TelemetryProcessorChainBuilder.UseAdaptiveSampling(5, includedTypes: "Event");
+                configuration.DefaultTelemetrySink.TelemetryProcessorChainBuilder.UseAdaptiveSampling(5, excludedTypes: "Event");
+                configuration.DefaultTelemetrySink.TelemetryProcessorChainBuilder.UseAdaptiveSampling(5, includedTypes: "Event");
             }
         }
 

@@ -21,22 +21,24 @@ namespace TestWorker.Host
         {
             try
             {
-                //var host = new HostBuilder()
+                //var hostBuilder = new HostBuilder()
                 //    .AddWorkerHostInfrastracture()
                 //    .AddApplicationInsightsForWorkerHost()
                 //    .AddWorkerHost<Host>(cfg =>
                 //    {
-                //        var baseCfg = new Test_Host_Config()
+                //        var baseCfg1 = new Test_Host_Config()
                 //        {
-                //            StateDbConnectionString = config.GetConnectionString("boh")
+                //            //StateDbConnectionString = config.GetConnectionString("boh")
                 //        };
 
-                //        configurationOverrider?.Invoke(baseCfg);
+                //        configurationOverrider?.Invoke(baseCfg1);
 
-                //        return new Host(baseCfg)
+                //        return new Host(baseCfg1)
                 //            .WithTestWriter();
                 //    });
 
+                //var host = hostBuilder.Build();
+                //return host;
 
                 var baseCfg = new Test_Host_Config()
                 {
@@ -47,8 +49,6 @@ namespace TestWorker.Host
 
                 return new Host(baseCfg)
                     .WithTestWriter();
-
-
             }
             catch (Exception e)
             {

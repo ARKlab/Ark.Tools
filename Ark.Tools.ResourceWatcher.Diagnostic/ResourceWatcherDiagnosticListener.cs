@@ -20,6 +20,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         {
             this.Configuration = configuration;
             this.Client = new TelemetryClient(configuration);
+            this.Client.InstrumentationKey = configuration.InstrumentationKey;
 
             this.subscription.Add(DiagnosticListener.AllListeners.Subscribe(this));
         }
