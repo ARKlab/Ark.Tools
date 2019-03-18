@@ -1,5 +1,4 @@
-﻿using Ark.Tools.ResourceWatcher.ApplicationInsights;
-using Microsoft.ApplicationInsights;
+﻿using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -15,9 +14,9 @@ using System.Diagnostics;
 using Microsoft.ApplicationInsights.Extensibility.Implementation.ApplicationId;
 using Microsoft.AspNetCore.Http;
 
-namespace Ark.Tools.ResourceWatcher.ApplicationInsights //.ApplicationInsightsOptions
+namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 {
-    public static class Extensions
+    public static partial class Ex
     {
         public static IHostBuilder AddApplicationInsightsForWorkerHost(this IHostBuilder builder)
         {
@@ -76,7 +75,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights //.ApplicationInsightsOp
 
                 services.Configure<ApplicationInsightsServiceOptions>(o =>
                 {
-                    o.InstrumentationKey = "fef8ed59-fc07-4890-865f-edba7d8d41f9"; // ctx.Configuration["ApplicationInsights:InstrumentationKey"];
+                    o.InstrumentationKey = ctx.Configuration["ApplicationInsights:InstrumentationKey"];
                     o.EnableAdaptiveSampling = true;
                     o.EnableHeartbeat = true;
                     o.AddAutoCollectedMetricExtractor = true;

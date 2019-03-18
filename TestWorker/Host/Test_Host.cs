@@ -1,5 +1,4 @@
 ﻿using NodaTime;
-using SimpleInjector;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,45 +9,35 @@ using TestWorker.Configs;
 using TestWorker.Writer;
 using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
+using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 using Microsoft.Extensions.Hosting;
 
 namespace TestWorker.Host
 {
     public static class Test_Host
     {
-        public static Host ConfigureFromAppSettings(bool ignoreStateServiceInDev = true, bool useSingleThread = false, Action<ITest_Host_Config> configurationOverrider = null)
+        public static IHostBuilder ConfigureFromAppSettings(bool ignoreStateServiceInDev = true, bool useSingleThread = false, Action<ITest_Host_Config> configurationOverrider = null)
         {
             try
             {
-                //var hostBuilder = new HostBuilder()
-                //    .AddWorkerHostInfrastracture()
-                //    .AddApplicationInsightsForWorkerHost()
-                //    .AddWorkerHost<Host>(cfg =>
-                //    {
-                //        var baseCfg1 = new Test_Host_Config()
-                //        {
-                //            //StateDbConnectionString = config.GetConnectionString("boh")
-                //        };
+                var hostBuilder = new HostBuilder()
+                    .AddWorkerHostInfrastracture()
+                    .AddApplicationInsightsForWorkerHost()
+                    .AddWorkerHost<Host>(cfg =>
+                    {
+                        var baseCfg1 = new Test_Host_Config()
+                        {
+                            //StateDbConnectionString = config.GetConnectionString("boh")
+                        };
 
-                //        configurationOverrider?.Invoke(baseCfg1);
+                        configurationOverrider?.Invoke(baseCfg1);
 
-                //        return new Host(baseCfg1)
-                //            .WithTestWriter();
-                //    });
+                        return new Host(baseCfg1)
+                            .WithTestWriter();
+                    })
+                    .UseConsoleLifetime();
 
-                //var host = hostBuilder.Build();
-                //return host;
-
-                var baseCfg = new Test_Host_Config()
-                {
-                    StateDbConnectionString = "boh"
-                };
-
-                configurationOverrider?.Invoke(baseCfg);
-
-                return new Host(baseCfg)
-                    .WithTestWriter();
+                return hostBuilder;
             }
             catch (Exception e)
             {
@@ -87,4 +76,6 @@ namespace TestWorker.Host
         }
         #endregion
     }
+
+
 }
