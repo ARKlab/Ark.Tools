@@ -216,7 +216,7 @@ namespace Ark.Tools.ResourceWatcher
                 else if (x.Match.RetryCount > _config.MaxRetries
                     && x.CurrentInfo.Modified > x.Match.Modified
                     && !(x.Match.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant())
-                    // BAN expired and new version                
+                    // BAN               
                     )
                 {
                     x.ProcessDataType = ProcessDataType.Banned;
@@ -239,7 +239,7 @@ namespace Ark.Tools.ResourceWatcher
             {
                 var processActivity = _diagnosticSource.ProcessResourceStart(info, lastState);
 
-                _logger.Info("({4}/{5}) Detected change on Resource.Id=\"{0}\", Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
+                _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
                     , info.ResourceId
                     , info.Modified
                     , lastState?.Modified
@@ -283,7 +283,7 @@ namespace Ark.Tools.ResourceWatcher
                             if (newState != null)
                             {
                                 if (!string.IsNullOrWhiteSpace(newState.CheckSum) && state.CheckSum != newState.CheckSum)
-                                    _logger.Info("Checksum changed on Resource.Id=\"{0}\" from \"{1}\" to \"{2}\"", state.ResourceId, state.CheckSum, newState.CheckSum);
+                                    _logger.Info("Checksum changed on ResourceId=\"{0}\" from \"{1}\" to \"{2}\"", state.ResourceId, state.CheckSum, newState.CheckSum);
 
                                 state.CheckSum = newState.CheckSum;
                                 state.RetrievedAt = newState.RetrievedAt;
@@ -295,9 +295,12 @@ namespace Ark.Tools.ResourceWatcher
                                 processType = ProcessType.NoPayload;
                             }
 
+                            state.Extensions = info.Extensions;
                             state.Modified = info.Modified;
                             state.RetryCount = 0; // success
                         }
+
+                        throw new NotSupportedException($"({idx}/{total}) ResourceId=\"{state.ResourceId}\" we cannot reach this point!");
                     }
                     else // for some reason, no action has been and payload has not been retrieved. We do not change the state
                     {
@@ -324,9 +327,8 @@ namespace Ark.Tools.ResourceWatcher
                     LogLevel lvl = ++state.RetryCount == _config.MaxRetries ? LogLevel.Fatal : LogLevel.Warn;
                     _diagnosticSource.ProcessResourceFailed(processActivity, lvl, info.ResourceId, type, ProcessType.Error, ex);
 
-                    // if we're in BAN and we tried to exit BAN and we failed, update the Modified anw
-                    if (state.RetryCount > _config.MaxRetries)
-                        state.Modified = info.Modified;
+                    state.Extensions = info.Extensions;
+                    state.Modified = info.Modified;
                 }
 
                 await _stateProvider.SaveStateAsync(new[] { state }, ctk).ConfigureAwait(false);
