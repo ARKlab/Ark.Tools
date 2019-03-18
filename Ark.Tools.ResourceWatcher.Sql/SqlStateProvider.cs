@@ -35,6 +35,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             EnsureArg.IsNotNull(config);
             EnsureArg.IsNotNull(connManager);
+            EnsureArg.IsNotNullOrWhiteSpace(config.DbConnectionString);
 
             _connManager = connManager;
             _config = config;

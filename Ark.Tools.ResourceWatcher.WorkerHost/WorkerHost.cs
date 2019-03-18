@@ -19,6 +19,14 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 {
 
     public delegate void VoidEventHandler();
+
+    public abstract class WorkerHost
+    {
+        public abstract void Start();
+        public abstract void Stop();
+
+        public abstract void RunAndBlock(CancellationToken ctk = default);
+    }
     
     /// <summary>
     /// A host for a classic worker that poll resources from one provider, with state-tracking and "writer" (outputs)
@@ -42,7 +50,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
     /// <typeparam name="TResource">The resource data</typeparam>
     /// <typeparam name="TMetadata">The resource metadata listed from a provider</typeparam>
     /// <typeparam name="TQueryFilter">The filter that the provider support</typeparam>
-    public class WorkerHost<TResource, TMetadata, TQueryFilter>
+    public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
         where TResource : class, IResource<TMetadata>
         where TMetadata : class, IResourceMetadata
         where TQueryFilter : class, new()
@@ -183,19 +191,19 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             await _container.GetInstance<Watcher>().RunOnce(filterConfigurer, ctk);
         }
 
-        public void Start()
+        public override void Start()
         {
             _onInit();
 
             _container.GetInstance<Watcher>().Start();
         }
 
-        public void Stop()
+        public override void Stop()
         {
             _container.GetInstance<Watcher>().Stop();
         }
 
-        public void RunAndBlock(CancellationToken ctk = default)
+        public override void RunAndBlock(CancellationToken ctk = default)
         {
             Start();
 
@@ -271,11 +279,11 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 }
             }
 
-            protected override async Task _runOnce(CancellationToken ctk = default)
+            protected override async Task _runOnce(RunType runType, CancellationToken ctk = default)
             {
                 using (var scope = AsyncScopedLifestyle.BeginScope(_container))
                 {
-                    await base._runOnce(ctk);
+                    await base._runOnce(runType, ctk);
                 }
             }
 

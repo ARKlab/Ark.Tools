@@ -16,6 +16,14 @@ namespace ProblemDetailsSample.Application.Handlers.Vaildators
                 .NotEmpty()
                 .MaximumLength(20)
                 ;
+
+            RuleFor(x => x.EntityId)
+                .NotEqual("ErrorCode")
+                .WithErrorCode("NOT_EQUAL_ERRORCODE")
+                .WithState(x => new
+                {
+                    Foo = "bar"
+                });
         }
     }
 }

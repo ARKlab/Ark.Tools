@@ -18,12 +18,12 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         {
             var dictionary = new RouteValueDictionary
                 {
-                    { "name" , type.GetType().AssemblyQualifiedName }
+                    { "name" , $"{type.GetType().AssemblyQualifiedName}" }
                 };
             var av = ctx?.Features.Get<IRouteValuesFeature>()?.RouteValues;
             var path = _provider.Router.GetVirtualPath(new VirtualPathContext(ctx, av, dictionary, "ProblemDetails"));
 
-            var link = UriHelper.BuildAbsolute(ctx.Request.Scheme, ctx.Request.Host, ctx.Request.PathBase, path.VirtualPath);
+            var link = UriHelper.BuildRelative(ctx.Request.PathBase, path.VirtualPath);
             return link;
         }
     }
