@@ -15,7 +15,6 @@
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
-  
   <!--===============================================================================-->
 
   <ItemGroup>
@@ -28,8 +27,6 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.18.3" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.18.5" />
   </ItemGroup>
-
-
 </Project>
