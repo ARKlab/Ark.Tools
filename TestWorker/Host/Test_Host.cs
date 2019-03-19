@@ -11,6 +11,8 @@ using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.ApplicationInsights;
 using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TestWorker.Host
 {
@@ -23,11 +25,12 @@ namespace TestWorker.Host
                 var hostBuilder = new HostBuilder()
                     .AddWorkerHostInfrastracture()
                     .AddApplicationInsightsForWorkerHost()
-                    .AddWorkerHost<Host>(cfg =>
+                    .AddWorkerHost<Host>(s =>
                     {
+                        //var config = s.GetService<IConfiguration>();
                         var baseCfg1 = new Test_Host_Config()
                         {
-                            //StateDbConnectionString = config.GetConnectionString("boh")
+                            StateDbConnectionString = "" //config.GetConnectionString("boh")
                         };
 
                         configurationOverrider?.Invoke(baseCfg1);

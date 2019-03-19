@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using Microsoft.ApplicationInsights.Extensibility.Implementation.ApplicationId;
 using Microsoft.AspNetCore.Http;
+using System;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 {
@@ -75,7 +76,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
                 services.Configure<ApplicationInsightsServiceOptions>(o =>
                 {
-                    o.InstrumentationKey = ctx.Configuration["ApplicationInsights:InstrumentationKey"];
+                    o.InstrumentationKey = ctx.Configuration["ApplicationInsights:InstrumentationKey"] 
+                        ?? Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
                     o.EnableAdaptiveSampling = true;
                     o.EnableHeartbeat = true;
                     o.AddAutoCollectedMetricExtractor = true;
