@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Channel;
 using System.Security.Claims;
+using Microsoft.ApplicationInsights.AspNetCore.TelemetryInitializers;
 
 namespace Ark.Tools.AspNetCore.ApplicationInsights
 {

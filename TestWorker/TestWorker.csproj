@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <ApplicationIcon />
+    <Version>1.2.3</Version>
     <OutputType>Exe</OutputType>
     <StartupObject />
   </PropertyGroup>

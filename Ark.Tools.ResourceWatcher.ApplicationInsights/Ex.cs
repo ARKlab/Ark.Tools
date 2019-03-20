@@ -25,6 +25,13 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             {
                 services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+                //TelemetryInitializer
+                services.AddSingleton<ITelemetryInitializer, DomainNameRoleInstanceTelemetryInitializer>();
+                services.AddSingleton<ITelemetryInitializer, AzureWebAppRoleEnvironmentTelemetryInitializer>();
+                services.AddSingleton<ITelemetryInitializer, ComponentVersionTelemetryInitializer>();
+                services.AddSingleton<ITelemetryInitializer, AspNetCoreEnvironmentTelemetryInitializer>();
+                services.AddSingleton<ITelemetryInitializer, HttpDependenciesParsingTelemetryInitializer>();
+
                 //TelemetryChannel
                 services.TryAddSingleton<ITelemetryChannel, ServerTelemetryChannel>();
 
@@ -36,7 +43,10 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
                 services.AddSingleton<ITelemetryModule, AppServicesHeartbeatTelemetryModule>();
                 services.AddSingleton<ITelemetryModule, AzureInstanceMetadataTelemetryModule>();
-
+                services.AddSingleton<ITelemetryModule, UnobservedExceptionTelemetryModule>();
+#if NET461
+                services.AddSingleton<ITelemetryModule, UnhandledExceptionTelemetryModule>();
+#endif
                 services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) =>
                 {
                     module.EnableLegacyCorrelationHeadersInjection =
@@ -76,8 +86,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
                 services.Configure<ApplicationInsightsServiceOptions>(o =>
                 {
-                    o.InstrumentationKey = ctx.Configuration["ApplicationInsights:InstrumentationKey"] 
-                        ?? Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
+                    o.InstrumentationKey = "fef8ed59-fc07-4890-865f-edba7d8d41f9"; //ctx.Configuration["ApplicationInsights:InstrumentationKey"] ?? Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
+
                     o.EnableAdaptiveSampling = true;
                     o.EnableHeartbeat = true;
                     o.AddAutoCollectedMetricExtractor = true;

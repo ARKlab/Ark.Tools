@@ -86,14 +86,32 @@ namespace Ark.Tools.ResourceWatcher
             );
         }
 
-        public void RunSuccessful(Activity activity, int totalResources, TimeSpan elapsed)
+        public void RunSuccessful(Activity activity, List<ProcessContext> evaluated, TimeSpan elapsed)
         {
             _logger.Info($"Check successful for tenant {_tenant} in {elapsed}");
 
-            _stop(activity, () => new
+            _stop(activity, () =>
             {
-                TotalResources = totalResources,
-                Tenant = _tenant,
+                var total = 0;
+                var counts = evaluated.GroupBy(x => x.ResultType).ToDictionary(x => x.Key, x => x.Count());
+                foreach (var k in Enum.GetValues(typeof(ResultType)).Cast<ResultType>())
+                {
+                    if (!counts.ContainsKey(k))
+                        counts[k] = 0;
+
+                    total += counts[k];
+                }
+
+                return new
+                {
+                    ResourcesFound = total,
+                    Normal = counts[ResultType.Normal],
+                    NoPayload = counts[ResultType.NoPayload],
+                    NoAction = counts[ResultType.NoAction],
+                    Error = counts[ResultType.Error],
+                    Skipped = counts[ResultType.Skipped],
+                    Tenant = _tenant,
+                };
             }
             );
         }
@@ -147,21 +165,23 @@ namespace Ark.Tools.ResourceWatcher
             return activity;
         }
 
-        public void CheckStateSuccessful(Activity activity, IEnumerable<ProcessData> toEvaluate)
+        public void CheckStateSuccessful(Activity activity, IEnumerable<ProcessContext> evaluated)
         {
             _stop(activity, () =>
             {
-                var counts = toEvaluate.GroupBy(x => x.ProcessDataType).ToDictionary(x => x.Key, x => x.Count());
-                foreach (var k in Enum.GetValues(typeof(ProcessDataType)).Cast<ProcessDataType>())
+                var counts = evaluated.GroupBy(x => x.ProcessType).ToDictionary(x => x.Key, x => x.Count());
+                foreach (var k in Enum.GetValues(typeof(ProcessType)).Cast<ProcessType>())
                     if (!counts.ContainsKey(k))
                         counts[k] = 0;
 
                 return new
                 {
-                    ResourcesNew = counts[ProcessDataType.New],
-                    ResourcesUpdated = counts[ProcessDataType.Updated],
-                    ResourcesRetried = counts[ProcessDataType.Retry],
-                    ResourcesRetriedAfterBan = counts[ProcessDataType.RetryAfterBan],
+                    ResourcesNew = counts[ProcessType.New],
+                    ResourcesUpdated = counts[ProcessType.Updated],
+                    ResourcesRetried = counts[ProcessType.Retry],
+                    ResourcesRetriedAfterBan = counts[ProcessType.RetryAfterBan],
+                    ResourcesBanned = counts[ProcessType.Banned],
+                    ResourcesNothingToDo = counts[ProcessType.NothingToDo],
                     Tenant = _tenant,
                 };
             }
@@ -170,12 +190,22 @@ namespace Ark.Tools.ResourceWatcher
         #endregion
 
         #region ProcessResource
-        public Activity ProcessResourceStart(IResourceMetadata metadata, ResourceState state)
+        public Activity ProcessResourceStart(int idx, int total, ProcessContext processContext)
         {
+            _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
+                , processContext.CurrentInfo.ResourceId
+                , processContext.CurrentInfo.Modified
+                , processContext.LastState?.Modified
+                , processContext.LastState?.RetryCount
+                , idx
+                , total
+            );
+
             Activity activity = _start("ProcessResource", () => new
             {
-                Metadata = metadata,
-                State = state,
+                Idx = idx,
+                Total = total,
+                ProcessContext = processContext,
                 Tenant = _tenant,
             },
                 null
@@ -184,53 +214,48 @@ namespace Ark.Tools.ResourceWatcher
             return activity;
         }
 
-        public void ProcessResourceFailed(Activity activity, LogLevel lvl, string resourceId, ProcessDataType processDataType, ProcessType processType, Exception ex)
+        public void ProcessResourceFailed(Activity activity, int idx, int total, ProcessContext processContext, bool isBanned, Exception ex)
         {
-            _logger.Log(lvl, ex, $"Error while processing ResourceId=\"{resourceId}\"");
+            var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
+            _logger.Log(lvl, ex, $"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" process Failed");
 
             _stop(activity, () => new
             {
-                ProcessDataType = processDataType,
-                ResourceIdId = resourceId,
+                Idx = idx,
+                Total = total,
+                ProcessContext = processContext,
+                IsBanned = isBanned,
                 Exception = ex,
                 Tenant = _tenant,
             }
             );
         }
 
-        public void ProcessResourceSuccessful(    Activity activity
-                                                , int idx
-                                                , string resourceId
-                                                , TimeSpan elapsed
-                                                , int retryCount
-                                                , int total
-                                                , IResourceState state
-                                                , ProcessDataType processDataType
-                                                , ProcessType processType)
+        public void ProcessResourceSuccessful(Activity activity, int idx, int total, ProcessContext processContext)
         {
-            if (processType == ProcessType.NoPayload)
-            {
-                _logger.Info($"({idx}/{total}) ResourceId=\"{resourceId}\" No payload retrived, so no new state. Generally due to a same-checksum");
-            }
-            else if (processType == ProcessType.NoAction)
-            {
-                _logger.Info($"({idx}/{total}) ResourceId=\"{resourceId}\" No action has been triggered and payload has not been retrieved. We do not change the state");
-            }
-            else if (processType == ProcessType.Normal)
-            {
-                _logger.Info($"({idx}/{total}) ResourceId=\"{resourceId}\" handled {(retryCount == 0 ? "" : "not ")}successfully in {elapsed}");
-            }
-
             //_setTags(activity, processType.ToString(), processType.ToString());
 
             _stop(activity, () => new
             {
-                ProcessDataType = processDataType,
-                ResourceIdId = resourceId,
-                State = state,
+                Idx = idx,
+                Total = total,
+                ProcessContext = processContext,
                 Tenant = _tenant,
             }
             );
+
+            if (processContext.ResultType == ResultType.NoPayload)
+            {
+                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" No payload retrived, so no new state. Generally due to a same-checksum");
+            }
+            else if (processContext.ResultType == ResultType.NoAction)
+            {
+                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" No action has been triggered and payload has not been retrieved. We do not change the state");
+            }
+            else if (processContext.ResultType == ResultType.Normal)
+            {
+                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" handled {(processContext.NewState.RetryCount == 0 ? "" : "not ")}successfully in {activity.Duration}");
+            }
         }
         #endregion
 

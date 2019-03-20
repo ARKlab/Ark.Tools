@@ -84,7 +84,14 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
-        public virtual void OnRunStop(int totalResources, string tenant, Exception exception)
+        public virtual void OnRunStop(    int resourcesFound
+                                        , int normal
+                                        , int noPayload
+                                        , int noAction
+                                        , int error
+                                        , int skipped
+                                        , string tenant
+                                        , Exception exception)
         {
 
         }
@@ -124,10 +131,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState.Stop")]
-        public virtual void OnCheckStateStop(     int resourcesNew
+        public virtual void OnCheckStateStop(int resourcesNew
                                                 , int resourcesUpdated
                                                 , int resourcesRetried
                                                 , int resourcesRetriedAfterBan
+                                                , int resourcesBanned
+                                                , int resourcesNothingToDo
                                                 , string tenant
                                                 , Exception exception)
         {
@@ -149,7 +158,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
-        public virtual void OnProcessResourceStop(string resourceId, ProcessDataType processDataType, IResourceState state, string tenant, Exception exception)
+        public virtual void OnProcessResourceStop(string tenant, int idx, int total, ProcessContext processContext, bool isBanned, Exception exception)
         {
 
         }

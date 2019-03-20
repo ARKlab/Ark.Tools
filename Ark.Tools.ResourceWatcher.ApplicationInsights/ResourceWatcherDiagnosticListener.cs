@@ -166,7 +166,14 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
-        public override void OnRunStop(int totalResources, string tenant, Exception exception)
+        public override void OnRunStop(   int resourcesFound
+                                        , int normal
+                                        , int noPayload
+                                        , int noAction
+                                        , int error
+                                        , int skipped
+                                        , string tenant
+                                        , Exception exception)
         {
             Activity currentActivity = Activity.Current;
 
@@ -185,7 +192,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
-            telemetry.Metrics.Add("TotalResources", totalResources);
+            telemetry.Metrics.Add("ResourcesFound", resourcesFound);
+            telemetry.Metrics.Add("ProcessNormal", normal);
+            telemetry.Metrics.Add("ProcessNoPayload", noPayload);
+            telemetry.Metrics.Add("ProcessNoAction", noAction);
+            telemetry.Metrics.Add("ProcessError", error);
+            telemetry.Metrics.Add("ProcessSkipped", skipped);
 
             //Exception
             if (exception != null)
@@ -197,7 +209,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 };
 
                 telemetryException.Properties.Add("Tenant", tenant);
-                telemetryException.Metrics.Add("TotalResources", totalResources);
+                telemetry.Metrics.Add("ResourcesFound", resourcesFound);
+                telemetry.Metrics.Add("ProcessNormal", normal);
+                telemetry.Metrics.Add("ProcessNoPayload", noPayload);
+                telemetry.Metrics.Add("ProcessNoAction", noAction);
+                telemetry.Metrics.Add("ProcessError", error);
+                telemetry.Metrics.Add("ProcessSkipped", skipped);
 
                 this.Client.TrackException(telemetryException);
             }
@@ -240,6 +257,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
+            telemetry.Properties.Add("Elapsed", elapsed.ToString());
             telemetry.Metrics.Add("ResourcesFound", resourcesFound);
 
             //Exception
@@ -275,10 +293,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState.Stop")]
-        public override void OnCheckStateStop(     int resourcesNew
+        public override void OnCheckStateStop(    int resourcesNew
                                                 , int resourcesUpdated
                                                 , int resourcesRetried
                                                 , int resourcesRetriedAfterBan
+                                                , int resourcesBanned
+                                                , int resourcesNothingToDo
                                                 , string tenant
                                                 , Exception exception)
         {
@@ -304,6 +324,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             telemetry.Metrics.Add("ResourcesUpdated", resourcesUpdated);
             telemetry.Metrics.Add("ResourcesRetried", resourcesRetried);
             telemetry.Metrics.Add("ResourcesRetriedAfterBan", resourcesRetriedAfterBan);
+            telemetry.Metrics.Add("ResourcesBanned", resourcesBanned);
+            telemetry.Metrics.Add("ResourcesNothingToDo", resourcesNothingToDo);
 
             //Exception
             if (exception != null)
@@ -337,7 +359,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
-        public override void OnProcessResourceStop(string resourceId, ProcessDataType processDataType, IResourceState state, string tenant, Exception exception)
+        public override void OnProcessResourceStop(string tenant, int idx, int total, ProcessContext processContext, bool isBanned, Exception exception)
         {
             Activity currentActivity = Activity.Current;
 
@@ -357,14 +379,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
-            telemetry.Properties.Add("ResourceId", resourceId);
-            telemetry.Properties.Add("ProcessDataType", processDataType.ToString());
-
-            if (state != default)
-            {
-                telemetry.Properties.Add("RetrievedAt", state.RetrievedAt.ToString());
-                telemetry.Properties.Add("CheckSum", state.CheckSum);
-            }
+            telemetry.Properties.Add("Idx/Total", idx.ToString() + "/" + total.ToString());
+            _propertiesProcessResource(telemetry, processContext);
 
             //Exception
             if (exception != null)
@@ -375,13 +391,30 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                     Message = exception.Message
                 };
 
+                //Properties and metrics
                 telemetryException.Properties.Add("Tenant", tenant);
-                telemetryException.Properties.Add("ResourceId", resourceId);
-                
+                telemetry.Properties.Add("Idx/Total", idx.ToString() + "/" + total.ToString());
+                _propertiesProcessResource(telemetryException, processContext);
+
                 this.Client.TrackException(telemetryException);
             }
 
             this.Client.TrackDependency(telemetry);
+        }
+
+        private void _propertiesProcessResource(ISupportProperties data, ProcessContext processDataContext)
+        {
+            data.Properties.Add("ResourceId", processDataContext.CurrentInfo.ResourceId);
+            data.Properties.Add("ProcessType", processDataContext.ProcessType.ToString());
+            data.Properties.Add("ResultType", processDataContext.ResultType.ToString());
+
+            if (processDataContext.NewState != default)
+            {
+                data.Properties.Add("RetryCount", processDataContext.NewState.RetryCount.ToString());
+                data.Properties.Add("RetrievedAt", processDataContext.NewState.ToString());
+                data.Properties.Add("CheckSum", processDataContext.NewState.CheckSum);
+                data.Properties.Add("Modified", processDataContext.NewState.Modified.ToString());
+            }
         }
         #endregion
     }
