@@ -166,7 +166,7 @@ namespace Ark.Tools.ResourceWatcher
                 _logger.Info($"Found {list.Count} resources to process with parallelism {_config.DegreeOfParallelism}");
 
                 var tasks = evaluated.Parallel((int)_config.DegreeOfParallelism, async (i, x) =>
-                    await _processEntry((int)i, evaluated.Count, x, ctk));
+                    await _processEntry((int)i+1, evaluated.Count, x, ctk));
 
                 await Task.WhenAll(tasks).ConfigureAwait(false);
 
