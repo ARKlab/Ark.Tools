@@ -21,7 +21,7 @@ setlocal
 "%MSBUILD%" "Ark.Tools.ResourceWatcher.Sql\Ark.Tools.ResourceWatcher.Sql.csproj"								/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj"					/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.ResourceWatcher.WorkerHost.Ftp\Ark.Tools.ResourceWatcher.WorkerHost.Ftp.csproj"			/t:Pack /p:Configuration=Release
-"%MSBUILD%" "Ark.Tools.ResourceWatcher.WorkerHost.Hosting\Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj"			/t:Pack /p:Configuration=Release
+"%MSBUILD%" "Ark.Tools.ResourceWatcher.WorkerHost.Hosting\Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj"	/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.ResourceWatcher.WorkerHost.Sql\Ark.Tools.ResourceWatcher.WorkerHost.Sql.csproj"			/t:Pack /p:Configuration=Release
 
 pause

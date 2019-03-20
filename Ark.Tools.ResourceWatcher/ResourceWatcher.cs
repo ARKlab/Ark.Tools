@@ -299,8 +299,10 @@ namespace Ark.Tools.ResourceWatcher
                             state.Modified = info.Modified;
                             state.RetryCount = 0; // success
                         }
-
-                        throw new NotSupportedException($"({idx}/{total}) ResourceId=\"{state.ResourceId}\" we cannot reach this point!");
+                        else
+                        {
+                            throw new NotSupportedException($"({idx}/{total}) ResourceId=\"{state.ResourceId}\" we cannot reach this point!");
+                        }
                     }
                     else // for some reason, no action has been and payload has not been retrieved. We do not change the state
                     {
