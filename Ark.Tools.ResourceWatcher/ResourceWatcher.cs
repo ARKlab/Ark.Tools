@@ -217,6 +217,7 @@ namespace Ark.Tools.ResourceWatcher
                 }
                 else
                     x.ProcessType = ProcessType.NothingToDo;
+
                 return x;
             });
 
@@ -286,7 +287,7 @@ namespace Ark.Tools.ResourceWatcher
                             }
                             else // no payload retrived, so no new state. Generally due to a same-checksum
                             {
-                                processContext.ResultType = ResultType.NoPayload;
+                                processContext.ResultType = ResultType.NoNewData;
                             }
 
                             state.Extensions = info.Extensions;
@@ -353,7 +354,7 @@ namespace Ark.Tools.ResourceWatcher
     {
         Normal,
         NoAction,
-        NoPayload,
+        NoNewData,
         Error,
         Skipped
     }

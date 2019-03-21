@@ -1,7 +1,9 @@
-﻿using Microsoft.ApplicationInsights;
+﻿using Ark.Tools.Nodatime.Json;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DiagnosticAdapter;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -168,7 +170,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
         public override void OnRunStop(   int resourcesFound
                                         , int normal
-                                        , int noPayload
+                                        , int noNewData
                                         , int noAction
                                         , int error
                                         , int skipped
@@ -193,11 +195,11 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
             telemetry.Metrics.Add("ResourcesFound", resourcesFound);
-            telemetry.Metrics.Add("ProcessNormal", normal);
-            telemetry.Metrics.Add("ProcessNoPayload", noPayload);
-            telemetry.Metrics.Add("ProcessNoAction", noAction);
-            telemetry.Metrics.Add("ProcessError", error);
-            telemetry.Metrics.Add("ProcessSkipped", skipped);
+            telemetry.Metrics.Add("Result_Normal", normal);
+            telemetry.Metrics.Add("Result_NoNewData", noNewData);
+            telemetry.Metrics.Add("Result_NoAction", noAction);
+            telemetry.Metrics.Add("Result_Error", error);
+            telemetry.Metrics.Add("Result_Skipped", skipped);
 
             //Exception
             if (exception != null)
@@ -210,11 +212,11 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
                 telemetryException.Properties.Add("Tenant", tenant);
                 telemetry.Metrics.Add("ResourcesFound", resourcesFound);
-                telemetry.Metrics.Add("ProcessNormal", normal);
-                telemetry.Metrics.Add("ProcessNoPayload", noPayload);
-                telemetry.Metrics.Add("ProcessNoAction", noAction);
-                telemetry.Metrics.Add("ProcessError", error);
-                telemetry.Metrics.Add("ProcessSkipped", skipped);
+                telemetry.Metrics.Add("Result_Normal", normal);
+                telemetry.Metrics.Add("Result_NoNewData", noNewData);
+                telemetry.Metrics.Add("Result_NoAction", noAction);
+                telemetry.Metrics.Add("Result_Error", error);
+                telemetry.Metrics.Add("Result_Skipped", skipped);
 
                 this.Client.TrackException(telemetryException);
             }
@@ -320,12 +322,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
-            telemetry.Metrics.Add("ResourcesNew", resourcesNew);
-            telemetry.Metrics.Add("ResourcesUpdated", resourcesUpdated);
-            telemetry.Metrics.Add("ResourcesRetried", resourcesRetried);
-            telemetry.Metrics.Add("ResourcesRetriedAfterBan", resourcesRetriedAfterBan);
-            telemetry.Metrics.Add("ResourcesBanned", resourcesBanned);
-            telemetry.Metrics.Add("ResourcesNothingToDo", resourcesNothingToDo);
+            telemetry.Metrics.Add("Resources_New", resourcesNew);
+            telemetry.Metrics.Add("Resources_Updated", resourcesUpdated);
+            telemetry.Metrics.Add("Resources_Retried", resourcesRetried);
+            telemetry.Metrics.Add("Resources_RetriedAfterBan", resourcesRetriedAfterBan);
+            telemetry.Metrics.Add("Resources_Banned", resourcesBanned);
+            telemetry.Metrics.Add("Resources_NothingToDo", resourcesNothingToDo);
 
             //Exception
             if (exception != null)
@@ -408,12 +410,21 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             data.Properties.Add("ProcessType", processDataContext.ProcessType.ToString());
             data.Properties.Add("ResultType", processDataContext.ResultType.ToString());
 
+            if (processDataContext.LastState != default)
+            {
+                data.Properties.Add("CheckSum_Old", processDataContext.LastState.CheckSum);
+                data.Properties.Add("Modified_Old", processDataContext.LastState.Modified.ToString());
+            }
+
             if (processDataContext.NewState != default)
             {
                 data.Properties.Add("RetryCount", processDataContext.NewState.RetryCount.ToString());
                 data.Properties.Add("RetrievedAt", processDataContext.NewState.ToString());
                 data.Properties.Add("CheckSum", processDataContext.NewState.CheckSum);
                 data.Properties.Add("Modified", processDataContext.NewState.Modified.ToString());
+
+                string extensionsString = JsonConvert.SerializeObject(processDataContext.NewState.Extensions, ArkDefaultJsonSerializerSettings.Instance);
+                data.Properties.Add("Extensions", extensionsString);
             }
         }
         #endregion

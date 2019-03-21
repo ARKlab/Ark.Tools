@@ -106,7 +106,7 @@ namespace Ark.Tools.ResourceWatcher
                 {
                     ResourcesFound = total,
                     Normal = counts[ResultType.Normal],
-                    NoPayload = counts[ResultType.NoPayload],
+                    NoNewData = counts[ResultType.NoNewData],
                     NoAction = counts[ResultType.NoAction],
                     Error = counts[ResultType.Error],
                     Skipped = counts[ResultType.Skipped],
@@ -244,7 +244,7 @@ namespace Ark.Tools.ResourceWatcher
             }
             );
 
-            if (processContext.ResultType == ResultType.NoPayload)
+            if (processContext.ResultType == ResultType.NoNewData)
             {
                 _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" No payload retrived, so no new state. Generally due to a same-checksum");
             }

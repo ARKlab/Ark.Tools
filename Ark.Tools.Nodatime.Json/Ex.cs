@@ -3,6 +3,8 @@
 using Ark.Tools.Nodatime.Json;
 using EnsureThat;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using NodaTime;
 using NodaTime.Serialization.JsonNet;
 using System;
 using System.Collections.Generic;
@@ -13,6 +15,17 @@ namespace Ark.Tools.Nodatime
 {
     public static class Ex
     {
+        public static JsonSerializerSettings ConfigureForArkDefault(this JsonSerializerSettings settings)
+        {
+            settings.NullValueHandling = NullValueHandling.Include;
+            settings.TypeNameHandling = TypeNameHandling.None;
+            settings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+            settings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+            settings.ConfigureForNodaTimeRanges();
+            settings.Converters.Add(new StringEnumConverter());
+            return settings;
+        }
+
         public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
         {
             EnsureArg.IsNotNull(settings);

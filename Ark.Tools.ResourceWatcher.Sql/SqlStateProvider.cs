@@ -14,6 +14,7 @@ using NodaTime;
 using Newtonsoft.Json.Converters;
 using Ark.Tools.Sql;
 using Ark.Tools.Core;
+using Ark.Tools.Nodatime.Json;
 
 namespace Ark.Tools.ResourceWatcher
 {
@@ -39,11 +40,7 @@ namespace Ark.Tools.ResourceWatcher
 
             _connManager = connManager;
             _config = config;
-            _jsonSerializerSettings = new JsonSerializerSettings();
-            _jsonSerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-            _jsonSerializerSettings.NullValueHandling = NullValueHandling.Include;
-            _jsonSerializerSettings.TypeNameHandling = TypeNameHandling.None;
-            _jsonSerializerSettings.Converters.Add(new StringEnumConverter());
+            _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.Instance;
         }
 
         class EJ

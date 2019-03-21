@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
   </ItemGroup>
