@@ -79,7 +79,9 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                 {
                     foreach (var f in filter.FoldersToWatch)
                     {
-                        var list = await _ftpClient.ListFilesRecursiveAsync(f, x => filter.FolderFilter?.Invoke(x.FullPath) == false, ctk: cts2.Token).ConfigureAwait(false);
+                        Predicate<FtpEntry> skipFolder = x => filter.FolderFilter?.Invoke(x.FullPath) == false;
+
+                        var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token).ConfigureAwait(false);
                         res = res.Concat(list.Select(e => new FtpMetadata(e)));
                     }
                     return res.ToList();
