@@ -254,7 +254,7 @@ namespace Ark.Tools.ResourceWatcher
             }
             else if (processContext.ResultType == ResultType.Normal)
             {
-                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" handled {(processContext.NewState.RetryCount == 0 ? "" : "not ")}successfully in {activity.Duration}");
+                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" handled {(processContext.NewState.RetryCount == 0 ? "" : "not ")}successfully {(activity != null ? " in" + (activity.Duration.ToString()) : "")}");
             }
         }
         #endregion
