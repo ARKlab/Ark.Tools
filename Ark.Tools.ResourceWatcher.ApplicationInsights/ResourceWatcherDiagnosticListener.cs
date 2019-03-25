@@ -211,12 +211,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 };
 
                 telemetryException.Properties.Add("Tenant", tenant);
-                telemetry.Metrics.Add("ResourcesFound", resourcesFound);
-                telemetry.Metrics.Add("Result_Normal", normal);
-                telemetry.Metrics.Add("Result_NoNewData", noNewData);
-                telemetry.Metrics.Add("Result_NoAction", noAction);
-                telemetry.Metrics.Add("Result_Error", error);
-                telemetry.Metrics.Add("Result_Skipped", skipped);
+                telemetryException.Metrics.Add("ResourcesFound", resourcesFound);
+                telemetryException.Metrics.Add("Result_Normal", normal);
+                telemetryException.Metrics.Add("Result_NoNewData", noNewData);
+                telemetryException.Metrics.Add("Result_NoAction", noAction);
+                telemetryException.Metrics.Add("Result_Error", error);
+                telemetryException.Metrics.Add("Result_Skipped", skipped);
 
                 this.Client.TrackException(telemetryException);
             }
@@ -395,7 +395,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
                 //Properties and metrics
                 telemetryException.Properties.Add("Tenant", tenant);
-                telemetry.Properties.Add("Idx/Total", idx.ToString() + "/" + total.ToString());
+                telemetryException.Properties.Add("Idx/Total", idx.ToString() + "/" + total.ToString());
                 _propertiesProcessResource(telemetryException, processContext);
 
                 this.Client.TrackException(telemetryException);
