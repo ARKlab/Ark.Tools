@@ -1,21 +1,22 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NLog;
+using Polly;
+using System.IO;
+using ArxOne.Ftp;
+using EnsureThat;
+using Ark.Tools.FtpClient.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Net.Sockets;
+using Org.Mentalis.Network.ProxySocket;
 
 namespace Ark.Tools.FtpClient
 {
-    using Polly;
-    using System.IO;
-    using ArxOne.Ftp;
-    using EnsureThat;
-    using Ark.Tools.FtpClient.Core;
-
     public class FtpClientArxOneFactory : IFtpClientFactory
     {
         public IFtpClient Create(string host, NetworkCredential credentials)
@@ -23,6 +24,25 @@ namespace Ark.Tools.FtpClient
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credentials);
             return new FtpClientArxOne(host, credentials);
+        }
+    }
+
+    public class FtpClientArxOneWithSocksFactory : IFtpClientFactory
+    {
+        private readonly ISocksConfig _config;
+
+        public FtpClientArxOneWithSocksFactory(ISocksConfig config)
+        {
+            EnsureArg.IsNotNull(config);
+
+            _config = config;
+        }
+
+        public IFtpClient Create(string host, NetworkCredential credentials)
+        {
+            EnsureArg.IsNotEmpty(host);
+            EnsureArg.IsNotNull(credentials);
+            return new FtpClientArxOneWithSocks(_config, host, credentials);
         }
     }
 
@@ -39,9 +59,9 @@ namespace Ark.Tools.FtpClient
             this.Credentials = credentials;
         }
 
-        public NetworkCredential Credentials { get; protected set; }
+        public NetworkCredential Credentials { get; private set; }
 
-        public string Host { get; protected set; }
+        public string Host { get; private set; }
 
         public async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
         {
@@ -73,7 +93,8 @@ namespace Ark.Tools.FtpClient
             if (client.ServerFeatures.HasFeature("MLSD"))
             {
                 return client.MlsdEntries(path);
-            } else
+            }
+            else
             {
                 return client.ListEntries(path);
             }
@@ -176,14 +197,59 @@ namespace Ark.Tools.FtpClient
             }
         }
 
-        private ArxOne.Ftp.FtpClient _getClient()
+        private protected virtual ArxOne.Ftp.FtpClient _getClient()
         {
             return new ArxOne.Ftp.FtpClient(new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
             {
                 ConnectTimeout = TimeSpan.FromSeconds(60)
-                
-            });            
+
+            });
         }
-        
+
+    }
+
+    public class FtpClientArxOneWithSocks : FtpClientArxOne
+    {
+        private readonly ISocksConfig _config;
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
+
+        public FtpClientArxOneWithSocks(ISocksConfig config, string host, NetworkCredential credentials) : base(host, credentials)
+        {
+            this._config = config;
+        }
+
+        private protected override ArxOne.Ftp.FtpClient _getClient()
+        {
+            var client = new ArxOne.Ftp.FtpClient(new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
+            {
+                ConnectTimeout = TimeSpan.FromSeconds(60),
+                ProxyConnect = e =>
+                {
+                    var s = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+                    {
+                        ProxyEndPoint = new IPEndPoint(IPAddress.Parse(_config.IpAddress), _config.Port),
+                        ProxyUser = _config.UserName,
+                        ProxyPass = _config.Password,
+                        ProxyType = _config.Type
+                    };
+
+                    switch (e)
+                    {
+                        case DnsEndPoint dns:
+                            s.Connect(dns.Host, dns.Port);
+                            break;
+                        case IPEndPoint ip:
+                            s.Connect(ip);
+                            break;
+
+                        default: throw new NotSupportedException();
+                    }
+
+                    return s;
+                }
+            });
+
+            return client;
+        }
     }
 }
