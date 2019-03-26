@@ -66,8 +66,7 @@ namespace Ark.Tools.ResourceWatcher
                 Type = type,
                 Now = now,
                 Tenant = _tenant,
-            },
-                null
+            }
             );
 
             return activity;
@@ -122,8 +121,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             Activity activity = _start("GetResources", () => new
             {
-            },
-                null
+            }
             );
 
             return activity;
@@ -158,8 +156,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             Activity activity = _start("CheckState", () => new
             {
-            },
-                null
+            }
             );
 
             return activity;
@@ -207,8 +204,7 @@ namespace Ark.Tools.ResourceWatcher
                 Total = total,
                 ProcessContext = processContext,
                 Tenant = _tenant,
-            },
-                null
+            }
             );
 
             return activity;
@@ -284,24 +280,19 @@ namespace Ark.Tools.ResourceWatcher
         }
         #endregion
 
-        private Activity _start(string operationName, Func<object> getPayload, Action<Activity> setTags)
+        private Activity _start(string operationName, Func<object> getPayload)
         {
-            Activity activity = null;
-            string activityName = BaseActivityName + "." +operationName;
+            string activityName = BaseActivityName + "." + operationName;
 
-            if (_source.IsEnabled(activityName))
+            var activity = new Activity(activityName);
+
+            if (_source.IsEnabled(activityName + ".Start"))
             {
-                activity = new Activity(activityName);
-                setTags?.Invoke(activity);
-
-                if (_source.IsEnabled(activityName + ".Start"))
-                {
-                    _source.StartActivity(activity, getPayload());
-                }
-                else
-                {
-                    activity.Start();
-                }
+                _source.StartActivity(activity, getPayload());
+            }
+            else
+            {
+                activity.Start();
             }
 
             return activity;

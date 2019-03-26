@@ -156,17 +156,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         #endregion
 
         #region Run
-        [DiagnosticName("Ark.Tools.ResourceWatcher.Run")]
-        public override void OnRun()
-        {
-        }
-
-        [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Start")]
-        public override void OnRunStart(RunType runType)
-        {
-
-        }
-
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
         public override void OnRunStop(   int resourcesFound
                                         , int normal
@@ -226,18 +215,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         #endregion 
 
         #region GetResources
-        [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources")]
-        public override void OnGetResources()
-        {
-
-        }
-
-        [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources.Start")]
-        public override void OnGetResourcesStart()
-        {
-
-        }
-
         [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources.Stop")]
         public override void OnGetResourcesStop(int resourcesFound, TimeSpan elapsed, string tenant, Exception exception)
         {
@@ -348,18 +325,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         #endregion
 
         #region ProcessResource
-        [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource")]
-        public override void OnProcessResource()
-        {
-
-        }
-
-        [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Start")]
-        public override void OnProcessResourceStart()
-        {
-
-        }
-
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
         public override void OnProcessResourceStop(string tenant, int idx, int total, ProcessContext processContext, bool isBanned, Exception exception)
         {
