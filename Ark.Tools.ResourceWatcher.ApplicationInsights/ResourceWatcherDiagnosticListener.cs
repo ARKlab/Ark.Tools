@@ -10,12 +10,11 @@ using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 { 
-    public class ResourceWatcherDiagnosticListener : DiagnosticListenerBase, IObserver<DiagnosticListener>, IDisposable
+    public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     {
         protected readonly TelemetryClient Client;
         protected readonly TelemetryConfiguration Configuration;
 
-        private readonly List<IDisposable> subscription = new List<IDisposable>();
         private const string _type = "ProcessStep";
 
         public ResourceWatcherDiagnosticListener(TelemetryConfiguration configuration)
@@ -23,34 +22,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             this.Configuration = configuration;
             this.Client = new TelemetryClient(configuration);
             this.Client.InstrumentationKey = configuration.InstrumentationKey;
-
-            this.subscription.Add(DiagnosticListener.AllListeners.Subscribe(this));
-        }
-
-        public void Dispose()
-        {
-            foreach (var sub in subscription)
-            {
-                sub.Dispose();
-            }
-        }
-
-        void IObserver<DiagnosticListener>.OnCompleted()
-        {
-
-        }
-
-        void IObserver<DiagnosticListener>.OnError(Exception error)
-        {
-
-        }
-
-        void IObserver<DiagnosticListener>.OnNext(DiagnosticListener value)
-        {
-            if (value.Name == "Ark.Tools.ResourceWatcher")
-            {
-                this.subscription.Add(value.SubscribeWithAdapter(this));
-            }
         }
 
         #region Event
@@ -259,17 +230,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         #endregion
 
         #region CheckState
-        [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState")]
-        public override void OnCheckState()
-        {
-
-        }
-
-        [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState.Start")]
-        public override void OnCheckStateStart()
-        {
-
-        }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState.Stop")]
         public override void OnCheckStateStop(    int resourcesNew

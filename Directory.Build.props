@@ -46,7 +46,7 @@
     <ArkToolsCoreVersion>1.1.15</ArkToolsCoreVersion>
     <AspNetCoreGroupVersion>1.3.5</AspNetCoreGroupVersion>
     <FtpClientGroupVersion>1.0.15</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>1.1.8</ResourceWatcherGroupVersion>
+    <ResourceWatcherGroupVersion>1.1.9</ResourceWatcherGroupVersion>
     
   </PropertyGroup>
   

@@ -1,20 +1,19 @@
 ﻿using Microsoft.Extensions.DiagnosticAdapter;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Ark.Tools.ResourceWatcher.ApplicationInsights
+namespace Ark.Tools.ResourceWatcher
 { 
-    public abstract class DiagnosticListenerBase : IObserver<DiagnosticListener>//, IDisposable
+    public abstract class ResourceWatcherDiagnosticListenerBase : IObserver<DiagnosticListener>, IDisposable
     {
-        //private readonly List<IDisposable> subscription = new List<IDisposable>();
+        private readonly List<IDisposable> _subscription = new List<IDisposable>();
 
-        //public void Dispose()
-        //{
-        //    foreach (var sub in subscription)
-        //    {
-        //        sub.Dispose();
-        //    }
-        //}
+        public ResourceWatcherDiagnosticListenerBase()
+        {
+            this._subscription.Add(DiagnosticListener.AllListeners.Subscribe(this));
+        }
+
 
         void IObserver<DiagnosticListener>.OnCompleted()
         {
@@ -28,7 +27,10 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
         void IObserver<DiagnosticListener>.OnNext(DiagnosticListener value)
         {
-
+            if (value.Name == "Ark.Tools.ResourceWatcher")
+            {
+                this._subscription.Add(value.SubscribeWithAdapter(this));
+            }
         }
 
         #region Event
@@ -72,10 +74,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         #endregion
 
         #region Run
-        [DiagnosticName("Ark.Tools.ResourceWatcher.Run")]
-        public virtual void OnRun()
-        {
-        }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Start")]
         public virtual void OnRunStart(RunType runType)
@@ -98,11 +96,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         #endregion 
 
         #region GetResources
-        [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources")]
-        public virtual void OnGetResources()
-        {
-
-        }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources.Start")]
         public virtual void OnGetResourcesStart()
@@ -118,11 +111,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         #endregion
 
         #region CheckState
-        [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState")]
-        public virtual void OnCheckState()
-        {
-
-        }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.CheckState.Start")]
         public virtual void OnCheckStateStart()
@@ -145,11 +133,6 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         #endregion
 
         #region ProcessResource
-        [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource")]
-        public virtual void OnProcessResource()
-        {
-
-        }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Start")]
         public virtual void OnProcessResourceStart()
@@ -162,6 +145,30 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         {
 
         }
+
+        #region IDisposable Support
+        private bool _disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    foreach (var d in _subscription)
+                        d.Dispose();
+                }
+
+                _disposedValue = true;
+            }
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
         #endregion
     }
 }
