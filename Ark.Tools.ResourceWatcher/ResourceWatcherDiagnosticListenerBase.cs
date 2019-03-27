@@ -41,13 +41,13 @@ namespace Ark.Tools.ResourceWatcher
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.RunTookTooLong")]
-        public virtual void RunTookTooLong(string tenant, TimeSpan elapsed)
+        public virtual void RunTookTooLong(string tenant, Activity activity)
         {
 
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceTookTooLong")]
-        public virtual void OnProcessResourceTookTooLong(string tenant, string resourceId, TimeSpan elapsed)
+        public virtual void OnProcessResourceTookTooLong(string tenant, string resourceId, Activity activity)
         {
 
         }

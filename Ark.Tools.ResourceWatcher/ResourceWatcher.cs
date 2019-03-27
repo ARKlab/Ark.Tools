@@ -129,7 +129,6 @@ namespace Ark.Tools.ResourceWatcher
         protected virtual async Task _runOnce(RunType runType, CancellationToken ctk = default)
         {
             var now = DateTime.UtcNow;
-            var sw = Stopwatch.StartNew();
 
             MappedDiagnosticsLogicalContext.Set("RequestID", Guid.NewGuid().ToString());
             var activityRun = _diagnosticSource.RunStart(runType, now);
@@ -151,7 +150,7 @@ namespace Ark.Tools.ResourceWatcher
                             ;
 
                 var list = infos.ToList();
-                _diagnosticSource.GetResourcesSuccessful(activityResource, list.Count, sw.Elapsed);
+                _diagnosticSource.GetResourcesSuccessful(activityResource, list.Count);
 
                 //Check State - check which entries are new or have been modified.
                 var activityCheckState = _diagnosticSource.CheckStateStart();
@@ -170,14 +169,14 @@ namespace Ark.Tools.ResourceWatcher
 
                 await Task.WhenAll(tasks).ConfigureAwait(false);
 
-                _diagnosticSource.RunSuccessful(activityRun, evaluated, sw.Elapsed);
+                _diagnosticSource.RunSuccessful(activityRun, evaluated);
 
-                if (sw.Elapsed > _config.RunDurationNotificationLimit)
-                    _diagnosticSource.RunTookTooLong(sw.Elapsed);
+                if (activityRun.Duration > _config.RunDurationNotificationLimit)
+                    _diagnosticSource.RunTookTooLong(activityRun);
             }
             catch (Exception ex)
             {
-                _diagnosticSource.RunFailed(activityRun, ex, sw.Elapsed);
+                _diagnosticSource.RunFailed(activityRun, ex);
                 throw;
             }
         }
@@ -305,8 +304,9 @@ namespace Ark.Tools.ResourceWatcher
                     }
 
                     _diagnosticSource.ProcessResourceSuccessful(processActivity, idx, total, processContext);
+
                     if(processActivity.Duration > _config.ResourceDurationNotificationLimit)
-                        _diagnosticSource.ProcessResourceTookTooLong(info.ResourceId, processActivity.Duration);
+                        _diagnosticSource.ProcessResourceTookTooLong(info.ResourceId, processActivity);
                 }
                 catch (Exception ex)
                 {

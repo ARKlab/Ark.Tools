@@ -37,46 +37,44 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.RunTookTooLong")]
-        public override void RunTookTooLong(string tenant, TimeSpan elapsed)
+        public override void RunTookTooLong(string tenant, Activity activity)
         {
-            Activity currentActivity = Activity.Current;
-
             var telemetry = new EventTelemetry
             {
-                Name = currentActivity.OperationName,
+                Name = activity.OperationName,
             };
 
             // properly fill dependency telemetry operation context
-            telemetry.Context.Operation.Id = currentActivity.RootId;
-            telemetry.Context.Operation.ParentId = currentActivity.ParentId;
-            telemetry.Timestamp = currentActivity.StartTimeUtc;
+            telemetry.Context.Operation.Id = activity.RootId;
+            telemetry.Context.Operation.ParentId = activity.ParentId;
+            telemetry.Timestamp = activity.StartTimeUtc;
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
-            telemetry.Metrics.Add("ElapsedSeconds", elapsed.TotalSeconds);
+            telemetry.Metrics.Add("ElapsedSeconds", activity.Duration.TotalSeconds);
+            telemetry.Metrics.Add("ElapsedMinutes", activity.Duration.Minutes);
 
             this.Client.TrackEvent(telemetry);
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceTookTooLong")]
-        public override void OnProcessResourceTookTooLong(string tenant, string resourceId, TimeSpan elapsed)
+        public override void OnProcessResourceTookTooLong(string tenant, string resourceId, Activity activity)
         {
-            Activity currentActivity = Activity.Current;
-
             var telemetry = new EventTelemetry
             {
-                Name = currentActivity.OperationName,   
+                Name = activity.OperationName,   
             };
 
             // properly fill dependency telemetry operation context
-            telemetry.Context.Operation.Id = currentActivity.RootId;
-            telemetry.Context.Operation.ParentId = currentActivity.ParentId;
-            telemetry.Timestamp = currentActivity.StartTimeUtc;
+            telemetry.Context.Operation.Id = activity.RootId;
+            telemetry.Context.Operation.ParentId = activity.ParentId;
+            telemetry.Timestamp = activity.StartTimeUtc;
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
             telemetry.Properties.Add("ResourceId", resourceId);
-            telemetry.Metrics.Add("ElapsedSeconds", elapsed.TotalSeconds);
+            telemetry.Metrics.Add("ElapsedSeconds", activity.Duration.TotalSeconds);
+            telemetry.Metrics.Add("ElapsedMinutes", activity.Duration.Minutes);
 
             this.Client.TrackEvent(telemetry);
         }

@@ -30,27 +30,27 @@ namespace Ark.Tools.ResourceWatcher
             _reportEvent("HostStartEvent", () => new { });
         }
 
-        public void RunTookTooLong(TimeSpan elapsed)
+        public void RunTookTooLong(Activity activity)
         {
-            _logger.Fatal($"Check for tenant {_tenant} took too much:{elapsed}");
+            _logger.Fatal($"Check for tenant {_tenant} took too much:{activity.Duration}");
 
             _reportEvent("RunTookTooLong",
                 () => new
                 {
-                    Elapsed = elapsed,
+                    Activity = activity,
                     Tenant = _tenant,
                 });
         }
 
-        public void ProcessResourceTookTooLong(string resourceId, TimeSpan elapsed)
+        public void ProcessResourceTookTooLong(string resourceId, Activity activity)
         {
-            _logger.Fatal($"Processing of ResourceId=\"{resourceId}\" took too much: {elapsed}");
+            _logger.Fatal($"Processing of ResourceId=\"{resourceId}\" took too much: {activity.Duration}");
 
             _reportEvent("ProcessResourceTookTooLong",
                 () => new
                 {
                     ResourceId = resourceId,
-                    Elapsed = elapsed,
+                    Activity = activity,
                     Tenant = _tenant,
                 });
         }
@@ -72,23 +72,21 @@ namespace Ark.Tools.ResourceWatcher
             return activity;
         }
 
-        public void RunFailed(Activity activity, Exception ex, TimeSpan elapsed)
+        public void RunFailed(Activity activity, Exception ex)
         {
-            _logger.Error(ex, $"Check failed for tenant {_tenant} in {elapsed}");
-
             _stop(activity, () => new
             {
                 Exception = ex,
-                Elapsed = elapsed,
+                Elapsed = activity.Duration,
                 Tenant = _tenant,
             }
             );
+
+            _logger.Error(ex, $"Check failed for tenant {_tenant} in {activity.Duration}");
         }
 
-        public void RunSuccessful(Activity activity, List<ProcessContext> evaluated, TimeSpan elapsed)
+        public void RunSuccessful(Activity activity, List<ProcessContext> evaluated)
         {
-            _logger.Info($"Check successful for tenant {_tenant} in {elapsed}");
-
             _stop(activity, () =>
             {
                 var total = 0;
@@ -113,6 +111,8 @@ namespace Ark.Tools.ResourceWatcher
                 };
             }
             );
+
+            _logger.Info($"Check successful for tenant {_tenant} in {activity.Duration}");
         }
         #endregion
 
@@ -137,17 +137,17 @@ namespace Ark.Tools.ResourceWatcher
             );
         }
 
-        public void GetResourcesSuccessful(Activity activity, int count, TimeSpan elapsed)
+        public void GetResourcesSuccessful(Activity activity, int count)
         {
-            _logger.Info($"Found {count} resources in {elapsed}");
-
             _stop(activity, () => new
             {
                 ResourcesFound = count,
-                Elapsed = elapsed,
+                Elapsed = activity.Duration,
                 Tenant = _tenant,
             }
             );
+
+            _logger.Info($"Found {count} resources in {activity.Duration}");
         }
         #endregion
 
