@@ -27,6 +27,7 @@ using SimpleInjector.Integration.AspNetCore.Mvc;
 using SimpleInjector.Lifestyles;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -197,7 +198,11 @@ namespace Ark.Tools.AspNetCore.Startup
             app.UseSwaggerUI();
             app.UseAuthentication();
 
-            app.UseMvc();
+            app.UseMvc(_mvcRoute);
+        }
+
+        protected virtual void _mvcRoute(IRouteBuilder obj)
+        {            
         }
 
         protected virtual void RegisterContainer(IApplicationBuilder app)
