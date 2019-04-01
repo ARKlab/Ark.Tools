@@ -16,7 +16,7 @@ namespace ProblemDetailsSample.Controllers.Private
     [ApiVersion("1.0")]
     [Route("entity")]
     [ApiController]
-    public class EntityController : Controller, IArea<PrivateArea>
+    public class EntityController : ControllerBase, IArea<PrivateArea>
     {
         //private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IQueryProcessor _queryProcessor;
