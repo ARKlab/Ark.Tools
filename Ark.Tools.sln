@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2035
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Core", "Ark.Tools.Core\Ark.Tools.Core.csproj", "{4A1CC7FA-F4D9-45E4-894D-3B758A7284EE}"
 EndProject
@@ -106,6 +106,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestWorker", "TestWorker\TestWorker.csproj", "{F3EC82A7-13C9-4DF1-B5A3-5E712BB12FF4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.ResourceWatcher.WorkerHost.Hosting", "Ark.Tools.ResourceWatcher.WorkerHost.Hosting\Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj", "{08FE0438-B8E0-4636-941E-14CC84EBE240}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EntityFrameworkCore", "Ark.Tools.EntityFrameworkCore\Ark.Tools.EntityFrameworkCore.csproj", "{E750259C-A996-4B22-BA4C-CE5096532BAD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EntityFrameworkCore.Nodatime", "Ark.Tools.EntityFrameworkCore.Nodatime\Ark.Tools.EntityFrameworkCore.Nodatime.csproj", "{D882E71E-E1EF-4BF6-AA4D-FEC3A57E6728}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EntityFrameworkCore.Nodatime.Tests", "Ark.Tools.EntityFrameworkCore.Nodatime.Tests\Ark.Tools.EntityFrameworkCore.Nodatime.Tests.csproj", "{14972F4D-464D-4C28-B9A1-E92503993441}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -293,6 +299,18 @@ Global
 		{08FE0438-B8E0-4636-941E-14CC84EBE240}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08FE0438-B8E0-4636-941E-14CC84EBE240}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08FE0438-B8E0-4636-941E-14CC84EBE240}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E750259C-A996-4B22-BA4C-CE5096532BAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E750259C-A996-4B22-BA4C-CE5096532BAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E750259C-A996-4B22-BA4C-CE5096532BAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E750259C-A996-4B22-BA4C-CE5096532BAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D882E71E-E1EF-4BF6-AA4D-FEC3A57E6728}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D882E71E-E1EF-4BF6-AA4D-FEC3A57E6728}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D882E71E-E1EF-4BF6-AA4D-FEC3A57E6728}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D882E71E-E1EF-4BF6-AA4D-FEC3A57E6728}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14972F4D-464D-4C28-B9A1-E92503993441}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14972F4D-464D-4C28-B9A1-E92503993441}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14972F4D-464D-4C28-B9A1-E92503993441}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14972F4D-464D-4C28-B9A1-E92503993441}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -300,6 +318,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{52218CB0-2FE8-4CA2-9AA0-C81E5C5ADBA5} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{F3EC82A7-13C9-4DF1-B5A3-5E712BB12FF4} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
+		{14972F4D-464D-4C28-B9A1-E92503993441} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F88F06AE-6856-423B-9179-28732B57F828}
