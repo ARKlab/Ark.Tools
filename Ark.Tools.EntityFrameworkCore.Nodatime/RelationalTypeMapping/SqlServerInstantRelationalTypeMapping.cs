@@ -3,6 +3,7 @@
 using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore.Storage;
+using NodaTime;
 
 namespace Ark.Tools.EntityFrameworkCore.Nodatime
 {
@@ -51,6 +52,9 @@ namespace Ark.Tools.EntityFrameworkCore.Nodatime
         protected override void ConfigureParameter(DbParameter parameter)
         {
             base.ConfigureParameter(parameter);
+
+            if (parameter.Value is Instant i)
+                parameter.Value = i.ToDateTimeUtc();
 
             if (Size.HasValue
                 && Size.Value != -1)

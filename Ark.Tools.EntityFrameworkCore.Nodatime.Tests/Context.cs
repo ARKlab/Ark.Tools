@@ -23,6 +23,9 @@ namespace Ark.Tools.EntityFrameworkCore.Nodatime.Tests
                     a.Property<int>("Id");
                     a.HasKey("EntityAId", "Id");
                 });
+
+            modelBuilder.Entity<EntityB>()
+                .OwnsOne(x => x.Address);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

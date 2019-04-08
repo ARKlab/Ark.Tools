@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.Data;
 using System.Data.Common;
+using System.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Storage;
+using NodaTime;
 
 namespace Ark.Tools.EntityFrameworkCore.Nodatime
 {
@@ -51,6 +53,12 @@ namespace Ark.Tools.EntityFrameworkCore.Nodatime
         protected override void ConfigureParameter(DbParameter parameter)
         {
             base.ConfigureParameter(parameter);
+
+            // Workaround for a SQLClient bug
+            ((SqlParameter)parameter).SqlDbType = SqlDbType.Date;
+
+            if (parameter.Value is LocalDate ld)
+                parameter.Value = ld.ToDateTimeUnspecified();
 
             if (Size.HasValue
                 && Size.Value != -1)

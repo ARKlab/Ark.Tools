@@ -24,12 +24,20 @@ namespace Ark.Tools.EntityFrameworkCore.Nodatime.Tests
                 using (var ctx = host.Services.GetService<Context>())
                 {
                     ctx.EntityBs.Where(x => x.OffsetDateTime.ToDateTimeOffset() > x.OffsetDateTime.ToDateTimeOffset()).ToList();
-
                     ctx.EntityBs.Where(x => x.OffsetDateTime.Date > x.OffsetDateTime.Date).ToList();
                     ctx.EntityBs.Where(x => x.LocalDate.PlusDays(1) > x.LocalDateTime.Date).ToList();
                     ctx.EntityBs.Where(x => x.LocalDateTime.ToDateTimeUnspecified() == DateTime.Now).ToList();
 
-                    ctx.SaveChanges();
+                    ctx.EntityBs.Add(new EntityB
+                    {
+                        Address = new Address
+                        {
+                            City = "string",
+                            Street = "string"
+                        }
+                    });
+
+                    ctx.SaveChanges(); 
                 }
             }
         }
