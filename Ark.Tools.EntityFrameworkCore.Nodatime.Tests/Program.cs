@@ -23,11 +23,6 @@ namespace Ark.Tools.EntityFrameworkCore.Nodatime.Tests
                 host.Start();
                 using (var ctx = host.Services.GetService<Context>())
                 {
-                    ctx.EntityBs.Where(x => x.OffsetDateTime.ToDateTimeOffset() > x.OffsetDateTime.ToDateTimeOffset()).ToList();
-                    ctx.EntityBs.Where(x => x.OffsetDateTime.Date > x.OffsetDateTime.Date).ToList();
-                    ctx.EntityBs.Where(x => x.LocalDate.PlusDays(1) > x.LocalDateTime.Date).ToList();
-                    ctx.EntityBs.Where(x => x.LocalDateTime.ToDateTimeUnspecified() == DateTime.Now).ToList();
-
                     ctx.EntityBs.Add(new EntityB
                     {
                         Address = new Address
@@ -36,6 +31,13 @@ namespace Ark.Tools.EntityFrameworkCore.Nodatime.Tests
                             Street = "string"
                         }
                     });
+
+                    ctx.EntityBs.Where(x => x.OffsetDateTime.ToDateTimeOffset() > x.OffsetDateTime.ToDateTimeOffset()).ToList();
+                    ctx.EntityBs.Where(x => x.OffsetDateTime.Date > x.OffsetDateTime.Date).ToList();
+                    ctx.EntityBs.Where(x => x.LocalDate.PlusDays(1) > x.LocalDateTime.Date).ToList();
+                    ctx.EntityBs.Where(x => x.LocalDateTime.ToDateTimeUnspecified() == DateTime.Now).ToList();
+
+                    
 
                     ctx.SaveChanges(); 
                 }

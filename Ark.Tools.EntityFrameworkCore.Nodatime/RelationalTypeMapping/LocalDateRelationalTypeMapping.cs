@@ -1,7 +1,10 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using System;
 using System.Data;
+using System.Data.Common;
 using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore.Storage;
 using NodaTime;
 using NodaTime.Text;
@@ -58,6 +61,16 @@ namespace Ark.Tools.EntityFrameworkCore.Nodatime
             }
 
             return base.GenerateCodeLiteral(value);
+        }
+
+        private static readonly MethodInfo _dbDataReaderMethod = typeof(DbDataReader).GetRuntimeMethod(nameof(DbDataReader.GetDateTime), new[] { typeof(int) });
+        public override MethodInfo GetDataReaderMethod()
+            => _dbDataReaderMethod;
+        public override Expression CustomizeDataReaderExpression(Expression expression)
+        {
+            return Expression.Call(null, typeof(LocalDate).GetRuntimeMethod(nameof(LocalDate.FromDateTime), new[] { typeof(DateTime) })
+                , expression
+                );
         }
 
         public static LocalDate FromIso(string s)
