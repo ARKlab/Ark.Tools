@@ -115,6 +115,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EntityFrameworkCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EntityFrameworkCore.SystemVersioning", "Ark.Tools.EntityFrameworkCore.SystemVersioning\Ark.Tools.EntityFrameworkCore.SystemVersioning.csproj", "{0710E623-8847-4937-892E-8DC9D5140D0B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ODataSample", "ODataSample\ODataSample.csproj", "{97A3CA43-02E4-4491-BBDE-3ED17E55BC3E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -317,6 +319,10 @@ Global
 		{0710E623-8847-4937-892E-8DC9D5140D0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0710E623-8847-4937-892E-8DC9D5140D0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0710E623-8847-4937-892E-8DC9D5140D0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97A3CA43-02E4-4491-BBDE-3ED17E55BC3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97A3CA43-02E4-4491-BBDE-3ED17E55BC3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97A3CA43-02E4-4491-BBDE-3ED17E55BC3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97A3CA43-02E4-4491-BBDE-3ED17E55BC3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -325,6 +331,7 @@ Global
 		{52218CB0-2FE8-4CA2-9AA0-C81E5C5ADBA5} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{F3EC82A7-13C9-4DF1-B5A3-5E712BB12FF4} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{14972F4D-464D-4C28-B9A1-E92503993441} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
+		{97A3CA43-02E4-4491-BBDE-3ED17E55BC3E} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F88F06AE-6856-423B-9179-28732B57F828}

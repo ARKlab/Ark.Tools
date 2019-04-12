@@ -21,7 +21,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit
 			_principalProvider = principalProvider;
 		}
 
-		public DbSet<Audit> Audit { get; set; }
+		public DbSet<Audit> Audits { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -150,7 +150,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit
                 }
             }
 
-            return Audit.Add(auditEntry);
+            return Audits.Add(auditEntry);
 
         }
 
@@ -170,7 +170,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit
 				affectedEntityEnty.KeyValues = new Dictionary<string, object>(affectedEntityEnty.KeyValues);
 			}
 
-			Audit.Update(audit.Entity);
+			Audits.Update(audit.Entity);
         }
     }
 
