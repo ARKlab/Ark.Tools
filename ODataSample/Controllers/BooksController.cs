@@ -6,71 +6,48 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ODataSample.Models;
 using Ark.Tools.EntityFrameworkCore.SystemVersioning;
+using Microsoft.AspNet.OData.Query;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace ODataSample.Controllers
 {
 	[ApiVersion("1.0")]
-    [ODataRoutePrefix("Books")]
-    //[Route("Books")]
-    //[ApiController]
-    //[ApiConventionType(typeof(DefaultApiConventions))] 
+	[ODataRoutePrefix("Books")]
+	//[Route("Books")]
+	//[ApiController]
+	//[ApiConventionType(typeof(DefaultApiConventions))] 
 
-    public class BooksController : ODataController
-    {
-        private BookStoreContext _db;
+	public class BooksController : ODataController
+	{
+		private BookStoreContext _db;
 
-        public BooksController(BookStoreContext context)
-        {
-            _db = context;
+		public BooksController(BookStoreContext context)
+		{
+			_db = context;
 
-        }
+		}
 
-        [HttpGet]
-        [ODataRoute]
-        [EnableQuery]
-        public IActionResult Get()
-        {
-            return Ok(_db.Books);
-        }
+		//[HttpGet]
+		[ODataRoute]
+		//[EnableQuery]
+		[Produces("application/json")]
+		[ProducesResponseType(typeof(ODataValue<IEnumerable<Book>>), StatusCodes.Status200OK)]
+		[EnableQuery(AllowedQueryOptions = AllowedQueryOptions.Filter | AllowedQueryOptions.Select)]
+		public IActionResult Get()
+		{
+			return Ok(_db.Books);
+		}
 
-        [HttpGet("({key})")]
-        [ODataRoute("({key})")]
-        [EnableQuery]
-        public IActionResult Get(int key)     //[FromODataUri] ????
-        {
-			var asOf = SystemClock.Instance.GetCurrentInstant();
-
-			if (key == -2)
+		[HttpGet("({key})")]
+		[ODataRoute("({key})")]
+		[EnableQuery]
+		public IActionResult Get(int key)     //[FromODataUri] ????
+		{
+			if (key == 0)
 			{
-				var bookList = _db.Books.FromSql($@"
-SELECT b.[Id]     
-      ,b.[ISBN]
-      ,b.[Title]
-      ,b.[Author]
-      ,b.[Price]
-      ,b.[Location_City]
-      ,b.[Location_Street]
-      ,b.[AuditId]
-      ,b.[PressId]
-      ,b.[_ETag]
-      ,b.[SysStartTime]
-      ,b.[SysEndTime]
-FROM		 dbo.[Audits] FOR SYSTEM_TIME AS OF {asOf} aud
-INNER JOIN   dbo.[Books]  FOR SYSTEM_TIME AS OF {asOf} b ON b.AuditId = aud.AuditId").ToList();
+				var asOf = SystemClock.Instance.GetCurrentInstant();
 
-				return Ok(bookList);
-			}
-			else if (key == 0)
-			{
-				var bookList = _db
-				  .Books
-				  .SqlServerBetween(asOf, asOf.PlusNanoseconds(10000))
-				  .ToList();
-
-				return Ok(bookList);
-			}
-			else if (key == -1)
-			{
 				var bookList = _db
 				  .Books
 				  .SqlServerAsOf(asOf)
@@ -78,9 +55,35 @@ INNER JOIN   dbo.[Books]  FOR SYSTEM_TIME AS OF {asOf} b ON b.AuditId = aud.Audi
 
 				return Ok(bookList);
 			}
-			else
-				return Ok(_db.Books.Find(key));
-        }
+
+			return Ok(_db.Books.Find(key));
+		}
+
+		//************************************* TEST **********************************************************//
+		[HttpGet("({myKey})")]
+		[ODataRoute("({myKey})")]
+		[EnableQuery]
+		public IActionResult GetByString(string myKey)    
+		{
+			return Ok();
+		}
+
+		//[HttpGet("Books(Id={Id}, Year={Year})")]
+		//[ODataRoute("Books(Id={Id}, Year={Year})")]
+		//[EnableQuery]
+		//public IActionResult TestWithTwoParameters([FromODataUri]int Id, [FromODataUri]int Year)
+		//{
+		//	return Ok();
+		//}
+
+		//[HttpGet("GetReports(Id={Id},Year={Year})")]
+		//[ODataRoute("GetReports(Id={Id},Year={Year})")]
+		//[EnableQuery]
+		//public IActionResult TestWithTwoParameters([FromODataUri]int Id, [FromODataUri]int Year)
+		//{
+		//	return Ok();
+		//}
+		//*****************************************************************************************************//
 
 		[HttpPost]
         [ODataRoute]

@@ -21,6 +21,14 @@ using Ark.Tools.Solid;
 using System.Security.Claims;
 using Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit;
 using Ark.Tools.EntityFrameworkCore.SystemVersioning;
+using Microsoft.AspNet.OData.Query;
+using Microsoft.OData.Edm;
+using Microsoft.AspNet.OData;
+using ODataSample.Controllers;
+using static Microsoft.AspNet.OData.Query.AllowedQueryOptions;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
 namespace ODataSample
 {
@@ -45,17 +53,37 @@ namespace ODataSample
         {
             base.ConfigureServices(services);
 
-            services.AddMvc(options =>
-            {
-                // https://blogs.msdn.microsoft.com/webdev/2018/08/27/asp-net-core-2-2-0-preview1-endpoint-routing/
-                // Because conflicts with ODataRouting as of this version
-                // could improve performance though
-                options.EnableEndpointRouting = false;
-            });
-            services.AddOData().EnableApiVersioning(o =>
-            {
-            });
-            services.AddODataApiExplorer(
+			//MVC
+			services.AddMvc(options =>
+			{
+				// https://blogs.msdn.microsoft.com/webdev/2018/08/27/asp-net-core-2-2-0-preview1-endpoint-routing/
+				// Because conflicts with ODataRouting as of this version
+				// could improve performance though
+				options.EnableEndpointRouting = false;
+			});
+
+			services.AddMvcCore(options =>
+			{
+				foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
+				{
+					outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+				}
+				foreach (var inputFormatter in options.InputFormatters.OfType<ODataInputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
+				{
+					inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+				}
+			});
+
+			//OData
+			services.AddOData().EnableApiVersioning();
+			//services.AddODataQueryFilter(new EnableQueryAttribute
+			//{
+			//	AllowedQueryOptions = AllowedQueryOptions.All,
+			//	PageSize = 10,
+			//	MaxNodeCount = 20,
+			//});
+
+			services.AddODataApiExplorer(
                 options =>
                 {
                     // add the versioned api explorer, which also adds IApiVersionDescriptionProvider service
@@ -65,35 +93,27 @@ namespace ODataSample
                     // note: this option is only necessary when versioning by url segment. the SubstitutionFormat
                     // can also be used to control the format of the API version in route templates
                     options.SubstituteApiVersionInUrl = true;
-                });
 
-            services.AddMvcCore(options =>
-            {
-                foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
-                {
-                    outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
-                }
-                foreach (var inputFormatter in options.InputFormatters.OfType<ODataInputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
-                {
-                    inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
-                }
-            });
+					options.QueryOptions.Controller<BooksController>()
+					.Action(c => c.Get(default)).Allow(Skip | Count).AllowTop(100);
+				});
+
 
 			services.AddTransient<IContextProvider<ClaimsPrincipal>, AspNetCoreUserContextProvider>();
 
+			//Entity Framework DB Context
 			services.AddDbContext<BookStoreContext>((provider, options) =>
             {
                 options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=ODataSample;Integrated Security=True;MultipleActiveResultSets=true");
 
 				options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 
+				//For Nodatime Support
 				options.AddNodaTimeSqlServer();
-				//options.EnableSensitiveDataLogging(true);
 
+				//For System Versioning And Audit
 				options.AddSqlServerSystemVersioningAudit();
 			});
-
-			services.AddTransient<IModelConfiguration, Config>();
 		}
 
 		public class NodatimeDesignTime : IDesignTimeServices
@@ -105,50 +125,21 @@ namespace ODataSample
 			}
 		}
 
-		class Config : IModelConfiguration
-        {
-            public void Apply(ODataModelBuilder builder, ApiVersion apiVersion)
-            {
-                builder.EntitySet<Book>("Books").EntityType
-                    .Expand()
-                    .HasOptional(x => x.Press)
-                        .IsExpandable()                    
-                    ;
+		private IApplicationBuilder _app;
 
-                builder.EntitySet<Book>("Books").EntityType
-                    .Expand()
-                    .HasOptional(x => x.Audit)
-                        .IsExpandable()
-                    ;
-
-                builder.EntitySet<Audit>("Audits").EntityType
-                    .Expand()
-                    ;
-
-                builder.EntitySet<Press>("Presses");
-            }
-        }
-
-        private IApplicationBuilder _app;
-        public override void Configure(IApplicationBuilder app)
-        {
+		public override void Configure(IApplicationBuilder app)
+		{
             _app = app; // :(
-            base.Configure(app);
+
+			base.Configure(app);
         }
 
-        protected override void _mvcRoute(IRouteBuilder obj)
+        protected override void _mvcRoute(IRouteBuilder routeBuilder)
         {
             var mb = _app.ApplicationServices.GetService<VersionedODataModelBuilder>();
-            obj.EnableDependencyInjection();
-            obj.MapVersionedODataRoutes("odata", "v{api-version:apiVersion}/odata", mb.GetEdmModels());
-        }
+			routeBuilder.EnableDependencyInjection();
 
-        //private static IEdmModel GetEdmModel()
-        //{
-        //    var builder = new ODataModelBuilder();
-        //    builder.EntitySet<Book>("Books");
-        //    builder.EntitySet<Press>("Presses");
-        //    return builder.GetEdmModel();
-        //}
-    }
+			routeBuilder.MapVersionedODataRoutes("odata", "v{api-version:apiVersion}/odata", mb.GetEdmModels());
+        }
+	}
 }

@@ -81,6 +81,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Group_Pack_All.bat = Group_Pack_All.bat
 		Group_Pack_AspnetCore.bat = Group_Pack_AspnetCore.bat
 		Group_Pack_Core.bat = Group_Pack_Core.bat
+		Group_Pack_EntityFrameworkCore.bat = Group_Pack_EntityFrameworkCore.bat
 		Group_Pack_FTPClient.bat = Group_Pack_FTPClient.bat
 		Group_Pack_ResourceWatcher.bat = Group_Pack_ResourceWatcher.bat
 		LICENSE = LICENSE
@@ -115,7 +116,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EntityFrameworkCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EntityFrameworkCore.SystemVersioning", "Ark.Tools.EntityFrameworkCore.SystemVersioning\Ark.Tools.EntityFrameworkCore.SystemVersioning.csproj", "{0710E623-8847-4937-892E-8DC9D5140D0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ODataSample", "ODataSample\ODataSample.csproj", "{97A3CA43-02E4-4491-BBDE-3ED17E55BC3E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ODataSample", "ODataSample\ODataSample.csproj", "{97A3CA43-02E4-4491-BBDE-3ED17E55BC3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

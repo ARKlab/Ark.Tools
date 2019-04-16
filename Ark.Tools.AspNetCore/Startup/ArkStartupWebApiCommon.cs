@@ -87,9 +87,9 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
 
                     opt.Filters.Add(new ArkDefaultExceptionFilter());
-                    opt.Filters.Add(new ProducesAttribute("application/json"));
-                    // opt.Filters.Add(new ConsumesAttribute("application/json")); // broken in aspnetcore 2.2 as is enforced on GET too
-                    opt.Conventions.Add(new FixBrokenAspNetCoreConsume());
+					//opt.Filters.Add(new ProducesAttribute("application/json")); // To be specified after
+					//opt.Filters.Add(new ConsumesAttribute("application/json")); // broken in aspnetcore 2.2 as is enforced on GET too
+					opt.Conventions.Add(new FixBrokenAspNetCoreConsume());
                     opt.Filters.Add(new ResponseCacheAttribute()
                     {
                         Location = ResponseCacheLocation.Any,
@@ -201,7 +201,7 @@ namespace Ark.Tools.AspNetCore.Startup
             app.UseMvc(_mvcRoute);
         }
 
-        protected virtual void _mvcRoute(IRouteBuilder obj)
+        protected virtual void _mvcRoute(IRouteBuilder routeBuilder)
         {            
         }
 
