@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Query.Sql;
 using System.Linq;
 using Ark.Tools.EntityFrameworkCore.SystemVersioning.ExpressionsOverride;
 using Ark.Tools.EntityFrameworkCore.SystemVersioning.Generators;
+using Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing;
 
 namespace Ark.Tools.EntityFrameworkCore.SystemVersioning
 {
@@ -38,6 +39,13 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning
 			}
 
 			return entityType;
+		}
+
+		public static void AddAuditReference<TEntity>(this ModelBuilder modelBuilder) where TEntity : class
+		{
+			modelBuilder.Entity<TEntity>()
+				.HasOne<Audit>("Audit")
+					.WithMany();
 		}
 
 		public static DbContextOptionsBuilder AddSqlServerSystemVersioningAudit(this DbContextOptionsBuilder optionsBuilder)

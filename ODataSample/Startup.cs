@@ -19,7 +19,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Ark.Tools.AspNetCore;
 using Ark.Tools.Solid;
 using System.Security.Claims;
-using Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit;
+using Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing;
 using Ark.Tools.EntityFrameworkCore.SystemVersioning;
 using Microsoft.AspNet.OData.Query;
 using Microsoft.OData.Edm;
@@ -29,6 +29,8 @@ using static Microsoft.AspNet.OData.Query.AllowedQueryOptions;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using System.Diagnostics;
+using System;
 
 namespace ODataSample
 {
@@ -51,7 +53,9 @@ namespace ODataSample
 
         public override void ConfigureServices(IServiceCollection services)
         {
-            base.ConfigureServices(services);
+			//Debugger.Launch();
+
+			base.ConfigureServices(services);
 
 			//MVC
 			services.AddMvc(options =>
@@ -96,17 +100,20 @@ namespace ODataSample
 
 					options.QueryOptions.Controller<BooksController>()
 					.Action(c => c.Get(default)).Allow(Skip | Count).AllowTop(100);
+
+					options.QueryOptions.Controller<CountriesController>()
+					.Action(c => c.Get(default)).Allow(Skip | Count).AllowTop(100);
 				});
 
-
+			//Claims Principal
 			services.AddTransient<IContextProvider<ClaimsPrincipal>, AspNetCoreUserContextProvider>();
 
 			//Entity Framework DB Context
-			services.AddDbContext<BookStoreContext>((provider, options) =>
+			services.AddDbContext<ODataSampleContext>((provider, options) =>
             {
                 options.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=ODataSample;Integrated Security=True;MultipleActiveResultSets=true");
 
-				options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+				options.UseQueryTrackingBehavior(QueryTrackingBehavior.TrackAll);
 
 				//For Nodatime Support
 				options.AddNodaTimeSqlServer();
@@ -114,15 +121,8 @@ namespace ODataSample
 				//For System Versioning And Audit
 				options.AddSqlServerSystemVersioningAudit();
 			});
-		}
 
-		public class NodatimeDesignTime : IDesignTimeServices
-		{
-			public void ConfigureDesignTimeServices(IServiceCollection serviceCollection)
-			{				
-				serviceCollection.SetNodaTimeSqlServerMappingSource();
-				//Debugger.Launch();
-			}
+			//services.SetNodaTimeSqlServerMappingSource();
 		}
 
 		private IApplicationBuilder _app;
@@ -136,7 +136,9 @@ namespace ODataSample
 
         protected override void _mvcRoute(IRouteBuilder routeBuilder)
         {
-            var mb = _app.ApplicationServices.GetService<VersionedODataModelBuilder>();
+			base._mvcRoute(routeBuilder);
+
+			var mb = _app.ApplicationServices.GetService<VersionedODataModelBuilder>();
 			routeBuilder.EnableDependencyInjection();
 
 			routeBuilder.MapVersionedODataRoutes("odata", "v{api-version:apiVersion}/odata", mb.GetEdmModels());

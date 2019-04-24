@@ -3,13 +3,13 @@ using NodaTime;
 using System;
 using System.Collections.Generic;
 
-namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit
+namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing
 {
 	public class Audit
     {
         public Guid AuditId { get; set; }
         public string UserId { get; set; }
-		public Instant Timestamp { get; set; }
+		public DateTime Timestamp { get; set; }
 
         public List<AffectedEntity> AffectedEntities { get; set; } = new List<AffectedEntity>();
     }

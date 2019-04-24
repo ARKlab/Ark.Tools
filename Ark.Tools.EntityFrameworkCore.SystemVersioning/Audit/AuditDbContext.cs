@@ -8,8 +8,9 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Security.Claims;
 using Ark.Tools.Solid;
 using Newtonsoft.Json;
+using System.Reflection;
 
-namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit
+namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing
 {
     public abstract class AuditDbContext : DbContext
     {
@@ -114,7 +115,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit
 				UserId =  _principalProvider.Current?.Identity?.Name
 			};
 
-            foreach (var entry in ChangeTracker.Entries())
+			foreach (var entry in ChangeTracker.Entries())
             {
                 if (entry.Entity is Audit || entry.Entity is AffectedEntity || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
                     continue;
@@ -130,7 +131,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit
                         TableName = entry.Metadata.Relational().TableName
                     };
 
-                    foreach (var property in entry.Properties)
+					foreach (var property in entry.Properties)
                     {
                         string propertyName = property.Metadata.Name;
 

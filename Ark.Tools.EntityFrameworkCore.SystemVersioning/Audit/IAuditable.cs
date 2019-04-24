@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit
+namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing
 {
 	public interface IAuditable
 	{

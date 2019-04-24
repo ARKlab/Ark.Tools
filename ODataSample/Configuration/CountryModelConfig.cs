@@ -6,25 +6,22 @@ using ODataSample.Models;
 
 namespace ODataSample.Configuration
 {
-	public class BookModelConfig : IModelConfiguration
+	public class CountryModelConfig : IModelConfiguration
 	{
 		public void Apply(ODataModelBuilder builder, ApiVersion apiVersion)
 		{
-			var books = builder.EntitySet<Book>("Books").EntityType;
+			var countries = builder.EntitySet<Country>("Countries").EntityType;
 
-			books.Filter();
+			countries.Filter();
 
-			books.Expand();
+			countries.Expand();
 
-			books
-				.HasOptional(x => x.Press)
-					.IsExpandable()
+			countries
+				.HasMany(x => x.Cities)
+				.IsExpandable()
 				;
 
-			books
-				.HasOptional(x => x.Audit)
-					.IsExpandable()
-				;
+			
 		}
 	}
 }

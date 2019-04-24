@@ -1,4 +1,4 @@
-﻿using Ark.Tools.EntityFrameworkCore.SystemVersioning.Audit;
+﻿using Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing;
 using Microsoft.AspNet.OData.Builder;
 using Microsoft.AspNet.OData.Query;
 using Microsoft.AspNetCore.Mvc;

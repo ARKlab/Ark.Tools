@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ODataSample.Models;
 
 namespace ODataSample.Migrations
 {
     [DbContext(typeof(ODataSampleContext))]
-    partial class BookStoreContextModelSnapshot : ModelSnapshot
+    [Migration("20190417151454_Update")]
+    partial class Update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -120,20 +122,6 @@ namespace ODataSample.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Press");
-
-                    b.HasAnnotation("SystemVersioning", true);
-                });
-
-            modelBuilder.Entity("ODataSample.Models.Test", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<int>("Value");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Tests");
 
                     b.HasAnnotation("SystemVersioning", true);
                 });

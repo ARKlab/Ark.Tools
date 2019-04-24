@@ -9,6 +9,7 @@ using Ark.Tools.EntityFrameworkCore.SystemVersioning;
 using Microsoft.AspNet.OData.Query;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
+using CSDeepCloneObject;
 
 namespace ODataSample.Controllers
 {
@@ -20,9 +21,9 @@ namespace ODataSample.Controllers
 
 	public class BooksController : ODataController
 	{
-		private BookStoreContext _db;
+		private ODataSampleContext _db;
 
-		public BooksController(BookStoreContext context)
+		public BooksController(ODataSampleContext context)
 		{
 			_db = context;
 
@@ -98,7 +99,7 @@ namespace ODataSample.Controllers
         [HttpPatch("({key})")]
         [ODataRoute("({key})")]
         //[EnableQuery]
-        public IActionResult Patch(int key, [FromBody] Delta<Book> movie)
+        public IActionResult Patch(int key, [FromBody] Delta<Book> book)
         {
             if (!ModelState.IsValid)
             {
@@ -109,7 +110,7 @@ namespace ODataSample.Controllers
             {
                 return NotFound();
             }
-            movie.Patch(entity);
+            book.Patch(entity);
             try
             {
                 _db.SaveChanges();
@@ -142,9 +143,21 @@ namespace ODataSample.Controllers
             {
                 return BadRequest();
             }
-            _db.Entry(update).State = EntityState.Modified;
-            try
-            {
+
+			//Solution Working
+			//var book = _db.Books.Find(key);
+			//book.With(update);	
+			//_db.Books.Update(book);
+
+			//Sol Reflection
+			var book = _db.Books.Find(key);
+			var be = _db.Entry(book);
+			var ue = _db.Entry(update);
+			be.CloneReflection(ue);
+			//_db.Books.Update(book);
+
+			try
+			{
                 _db.SaveChanges();
             }
             catch (DbUpdateConcurrencyException)
@@ -161,17 +174,18 @@ namespace ODataSample.Controllers
             return Updated(update);
         }
 
-        [HttpDelete("({key})")]
+
+		[HttpDelete("({key})")]
         [ODataRoute("({key})")]
         //[EnableQuery]
         public IActionResult Delete(int key)
         {
-            var movie = _db.Books.Find(key);
-            if (movie == null)
+            var book = _db.Books.Find(key);
+            if (book == null)
             {
                 return NotFound();
             }
-            _db.Books.Remove(movie);
+            _db.Books.Remove(book);
             _db.SaveChanges();
             return StatusCode((int)System.Net.HttpStatusCode.NoContent);
         }
@@ -180,5 +194,49 @@ namespace ODataSample.Controllers
         {
             return _db.Books.Any(x => x.Id == key);
         }
-    }
+
+
+		//Sol 2 - NOT
+		//var book = _db.Books.Find(key);
+
+		//update._ETag = book._ETag;
+
+		//(_db.Entry(book).Collection(p => p.Addresses).CurrentValue as ICollection<Address>).Clear();
+		//_db.Entry(book).CurrentValues.SetValues(update);
+		//_db.Entry(book).State = EntityState.Modified;
+
+		//Sol 3 - NOT
+		//_db.Entry(update).State = EntityState.Modified;
+		//_db.UpdateImmutable(update);
+
+		//Sol 4 
+		//_db.Upsert(update);
+
+		////Sol 5 NOT
+		//var book = _db.Books.Find(key);
+		//_db.Entry(book).CurrentValues.SetValues(update);
+		//_db.Upsert(update);
+
+		//Sol 6
+		//_db.Attach(update);
+
+		//var unchangedEntities = _db.ChangeTracker.Entries().Where(x => x.State == EntityState.Unchanged);
+
+		//foreach (var ee in unchangedEntities)
+		//{
+		//	ee.State = EntityState.Modified;
+		//}
+
+		//Sol 7
+		//var book = _db.Books.Find(key);
+		//update._ETag = book._ETag;
+		//_db.UpdateChildCollection(book, update, p => p.Addresses, collectionItem => collectionItem.Id);
+
+		//Sol 8
+		//var book = _db.Books.Find(key);
+
+		//update._ETag = book._ETag;
+		//_db.TestUpdate(update);
+
+	}
 }

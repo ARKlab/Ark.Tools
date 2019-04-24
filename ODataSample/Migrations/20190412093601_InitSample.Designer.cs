@@ -10,7 +10,7 @@ using ODataSample.Models;
 
 namespace ODataSample.Migrations
 {
-    [DbContext(typeof(BookStoreContext))]
+    [DbContext(typeof(ODataSampleContext))]
     [Migration("20190412093601_InitSample")]
     partial class InitSample
     {

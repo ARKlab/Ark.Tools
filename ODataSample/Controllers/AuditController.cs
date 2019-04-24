@@ -9,9 +9,9 @@ namespace ODataSample.Controllers
     [ODataRoutePrefix("Audits")]
     public class AuditController : ODataController
     {
-        private BookStoreContext _db;
+        private ODataSampleContext _db;
 
-        public AuditController(BookStoreContext context)
+        public AuditController(ODataSampleContext context)
         {
             _db = context;
         }
