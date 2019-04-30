@@ -7,18 +7,22 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Ark.Tools.Solid;
+using System.Security.Claims;
 
 namespace RavenDbSample.Auditable.Decorator
 {
 	public class AsyncDocumentSessionDecorator : IAsyncDocumentSession
 	{
 		private readonly IAsyncDocumentSession _inner;
+		private readonly IContextProvider<ClaimsPrincipal> _principalProvider;
 		private Audit _audit;
 
-		public AsyncDocumentSessionDecorator(IAsyncDocumentSession inner)
+		public AsyncDocumentSessionDecorator(IAsyncDocumentSession inner, IContextProvider<ClaimsPrincipal> principalProvider)
 		{
 			_inner = inner;
+			_principalProvider = principalProvider;
+
 			_audit = new Audit() { Id = null }; //Qui con Factory
 		}
 
@@ -36,6 +40,13 @@ namespace RavenDbSample.Auditable.Decorator
 
 		public void Delete<T>(T entity)
 		{
+			if (_audit.Id == null)
+				_inner.StoreAsync(_audit);
+
+			_setAuditIdOnEntity(entity);
+			
+			_fillAudit(_audit, entity);
+
 			_inner.Delete(entity);
 		}
 
@@ -119,7 +130,7 @@ namespace RavenDbSample.Auditable.Decorator
 			_setAuditIdOnEntity(entity);
 
 			await _inner.StoreAsync(entity, token);
-			
+
 			_fillAudit(_audit, entity);
 		}
 
@@ -164,13 +175,31 @@ namespace RavenDbSample.Auditable.Decorator
 
 		private void _fillAudit(Audit audit, object entity)
 		{
-			//var entityId = _inner.Advanced.GetDocumentId(entity);
+			var entityId = _inner.Advanced.GetDocumentId(entity);
+			var cv = _inner.Advanced.GetChangeVectorFor(entity);
+			var collectionName = _inner.Advanced.DocumentStore.Conventions.GetCollectionName(entity);
 
-			//if (_audit.EntityChangeVector.ContainsKey(entityId))
-			//	_audit.EntityChangeVector[entityId].Prev = _inner.Advanced.GetChangeVectorFor(entity);
+			var lastUpdate = DateTime.UtcNow;
+			var userId = _principalProvider.Current?.Identity?.Name;
 
-			//_audit.EntityId.Add(_inner.Advanced.GetDocumentId(entity));
-			//_audit.CurrentChangeVector.Add(_inner.Advanced.GetChangeVectorFor(entity));
+			//if (_audit.EntityInfo.ContainsKey(entityId))
+			//{
+			//	_audit.EntityInfo[entityId].PrevChangeVector = cv;
+			//}
+			//else
+			//{
+
+			_audit.UserId = entityId;
+			_audit.LastUpdatedUtc = lastUpdate;
+			_audit.UserId = userId;
+
+			_audit.EntityInfo.Add(new EntityInfo
+			{
+				EntityId = entityId,
+				PrevChangeVector = cv,
+				CollectionName = collectionName
+			});
+			//}
 		}
 	}
 }

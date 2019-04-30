@@ -14,6 +14,14 @@ using Ark.Tools.AspNetCore;
 using Ark.Tools.Solid;
 using System.Security.Claims;
 using Microsoft.AspNet.OData.Builder;
+using Raven.Client.Documents;
+using Raven.Embedded;
+using Raven.Client.Documents.Operations.Revisions;
+using Raven.Client.Documents.Session;
+using RavenDbSample.Auditable.Decorator;
+using System;
+using RavenDbSample.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace RavenDbSample
 {
@@ -47,12 +55,6 @@ namespace RavenDbSample
 			//OData
 			services.AddOData().EnableApiVersioning();
 			services.AddODataQueryFilter();
-			//services.AddODataQueryFilter(new EnableQueryAttribute
-			//{
-			//	AllowedQueryOptions = AllowedQueryOptions.All,
-			//	PageSize = 10,
-			//	MaxNodeCount = 20,
-			//});
 
 			services.AddODataApiExplorer(
 			options =>
@@ -78,6 +80,15 @@ namespace RavenDbSample
 					inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
 				}
 			});
+
+			//RavenDB
+			var types = new HashSet<Type>() { typeof(BaseOperation) };
+
+			services.AddHostedService<RavenDbAuditProcessor>();
+			services.AddSingleton<IAuditableTypeProvider>(ss => new AuditableTypeProvider(types));
+			services.AddScoped<IAsyncDocumentSession>(
+				ss => new AsyncDocumentSessionDecorator(ss.GetService<IDocumentStore>().OpenAsyncSession()
+				, new AspNetCoreUserContextProvider(_app.ApplicationServices.GetRequiredService<IHttpContextAccessor>())));
 		}
 
 		private IApplicationBuilder _app;
@@ -97,6 +108,61 @@ namespace RavenDbSample
 			routeBuilder.EnableDependencyInjection();
 
 			routeBuilder.MapVersionedODataRoutes("odata", "v{api-version:apiVersion}/odata", mb.GetEdmModels());
+		}
+
+		protected override void RegisterContainer(IApplicationBuilder app)
+		{
+			base.RegisterContainer(app);
+
+			//var cfg = new ApiConfig()
+			//{
+			//	MiddlewareSQLConnectionString = Configuration.GetConnectionString("NavisionMW.Database"),
+			//	SmtpConnectionString = Configuration["ConnectionStrings:Notification.SMTP"],
+			//	NotificationSenderAddress = Configuration["Notification:SenderAddress"],
+			//	RebusSQLConnectionString = Configuration.GetConnectionString("NavisionMW.RebusDatabase"),
+			//	RequestQueue = Configuration["NavisionMW:RequestQueue"],
+			//	MMSSQLConnectionString = Configuration["ConnectionStrings:MMS.Database"],
+			//	MMSSchema = Configuration["MMS:Schema"],
+			//	NavisionSQLConnectionString = Configuration["ConnectionStrings:Navision.Database"],
+			//	NavisionPrefix = Configuration["Navision:Prefix"],
+			//	MappingSQLConnectionString = Configuration.GetConnectionString("Mapping.Database"),
+			//	MappingSchema = Configuration["Mapping:Schema"],
+			//};
+
+			//var env = app.ApplicationServices.GetService<IHostingEnvironment>();
+
+			//if (!env.IsProduction())
+			//{
+			//	var mails = Configuration["Notification:TesterAddresses"];
+			//	if (!string.IsNullOrWhiteSpace(mails))
+			//		cfg.NotificationTesterAddresses = mails.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+			//}
+
+			//var apiHost = new ApiHost(cfg)
+			//	.WithContainer(Container)
+			//	.WithRebusOneWay(
+			//			app.ApplicationServices.GetService<InMemNetwork>(),
+			//			app.ApplicationServices.GetService<InMemorySubscriberStore>());
+
+			//if (app.ApplicationServices.GetService<IMMSDataContext>() != null)
+			//	apiHost.WithMMSContext(() => app.ApplicationServices.GetService<IMMSDataContext>());
+			//else
+			//	apiHost.WithMMSContext();
+
+			//if (app.ApplicationServices.GetService<INavisionDataContext>() != null)
+			//	apiHost.WithNavisionContext(() => app.ApplicationServices.GetService<INavisionDataContext>());
+			//else
+			//	apiHost.WithNavisionContext();
+
+			//if (app.ApplicationServices.GetService<IMappingDataContext>() != null)
+			//	apiHost.WithMappingDataContext(() => app.ApplicationServices.GetService<IMappingDataContext>());
+			//else
+			//	apiHost.WithMappingDataContext();
+
+			//var lifetime = app.ApplicationServices.GetRequiredService<IApplicationLifetime>();
+
+			//lifetime.ApplicationStarted.Register(() => apiHost.RunInBackground());
+			//lifetime.ApplicationStopped.Register(() => Container.Dispose());
 		}
 	}
 }

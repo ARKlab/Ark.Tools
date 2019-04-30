@@ -16,24 +16,18 @@ namespace RavenDbSample.Auditable
 	{
 		[Key]
 		public string Id { get; set; }
-		public Dictionary<string, ChangeVectorDto> EntityChangeVector { get; set; } = new Dictionary<string, ChangeVectorDto>();
+		public string UserId { get; set; }
+		public DateTime LastUpdatedUtc { get; set; }
+		//public Dictionary<string, EntityInfo> EntityInfo { get; set; } = new Dictionary<string, EntityInfo>();
+
+		public HashSet<EntityInfo> EntityInfo { get; set; } = new HashSet<EntityInfo>();
 	}
 
-	public class ChangeVectorDto
+	public class EntityInfo
 	{
-		public string Prev { get; set; }
-		public string Curr { get; set; }
+		public string EntityId { get; set; }
+		public string CollectionName { get; set; }
+		public string PrevChangeVector { get; set; }
+		public string CurrChangeVector { get; set; }
 	}
-
-
-	//public class Audit
-	//{
-	//	[Key]
-	//	public string Id { get; set; }
-
-	//	public List<string> EntityId { get; set; } = new List<string>();
-	//	public List<string> CurrentChangeVector { get; set; } = new List<string>();
-
-	//	//public Dictionary<string, string> EntityChangeVector { get; set; } = new Dictionary<string, string>();
-	//}
 }

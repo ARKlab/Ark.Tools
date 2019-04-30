@@ -48,24 +48,29 @@ namespace RavenDbSample.Controllers
 
 			};
 
+			//** Store ***********************//
 			await _session.StoreAsync(e);
 			await _session.StoreAsync(e2);
 			await _session.SaveChangesAsync();
 
-			var audit = await _session.LoadAsync<Audit>("audits/417-A");
 
-			string changeVector = _session.Advanced.GetChangeVectorFor(audit);
 
-			var revisionsMetadata = await _session
-			.Advanced
-			.Revisions
-			.GetMetadataForAsync(audit.Id, start: 0, pageSize: 25);
+			//var audit = await _session.LoadAsync<Audit>("audits/417-A");
 
-			//var revisionBase = await _session.Advanced.Revisions.GetAsync<BaseOperation>(changeVector);
+			//string changeVector = _session.Advanced.GetChangeVectorFor(audit);
+
+			//var revisionsMetadata = await _session
+			//.Advanced
+			//.Revisions
+			//.GetMetadataForAsync(audit.Id, start: 0, pageSize: 25);
+
+
+			//var revisionBase = await _session.Advanced.Revisions.GetAsync<BaseOperation>("A:53-TttBA3x6AE6M/0uxkUIs2Q");
 			//var revisionAudit = await _session.Advanced.Revisions.GetAsync<Audit>(changeVector);
 
 			//var eRelated = await _session.LoadAsync<BaseOperation>(revisionAudit.EntityId);
 
+			//** Delete ***********************//
 			_session.Delete(e);
 			await _session.SaveChangesAsync();
 			

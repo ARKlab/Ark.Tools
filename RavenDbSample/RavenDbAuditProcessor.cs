@@ -5,6 +5,7 @@ using Raven.Client.Documents.Operations;
 using Raven.Client.Documents.Subscriptions;
 using RavenDbSample.Auditable;
 using RavenDbSample.Models;
+using Sparrow.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,30 +17,19 @@ namespace RavenDbSample
 	public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 	{
 		private readonly IDocumentStore _store;
-		private List<SubscriptionWorker<Revision<IAuditable>>> _workers = new List<SubscriptionWorker<Revision<IAuditable>>>();
 		private List<Task> _subscriptionWorkerTasks = new List<Task>();
 		private CancellationTokenSource _tokenSource;
 		private readonly object _gate = new object();
 		private readonly HashSet<string> _names = new HashSet<string>();
-		private const string _prefixName= "AuditProcessor/";
-
-		public RavenDbAuditProcessor(IDocumentStore store/*, List<Type> types*/)
+		private const string _prefixName= "AuditProcessor";
+		
+		public RavenDbAuditProcessor(IDocumentStore store, IAuditableTypeProvider provider)
 		{
 			_store = store;
 
-			var types = new List<Type>() { typeof(BaseOperation) };
-
-			foreach (var t in types)
+			foreach (var t in provider.TypeList)
 				_names.Add(store.Conventions.GetCollectionName(t));
 
-			foreach (var name in _names)
-			{
-				_workers.Add(_store.Subscriptions.GetSubscriptionWorker<Revision<IAuditable>>(new SubscriptionWorkerOptions(_prefixName + name)
-				{
-					Strategy = SubscriptionOpeningStrategy.WaitForFree,
-					MaxDocsPerBatch = 10,
-				}));
-			}
 		}
 
 		public async Task StartAsync(CancellationToken ctk = default)
@@ -48,10 +38,10 @@ namespace RavenDbSample
 			{
 				try
 				{
-					await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions()
+					var localName = await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions()
 					{
 						Name = _prefixName + name,
-						Query = $@"From {name} (Revisions = true)"
+						Query = $@"From {name}(Revisions = true)"
 					});
 				}
 				catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
@@ -61,26 +51,34 @@ namespace RavenDbSample
 
 			lock (_gate)
 			{
-				int i = 0;
-				foreach (var worker in _workers)
-				{
-					if (_subscriptionWorkerTasks.Count > 0 && _subscriptionWorkerTasks[i] != null) //if (_subscriptionWorkerTask != null)
-						throw new InvalidOperationException("Already started");
+				if (_subscriptionWorkerTasks.Count > 0)
+					throw new InvalidOperationException("Already started");
 
-					_tokenSource = new CancellationTokenSource();
-					_subscriptionWorkerTasks.Add(Task.Run(() => _run(worker, _tokenSource.Token), ctk));
-					i++;
+				_tokenSource = new CancellationTokenSource();
+
+				foreach (var name in _names)
+				{
+					_subscriptionWorkerTasks.Add(Task.Run(() => _run(name, _tokenSource.Token), ctk));
 				}
 			}
 		}
 
-		private async Task _run(SubscriptionWorker<Revision<IAuditable>> worker, CancellationToken ctk = default)
+		private async Task _run(string name, CancellationToken ctk = default)
 		{
 			while (!ctk.IsCancellationRequested)
 			{
 				try
 				{
-					await worker.Run(_processAuditChange, ctk);
+					using (var worker = _store.Subscriptions.GetSubscriptionWorker<Revision<dynamic>>(
+					new SubscriptionWorkerOptions(_prefixName + name)
+					{
+						Strategy = SubscriptionOpeningStrategy.WaitForFree,
+						MaxDocsPerBatch = 10,
+					}))
+					{
+
+						await worker.Run(_processAuditChange, ctk);
+					}
 				}
 				catch (TaskCanceledException) { throw; }
 				catch (Exception)
@@ -91,34 +89,47 @@ namespace RavenDbSample
 
 		}
 
-		private async Task _processAuditChange(SubscriptionBatch<Revision<IAuditable>> batch)
+		private async Task _processAuditChange(SubscriptionBatch<Revision<dynamic>> batch)
 		{
-			using (var session = batch.OpenAsyncSession())
+			using (var session = _store.OpenAsyncSession())
 			{
 				foreach (var e in batch.Items)
 				{
-					session.Advanced.Defer(new PatchCommandData(
-						id: e.Id,
-						changeVector: null,
-						patch: new PatchRequest
-						{
-							Script = "this.EntityChangeVector[args.Id] = args.EntityChangeVector",
-							Values =
+					if (e.Result.Current?.AuditId != null)
+					{
+						session.Advanced.Defer(new PatchCommandData(
+							id: (string)e.Result.Current.AuditId,
+							changeVector: null,
+							patch: new PatchRequest
 							{
+								Script = @"this.EntityInfo
+											.forEach(eInfo => { 
+												if (eInfo.EntityId == args.Id) 
+													eInfo.CurrChangeVector = args.Cv; 
+											});
+										 ",
+								Values =
 								{
-									"EntityChangeVector",
-									new ChangeVectorDto
 									{
-										Prev = session.Advanced.GetChangeVectorFor(e.Result.Previous),
-										Curr = session.Advanced.GetChangeVectorFor(e.Result.Current)
+										"Cv", e.ChangeVector
+									},
+									{
+										"Id", e.Id
 									}
-								},
-								{
-									"Id", e.Id
 								}
-							}
-						},
-						patchIfMissing: null));
+								//Script = "this.EntityInfo[args.Id].CurrChangeVector = args.cv;",
+								//Values =
+								//{
+								//	{
+								//		"cv", e.ChangeVector
+								//	},
+								//	{
+								//		"Id", e.Id
+								//	}
+								//}
+							},
+							patchIfMissing: null));
+					}
 				}
 
 				await session.SaveChangesAsync();
@@ -145,7 +156,7 @@ namespace RavenDbSample
 
 		public void Dispose()
 		{
-			((IDisposable)_workers)?.Dispose();
+			_tokenSource?.Cancel();
 			_tokenSource?.Dispose();
 		}
 	}

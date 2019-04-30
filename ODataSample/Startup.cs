@@ -105,9 +105,6 @@ namespace ODataSample
 					.Action(c => c.Get(default)).Allow(Skip | Count).AllowTop(100);
 				});
 
-			//Claims Principal
-			services.AddTransient<IContextProvider<ClaimsPrincipal>, AspNetCoreUserContextProvider>();
-
 			//Entity Framework DB Context
 			services.AddDbContext<ODataSampleContext>((provider, options) =>
             {
