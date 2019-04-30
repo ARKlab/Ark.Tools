@@ -7,7 +7,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing
 {
 	public class Audit
     {
-        public Guid AuditId { get; set; }
+        public Guid Id { get; set; }
         public string UserId { get; set; }
 		public DateTime Timestamp { get; set; }
 

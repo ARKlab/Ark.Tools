@@ -18,10 +18,14 @@ using Raven.Client.Documents;
 using Raven.Embedded;
 using Raven.Client.Documents.Operations.Revisions;
 using Raven.Client.Documents.Session;
-using RavenDbSample.Auditable.Decorator;
 using System;
 using RavenDbSample.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using RavenDbSample.Application.Host;
+using System.Reflection;
+using Ark.Tools.Core;
+using Ark.Tools.RavenDb.Auditing;
 
 namespace RavenDbSample
 {
@@ -49,7 +53,7 @@ namespace RavenDbSample
 			//MVC
 			services.AddMvcCore(options =>
 			{
-				options.EnableEndpointRouting = false;
+				options.EnableEndpointRouting = false; //For Odata
 			});
 
 			//OData
@@ -81,14 +85,8 @@ namespace RavenDbSample
 				}
 			});
 
-			//RavenDB
-			var types = new HashSet<Type>() { typeof(BaseOperation) };
-
-			services.AddHostedService<RavenDbAuditProcessor>();
-			services.AddSingleton<IAuditableTypeProvider>(ss => new AuditableTypeProvider(types));
-			services.AddScoped<IAsyncDocumentSession>(
-				ss => new AsyncDocumentSessionDecorator(ss.GetService<IDocumentStore>().OpenAsyncSession()
-				, new AspNetCoreUserContextProvider(_app.ApplicationServices.GetRequiredService<IHttpContextAccessor>())));
+			//Add HostedService for Auditable
+			services.AddHostedServiceAuditProcessor();
 		}
 
 		private IApplicationBuilder _app;
@@ -114,55 +112,15 @@ namespace RavenDbSample
 		{
 			base.RegisterContainer(app);
 
-			//var cfg = new ApiConfig()
-			//{
-			//	MiddlewareSQLConnectionString = Configuration.GetConnectionString("NavisionMW.Database"),
-			//	SmtpConnectionString = Configuration["ConnectionStrings:Notification.SMTP"],
-			//	NotificationSenderAddress = Configuration["Notification:SenderAddress"],
-			//	RebusSQLConnectionString = Configuration.GetConnectionString("NavisionMW.RebusDatabase"),
-			//	RequestQueue = Configuration["NavisionMW:RequestQueue"],
-			//	MMSSQLConnectionString = Configuration["ConnectionStrings:MMS.Database"],
-			//	MMSSchema = Configuration["MMS:Schema"],
-			//	NavisionSQLConnectionString = Configuration["ConnectionStrings:Navision.Database"],
-			//	NavisionPrefix = Configuration["Navision:Prefix"],
-			//	MappingSQLConnectionString = Configuration.GetConnectionString("Mapping.Database"),
-			//	MappingSchema = Configuration["Mapping:Schema"],
-			//};
+			var cfg = new ApiConfig()
+			{
+			};
 
-			//var env = app.ApplicationServices.GetService<IHostingEnvironment>();
+			var apiHost = new ApiHost(cfg)
+				.WithContainer(Container)
+				.WithRavenDbAudit();
 
-			//if (!env.IsProduction())
-			//{
-			//	var mails = Configuration["Notification:TesterAddresses"];
-			//	if (!string.IsNullOrWhiteSpace(mails))
-			//		cfg.NotificationTesterAddresses = mails.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-			//}
-
-			//var apiHost = new ApiHost(cfg)
-			//	.WithContainer(Container)
-			//	.WithRebusOneWay(
-			//			app.ApplicationServices.GetService<InMemNetwork>(),
-			//			app.ApplicationServices.GetService<InMemorySubscriberStore>());
-
-			//if (app.ApplicationServices.GetService<IMMSDataContext>() != null)
-			//	apiHost.WithMMSContext(() => app.ApplicationServices.GetService<IMMSDataContext>());
-			//else
-			//	apiHost.WithMMSContext();
-
-			//if (app.ApplicationServices.GetService<INavisionDataContext>() != null)
-			//	apiHost.WithNavisionContext(() => app.ApplicationServices.GetService<INavisionDataContext>());
-			//else
-			//	apiHost.WithNavisionContext();
-
-			//if (app.ApplicationServices.GetService<IMappingDataContext>() != null)
-			//	apiHost.WithMappingDataContext(() => app.ApplicationServices.GetService<IMappingDataContext>());
-			//else
-			//	apiHost.WithMappingDataContext();
-
-			//var lifetime = app.ApplicationServices.GetRequiredService<IApplicationLifetime>();
-
-			//lifetime.ApplicationStarted.Register(() => apiHost.RunInBackground());
-			//lifetime.ApplicationStopped.Register(() => Container.Dispose());
+			var env = app.ApplicationServices.GetService<IHostingEnvironment>();
 		}
 	}
 }

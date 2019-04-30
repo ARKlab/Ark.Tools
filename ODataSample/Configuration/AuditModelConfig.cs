@@ -12,7 +12,7 @@ namespace ODataSample.Configuration
 		{
 			var audit = builder.EntitySet<Audit>("Audits").EntityType;
 
-			audit.HasKey(p => p.AuditId);
+			audit.HasKey(p => p.Id);
 
 			audit.Filter();
 			audit.Expand();

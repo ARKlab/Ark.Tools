@@ -9,7 +9,7 @@ using System.Reflection;
 namespace ODataSample.Models
 {
 	// Book
-	public class Book : IAuditable
+	public class Book : IAuditableEntityFramework
 	{
         [Key]
         public int Id { get; set; }

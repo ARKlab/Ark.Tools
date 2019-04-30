@@ -1,7 +1,5 @@
 ﻿using Raven.Client.Documents.Session;
 using Raven.Client.Documents.Indexes;
-using Raven.Client.Documents.Linq;
-using Raven.Client.Documents.Session.Loaders;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -17,14 +15,14 @@ using Raven.Client.Util;
 using Raven.Client.Documents.Commands;
 using System.Linq;
 
-namespace RavenDbSample.Auditable.Decorator
+namespace Ark.Tools.RavenDb.Auditing
 {
-	public class AsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSessionOperations
+	public class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSessionOperations
 	{
 		private readonly IAsyncAdvancedSessionOperations _inner;
 		private readonly object _audit;
 
-		public AsyncAdvancedSessionOperationsDecorator(IAsyncAdvancedSessionOperations inner, object audit)
+		public AuditableAsyncAdvancedSessionOperationsDecorator(IAsyncAdvancedSessionOperations inner, object audit)
 		{
 			_inner = inner;
 			_audit = audit;
@@ -34,7 +32,7 @@ namespace RavenDbSample.Auditable.Decorator
 
 		public IAsyncLazySessionOperations Lazily => _inner.Lazily;
 
-		public IAttachmentsSessionOperationsAsync Attachments => new AttachmentsSessionOperationsAsyncDecorator(_inner.Attachments, _audit);
+		public IAttachmentsSessionOperationsAsync Attachments => new AuditableAttachmentsSessionOperationsAsyncDecorator(_inner.Attachments, _audit);
 
 		public IRevisionsSessionOperationsAsync Revisions => _inner.Revisions;
 

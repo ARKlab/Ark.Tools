@@ -1,24 +1,16 @@
-﻿using Raven.Client.Documents.Subscriptions;
+﻿using Ark.Tools.Core;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace RavenDbSample.Auditable
+namespace Ark.Tools.RavenDb.Auditing
 {
-	public interface IAuditable
-	{
-		string AuditId { get; set; }
-	}
-
 	public class Audit
 	{
-		[Key]
-		public string Id { get; set; }
+		public Guid AuditId { get; set; }
+		public string Id => AuditId.ToString();
+		
 		public string UserId { get; set; }
 		public DateTime LastUpdatedUtc { get; set; }
-		//public Dictionary<string, EntityInfo> EntityInfo { get; set; } = new Dictionary<string, EntityInfo>();
 
 		public HashSet<EntityInfo> EntityInfo { get; set; } = new HashSet<EntityInfo>();
 	}

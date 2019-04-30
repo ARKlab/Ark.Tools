@@ -9,24 +9,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ark.Tools.Solid;
 using System.Security.Claims;
+using Ark.Tools.Core;
 
-namespace RavenDbSample.Auditable.Decorator
+namespace Ark.Tools.RavenDb.Auditing
 {
-	public class AsyncDocumentSessionDecorator : IAsyncDocumentSession
+	public class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSession
 	{
 		private readonly IAsyncDocumentSession _inner;
 		private readonly IContextProvider<ClaimsPrincipal> _principalProvider;
 		private Audit _audit;
 
-		public AsyncDocumentSessionDecorator(IAsyncDocumentSession inner, IContextProvider<ClaimsPrincipal> principalProvider)
+		public AuditableAsyncDocumentSessionDecorator(IAsyncDocumentSession inner, IContextProvider<ClaimsPrincipal> principalProvider)
 		{
 			_inner = inner;
 			_principalProvider = principalProvider;
-
-			_audit = new Audit() { Id = null }; //Qui con Factory
 		}
 
-		public IAsyncAdvancedSessionOperations Advanced => new AsyncAdvancedSessionOperationsDecorator(_inner.Advanced, _audit);
+		public IAsyncAdvancedSessionOperations Advanced => new AuditableAsyncAdvancedSessionOperationsDecorator(_inner.Advanced, _audit);
 
 		public IAsyncSessionDocumentCounters CountersFor(string documentId)
 		{
@@ -40,12 +39,13 @@ namespace RavenDbSample.Auditable.Decorator
 
 		public void Delete<T>(T entity)
 		{
-			if (_audit.Id == null)
+			if (_ensureAndCreateAudit())
 				_inner.StoreAsync(_audit);
 
 			_setAuditIdOnEntity(entity);
-			
-			_fillAudit(_audit, entity);
+
+			var infos = _getEntityInfo(entity);
+			_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
 
 			_inner.Delete(entity);
 		}
@@ -118,46 +118,69 @@ namespace RavenDbSample.Auditable.Decorator
 		public async Task SaveChangesAsync(CancellationToken token = default)
 		{
 			await _inner.SaveChangesAsync(token);
-			_audit = new Audit() { Id = null }; //Qui con Factory
+			_audit = null;
 		}
 
 		public async Task StoreAsync(object entity, CancellationToken token = default)
 		{
 			_ensureEntityId(entity);
 
-			await _ensureAudit(_audit);
+			if(_ensureAndCreateAudit())
+				await _inner.StoreAsync(_audit, token);
 
 			_setAuditIdOnEntity(entity);
 
 			await _inner.StoreAsync(entity, token);
 
-			_fillAudit(_audit, entity);
+			var infos = _getEntityInfo(entity);
+			_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
 		}
 
 		public async Task StoreAsync(object entity, string changeVector, string id, CancellationToken token = default)
 		{
 			_checkEntityIdGeneration(id);
 
+			if (_ensureAndCreateAudit())
+				await _inner.StoreAsync(_audit, token);
+
+			_setAuditIdOnEntity(entity);
+
 			await _inner.StoreAsync(entity, changeVector, id, token);
+
+			var infos = _getEntityInfo(entity);
+			_fillAudit(_audit, id, changeVector, infos.collectionName);
 		}
 
 		public async Task StoreAsync(object entity, string id, CancellationToken token = default)
 		{
 			_checkEntityIdGeneration(id);
 
+			if (_ensureAndCreateAudit())
+				await _inner.StoreAsync(_audit, token);
+
+			_setAuditIdOnEntity(entity);
+
 			await _inner.StoreAsync(entity, id, token);
+
+			var infos = _getEntityInfo(entity);
+			_fillAudit(_audit, id, infos.cv, infos.collectionName);
 		}
 
 		private void _setAuditIdOnEntity(object entity)
 		{
-			if (entity is IAuditable)
-				(entity as IAuditable).AuditId = _audit.Id;
+			if (entity is IAuditableEntity)
+				(entity as IAuditableEntity).AuditId = _audit.AuditId;
 		}
 
-		private async Task _ensureAudit(Audit audit, CancellationToken token = default)
+		private bool _ensureAndCreateAudit()
 		{
-			if(audit.Id == null)
-				await _inner.StoreAsync(_audit, token);
+			if (_audit == null)
+			{
+				_audit = new Audit() { AuditId = Guid.NewGuid() };
+				return true;
+			}
+
+			return false;
 		}
 
 		private void _ensureEntityId(object entity, CancellationToken token = default)
@@ -173,25 +196,10 @@ namespace RavenDbSample.Auditable.Decorator
 				throw new NotSupportedException("Entity Id generation incompatible with audit");
 		}
 
-		private void _fillAudit(Audit audit, object entity)
+		private void _fillAudit(Audit audit, string entityId, string cv, string collectionName)
 		{
-			var entityId = _inner.Advanced.GetDocumentId(entity);
-			var cv = _inner.Advanced.GetChangeVectorFor(entity);
-			var collectionName = _inner.Advanced.DocumentStore.Conventions.GetCollectionName(entity);
-
-			var lastUpdate = DateTime.UtcNow;
-			var userId = _principalProvider.Current?.Identity?.Name;
-
-			//if (_audit.EntityInfo.ContainsKey(entityId))
-			//{
-			//	_audit.EntityInfo[entityId].PrevChangeVector = cv;
-			//}
-			//else
-			//{
-
-			_audit.UserId = entityId;
-			_audit.LastUpdatedUtc = lastUpdate;
-			_audit.UserId = userId;
+			_audit.LastUpdatedUtc = DateTime.UtcNow;
+			_audit.UserId = _principalProvider.Current?.Identity?.Name;
 
 			_audit.EntityInfo.Add(new EntityInfo
 			{
@@ -199,7 +207,15 @@ namespace RavenDbSample.Auditable.Decorator
 				PrevChangeVector = cv,
 				CollectionName = collectionName
 			});
-			//}
+		}
+
+		private (string entityId, string cv, string collectionName) _getEntityInfo(object entity)
+		{
+			var entityId = _inner.Advanced.GetDocumentId(entity);
+			var cv = _inner.Advanced.GetChangeVectorFor(entity);
+			var collectionName = _inner.Advanced.DocumentStore.Conventions.GetCollectionName(entity);
+
+			return (entityId, cv, collectionName);
 		}
 	}
 }

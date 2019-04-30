@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNet.OData.Builder;
+﻿using Ark.Tools.Core;
+using Microsoft.AspNet.OData.Builder;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RavenDbSample.Auditable;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace RavenDbSample.Models
 {
@@ -45,7 +43,7 @@ namespace RavenDbSample.Models
 	}
 
 
-	public class BaseOperation : IAuditable
+	public class BaseOperation : IAuditableEntity
 	{
 		[Key]
 		public string Id { get; set; }
@@ -57,7 +55,7 @@ namespace RavenDbSample.Models
 		[Required]
 		public Base B { get; set; }
 
-		public string AuditId { get; set; }
+		public Guid AuditId { get; set; }
 	}
 	
 	class BaseConverter : JsonCreationConverter<Base>

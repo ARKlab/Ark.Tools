@@ -12,53 +12,53 @@ using Raven.Client.Documents.Linq;
 
 namespace RavenDbSample.Controllers
 {
-	//[ApiVersion("1.0")]
-	//[Route("BaseOperations")]
-	//[ApiController]
-	//public class BaseOperationsController : ControllerBase
-	//{
-	//	private readonly IAsyncDocumentSession _session;
+	[ApiVersion("1.0")]
+	[Route("BaseOperations")]
+	[ApiController]
+	public class BaseOperationsController : ControllerBase
+	{
+		private readonly IAsyncDocumentSession _session;
 
-	//	public BaseOperationsController(IAsyncDocumentSession session)
-	//	{
-	//		_session = session;
-	//	}
+		public BaseOperationsController(IAsyncDocumentSession session)
+		{
+			_session = session;
+		}
 
-	//	[HttpGet]
-	//	[Produces("application/json")]
-	//	[ProducesResponseType(typeof(IEnumerable<BaseOperation>), StatusCodes.Status200OK)]
-	//	//[EnableQuery(AllowedQueryOptions = AllowedQueryOptions.Filter | AllowedQueryOptions.Select)]
-	//	public async Task<IActionResult> Get(ODataQueryOptions<BaseOperation> options)
-	//	{
-	//		var query = _session.Query<BaseOperation>();
-	//		var q2 = options.ApplyTo(query, new ODataQuerySettings
-	//		{
-	//			HandleNullPropagation = HandleNullPropagationOption.False
-	//		}) as IRavenQueryable<BaseOperation>;
+		[HttpGet]
+		[Produces("application/json")]
+		[ProducesResponseType(typeof(IEnumerable<BaseOperation>), StatusCodes.Status200OK)]
+		//[EnableQuery(AllowedQueryOptions = AllowedQueryOptions.Filter | AllowedQueryOptions.Select)]
+		public async Task<IActionResult> Get(ODataQueryOptions<BaseOperation> options)
+		{
+			var query = _session.Query<BaseOperation>();
+			var q2 = options.ApplyTo(query, new ODataQuerySettings
+			{
+				HandleNullPropagation = HandleNullPropagationOption.False
+			}) as IRavenQueryable<BaseOperation>;
 
-	//		var set = await q2.ToListAsync();
-	//		return Ok(set);
-	//	}
+			var set = await q2.ToListAsync();
+			return Ok(set);
+		}
 
-	//	[HttpGet("{key}")]
-	//	public async Task<IActionResult> Get([FromRoute]string key)
-	//	{
-	//		var operation = await _session.LoadAsync<BaseOperation>(key);
+		[HttpGet("{key}")]
+		public async Task<IActionResult> Get([FromRoute]string key)
+		{
+			var operation = await _session.LoadAsync<BaseOperation>(key);
 
-	//		return Ok(operation);
-	//	}
+			return Ok(operation);
+		}
 
 
-	//	[HttpPost]
-	//	[Consumes("application/json")]
-	//	[Produces("application/json")]
-	//	[ProducesResponseType(typeof(BaseOperation), StatusCodes.Status200OK)]
-	//	public async Task<IActionResult> Post([FromBody] BaseOperation operationBase)
-	//	{
-	//		await _session.StoreAsync(operationBase);
-	//		await _session.SaveChangesAsync();
+		[HttpPost]
+		[Consumes("application/json")]
+		[Produces("application/json")]
+		[ProducesResponseType(typeof(BaseOperation), StatusCodes.Status200OK)]
+		public async Task<IActionResult> Post([FromBody] BaseOperation operationBase)
+		{
+			await _session.StoreAsync(operationBase);
+			await _session.SaveChangesAsync();
 
-	//		return Ok(operationBase);
-	//	}
-	//}
+			return Ok(operationBase);
+		}
+	}
 }

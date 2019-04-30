@@ -3,20 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace RavenDbSample
+namespace Ark.Tools.RavenDb.Auditing
 {
 	public interface IAuditableTypeProvider
 	{
-		HashSet<Type> TypeList { get; }
+		List<Type> TypeList { get; }
 	}
 
 	public class AuditableTypeProvider: IAuditableTypeProvider
 	{
-		public AuditableTypeProvider(HashSet<Type> typeList)
+		public AuditableTypeProvider(List<Type> typeList)
 		{
 			TypeList = typeList;
 		}
 
-		public HashSet<Type> TypeList { get; set; }
+		public List<Type> TypeList { get; set; }
 	}
 }

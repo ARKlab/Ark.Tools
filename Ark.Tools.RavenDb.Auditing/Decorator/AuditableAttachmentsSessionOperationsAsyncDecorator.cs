@@ -1,19 +1,16 @@
 ﻿using Raven.Client.Documents.Operations.Attachments;
 using Raven.Client.Documents.Session;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RavenDbSample.Auditable.Decorator
+namespace Ark.Tools.RavenDb.Auditing
 {
-	public class AttachmentsSessionOperationsAsyncDecorator : IAttachmentsSessionOperationsAsync
+	public class AuditableAttachmentsSessionOperationsAsyncDecorator : IAttachmentsSessionOperationsAsync
 	{
 		private readonly IAttachmentsSessionOperationsAsync _inner;
 
-		public AttachmentsSessionOperationsAsyncDecorator(IAttachmentsSessionOperationsAsync inner, object audit)
+		public AuditableAttachmentsSessionOperationsAsyncDecorator(IAttachmentsSessionOperationsAsync inner, object audit)
 		{
 			_inner = inner;
 		}

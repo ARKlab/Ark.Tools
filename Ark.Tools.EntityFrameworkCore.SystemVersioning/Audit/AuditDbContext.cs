@@ -29,7 +29,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing
             base.OnModelCreating(modelBuilder);
 
 			modelBuilder.Entity<Audit>()
-				.HasKey(p => p.AuditId);
+				.HasKey(p => p.Id);
 
 			modelBuilder.Entity<Audit>()
 				.HasAnnotation(SystemVersioningConstants.SqlServerSystemVersioning, true);
@@ -102,7 +102,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing
 
         private bool _hasAuditableEntity()
         {
-            return ChangeTracker.Entries().Select(s => s.Entity).OfType<IAuditable>().Any();
+            return ChangeTracker.Entries().Select(s => s.Entity).OfType<IAuditableEntityFramework>().Any();
         }
 
         private EntityEntry<Audit> _onBeforeSaveChanges(Guid guid)
@@ -111,7 +111,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing
 
             var auditEntry = new Audit()
             {
-                AuditId = guid,
+                Id = guid,
 				UserId =  _principalProvider.Current?.Identity?.Name
 			};
 
@@ -120,7 +120,7 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing
                 if (entry.Entity is Audit || entry.Entity is AffectedEntity || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
                     continue;
 
-                if (entry.Entity is IAuditable a)
+                if (entry.Entity is IAuditableEntityFramework a)
                 {
                     a.AuditId = guid;
 

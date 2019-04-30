@@ -3,16 +3,13 @@ using Raven.Client.Documents;
 using Raven.Client.Documents.Commands.Batches;
 using Raven.Client.Documents.Operations;
 using Raven.Client.Documents.Subscriptions;
-using RavenDbSample.Auditable;
-using RavenDbSample.Models;
-using Sparrow.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RavenDbSample
+namespace Ark.Tools.RavenDb.Auditing
 {
 	public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 	{
@@ -65,10 +62,14 @@ namespace RavenDbSample
 
 		private async Task _run(string name, CancellationToken ctk = default)
 		{
+			int retryCount = 0;
+
 			while (!ctk.IsCancellationRequested)
 			{
 				try
 				{
+					retryCount++;
+
 					using (var worker = _store.Subscriptions.GetSubscriptionWorker<Revision<dynamic>>(
 					new SubscriptionWorkerOptions(_prefixName + name)
 					{
@@ -83,6 +84,9 @@ namespace RavenDbSample
 				catch (TaskCanceledException) { throw; }
 				catch (Exception)
 				{
+					if (retryCount > 10)
+						throw new Exception("Fatal"); 
+
 					// retry
 				}
 			}
@@ -117,16 +121,6 @@ namespace RavenDbSample
 										"Id", e.Id
 									}
 								}
-								//Script = "this.EntityInfo[args.Id].CurrChangeVector = args.cv;",
-								//Values =
-								//{
-								//	{
-								//		"cv", e.ChangeVector
-								//	},
-								//	{
-								//		"Id", e.Id
-								//	}
-								//}
 							},
 							patchIfMissing: null));
 					}
