@@ -16,7 +16,7 @@ goto end
 :operations
 setlocal
 
-"%MSBUILD%" "Ark.Tools.EntityFrameworkCore\Ark.Tools.EntityFrameworkCore.csproj"							/t:Pack /p:Configuration=Release
+"%MSBUILD%" "Ark.Tools.EntityFrameworkCore\Ark.Tools.EntityFrameworkCore.csproj"							        /t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.EntityFrameworkCore.Nodatime\Ark.Tools.EntityFrameworkCore.Nodatime.csproj"					/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.EntityFrameworkCore.SystemVersioning\Ark.Tools.EntityFrameworkCore.SystemVersioning.csproj"	/t:Pack /p:Configuration=Release
 

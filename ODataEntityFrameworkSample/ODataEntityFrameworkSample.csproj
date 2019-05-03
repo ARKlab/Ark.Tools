@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AspNetCoreModuleName>AspNetCoreModuleV2</AspNetCoreModuleName>
+    <AspNetCoreHostingModel>inprocess</AspNetCoreHostingModel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Migrations\20190418101028_Test.cs" />
+    <Compile Remove="Migrations\20190418101028_Test.Designer.cs" />
+    <Compile Remove="Migrations\20190502132115_Init.cs" />
+    <Compile Remove="Migrations\20190502132115_Init.Designer.cs" />
+    <Compile Remove="Migrations\20190502150253_Init.cs" />
+    <Compile Remove="Migrations\20190502150253_Init.Designer.cs" />
+    <Compile Remove="Migrations\20190502151447_Init.cs" />
+    <Compile Remove="Migrations\20190502151447_Init.Designer.cs" />
+    <Compile Remove="Migrations\20190502152235_Init2.cs" />
+    <Compile Remove="Migrations\20190502152235_Init2.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
+    <ProjectReference Include="..\Ark.Tools.EntityFrameworkCore.SystemVersioning\Ark.Tools.EntityFrameworkCore.SystemVersioning.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OData" Version="7.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OData.Versioning.ApiExplorer" Version="3.1.1" />
+    <PackageReference Include="Microsoft.OData.Core" Version="7.5.4" />
+    <PackageReference Include="Microsoft.OData.Edm" Version="7.5.4" />
+    <PackageReference Include="morelinq" Version="3.1.1" />
+  </ItemGroup>
+
+</Project>

@@ -16,9 +16,7 @@ namespace RavenDbSample
 				ServerUrl = "http://127.0.0.1:8080"
 			});
 
-			var store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions("RavenDb")
-			{
-			});
+			var store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions("RavenDb"));
 
 			store.Maintenance.Send(new ConfigureRevisionsOperation(new RevisionsConfiguration
 			{

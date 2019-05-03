@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using RavenDbSample.Models;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Session;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Microsoft.AspNet.OData;
 using Raven.Client.Documents.Linq;
 
 namespace RavenDbSample.Controllers

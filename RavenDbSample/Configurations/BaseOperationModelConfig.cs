@@ -1,10 +1,6 @@
 ﻿using Microsoft.AspNet.OData.Builder;
 using Microsoft.AspNetCore.Mvc;
 using RavenDbSample.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace RavenDbSample.Configurations
 {

@@ -29,7 +29,7 @@ Consider that this do replace the original SqlServer services and therefore is n
 To add support to Nodatime types over SqlServer at runtime, configure the `DbContext` replacing some of the original SqlServer services with the one provided by this library.
  
 ```csharp
-public class SucaContext : DbContext
+public class ExampleContext : DbContext
 {
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

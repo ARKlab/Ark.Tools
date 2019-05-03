@@ -10,21 +10,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNet.OData.Formatter;
 using Microsoft.Net.Http.Headers;
 using System.Linq;
-using Ark.Tools.AspNetCore;
-using Ark.Tools.Solid;
-using System.Security.Claims;
 using Microsoft.AspNet.OData.Builder;
 using Raven.Client.Documents;
-using Raven.Embedded;
-using Raven.Client.Documents.Operations.Revisions;
-using Raven.Client.Documents.Session;
-using System;
-using RavenDbSample.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using RavenDbSample.Application.Host;
-using System.Reflection;
-using Ark.Tools.Core;
 using Ark.Tools.RavenDb.Auditing;
 
 namespace RavenDbSample
@@ -50,12 +39,6 @@ namespace RavenDbSample
 		{
 			base.ConfigureServices(services);
 
-			//MVC
-			services.AddMvcCore(options =>
-			{
-				options.EnableEndpointRouting = false; //For Odata
-			});
-
 			//OData
 			services.AddOData().EnableApiVersioning();
 			services.AddODataQueryFilter();
@@ -72,17 +55,16 @@ namespace RavenDbSample
 				options.SubstituteApiVersionInUrl = true;
 			});
 
-
+			//MVC
 			services.AddMvcCore(options =>
 			{
+				options.EnableEndpointRouting = false; //For Odata
+
 				foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
-				{
 					outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
-				}
+
 				foreach (var inputFormatter in options.InputFormatters.OfType<ODataInputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
-				{
 					inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
-				}
 			});
 
 			//Add HostedService for Auditable

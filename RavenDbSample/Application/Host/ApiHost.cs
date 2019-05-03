@@ -1,25 +1,12 @@
-﻿using Ark.Tools.Solid;
-using Ark.Tools.Sql;
-using FluentValidation;
-using SimpleInjector;
-using System.Linq;
+﻿using SimpleInjector;
 using System.Reflection;
 using System.Threading;
 using Ark.Tools.SimpleInjector;
-using Ark.Tools.Solid.SimpleInjector;
-using Ark.Tools.Sql.SqlServer;
-using System;
-using System.Collections.Generic;
-using Raven.Client.Documents.Session;
-using Raven.Client.Documents;
-using RavenDbSample.Models;
-using System.Security.Claims;
-using SimpleInjector.Lifestyles;
 using Ark.Tools.RavenDb.Auditing;
 
 namespace RavenDbSample.Application.Host
 {
-    public class ApiHost
+	public class ApiHost
     {
         public ApiHost(ApiConfig config)
         {

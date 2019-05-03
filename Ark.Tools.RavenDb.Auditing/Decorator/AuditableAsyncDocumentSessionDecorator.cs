@@ -52,7 +52,8 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		public void Delete(string id)
 		{
-			_inner.Delete(id);
+			throw new NotSupportedException("Delete by Id is not supported, load entity first, than delete it");
+			//_inner.Delete(id);
 		}
 
 		public void Dispose()
