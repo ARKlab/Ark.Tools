@@ -15,6 +15,7 @@ using Raven.Client.Documents;
 using Microsoft.AspNetCore.Hosting;
 using RavenDbSample.Application.Host;
 using Ark.Tools.RavenDb.Auditing;
+using Raven.Client.Documents.Operations.Revisions;
 
 namespace RavenDbSample
 {
@@ -69,6 +70,20 @@ namespace RavenDbSample
 
 			//Add HostedService for Auditable
 			services.AddHostedServiceAuditProcessor();
+
+
+			var store = new DocumentStore()
+			{
+				Database = "RavenDb",
+				Urls = new []
+				{
+					"http://127.0.0.1:8080"
+				}
+			};
+
+			services.AddSingleton(store.Initialize());
+
+
 		}
 
 		private IApplicationBuilder _app;
@@ -76,6 +91,20 @@ namespace RavenDbSample
 		public override void Configure(IApplicationBuilder app)
 		{
 			_app = app; // :(
+
+			var store = app.ApplicationServices.GetService<IDocumentStore>();
+
+			store.Maintenance.Send(new ConfigureRevisionsOperation(new RevisionsConfiguration
+			{
+				Default = new RevisionsCollectionConfiguration
+				{
+					Disabled = false,
+					PurgeOnDelete = false,
+					MinimumRevisionsToKeep = null,
+					MinimumRevisionAgeToKeep = null,
+				}
+			}));
+
 
 			base.Configure(app);
 		}

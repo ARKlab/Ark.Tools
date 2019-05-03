@@ -5,6 +5,7 @@ using System.Reflection;
 
 namespace ODataEntityFrameworkSample
 {
+	//OWNED_ENTITIES
 	static class Ex
 	{
 		public static void CloneReflection<T>(this EntityEntry<T> target, EntityEntry<T> source)

@@ -115,6 +115,7 @@ namespace ODataEntityFrameworkSample.Controllers
 			var country = _db.Countries.AsTracking()
 				.Include(x => x.Cities).SingleOrDefault(x => x.Id == key);
 
+			//OWNED_ENTITIES
 			//To manage Add or Remove on OWNED collection entity we need to do this monster
 			//Works but the record result as modyfied also if is not really added (are just same as before)
 			//and the systart time is updated

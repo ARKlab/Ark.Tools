@@ -125,6 +125,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.RavenDb.Auditing"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ODataEntityFrameworkSample", "ODataEntityFrameworkSample\ODataEntityFrameworkSample.csproj", "{469CB128-17A2-4553-BD0D-0EB30C52E4BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RavenDbSample.Tests", "ravenDbSample.Tests\RavenDbSample.Tests.csproj", "{E5D6732D-33C1-4553-AD7E-AF840701CF7B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -343,6 +345,10 @@ Global
 		{469CB128-17A2-4553-BD0D-0EB30C52E4BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{469CB128-17A2-4553-BD0D-0EB30C52E4BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{469CB128-17A2-4553-BD0D-0EB30C52E4BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5D6732D-33C1-4553-AD7E-AF840701CF7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5D6732D-33C1-4553-AD7E-AF840701CF7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5D6732D-33C1-4553-AD7E-AF840701CF7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5D6732D-33C1-4553-AD7E-AF840701CF7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -353,6 +359,7 @@ Global
 		{14972F4D-464D-4C28-B9A1-E92503993441} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{995A6412-9CC7-4136-9994-3804E350B3DF} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{469CB128-17A2-4553-BD0D-0EB30C52E4BA} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
+		{E5D6732D-33C1-4553-AD7E-AF840701CF7B} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F88F06AE-6856-423B-9179-28732B57F828}

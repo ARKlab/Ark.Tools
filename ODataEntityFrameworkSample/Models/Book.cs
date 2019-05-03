@@ -49,6 +49,26 @@ namespace ODataEntityFrameworkSample.Models
 		}
 	}
 
+	// Book
+	public class BookDto
+	{
+		public int Id { get; set; }
+
+		public string ISBN { get; set; }
+		public string Title { get; set; }
+		public string Author { get; set; }
+		public decimal Price { get; set; }
+		public Address Location { get; set; }
+		
+		public virtual Bibliografy Bibliografy { get; set; }
+
+		public virtual List<Address> Addresses { get; set; }
+
+		public virtual Press Press { get; set; }
+
+		public string _ETag { get; set; }
+
+	}
 
 	// Press
 	public class Press

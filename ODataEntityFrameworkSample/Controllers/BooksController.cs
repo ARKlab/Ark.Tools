@@ -106,7 +106,7 @@ namespace ODataEntityFrameworkSample.Controllers
         [HttpPut("({key})")]
         [ODataRoute("({key})")]
         //[EnableQuery]
-        public IActionResult Put(int key, [FromBody] Book update)
+        public IActionResult Put(int key, [FromBody] BookDto update)
         {
             if (!ModelState.IsValid)
             {
@@ -123,14 +123,16 @@ namespace ODataEntityFrameworkSample.Controllers
 			//_db.Books.Update(book);
 
 			//Clone Reflection is for Owned Collection Entity
+			//OWNED_ENTITIES
 
 			//Sol Reflection
 			var book = _db.Books.Find(key);
 			var be = _db.Entry(book);
 			var ue = _db.Entry(update);
 			be.CloneReflection(ue);
-			//_db.Books.Update(book);
+			_db.Books.Update(book);
 
+			_db.Books.Persist().InsertOrUpdate()
 
 
 			try
