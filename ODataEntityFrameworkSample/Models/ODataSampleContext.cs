@@ -23,6 +23,10 @@ namespace ODataEntityFrameworkSample.Models
 		public DbSet<City> Cities { get; set; }
 		public DbSet<Test> Tests { get; set; }
 
+		public DbSet<School> Schools { get; set; }
+		public DbSet<University> Universities { get; set; }
+		public DbSet<PhotoStudio> PhotoStudios { get; set; }
+
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -40,9 +44,9 @@ namespace ODataEntityFrameworkSample.Models
 				});
 
 
-            modelBuilder.Entity<Book>()
-                .HasOne<Audit>("Audit")
-                    .WithMany();
+			modelBuilder.Entity<Book>()
+				.HasOne<Audit>("Audit")
+					.WithMany();
 
 
 			modelBuilder.Entity<Book>()
@@ -64,6 +68,51 @@ namespace ODataEntityFrameworkSample.Models
 					.WithOne()
 					.HasForeignKey(x => x.CountryId)
 				;
+
+			//*****************************************************//
+			//School test
+			modelBuilder.Entity<School>()
+				.OwnsMany(b => b.Students, a =>
+				{
+					a.HasForeignKey("SchoolId");
+				});
+
+			modelBuilder.Entity<School>()
+				.OwnsOne(c => c.Registry, a =>
+				{
+					a.HasForeignKey("SchoolId");
+					a.HasKey("Id");
+					a.ToTable("Registry");
+					a.OwnsMany<Rule>(x => x.Rules, b =>
+					{
+						b.HasForeignKey("RuleId");
+						b.HasKey("Id");
+					});
+				});
+
+			//*****************************************************//
+			//universities test
+			modelBuilder.Entity<University>()
+				.OwnsMany(b => b.People, a =>
+				{
+					a.HasForeignKey("UniversityId");
+					a.HasKey("Name", "SurName", "Role");
+				});
+
+
+			//*****************************************************//
+			//PhotoStudios test
+			modelBuilder.Entity<PhotoStudio>()
+				.OwnsMany(b => b.Workers, a =>
+				{
+					a.HasForeignKey("PhotoStudioId");
+					a.HasKey("Name", "SurName", "Role");
+				});
+
+
+
+
+
 
 			modelBuilder.AllTemporalTable();
 			

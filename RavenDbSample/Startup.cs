@@ -71,7 +71,6 @@ namespace RavenDbSample
 			//Add HostedService for Auditable
 			services.AddHostedServiceAuditProcessor();
 
-
 			var store = new DocumentStore()
 			{
 				Database = "RavenDb",
@@ -82,8 +81,6 @@ namespace RavenDbSample
 			};
 
 			services.AddSingleton(store.Initialize());
-
-
 		}
 
 		private IApplicationBuilder _app;

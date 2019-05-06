@@ -19,4 +19,22 @@ namespace ODataEntityFrameworkSample.Models
 		public int CountryId { get; set; }
 		public int? Population { get; set; }
 	}
+
+	//**********************************************************************//
+	public class CountryDto /*: IAuditable*/
+	{
+		[Key]
+		public int Id { get; set; }
+		public string Name { get; set; }
+		public virtual HashSet<CityDto> Cities { get; set; }
+	}
+
+	public class CityDto
+	{
+		[Key]
+		public int Id { get; set; }
+		public string Name { get; set; }
+		public int CountryId { get; set; }
+		public int? Population { get; set; }
+	}
 }

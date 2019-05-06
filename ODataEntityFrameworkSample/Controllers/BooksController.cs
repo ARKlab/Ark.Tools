@@ -9,6 +9,7 @@ using Ark.Tools.EntityFrameworkCore.SystemVersioning;
 using Microsoft.AspNet.OData.Query;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
+using AutoMapper.EntityFrameworkCore;
 
 namespace ODataEntityFrameworkSample.Controllers
 {
@@ -126,13 +127,13 @@ namespace ODataEntityFrameworkSample.Controllers
 			//OWNED_ENTITIES
 
 			//Sol Reflection
-			var book = _db.Books.Find(key);
-			var be = _db.Entry(book);
-			var ue = _db.Entry(update);
-			be.CloneReflection(ue);
-			_db.Books.Update(book);
+			//var book = _db.Books.Find(key);
+			//var be = _db.Entry(book);
+			//var ue = _db.Entry(update);
+			//be.CloneReflection(ue);
+			//_db.Books.Update(book);
 
-			_db.Books.Persist().InsertOrUpdate()
+			_db.Books.Persist().InsertOrUpdate(update);
 
 
 			try

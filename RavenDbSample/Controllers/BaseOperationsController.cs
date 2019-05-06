@@ -39,9 +39,14 @@ namespace RavenDbSample.Controllers
 		}
 
 		[HttpGet("{key}")]
+		[Produces("application/json")]
+		[ProducesResponseType(typeof(BaseOperation), StatusCodes.Status200OK)]
 		public async Task<IActionResult> Get([FromRoute]string key)
 		{
 			var operation = await _session.LoadAsync<BaseOperation>(key);
+
+			if (operation == null)
+				return NotFound();
 
 			return Ok(operation);
 		}

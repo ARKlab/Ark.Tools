@@ -15,12 +15,12 @@ using AutoMapper.EntityFrameworkCore;
 namespace ODataEntityFrameworkSample.Controllers
 {
 	[ApiVersion("1.0")]
-	[ODataRoutePrefix("Countries")]
-	public class CountriesController : ODataController
+	[ODataRoutePrefix("Universities")]
+	public class UniversitiesController : ODataController
 	{
 		private ODataSampleContext _db;
 
-		public CountriesController(ODataSampleContext context)
+		public UniversitiesController(ODataSampleContext context)
 		{
 			_db = context;
 		}
@@ -29,11 +29,11 @@ namespace ODataEntityFrameworkSample.Controllers
 		[ODataRoute]
 		//[EnableQuery]
 		[Produces("application/json")]
-		[ProducesResponseType(typeof(ODataValue<IEnumerable<Country>>), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(ODataValue<IEnumerable<University>>), StatusCodes.Status200OK)]
 		[EnableQuery(AllowedQueryOptions = AllowedQueryOptions.Filter | AllowedQueryOptions.Select)]
 		public IActionResult Get()
 		{
-			return Ok(_db.Countries.Include(x => x.Cities));
+			return Ok(_db.Universities.Include(x => x.People));
 		}
 
 		[HttpGet("({key})")]
@@ -45,49 +45,49 @@ namespace ODataEntityFrameworkSample.Controllers
 			{
 				var asOf = SystemClock.Instance.GetCurrentInstant();
 
-				var countryList = _db
-				  .Countries
+				var UniversityList = _db
+				  .Universities
 				  .SqlServerAsOf(asOf)
 				  .ToList();
 
-				return Ok(countryList);
+				return Ok(UniversityList);
 			}
 
-			return Ok(_db.Countries.Include(x => x.Cities).Where(x => x.Id == key));
+			return Ok(_db.Universities.Include(x => x.People).Where(x => x.Id == key));
 		}
 
 		[HttpPost]
 		[ODataRoute]
 		[EnableQuery]
-		public IActionResult Post([FromBody]Country country)
+		public IActionResult Post([FromBody]University University)
 		{
-			_db.Countries.Add(country);
+			_db.Universities.Add(University);
 			_db.SaveChanges();
-			return Created(country);
+			return Created(University);
 		}
 
 		[HttpPatch("({key})")]
 		[ODataRoute("({key})")]
 		//[EnableQuery]
-		public IActionResult Patch(int key, [FromBody] Delta<Country> country)
+		public IActionResult Patch(int key, [FromBody] Delta<University> University)
 		{
 			if (!ModelState.IsValid)
 			{
 				return BadRequest(ModelState);
 			}
-			var entity = _db.Countries.Find(key);
+			var entity = _db.Universities.Find(key);
 			if (entity == null)
 			{
 				return NotFound();
 			}
-			country.Patch(entity);
+			University.Patch(entity);
 			try
 			{
 				_db.SaveChanges();
 			}
 			catch (DbUpdateConcurrencyException)
 			{
-				if (!_countriesExists(key))
+				if (!_UniversitiesExists(key))
 				{
 					return NotFound();
 				}
@@ -102,7 +102,7 @@ namespace ODataEntityFrameworkSample.Controllers
 
 		[HttpPut("({key})")]
 		[ODataRoute("({key})")]
-		public IActionResult Put_Countries(int key, [FromBody] CountryDto update)
+		public IActionResult Put_Universities(int key, [FromBody] University update)
 		{
 			if (!ModelState.IsValid)
 			{
@@ -113,34 +113,13 @@ namespace ODataEntityFrameworkSample.Controllers
 				return BadRequest();
 			}
 
-			var country = _db.Countries.AsTracking()
-				.Include(x => x.Cities).SingleOrDefault(x => x.Id == key);
+			var university = _db.Universities.AsTracking()
+				.Include(x => x.People).SingleOrDefault(x => x.Id == key);
 
-			//OWNED_ENTITIES
-			//To manage Add or Remove on OWNED collection entity we need to do this monster
-			//Works but the record result as modyfied also if is not really added (are just same as before)
-			//and the systart time is updated
+			 //_db.Universities.AsTracking()
+				//.Include(x => x.Registry).SingleOrDefault(x => x.Id == key);
 
-			//if (update.Cities != null)
-			//{
-			//	foreach (var choice in update.Cities.FullJoin(country.Cities, u => u.Id,
-			//		u => (toAdd: true, toRem: false, toUpdate: false, city: u, cur: null),
-			//		c => (toAdd: false, toRem: true, toUpdate: false, city: c, cur: null),
-			//		(u, c) => (toAdd: false, toRem: false, toUpdate: true, city: u, cur: c)
-			//		))
-			//	{
-			//		if (choice.toAdd)
-			//			country.Cities.Add(choice.city);
-			//		if (choice.toRem)
-			//			country.Cities.Remove(choice.city);
-			//		if (choice.toUpdate)
-			//		{
-			//			_db.Entry(choice.cur).CurrentValues.SetValues(choice.city);
-			//		}
-			//	}
-			//}
-
-			_db.Countries.Persist().InsertOrUpdate(update);
+			_db.Universities.Persist().InsertOrUpdate(update);
 
 			try
 			{
@@ -148,7 +127,7 @@ namespace ODataEntityFrameworkSample.Controllers
 			}
 			catch (DbUpdateConcurrencyException)
 			{
-				if (!_countriesExists(key))
+				if (!_UniversitiesExists(key))
 				{
 					return NotFound();
 				}
@@ -158,7 +137,7 @@ namespace ODataEntityFrameworkSample.Controllers
 				}
 			}
 
-			return Updated(country);
+			return Updated(university);
 		}
 
 
@@ -167,19 +146,19 @@ namespace ODataEntityFrameworkSample.Controllers
 		//[EnableQuery]
 		public IActionResult Delete(int key)
 		{
-			var country = _db.Countries.Find(key);
-			if (country == null)
+			var University = _db.Universities.Find(key);
+			if (University == null)
 			{
 				return NotFound();
 			}
-			_db.Countries.Remove(country);
+			_db.Universities.Remove(University);
 			_db.SaveChanges();
 			return StatusCode((int)System.Net.HttpStatusCode.NoContent);
 		}
 
-		private bool _countriesExists(int key)
+		private bool _UniversitiesExists(int key)
 		{
-			return _db.Countries.Any(x => x.Id == key);
+			return _db.Universities.Any(x => x.Id == key);
 		}
 	}
 }

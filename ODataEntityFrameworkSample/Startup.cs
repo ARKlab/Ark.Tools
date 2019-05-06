@@ -21,6 +21,9 @@ using static Microsoft.AspNet.OData.Query.AllowedQueryOptions;
 using Ark.Tools.Solid;
 using System.Security.Claims;
 using Ark.Tools.AspNetCore;
+using AutoMapper;
+using AutoMapper.EquivalencyExpression;
+using AutoMapper.EntityFrameworkCore;
 
 namespace ODataEntityFrameworkSample
 {
@@ -110,6 +113,35 @@ namespace ODataEntityFrameworkSample
 			});
 
 			//services.SetNodaTimeSqlServerMappingSource();
+
+			Mapper.Initialize(cfg =>
+			{
+				cfg.AddCollectionMappers();
+				cfg.UseEntityFrameworkCoreModel<ODataSampleContext>(services);
+				// Configuration code
+
+				//cfg.CreateMap<Book, BookDto>();
+				//cfg.CreateMap<ICollection<Address>, IEnumerable<AddressDto>>();
+				//cfg.CreateMap<Press, PressDto>();
+				//cfg.CreateMap<Bibliografy, BibliografyDto>();
+				//cfg.CreateMap<ICollection<Code>, IEnumerable<CodeDto>>();
+
+
+				cfg.CreateMap<Country, CountryDto>();
+				cfg.CreateMap<ICollection<City>, IEnumerable<CityDto>>();
+
+				cfg.CreateMap<School, SchoolDto>();
+				cfg.CreateMap<ICollection<Student>, IEnumerable<StudentDto>>();
+				cfg.CreateMap<Registry, RegistryDto>();
+				cfg.CreateMap<ICollection<Rule>, IEnumerable<RuleDto>>();
+
+				cfg.CreateMap<University, University>();
+				cfg.CreateMap<Person, Person>();
+
+				cfg.CreateMap<PhotoStudio, PhotoStudio>();
+				cfg.CreateMap<Worker, Worker>();
+
+			});
 		}
 
 		private IApplicationBuilder _app;

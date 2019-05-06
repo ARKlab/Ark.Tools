@@ -14,6 +14,11 @@ namespace ODataEntityFrameworkSample.Configuration
 
 			audit.Filter();
 			audit.Expand();
+
+			audit.ContainsMany(x => x.AffectedEntities)
+				;
+
+			builder.EntityType<AffectedEntity>().HasKey(x => x.EntityId);
 		}
 	}
 }

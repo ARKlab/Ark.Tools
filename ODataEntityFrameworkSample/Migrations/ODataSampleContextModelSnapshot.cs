@@ -3,17 +3,15 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ODataEntityFrameworkSample.Models;
 
 namespace ODataEntityFrameworkSample.Migrations
 {
     [DbContext(typeof(ODataSampleContext))]
-    [Migration("20190502152516_Init")]
-    partial class Init
+    partial class ODataSampleContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,6 +105,25 @@ namespace ODataEntityFrameworkSample.Migrations
                     b.HasAnnotation("SystemVersioning", true);
                 });
 
+            modelBuilder.Entity("ODataEntityFrameworkSample.Models.PhotoStudio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<Guid>("AuditId");
+
+                    b.Property<string>("Name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuditId");
+
+                    b.ToTable("PhotoStudios");
+
+                    b.HasAnnotation("SystemVersioning", true);
+                });
+
             modelBuilder.Entity("ODataEntityFrameworkSample.Models.Press", b =>
                 {
                     b.Property<int>("Id")
@@ -126,6 +143,21 @@ namespace ODataEntityFrameworkSample.Migrations
                     b.HasAnnotation("SystemVersioning", true);
                 });
 
+            modelBuilder.Entity("ODataEntityFrameworkSample.Models.School", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Schools");
+
+                    b.HasAnnotation("SystemVersioning", true);
+                });
+
             modelBuilder.Entity("ODataEntityFrameworkSample.Models.Test", b =>
                 {
                     b.Property<string>("Id")
@@ -136,6 +168,21 @@ namespace ODataEntityFrameworkSample.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Tests");
+
+                    b.HasAnnotation("SystemVersioning", true);
+                });
+
+            modelBuilder.Entity("ODataEntityFrameworkSample.Models.University", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Universities");
 
                     b.HasAnnotation("SystemVersioning", true);
                 });
@@ -272,6 +319,139 @@ namespace ODataEntityFrameworkSample.Migrations
                         .WithMany("Cities")
                         .HasForeignKey("CountryId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("ODataEntityFrameworkSample.Models.PhotoStudio", b =>
+                {
+                    b.HasOne("Ark.Tools.EntityFrameworkCore.SystemVersioning.Auditing.Audit", "Audit")
+                        .WithMany()
+                        .HasForeignKey("AuditId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.OwnsMany("ODataEntityFrameworkSample.Models.Worker", "Workers", b1 =>
+                        {
+                            b1.Property<string>("Name");
+
+                            b1.Property<string>("SurName");
+
+                            b1.Property<int>("Role");
+
+                            b1.Property<int>("PhotoStudioId");
+
+                            b1.Property<string>("Quality");
+
+                            b1.HasKey("Name", "SurName", "Role");
+
+                            b1.HasIndex("PhotoStudioId");
+
+                            b1.ToTable("Worker");
+
+                            b1.HasOne("ODataEntityFrameworkSample.Models.PhotoStudio")
+                                .WithMany("Workers")
+                                .HasForeignKey("PhotoStudioId")
+                                .OnDelete(DeleteBehavior.Cascade);
+                        });
+                });
+
+            modelBuilder.Entity("ODataEntityFrameworkSample.Models.School", b =>
+                {
+                    b.OwnsOne("ODataEntityFrameworkSample.Models.Registry", "Registry", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                            b1.Property<string>("Name");
+
+                            b1.Property<int>("SchoolId");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SchoolId")
+                                .IsUnique();
+
+                            b1.ToTable("Registry");
+
+                            b1.HasOne("ODataEntityFrameworkSample.Models.School")
+                                .WithOne("Registry")
+                                .HasForeignKey("ODataEntityFrameworkSample.Models.Registry", "SchoolId")
+                                .OnDelete(DeleteBehavior.Cascade);
+
+                            b1.OwnsMany("ODataEntityFrameworkSample.Models.Rule", "Rules", b2 =>
+                                {
+                                    b2.Property<int>("Id")
+                                        .ValueGeneratedOnAdd()
+                                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                                    b2.Property<string>("Name");
+
+                                    b2.Property<int>("RuleId");
+
+                                    b2.Property<int?>("Value");
+
+                                    b2.HasKey("Id");
+
+                                    b2.HasIndex("RuleId");
+
+                                    b2.ToTable("Rule");
+
+                                    b2.HasOne("ODataEntityFrameworkSample.Models.Registry")
+                                        .WithMany("Rules")
+                                        .HasForeignKey("RuleId")
+                                        .OnDelete(DeleteBehavior.Cascade);
+                                });
+                        });
+
+                    b.OwnsMany("ODataEntityFrameworkSample.Models.Student", "Students", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                            b1.Property<string>("Name");
+
+                            b1.Property<string>("Power");
+
+                            b1.Property<int>("SchoolId");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SchoolId");
+
+                            b1.ToTable("Student");
+
+                            b1.HasOne("ODataEntityFrameworkSample.Models.School")
+                                .WithMany("Students")
+                                .HasForeignKey("SchoolId")
+                                .OnDelete(DeleteBehavior.Cascade);
+                        });
+                });
+
+            modelBuilder.Entity("ODataEntityFrameworkSample.Models.University", b =>
+                {
+                    b.OwnsMany("ODataEntityFrameworkSample.Models.Person", "People", b1 =>
+                        {
+                            b1.Property<string>("Name");
+
+                            b1.Property<string>("SurName");
+
+                            b1.Property<int>("Role");
+
+                            b1.Property<string>("Field");
+
+                            b1.Property<int>("UniversityId");
+
+                            b1.HasKey("Name", "SurName", "Role");
+
+                            b1.HasIndex("UniversityId");
+
+                            b1.ToTable("Person");
+
+                            b1.HasOne("ODataEntityFrameworkSample.Models.University")
+                                .WithMany("People")
+                                .HasForeignKey("UniversityId")
+                                .OnDelete(DeleteBehavior.Cascade);
+                        });
                 });
 #pragma warning restore 612, 618
         }
