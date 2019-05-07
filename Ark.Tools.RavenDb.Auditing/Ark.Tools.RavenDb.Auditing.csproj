@@ -11,10 +11,9 @@
     <VersionSuffix></VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
-  <!--===============================================================================-->
-  
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.RavenDbCore\Ark.Tools.RavenDb.csproj" />
+    <ProjectReference Include="..\Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj" />
   </ItemGroup>
+  <!--===============================================================================-->
 
 </Project>

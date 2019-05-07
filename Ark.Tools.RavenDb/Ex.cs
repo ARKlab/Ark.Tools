@@ -44,7 +44,6 @@ namespace Ark.Tools.RavenDb
 				{
 					// The database was already created before calling CreateDatabaseOperation
 				}
-
 			}
 		}
 

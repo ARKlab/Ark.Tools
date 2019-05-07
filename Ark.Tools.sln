@@ -119,13 +119,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EntityFrameworkCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenDbSample", "RavenDbSample\RavenDbSample.csproj", "{995A6412-9CC7-4136-9994-3804E350B3DF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.RavenDb", "Ark.Tools.RavenDbCore\Ark.Tools.RavenDb.csproj", "{6E4443A3-C5FA-4C10-97B8-5E7200DB8230}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.RavenDb.Auditing", "Ark.Tools.RavenDb.Auditing\Ark.Tools.RavenDb.Auditing.csproj", "{29CE13FF-D0DE-4E43-B756-38C8E124A66C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ODataEntityFrameworkSample", "ODataEntityFrameworkSample\ODataEntityFrameworkSample.csproj", "{469CB128-17A2-4553-BD0D-0EB30C52E4BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RavenDbSample.Tests", "ravenDbSample.Tests\RavenDbSample.Tests.csproj", "{E5D6732D-33C1-4553-AD7E-AF840701CF7B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenDbSample.Tests", "ravenDbSample.Tests\RavenDbSample.Tests.csproj", "{E5D6732D-33C1-4553-AD7E-AF840701CF7B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.RavenDb", "Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj", "{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -333,10 +333,6 @@ Global
 		{995A6412-9CC7-4136-9994-3804E350B3DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{995A6412-9CC7-4136-9994-3804E350B3DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{995A6412-9CC7-4136-9994-3804E350B3DF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6E4443A3-C5FA-4C10-97B8-5E7200DB8230}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6E4443A3-C5FA-4C10-97B8-5E7200DB8230}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6E4443A3-C5FA-4C10-97B8-5E7200DB8230}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6E4443A3-C5FA-4C10-97B8-5E7200DB8230}.Release|Any CPU.Build.0 = Release|Any CPU
 		{29CE13FF-D0DE-4E43-B756-38C8E124A66C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{29CE13FF-D0DE-4E43-B756-38C8E124A66C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{29CE13FF-D0DE-4E43-B756-38C8E124A66C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -349,6 +345,10 @@ Global
 		{E5D6732D-33C1-4553-AD7E-AF840701CF7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E5D6732D-33C1-4553-AD7E-AF840701CF7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E5D6732D-33C1-4553-AD7E-AF840701CF7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
