@@ -43,7 +43,6 @@ namespace Ark.Tools.EntityFrameworkCore.SystemVersioning.ExpressionsOverride
 
 		private void SetCustomSelectExpressionProperties(RelationalQueryCompilationContext queryCompilationContext)
 		{
-			// If the WithSqlTweaksResultOperator query annotation exists then set the property to true.
 			if (queryCompilationContext.QueryAnnotations.Any(a => a.GetType() == typeof(AsOfResultOperator)))
 			{
 				UseAsOf = true;

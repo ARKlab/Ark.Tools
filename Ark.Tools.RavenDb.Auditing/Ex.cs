@@ -14,16 +14,6 @@ namespace Ark.Tools.RavenDb.Auditing
 {
 	public static class Ex
 	{
-		//public static void AddHostedServiceAuditProcessor(this IServiceCollection services)
-		//{
-		//	var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
-		//	.Where(x => typeof(IAuditableEntity).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
-		//	.ToList();
-
-		//	services.AddHostedService<RavenDbAuditProcessor>();
-		//	services.AddSingleton<IAuditableTypeProvider>(ss => new AuditableTypeProvider(types));
-		//}
-
 	    //Hosted service Audit Processor
 		public static void AddHostedServiceAuditProcessor(this IServiceCollection services)
 		{

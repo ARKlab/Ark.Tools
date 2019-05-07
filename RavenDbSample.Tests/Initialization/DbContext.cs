@@ -28,7 +28,7 @@ namespace RavenDBSample.Tests
 	{
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
 
-		public static IDocumentStore _documentStore;
+		private static IDocumentStore _documentStore;
 		const string DatabaseConnectionString = "http://127.0.0.1:8080";
 
 		//private static readonly Lazy<IDocumentStore> TestServerStore = new Lazy<IDocumentStore>(_runServer, LazyThreadSafetyMode.ExecutionAndPublication);
@@ -44,7 +44,7 @@ namespace RavenDBSample.Tests
 
 		//	EmbeddedServer.Instance.StartServer(options);
 
-		//	DocumentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(_databaseName));
+		//	_documentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(_databaseName));
 
 		//	//var url = AsyncHelpers.RunSync(() => EmbeddedServer.Instance.GetServerUriAsync());
 

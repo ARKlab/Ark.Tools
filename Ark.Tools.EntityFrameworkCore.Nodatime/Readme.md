@@ -15,13 +15,13 @@ To enable the support at design time, for example to be used to Add-Migration or
 Consider that this do replace the original SqlServer services and therefore is not composable with other extensions.
  
 ```csharp
-    public class NodatimeDesignTime : IDesignTimeServices
+public class NodatimeDesignTime : IDesignTimeServices
+{
+    public void ConfigureDesignTimeServices(IServiceCollection serviceCollection)
     {
-        public void ConfigureDesignTimeServices(IServiceCollection serviceCollection)
-        {
-            serviceCollection.SetNodaTimeSqlServerMappingSource();
-        }
+        serviceCollection.SetNodaTimeSqlServerMappingSource();
     }
+}
 ```
 
 ### Runtime

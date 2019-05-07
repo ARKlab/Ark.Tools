@@ -44,9 +44,11 @@ namespace ODataEntityFrameworkSample.Models
 				});
 
 
-			modelBuilder.Entity<Book>()
-				.HasOne<Audit>("Audit")
-					.WithMany();
+			//modelBuilder.Entity<Book>()
+			//	.HasOne<Audit>("Audit")
+			//		.WithMany();
+
+			modelBuilder.AddAuditReference<Book>();
 
 
 			modelBuilder.Entity<Book>()

@@ -56,6 +56,18 @@ namespace ODataEntityFrameworkSample.Controllers
 
 				return Ok(bookList);
 			}
+			else if (key == -1)
+			{
+				var startTime = SystemClock.Instance.GetCurrentInstant();
+				var endTime = startTime.PlusNanoseconds(100000);
+
+				var bookList = _db
+				  .Books
+				  .SqlServerBetween(startTime, endTime)
+				  .ToList();
+
+				return Ok(bookList);
+			}
 
 			return Ok(_db.Books.Find(key));
 		}
@@ -174,49 +186,5 @@ namespace ODataEntityFrameworkSample.Controllers
         {
             return _db.Books.Any(x => x.Id == key);
         }
-
-
-		//Sol 2 - NOT
-		//var book = _db.Books.Find(key);
-
-		//update._ETag = book._ETag;
-
-		//(_db.Entry(book).Collection(p => p.Addresses).CurrentValue as ICollection<Address>).Clear();
-		//_db.Entry(book).CurrentValues.SetValues(update);
-		//_db.Entry(book).State = EntityState.Modified;
-
-		//Sol 3 - NOT
-		//_db.Entry(update).State = EntityState.Modified;
-		//_db.UpdateImmutable(update);
-
-		//Sol 4 
-		//_db.Upsert(update);
-
-		////Sol 5 NOT
-		//var book = _db.Books.Find(key);
-		//_db.Entry(book).CurrentValues.SetValues(update);
-		//_db.Upsert(update);
-
-		//Sol 6
-		//_db.Attach(update);
-
-		//var unchangedEntities = _db.ChangeTracker.Entries().Where(x => x.State == EntityState.Unchanged);
-
-		//foreach (var ee in unchangedEntities)
-		//{
-		//	ee.State = EntityState.Modified;
-		//}
-
-		//Sol 7
-		//var book = _db.Books.Find(key);
-		//update._ETag = book._ETag;
-		//_db.UpdateChildCollection(book, update, p => p.Addresses, collectionItem => collectionItem.Id);
-
-		//Sol 8
-		//var book = _db.Books.Find(key);
-
-		//update._ETag = book._ETag;
-		//_db.TestUpdate(update);
-
 	}
 }
