@@ -20,7 +20,7 @@
 
   <ItemGroup>    
     <PackageReference Include="MessagePack" Version="1.7.3.4" />    
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.2" />
   </ItemGroup>
 
   <ItemGroup>

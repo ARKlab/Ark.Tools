@@ -22,7 +22,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="SpecFlow" Version="2.4.1" />
+    <PackageReference Include="SpecFlow" Version="3.0.213" />
   </ItemGroup>
 
   <ItemGroup>

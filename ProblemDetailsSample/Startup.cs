@@ -20,7 +20,6 @@ namespace ProblemDetailsSample
             base.Configure(app);
 
             app.UseBranchWithServices<PrivateStartup>("/private", Configuration);
-            //app.UseBranchWithServices<PublicStartup>("/public", Configuration);
         }
     }
 }

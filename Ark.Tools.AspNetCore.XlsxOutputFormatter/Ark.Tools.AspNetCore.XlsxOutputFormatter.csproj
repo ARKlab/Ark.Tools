@@ -19,7 +19,7 @@
   <!--===============================================================================-->
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.2" />
     <PackageReference Include="EPPlus.Core" Version="1.5.4" />    
   </ItemGroup>
   

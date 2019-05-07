@@ -47,6 +47,8 @@
     <AspNetCoreGroupVersion>1.3.7</AspNetCoreGroupVersion>
     <FtpClientGroupVersion>1.1.0</FtpClientGroupVersion>
     <ResourceWatcherGroupVersion>1.1.10</ResourceWatcherGroupVersion>
+    <EntityFrameworkGroupVersion>1.0.0</EntityFrameworkGroupVersion>
+    <RavenDbGroupVersion>1.0.0</RavenDbGroupVersion>
     
   </PropertyGroup>
   

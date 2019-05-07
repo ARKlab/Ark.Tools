@@ -20,7 +20,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="NodaTime" Version="2.4.4" />
+    <PackageReference Include="NodaTime" Version="2.4.5" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
   </ItemGroup>
