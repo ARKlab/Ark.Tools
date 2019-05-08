@@ -6,6 +6,7 @@ using Ark.Tools.Core;
 using Ark.Tools.Nodatime;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.AspNet.OData;
 using Microsoft.AspNet.OData.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -90,7 +91,7 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.Filters.Add(new ArkDefaultExceptionFilter());
 					//opt.Filters.Add(new ProducesAttribute("application/json")); // To be specified after
 					//opt.Filters.Add(new ConsumesAttribute("application/json")); // broken in aspnetcore 2.2 as is enforced on GET too
-					opt.Conventions.Add(new FixBrokenAspNetCoreConsume());
+					opt.Conventions.Add(new ArkDefaultConventions());
                     opt.Filters.Add(new ResponseCacheAttribute()
                     {
                         Location = ResponseCacheLocation.Any,
@@ -214,18 +215,43 @@ namespace Ark.Tools.AspNetCore.Startup
             Container.RegisterAuthorizationAspNetCoreUser(app);
         }
     }
-    class FixBrokenAspNetCoreConsume : IActionModelConvention
-    {
-        private static HashSet<string> _methods = new HashSet<string> { "POST", "PUT", "PATCH" };
 
-        public void Apply(ActionModel action)
-        {
-            var model = action.Selectors.OfType<SelectorModel>().SingleOrDefault();
-            var mm = model?.EndpointMetadata.OfType<HttpMethodMetadata>().SingleOrDefault();
-            if (mm != null && _methods.Intersect(mm.HttpMethods).Any() && action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any()))
-            {
-                action.Filters.Add(new ConsumesAttribute("application/json"));
-            }
-        }
-    }
+    //class FixBrokenAspNetCoreConsume : IActionModelConvention
+    //{
+    //    private static HashSet<string> _methods = new HashSet<string> { "POST", "PUT", "PATCH" };
+
+    //    public void Apply(ActionModel action)
+    //    {
+    //        var model = action.Selectors.OfType<SelectorModel>().SingleOrDefault();
+    //        var mm = model?.EndpointMetadata.OfType<HttpMethodMetadata>().SingleOrDefault();
+    //        if (mm != null && _methods.Intersect(mm.HttpMethods).Any() && action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any()))
+    //        {
+    //            action.Filters.Add(new ConsumesAttribute("application/json"));
+    //        }
+    //    }
+    //}
+
+	class ArkDefaultConventions : IActionModelConvention
+	{
+		private static HashSet<string> _consumeMethods = new HashSet<string> { "POST", "PUT", "PATCH" };
+
+		public void Apply(ActionModel action)
+		{
+			var model = action.Selectors.OfType<SelectorModel>().SingleOrDefault();
+			var mm = model?.EndpointMetadata.OfType<HttpMethodMetadata>().SingleOrDefault();			
+
+			if (mm != null 
+				&& _consumeMethods.Intersect(mm.HttpMethods).Any() 
+				&& action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any()))
+			{
+				action.Filters.Add(new ConsumesAttribute("application/json"));
+			}
+
+			if (!_isODataController(action))
+				action.Filters.Add(new ProducesAttribute("application/json"));
+		}
+
+		private bool _isODataController(ActionModel action)
+			=> typeof(ODataController).IsAssignableFrom(action.Controller.ControllerType);
+	}
 }

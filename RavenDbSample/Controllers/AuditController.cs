@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNet.OData.Query;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Raven.Client.Documents;
 using Raven.Client.Documents.Session;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Raven.Client.Documents.Linq;
 using Ark.Tools.RavenDb.Auditing;
+using Ark.Tools.RavenDb;
 
 namespace RavenDbSample.Controllers
 {
@@ -27,14 +26,17 @@ namespace RavenDbSample.Controllers
 		[ProducesResponseType(typeof(IEnumerable<Audit>), StatusCodes.Status200OK)]
 		public async Task<IActionResult> Get(ODataQueryOptions<Audit> options)
 		{
-			var query = _session.Query<Audit>();
-			var q2 = options.ApplyTo(query, new ODataQuerySettings
+			var validations = new RavenDefaultODataValidationSettings()
 			{
-				HandleNullPropagation = HandleNullPropagationOption.False
-			}) as IRavenQueryable<Audit>;
+				AllowedOrderByProperties =
+				{
+					"LastUpdatedUtc"
+				},
+			};
 
-			var set = await q2.ToListAsync();
-			return Ok(set);
+			var res = await _session.Query<Audit>().GetPagedWithODataOptions<Audit>(options, validations);
+
+			return Ok(res);
 		}
 
 		[HttpGet("{key}")]

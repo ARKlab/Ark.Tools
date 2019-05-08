@@ -23,7 +23,7 @@ namespace RavenDbSample.Controllers
 		}
 
 		[HttpGet]
-		[Produces("application/json")]
+		//[Produces("application/json")]
 		[ProducesResponseType(typeof(IEnumerable<BaseOperation>), StatusCodes.Status200OK)]
 		//[EnableQuery(AllowedQueryOptions = AllowedQueryOptions.Filter | AllowedQueryOptions.Select)]
 		public async Task<IActionResult> Get(ODataQueryOptions<BaseOperation> options)
@@ -39,7 +39,7 @@ namespace RavenDbSample.Controllers
 		}
 
 		[HttpGet("{key}")]
-		[Produces("application/json")]
+		//[Produces("application/json")]
 		[ProducesResponseType(typeof(BaseOperation), StatusCodes.Status200OK)]
 		public async Task<IActionResult> Get([FromRoute]string key)
 		{
@@ -53,8 +53,8 @@ namespace RavenDbSample.Controllers
 
 
 		[HttpPost]
-		[Consumes("application/json")]
-		[Produces("application/json")]
+		//[Consumes("application/json")]
+		//[Produces("application/json")]
 		[ProducesResponseType(typeof(BaseOperation), StatusCodes.Status200OK)]
 		public async Task<IActionResult> Post([FromBody] BaseOperation operationBase)
 		{

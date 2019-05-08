@@ -1,18 +1,8 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Raven.Embedded;
-using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.IO;
-using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using NLog;
-using System.Diagnostics;
-using Ark.Tools.NLog;
-using NLog.Targets;
-using System.Net;
-using Ark.Tools.Nodatime;
 
 namespace RavenDbSample
 {
