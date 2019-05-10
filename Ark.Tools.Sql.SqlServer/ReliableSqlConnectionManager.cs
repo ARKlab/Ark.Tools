@@ -5,14 +5,9 @@ using System.Data.SqlClient;
 
 namespace Ark.Tools.Sql.SqlServer
 {
-    public class ReliableSqlConnectionManager : IDbConnectionManager
+    public class ReliableSqlConnectionManager : SqlConnectionManager
     {
-        private static void OnInfoMessage(object sender, SqlInfoMessageEventArgs ev)
-        {
-            SqlExceptionHandler.LogSqlInfoMessage(ev);
-        }
-
-        public IDbConnection Get(string connectionString)
+        protected override SqlConnection Build(string connectionString)
         {
             var opt = new SqlConnectionStringBuilder(connectionString);
             opt.ConnectRetryCount = 3;
