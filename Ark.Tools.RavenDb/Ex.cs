@@ -111,7 +111,7 @@ namespace Ark.Tools.RavenDb
 		public static async Task<PagedResult<T>> GetPagedWithODataOptions<T>(
 			this IRavenQueryable<T> query
 			, ODataQueryOptions<T> options
-			, ODataValidationSettings validations
+			, ODataValidationSettings validations = null
 			, int defaultPageSize = 100
 			, CancellationToken ctk = default)
 		where T : class

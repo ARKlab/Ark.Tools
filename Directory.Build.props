@@ -48,7 +48,7 @@
     <FtpClientGroupVersion>1.1.4</FtpClientGroupVersion>
     <ResourceWatcherGroupVersion>1.1.14</ResourceWatcherGroupVersion>
     <EntityFrameworkGroupVersion>1.0.3</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>1.0.3</RavenDbGroupVersion>
+    <RavenDbGroupVersion>1.0.4</RavenDbGroupVersion>
     
   </PropertyGroup>
   

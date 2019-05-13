@@ -43,14 +43,14 @@ namespace RavenDbSample
 			base.ConfigureServices(services);
 
 			//OData
-			services.AddOData().EnableApiVersioning();
-			services.AddODataQueryFilter(new EnableQueryAttribute
-			{
-				AllowedQueryOptions = AllowedQueryOptions.All,
-				AllowedFunctions = AllowedFunctions.Any,
-				PageSize = 10,
-				MaxNodeCount = 20,
-			});
+			services.AddOData()/*.EnableApiVersioning()*/;
+			//services.AddODataQueryFilter(new EnableQueryAttribute
+			//{
+			//	AllowedQueryOptions = AllowedQueryOptions.All,
+			//	AllowedFunctions = AllowedFunctions.Any,
+			//	PageSize = 10,
+			//	MaxNodeCount = 20,
+			//});
 
 			//services.AddODataApiExplorer(
 			//options =>

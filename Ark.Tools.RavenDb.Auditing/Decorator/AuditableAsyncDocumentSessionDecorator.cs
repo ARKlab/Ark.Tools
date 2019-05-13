@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Ark.Tools.Solid;
 using System.Security.Claims;
 using Ark.Tools.Core;
+using System.Linq;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
@@ -118,59 +119,102 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		public async Task SaveChangesAsync(CancellationToken token = default)
 		{
+			var changes = _inner.Advanced.WhatChanged();
+
+			if (changes.Count > 0)
+			{
+				if (_ensureAndCreateAudit())
+					await _inner.StoreAsync(_audit, token);
+
+				foreach (var entityId in changes.Keys)
+				{
+					var entity = await _inner.LoadAsync<object>(entityId);
+
+					if (entity is IAuditableEntity)
+					{
+						_setAuditIdOnEntity(entity);
+
+						var infos = _getEntityInfo(entity);
+						_fillAudit(_audit, entityId, infos.cv, infos.collectionName);
+					}
+				}
+			}
+
 			await _inner.SaveChangesAsync(token);
 			_audit = null;
 		}
 
 		public async Task StoreAsync(object entity, CancellationToken token = default)
 		{
-			_ensureEntityId(entity);
+			if (entity is IAuditableEntity)
+			{
+				_ensureEntityId(entity);
 
-			if(_ensureAndCreateAudit())
-				await _inner.StoreAsync(_audit, token);
+				if (_ensureAndCreateAudit())
+					await _inner.StoreAsync(_audit, token);
 
-			_setAuditIdOnEntity(entity);
+				_setAuditIdOnEntity(entity);
 
-			await _inner.StoreAsync(entity, token);
+				await _inner.StoreAsync(entity, token);
 
-			var infos = _getEntityInfo(entity);
-			_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
+				var infos = _getEntityInfo(entity);
+				_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
+			}
+			else
+				await _inner.StoreAsync(entity, token);
 		}
 
 		public async Task StoreAsync(object entity, string changeVector, string id, CancellationToken token = default)
 		{
-			_checkEntityIdGeneration(id);
+			if (entity is IAuditableEntity)
+			{
+				_checkEntityIdGeneration(id);
 
-			if (_ensureAndCreateAudit())
-				await _inner.StoreAsync(_audit, token);
+				if (_ensureAndCreateAudit())
+					await _inner.StoreAsync(_audit, token);
 
-			_setAuditIdOnEntity(entity);
+				if (entity is IAuditableEntity)
+					_setAuditIdOnEntity(entity);
 
-			await _inner.StoreAsync(entity, changeVector, id, token);
+				await _inner.StoreAsync(entity, changeVector, id, token);
 
-			var infos = _getEntityInfo(entity);
-			_fillAudit(_audit, id, changeVector, infos.collectionName);
+				if (entity is IAuditableEntity)
+				{
+					var infos = _getEntityInfo(entity);
+					_fillAudit(_audit, id, changeVector, infos.collectionName);
+				}
+			}
+			else
+				await _inner.StoreAsync(entity, changeVector, id, token);
 		}
 
 		public async Task StoreAsync(object entity, string id, CancellationToken token = default)
 		{
-			_checkEntityIdGeneration(id);
+			if (entity is IAuditableEntity)
+			{
+				_checkEntityIdGeneration(id);
 
-			if (_ensureAndCreateAudit())
-				await _inner.StoreAsync(_audit, token);
+				if (_ensureAndCreateAudit())
+					await _inner.StoreAsync(_audit, token);
 
-			_setAuditIdOnEntity(entity);
+				if (entity is IAuditableEntity)
+					_setAuditIdOnEntity(entity);
 
-			await _inner.StoreAsync(entity, id, token);
+				await _inner.StoreAsync(entity, id, token);
 
-			var infos = _getEntityInfo(entity);
-			_fillAudit(_audit, id, infos.cv, infos.collectionName);
+				if (entity is IAuditableEntity)
+				{
+					var infos = _getEntityInfo(entity);
+					_fillAudit(_audit, id, infos.cv, infos.collectionName);
+				}
+			}
+			else
+				await _inner.StoreAsync(entity, id, token);
 		}
 
 		private void _setAuditIdOnEntity(object entity)
 		{
-			if (entity is IAuditableEntity)
-				(entity as IAuditableEntity).AuditId = _audit.AuditId;
+			(entity as IAuditableEntity).AuditId = _audit.AuditId;
 		}
 
 		private bool _ensureAndCreateAudit()
@@ -202,12 +246,15 @@ namespace Ark.Tools.RavenDb.Auditing
 			_audit.LastUpdatedUtc = DateTime.UtcNow;
 			_audit.UserId = _principalProvider.Current?.Identity?.Name;
 
-			_audit.EntityInfo.Add(new EntityInfo
+			if (!_audit.EntityInfo.Any(s => s.EntityId == entityId))
 			{
-				EntityId = entityId,
-				PrevChangeVector = cv,
-				CollectionName = collectionName
-			});
+				_audit.EntityInfo.Add(new EntityInfo
+				{
+					EntityId = entityId,
+					PrevChangeVector = cv,
+					CollectionName = collectionName
+				});
+			}
 		}
 
 		private (string entityId, string cv, string collectionName) _getEntityInfo(object entity)
