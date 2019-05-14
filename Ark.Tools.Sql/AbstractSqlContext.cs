@@ -74,8 +74,8 @@ namespace Ark.Tools.Sql
         {
             lock (_connection)
             {
-                _transaction.Commit();
-                _transaction.Dispose();
+                _transaction?.Commit();
+                _transaction?.Dispose();
                 _transaction = null;
             }
         }
@@ -84,8 +84,8 @@ namespace Ark.Tools.Sql
         {
             lock (_connection)
             {
-                _transaction.Rollback();
-                _transaction.Dispose();
+                _transaction?.Rollback();
+                _transaction?.Dispose();
                 _transaction = null;
             }
         }
@@ -114,7 +114,7 @@ namespace Ark.Tools.Sql
             
             if (disposing)
             {
-                _transaction.Dispose();
+                _transaction?.Dispose();
                 _connection.Dispose();
             }
 
