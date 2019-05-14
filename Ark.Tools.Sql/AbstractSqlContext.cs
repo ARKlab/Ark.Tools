@@ -66,6 +66,7 @@ namespace Ark.Tools.Sql
         {
             get
             {
+                _ensureOpened();
                 return _transaction;
             }
         }
