@@ -132,17 +132,20 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		public void Defer(ICommandData command, params ICommandData[] commands)
 		{
-			_inner.Defer(command, commands);
+			throw new NotSupportedException("Defer is not supported with Audit");
+			//_inner.Defer(command, commands);
 		}
 
 		public void Defer(ICommandData[] commands)
 		{
-			_inner.Defer(commands);
+			throw new NotSupportedException("Defer is not supported with Audit");
+			//_inner.Defer(commands);
 		}
 
 		public void Evict<T>(T entity)
 		{
-			_inner.Evict(entity);
+			throw new NotSupportedException("Evict is not supported with Audit");
+			//_inner.Evict(entity);
 		}
 
 		public Task<bool> ExistsAsync(string id, CancellationToken token = default)
@@ -222,22 +225,26 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		public void Patch<T, U>(string id, Expression<Func<T, U>> path, U value)
 		{
-			_inner.Patch(id, path, value);
+			throw new NotSupportedException("Patch is not supported with Audit");
+			//_inner.Patch(id, path, value);
 		}
 
 		public void Patch<T, U>(T entity, Expression<Func<T, U>> path, U value)
 		{
-			_inner.Patch(entity, path, value);
+			throw new NotSupportedException("Patch is not supported with Audit");
+			//_inner.Patch(entity, path, value);
 		}
 
 		public void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder)
 		{
-			_inner.Patch(entity, path, arrayAdder);
+			throw new NotSupportedException("Patch is not supported with Audit");
+			//_inner.Patch(entity, path, arrayAdder);
 		}
 
 		public void Patch<T, U>(string id, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder)
 		{
-			_inner.Patch(id, path, arrayAdder);
+			throw new NotSupportedException("Patch is not supported with Audit");
+			//_inner.Patch(id, path, arrayAdder);
 		}
 
 		public Task RefreshAsync<T>(T entity, CancellationToken token = default)

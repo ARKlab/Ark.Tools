@@ -46,7 +46,7 @@ namespace Ark.Tools.RavenDb.Auditing
 		//Register Decorator
 		public static void RegisterRavenDbAudit(this Container container)
 		{
-			container.Register<IAsyncDocumentSession>(() => container.GetInstance<IDocumentStore>().OpenAsyncSession(), Lifestyle.Scoped);
+			//container.Register<IAsyncDocumentSession>(() => container.GetInstance<IDocumentStore>().OpenAsyncSession(), Lifestyle.Scoped);
 			container.RegisterDecorator<IAsyncDocumentSession, AuditableAsyncDocumentSessionDecorator>();
 		}
 

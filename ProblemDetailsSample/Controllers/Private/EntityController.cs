@@ -134,7 +134,7 @@ namespace ProblemDetailsSample.Controllers.Private
         /// </summary>
         /// <param name="body"></param>
         /// <returns></returns>
-        [HttpPost(@"ValidationFails")]
+        [HttpPost(@"FluentValidationFails")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
         public async Task<IActionResult> Post_ValidationFails([FromBody]Entity.V1.Input body)
         {
@@ -153,7 +153,7 @@ namespace ProblemDetailsSample.Controllers.Private
         /// </summary>
         /// <param name="body"></param>
         /// <returns></returns>
-        [HttpPost(@"ValidationFails2Errors")]
+        [HttpPost(@"FluentValidationFails2Errors")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
         public async Task<IActionResult> Post_ValidationFails2Errors([FromBody]Entity.V1.Input body)
         {

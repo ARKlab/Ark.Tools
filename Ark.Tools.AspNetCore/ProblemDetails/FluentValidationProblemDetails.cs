@@ -1,4 +1,5 @@
 ﻿using Hellang.Middleware.ProblemDetails;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,7 +21,9 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                         ResourceName = error.ResourceName,
                     }
                 ).ToArray());
-        }
+
+			Detail = string.Join(Environment.NewLine, Errors?.SelectMany(s => s.Value.Select(x => x.ErrorMessage)));
+		}
 
         public Dictionary<string, FluentValidationErrors[]> Errors { get; set; }
     }

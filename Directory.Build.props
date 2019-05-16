@@ -44,11 +44,11 @@
   <PropertyGroup>
     
     <ArkToolsCoreVersion>1.1.21</ArkToolsCoreVersion>
-    <AspNetCoreGroupVersion>1.3.11</AspNetCoreGroupVersion>
+    <AspNetCoreGroupVersion>1.3.12</AspNetCoreGroupVersion>
     <FtpClientGroupVersion>1.1.4</FtpClientGroupVersion>
     <ResourceWatcherGroupVersion>1.1.14</ResourceWatcherGroupVersion>
     <EntityFrameworkGroupVersion>1.0.3</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>1.0.4</RavenDbGroupVersion>
+    <RavenDbGroupVersion>1.0.5</RavenDbGroupVersion>
     
   </PropertyGroup>
   

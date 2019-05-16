@@ -181,7 +181,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				if (entity is IAuditableEntity)
 				{
 					var infos = _getEntityInfo(entity);
-					_fillAudit(_audit, id, changeVector, infos.collectionName);
+					_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
 				}
 			}
 			else
@@ -205,7 +205,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				if (entity is IAuditableEntity)
 				{
 					var infos = _getEntityInfo(entity);
-					_fillAudit(_audit, id, infos.cv, infos.collectionName);
+					_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
 				}
 			}
 			else
