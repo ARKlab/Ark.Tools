@@ -84,7 +84,9 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.ThrowDuplicateResourceIdRetrived")]
         public override void OnDuplicateResourceIdRetrived(string tenant, Exception exception)
         {
-            var telemetryException = new ExceptionTelemetry
+			Activity currentActivity = Activity.Current;
+
+			var telemetryException = new ExceptionTelemetry
             {
                 Exception = exception,
                 Message = exception.Message
@@ -92,13 +94,19 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
             telemetryException.Properties.Add("Tenant", tenant);
 
-            this.Client.TrackException(telemetryException);
+			//Telemetry operation context
+			telemetryException.Context.Operation.Id = currentActivity?.RootId;
+			telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
+
+			this.Client.TrackException(telemetryException);
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ReportRunConsecutiveFailureLimitReached")]
         public override void OnReportRunConsecutiveFailureLimitReached(string tenant, Exception exception)
         {
-            var telemetryException = new ExceptionTelemetry
+			Activity currentActivity = Activity.Current;
+
+			var telemetryException = new ExceptionTelemetry
             {
                 Exception = exception,
                 Message = exception.Message
@@ -106,13 +114,19 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
             telemetryException.Properties.Add("Tenant", tenant);
 
-            this.Client.TrackException(telemetryException);
+			//Telemetry operation context
+			telemetryException.Context.Operation.Id = currentActivity?.RootId;
+			telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
+
+			this.Client.TrackException(telemetryException);
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceSaveFailed")]
         public override void OnProcessResourceSaveFailed(string resourceId, string tenant, Exception exception)
         {
-            var telemetryException = new ExceptionTelemetry
+			Activity currentActivity = Activity.Current;
+
+			var telemetryException = new ExceptionTelemetry
             {
                 Exception = exception,
                 Message = exception.Message
@@ -120,7 +134,11 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
             telemetryException.Properties.Add("Tenant", tenant);
 
-            this.Client.TrackException(telemetryException);
+			//Telemetry operation context
+			telemetryException.Context.Operation.Id = currentActivity?.RootId;
+			telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
+
+			this.Client.TrackException(telemetryException);
         }
         #endregion
 
@@ -168,7 +186,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                     Message = exception.Message
                 };
 
-                telemetryException.Properties.Add("Tenant", tenant);
+				//Telemetry operation context
+				telemetryException.Context.Operation.Id = currentActivity.RootId;
+				telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
+
+				//Properties and metrics
+				telemetryException.Properties.Add("Tenant", tenant);
                 telemetryException.Metrics.Add("ResourcesFound", resourcesFound);
                 telemetryException.Metrics.Add("Result_Normal", normal);
                 telemetryException.Metrics.Add("Result_NoNewData", noNewData);
@@ -275,7 +298,20 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
                 telemetryException.Properties.Add("Tenant", tenant);
 
-                this.Client.TrackException(telemetryException);
+				//Telemetry operation context
+				telemetryException.Context.Operation.Id = currentActivity.RootId;
+				telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
+
+				//Properties and metrics
+				telemetryException.Properties.Add("Tenant", tenant);
+				telemetryException.Metrics.Add("Resources_New", resourcesNew);
+				telemetryException.Metrics.Add("Resources_Updated", resourcesUpdated);
+				telemetryException.Metrics.Add("Resources_Retried", resourcesRetried);
+				telemetryException.Metrics.Add("Resources_RetriedAfterBan", resourcesRetriedAfterBan);
+				telemetryException.Metrics.Add("Resources_Banned", resourcesBanned);
+				telemetryException.Metrics.Add("Resources_NothingToDo", resourcesNothingToDo);
+
+				this.Client.TrackException(telemetryException);
             }
 
             this.Client.TrackDependency(telemetry);
@@ -316,8 +352,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                     Message = exception.Message
                 };
 
-                //Properties and metrics
-                telemetryException.Properties.Add("Tenant", tenant);
+				//Telemetry operation context
+				telemetryException.Context.Operation.Id = currentActivity.RootId;
+				telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
+
+				//Properties and metrics
+				telemetryException.Properties.Add("Tenant", tenant);
                 telemetryException.Properties.Add("Idx/Total", idx.ToString() + "/" + total.ToString());
                 _propertiesProcessResource(telemetryException, processContext);
 
