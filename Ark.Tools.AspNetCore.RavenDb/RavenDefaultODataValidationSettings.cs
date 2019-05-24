@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNet.OData.Query;
 
-namespace Ark.Tools.RavenDb
+namespace Ark.Tools.AspNetCore.RavenDb
 {
 	public class RavenDefaultODataValidationSettings : ODataValidationSettings
 	{

@@ -127,6 +127,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RavenDbSample.Tests", "rave
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.RavenDb", "Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj", "{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.RavenDb", "Ark.Tools.AspNetCore.RavenDb\Ark.Tools.AspNetCore.RavenDb.csproj", "{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -349,6 +351,10 @@ Global
 		{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

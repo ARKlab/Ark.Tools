@@ -5,7 +5,7 @@ using Raven.Client.Documents.Session;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Ark.Tools.RavenDb.Auditing;
-using Ark.Tools.RavenDb;
+using Ark.Tools.AspNetCore.RavenDb;
 
 namespace RavenDbSample.Controllers
 {

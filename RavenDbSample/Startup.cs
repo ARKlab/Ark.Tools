@@ -15,9 +15,8 @@ using Microsoft.AspNetCore.Hosting;
 using RavenDbSample.Application.Host;
 using Ark.Tools.RavenDb.Auditing;
 using Raven.Client.Documents.Operations.Revisions;
-using Microsoft.AspNet.OData;
-using Microsoft.AspNet.OData.Query;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using RavenDbSample.Utils;
 
 namespace RavenDbSample
 {
@@ -43,32 +42,11 @@ namespace RavenDbSample
 			base.ConfigureServices(services);
 
 			//OData
-			services.AddOData()/*.EnableApiVersioning()*/;
-			//services.AddODataQueryFilter(new EnableQueryAttribute
-			//{
-			//	AllowedQueryOptions = AllowedQueryOptions.All,
-			//	AllowedFunctions = AllowedFunctions.Any,
-			//	PageSize = 10,
-			//	MaxNodeCount = 20,
-			//});
-
-			//services.AddODataApiExplorer(
-			//options =>
-			//{
-			//	// add the versioned api explorer, which also adds IApiVersionDescriptionProvider service
-			//	// note: the specified format code will format the version as "'v'major[.minor][-status]"
-			//	options.GroupNameFormat = "'v'VVVV";
-
-			//	// note: this option is only necessary when versioning by url segment. the SubstitutionFormat
-			//	// can also be used to control the format of the API version in route templates
-			//	options.SubstituteApiVersionInUrl = true;
-			//});
+			services.AddOData();
 
 			//MVC
 			services.AddMvcCore(options =>
 			{
-				//options.EnableEndpointRouting = false; //For Odata
-
 				foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
 					outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
 
@@ -94,6 +72,7 @@ namespace RavenDbSample
 			services.AddSwaggerGen(c =>
 			{
 				c.OperationFilter<ODataParamsOnSwagger>();
+				c.OperationFilter<ResponseFormatFilter>();
 			});
 		}
 
@@ -123,13 +102,9 @@ namespace RavenDbSample
 		protected override void _mvcRoute(IRouteBuilder routeBuilder)
 		{
 			base._mvcRoute(routeBuilder);
-
-			//var mb = _app.ApplicationServices.GetService<VersionedODataModelBuilder>();
-			
+						
 			routeBuilder.Filter().OrderBy().MaxTop(1000);
 			routeBuilder.EnableDependencyInjection();
-
-			//routeBuilder.MapVersionedODataRoutes("odata", "v{api-version:apiVersion}/odata", mb.GetEdmModels());
 		}
 
 		protected override void RegisterContainer(IApplicationBuilder app)

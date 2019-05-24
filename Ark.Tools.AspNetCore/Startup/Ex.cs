@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
@@ -37,8 +39,10 @@ namespace Ark.Tools.AspNetCore.Startup
 
         public static IServiceCollection ArkConfigureAuth0(this IServiceCollection services, string domain, string audience, string swaggerClientId)
         {
-            var defaultPolicy = new AuthorizationPolicyBuilder()
-                .AddAuthenticationSchemes("Auth0")
+			var authScheme = "Auth0";
+
+			var defaultPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(authScheme)
                 .RequireAuthenticatedUser()
                 .Build();
 
@@ -48,48 +52,90 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.Filters.Add(new AuthorizeFilter(defaultPolicy));
                 });
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = "Auth0";
-                options.DefaultChallengeScheme = "Auth0";
+			services.AddAuthentication(options =>
+				{
+					options.DefaultAuthenticateScheme = authScheme;
+					options.DefaultChallengeScheme = authScheme;
 
-            })
-            .AddJwtBearer("Auth0", o =>
-            {
-                o.Audience = audience;
-                o.Authority = $"https://{domain}/";
-                o.TokenValidationParameters = new TokenValidationParameters
-                {
-                    NameClaimTypeRetriever = (a, b) =>
-                    {
-                        if (a is JwtSecurityToken jwt)
-                        {
-                            if (jwt.Claims.Any(x => x.Type == "http://ark-energy.eu/claims/email"))
-                            {
-                                return "http://ark-energy.eu/claims/email";
-                            }
-                            else if (jwt.Claims.Any(x => x.Type == ClaimTypes.Email))
-                            {
-                                return ClaimTypes.Email;
-                            }
-                            else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.Where(w => w.Type == "appidacr").SingleOrDefault()?.Value == "1")
-                            {
-                                return "appid";
-                            }
-                        }
+				})
+				.AddJwtBearerArkDefault(authScheme, audience, domain)
+				;
 
-                        return ClaimTypes.NameIdentifier;
-                    }
-                }; 
-            });
-            ;
+            //.AddJwtBearer("Auth0", o =>
+            //{
+            //    o.Audience = audience;
+            //    o.Authority = $"https://{domain}/";
+            //    o.TokenValidationParameters = new TokenValidationParameters
+            //    {
+            //        NameClaimTypeRetriever = (a, b) =>
+            //        {
+            //            if (a is JwtSecurityToken jwt)
+            //            {
+            //                if (jwt.Claims.Any(x => x.Type == "http://ark-energy.eu/claims/email"))
+            //                {
+            //                    return "http://ark-energy.eu/claims/email";
+            //                }
+            //                else if (jwt.Claims.Any(x => x.Type == ClaimTypes.Email))
+            //                {
+            //                    return ClaimTypes.Email;
+            //                }
+            //                else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.Where(w => w.Type == "appidacr").SingleOrDefault()?.Value == "1")
+            //                {
+            //                    return "appid";
+            //                }
+            //            }
+
+            //            return ClaimTypes.NameIdentifier;
+            //        }
+            //    };
+            //})
+            //;
 
             services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
 
             return services;
         }
 
-        public static IServiceCollection ArkConfigureSwaggerAuth0(this IServiceCollection services, string domain, string audience, string clientId)
+
+		public static AuthenticationBuilder AddJwtBearerArkDefault(
+						this AuthenticationBuilder builder
+					  , string authenticationScheme
+			          , string audience
+					  , string domain
+					  , Action<JwtBearerOptions> configureOptions = null)
+		{
+			return  builder.AddJwtBearer(authenticationScheme, o =>
+			{
+				o.Audience = audience;
+				o.Authority = $"https://{domain}/";
+				o.TokenValidationParameters = new TokenValidationParameters
+				{
+					NameClaimTypeRetriever = (a, b) =>
+					{
+						if (a is JwtSecurityToken jwt)
+						{
+							if (jwt.Claims.Any(x => x.Type == "http://ark-energy.eu/claims/email"))
+							{
+								return "http://ark-energy.eu/claims/email";
+							}
+							else if (jwt.Claims.Any(x => x.Type == ClaimTypes.Email))
+							{
+								return ClaimTypes.Email;
+							}
+							else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.Where(w => w.Type == "appidacr").SingleOrDefault()?.Value == "1")
+							{
+								return "appid";
+							}
+						}
+
+						return ClaimTypes.NameIdentifier;
+					}
+				};
+				configureOptions?.Invoke(o);
+			});
+		}
+
+		public static IServiceCollection ArkConfigureSwaggerAuth0(this IServiceCollection services, string domain, string audience, string clientId)
         {
             services.ConfigureSwaggerGen(c =>
             {
