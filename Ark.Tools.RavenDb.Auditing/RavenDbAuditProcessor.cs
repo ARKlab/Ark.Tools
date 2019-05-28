@@ -99,8 +99,17 @@ namespace Ark.Tools.RavenDb.Auditing
 			{
 				foreach (var e in batch.Items)
 				{
-					if (e.Result.Current?.AuditId != null)
+					if (e.Result.Current?.AuditId != null) //Delete does not have an audit 
 					{
+						string operation = default;
+
+						if (e.Result.Previous != null && e.Result.Current == null)
+							operation = Operations.Delete.ToString();
+						else if (e.Result.Previous != null && e.Result.Current != null)
+							operation = Operations.Update.ToString();
+						else if (e.Result.Previous == null && e.Result.Current != null)
+							operation = Operations.Insert.ToString();
+
 						session.Advanced.Defer(new PatchCommandData(
 							id: (string)e.Result.Current.AuditId,
 							changeVector: null,
@@ -111,16 +120,8 @@ namespace Ark.Tools.RavenDb.Auditing
 												if (eInfo.EntityId == args.Id)
 												{
 													eInfo.CurrChangeVector = args.Cv; 
-
-													if (eInfo.Operation != args.OperationDelete)
-														eInfo.LastModified = args.LastMod;
-
-													if (eInfo.PrevChangeVector != null && eInfo.CurrChangeVector == null)
-														eInfo.Operation = args.OperationDelete;
-													else if (eInfo.PrevChangeVector != null && eInfo.CurrChangeVector != null)
-														eInfo.Operation = args.OperationUpdate;
-													else if(eInfo.PrevChangeVector == null && eInfo.CurrChangeVector != null)
-														eInfo.Operation = args.OperationInsert;
+													eInfo.Operation = args.Operation;
+													eInfo.LastModified = args.LastMod;
 												}
 											});
 										 ",
@@ -136,13 +137,7 @@ namespace Ark.Tools.RavenDb.Auditing
 										"LastMod", e.Metadata["@last-modified"]
 									},
 									{
-										"OperationDelete",  Operations.Delete.ToString()
-									},
-									{
-										"OperationUpdate",  Operations.Update.ToString()
-									},
-									{
-										"OperationInsert",  Operations.Insert.ToString()
+										"Operation",  operation
 									}
 								}
 							},
