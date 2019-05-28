@@ -108,8 +108,20 @@ namespace Ark.Tools.RavenDb.Auditing
 							{
 								Script = @"this.EntityInfo
 											.forEach(eInfo => { 
-												if (eInfo.EntityId == args.Id) 
+												if (eInfo.EntityId == args.Id)
+												{
 													eInfo.CurrChangeVector = args.Cv; 
+
+													if (eInfo.Operation != args.OperationDelete)
+														eInfo.LastModified = args.LastMod;
+
+													if (eInfo.PrevChangeVector != null && eInfo.CurrChangeVector == null)
+														eInfo.Operation = args.OperationDelete;
+													else if (eInfo.PrevChangeVector != null && eInfo.CurrChangeVector != null)
+														eInfo.Operation = args.OperationUpdate;
+													else if(eInfo.PrevChangeVector == null && eInfo.CurrChangeVector != null)
+														eInfo.Operation = args.OperationInsert;
+												}
 											});
 										 ",
 								Values =
@@ -119,6 +131,18 @@ namespace Ark.Tools.RavenDb.Auditing
 									},
 									{
 										"Id", e.Id
+									},
+									{
+										"LastMod", e.Metadata["@last-modified"]
+									},
+									{
+										"OperationDelete",  Operations.Delete.ToString()
+									},
+									{
+										"OperationUpdate",  Operations.Update.ToString()
+									},
+									{
+										"OperationInsert",  Operations.Insert.ToString()
 									}
 								}
 							},

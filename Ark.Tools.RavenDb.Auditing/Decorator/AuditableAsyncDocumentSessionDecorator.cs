@@ -46,7 +46,11 @@ namespace Ark.Tools.RavenDb.Auditing
 			_setAuditIdOnEntity(entity);
 
 			var infos = _getEntityInfo(entity);
-			_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
+
+			var metadata = _inner.Advanced.GetMetadataFor(entity);
+			var lastMod = (string) metadata["@last-modified"];
+
+			_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName, lastMod, "Delete");
 
 			_inner.Delete(entity);
 		}
@@ -241,7 +245,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				throw new NotSupportedException("Entity Id generation incompatible with audit");
 		}
 
-		private void _fillAudit(Audit audit, string entityId, string cv, string collectionName)
+		private void _fillAudit(Audit audit, string entityId, string cv, string collectionName, string lastMod = null, string operation = null)
 		{
 			_audit.LastUpdatedUtc = DateTime.UtcNow;
 			_audit.UserId = _principalProvider.Current?.Identity?.Name;
@@ -252,7 +256,9 @@ namespace Ark.Tools.RavenDb.Auditing
 				{
 					EntityId = entityId,
 					PrevChangeVector = cv,
-					CollectionName = collectionName
+					CollectionName = collectionName,
+					Operation = operation,
+					LastModified = operation == "Delete" ? DateTime.Parse(lastMod) : default
 				});
 			}
 		}

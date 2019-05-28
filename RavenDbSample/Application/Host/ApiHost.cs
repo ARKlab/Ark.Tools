@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Threading;
 using Ark.Tools.SimpleInjector;
 using Ark.Tools.RavenDb.Auditing;
+using Raven.Client.Documents.Session;
+using Raven.Client.Documents;
 
 namespace RavenDbSample.Application.Host
 {
@@ -30,6 +32,8 @@ namespace RavenDbSample.Application.Host
 
 		public ApiHost WithRavenDbAudit()
 		{
+			Container.Register<IAsyncDocumentSession>(() => Container.GetInstance<IDocumentStore>().OpenAsyncSession(), Lifestyle.Scoped);
+
 			Container.RegisterRavenDbAudit();
 			return this;
 		}

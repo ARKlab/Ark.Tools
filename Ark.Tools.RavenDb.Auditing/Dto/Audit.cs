@@ -21,5 +21,15 @@ namespace Ark.Tools.RavenDb.Auditing
 		public string CollectionName { get; set; }
 		public string PrevChangeVector { get; set; }
 		public string CurrChangeVector { get; set; }
+
+		public string Operation { get; set; }
+		public DateTime LastModified { get; set; }
+	}
+
+	public enum Operations
+	{
+		Insert,
+		Update,
+		Delete
 	}
 }

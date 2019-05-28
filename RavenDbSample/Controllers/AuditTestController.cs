@@ -18,7 +18,7 @@ namespace RavenDbSample.Controllers
 		}
 
 		[HttpGet()]
-		public async Task<IActionResult> Get()
+		public async Task<IActionResult> TestDouble()
 		{
 			var e = new BaseOperation()
 			{
@@ -27,7 +27,7 @@ namespace RavenDbSample.Controllers
 				{
 					Id = "B-1"
 				}
-			
+
 			};
 
 			var e2 = new BaseOperation()
@@ -48,7 +48,37 @@ namespace RavenDbSample.Controllers
 			//** Delete ***********************//
 			_session.Delete(e);
 			await _session.SaveChangesAsync();
-			
+
+			return Ok();
+		}
+
+		[HttpGet("{id}")]
+		public async Task<IActionResult> TestUpdate([FromRoute]string id)
+		{
+			var e = new BaseOperation()
+			{
+				Id = null,
+				B = new B()
+				{
+					Id = "B-single"
+				}
+
+			};
+
+			//** Store ***********************//
+			await _session.StoreAsync(e);
+			await _session.SaveChangesAsync();
+
+			//** Update ***********************//
+
+			e.B.Id = "BUpdate";
+			await _session.StoreAsync(e);
+			await _session.SaveChangesAsync();
+
+			//** Delete ***********************//
+			_session.Delete(e);
+			await _session.SaveChangesAsync();
+
 			return Ok();
 		}
 	}

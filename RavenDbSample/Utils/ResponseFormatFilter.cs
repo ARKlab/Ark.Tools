@@ -7,17 +7,27 @@ namespace RavenDbSample.Utils
 	{
 		public void Apply(Operation operation, OperationFilterContext context)
 		{
-			if (operation.Parameters == null)
-				return;
-
-			foreach (var responseType in context.ApiDescription.SupportedResponseTypes)
+			if (operation.Produces != null)
 			{
-				foreach (var format in responseType.ApiResponseFormats)
+				foreach (var produce in operation.Produces)
 				{
-					if (format.MediaType == "application/json")
+					if (produce == "application/json")
 					{
-						responseType.ApiResponseFormats.Clear();
-						responseType.ApiResponseFormats.Add(format);
+						operation.Produces.Clear();
+						operation.Produces.Add(produce);
+						break;
+					}
+				}
+			}
+
+			if (operation.Consumes != null)
+			{
+				foreach (var consume in operation.Consumes)
+				{
+					if (consume == "application/json")
+					{
+						operation.Consumes.Clear();
+						operation.Consumes.Add(consume);
 						break;
 					}
 				}
