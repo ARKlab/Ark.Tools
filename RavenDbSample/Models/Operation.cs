@@ -2,6 +2,7 @@
 using Microsoft.AspNet.OData.Builder;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RavenDbSample.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -55,6 +56,8 @@ namespace RavenDbSample.Models
 		[Required]
 		public Base B { get; set; }
 
+		[JsonIgnore]
+		//[SwaggerExclude]
 		public Guid AuditId { get; set; }
 	}
 	

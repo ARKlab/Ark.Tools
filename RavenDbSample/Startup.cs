@@ -73,6 +73,7 @@ namespace RavenDbSample
 			{
 				c.OperationFilter<ODataParamsOnSwagger>();
 				c.OperationFilter<ResponseFormatFilter>();
+				c.SchemaFilter<SwaggerExcludeFilter>();
 			});
 		}
 
