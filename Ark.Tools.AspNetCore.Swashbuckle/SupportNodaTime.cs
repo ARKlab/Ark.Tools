@@ -66,6 +66,47 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
                 Type = "string",
                 Example = "P1Y2M-3DT4H"
             });
-        }
+
+			//** NULLABLE ********************************//
+			c.MapType<LocalDate?>(() => new Schema()
+			{
+				Type = "string",
+				Format = "date",
+				Example = "2016-01-21"
+			});
+
+			c.MapType<LocalDateTime?>(() => new Schema()
+			{
+				Type = "string",
+				Format = "date-time",
+				Example = "2016-01-21T15:01:01.999999999"
+			});
+
+			c.MapType<Instant?>(() => new Schema()
+			{
+				Type = "string",
+				Format = "date-time",
+				Example = "2016-01-21T15:01:01.999999999Z"
+			});
+
+			c.MapType<OffsetDateTime?>(() => new Schema()
+			{
+				Type = "string",
+				Format = "date-time",
+				Example = "2016-01-21T15:01:01.999999999+02:00"
+			});
+
+			c.MapType<ZonedDateTime?>(() => new Schema
+			{
+				Type = "string",
+				Example = "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"
+			});
+
+			c.MapType<LocalTime?>(() => new Schema()
+			{
+				Type = "string",
+				Example = "14:01:00.999999999"
+			});
+		}
     }
 }

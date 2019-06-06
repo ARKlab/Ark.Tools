@@ -7,7 +7,6 @@ using Raven.Client.ServerWide.Operations;
 using Raven.Client;
 using Raven.Client.Documents.Indexes;
 using Raven.Client.Documents.Operations.Indexes;
-using Raven.Embedded;
 using System;
 using System.Linq;
 using System.Threading;
@@ -19,7 +18,7 @@ namespace Ark.Tools.RavenDb
 {
 	public static class Ex
 	{
-		public static void EnsureDatabaseExists(this IDocumentStore store, string database = null, bool createDatabaseIfNotExists = true)
+		public static void EnsureDatabaseExists(this IDocumentStore store, string database = null, bool createDatabaseIfNotExists = true, int replicationFactor = 3, Action<DatabaseRecord> configureRecord = null)
 		{
 			database = database ?? store.Database;
 
@@ -35,9 +34,12 @@ namespace Ark.Tools.RavenDb
 				if (createDatabaseIfNotExists == false)
 					throw;
 
+				var record = new DatabaseRecord(database);
+				configureRecord?.Invoke(record);
+
 				try
 				{
-					store.Maintenance.Server.Send(new CreateDatabaseOperation(new DatabaseRecord(database)));
+					store.Maintenance.Server.Send(new CreateDatabaseOperation(record, replicationFactor));
 				}
 				catch (ConcurrencyException)
 				{
@@ -46,8 +48,10 @@ namespace Ark.Tools.RavenDb
 			}
 		}
 
-		public static void ResetDatabaseWithName(this IDocumentStore store, string databaseName)
+		public static IDocumentStore DeleteDatabaseWithName(this IDocumentStore store, string database)
 		{
+			database = database ?? store.Database;
+
 			store.Maintenance.Server.Send(new DeleteDatabasesOperation(store.Database, hardDelete: true));
 
 			string[] databaseNames;
@@ -55,9 +59,9 @@ namespace Ark.Tools.RavenDb
 			{
 				var operation = new GetDatabaseNamesOperation(0, 25);
 				databaseNames = store.Maintenance.Server.Send(operation);
-			} while (databaseNames.Contains(databaseName));
+			} while (databaseNames.Contains(database));
 
-			EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(databaseName)).EnsureDatabaseExists();
+			return store;
 		}
 
 		public static void DeleteCollection(this IDocumentStore store, string collectionName, int timeSpan = 15)

@@ -11,11 +11,10 @@
     <VersionSuffix></VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
-  <!--===============================================================================-->
-
   <ItemGroup>
-    <PackageReference Include="RavenDB.Embedded" Version="4.1.5" />
+    <PackageReference Include="RavenDB.Client" Version="4.1.6" />
   </ItemGroup>
+  <!--===============================================================================-->
   
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />

@@ -68,13 +68,13 @@ namespace RavenDBSample.Tests
 
 			_documentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(_databaseName));
 
-			_documentStore.ResetDatabaseWithName(_databaseName);
+			_documentStore.DeleteDatabaseWithName(_databaseName);
 		}
 
 		[BeforeScenario]
 		public void ResetDatabaseOnEachScenario(FeatureContext fctx)
 		{
-			_documentStore.ResetDatabaseWithName(_databaseName);
+			_documentStore.DeleteDatabaseWithName(_databaseName);
 		}
 
 		[AfterScenario]
