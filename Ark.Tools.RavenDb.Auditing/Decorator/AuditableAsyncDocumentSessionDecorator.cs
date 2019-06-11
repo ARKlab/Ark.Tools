@@ -248,7 +248,9 @@ namespace Ark.Tools.RavenDb.Auditing
 		private void _fillAudit(Audit audit, string entityId, string cv, string collectionName, string lastMod = null, string operation = null)
 		{
 			_audit.LastUpdatedUtc = DateTime.UtcNow;
-			_audit.UserId = _principalProvider.Current?.Identity?.Name;
+			//_audit.UserId = _principalProvider.Current?.Identity?.Name;
+			_audit.UserId = _principalProvider.Current?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+				?? throw new InvalidOperationException("UserId not found: audit requires an identified claims principal");
 
 			if (!_audit.EntityInfo.Any(s => s.EntityId == entityId))
 			{
