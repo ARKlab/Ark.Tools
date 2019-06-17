@@ -1,6 +1,6 @@
 ![image](http://www.ark-energy.eu/wp-content/uploads/ark-dark.png)
 # Ark.Tools
-This is a set of core libraries developed and mainteined by Ark as a set of helper or extensions of the libraries Ark choose to use in their LOB applications.
+This is a set of core libraries developed and maintained by Ark as a set of helper or extensions of the libraries Ark choose to use in their LOB applications.
 
 ## Getting Started
 All libraries are provided in NuGet.
