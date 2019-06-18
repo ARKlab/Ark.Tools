@@ -52,7 +52,7 @@ namespace Ark.Tools.RavenDb
 		{
 			database = database ?? store.Database;
 
-			store.Maintenance.Server.Send(new DeleteDatabasesOperation(store.Database, hardDelete: true));
+			store.Maintenance.Server.Send(new DeleteDatabasesOperation(database, hardDelete: true));
 
 			string[] databaseNames;
 			do
