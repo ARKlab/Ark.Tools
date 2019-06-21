@@ -30,33 +30,8 @@ namespace RavenDBSample.Tests
 
 		private static IDocumentStore _documentStore;
 		const string DatabaseConnectionString = "http://127.0.0.1:8080";
-
-		//private static readonly Lazy<IDocumentStore> TestServerStore = new Lazy<IDocumentStore>(_runServer, LazyThreadSafetyMode.ExecutionAndPublication);
-
 		private const string _databaseName = "RavenDb";
 
-		//private static IDocumentStore _runServer()
-		//{
-		//	var options = new ServerOptions
-		//	{
-		//		ServerUrl = DatabaseConnectionString,
-		//	};
-
-		//	EmbeddedServer.Instance.StartServer(options);
-
-		//	_documentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(_databaseName));
-
-		//	//var url = AsyncHelpers.RunSync(() => EmbeddedServer.Instance.GetServerUriAsync());
-
-		//	//var store = new DocumentStore
-		//	//{
-		//	//	Urls = new[] { url.AbsoluteUri }
-		//	//};
-
-		//	//store.Initialize();
-
-		//	return DocumentStore;
-		//}
 
 		[BeforeTestRun(Order = 0)]
 		public static void TestEnvironmentInitialization()
@@ -75,6 +50,15 @@ namespace RavenDBSample.Tests
 		public void ResetDatabaseOnEachScenario(FeatureContext fctx)
 		{
 			_documentStore.DeleteDatabaseWithName(_databaseName);
+		}
+
+		[BeforeScenario]
+		public void ResetDatabaseOnEachScenarioCollection(FeatureContext fctx)
+		{
+			_documentStore.DeleteCollection("BaseOperations");
+			_documentStore.DeleteCollection("Audits");
+
+			_documentStore.WaitForIndexing();
 		}
 
 		[AfterScenario]

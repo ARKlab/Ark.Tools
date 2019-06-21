@@ -211,8 +211,10 @@ namespace Ark.Tools.AspNetCore.Startup
         protected virtual void RegisterContainer(IApplicationBuilder app)
         {
             Container.AutoCrossWireAspNetComponents(app);
-            Container.RegisterMvcControllers(app);
-            Container.RegisterAuthorizationAspNetCoreUser(app);
+#pragma warning disable CS0618 // Type or member is obsolete
+			Container.RegisterMvcControllers(app); //https://simpleinjector.org/aspnetcore
+#pragma warning restore CS0618 // Type or member is obsolete
+			Container.RegisterAuthorizationAspNetCoreUser(app);
         }
     }
 

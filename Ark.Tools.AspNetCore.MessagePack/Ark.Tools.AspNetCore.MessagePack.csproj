@@ -19,8 +19,8 @@
   <!--===============================================================================-->
 
   <ItemGroup>    
-    <PackageReference Include="MessagePack" Version="1.7.3.4" />    
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.2" />
+    <PackageReference Include="MessagePack" Version="1.7.3.7" />    
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
   </ItemGroup>
 
   <ItemGroup>

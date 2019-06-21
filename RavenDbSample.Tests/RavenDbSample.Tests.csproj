@@ -15,18 +15,36 @@
   <ItemGroup>
     <PackageReference Include="Flurl.Http" Version="2.4.2" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="2.2.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.1.1" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
-    <PackageReference Include="RavenDB.TestDriver" Version="4.1.5" />
-    <PackageReference Include="SpecFlow" Version="3.0.213" />
-    <PackageReference Include="SpecFlow.MsTest" Version="3.0.213" />
-    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.0.213" />
+    <PackageReference Include="RavenDB.Embedded" Version="4.2.0" />
+    <PackageReference Include="SpecFlow" Version="3.0.220" />
+    <PackageReference Include="SpecFlow.MsTest" Version="3.0.220" />
+    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.0.220" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
     <ProjectReference Include="..\RavenDbSample\RavenDbSample.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Tests\BaseOperationV1.feature.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>BaseOperationV1.feature</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <SpecFlowFeatureFiles Update="Tests\BaseOperationV1.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>BaseOperationV1.feature.cs</LastGenOutput>
+    </SpecFlowFeatureFiles>
+    <SpecFlowFeatureFiles Update="Tests\RavenDbTestV1.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+    </SpecFlowFeatureFiles>
   </ItemGroup>
 
 </Project>

@@ -18,11 +18,11 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.9.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.9.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.9.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer" Version="2.9.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.9.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.10.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.10.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.10.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer" Version="2.10.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.10.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />

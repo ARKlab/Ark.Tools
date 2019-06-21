@@ -120,6 +120,11 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.AsyncDocumentQuery<T>(indexName, collectionName, isMapReduce);
 		}
 
+		public IAsyncGraphQuery<T> AsyncGraphQuery<T>(string query)
+		{
+			return _inner.AsyncGraphQuery<T>(query);
+		}
+
 		public IAsyncRawDocumentQuery<T> AsyncRawQuery<T>(string query)
 		{
 			return _inner.AsyncRawQuery<T>(query);
