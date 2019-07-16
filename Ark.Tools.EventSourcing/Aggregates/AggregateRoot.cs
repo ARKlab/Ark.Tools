@@ -1,0 +1,238 @@
+﻿using Ark.Tools.EventSourcing.Events;
+using Ark.Tools.EventSourcing.Store;
+using EnsureThat;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Ark.Tools.EventSourcing.Aggregates
+{
+	public abstract class AggregateTransaction<TAggregate, TAggregateState> 
+        : IAggregateTransaction<TAggregate, TAggregateState>
+        where TAggregate : AggregateRoot<TAggregate, TAggregateState>, new()
+        where TAggregateState : AggregateState<TAggregate, TAggregateState>, new()
+    {
+        public TAggregate Aggregate { get; private set; } = null;
+        public string Identifier { get; }
+
+		public IEnumerable<AggregateEventEnvelope<TAggregate>> History { get; private set; }
+
+		public AggregateTransaction(string identifier)
+        {
+            Identifier = identifier;
+        }
+
+        protected void CreateFromState(TAggregateState state)
+        {
+            Aggregate = new TAggregate();
+            Aggregate.SetState(state);
+        }
+
+        protected void CreateFromHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history, TAggregateState snapshot = null)
+        {
+            Aggregate = new TAggregate();
+            if (snapshot != null)
+                Aggregate.SetState(snapshot);
+            else
+                Aggregate.SetState(new TAggregateState
+                {
+                    Identifier = Identifier,
+                    Version = 0
+                });
+
+            Aggregate.ApplyHistory(history);
+        }
+
+		public async Task LoadAsync(long maxVersion, CancellationToken ctk = default)
+		{
+			var events = await LoadHistory(maxVersion, ctk);
+			History = events;
+
+			CreateFromHistory(events);
+		}
+
+		public Task LoadAsync(CancellationToken ctk = default)
+		{
+			return LoadAsync(long.MaxValue, ctk);
+		}
+
+		public abstract Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default);
+		public abstract Task SaveChangesAsync(CancellationToken ctk = default);
+        public abstract void Dispose();
+    }
+
+    public abstract class AggregateRoot<TAggregate, TAggregateState> : IAggregateRoot
+        where TAggregate : AggregateRoot<TAggregate, TAggregateState>, new()
+        where TAggregateState : AggregateState<TAggregate, TAggregateState>, new()
+    {
+        private static readonly IReadOnlyDictionary<Type, Action<TAggregate, IAggregateEvent<TAggregate>, IMetadata>> _applyMethods;
+        private static readonly string _aggregateName = AggregateHelper<TAggregate>.Name;
+
+        private readonly List<AggregateEventEnvelope<TAggregate>> _uncommittedAggregateEvents = new List<AggregateEventEnvelope<TAggregate>>();
+        private readonly List<DomainEventEnvelope> _uncommittedDomainEvents = new List<DomainEventEnvelope>();
+        private bool _applying;
+
+        public TAggregateState State { get; protected internal set; }
+
+        public string Name => _aggregateName;
+        public string Identifier => State.Identifier;
+        public long Version => State.Version;
+        public bool IsNew => Version == 0;
+        public IEnumerable<AggregateEventEnvelope<TAggregate>> UncommittedAggregateEvents => _uncommittedAggregateEvents;
+        public IEnumerable<DomainEventEnvelope> UncommittedDomainEvents => _uncommittedDomainEvents;
+        
+        static AggregateRoot()
+        {
+            var aggregateEventType = typeof(IAggregateEvent<TAggregate>);
+            var aggregateStateType = typeof(TAggregateState);
+
+            var methods = typeof(TAggregate)
+                .GetTypeInfo()
+                .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(mi => mi.Name == "Apply")
+                .Where(mi => {
+                    var parameters = mi.GetParameters();
+                    return parameters.Length == 2
+                        && aggregateEventType.GetTypeInfo().IsAssignableFrom(parameters[0].ParameterType)
+                        ;
+                    })
+                ;
+
+            _applyMethods = methods
+                .ToDictionary(
+                    mi => mi.GetParameters()[0].ParameterType,
+                    mi => {
+                        var eventType = mi.GetParameters()[0].ParameterType;
+                        var aggregateParam = Expression.Parameter(typeof(TAggregate), "agg");
+                        var eventParam = Expression.Parameter(aggregateEventType, "evt");
+						var metadataParam = Expression.Parameter(typeof(IMetadata), "metadata");
+
+						var lambda = Expression.Lambda<Action<TAggregate, IAggregateEvent<TAggregate>, IMetadata>>(
+                            Expression.Call(
+                                aggregateParam,
+                                mi,
+                                Expression.Convert(eventParam, eventType),
+								metadataParam
+							),
+                            aggregateParam,
+                            eventParam,
+							metadataParam
+						);
+
+                        return lambda.Compile();
+                    }
+                );
+        }
+        
+        internal void SetState(TAggregateState state)
+        {
+            if (_uncommittedAggregateEvents.Any() || _uncommittedDomainEvents.Any())
+                throw new InvalidOperationException("An used aggregate cannot change state");
+
+            State = state;
+        }
+
+        internal void ApplyHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history)
+        {
+            foreach (var e in history)
+                _apply(e);
+        }
+
+        protected virtual void Emit<TEvent>(TEvent aggregateEvent, IDictionary<string,string> metadata = null)
+            where TEvent : class, IAggregateEvent<TAggregate>
+        {
+            Ensure.Any.IsNotNull(aggregateEvent, nameof(aggregateEvent));
+
+            if (_applying)
+                throw new InvalidOperationException("Emit shall not be called during Apply phase. Do it before or after Emitting an event");
+
+            var aggregateSequenceNumber = Version + 1;
+            var eventId = $"{Name}/{Identifier}/{aggregateSequenceNumber:D20}";
+            var now = DateTimeOffset.Now;
+
+            IMetadata eventMetadata = new Metadata
+            {
+                Timestamp = now,
+                AggregateVersion = aggregateSequenceNumber,
+                AggregateName = Name,
+                AggregateId = Identifier,
+                EventId = eventId,
+                EventName = AggregateHelper<TAggregate>.EventHelper<TEvent>.Name,
+                //EventVersion = AggregateHelper<TAggregate>.EventHelper<TEvent>.Version,
+                TimestampEpoch = now.ToUnixTimeMilliseconds()
+            };
+
+            if (metadata != null)
+            {
+                eventMetadata = eventMetadata.CloneWith(metadata);
+            }
+
+            var uncommittedEvent = new AggregateEventEnvelope<TAggregate>(aggregateEvent, eventMetadata);
+
+            _apply(uncommittedEvent);
+
+            _uncommittedAggregateEvents.Add(uncommittedEvent);
+        }
+
+        protected virtual void Publish<TEvent>(TEvent domainEvent, IMetadata metadata = null)
+            where TEvent : class, IDomainEvent
+        {
+            Ensure.Any.IsNotNull(domainEvent, nameof(domainEvent));
+
+            if (_applying)
+                throw new InvalidOperationException("Publish shall not be called during Apply phase. Do it before or after Emitting an event");
+
+            var now = DateTimeOffset.Now;
+            var eventMetadata = new Metadata
+            {
+                Timestamp = now,                
+                EventId = Guid.NewGuid().ToString(),
+                TimestampEpoch = now.ToUnixTimeMilliseconds(),
+
+                AggregateVersion = Version,
+                AggregateName = Name,
+                AggregateId = Identifier,
+            };
+
+            if (metadata != null)
+            {
+                eventMetadata.CloneWith(metadata.Values);
+            }
+
+            _uncommittedDomainEvents.Add(new DomainEventEnvelope(domainEvent, eventMetadata));
+        }
+
+        private void _apply(AggregateEventEnvelope<TAggregate> aggregateEvent)
+        {
+            _applying = true;
+            var eventType = aggregateEvent.Event.GetType();
+
+            if (!_applyMethods.TryGetValue(eventType, out var applyMethod))
+            {
+                throw new NotImplementedException(
+                    $"Aggregate '{Name}' does have an 'Apply' method that takes aggregate event '{eventType}' as argument");
+            }
+
+            applyMethod(this as TAggregate, aggregateEvent.Event, aggregateEvent.Metadata);
+
+            ValidateInvariantsOrThrow();
+
+            State.Version++;
+            _applying = false;
+        }
+
+
+        public void Commit()
+        {
+            _uncommittedAggregateEvents.Clear();
+        }
+
+        protected virtual void ValidateInvariantsOrThrow()
+        {
+        }
+    }
+}

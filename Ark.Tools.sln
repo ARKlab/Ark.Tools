@@ -82,6 +82,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Group_Pack_AspnetCore.bat = Group_Pack_AspnetCore.bat
 		Group_Pack_Core.bat = Group_Pack_Core.bat
 		Group_Pack_EntityFrameworkCore.bat = Group_Pack_EntityFrameworkCore.bat
+		Group_Pack_EventSourcing.bat = Group_Pack_EventSourcing.bat
 		Group_Pack_FTPClient.bat = Group_Pack_FTPClient.bat
 		Group_Pack_RavenDb.bat = Group_Pack_RavenDb.bat
 		Group_Pack_ResourceWatcher.bat = Group_Pack_ResourceWatcher.bat
@@ -128,6 +129,14 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.RavenDb", "Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj", "{F35573FD-6512-48E0-BC9A-7A8269FCEF0E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.RavenDb", "Ark.Tools.AspNetCore.RavenDb\Ark.Tools.AspNetCore.RavenDb.csproj", "{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EventSourcing.RavenDb", "Ark.Tools.EventSourcing.RavenDb\Ark.Tools.EventSourcing.RavenDb.csproj", "{A3B01C20-5DF4-4B92-A653-401669A81FE3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EventSourcing.SimpleInjector", "Ark.Tools.EventSourcing.SimpleInjector\Ark.Tools.EventSourcing.SimpleInjector.csproj", "{0DF3A2E5-F345-49C3-AB41-564504C16CCE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EventSourcing.Rebus", "Ark.Tools.EventSourcing.Rebus\Ark.Tools.EventSourcing.Rebus.csproj", "{5329B8CD-6835-43D8-A0B0-3BA96CAF89BC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EventSourcing", "Ark.Tools.EventSourcing\Ark.Tools.EventSourcing.csproj", "{8B69A37C-E72E-47EF-9870-BEAC4A14417B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -355,6 +364,22 @@ Global
 		{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C916F0D-3A4A-4ED0-BBBE-1BB6DC5E98B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3B01C20-5DF4-4B92-A653-401669A81FE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3B01C20-5DF4-4B92-A653-401669A81FE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3B01C20-5DF4-4B92-A653-401669A81FE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3B01C20-5DF4-4B92-A653-401669A81FE3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DF3A2E5-F345-49C3-AB41-564504C16CCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DF3A2E5-F345-49C3-AB41-564504C16CCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DF3A2E5-F345-49C3-AB41-564504C16CCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DF3A2E5-F345-49C3-AB41-564504C16CCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5329B8CD-6835-43D8-A0B0-3BA96CAF89BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5329B8CD-6835-43D8-A0B0-3BA96CAF89BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5329B8CD-6835-43D8-A0B0-3BA96CAF89BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5329B8CD-6835-43D8-A0B0-3BA96CAF89BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B69A37C-E72E-47EF-9870-BEAC4A14417B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B69A37C-E72E-47EF-9870-BEAC4A14417B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B69A37C-E72E-47EF-9870-BEAC4A14417B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B69A37C-E72E-47EF-9870-BEAC4A14417B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

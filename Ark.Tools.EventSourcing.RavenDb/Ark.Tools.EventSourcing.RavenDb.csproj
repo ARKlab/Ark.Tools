@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+    <Description>EventSourcing with RavenDb</Description>
+    <PackageTags>Ark;C#;.NET;EventSourcing;RavenDb;</PackageTags>
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes>
+    </PackageReleaseNotes>
+    <Version>$(EventSourcingGroupVersion)</Version>
+    <VersionSuffix></VersionSuffix>
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.EventSourcing\Ark.Tools.EventSourcing.csproj" />
+    <ProjectReference Include="..\Ark.Tools.EventSourcing.SimpleInjector\Ark.Tools.EventSourcing.SimpleInjector.csproj" />
+    <ProjectReference Include="..\Ark.Tools.RavenDb.Auditing\Ark.Tools.RavenDb.Auditing.csproj" />
+    <ProjectReference Include="..\Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj" />
+  </ItemGroup>
+
+</Project>
