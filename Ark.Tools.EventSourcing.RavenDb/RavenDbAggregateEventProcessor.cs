@@ -157,7 +157,6 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
         public void Dispose()
         {
-            ((IDisposable)_worker)?.Dispose();
             _tokenSource?.Dispose();
         }
     }
