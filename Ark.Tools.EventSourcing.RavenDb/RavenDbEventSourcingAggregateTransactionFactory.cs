@@ -49,7 +49,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 		{
 			using (var session = _sessionFactory.Create(new SessionOptions
 			{
-				NoTracking = true,
+				//NoTracking = true,
 				TransactionMode = TransactionMode.SingleNode
 			}))
 			{
