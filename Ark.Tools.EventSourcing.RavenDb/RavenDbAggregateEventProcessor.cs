@@ -25,7 +25,6 @@ namespace Ark.Tools.EventSourcing.RavenDb
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
 
 		private readonly IDocumentStore _store;
-        private SubscriptionWorker<AggregateEventStore> _worker;
         private IAggregateEventHandlerActivator _handlerActivator;
         private Task _subscriptionWorkerTask;
         private CancellationTokenSource _tokenSource;
@@ -38,15 +37,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
             _store = store;
             _handlerActivator = handlerActivator;
 
-            AggregateName = AggregateHelper<TAggregate>.Name;
-
-
-            _worker = _store.Subscriptions.GetSubscriptionWorker<AggregateEventStore>(
-                new SubscriptionWorkerOptions(SubscriptionName)
-                {
-                    Strategy = SubscriptionOpeningStrategy.WaitForFree,
-                    MaxDocsPerBatch = 100,                    
-                });
+            AggregateName = AggregateHelper<TAggregate>.Name;            
         }
 
         protected abstract string UniqueProcessorName { get; }
@@ -86,10 +77,18 @@ namespace Ark.Tools.EventSourcing.RavenDb
             {
                 try
                 {
-                    await _worker.Run(_exec, ctk);
+					using (var worker = _store.Subscriptions.GetSubscriptionWorker<AggregateEventStore>(
+						new SubscriptionWorkerOptions(SubscriptionName)
+						{
+							Strategy = SubscriptionOpeningStrategy.WaitForFree,
+							MaxDocsPerBatch = 100,
+						}))
+					{
+						await worker.Run(_exec, ctk);
+					}
                 }
                 catch (TaskCanceledException) { throw; }
-                catch (Exception ex) 
+                catch (Exception ex)
                 {
 					_logger.Warn(ex, $"Failed processing events for aggregate {AggregateName}");
                     await Task.Delay(TimeSpan.FromSeconds(5), ctk);
