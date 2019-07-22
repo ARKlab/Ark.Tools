@@ -14,14 +14,17 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Ark.Tools.EventSourcing.Store;
+using NLog;
 
 namespace Ark.Tools.EventSourcing.RavenDb
 {
     public abstract class RavenDbAggregateEventProcessor<TAggregate> 
         : IDisposable
         where TAggregate : IAggregateRoot
-    {
-        private readonly IDocumentStore _store;
+	{
+		private static Logger _logger = LogManager.GetCurrentClassLogger();
+
+		private readonly IDocumentStore _store;
         private SubscriptionWorker<AggregateEventStore> _worker;
         private IAggregateEventHandlerActivator _handlerActivator;
         private Task _subscriptionWorkerTask;
@@ -86,8 +89,9 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     await _worker.Run(_exec, ctk);
                 }
                 catch (TaskCanceledException) { throw; }
-                catch (Exception) 
+                catch (Exception ex) 
                 {
+					_logger.Warn(ex, $"Failed processing events for aggregate {AggregateName}");
                     await Task.Delay(TimeSpan.FromSeconds(5), ctk);
                 }
             }

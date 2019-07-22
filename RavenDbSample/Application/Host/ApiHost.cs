@@ -5,6 +5,11 @@ using Ark.Tools.SimpleInjector;
 using Ark.Tools.RavenDb.Auditing;
 using Raven.Client.Documents.Session;
 using Raven.Client.Documents;
+using Ark.Tools.EventSourcing.RavenDb;
+using RavenDbSample.Models;
+using Ark.Tools.EventSourcing.DomainEventPublisher;
+using Ark.Tools.EventSourcing.Store;
+using Ark.Tools.DomainEventPublisher.Rebus;
 
 namespace RavenDbSample.Application.Host
 {
@@ -41,9 +46,17 @@ namespace RavenDbSample.Application.Host
 		private void _registerContainer(Container container)
         {
 			container.RegisterInstance(this.Config);
-        }
 
-        public void RunInBackground()
+			//EventSourcing
+			container.RegisterSingleton<IDomainEventPublisher, RebusDomainEventPublisher>();
+			container.RegisterSingleton<RavenDbDomainEventPublisher>();
+			container.RegisterSingleton<IRavenDbSessionFactory, SimpleInjectorAuditedSessionFactory>();
+			container.RegisterSingleton<
+				IAggregateTransactionFactory<MyEntityAggregate, MyEntityState>, 
+				RavenDbEventSourcingAggregateTransactionFactory<MyEntityAggregate, MyEntityState>>();
+		}
+
+		public void RunInBackground()
         {
 
         }
