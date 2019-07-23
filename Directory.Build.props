@@ -52,7 +52,7 @@
     
     <AspNetCoreGroupVersion>1.3.20</AspNetCoreGroupVersion>
 
-    <EventSourcingGroupVersion>1.0.4</EventSourcingGroupVersion>
+    <EventSourcingGroupVersion>1.0.5</EventSourcingGroupVersion>
     
   </PropertyGroup>
   

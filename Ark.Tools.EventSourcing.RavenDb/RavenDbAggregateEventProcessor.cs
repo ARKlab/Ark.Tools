@@ -15,6 +15,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ark.Tools.EventSourcing.Store;
 using NLog;
+using Raven.Client.Exceptions.Database;
+using Raven.Client.Exceptions.Documents.Subscriptions;
+using Raven.Client.Exceptions.Security;
 
 namespace Ark.Tools.EventSourcing.RavenDb
 {
@@ -75,24 +78,86 @@ namespace Ark.Tools.EventSourcing.RavenDb
         {
             while (!ctk.IsCancellationRequested)
             {
-                try
-                {
-					using (var worker = _store.Subscriptions.GetSubscriptionWorker<AggregateEventStore>(
-						new SubscriptionWorkerOptions(SubscriptionName)
-						{
-							Strategy = SubscriptionOpeningStrategy.WaitForFree,
-							MaxDocsPerBatch = 100,
-						}))
+				var options = new SubscriptionWorkerOptions(SubscriptionName)
+				{
+					Strategy = SubscriptionOpeningStrategy.TakeOver,
+					MaxDocsPerBatch = 10,
+				};
+
+				// here we configure that we allow a down time of up to 2 hours, and will wait for 2 minutes for reconnecting
+				options.MaxErroneousPeriod = TimeSpan.MaxValue;
+				options.TimeToWaitBeforeConnectionRetry = TimeSpan.FromSeconds(10);
+
+				var subscriptionWorker = _store.Subscriptions.GetSubscriptionWorker<AggregateEventStore>(options);
+
+				try
+				{
+					// here we are able to be informed of any exception that happens during processing                    
+					subscriptionWorker.OnSubscriptionConnectionRetry += ex =>
 					{
-						await worker.Run(_exec, ctk);
+						_logger.Error(ex, "Error during subscription processing: " + SubscriptionName);
+					};
+
+					await subscriptionWorker.Run(_exec, ctk);
+
+					// Run will complete normally if you have disposed the subscription
+					return;
+				}
+				catch (Exception e)
+				{
+					_logger.Error(e, "Failure in subscription: " + SubscriptionName);
+
+					if (e is DatabaseDoesNotExistException ||
+						e is SubscriptionDoesNotExistException ||
+						e is SubscriptionInvalidStateException ||
+						e is AuthorizationException)
+						throw; // not recoverable
+
+
+					if (e is SubscriptionClosedException)
+						// closed explicitly by admin, probably
+						return;
+
+					if (e is SubscriberErrorException se)
+						throw;
+
+					// handle this depending on subscription
+					// open strategy (discussed later)
+					if (e is SubscriptionInUseException)
+					{
+						await Task.Delay(TimeSpan.FromSeconds(30), ctk);
+						continue;
 					}
-                }
-                catch (TaskCanceledException) { throw; }
-                catch (Exception ex)
-                {
-					_logger.Warn(ex, $"Failed processing events for aggregate {AggregateName}");
-                    await Task.Delay(TimeSpan.FromSeconds(5), ctk);
-                }
+
+					throw;
+				}
+				finally
+				{
+					subscriptionWorker.Dispose();
+				}
+
+
+
+
+				//try
+    //            {
+				//	using (var worker = _store.Subscriptions.GetSubscriptionWorker<AggregateEventStore>(
+				//		new SubscriptionWorkerOptions(SubscriptionName)
+				//		{
+				//			Strategy = SubscriptionOpeningStrategy.WaitForFree,
+				//			MaxDocsPerBatch = 100,
+							
+				//		}))
+				//	{
+				//		await worker.Run(_exec, ctk);
+				//	}
+    //            }
+    //            catch (TaskCanceledException) { throw; }
+    //            catch (Exception ex)
+    //            {
+				//	_logger.Warn(ex, $"Failed processing events for aggregate {AggregateName}");
+    //                await Task.Delay(TimeSpan.FromSeconds(5), ctk);
+    //            }
             }
             
         }
