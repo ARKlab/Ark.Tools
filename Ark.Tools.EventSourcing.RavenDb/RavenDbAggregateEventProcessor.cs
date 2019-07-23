@@ -1,14 +1,9 @@
-﻿
-using Ark.Tools.EventSourcing.Aggregates;
+﻿using Ark.Tools.EventSourcing.Aggregates;
 using Ark.Tools.EventSourcing.Events;
-using Ark.Tools.EventSourcing.DomainEventPublisher;
 using Raven.Client.Documents;
-using Raven.Client.Documents.Queries;
 using Raven.Client.Documents.Subscriptions;
-
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -21,67 +16,71 @@ using Raven.Client.Exceptions.Security;
 
 namespace Ark.Tools.EventSourcing.RavenDb
 {
-    public abstract class RavenDbAggregateEventProcessor<TAggregate> 
-        : IDisposable
-        where TAggregate : IAggregateRoot
+	public abstract class RavenDbAggregateEventProcessor<TAggregate>
+	: IDisposable
+	where TAggregate : IAggregateRoot
 	{
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
 
 		private readonly IDocumentStore _store;
-        private IAggregateEventHandlerActivator _handlerActivator;
-        private Task _subscriptionWorkerTask;
-        private CancellationTokenSource _tokenSource;
-        private object _gate = new object();
+		private IAggregateEventHandlerActivator _handlerActivator;
+		private Task _subscriptionWorkerTask;
+		private CancellationTokenSource _tokenSource;
+		private object _gate = new object();
 
-        readonly ConcurrentDictionary<Type, MethodInfo> _dispatchMethods = new ConcurrentDictionary<Type, MethodInfo>();
+		readonly ConcurrentDictionary<Type, MethodInfo> _dispatchMethods = new ConcurrentDictionary<Type, MethodInfo>();
 
-        public RavenDbAggregateEventProcessor(IDocumentStore store, IAggregateEventHandlerActivator handlerActivator)
-        {            
-            _store = store;
-            _handlerActivator = handlerActivator;
+		public RavenDbAggregateEventProcessor(IDocumentStore store, IAggregateEventHandlerActivator handlerActivator)
+		{
+			_store = store;
+			_handlerActivator = handlerActivator;
 
-            AggregateName = AggregateHelper<TAggregate>.Name;            
-        }
+			AggregateName = AggregateHelper<TAggregate>.Name;
+		}
 
-        protected abstract string UniqueProcessorName { get; }
-        protected string AggregateName { get; }
+		protected abstract string UniqueProcessorName { get; }
+		protected string AggregateName { get; }
 
-        protected string SubscriptionName => $"{AggregateName}/{UniqueProcessorName}";
+		protected string SubscriptionName => $"{AggregateName}/{UniqueProcessorName}";
 
-        public async Task StartAsync(CancellationToken ctk = default)
-        {
-            var prefix = AggregateName + "/";
-            try {
-                await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions
-                {
-                    Name = SubscriptionName,
-                    Query = $@"from {RavenDbEventSourcingConstants.AggregateEventsCollectionName} as e
-                               where startsWith(id(e), '{prefix}')
-                    "
-                });
-            } catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
-            {
-            }
+		public async Task StartAsync(CancellationToken ctk = default)
+		{
+			var prefix = AggregateName + "/";
+			try
+			{
+				await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions
+				{
+					Name = SubscriptionName,
+					Query = $@"
+from {RavenDbEventSourcingConstants.AggregateEventsCollectionName} as e
+where startsWith(id(e), '{prefix}')
+                "
+				});
+			}
+			catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
+			{
+			}
 
-            lock (_gate)
-            {
-                if (_subscriptionWorkerTask != null)
-                    throw new InvalidOperationException("Already started");
+			lock (_gate)
+			{
+				if (_subscriptionWorkerTask != null)
+					throw new InvalidOperationException("Already started");
 
 
-                _tokenSource = new CancellationTokenSource();
-                _subscriptionWorkerTask = Task.Run(() => _run(_tokenSource.Token), ctk);
-            }
-        }
+				_tokenSource = new CancellationTokenSource();
+				_subscriptionWorkerTask = Task.Factory.StartNew(() => _run(_tokenSource.Token), _tokenSource.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+			}
+		}
 
-        private async Task _run(CancellationToken ctk = default)
-        {
-            while (!ctk.IsCancellationRequested)
-            {
+		private async Task _run(CancellationToken ctk = default)
+		{
+			while (!ctk.IsCancellationRequested)
+			{
 				var options = new SubscriptionWorkerOptions(SubscriptionName)
 				{
 					Strategy = SubscriptionOpeningStrategy.TakeOver,
 					MaxDocsPerBatch = 10,
+					ReceiveBufferSizeInBytes = 25 * 1024 * 1024
 				};
 
 				// here we configure that we allow a down time of up to 2 hours, and will wait for 2 minutes for reconnecting
@@ -98,6 +97,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 						_logger.Error(ex, "Error during subscription processing: " + SubscriptionName);
 					};
 
+					_logger.Info($"Start processing {SubscriptionName}");
 					await subscriptionWorker.Run(_exec, ctk);
 
 					// Run will complete normally if you have disposed the subscription
@@ -129,100 +129,79 @@ namespace Ark.Tools.EventSourcing.RavenDb
 						continue;
 					}
 
-					throw;
+					continue;
 				}
 				finally
 				{
 					subscriptionWorker.Dispose();
 				}
+			}
+
+		}
+
+		private async Task _exec(SubscriptionBatch<AggregateEventStore> batch)
+		{
+			_logger.Trace($"Got a batch of {batch.NumberOfItemsInBatch} items");
+
+			var tasks = batch.Items.GroupBy(x => x.Result.AggregateId)
+				.Select(async g =>
+				{
+					foreach (var e in g)
+					{
+						AggregateEventEnvelope<TAggregate> envelope = e.Result.FromStore<TAggregate>();
+						var evtType = envelope.Event.GetType();
+						var methodToInvoke = _dispatchMethods
+							.GetOrAdd(evtType, type => _getDispatchMethod(evtType));
+
+						await (Task)methodToInvoke.Invoke(this, new object[] { envelope.Event, envelope.Metadata });
+					}
+				});
 
 
+			await Task.WhenAll(tasks);
+		}
 
+		Task _invokeHandler<TEvent>(TEvent evt, IMetadata metadata)
+			where TEvent : IAggregateEvent<TAggregate>
+		{
+			var handler = _handlerActivator.GetHandler<TAggregate, TEvent>(evt);
 
-				//try
-    //            {
-				//	using (var worker = _store.Subscriptions.GetSubscriptionWorker<AggregateEventStore>(
-				//		new SubscriptionWorkerOptions(SubscriptionName)
-				//		{
-				//			Strategy = SubscriptionOpeningStrategy.WaitForFree,
-				//			MaxDocsPerBatch = 100,
-							
-				//		}))
-				//	{
-				//		await worker.Run(_exec, ctk);
-				//	}
-    //            }
-    //            catch (TaskCanceledException) { throw; }
-    //            catch (Exception ex)
-    //            {
-				//	_logger.Warn(ex, $"Failed processing events for aggregate {AggregateName}");
-    //                await Task.Delay(TimeSpan.FromSeconds(5), ctk);
-    //            }
-            }
-            
-        }
+			if (handler != null)
+				return handler.HandleAsync(evt, metadata, _tokenSource.Token);
+			else
+				return Task.CompletedTask;
+		}
 
-        private async Task _exec(SubscriptionBatch<AggregateEventStore> batch)
-        {
-            var tasks = batch.Items.GroupBy(x => x.Result.AggregateId)
-                .Select(async g =>
-                {
-                    foreach (var e in g)
-                    {
-                        AggregateEventEnvelope<TAggregate> envelope = e.Result.FromStore<TAggregate>();
-                        var evtType = envelope.Event.GetType();
-                        var methodToInvoke = _dispatchMethods
-                            .GetOrAdd(evtType, type => _getDispatchMethod(evtType));
+		class FakeEvent : IAggregateEvent<TAggregate> { }
 
-                        await (Task)methodToInvoke.Invoke(this, new object[] { envelope.Event, envelope.Metadata });
-                    }
-                });
+		MethodInfo _getDispatchMethod(Type eventType)
+		{
+			Func<FakeEvent, IMetadata, Task> a = _invokeHandler<FakeEvent>;
 
+			return a.Method.GetGenericMethodDefinition().MakeGenericMethod(eventType);
+		}
 
-            await Task.WhenAll(tasks);            
-        }
+		public async Task StopAsync()
+		{
+			Task runtask;
+			lock (_gate)
+			{
+				_tokenSource.Cancel();
+				_tokenSource = null;
+				runtask = _subscriptionWorkerTask;
+				_subscriptionWorkerTask = null;
+			}
 
-        Task _invokeHandler<TEvent>(TEvent evt, IMetadata metadata)
-            where TEvent : IAggregateEvent<TAggregate>
-        {
-            var handler = _handlerActivator.GetHandler<TAggregate, TEvent>(evt);
+			try
+			{
+				await runtask;
+			}
+			catch (TaskCanceledException) { }
+		}
 
-            if (handler != null)
-                return handler.HandleAsync(evt, metadata, _tokenSource.Token);
-            else
-                return Task.CompletedTask;
-        }
-
-        class FakeEvent : IAggregateEvent<TAggregate> { }
-
-        MethodInfo _getDispatchMethod(Type eventType)
-        {
-            Func<FakeEvent, IMetadata, Task> a = _invokeHandler<FakeEvent>;
-
-            return a.Method.GetGenericMethodDefinition().MakeGenericMethod(eventType);
-        }
-
-        public async Task StopAsync()
-        {
-            Task runtask;
-            lock (_gate)
-            {
-                _tokenSource.Cancel();
-                _tokenSource = null;
-                runtask = _subscriptionWorkerTask;
-                _subscriptionWorkerTask = null;
-            }
-
-            try
-            {
-                await runtask;
-            }
-            catch (TaskCanceledException) { }
-        }
-
-        public void Dispose()
-        {
-            _tokenSource?.Dispose();
-        }
-    }
+		public void Dispose()
+		{
+			_tokenSource?.Dispose();
+		}
+	}
 }
