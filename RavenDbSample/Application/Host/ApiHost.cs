@@ -10,6 +10,9 @@ using RavenDbSample.Models;
 using Ark.Tools.EventSourcing.DomainEventPublisher;
 using Ark.Tools.EventSourcing.Store;
 using Ark.Tools.DomainEventPublisher.Rebus;
+using Ark.Tools.Solid;
+using RavenDbSample.Application.DAL;
+using Ark.Tools.Solid.SimpleInjector;
 
 namespace RavenDbSample.Application.Host
 {
@@ -30,7 +33,11 @@ namespace RavenDbSample.Application.Host
 			
 			Container.AllowResolvingFuncFactories();
 
-            _registerContainer(Container);
+			Container.RequireSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
+			Container.RequireSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
+			Container.RequireSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+
+			_registerContainer(Container);
 
             return this;
         }
@@ -38,6 +45,20 @@ namespace RavenDbSample.Application.Host
 		public ApiHost WithRavenDbAudit()
 		{
 			Container.Register<IAsyncDocumentSession>(() => Container.GetInstance<IDocumentStore>().OpenAsyncSession(), Lifestyle.Scoped);
+
+			//Container.Register<IAsyncDocumentSession>(() => {
+			//	var session = Container.GetInstance<IDocumentStore>().OpenAsyncSession(
+			//	new SessionOptions
+			//	{
+			//		NoTracking = false,
+			//		TransactionMode = TransactionMode.ClusterWide
+			//	}
+			//	);
+
+			//	session.Advanced.UseOptimisticConcurrency = false;
+
+			//	return session;
+			//}, Lifestyle.Scoped);
 
 			Container.RegisterRavenDbAudit();
 			return this;
@@ -54,6 +75,14 @@ namespace RavenDbSample.Application.Host
 			container.RegisterSingleton<
 				IAggregateTransactionFactory<MyEntityAggregate, MyEntityState>, 
 				RavenDbEventSourcingAggregateTransactionFactory<MyEntityAggregate, MyEntityState>>();
+
+			// DAL
+			container.Register<IDbContext, DbContext>();
+			container.Register<IDbContextClusterWide, DbContextClusterWide>();
+
+			container.Register(typeof(IQueryHandler<,>), this._applicationAssemblies);
+			container.Register(typeof(IRequestHandler<,>), this._applicationAssemblies);
+
 		}
 
 		public void RunInBackground()

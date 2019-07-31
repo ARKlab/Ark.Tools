@@ -44,15 +44,15 @@
   <PropertyGroup>
     
     <ArkToolsCoreVersion>1.1.24</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>1.1.7</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>1.1.18</ResourceWatcherGroupVersion>
+    <FtpClientGroupVersion>1.1.8</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>1.1.19</ResourceWatcherGroupVersion>
     
-    <EntityFrameworkGroupVersion>1.0.6</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>1.0.13</RavenDbGroupVersion>
+    <EntityFrameworkGroupVersion>1.0.7</EntityFrameworkGroupVersion>
+    <RavenDbGroupVersion>1.0.14</RavenDbGroupVersion>
     
-    <AspNetCoreGroupVersion>1.3.20</AspNetCoreGroupVersion>
+    <AspNetCoreGroupVersion>1.3.21</AspNetCoreGroupVersion>
 
-    <EventSourcingGroupVersion>1.0.6</EventSourcingGroupVersion>
+    <EventSourcingGroupVersion>1.0.6</EventSourcingGroupVersion> <!--depends from Core Only -->
     
   </PropertyGroup>
   

@@ -24,12 +24,18 @@
     <ProjectReference Include="..\Ark.Tools.RavenDb.Auditing\Ark.Tools.RavenDb.Auditing.csproj" />
     <ProjectReference Include="..\Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj" />
     <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AgileObjects.AgileMapper" Version="1.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.OData.Versioning.ApiExplorer" Version="3.1.1" />
     <PackageReference Include="Microsoft.OData.Core" Version="7.6.0" />
     <PackageReference Include="RavenDB.Embedded" Version="4.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Application\Queries\" />
   </ItemGroup>
 
 </Project>
