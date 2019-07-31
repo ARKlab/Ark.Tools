@@ -19,7 +19,7 @@ namespace RavenDbSample.Application.DAL
 {
 	public class DbContext : IDbContext
 	{
-		public readonly IAsyncDocumentSession _session;
+		protected readonly IAsyncDocumentSession _session;
 
 		public DbContext(IAsyncDocumentSession session)
 		{

@@ -46,5 +46,6 @@ namespace RavenDbSample.Application.Requests
 			return res;
 
 		}
+
 	}
 }

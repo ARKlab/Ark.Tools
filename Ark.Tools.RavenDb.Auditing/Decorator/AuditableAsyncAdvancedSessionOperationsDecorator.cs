@@ -282,6 +282,21 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.StreamAsync<T>(startsWith, matches, start, pageSize, startAfter, token);
 		}
 
+		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+		{
+			return _inner.StreamAsync(query, out streamQueryStats, token);
+		}
+
+		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+		{
+			return _inner.StreamAsync(query, out streamQueryStats, token);
+		}
+
+		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+		{
+			return _inner.StreamAsync(query, out streamQueryStats, token);
+		}
+
 		public Task StreamIntoAsync<T>(IAsyncDocumentQuery<T> query, Stream output, CancellationToken token = default)
 		{
 			return _inner.StreamIntoAsync(query, output, token);

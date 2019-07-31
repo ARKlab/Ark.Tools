@@ -44,21 +44,21 @@ namespace RavenDbSample.Application.Host
 
 		public ApiHost WithRavenDbAudit()
 		{
-			Container.Register<IAsyncDocumentSession>(() => Container.GetInstance<IDocumentStore>().OpenAsyncSession(), Lifestyle.Scoped);
+			//Container.Register<IAsyncDocumentSession>(() => Container.GetInstance<IDocumentStore>().OpenAsyncSession(), Lifestyle.Scoped);
 
-			//Container.Register<IAsyncDocumentSession>(() => {
-			//	var session = Container.GetInstance<IDocumentStore>().OpenAsyncSession(
-			//	new SessionOptions
-			//	{
-			//		NoTracking = false,
-			//		TransactionMode = TransactionMode.ClusterWide
-			//	}
-			//	);
+			Container.RegisterConditional<IAsyncDocumentSession>(
+				Lifestyle.Scoped.CreateRegistration(
+					() => Container.GetInstance<IDocumentStore>().OpenAsyncSession(), Container
+					),
+				ctx => !typeof(IDbContextClusterWide).IsAssignableFrom(ctx.Consumer.ImplementationType)
+			);
 
-			//	session.Advanced.UseOptimisticConcurrency = false;
-
-			//	return session;
-			//}, Lifestyle.Scoped);
+			Container.RegisterConditional<IAsyncDocumentSession>(
+				Lifestyle.Scoped.CreateRegistration(
+					() => Container.GetInstance<IDocumentStore>().OpenAsyncClusterWideSession(), Container
+					),
+				ctx => typeof(IDbContextClusterWide).IsAssignableFrom(ctx.Consumer.ImplementationType)
+			);
 
 			Container.RegisterRavenDbAudit();
 			return this;

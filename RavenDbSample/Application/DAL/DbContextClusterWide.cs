@@ -20,8 +20,8 @@ namespace RavenDbSample.Application.DAL
 {
 	public class DbContextClusterWide : DbContext, IDbContextClusterWide
 	{
-		public DbContextClusterWide(IDocumentStore store)
-		: base(store.OpenAsyncClusterWideSession())
+		public DbContextClusterWide(IAsyncDocumentSession session)
+		: base(session)
 		{
 		}
 		public async Task<string> CreateContractClustered(Contract.Input input, CancellationToken ctk = default)
