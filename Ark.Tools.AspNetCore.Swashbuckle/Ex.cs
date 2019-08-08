@@ -32,7 +32,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
             if (derivedTypes == null || derivedTypes.Count == 0)
                 derivedTypes = _init<TBase>();
 
-            o.DocumentFilter<PolymorphismDocumentFilter<TBase>>(discriminatorName);
+            o.DocumentFilter<PolymorphismDocumentFilter<TBase>>(discriminatorName, derivedTypes);
             o.SchemaFilter<PolymorphismSchemaFilter<TBase>>(derivedTypes);
         }
 

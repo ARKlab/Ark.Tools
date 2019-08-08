@@ -34,10 +34,15 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
     public class PolymorphismDocumentFilter<T> : IDocumentFilter
     {
         private readonly string _discriminatorName;
+        private readonly HashSet<Type> _derivedTypes;
 
-        public PolymorphismDocumentFilter(string fieldDiscriminatorName)
+        public PolymorphismDocumentFilter(string fieldDiscriminatorName, HashSet<Type> derivedTypes)
         {
             _discriminatorName = fieldDiscriminatorName ?? "discriminator";
+            _derivedTypes = derivedTypes 
+                ?? new HashSet<Type>(typeof(T).Assembly
+                .GetTypes()
+                .Where(x => typeof(T) != x && typeof(T).IsAssignableFrom(x)));
         }
 
         public void Apply(SwaggerDocument swaggerDoc, DocumentFilterContext context)
@@ -54,13 +59,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
             if (!parentSchema.Properties.ContainsKey(_discriminatorName))
                 parentSchema.Properties.Add(_discriminatorName, new Schema { Type = "string" });
-
-            //register all subclasses
-            var derivedTypes = typeof(T).Assembly
-                                           .GetTypes()
-                                           .Where(x => typeof(T) != x && typeof(T).IsAssignableFrom(x));
-
-            foreach (var item in derivedTypes)
+            
+            foreach (var item in _derivedTypes)
                 context.SchemaRegistry.GetOrRegister(item);
         }
     }    
