@@ -16,7 +16,7 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.6" />
   
     <ProjectReference Include="..\Ark.Tools.EntityFrameworkCore\Ark.Tools.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" />

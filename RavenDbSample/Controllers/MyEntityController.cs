@@ -12,9 +12,8 @@ using RavenDbSample.Models;
 namespace RavenDbSample.Controllers
 {
 	[ApiVersion("1.0")]
-	[Route("myEntities")]
+	[Route("MyEntity")]
 	[ApiController]
-
 	public class MyEntityController : ControllerBase
 	{
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
@@ -33,6 +32,7 @@ namespace RavenDbSample.Controllers
 		/// <returns></returns>
 		[HttpGet("{id}")]
 		[Produces("application/json")]
+		[ProducesResponseType(typeof(IEnumerable<MyEntity>), StatusCodes.Status200OK)]
 		public async Task<IActionResult> GetById([FromRoute]string id, CancellationToken ctk = default)
 		{
 			_logger.Trace($@"Get: Import id: {id}");

@@ -73,8 +73,8 @@ namespace RavenDbSample.Application.Host
 			container.RegisterSingleton<RavenDbDomainEventPublisher>();
 			container.RegisterSingleton<IRavenDbSessionFactory, SimpleInjectorAuditedSessionFactory>();
 			container.RegisterSingleton<
-				IAggregateTransactionFactory<MyEntityAggregate, MyEntityState>, 
-				RavenDbEventSourcingAggregateTransactionFactory<MyEntityAggregate, MyEntityState>>();
+				IAggregateTransactionFactory<MyEntityAggregate, MyEntityState, MyEntity>, 
+				RavenDbEventSourcingAggregateTransactionFactory<MyEntityAggregate, MyEntityState, MyEntity>>();
 
 			// DAL
 			container.Register<IDbContext, DbContext>();

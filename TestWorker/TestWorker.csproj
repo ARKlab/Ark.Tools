@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights.ServiceFabric" Version="2.3.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.ServiceFabric" Version="2.3.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer" Version="2.9.1" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
 
