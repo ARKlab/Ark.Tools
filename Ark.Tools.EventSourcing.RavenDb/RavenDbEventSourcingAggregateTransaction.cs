@@ -11,19 +11,22 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.RavenDb
 {
-    public class RavenDbEventSourcingAggregateTransaction<TAggregate, TAggregateState>
-        : AggregateTransaction<TAggregate, TAggregateState>
-        where TAggregate : AggregateRoot<TAggregate, TAggregateState>, new()
-        where TAggregateState : AggregateState<TAggregate, TAggregateState>, new()
+    public class RavenDbEventSourcingAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
+        : AggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
+        where TAggregate : IAggregate
     {
         private readonly IAsyncDocumentSession _session;
         private readonly string _chexKey;
         private CompareExchangeValue<long> _chex;
 
         public RavenDbEventSourcingAggregateTransaction(
-            IAsyncDocumentSession session, 
-            string aggregateId)
-            : base(aggregateId)
+            IAsyncDocumentSession session,
+            string aggregateId,
+            IAggregateRootFactory aggregateRootFactory
+            )
+            : base(aggregateId, aggregateRootFactory)
         {
             session.Advanced.UseOptimisticConcurrency = false;
             _session = session;

@@ -11,19 +11,25 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.RavenDb
 {
-    public class RavenDbEventSourcingAggregateTransactionFactory<TAggregate, TAggregateState>
-        : IAggregateTransactionFactory<TAggregate, TAggregateState>
-        where TAggregate : AggregateRoot<TAggregate, TAggregateState>, new()
-        where TAggregateState : AggregateState<TAggregate, TAggregateState>, new()
+    public class RavenDbEventSourcingAggregateTransactionFactory<TAggregateRoot, TAggregateState, TAggregate>
+        : IAggregateTransactionFactory<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
+        where TAggregate : IAggregate
     {
 		private readonly IRavenDbSessionFactory _sessionFactory;
+        private readonly IAggregateRootFactory _aggregateRootFactory;
 
-		public RavenDbEventSourcingAggregateTransactionFactory(IRavenDbSessionFactory sessionFactory)
+        public RavenDbEventSourcingAggregateTransactionFactory(
+            IRavenDbSessionFactory sessionFactory,
+            IAggregateRootFactory aggregateRootFactory
+            )
         {
 			_sessionFactory = sessionFactory;
+            _aggregateRootFactory = aggregateRootFactory;
         }
 
-        public async Task<IAggregateTransaction<TAggregate, TAggregateState>> StartTransactionAsync(string id, CancellationToken ctk = default)
+        public async Task<IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>> StartTransactionAsync(string id, CancellationToken ctk = default)
         {
 			var session = _sessionFactory.Create(new SessionOptions
 			{
@@ -31,7 +37,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 				TransactionMode = TransactionMode.ClusterWide
 			});
 
-			var tx = new RavenDbEventSourcingAggregateTransaction<TAggregate, TAggregateState>(session, id);
+			var tx = new RavenDbEventSourcingAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>(session, id, _aggregateRootFactory);
 
             try
             {

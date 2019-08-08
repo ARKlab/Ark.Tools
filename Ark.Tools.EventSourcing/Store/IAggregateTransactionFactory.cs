@@ -4,11 +4,12 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.Store
 {
-    public interface IAggregateTransactionFactory<TAggregate, TAggregateState>
-        where TAggregate : AggregateRoot<TAggregate, TAggregateState>, new()
-        where TAggregateState : AggregateState<TAggregate, TAggregateState>, new()
+    public interface IAggregateTransactionFactory<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
+        where TAggregate : IAggregate
     {
-        Task<IAggregateTransaction<TAggregate, TAggregateState>> StartTransactionAsync(string id, CancellationToken ctk = default);
+        Task<IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>> StartTransactionAsync(string id, CancellationToken ctk = default);
 		Task<TAggregateState> LoadCapturedState(string id, CancellationToken ctk = default);
 	}
 }

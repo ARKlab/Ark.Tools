@@ -15,14 +15,16 @@ namespace RavenDbSample.Models
 		Modified
 	}
 
-	public class MyEntityState : AggregateState<MyEntityAggregate, MyEntityState>
+    public class MyEntity : IAggregate { }
+
+	public class MyEntityState : AggregateState<MyEntityState, MyEntity>
 	{
 		public string Name { get; set; }
 		public Status Status { get; set; }
 		public Instant UpdatedAt { get; set; }
 	}
 
-	public class MyEntityAggregate : AggregateRoot<MyEntityAggregate, MyEntityState>
+	public class MyEntityAggregate : AggregateRoot<MyEntityAggregate, MyEntityState, MyEntity>
 	{
 		public bool IsCreated => State.Status == Status.Created;
 

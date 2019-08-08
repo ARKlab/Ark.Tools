@@ -11,30 +11,30 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.Aggregates
 {
-	public abstract class AggregateTransaction<TAggregate, TAggregateState> 
-        : IAggregateTransaction<TAggregate, TAggregateState>
-        where TAggregate : AggregateRoot<TAggregate, TAggregateState>, new()
-        where TAggregateState : AggregateState<TAggregate, TAggregateState>, new()
+	public abstract class AggregateTransaction<TAggregateRoot, TAggregateState, TAggregate> 
+        : IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
+        where TAggregate : IAggregate
     {
-        public TAggregate Aggregate { get; private set; } = null;
+        public TAggregateRoot Aggregate { get; private set; } = null;
         public string Identifier { get; }
 
-		public IEnumerable<AggregateEventEnvelope<TAggregate>> History { get; private set; }
+        public IEnumerable<AggregateEventEnvelope<TAggregate>> History { get; private set; }
 
-		public AggregateTransaction(string identifier)
+		public AggregateTransaction(string identifier, IAggregateRootFactory aggregateRootFactory)
         {
             Identifier = identifier;
+            Aggregate = aggregateRootFactory.Create<TAggregateRoot>();
         }
 
-        protected void CreateFromState(TAggregateState state)
+        private void _createFromState(TAggregateState state)
         {
-            Aggregate = new TAggregate();
             Aggregate.SetState(state);
         }
 
-        protected void CreateFromHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history, TAggregateState snapshot = null)
+        private void _createFromHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history, TAggregateState snapshot = null)
         {
-            Aggregate = new TAggregate();
             if (snapshot != null)
                 Aggregate.SetState(snapshot);
             else
@@ -52,7 +52,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
 			var events = await LoadHistory(maxVersion, ctk);
 			History = events;
 
-			CreateFromHistory(events);
+			_createFromHistory(events);
 		}
 
 		public Task LoadAsync(CancellationToken ctk = default)
@@ -65,11 +65,12 @@ namespace Ark.Tools.EventSourcing.Aggregates
         public abstract void Dispose();
     }
 
-    public abstract class AggregateRoot<TAggregate, TAggregateState> : IAggregateRoot
-        where TAggregate : AggregateRoot<TAggregate, TAggregateState>, new()
-        where TAggregateState : AggregateState<TAggregate, TAggregateState>, new()
+    public abstract class AggregateRoot<TAggregateRoot, TAggregateState, TAggregate> : IAggregateRoot
+        where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
+        where TAggregate : IAggregate
     {
-        private static readonly IReadOnlyDictionary<Type, Action<TAggregate, IAggregateEvent<TAggregate>, IMetadata>> _applyMethods;
+        private static readonly IReadOnlyDictionary<Type, Action<TAggregateRoot, IAggregateEvent<TAggregate>, IMetadata>> _applyMethods;
         private static readonly string _aggregateName = AggregateHelper<TAggregate>.Name;
 
         private readonly List<AggregateEventEnvelope<TAggregate>> _uncommittedAggregateEvents = new List<AggregateEventEnvelope<TAggregate>>();
@@ -90,7 +91,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
             var aggregateEventType = typeof(IAggregateEvent<TAggregate>);
             var aggregateStateType = typeof(TAggregateState);
 
-            var methods = typeof(TAggregate)
+            var methods = typeof(TAggregateRoot)
                 .GetTypeInfo()
                 .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
                 .Where(mi => mi.Name == "Apply")
@@ -107,11 +108,11 @@ namespace Ark.Tools.EventSourcing.Aggregates
                     mi => mi.GetParameters()[0].ParameterType,
                     mi => {
                         var eventType = mi.GetParameters()[0].ParameterType;
-                        var aggregateParam = Expression.Parameter(typeof(TAggregate), "agg");
+                        var aggregateParam = Expression.Parameter(typeof(TAggregateRoot), "agg");
                         var eventParam = Expression.Parameter(aggregateEventType, "evt");
 						var metadataParam = Expression.Parameter(typeof(IMetadata), "metadata");
 
-						var lambda = Expression.Lambda<Action<TAggregate, IAggregateEvent<TAggregate>, IMetadata>>(
+						var lambda = Expression.Lambda<Action<TAggregateRoot, IAggregateEvent<TAggregate>, IMetadata>>(
                             Expression.Call(
                                 aggregateParam,
                                 mi,
@@ -217,7 +218,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
                     $"Aggregate '{Name}' does have an 'Apply' method that takes aggregate event '{eventType}' as argument");
             }
 
-            applyMethod(this as TAggregate, aggregateEvent.Event, aggregateEvent.Metadata);
+            applyMethod(this as TAggregateRoot, aggregateEvent.Event, aggregateEvent.Metadata);
 
             ValidateInvariantsOrThrow();
 

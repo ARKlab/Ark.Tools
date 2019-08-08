@@ -15,7 +15,7 @@ namespace Ark.Tools.EventSourcing.SimpleInjector
 		}
 
 		public IAggregateEventHandler<TAggregate, TEvent> GetHandler<TAggregate, TEvent>(TEvent @event)
-			where TAggregate : IAggregateRoot
+			where TAggregate : IAggregate
 			where TEvent : IAggregateEvent<TAggregate>
 		{
 			IServiceProvider provider = _container;

@@ -5,7 +5,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
 
     public sealed class AggregateEventEnvelope<TAggregate> 
         : EventEnvelope<IAggregateEvent<TAggregate>>
-        where TAggregate : IAggregateRoot
+        where TAggregate : IAggregate
     {
         public AggregateEventEnvelope(IAggregateEvent<TAggregate> aggregateEvent, IMetadata metadata)
             : base(aggregateEvent, metadata)

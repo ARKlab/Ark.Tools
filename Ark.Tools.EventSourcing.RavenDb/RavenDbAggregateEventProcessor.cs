@@ -18,7 +18,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 {
 	public abstract class RavenDbAggregateEventProcessor<TAggregate>
 	: IDisposable
-	where TAggregate : IAggregateRoot
+	where TAggregate : IAggregate
 	{
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
 

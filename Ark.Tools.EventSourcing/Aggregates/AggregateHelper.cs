@@ -5,7 +5,7 @@ using System.Reflection;
 namespace Ark.Tools.EventSourcing.Aggregates
 {
     public static class AggregateHelper<TAggregate>
-        where TAggregate : IAggregateRoot
+        where TAggregate : IAggregate
     {
         public static string Name { get; } = _getName();
 

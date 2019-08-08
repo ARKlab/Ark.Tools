@@ -20,7 +20,7 @@ namespace Ark.Tools.EventSourcing.Store
 
     public interface IAggregateEventStore<TAggregate, TEvent> : IAggregateEventStore
         where TEvent : class, IAggregateEvent<TAggregate>
-        where TAggregate : class, IAggregateRoot
+        where TAggregate : class, IAggregate
     {
         TEvent Event { get; }
     }
@@ -46,7 +46,7 @@ namespace Ark.Tools.EventSourcing.Store
         : AggregateEventStore
         , IAggregateEventStore<TAggregate, TEvent>
         where TEvent : class, IAggregateEvent<TAggregate>
-        where TAggregate : class, IAggregateRoot
+        where TAggregate : class, IAggregate
     {
         public TEvent Event { get; set; }
 
@@ -60,7 +60,7 @@ namespace Ark.Tools.EventSourcing.Store
     public static partial class Ex
     {
         public static AggregateEventStore ToStore<TAggregate>(this AggregateEventEnvelope<TAggregate> e)
-            where TAggregate : IAggregateRoot
+            where TAggregate : IAggregate
         {
             var eventType = e.Event.GetType();
             var outboxType = typeof(AggregateEventStore<,>).MakeGenericType(typeof(TAggregate), eventType);
@@ -83,7 +83,7 @@ namespace Ark.Tools.EventSourcing.Store
         }
 
         public static AggregateEventEnvelope<TAggregate> FromStore<TAggregate>(this AggregateEventStore store)
-            where TAggregate : IAggregateRoot
+            where TAggregate : IAggregate
         {
             return new AggregateEventEnvelope<TAggregate>(store.GetEvent() as IAggregateEvent<TAggregate>, new Metadata(new MetadataContainer(store.Metadata)));
             

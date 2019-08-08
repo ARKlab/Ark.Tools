@@ -3,6 +3,7 @@ using Ark.Tools.EventSourcing.Store;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Conventions;
 using Raven.Client.Documents.Operations.Revisions;
+using Raven.Client.ServerWide.Operations;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -23,16 +24,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 {
                     return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
                 }
-
-                if (typeof(AggregateState<,>).IsAssignableFromEx(type))
-                {
-                    while (!(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(AggregateState<,>)))
-                        type = type.BaseType;
-
-                    var aggregateName = AggregateHelper.AggregateName(type.GetGenericArguments()[0]);
-                    return aggregateName;
-                }
-
+                
                 return null;
             });
 
@@ -68,9 +60,27 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 },
                 Collections = new Dictionary<string, RevisionsCollectionConfiguration>
                 {
-                    {"@Outbox", new RevisionsCollectionConfiguration {Disabled = true}},                    
+                    {RavenDbEventSourcingConstants.OutboxCollectionName, new RevisionsCollectionConfiguration {Disabled = true} },
                 }
             }));
+        }
+
+        public static async Task EnsureNoRevisionForAggregateState<TAggregate>(this IDocumentStore store)
+            where TAggregate : IAggregate
+        {
+            var collection = AggregateHelper<TAggregate>.Name;
+            var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database));
+            var revision = database.Revisions;
+            if ((revision.Collections.ContainsKey(collection) && revision.Collections[collection].Disabled == true)
+                || revision.Default.Disabled)
+                return;
+
+            revision.Collections.Add(collection, new RevisionsCollectionConfiguration
+            {
+                Disabled = true
+            });
+
+            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision));
         }
     }
 }

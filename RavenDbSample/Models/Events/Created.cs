@@ -5,7 +5,7 @@ using System.Text;
 
 namespace RavenDbSample.Models
 {
-	public class Created : IAggregateEvent<MyEntityAggregate>
+	public class Created : IAggregateEvent<MyEntity>
 	{
 		public Created(string name)
 		{

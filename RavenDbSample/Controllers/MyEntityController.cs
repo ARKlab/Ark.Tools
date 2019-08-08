@@ -18,9 +18,9 @@ namespace RavenDbSample.Controllers
 	public class MyEntityController : ControllerBase
 	{
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
-		private readonly IAggregateTransactionFactory<MyEntityAggregate, MyEntityState> _transactionFactory;
+		private readonly IAggregateTransactionFactory<MyEntityAggregate, MyEntityState, MyEntity> _transactionFactory;
 
-		public MyEntityController(IAggregateTransactionFactory<MyEntityAggregate, MyEntityState> transactionFactory)
+		public MyEntityController(IAggregateTransactionFactory<MyEntityAggregate, MyEntityState, MyEntity> transactionFactory)
 		{
 			_transactionFactory = transactionFactory;
 		}
