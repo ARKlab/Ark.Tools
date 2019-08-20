@@ -77,7 +77,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
         private readonly List<DomainEventEnvelope> _uncommittedDomainEvents = new List<DomainEventEnvelope>();
         private bool _applying;
 
-        public TAggregateState State { get; protected internal set; }
+        public TAggregateState State { get; private set; }
 
         public string Name => _aggregateName;
         public string Identifier => State.Identifier;
@@ -131,10 +131,11 @@ namespace Ark.Tools.EventSourcing.Aggregates
         
         internal void SetState(TAggregateState state)
         {
-            if (_uncommittedAggregateEvents.Any() || _uncommittedDomainEvents.Any())
+            if (State != null)
                 throw new InvalidOperationException("An used aggregate cannot change state");
 
             State = state;
+            State._isRootManaged = true;
         }
 
         internal void ApplyHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history)
@@ -222,7 +223,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
 
             ValidateInvariantsOrThrow();
 
-            State.Version++;
+            ++State._version;
             _applying = false;
         }
 

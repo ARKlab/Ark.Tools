@@ -1,15 +1,34 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 
 namespace Ark.Tools.EventSourcing.Aggregates
-{
-    [DataContract]
+{    
 	public abstract class AggregateState<TAggregateState, TAggregate> : IAggregateState
         where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
         where TAggregate : IAggregate
     {
-        [DataMember]
-        public string Identifier { get; internal set; }
-        [DataMember]
-        public long Version { get; internal set; }
-	}
+        internal bool _isRootManaged = false;
+        internal string _identifier;
+        internal long _version;
+
+        public string Identifier 
+        {
+            get { return _identifier; }
+            set {
+                if (_isRootManaged)
+                    throw new InvalidOperationException($"Cannot set Identifier when AggregateState is managed by an AggregateRoot");
+                _identifier = value;
+            }
+        }
+        public long Version
+        {
+            get { return _version; }
+            set
+            {
+                if (_isRootManaged)
+                    throw new InvalidOperationException($"Cannot set Version when AggregateState is managed by an AggregateRoot");
+                _version = value;
+            }
+        }
+    }
 }
