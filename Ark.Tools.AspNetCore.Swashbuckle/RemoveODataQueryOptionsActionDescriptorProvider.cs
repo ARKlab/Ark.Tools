@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNet.OData.Query;
 using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,8 +21,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 				{
 					if (typeof(ODataQueryOptions).IsAssignableFrom(descriptor.Parameters[i].ParameterType))
 					{
-						descriptor.Parameters.RemoveAt(i);
-						--i;
+						descriptor.Parameters[i].BindingInfo.BindingSource = BindingSource.Special;
 					}
 				}
 			}

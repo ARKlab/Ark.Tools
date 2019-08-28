@@ -135,7 +135,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 //c.DocumentFilter<SetVersionInPaths>();
 
                 c.OperationFilter<DefaultResponsesOperationFilter>();
-
+				
                 c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
                 c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @""));
