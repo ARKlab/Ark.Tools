@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -116,14 +117,17 @@ namespace Ark.Tools.AspNetCore.Startup
                 });
             ;
 
-            services.AddSwaggerGen(c =>
+			services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
+
+			services.AddSwaggerGen(c =>
             {
                 c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
 
                 c.MapNodaTimeTypes();
 
-                //c.OperationFilter<RemoveVersionParameters>();
-                c.OperationFilter<SupportFlaggedEnums>();
+				//c.OperationFilter<RemoveVersionParameters>();
+				c.OperationFilter<ODataParamsOnSwagger>();
+				c.OperationFilter<SupportFlaggedEnums>();
                 c.OperationFilter<PrettifyOperationIdOperationFilter>();
 
                 c.SchemaFilter<RequiredSchemaFilter>();
@@ -144,7 +148,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.RouteTemplate = "swagger/docs/{documentName}";
             });
 
-            services.ArkConfigureSwaggerUI(c =>
+			services.ArkConfigureSwaggerUI(c =>
             {
                 c.RoutePrefix = "swagger";
 

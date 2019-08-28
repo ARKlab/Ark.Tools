@@ -17,6 +17,7 @@ using Ark.Tools.RavenDb.Auditing;
 using Raven.Client.Documents.Operations.Revisions;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using RavenDbSample.Utils;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace RavenDbSample
 {
@@ -60,7 +61,7 @@ namespace RavenDbSample
 			var store = new DocumentStore()
 			{
 				Database = "RavenDb",
-				Urls = new []
+				Urls = new[]
 				{
 					"http://127.0.0.1:8080"
 				}
@@ -68,10 +69,11 @@ namespace RavenDbSample
 
 			services.AddSingleton(store.Initialize());
 
+			//services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
 
 			services.AddSwaggerGen(c =>
 			{
-				c.OperationFilter<ODataParamsOnSwagger>();
+				//c.OperationFilter<ODataParamsOnSwagger>();
 				c.OperationFilter<ResponseFormatFilter>();
 				c.SchemaFilter<SwaggerExcludeFilter>();
 			});
@@ -103,7 +105,7 @@ namespace RavenDbSample
 		protected override void _mvcRoute(IRouteBuilder routeBuilder)
 		{
 			base._mvcRoute(routeBuilder);
-						
+
 			routeBuilder.Filter().OrderBy().MaxTop(1000);
 			routeBuilder.EnableDependencyInjection();
 		}

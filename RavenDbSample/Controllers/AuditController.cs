@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Ark.Tools.RavenDb.Auditing;
 using Ark.Tools.AspNetCore.RavenDb;
+using Ark.Tools.AspNetCore.Swashbuckle;
 
 namespace RavenDbSample.Controllers
 {
@@ -22,6 +23,7 @@ namespace RavenDbSample.Controllers
 		}
 
 		[HttpGet]
+		[SwaggerAddODataParams]
 		[Produces("application/json")]
 		[ProducesResponseType(typeof(IEnumerable<Audit>), StatusCodes.Status200OK)]
 		public async Task<IActionResult> Get(ODataQueryOptions<Audit> options)

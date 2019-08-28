@@ -9,6 +9,7 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <SpecFlow_EnableWarnForFeatureCodeBehindFilesWithoutCorrespondingFeatureFile>false</SpecFlow_EnableWarnForFeatureCodeBehindFilesWithoutCorrespondingFeatureFile>
   </PropertyGroup>
 
   <PropertyGroup>

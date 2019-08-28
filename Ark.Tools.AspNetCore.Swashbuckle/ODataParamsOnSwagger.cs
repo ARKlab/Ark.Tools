@@ -1,12 +1,16 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Microsoft.AspNet.OData.Query;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Linq;
+using System;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+	public sealed class SwaggerAddODataParamsAttribute : Attribute
+	{
+	}
+
 	public class ODataParamsOnSwagger : IOperationFilter
 	{
 		public void Apply(Operation operation, OperationFilterContext context)
@@ -14,14 +18,11 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 			if (operation.Parameters == null)
 				return;
 
-			var oDataQueryOptionParameter = context.ApiDescription.ParameterDescriptions.FirstOrDefault(x => typeof(ODataQueryOptions).IsAssignableFrom(x.Type));
-			
-			if (oDataQueryOptionParameter != null)
-			{
-				var optionParameter = operation.Parameters.Where(w => w.Name == oDataQueryOptionParameter.Name).SingleOrDefault();
+			var hasAttribute = context.MethodInfo.GetCustomAttributes(typeof(SwaggerAddODataParamsAttribute), true).Length > 0;
 
-				if (optionParameter != null)
-						operation.Parameters.Remove(optionParameter);
+			if (hasAttribute)
+			{
+				hasAttribute = false;
 
 				operation.Parameters.Add(new NonBodyParameter
 				{
