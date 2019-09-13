@@ -6,6 +6,7 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <LangVersion>latest</LangVersion>
+    <SpecFlow_EnableWarnForFeatureCodeBehindFilesWithoutCorrespondingFeatureFile>false</SpecFlow_EnableWarnForFeatureCodeBehindFilesWithoutCorrespondingFeatureFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
