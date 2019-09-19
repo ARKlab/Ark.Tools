@@ -244,16 +244,14 @@ namespace Ark.Tools.AspNetCore.Startup
 		public void Apply(ActionModel action)
 		{
 			var model = action.Selectors.OfType<SelectorModel>().SingleOrDefault();
-			var mm = model?.EndpointMetadata.OfType<HttpMethodMetadata>().SingleOrDefault();			
-
-			if (mm != null 
-				&& _consumeMethods.Intersect(mm.HttpMethods).Any() 
+			var mm = model?.EndpointMetadata.OfType<HttpMethodMetadata>().SingleOrDefault();
+			if (mm != null
+				&& _consumeMethods.Intersect(mm.HttpMethods).Any()
 				&& action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any()))
 			{
 				action.Filters.Add(new ConsumesAttribute("application/json"));
 			}
-
-			if (!_isODataController(action))
+			if (!_isODataController(action) && !action.Filters.OfType<ProducesAttribute>().Any())
 				action.Filters.Add(new ProducesAttribute("application/json"));
 		}
 
