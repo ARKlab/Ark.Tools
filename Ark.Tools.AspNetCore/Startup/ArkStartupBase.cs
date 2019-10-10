@@ -43,7 +43,6 @@ namespace Ark.Tools.AspNetCore.Startup
                     o.RequestCollectionOptions.TrackExceptions = true;
                     o.DeveloperMode = Debugger.IsAttached;
                     o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
-                    o.RequestCollectionOptions.EnableW3CDistributedTracing = true;
                     o.RequestCollectionOptions.InjectResponseHeaders = true;
                     o.RequestCollectionOptions.TrackExceptions = true;
                 });
