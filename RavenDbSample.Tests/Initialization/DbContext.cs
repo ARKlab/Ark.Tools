@@ -1,25 +1,13 @@
 ﻿using Ark.Tools.RavenDb;
 using NLog;
 using TechTalk.SpecFlow;
-using Dapper;
-using System.Data.SqlClient;
-using System.Linq;
-
 using System.Diagnostics;
-using System;
-using Raven.Client;
 using Raven.Client.Documents;
-using Raven.Client.Documents.Indexes;
-using Raven.Client.Documents.Operations;
-using Raven.Client.Documents.Operations.Indexes;
-using Raven.Client.Documents.Smuggler;
-using Raven.Client.Exceptions.Cluster;
-using Raven.Client.Exceptions.Database;
-using Raven.Client.ServerWide;
-using Raven.Client.ServerWide.Operations;
-using Raven.Client.Util;
 using Raven.Embedded;
-using System.Threading;
+using Raven.Client.ServerWide.Operations;
+using System.Linq;
+using Raven.Client.Documents.Operations.Revisions;
+using System;
 
 namespace RavenDBSample.Tests
 {
@@ -29,28 +17,69 @@ namespace RavenDBSample.Tests
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
 
 		private static IDocumentStore _documentStore;
-		const string DatabaseConnectionString = "http://127.0.0.1:8080";
+		public static string DatabaseConnectionString { get; private set; } = "http://127.0.0.1:0";
+		//const string DatabaseConnectionString = "http://127.0.0.1:8080";
 		private const string _databaseName = "RavenDb";
 
 
-		[BeforeTestRun(Order = 0)]
+		[BeforeTestRun(Order = int.MinValue)]
 		public static void TestEnvironmentInitialization()
 		{
+			Environment.SetEnvironmentVariable("CODE_COVERAGE_SESSION_NAME", null);
 			EmbeddedServer.Instance.StartServer(new ServerOptions
 			{
+				//FrameworkVersion = "2.2.5",
 				ServerUrl = DatabaseConnectionString,
 			});
 
-			_documentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(_databaseName));
+			DatabaseConnectionString = EmbeddedServer.Instance.GetServerUriAsync().GetAwaiter().GetResult().ToString();
+			var store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(_databaseName));
 
-			_documentStore.DeleteDatabaseWithName(_databaseName);
+			store.Maintenance.Server.Send(new DeleteDatabasesOperation(store.Database, hardDelete: true));
+
+			string[] databaseNames;
+			do
+			{
+				var operation = new GetDatabaseNamesOperation(0, 25);
+				databaseNames = store.Maintenance.Server.Send(operation);
+			} while (databaseNames.Contains(store.Database));
+
+			store.EnsureDatabaseExists(_databaseName, configureRecord: r =>
+			{
+				r.Revisions = new RevisionsConfiguration()
+				{
+					Default = new RevisionsCollectionConfiguration
+					{
+						Disabled = false,
+						PurgeOnDelete = false,
+						MinimumRevisionsToKeep = null,
+						MinimumRevisionAgeToKeep = null,
+					},
+					Collections = new System.Collections.Generic.Dictionary<string, RevisionsCollectionConfiguration>
+					{
+						{ "@Outbox", new RevisionsCollectionConfiguration { Disabled = true }}
+					}
+				};
+			});
+
+			_documentStore = store;
+
+
+			//EmbeddedServer.Instance.StartServer(new ServerOptions
+			//{
+			//	ServerUrl = DatabaseConnectionString,
+			//});
+
+			//_documentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(_databaseName));
+
+			//_documentStore.DeleteDatabaseWithName(_databaseName);
 		}
 
-		[BeforeScenario]
-		public void ResetDatabaseOnEachScenario(FeatureContext fctx)
-		{
-			_documentStore.DeleteDatabaseWithName(_databaseName);
-		}
+		//[BeforeScenario]
+		//public void ResetDatabaseOnEachScenario(FeatureContext fctx)
+		//{
+		//	_documentStore.DeleteDatabaseWithName(_databaseName);
+		//}
 
 		[BeforeScenario]
 		public void ResetDatabaseOnEachScenarioCollection(FeatureContext fctx)

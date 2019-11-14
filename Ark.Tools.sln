@@ -138,6 +138,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EventSourcing.Reb
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.EventSourcing", "Ark.Tools.EventSourcing\Ark.Tools.EventSourcing.csproj", "{8B69A37C-E72E-47EF-9870-BEAC4A14417B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestProject", "TestProject\TestProject.csproj", "{CCF69014-6938-44E4-A600-FAE21599D5F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -380,6 +382,10 @@ Global
 		{8B69A37C-E72E-47EF-9870-BEAC4A14417B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B69A37C-E72E-47EF-9870-BEAC4A14417B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B69A37C-E72E-47EF-9870-BEAC4A14417B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCF69014-6938-44E4-A600-FAE21599D5F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCF69014-6938-44E4-A600-FAE21599D5F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCF69014-6938-44E4-A600-FAE21599D5F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCF69014-6938-44E4-A600-FAE21599D5F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -391,6 +397,7 @@ Global
 		{995A6412-9CC7-4136-9994-3804E350B3DF} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{469CB128-17A2-4553-BD0D-0EB30C52E4BA} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{E5D6732D-33C1-4553-AD7E-AF840701CF7B} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
+		{CCF69014-6938-44E4-A600-FAE21599D5F3} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F88F06AE-6856-423B-9179-28732B57F828}
