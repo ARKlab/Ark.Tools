@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Activity\Ark.Tools.Activity.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.ApplicationInsights\Ark.Tools.ResourceWatcher.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost.Hosting\Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost.Sql\Ark.Tools.ResourceWatcher.WorkerHost.Sql.csproj" />

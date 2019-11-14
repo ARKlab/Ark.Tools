@@ -11,8 +11,8 @@ using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.ApplicationInsights;
 using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Ark.Tools.Activity.Provider;
+using TestWorker.Constants;
 
 namespace TestWorker.Host
 {
@@ -33,11 +33,18 @@ namespace TestWorker.Host
                             StateDbConnectionString = "" //config.GetConnectionString("boh")
                         };
 
-                        configurationOverrider?.Invoke(baseCfg1);
+
+						var rebusCfg = new RebusResourceNotifier_Config()
+						{
+							AsbConnectionString = Test_Constants.RebusConnString
+						};
+
+						configurationOverrider?.Invoke(baseCfg1);
 
                         return new Host(baseCfg1)
-                            .WithTestWriter();
-                    })
+                            .WithTestWriter()
+						    .WithNotifier(rebusCfg);
+					})
                     .UseConsoleLifetime();
 
                 return hostBuilder;
@@ -76,7 +83,21 @@ namespace TestWorker.Host
                 return this;
             }
 
-        }
+
+			public Host WithNotifier(IRebusResourceNotifier_Config rebusCfg)
+			{
+				this.AppendFileProcessor<TestWriter_Notifier>(deps =>
+				{
+					deps.Container.RegisterInstance(rebusCfg);
+					deps.Container.RegisterSingleton<RebusResourceNotifier>();
+				});
+
+				//_logger.Info("Rebus notifier added to host");
+
+				return this;
+			}
+
+		}
         #endregion
     }
 
