@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
 using System.Linq;
@@ -27,7 +28,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
                 .UseStartup<TStartup>()
                 .Build();
 
-            var lifetime = app.ApplicationServices.GetRequiredService<IApplicationLifetime>();            
+            var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();            
             var r2 = lifetime.ApplicationStopping.Register(() => webHost.StopAsync().GetAwaiter().GetResult());
 
             Func<HttpContext, Task> branchDelegate = async ctx =>

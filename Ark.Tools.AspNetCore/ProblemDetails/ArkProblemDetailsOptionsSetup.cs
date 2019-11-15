@@ -8,6 +8,7 @@ using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Hosting;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -15,13 +16,13 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         : IConfigureOptions<ProblemDetailsOptions>
         , IPostConfigureOptions<ProblemDetailsOptions>
     {
-        public ArkProblemDetailsOptionsSetup(IHostingEnvironment environment, IProblemDetailsLinkGenerator linkGenerator)
+        public ArkProblemDetailsOptionsSetup(IWebHostEnvironment environment, IProblemDetailsLinkGenerator linkGenerator)
         {
             Environment = environment;
             LinkGenerator = linkGenerator;
         }
 
-        private IHostingEnvironment Environment { get; }
+        private IWebHostEnvironment Environment { get; }
         private IProblemDetailsLinkGenerator LinkGenerator { get; }
 
         public void Configure(ProblemDetailsOptions options)

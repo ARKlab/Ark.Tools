@@ -257,44 +257,45 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.RefreshAsync(entity, token);
 		}
 
+
 		public void SetTransactionMode(TransactionMode mode)
 		{
 			_inner.SetTransactionMode(mode);
 		}
 
-		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, CancellationToken token = default)
+		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, CancellationToken token = default)
 		{
 			return _inner.StreamAsync(query, token);
 		}
 
-		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, CancellationToken token = default)
+		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+		{
+			return _inner.StreamAsync(query, out streamQueryStats, token);
+		}
+
+		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, CancellationToken token = default)
 		{
 			return _inner.StreamAsync(query, token);
 		}
 
-		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, CancellationToken token = default)
+		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+		{
+			return _inner.StreamAsync(query, out streamQueryStats, token);
+		}
+
+		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, CancellationToken token = default)
 		{
 			return _inner.StreamAsync(query, token);
 		}
 
-		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null, CancellationToken token = default)
+		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+		{
+			return _inner.StreamAsync(query, out streamQueryStats, token);
+		}
+
+		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null, CancellationToken token = default)
 		{
 			return _inner.StreamAsync<T>(startsWith, matches, start, pageSize, startAfter, token);
-		}
-
-		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, out streamQueryStats, token);
-		}
-
-		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, out streamQueryStats, token);
-		}
-
-		public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, out streamQueryStats, token);
 		}
 
 		public Task StreamIntoAsync<T>(IAsyncDocumentQuery<T> query, Stream output, CancellationToken token = default)
@@ -322,5 +323,4 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.WhatChanged();
 		}
 	}
-
 }

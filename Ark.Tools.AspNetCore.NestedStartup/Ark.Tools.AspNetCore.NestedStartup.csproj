@@ -5,6 +5,8 @@
   <!-- ===================Configuration for Nuget Package========================= -->
   <PropertyGroup>
 
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
+    
     <Description>Extensions of AspNetCore for supporting nested Startups, with separate Services</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mvc;AspNetCore</PackageTags>
 
@@ -19,9 +21,7 @@
   <!-- =============================================================================== -->
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  
 </Project>

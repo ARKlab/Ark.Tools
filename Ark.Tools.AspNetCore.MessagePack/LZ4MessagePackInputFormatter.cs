@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
 using MessagePack;
-using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
@@ -41,8 +41,8 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
             var request = context.HttpContext.Request;
 
             if (!request.Body.CanSeek)
-            {
-                BufferingHelper.EnableRewind(request);
+            {                
+				request.EnableBuffering();
 
                 await request.Body.DrainAsync(CancellationToken.None);
                 request.Body.Seek(0L, SeekOrigin.Begin);

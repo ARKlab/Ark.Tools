@@ -4,6 +4,8 @@
 
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
     
     <Description>Extensions of Swashbuckle.AspNetCore</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Swashbuckle;Swagger</PackageTags>
@@ -20,10 +22,13 @@
   <!--===============================================================================-->
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+      
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="7.2.2" />
     <PackageReference Include="NodaTime" Version="2.4.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
   </ItemGroup>
 
 </Project>

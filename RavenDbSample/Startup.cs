@@ -122,7 +122,7 @@ namespace RavenDbSample
 				.WithContainer(Container)
 				.WithRavenDbAudit();
 
-			var env = app.ApplicationServices.GetService<IHostingEnvironment>();
+			var env = app.ApplicationServices.GetService<IWebHostEnvironment>();
 		}
 	}
 }

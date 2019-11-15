@@ -63,8 +63,16 @@ namespace Ark.Tools.AspNetCore.Startup
                 .AddApiExplorer()
                 .AddFormatterMappings()
                 .AddDataAnnotations()
-                .AddJsonFormatters()
-            ;
+				.AddNewtonsoftJson(s =>
+				{
+					s.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
+					s.SerializerSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+					s.SerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+					s.SerializerSettings.ConfigureForNodaTimeRanges();
+					s.SerializerSettings.Converters.Add(new StringEnumConverter());
+					//s.SerializerSettings.ContractResolver = new DefaultContractResolver();
+				});
+			;
 
             services.AddApiVersioning(o =>
             {
@@ -84,7 +92,7 @@ namespace Ark.Tools.AspNetCore.Startup
                     //Conventions
                     o.Conventions.Add(new ProblemDetailsResultApiConvention());
                 })
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .AddMvcOptions(opt =>
                 {
                     opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
@@ -106,15 +114,15 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.ReturnHttpNotAcceptable = true;
                     opt.RespectBrowserAcceptHeader = true;
                 })
-                .AddJsonOptions(s =>
-                {
-                    s.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
-                    s.SerializerSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                    s.SerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-                    s.SerializerSettings.ConfigureForNodaTimeRanges();
-                    s.SerializerSettings.Converters.Add(new StringEnumConverter());
-                    //s.SerializerSettings.ContractResolver = new DefaultContractResolver();
-                });
+                //.AddJsonOptions(s =>
+                //{
+                //    s.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
+                //    s.SerializerSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
+                //    s.SerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+                //    s.SerializerSettings.ConfigureForNodaTimeRanges();
+                //    s.SerializerSettings.Converters.Add(new StringEnumConverter());
+                //    //s.SerializerSettings.ContractResolver = new DefaultContractResolver();
+                //});
             ;
 
 			services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();

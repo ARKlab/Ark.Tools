@@ -4,6 +4,8 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
+    <TargetFrameworks>net461;netstandard2.0;</TargetFrameworks>
+    
     <Description>Extensions and helpers of Ark.Tools.Sql for Oracle</Description>
     <PackageTags>Ark;C#;.NET;Framework;Sql;Oracle</PackageTags>
 
@@ -29,4 +31,5 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.31" />
   </ItemGroup>
+
 </Project>

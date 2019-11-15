@@ -62,7 +62,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
         public virtual void Configure(IApplicationBuilder app)
         {
-            var env = app.ApplicationServices.GetRequiredService<IHostingEnvironment>();
+            var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
 
             app.Use(async (context, next) =>
             {

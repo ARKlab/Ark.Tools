@@ -5,6 +5,8 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
+    
     <Description>Extensions of AspNetCore for supporting MessagePack formatting</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;MessagePack;MsgPack</PackageTags>
 
@@ -18,9 +20,12 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  
   <ItemGroup>    
-    <PackageReference Include="MessagePack" Version="1.7.3.7" />    
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
+    <PackageReference Include="MessagePack" Version="1.8.74" />
   </ItemGroup>
 
   <ItemGroup>

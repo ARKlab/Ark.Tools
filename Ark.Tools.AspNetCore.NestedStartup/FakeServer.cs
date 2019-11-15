@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using System.Threading;
 using System.Threading.Tasks;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
+//using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace Ark.Tools.AspNetCore.NestedStartup
 {
     public sealed class FakeServer : IServer
     {
-        private IHttpApplication<Context> _application;
+        private IHttpApplication<HttpContextAccessor> _application;
 
         public FakeServer(IFeatureCollection featureCollection)
         {
@@ -22,7 +22,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
 
         public Task StartAsync<TContext>(IHttpApplication<TContext> application, CancellationToken cancellationToken)
         {
-            _application = (IHttpApplication<Context>)application;
+            _application = (IHttpApplication<HttpContextAccessor>)application;
             return Task.CompletedTask;
         }
 
@@ -34,7 +34,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
 
         public async Task Process(HttpContext ctx)
         {
-            var c = new Context();
+            var c = new HttpContextAccessor();
 
             c.HttpContext = ctx;
 

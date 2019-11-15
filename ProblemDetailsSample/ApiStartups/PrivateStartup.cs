@@ -13,6 +13,7 @@ using Ark.Tools.AspNetCore.Startup;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using ProblemDetailsSample.Application.Handlers.Host;
 using ProblemDetailsSample.Application.Handlers;
+using Microsoft.Extensions.Hosting;
 
 namespace ProblemDetailsSample
 {
@@ -65,7 +66,7 @@ namespace ProblemDetailsSample
             var apiHost = new ApiHost(cfg)
                 .WithContainer(Container);
 
-            var lifetime = app.ApplicationServices.GetRequiredService<IApplicationLifetime>();
+            var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
 
             lifetime.ApplicationStopped.Register(() => Container.Dispose());
         }

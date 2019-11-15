@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -20,6 +20,10 @@
     <Compile Remove="Migrations\20190502151447_Init.Designer.cs" />
     <Compile Remove="Migrations\20190502152235_Init2.cs" />
     <Compile Remove="Migrations\20190502152235_Init2.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
