@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using WebApplicationDemo.Application.Host;
 
@@ -25,8 +26,8 @@ namespace WebApplicationDemo
 
 		public override IEnumerable<ApiVersion> Versions => new[] { new ApiVersion(1, 0) };
 
-		public override Info MakeInfo(ApiVersion version)
-			=> new Info
+		public override OpenApiInfo MakeInfo(ApiVersion version)
+			=> new OpenApiInfo
 			{
 				Title = "API",
 				Version = version.ToString("VVVV"),

@@ -24,6 +24,7 @@ using Ark.Tools.AspNetCore;
 using AutoMapper;
 using AutoMapper.EquivalencyExpression;
 using AutoMapper.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 namespace ODataEntityFrameworkSample
 {
@@ -37,9 +38,9 @@ namespace ODataEntityFrameworkSample
 
         public override IEnumerable<ApiVersion> Versions => new[] { new ApiVersion(1,0) };
 
-        public override Info MakeInfo(ApiVersion version)
-            => new Info
-            {
+        public override OpenApiInfo MakeInfo(ApiVersion version)
+            => new OpenApiInfo
+			{
                 Title = "API",
                 Version = version.ToString("VVVV"),
             };

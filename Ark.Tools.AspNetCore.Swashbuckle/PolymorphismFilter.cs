@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
@@ -8,60 +9,66 @@ using System.Linq;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-    public class PolymorphismSchemaFilter<T> : ISchemaFilter
-    {
-        private readonly HashSet<Type> _derivedTypes;
+	public class PolymorphismSchemaFilter<T> : ISchemaFilter
+	{
+		private readonly HashSet<Type> _derivedTypes;
 
-        public PolymorphismSchemaFilter(HashSet<Type> derivedTypes)
-        {
-            _derivedTypes = derivedTypes;
-        }
-        
-        public void Apply(Schema model, SchemaFilterContext context)
-        {
-            if (!_derivedTypes.Contains(context.SystemType)) return;
-            
-            var parentSchemaRef = context.SchemaRegistry.GetOrRegister(typeof(T));
-            var parentSchema = context.SchemaRegistry.Definitions[parentSchemaRef.Ref.Split('/').Last()];
+		public PolymorphismSchemaFilter(HashSet<Type> derivedTypes)
+		{
+			_derivedTypes = derivedTypes;
+		}
 
-            foreach (var p in parentSchema.Properties.Keys)
-                model.Properties.Remove(p);
+		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+		{
+			if (!_derivedTypes.Contains(context.GetType())) return;
 
-            model.AllOf = new List<Schema> { parentSchemaRef };            
-        }
-    }
+			var parentSchemaRef = context.SchemaGenerator.GenerateSchema(typeof(T), context.SchemaRepository);
+			var parentSchema = context.SchemaRepository.Schemas[parentSchemaRef.Reference.Id.Split('/').Last()];
 
-    public class PolymorphismDocumentFilter<T> : IDocumentFilter
-    {
-        private readonly string _discriminatorName;
-        private readonly HashSet<Type> _derivedTypes;
+			foreach (var p in parentSchema.Properties.Keys)
+				schema.Properties.Remove(p);
 
-        public PolymorphismDocumentFilter(string fieldDiscriminatorName, HashSet<Type> derivedTypes)
-        {
-            _discriminatorName = fieldDiscriminatorName ?? "discriminator";
-            _derivedTypes = derivedTypes 
-                ?? new HashSet<Type>(typeof(T).Assembly
-                .GetTypes()
-                .Where(x => typeof(T) != x && typeof(T).IsAssignableFrom(x)));
-        }
+			schema.AllOf = new List<OpenApiSchema> { parentSchemaRef };
+		}
+	}
 
-        public void Apply(SwaggerDocument swaggerDoc, DocumentFilterContext context)
-        {
-            var parentSchema = context.SchemaRegistry.GetOrRegister(typeof(T));
-            if (parentSchema.Ref != null)
-                parentSchema = context.SchemaRegistry.Definitions[parentSchema.Ref.Split('/').Last()];
+	public class PolymorphismDocumentFilter<T> : IDocumentFilter
+	{
+		private readonly string _discriminatorName;
+		private readonly HashSet<Type> _derivedTypes;
 
-            //set up a discriminator property (it must be required)
-            parentSchema.Discriminator = _discriminatorName;
-            parentSchema.Required = parentSchema.Required ?? new List<string>();
-            if (!parentSchema.Required.Contains(_discriminatorName))
-                parentSchema.Required.Add(_discriminatorName);
+		public PolymorphismDocumentFilter(string fieldDiscriminatorName, HashSet<Type> derivedTypes)
+		{
+			_discriminatorName = fieldDiscriminatorName ?? "discriminator";
+			_derivedTypes = derivedTypes
+				?? new HashSet<Type>(typeof(T).Assembly
+				.GetTypes()
+				.Where(x => typeof(T) != x && typeof(T).IsAssignableFrom(x)));
+		}
 
-            if (!parentSchema.Properties.ContainsKey(_discriminatorName))
-                parentSchema.Properties.Add(_discriminatorName, new Schema { Type = "string" });
-            
-            foreach (var item in _derivedTypes)
-                context.SchemaRegistry.GetOrRegister(item);
-        }
-    }    
+		public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
+		{
+			{
+				var parentSchema = context.SchemaGenerator.GenerateSchema(typeof(T), context.SchemaRepository);
+				if (parentSchema.Reference != null)
+					parentSchema = context.SchemaRepository.Schemas[parentSchema.Reference.Id.Split('/').Last()];
+
+				//set up a discriminator property (it must be required)
+				parentSchema.Discriminator = new OpenApiDiscriminator
+				{
+					PropertyName = _discriminatorName
+				};
+
+				parentSchema.Required = parentSchema.Required ?? new HashSet<string>();
+				if (!parentSchema.Required.Contains(_discriminatorName))
+					parentSchema.Required.Add(_discriminatorName);
+
+				if (!parentSchema.Properties.ContainsKey(_discriminatorName))
+					parentSchema.Properties.Add(_discriminatorName, new OpenApiSchema { Type = "string" });
+
+				foreach (var item in _derivedTypes)
+					context.SchemaGenerator.GenerateSchema(item, context.SchemaRepository);
+			}
+		}
+	}
 }

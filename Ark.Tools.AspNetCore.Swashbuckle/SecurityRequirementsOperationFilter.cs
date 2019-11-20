@@ -3,19 +3,21 @@
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Collections.Generic;
 using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.OpenApi.Models;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
     public class SecurityRequirementsOperationFilter : IOperationFilter
     {
-        public void Apply(Operation operation, OperationFilterContext context)
-        {
-            operation.Security = new List<IDictionary<string, IEnumerable<string>>>();
-            operation.Security.Add(
-                new Dictionary<string, IEnumerable<string>>
-                {
-                    { "oauth2", new [] { "openid profile" } }
-                });
-        }
-    }
+		public void Apply(OpenApiOperation operation, OperationFilterContext context)
+		{
+			operation.Security = new List<OpenApiSecurityRequirement>();
+
+			var dict = new OpenApiSecurityRequirement();
+			var openApiSecurityScheme = new OpenApiSecurityScheme() { Type = SecuritySchemeType.OAuth2 };
+			dict.Add(openApiSecurityScheme, new[] { "openid profile" });
+
+			operation.Security.Add(dict);
+		}
+	}
 }

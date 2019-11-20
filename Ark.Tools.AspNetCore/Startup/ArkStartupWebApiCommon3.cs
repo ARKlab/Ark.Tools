@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using NodaTime;
@@ -113,56 +114,56 @@ namespace Ark.Tools.AspNetCore.Startup
 				})
 			;
 
-			//	services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
+			services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
 
-			//services.AddSwaggerGen(c =>
-			//{
-			//	//c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
+			services.AddSwaggerGen(c =>
+			{
+				//c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
 
-			//	//c.MapNodaTimeTypes();
+				//c.MapNodaTimeTypes();
 
-			//	//c.OperationFilter<RemoveVersionParameters>();
-			//	//c.OperationFilter<ODataParamsOnSwagger>();
-			//	//c.OperationFilter<SupportFlaggedEnums>();
-			//	//c.OperationFilter<PrettifyOperationIdOperationFilter>();
+				//c.OperationFilter<RemoveVersionParameters>();
+				//c.OperationFilter<ODataParamsOnSwagger>();
+				//c.OperationFilter<SupportFlaggedEnums>();
+				//c.OperationFilter<PrettifyOperationIdOperationFilter>();
 
-			//	//c.SchemaFilter<RequiredSchemaFilter>();
+				//c.SchemaFilter<RequiredSchemaFilter>();
 
-			//	//c.DocumentFilter<SetVersionInPaths>();
+				//c.DocumentFilter<SetVersionInPaths>();
 
-			//	//c.OperationFilter<DefaultResponsesOperationFilter>();
+				//c.OperationFilter<DefaultResponsesOperationFilter>();
 
-			//	//c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
+				//c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
-			//	//c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @""));
-			//});
+				//c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @""));
+			});
 
-			//services.ArkConfigureSwaggerVersions(Versions, MakeInfo);
+			services.ArkConfigureSwaggerVersions(Versions, MakeInfo);
 
-			//services.ArkConfigureSwagger(c =>
-			//{
-			//	c.RouteTemplate = "swagger/docs/{documentName}";
-			//});
+			services.ArkConfigureSwagger(c =>
+			{
+				c.RouteTemplate = "swagger/docs/{documentName}";
+			});
 
-			//services.ArkConfigureSwaggerUI(c =>
-			//{
-			//	c.RoutePrefix = "swagger";
+			services.ArkConfigureSwaggerUI(c =>
+			{
+				c.RoutePrefix = "swagger";
 
-			//	c.DefaultModelExpandDepth(2);
-			//	c.DefaultModelRendering(ModelRendering.Model);
-			//	c.DisplayRequestDuration();
-			//	c.DocExpansion(DocExpansion.None);
-			//	c.EnableDeepLinking();
-			//	c.EnableFilter();
-			//	c.MaxDisplayedTags(5);
-			//	c.ShowExtensions();
-			//	c.EnableValidator();
-			//});
+				c.DefaultModelExpandDepth(2);
+				c.DefaultModelRendering(ModelRendering.Model);
+				c.DisplayRequestDuration();
+				c.DocExpansion(DocExpansion.None);
+				c.EnableDeepLinking();
+				c.EnableFilter();
+				c.MaxDisplayedTags(5);
+				c.ShowExtensions();
+				c.EnableValidator();
+			});
 
 			//	Api Behaviour override for disabling automatic Problem details
-			//	services.ConfigureOptions<ApiBehaviourOptionsSetup>();
+			services.ConfigureOptions<ApiBehaviourOptionsSetup>();
 
-			//services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
+			services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
 			_integrateSimpleInjectorContainer(services);
 
 			services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>());
@@ -182,7 +183,7 @@ namespace Ark.Tools.AspNetCore.Startup
 		}
 
 		public abstract IEnumerable<ApiVersion> Versions { get; }
-		public abstract Info MakeInfo(ApiVersion version);
+		public abstract OpenApiInfo MakeInfo(ApiVersion version);
 
 		public virtual void Configure(IApplicationBuilder app)
 		{
@@ -196,8 +197,8 @@ namespace Ark.Tools.AspNetCore.Startup
 
 			//app.UseArkProblemDetails();
 
-			//app.UseSwagger();
-			//app.UseSwaggerUI();
+			app.UseSwagger();
+			app.UseSwaggerUI();
 
 			app.UseRouting();
 			app.UseCors();

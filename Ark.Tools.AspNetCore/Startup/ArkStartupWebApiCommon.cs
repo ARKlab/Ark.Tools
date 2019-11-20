@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using NodaTime;
@@ -194,7 +195,7 @@ namespace Ark.Tools.AspNetCore.Startup
         }
 
         public abstract IEnumerable<ApiVersion> Versions { get; }
-        public abstract Info MakeInfo(ApiVersion version);
+        public abstract OpenApiInfo MakeInfo(ApiVersion version);
 
         public virtual void Configure(IApplicationBuilder app)
         {

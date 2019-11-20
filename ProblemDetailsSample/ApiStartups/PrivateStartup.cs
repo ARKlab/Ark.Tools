@@ -14,6 +14,7 @@ using Swashbuckle.AspNetCore.SwaggerUI;
 using ProblemDetailsSample.Application.Handlers.Host;
 using ProblemDetailsSample.Application.Handlers;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 
 namespace ProblemDetailsSample
 {
@@ -25,8 +26,8 @@ namespace ProblemDetailsSample
         }
 
         public override IEnumerable<ApiVersion> Versions => ProblemDetailsSampleConstants.PrivateVersions.Reverse().Select(x => ApiVersion.Parse(x));
-        public override Info MakeInfo(ApiVersion version)
-            => new Info { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV") };
+        public override OpenApiInfo MakeInfo(ApiVersion version)
+            => new OpenApiInfo { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV") };
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public override void ConfigureServices(IServiceCollection services)
