@@ -1,7 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
@@ -20,7 +19,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
 		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
 		{
-			if (!_derivedTypes.Contains(context.GetType())) return;
+			if (!_derivedTypes.Contains(context.ApiModel.Type))
+				return;
 
 			var parentSchemaRef = context.SchemaGenerator.GenerateSchema(typeof(T), context.SchemaRepository);
 			var parentSchema = context.SchemaRepository.Schemas[parentSchemaRef.Reference.Id.Split('/').Last()];
@@ -48,27 +48,44 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
 		public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
 		{
+			var parentSchema = context.SchemaGenerator.GenerateSchema(typeof(T), context.SchemaRepository);
+			if (parentSchema.Reference != null)
+				parentSchema = context.SchemaRepository.Schemas[parentSchema.Reference.Id.Split('/').Last()];
+
+			//set up a discriminator property (it must be required)
+			parentSchema.Discriminator = new OpenApiDiscriminator
 			{
-				var parentSchema = context.SchemaGenerator.GenerateSchema(typeof(T), context.SchemaRepository);
-				if (parentSchema.Reference != null)
-					parentSchema = context.SchemaRepository.Schemas[parentSchema.Reference.Id.Split('/').Last()];
+				PropertyName = _discriminatorName
+			};
 
-				//set up a discriminator property (it must be required)
-				parentSchema.Discriminator = new OpenApiDiscriminator
-				{
-					PropertyName = _discriminatorName
-				};
+			parentSchema.Required = parentSchema.Required ?? new HashSet<string>();
+			if (!parentSchema.Required.Contains(_discriminatorName))
+				parentSchema.Required.Add(_discriminatorName);
 
-				parentSchema.Required = parentSchema.Required ?? new HashSet<string>();
-				if (!parentSchema.Required.Contains(_discriminatorName))
-					parentSchema.Required.Add(_discriminatorName);
+			if (!parentSchema.Properties.ContainsKey(_discriminatorName))
+				parentSchema.Properties.Add(_discriminatorName, new OpenApiSchema { Type = "string" });
 
-				if (!parentSchema.Properties.ContainsKey(_discriminatorName))
-					parentSchema.Properties.Add(_discriminatorName, new OpenApiSchema { Type = "string" });
+			foreach (var item in _derivedTypes)
+				context.SchemaGenerator.GenerateSchema(item, context.SchemaRepository);
 
-				foreach (var item in _derivedTypes)
-					context.SchemaGenerator.GenerateSchema(item, context.SchemaRepository);
-			}
+		}
+	}
+
+	public class TestFilter : IDocumentFilter
+	{
+		private readonly string _param1;
+		private readonly int _param2;
+
+		public TestFilter(string param1, int param2)
+		{
+			_param1 = param1;
+			_param2 = param2;
+		}
+
+		public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
+		{
+
+
 		}
 	}
 }

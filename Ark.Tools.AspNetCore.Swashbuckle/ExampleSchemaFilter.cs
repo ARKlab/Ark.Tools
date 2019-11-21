@@ -2,12 +2,13 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System;
+using System.ComponentModel;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-    public class ExampleSchemaFilter<T> : ISchemaFilter
+	public class ExampleSchemaFilter<T> : ISchemaFilter
     {
         public ExampleSchemaFilter(T example)
         {
@@ -18,9 +19,12 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
 		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
 		{
-			if (context.GetType() == typeof(T))
+			if (context.ApiModel.Type == typeof(T))
 			{
-				schema.Example = (IOpenApiAny) Example;
+				var b = OpenApiAnyFactory.TryCreateFor(schema, Example, out IOpenApiAny openApiAny);
+
+				if(b)
+					schema.Example = openApiAny;
 			}
 		}
 	}

@@ -55,6 +55,9 @@ namespace Ark.Tools.AspNetCore.Startup
 			services.AddLocalization();
 			services.AddRouting();
 
+			//ProblemDetails
+			services.AddArkProblemDetails();
+
 			// Add minumum framework services.
 			services.AddMvcCore()
 				.AddAuthorization()
@@ -86,10 +89,10 @@ namespace Ark.Tools.AspNetCore.Startup
 			});
 
 			services.AddMvcCore(o =>
-			{
-				//Conventions
-				//o.Conventions.Add(new ProblemDetailsResultApiConvention());
-			})
+				{
+					//Conventions
+					o.Conventions.Add(new ProblemDetailsResultApiConvention());
+				})
 				.SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
 				.AddMvcOptions(opt =>
 				{
@@ -114,28 +117,27 @@ namespace Ark.Tools.AspNetCore.Startup
 				})
 			;
 
-			services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
+			//services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
 
 			services.AddSwaggerGen(c =>
 			{
-				//c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
+				c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
 
-				//c.MapNodaTimeTypes();
+				c.MapNodaTimeTypes();
 
-				//c.OperationFilter<RemoveVersionParameters>();
 				//c.OperationFilter<ODataParamsOnSwagger>();
-				//c.OperationFilter<SupportFlaggedEnums>();
-				//c.OperationFilter<PrettifyOperationIdOperationFilter>();
+				c.OperationFilter<SupportFlaggedEnums>();
 
-				//c.SchemaFilter<RequiredSchemaFilter>();
+				c.OperationFilter<PrettifyOperationIdOperationFilter>();
+				c.SchemaFilter<RequiredSchemaFilter>();
 
-				//c.DocumentFilter<SetVersionInPaths>();
+				c.DocumentFilter<SetVersionInPaths>();
 
-				//c.OperationFilter<DefaultResponsesOperationFilter>();
+				c.OperationFilter<DefaultResponsesOperationFilter>();
 
-				//c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
+				c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
-				//c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @""));
+				c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @""));
 			});
 
 			services.ArkConfigureSwaggerVersions(Versions, MakeInfo);
@@ -195,7 +197,7 @@ namespace Ark.Tools.AspNetCore.Startup
 				SupportedCultures = CultureInfo.GetCultures(CultureTypes.InstalledWin32Cultures | CultureTypes.NeutralCultures | CultureTypes.SpecificCultures)
 			});
 
-			//app.UseArkProblemDetails();
+			app.UseArkProblemDetails();
 
 			app.UseSwagger();
 			app.UseSwaggerUI();

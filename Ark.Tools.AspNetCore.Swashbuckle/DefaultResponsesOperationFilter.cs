@@ -2,13 +2,12 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Collections.Generic;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-    public class DefaultResponsesOperationFilter : IOperationFilter
+	public class DefaultResponsesOperationFilter : IOperationFilter
     {
 		public void Apply(OpenApiOperation operation, OperationFilterContext context)
 		{
@@ -18,11 +17,10 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					new OpenApiResponse
 					{
 						Description = "Unauthorized",
-						Headers = new Dictionary<string, OpenApiHeader>
+						Content = new Dictionary<string, OpenApiMediaType>
 						{
-							["Location"] = new OpenApiHeader
+							["application/json"] = new OpenApiMediaType
 							{
-								Required = true,
 								Schema = context.SchemaGenerator.GenerateSchema(typeof(ProblemDetails), context.SchemaRepository)
 							}
 						}
@@ -35,11 +33,10 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					new OpenApiResponse
 					{
 						Description = "Not enough permissions",
-						Headers = new Dictionary<string, OpenApiHeader>
+						Content = new Dictionary<string, OpenApiMediaType>
 						{
-							["Location"] = new OpenApiHeader
+							["application/json"] = new OpenApiMediaType
 							{
-								Required = true,
 								Schema = context.SchemaGenerator.GenerateSchema(typeof(ProblemDetails), context.SchemaRepository)
 							}
 						}
@@ -52,11 +49,10 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					new OpenApiResponse
 					{
 						Description = "Invalid payload",
-						Headers = new Dictionary<string, OpenApiHeader>
+						Content = new Dictionary<string, OpenApiMediaType>
 						{
-							["Location"] = new OpenApiHeader
+							["application/json"] = new OpenApiMediaType
 							{
-								Required = true,
 								Schema = context.SchemaGenerator.GenerateSchema(typeof(ValidationProblemDetails), context.SchemaRepository)
 							}
 						}
@@ -69,11 +65,10 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					new OpenApiResponse
 					{
 						Description = "Internal server error. Retry later or contact support.",
-						Headers = new Dictionary<string, OpenApiHeader>
+						Content = new Dictionary<string, OpenApiMediaType>
 						{
-							["Location"] = new OpenApiHeader
+							["application/json"] = new OpenApiMediaType
 							{
-								Required = true,
 								Schema = context.SchemaGenerator.GenerateSchema(typeof(ProblemDetails), context.SchemaRepository)
 							}
 						}

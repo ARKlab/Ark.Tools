@@ -2,12 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Collections.Generic;
-using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.OpenApi.Models;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-    public class SecurityRequirementsOperationFilter : IOperationFilter
+	public class SecurityRequirementsOperationFilter : IOperationFilter
     {
 		public void Apply(OpenApiOperation operation, OperationFilterContext context)
 		{

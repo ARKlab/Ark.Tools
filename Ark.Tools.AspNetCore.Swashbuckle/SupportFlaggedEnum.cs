@@ -1,18 +1,18 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Linq;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-    public class SupportFlaggedEnums : IOperationFilter
+	public class SupportFlaggedEnums : IOperationFilter
     {
 		public void Apply(OpenApiOperation operation, OperationFilterContext context)
 		{
-			if (operation.Parameters == null) return;
+			if (operation.Parameters == null) 
+				return;
 
 			var queryEnumParams = operation.Parameters.OfType<OpenApiParameter>()
 				.Where(param => param.In == ParameterLocation.Query)
@@ -29,12 +29,15 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 				.Select(x => x.o)
 				.ToArray();
 
-			//foreach (var param in queryEnumParams)
-			//{
-			//	param.Items = new PartialSchema { Type = param.Type, Enum = param.Enum };
-			//	//param.Type = "array";
-			//	param.CollectionFormat = "csv";
-			//}
+			foreach (var param in queryEnumParams)
+			{
+				var s = param.Schema;
+				param.Schema = new OpenApiSchema { Type = "array", Items = s };
+				param.Style = ParameterStyle.Simple;
+				param.Explode = false;
+			}
+
+
 		}
 	}
 }

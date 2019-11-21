@@ -9,10 +9,10 @@ namespace RavenDbSample.Utils
 	{
 		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
 		{
-			if (schema?.Properties == null || context.GetType() == null)
+			if (schema?.Properties == null || context.ApiModel.Type == null)
 				return;
 
-			if (typeof(IAuditableEntity).IsAssignableFrom(context.GetType()))
+			if (typeof(IAuditableEntity).IsAssignableFrom(context.ApiModel.Type))
 			{
 				var name = char.ToLower(nameof(IAuditableEntity.AuditId)[0]) + nameof(IAuditableEntity.AuditId).Substring(1);
 

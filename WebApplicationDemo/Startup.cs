@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Ark.Tools.AspNetCore.Startup;
+using Ark.Tools.AspNetCore.Swashbuckle;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -13,7 +14,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.SwaggerUI;
 using WebApplicationDemo.Application.Host;
+using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo
 {
@@ -37,17 +40,27 @@ namespace WebApplicationDemo
 		public override void ConfigureServices(IServiceCollection services)
 		{
 			base.ConfigureServices(services);
+
+			services.ArkConfigureSwaggerUI(c =>
+			{
+				c.MaxDisplayedTags(100);
+				c.DefaultModelRendering(ModelRendering.Model);
+				c.ShowExtensions();
+				//c.OAuthAppName("Public API");
+			});
+
+			services.ConfigureSwaggerGen(c =>
+			{
+				c.AddPolymorphismSupport<Polymorphic>();
+
+				//c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
+			});
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public override void Configure(IApplicationBuilder app)
 		{
 			base.Configure(app);
-
-
-
-
-
 
 		}
 

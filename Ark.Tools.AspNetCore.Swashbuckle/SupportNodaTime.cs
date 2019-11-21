@@ -4,12 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using NodaTime;
-using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-    public static class SupportNodaTimeEx
+	public static class SupportNodaTimeEx
     { 
         /// <summary>
         /// Register support for NodaTime types. For Json 

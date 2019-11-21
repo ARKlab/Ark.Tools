@@ -126,7 +126,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 //});
             ;
 
-			services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
+			//services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
 
 			services.AddSwaggerGen(c =>
             {
@@ -135,13 +135,13 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.MapNodaTimeTypes();
 
 				//c.OperationFilter<RemoveVersionParameters>();
-				c.OperationFilter<ODataParamsOnSwagger>();
+				//c.OperationFilter<ODataParamsOnSwagger>();
 				c.OperationFilter<SupportFlaggedEnums>();
                 c.OperationFilter<PrettifyOperationIdOperationFilter>();
 
                 c.SchemaFilter<RequiredSchemaFilter>();
 
-                //c.DocumentFilter<SetVersionInPaths>();
+                c.DocumentFilter<SetVersionInPaths>();
 
                 c.OperationFilter<DefaultResponsesOperationFilter>();
 				

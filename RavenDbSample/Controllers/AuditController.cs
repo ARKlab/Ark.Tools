@@ -23,7 +23,7 @@ namespace RavenDbSample.Controllers
 		}
 
 		[HttpGet]
-		[SwaggerAddODataParams]
+		//[SwaggerAddODataParams]
 		[Produces("application/json")]
 		[ProducesResponseType(typeof(IEnumerable<Audit>), StatusCodes.Status200OK)]
 		public async Task<IActionResult> Get(ODataQueryOptions<Audit> options)

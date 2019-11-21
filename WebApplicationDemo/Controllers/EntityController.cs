@@ -26,19 +26,21 @@ namespace WebApplicationDemo.Controllers
             _requestProcessor = requestProcessor;
         }
 
-        /// <summary>
-        /// Get a Entity by Id - Try with text: 'null' for a null entity - 'ensure' for ensure error
-        /// </summary>
-        /// <param name="entityId">The Entity identifier</param>
-        /// <param name="ctk"></param>
-        /// <returns></returns>
-        [HttpGet(@"{entityId}")]
+		/// <summary>
+		/// Get a Entity by Id - Try with text: 'null' for a null entity - 'ensure' for ensure error
+		/// </summary>
+		/// <param name="entityId">The Entity identifier</param>
+		/// <param name="result">The Entity Result </param>
+		/// <param name="tests">The Entity test array </param>
+		/// <param name="ctk"></param>
+		/// <returns></returns>
+		[HttpGet(@"{entityId}")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Get_Entity([FromRoute] string entityId, CancellationToken ctk = default)
+        public async Task<IActionResult> Get_Entity([FromRoute] string entityId, [FromQuery] EntityResult result, [FromQuery] EntityTest[] tests, CancellationToken ctk = default)
         {
             var query = new Get_EntityByIdQuery.V1()
             {
-                EntityId = entityId
+                EntityId = entityId,
             };
 
             var res = await _queryProcessor.ExecuteAsync(query, ctk);
@@ -48,6 +50,5 @@ namespace WebApplicationDemo.Controllers
 
             return this.Ok(res);
         }
-
-    }
+	}
 }
