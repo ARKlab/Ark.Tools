@@ -46,7 +46,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
-    <ProjectReference Include="..\ProblemDetailsSample\ProblemDetailsSample.csproj" />
+    <ProjectReference Include="..\WebApplicationDemo\WebApplicationDemo.csproj" />
   </ItemGroup>
 
 </Project>

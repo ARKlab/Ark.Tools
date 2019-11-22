@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -20,7 +21,7 @@ using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo
 {
-	public class Startup : ArkStartupWebApi3
+	public class Startup : ArkStartupWebApi
 	{
 		public Startup(IConfiguration configuration)
 			: base(configuration)
@@ -41,6 +42,38 @@ namespace WebApplicationDemo
 		{
 			base.ConfigureServices(services);
 
+			var auth0Scheme = "Auth0";
+			var audience = "Audience";
+			var domain = "Domain";
+			var swaggerClientId = "SwaggerClientId";
+
+			var defaultPolicy = new AuthorizationPolicyBuilder()
+				.AddAuthenticationSchemes(auth0Scheme)
+				.RequireAuthenticatedUser()
+				.Build();
+
+			services.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = auth0Scheme;
+				options.DefaultChallengeScheme = auth0Scheme;
+
+			})
+			.AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
+			{
+				if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
+				{
+					o.TokenValidationParameters.ValidIssuer = o.Authority;
+					o.Authority = null;
+					//o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.ClientSecretSpecFlow));
+				}
+				o.TokenValidationParameters.RoleClaimType = "Role";
+			})
+			;
+
+			services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
+
+
+
 			services.ArkConfigureSwaggerUI(c =>
 			{
 				c.MaxDisplayedTags(100);
@@ -51,7 +84,16 @@ namespace WebApplicationDemo
 
 			services.ConfigureSwaggerGen(c =>
 			{
+				var dict = new OpenApiSecurityRequirement
+				{
+					{ new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
+				};
+
+				c.AddSecurityRequirement(dict);
+
 				c.AddPolymorphismSupport<Polymorphic>();
+
+				//c.OperationFilter<SecurityRequirementsOperationFilter>();
 
 				//c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
 			});
@@ -78,43 +120,4 @@ namespace WebApplicationDemo
 			var env = app.ApplicationServices.GetService<IWebHostEnvironment>();
 		}
 	}
-
-
-
-
-	//public class Startup
-	//{
-	//	public Startup(IConfiguration configuration)
-	//	{
-	//		Configuration = configuration;
-	//	}
-
-	//	public IConfiguration Configuration { get; }
-
-	//	// This method gets called by the runtime. Use this method to add services to the container.
-	//	public void ConfigureServices(IServiceCollection services)
-	//	{
-	//		services.AddControllers();
-	//	}
-
-	//	// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-	//	public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-	//	{
-	//		if (env.IsDevelopment())
-	//		{
-	//			app.UseDeveloperExceptionPage();
-	//		}
-
-	//		app.UseHttpsRedirection();
-
-	//		app.UseRouting();
-
-	//		app.UseAuthorization();
-
-	//		app.UseEndpoints(endpoints =>
-	//		{
-	//			endpoints.MapControllers();
-	//		});
-	//	}
-	//}
 }

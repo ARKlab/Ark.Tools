@@ -8,6 +8,7 @@ using System.Linq;
 using Ark.Tools.Core.EntityTag;
 using Flurl.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 
 namespace TestProject
 {
@@ -16,7 +17,6 @@ namespace TestProject
 	{
 		internal IFlurlClient _client;
 
-		private bool _auth = true;
 		private readonly string _version;
 		private Task<HttpResponseMessage> _lastResponse;
 		private static MediaTypeHeaderValue _jsonMediaType = new MediaTypeHeaderValue("application/json");
@@ -30,9 +30,9 @@ namespace TestProject
 			_version = tags.FirstOrDefault(x => x.StartsWith("Api:"))?.Substring("Api:".Length) ?? "v" + "1.0"/*CommonConstants.ApiVersions.Last()*/;
 		}
 
-		public void SetAuthorization(bool auth)
+		public HttpStatusCode GetLastStatusCode()
 		{
-			_auth = auth;
+			return _lastResponse.GetAwaiter().GetResult().StatusCode;
 		}
 
 		public void Get(string requestUri, IEntityWithETag e)
@@ -50,6 +50,28 @@ namespace TestProject
 				req.Headers.Add("If-None-Match", e.ToString());
 
 			_lastResponse = req.GetAsync();
+
+			_lastResponse.GetAwaiter().GetResult();
+		}
+
+		public void Get(string[] requestUriParts, EntityTagHeaderValue e)
+		{
+			var req = _client.Request(new[] { _version });
+
+			foreach (var part in requestUriParts)
+				req.AppendPathSegment(part, true);
+
+			if (e != null)
+				req.Headers.Add("If-None-Match", e.ToString());
+
+			_lastResponse = req.GetAsync();
+
+			_lastResponse.GetAwaiter().GetResult();
+		}
+
+		public void Get(string[] requestUriParts, string etag = null)
+		{
+			Get(requestUriParts, etag != null ? new EntityTagHeaderValue($"\"{etag}\"") : null);
 		}
 
 		public void Get(string requestUri, string etag = null)
@@ -64,6 +86,8 @@ namespace TestProject
 			var req = _client.Request(reqUriComposed);
 
 			_lastResponse = req.DeleteAsync();
+
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public void PostAsJson(string requestUri) => PostAsJson(requestUri, (String)null);
@@ -78,6 +102,8 @@ namespace TestProject
 				req.Headers.Add("If-Match", $"\"{eTag._ETag}\"");
 
 			_lastResponse = req.PostJsonAsync(body);
+
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public void PutAsJson(string requestUri) => PutAsJson(requestUri, (String)null);
@@ -92,6 +118,8 @@ namespace TestProject
 				req.WithHeader("If-Match", $"\"{eTag._ETag}\"");
 
 			_lastResponse = req.PutJsonAsync(body);
+
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public void PatchAsJson(string requestUri) => PatchAsJson(requestUri, (String)null);
@@ -106,6 +134,8 @@ namespace TestProject
 				req.WithHeader("If-Match", $"\"{eTag._ETag}\"");
 
 			_lastResponse = req.PatchJsonAsync(body);
+
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public T ReadAs<T>()
@@ -116,6 +146,22 @@ namespace TestProject
 			return _lastResponse.ReceiveJson<T>().GetAwaiter().GetResult();
 		}
 
+		public string ReadAsString()
+		{
+			if (_lastResponse == null)
+				throw new InvalidOperationException("I suggest to make a request first ...");
+
+			return _lastResponse.ReceiveString().GetAwaiter().GetResult();
+		}
+
+		[When(@"I get url (.*)")]
+		public void WhenIGetUrl(string url)
+		{
+			var req = _client.Request(url);
+			_lastResponse = req.GetAsync();
+
+			_lastResponse.GetAwaiter().GetResult();
+		}
 
 		[Then("The request succeded")]
 		public void ThenTheRequestSucceded()
@@ -129,27 +175,17 @@ namespace TestProject
 			Assert.AreEqual(code, _lastResponse.GetAwaiter().GetResult().StatusCode);
 		}
 
+		[Then(@"The problem detail type contains (.*)")]
+		public void ThenTheProblemDetailTypeContains(string expectedProblemDetailType)
+		{
+			var problemDetail = _lastResponse.ReceiveJson<ProblemDetails>().GetAwaiter().GetResult();
+			Assert.IsTrue(problemDetail.Type.Contains(expectedProblemDetailType));
+		}
+
 		[Then(@"The request returns (.*)")]
 		public void ThenTheRequestReturns(HttpStatusCode code)
 		{
 			Assert.AreEqual(code, _lastResponse.GetAwaiter().GetResult().StatusCode);
-		}
-
-		//[Then("the result is (.*) with a operation location header")]
-		//public void ThenTheResultIsWithContentHeader(HttpStatusCode code)
-		//{
-		//    Assert.AreEqual(_lastResponse.Status, code);
-
-		//    Regex regex = new Regex($@"^/{_version}/operation");
-		//    Match match = regex.Match(_lastResponse.Message.Headers.Location.PathAndQuery);
-
-		//    Assert.IsTrue(match.Success);
-		//}
-
-		[Then("Everything is ok")]
-		public void ThenEverythingIsOk()
-		{
-			Assert.IsTrue(true);
 		}
 	}
 }
