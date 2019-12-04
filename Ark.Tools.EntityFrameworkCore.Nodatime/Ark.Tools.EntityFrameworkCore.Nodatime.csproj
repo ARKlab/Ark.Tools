@@ -21,5 +21,10 @@
     <ProjectReference Include="..\Ark.Tools.EntityFrameworkCore\Ark.Tools.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" />
   </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+  </ItemGroup>
   
 </Project>

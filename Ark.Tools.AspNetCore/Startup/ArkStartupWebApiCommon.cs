@@ -168,7 +168,8 @@ namespace Ark.Tools.AspNetCore.Startup
 		private void _integrateSimpleInjectorContainer(IServiceCollection services)
 		{
 			Container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-			services.EnableSimpleInjectorCrossWiring(Container);
+			services.AddSimpleInjector(Container);
+			//services.EnableSimpleInjectorCrossWiring(Container);
 			services.AddSingleton<IControllerActivator>(
 				new SimpleInjectorControllerActivator(Container));
 
@@ -216,7 +217,8 @@ namespace Ark.Tools.AspNetCore.Startup
 
 		protected virtual void RegisterContainer(IApplicationBuilder app)
 		{
-			Container.AutoCrossWireAspNetComponents(app);
+			app.UseSimpleInjector(Container);
+			//Container.AutoCrossWireAspNetComponents(app);
 #pragma warning disable CS0618 // Type or member is obsolete
 			Container.RegisterMvcControllers(app); //https://simpleinjector.org/aspnetcore
 #pragma warning restore CS0618 // Type or member is obsolete

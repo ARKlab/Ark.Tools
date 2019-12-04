@@ -22,11 +22,15 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="SpecFlow" Version="3.0.225" />
+    <PackageReference Include="SpecFlow" Version="3.1.67" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

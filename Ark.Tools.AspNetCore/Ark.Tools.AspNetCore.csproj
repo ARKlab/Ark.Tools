@@ -5,7 +5,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
 
     <Description>Tools and base classes for AspNetCore as in Ark-way of using it</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore</PackageTags>
@@ -27,12 +27,12 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="8.5.1" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="3.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="7.2.2" />
     <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders" Version="0.11.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="4.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="4.0.0" />
-    <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="4.7.1" />
+    <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="4.8.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,6 +47,10 @@
     <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

@@ -5,7 +5,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
     
-    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     
     <Description>Extensions of AspNetCore for supporting CSV parameters as array in both Route and Query params</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;CSV</PackageTags>
@@ -22,6 +22,10 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
   
 </Project>

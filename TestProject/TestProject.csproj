@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     <PlatformTarget>x64</PlatformTarget>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -35,18 +35,22 @@
   
   <ItemGroup>
     <PackageReference Include="Flurl.Http" Version="2.4.2" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="2.0.0" />
     <PackageReference Include="MSTest.TestFramework" Version="2.0.0" />
-    <PackageReference Include="SpecFlow" Version="3.1.62" />
-    <PackageReference Include="SpecFlow.MsTest" Version="3.1.62" />
-    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.1.62" />
+    <PackageReference Include="SpecFlow" Version="3.1.67" />
+    <PackageReference Include="SpecFlow.MsTest" Version="3.1.67" />
+    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.1.67" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
     <ProjectReference Include="..\WebApplicationDemo\WebApplicationDemo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

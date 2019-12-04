@@ -19,13 +19,17 @@
   
   <ItemGroup>
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.0.0" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.6.0" />
-    <PackageReference Include="Microsoft.Extensions.DiagnosticAdapter" Version="2.2.0" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

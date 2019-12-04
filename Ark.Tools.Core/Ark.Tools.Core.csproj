@@ -24,12 +24,19 @@
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
     <PackageReference Include="Ensure.That" Version="8.1.2" />
     <PackageReference Include="NodaTime" Version="2.4.7" />
-    <PackageReference Include="Polly" Version="7.1.1" />
+    <PackageReference Include="Polly" Version="7.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>
