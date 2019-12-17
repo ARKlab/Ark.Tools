@@ -16,7 +16,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
     {
         const string ContentType = "application/x.msgpacklz4";
         
-        readonly IFormatterResolver _resolver;
+        readonly MessagePackSerializerOptions _options;
 
         public LZ4MessagePackInputFormatter()
             : this(null)
@@ -26,12 +26,18 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
         public LZ4MessagePackInputFormatter(IFormatterResolver resolver)
         {
             SupportedMediaTypes.Add(ContentType);
-            _resolver = resolver ?? MessagePackSerializer.DefaultResolver;
+
+            if (resolver == null)
+                _options = MessagePackSerializer.DefaultOptions;
+            else
+                _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
+
+            _options.WithCompression(MessagePackCompression.Lz4BlockArray);
         }
 
         protected override bool CanReadType(Type type)
         {
-            return _resolver.GetFormatterDynamic(type) != null && base.CanReadType(type);
+            return _options.Resolver.GetFormatterDynamic(type) != null && base.CanReadType(type);
         }
 
         public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)
@@ -48,7 +54,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 request.Body.Seek(0L, SeekOrigin.Begin);
             }
 
-            var result = LZ4MessagePackSerializer.NonGeneric.Deserialize(context.ModelType, request.Body, _resolver);
+            var result = MessagePackSerializer.Deserialize(context.ModelType, request.Body, _options);
 
             return await InputFormatterResult.SuccessAsync(result);
         }

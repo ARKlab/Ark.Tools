@@ -32,7 +32,7 @@
     <PackageReference Include="AgileObjects.AgileMapper" Version="1.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.OData.Versioning.ApiExplorer" Version="4.0.0" />
     <PackageReference Include="Microsoft.OData.Core" Version="7.6.2" />
-    <PackageReference Include="RavenDB.Embedded" Version="4.2.5" />
+    <PackageReference Include="RavenDB.Embedded" Version="4.2.6" />
   </ItemGroup>
 
   <ItemGroup>

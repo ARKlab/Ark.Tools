@@ -11,7 +11,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
     {
         const string ContentType = "application/x-msgpack";
 
-        readonly IFormatterResolver _resolver;
+        readonly MessagePackSerializerOptions _options;
 
         public MessagePackOutputFormatter()
             : this(null)
@@ -20,12 +20,16 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
         public MessagePackOutputFormatter(IFormatterResolver resolver)
         {
             SupportedMediaTypes.Add(ContentType);
-            _resolver = resolver ?? MessagePackSerializer.DefaultResolver;
+
+            if (resolver == null)
+                _options = MessagePackSerializer.DefaultOptions;
+            else
+                _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
         }
 
         protected override bool CanWriteType(Type type)
         {
-            return _resolver.GetFormatterDynamic(type) != null;
+            return _options.Resolver.GetFormatterDynamic(type) != null;
         }
 
         public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
@@ -40,13 +44,13 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 }
                 else
                 {
-                    MessagePackSerializer.NonGeneric.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _resolver);
+                    MessagePackSerializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _options);
                     return Task.CompletedTask;
                 }
             }
             else
             {
-                MessagePackSerializer.NonGeneric.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, _resolver);
+                MessagePackSerializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, _options);
                 return Task.CompletedTask;
             }
         }

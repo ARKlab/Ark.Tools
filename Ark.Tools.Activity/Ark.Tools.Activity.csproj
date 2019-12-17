@@ -14,7 +14,7 @@
 
 	
 	<ItemGroup>			
-		<PackageReference Include="Rebus" Version="5.4.0" />
+		<PackageReference Include="Rebus" Version="5.4.1" />
 		<PackageReference Include="Rebus.NLog" Version="5.0.0" />
 		<PackageReference Include="Rebus.SimpleInjector" Version="4.0.0" />
 		<PackageReference Include="Rebus.AzureServiceBus" Version="6.0.7" />

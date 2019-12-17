@@ -11,7 +11,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
     {
         const string ContentType = "application/x.msgpacklz4";
         
-        readonly IFormatterResolver _resolver;
+        readonly MessagePackSerializerOptions _options;
 
         public LZ4MessagePackOutputFormatter()
             : this(null)
@@ -21,12 +21,18 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
         public LZ4MessagePackOutputFormatter(IFormatterResolver resolver)
         {
             SupportedMediaTypes.Add(ContentType);
-            this._resolver = resolver ?? MessagePackSerializer.DefaultResolver;
+
+            if (resolver == null)
+                _options = MessagePackSerializer.DefaultOptions;
+            else
+                _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
+
+            _options.WithCompression(MessagePackCompression.Lz4BlockArray);
         }
 
         protected override bool CanWriteType(Type type)
         {
-            return _resolver.GetFormatterDynamic(type) != null;
+            return _options.Resolver.GetFormatterDynamic(type) != null;
         }
         
         public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
@@ -41,13 +47,13 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 }
                 else
                 {
-                    LZ4MessagePackSerializer.NonGeneric.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _resolver);
+                    MessagePackSerializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _options);
                     return Task.CompletedTask;
                 }
             }
             else
             {
-                LZ4MessagePackSerializer.NonGeneric.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, _resolver);
+                MessagePackSerializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, _options);
                 return Task.CompletedTask;
             }
         }
