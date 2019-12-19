@@ -11,7 +11,7 @@ namespace TestWorker.Configs
     {
         public Test_Host_Config()
         {
-            WorkerName = "TEST";
+            WorkerName = "TestWorker";
         }
 
         public string StateDbConnectionString { get; set; }

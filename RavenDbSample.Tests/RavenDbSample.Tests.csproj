@@ -41,7 +41,6 @@
   <ItemGroup>
     <SpecFlowFeatureFiles Update="Tests\BaseOperationV1.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
-      <LastGenOutput>BaseOperationV1.feature.cs</LastGenOutput>
     </SpecFlowFeatureFiles>
     <SpecFlowFeatureFiles Update="Tests\RavenDbTestV1.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>

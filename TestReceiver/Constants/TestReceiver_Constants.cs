@@ -16,9 +16,9 @@ namespace TestWorker.Constants
 		//public const int KeepSessionAliveInMinutes = 30;
 
 		public const string DataTimezone = "CET";
-		public const string ProviderName = "test";
+		public const string ProviderName = "TestWorker";
 
-		public const string RebusConnString = "Endpoint=sb://ark-playground.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=fc3hUuRJJmx/IpQ+89QyYP8VVA6IkwQcToSEt/51+rU=";
+		public const string RebusConnString = "Endpoint=sb://artesian-ops.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=2yyjCkOyAfTaRZvZM95fAGZbvUYRY8FlvdkvJ+FIWCA=";
 
 	}
 }

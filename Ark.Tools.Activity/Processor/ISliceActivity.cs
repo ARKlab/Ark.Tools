@@ -18,6 +18,8 @@ namespace Ark.Tools.Activity.Processor
         IEnumerable<Slice> ImpactedSlices(Resource resource, Slice slice);
 
         Task Process(Slice activitySlice);
-    }
+
+		TimeSpan? CoolDown { get; }
+	}
 
 }
