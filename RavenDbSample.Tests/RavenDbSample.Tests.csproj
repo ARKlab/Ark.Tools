@@ -24,9 +24,9 @@
     <PackageReference Include="MSTest.TestAdapter" Version="2.0.0" />
     <PackageReference Include="MSTest.TestFramework" Version="2.0.0" />
     <PackageReference Include="RavenDB.Embedded" Version="4.2.6" />
-    <PackageReference Include="SpecFlow" Version="3.1.67" />
-    <PackageReference Include="SpecFlow.MsTest" Version="3.1.67" />
-    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.1.67" />
+    <PackageReference Include="SpecFlow" Version="3.1.74" />
+    <PackageReference Include="SpecFlow.MsTest" Version="3.1.74" />
+    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.1.74" />
   </ItemGroup>
 
   <ItemGroup>

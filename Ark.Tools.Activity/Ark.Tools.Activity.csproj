@@ -7,7 +7,7 @@
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
     <Version>$(ArkToolsCoreVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>beta01</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->

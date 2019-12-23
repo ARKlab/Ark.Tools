@@ -13,7 +13,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(AspNetCoreGroupVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>beta01</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>

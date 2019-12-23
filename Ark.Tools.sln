@@ -144,6 +144,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestReceiver", "TestReceive
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServiceBusUtility", "ServiceBusUtility\ServiceBusUtility.csproj", "{510E9089-15C0-4831-8303-8481052CD036}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Debug", "Debug", "{6A810A74-3D9A-419C-A324-758818CEEDBC}"
+	ProjectSection(SolutionItems) = preProject
+		Group_Pack_All_Debug.bat = Group_Pack_All_Debug.bat
+		Group_Pack_AspnetCore_Debug.bat = Group_Pack_AspnetCore_Debug.bat
+		Group_Pack_Core_Debug.bat = Group_Pack_Core_Debug.bat
+		Group_Pack_EntityFrameworkCore_Debug.bat = Group_Pack_EntityFrameworkCore_Debug.bat
+		Group_Pack_EventSourcing_Debug.bat = Group_Pack_EventSourcing_Debug.bat
+		Group_Pack_FTPClient_Debug.bat = Group_Pack_FTPClient_Debug.bat
+		Group_Pack_RavenDb_Debug.bat = Group_Pack_RavenDb_Debug.bat
+		Group_Pack_ResourceWatcher_Debug.bat = Group_Pack_ResourceWatcher_Debug.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -412,6 +424,7 @@ Global
 		{CCF69014-6938-44E4-A600-FAE21599D5F3} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{F3A5B70C-7FDC-45D6-AD50-66F292DA647E} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{510E9089-15C0-4831-8303-8481052CD036} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
+		{6A810A74-3D9A-419C-A324-758818CEEDBC} = {157C2BDE-AA77-4AFE-8194-5E049B6AFC96}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F88F06AE-6856-423B-9179-28732B57F828}

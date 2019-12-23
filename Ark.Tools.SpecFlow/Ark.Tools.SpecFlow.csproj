@@ -15,14 +15,14 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(ArkToolsCoreVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>beta01</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="SpecFlow" Version="3.1.67" />
+    <PackageReference Include="SpecFlow" Version="3.1.74" />
   </ItemGroup>
 
   <ItemGroup>
