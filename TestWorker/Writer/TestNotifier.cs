@@ -21,10 +21,10 @@ namespace TestWorker.Writer
 		public async Task Process(Test_File file, CancellationToken ctk = default)
 		{
 			var zonedNow = new LocalDate(2019, 01, 01).AtStartOfDayInZone(DateTimeZoneProviders.Tzdb[Test_Constants.DataTimezone]);
-			var notifymessage = "Test_Queue_Creation";
+			var notifymessage = "first";
 
 
-			await _notifier.Notify(notifymessage.ToString(), Slice.From(zonedNow));
+			await _notifier.Notify(notifymessage, Slice.From(zonedNow));
 		}
 	}
 }

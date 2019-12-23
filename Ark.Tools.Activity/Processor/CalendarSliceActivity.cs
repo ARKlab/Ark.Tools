@@ -1,13 +1,12 @@
 ﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Activity.Processor
 {
-
-
-    public abstract class CalendarSliceActivity : ISliceActivity
+	public abstract class CalendarSliceActivity : ISliceActivity
     {
         private readonly IEnumerable<Slice> _calendar;
         private readonly Dictionary<Resource, Dictionary<Slice, List<Slice>>> _reverseMap;
@@ -35,7 +34,9 @@ namespace Ark.Tools.Activity.Processor
         public abstract ILogger Logger { get; }
         public abstract Resource Resource { get; }
 
-        public virtual IEnumerable<Slice> ImpactedSlices(Resource source, Slice sourceSlice)
+		public abstract TimeSpan? CoolDown { get; }
+
+		public virtual IEnumerable<Slice> ImpactedSlices(Resource source, Slice sourceSlice)
         {
             return _reverseMap[source][sourceSlice];
         }

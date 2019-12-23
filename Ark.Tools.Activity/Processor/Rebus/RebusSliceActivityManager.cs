@@ -14,6 +14,7 @@ using Rebus.Compression;
 using Rebus.Handlers;
 using Rebus.NLog.Config;
 using Rebus.Serialization.Json;
+using Rebus.Retry.Simple;
 
 namespace Ark.Tools.Activity.Processor
 {
@@ -41,31 +42,34 @@ namespace Ark.Tools.Activity.Processor
 
         public async Task Start()
         {
-            var busConfigurer = Configure.With(new SimpleInjectorContainerAdapter(_container))
-                .Logging(l => l.NLog())
-                .Transport(t => t.UseAzureServiceBus(_config.AsbConnectionString, "q_"+_name).AutomaticallyRenewPeekLock())
-                .Options(o =>
-                {
-                    o.EnableCompression();
-                    o.SetMaxParallelism(1);
-                    o.SetNumberOfWorkers(1);
-                })
-                .Serialization(s =>
-                {
-                    var cfg = new JsonSerializerSettings();
-                    cfg.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-                    cfg.TypeNameHandling = TypeNameHandling.None;
-                    cfg.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                    s.UseNewtonsoftJson(cfg);
-                })
-                .Sagas(s => s.StoreInSqlServer(_config.SagaSqlConnectionString, "REBUS_Saga_" + _name, "REBUS_SagaIndex_" + _name))
-                ;
+			var busConfigurer = Configure.With(new SimpleInjectorContainerAdapter(_container))
+				.Logging(l => l.NLog())
+				.Transport(t => t.UseAzureServiceBus(_config.AsbConnectionString, "q_" + _name).AutomaticallyRenewPeekLock())
+				.Options(o =>
+				{
+					o.EnableCompression();
+					o.SetMaxParallelism(1);
+					o.SetNumberOfWorkers(1);
+					o.SimpleRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
+				})
+				.Serialization(s =>
+				{
+					var cfg = new JsonSerializerSettings();
+					cfg.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+					cfg.TypeNameHandling = TypeNameHandling.None;
+					cfg.ObjectCreationHandling = ObjectCreationHandling.Replace;
+					s.UseNewtonsoftJson(cfg);
+				})
+				.Sagas(s => s.StoreInSqlServer(_config.SagaSqlConnectionString, "REBUS_Saga_" + _name, "REBUS_SagaIndex_" + _name))
+				//.Timeouts(t => t.StoreInSqlServer(_config.SagaSqlConnectionString, "REBUS_Timeout_" + _name, true))
+				;
 
             _container.Register<IHandleMessages<ResourceSliceReady>, SliceSplitter>();
             _container.Register<IHandleMessages<Ark.Tasks.Messages.ResourceSliceReady>, SliceSplitter>();
             _container.Register<IHandleMessages<SliceReady>, SliceActivitySaga>();
             _container.Register<IHandleMessages<Ark.Tasks.Messages.SliceReady>, SliceActivitySaga>();
-            _container.Register<ISliceActivity>(_activityFactory);
+			_container.Register<IHandleMessages<CoolDownMessage>, SliceActivitySaga>();
+			_container.Register<ISliceActivity>(_activityFactory);
 
             var bus = busConfigurer.Start();
             foreach (var d in _dependencies)
