@@ -11,6 +11,7 @@ using Rebus.SimpleInjector;
 using Rebus.Compression;
 using Rebus.NLog.Config;
 using Rebus.Serialization.Json;
+using Rebus.Retry.Simple;
 
 namespace Ark.Tools.Activity.Provider
 {
@@ -33,7 +34,8 @@ namespace Ark.Tools.Activity.Provider
                     o.EnableCompression();
                     o.SetMaxParallelism(1);
                     o.SetNumberOfWorkers(1);
-                })
+					o.SimpleRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
+				})
                 .Serialization(s =>
                 {
 

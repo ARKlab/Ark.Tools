@@ -14,6 +14,7 @@ using Rebus.Compression;
 using Rebus.Handlers;
 using Rebus.NLog.Config;
 using Rebus.Serialization.Json;
+using Rebus.Retry.Simple;
 
 namespace Ark.Tools.Activity.Processor
 {
@@ -43,15 +44,13 @@ namespace Ark.Tools.Activity.Processor
         {
 			var busConfigurer = Configure.With(new SimpleInjectorContainerAdapter(_container))
 				.Logging(l => l.NLog())
-				.Transport(t => t.UseAzureServiceBus(_config.AsbConnectionString, "q_" + _name)
-					.AutomaticallyRenewPeekLock()
-
-					)
+				.Transport(t => t.UseAzureServiceBus(_config.AsbConnectionString, "q_" + _name).AutomaticallyRenewPeekLock())
 				.Options(o =>
 				{
 					o.EnableCompression();
 					o.SetMaxParallelism(1);
 					o.SetNumberOfWorkers(1);
+					o.SimpleRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
 				})
 				.Serialization(s =>
 				{

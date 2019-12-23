@@ -11,7 +11,7 @@ namespace ServiceBusUtility
 	{
 		private static readonly string _connection = "Endpoint=sb://ark-playground.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=fc3hUuRJJmx/IpQ+89QyYP8VVA6IkwQcToSEt/51+rU=";
 
-		private static readonly string _topicName = "test_stica";
+		private static readonly string _topicName = "test_first";
 
 		static void Main(string[] args)
 		{
@@ -45,7 +45,7 @@ namespace ServiceBusUtility
 							};
 
 
-						//_CleanMessagesInSub(name, infos.FirstOrDefault());
+						_CleanMessagesInSub(name, infos.FirstOrDefault());
 					}
 
 

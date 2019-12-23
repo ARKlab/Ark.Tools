@@ -3,6 +3,7 @@ using Ark.Tools.Activity.Processor;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TestReceiver
@@ -20,6 +21,7 @@ namespace TestReceiver
 		public TestReceiver_Activity(TestReceiver_Config config)
 		{
 			_config = config;
+			Console.WriteLine($"********** Now {DateTimeOffset.UtcNow} ********");
 		}
 
 		public override Ark.Tools.Activity.ResourceDependency[] Dependencies
@@ -45,18 +47,23 @@ namespace TestReceiver
 
 		public override Resource Resource { get; } = new Resource("TestReceiver", "TestReceiver_Activity");
 
-		public override TimeSpan? CoolDown { get; } = new TimeSpan(0, 2, 0);
+		//public override TimeSpan? CoolDown { get; } = new TimeSpan(0, 2, 0);
 
 		public override NLog.ILogger Logger
 		{
 			get { return _logger; }
 		}
-		
+
+		public override TimeSpan? CoolDown => null;
+
 		public override async Task Process(Ark.Tools.Activity.Slice activitySlice)
 		{
-			_logger.Info("PROCESS DONE!");
+			await Task.Delay(new TimeSpan(0, 0, 5));
 
-			await Task.FromResult(true);
+			Console.WriteLine($"** Process Started Now {DateTimeOffset.UtcNow}**");
+			throw new TimeoutException("Exception!");
+
+			//await Task.FromResult(true);
 		}
 
 	}
