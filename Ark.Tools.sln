@@ -75,6 +75,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.BasicA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.NLog", "Ark.Tools.NLog\Ark.Tools.NLog.csproj", "{0E35EC99-9F75-4883-8747-93A680FD39A7}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApplicationDemo", "WebApplicationDemo\WebApplicationDemo.csproj", "{EE68A2B4-131F-4CC8-B533-E74EF577BBB1}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{157C2BDE-AA77-4AFE-8194-5E049B6AFC96}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
@@ -410,6 +412,10 @@ Global
 		{510E9089-15C0-4831-8303-8481052CD036}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{510E9089-15C0-4831-8303-8481052CD036}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{510E9089-15C0-4831-8303-8481052CD036}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE68A2B4-131F-4CC8-B533-E74EF577BBB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE68A2B4-131F-4CC8-B533-E74EF577BBB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE68A2B4-131F-4CC8-B533-E74EF577BBB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE68A2B4-131F-4CC8-B533-E74EF577BBB1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -425,6 +431,7 @@ Global
 		{F3A5B70C-7FDC-45D6-AD50-66F292DA647E} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{510E9089-15C0-4831-8303-8481052CD036} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 		{6A810A74-3D9A-419C-A324-758818CEEDBC} = {157C2BDE-AA77-4AFE-8194-5E049B6AFC96}
+		{EE68A2B4-131F-4CC8-B533-E74EF577BBB1} = {51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F88F06AE-6856-423B-9179-28732B57F828}
