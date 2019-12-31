@@ -20,7 +20,8 @@ namespace Ark.Tools.AspNetCore.NestedStartup
         public static IApplicationBuilder UseBranchWithServices<TStartup>(this IApplicationBuilder app, string url, IConfiguration configuration) where TStartup : class
         {
             var feature = app.ServerFeatures;
-            var webHost = new WebHostBuilder()
+
+            var webHostBuilder = new WebHostBuilder()
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseConfiguration(configuration)
                 .UseParentServiceProvider(app.ApplicationServices, configuration)
@@ -29,13 +30,13 @@ namespace Ark.Tools.AspNetCore.NestedStartup
                 .Build();
 
             var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();            
-            var r2 = lifetime.ApplicationStopping.Register(() => webHost.StopAsync().GetAwaiter().GetResult());
+            var r2 = lifetime.ApplicationStopping.Register(() => webHostBuilder.StopAsync().GetAwaiter().GetResult());
 
             Func<HttpContext, Task> branchDelegate = async ctx =>
             {
-                var server = webHost.Services.GetRequiredService<FakeServer>();
+                var server = webHostBuilder.Services.GetRequiredService<FakeServer>();
 
-                var nestedFactory = webHost.Services.GetRequiredService<IServiceScopeFactory>();
+                var nestedFactory = webHostBuilder.Services.GetRequiredService<IServiceScopeFactory>();
 
                 using (var nestedScope = nestedFactory.CreateScope())
                 {
@@ -44,7 +45,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
                 }
             };
 
-            webHost.Start();
+            webHostBuilder.Start();
 
             return app.Map(url, builder =>
             {

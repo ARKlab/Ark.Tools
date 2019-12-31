@@ -19,12 +19,12 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
 		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
 		{
-			if (context.ApiModel.Type == typeof(T))
+			if (context.Type == typeof(T))
 			{
-				var b = OpenApiAnyFactory.TryCreateFor(schema, Example, out IOpenApiAny openApiAny);
+				var b = OpenApiAnyFactory.CreateFor(schema, Example);
 
-				if(b)
-					schema.Example = openApiAny;
+				if(b != null)
+					schema.Example = b;
 			}
 		}
 	}

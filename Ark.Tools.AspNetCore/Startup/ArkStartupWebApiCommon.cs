@@ -156,6 +156,8 @@ namespace Ark.Tools.AspNetCore.Startup
 				c.EnableValidator();
 			});
 
+			services.AddSwaggerGenNewtonsoftSupport();
+
 			//	Api Behaviour override for disabling automatic Problem details
 			services.ConfigureOptions<ApiBehaviourOptionsSetup>();
 

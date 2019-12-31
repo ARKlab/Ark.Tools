@@ -52,15 +52,15 @@ namespace WebApplicationDemo.Application.Host
 			container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton,
 				c => !c.Handled);
 
-			//container.RegisterDecorator(
-			//		 typeof(IQueryHandler<,>)
-			//	   , typeof(QueryFluentValidateDecorator<,>)
-			//	);
+			container.RegisterDecorator(
+					 typeof(IQueryHandler<,>)
+				   , typeof(QueryFluentValidateDecorator<,>)
+				);
 
-			//container.RegisterDecorator(
-			//		 typeof(IRequestHandler<,>)
-			//	   , typeof(RequestFluentValidateDecorator<,>)
-			//	);
+			container.RegisterDecorator(
+					 typeof(IRequestHandler<,>)
+				   , typeof(RequestFluentValidateDecorator<,>)
+				);
 
 			container.RegisterInstance(this.Config);
 

@@ -185,6 +185,25 @@ namespace ProblemDetailsSample.Controllers.Private
 
             return this.Ok(res);
         }
+
+        /// <summary>
+        /// Returns a BusinessRuleViolation
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        [HttpPost(@"BusinessRuleViolation")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Post_BusinessRuleViolation([FromBody]Entity.V1.Input body)
+        {
+            var request = new Post_EntityRequestBusinessRuleViolation.V1()
+            {
+                EntityId = body.EntityId
+            };
+
+            var res = await _requestProcessor.ExecuteAsync(request, default);
+
+            return this.Ok(res);
+        }
     }
 
     internal class Error

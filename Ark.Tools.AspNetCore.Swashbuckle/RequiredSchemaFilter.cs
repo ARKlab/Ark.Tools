@@ -12,7 +12,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
     {
 		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
 		{
-			var requiredProperties = context.ApiModel.Type.GetProperties()
+			var requiredProperties = context.Type.GetProperties()
 				.Where(w => w.GetCustomAttributes(typeof(RequiredAttribute), true).Any())
 				.Select(s => Char.ToLowerInvariant(s.Name[0]) + s.Name.Substring(1));
 

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
+using Ark.Tools.Core.BusinessRuleViolation;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -28,7 +29,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         public void Configure(ProblemDetailsOptions options)
         {
             // This is the default behavior; only include exception details in a development environment.
-            options.IncludeExceptionDetails = ctx => Environment.IsDevelopment();
+            options.IncludeExceptionDetails = ctx => !Environment.IsProduction();
 
             options.ShouldLogUnhandledException = (ctx, e, d) => IsServerError(d.Status);
 
@@ -45,7 +46,13 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                 {
                     var path = LinkGenerator.GetLink(details as ArkProblemDetails, ctx);
                     details.Type = details.Type ?? path;
-                }  
+                }
+
+                if (details is BusinessRuleProblemDetails br)
+                {
+                    var path = LinkGenerator.GetLink(br.Violation, ctx);
+                    details.Type = path;
+                }
             };
 
             _configureExceptionProblemDetails(options);
@@ -54,6 +61,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         // This will map Exceptions to the corresponding Conflict status code.
         private void _configureExceptionProblemDetails(ProblemDetailsOptions options)
         {
+
             options.Map<EntityNotFoundException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status404NotFound));
 
             options.Map<NotImplementedException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status501NotImplemented));
@@ -72,6 +80,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
             options.Map<FluentValidation.ValidationException>(ex => new FluentValidationProblemDetails(ex, StatusCodes.Status400BadRequest));
 
+            options.Map<BusinessRuleViolationException>(ex => new BusinessRuleProblemDetails(ex.BusinessRuleViolation));
         }
 
         private static bool IsServerError(int? statusCode)

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using NLog;
 using NodaTime;
 using WebApplicationDemo.Api.Queries;
+using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Controllers
@@ -50,5 +51,76 @@ namespace WebApplicationDemo.Controllers
 
             return this.Ok(res);
         }
-	}
+
+        /// <summary>
+        /// Returns a BusinessRuleViolation
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        [HttpPost(@"BusinessRuleViolation")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Post_BusinessRuleViolation([FromBody]Entity.V1.Input body)
+        {
+            var request = new Post_EntityRequestBusinessRuleViolation.V1()
+            {
+                EntityId = body.EntityId
+            };
+
+            var res = await _requestProcessor.ExecuteAsync(request, default);
+
+            return this.Ok(res);
+        }
+
+
+        /// <summary>
+        /// Returns a BusinessRuleViolation
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        [HttpPost(@"ArkProblemDetails")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Post_ArkProblemDetails([FromBody]Entity.V1.Input body)
+        {
+            var request = new Post_EntityRequestProblemDetails.V1()
+            {
+                EntityId = body.EntityId
+            };
+
+            var res = await _requestProcessor.ExecuteAsync(request, default);
+
+            return this.Ok(res);
+        }
+
+        /// <summary>
+        /// Returns Handler EntityNotFoundException
+        /// </summary>
+        /// <param name="ctk"></param>
+        /// <returns></returns>
+        [HttpGet(@"EntityNotFound")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public Task<IActionResult> Get_EntityHandlerNotFound(CancellationToken ctk = default)
+        {
+            throw new EntityNotFoundException("Entyty not here.");
+
+        }
+
+        /// <summary>
+        /// Returns a Validation Fails
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        [HttpPost(@"FluentValidationFails")]
+        [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        public async Task<IActionResult> Post_ValidationFails([FromBody]Entity.V1.Input body)
+        {
+            var request = new Post_EntityRequest.V1()
+            {
+                EntityId = "StringLongerThan10"
+            };
+
+            var res = await _requestProcessor.ExecuteAsync(request, default);
+
+            return this.Ok(res);
+        }
+    }
 }

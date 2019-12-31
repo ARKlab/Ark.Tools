@@ -19,7 +19,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
 		public void Apply(OpenApiSchema schema, SchemaFilterContext context)
 		{
-			if (!_derivedTypes.Contains(context.ApiModel.Type))
+			if (!_derivedTypes.Contains(context.Type))
 				return;
 
 			var parentSchemaRef = context.SchemaGenerator.GenerateSchema(typeof(T), context.SchemaRepository);
