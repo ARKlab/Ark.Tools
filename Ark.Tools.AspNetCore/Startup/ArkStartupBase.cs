@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights;
 using Microsoft.ApplicationInsights.AspNetCore;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -31,8 +32,10 @@ namespace Ark.Tools.AspNetCore.Startup
             // Application Insights
             if (Configuration["ApplicationInsights:InstrumentationKey"] != null || Debugger.IsAttached)
             {
+                services.AddApplicationInsightsTelemetryProcessor<SuccessfulOperationRelatedFilterProcessor>();
                 services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
                 services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
+
                 services.AddApplicationInsightsTelemetry(o =>
                 {
                     o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
@@ -55,6 +58,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 
 
                 services.AddSingleton<ITelemetryProcessorFactory, SnapshotCollectorTelemetryProcessorFactory>();
+
             }
 
             services.AddCors();            

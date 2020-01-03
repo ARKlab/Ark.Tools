@@ -18,12 +18,15 @@
   <!--===============================================================================-->
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.ApplicationInsights.SnapshotCollector" Version="1.3.5" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.8.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
   </ItemGroup>

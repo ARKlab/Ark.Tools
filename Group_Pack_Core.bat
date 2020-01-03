@@ -41,6 +41,8 @@ setlocal
 "%MSBUILD%" "Ark.Tools.Sql.Oracle\Ark.Tools.Sql.Oracle.csproj" 											/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" 									/t:Pack /p:Configuration=Release
 
+"%MSBUILD%" "Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" 						/t:Pack /p:Configuration=Release
+
 pause
 
 :end
