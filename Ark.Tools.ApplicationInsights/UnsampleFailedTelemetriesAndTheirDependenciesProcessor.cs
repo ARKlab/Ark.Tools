@@ -15,7 +15,7 @@ namespace Ark.Tools.ApplicationInsights
     /// This class implement a <seealso cref="ITelemetryProcessor"/> to remove
     /// all excessive telemetry for successful requests.
     /// </summary>
-    public class SuccessfulOperationRelatedFilterProcessor : ITelemetryProcessor
+    public class UnsampleFailedTelemetriesAndTheirDependenciesProcessor : ITelemetryProcessor
     {
         private readonly ITelemetryProcessor _next;
         private readonly ConcurrentDictionary<string, ConcurrentQueue<ITelemetry>> _operations;
@@ -84,7 +84,7 @@ namespace Ark.Tools.ApplicationInsights
         /// This constructor is called by the AI infrastructure, when the
         /// telemetry processing chain is build.
         /// </remarks>
-        public SuccessfulOperationRelatedFilterProcessor(ITelemetryProcessor next)
+        public UnsampleFailedTelemetriesAndTheirDependenciesProcessor(ITelemetryProcessor next)
         {
             _next = next;
             _operations = new ConcurrentDictionary<string, ConcurrentQueue<ITelemetry>>();
@@ -137,6 +137,7 @@ namespace Ark.Tools.ApplicationInsights
             if (_alwaysForwarded(item))
             {
                 // Send it directly
+                _unsample(item);
                 _next.Process(item);
                 return;
             }
@@ -154,20 +155,17 @@ namespace Ark.Tools.ApplicationInsights
             // All operations are started via a request
             if (item is RequestTelemetry request)
             {
+                var shouldNotSample = (request.Success.HasValue && !request.Success.Value) || AlwaysLogOperations.Any(on => _matchOperation(request.Name, on));
+
                 // Obtain (and remove) the telemetries for this operation
                 if (_operations.TryRemove(operationId, out var telemetries))
                 {
-                    // Send all the logging for the operation if the operation failed
-                    if ((request.Success.HasValue && !request.Success.Value) || AlwaysLogOperations.Any(on => _matchOperation(request.Name, on)))
+                    while (telemetries.TryDequeue(out var telemetry))
                     {
-                        while (telemetries.TryDequeue(out var telemetry))
-                        {
-                            // Dependencies and Traces, if kept, should always be sent, not further sampled.
-                            if (telemetry is ISupportSampling supportSampling)
-                                supportSampling.SamplingPercentage = 100.0;
+                        if (shouldNotSample)
+                            _unsample(telemetry);
 
-                            _next.Process(telemetry);
-                        }
+                        _next.Process(telemetry);
                     }
 
                     // Add the operation to the list of disposed operations
@@ -176,6 +174,9 @@ namespace Ark.Tools.ApplicationInsights
                 }
 
                 // Always send the request itself
+                if (shouldNotSample)
+                    _unsample(item);
+
                 _next.Process(item);
             }
             else
@@ -198,6 +199,12 @@ namespace Ark.Tools.ApplicationInsights
                 });
                 telemetries.Enqueue(item);
             }
+        }
+
+        private void _unsample(ITelemetry item)
+        {
+            if (item is ISupportSampling s)
+                s.SamplingPercentage = 100.0;
         }
 
         private static bool _matchOperation(string operationName, string filterName)

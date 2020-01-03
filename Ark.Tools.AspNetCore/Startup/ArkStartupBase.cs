@@ -32,7 +32,7 @@ namespace Ark.Tools.AspNetCore.Startup
             // Application Insights
             if (Configuration["ApplicationInsights:InstrumentationKey"] != null || Debugger.IsAttached)
             {
-                services.AddApplicationInsightsTelemetryProcessor<SuccessfulOperationRelatedFilterProcessor>();
+                services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
                 services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
                 services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
 
@@ -46,8 +46,6 @@ namespace Ark.Tools.AspNetCore.Startup
                     o.RequestCollectionOptions.TrackExceptions = true;
                     o.DeveloperMode = Debugger.IsAttached;
                     o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
-                    o.RequestCollectionOptions.InjectResponseHeaders = true;
-                    o.RequestCollectionOptions.TrackExceptions = true;
                 });
                 services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
 

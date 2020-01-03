@@ -18,7 +18,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             return builder.ConfigureServices((ctx, services) =>
             {
 
-                services.AddApplicationInsightsTelemetryProcessor<SuccessfulOperationRelatedFilterProcessor>();
+                services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
                 {
                     o.AddAutoCollectedMetricExtractor = true;
