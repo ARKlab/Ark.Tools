@@ -4,6 +4,10 @@ using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
 using System;
 using System.Reflection;
+using Microsoft.ApplicationInsights.WorkerService;
+using Microsoft.Extensions.Configuration;
+using Microsoft.ApplicationInsights.SnapshotCollector;
+using Ark.Tools.ApplicationInsights;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 {
@@ -13,6 +17,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         {
             return builder.ConfigureServices((ctx, services) =>
             {
+
+                services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
                 {
                     o.AddAutoCollectedMetricExtractor = true;
@@ -24,7 +30,15 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                     o.DeveloperMode = Debugger.IsAttached;
                 });
                 services.AddSingleton<ITelemetryModule, ResourceWatcherTelemetryModule>();
+                services.AddSingleton<ITelemetryProcessorFactory>(
+                    new SkipSqlDatabaseDependencyFilterFactory(ctx.Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
 
+                services.Configure<SnapshotCollectorConfiguration>(o =>
+                {
+                });
+                var section = ctx.Configuration.GetSection(nameof(SnapshotCollectorConfiguration));
+                services.Configure<SnapshotCollectorConfiguration>(section);
+                services.AddSingleton<ITelemetryProcessorFactory, SnapshotCollectorTelemetryProcessorFactory>();
             });
         }
     }
