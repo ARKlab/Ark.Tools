@@ -19,6 +19,12 @@ using Ark.Tools.AspNetCore.Swashbuckle;
 using RavenDbSample.Utils;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
+using System;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace RavenDbSample
 {
@@ -43,21 +49,85 @@ namespace RavenDbSample
 		{
 			base.ConfigureServices(services);
 
-			//OData
-			services.AddOData();
+			var auth0Scheme = "Auth0";
+			var audience = Configuration["Auth0:Audience"];
+			var domain = Configuration["Auth0:Domain"];
+			var swaggerClientId = "SwaggerClientId";
 
-			//MVC
-			services.AddMvcCore(options =>
+			var defaultPolicy = new AuthorizationPolicyBuilder()
+				.AddAuthenticationSchemes(auth0Scheme)
+				.RequireAuthenticatedUser()
+				.Build();
+
+			services.AddAuthentication(options =>
 			{
-				foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
-					outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+				options.DefaultAuthenticateScheme = auth0Scheme;
+				options.DefaultChallengeScheme = auth0Scheme;
 
-				foreach (var inputFormatter in options.InputFormatters.OfType<ODataInputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
-					inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+			})
+			.AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
+			{
+				if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
+				{
+					o.TokenValidationParameters.ValidIssuer = o.Authority;
+					o.Authority = null;
+					o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(ApplicationConstants.ClientSecretSpecFlow));
+				}
+				o.TokenValidationParameters.RoleClaimType = "Role";
+			})
+			;
+
+			services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
+
+
+
+			services.ArkConfigureSwaggerUI(c =>
+			{
+				c.MaxDisplayedTags(100);
+				c.DefaultModelRendering(ModelRendering.Model);
+				c.ShowExtensions();
+				//c.OAuthAppName("Public API");
 			});
 
+			services.ConfigureSwaggerGen(c =>
+			{
+				var dict = new OpenApiSecurityRequirement
+				{
+					{ new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
+				};
+
+				c.AddSecurityRequirement(dict);
+
+				//c.AddPolymorphismSupport<Polymorphic>();
+				c.SchemaFilter<SwaggerExcludeFilter>();
+
+				//c.OperationFilter<SecurityRequirementsOperationFilter>();
+
+				//c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
+			});
+
+			////OData
+			//services.AddOData();
+
+			////MVC
+			//services.AddMvcCore(options =>
+			//{
+			//	foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
+			//		outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+
+			//	foreach (var inputFormatter in options.InputFormatters.OfType<ODataInputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
+			//		inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+			//});
+
 			//Add HostedService for Auditable
-			services.AddHostedServiceAuditProcessor();
+			//services.AddHostedServiceAuditProcessor();
+
+			var assemblies = new List<Assembly>
+					{
+						Assembly.Load("RavenDbSample"),
+					};
+			services.AddHostedServiceAuditProcessor(assemblies);
+
 
 			var store = new DocumentStore()
 			{
@@ -72,12 +142,12 @@ namespace RavenDbSample
 
 			//services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
 
-			services.AddSwaggerGen(c =>
-			{
-				//c.OperationFilter<ODataParamsOnSwagger>();
-				//c.OperationFilter<ResponseFormatFilter>();
-				c.SchemaFilter<SwaggerExcludeFilter>();
-			});
+			//services.AddSwaggerGen(c =>
+			//{
+			//	//c.OperationFilter<ODataParamsOnSwagger>();
+			//	//c.OperationFilter<ResponseFormatFilter>();
+			//	c.SchemaFilter<SwaggerExcludeFilter>();
+			//});
 		}
 
 		private IApplicationBuilder _app;

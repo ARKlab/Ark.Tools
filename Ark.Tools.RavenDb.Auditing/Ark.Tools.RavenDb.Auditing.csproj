@@ -2,6 +2,9 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+
+    <TargetFrameworks>$(TargetFrameworks);netcoreapp3.1</TargetFrameworks>
+    
     <Description>Generic tools for RavenDbAuditing</Description>
     <PackageTags>Ark;C#;.NET;RavenDb;Auditing;</PackageTags>
     <!--Update these information when releasing a new version of the NugetPackage-->

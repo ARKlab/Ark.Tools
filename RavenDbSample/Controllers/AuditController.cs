@@ -22,24 +22,24 @@ namespace RavenDbSample.Controllers
 			_session = session;
 		}
 
-		[HttpGet]
-		//[SwaggerAddODataParams]
-		[Produces("application/json")]
-		[ProducesResponseType(typeof(IEnumerable<Audit>), StatusCodes.Status200OK)]
-		public async Task<IActionResult> Get(ODataQueryOptions<Audit> options)
-		{
-			var validations = new RavenDefaultODataValidationSettings()
-			{
-				AllowedOrderByProperties =
-				{
-					"LastUpdatedUtc"
-				},
-			};
+		//[HttpGet]
+		////[SwaggerAddODataParams]
+		//[Produces("application/json")]
+		//[ProducesResponseType(typeof(IEnumerable<Audit>), StatusCodes.Status200OK)]
+		//public async Task<IActionResult> Get(ODataQueryOptions<Audit> options)
+		//{
+		//	var validations = new RavenDefaultODataValidationSettings()
+		//	{
+		//		AllowedOrderByProperties =
+		//		{
+		//			"LastUpdatedUtc"
+		//		},
+		//	};
 
-			var res = await _session.Query<Audit>().GetPagedWithODataOptions<Audit>(options, validations);
+		//	var res = await _session.Query<Audit>().GetPagedWithODataOptions<Audit>(options, validations);
 
-			return Ok(res);
-		}
+		//	return Ok(res);
+		//}
 
 		[HttpGet("{key}")]
 		public async Task<IActionResult> Get([FromRoute]string key)

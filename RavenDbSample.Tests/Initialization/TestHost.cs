@@ -13,6 +13,7 @@ using System.Net.Http;
 using Flurl;
 //using netDumbster.smtp;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 //using Rebus.Transport.InMem;
 //using Rebus.Persistence.InMem;
 
@@ -22,7 +23,7 @@ namespace RavenDbSample.Tests
 	public static class TestHost
 	{
 		private const string _baseUri = "https://localhost:5001";
-		private static TestServer _server;
+		private static IHost _server;
 		private static ClientFactory _factory;
 
 
@@ -36,24 +37,33 @@ namespace RavenDbSample.Tests
 
 			});
 
-			//_smtp = SimpleSmtpServer.Start();
+			var builder = Program.GetHostBuilder(new string[] { })
+				.ConfigureWebHost(wh =>
+				{
+					wh.UseTestServer();
+				});
 
-			var builder = Program.GetWebHostBuilder(new string[] { })
-			.UseEnvironment("SpecFlow")
-			.UseStartup<Startup>()
-			.ConfigureServices(services =>
-			{
+			_server = builder.Start();
+			_factory = new ClientFactory(_server.GetTestServer());
 
-			});
-			;
 
-			var server = new TestServer(builder)
-			{
-				BaseAddress = new Uri(_baseUri)
-			};
 
-			_server = server;
-			_factory = new ClientFactory(_server);
+			//var builder = Program.GetWebHostBuilder(new string[] { })
+			//.UseEnvironment("SpecFlow")
+			//.UseStartup<Startup>()
+			//.ConfigureServices(services =>
+			//{
+
+			//});
+			//;
+
+			//var server = new TestServer(builder)
+			//{
+			//	BaseAddress = new Uri(_baseUri)
+			//};
+
+			//_server = server;
+			//_factory = new ClientFactory(_server);
 
 			//var configuration = new ConfigurationBuilder()
 			//	//.SetBasePath(Directory.GetCurrentDirectory())
