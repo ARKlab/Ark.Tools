@@ -9,7 +9,7 @@
     </PackageReleaseNotes>
     
     <Version>$(ArkToolsCoreVersion)</Version>
-    <VersionSuffix>beta01</VersionSuffix>
+    <VersionSuffix>beta02</VersionSuffix>
   
   
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
