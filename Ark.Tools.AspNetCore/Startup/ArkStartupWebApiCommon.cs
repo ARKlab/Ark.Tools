@@ -4,6 +4,7 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
 using Ark.Tools.Nodatime;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNet.OData.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -84,13 +85,14 @@ namespace Ark.Tools.AspNetCore.Startup
 			});
 
 			services.AddMvcCore(o =>
-				{
-					//Conventions
-					o.Conventions.Add(new ProblemDetailsResultApiConvention());
-				})
+			{
+				//Conventions
+				o.Conventions.Add(new ProblemDetailsResultApiConvention());
+			})
 				.SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
 				.AddMvcOptions(opt =>
 				{
+					opt.EnableEndpointRouting = false;
 					opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
 
 					opt.Filters.Add(new ArkDefaultExceptionFilter());
@@ -171,7 +173,13 @@ namespace Ark.Tools.AspNetCore.Startup
 		private void _integrateSimpleInjectorContainer(IServiceCollection services)
 		{
 			Container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-			services.AddSimpleInjector(Container);
+			services.AddSimpleInjector(Container, o =>
+			{
+				o.AddAspNetCore().AddControllerActivation();
+				o.CrossWire<RequestTelemetry>();
+				o.CrossWire<TelemetryClient>();
+			});
+
 			//services.EnableSimpleInjectorCrossWiring(Container);
 			services.AddSingleton<IControllerActivator>(
 				new SimpleInjectorControllerActivator(Container));
@@ -210,7 +218,7 @@ namespace Ark.Tools.AspNetCore.Startup
 				endpoints.MapControllers();
 			});
 
-			//app.UseMvc(_mvcRoute); //Not Usable without setting 	MVC opt.EnableEndpointRouting = false;
+			app.UseMvc(_mvcRoute); //Not Usable without setting 	MVC opt.EnableEndpointRouting = false;
 		}
 
 		protected virtual void _mvcRoute(IRouteBuilder routeBuilder)
@@ -221,10 +229,6 @@ namespace Ark.Tools.AspNetCore.Startup
 		protected virtual void RegisterContainer(IApplicationBuilder app)
 		{
 			app.UseSimpleInjector(Container);
-			//Container.AutoCrossWireAspNetComponents(app);
-#pragma warning disable CS0618 // Type or member is obsolete
-			Container.RegisterMvcControllers(app); //https://simpleinjector.org/aspnetcore
-#pragma warning restore CS0618 // Type or member is obsolete
 			Container.RegisterAuthorizationAspNetCoreUser(app);
 		}
 	}

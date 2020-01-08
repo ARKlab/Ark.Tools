@@ -159,12 +159,6 @@ namespace RavenDbSample
 				}
 			}));
 
-			app.UseMvc(routeBuilder =>
-			{
-				routeBuilder.Filter().OrderBy().MaxTop(1000);
-				routeBuilder.EnableDependencyInjection();
-			});
-
 			base.Configure(app);
 		}
 
