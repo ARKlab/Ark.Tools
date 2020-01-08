@@ -15,7 +15,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(FtpClientGroupVersion)</Version>
-    <VersionSuffix>beta02</VersionSuffix>
+    <VersionSuffix>$(FtpClientGroupVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>

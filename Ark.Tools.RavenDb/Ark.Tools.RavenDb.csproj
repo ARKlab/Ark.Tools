@@ -8,7 +8,7 @@
     <PackageReleaseNotes>
     </PackageReleaseNotes>
     <Version>$(RavenDbGroupVersion)</Version>
-    <VersionSuffix>beta02</VersionSuffix>
+    <VersionSuffix>$(RavenDbGroupVersionSuffix)</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <ItemGroup>

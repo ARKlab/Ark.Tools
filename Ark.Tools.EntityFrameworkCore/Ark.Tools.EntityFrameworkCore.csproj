@@ -8,7 +8,7 @@
     <PackageReleaseNotes>
     </PackageReleaseNotes>
     <Version>$(EntityFrameworkGroupVersion)</Version>
-    <VersionSuffix>beta02</VersionSuffix>
+    <VersionSuffix>$(EntityFrameworkGroupVersionSuffix)</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->

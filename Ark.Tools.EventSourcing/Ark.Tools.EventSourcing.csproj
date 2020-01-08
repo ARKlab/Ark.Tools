@@ -8,7 +8,7 @@
     <PackageReleaseNotes>
     </PackageReleaseNotes>
     <Version>$(EventSourcingGroupVersion)</Version>
-    <VersionSuffix>beta02</VersionSuffix>
+    <VersionSuffix>$(EventSourcingGroupVersionSuffix)</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->

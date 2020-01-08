@@ -11,7 +11,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(ResourceWatcherGroupVersion)</Version>
-    <VersionSuffix>beta02</VersionSuffix>
+    <VersionSuffix>$(ResourceWatcherGroupVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
