@@ -2,8 +2,8 @@
 setlocal
 set PROGRAMS=%ProgramFiles(x86)%
 for %%e in (Community Professional Enterprise) do (
-    if exist "%PROGRAMS%\Microsoft Visual Studio\2017\%%e\MSBuild\15.0\Bin\MSBuild.exe" (
-        set "MSBUILD=%PROGRAMS%\Microsoft Visual Studio\2017\%%e\MSBuild\15.0\Bin\MSBuild.exe"
+    if exist "%PROGRAMS%\Microsoft Visual Studio\2019\%%e\MSBuild\Current\Bin\MSBuild.exe" (
+        set "MSBUILD=%PROGRAMS%\Microsoft Visual Studio\2019\%%e\MSBuild\Current\Bin\MSBuild.exe"
     )
 )
 if exist "%MSBUILD%" goto :operations
@@ -19,6 +19,8 @@ setlocal
 "%MSBUILD%" "Ark.Tools.Auth0\Ark.Tools.Auth0.csproj"													/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Core\Ark.Tools.Core.csproj"														/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Http\Ark.Tools.Http.csproj"														/t:Pack /p:Configuration=Release
+
+"%MSBUILD%" "Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj"						/t:Pack /p:Configuration=Release
 
 "%MSBUILD%" "Ark.Tools.NLog\Ark.Tools.NLog.csproj" 														/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.NLog.CloudConfigurationManager\Ark.Tools.NLog.CloudConfigurationManager.csproj" 	/t:Pack /p:Configuration=Release
