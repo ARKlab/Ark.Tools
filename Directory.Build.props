@@ -39,6 +39,7 @@
   </PropertyGroup>
    
 	<ItemGroup>
+    <None Include="..\ark-dark.png" Pack="true" PackagePath="\"/>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
 	</ItemGroup>
 
