@@ -6,63 +6,60 @@ using System;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-	//ODATA not supported on ASPNET core 3.0
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+	public sealed class SwaggerAddODataParamsAttribute : Attribute
+	{
+	}
 
+	public class ODataParamsOnSwagger : IOperationFilter
+	{
+		public void Apply(OpenApiOperation operation, OperationFilterContext context)
+		{
+			if (operation.Parameters == null)
+				return;
 
-	//[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-	//public sealed class SwaggerAddODataParamsAttribute : Attribute
-	//{
-	//}
+			var hasAttribute = context.MethodInfo.GetCustomAttributes(typeof(SwaggerAddODataParamsAttribute), true).Length > 0;
 
-	//public class ODataParamsOnSwagger : IOperationFilter
-	//{
-	//	public void Apply(OpenApiOperation operation, OperationFilterContext context)
-	//	{
-	//		if (operation.Parameters == null)
-	//			return;
+			if (hasAttribute)
+			{
+				hasAttribute = false;
 
-	//		var hasAttribute = context.MethodInfo.GetCustomAttributes(typeof(SwaggerAddODataParamsAttribute), true).Length > 0;
+				operation.Parameters.Add(new OpenApiParameter
+				{
+					Name = "$filter",
+					Description = "Filter the results using OData syntax.",
+					Required = false,
+					//Type = "string",
+					In = ParameterLocation.Query
+				});
 
-	//		if (hasAttribute)
-	//		{
-	//			hasAttribute = false;
+				operation.Parameters.Add(new OpenApiParameter
+				{
+					Name = "$orderby",
+					Description = "Order the results using OData syntax.",
+					Required = false,
+					//Type = "string",
+					In = ParameterLocation.Query
+				});
 
-	//			operation.Parameters.Add(new OpenApiParameter
-	//			{
-	//				Name = "$filter",
-	//				Description = "Filter the results using OData syntax.",
-	//				Required = false,		
-	//				//Type = "string",
-	//				In = ParameterLocation.Query
-	//			});
+				operation.Parameters.Add(new OpenApiParameter
+				{
+					Name = "$skip",
+					Description = "The number of results to skip.",
+					Required = false,
+					//Type = "integer",
+					In = ParameterLocation.Query
+				});
 
-	//			operation.Parameters.Add(new OpenApiParameter
-	//			{
-	//				Name = "$orderby",
-	//				Description = "Order the results using OData syntax.",
-	//				Required = false,
-	//				//Type = "string",
-	//				In = ParameterLocation.Query
-	//			});
-
-	//			operation.Parameters.Add(new OpenApiParameter
-	//			{
-	//				Name = "$skip",
-	//				Description = "The number of results to skip.",
-	//				Required = false,
-	//				//Type = "integer",
-	//				In = ParameterLocation.Query
-	//			});
-
-	//			operation.Parameters.Add(new OpenApiParameter
-	//			{
-	//				Name = "$top",
-	//				Description = "The number of results to return.",
-	//				Required = false,
-	//				//Type = "integer",
-	//				In = ParameterLocation.Query
-	//			});
-	//		}
-	//	}
-	//}
+				operation.Parameters.Add(new OpenApiParameter
+				{
+					Name = "$top",
+					Description = "The number of results to return.",
+					Required = false,
+					//Type = "integer",
+					In = ParameterLocation.Query
+				});
+			}
+		}
+	}
 }

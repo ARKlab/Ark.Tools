@@ -106,28 +106,27 @@ namespace RavenDbSample
 				//c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
 			});
 
-			////OData
-			//services.AddOData();
+			//OData
+			services.AddOData();
 
-			////MVC
-			//services.AddMvcCore(options =>
-			//{
-			//	foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
-			//		outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+			//MVC
+			services.AddMvcCore(options =>
+			{
+				options.EnableEndpointRouting = false;
 
-			//	foreach (var inputFormatter in options.InputFormatters.OfType<ODataInputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
-			//		inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
-			//});
+				foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
+					outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+
+				foreach (var inputFormatter in options.InputFormatters.OfType<ODataInputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
+					inputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
+			});
 
 			//Add HostedService for Auditable
-			//services.AddHostedServiceAuditProcessor();
-
 			var assemblies = new List<Assembly>
 					{
 						Assembly.Load("RavenDbSample"),
 					};
 			services.AddHostedServiceAuditProcessor(assemblies);
-
 
 			var store = new DocumentStore()
 			{
@@ -139,15 +138,6 @@ namespace RavenDbSample
 			};
 
 			services.AddSingleton(store.Initialize());
-
-			//services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
-
-			//services.AddSwaggerGen(c =>
-			//{
-			//	//c.OperationFilter<ODataParamsOnSwagger>();
-			//	//c.OperationFilter<ResponseFormatFilter>();
-			//	c.SchemaFilter<SwaggerExcludeFilter>();
-			//});
 		}
 
 		private IApplicationBuilder _app;
@@ -169,6 +159,11 @@ namespace RavenDbSample
 				}
 			}));
 
+			app.UseMvc(routeBuilder =>
+			{
+				routeBuilder.Filter().OrderBy().MaxTop(1000);
+				routeBuilder.EnableDependencyInjection();
+			});
 
 			base.Configure(app);
 		}

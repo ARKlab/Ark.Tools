@@ -22,21 +22,21 @@ namespace RavenDbSample.Controllers
 			_session = session;
 		}
 
-		//[HttpGet]
-		////[Produces("application/json")]
-		//[ProducesResponseType(typeof(IEnumerable<BaseOperation>), StatusCodes.Status200OK)]
-		////[EnableQuery(AllowedQueryOptions = AllowedQueryOptions.Filter | AllowedQueryOptions.Select)]
-		//public async Task<IActionResult> Get(ODataQueryOptions<BaseOperation> options)
-		//{
-		//	var query = _session.Query<BaseOperation>();
-		//	var q2 = options.ApplyTo(query, new ODataQuerySettings
-		//	{
-		//		HandleNullPropagation = HandleNullPropagationOption.False
-		//	}) as IRavenQueryable<BaseOperation>;
+		[HttpGet]
+		//[Produces("application/json")]
+		[ProducesResponseType(typeof(IEnumerable<BaseOperation>), StatusCodes.Status200OK)]
+		//[EnableQuery(AllowedQueryOptions = AllowedQueryOptions.Filter | AllowedQueryOptions.Select)]
+		public async Task<IActionResult> Get(ODataQueryOptions<BaseOperation> options)
+		{
+			var query = _session.Query<BaseOperation>();
+			var q2 = options.ApplyTo(query, new ODataQuerySettings
+			{
+				HandleNullPropagation = HandleNullPropagationOption.False
+			}) as IRavenQueryable<BaseOperation>;
 
-		//	var set = await q2.ToListAsync();
-		//	return Ok(set);
-		//}
+			var set = await q2.ToListAsync();
+			return Ok(set);
+		}
 
 		[HttpGet("{key}")]
 		//[Produces("application/json")]

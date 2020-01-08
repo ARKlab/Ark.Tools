@@ -4,28 +4,26 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-	//ODATA not supported on ASPNET core 3.0
+	public class RemoveODataQueryOptionsActionDescriptorProvider : IActionDescriptorProvider
+	{
+		public int Order => 1;
 
-	//public class RemoveODataQueryOptionsActionDescriptorProvider : IActionDescriptorProvider
-	//{
-	//	public int Order => 1;
+		public void OnProvidersExecuting(ActionDescriptorProviderContext context)
+		{
+			foreach (var descriptor in context.Results)
+			{
+				for (int i = 0; i < descriptor.Parameters.Count; ++i)
+				{
+					if (typeof(ODataQueryOptions).IsAssignableFrom(descriptor.Parameters[i].ParameterType))
+					{
+						descriptor.Parameters[i].BindingInfo.BindingSource = BindingSource.Special;
+					}
+				}
+			}
+		}
 
-	//	public void OnProvidersExecuting(ActionDescriptorProviderContext context)
-	//	{
-	//		foreach (var descriptor in context.Results)
-	//		{
-	//			for (int i = 0; i < descriptor.Parameters.Count; ++i)
-	//			{
-	//				if (typeof(ODataQueryOptions).IsAssignableFrom(descriptor.Parameters[i].ParameterType))
-	//				{
-	//					descriptor.Parameters[i].BindingInfo.BindingSource = BindingSource.Special;
-	//				}
-	//			}
-	//		}
-	//	}
-
-	//	public void OnProvidersExecuted(ActionDescriptorProviderContext context)
-	//	{
-	//	}
-	//}
+		public void OnProvidersExecuted(ActionDescriptorProviderContext context)
+		{
+		}
+	}
 }

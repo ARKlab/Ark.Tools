@@ -22,20 +22,20 @@ namespace RavenDbSample.Controllers
 			_session = session;
 		}
 
-		//[HttpGet]
-		//[Produces("application/json")]
-		//[ProducesResponseType(typeof(IEnumerable<Author>), StatusCodes.Status200OK)]
-		//public async Task<IActionResult> Get(ODataQueryOptions<Author> options)
-		//{
-		//	var query = _session.Query<Author>();
-		//	var q2 = options.ApplyTo(query, new ODataQuerySettings
-		//	{
-		//		HandleNullPropagation = HandleNullPropagationOption.False
-		//	}) as IRavenQueryable<Author>;
+		[HttpGet]
+		[Produces("application/json")]
+		[ProducesResponseType(typeof(IEnumerable<Author>), StatusCodes.Status200OK)]
+		public async Task<IActionResult> Get(ODataQueryOptions<Author> options)
+		{
+			var query = _session.Query<Author>();
+			var q2 = options.ApplyTo(query, new ODataQuerySettings
+			{
+				HandleNullPropagation = HandleNullPropagationOption.False
+			}) as IRavenQueryable<Author>;
 
-		//	var set = await q2.ToListAsync();
-		//	return Ok(set);
-		//}
+			var set = await q2.ToListAsync();
+			return Ok(set);
+		}
 
 		[HttpGet("{key}")]
 		[Produces("application/json")]

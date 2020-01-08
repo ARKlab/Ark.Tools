@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
@@ -111,7 +112,7 @@ namespace Ark.Tools.AspNetCore.Startup
 				})
 			;
 
-			//services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
+			services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
 
 			services.AddSwaggerGen(c =>
 			{
@@ -119,7 +120,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
 				c.MapNodaTimeTypes();
 
-				//c.OperationFilter<ODataParamsOnSwagger>();
+				c.OperationFilter<ODataParamsOnSwagger>();
 				c.OperationFilter<SupportFlaggedEnums>();
 
 				c.OperationFilter<PrettifyOperationIdOperationFilter>();
