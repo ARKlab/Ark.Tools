@@ -208,8 +208,8 @@ namespace Ark.Tools.AspNetCore.Startup
 			app.UseSwagger();
 			app.UseSwaggerUI();
 
-			app.UseRouting();
-			app.UseCors();
+
+			//app.UseCors();
 
 			app.UseAuthentication();
 			app.UseAuthorization();

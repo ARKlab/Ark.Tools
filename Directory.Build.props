@@ -64,7 +64,7 @@
     <EntityFrameworkGroupVersionSuffix>beta03</EntityFrameworkGroupVersionSuffix>
     <RavenDbGroupVersionSuffix>beta03</RavenDbGroupVersionSuffix>
 
-    <AspNetCoreGroupVersionSuffix>beta03</AspNetCoreGroupVersionSuffix>
+    <AspNetCoreGroupVersionSuffix>beta04</AspNetCoreGroupVersionSuffix>
 
     <EventSourcingGroupVersionSuffix>beta03</EventSourcingGroupVersionSuffix> <!--depends from ArkToolsCore Only -->
 
