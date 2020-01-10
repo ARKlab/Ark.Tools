@@ -2,7 +2,7 @@
 using Microsoft.ApplicationInsights.WorkerService;
 using Ark.Tools.AspNetCore.ApplicationInsights;
 
-namespace Ark.Tools.ResourceWatcher.ApplicationInsights
+namespace Ark.Tools.ApplicationInsights.HostedService
 {
     public class SkipSqlDatabaseDependencyFilterFactory : ITelemetryProcessorFactory
     {

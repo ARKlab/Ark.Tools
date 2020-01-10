@@ -5,7 +5,7 @@ using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Ark.Tools.ResourceWatcher.ApplicationInsights
+namespace Ark.Tools.ApplicationInsights.HostedService
 {
     public class SnapshotCollectorTelemetryProcessorFactory : ITelemetryProcessorFactory
     {
