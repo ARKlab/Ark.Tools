@@ -9,7 +9,8 @@ using Flurl.Http;
 using Flurl.Http.Configuration;
 using System.Net.Http;
 using Flurl;
-using ProblemDetailsSample; 
+using WebApplicationDemo;
+using Microsoft.Extensions.Hosting;
 
 namespace TestProject
 {
@@ -17,7 +18,7 @@ namespace TestProject
 	public static class TestHost
 	{
 		private const string _baseUri = "https://localhost:5001";
-		private static TestServer _server;
+		private static IHost _server;
 		private static ClientFactory _factory;
 
 
@@ -33,31 +34,14 @@ namespace TestProject
 
 			//_smtp = SimpleSmtpServer.Start();
 
-			var builder = Program.GetWebHostBuilder(new string[] { })
-			.UseEnvironment("SpecFlow")
-			.UseStartup<Startup>()
-			.ConfigureServices(services =>
-			{
+			var builder = Program.GetHostBuilder(new string[] { })
+				.ConfigureWebHost(wh =>
+				{
+					wh.UseTestServer();
+				});
 
-			});
-			;
-
-			var server = new TestServer(builder)
-			{
-				BaseAddress = new Uri(_baseUri)
-			};
-
-			_server = server;
-			_factory = new ClientFactory(_server);
-
-			//var configuration = new ConfigurationBuilder()
-			//	//.SetBasePath(Directory.GetCurrentDirectory())
-			//	.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-			//	.AddJsonFile($"appsettings.SpecFlow.json", optional: true)
-			//	.AddEnvironmentVariables()
-			//	.Build();
-
-			//SqlConnection = configuration.GetConnectionString("NavisionMW.Database");
+			_server = builder.Start();
+			_factory = new ClientFactory(_server.GetTestServer());
 		}
 
 		[BeforeFeature(Order = 0)]

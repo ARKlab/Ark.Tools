@@ -1,57 +1,58 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Raven.Embedded;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace RavenDbSample
 {
 	public static class Program
 	{
-		public static IWebHostBuilder GetWebHostBuilder(string[] args)
+		public static IConfiguration Configuration { get; internal set; }
+		public static IHostBuilder GetHostBuilder(string[] args)
 		{
 			args = args ?? Array.Empty<string>();
 
-			var host = WebHost.CreateDefaultBuilder(args).Config(args);
-			
+			var host = Host.CreateDefaultBuilder(args).Config(args);
+
 			return host;
 		}
 
-		public static IWebHostBuilder Config(this IWebHostBuilder builder, string[] args)
+		public static IHostBuilder Config(this IHostBuilder builder, string[] args)
 		{
 			return builder
-				.UseKestrel(o =>
+				//.UseContentRoot(Directory.GetCurrentDirectory())
+				.ConfigureWebHostDefaults(webBuilder =>
 				{
-					o.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
-				})
-				.CaptureStartupErrors(true)
-				.UseSetting(WebHostDefaults.DetailedErrorsKey, "true")
-				.UseSetting(WebHostDefaults.PreventHostingStartupKey, "true")
-				//.ConfigureAppConfiguration((hostingContext, config) =>
-				//{
-				//	var env = hostingContext.HostingEnvironment;
-
-				//	config
-				//		.SetBasePath(Directory.GetCurrentDirectory())
-				//		.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-				//		.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-				//		.AddEnvironmentVariables()
-				//		.AddApplicationInsightsSettings(developerMode: env.IsDevelopment())
-				//		.AddCommandLine(args)
-				//		;
-				//})
-				//.ConfigureLogging((hostingContext, logging) =>
-				//{
-				//	logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-				//	logging.AddConsole();
-				//	logging.AddDebug();
-				//})
-				;
+					webBuilder.ConfigureKestrel(serverOptions =>
+					{
+						// Set properties and call methods on options
+					})
+					.CaptureStartupErrors(true)
+					.UseSetting(WebHostDefaults.DetailedErrorsKey, "true")
+					.UseSetting(WebHostDefaults.PreventHostingStartupKey, "true")
+					.UseIISIntegration()
+					.UseStartup<Startup>();
+				});
+				//.ConfigureServices;
 		}
+
 
 		public static void InitStatic(string[] args)
 		{
 			args = args ?? Array.Empty<string>();
+
+			Configuration = new ConfigurationBuilder()
+			   .SetBasePath(Directory.GetCurrentDirectory())
+			   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+			   .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
+			   .AddEnvironmentVariables()
+			   .AddCommandLine(args)
+			   .Build()
+			   ;
 		}
 
 		public static async Task Main(string[] args)
@@ -64,17 +65,18 @@ namespace RavenDbSample
 				{
 					EmbeddedServer.Instance.StartServer(new ServerOptions
 					{
+						FrameworkVersion = "2.2.6",
 						ServerUrl = "http://127.0.0.1:8080"
 					});
 
 					var store = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions("RavenDb"));
 				}
 
-				using (var h = GetWebHostBuilder(args)
-					.UseIISIntegration()
-					.UseStartup<Startup>()
+				using (var h = GetHostBuilder(args)
 					.Build())
+				{
 					await h.RunAsync();
+				}
 			}
 			catch (Exception ex)
 			{

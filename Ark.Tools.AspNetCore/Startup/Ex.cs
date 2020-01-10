@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace Ark.Tools.AspNetCore.Startup
 {
     public static class Ex
     {
-        internal static IServiceCollection ArkConfigureSwaggerVersions(this IServiceCollection services, IEnumerable<ApiVersion> versions, Func<ApiVersion, Info> infoBuilder)
+        internal static IServiceCollection ArkConfigureSwaggerVersions(this IServiceCollection services, IEnumerable<ApiVersion> versions, Func<ApiVersion, OpenApiInfo> infoBuilder)
         {
             services.ConfigureSwaggerGen(c =>
             {
@@ -140,17 +141,31 @@ namespace Ark.Tools.AspNetCore.Startup
             services.ConfigureSwaggerGen(c =>
             {
 
-                var oauthScheme = new OAuth2Scheme
-                {
-                    Type = "oauth2",
-                    Flow = "implicit",
-                    AuthorizationUrl = $"https://{domain}/authorize",
-                    Scopes = new Dictionary<string, string>
-                        {
-                            { "openid profile email", "Grant access to user" }
-                        }
+                var oauthScheme = new OpenApiSecurityScheme
+				{
+                    Type = SecuritySchemeType.OAuth2,
+					Flows = new OpenApiOAuthFlows() 
+					{ 
+						Implicit = new OpenApiOAuthFlow() 
+						{ 
+							AuthorizationUrl = new Uri($"https://{domain}/authorize"),
+							Scopes = new Dictionary<string, string>
+							{
+								{ "openid", "Grant access to user" }
+							}
+						} 
+					},
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "oauth2"
+                    },
+                    Scheme = "oauth2"
                 };
+
                 c.AddSecurityDefinition("oauth2", oauthScheme);
+
+                c.OperationFilter<SecurityRequirementsOperationFilter>();
             });
 
             services.ArkConfigureSwaggerUI(c =>

@@ -17,7 +17,7 @@ namespace RavenDBSample.Tests
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
 
 		private static IDocumentStore _documentStore;
-		public static string DatabaseConnectionString { get; private set; } = "http://127.0.0.1:0";
+		public static string DatabaseConnectionString { get; private set; } = "http://127.0.0.1:8080";
 		//const string DatabaseConnectionString = "http://127.0.0.1:8080";
 		private const string _databaseName = "RavenDb";
 
@@ -28,7 +28,7 @@ namespace RavenDBSample.Tests
 			Environment.SetEnvironmentVariable("CODE_COVERAGE_SESSION_NAME", null);
 			EmbeddedServer.Instance.StartServer(new ServerOptions
 			{
-				//FrameworkVersion = "2.2.5",
+				FrameworkVersion = "2.2.6",
 				ServerUrl = DatabaseConnectionString,
 			});
 

@@ -4,6 +4,8 @@
 
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     
     <Description>Extensions of Swashbuckle.AspNetCore</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Swashbuckle;Swagger</PackageTags>
@@ -13,17 +15,27 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(AspNetCoreGroupVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>$(AspNetCoreGroupVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OData" Version="7.2.2" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+      
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OData" Version="7.3.0" />
     <PackageReference Include="NodaTime" Version="2.4.7" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="5.0.0-rc5" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="5.0.0-rc5" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="5.0.0-rc5" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="5.0.0-rc5" />
+  </ItemGroup>
+      
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 
@@ -13,7 +13,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
 	public class ODataParamsOnSwagger : IOperationFilter
 	{
-		public void Apply(Operation operation, OperationFilterContext context)
+		public void Apply(OpenApiOperation operation, OperationFilterContext context)
 		{
 			if (operation.Parameters == null)
 				return;
@@ -24,40 +24,40 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 			{
 				hasAttribute = false;
 
-				operation.Parameters.Add(new NonBodyParameter
+				operation.Parameters.Add(new OpenApiParameter
 				{
 					Name = "$filter",
 					Description = "Filter the results using OData syntax.",
 					Required = false,
-					Type = "string",
-					In = "query"
+					//Type = "string",
+					In = ParameterLocation.Query
 				});
 
-				operation.Parameters.Add(new NonBodyParameter
+				operation.Parameters.Add(new OpenApiParameter
 				{
 					Name = "$orderby",
 					Description = "Order the results using OData syntax.",
 					Required = false,
-					Type = "string",
-					In = "query"
+					//Type = "string",
+					In = ParameterLocation.Query
 				});
 
-				operation.Parameters.Add(new NonBodyParameter
+				operation.Parameters.Add(new OpenApiParameter
 				{
 					Name = "$skip",
 					Description = "The number of results to skip.",
 					Required = false,
-					Type = "integer",
-					In = "query"
+					//Type = "integer",
+					In = ParameterLocation.Query
 				});
 
-				operation.Parameters.Add(new NonBodyParameter
+				operation.Parameters.Add(new OpenApiParameter
 				{
 					Name = "$top",
 					Description = "The number of results to return.",
 					Required = false,
-					Type = "integer",
-					In = "query"
+					//Type = "integer",
+					In = ParameterLocation.Query
 				});
 			}
 		}

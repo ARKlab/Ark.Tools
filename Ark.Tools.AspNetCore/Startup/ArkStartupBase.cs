@@ -64,7 +64,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
         public virtual void Configure(IApplicationBuilder app)
         {
-            var env = app.ApplicationServices.GetRequiredService<IHostingEnvironment>();
+            var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
 
             app.Use(async (context, next) =>
             {
@@ -98,7 +98,12 @@ namespace Ark.Tools.AspNetCore.Startup
 
             app.UseStaticFiles();
 
-            app.UseCors(p => p.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials());
+            app.UseRouting();
+            app.UseCors(p => p
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowed(_ => true));
         }
     }
 

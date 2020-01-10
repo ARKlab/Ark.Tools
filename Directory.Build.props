@@ -1,7 +1,7 @@
 <Project>
   
   <PropertyGroup>
-    <TargetFrameworks>net461;netstandard2.0;</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0;netstandard2.1</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>	
@@ -17,8 +17,8 @@
     <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
 	
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	  
-    <PackageIconUrl>http://www.ark-energy.eu/wp-content/uploads/ark-dark.png</PackageIconUrl>
+
+    <PackageIcon>ark-dark.png</PackageIcon>
     <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
       
     <Authors>ARK Labs</Authors>
@@ -37,24 +37,38 @@
 	  
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
+   
 	<ItemGroup>
+    <None Include="..\ark-dark.png" Pack="true" PackagePath="\"/>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
 	</ItemGroup>
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>1.1.34</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>1.1.18</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>1.1.29</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>2.0.0</ArkToolsCoreVersion>
+    <FtpClientGroupVersion>2.0.0</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>2.0.0</ResourceWatcherGroupVersion>
     
-    <EntityFrameworkGroupVersion>1.0.17</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>1.0.25</RavenDbGroupVersion>
+    <EntityFrameworkGroupVersion>2.0.0</EntityFrameworkGroupVersion>
+    <RavenDbGroupVersion>2.0.0</RavenDbGroupVersion>
     
-    <AspNetCoreGroupVersion>1.3.33</AspNetCoreGroupVersion>
+    <AspNetCoreGroupVersion>2.0.0</AspNetCoreGroupVersion>
 
-    <EventSourcingGroupVersion>1.0.17</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
-    
-  </PropertyGroup>
+    <EventSourcingGroupVersion>2.0.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
+
+    <!--Groups SUFFIX -->
+    <ArkToolsCoreVersionSuffix></ArkToolsCoreVersionSuffix>
+    <FtpClientGroupVersionSuffix></FtpClientGroupVersionSuffix>
+    <ResourceWatcherGroupVersionSuffix></ResourceWatcherGroupVersionSuffix>
+
+    <EntityFrameworkGroupVersionSuffix></EntityFrameworkGroupVersionSuffix>
+    <RavenDbGroupVersionSuffix></RavenDbGroupVersionSuffix>
+
+    <AspNetCoreGroupVersionSuffix></AspNetCoreGroupVersionSuffix>
+
+    <EventSourcingGroupVersionSuffix></EventSourcingGroupVersionSuffix>
+
+</PropertyGroup>
   
   <Target Name="PushNugetPackage" AfterTargets="Pack" Condition="('$(Configuration)' == 'Release' And $(VersionSuffix) == '') Or ('$(Configuration)' == 'Debug' And $(VersionSuffix) != '')">
     <Exec Command="dotnet nuget push -s https://api.nuget.org/v3/index.json $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).nupkg" />

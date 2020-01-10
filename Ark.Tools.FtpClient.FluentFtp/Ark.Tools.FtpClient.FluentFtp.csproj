@@ -11,20 +11,24 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(FtpClientGroupVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>$(FtpClientGroupVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="27.1.4" />
+    <PackageReference Include="FluentFTP" Version="29.0.0" />
     <PackageReference Include="Sunlighter.AsyncQueueLib" Version="1.0.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

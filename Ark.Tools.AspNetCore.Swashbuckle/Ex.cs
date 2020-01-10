@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -14,7 +13,7 @@ using System.Reflection;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-    public static partial class Ex
+	public static partial class Ex
     {
         public static void IncludeXmlCommentsForAssembly<T>(this SwaggerGenOptions o) => o.IncludeXmlCommentsForAssembly(typeof(T).Assembly);
 
@@ -27,7 +26,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
                 o.IncludeXmlComments(path);
         }
 
-        public static void AddPolymorphismSupport<TBase>(this SwaggerGenOptions o, string discriminatorName = null, HashSet<Type> derivedTypes = null)
+		//TODO MJ
+        public static void AddPolymorphismSupport<TBase>(this SwaggerGenOptions o, string discriminatorName = "discriminator", HashSet<Type> derivedTypes = null)
         {
             if (derivedTypes == null || derivedTypes.Count == 0)
                 derivedTypes = _init<TBase>();

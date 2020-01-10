@@ -18,6 +18,13 @@ using Raven.Client.Documents.Operations.Revisions;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using RavenDbSample.Utils;
 using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
+using System;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace RavenDbSample
 {
@@ -31,8 +38,8 @@ namespace RavenDbSample
 
 		public override IEnumerable<ApiVersion> Versions => new[] { new ApiVersion(1, 0) };
 
-		public override Info MakeInfo(ApiVersion version)
-			=> new Info
+		public override OpenApiInfo MakeInfo(ApiVersion version)
+			=> new OpenApiInfo
 			{
 				Title = "API",
 				Version = version.ToString("VVVV"),
@@ -42,12 +49,77 @@ namespace RavenDbSample
 		{
 			base.ConfigureServices(services);
 
+			var auth0Scheme = "Auth0";
+			var audience = Configuration["Auth0:Audience"];
+			var domain = Configuration["Auth0:Domain"];
+			var swaggerClientId = "SwaggerClientId";
+
+			var defaultPolicy = new AuthorizationPolicyBuilder()
+				.AddAuthenticationSchemes(auth0Scheme)
+				.RequireAuthenticatedUser()
+				.Build();
+
+			services.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = auth0Scheme;
+				options.DefaultChallengeScheme = auth0Scheme;
+
+			})
+			.AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
+			{
+				if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
+				{
+					o.TokenValidationParameters.ValidIssuer = o.Authority;
+					o.Authority = null;
+					o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(ApplicationConstants.ClientSecretSpecFlow));
+				}
+				o.TokenValidationParameters.RoleClaimType = "Role";
+			})
+			;
+
+			services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
+
+
+
+			services.ArkConfigureSwaggerUI(c =>
+			{
+				c.MaxDisplayedTags(100);
+				c.DefaultModelRendering(ModelRendering.Model);
+				c.ShowExtensions();
+				//c.OAuthAppName("Public API");
+			});
+
+			services.ConfigureSwaggerGen(c =>
+			{
+				var dict = new OpenApiSecurityRequirement
+				{
+					{
+						new OpenApiSecurityScheme
+						{
+							Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" }
+						},
+						new[] { "openid" }
+					}
+				};
+
+				c.AddSecurityRequirement(dict);
+
+				//c.AddPolymorphismSupport<Polymorphic>();
+				c.SchemaFilter<SwaggerExcludeFilter>();
+
+				//c.OperationFilter<SecurityRequirementsOperationFilter>();
+
+				//c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
+			});
+
 			//OData
 			services.AddOData();
 
 			//MVC
 			services.AddMvcCore(options =>
 			{
+				options.EnableEndpointRouting = false;
+
 				foreach (var outputFormatter in options.OutputFormatters.OfType<ODataOutputFormatter>().Where(_ => _.SupportedMediaTypes.Count == 0))
 					outputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/prs.odatatestxx-odata"));
 
@@ -56,7 +128,11 @@ namespace RavenDbSample
 			});
 
 			//Add HostedService for Auditable
-			services.AddHostedServiceAuditProcessor();
+			var assemblies = new List<Assembly>
+					{
+						Assembly.Load("RavenDbSample"),
+					};
+			services.AddHostedServiceAuditProcessor(assemblies);
 
 			var store = new DocumentStore()
 			{
@@ -68,15 +144,6 @@ namespace RavenDbSample
 			};
 
 			services.AddSingleton(store.Initialize());
-
-			//services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
-
-			services.AddSwaggerGen(c =>
-			{
-				//c.OperationFilter<ODataParamsOnSwagger>();
-				c.OperationFilter<ResponseFormatFilter>();
-				c.SchemaFilter<SwaggerExcludeFilter>();
-			});
 		}
 
 		private IApplicationBuilder _app;
@@ -97,7 +164,6 @@ namespace RavenDbSample
 					MinimumRevisionAgeToKeep = null,
 				}
 			}));
-
 
 			base.Configure(app);
 		}
@@ -122,7 +188,7 @@ namespace RavenDbSample
 				.WithContainer(Container)
 				.WithRavenDbAudit();
 
-			var env = app.ApplicationServices.GetService<IHostingEnvironment>();
+			var env = app.ApplicationServices.GetService<IWebHostEnvironment>();
 		}
 	}
 }

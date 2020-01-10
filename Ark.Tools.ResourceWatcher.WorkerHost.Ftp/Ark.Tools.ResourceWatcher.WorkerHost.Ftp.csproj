@@ -11,7 +11,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(ResourceWatcherGroupVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>$(ResourceWatcherGroupVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
@@ -20,6 +20,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
   
 </Project>

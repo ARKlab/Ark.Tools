@@ -16,7 +16,7 @@ namespace TestProject
 		[When(@"I get a wrong url")]
 		public void WhenIGetAWrongUrl()
 		{
-			var url = $@"pippo";
+			var url = $@"entity/null";
 			_client.Get(url);
 		}
 	}

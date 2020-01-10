@@ -12,18 +12,22 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(ArkToolsCoreVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="8.5.0" />
+    <PackageReference Include="FluentValidation" Version="8.6.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

@@ -15,7 +15,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(ArkToolsCoreVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
@@ -23,13 +23,14 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.30" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.7.0" />
-    <PackageReference Include="NLog" Version="4.6.7" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.6.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.0" />
+    <PackageReference Include="NLog" Version="4.6.8" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

@@ -8,7 +8,7 @@
     <PackageReleaseNotes>
     </PackageReleaseNotes>
     <Version>$(EntityFrameworkGroupVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>$(EntityFrameworkGroupVersionSuffix)</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
@@ -22,6 +22,10 @@
     <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
 
     <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
   
 </Project>

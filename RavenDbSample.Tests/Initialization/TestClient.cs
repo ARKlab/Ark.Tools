@@ -8,6 +8,7 @@ using System.Linq;
 using Ark.Tools.Core.EntityTag;
 using Flurl.Http;
 using System.Threading.Tasks;
+using RavenDbSample.Tests.AuthTest;
 
 namespace RavenDbSample.Tests
 {
@@ -16,15 +17,16 @@ namespace RavenDbSample.Tests
 	{
 		internal IFlurlClient _client;
 
-		private bool _auth = true;
+		private AuthTestContext _authContext;
 		private readonly string _version;
 		private Task<HttpResponseMessage> _lastResponse;
 		private static MediaTypeHeaderValue _jsonMediaType = new MediaTypeHeaderValue("application/json");
+		private bool _isAuthenticated = true;
 
-		public TestClient(FeatureContext fctx, ScenarioContext sctx, IFlurlClient client)
+		public TestClient(FeatureContext fctx, ScenarioContext sctx, IFlurlClient client, AuthTestContext authContext)
 		{
 			_client = client;
-
+			_authContext = authContext;
 			var tags = sctx.ScenarioInfo.Tags.Concat(fctx.FeatureInfo.Tags);
 
 			_version = tags.FirstOrDefault(x => x.StartsWith("Api:"))?.Substring("Api:".Length) ?? "v" + "1.0"/*CommonConstants.ApiVersions.Last()*/;
@@ -32,7 +34,12 @@ namespace RavenDbSample.Tests
 
 		public void SetAuthorization(bool auth)
 		{
-			_auth = auth;
+			_isAuthenticated = auth;
+		}
+
+		public HttpStatusCode GetLastStatusCode()
+		{
+			return _lastResponse.GetAwaiter().GetResult().StatusCode;
 		}
 
 		public void Get(string requestUri, IEntityWithETag e)
@@ -46,10 +53,14 @@ namespace RavenDbSample.Tests
 
 			var req = _client.Request(reqUriComposed);
 
+			if (_isAuthenticated)
+				_authContext.SetAuth(req);
+
 			if (e != null)
 				req.Headers.Add("If-None-Match", e.ToString());
 
 			_lastResponse = req.GetAsync();
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public void Get(string requestUri, string etag = null)
@@ -63,7 +74,11 @@ namespace RavenDbSample.Tests
 
 			var req = _client.Request(reqUriComposed);
 
+			if (_isAuthenticated)
+				_authContext.SetAuth(req);
+
 			_lastResponse = req.DeleteAsync();
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public void PostAsJson(string requestUri) => PostAsJson(requestUri, (String)null);
@@ -74,10 +89,14 @@ namespace RavenDbSample.Tests
 
 			var req = _client.Request(reqUriComposed);
 
+			if (_isAuthenticated)
+				_authContext.SetAuth(req);
+
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.Headers.Add("If-Match", $"\"{eTag._ETag}\"");
 
 			_lastResponse = req.PostJsonAsync(body);
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public void PutAsJson(string requestUri) => PutAsJson(requestUri, (String)null);
@@ -88,10 +107,14 @@ namespace RavenDbSample.Tests
 
 			var req = _client.Request(reqUriComposed);
 
+			if (_isAuthenticated)
+				_authContext.SetAuth(req);
+
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.WithHeader("If-Match", $"\"{eTag._ETag}\"");
 
 			_lastResponse = req.PutJsonAsync(body);
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public void PatchAsJson(string requestUri) => PatchAsJson(requestUri, (String)null);
@@ -102,10 +125,14 @@ namespace RavenDbSample.Tests
 
 			var req = _client.Request(reqUriComposed);
 
+			if (_isAuthenticated)
+				_authContext.SetAuth(req);
+
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.WithHeader("If-Match", $"\"{eTag._ETag}\"");
 
 			_lastResponse = req.PatchJsonAsync(body);
+			_lastResponse.GetAwaiter().GetResult();
 		}
 
 		public T ReadAs<T>()

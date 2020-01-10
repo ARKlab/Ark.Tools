@@ -8,7 +8,7 @@
     <PackageReleaseNotes>
     </PackageReleaseNotes>
     <Version>$(EventSourcingGroupVersion)</Version>
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>$(EventSourcingGroupVersionSuffix)</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
@@ -18,6 +18,10 @@
     <ProjectReference Include="..\Ark.Tools.EventSourcing.SimpleInjector\Ark.Tools.EventSourcing.SimpleInjector.csproj" />
     <ProjectReference Include="..\Ark.Tools.RavenDb.Auditing\Ark.Tools.RavenDb.Auditing.csproj" />
     <ProjectReference Include="..\Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

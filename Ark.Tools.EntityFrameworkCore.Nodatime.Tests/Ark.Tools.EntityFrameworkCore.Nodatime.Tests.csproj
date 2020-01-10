@@ -9,8 +9,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.0" />
     <ProjectReference Include="..\Ark.Tools.EntityFrameworkCore.Nodatime\Ark.Tools.EntityFrameworkCore.Nodatime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>
