@@ -8,15 +8,21 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 {
 	public class SecurityRequirementsOperationFilter : IOperationFilter
     {
-		public void Apply(OpenApiOperation operation, OperationFilterContext context)
-		{
-			operation.Security = new List<OpenApiSecurityRequirement>();
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        {
 
-			var dict = new OpenApiSecurityRequirement();
-			var openApiSecurityScheme = new OpenApiSecurityScheme() { Type = SecuritySchemeType.OAuth2 };
-			dict.Add(openApiSecurityScheme, new[] { "openid profile" });
+            var oAuthScheme = new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" }
+            };
 
-			operation.Security.Add(dict);
-		}
-	}
+            operation.Security = new List<OpenApiSecurityRequirement>
+                {
+                    new OpenApiSecurityRequirement
+                    {
+                        [ oAuthScheme ] = new[] { "openid" }
+                    }
+                };
+        }
+    }
 }

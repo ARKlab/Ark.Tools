@@ -93,7 +93,13 @@ namespace RavenDbSample
 			{
 				var dict = new OpenApiSecurityRequirement
 				{
-					{ new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
+					{
+						new OpenApiSecurityScheme
+						{
+							Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" }
+						},
+						new[] { "openid" }
+					}
 				};
 
 				c.AddSecurityRequirement(dict);

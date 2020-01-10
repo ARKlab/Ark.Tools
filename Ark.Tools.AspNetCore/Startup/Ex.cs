@@ -151,12 +151,21 @@ namespace Ark.Tools.AspNetCore.Startup
 							AuthorizationUrl = new Uri($"https://{domain}/authorize"),
 							Scopes = new Dictionary<string, string>
 							{
-								{ "openid profile email", "Grant access to user" }
+								{ "openid", "Grant access to user" }
 							}
 						} 
-					}
+					},
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "oauth2"
+                    },
+                    Scheme = "oauth2"
                 };
+
                 c.AddSecurityDefinition("oauth2", oauthScheme);
+
+                c.OperationFilter<SecurityRequirementsOperationFilter>();
             });
 
             services.ArkConfigureSwaggerUI(c =>
