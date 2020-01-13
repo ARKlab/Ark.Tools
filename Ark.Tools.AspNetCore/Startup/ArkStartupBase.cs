@@ -29,35 +29,30 @@ namespace Ark.Tools.AspNetCore.Startup
         {
             services.AddHttpContextAccessor();
             
-            // Application Insights
-            if (Configuration["ApplicationInsights:InstrumentationKey"] != null || Debugger.IsAttached)
+            services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
+            services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
+            services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
+
+            services.AddApplicationInsightsTelemetry(o =>
             {
-                services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
-                services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
-                services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
+                o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+                o.EnableAdaptiveSampling = true;
+                o.EnableHeartbeat = true;
+                o.AddAutoCollectedMetricExtractor = true;
+                o.RequestCollectionOptions.InjectResponseHeaders = true;
+                o.RequestCollectionOptions.TrackExceptions = true;
+                o.DeveloperMode = Debugger.IsAttached;
+                o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
+            });
+            services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
 
-                services.AddApplicationInsightsTelemetry(o =>
-                {
-                    o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                    o.EnableAdaptiveSampling = true;
-                    o.EnableHeartbeat = true;
-                    o.AddAutoCollectedMetricExtractor = true;
-                    o.RequestCollectionOptions.InjectResponseHeaders = true;
-                    o.RequestCollectionOptions.TrackExceptions = true;
-                    o.DeveloperMode = Debugger.IsAttached;
-                    o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
-                });
-                services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
-
-                services.Configure<SnapshotCollectorConfiguration>(o =>
-                {                    
-                });
-                services.Configure<SnapshotCollectorConfiguration>(Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
+            services.Configure<SnapshotCollectorConfiguration>(o =>
+            {                    
+            });
+            services.Configure<SnapshotCollectorConfiguration>(Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
                 
 
-                services.AddSingleton<ITelemetryProcessorFactory, SnapshotCollectorTelemetryProcessorFactory>();
-
-            }
+            services.AddSingleton<ITelemetryProcessorFactory, SnapshotCollectorTelemetryProcessorFactory>();            
 
             services.AddCors();            
         }
