@@ -92,7 +92,7 @@ namespace Ark.Tools.AspNetCore.Startup
 				.SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
 				.AddMvcOptions(opt =>
 				{
-					opt.EnableEndpointRouting = false;
+					//opt.EnableEndpointRouting = false;
 					opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
 
 					opt.Filters.Add(new ArkDefaultExceptionFilter());
@@ -218,7 +218,7 @@ namespace Ark.Tools.AspNetCore.Startup
 				endpoints.MapControllers();
 			});
 
-			app.UseMvc(_mvcRoute); //Not Usable without setting 	MVC opt.EnableEndpointRouting = false;
+			//app.UseMvc(_mvcRoute); //Not Usable without setting 	MVC opt.EnableEndpointRouting = false;
 		}
 
 		protected virtual void _mvcRoute(IRouteBuilder routeBuilder)
