@@ -95,7 +95,7 @@ namespace WebApplicationDemo
 
 				//c.OperationFilter<SecurityRequirementsOperationFilter>();
 
-				//c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
+				c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
 			});
 		}
 

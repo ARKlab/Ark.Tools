@@ -35,7 +35,8 @@ setlocal
 "%MSBUILD%" "Ark.Tools.Solid\Ark.Tools.Solid.csproj" 													/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Solid.FluentValidaton\Ark.Tools.Solid.FluentValidaton.csproj"					/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" 						/t:Pack /p:Configuration=Release
-			
+	
+"%MSBUILD%" "Ark.Tools.Rebus\Ark.Tools.Rebus.csproj"													/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Activity\Ark.Tools.Activity.csproj"												/t:Pack /p:Configuration=Release
 	
 "%MSBUILD%" "Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj" 												/t:Pack /p:Configuration=Release

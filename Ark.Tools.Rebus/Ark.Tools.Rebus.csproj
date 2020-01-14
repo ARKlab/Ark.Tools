@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>NLog configuration helper and extensions for Ark standard configuration using code and not config files.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;NLog</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+	<ItemGroup>			
+		<PackageReference Include="Rebus" Version="5.4.1" />
+		<PackageReference Include="Rebus.NLog" Version="5.0.0" />
+		<PackageReference Include="Rebus.SimpleInjector" Version="4.0.0" />
+		<PackageReference Include="Rebus.AzureServiceBus" Version="6.0.7" />
+		<PackageReference Include="Rebus.SqlServer" Version="5.1.0" />
+	</ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -164,6 +164,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.ApplicationInsigh
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestLinkGenerator", "TestLinkGenerator\TestLinkGenerator.csproj", "{9A6805DD-C3C6-4D16-9A6B-D190AB237324}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Rebus", "Ark.Tools.Rebus\Ark.Tools.Rebus.csproj", "{6D994502-96FA-4557-A6C9-AA4612FF643A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -434,6 +436,10 @@ Global
 		{9A6805DD-C3C6-4D16-9A6B-D190AB237324}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A6805DD-C3C6-4D16-9A6B-D190AB237324}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A6805DD-C3C6-4D16-9A6B-D190AB237324}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D994502-96FA-4557-A6C9-AA4612FF643A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D994502-96FA-4557-A6C9-AA4612FF643A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D994502-96FA-4557-A6C9-AA4612FF643A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D994502-96FA-4557-A6C9-AA4612FF643A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

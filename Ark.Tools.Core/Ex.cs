@@ -1,9 +1,11 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Auth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Core
@@ -115,6 +117,20 @@ namespace Ark.Tools.Core
         {
             if (toSearch == null) return false;
             return SqlLikeStringUtilities.SqlLike(toFind, toSearch);
+        }
+
+        public static string GetUserId(this ClaimsPrincipal principal)
+        {
+            return principal.GetUserEmail()
+                ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+
+
+        public static string GetUserEmail(this ClaimsPrincipal principal)
+        {
+            return principal.FindFirst(AuthClaims.ArkEmailClaim)?.Value
+                ?? principal.FindFirst(ClaimTypes.Email)?.Value
+                ;
         }
     }
 
