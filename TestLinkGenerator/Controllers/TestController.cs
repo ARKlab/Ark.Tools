@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
@@ -31,16 +32,23 @@ namespace TestWithoutArkTools.Controllers
 		{
 			var res = Guid.NewGuid().ToString();
 
-			var uri = Url.RouteUrl("V1.GetOperationById", new { operationId = res });
+			var ambients = this.HttpContext?.Features.Get<IRouteValuesFeature>()?.RouteValues;
+
+			var rd = new RouteValueDictionary(new { operationId = res })
+			{
+				{ "api-version", ambients["api-version"] }
+			};
+
+			var rd2 = new RouteValueDictionary(new { operationId = res });
+			rd2.Add("api-version", ambients["api-version"]);
+
+			var uri = this.Url.Link("V1.GetOperationById", rd);
 
 			var u_GetPathByName = _linkGenerator.GetPathByName("V1.GetOperationById", new { operationId = res });
 
-			var u_GetPathByNameHttp = _linkGenerator.GetPathByName(this.HttpContext, "V1.GetOperationById", new { operationId = res });
+			var u_GetPathByNameHttp = _linkGenerator.GetPathByName(this.HttpContext, "V1.GetOperationById", rd);
 
-			var pd = new RouteValueDictionary(new { operationId = res });
-			pd.Add("api-version", "1.0");
-
-			var u = Url.RouteUrl("V1.GetOperationById", pd);
+			var u = Url.RouteUrl("V1.GetOperationById", rd);
 			
 			return this.Ok(new OutputObject()
 			{

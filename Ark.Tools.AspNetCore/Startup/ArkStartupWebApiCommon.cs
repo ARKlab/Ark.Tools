@@ -31,6 +31,7 @@ using Swashbuckle.AspNetCore.SwaggerUI;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
@@ -55,11 +56,30 @@ namespace Ark.Tools.AspNetCore.Startup
 			services.AddArkProblemDetails();
 
 			// Add minumum framework services.
-			services.AddMvcCore()
-				.AddAuthorization()
-				.AddApiExplorer()
-				.AddFormatterMappings()
-				.AddDataAnnotations()
+			services.AddControllers(opt =>
+			{
+				//Conventions
+				opt.Conventions.Add(new ProblemDetailsResultApiConvention());
+				opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
+
+				opt.Filters.Add(new ArkDefaultExceptionFilter());
+				//opt.Filters.Add(new ProducesAttribute("application/json")); // To be specified after
+				//opt.Filters.Add(new ConsumesAttribute("application/json")); // broken in aspnetcore 2.2 as is enforced on GET too
+				opt.Conventions.Add(new ArkDefaultConventions());
+				opt.Filters.Add(new ResponseCacheAttribute()
+				{
+					Location = ResponseCacheLocation.Any,
+					Duration = 0,
+					NoStore = false,
+					VaryByHeader = "Accept,Accept-Encoding,Accept-Language,Authorization"
+				});
+				opt.Filters.Add(new ModelStateValidationFilter());
+				opt.Filters.Add(new ETagHeaderBasicSupportFilter());
+				opt.Filters.Add(new ApiControllerAttribute());
+				opt.ReturnHttpNotAcceptable = true;
+				opt.RespectBrowserAcceptHeader = true;
+			})
+				.SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
 				.AddNewtonsoftJson(s =>
 				{
 					s.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
@@ -69,12 +89,18 @@ namespace Ark.Tools.AspNetCore.Startup
 					s.SerializerSettings.Converters.Add(new StringEnumConverter());
 					//s.SerializerSettings.ContractResolver = new DefaultContractResolver();
 				})
+				.AddFormatterMappings(s =>
+				{
+				})
 				;
+
+			services.AddAuthorization();
 
 			services.AddApiVersioning(o =>
 			{
 				o.ReportApiVersions = true;
-				o.AssumeDefaultVersionWhenUnspecified = false;
+				o.AssumeDefaultVersionWhenUnspecified = true;
+				o.DefaultApiVersion = Versions.Last();
 			});
 
 			services.AddVersionedApiExplorer(o =>
@@ -83,36 +109,6 @@ namespace Ark.Tools.AspNetCore.Startup
 				o.SubstituteApiVersionInUrl = true;
 				o.SubstitutionFormat = "VVVV";
 			});
-
-			services.AddMvcCore(o =>
-			{
-				//Conventions
-				o.Conventions.Add(new ProblemDetailsResultApiConvention());
-			})
-				.SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
-				.AddMvcOptions(opt =>
-				{
-					//opt.EnableEndpointRouting = false;
-					opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
-
-					opt.Filters.Add(new ArkDefaultExceptionFilter());
-					//opt.Filters.Add(new ProducesAttribute("application/json")); // To be specified after
-					//opt.Filters.Add(new ConsumesAttribute("application/json")); // broken in aspnetcore 2.2 as is enforced on GET too
-					opt.Conventions.Add(new ArkDefaultConventions());
-					opt.Filters.Add(new ResponseCacheAttribute()
-					{
-						Location = ResponseCacheLocation.Any,
-						Duration = 0,
-						NoStore = false,
-						VaryByHeader = "Accept,Accept-Encoding,Accept-Language,Authorization"
-					});
-					opt.Filters.Add(new ModelStateValidationFilter());
-					opt.Filters.Add(new ETagHeaderBasicSupportFilter());
-					opt.Filters.Add(new ApiControllerAttribute());
-					opt.ReturnHttpNotAcceptable = true;
-					opt.RespectBrowserAcceptHeader = true;
-				})
-			;
 
 			services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
 
