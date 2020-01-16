@@ -93,12 +93,6 @@ namespace Ark.Tools.AspNetCore.Startup
 
             app.UseStaticFiles();
 
-            app.UseRouting();
-            app.UseCors(p => p
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()
-                .SetIsOriginAllowed(_ => true));
         }
     }
 

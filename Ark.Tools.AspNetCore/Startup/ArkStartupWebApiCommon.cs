@@ -193,6 +193,13 @@ namespace Ark.Tools.AspNetCore.Startup
 		{
 			RegisterContainer(app);
 
+			app.UseRouting();
+			app.UseCors(p => p
+				.AllowAnyHeader()
+				.AllowAnyMethod()
+				.AllowCredentials()
+				.SetIsOriginAllowed(_ => true));
+
 			app.UseRequestLocalization(new RequestLocalizationOptions
 			{
 				DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture),
