@@ -46,7 +46,7 @@
   <PropertyGroup>
     
     <ArkToolsCoreVersion>2.0.4</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>2.0.4</FtpClientGroupVersion>
+    <FtpClientGroupVersion>2.0.5</FtpClientGroupVersion>
     <ResourceWatcherGroupVersion>2.0.4</ResourceWatcherGroupVersion>
     
     <EntityFrameworkGroupVersion>2.0.4</EntityFrameworkGroupVersion>

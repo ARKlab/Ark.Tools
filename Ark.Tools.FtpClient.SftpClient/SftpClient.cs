@@ -88,9 +88,8 @@ namespace Ark.Tools.FtpClient.SftpClient
 
                 var result = new List<FtpEntry>();
 
-                using (var sFtpClient = new Renci.SshNet.SftpClient(new ConnectionInfo(Host, Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password))))
+                using (var sFtpClient = _getSFtpClient())
                 {
-
                     sFtpClient.Connect();
                     var rawLs = await sFtpClient.ListDirectoryAsync(path);
                     _logger.Trace("Starting parsing response for path {0}", path);
@@ -182,7 +181,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
             using (var linked = CancellationTokenSource.CreateLinkedTokenSource(ctk, cts.Token))
             {
-                using (var sFtpClient = new Renci.SshNet.SftpClient(new ConnectionInfo(Host, Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password))))
+                using (var sFtpClient = _getSFtpClient())
                 {
                     sFtpClient.Connect();
                     using (var ms = new MemoryStream())
@@ -200,7 +199,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
             using (var linked = CancellationTokenSource.CreateLinkedTokenSource(ctk, cts.Token))
             {
-                using (var sFtpClient = new Renci.SshNet.SftpClient(new ConnectionInfo(Host, Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password))))
+                using (var sFtpClient = _getSFtpClient())
                 {
                     sFtpClient.Connect();
                     using (var ms = new MemoryStream(content))
@@ -212,6 +211,18 @@ namespace Ark.Tools.FtpClient.SftpClient
         }
 
         #region private helpers
+
+        private Renci.SshNet.SftpClient _getSFtpClient()
+        {
+            var connInfo = new ConnectionInfo(Host, Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
+            connInfo.Timeout = TimeSpan.FromMinutes(5);
+            return new Renci.SshNet.SftpClient(connInfo)
+            {
+                KeepAliveInterval = TimeSpan.FromMinutes(1),
+                OperationTimeout = TimeSpan.FromMinutes(5)
+            };
+        }
+
         private List<FtpEntry> _parse(IEnumerable<SftpFile> files, CancellationToken ctk)
         {
             var result = new List<FtpEntry>();
