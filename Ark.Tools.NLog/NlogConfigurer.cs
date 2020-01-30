@@ -12,7 +12,7 @@ using System.Linq;
 using NLog.Common;
 
 namespace Ark.Tools.NLog
-{ 
+{
 
     public static class NLogConfigurer
     {
@@ -86,6 +86,32 @@ namespace Ark.Tools.NLog
                         .WithDatabaseRule("*", LogLevel.Info)
                         .WithMailRule("*", LogLevel.Fatal)
                         ;
+        }
+
+        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, string smtpConnectionString, bool async = true)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                @this
+                    .WithConsoleTarget(false)
+                    .WithConsoleRule("*", LogLevel.Debug);
+             }
+            else
+            {
+                @this
+                    .WithDatabaseTarget(logTableName, connectionString, async)
+                    .WithDatabaseRule("*", LogLevel.Info);
+            }
+
+            if (!string.IsNullOrWhiteSpace(smtpConnectionString))
+            {
+                @this
+                    .WithMailTarget(mailFrom, mailTo , smtpConnectionString, async: false)
+                    .WithMailRule("*", LogLevel.Fatal)
+                    ;
+            }
+
+            return @this;
         }
 
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, bool async = true, bool disableMailInDevelop = true)

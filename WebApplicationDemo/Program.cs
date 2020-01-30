@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Ark.Tools.NLog;
 using Ark.Tools.Nodatime;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -82,6 +83,14 @@ namespace WebApplicationDemo
 				.AddCommandLine(args)
 				.Build()
 				;
+
+			var ns = "WebApplicationDemo";
+
+			NLogConfigurer.For(ns)
+			   .WithArkDefaultTargetsAndRules(ns.Replace('.', '_'), cfg.GetConnectionString("NLog.Database")
+											   , "noreply@ark-energy.eu", cfg["NLog:NotificationList"]
+											   , cfg.GetConnectionString("NLog.Smtp"))
+				.Apply();
 		}
 
 		public static async Task Main(string[] args)

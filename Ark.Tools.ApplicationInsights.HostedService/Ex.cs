@@ -6,6 +6,8 @@ using System.Reflection;
 using Microsoft.ApplicationInsights.WorkerService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.ApplicationInsights.SnapshotCollector;
+using Microsoft.ApplicationInsights.Extensibility;
+using Ark.Tools.AspNetCore.ApplicationInsights;
 
 namespace Ark.Tools.ApplicationInsights.HostedService
 {
@@ -15,6 +17,7 @@ namespace Ark.Tools.ApplicationInsights.HostedService
         {
             return builder.ConfigureServices((ctx, services) =>
             {
+                services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
 
                 services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
