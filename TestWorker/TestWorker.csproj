@@ -13,10 +13,10 @@
     <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer" Version="2.9.1" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
 
-    <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.12.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.12.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer" Version="2.12.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.12.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.12.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.12.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer" Version="2.12.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.12.1" />
   </ItemGroup>
 
   <ItemGroup>

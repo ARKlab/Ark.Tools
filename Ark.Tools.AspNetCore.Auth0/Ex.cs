@@ -3,6 +3,7 @@
 using Ark.Tools.AspNetCore.Auth0;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore
@@ -23,32 +24,10 @@ namespace Ark.Tools.AspNetCore
         /// <param name="clientSecret">The paired WebApp secret</param>
         /// <param name="authzApiUrl">The base uri of the AuthorizationExtension API</param>
         /// <param name="enableIdTokenAuthentication">If true, enable support authentication using also IdToken from the paired WebApp.</param>
+        [Obsolete("This method has been deprecated.", true)]
         public static void AddAuth0ApiAuthenticationWithAuthz(this AuthenticationBuilder builder, string domain, string apiAudience, string clientId, string clientSecret, string authzApiUrl, bool enableIdTokenAuthentication = false)
         {
-            if (enableIdTokenAuthentication)
-            {
-                builder.AddJwtBearer(opt =>
-                {
-                    opt.Audience = clientId;
-                    opt.Authority = $"https://{domain}/";
-                    opt.SaveToken = true;
-                    opt.Events = new Auth0IdTokenJwtEvents(domain, clientId, clientSecret);
-                    opt.Events.OnAuthenticationFailed = ctx =>
-                    {
-                        ctx.Exception = null;
-                        ctx.NoResult();
-                        return Task.CompletedTask;
-                    };
-                });
-            }
 
-            builder.AddJwtBearer(opt =>
-            {
-                opt.Audience = apiAudience;
-                opt.Authority = $"https://{domain}/";
-                opt.SaveToken = true;
-                opt.Events = new Auth0AccessTokenJwtEvents(domain, clientId, clientSecret, authzApiUrl);                
-            });
         }
     }
 }

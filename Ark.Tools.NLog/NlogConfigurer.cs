@@ -10,6 +10,7 @@ using System.Text;
 using System;
 using System.Linq;
 using NLog.Common;
+using System.Diagnostics;
 
 namespace Ark.Tools.NLog
 {
@@ -88,15 +89,16 @@ namespace Ark.Tools.NLog
                         ;
         }
 
-        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, string smtpConnectionString, bool async = true)
+        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, string smtpConnectionString, bool consoleEnabled = false,  bool async = true)
         {
-            if (string.IsNullOrWhiteSpace(connectionString))
+            if (consoleEnabled)
             {
                 @this
-                    .WithConsoleTarget(false)
+                    .WithConsoleTarget(async)
                     .WithConsoleRule("*", LogLevel.Debug);
-             }
-            else
+            }
+
+            if (!string.IsNullOrWhiteSpace(connectionString))
             {
                 @this
                     .WithDatabaseTarget(logTableName, connectionString, async)
@@ -108,6 +110,14 @@ namespace Ark.Tools.NLog
                 @this
                     .WithMailTarget(mailFrom, mailTo , smtpConnectionString, async: false)
                     .WithMailRule("*", LogLevel.Fatal)
+                    ;
+            }
+
+            if (Debugger.IsAttached)
+            {
+                @this
+                    .WithDebuggerTarget()
+                    .WithDebuggerRule()
                     ;
             }
 
@@ -175,7 +185,7 @@ namespace Ark.Tools.NLog
 
         public class Configurer
         {
-            private LoggingConfiguration _config = new LoggingConfiguration();
+            internal LoggingConfiguration _config = new LoggingConfiguration();
             private readonly string _appName;
             private bool _throwExceptions = false;
 
@@ -184,6 +194,20 @@ namespace Ark.Tools.NLog
                 _appName = appName;
                 ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(Configurer).Assembly);
             }
+
+            #region debugger
+            public Configurer WithDebuggerTarget()
+            {
+                _config.AddTarget("Debugger", new DebuggerTarget("Debugger"));
+                return this;
+            }
+
+            public Configurer WithDebuggerRule()
+            {
+                _config.AddRuleForAllLevels("Debugger");
+                return this;
+            }
+            #endregion
 
             #region targets
             public Configurer WithConsoleTarget(bool async = true)
@@ -251,7 +275,7 @@ VALUES
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("TimestampTz", @"${date:format=dd-MMM-yyyy h\:mm\:ss.fff tt K}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("LogLevel", @"${level:uppercase=true}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Logger", @"${logger}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Callsite", @"${callsite:filename=true}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Callsite", @"${when:when=level>=LogLevel.Error:inner=${callsite:filename=true}}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", _appName));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("RequestID", @"${mdlc:item=RequestID}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));

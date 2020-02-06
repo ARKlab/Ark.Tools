@@ -3,11 +3,14 @@ using EnsureThat;
 using WebApplicationDemo.Dto;
 using System.Threading;
 using System.Threading.Tasks;
+using NLog;
 
 namespace WebApplicationDemo.Api.Queries
 {
     public class Get_EntityByIdQueryHandler : IQueryHandler<Get_EntityByIdQuery.V1, Entity.V1.Output>
     {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
         public Entity.V1.Output Execute(Get_EntityByIdQuery.V1 query)
         {
             return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
@@ -24,6 +27,8 @@ namespace WebApplicationDemo.Api.Queries
             {
                 EntityId = query.EntityId
             };
+
+            _logger.Info($"Entity {entity.EntityId} found!");
 
             return await Task.FromResult(entity);
         }

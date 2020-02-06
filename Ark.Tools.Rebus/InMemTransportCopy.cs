@@ -46,7 +46,7 @@ namespace Ark.Tools.Rebus
 
             if (nextMessage == null) return null;
 
-            context.OnAborted(() =>
+            context.OnAborted(ctx =>
             {
                 _network.Deliver(_inputQueueAddress, nextMessage, alwaysQuiet: true);
             });

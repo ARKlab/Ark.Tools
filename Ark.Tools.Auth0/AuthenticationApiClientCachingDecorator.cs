@@ -56,6 +56,9 @@ namespace Ark.Tools.Auth0
         }
 
         #region Passthrough
+
+        public Uri BaseUri => _inner.BaseUri;
+
         public AuthorizationUrlBuilder BuildAuthorizationUrl()
         {
             return _inner.BuildAuthorizationUrl();
@@ -86,21 +89,6 @@ namespace Ark.Tools.Auth0
             return _inner.GetImpersonationUrlAsync(request);
         }
 
-        public ApiInfo GetLastApiInfo()
-        {
-            return _inner.GetLastApiInfo();
-        }
-
-        public Task<string> GetSamlMetadataAsync(string clientId)
-        {
-            return _inner.GetSamlMetadataAsync(clientId);
-        }
-
-        public Task<string> GetWsFedMetadataAsync()
-        {
-            return _inner.GetWsFedMetadataAsync();
-        }
-
         public Task<SignupUserResponse> SignupUserAsync(SignupUserRequest request)
         {
             return _inner.SignupUserAsync(request);
@@ -114,11 +102,6 @@ namespace Ark.Tools.Auth0
         public Task<PasswordlessSmsResponse> StartPasswordlessSmsFlowAsync(PasswordlessSmsRequest request)
         {
             return _inner.StartPasswordlessSmsFlowAsync(request);
-        }
-
-        public Task UnlinkUserAsync(UnlinkUserRequest request)
-        {
-            return _inner.UnlinkUserAsync(request);
         }
 
         #endregion

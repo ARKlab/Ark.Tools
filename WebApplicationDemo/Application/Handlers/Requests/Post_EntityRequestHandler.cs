@@ -1,5 +1,6 @@
 ﻿using Ark.Tools.Solid;
 using EnsureThat;
+using NLog;
 using System.Threading;
 using System.Threading.Tasks;
 using WebApplicationDemo.Api.Requests;

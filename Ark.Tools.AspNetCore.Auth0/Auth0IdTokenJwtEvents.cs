@@ -12,9 +12,11 @@ using Auth0.ManagementApi;
 using Auth0.AuthenticationApi;
 using Auth0.ManagementApi.Models;
 using Newtonsoft.Json;
+using System;
 
 namespace Ark.Tools.AspNetCore.Auth0
 {
+    [Obsolete]
     public class Auth0IdTokenJwtEvents : JwtBearerEvents
     {
         private readonly string _domain;
@@ -65,11 +67,11 @@ namespace Ark.Tools.AspNetCore.Auth0
                     }
                     else
                     {
-                        var auth0 = new AuthenticationApiClient(_domain);
-                        profile = await auth0.Connection.PostAsync<User>("tokeninfo", new
-                        {
-                            id_token = token
-                        }, null, null, null, null, null);
+                        //var auth0 = new AuthenticationApiClient(_domain);
+                        //profile = await auth0.Connection.PostAsync<User>("tokeninfo", new
+                        //{
+                        //    id_token = token
+                        //}, null, null, null, null, null);
                     }
 
                     if (profile != null)

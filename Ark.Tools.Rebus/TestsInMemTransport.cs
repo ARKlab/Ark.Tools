@@ -18,7 +18,7 @@ namespace Ark.Tools.Rebus
 
         public override Task<TransportMessage> Receive(ITransactionContext context, CancellationToken cancellationToken)
         {
-            context.OnCompleted(() =>
+            context.OnCompleted(ctx =>
             {
                 Interlocked.Decrement(ref InProcessMessageCount);
                 return Task.CompletedTask;
