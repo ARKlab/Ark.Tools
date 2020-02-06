@@ -111,6 +111,17 @@ namespace ProblemDetailsSample.Controllers.Private
         }
 
         /// <summary>
+        /// Returns Generic Exception
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet(@"GenericException")]
+        public IActionResult Get_GenericException()
+        {
+            throw new Exception("This is a Generic Exception thrown from an Web API controller.");
+        }
+
+
+        /// <summary>
         /// Returns a BadRequest with Payload
         /// </summary>
         /// <param name="body"></param>

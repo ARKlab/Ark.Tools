@@ -15,13 +15,20 @@ namespace Ark.Tools.AspNetCore.Startup
 		{
 			var model = action.Selectors.OfType<SelectorModel>().SingleOrDefault();
 			var mm = model?.EndpointMetadata.OfType<HttpMethodMetadata>().SingleOrDefault();
+
 			if (mm != null
 				&& _consumeMethods.Intersect(mm.HttpMethods).Any()
-				&& action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any()))
+				&& action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any())
+				&& !action.Filters.OfType<ConsumesAttribute>().Any()
+				&& !action.Controller.Filters.OfType<ConsumesAttribute>().Any())
 			{
 				action.Filters.Add(new ConsumesAttribute("application/json"));
 			}
-			if (!_isODataController(action) && !action.Filters.OfType<ProducesAttribute>().Any())
+
+			if (!_isODataController(action)
+				&& !action.Filters.OfType<ProducesAttribute>().Any()
+				&& !action.Controller.Filters.OfType<ProducesAttribute>().Any()
+				)
 				action.Filters.Add(new ProducesAttribute("application/json"));
 		}
 

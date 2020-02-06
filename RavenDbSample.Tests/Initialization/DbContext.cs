@@ -82,7 +82,7 @@ namespace RavenDBSample.Tests
 		//}
 
 		[BeforeScenario]
-		public void ResetDatabaseOnEachScenarioCollection(FeatureContext fctx)
+		public void ResetDatabaseOnEachScenarioCollection()
 		{
 			_documentStore.DeleteCollection("BaseOperations");
 			_documentStore.DeleteCollection("Audits");

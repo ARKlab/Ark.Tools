@@ -150,7 +150,7 @@ namespace Ark.Tools.AspNetCore.Startup
 				c.DocExpansion(DocExpansion.None);
 				c.EnableDeepLinking();
 				c.EnableFilter();
-				c.MaxDisplayedTags(5);
+				c.MaxDisplayedTags(100);
 				c.ShowExtensions();
 				c.EnableValidator();
 			});

@@ -13,29 +13,35 @@ namespace Ark.Tools.Http
 {
     public class LZ4MessagePackMediaTypeFormatter : MediaTypeFormatter
     {
-        private readonly IFormatterResolver _resolver;
+        private MessagePackSerializerOptions _options;
 
         public static MediaTypeHeaderValue DefaultMediaType { get; } = new MediaTypeHeaderValue("application/x.msgpacklz4");
 
         public LZ4MessagePackMediaTypeFormatter()
-            : this(MessagePackSerializer.DefaultResolver)
+            : this(MessagePackSerializer.DefaultOptions.Resolver)
         {
         }
 
         public LZ4MessagePackMediaTypeFormatter(IFormatterResolver resolver)
         {
-            _resolver = resolver;
             SupportedMediaTypes.Add(DefaultMediaType);
+
+            if (resolver == null)
+                _options = MessagePackSerializer.DefaultOptions;
+            else
+                _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
+
+            _options = _options.WithCompression(MessagePackCompression.Lz4Block);
         }
 
         public override bool CanReadType(Type type)
         {
-            return _resolver.GetFormatterDynamic(type) != null;
+            return _options.Resolver.GetFormatterDynamic(type) != null;
         }
 
         public override bool CanWriteType(Type type)
         {
-            return _resolver.GetFormatterDynamic(type) != null;
+            return _options.Resolver.GetFormatterDynamic(type) != null;
         }
 
         public override Task WriteToStreamAsync(Type type, object value, Stream writeStream, HttpContent content, TransportContext transportContext)
@@ -49,11 +55,10 @@ namespace Ark.Tools.Http
                 throw new ArgumentNullException(nameof(writeStream));
             }
 
-            LZ4MessagePackSerializer.NonGeneric.Serialize(type, writeStream, value, _resolver);
-            return Task.FromResult(0);
+            return MessagePackSerializer.SerializeAsync(type, writeStream, value, _options);
         }
 
-        public override Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger)
+        public override async Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger)
         {
             if (type == null)
             {
@@ -64,8 +69,7 @@ namespace Ark.Tools.Http
                 throw new ArgumentNullException(nameof(readStream));
             }
 
-            var value = LZ4MessagePackSerializer.NonGeneric.Deserialize(type, readStream, _resolver);
-            return Task.FromResult(value);
+            return await MessagePackSerializer.DeserializeAsync(type, readStream, _options);
         }
     }
 }

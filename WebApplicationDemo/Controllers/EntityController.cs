@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ark.Tools.Core;
@@ -102,6 +103,16 @@ namespace WebApplicationDemo.Controllers
         {
             throw new EntityNotFoundException("Entyty not here.");
 
+        }
+
+        /// <summary>
+        /// Returns Generic Exception
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet(@"GenericException")]
+        public IActionResult Get_GenericException()
+        {
+            throw new Exception("This is a Generic Exception thrown from an Web API controller.");
         }
 
         /// <summary>

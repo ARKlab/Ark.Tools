@@ -18,7 +18,7 @@ namespace Ark.Tools.Http
 
             using (var stream = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
-                return LZ4MessagePackSerializer.Deserialize<T>(stream, formatterResolver);
+                return await MessagePackSerializer.DeserializeAsync<T>(stream);
             }
         }
 

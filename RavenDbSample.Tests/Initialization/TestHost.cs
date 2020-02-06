@@ -4,18 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System;
 using TechTalk.SpecFlow;
-using RavenDbSample;
-//using IntelliTect.AspNetCore.TestHost.WindowsAuth;
 using Ark.Tools.Http;
 using Flurl.Http;
 using Flurl.Http.Configuration;
 using System.Net.Http;
 using Flurl;
-//using netDumbster.smtp;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-//using Rebus.Transport.InMem;
-//using Rebus.Persistence.InMem;
 
 namespace RavenDbSample.Tests
 {

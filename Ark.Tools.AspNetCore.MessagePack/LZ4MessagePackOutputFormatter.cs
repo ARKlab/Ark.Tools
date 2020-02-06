@@ -27,7 +27,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
             else
                 _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
 
-            _options.WithCompression(MessagePackCompression.Lz4Block);
+            _options = _options.WithCompression(MessagePackCompression.Lz4Block);
         }
 
         protected override bool CanWriteType(Type type)
