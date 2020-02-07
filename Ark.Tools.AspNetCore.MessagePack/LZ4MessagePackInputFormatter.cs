@@ -15,7 +15,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
     public class LZ4MessagePackInputFormatter : InputFormatter
     {
         const string ContentType = "application/x.msgpacklz4";
-        
+
         readonly MessagePackSerializerOptions _options;
 
         public LZ4MessagePackInputFormatter()
@@ -47,14 +47,14 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
             var request = context.HttpContext.Request;
 
             if (!request.Body.CanSeek)
-            {                
-				request.EnableBuffering();
+            {
+                request.EnableBuffering();
 
                 await request.Body.DrainAsync(CancellationToken.None);
                 request.Body.Seek(0L, SeekOrigin.Begin);
             }
 
-            var result = MessagePackSerializer.Deserialize(context.ModelType, request.Body, _options);
+            var result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, _options);
 
             return await InputFormatterResult.SuccessAsync(result);
         }

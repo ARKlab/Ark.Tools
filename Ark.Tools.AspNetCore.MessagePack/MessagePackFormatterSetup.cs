@@ -18,6 +18,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 
         public void Configure(MvcOptions opt)
         {
+            opt.FormatterMappings.SetMediaTypeMappingForFormat("mplz4", MediaTypeHeaderValue.Parse("application/x.msgpacklz4"));
             opt.FormatterMappings.SetMediaTypeMappingForFormat("mp", MediaTypeHeaderValue.Parse("application/x-msgpack"));
 
             opt.OutputFormatters.Add(new MessagePackOutputFormatter(_resolver));

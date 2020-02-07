@@ -10,7 +10,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
     public class LZ4MessagePackOutputFormatter : OutputFormatter
     {
         const string ContentType = "application/x.msgpacklz4";
-        
+
         readonly MessagePackSerializerOptions _options;
 
         public LZ4MessagePackOutputFormatter()
@@ -34,7 +34,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
         {
             return _options.Resolver.GetFormatterDynamic(type) != null;
         }
-        
+
         public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
         {
             // 'object' want to use anonymous type serialize, etc...
@@ -47,14 +47,12 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 }
                 else
                 {
-                    MessagePackSerializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _options);
-                    return Task.CompletedTask;
+                    return MessagePackSerializer.SerializeAsync(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _options);
                 }
             }
             else
             {
-                MessagePackSerializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, _options);
-                return Task.CompletedTask;
+                return MessagePackSerializer.SerializeAsync(context.ObjectType, context.HttpContext.Response.Body, context.Object, _options);
             }
         }
     }
