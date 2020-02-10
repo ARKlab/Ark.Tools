@@ -173,7 +173,6 @@ namespace Ark.Tools.AspNetCore.Startup
 			{
 				o.AddAspNetCore().AddControllerActivation();
 				o.CrossWire<RequestTelemetry>();
-				o.CrossWire<TelemetryClient>();
 			});
 
 			//services.EnableSimpleInjectorCrossWiring(Container);
@@ -232,6 +231,7 @@ namespace Ark.Tools.AspNetCore.Startup
 		protected virtual void RegisterContainer(IApplicationBuilder app)
 		{
 			app.UseSimpleInjector(Container);
+			Container.RegisterSingleton(() => app.ApplicationServices.GetRequiredService<TelemetryClient>());
 			Container.RegisterAuthorizationAspNetCoreUser(app);
 		}
 	}
