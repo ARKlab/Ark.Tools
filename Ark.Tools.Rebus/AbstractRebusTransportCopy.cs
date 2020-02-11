@@ -34,7 +34,7 @@ namespace Ark.Tools.Rebus
             {
                 var messages = new ConcurrentQueue<OutgoingMessage>();
 
-                context.OnCommitted(async ctx => await SendOutgoingMessages(messages, context));
+                context.OnCommitted(async () => await SendOutgoingMessages(messages, context));
 
                 return messages;
             });
