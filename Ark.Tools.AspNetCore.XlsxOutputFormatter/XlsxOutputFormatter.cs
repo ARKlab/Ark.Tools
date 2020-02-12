@@ -8,6 +8,7 @@ using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -126,9 +127,12 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter
                     }
                     else FormatDocument(document);
                 }
-
-                await document.WriteToStream(response.Body);
-
+                using (var ms = new MemoryStream())
+                {
+                    await document.WriteToStream(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
+                    await ms.CopyToAsync(response.Body);
+                }
             }
         }
 
