@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using NLog;
@@ -40,8 +41,8 @@ namespace Ark.Tools.AspNetCore
                 logger = LogManager.GetCurrentClassLogger();
 
             Exception e = context.Exception;
-            var requestUri = context.HttpContext.Request.Path;
-            var requestMethod = context.HttpContext.Request.Method ?? "METHOD_NOT_SET";
+            var requestUri = context.HttpContext?.Request?.Path ?? new PathString();
+            var requestMethod = context.HttpContext?.Request?.Method ?? "METHOD_NOT_SET";
             logger.Error(e, "Exception for {0} - {1}: {2}", requestMethod, requestUri, e.Message);
         }
     }
