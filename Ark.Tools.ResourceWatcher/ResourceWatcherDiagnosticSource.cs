@@ -187,22 +187,70 @@ namespace Ark.Tools.ResourceWatcher
         #endregion
 
         #region ProcessResource
-        public Activity ProcessResourceStart(int idx, int total, ProcessContext processContext)
+        public Activity ProcessResourceStart(ProcessContext processContext)
         {
             _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
                 , processContext.CurrentInfo.ResourceId
                 , processContext.CurrentInfo.Modified
                 , processContext.LastState?.Modified
                 , processContext.LastState?.RetryCount
-                , idx
-                , total
+                , processContext.Index
+                , processContext.Total
             );
 
             Activity activity = _start("ProcessResource", () => new
             {
-                Idx = idx,
-                Total = total,
                 ProcessContext = processContext,
+                Tenant = _tenant,
+            });
+
+            return activity;
+        }
+
+        public void ProcessResourceFailed(Activity activity, ProcessContext pc, bool isBanned, Exception ex)
+        {
+            var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
+            _logger.Log(lvl, ex, $"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" process Failed");
+
+            _stop(activity, () => new
+            {
+                ProcessContext = pc,
+                Exception = ex,
+                Tenant = _tenant,
+            });
+        }
+
+        public void ProcessResourceSuccessful(Activity activity, ProcessContext pc)
+        {
+            //_setTags(activity, processType.ToString(), processType.ToString());
+
+            _stop(activity, () => new
+            {
+                ProcessContext = pc,
+                Tenant = _tenant,
+            });
+
+            if (pc.ResultType == ResultType.NoNewData)
+            {
+                _logger.Info($"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" No payload retrived, so no new state. Generally due to a same-checksum");
+            }
+            else if (pc.ResultType == ResultType.NoAction)
+            {
+                _logger.Info($"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" No action has been triggered and payload has not been retrieved. We do not change the state");
+            }
+            else if (pc.ResultType == ResultType.Normal)
+            {
+                _logger.Info($"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" handled {(pc.NewState.RetryCount == 0 ? "" : "not ")}successfully {(activity != null ? " in" + (activity.Duration.ToString()) : "")}");
+            }
+        }
+        #endregion
+
+        #region FetchResource
+        public Activity FetchResourceStart(ProcessContext pc)
+        {
+            Activity activity = _start("FetchResource", () => new
+            {
+                ProcessContext = pc,
                 Tenant = _tenant,
             }
             );
@@ -210,50 +258,30 @@ namespace Ark.Tools.ResourceWatcher
             return activity;
         }
 
-        public void ProcessResourceFailed(Activity activity, int idx, int total, ProcessContext processContext, bool isBanned, Exception ex)
+        public void FetchResourceFailed(Activity activity, ProcessContext pc, Exception ex)
         {
-            var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
-            _logger.Log(lvl, ex, $"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" process Failed");
-
             _stop(activity, () => new
             {
-                Idx = idx,
-                Total = total,
-                ProcessContext = processContext,
-                IsBanned = isBanned,
+                ProcessContext = pc,
                 Exception = ex,
                 Tenant = _tenant,
             }
             );
         }
 
-        public void ProcessResourceSuccessful(Activity activity, int idx, int total, ProcessContext processContext)
+        public void FetchResourceSuccessful(Activity activity, ProcessContext pc)
         {
             //_setTags(activity, processType.ToString(), processType.ToString());
 
             _stop(activity, () => new
             {
-                Idx = idx,
-                Total = total,
-                ProcessContext = processContext,
+                ProcessContext = pc,
                 Tenant = _tenant,
             }
             );
-
-            if (processContext.ResultType == ResultType.NoNewData)
-            {
-                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" No payload retrived, so no new state. Generally due to a same-checksum");
-            }
-            else if (processContext.ResultType == ResultType.NoAction)
-            {
-                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" No action has been triggered and payload has not been retrieved. We do not change the state");
-            }
-            else if (processContext.ResultType == ResultType.Normal)
-            {
-                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" handled {(processContext.NewState.RetryCount == 0 ? "" : "not ")}successfully {(activity != null ? " in" + (activity.Duration.ToString()) : "")}");
-            }
         }
         #endregion
+
 
         #region Exception
         public void ProcessResourceSaveFailed(string resourceId, Exception ex)

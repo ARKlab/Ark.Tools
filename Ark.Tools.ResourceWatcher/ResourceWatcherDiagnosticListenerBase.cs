@@ -131,6 +131,22 @@ namespace Ark.Tools.ResourceWatcher
 
         }
         #endregion
+        
+        #region FetchResource
+
+        [DiagnosticName("Ark.Tools.ResourceWatcher.FetchResource.Start")]
+        public virtual void OnFetchResourceStart()
+        {
+
+        }
+
+        [DiagnosticName("Ark.Tools.ResourceWatcher.FetchResource.Stop")]
+        public virtual void OnFetchResourceStop(string tenant, ProcessContext processContext, Exception exception)
+        {
+
+        }
+
+        #endregion
 
         #region ProcessResource
 
@@ -141,10 +157,12 @@ namespace Ark.Tools.ResourceWatcher
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
-        public virtual void OnProcessResourceStop(string tenant, int idx, int total, ProcessContext processContext, bool isBanned, Exception exception)
+        public virtual void OnProcessResourceStop(string tenant, ProcessContext processContext, Exception exception)
         {
 
         }
+
+        #endregion
 
         #region IDisposable Support
         private bool _disposedValue = false; // To detect redundant calls
@@ -168,7 +186,6 @@ namespace Ark.Tools.ResourceWatcher
         {
             Dispose(true);
         }
-        #endregion
         #endregion
     }
 }

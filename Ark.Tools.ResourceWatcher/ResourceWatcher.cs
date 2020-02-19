@@ -74,7 +74,7 @@ namespace Ark.Tools.ResourceWatcher
 
         protected virtual void _onBeforeStart()
         {
-        }        
+        }
 
         public async Task RunOnce(CancellationToken ctk = default)
         {
@@ -158,14 +158,19 @@ namespace Ark.Tools.ResourceWatcher
                 var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
 
                 var evaluated = _createEvalueteList(list, states).ToList();
-                
+
                 _diagnosticSource.CheckStateSuccessful(activityCheckState, evaluated);
 
                 //Process
                 _logger.Info($"Found {list.Count} resources to process with parallelism {_config.DegreeOfParallelism}");
 
+                var total = evaluated.Count;
                 var tasks = evaluated.Parallel((int)_config.DegreeOfParallelism, async (i, x) =>
-                    await _processEntry((int)i+1, evaluated.Count, x, ctk));
+                {
+                    x.Index = (int)i+1;
+                    x.Total = total;
+                    await _processEntry(x, ctk);
+                });
 
                 await Task.WhenAll(tasks).ConfigureAwait(false);
 
@@ -227,26 +232,45 @@ namespace Ark.Tools.ResourceWatcher
         protected abstract Task<T> _retrievePayload(IResourceMetadata info, IResourceTrackedState lastState, CancellationToken ctk = default);
         protected abstract Task _processResource(ChangedStateContext<T> context, CancellationToken ctk = default);
 
-        private async Task _processEntry(int idx, int total, ProcessContext processContext, CancellationToken ctk = default)
+        private async Task<T> _fetchResource(ProcessContext pc, CancellationToken ctk = default)
         {
-            var info = processContext.CurrentInfo;
-            var lastState = processContext.LastState;
-            var dataType = processContext.ProcessType;
+            var info = pc.CurrentInfo;
+            var lastState = pc.LastState;
 
-            if (processContext.ProcessType == ProcessType.NothingToDo || processContext.ProcessType == ProcessType.Banned)
+            var activity = _diagnosticSource.FetchResourceStart(pc);
+
+            try
             {
-                processContext.ResultType = ResultType.Skipped;
-                _logger.Info($"({idx}/{total}) ResourceId=\"{processContext.CurrentInfo.ResourceId}\" Process Type is: {processContext.ProcessType} - Skipped");
+                var res = await _retrievePayload(info, lastState, ctk);
+                _diagnosticSource.FetchResourceSuccessful(activity, pc);
+                return res;
+            } catch (Exception ex)
+            {
+                _diagnosticSource.FetchResourceFailed(activity, pc, ex);
+                throw;
+            }
+        }
+
+        private async Task _processEntry(ProcessContext pc, CancellationToken ctk = default)
+        {
+            var info = pc.CurrentInfo;
+            var lastState = pc.LastState;
+            var dataType = pc.ProcessType;
+            
+            if (pc.ProcessType == ProcessType.NothingToDo || pc.ProcessType == ProcessType.Banned)
+            {
+                pc.ResultType = ResultType.Skipped;
+                _logger.Info($"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" Process Type is: {pc.ProcessType} - Skipped");
                 return;
             }
 
             try
             {
-                var processActivity = _diagnosticSource.ProcessResourceStart(idx, total, processContext);
+                var processActivity = _diagnosticSource.ProcessResourceStart(pc);
 
-                AsyncLazy<T> payload = new AsyncLazy<T>(() => _retrievePayload(info, lastState, ctk));
+                AsyncLazy<T> payload = new AsyncLazy<T>(() => _fetchResource(pc, ctk));
 
-                var state = processContext.NewState = new ResourceState()
+                var state = pc.NewState = new ResourceState()
                 {
                     Tenant = _config.Tenant,
                     ResourceId = info.ResourceId,
@@ -260,7 +284,7 @@ namespace Ark.Tools.ResourceWatcher
 
                 try
                 {
-                    processContext.ResultType = ResultType.Normal;
+                    pc.ResultType = ResultType.Normal;
                     IResourceState newState = default;
 
                     await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk).ConfigureAwait(false);
@@ -282,11 +306,11 @@ namespace Ark.Tools.ResourceWatcher
                                 state.CheckSum = newState.CheckSum;
                                 state.RetrievedAt = newState.RetrievedAt;
 
-                                processContext.ResultType = ResultType.Normal;
+                                pc.ResultType = ResultType.Normal;
                             }
                             else // no payload retrived, so no new state. Generally due to a same-checksum
                             {
-                                processContext.ResultType = ResultType.NoNewData;
+                                pc.ResultType = ResultType.NoNewData;
                             }
 
                             state.Extensions = info.Extensions;
@@ -295,15 +319,15 @@ namespace Ark.Tools.ResourceWatcher
                         }
                         else
                         {
-                            throw new NotSupportedException($"({idx}/{total}) ResourceId=\"{state.ResourceId}\" we cannot reach this point!");
+                            throw new NotSupportedException($"({pc.Index}/{pc.Total}) ResourceId=\"{state.ResourceId}\" we cannot reach this point!");
                         }
                     }
                     else // for some reason, no action has been and payload has not been retrieved. We do not change the state
                     {
-                        processContext.ResultType = ResultType.NoAction;
+                        pc.ResultType = ResultType.NoAction;
                     }
 
-                    _diagnosticSource.ProcessResourceSuccessful(processActivity, idx, total, processContext);
+                    _diagnosticSource.ProcessResourceSuccessful(processActivity, pc);
 
                     if(processActivity.Duration > _config.ResourceDurationNotificationLimit)
                         _diagnosticSource.ProcessResourceTookTooLong(info.ResourceId, processActivity);
@@ -311,13 +335,13 @@ namespace Ark.Tools.ResourceWatcher
                 catch (Exception ex)
                 {
                     state.LastException = ex;
-                    processContext.ResultType = ResultType.Error;
+                    pc.ResultType = ResultType.Error;
                     var isBanned = ++state.RetryCount == _config.MaxRetries;
 
                     state.Extensions = info.Extensions;
                     state.Modified = info.Modified;
 
-                    _diagnosticSource.ProcessResourceFailed(processActivity, idx, total, processContext, isBanned, ex);
+                    _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
                 }
 
                 await _stateProvider.SaveStateAsync(new[] { state }, ctk).ConfigureAwait(false);
@@ -376,6 +400,8 @@ namespace Ark.Tools.ResourceWatcher
         public ResourceState NewState { get; set; }
         public ProcessType ProcessType { get; set; }
         public ResultType ResultType { get; set; }
+        public int Index { get; set; }
+        public int Total { get; set; }
     }
 
     public sealed class ChangedStateContext<T> where T : IResourceState

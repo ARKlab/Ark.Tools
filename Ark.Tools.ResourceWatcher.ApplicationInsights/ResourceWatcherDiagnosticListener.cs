@@ -318,9 +318,9 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         }
         #endregion
 
-        #region ProcessResource
+        #region ProcessEntry
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
-        public override void OnProcessResourceStop(string tenant, int idx, int total, ProcessContext processContext, bool isBanned, Exception exception)
+        public override void OnProcessResourceStop(string tenant, ProcessContext processContext, Exception exception)
         {
             Activity currentActivity = Activity.Current;
 
@@ -340,8 +340,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
-            telemetry.Properties.Add("Idx/Total", idx.ToString() + "/" + total.ToString());
-            _propertiesProcessResource(telemetry, processContext);
+            _propertiesProcessContext(telemetry, processContext);
 
             //Exception
             if (exception != null)
@@ -352,14 +351,13 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                     Message = exception.Message
                 };
 
-				//Telemetry operation context
-				telemetryException.Context.Operation.Id = currentActivity.RootId;
-				telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
+                //Telemetry operation context
+                telemetryException.Context.Operation.Id = currentActivity.RootId;
+                telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
 
-				//Properties and metrics
-				telemetryException.Properties.Add("Tenant", tenant);
-                telemetryException.Properties.Add("Idx/Total", idx.ToString() + "/" + total.ToString());
-                _propertiesProcessResource(telemetryException, processContext);
+                //Properties and metrics
+                telemetryException.Properties.Add("Tenant", tenant);
+                _propertiesProcessContext(telemetryException, processContext);
 
                 this.Client.TrackException(telemetryException);
             }
@@ -367,29 +365,82 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             this.Client.TrackDependency(telemetry);
         }
 
-        private void _propertiesProcessResource(ISupportProperties data, ProcessContext processDataContext)
-        {
-            data.Properties.Add("ResourceId", processDataContext.CurrentInfo.ResourceId);
-            data.Properties.Add("ProcessType", processDataContext.ProcessType.ToString());
-            data.Properties.Add("ResultType", processDataContext.ResultType.ToString());
+        #endregion
 
-            if (processDataContext.LastState != default)
+        #region FetchResource
+        [DiagnosticName("Ark.Tools.ResourceWatcher.FetchResource.Stop")]
+        public override void OnFetchResourceStop(string tenant, ProcessContext processContext, Exception exception)
+        {
+            Activity currentActivity = Activity.Current;
+
+            var telemetry = new DependencyTelemetry
             {
-                data.Properties.Add("CheckSum_Old", processDataContext.LastState.CheckSum);
-                data.Properties.Add("Modified_Old", processDataContext.LastState.Modified.ToString());
+                Id = currentActivity.Id,
+                Duration = currentActivity.Duration,
+                Name = currentActivity.OperationName,
+                Success = exception == null ? true : false,
+                Timestamp = currentActivity.StartTimeUtc,
+                Type = _type
+            };
+
+            //Telemetry operation context
+            telemetry.Context.Operation.Id = currentActivity.RootId;
+            telemetry.Context.Operation.ParentId = currentActivity.ParentId;
+
+            //Properties and metrics
+            telemetry.Properties.Add("Tenant", tenant);
+            _propertiesProcessContext(telemetry, processContext);
+
+            //Exception
+            if (exception != null)
+            {
+                var telemetryException = new ExceptionTelemetry
+                {
+                    Exception = exception,
+                    Message = exception.Message
+                };
+
+                //Telemetry operation context
+                telemetryException.Context.Operation.Id = currentActivity.RootId;
+                telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
+
+                //Properties and metrics
+                telemetryException.Properties.Add("Tenant", tenant);
+                _propertiesProcessContext(telemetryException, processContext);
+
+                this.Client.TrackException(telemetryException);
             }
 
-            if (processDataContext.NewState != default)
-            {
-                data.Properties.Add("RetryCount", processDataContext.NewState.RetryCount.ToString());
-                data.Properties.Add("RetrievedAt", processDataContext.NewState.ToString());
-                data.Properties.Add("CheckSum", processDataContext.NewState.CheckSum);
-                data.Properties.Add("Modified", processDataContext.NewState.Modified.ToString());
+            this.Client.TrackDependency(telemetry);
+        }
+        #endregion
 
-                string extensionsString = JsonConvert.SerializeObject(processDataContext.NewState.Extensions, ArkDefaultJsonSerializerSettings.Instance);
+
+
+        private void _propertiesProcessContext(ISupportProperties data, ProcessContext pc)
+        {
+            data.Properties.Add("ResourceId", pc.CurrentInfo.ResourceId);
+            data.Properties.Add("ProcessType", pc.ProcessType.ToString());
+            data.Properties.Add("ResultType", pc.ResultType.ToString());
+
+            data.Properties.Add("Idx/Total", pc.Index.ToString() + "/" + pc.Total.ToString());
+
+            if (pc.LastState != default)
+            {
+                data.Properties.Add("CheckSum_Old", pc.LastState.CheckSum);
+                data.Properties.Add("Modified_Old", pc.LastState.Modified.ToString());
+            }
+
+            if (pc.NewState != default)
+            {
+                data.Properties.Add("RetryCount", pc.NewState.RetryCount.ToString());
+                data.Properties.Add("RetrievedAt", pc.NewState.ToString());
+                data.Properties.Add("CheckSum", pc.NewState.CheckSum);
+                data.Properties.Add("Modified", pc.NewState.Modified.ToString());
+
+                string extensionsString = JsonConvert.SerializeObject(pc.NewState.Extensions, ArkDefaultJsonSerializerSettings.Instance);
                 data.Properties.Add("Extensions", extensionsString);
             }
         }
-        #endregion
     }
 }
