@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
@@ -18,7 +18,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.12.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.12.1" />
   </ItemGroup>
