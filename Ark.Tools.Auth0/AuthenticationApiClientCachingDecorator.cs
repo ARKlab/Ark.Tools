@@ -4,11 +4,13 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Builders;
 using Auth0.AuthenticationApi.Models;
 using Auth0.Core.Http;
+using JWT.Algorithms;
 using JWT.Builder;
 using Microsoft.Extensions.Caching.Memory;
 using Polly;
@@ -49,6 +51,7 @@ namespace Ark.Tools.Auth0
         {
             var decode = new JwtBuilder()
                                 .DoNotVerifySignature()
+                                .WithAlgorithm(new HMACSHA256Algorithm())
                                 .Decode<IDictionary<string, object>>(accessToken);
 
             var res = DateTimeOffset.FromUnixTimeSeconds((long)decode["exp"]) - DateTimeOffset.UtcNow;
