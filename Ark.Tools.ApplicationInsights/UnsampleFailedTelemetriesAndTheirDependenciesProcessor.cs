@@ -5,9 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.ApplicationInsights
 {
@@ -104,6 +102,9 @@ namespace Ark.Tools.ApplicationInsights
         /// </returns>
         private bool _alwaysForwarded(ITelemetry item)
         {
+            if (item is MetricTelemetry)
+                return true;
+
             // Check if we need to log all exceptions
             if (AlwaysLogExceptions && item is ExceptionTelemetry)
                 return true;
@@ -121,7 +122,7 @@ namespace Ark.Tools.ApplicationInsights
             if (item is TraceTelemetry trace && trace.SeverityLevel.HasValue && trace.SeverityLevel.Value >= MinAlwaysTraceLevel)
                 return true;
 
-            // The event might might be kept until later
+            // The event might be kept until later
             return false;
         }
 

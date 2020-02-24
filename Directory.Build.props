@@ -45,16 +45,16 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>2.1.3</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>2.1.3</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>2.1.3</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>2.1.4</ArkToolsCoreVersion>
+    <FtpClientGroupVersion>2.1.4</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>2.1.4</ResourceWatcherGroupVersion>
     
-    <EntityFrameworkGroupVersion>2.1.3</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>2.1.3</RavenDbGroupVersion>
+    <EntityFrameworkGroupVersion>2.1.4</EntityFrameworkGroupVersion>
+    <RavenDbGroupVersion>2.1.4</RavenDbGroupVersion>
     
-    <AspNetCoreGroupVersion>2.1.8</AspNetCoreGroupVersion>
+    <AspNetCoreGroupVersion>2.1.9</AspNetCoreGroupVersion>
 
-    <EventSourcingGroupVersion>2.1.3</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
+    <EventSourcingGroupVersion>2.1.4</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
     <!--Groups SUFFIX -->
     <ArkToolsCoreVersionSuffix></ArkToolsCoreVersionSuffix>

@@ -19,7 +19,7 @@ namespace Ark.Tools.ApplicationInsights.HostedService
             {
                 services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
 
-                services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
+                //services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
                 {
                     o.AddAutoCollectedMetricExtractor = true;
