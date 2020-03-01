@@ -3,34 +3,50 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Core
 {
     public static class ParallellExtensions
     {
-        //Parallell by Partitioner
-        public static Task Parallel<T>(this IList<T> list, int degree, Func<T, Task> action)
+        public static Task Parallel<T>(this IList<T> list, int degree, Func<T, Task> action, CancellationToken ctk = default)
         {
-            return list.Parallel(degree, (i, x) => action?.Invoke(x));
+            return list.Parallel(degree, (i, x, ct) => action?.Invoke(x), ctk);
+        }
+        public static Task<IList<U>> Parallel<T,U>(this IList<T> list, int degree, Func<T, Task<U>> action, CancellationToken ctk = default)
+        {
+            return list.Parallel(degree, (i, x, ct) => action?.Invoke(x), ctk);
         }
 
-        public static Task Parallel<T>(this IList<T> list, int degree, Func<long, T, Task> action)
+        public static Task Parallel<T>(this IList<T> list, int degree, Func<int, T, Task> action, CancellationToken ctk = default)
         {
-            var tasks = System.Collections.Concurrent.Partitioner.Create(list, true)
-                                .GetOrderablePartitions(degree)
-                                .Select(async partition =>
-                                {
-                                    using (partition)
-                                    {
-                                        while (partition.MoveNext())
-                                        {
-                                            await action?.Invoke(partition.Current.Key, partition.Current.Value);
-                                        }
-                                    }
-                                });
+            return list.Parallel(degree, (i, x, ct) => action?.Invoke(i, x), ctk);
+        }
 
-            return Task.WhenAll(tasks);
+        public static Task<IList<U>> Parallel<T, U>(this IList<T> list, int degree, Func<int, T, Task<U>> action, CancellationToken ctk = default)
+        {
+            return list.Parallel(degree, (i, x, ct) => action?.Invoke(i, x), ctk);
+        }
+
+        public static Task Parallel<T>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task> action, CancellationToken ctk = default)
+        {
+            return list.ToObservable()
+                .Select((x, i) => Observable.Defer(() => Observable.FromAsync(ct => action(i, x, ct))))
+                .Merge(degree)
+                .ToList()
+                .ToTask(ctk);
+        }
+
+        public static Task<IList<U>> Parallel<T,U>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task<U>> action, CancellationToken ctk = default)
+        {
+            return list.ToObservable()
+                .Select((x, i) => Observable.Defer(() => Observable.FromAsync(ct => action(i, x, ct))))
+                .Merge(degree)
+                .ToList()
+                .ToTask(ctk);
         }
     }
 }

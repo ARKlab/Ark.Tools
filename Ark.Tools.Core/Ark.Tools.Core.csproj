@@ -2,7 +2,7 @@
 
 
   <PropertyGroup>
-    <TargetFrameworks>net461;netstandard2.0;net452;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -33,6 +33,7 @@
     <PackageReference Include="Ensure.That" Version="8.1.2" />
     <PackageReference Include="NodaTime" Version="2.4.7" />
     <PackageReference Include="Polly" Version="7.2.0" />
+    <PackageReference Include="System.Reactive" Version="4.3.2" />
   </ItemGroup>
 
   <ItemGroup>

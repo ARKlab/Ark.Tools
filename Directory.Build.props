@@ -56,7 +56,7 @@
 
     <EventSourcingGroupVersion>2.1.5</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
-    <!--Groups SUFFIX -->
+    <!-- Groups SUFFIX -->
     <ArkToolsCoreVersionSuffix></ArkToolsCoreVersionSuffix>
     <FtpClientGroupVersionSuffix></FtpClientGroupVersionSuffix>
     <ResourceWatcherGroupVersionSuffix></ResourceWatcherGroupVersionSuffix>
