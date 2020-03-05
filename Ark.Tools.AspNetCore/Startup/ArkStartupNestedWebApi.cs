@@ -11,7 +11,12 @@ namespace Ark.Tools.AspNetCore.Startup
     {
 
         public ArkStartupNestedWebApi(IConfiguration configuration) 
-            : base(configuration)
+            : this(configuration, true)
+        {
+        }
+
+        public ArkStartupNestedWebApi(IConfiguration configuration, bool useNewtonsoftJson)
+            : base(configuration, useNewtonsoftJson)
         {
         }
 

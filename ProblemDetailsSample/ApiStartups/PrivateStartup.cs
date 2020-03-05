@@ -21,7 +21,7 @@ namespace ProblemDetailsSample
     public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
     {
         public PrivateStartup(IConfiguration config)
-            : base(config)
+            : base(config, true)
         {
         }
 

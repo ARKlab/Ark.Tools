@@ -24,7 +24,7 @@ namespace WebApplicationDemo
 	public class Startup : ArkStartupWebApi
 	{
 		public Startup(IConfiguration configuration)
-			: base(configuration)
+			: base(configuration, false)
 		{
 		}
 
@@ -91,11 +91,11 @@ namespace WebApplicationDemo
 
 				c.AddSecurityRequirement(dict);
 
-				c.AddPolymorphismSupport<Polymorphic>();
+				c.AddPolymorphismSupport<Polymorphic>("kind");
 
 				//c.OperationFilter<SecurityRequirementsOperationFilter>();
 
-				c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
+				c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GetEntityPayload()); //Non funziona
 			});
 		}
 

@@ -40,7 +40,7 @@ namespace Ark.Tools.Nodatime
             }
             if (value is string s)
             {
-                var r = _pattern.WithCulture(culture).Parse(s);
+                var r = _pattern.WithCulture(culture ?? CultureInfo.InvariantCulture).Parse(s);
                 if (r.Success)
                     return r.Value;
                 // little hack, not the finest, but should work

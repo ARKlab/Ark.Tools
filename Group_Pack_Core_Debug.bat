@@ -30,6 +30,7 @@ setlocal
 
 "%MSBUILD%" "Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" 												/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj"									/t:Pack /p:Configuration=Debug
+"%MSBUILD%" "Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj"				/t:Pack /p:Configuration=Debug
 				
 "%MSBUILD%" "Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" 									/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.Solid\Ark.Tools.Solid.csproj" 													/t:Pack /p:Configuration=Debug
@@ -44,6 +45,9 @@ setlocal
 "%MSBUILD%" "Ark.Tools.Sql\Ark.Tools.Sql.csproj" 														/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.Sql.Oracle\Ark.Tools.Sql.Oracle.csproj" 											/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" 									/t:Pack /p:Configuration=Debug
+
+"%MSBUILD%" "Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" 									/t:Pack /p:Configuration=Debug
+"%MSBUILD%" "Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" 									/t:Pack /p:Configuration=Debug
 
 pause
 

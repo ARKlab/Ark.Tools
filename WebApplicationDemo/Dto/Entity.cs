@@ -1,6 +1,7 @@
 ﻿using Ark.Tools.Core.EntityTag;
 using NodaTime;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace WebApplicationDemo.Dto
@@ -9,23 +10,26 @@ namespace WebApplicationDemo.Dto
     {
         public static class V1
         {
-            public class Input : IEntityWithETag
-            {
-                public virtual string _ETag { get; set; }
+			public class Input : IEntityWithETag
+			{
+				public virtual string _ETag { get; set; }
 
 				[Required]
-                public string EntityId { get; set; }
+				public string EntityId { get; set; }
 
 				public EntityResult EntityResult { get; set; }
 
-				public EntityTest EntityTest { get; set; }
+				public EntityTest? EntityTest { get; set; }
+
+				public IList<string> Strings { get; set; }
+
+				public IDictionary<LocalDate, double?> Ts { get; set; }
 			}
 
             public class Output : Input
             {
                 public int Value { get; set; }
-				public LocalDate Date { get; set; }
-
+				public LocalDate? Date { get; set; }
 			}
         }
 

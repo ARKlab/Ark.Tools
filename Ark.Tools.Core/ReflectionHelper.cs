@@ -40,6 +40,56 @@ namespace Ark.Tools.Core
             return (TAttribute)attributes.FirstOrDefault();
         }
 
+        public static Type GetCompatibleGenericBaseClass(this Type type, Type baseType)
+        {
+            Type baseTypeToCheck = type;
+
+            while (baseTypeToCheck != null && baseTypeToCheck != typeof(object))
+            {
+                if (baseTypeToCheck.IsGenericType)
+                {
+                    Type genericTypeToCheck = baseTypeToCheck.GetGenericTypeDefinition();
+                    if (genericTypeToCheck == baseType)
+                    {
+                        return baseTypeToCheck;
+                    }
+                }
+
+                baseTypeToCheck = baseTypeToCheck.BaseType;
+            }
+
+            return null;
+        }
+
+        public static Type GetCompatibleGenericInterface(this Type type, Type interfaceType)
+        {
+            Type interfaceToCheck = type;
+
+            if (interfaceToCheck.IsGenericType)
+            {
+                interfaceToCheck = interfaceToCheck.GetGenericTypeDefinition();
+            }
+
+            if (interfaceToCheck == interfaceType)
+            {
+                return type;
+            }
+
+            foreach (Type typeToCheck in type.GetInterfaces())
+            {
+                if (typeToCheck.IsGenericType)
+                {
+                    Type genericInterfaceToCheck = typeToCheck.GetGenericTypeDefinition();
+                    if (genericInterfaceToCheck == interfaceType)
+                    {
+                        return typeToCheck;
+                    }
+                }
+            }
+
+            return null;
+        }
+
 
         /// <summary>
         /// Get the item type of a type that implements `IEnumerable`.

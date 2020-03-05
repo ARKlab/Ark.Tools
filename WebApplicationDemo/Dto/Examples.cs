@@ -7,7 +7,7 @@ namespace WebApplicationDemo.Dto
 {
 	public static class Examples
 	{
-		public static Entity.V1.Output GeEntityPayload()
+		public static Entity.V1.Output GetEntityPayload()
 		{
 			return new Entity.V1.Output()
 			{

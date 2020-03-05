@@ -139,7 +139,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
                 }
 
                 ctk.ThrowIfCancellationRequested();
-
+                
                 return files.ToList();
             }
         }
@@ -148,8 +148,9 @@ namespace Ark.Tools.FtpClient.FluentFtp
         {
             using (var client = _getClient())
             {
-                await client.ConnectAsync();
-                await client.UploadAsync(content, path);
+                await client.ConnectAsync(ctk);
+                await client.UploadAsync(content, path, token:ctk);
+                await client.DisconnectAsync(ctk);
             }
         }
 
@@ -160,9 +161,9 @@ namespace Ark.Tools.FtpClient.FluentFtp
             {
                 Credentials = Credentials,
                 SocketKeepAlive = true,
-                SocketPollInterval = 1000,
-                ConnectTimeout = 5000,
-                DataConnectionConnectTimeout = 5000,
+                //SocketPollInterval = 1000,
+                //ConnectTimeout = 5000,
+                //DataConnectionConnectTimeout = 5000,
             };
 
             return client;

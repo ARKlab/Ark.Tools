@@ -15,6 +15,7 @@ namespace Ark.Tools.Nodatime
 {
     public static class Ex
     {
+        [Obsolete("Use Ark.Tools.NewtonsoftJson ConfigureForArkDefaults()", true)]
         public static JsonSerializerSettings ConfigureForArkDefault(this JsonSerializerSettings settings)
         {
             settings.NullValueHandling = NullValueHandling.Include;

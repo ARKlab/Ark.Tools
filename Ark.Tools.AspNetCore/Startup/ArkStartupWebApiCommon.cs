@@ -32,18 +32,26 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
 	public abstract class ArkStartupWebApiCommon
 	{
 		public IConfiguration Configuration { get; }
-
+		public bool UseNewtonsoftJson { get; }
 		public Container Container { get; } = new Container();
 
 		public ArkStartupWebApiCommon(IConfiguration configuration)
+			: this(configuration, true)
+		{
+		}
+
+		public ArkStartupWebApiCommon(IConfiguration configuration, bool useNewtonsoftJson)
 		{
 			Configuration = configuration;
+			UseNewtonsoftJson = useNewtonsoftJson;
 		}
 
 		public virtual void ConfigureServices(IServiceCollection services)
@@ -56,7 +64,7 @@ namespace Ark.Tools.AspNetCore.Startup
 			services.AddArkProblemDetails();
 
 			// Add minumum framework services.
-			services.AddControllers(opt =>
+			var mvcBuilder = services.AddControllers(opt =>
 			{
 				//Conventions
 				opt.Conventions.Add(new ProblemDetailsResultApiConvention());
@@ -79,20 +87,25 @@ namespace Ark.Tools.AspNetCore.Startup
 				opt.ReturnHttpNotAcceptable = true;
 				opt.RespectBrowserAcceptHeader = true;
 			})
-				.SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
-				.AddNewtonsoftJson(s =>
+			.SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+			.AddFormatterMappings(s =>
+			{
+			})
+			;
+
+			if (UseNewtonsoftJson)
+			{
+				mvcBuilder.AddNewtonsoftJson(s =>
 				{
-					s.SerializerSettings.TypeNameHandling = TypeNameHandling.None;
-					s.SerializerSettings.ObjectCreationHandling = ObjectCreationHandling.Replace;
-					s.SerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-					s.SerializerSettings.ConfigureForNodaTimeRanges();
-					s.SerializerSettings.Converters.Add(new StringEnumConverter());
-					//s.SerializerSettings.ContractResolver = new DefaultContractResolver();
-				})
-				.AddFormatterMappings(s =>
+					s.SerializerSettings.ConfigureArkDefaults();
+				});
+			} else
+			{
+				mvcBuilder.AddJsonOptions(options =>
 				{
-				})
-				;
+					options.JsonSerializerOptions.ConfigureArkDefaults();
+				});
+			}
 
 			services.AddAuthorization();
 
@@ -155,7 +168,8 @@ namespace Ark.Tools.AspNetCore.Startup
 				c.EnableValidator();
 			});
 
-			services.AddSwaggerGenNewtonsoftSupport();
+			if (UseNewtonsoftJson)
+				services.AddSwaggerGenNewtonsoftSupport();
 
 			//	Api Behaviour override for disabling automatic Problem details
 			services.ConfigureOptions<ApiBehaviourOptionsSetup>();

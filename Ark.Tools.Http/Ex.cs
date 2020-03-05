@@ -1,14 +1,9 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.Nodatime;
 using Flurl.Http;
 using Flurl.Http.Configuration;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
-using NodaTime;
-using NodaTime.Serialization.JsonNet;
 using System;
+using Ark.Tools.NewtonsoftJson;
 
 namespace Ark.Tools.Http
 {

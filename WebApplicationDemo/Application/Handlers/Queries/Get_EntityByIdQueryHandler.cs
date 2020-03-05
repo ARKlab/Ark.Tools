@@ -4,6 +4,8 @@ using WebApplicationDemo.Dto;
 using System.Threading;
 using System.Threading.Tasks;
 using NLog;
+using System.Collections.Generic;
+using NodaTime;
 
 namespace WebApplicationDemo.Api.Queries
 {
@@ -25,7 +27,15 @@ namespace WebApplicationDemo.Api.Queries
 
             var entity = new Entity.V1.Output()
             {
-                EntityId = query.EntityId
+                EntityId = query.EntityId,
+                Date = NodaTime.SystemClock.Instance.GetCurrentInstant().InUtc().Date,
+                EntityResult = EntityResult.Success1 | EntityResult.Success2,
+                EntityTest = EntityTest.Prova1,
+                Strings = new List<string>() { "antani" },
+                Ts = new Dictionary<LocalDate, double?>
+                {
+                    { NodaTime.SystemClock.Instance.GetCurrentInstant().InUtc().Date, null }
+                }
             };
 
             _logger.Info($"Entity {entity.EntityId} found!");

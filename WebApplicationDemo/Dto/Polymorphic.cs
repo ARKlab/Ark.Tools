@@ -1,6 +1,9 @@
 ﻿using Ark.Tools.Core;
+using Ark.Tools.NewtonsoftJson;
+using Ark.Tools.Nodatime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -13,6 +16,7 @@ namespace WebApplicationDemo.Dto
 	}
 
 	[JsonConverter(typeof(PolymorphicConverter))]
+	[System.Text.Json.Serialization.JsonConverter(typeof(PolymorphicConverterSTJ))]
 	public abstract class Polymorphic
 	{
 		public string Id { get; set; }
@@ -27,6 +31,10 @@ namespace WebApplicationDemo.Dto
 		}
 
 		public int ValueFromA { get; set; }
+		public LocalDateRange? Range { get; set; }
+
+		public IList<string> StringList { get; set; }
+		public IDictionary<LocalDate, double?> Ts { get; set; }
 	}
 
 	public class B : Polymorphic
@@ -39,8 +47,29 @@ namespace WebApplicationDemo.Dto
 		public int ValueFromB { get; set; }
 	}
 
+	class PolymorphicConverterSTJ : Ark.Tools.SystemTextJson.JsonPolymorphicConverter<Polymorphic, BaseKind>
+	{
+		public PolymorphicConverterSTJ() 
+			: base(nameof(Polymorphic.Kind))
+		{
+		}
 
-	class PolymorphicConverter : JsonCreationConverter<Polymorphic>
+		protected override Type GetType(BaseKind discriminatorValue)
+		{
+			switch (discriminatorValue)
+			{
+				case BaseKind.A:
+					return typeof(A);
+				case BaseKind.B:
+					return typeof(B);
+			}
+
+			return null;
+		}
+	}
+
+
+	class PolymorphicConverter : JsonPolymorphicConverter<Polymorphic>
 	{
 		protected override Polymorphic Create(Type objectType, JObject jObject)
 		{
@@ -57,50 +86,6 @@ namespace WebApplicationDemo.Dto
 			}
 
 			throw new InvalidOperationException("Can't deserialize SourceEntry. SourceEntry.Kind field not found or not valid.");
-		}
-	}
-
-	public abstract class JsonCreationConverter<T> : JsonConverter
-	{
-		/// <summary>
-		/// Create an instance of objectType, based properties in the JSON object
-		/// </summary>
-		/// <param name="objectType">type of object expected</param>
-		/// <param name="jObject">
-		/// contents of JSON object that will be deserialized
-		/// </param>
-		/// <returns></returns>
-		protected abstract T Create(Type objectType, JObject jObject);
-
-		public override bool CanConvert(Type objectType)
-		{
-			return typeof(T).IsAssignableFrom(objectType);
-		}
-
-		public override bool CanWrite => false;
-
-		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override object ReadJson(JsonReader reader,
-										Type objectType,
-										 object existingValue,
-										 JsonSerializer serializer)
-		{
-			if (reader.TokenType == JsonToken.Null) return null;
-
-			// Load JObject from stream
-			JObject jObject = JObject.Load(reader);
-
-			// Create target object based on JObject
-			T target = Create(objectType, jObject);
-
-			// Populate the object properties
-			serializer.Populate(jObject.CreateReader(), target);
-
-			return target;
 		}
 	}
 }

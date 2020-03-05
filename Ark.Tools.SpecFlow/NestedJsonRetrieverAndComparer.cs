@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Ark.Tools.Nodatime;
 using TechTalk.SpecFlow.Assist;
 using Ark.Tools.Http;
+using Ark.Tools.NewtonsoftJson;
 
 namespace Ark.Tools.SpecFlow
 {

@@ -11,7 +11,12 @@ namespace Ark.Tools.AspNetCore.Startup
         private ArkStartupBase _anotherBase;
 
         public ArkStartupWebApi(IConfiguration configuration) 
-            : base(configuration)
+            : this(configuration, true)
+        {
+        }
+
+        public ArkStartupWebApi(IConfiguration configuration, bool useNewtonsoftJson)
+            : base(configuration, useNewtonsoftJson)
         {
             _anotherBase = new ArkStartupBase(configuration);
         }

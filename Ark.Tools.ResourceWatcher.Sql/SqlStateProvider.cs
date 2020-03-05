@@ -3,7 +3,6 @@
 
 using Dapper;
 using System.Collections.Generic;
-
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +14,7 @@ using Newtonsoft.Json.Converters;
 using Ark.Tools.Sql;
 using Ark.Tools.Core;
 using Ark.Tools.Nodatime.Json;
+using Ark.Tools.NewtonsoftJson;
 
 namespace Ark.Tools.ResourceWatcher
 {

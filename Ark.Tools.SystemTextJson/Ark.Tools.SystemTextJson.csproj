@@ -1,11 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <TargetFrameworks>net461;netstandard2.0;netstandard2.1</TargetFrameworks>
+  </PropertyGroup>
+
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>Extensions of Ark.Tools.NLog reading params from IConfiguration</Description>
-    <PackageTags>Ark;C#;.NET;Framework;NLog</PackageTags>
+    <Description>Core utilities over System.Text.Json</Description>
+    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -15,18 +19,17 @@
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.2" />
+    <PackageReference Include="System.Text.Json" Version="4.7.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
   </ItemGroup>
 
 </Project>

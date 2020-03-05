@@ -25,9 +25,9 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="8.6.1" />
-    <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="4.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.1" />
+    <PackageReference Include="FluentValidation" Version="8.6.2" />
+    <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="4.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="7.3.0" />
     <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders" Version="0.11.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="4.1.1" />
@@ -43,10 +43,12 @@
     <ProjectReference Include="..\Ark.Tools.AspNetCore.NestedStartup\Ark.Tools.AspNetCore.NestedStartup.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.Swashbuckle\Ark.Tools.AspNetCore.Swashbuckle.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" />
     <ProjectReference Include="..\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />
     <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
+    <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
 
   <ItemGroup>

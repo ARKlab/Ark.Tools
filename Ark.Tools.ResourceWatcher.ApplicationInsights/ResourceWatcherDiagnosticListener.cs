@@ -1,4 +1,5 @@
-﻿using Ark.Tools.Nodatime.Json;
+﻿using Ark.Tools.NewtonsoftJson;
+using Ark.Tools.Nodatime.Json;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;

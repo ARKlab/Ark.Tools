@@ -18,14 +18,14 @@
   <!--===============================================================================-->
   
   <ItemGroup>
-    <PackageReference Include="CacheCow.Client" Version="2.7.1" />
+    <PackageReference Include="CacheCow.Client" Version="2.7.2" />
     <PackageReference Include="Flurl.Http" Version="2.4.2" />
     <PackageReference Include="MessagePack.NodaTime" Version="2.0.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
   </ItemGroup>
-
+  
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
+    <ProjectReference Include="..\Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" />
   </ItemGroup>
 
   <ItemGroup>
