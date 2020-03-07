@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus
 {
-	public class TestsInMemTransport : InMemTransportCopy
+	public class TestsInMemTransport : InMemTransport
     {
         public static int InProcessMessageCount;
         public TestsInMemTransport(InMemNetwork network, string inputQueueAddress)
@@ -18,7 +18,7 @@ namespace Ark.Tools.Rebus
 
         public override Task<TransportMessage> Receive(ITransactionContext context, CancellationToken cancellationToken)
         {
-            context.OnCompleted(() =>
+            context.OnCompleted(ctx =>
             {
                 Interlocked.Decrement(ref InProcessMessageCount);
                 return Task.CompletedTask;
