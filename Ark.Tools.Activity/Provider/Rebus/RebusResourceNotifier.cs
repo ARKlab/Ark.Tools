@@ -28,7 +28,7 @@ namespace Ark.Tools.Activity.Provider
             _providerName = config.ProviderName;
             _configurer = Configure.With(new SimpleInjectorContainerAdapter(_container))
                 .Logging(l => l.NLog())
-                .Transport(t => t.UseAzureServiceBusAsOneWayClient(config.AsbConnectionString))
+                .Transport(t => t.UseAzureServiceBusAsOneWayClient(config.AsbConnectionString).UseLegacyNaming())
                 .Options(o =>
                 {
                     o.EnableCompression();
@@ -38,7 +38,6 @@ namespace Ark.Tools.Activity.Provider
 				})
                 .Serialization(s =>
                 {
-
                     var cfg = new JsonSerializerSettings();
                     cfg = cfg.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
                     cfg.TypeNameHandling = TypeNameHandling.None;

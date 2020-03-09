@@ -44,7 +44,7 @@ namespace Ark.Tools.Activity.Processor
         {
 			var busConfigurer = Configure.With(new SimpleInjectorContainerAdapter(_container))
 				.Logging(l => l.NLog())
-				.Transport(t => t.UseAzureServiceBus(_config.AsbConnectionString, "q_" + _name).AutomaticallyRenewPeekLock())
+				.Transport(t => t.UseAzureServiceBus(_config.AsbConnectionString, "q_" + _name).AutomaticallyRenewPeekLock().UseLegacyNaming())
 				.Options(o =>
 				{
 					o.EnableCompression();
