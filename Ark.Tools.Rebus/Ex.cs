@@ -70,7 +70,6 @@ namespace Ark.Tools.Rebus
             });
         }
 
-
         public static void UseTestsInMemoryTransport(this StandardConfigurer<ITransport> configurer, InMemNetwork network, string inputQueueName)
         {
             if (configurer == null) throw new ArgumentNullException(nameof(configurer));

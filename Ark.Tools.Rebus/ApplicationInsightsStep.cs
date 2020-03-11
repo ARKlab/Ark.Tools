@@ -25,12 +25,14 @@ namespace Ark.Tools.Rebus
 
         public async Task Process(IncomingStepContext context, Func<Task> next)
         {
-            var activity = new Activity(_activityName);
             var transportMessage = context.Load<TransportMessage>();
-            var transactionContext = context.Load<ITransactionContext>();
             var client = _container.GetInstance<TelemetryClient>();
 
             var messageId = transportMessage.Headers.GetValueOrNull(Headers.MessageId);
+            var messageType = transportMessage.Headers.GetValueOrNull(Headers.Type);
+            var correlationId = transportMessage.Headers.GetValueOrNull(Headers.CorrelationId);
+
+            var activity = new Activity(_activityName + " | " + messageType);
             if (_tryExtractRequestId(transportMessage, out var id))
             {
                 activity.SetParentId(id);
@@ -45,6 +47,7 @@ namespace Ark.Tools.Rebus
             }
 
             activity.AddBaggage(Headers.MessageId, messageId);
+            activity.AddBaggage(Headers.CorrelationId, correlationId);
 
             using (var operation = client.StartOperation<RequestTelemetry>(activity))
             {
