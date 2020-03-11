@@ -17,7 +17,7 @@
     <Version>$(ArkToolsCoreVersion)</Version>
     <!--<VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>-->
 
-    <VersionSuffix>beta01</VersionSuffix>
+    <VersionSuffix>beta05</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
