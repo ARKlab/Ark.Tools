@@ -28,7 +28,8 @@ namespace Ark.Tools.AspNetCore.Startup
         public virtual void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpContextAccessor();
-            
+
+            services.AddApplicationInsightsTelemetryProcessor<ArkSkipUselessSpamTelemetryProcessor>();
             //services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
             services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();

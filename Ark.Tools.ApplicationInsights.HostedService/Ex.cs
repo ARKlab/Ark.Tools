@@ -18,6 +18,7 @@ namespace Ark.Tools.ApplicationInsights.HostedService
             return builder.ConfigureServices((ctx, services) =>
             {
                 services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
+                services.AddApplicationInsightsTelemetryProcessor<ArkSkipUselessSpamTelemetryProcessor>();
 
                 //services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
