@@ -5,6 +5,7 @@ using Ark.Tools.FtpClient;
 using Ark.Tools.FtpClient.Core;
 using NodaTime;
 using Polly;
+using SimpleInjector;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,18 +29,18 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
         }
 
         /// <summary>
-        /// Set the FtpClientFactory to use
+        /// Set the FtpClientPoolFactory to use
         /// </summary>
         /// <typeparam name="TFtpFactory">IFtpClientFactory implementation</typeparam>
         /// <param name="deps">Callback to register additinal dependencies of the TFtpFactory</param>
-        public void UseFtpClientFactory<TFtpFactory>(Action<Dependencies> deps = null)
-            where TFtpFactory : class, IFtpClientFactory
+        public void UseFtpClientPoolFactory<TFtpFactory>(Action<Dependencies> deps = null)
+            where TFtpFactory : class, IFtpClientPoolFactory
         {
             base.UseDataProvider<FtpProvider>(r =>
             {
                 deps?.Invoke(r);
-                r.Container.RegisterSingleton<IFtpClientFactory, TFtpFactory>();
-            });
+                r.Container.RegisterSingleton<IFtpClientPoolFactory, TFtpFactory>();
+            }, Lifestyle.Scoped);
         }
 
         /// <summary>
@@ -57,17 +58,22 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
             });
         }
 
-        class FtpProvider : IResourceProvider<FtpMetadata, FtpFile<TPayload>, FtpFilter>
+        sealed class FtpProvider : IResourceProvider<FtpMetadata, FtpFile<TPayload>, FtpFilter>, IDisposable
         {
             private readonly IFtpConfig _config;
-            private readonly IFtpClient _ftpClient;
+            private readonly IFtpClientPool _ftpClient;
             private readonly IFtpParser<TPayload> _parser;
 
-            public FtpProvider(IFtpConfig config, IFtpClientFactory ftpClientFactory, IFtpParser<TPayload> parser)
+            public FtpProvider(IFtpConfig config, IFtpClientPoolFactory ftpClientFactory, IFtpParser<TPayload> parser)
             {
                 _config = config;
-                _ftpClient = ftpClientFactory.Create(config.Host, config.Credentials);
+                _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.Host, config.Credentials);
                 _parser = parser;
+            }
+
+            public void Dispose()
+            {
+                _ftpClient.Dispose();
             }
 
             public async Task<IEnumerable<FtpMetadata>> GetMetadata(FtpFilter filter, CancellationToken ctk = default)

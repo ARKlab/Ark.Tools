@@ -75,7 +75,7 @@ namespace Ark.Tools.FtpClient.FtpRequest
         }
     }
 
-    public class FtpClient : IFtpClient  //former KailFtpClient ;-)
+    public class FtpClient : FtpClientBase  //former KailFtpClient ;-)
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -83,18 +83,10 @@ namespace Ark.Tools.FtpClient.FtpRequest
 
         private Regex _parseListWindows = new Regex(@"^\s*(?<modify>\d+-\d+-\d+\s+\d+:\d+\w+)\s+(?<dir>[<]dir[>])?\s+(?<size>\d+)?\s+(?<name>.*)$", RegexOptions.IgnoreCase);
 
-        public FtpClient(string host, NetworkCredential credentials)
+        public FtpClient(string host, NetworkCredential credential) : base(host, credential)
         {
-            EnsureArg.IsNotEmpty(host);
-            EnsureArg.IsNotNull(credentials);
-
-            this.Host = host;
-            this.Credentials = credentials;
         }
 
-        public NetworkCredential Credentials { get; protected set; }
-
-        public string Host { get; protected set; }
 
         /// <summary>
         /// List all entries of a folder.
@@ -104,7 +96,7 @@ namespace Ark.Tools.FtpClient.FtpRequest
         /// <returns>
         /// All entries found (files, folders, symlinks)
         /// </returns>
-        public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default(CancellationToken))
+        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default(CancellationToken))
         {
             await Task.Yield();
 
@@ -151,71 +143,6 @@ namespace Ark.Tools.FtpClient.FtpRequest
             }
         }
 
-        /// <summary>
-        /// List a directory recursively and returns the files found.
-        /// </summary>
-        /// <param name="startPath">The directory to list recursively</param>
-        /// <param name="skipFolder">Predicate returns true for folders that are to be skipped.</param>
-        /// <param name="ctk"></param>
-        /// <returns>
-        /// The files found.
-        /// </returns>
-        public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default(CancellationToken))
-        {
-            _logger.Trace("List files starting from path: {0}", startPath);
-
-            if (skipFolder == null)
-                skipFolder = x => false;
-
-            List<Task<IEnumerable<FtpEntry>>> pending = new List<Task<IEnumerable<FtpEntry>>>();
-            IEnumerable<FtpEntry> files = new List<FtpEntry>();
-
-            Func<string, CancellationToken, Task<IEnumerable<FtpEntry>>> listFolderAsync = async (string path, CancellationToken ct) =>
-            {
-
-                var retrier = Policy
-                    .Handle<Exception>()
-                    .WaitAndRetryAsync(new[]
-                    {
-                    TimeSpan.FromSeconds(1),
-                    TimeSpan.FromSeconds(5),
-                    TimeSpan.FromSeconds(15)
-                    }, (ex, ts) =>
-                    {
-                        _logger.Warn(ex, "Failed to list folder {0}. Try again soon ...", path);
-                    });
-                var res = await retrier.ExecuteAsync(async ct1 =>
-                    {
-                        return await this.ListDirectoryAsync(path, ct1).ConfigureAwait(false);
-                    }, ct).ConfigureAwait(false);
-                return res;
-            };
-
-            pending.Add(listFolderAsync(startPath, ctk));
-
-            while (pending.Count > 0)
-            {
-                var completedTask = await Task.WhenAny(pending).ConfigureAwait(false);
-                pending.Remove(completedTask);
-
-                // task could have completed with errors ... strange, let them progate.
-                var list = await completedTask.ConfigureAwait(false);
-
-                //we want to exclude folders . and .. that we dont want to search
-                foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..") ))
-                {
-                    if (skipFolder.Invoke(d))
-                        _logger.Info("Skipping folder: {0}", d.FullPath);
-                    else
-                        pending.Add(listFolderAsync(d.FullPath, ctk));
-                }
-
-                files = files.Concat(list.Where(x => !x.IsDirectory).ToList());
-            }
-
-            return files;
-            
-        }
 
         /// <summary>
         /// Downloads the file asynchronous.
@@ -223,7 +150,7 @@ namespace Ark.Tools.FtpClient.FtpRequest
         /// <param name="path">The path.</param>
         /// <param name="ctk">The CTK.</param>
         /// <returns></returns>
-        public async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
+        public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
         {
             using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
             using (var linked = CancellationTokenSource.CreateLinkedTokenSource(ctk, cts.Token))
@@ -307,7 +234,7 @@ namespace Ark.Tools.FtpClient.FtpRequest
             return result;
         }
 
-        public async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
+        public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
             using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
             using (var linked = CancellationTokenSource.CreateLinkedTokenSource(ctk, cts.Token))

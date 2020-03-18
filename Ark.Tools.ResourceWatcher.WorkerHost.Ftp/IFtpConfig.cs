@@ -11,5 +11,6 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
         NetworkCredential Credentials { get; }
         TimeSpan ListingTimeout { get; }
         TimeSpan DownloadTimeout { get; }
+        int MaxConcurrentConnections { get; }
     }
 }
