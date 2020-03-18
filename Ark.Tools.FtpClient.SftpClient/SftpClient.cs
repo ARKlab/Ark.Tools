@@ -41,10 +41,11 @@ namespace Ark.Tools.FtpClient.SftpClient
             EnsureArg.IsNotNull(credentials);
 
             int port = 2222;
+            string h = host;
             var r = Regex.Match(host, @":\d+$");
             if (r.Success)
             {
-                host = host.Substring(0, r.Index);
+                h = host.Substring(0, r.Index);
                 port = Convert.ToInt16(host.Substring(r.Index + 1));
             }
 
