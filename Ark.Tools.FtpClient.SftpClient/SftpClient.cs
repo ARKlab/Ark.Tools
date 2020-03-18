@@ -49,7 +49,7 @@ namespace Ark.Tools.FtpClient.SftpClient
                 port = Convert.ToInt16(host.Substring(r.Index + 1));
             }
 
-            return new SftpClientConnection(host, credentials, port);
+            return new SftpClientConnection(h, credentials, port);
         }
     }
 
