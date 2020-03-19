@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Auth0;
 using Ark.Tools.FtpClient.Core;
 using Ark.Tools.Http;
 using Auth0.AuthenticationApi;
@@ -16,7 +17,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,28 +28,35 @@ namespace Ark.Tools.FtpClient.FtpProxy
     public class FtpClientProxyFactory : IFtpClientFactory
     {
         private readonly IFtpClientProxyConfig _config;
-        private static readonly IFlurlClientFactory _flurlClientFactory = new ArkFlurlClientFactory();
-
-        static FtpClientProxyFactory()
-        {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                (sender, certificate, chain, sslPolicyErrors) => true;
-        }
 
         public FtpClientProxyFactory(IFtpClientProxyConfig config)
         {
             EnsureArg.IsNotNull(config);
-
             _config = config;
         }
 
         public IFtpClient Create(string host, NetworkCredential credentials)
         {
-            return new FtpClientProxy(_config, _flurlClientFactory              
-                , host, credentials);
+            return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, host, credentials);
         }
     }
 
+    public class FtpClientPoolProxyFactory : IFtpClientPoolFactory
+    {
+        private readonly IFtpClientProxyConfig _config;
+
+        public FtpClientPoolProxyFactory(IFtpClientProxyConfig config)
+        {
+            EnsureArg.IsNotNull(config);
+            _config = config;
+        }
+
+        public IFtpClientPool Create(int maxPoolSize, string host, NetworkCredential credentials)
+        {
+            return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, host, credentials);
+        }
+    }
+    
     public interface IFtpClientProxyConfig
     {
         string ClientID { get; }
@@ -58,39 +68,28 @@ namespace Ark.Tools.FtpClient.FtpProxy
         int? ListingDegreeOfParallelism { get; }
     }
 
-    public class FtpClientProxy : IFtpClient
+    public sealed class FtpClientProxy : IFtpClientPool
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private IFtpClientProxyConfig _config;
         private readonly AuthenticationContext _adal;
-        private readonly AuthenticationApiClient _auth0;
+        private readonly IAuthenticationApiClient _auth0;
 
         private readonly ConnectionInfo _connectionInfo;
 
         private readonly IFlurlClient _client;
-
-        private readonly Polly.Caching.Memory.MemoryCacheProvider _memoryCacheProvider
-           = new Polly.Caching.Memory.MemoryCacheProvider(new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()));
-
-        private readonly AsyncPolicy<(string AccessToken, DateTimeOffset ExpiresOn)> _cachePolicy;
 
         public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, string host, NetworkCredential credentials)
         {
             this._config = config;
             this.Host = host;
             this.Credentials = credentials;
-            
-
-            var cfg = new JsonSerializerSettings();
-
-            cfg.ObjectCreationHandling = ObjectCreationHandling.Replace;
-            cfg.NullValueHandling = NullValueHandling.Ignore;
 
             _client = client.Get(_config.FtpProxyWebInterfaceBaseUri)
                 .Configure(c => 
                 {
-                    c.ConnectionLeaseTimeout = TimeSpan.FromMinutes(30);
-                    c.JsonSerializer = new NewtonsoftJsonSerializer(cfg);                    
+                    c.HttpClientFactory = new UntrustedCertClientFactory();
+                    c.ConnectionLeaseTimeout = TimeSpan.FromMinutes(30);                  
                 })
                 .WithHeader("Accept", "application/json, text/json")
                 .WithHeader("Accept-Encoding", "gzip, deflate")
@@ -100,11 +99,10 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
             _client.BaseUrl = _config.FtpProxyWebInterfaceBaseUri.ToString();
 
-            if (_config.UseAuth0) _auth0 = new AuthenticationApiClient(_config.TenantID);
-            else _adal = new AuthenticationContext("https://login.microsoftonline.com/" + this._config.TenantID);
-
-            _cachePolicy = Policy.CacheAsync(_memoryCacheProvider.AsyncFor<(string AccessToken, DateTimeOffset ExpiresOn)>(), new ResultTtl<(string AccessToken, DateTimeOffset ExpiresOn)>(r => new Ttl(r.ExpiresOn - DateTimeOffset.Now, false)));
-            //_cachePolicy = Policy.CacheAsync(_memoryCacheProvider, new RelativeTtl(TimeSpan.FromMinutes(5)));
+            if (_config.UseAuth0) 
+                _auth0 = new AuthenticationApiClientCachingDecorator(new AuthenticationApiClient(_config.TenantID));
+            else 
+                _adal = new AuthenticationContext("https://login.microsoftonline.com/" + this._config.TenantID);
 
             _connectionInfo = new ConnectionInfo
             {
@@ -257,13 +255,10 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         private async Task<string> _getAccessToken(CancellationToken ctk = default(CancellationToken))
         {
-            var res = await _cachePolicy.ExecuteAsync((ctx,ct) =>
-            {
-                if (_config.UseAuth0) return _getAuth0AccessToken(ct);
-                else return _getAdalAccessToken(ct);
-            }, new Context("_getAccessToken"), ctk);
-
-            return res.AccessToken;
+            if (_config.UseAuth0) 
+                return (await _getAuth0AccessToken(ctk)).AccessToken;
+            else 
+                return (await _getAdalAccessToken(ctk)).AccessToken;
         }
 
         private async Task<(string AccessToken, System.DateTimeOffset ExpiresOn)> _getAuth0AccessToken(CancellationToken ctk = default(CancellationToken))
@@ -311,37 +306,16 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
             return (result.AccessToken, result.ExpiresOn);
         }
-
-        //private void _handleRestResult(IRestResponse response)
-        //{
-        //    if (response.ResponseStatus == ResponseStatus.Completed)
-        //    {
-        //        if (response.StatusCode == System.Net.HttpStatusCode.OK || response.StatusCode == System.Net.HttpStatusCode.NoContent)
-        //        {
-        //            // nothing
-        //        }
-        //        else
-        //        {
-        //            _logger.Trace("Failed handling REST call to WebInterface: {0}", response.Request.Resource);
-        //            throw new ApplicationException(string.Format("Failed handling REST call to WebInterface {0}. Returned status: {1}. Content: \n{2}", response.Request.Resource, response.StatusCode, response.Content.Replace("\\r\\n", "\n")));
-        //        }
-        //    }
-        //    else
-        //    {
-        //        if (response.ErrorException != null)
-        //        {
-        //            _logger.Trace(response.ErrorException, "Failed handling REST call to WebInterface: {0}", response.Request.Resource);
-        //            throw new ApplicationException("Failed handling REST call to WebInterface: " + response.Request.Resource, response.ErrorException);
-        //        } else {
-        //            _logger.Trace("Failed handling REST call to WebInterface: {0} status: {1}", response.Request.Resource, response.ResponseStatus);
-        //            throw new ApplicationException($"Failed handling REST call to WebInterface: {response.Request.Resource} status: {response.ResponseStatus}");
-        //        }
-        //    }
-        //}
-
+        
         public Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
             throw new NotImplementedException();
         }
+
+        public void Dispose()
+        {
+            _client?.Dispose();
+        }
+
     }
 }

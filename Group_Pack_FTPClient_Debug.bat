@@ -20,7 +20,6 @@ setlocal
 "%MSBUILD%" "Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj"								/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.FtpClient.FluentFtp\Ark.Tools.FtpClient.FluentFtp.csproj"					/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.FtpClient.FtpProxy\Ark.Tools.FtpClient.FtpProxy.csproj"						/t:Pack /p:Configuration=Debug
-"%MSBUILD%" "Ark.Tools.FtpClient.FtpRequest\Ark.Tools.FtpClient.FtpRequest.csproj"					/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.FtpClient.SftpClient\Ark.Tools.FtpClient.SftpClient.csproj"					/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.FtpClient.SystemNetFtpClient\Ark.Tools.FtpClient.SystemNetFtpClient.csproj"	/t:Pack /p:Configuration=Debug
 

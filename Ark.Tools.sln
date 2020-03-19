@@ -33,8 +33,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient.FtpProx
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient.SftpClient", "Ark.Tools.FtpClient.SftpClient\Ark.Tools.FtpClient.SftpClient.csproj", "{C7793D90-FA78-4D03-AAE1-4A372B08F60B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.FtpClient.FtpRequest", "Ark.Tools.FtpClient.FtpRequest\Ark.Tools.FtpClient.FtpRequest.csproj", "{F227C274-5271-481C-8BB1-C5630B21C330}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.ResourceWatcher", "Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj", "{55F881AD-7603-4E45-8396-7F6C2391597C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.ResourceWatcher.WorkerHost", "Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj", "{A132E4CD-E43F-40F7-A45F-A4240EF97DB5}"
@@ -166,11 +164,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestLinkGenerator", "TestLi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Rebus", "Ark.Tools.Rebus\Ark.Tools.Rebus.csproj", "{6D994502-96FA-4557-A6C9-AA4612FF643A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.SystemTextJson", "Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj", "{04DB0F3C-CD5D-4BB3-B0F2-4FF3274A4AFE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.SystemTextJson", "Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj", "{04DB0F3C-CD5D-4BB3-B0F2-4FF3274A4AFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.NewtonsoftJson", "Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj", "{A0C066D9-F879-4F5E-9721-22749F596B71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.NewtonsoftJson", "Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj", "{A0C066D9-F879-4F5E-9721-22749F596B71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Nodatime.SystemTextJson", "Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj", "{9CDDB09B-CA2A-4663-B2E6-F01B439C2322}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Nodatime.SystemTextJson", "Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj", "{9CDDB09B-CA2A-4663-B2E6-F01B439C2322}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -238,10 +236,6 @@ Global
 		{C7793D90-FA78-4D03-AAE1-4A372B08F60B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7793D90-FA78-4D03-AAE1-4A372B08F60B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7793D90-FA78-4D03-AAE1-4A372B08F60B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F227C274-5271-481C-8BB1-C5630B21C330}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F227C274-5271-481C-8BB1-C5630B21C330}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F227C274-5271-481C-8BB1-C5630B21C330}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F227C274-5271-481C-8BB1-C5630B21C330}.Release|Any CPU.Build.0 = Release|Any CPU
 		{55F881AD-7603-4E45-8396-7F6C2391597C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{55F881AD-7603-4E45-8396-7F6C2391597C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55F881AD-7603-4E45-8396-7F6C2391597C}.Release|Any CPU.ActiveCfg = Release|Any CPU
