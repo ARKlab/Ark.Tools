@@ -30,11 +30,10 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddHttpContextAccessor();
 
             services.AddApplicationInsightsTelemetryProcessor<ArkSkipUselessSpamTelemetryProcessor>();
-            //services.AddApplicationInsightsTelemetryProcessor<UnsampleFailedTelemetriesAndTheirDependenciesProcessor>();
             services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
-
+            
             services.AddApplicationInsightsTelemetry(o =>
             {
                 o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];

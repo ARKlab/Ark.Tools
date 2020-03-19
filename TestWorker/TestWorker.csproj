@@ -9,17 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights.ServiceFabric" Version="2.3.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer" Version="2.9.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-
-    <PackageReference Include="Microsoft.ApplicationInsights.DependencyCollector" Version="2.13.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.13.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer" Version="2.13.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.13.1" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Activity\Ark.Tools.Activity.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.ApplicationInsights\Ark.Tools.ResourceWatcher.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost.Hosting\Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />
