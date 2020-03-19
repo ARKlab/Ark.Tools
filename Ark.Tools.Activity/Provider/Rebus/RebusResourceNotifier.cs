@@ -7,11 +7,11 @@ using Ark.Tools.Activity.Messages;
 using NLog;
 using Rebus.Bus;
 using Rebus.Config;
-using Rebus.SimpleInjector;
 using Rebus.Compression;
 using Rebus.NLog.Config;
 using Rebus.Serialization.Json;
 using Rebus.Retry.Simple;
+using Ark.Tools.Rebus;
 
 namespace Ark.Tools.Activity.Provider
 {
@@ -20,13 +20,11 @@ namespace Ark.Tools.Activity.Provider
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly string _providerName;
         private readonly Container _container = new Container();
-        private readonly RebusConfigurer _configurer;
-        private IBus _bus;
 
         public RebusResourceNotifier(IRebusResourceNotifier_Config config)
         {
             _providerName = config.ProviderName;
-            _configurer = Configure.With(new SimpleInjectorContainerAdapter(_container))
+            _container.ConfigureRebus(c => c
                 .Logging(l => l.NLog())
                 .Transport(t => t.UseAzureServiceBusAsOneWayClient(config.AsbConnectionString).UseLegacyNaming())
                 .Options(o =>
@@ -44,14 +42,14 @@ namespace Ark.Tools.Activity.Provider
                     cfg.ObjectCreationHandling = ObjectCreationHandling.Replace;
                     s.UseNewtonsoftJson(cfg);
                 })
-                ;
+                );
             if (config.StartAtCreation)
                 Start();
         }
 
         public void Start()
         {
-            _bus = _configurer.Start();
+            _container.StartBus();
             _logger.Debug("Bus started");
         }
 
@@ -59,7 +57,7 @@ namespace Ark.Tools.Activity.Provider
         {
             var resource = new Resource { Provider = _providerName, Id = resourceId };
             _logger.Trace("Notifing ready slice for {0}@{1}", resource, slice);
-            return _bus.Advanced.Topics.Publish(resource.ToString(), new ResourceSliceReady() {
+            return _container.GetInstance<IBus>().Advanced.Topics.Publish(resource.ToString(), new ResourceSliceReady() {
                 Resource = resource,
                 Slice = slice
             });
