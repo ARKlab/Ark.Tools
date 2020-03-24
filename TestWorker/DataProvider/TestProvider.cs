@@ -13,7 +13,8 @@ namespace TestWorker.DataProvider
 {
     public class Test_ProviderFilter
     {
-        public LocalDateTime Date { get; set; }
+        public LocalDate Date { get; set; } = LocalDate.FromDateTime(DateTime.Now);
+        public int Count { get; set; } = 10;
     }
 
     public class TestProvider : IResourceProvider<Test_FileMetadataDto, Test_File, Test_ProviderFilter>
@@ -28,12 +29,13 @@ namespace TestWorker.DataProvider
         {
             return Task.Run(() =>
             {
-                var metadataList = new List<Test_FileMetadataDto>();
-
-                metadataList.Add(new Test_FileMetadataDto
-                {
-                    FileName = "TestFileName",
-                });
+                var metadataList = Enumerable.Range(1, filter.Count).Select(x =>                
+                    new Test_FileMetadataDto
+                    {
+                        FileName = "TestFileName" + x,
+                        Date = filter.Date,                        
+                    }
+                ).ToList();
 
                 return metadataList.AsEnumerable();
             });

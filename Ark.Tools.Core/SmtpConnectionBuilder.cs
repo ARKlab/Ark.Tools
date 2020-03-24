@@ -7,6 +7,9 @@ namespace Ark.Tools
 {
     public class SmtpConnectionBuilder
     {
+        public SmtpConnectionBuilder()
+        { }
+
         /// <summary>
         /// Smtp connection string
         /// </summary>

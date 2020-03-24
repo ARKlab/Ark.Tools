@@ -8,6 +8,7 @@ namespace TestWorker.Dto
     public class Test_FileMetadataDto : IResourceMetadata
     {
         public string FileName { get; set; }
+        public LocalDate Date { get; set; }
 
         string IResourceMetadata.ResourceId => FileName;
         LocalDateTime IResourceMetadata.Modified { get; } = LocalDateTime.FromDateTime(DateTime.UtcNow);

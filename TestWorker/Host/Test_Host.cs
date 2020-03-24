@@ -13,6 +13,7 @@ using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 using Microsoft.Extensions.Hosting;
 using Ark.Tools.Activity.Provider;
 using TestWorker.Constants;
+using Ark.Tools.NLog;
 
 namespace TestWorker.Host
 {
@@ -25,6 +26,12 @@ namespace TestWorker.Host
                 var hostBuilder = new HostBuilder()
                     .AddWorkerHostInfrastracture()
                     .AddApplicationInsightsForWorkerHost()
+                    .ConfigureServices((ctx,s) =>
+                    {
+                        NLogConfigurer.For("Test_Worker")
+                            .WithDefaultTargetsAndRulesFromConfiguration("Test_Worker", NLogConfigurer.MailFromDefault, ctx.Configuration)
+                            .Apply();
+                    })
                     .AddWorkerHost<Host>(s =>
                     {
                         //var config = s.GetService<IConfiguration>();
@@ -41,9 +48,12 @@ namespace TestWorker.Host
 
 						configurationOverrider?.Invoke(baseCfg1);
 
-                        return new Host(baseCfg1)
+                        var h = new Host(baseCfg1)
                             .WithTestWriter()
-						    .WithNotifier(rebusCfg);
+                            .WithNotifier(rebusCfg);
+
+                        h.AddProviderFilterConfigurer(c => c.Count = 100);
+                        return h;
 					})
                     .UseConsoleLifetime();
 
@@ -70,7 +80,7 @@ namespace TestWorker.Host
 
             public Task RunOnceAsync(LocalDate date, CancellationToken ctk = default)
             {
-                return base.RunOnceAsync(f => f.Date = LocalDateTime.FromDateTime(DateTime.Today), ctk);
+                return base.RunOnceAsync(f => f.Date = LocalDate.FromDateTime(DateTime.Today), ctk);
             }
 
             public Host WithTestWriter()
