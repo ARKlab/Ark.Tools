@@ -157,23 +157,19 @@ namespace Ark.Tools.ResourceWatcher
 
                 var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
 
-                var evaluated = _createEvalueteList(list, states).ToList();
+                var evaluated = _createEvalueteList(list, states);
 
                 _diagnosticSource.CheckStateSuccessful(activityCheckState, evaluated);
 
                 //Process
-                _logger.Info($"Found {list.Count} resources to process with parallelism {_config.DegreeOfParallelism}");
+                var skipped = evaluated.Where(x => x.ResultType == ResultType.Skipped).ToList();
+                var toProcess = evaluated.Where(x => !x.ResultType.HasValue).ToList();
 
-                var total = evaluated.Count;
-                var tasks = evaluated.Parallel((int)_config.DegreeOfParallelism, async (i, x) =>
-                {
-                    x.Index = (int)i+1;
-                    x.Total = total;
-                    await _processEntry(x, ctk);
-                });
+                _logger.Info($"Found {skipped.Count} resources to skip");
+                _logger.Info($"Found {toProcess.Count} resources to process with parallelism {_config.DegreeOfParallelism}");
 
-                await Task.WhenAll(tasks).ConfigureAwait(false);
-
+                await toProcess.Parallel((int)_config.DegreeOfParallelism, (i, x, ct) => _processEntry(x, ct), ctk);
+                
                 _diagnosticSource.RunSuccessful(activityRun, evaluated);
 
                 if (activityRun.Duration > _config.RunDurationNotificationLimit)
@@ -186,44 +182,49 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        private IEnumerable<ProcessContext> _createEvalueteList(List<IResourceMetadata> list, IEnumerable<ResourceState> states)
+        private List<ProcessContext> _createEvalueteList(List<IResourceMetadata> list, IEnumerable<ResourceState> states)
         {
-            var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
-            {
-                var x = new ProcessContext { CurrentInfo = i, LastState = s.SingleOrDefault() };
-                if (x.LastState == null)
-                {
-                    x.ProcessType = ProcessType.New;
-                }
-                else if (x.LastState.RetryCount == 0 && x.CurrentInfo.Modified > x.LastState.Modified)
-                {
-                    x.ProcessType = ProcessType.Updated;
-                }
-                else if (x.LastState.RetryCount > 0 && x.LastState.RetryCount <= _config.MaxRetries)
-                {
-                    x.ProcessType = ProcessType.Retry;
-                }
-                else if (x.LastState.RetryCount > _config.MaxRetries
-                    && x.CurrentInfo.Modified > x.LastState.Modified
-                    && x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()
-                    // BAN expired and new version                
-                    )
-                {
-                    x.ProcessType = ProcessType.RetryAfterBan;
-                }
-                else if (x.LastState.RetryCount > _config.MaxRetries
-                    && x.CurrentInfo.Modified > x.LastState.Modified
-                    && !(x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant())
-                    // BAN               
-                    )
-                {
-                    x.ProcessType = ProcessType.Banned;
-                }
-                else
-                    x.ProcessType = ProcessType.NothingToDo;
+            var ev = list.Select((meta, idx) => (meta, idx)).GroupJoin(states, i => i.meta.ResourceId, s => s.ResourceId, (i, s) =>
+             {
+                 var x = new ProcessContext { CurrentInfo = i.meta, LastState = s.SingleOrDefault(), Total = list.Count, Index = i.idx+1 };
+                 if (x.LastState == null)
+                 {
+                     x.ProcessType = ProcessType.New;
+                 }
+                 else if (x.LastState.RetryCount == 0 && x.CurrentInfo.Modified > x.LastState.Modified)
+                 {
+                     x.ProcessType = ProcessType.Updated;
+                 }
+                 else if (x.LastState.RetryCount > 0 && x.LastState.RetryCount <= _config.MaxRetries)
+                 {
+                     x.ProcessType = ProcessType.Retry;
+                 }
+                 else if (x.LastState.RetryCount > _config.MaxRetries
+                     && x.CurrentInfo.Modified > x.LastState.Modified
+                     && x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()
+                     // BAN expired and new version                
+                     )
+                 {
+                     x.ProcessType = ProcessType.RetryAfterBan;
+                 }
+                 else if (x.LastState.RetryCount > _config.MaxRetries
+                     && x.CurrentInfo.Modified > x.LastState.Modified
+                     && !(x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant())
+                     // BAN               
+                     )
+                 {
+                     x.ProcessType = ProcessType.Banned;
+                 }
+                 else
+                     x.ProcessType = ProcessType.NothingToDo;
 
-                return x;
-            });
+                 if (x.ProcessType == ProcessType.NothingToDo || x.ProcessType == ProcessType.Banned)
+                 {
+                     x.ResultType = ResultType.Skipped;
+                 }
+
+                 return x;
+             }).ToList();
 
             return ev;
         }
@@ -257,13 +258,6 @@ namespace Ark.Tools.ResourceWatcher
             var lastState = pc.LastState;
             var dataType = pc.ProcessType;
             
-            if (pc.ProcessType == ProcessType.NothingToDo || pc.ProcessType == ProcessType.Banned)
-            {
-                pc.ResultType = ResultType.Skipped;
-                _logger.Info($"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" Process Type is: {pc.ProcessType} - Skipped");
-                return;
-            }
-
             try
             {
                 var processActivity = _diagnosticSource.ProcessResourceStart(pc);
@@ -399,7 +393,7 @@ namespace Ark.Tools.ResourceWatcher
         public ResourceState LastState { get; set; }
         public ResourceState NewState { get; set; }
         public ProcessType ProcessType { get; set; }
-        public ResultType ResultType { get; set; }
+        public ResultType? ResultType { get; set; }
         public int Index { get; set; }
         public int Total { get; set; }
     }
