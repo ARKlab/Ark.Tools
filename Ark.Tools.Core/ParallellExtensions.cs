@@ -35,7 +35,7 @@ namespace Ark.Tools.Core
         public static Task Parallel<T>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task> action, CancellationToken ctk = default)
         {
             return list.ToObservable()
-                .Select((x, i) => Observable.FromAsync(ct => action(i, x, ct)).SubscribeOn(ThreadPoolScheduler.Instance))
+                .Select((x, i) => Observable.FromAsync(ct => action(i, x, ct)).SubscribeOn(DefaultScheduler.Instance))
                 .Merge(degree)
                 .ToList()
                 .ToTask(ctk);
@@ -44,7 +44,7 @@ namespace Ark.Tools.Core
         public static Task<IList<U>> Parallel<T,U>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task<U>> action, CancellationToken ctk = default)
         {
             return list.ToObservable()
-                .Select((x, i) => Observable.FromAsync(ct => action(i, x, ct)).SubscribeOn(ThreadPoolScheduler.Instance))
+                .Select((x, i) => Observable.FromAsync(ct => action(i, x, ct)).SubscribeOn(DefaultScheduler.Instance))
                 .Merge(degree)
                 .ToList()
                 .ToTask(ctk);

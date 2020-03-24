@@ -37,6 +37,8 @@ namespace Ark.Tools.FtpClient
                 new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
                 {
                     ConnectTimeout = TimeSpan.FromSeconds(60),
+                    ReadWriteTimeout = TimeSpan.FromMinutes(3),
+                    Passive = true,
                 });
         }
 

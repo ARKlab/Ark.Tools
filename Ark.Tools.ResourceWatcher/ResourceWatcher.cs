@@ -168,7 +168,12 @@ namespace Ark.Tools.ResourceWatcher
                 _logger.Info($"Found {skipped.Count} resources to skip");
                 _logger.Info($"Found {toProcess.Count} resources to process with parallelism {_config.DegreeOfParallelism}");
 
-                await toProcess.Parallel((int)_config.DegreeOfParallelism, (i, x, ct) => _processEntry(x, ct), ctk);
+                var count = toProcess.Count;
+                await toProcess.Parallel((int)_config.DegreeOfParallelism, (i, x, ct) => {
+                    x.Total = count;
+                    x.Index = i + 1;
+                    return _processEntry(x, ct);
+                }, ctk);
                 
                 _diagnosticSource.RunSuccessful(activityRun, evaluated);
 
@@ -184,9 +189,9 @@ namespace Ark.Tools.ResourceWatcher
 
         private List<ProcessContext> _createEvalueteList(List<IResourceMetadata> list, IEnumerable<ResourceState> states)
         {
-            var ev = list.Select((meta, idx) => (meta, idx)).GroupJoin(states, i => i.meta.ResourceId, s => s.ResourceId, (i, s) =>
+            var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
              {
-                 var x = new ProcessContext { CurrentInfo = i.meta, LastState = s.SingleOrDefault(), Total = list.Count, Index = i.idx+1 };
+                 var x = new ProcessContext { CurrentInfo = i, LastState = s.SingleOrDefault() };
                  if (x.LastState == null)
                  {
                      x.ProcessType = ProcessType.New;
@@ -394,8 +399,8 @@ namespace Ark.Tools.ResourceWatcher
         public ResourceState NewState { get; set; }
         public ProcessType ProcessType { get; set; }
         public ResultType? ResultType { get; set; }
-        public int Index { get; set; }
-        public int Total { get; set; }
+        public int? Index { get; set; }
+        public int? Total { get; set; }
     }
 
     public sealed class ChangedStateContext<T> where T : IResourceState
