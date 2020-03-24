@@ -16,6 +16,12 @@ namespace Ark.Tools.FtpClient.Core
             _connectionFactory = connectionFactory;
         }
 
+        public FtpClient(string host, NetworkCredential credential, int maxListingParallelism, IFtpClientConnectionFactory connectionFactory)
+            : base(host, credential, maxListingParallelism)
+        {
+            _connectionFactory = connectionFactory;
+        }
+
         protected override Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
         {
             return Task.FromResult(_connectionFactory.Create(Host, Credentials));

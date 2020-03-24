@@ -25,7 +25,7 @@ namespace Ark.Tools.FtpClient
         private readonly SemaphoreSlim _semaphore;
 
         public FtpClientPoolArxOne(int maxPoolSize, string host, NetworkCredential credentials)
-            : base(host, credentials)
+            : base(host, credentials, maxPoolSize)
         {
             _client = _getClient();
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);

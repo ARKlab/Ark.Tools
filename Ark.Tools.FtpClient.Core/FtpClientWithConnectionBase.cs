@@ -20,6 +20,12 @@ namespace Ark.Tools.FtpClient.Core
         {
         }
 
+
+        protected FtpClientWithConnectionBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism)
+            : base(host, credential, maxListingRecursiveParallelism)
+        {
+        }
+
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
             using (var client = await GetConnection(ctk))

@@ -18,7 +18,7 @@ namespace Ark.Tools.FtpClient.Core
         private readonly IFtpClientConnectionFactory _connectionFactory;
 
         public FtpClientPool(int poolMaxSize, string host, NetworkCredential credential, IFtpClientConnectionFactory connectionFactory) 
-            : base(host, credential)
+            : base(host, credential, poolMaxSize)
         {
             PoolMaxSize = poolMaxSize;
             _connectionFactory = connectionFactory;
