@@ -62,7 +62,13 @@ namespace Ark.Tools.EventSourcing.Aggregates
 
 		public abstract Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default);
 		public abstract Task SaveChangesAsync(CancellationToken ctk = default);
-        public abstract void Dispose();
+
+        protected virtual void Dispose(bool disposing) { }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
     }
 
     public abstract class AggregateRoot<TAggregateRoot, TAggregateState, TAggregate> : IAggregateRoot

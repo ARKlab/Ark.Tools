@@ -17,8 +17,8 @@ using Raven.Client.Exceptions.Security;
 namespace Ark.Tools.EventSourcing.RavenDb
 {
 	public abstract class RavenDbAggregateEventProcessor<TAggregate>
-	: IDisposable
-	where TAggregate : IAggregate
+		: IDisposable
+		where TAggregate : IAggregate
 	{
 		private static Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -199,9 +199,14 @@ where startsWith(id(e), '{prefix}')
 			catch (TaskCanceledException) { }
 		}
 
+		protected virtual void Dispose(bool disposing) 
+		{ 
+			if (disposing) _tokenSource?.Dispose();
+		}
+
 		public void Dispose()
 		{
-			_tokenSource?.Dispose();
+			Dispose(true);
 		}
 	}
 }

@@ -112,7 +112,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
         #region IDisposable Support
         private bool _disposedValue = false; // To detect redundant calls
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (!_disposedValue)
             {
@@ -122,12 +122,9 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 }
                 _disposedValue = true;
             }
+            base.Dispose(disposing);
         }
 
-        public override void Dispose()
-        {
-            Dispose(true);
-        }
         #endregion
     }
 }

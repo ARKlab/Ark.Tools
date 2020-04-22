@@ -29,13 +29,11 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         public void Configure(ProblemDetailsOptions options)
         {
             // This is the default behavior; only include exception details in a development environment.
-            options.IncludeExceptionDetails = ctx => !Environment.IsProduction();
+            options.IncludeExceptionDetails = (ctx, ex) => !Environment.IsProduction();
 
-            options.ShouldLogUnhandledException = (ctx, e, d) => IsServerError(d.Status);
+            options.ShouldLogUnhandledException = (ctx, e, d) => _isServerError(d.Status);
 
-            options.MapStatusCode = (ctx, statusCode) => new StatusCodeProblemDetails(statusCode);
-
-            options.IsProblem = IsProblem;
+            options.IsProblem = _isProblem;
 
             options.OnBeforeWriteDetails = (ctx, details) =>
             {
@@ -62,34 +60,34 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         private void _configureExceptionProblemDetails(ProblemDetailsOptions options)
         {
 
-            options.Map<EntityNotFoundException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status404NotFound));
+            options.Map<EntityNotFoundException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status404NotFound));
 
-            options.Map<NotImplementedException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status501NotImplemented));
+            options.Map<NotImplementedException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status501NotImplemented));
 
-            options.Map<HttpRequestException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status503ServiceUnavailable));
+            options.Map<HttpRequestException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status503ServiceUnavailable));
 
-            options.Map<UnauthorizedAccessException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status403Forbidden));
+            options.Map<UnauthorizedAccessException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status403Forbidden));
 
-            options.Map<EntityTagMismatchException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status412PreconditionFailed));
+            options.Map<EntityTagMismatchException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status412PreconditionFailed));
 
-            options.Map<OptimisticConcurrencyException>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict));
+            options.Map<OptimisticConcurrencyException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status409Conflict));
 
             options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex) 
-                ? new ExceptionProblemDetails(ex, StatusCodes.Status409Conflict)
-                : new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
+                ? StatusCodeProblemDetails.Create(StatusCodes.Status409Conflict)
+                : StatusCodeProblemDetails.Create(StatusCodes.Status500InternalServerError));
 
             options.Map<FluentValidation.ValidationException>(ex => new FluentValidationProblemDetails(ex, StatusCodes.Status400BadRequest));
 
             options.Map<BusinessRuleViolationException>(ex => new BusinessRuleProblemDetails(ex.BusinessRuleViolation));
         }
 
-        private static bool IsServerError(int? statusCode)
+        private static bool _isServerError(int? statusCode)
         {
             // Err on the side of caution and treat missing status code as server error.
             return !statusCode.HasValue || statusCode.Value >= 500;
         }
 
-        private static bool IsProblem(HttpContext context)
+        private static bool _isProblem(HttpContext context)
         {
             if (context.Response.StatusCode < 400)
                 return false;
@@ -109,7 +107,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         public void PostConfigure(string name, ProblemDetailsOptions options)
         {
             // If an exception other than above specified is thrown, this will handle it.
-            options.Map<Exception>(ex => new ExceptionProblemDetails(ex, StatusCodes.Status500InternalServerError));
+            options.Map<Exception>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status500InternalServerError));
         }
     }
 }

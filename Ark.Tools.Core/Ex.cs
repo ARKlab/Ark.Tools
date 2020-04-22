@@ -12,10 +12,10 @@ namespace Ark.Tools.Core
 {
     public static unsafe partial class Ex
     {
-        private static readonly uint[] _lookup32Unsafe = CreateLookup32Unsafe();
+        private static readonly uint[] _lookup32Unsafe = _createLookup32Unsafe();
         private static readonly uint* _lookup32UnsafeP = (uint*)GCHandle.Alloc(_lookup32Unsafe, GCHandleType.Pinned).AddrOfPinnedObject();
 
-        private static uint[] CreateLookup32Unsafe()
+        private static uint[] _createLookup32Unsafe()
         {
             var result = new uint[256];
             for (int i = 0; i < 256; i++)
@@ -29,7 +29,7 @@ namespace Ark.Tools.Core
             return result;
         }
 
-        private static string ByteArrayToHexViaLookup32UnsafeDirect(byte[] bytes)
+        private static string _byteArrayToHexViaLookup32UnsafeDirect(byte[] bytes)
         {
             var lookupP = _lookup32UnsafeP;
             var result = new string((char)0, bytes.Length * 2);
@@ -47,7 +47,7 @@ namespace Ark.Tools.Core
 
         public static string ToHexString(this byte[] bytes)
         {
-            return ByteArrayToHexViaLookup32UnsafeDirect(bytes);
+            return _byteArrayToHexViaLookup32UnsafeDirect(bytes);
         }
 
         public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct
