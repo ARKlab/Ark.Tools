@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+    <Description>Authorization library framework-independent</Description>
+    <PackageTags>Ark;C#;.NET;Authorization</PackageTags>
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes>
+    </PackageReleaseNotes>
+
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+  
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+  </ItemGroup>
+</Project>

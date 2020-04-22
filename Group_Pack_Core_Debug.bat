@@ -49,6 +49,10 @@ setlocal
 "%MSBUILD%" "Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" 									/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" 									/t:Pack /p:Configuration=Debug
 
+
+"%MSBUILD%" "Ark.Tools.Authorization\Ark.Tools.Authorization.csproj" 									/t:Pack /p:Configuration=Debug
+"%MSBUILD%" "Ark.Tools.Solid.Authorization\Ark.Tools.Solid.Authorization.csproj" 						/t:Pack /p:Configuration=Debug
+
 pause
 
 :end
