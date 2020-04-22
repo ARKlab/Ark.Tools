@@ -18,6 +18,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Hosting
                 cfg.AddJsonFile("appsettings.json", true);
                 cfg.AddJsonFile($"appsettings.{ctx.HostingEnvironment.EnvironmentName}.json", true);
                 cfg.AddEnvironmentVariables();
+                cfg.AddArkLegacyEnvironmentVariables();
             })
             .ConfigureLogging((context, b) =>
             {
