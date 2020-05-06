@@ -45,7 +45,7 @@ namespace Ark.Tools.ResourceWatcher
 
         class EJ
         {
-            public string ExtensionJson { get; set; }
+            public string ExtensionsJson { get; set; }
         }
 
         public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[] resourceIds = null, CancellationToken ctk = default(CancellationToken))
@@ -57,8 +57,8 @@ namespace Ark.Tools.ResourceWatcher
 
             ResourceState map(ResourceState r, EJ e)
             {
-                if (e?.ExtensionJson != null)
-                    r.Extensions = JsonConvert.DeserializeObject(e.ExtensionJson, _jsonSerializerSettings);
+                if (e?.ExtensionsJson != null)
+                    r.Extensions = JsonConvert.DeserializeObject(e.ExtensionsJson, _jsonSerializerSettings);
 
                 return r;
             }
