@@ -2,6 +2,7 @@
 using NodaTime.Text;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using TechTalk.SpecFlow.Assist;
 
@@ -54,8 +55,14 @@ namespace Ark.Tools.SpecFlow
                 case Instant i:
                     {
                         var res3 = InstantPattern.ExtendedIso.Parse(expectedValue);
-                        if (!res3.Success) return false;
-                        return res3.Value == i;
+                        if (res3.Success) return res3.Value == i;
+
+                        if (DateTime.TryParse(expectedValue, CultureInfo.CurrentCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var d))
+                        {
+                            return Instant.FromDateTimeUtc(d) == i;
+                        }
+
+                        return false;
                     }
                 case LocalTime t:
                     {
@@ -66,8 +73,14 @@ namespace Ark.Tools.SpecFlow
                 case OffsetDateTime odt:
                     {
                         var res6 = OffsetDateTimePattern.ExtendedIso.Parse(expectedValue);
-                        if (!res6.Success) return false;
-                        return res6.Value == odt;
+                        if (res6.Success) return res6.Value == odt; 
+
+                        if (DateTimeOffset.TryParse(expectedValue, out var o))
+                        {
+                            return OffsetDateTime.FromDateTimeOffset(o) == odt;
+                        }
+
+                        return false;
                     }
             }
 
@@ -97,7 +110,7 @@ namespace Ark.Tools.SpecFlow
                     return LocalDate.FromDateTime(d);
                 }
 
-                throw GetInvalidOperationException(keyValuePair.Value);
+                throw _getInvalidOperationException(keyValuePair.Value);
             }
 
             if (t == typeof(LocalDateTime))
@@ -110,33 +123,45 @@ namespace Ark.Tools.SpecFlow
                     return LocalDateTime.FromDateTime(d);
                 }
 
-                throw GetInvalidOperationException(keyValuePair.Value);
+                throw _getInvalidOperationException(keyValuePair.Value);
             }
 
             if (t == typeof(Instant))
             {
                 var res = InstantPattern.ExtendedIso.Parse(keyValuePair.Value);
-                if (!res.Success) throw GetInvalidOperationException(keyValuePair.Value);
-                return res.Value;
+                if (res.Success) return res.Value;
+
+                if (DateTime.TryParse(keyValuePair.Value, CultureInfo.CurrentCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var d))
+                {
+                    return Instant.FromDateTimeUtc(d);
+                }
+
+                throw _getInvalidOperationException(keyValuePair.Value);
             }
 
             if (t == typeof(LocalTime))
             {
                 var res = LocalTimePattern.ExtendedIso.Parse(keyValuePair.Value);
-                if (!res.Success) throw GetInvalidOperationException(keyValuePair.Value);
+                if (!res.Success) throw _getInvalidOperationException(keyValuePair.Value);
                 return res.Value;
             }
 
             if (t == typeof(OffsetDateTime))
             {
                 var res = OffsetDateTimePattern.ExtendedIso.Parse(keyValuePair.Value);
-                if (!res.Success) throw GetInvalidOperationException(keyValuePair.Value);
-                return res.Value;
+                if (res.Success) return res.Value;
+
+                if (DateTimeOffset.TryParse(keyValuePair.Value, out var o))
+                {
+                    return OffsetDateTime.FromDateTimeOffset(o);
+                }
+
+                throw _getInvalidOperationException(keyValuePair.Value);
             }
 
             throw new NotImplementedException();
         }
 
-        private static InvalidOperationException GetInvalidOperationException(string value) => new InvalidOperationException($"Cannot parse value {value} as iso pattern");
+        private static InvalidOperationException _getInvalidOperationException(string value) => new InvalidOperationException($"Cannot parse value {value} pattern");
     }
 }
