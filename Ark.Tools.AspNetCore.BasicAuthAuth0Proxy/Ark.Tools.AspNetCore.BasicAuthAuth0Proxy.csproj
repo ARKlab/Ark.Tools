@@ -26,10 +26,10 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.0.5" />
-    <PackageReference Include="JWT" Version="6.1.4" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.0.8" />
+    <PackageReference Include="JWT" Version="7.2.1" />
     <PackageReference Include="Polly.Caching.Memory" Version="3.0.2" />
-    <PackageReference Include="Polly" Version="7.2.0" />
+    <PackageReference Include="Polly" Version="7.2.1" />
   </ItemGroup>
   
   

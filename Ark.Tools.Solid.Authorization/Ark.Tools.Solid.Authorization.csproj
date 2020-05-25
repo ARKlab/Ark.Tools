@@ -18,7 +18,7 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Authorization\Ark.Tools.Authorization.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />

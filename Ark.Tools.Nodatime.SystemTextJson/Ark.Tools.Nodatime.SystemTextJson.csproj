@@ -27,7 +27,7 @@
   <!--===============================================================================-->
   <ItemGroup>
 
-    <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.0.0-beta01" />
+    <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.0.0-beta02" />
   </ItemGroup>
 
   <ItemGroup>
