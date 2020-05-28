@@ -14,7 +14,7 @@ using System.Linq;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
-	public class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSession
+	public sealed class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSession
 	{
 		private readonly IAsyncDocumentSession _inner;
 		private readonly IContextProvider<ClaimsPrincipal> _principalProvider;
@@ -56,6 +56,11 @@ namespace Ark.Tools.RavenDb.Auditing
 		}
 
 		public void Delete(string id)
+		{
+			throw new NotSupportedException("Delete by Id is not supported, load entity first, than delete it");
+			//_inner.Delete(id);
+		}
+		public void Delete(string id, string expectedChangeVector)
 		{
 			throw new NotSupportedException("Delete by Id is not supported, load entity first, than delete it");
 			//_inner.Delete(id);
@@ -273,5 +278,6 @@ namespace Ark.Tools.RavenDb.Auditing
 
 			return (entityId, cv, collectionName);
 		}
+
 	}
 }
