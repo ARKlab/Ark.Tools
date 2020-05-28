@@ -3,8 +3,6 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
-
-    <TargetFrameworks>net461;netstandard2.0;</TargetFrameworks>
     
     <Description>Extensions and helpers of Ark.Tools.Sql for Oracle</Description>
     <PackageTags>Ark;C#;.NET;Framework;Sql;Oracle</PackageTags>
@@ -24,11 +22,11 @@
     <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
     <PackageReference Include="Oracle.ManagedDataAccess" Version="19.7.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.70" />
   </ItemGroup>
 
