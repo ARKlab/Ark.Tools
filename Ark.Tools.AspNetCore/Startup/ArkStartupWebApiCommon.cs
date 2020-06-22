@@ -182,21 +182,12 @@ namespace Ark.Tools.AspNetCore.Startup
 
 		private void _integrateSimpleInjectorContainer(IServiceCollection services)
 		{
-			Container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
 			services.AddSimpleInjector(Container, o =>
 			{
 				o.AddAspNetCore().AddControllerActivation();
 				o.CrossWire<RequestTelemetry>();
 			});
 
-			//services.EnableSimpleInjectorCrossWiring(Container);
-			services.AddSingleton<IControllerActivator>(
-				new SimpleInjectorControllerActivator(Container));
-
-			services.AddSingleton<IViewComponentActivator>(
-				new SimpleInjectorViewComponentActivator(Container));
-
-			services.UseSimpleInjectorAspNetRequestScoping(Container);
 		}
 
 		public abstract IEnumerable<ApiVersion> Versions { get; }

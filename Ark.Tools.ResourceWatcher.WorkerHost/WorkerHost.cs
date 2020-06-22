@@ -217,7 +217,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         /// </summary>
         protected virtual void _onInit()
         {
-            if (_container.IsLocked()) return;
+            if (_container.IsLocked) return;
             
             _container.Collection.Register<Predicate<TMetadata>>(_predicates);
             _container.Collection.Register<Action<TQueryFilter>>(_configurers);
