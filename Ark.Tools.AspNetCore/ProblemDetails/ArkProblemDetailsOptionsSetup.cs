@@ -43,12 +43,11 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
             {
                 if ( Environment.IsProduction() && (details.Status >= 400 && details.Status < 500))
                 {
-                    if (details.Extensions.ContainsKey("errors"))
+                    if (details.Extensions.ContainsKey(options.ExceptionDetailsPropertyName))
                     {
-                        details.Extensions.Remove("errors");
+                        details.Extensions.Remove(options.ExceptionDetailsPropertyName);
                     }
                 }
-
 
                 if (details is ArkProblemDetails)
                 {
