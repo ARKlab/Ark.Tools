@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 using NodaTime;
+using TestWorker.Constants;
 
 namespace TestWorker.Configs
 {
@@ -11,7 +12,7 @@ namespace TestWorker.Configs
     {
         public Test_Host_Config()
         {
-            WorkerName = "TestWorker";
+            WorkerName = Test_Constants.AppName;
         }
 
         public string StateDbConnectionString { get; set; }

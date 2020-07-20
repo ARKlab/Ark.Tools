@@ -5,20 +5,20 @@ using System.Threading;
 using NLog;
 using Ark.Tools.NLog;
 using System;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace TestReceiver
 {
 	class Config : TestReceiver_Config, IRebusSliceActivityManagerConfig
 	{
+		public string RebusConnstring { get; set; }
 		public string ActivitySqlConnectionString
 		{
 			get { return "DB"; }
 		}
 
-		public string AsbConnectionString
-		{
-			get { return "Endpoint=sb://ark-playground.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=fc3hUuRJJmx/IpQ+89QyYP8VVA6IkwQcToSEt/51+rU="; }
-		}
+		public string AsbConnectionString => RebusConnstring;
 
 		public string SagaSqlConnectionString
 		{
@@ -26,24 +26,28 @@ namespace TestReceiver
 		}
 	}
 
+
 	class Program
 	{
+
 		static void Main(string[] args)
 		{
-			//NLogConfigurer.For("K2E_D_MGP_Prezzi")
-			//	.WithDefaultTargetsAndRulesFromAppSettings("K4View_Materializers", "k4view-alerts@ark-energy.eu", "arkive-notifications@ark-energy.eu")
-			//	.WithMailRule("Rebus.*", LogLevel.Error)
-			//	.Apply();
-
 			NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
 			try
 			{
-				//DapperNodaTimeSetup.Register();
-				//set Retry Manager
-
 				var container = new Container();
+
+				var cfg = new Config()
+				{
+					RebusConnstring = "12"
+				};
+
+
 				var reg = Lifestyle.Singleton.CreateRegistration(typeof(Config), container);
+
+
+				container.RegisterInstance(cfg);
 				container.AddRegistration(typeof(TestReceiver_Config), reg);
 				container.AddRegistration(typeof(IRebusSliceActivityManagerConfig), reg);
 

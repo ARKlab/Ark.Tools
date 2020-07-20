@@ -18,7 +18,6 @@ namespace TestWorker.Constants
 		public const string DataTimezone = "CET";
 		public const string ProviderName = "test";
 
-		public const string RebusConnString = "Endpoint=sb://ark-playground.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=fc3hUuRJJmx/IpQ+89QyYP8VVA6IkwQcToSEt/51+rU=";
-
+		public const string AppName = "Test_Worker";
 	}
 }

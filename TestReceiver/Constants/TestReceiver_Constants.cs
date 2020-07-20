@@ -18,7 +18,5 @@ namespace TestWorker.Constants
 		public const string DataTimezone = "CET";
 		public const string ProviderName = "TestWorker";
 
-		public const string RebusConnString = "Endpoint=sb://artesian-ops.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=2yyjCkOyAfTaRZvZM95fAGZbvUYRY8FlvdkvJ+FIWCA=";
-
 	}
 }

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
 using Ark.Tools.Core.BusinessRuleViolation;
+using System.Diagnostics;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -29,16 +30,25 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         public void Configure(ProblemDetailsOptions options)
         {
             // This is the default behavior; only include exception details in a development environment.
-            options.IncludeExceptionDetails = (ctx, ex) => !Environment.IsProduction();
+            options.IncludeExceptionDetails = (ctx, ex) => true; // !Environment.IsProduction();
 
             options.ShouldLogUnhandledException = (ctx, e, d) => _isServerError(d.Status);
 
             options.IsProblem = _isProblem;
 
+            // keep consistent with asp.net core 2.2 conventions that adds a tracing value
+            options.GetTraceId = ctx => Activity.Current?.Id ?? ctx.TraceIdentifier;
+
             options.OnBeforeWriteDetails = (ctx, details) =>
             {
-                // keep consistent with asp.net core 2.2 conventions that adds a tracing value
-                ProblemDetailsHelper.SetTraceId(details, ctx);
+                if ( Environment.IsProduction() && (details.Status >= 400 && details.Status < 500))
+                {
+                    if (details.Extensions.ContainsKey("errors"))
+                    {
+                        details.Extensions.Remove("errors");
+                    }
+                }
+
 
                 if (details is ArkProblemDetails)
                 {
@@ -60,17 +70,17 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         private void _configureExceptionProblemDetails(ProblemDetailsOptions options)
         {
 
-            options.Map<EntityNotFoundException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status404NotFound));
+            options.MapToStatusCode<EntityNotFoundException>(StatusCodes.Status404NotFound);
 
-            options.Map<NotImplementedException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status501NotImplemented));
+            options.MapToStatusCode<NotImplementedException>(StatusCodes.Status501NotImplemented);
 
-            options.Map<HttpRequestException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status503ServiceUnavailable));
+            options.MapToStatusCode<HttpRequestException>(StatusCodes.Status503ServiceUnavailable);
 
-            options.Map<UnauthorizedAccessException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status403Forbidden));
+            options.MapToStatusCode<UnauthorizedAccessException>(StatusCodes.Status403Forbidden);
 
-            options.Map<EntityTagMismatchException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status412PreconditionFailed));
+            options.MapToStatusCode<EntityTagMismatchException>(StatusCodes.Status412PreconditionFailed);
 
-            options.Map<OptimisticConcurrencyException>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status409Conflict));
+            options.MapToStatusCode<OptimisticConcurrencyException>(StatusCodes.Status409Conflict);
 
             options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex) 
                 ? StatusCodeProblemDetails.Create(StatusCodes.Status409Conflict)
@@ -107,7 +117,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         public void PostConfigure(string name, ProblemDetailsOptions options)
         {
             // If an exception other than above specified is thrown, this will handle it.
-            options.Map<Exception>(ex => StatusCodeProblemDetails.Create(StatusCodes.Status500InternalServerError));
+            options.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
         }
     }
 }
