@@ -51,7 +51,7 @@
     <EntityFrameworkGroupVersion>2.6.0</EntityFrameworkGroupVersion>
     <RavenDbGroupVersion>2.6.0</RavenDbGroupVersion>
     
-    <AspNetCoreGroupVersion>2.6.0</AspNetCoreGroupVersion>
+    <AspNetCoreGroupVersion>2.6.1</AspNetCoreGroupVersion>
 
     <EventSourcingGroupVersion>2.6.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
