@@ -27,6 +27,7 @@
 		<PackageReference Include="Rebus.AzureServiceBus" Version="7.1.4" />
 		<PackageReference Include="Rebus.SqlServer" Version="7.0.1" />
     <PackageReference Include="Rebus.AzureBlobs" Version="0.5.0" />
+    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="4.1.4" />
 	</ItemGroup>
   
   <ItemGroup>
