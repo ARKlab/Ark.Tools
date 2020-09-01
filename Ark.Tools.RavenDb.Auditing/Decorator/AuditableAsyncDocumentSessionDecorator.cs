@@ -121,7 +121,7 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.Query<T>(indexName, collectionName, isMapReduce);
 		}
 
-		public IRavenQueryable<T> Query<T, TIndexCreator>() where TIndexCreator : AbstractIndexCreationTask, new()
+		public IRavenQueryable<T> Query<T, TIndexCreator>() where TIndexCreator : AbstractCommonApiForIndexes, new()
 		{
 			return _inner.Query<T, TIndexCreator>();
 		}
@@ -279,5 +279,34 @@ namespace Ark.Tools.RavenDb.Auditing
 			return (entityId, cv, collectionName);
 		}
 
-	}
+        public IAsyncSessionDocumentTimeSeries TimeSeriesFor(string documentId, string name)
+        {
+            return _inner.TimeSeriesFor(documentId, name);
+        }
+
+        public IAsyncSessionDocumentTimeSeries TimeSeriesFor(object entity, string name)
+        {
+            return _inner.TimeSeriesFor(entity, name);
+        }
+
+        public IAsyncSessionDocumentTypedTimeSeries<TValues> TimeSeriesFor<TValues>(string documentId, string name = null) where TValues : new()
+        {
+            return _inner.TimeSeriesFor<TValues>(documentId, name);
+        }
+
+        public IAsyncSessionDocumentTypedTimeSeries<TValues> TimeSeriesFor<TValues>(object entity, string name = null) where TValues : new()
+        {
+            return _inner.TimeSeriesFor<TValues>(entity, name);
+        }
+
+        public IAsyncSessionDocumentRollupTypedTimeSeries<TValues> TimeSeriesRollupFor<TValues>(object entity, string policy, string raw = null) where TValues : new()
+        {
+            return _inner.TimeSeriesRollupFor<TValues>(entity, policy, raw);
+        }
+
+        public IAsyncSessionDocumentRollupTypedTimeSeries<TValues> TimeSeriesRollupFor<TValues>(string documentId, string policy, string raw = null) where TValues : new()
+        {
+            return _inner.TimeSeriesRollupFor<TValues>(documentId, policy, raw);
+        }
+    }
 }

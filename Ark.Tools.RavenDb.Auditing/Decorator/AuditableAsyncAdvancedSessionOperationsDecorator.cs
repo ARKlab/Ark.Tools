@@ -14,6 +14,7 @@ using System.IO;
 using Raven.Client.Util;
 using Raven.Client.Documents.Commands;
 using System.Linq;
+using Raven.Client.Json.Serialization;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
@@ -56,9 +57,11 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		public bool UseOptimisticConcurrency { get => _inner.UseOptimisticConcurrency; set => _inner.UseOptimisticConcurrency = value; }
 
-		public EntityToBlittable EntityToBlittable => _inner.EntityToBlittable;
+        public SessionInfo SessionInfo => _inner.SessionInfo;
 
-		public event EventHandler<BeforeStoreEventArgs> OnBeforeStore
+        public ISessionBlittableJsonConverter JsonConverter => _inner.JsonConverter;
+
+        public event EventHandler<BeforeStoreEventArgs> OnBeforeStore
 		{
 			add
 			{
@@ -110,7 +113,7 @@ namespace Ark.Tools.RavenDb.Auditing
 			}
 		}
 
-		public IAsyncDocumentQuery<T> AsyncDocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractIndexCreationTask, new()
+		public IAsyncDocumentQuery<T> AsyncDocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractCommonApiForIndexes, new()
 		{
 			return _inner.AsyncDocumentQuery<T, TIndexCreator>();
 		}
@@ -188,7 +191,12 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.GetMetadataFor(instance);
 		}
 
-		public bool HasChanged(object entity)
+        public List<string> GetTimeSeriesFor<T>(T instance)
+        {
+            return _inner.GetTimeSeriesFor(instance);
+        }
+
+        public bool HasChanged(object entity)
 		{
 			return _inner.HasChanged(entity);
 		}
@@ -252,7 +260,17 @@ namespace Ark.Tools.RavenDb.Auditing
 			//_inner.Patch(id, path, arrayAdder);
 		}
 
-		public Task RefreshAsync<T>(T entity, CancellationToken token = default)
+        public void Patch<T, TKey, TValue>(T entity, Expression<Func<T, IDictionary<TKey, TValue>>> path, Expression<Func<JavaScriptDictionary<TKey, TValue>, object>> dictionaryAdder)
+        {
+            _inner.Patch(entity, path, dictionaryAdder);
+        }
+
+        public void Patch<T, TKey, TValue>(string id, Expression<Func<T, IDictionary<TKey, TValue>>> path, Expression<Func<JavaScriptDictionary<TKey, TValue>, object>> dictionaryAdder)
+        {
+            _inner.Patch(id, path, dictionaryAdder);
+        }
+
+        public Task RefreshAsync<T>(T entity, CancellationToken token = default)
 		{
 			return _inner.RefreshAsync(entity, token);
 		}
@@ -261,41 +279,6 @@ namespace Ark.Tools.RavenDb.Auditing
 		public void SetTransactionMode(TransactionMode mode)
 		{
 			_inner.SetTransactionMode(mode);
-		}
-
-		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, token);
-		}
-
-		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, out streamQueryStats, token);
-		}
-
-		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, token);
-		}
-
-		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, out streamQueryStats, token);
-		}
-
-		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, token);
-		}
-
-		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
-		{
-			return _inner.StreamAsync(query, out streamQueryStats, token);
-		}
-
-		public Task<Raven.Client.Util.IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null, CancellationToken token = default)
-		{
-			return _inner.StreamAsync<T>(startsWith, matches, start, pageSize, startAfter, token);
 		}
 
 		public Task StreamIntoAsync<T>(IAsyncDocumentQuery<T> query, Stream output, CancellationToken token = default)
@@ -322,5 +305,40 @@ namespace Ark.Tools.RavenDb.Auditing
 		{
 			return _inner.WhatChanged();
 		}
-	}
+
+        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IAsyncDocumentQuery<T> query, CancellationToken token)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IAsyncDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IAsyncRawDocumentQuery<T> query, CancellationToken token)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IAsyncRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IQueryable<T> query, CancellationToken token)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(string startsWith, string matches, int start, int pageSize, string startAfter, CancellationToken token)
+        {
+            return _inner.StreamAsync<T>(startsWith, matches, start, pageSize, startAfter, token);
+        }
+    }
 }

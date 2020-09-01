@@ -1,5 +1,7 @@
 ﻿using Raven.Client.Documents.Operations.Attachments;
 using Raven.Client.Documents.Session;
+
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -50,7 +52,12 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.GetAsync(entity, name, token);
 		}
 
-		public AttachmentName[] GetNames(object entity)
+        public Task<IEnumerator<AttachmentEnumeratorResult>> GetAsync(IEnumerable<AttachmentRequest> attachments, CancellationToken token = default)
+        {
+            return _inner.GetAsync(attachments, token);
+        }
+
+        public AttachmentName[] GetNames(object entity)
 		{
 			return _inner.GetNames(entity);
 		}

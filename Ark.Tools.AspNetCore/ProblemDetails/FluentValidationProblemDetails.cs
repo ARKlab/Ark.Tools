@@ -18,7 +18,6 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                         ErrorCode = error.ErrorCode,
                         ErrorMessage = error.ErrorMessage,
                         FormattedMessagePlaceholderValues = error.FormattedMessagePlaceholderValues,
-                        ResourceName = error.ResourceName,
                     }
                 ).ToArray());
 
@@ -50,9 +49,5 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         // Summary:
         //     Gets or sets the formatted message placeholder values.
         public Dictionary<string, object> FormattedMessagePlaceholderValues { get; set; }
-        //
-        // Summary:
-        //     The resource name used for building the message
-        public string ResourceName { get; set; }
     }
 }

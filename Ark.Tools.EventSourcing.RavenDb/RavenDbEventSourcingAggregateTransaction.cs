@@ -78,9 +78,9 @@ namespace Ark.Tools.EventSourcing.RavenDb
             if (Aggregate.UncommittedAggregateEvents.Any())
             {
                 if (_chex == null)
-                    _session.Advanced.ClusterTransaction.CreateCompareExchangeValue<long>(_chexKey, Aggregate.Version);
+                    _chex = _session.Advanced.ClusterTransaction.CreateCompareExchangeValue<long>(_chexKey, Aggregate.Version);
                 else
-                    _session.Advanced.ClusterTransaction.UpdateCompareExchangeValue<long>(new CompareExchangeValue<long>(_chexKey, _chex.Index, Aggregate.Version));
+                    _chex.Value = Aggregate.Version;
 
                 foreach (var e in Aggregate.UncommittedDomainEvents)
                 {
