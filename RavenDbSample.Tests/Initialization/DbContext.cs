@@ -28,7 +28,7 @@ namespace RavenDBSample.Tests
 			Environment.SetEnvironmentVariable("CODE_COVERAGE_SESSION_NAME", null);
 			EmbeddedServer.Instance.StartServer(new ServerOptions
 			{
-				FrameworkVersion = "2.2.6",
+				FrameworkVersion = "2.2.8",
 				ServerUrl = DatabaseConnectionString,
 			});
 

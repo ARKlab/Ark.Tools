@@ -93,19 +93,6 @@ namespace Ark.Tools.AspNetCore.Startup
 			})
 			;
 
-			if (UseNewtonsoftJson)
-			{
-				mvcBuilder.AddNewtonsoftJson(s =>
-				{
-					s.SerializerSettings.ConfigureArkDefaults();
-				});
-			} else
-			{
-				mvcBuilder.AddJsonOptions(options =>
-				{
-					options.JsonSerializerOptions.ConfigureArkDefaults();
-				});
-			}
 
 			services.AddAuthorization();
 
@@ -170,6 +157,21 @@ namespace Ark.Tools.AspNetCore.Startup
 
 			if (UseNewtonsoftJson)
 				services.AddSwaggerGenNewtonsoftSupport();
+
+			if (UseNewtonsoftJson)
+			{
+				mvcBuilder.AddNewtonsoftJson(s =>
+				{
+					s.SerializerSettings.ConfigureArkDefaults();
+				});
+			}
+			else
+			{
+				mvcBuilder.AddJsonOptions(options =>
+				{
+					options.JsonSerializerOptions.ConfigureArkDefaults();
+				});
+			}
 
 			//	Api Behaviour override for disabling automatic Problem details
 			services.ConfigureOptions<ApiBehaviourOptionsSetup>();

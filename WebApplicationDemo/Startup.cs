@@ -72,8 +72,6 @@ namespace WebApplicationDemo
 
 			services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
 
-
-
 			services.ArkConfigureSwaggerUI(c =>
 			{
 				c.MaxDisplayedTags(100);
@@ -103,7 +101,6 @@ namespace WebApplicationDemo
 		public override void Configure(IApplicationBuilder app)
 		{
 			base.Configure(app);
-
 		}
 
 		protected override void RegisterContainer(IApplicationBuilder app)

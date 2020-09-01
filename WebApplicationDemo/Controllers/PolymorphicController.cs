@@ -17,7 +17,7 @@ namespace WebApplicationDemo.Controllers
 	[ApiVersion("1.0")]
 	[Route("polymorphycs")]
 	[ApiController]
-	public class PolymorphicController : ControllerBase
+	public class PolymorphicController : ApiController
 	{
 		private readonly IQueryProcessor _queryProcessor;
 		private readonly IRequestProcessor _requestProcessor;

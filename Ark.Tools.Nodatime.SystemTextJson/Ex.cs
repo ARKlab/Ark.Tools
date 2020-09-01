@@ -1,4 +1,7 @@
-﻿using System;
+﻿using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,6 +24,14 @@ namespace Ark.Tools.Nodatime.SystemTextJson
                 @this.Converters.Add(new ZonedDateTimeRangeConverter());
 
             return @this;
+        }
+
+        public static JsonSerializerOptions ConfigureForNodaTimeArkDefaults(this JsonSerializerOptions @this)
+        {
+            return @this
+                .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)
+                .ConfigureForNodaTimeRanges()
+                ;
         }
     }
 }
