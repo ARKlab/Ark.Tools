@@ -66,7 +66,7 @@ namespace Ark.Tools.Nodatime.Intervals
         {
             var offset = Duration.Zero;
             offset += Duration.FromTicks(time.TickOfSecond);
-            offset += Duration.FromMilliseconds(time.Second);
+            offset += Duration.FromSeconds(time.Second);
 
             switch (period)
             {
