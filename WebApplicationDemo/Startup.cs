@@ -72,8 +72,7 @@ namespace WebApplicationDemo
 			;
 
 			//HealthChecks
-			services.AddArkHealthChecks()
-				.AddHealthChecks()
+			services.AddHealthChecks()
 				.AddCheck<ExampleHealthCheck>("Example Web App Demo Health Check", tags: new string[]{ "ArkTools", "WebDemo"})
 				.AddSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Logs;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True", healthQuery: "SELECT 1;", name: "NLOG DB", tags: new string[] { "NLOG", "SQLServer" });
 
@@ -108,9 +107,6 @@ namespace WebApplicationDemo
 		public override void Configure(IApplicationBuilder app)
 		{
 			base.Configure(app);
-
-			//HealthChecks
-			app.UseArkHealthChecks();
 		}
 
 		protected override void RegisterContainer(IApplicationBuilder app)
