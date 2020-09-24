@@ -44,28 +44,27 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>2.7.1</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>2.7.1</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>2.7.1</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>2.7.2</ArkToolsCoreVersion>
+    <FtpClientGroupVersion>2.7.2</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>2.7.2</ResourceWatcherGroupVersion>
     
-    <EntityFrameworkGroupVersion>2.7.1</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>2.7.1</RavenDbGroupVersion>
+    <EntityFrameworkGroupVersion>2.7.2</EntityFrameworkGroupVersion>
+    <RavenDbGroupVersion>2.7.2</RavenDbGroupVersion>
     
-    <AspNetCoreGroupVersion>2.7.1</AspNetCoreGroupVersion>
-
-    <EventSourcingGroupVersion>2.7.1</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
+    <AspNetCoreGroupVersion>2.7.2</AspNetCoreGroupVersion>
+    <EventSourcingGroupVersion>2.7.2</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
     <!-- Groups SUFFIX -->
-    <ArkToolsCoreVersionSuffix></ArkToolsCoreVersionSuffix>
-    <FtpClientGroupVersionSuffix></FtpClientGroupVersionSuffix>
-    <ResourceWatcherGroupVersionSuffix></ResourceWatcherGroupVersionSuffix>
+    <ArkToolsCoreVersionSuffix>beta01</ArkToolsCoreVersionSuffix>
+    <FtpClientGroupVersionSuffix>beta01</FtpClientGroupVersionSuffix>
+    <ResourceWatcherGroupVersionSuffix>beta01</ResourceWatcherGroupVersionSuffix>
 
-    <EntityFrameworkGroupVersionSuffix></EntityFrameworkGroupVersionSuffix>
-    <RavenDbGroupVersionSuffix></RavenDbGroupVersionSuffix>
+    <EntityFrameworkGroupVersionSuffix>beta01</EntityFrameworkGroupVersionSuffix>
+    <RavenDbGroupVersionSuffix>beta01</RavenDbGroupVersionSuffix>
 
-    <AspNetCoreGroupVersionSuffix></AspNetCoreGroupVersionSuffix>
+    <AspNetCoreGroupVersionSuffix>beta01</AspNetCoreGroupVersionSuffix>
 
-    <EventSourcingGroupVersionSuffix></EventSourcingGroupVersionSuffix>
+    <EventSourcingGroupVersionSuffix>beta01</EventSourcingGroupVersionSuffix>
 
 </PropertyGroup>
   

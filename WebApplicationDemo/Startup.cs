@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Microsoft.AspNetCore.Authorization;
@@ -70,6 +71,12 @@ namespace WebApplicationDemo
 			})
 			;
 
+			//HealthChecks
+			services.AddArkHealthChecks()
+				.AddHealthChecks()
+				.AddCheck<ExampleHealthCheck>("Example Web App Demo Health Check", tags: new string[]{ "ArkTools", "WebDemo"})
+				.AddSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Logs;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True", healthQuery: "SELECT 1;", name: "NLOG DB", tags: new string[] { "NLOG", "SQLServer" });
+
 			services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
 
 			services.ArkConfigureSwaggerUI(c =>
@@ -101,6 +108,9 @@ namespace WebApplicationDemo
 		public override void Configure(IApplicationBuilder app)
 		{
 			base.Configure(app);
+
+			//HealthChecks
+			app.UseArkHealthChecks();
 		}
 
 		protected override void RegisterContainer(IApplicationBuilder app)
