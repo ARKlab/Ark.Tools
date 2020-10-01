@@ -9,6 +9,6 @@ namespace WebApplicationDemo.Dto
 {
     public interface IExampleHealthCheckService
     {
-        public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default);
+        public Task CheckHealthAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -9,19 +9,17 @@ namespace WebApplicationDemo.Dto
 {
     public class ExampleHealthCheckService : IExampleHealthCheckService
     {
-        public Task<HealthCheckResult> CheckHealthAsync(
+        public Task CheckHealthAsync(
             CancellationToken cancellationToken = default)
         {
             var healthCheckResultHealthy = true;
 
             if (healthCheckResultHealthy)
             {
-                return Task.FromResult(
-                    HealthCheckResult.Healthy("A healthy result."));
+                return Task.CompletedTask;
             }
 
-            return Task.FromResult(
-                HealthCheckResult.Unhealthy("An unhealthy result."));
+            return Task.FromException(new Exception("Failed"));
         }
     }
 }
