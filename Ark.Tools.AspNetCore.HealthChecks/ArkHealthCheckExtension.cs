@@ -5,11 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
+using SimpleInjector;
 
 namespace Ark.Tools.AspNetCore.HealthChecks
 {
@@ -53,8 +52,8 @@ namespace Ark.Tools.AspNetCore.HealthChecks
                             //If not found uses default
                             setup.AddCustomStylesheet("UIHealthChecks.css");
                         }
-                        catch 
-                        { 
+                        catch
+                        {
                             //Use Default styling
                         }
                     });
@@ -64,6 +63,56 @@ namespace Ark.Tools.AspNetCore.HealthChecks
             });
 
             return app;
+        }
+
+        public static IHealthChecksBuilder AddSimpleInjectorCheck<T>(this IHealthChecksBuilder builder, string name, HealthStatus? failureStatus = null, IEnumerable<string> tags = null, TimeSpan? timeout = null) where T : class, IHealthCheck
+        {
+            return builder.AddCheck<SimpleInjectorCheck<T>>(name, failureStatus, tags, timeout);
+        }
+
+        public static IHealthChecksBuilder AddSimpleInjectorLambdaCheck<T>(this IHealthChecksBuilder builder, string name, Func<T, CancellationToken, Task> action, HealthStatus? failureStatus = null, IEnumerable<string> tags = null, TimeSpan? timeout = null) where T : class
+        {
+            return builder.Add(new HealthCheckRegistration(name, sp => new LambdaCheck<T>(sp.GetRequiredService<Container>(), action), failureStatus, tags, timeout));
+        }
+
+        private class SimpleInjectorCheck<T> : IHealthCheck where T : class, IHealthCheck
+        {
+            private readonly Container _container;
+
+            public SimpleInjectorCheck(Container container)
+            {
+                _container = container;
+            }
+
+            public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+            {
+                return _container.GetInstance<T>().CheckHealthAsync(context, cancellationToken);
+            }
+        }
+
+        private class LambdaCheck<T> : IHealthCheck where T : class
+        {
+            private readonly Container _container;
+            private readonly Func<T, CancellationToken, Task> _action;
+
+            public LambdaCheck(Container container, Func<T, CancellationToken, Task> action)
+            {
+                _container = container;
+                this._action = action;
+            }
+
+            public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+            {
+                try
+                {
+                    await _action(_container.GetInstance<T>(), cancellationToken);
+                    return new HealthCheckResult(HealthStatus.Healthy);
+                }
+                catch (Exception ex)
+                {
+                    return new HealthCheckResult(HealthStatus.Unhealthy, exception: ex);
+                }
+            }
         }
     }
 }

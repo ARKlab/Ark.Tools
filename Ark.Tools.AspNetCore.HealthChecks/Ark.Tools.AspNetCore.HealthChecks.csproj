@@ -37,5 +37,6 @@
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="3.1.2" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="3.1.2" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="3.1.8" />
+		<PackageReference Include="SimpleInjector" Version="5.0.3" />
 	</ItemGroup>
 </Project>

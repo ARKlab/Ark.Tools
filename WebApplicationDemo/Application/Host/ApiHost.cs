@@ -8,6 +8,7 @@ using System.Threading;
 using Ark.Tools.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql.SqlServer;
+using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Application.Host
 {
@@ -63,6 +64,10 @@ namespace WebApplicationDemo.Application.Host
 				);
 
 			container.RegisterInstance(this.Config);
+
+			//HealthChecks
+			container.Register<ExampleHealthCheck>();
+			container.Register<ExampleHealthCheckLamda>();
 
 			// DAL
 			//container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
