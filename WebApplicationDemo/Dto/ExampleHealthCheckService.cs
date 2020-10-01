@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WebApplicationDemo.Dto
 {
-    public class ExampleHealthCheckLamda
+    public class ExampleHealthCheckService : IExampleHealthCheckService
     {
         public Task<HealthCheckResult> CheckHealthAsync(
             CancellationToken cancellationToken = default)

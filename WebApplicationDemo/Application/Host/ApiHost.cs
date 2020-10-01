@@ -67,7 +67,7 @@ namespace WebApplicationDemo.Application.Host
 
 			//HealthChecks
 			container.Register<ExampleHealthCheck>();
-			container.Register<ExampleHealthCheckLamda>();
+			Container.Register<IExampleHealthCheckService, ExampleHealthCheckService>();
 
 			// DAL
 			//container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
