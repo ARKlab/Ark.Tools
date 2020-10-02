@@ -3,12 +3,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using SimpleInjector;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
-using SimpleInjector;
 
 namespace Ark.Tools.AspNetCore.HealthChecks
 {
@@ -50,7 +49,9 @@ namespace Ark.Tools.AspNetCore.HealthChecks
                         {
                             //Checks if a style is present in application for the HealthChecks
                             //If not found uses default
-                            setup.AddCustomStylesheet("UIHealthChecks.css");
+                            var path = (String)AppDomain.CurrentDomain.BaseDirectory;
+                            var stylesheet = path + "UIHealthChecks.css";
+                            setup.AddCustomStylesheet(stylesheet);
                         }
                         catch
                         {
