@@ -1,4 +1,5 @@
 ﻿using HealthChecks.UI.Client;
+using HealthChecks.UI.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,9 +26,14 @@ namespace Ark.Tools.AspNetCore.HealthChecks
                 setup.MaximumHistoryEntriesPerEndpoint(50);
                 setup.AddHealthCheckEndpoint("Health Checks", "/healthCheck");
             }
-            ).AddInMemoryStorage();
+            ).AddInMemoryStorage();            
 
             return services;
+        }
+
+        public static IServiceCollection AddArkHealthChecksUIOptions(this IServiceCollection services, Action<Options> setup)
+        {
+            return services.AddSingleton(setup);
         }
 
         public static IApplicationBuilder UseArkHealthChecks(this IApplicationBuilder app)
@@ -40,27 +46,12 @@ namespace Ark.Tools.AspNetCore.HealthChecks
                     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
                 });
 
-                app.UseRouting()
-                .UseEndpoints(endpoints =>
+                endpoints.MapHealthChecksUI(setup =>
                 {
-                    endpoints.MapHealthChecksUI(setup =>
-                    {
-                        try
-                        {
-                            //Checks if a style is present in application for the HealthChecks
-                            //If not found uses default
-                            var path = (String)AppDomain.CurrentDomain.BaseDirectory;
-                            var stylesheet = path + "UIHealthChecks.css";
-                            setup.AddCustomStylesheet(stylesheet);
-                        }
-                        catch
-                        {
-                            //Use Default styling
-                        }
-                    });
+                    var configurers = app.ApplicationServices.GetServices<Action<Options>>();
+                    foreach (var c in configurers)
+                        c?.Invoke(setup);
                 });
-
-                endpoints.MapControllers();
             });
 
             return app;
