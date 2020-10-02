@@ -62,7 +62,7 @@
     <EntityFrameworkGroupVersionSuffix>beta03</EntityFrameworkGroupVersionSuffix>
     <RavenDbGroupVersionSuffix>beta03</RavenDbGroupVersionSuffix>
 
-    <AspNetCoreGroupVersionSuffix>beta04</AspNetCoreGroupVersionSuffix>
+    <AspNetCoreGroupVersionSuffix>beta05</AspNetCoreGroupVersionSuffix>
 
     <EventSourcingGroupVersionSuffix>beta03</EventSourcingGroupVersionSuffix>
 
