@@ -164,6 +164,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Authorization", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Solid.Authorization", "Ark.Tools.Solid.Authorization\Ark.Tools.Solid.Authorization.csproj", "{3E6F5A3B-D1F0-4F68-83A0-505712B12A30}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.AspNetCore.HealthChecks", "Ark.Tools.AspNetCore.HealthChecks\Ark.Tools.AspNetCore.HealthChecks.csproj", "{110D45B0-E0A8-4C61-9A46-2D33901F4FCA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -434,6 +436,10 @@ Global
 		{3E6F5A3B-D1F0-4F68-83A0-505712B12A30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E6F5A3B-D1F0-4F68-83A0-505712B12A30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E6F5A3B-D1F0-4F68-83A0-505712B12A30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{110D45B0-E0A8-4C61-9A46-2D33901F4FCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{110D45B0-E0A8-4C61-9A46-2D33901F4FCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{110D45B0-E0A8-4C61-9A46-2D33901F4FCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{110D45B0-E0A8-4C61-9A46-2D33901F4FCA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

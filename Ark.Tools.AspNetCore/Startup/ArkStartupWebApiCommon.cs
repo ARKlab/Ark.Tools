@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
@@ -62,6 +63,9 @@ namespace Ark.Tools.AspNetCore.Startup
 
 			//ProblemDetails
 			services.AddArkProblemDetails();
+
+			//HealthChecks
+			services.AddArkHealthChecks();
 
 			// Add minumum framework services.
 			var mvcBuilder = services.AddControllers(opt =>
@@ -213,6 +217,8 @@ namespace Ark.Tools.AspNetCore.Startup
 			});
 
 			app.UseArkProblemDetails();
+
+			app.UseArkHealthChecks();
 
 			app.UseSwagger();
 			app.UseSwaggerUI();

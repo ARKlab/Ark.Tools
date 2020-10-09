@@ -39,6 +39,7 @@
     <ProjectReference Include="..\Ark.Tools.AspNetCore.ApplicationInsights\Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.Auth0\Ark.Tools.AspNetCore.Auth0.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.CommaSeparatedParameters\Ark.Tools.AspNetCore.CommaSeparatedParameters.csproj" />
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.HealthChecks\Ark.Tools.AspNetCore.HealthChecks.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.MessagePack\Ark.Tools.AspNetCore.MessagePack.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.NestedStartup\Ark.Tools.AspNetCore.NestedStartup.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.Swashbuckle\Ark.Tools.AspNetCore.Swashbuckle.csproj" />

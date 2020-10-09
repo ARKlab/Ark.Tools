@@ -5,6 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="UIHealthChecks.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="UIHealthChecks.css" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />

@@ -11,9 +11,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
 
     <Version>$(ArkToolsCoreVersion)</Version>
-    <!--<VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>-->
-
-    <VersionSuffix></VersionSuffix>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
