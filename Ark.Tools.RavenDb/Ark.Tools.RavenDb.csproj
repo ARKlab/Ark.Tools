@@ -12,7 +12,7 @@
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="RavenDB.Client" Version="5.0.2" />
+    <PackageReference Include="RavenDB.Client" Version="5.0.3" />
   </ItemGroup>
   <!--===============================================================================-->
   

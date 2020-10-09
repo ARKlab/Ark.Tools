@@ -113,7 +113,59 @@ namespace Ark.Tools.RavenDb.Auditing
 			}
 		}
 
-		public IAsyncDocumentQuery<T> AsyncDocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractCommonApiForIndexes, new()
+        public event EventHandler<BeforeConversionToDocumentEventArgs> OnBeforeConversionToDocument
+        {
+            add
+            {
+                _inner.OnBeforeConversionToDocument += value;
+            }
+
+            remove
+            {
+                _inner.OnBeforeConversionToDocument -= value;
+            }
+        }
+
+        public event EventHandler<AfterConversionToDocumentEventArgs> OnAfterConversionToDocument
+        {
+            add
+            {
+                _inner.OnAfterConversionToDocument += value;
+            }
+
+            remove
+            {
+                _inner.OnAfterConversionToDocument -= value;
+            }
+        }
+
+        public event EventHandler<BeforeConversionToEntityEventArgs> OnBeforeConversionToEntity
+        {
+            add
+            {
+                _inner.OnBeforeConversionToEntity += value;
+            }
+
+            remove
+            {
+                _inner.OnBeforeConversionToEntity -= value;
+            }
+        }
+
+        public event EventHandler<AfterConversionToEntityEventArgs> OnAfterConversionToEntity
+        {
+            add
+            {
+                _inner.OnAfterConversionToEntity += value;
+            }
+
+            remove
+            {
+                _inner.OnAfterConversionToEntity -= value;
+            }
+        }
+
+        public IAsyncDocumentQuery<T> AsyncDocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractCommonApiForIndexes, new()
 		{
 			return _inner.AsyncDocumentQuery<T, TIndexCreator>();
 		}

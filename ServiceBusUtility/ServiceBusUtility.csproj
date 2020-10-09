@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WindowsAzure.ServiceBus" Version="6.0.2" />
+    <PackageReference Include="WindowsAzure.ServiceBus" Version="6.0.3" />
   </ItemGroup>
 
 </Project>
