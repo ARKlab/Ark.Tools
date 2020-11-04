@@ -22,7 +22,7 @@ namespace Ark.Tools.AspNetCore.HealthChecks
 
             services.AddHealthChecksUI(setupSettings: setup =>
             {
-                setup.SetEvaluationTimeInSeconds(10);
+                setup.SetEvaluationTimeInSeconds(60);
                 setup.MaximumHistoryEntriesPerEndpoint(50);
                 setup.AddHealthCheckEndpoint("Health Checks", "/healthCheck");
             }
