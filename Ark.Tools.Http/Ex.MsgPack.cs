@@ -11,12 +11,12 @@ namespace Ark.Tools.Http
 {
     public static partial class Ex
     {
-        public static async Task<T> ReceiveMsgPack<T>(this Task<HttpResponseMessage> response, IFormatterResolver formatterResolver)
+        public static async Task<T> ReceiveMsgPack<T>(this Task<IFlurlResponse> response, IFormatterResolver formatterResolver)
         {
             var resp = await response.ConfigureAwait(false);
             if (resp == null) return default;
 
-            using (var stream = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            using (var stream = await resp.ResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
                 return await MessagePackSerializer.DeserializeAsync<T>(stream);
             }
@@ -27,13 +27,13 @@ namespace Ark.Tools.Http
             return request.SendAsync(HttpMethod.Get, null, cancellationToken, completionOption).ReceiveMsgPack<T>(formatterResolver);
         }
 
-        public static Task<HttpResponseMessage> PostMsgPackAsync<T>(this IFlurlRequest request, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
+        public static Task<IFlurlResponse> PostMsgPackAsync<T>(this IFlurlRequest request, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
             return request.SendAsync(HttpMethod.Post, content, cancellationToken, completionOption);
         }
 
-        public static Task<HttpResponseMessage> PutMsgPackAsync<T>(this IFlurlRequest request, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
+        public static Task<IFlurlResponse> PutMsgPackAsync<T>(this IFlurlRequest request, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
             return request.SendAsync(HttpMethod.Put, content, cancellationToken, completionOption);
@@ -44,13 +44,13 @@ namespace Ark.Tools.Http
             return new FlurlRequest(url).SendAsync(HttpMethod.Get, null, cancellationToken, completionOption).ReceiveMsgPack<T>(formatterResolver);
         }
 
-        public static Task<HttpResponseMessage> PostMsgPackAsync<T>(this Url url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
+        public static Task<IFlurlResponse> PostMsgPackAsync<T>(this Url url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
             return new FlurlRequest(url).SendAsync(HttpMethod.Post, content, cancellationToken, completionOption);
         }
 
-        public static Task<HttpResponseMessage> PutMsgPackAsync<T>(this Url url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
+        public static Task<IFlurlResponse> PutMsgPackAsync<T>(this Url url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
             return new FlurlRequest(url).SendAsync(HttpMethod.Put, content, cancellationToken, completionOption);
@@ -61,13 +61,13 @@ namespace Ark.Tools.Http
             return new FlurlRequest(url).SendAsync(HttpMethod.Get, null, cancellationToken, completionOption).ReceiveMsgPack<T>(formatterResolver);
         }
 
-        public static Task<HttpResponseMessage> PostMsgPackAsync<T>(this string url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
+        public static Task<IFlurlResponse> PostMsgPackAsync<T>(this string url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
             return new FlurlRequest(url).SendAsync(HttpMethod.Post, content, cancellationToken, completionOption);
         }
 
-        public static Task<HttpResponseMessage> PutMsgPackAsync<T>(this string url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
+        public static Task<IFlurlResponse> PutMsgPackAsync<T>(this string url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
             return new FlurlRequest(url).SendAsync(HttpMethod.Put, content, cancellationToken, completionOption);

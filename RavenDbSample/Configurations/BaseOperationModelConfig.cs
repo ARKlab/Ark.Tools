@@ -6,7 +6,7 @@ namespace RavenDbSample.Configurations
 {
 	public class BaseOperationModelConfig : IModelConfiguration
 	{
-		public void Apply(ODataModelBuilder builder, ApiVersion apiVersion)
+		public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string routePrefix)
 		{
 			var op = builder.EntitySet<BaseOperation>("BaseOperations").EntityType;
 

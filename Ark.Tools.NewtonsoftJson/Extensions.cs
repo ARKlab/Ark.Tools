@@ -15,7 +15,7 @@ namespace Newtonsoft.Json
             @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
             @this.ConfigureForNodaTimeRanges();
             @this.Converters.Add(new StringEnumConverter());
-            @this.ContractResolver = new CamelCasePropertyNamesContractResolver();            
+            @this.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
             return @this;
         }

@@ -1,25 +1,24 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Net;
-using System.Net.Http;
 using TechTalk.SpecFlow;
 using System;
 using System.Net.Http.Headers;
 using System.Linq;
 using Ark.Tools.Core.EntityTag;
 using Flurl.Http;
-using System.Threading.Tasks;
 using RavenDbSample.Tests.AuthTest;
 
 namespace RavenDbSample.Tests
 {
 	[Binding]
-	public sealed class TestClient
+	public sealed class TestClient : IDisposable
 	{
 		internal IFlurlClient _client;
 
 		private AuthTestContext _authContext;
 		private readonly string _version;
-		private Task<HttpResponseMessage> _lastResponse;
+		private IFlurlResponse _backProperty;
+		private IFlurlResponse LastResponse { get => _backProperty; set { _backProperty?.Dispose(); _backProperty = value; } }
 		private static MediaTypeHeaderValue _jsonMediaType = new MediaTypeHeaderValue("application/json");
 		private bool _isAuthenticated = true;
 
@@ -39,7 +38,7 @@ namespace RavenDbSample.Tests
 
 		public HttpStatusCode GetLastStatusCode()
 		{
-			return _lastResponse.GetAwaiter().GetResult().StatusCode;
+			return (HttpStatusCode)LastResponse.StatusCode;
 		}
 
 		public void Get(string requestUri, IEntityWithETag e)
@@ -59,8 +58,7 @@ namespace RavenDbSample.Tests
 			if (e != null)
 				req.Headers.Add("If-None-Match", e.ToString());
 
-			_lastResponse = req.GetAsync();
-			_lastResponse.GetAwaiter().GetResult();
+			LastResponse = req.GetAsync().GetAwaiter().GetResult();
 		}
 
 		public void Get(string requestUri, string etag = null)
@@ -77,8 +75,7 @@ namespace RavenDbSample.Tests
 			if (_isAuthenticated)
 				_authContext.SetAuth(req);
 
-			_lastResponse = req.DeleteAsync();
-			_lastResponse.GetAwaiter().GetResult();
+			LastResponse = req.DeleteAsync().GetAwaiter().GetResult();
 		}
 
 		public void PostAsJson(string requestUri) => PostAsJson(requestUri, (String)null);
@@ -95,8 +92,7 @@ namespace RavenDbSample.Tests
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.Headers.Add("If-Match", $"\"{eTag._ETag}\"");
 
-			_lastResponse = req.PostJsonAsync(body);
-			_lastResponse.GetAwaiter().GetResult();
+			LastResponse = req.PostJsonAsync(body).GetAwaiter().GetResult();
 		}
 
 		public void PutAsJson(string requestUri) => PutAsJson(requestUri, (String)null);
@@ -113,8 +109,7 @@ namespace RavenDbSample.Tests
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.WithHeader("If-Match", $"\"{eTag._ETag}\"");
 
-			_lastResponse = req.PutJsonAsync(body);
-			_lastResponse.GetAwaiter().GetResult();
+			LastResponse = req.PutJsonAsync(body).GetAwaiter().GetResult();
 		}
 
 		public void PatchAsJson(string requestUri) => PatchAsJson(requestUri, (String)null);
@@ -131,35 +126,34 @@ namespace RavenDbSample.Tests
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.WithHeader("If-Match", $"\"{eTag._ETag}\"");
 
-			_lastResponse = req.PatchJsonAsync(body);
-			_lastResponse.GetAwaiter().GetResult();
+			LastResponse = req.PatchJsonAsync(body).GetAwaiter().GetResult();
 		}
 
 		public T ReadAs<T>()
 		{
-			if (_lastResponse == null)
+			if (LastResponse == null)
 				throw new InvalidOperationException("I suggest to make a request first ...");
 
-			return _lastResponse.ReceiveJson<T>().GetAwaiter().GetResult();
+			return LastResponse.GetJsonAsync<T>().GetAwaiter().GetResult();
 		}
 
 
 		[Then("The request succeded")]
 		public void ThenTheRequestSucceded()
 		{
-			_lastResponse.GetAwaiter().GetResult().EnsureSuccessStatusCode();
+			LastResponse.ResponseMessage.EnsureSuccessStatusCode();
 		}
 
 		[Then(@"The request fails with (.*)")]
 		public void ThenTheRequestFailsWith(HttpStatusCode code)
 		{
-			Assert.AreEqual(code, _lastResponse.GetAwaiter().GetResult().StatusCode);
+			Assert.AreEqual(code, LastResponse.StatusCode);
 		}
 
 		[Then(@"The request returns (.*)")]
 		public void ThenTheRequestReturns(HttpStatusCode code)
 		{
-			Assert.AreEqual(code, _lastResponse.GetAwaiter().GetResult().StatusCode);
+			Assert.AreEqual(code, LastResponse.StatusCode);
 		}
 
 		//[Then("the result is (.*) with a operation location header")]
@@ -178,5 +172,10 @@ namespace RavenDbSample.Tests
 		{
 			Assert.IsTrue(true);
 		}
-	}
+
+        public void Dispose()
+        {
+			LastResponse?.Dispose();
+        }
+    }
 }

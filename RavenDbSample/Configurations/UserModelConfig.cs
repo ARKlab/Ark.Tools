@@ -6,7 +6,7 @@ namespace RavenDbSample.Configurations
 {
 	public class UserModelConfig : IModelConfiguration
 	{
-		public void Apply(ODataModelBuilder builder, ApiVersion apiVersion)
+		public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string routePrefix)
 		{
 			var users = builder.EntitySet<User>("Users").EntityType;
 

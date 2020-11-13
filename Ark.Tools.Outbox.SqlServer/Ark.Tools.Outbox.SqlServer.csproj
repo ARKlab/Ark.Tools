@@ -1,15 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>Core language tools or utilities over dependencies</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
+    <Description>Outbox pattern implementation</Description>
+    <PackageTags>Ark;C#;.NET;Framework;OutboxPattern;Outbox</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -20,17 +16,14 @@
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
+    <PackageReference Include="Dapper" Version="2.0.35" />
   </ItemGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Ensure.That" Version="9.2.0" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="5.0.0" />
-    <PackageReference Include="morelinq" Version="3.3.2" />
-    <PackageReference Include="NodaTime" Version="3.0.3" />
-    <PackageReference Include="Polly" Version="7.2.1" />
-    <PackageReference Include="System.Reactive" Version="4.4.1" />
+    <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Outbox\Ark.Tools.Outbox.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />
   </ItemGroup>
 
   <ItemGroup>
