@@ -1,6 +1,7 @@
 ﻿
 using System;
 
+using Ark.Tools.Outbox;
 using Ark.Tools.Outbox.Rebus.Config;
 
 using Rebus.Transport;
@@ -29,5 +30,24 @@ namespace Rebus.Config
 
 			return configurer;
 		}
+
+		public static StandardConfigurer<IOutboxContextFactory> Use(this StandardConfigurer<IOutboxContextFactory> configurer, Func<IOutboxContext> factory)
+        {
+			configurer.Register(c => new LambdaOutboxContextFactory(factory));
+			return configurer;
+		}
+
+		class LambdaOutboxContextFactory : IOutboxContextFactory
+        {
+            private readonly Func<IOutboxContext> _factory;
+
+            internal LambdaOutboxContextFactory(Func<IOutboxContext> factory)
+            {
+                _factory = factory;
+            }
+
+			public IOutboxContext Create()
+				=> _factory();
+        }
 	}
 }

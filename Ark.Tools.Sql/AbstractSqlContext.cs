@@ -71,7 +71,7 @@ namespace Ark.Tools.Sql
             }
         }
 
-        public void Commit()
+        public virtual void Commit()
         {
             lock (_connection)
             {
@@ -81,7 +81,7 @@ namespace Ark.Tools.Sql
             }
         }
 
-        public void Rollback()
+        public virtual void Rollback()
         {
             lock (_connection)
             {
@@ -91,7 +91,7 @@ namespace Ark.Tools.Sql
             }
         }
 
-        public void ChangeIsolationLevel(IsolationLevel isolationLevel)
+        public virtual void ChangeIsolationLevel(IsolationLevel isolationLevel)
         {
             _isolationLevel = isolationLevel;
             Rollback();
