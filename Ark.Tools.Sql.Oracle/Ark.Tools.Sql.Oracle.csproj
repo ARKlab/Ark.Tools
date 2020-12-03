@@ -15,9 +15,6 @@
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.91" />
-  </ItemGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
@@ -26,11 +23,11 @@
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
-    <PackageReference Include="Oracle.ManagedDataAccess" Version="19.9.0" />
+    <PackageReference Include="Oracle.ManagedDataAccess" Version="19.10.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.91" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.100" />
   </ItemGroup>
 
   <ItemGroup>

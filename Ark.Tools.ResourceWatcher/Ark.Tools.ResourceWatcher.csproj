@@ -19,8 +19,8 @@
   
   <ItemGroup>
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.0" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.7.1" />
-    <PackageReference Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.9" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.10" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,6 +6,8 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
+    <TargetFrameworks>net5.0</TargetFrameworks>
+
     <Description>Extensions of ApplicationInsights for AspNetCore</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;ApplicationInsights</PackageTags>
 
@@ -20,8 +22,8 @@
   <!--===============================================================================-->
   
   <ItemGroup>  
-      <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.15.0" />
-      <PackageReference Include="Microsoft.ApplicationInsights.SnapshotCollector" Version="1.3.7.3" />
+      <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.16.0" />
+      <PackageReference Include="Microsoft.ApplicationInsights.SnapshotCollector" Version="1.3.7.4" />
   </ItemGroup>
   
   <ItemGroup>
