@@ -52,6 +52,9 @@ setlocal
 "%MSBUILD%" "Ark.Tools.Authorization\Ark.Tools.Authorization.csproj" 									/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Solid.Authorization\Ark.Tools.Solid.Authorization.csproj" 						/t:Pack /p:Configuration=Release
 
+"%MSBUILD%" "Ark.Tools.Outbox\Ark.Tools.Outbox.csproj" 													/t:Pack /p:Configuration=Release
+"%MSBUILD%" "Ark.Tools.Outbox.Rebus\Ark.Tools.Outbox.Rebus.csproj" 										/t:Pack /p:Configuration=Release
+"%MSBUILD%" "Ark.Tools.Outbox.SqlServer\Ark.Tools.Outbox.SqlServer.csproj" 								/t:Pack /p:Configuration=Release
 
 pause
 
