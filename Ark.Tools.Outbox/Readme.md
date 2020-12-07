@@ -1,7 +1,7 @@
 ﻿![image](http://www.ark-energy.eu/wp-content/uploads/ark-dark.png)
 # Ark.Tools.Outbox
 
-Implements the Outbox pattern to forward events/side-effects to a Bus in a Transactional way.
+Implements the Outbox pattern to forward events/side-effects to a Bus in a transactional way.
 
 Currently integration with Rebus and Ark.Tools.Sql is provided using Ark.Tools.Outbox.Rebus and Ark.Tools.Outbox.SqlServer
 
