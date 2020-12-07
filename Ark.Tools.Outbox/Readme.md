@@ -44,7 +44,7 @@ async Task ExecuteAsync()
 
 ### Unsafe Way (easy pitfalls) 
 
-Implement a Context that automatically create a RebusTransactionScope that Complete() on Commit().
+Implement a Context that automatically creates a RebusTransactionScope that Complete() on Commit().
 
 ```csharp
 
@@ -87,7 +87,7 @@ class ApplicationContext : AbstractSqlContextWithOutbox<App>, IOutboxContext
 
 ```
 
-And than the usage is more straighforward, but has pitfalls as Context is reusable!
+The use is more straighforward, but has also pitfalls as the Context is reusable.
 
 ```csharp
 
