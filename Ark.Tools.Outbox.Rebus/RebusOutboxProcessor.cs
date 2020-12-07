@@ -59,7 +59,7 @@ namespace Ark.Tools.Outbox.Rebus
 					bool waitForMessages = true;
 					using (var ctx = _outboxContextFactory.Create())
 					{
-						var messages = await ctx.PeakLockMessagesAsync(_topMessagesToRetrieve, ctk);
+						var messages = await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk);
 						if (messages.Any())
 						{
 							using (var rebusTransactionScope = new RebusTransactionScope())

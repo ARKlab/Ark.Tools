@@ -31,13 +31,13 @@ namespace Ark.Tools.Outbox
         );
 
         /// <summary>
-        /// Peak-lock a batch of messages
+        /// Peek-lock a batch of messages
         /// </summary>
         /// <remarks>Messages will be deleted con <see cref="IContext.Commit()"/>.</remarks>
         /// <param name="messageCount"></param>
         /// <param name="ctk"></param>
         /// <returns>A batch of messages.</returns>
-        Task<IEnumerable<OutboxMessage>> PeakLockMessagesAsync(
+        Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(
                int messageCount = 10
              , CancellationToken ctk = default
         );

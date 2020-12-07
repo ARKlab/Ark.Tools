@@ -52,7 +52,7 @@ namespace Ark.Tools.Outbox.SqlServer
                     )
                     ";
 
-                PeakLock = (int messageCount) => $@"
+                PeekLock = (int messageCount) => $@"
                     ;WITH batch AS (
                         SELECT TOP ({messageCount}) *
                         FROM {full}
@@ -95,7 +95,7 @@ namespace Ark.Tools.Outbox.SqlServer
             }
 
             public string Insert { get; }
-            public Func<int, string> PeakLock { get; }
+            public Func<int, string> PeekLock { get; }
             public string Count { get; }
             public string Clear { get; }
             public string CreateTable { get; }
@@ -117,9 +117,9 @@ namespace Ark.Tools.Outbox.SqlServer
             }
         }
 
-        public Task<IEnumerable<OutboxMessage>> PeakLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
+        public Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
         {
-            var cmd = new CommandDefinition(_statements.PeakLock(messageCount), transaction: this.Transaction, cancellationToken: ctk);
+            var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: this.Transaction, cancellationToken: ctk);
 
             return this.Connection.QueryAsync<OutboxMessage>(cmd);
         }

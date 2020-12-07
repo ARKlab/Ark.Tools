@@ -28,9 +28,9 @@ namespace Ark.Tools.Outbox.SqlServer
             return _outbox.CountAsync(ctk);
         }
 
-        public Task<IEnumerable<OutboxMessage>> PeakLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
+        public Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
         {
-            return _outbox.PeakLockMessagesAsync(messageCount, ctk);
+            return _outbox.PeekLockMessagesAsync(messageCount, ctk);
         }
 
         public Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)

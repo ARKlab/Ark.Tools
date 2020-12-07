@@ -79,7 +79,7 @@ namespace Ark.Tools.Outbox
                 try
                 {
                     using var ctx = _outboxContextFactory();
-                    var messages = await ctx.PeakLockMessagesAsync(BatchSize, ctk);
+                    var messages = await ctx.PeekLockMessagesAsync(BatchSize, ctk);
                     await _processMessages(messages, ctk).ConfigureAwait(false);
                     ctx.Commit();                    
                 }
