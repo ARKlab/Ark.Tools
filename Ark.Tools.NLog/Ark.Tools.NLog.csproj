@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    
   </ItemGroup>
 
 </Project>

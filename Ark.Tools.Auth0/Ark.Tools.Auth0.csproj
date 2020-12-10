@@ -24,6 +24,6 @@
     <PackageReference Include="Polly.Caching.Memory" Version="3.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    
   </ItemGroup>
 </Project>

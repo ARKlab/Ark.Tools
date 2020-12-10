@@ -1,7 +1,7 @@
 <Project>
   
   <PropertyGroup>
-    <TargetFrameworks>net472;netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0</TargetFrameworks>
+    <TargetFrameworks>net472;net5.0</TargetFrameworks>
     <LangVersion>9.0</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>	
@@ -15,15 +15,15 @@
 
     <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
 	
-	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
     <PackageIcon>ark-dark.png</PackageIcon>
     <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
       
     <Authors>ARK Labs</Authors>
-    <Copyright>Copyright (C) 2018 ARK S.r.l</Copyright>
+    <Copyright>Copyright (C) 2020 ARK S.r.l</Copyright>
 
-    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
@@ -33,8 +33,8 @@
 
 	  <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
 	  <EmbedUntrackedSources>true</EmbedUntrackedSources>
-	  
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    
+    <DebugType>portable</DebugType>
   </PropertyGroup>
    
 	<ItemGroup>
@@ -55,50 +55,23 @@
     <EventSourcingGroupVersion>3.0.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
     <!-- Groups SUFFIX -->
-    <ArkToolsCoreVersionSuffix>beta04</ArkToolsCoreVersionSuffix>
-    <FtpClientGroupVersionSuffix>beta04</FtpClientGroupVersionSuffix>
-    <ResourceWatcherGroupVersionSuffix>beta04</ResourceWatcherGroupVersionSuffix>
+    <ArkToolsCoreVersionSuffix>beta07</ArkToolsCoreVersionSuffix>
+    <FtpClientGroupVersionSuffix>beta07</FtpClientGroupVersionSuffix>
+    <ResourceWatcherGroupVersionSuffix>beta07</ResourceWatcherGroupVersionSuffix>
 
-    <EntityFrameworkGroupVersionSuffix>beta04</EntityFrameworkGroupVersionSuffix>
-    <RavenDbGroupVersionSuffix>beta04</RavenDbGroupVersionSuffix>
+    <EntityFrameworkGroupVersionSuffix>beta07</EntityFrameworkGroupVersionSuffix>
+    <RavenDbGroupVersionSuffix>beta07</RavenDbGroupVersionSuffix>
 
-    <AspNetCoreGroupVersionSuffix>beta04</AspNetCoreGroupVersionSuffix>
+    <AspNetCoreGroupVersionSuffix>beta07</AspNetCoreGroupVersionSuffix>
 
-    <EventSourcingGroupVersionSuffix>beta04</EventSourcingGroupVersionSuffix>
+    <EventSourcingGroupVersionSuffix>beta07</EventSourcingGroupVersionSuffix>
 
 </PropertyGroup>
   
   <Target Name="PushNugetPackage" AfterTargets="Pack" Condition="('$(Configuration)' == 'Release' And $(VersionSuffix) == '') Or ('$(Configuration)' == 'Debug' And $(VersionSuffix) != '')">
     <Exec Command="dotnet nuget push -s https://api.nuget.org/v3/index.json $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).nupkg" />
-    <!--<Exec Command="dotnet nuget push -s https://nuget.smbsrc.net/ $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).symbols.nupkg" />-->
   </Target>
-	
-	<Target Name="_ResolvePublishNuGetPackagePdbsAndXml"
-			AfterTargets="RunResolvePublishAssemblies">
-		<ItemGroup>
-			<ResolvedFileToPublish 
-			Include="@(ResolvedAssembliesToPublish->'%(RootDir)%(Directory)%(Filename).pdb')" 
-			RelativePath="$([System.IO.Path]::ChangeExtension(%(ResolvedAssembliesToPublish.DestinationSubPath), '.pdb'))"
-			DestinationSubPath="$([System.IO.Path]::ChangeExtension(%(ResolvedAssembliesToPublish.DestinationSubPath), '.pdb'))"
-			Condition="'%(ResolvedAssembliesToPublish.PackageName)' != ''
-						and Exists('%(RootDir)%(Directory)%(Filename).pdb')" />
-			<ResolvedFileToPublish 
-			Include="@(ResolvedAssembliesToPublish->'%(RootDir)%(Directory)%(Filename).xml')" 
-			RelativePath="$([System.IO.Path]::ChangeExtension(%(ResolvedAssembliesToPublish.DestinationSubPath), '.xml'))"
-			DestinationSubPath="$([System.IO.Path]::ChangeExtension(%(ResolvedAssembliesToPublish.DestinationSubPath), '.xml'))"
-			Condition="'%(ResolvedAssembliesToPublish.PackageName)' != ''
-						and Exists('%(RootDir)%(Directory)%(Filename).xml')" />
-		</ItemGroup>
-	</Target>
 	
 
-  <PropertyGroup>
-	<TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
-  </PropertyGroup>
-  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
-    <ItemGroup>
-		<BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')-&gt;WithMetadataValue('PrivateAssets', 'All'))" />
-    </ItemGroup>
-  </Target>
 
 </Project>

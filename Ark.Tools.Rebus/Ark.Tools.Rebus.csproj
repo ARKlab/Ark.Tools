@@ -35,7 +35,7 @@
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    
   </ItemGroup>
 
 </Project>

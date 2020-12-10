@@ -28,7 +28,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
 
 </Project>
