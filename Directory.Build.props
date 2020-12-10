@@ -1,7 +1,7 @@
 <Project>
   
   <PropertyGroup>
-    <TargetFrameworks>net472;net5.0</TargetFrameworks>
+    <TargetFrameworks>net472;netstandard2.0;netstandard2.1;net5.0</TargetFrameworks>
     <LangVersion>9.0</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>	
@@ -55,16 +55,16 @@
     <EventSourcingGroupVersion>3.0.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
     <!-- Groups SUFFIX -->
-    <ArkToolsCoreVersionSuffix>beta07</ArkToolsCoreVersionSuffix>
-    <FtpClientGroupVersionSuffix>beta07</FtpClientGroupVersionSuffix>
-    <ResourceWatcherGroupVersionSuffix>beta07</ResourceWatcherGroupVersionSuffix>
+    <ArkToolsCoreVersionSuffix>beta08</ArkToolsCoreVersionSuffix>
+    <FtpClientGroupVersionSuffix>beta08</FtpClientGroupVersionSuffix>
+    <ResourceWatcherGroupVersionSuffix>beta08</ResourceWatcherGroupVersionSuffix>
 
-    <EntityFrameworkGroupVersionSuffix>beta07</EntityFrameworkGroupVersionSuffix>
-    <RavenDbGroupVersionSuffix>beta07</RavenDbGroupVersionSuffix>
+    <EntityFrameworkGroupVersionSuffix>beta08</EntityFrameworkGroupVersionSuffix>
+    <RavenDbGroupVersionSuffix>beta08</RavenDbGroupVersionSuffix>
 
-    <AspNetCoreGroupVersionSuffix>beta07</AspNetCoreGroupVersionSuffix>
+    <AspNetCoreGroupVersionSuffix>beta08</AspNetCoreGroupVersionSuffix>
 
-    <EventSourcingGroupVersionSuffix>beta07</EventSourcingGroupVersionSuffix>
+    <EventSourcingGroupVersionSuffix>beta08</EventSourcingGroupVersionSuffix>
 
 </PropertyGroup>
   
