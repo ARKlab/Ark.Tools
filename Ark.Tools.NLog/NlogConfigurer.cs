@@ -3,7 +3,7 @@
 using NLog;
 using NLog.Config;
 using NLog.Targets;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Dapper;
 using NLog.Targets.Wrappers;
 using System.Text;

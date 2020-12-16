@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
 

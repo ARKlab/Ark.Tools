@@ -211,6 +211,21 @@ namespace Ark.Tools.Auth0
         {
             return $"PasswordlessSmsTokenRequest{r.ClientId}{r.PhoneNumber}{r.Audience}{r.Scope}";
         }
+
+        public Task<AccessTokenResponse> GetTokenAsync(DeviceCodeTokenRequest request)
+        {
+            return _getToken(request);
+        }
+
+        private string _getKey(DeviceCodeTokenRequest r)
+        {
+            return $"DeviceCodeTokenRequest{r.ClientId}{r.DeviceCode}";
+        }
+
+        public Task<DeviceCodeResponse> StartDeviceFlowAsync(DeviceCodeRequest request)
+        {
+            return _inner.StartDeviceFlowAsync(request);
+        }
         #endregion
     }
 }

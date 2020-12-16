@@ -3,7 +3,7 @@
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace Ark.Tools.AspNetCore.ApplicationInsights
 {

@@ -86,12 +86,12 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
             else if (key.StartsWith(SqlAzureServerPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 prefix = SqlAzureServerPrefix;
-                provider = "System.Data.SqlClient";
+                provider = "Microsoft.Data.SqlClient";
             }
             else if (key.StartsWith(SqlServerPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 prefix = SqlServerPrefix;
-                provider = "System.Data.SqlClient";
+                provider = "Microsoft.Data.SqlClient";
             }
             else if (key.StartsWith(CustomPrefix, StringComparison.OrdinalIgnoreCase))
             {

@@ -38,7 +38,7 @@
 		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="5.0.0-preview1" />
 		<PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.1.0" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="5.0.1" />
-		<PackageReference Include="SimpleInjector" Version="5.1.0" />
+		<PackageReference Include="SimpleInjector" Version="5.2.0" />
 	</ItemGroup>
 
 	<ItemGroup>
