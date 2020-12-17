@@ -5,7 +5,7 @@ This is a set of core libraries developed and maintained by Ark as a set of help
 ## Getting Started
 All libraries are provided in NuGet.
 
-Support for .NET Framework 4.6.1 and/or .NET Standard 2.0. 
+Support for .NET Framework 4.7.1,.NET Standard 2.x, .NET 5.0. 
 Support for other frameworks is up-for-grabs ;)
 
 ## Quick Start
@@ -19,6 +19,13 @@ The main library used by Ark in its stack are
 
 If you want to learn more about each project, look the respective Readme when present or directly at code.
 Documentation improvements are up-for-grabs ;)
+
+## Migrate from v2 to v3
+
+- **BREAKING:** Microsoft.AspNetCore v5
+   - change netcoreapp3.1 to net5.0 on all projects referencing Ark.Tools.AspNetCore.* projects
+- **BREAKING:** from `System.Data.SqlClient` to `Microsoft.Data.SqlClient`
+   - remove any Nuget reference to `System.Data.SqlClient` and replace, where needed, with `Microsoft.Data.SqlClient`
 
 ## Contributing
 Feel free to send PRs or to raise issues if you spot them. We try our best to improve our libraries.

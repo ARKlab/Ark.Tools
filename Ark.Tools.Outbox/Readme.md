@@ -16,9 +16,25 @@ container.ConfigureRebus(c
         t.UseXXX(...);
         t.Outbox(o => {
             // this is used only by the Outbox processor, not on Send() or Publish()
-            o.OutboxContextFactory(c => c.Use(() => container.GetInstance<IOutboxContext>());
+            o.OutboxContextFactory(c => c.Use(() => container.GetInstance<IOutboxContext>()));
         });
     });
+```
+
+### Create the Table
+
+Use IOutboxContext.EnsureTablesAreCreate() or add the following table to the DB by other means.
+
+```sql
+CREATE TABLE dbo.Outbox (
+    [id] [bigint] IDENTITY(1,1) NOT NULL,
+	[headers] [nvarchar](MAX) NOT NULL,
+	[body] [varbinary](MAX) NOT NULL,
+    CONSTRAINT [PK_Outbox] PRIMARY KEY CLUSTERED 
+    (
+	    [id] ASC
+    )
+)
 ```
 
 ### Safe Way (no hidden behaviours)
