@@ -11,7 +11,7 @@ namespace Ark.Tools.Nodatime
 {
     public class OffsetDateTimeConverter : TypeConverter
     {
-		private readonly OffsetDateTimePattern _pattern = OffsetDateTimePattern.ExtendedIso;
+		private readonly OffsetDateTimePattern _pattern = OffsetDateTimePattern.Rfc3339;
 		private static Type[] _supportedFrom = new[]
 		{
 			typeof(string),typeof(OffsetDateTime),typeof(DateTimeOffset)
@@ -46,7 +46,7 @@ namespace Ark.Tools.Nodatime
 
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
 		{
-			if (destinationType == typeof(string) || destinationType == typeof(DateTime))
+			if (destinationType == typeof(string) || destinationType == typeof(DateTimeOffset))
 				return true;
 
 			return base.CanConvertTo(context, destinationType);

@@ -26,6 +26,9 @@ Documentation improvements are up-for-grabs ;)
    - change netcoreapp3.1 to net5.0 on all projects referencing Ark.Tools.AspNetCore.* projects
 - **BREAKING:** from `System.Data.SqlClient` to `Microsoft.Data.SqlClient`
    - remove any Nuget reference to `System.Data.SqlClient` and replace, where needed, with `Microsoft.Data.SqlClient`
+- **BREAKING:** upgraded to Flurl v3
+   - most usages should be fine, but those that expected Flurl method to return a HttpMessageResponse, as not returns IFlurlResponse **Disposable!**
+   
 
 ## Contributing
 Feel free to send PRs or to raise issues if you spot them. We try our best to improve our libraries.
