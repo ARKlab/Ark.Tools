@@ -124,9 +124,9 @@ namespace WebApplicationDemo
 			base.Configure(app);
 		}
 
-		protected override void RegisterContainer(IApplicationBuilder app)
+		protected override void RegisterContainer()
 		{
-			base.RegisterContainer(app);
+			base.RegisterContainer();
 
 			var cfg = new ApiConfig()
 			{
@@ -134,8 +134,6 @@ namespace WebApplicationDemo
 
 			var apiHost = new ApiHost(cfg)
 				.WithContainer(Container);
-
-			var env = app.ApplicationServices.GetService<IWebHostEnvironment>();
 		}
 	}
 }

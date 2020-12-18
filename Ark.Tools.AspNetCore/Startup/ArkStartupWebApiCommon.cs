@@ -191,9 +191,9 @@ namespace Ark.Tools.AspNetCore.Startup
 			services.AddSimpleInjector(Container, o =>
 			{
 				o.AddAspNetCore().AddControllerActivation();
-				o.CrossWire<RequestTelemetry>();
 			});
 
+			RegisterContainer();
 		}
 
 		public abstract IEnumerable<ApiVersion> Versions { get; }
@@ -201,8 +201,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
 		public virtual void Configure(IApplicationBuilder app)
 		{
-			RegisterContainer(app);
-
+			app.UseSimpleInjector(Container);
 			app.UseRouting();
 			app.UseCors(p => p
 				.AllowAnyHeader()
@@ -241,11 +240,9 @@ namespace Ark.Tools.AspNetCore.Startup
 			routeBuilder.SetTimeZoneInfo(TimeZoneInfo.Utc);
 		}
 
-		protected virtual void RegisterContainer(IApplicationBuilder app)
+		protected virtual void RegisterContainer()
 		{
-			app.UseSimpleInjector(Container);
-			Container.RegisterSingleton(() => app.ApplicationServices.GetRequiredService<TelemetryClient>());
-			Container.RegisterAuthorizationAspNetCoreUser(app);
+			Container.RegisterAuthorizationAspNetCoreUser();
 		}
 	}
 }

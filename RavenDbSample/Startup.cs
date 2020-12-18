@@ -176,9 +176,9 @@ namespace RavenDbSample
 			routeBuilder.EnableDependencyInjection();
 		}
 
-		protected override void RegisterContainer(IApplicationBuilder app)
+		protected override void RegisterContainer()
 		{
-			base.RegisterContainer(app);
+			base.RegisterContainer();
 
 			var cfg = new ApiConfig()
 			{
@@ -188,7 +188,6 @@ namespace RavenDbSample
 				.WithContainer(Container)
 				.WithRavenDbAudit();
 
-			var env = app.ApplicationServices.GetService<IWebHostEnvironment>();
 		}
 	}
 }

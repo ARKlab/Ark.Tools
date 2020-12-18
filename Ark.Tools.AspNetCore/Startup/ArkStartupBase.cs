@@ -88,7 +88,7 @@ namespace Ark.Tools.AspNetCore.Startup
             });
             
             app.UseSecurityHeaders();
-            app.UseHttpsRedirection();
+            app.UseHsts();
 
             app.UseStaticFiles();
 

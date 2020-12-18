@@ -56,9 +56,9 @@ namespace ProblemDetailsSample
             //    });
         }
 
-        protected override void RegisterContainer(IApplicationBuilder app)
+        protected override void RegisterContainer()
         {
-            base.RegisterContainer(app);
+            base.RegisterContainer();
 
             var cfg = new ApiConfig()
             {
@@ -67,9 +67,6 @@ namespace ProblemDetailsSample
             var apiHost = new ApiHost(cfg)
                 .WithContainer(Container);
 
-            var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
-
-            lifetime.ApplicationStopped.Register(() => Container.Dispose());
         }
     }
 }
