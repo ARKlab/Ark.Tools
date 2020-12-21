@@ -3,6 +3,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
@@ -10,13 +11,13 @@ namespace Ark.Tools.AspNetCore.Startup
     {
         private ArkStartupBase _anotherBase;
 
-        public ArkStartupWebApi(IConfiguration configuration) 
-            : this(configuration, true)
+        public ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment)
+            : this(configuration, environment, false)
         {
         }
 
-        public ArkStartupWebApi(IConfiguration configuration, bool useNewtonsoftJson)
-            : base(configuration, useNewtonsoftJson)
+        public ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
+            : base(configuration, environment, useNewtonsoftJson)
         {
             _anotherBase = new ArkStartupBase(configuration);
         }

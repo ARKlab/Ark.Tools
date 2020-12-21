@@ -28,7 +28,13 @@ Documentation improvements are up-for-grabs ;)
    - remove any Nuget reference to `System.Data.SqlClient` and replace, where needed, with `Microsoft.Data.SqlClient`
 - **BREAKING:** upgraded to Flurl v3
    - most usages should be fine, but those that expected Flurl method to return a HttpMessageResponse, as not returns IFlurlResponse **Disposable!**
-   
+- **BREAKING:** change to AspNetCore base Startup on RegisterContainer()
+   - RegisterContainer() no longer takes IApplicationBuilder parameter but a IServicesCollection as the Container registration has been moved during ConfigureServices()
+   - this affects mostly those cases where IServiceProvider was used to check for Tests overrides of mocked services
+   - Use IHostEnvironment or services.HasService
+- **BREAKING:** change to AspNetCore Startups. Now defaults to System.Text.Json instead of Newtonsoft.Json. 
+   - Use the parameter `useNewtonsoftJson: true` of base ctor to keep old behaviour
+   - Migrate from the `Ark.Tools.SystemTextJson.JsonPolymorphicConverter` instead of `Ark.Tools.NewtonsoftJson.JsonPolymorphicConverter`
 
 ## Contributing
 Feel free to send PRs or to raise issues if you spot them. We try our best to improve our libraries.

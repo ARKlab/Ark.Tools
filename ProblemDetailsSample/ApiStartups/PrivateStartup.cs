@@ -20,8 +20,8 @@ namespace ProblemDetailsSample
 {
     public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
     {
-        public PrivateStartup(IConfiguration config)
-            : base(config, true)
+        public PrivateStartup(IConfiguration config, IHostEnvironment env)
+            : base(config, env, true)
         {
         }
 
@@ -56,9 +56,9 @@ namespace ProblemDetailsSample
             //    });
         }
 
-        protected override void RegisterContainer()
+        protected override void RegisterContainer(IServiceCollection services)
         {
-            base.RegisterContainer();
+            base.RegisterContainer(services);
 
             var cfg = new ApiConfig()
             {

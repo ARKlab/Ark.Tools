@@ -27,8 +27,8 @@ namespace WebApplicationDemo
 {
 	public class Startup : ArkStartupWebApi
 	{
-		public Startup(IConfiguration configuration)
-			: base(configuration, false)
+		public Startup(IConfiguration configuration, IHostEnvironment env)
+			: base(configuration, env, false)
 		{
 		}
 
@@ -124,9 +124,9 @@ namespace WebApplicationDemo
 			base.Configure(app);
 		}
 
-		protected override void RegisterContainer()
+		protected override void RegisterContainer(IServiceCollection services)
 		{
-			base.RegisterContainer();
+			base.RegisterContainer(services);
 
 			var cfg = new ApiConfig()
 			{

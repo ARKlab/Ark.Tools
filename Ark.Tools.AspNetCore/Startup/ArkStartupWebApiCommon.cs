@@ -4,8 +4,7 @@ using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
-using Ark.Tools.Nodatime;
-using Microsoft.ApplicationInsights;
+
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNet.OData.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -13,47 +12,46 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using NodaTime;
-using NodaTime.Serialization.JsonNet;
+
 using SimpleInjector;
-using SimpleInjector.Integration.AspNetCore.Mvc;
-using SimpleInjector.Lifestyles;
+
 using Swashbuckle.AspNetCore.SwaggerUI;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
-	public abstract class ArkStartupWebApiCommon
+    public abstract class ArkStartupWebApiCommon
 	{
 		public IConfiguration Configuration { get; }
 		public bool UseNewtonsoftJson { get; }
 		public Container Container { get; } = new Container();
+		public IHostEnvironment HostEnvironment { get; }
 
-		public ArkStartupWebApiCommon(IConfiguration configuration)
-			: this(configuration, true)
+		public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
+			: this(configuration, hostEnvironment, false)
 		{
 		}
 
-		public ArkStartupWebApiCommon(IConfiguration configuration, bool useNewtonsoftJson)
+		public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
 		{
 			Configuration = configuration;
 			UseNewtonsoftJson = useNewtonsoftJson;
-		}
+            HostEnvironment = hostEnvironment;
+        }
 
 		public virtual void ConfigureServices(IServiceCollection services)
 		{
@@ -193,11 +191,12 @@ namespace Ark.Tools.AspNetCore.Startup
 				o.AddAspNetCore().AddControllerActivation();
 			});
 
-			RegisterContainer();
+			RegisterContainer(services);
 		}
 
 		public abstract IEnumerable<ApiVersion> Versions { get; }
-		public abstract OpenApiInfo MakeInfo(ApiVersion version);
+
+        public abstract OpenApiInfo MakeInfo(ApiVersion version);
 
 		public virtual void Configure(IApplicationBuilder app)
 		{
@@ -240,7 +239,7 @@ namespace Ark.Tools.AspNetCore.Startup
 			routeBuilder.SetTimeZoneInfo(TimeZoneInfo.Utc);
 		}
 
-		protected virtual void RegisterContainer()
+		protected virtual void RegisterContainer(IServiceCollection services)
 		{
 			Container.RegisterAuthorizationAspNetCoreUser();
 		}

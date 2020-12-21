@@ -25,14 +25,15 @@ using System;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.Extensions.Hosting;
 
 namespace RavenDbSample
 {
 	public class Startup : ArkStartupWebApi
 	{
 
-		public Startup(IConfiguration configuration)
-			: base(configuration)
+		public Startup(IConfiguration configuration, IHostEnvironment environment)
+			: base(configuration, environment)
 		{
 		}
 
@@ -176,9 +177,9 @@ namespace RavenDbSample
 			routeBuilder.EnableDependencyInjection();
 		}
 
-		protected override void RegisterContainer()
+		protected override void RegisterContainer(IServiceCollection services)
 		{
-			base.RegisterContainer();
+			base.RegisterContainer(services);
 
 			var cfg = new ApiConfig()
 			{
