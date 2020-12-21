@@ -30,11 +30,11 @@ namespace WebApplicationDemo
 		public Startup(IConfiguration configuration, IHostEnvironment env)
 			: base(configuration, env, false)
 		{
-		}
+        }
 
 		public override IEnumerable<ApiVersion> Versions => new[] { new ApiVersion(1, 0) };
 
-		public override OpenApiInfo MakeInfo(ApiVersion version)
+        public override OpenApiInfo MakeInfo(ApiVersion version)
 			=> new OpenApiInfo
 			{
 				Title = "API",
@@ -124,9 +124,11 @@ namespace WebApplicationDemo
 			base.Configure(app);
 		}
 
-		protected override void RegisterContainer(IServiceCollection services)
+		protected override void RegisterContainer(IServiceProvider services)
 		{
 			base.RegisterContainer(services);
+
+			var ext = services.GetService<IExternalInjected>();
 
 			var cfg = new ApiConfig()
 			{

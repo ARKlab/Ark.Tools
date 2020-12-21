@@ -189,12 +189,16 @@ namespace Ark.Tools.AspNetCore.Startup
 			services.AddSimpleInjector(Container, o =>
 			{
 				o.AddAspNetCore().AddControllerActivation();
-			});
 
-			RegisterContainer(services);
+                Container.Options.ContainerLocking += (s,e) =>
+				{
+					RegisterContainer(o.ApplicationServices);
+				};
+			});
+			RegisterContainer();
 		}
 
-		public abstract IEnumerable<ApiVersion> Versions { get; }
+        public abstract IEnumerable<ApiVersion> Versions { get; }
 
         public abstract OpenApiInfo MakeInfo(ApiVersion version);
 
@@ -239,9 +243,13 @@ namespace Ark.Tools.AspNetCore.Startup
 			routeBuilder.SetTimeZoneInfo(TimeZoneInfo.Utc);
 		}
 
-		protected virtual void RegisterContainer(IServiceCollection services)
+		protected virtual void RegisterContainer()
 		{
 			Container.RegisterAuthorizationAspNetCoreUser();
+		}
+
+		protected virtual void RegisterContainer(IServiceProvider services)
+		{
 		}
 	}
 }

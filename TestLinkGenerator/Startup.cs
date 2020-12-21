@@ -103,7 +103,7 @@ namespace TestWithoutArkTools
 
 		}
 
-		protected override void RegisterContainer(IServiceCollection services)
+		protected override void RegisterContainer(IServiceProvider services)
 		{
 			base.RegisterContainer(services);
 
