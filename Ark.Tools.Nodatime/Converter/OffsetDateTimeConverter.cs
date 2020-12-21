@@ -11,7 +11,7 @@ namespace Ark.Tools.Nodatime
 {
     public class OffsetDateTimeConverter : TypeConverter
     {
-		private readonly OffsetDateTimePattern _pattern = OffsetDateTimePattern.Rfc3339;
+		private readonly OffsetDateTimePattern _pattern = OffsetDateTimePattern.ExtendedIso;
 		private static Type[] _supportedFrom = new[]
 		{
 			typeof(string),typeof(OffsetDateTime),typeof(DateTimeOffset)
