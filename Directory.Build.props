@@ -55,16 +55,16 @@
     <EventSourcingGroupVersion>3.0.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
     <!-- Groups SUFFIX -->
-    <ArkToolsCoreVersionSuffix>beta12</ArkToolsCoreVersionSuffix>
-    <FtpClientGroupVersionSuffix>beta12</FtpClientGroupVersionSuffix>
-    <ResourceWatcherGroupVersionSuffix>beta12</ResourceWatcherGroupVersionSuffix>
+    <ArkToolsCoreVersionSuffix>beta13</ArkToolsCoreVersionSuffix>
+    <FtpClientGroupVersionSuffix>beta13</FtpClientGroupVersionSuffix>
+    <ResourceWatcherGroupVersionSuffix>beta13</ResourceWatcherGroupVersionSuffix>
 
-    <EntityFrameworkGroupVersionSuffix>beta12</EntityFrameworkGroupVersionSuffix>
-    <RavenDbGroupVersionSuffix>beta12</RavenDbGroupVersionSuffix>
+    <EntityFrameworkGroupVersionSuffix>beta13</EntityFrameworkGroupVersionSuffix>
+    <RavenDbGroupVersionSuffix>beta13</RavenDbGroupVersionSuffix>
 
-    <AspNetCoreGroupVersionSuffix>beta12</AspNetCoreGroupVersionSuffix>
+    <AspNetCoreGroupVersionSuffix>beta13</AspNetCoreGroupVersionSuffix>
 
-    <EventSourcingGroupVersionSuffix>beta12</EventSourcingGroupVersionSuffix>
+    <EventSourcingGroupVersionSuffix>beta13</EventSourcingGroupVersionSuffix>
 
 </PropertyGroup>
   
