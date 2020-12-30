@@ -81,12 +81,12 @@ namespace Ark.Tools.Outbox.SqlServer
 
                     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}')
                         CREATE TABLE {full} (
-                            [id] [bigint] IDENTITY(1,1) NOT NULL,
-	                        [headers] [nvarchar](MAX) NOT NULL,
-	                        [body] [varbinary](MAX) NOT NULL,
+                            [Id] [bigint] IDENTITY(1,1) NOT NULL,
+	                        [Headers] [nvarchar](MAX) NOT NULL,
+	                        [Body] [varbinary](MAX) NOT NULL,
                             CONSTRAINT [PK_{table}] PRIMARY KEY CLUSTERED 
                             (
-	                            [id] ASC
+	                            [Id] ASC
                             )
                         )
   
