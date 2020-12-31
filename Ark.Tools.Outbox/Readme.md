@@ -44,7 +44,7 @@ async Task ExecuteAsync()
 {
 
     using var ctx = _contextFactory();
-    using var scope = _bus.EnlistInto(ctx);
+    using var scope = _bus.Enlist(ctx);
 
     await ctx.ReadSomething();
 
