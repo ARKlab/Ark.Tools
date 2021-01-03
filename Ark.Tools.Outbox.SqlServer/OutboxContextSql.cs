@@ -4,12 +4,9 @@ using Dapper;
 
 using MoreLinq;
 
-using NLog;
-
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +18,8 @@ namespace Ark.Tools.Outbox.SqlServer
         private readonly ISqlContext<Tag> _sqlContext;
         private readonly IOutboxContextSqlConfig _config;
         private readonly Statements _statements;
+
+        private static readonly HeaderSerializer _headerSerializer = new HeaderSerializer();
 
         public IDbConnection Connection => _sqlContext.Connection;
         public IDbTransaction Transaction => _sqlContext.Transaction;
@@ -107,7 +106,7 @@ namespace Ark.Tools.Outbox.SqlServer
             {
                 var parameters = b.Select(message => new
                 {
-                    pHeaders = message.Headers,
+                    pHeaders = _headerSerializer.SerializeToString(message.Headers),
                     pBody = message.Body
                 });
 
@@ -117,11 +116,17 @@ namespace Ark.Tools.Outbox.SqlServer
             }
         }
 
-        public Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
+        public async Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
         {
             var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: this.Transaction, cancellationToken: ctk);
 
-            return this.Connection.QueryAsync<OutboxMessage>(cmd);
+            var res = await this.Connection.QueryAsync<(string Headers, byte[] Body)>(cmd).ConfigureAwait(false);
+
+            return res.Select(x => new OutboxMessage
+            {
+                Body = x.Body,
+                Headers = _headerSerializer.DeserializeFromString(x.Headers)
+            }).ToList();
         }
 
         public Task<int> CountAsync(CancellationToken ctk = default)
