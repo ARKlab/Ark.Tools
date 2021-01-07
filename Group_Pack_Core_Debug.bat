@@ -30,6 +30,7 @@ setlocal
 
 "%MSBUILD%" "Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" 												/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj"									/t:Pack /p:Configuration=Debug
+"%MSBUILD%" "Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj" 								/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj"				/t:Pack /p:Configuration=Debug
 
 "%MSBUILD%" "Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" 									/t:Pack /p:Configuration=Debug

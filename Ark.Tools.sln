@@ -166,11 +166,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Solid.Authorizati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.HealthChecks", "Ark.Tools.AspNetCore.HealthChecks\Ark.Tools.AspNetCore.HealthChecks.csproj", "{110D45B0-E0A8-4C61-9A46-2D33901F4FCA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Outbox", "Ark.Tools.Outbox\Ark.Tools.Outbox.csproj", "{D9FD9CF8-F3BC-4434-9F9E-7263E05C1EDF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Outbox", "Ark.Tools.Outbox\Ark.Tools.Outbox.csproj", "{D9FD9CF8-F3BC-4434-9F9E-7263E05C1EDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Outbox.SqlServer", "Ark.Tools.Outbox.SqlServer\Ark.Tools.Outbox.SqlServer.csproj", "{0625A79C-D13E-4F98-B17F-4547447A57EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Outbox.SqlServer", "Ark.Tools.Outbox.SqlServer\Ark.Tools.Outbox.SqlServer.csproj", "{0625A79C-D13E-4F98-B17F-4547447A57EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Outbox.Rebus", "Ark.Tools.Outbox.Rebus\Ark.Tools.Outbox.Rebus.csproj", "{5C5584ED-195C-4434-BD1E-64B583AF75A5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Outbox.Rebus", "Ark.Tools.Outbox.Rebus\Ark.Tools.Outbox.Rebus.csproj", "{5C5584ED-195C-4434-BD1E-64B583AF75A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ark.Tools.Nodatime.Dapper", "Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj", "{84349CFF-2C3C-4602-BF50-E9F019B5FE47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -458,6 +460,10 @@ Global
 		{5C5584ED-195C-4434-BD1E-64B583AF75A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C5584ED-195C-4434-BD1E-64B583AF75A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C5584ED-195C-4434-BD1E-64B583AF75A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84349CFF-2C3C-4602-BF50-E9F019B5FE47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84349CFF-2C3C-4602-BF50-E9F019B5FE47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84349CFF-2C3C-4602-BF50-E9F019B5FE47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84349CFF-2C3C-4602-BF50-E9F019B5FE47}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

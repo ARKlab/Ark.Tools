@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />
   </ItemGroup>
 
