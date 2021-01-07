@@ -2,19 +2,13 @@
 
 using Microsoft.Data.SqlClient;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql.SqlServer
 {
-    public static class NodatimeDapperSqlServer
+    public static class NodaTimeDapperSqlServer
     {
-        public static void Setup()
+        static NodaTimeDapperSqlServer()
         {
-            NodaTimeDapper.Setup();
             InstantHandler.Instance.OnSetValue += (s, p) =>
             {
                 if (p is SqlParameter sql)
@@ -50,6 +44,11 @@ namespace Ark.Tools.Sql.SqlServer
                     sql.SqlDbType = System.Data.SqlDbType.Time;
                 }
             };
+        }
+
+        public static void Setup()
+        {
+            NodaTimeDapper.Setup();
         }
     }
 }
