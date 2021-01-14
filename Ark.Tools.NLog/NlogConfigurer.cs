@@ -197,7 +197,7 @@ namespace Ark.Tools.NLog
 
         private static bool _isProduction()
         {
-            return _getEnvironment() != "Production";
+            return _getEnvironment().Equals("Production", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string _getEnvironment()
@@ -305,6 +305,7 @@ namespace Ark.Tools.NLog
             {
                 _ensureTableIsCreated(connectionString, logTableName);
                 var databaseTarget = new DatabaseTarget();
+                databaseTarget.DBProvider = "microsoft.data.sqlclient";
                 databaseTarget.ConnectionString = connectionString;
                 databaseTarget.KeepConnection = true;
                 databaseTarget.CommandText = string.Format(@"
