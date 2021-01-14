@@ -44,7 +44,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             where TMetadata : class, IResourceMetadata
             where TQueryFilter : class, new()
         {
-            DapperNodaTimeSetup.Register();
+            NodaTimeDapperSqlServer.Setup();
 
             Dapper.SqlMapper.AddTypeMap(typeof(DateTime), DbType.DateTime2);
             Dapper.SqlMapper.AddTypeMap(typeof(DateTime?), DbType.DateTime2);
