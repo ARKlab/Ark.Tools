@@ -305,7 +305,7 @@ namespace Ark.Tools.NLog
             {
                 _ensureTableIsCreated(connectionString, logTableName);
                 var databaseTarget = new DatabaseTarget();
-                databaseTarget.DBProvider = "microsoft.data.sqlclient";
+                databaseTarget.DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"; // see https://github.com/NLog/NLog/wiki/Database-target#microsoftdatasqlclient-and-net-core
                 databaseTarget.ConnectionString = connectionString;
                 databaseTarget.KeepConnection = true;
                 databaseTarget.CommandText = string.Format(@"
@@ -516,10 +516,11 @@ VALUES
 
             public void Apply()
             {
-                LogManager.Configuration = _config;
                 LogManager.ThrowExceptions = _throwExceptions;
                 LogManager.ThrowConfigExceptions = true;
                 InternalLogger.LogToTrace = true;
+                // this is last, so that ThrowConfigExceptions is respected on Config change
+                LogManager.Configuration = _config;
             }
         }
 
