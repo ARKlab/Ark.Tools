@@ -19,7 +19,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="9.2.0" />
+    <PackageReference Include="FluentValidation" Version="9.3.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    
   </ItemGroup>
 
 </Project>

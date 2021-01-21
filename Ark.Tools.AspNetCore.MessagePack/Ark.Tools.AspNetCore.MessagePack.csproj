@@ -5,7 +5,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net5.0</TargetFrameworks>
     
     <Description>Extensions of AspNetCore for supporting MessagePack formatting</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;MessagePack;MsgPack</PackageTags>
@@ -25,7 +25,7 @@
   </ItemGroup>
   
   <ItemGroup>    
-    <PackageReference Include="MessagePack" Version="2.1.165" />
+    <PackageReference Include="MessagePack" Version="2.2.85" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    
   </ItemGroup>
 
 </Project>

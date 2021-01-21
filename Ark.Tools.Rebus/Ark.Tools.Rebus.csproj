@@ -22,12 +22,12 @@
   <!--===============================================================================-->
 
 	<ItemGroup>			
-		<PackageReference Include="Rebus" Version="6.3.1" />
+		<PackageReference Include="Rebus" Version="6.4.1" />
 		<PackageReference Include="Rebus.NLog" Version="5.0.0" />
-		<PackageReference Include="Rebus.AzureServiceBus" Version="7.1.4" />
-		<PackageReference Include="Rebus.SqlServer" Version="7.0.1" />
+		<PackageReference Include="Rebus.AzureServiceBus" Version="8.0.1" />
+		<PackageReference Include="Rebus.SqlServer" Version="7.1.7" />
     <PackageReference Include="Rebus.AzureBlobs" Version="0.5.0" />
-    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="4.1.4" />
+    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.1.1" />
 	</ItemGroup>
   
   <ItemGroup>
@@ -35,7 +35,7 @@
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    
   </ItemGroup>
 
 </Project>

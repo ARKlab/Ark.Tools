@@ -14,7 +14,10 @@ namespace System.Text.Json
         {
             @this.AllowTrailingCommas = true;
             @this.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-            @this.Converters.Insert(0, new NullableStructSerializerFactory());
+            @this.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+            @this.PropertyNameCaseInsensitive = true;
+
+            //@this.Converters.Insert(0, new NullableStructSerializerFactory()); // not required anymore in v5
             @this.Converters.Add(new JsonStringEnumConverter());
             @this.Converters.Add(new GenericDictionaryWithConvertibleKey());
 

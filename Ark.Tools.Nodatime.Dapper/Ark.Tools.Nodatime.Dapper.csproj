@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>Extensions and helpers for Nodatime and Dapper</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Nodatime;Dapper</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.0.78" />
+    <PackageReference Include="NodaTime" Version="3.0.3" />
+  </ItemGroup>
+  <!--===============================================================================-->
+
+
+</Project>

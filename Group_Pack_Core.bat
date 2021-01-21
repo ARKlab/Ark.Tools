@@ -29,6 +29,7 @@ setlocal
 "%MSBUILD%" "Ark.Tools.NLog.ConfigurationManager\Ark.Tools.NLog.ConfigurationManager.csproj" 			/t:Pack /p:Configuration=Release
 
 "%MSBUILD%" "Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" 												/t:Pack /p:Configuration=Release
+"%MSBUILD%" "Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj" 								/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj"									/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj"				/t:Pack /p:Configuration=Release
 				
@@ -52,6 +53,9 @@ setlocal
 "%MSBUILD%" "Ark.Tools.Authorization\Ark.Tools.Authorization.csproj" 									/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.Solid.Authorization\Ark.Tools.Solid.Authorization.csproj" 						/t:Pack /p:Configuration=Release
 
+"%MSBUILD%" "Ark.Tools.Outbox\Ark.Tools.Outbox.csproj" 													/t:Pack /p:Configuration=Release
+"%MSBUILD%" "Ark.Tools.Outbox.Rebus\Ark.Tools.Outbox.Rebus.csproj" 										/t:Pack /p:Configuration=Release
+"%MSBUILD%" "Ark.Tools.Outbox.SqlServer\Ark.Tools.Outbox.SqlServer.csproj" 								/t:Pack /p:Configuration=Release
 
 pause
 

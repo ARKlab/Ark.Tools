@@ -20,12 +20,16 @@ namespace ProblemDetailsSample
 {
     public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
     {
-        public PrivateStartup(IConfiguration config)
-            : base(config, true)
+        public PrivateStartup(IConfiguration config, IHostEnvironment env, IServiceProvider provider)
+            : base(config, env, true)
         {
+            ServiceProvider = provider;
         }
 
         public override IEnumerable<ApiVersion> Versions => ProblemDetailsSampleConstants.PrivateVersions.Reverse().Select(x => ApiVersion.Parse(x));
+
+        public IServiceProvider ServiceProvider { get; }
+
         public override OpenApiInfo MakeInfo(ApiVersion version)
             => new OpenApiInfo { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV") };
 
@@ -56,9 +60,9 @@ namespace ProblemDetailsSample
             //    });
         }
 
-        protected override void RegisterContainer(IApplicationBuilder app)
+        protected override void RegisterContainer(IServiceProvider services)
         {
-            base.RegisterContainer(app);
+            base.RegisterContainer(services);
 
             var cfg = new ApiConfig()
             {
@@ -67,9 +71,6 @@ namespace ProblemDetailsSample
             var apiHost = new ApiHost(cfg)
                 .WithContainer(Container);
 
-            var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
-
-            lifetime.ApplicationStopped.Register(() => Container.Dispose());
         }
     }
 }

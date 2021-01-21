@@ -3,7 +3,7 @@
 using NLog;
 using NLog.Config;
 using NLog.Targets;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Dapper;
 using NLog.Targets.Wrappers;
 using System.Text;
@@ -197,7 +197,7 @@ namespace Ark.Tools.NLog
 
         private static bool _isProduction()
         {
-            return _getEnvironment() != "Production";
+            return _getEnvironment().Equals("Production", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string _getEnvironment()
@@ -305,6 +305,7 @@ namespace Ark.Tools.NLog
             {
                 _ensureTableIsCreated(connectionString, logTableName);
                 var databaseTarget = new DatabaseTarget();
+                databaseTarget.DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"; // see https://github.com/NLog/NLog/wiki/Database-target#microsoftdatasqlclient-and-net-core
                 databaseTarget.ConnectionString = connectionString;
                 databaseTarget.KeepConnection = true;
                 databaseTarget.CommandText = string.Format(@"
@@ -515,10 +516,11 @@ VALUES
 
             public void Apply()
             {
-                LogManager.Configuration = _config;
                 LogManager.ThrowExceptions = _throwExceptions;
                 LogManager.ThrowConfigExceptions = true;
                 InternalLogger.LogToTrace = true;
+                // this is last, so that ThrowConfigExceptions is respected on Config change
+                LogManager.Configuration = _config;
             }
         }
 

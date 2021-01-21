@@ -15,19 +15,19 @@
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
-  <!--===============================================================================-->
-  
   <ItemGroup>
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.1" />
   </ItemGroup>
+  <!--===============================================================================-->
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    
   </ItemGroup>
 
 </Project>

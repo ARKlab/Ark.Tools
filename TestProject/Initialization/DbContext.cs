@@ -2,7 +2,7 @@
 using TechTalk.SpecFlow;
 using System.Linq;
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 //using Microsoft.SqlServer.Dac;
 using Dapper;
 

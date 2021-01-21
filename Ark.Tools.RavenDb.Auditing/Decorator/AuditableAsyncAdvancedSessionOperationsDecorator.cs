@@ -15,6 +15,7 @@ using Raven.Client.Util;
 using Raven.Client.Documents.Commands;
 using System.Linq;
 using Raven.Client.Json.Serialization;
+using Raven.Client.Documents.Queries.TimeSeries;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
@@ -113,7 +114,59 @@ namespace Ark.Tools.RavenDb.Auditing
 			}
 		}
 
-		public IAsyncDocumentQuery<T> AsyncDocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractCommonApiForIndexes, new()
+        public event EventHandler<BeforeConversionToDocumentEventArgs> OnBeforeConversionToDocument
+        {
+            add
+            {
+                _inner.OnBeforeConversionToDocument += value;
+            }
+
+            remove
+            {
+                _inner.OnBeforeConversionToDocument -= value;
+            }
+        }
+
+        public event EventHandler<AfterConversionToDocumentEventArgs> OnAfterConversionToDocument
+        {
+            add
+            {
+                _inner.OnAfterConversionToDocument += value;
+            }
+
+            remove
+            {
+                _inner.OnAfterConversionToDocument -= value;
+            }
+        }
+
+        public event EventHandler<BeforeConversionToEntityEventArgs> OnBeforeConversionToEntity
+        {
+            add
+            {
+                _inner.OnBeforeConversionToEntity += value;
+            }
+
+            remove
+            {
+                _inner.OnBeforeConversionToEntity -= value;
+            }
+        }
+
+        public event EventHandler<AfterConversionToEntityEventArgs> OnAfterConversionToEntity
+        {
+            add
+            {
+                _inner.OnAfterConversionToEntity += value;
+            }
+
+            remove
+            {
+                _inner.OnAfterConversionToEntity -= value;
+            }
+        }
+
+        public IAsyncDocumentQuery<T> AsyncDocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractCommonApiForIndexes, new()
 		{
 			return _inner.AsyncDocumentQuery<T, TIndexCreator>();
 		}
@@ -138,7 +191,12 @@ namespace Ark.Tools.RavenDb.Auditing
 			_inner.Clear();
 		}
 
-		public void Defer(ICommandData command, params ICommandData[] commands)
+        public Task<(T Entity, string ChangeVector)> ConditionalLoadAsync<T>(string id, string changeVector, CancellationToken token = default)
+        {
+            return _inner.ConditionalLoadAsync<T>(id, changeVector, token);
+        }
+
+        public void Defer(ICommandData command, params ICommandData[] commands)
 		{
 			throw new NotSupportedException("Defer is not supported with Audit");
 			//_inner.Defer(command, commands);
@@ -281,7 +339,162 @@ namespace Ark.Tools.RavenDb.Auditing
 			_inner.SetTransactionMode(mode);
 		}
 
-		public Task StreamIntoAsync<T>(IAsyncDocumentQuery<T> query, Stream output, CancellationToken token = default)
+        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IAsyncRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null, CancellationToken token = default)
+        {
+            return _inner.StreamAsync<T>(startsWith, matches, start, pageSize, startAfter, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult>>> StreamAsync(IQueryable<TimeSeriesAggregationResult> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult>>> StreamAsync(IQueryable<TimeSeriesAggregationResult> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult>>> StreamAsync(IAsyncDocumentQuery<TimeSeriesAggregationResult> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult>>> StreamAsync(IAsyncRawDocumentQuery<TimeSeriesAggregationResult> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult>>> StreamAsync(IAsyncRawDocumentQuery<TimeSeriesAggregationResult> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult>>> StreamAsync(IAsyncDocumentQuery<TimeSeriesAggregationResult> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult>>> StreamAsync(IQueryable<TimeSeriesRawResult> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult>>> StreamAsync(IQueryable<TimeSeriesRawResult> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult>>> StreamAsync(IAsyncDocumentQuery<TimeSeriesRawResult> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult>>> StreamAsync(IAsyncRawDocumentQuery<TimeSeriesRawResult> query, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult>>> StreamAsync(IAsyncRawDocumentQuery<TimeSeriesRawResult> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult>>> StreamAsync(IAsyncDocumentQuery<TimeSeriesRawResult> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default)
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult<T>>>> StreamAsync<T>(IQueryable<TimeSeriesAggregationResult<T>> query, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult<T>>>> StreamAsync<T>(IQueryable<TimeSeriesAggregationResult<T>> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult<T>>>> StreamAsync<T>(IAsyncDocumentQuery<TimeSeriesAggregationResult<T>> query, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult<T>>>> StreamAsync<T>(IAsyncRawDocumentQuery<TimeSeriesAggregationResult<T>> query, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult<T>>>> StreamAsync<T>(IAsyncRawDocumentQuery<TimeSeriesAggregationResult<T>> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesAggregationResult<T>>>> StreamAsync<T>(IAsyncDocumentQuery<TimeSeriesAggregationResult<T>> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult<T>>>> StreamAsync<T>(IQueryable<TimeSeriesRawResult<T>> query, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult<T>>>> StreamAsync<T>(IQueryable<TimeSeriesRawResult<T>> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult<T>>>> StreamAsync<T>(IAsyncDocumentQuery<TimeSeriesRawResult<T>> query, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult<T>>>> StreamAsync<T>(IAsyncRawDocumentQuery<TimeSeriesRawResult<T>> query, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult<T>>>> StreamAsync<T>(IAsyncRawDocumentQuery<TimeSeriesRawResult<T>> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task<IAsyncEnumerator<TimeSeriesStreamResult<TimeSeriesRawResult<T>>>> StreamAsync<T>(IAsyncDocumentQuery<TimeSeriesRawResult<T>> query, out StreamQueryStatistics streamQueryStats, CancellationToken token = default) where T : new()
+        {
+            return _inner.StreamAsync(query, out streamQueryStats, token);
+        }
+
+        public Task StreamIntoAsync<T>(IAsyncDocumentQuery<T> query, Stream output, CancellationToken token = default)
 		{
 			return _inner.StreamIntoAsync(query, output, token);
 		}
@@ -305,40 +518,5 @@ namespace Ark.Tools.RavenDb.Auditing
 		{
 			return _inner.WhatChanged();
 		}
-
-        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IAsyncDocumentQuery<T> query, CancellationToken token)
-        {
-            return _inner.StreamAsync(query, token);
-        }
-
-        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IAsyncDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token)
-        {
-            return _inner.StreamAsync(query, out streamQueryStats, token);
-        }
-
-        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IAsyncRawDocumentQuery<T> query, CancellationToken token)
-        {
-            return _inner.StreamAsync(query, token);
-        }
-
-        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IAsyncRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token)
-        {
-            return _inner.StreamAsync(query, out streamQueryStats, token);
-        }
-
-        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IQueryable<T> query, CancellationToken token)
-        {
-            return _inner.StreamAsync(query, token);
-        }
-
-        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats, CancellationToken token)
-        {
-            return _inner.StreamAsync(query, out streamQueryStats, token);
-        }
-
-        Task<IAsyncEnumerator<StreamResult<T>>> IAsyncAdvancedSessionOperations.StreamAsync<T>(string startsWith, string matches, int start, int pageSize, string startAfter, CancellationToken token)
-        {
-            return _inner.StreamAsync<T>(startsWith, matches, start, pageSize, startAfter, token);
-        }
     }
 }

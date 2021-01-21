@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NLog;
 using System;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace Ark.Tools.Sql.SqlServer
 {

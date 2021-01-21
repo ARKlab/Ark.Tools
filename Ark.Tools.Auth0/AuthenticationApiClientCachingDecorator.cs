@@ -191,6 +191,41 @@ namespace Ark.Tools.Auth0
         {
             return $"GetUserInfo{accessToken}";
         }
+
+        public Task<AccessTokenResponse> GetTokenAsync(PasswordlessEmailTokenRequest request)
+        {
+            return _getToken(request);
+        }
+
+        private string _getKey(PasswordlessEmailTokenRequest r)
+        {
+            return $"PasswordlessEmailTokenRequest{r.ClientId}{r.Email}{r.Audience}{r.Scope}";
+        }
+
+        public Task<AccessTokenResponse> GetTokenAsync(PasswordlessSmsTokenRequest request)
+        {
+            return _getToken(request);
+        }
+
+        private string _getKey(PasswordlessSmsTokenRequest r)
+        {
+            return $"PasswordlessSmsTokenRequest{r.ClientId}{r.PhoneNumber}{r.Audience}{r.Scope}";
+        }
+
+        public Task<AccessTokenResponse> GetTokenAsync(DeviceCodeTokenRequest request)
+        {
+            return _getToken(request);
+        }
+
+        private string _getKey(DeviceCodeTokenRequest r)
+        {
+            return $"DeviceCodeTokenRequest{r.ClientId}{r.DeviceCode}";
+        }
+
+        public Task<DeviceCodeResponse> StartDeviceFlowAsync(DeviceCodeRequest request)
+        {
+            return _inner.StartDeviceFlowAsync(request);
+        }
         #endregion
     }
 }

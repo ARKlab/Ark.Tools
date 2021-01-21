@@ -11,10 +11,11 @@ namespace Ark.Tools.Http
     {
         public static IFlurlClient ConfigureArkDefaults(this IFlurlClient client)
         {
+            var j = new CookieJar();
             client.AllowAnyHttpStatus();
             return client.Configure(s =>
             {
-                s.CookiesEnabled = true;
+                s.BeforeCall += c => c.Request.WithCookies(j);
                 s.HttpClientFactory = ArkHttpClientFactory.Instance;
                 var jsonSettings = new ArkJsonSerializerSettings();
 

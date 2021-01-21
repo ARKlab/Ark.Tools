@@ -19,19 +19,20 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
-    <PackageReference Include="Oracle.ManagedDataAccess" Version="19.8.0" />
+    <PackageReference Include="Oracle.ManagedDataAccess" Version="19.10.1" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.80" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.101" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
+    
   </ItemGroup>
 
 </Project>

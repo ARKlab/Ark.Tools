@@ -16,4 +16,12 @@ namespace Ark.Tools.NewtonsoftJson
             this.ConfigureArkDefaults();
         }
     }
+
+    /// <summary>
+    /// JsonSerializer with ArkDefaultSettings
+    /// </summary>
+    public static class ArkJsonSerializer
+    {
+        public static JsonSerializer Instance { get; } = JsonSerializer.Create(ArkDefaultJsonSerializerSettings.Instance);
+    }
 }
