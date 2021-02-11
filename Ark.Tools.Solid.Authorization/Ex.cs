@@ -18,17 +18,28 @@ namespace Ark.Tools.Solid.Authorization
 
         public static void RegisterAuthorization(this Container container)
         {
+            RegisterAuthorizationBase(container);
+            RegisterAuthorizationDecorator(container);
+        }
+
+        public static void RegisterAuthorizationBase(this Container container)
+        {
             container.Register<IAuthorizationPolicyProvider, ContainerAuthorizationPolicyProvider>(Lifestyle.Scoped);
             container.Register<IAuthorizationContextEvaluator, DefaultAuthorizationContextEvaluator>(Lifestyle.Scoped);
             container.Register<IAuthorizationContextFactory, DefaultAuthorizationContextFactory>(Lifestyle.Scoped);
             container.Register<IAuthorizationService, DefaultAuthorizationService>(Lifestyle.Scoped);
-            container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(PolicyAuthorizeQueryDecorator<,>));
-            container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(PolicyAuthorizeRequestDecorator<,>));
-            container.RegisterDecorator(typeof(ICommandHandler<>), typeof(PolicyAuthorizeCommandDecorator<>));
+
             container.Collection.Register<IAuthorizationHandler>(typeof(PassThroughAuthorizationHandler));
             container.Collection.Register(new IAuthorizationPolicy[0]);
             container.RegisterConditional(typeof(IAuthorizationResourceHandler<,>), typeof(PassThroughAuthorizationResourceHandler<,>), Lifestyle.Singleton,
                 c => !c.Handled);
+        }
+
+        public static void RegisterAuthorizationDecorator(this Container container)
+        {
+            container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(PolicyAuthorizeQueryDecorator<,>));
+            container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(PolicyAuthorizeRequestDecorator<,>));
+            container.RegisterDecorator(typeof(ICommandHandler<>), typeof(PolicyAuthorizeCommandDecorator<>));
         }
 
         public static void RegisterAuthorizationPolicy<TPolicy>(this Container container) where TPolicy : class, IAuthorizationPolicy
