@@ -24,6 +24,8 @@ namespace System.Text.Json
             @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
             @this.ConfigureForNodaTimeRanges();
 
+            @this.Converters.Add(new UniversalInvariantTypeConverterJsonConverter());
+
             return @this;
         }
     }
