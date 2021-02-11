@@ -30,8 +30,4 @@
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    
-  </ItemGroup>
-
 </Project>
