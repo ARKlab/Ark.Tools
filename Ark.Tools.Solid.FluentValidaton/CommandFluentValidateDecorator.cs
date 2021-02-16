@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 namespace Ark.Tools.Solid
 {
     public class CommandFluentValidateDecorator<TCommand>
-        : ICommandHandler<TCommand> 
+        : ICommandHandler<TCommand>
+        where TCommand : ICommand
     {
         private readonly ICommandHandler<TCommand> _decorated;
         private readonly IValidator<TCommand> _validator;

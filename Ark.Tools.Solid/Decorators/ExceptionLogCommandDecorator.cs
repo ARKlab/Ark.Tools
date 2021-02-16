@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 namespace Ark.Tools.Solid.Decorators
 {
     public sealed class ExceptionLogCommandDecorator<TCommand> : ICommandHandler<TCommand>
+        where TCommand : ICommand
     {
         private readonly ICommandHandler<TCommand> _decorated;
 

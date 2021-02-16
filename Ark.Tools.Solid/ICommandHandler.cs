@@ -5,7 +5,10 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid
 {
+    public interface ICommand { }
+
     public interface ICommandHandler<TCommand>
+        where TCommand : ICommand
     {
         void Execute(TCommand command);
 

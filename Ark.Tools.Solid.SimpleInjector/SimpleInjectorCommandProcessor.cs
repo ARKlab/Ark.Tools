@@ -25,14 +25,14 @@ namespace Ark.Tools.Solid.SimpleInjector
         }
 
         [DebuggerStepThrough]
-        public void Execute(object command)
+        public void Execute(ICommand command)
         {
             dynamic commandHandler = _getHandlerInstance(command);
             commandHandler.Execute((dynamic)command);
         }
 
         [DebuggerStepThrough]
-        public async Task ExecuteAsync(object command, CancellationToken ctk = default(CancellationToken))
+        public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default(CancellationToken))
         {
             dynamic commandHandler = _getHandlerInstance(command);
             await commandHandler.ExecuteAsync((dynamic)command, ctk).ConfigureAwait(false);
