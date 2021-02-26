@@ -33,13 +33,13 @@ namespace Ark.Tools.ApplicationInsights.HostedService
                 });
                 services.AddSingleton<ITelemetryProcessorFactory>(
                     new SkipSqlDatabaseDependencyFilterFactory(ctx.Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
-
+#if NET5_0
                 services.Configure<SnapshotCollectorConfiguration>(o =>
                 {
                 });
-                var section = ctx.Configuration.GetSection(nameof(SnapshotCollectorConfiguration));
-                services.Configure<SnapshotCollectorConfiguration>(section);
-                services.AddSingleton<ITelemetryProcessorFactory, SnapshotCollectorTelemetryProcessorFactory>();
+                services.Configure<SnapshotCollectorConfiguration>(ctx.Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
+                services.AddSnapshotCollector();
+#endif
             });
         }
     }

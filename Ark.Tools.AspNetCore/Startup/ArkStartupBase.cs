@@ -48,12 +48,12 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
 
             services.Configure<SnapshotCollectorConfiguration>(o =>
-            {                    
+            {
             });
             services.Configure<SnapshotCollectorConfiguration>(Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
             services.AddSnapshotCollector();
 
-            services.AddCors();            
+            services.AddCors();   
         }
 
         public virtual void Configure(IApplicationBuilder app)
