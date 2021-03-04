@@ -169,7 +169,7 @@ namespace Ark.Tools.NLog
 
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, bool async = true, bool disableMailInDevelop = true)
         {
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, NLogConfigurer.MailFromDefault, mailTo, null, _isProduction(), async);
+            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, NLogConfigurer.MailFromDefault, mailTo, null, !_isProduction(), async);
             if (disableMailInDevelop)
                 @this.DisableMailRuleWhenInVisualStudio();
             @this.ThrowInternalExceptionsInVisualStudio();
@@ -187,7 +187,7 @@ namespace Ark.Tools.NLog
             cs.Password = smtpPassword;
             cs.UseSsl = useSsl;
 
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, NLogConfigurer.MailFromDefault, mailTo, cs.ConnectionString, _isProduction(), async);
+            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, NLogConfigurer.MailFromDefault, mailTo, cs.ConnectionString, !_isProduction(), async);
             if (disableMailInDevelop)
                 @this.DisableMailRuleWhenInVisualStudio();
             @this.ThrowInternalExceptionsInVisualStudio();
@@ -209,7 +209,7 @@ namespace Ark.Tools.NLog
 
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, bool async = true, bool disableMailInDevelop = true)
         {
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, _isProduction(), async);
+            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, !_isProduction(), async);
             if (disableMailInDevelop)
                 @this.DisableMailRuleWhenInVisualStudio();
             @this.ThrowInternalExceptionsInVisualStudio();
@@ -227,7 +227,7 @@ namespace Ark.Tools.NLog
             cs.Password = smtpPassword;
             cs.UseSsl = useSsl;
 
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, cs.ConnectionString, _isProduction(), async);
+            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, cs.ConnectionString, !_isProduction(), async);
             if (disableMailInDevelop)
                 @this.DisableMailRuleWhenInVisualStudio();
             @this.ThrowInternalExceptionsInVisualStudio();
@@ -239,7 +239,7 @@ namespace Ark.Tools.NLog
             string smtpConnectionString,
             bool async = true, bool disableMailInDevelop = true)
         {
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, smtpConnectionString, _isProduction(), async);
+            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, smtpConnectionString, !_isProduction(), async);
             if (disableMailInDevelop)
                 @this.DisableMailRuleWhenInVisualStudio();
             @this.ThrowInternalExceptionsInVisualStudio();
