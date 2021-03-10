@@ -12,8 +12,7 @@ using System.Threading;
 namespace Ark.Tools.NLog
 {
     [LayoutRenderer("ark.activityid")]
-    [AppDomainFixedOutput]
-    [ThreadAgnostic]
+    [ThreadSafe]
     public class ActivityIdLayoutRenderer : LayoutRenderer
     {
         /// <summary>
