@@ -3,6 +3,8 @@
 using CacheCow.Client;
 using Flurl.Http;
 using Flurl.Http.Configuration;
+
+using System.Net;
 using System.Net.Http;
 
 namespace Ark.Tools.Http
@@ -15,7 +17,14 @@ namespace Ark.Tools.Http
         {
             return new CachingHandler()
             {
-                InnerHandler = base.CreateMessageHandler(),                
+                InnerHandler = new HttpClientHandler
+                {
+#if NET5_0_OR_GREATER
+                    AutomaticDecompression = DecompressionMethods.All
+#else
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+#endif
+                }
             };
         }
 

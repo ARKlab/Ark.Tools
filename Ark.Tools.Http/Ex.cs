@@ -15,7 +15,14 @@ namespace Ark.Tools.Http
             client.AllowAnyHttpStatus();
             return client.Configure(s =>
             {
-                s.BeforeCall += c => c.Request.WithCookies(j);
+                s.BeforeCall += c => c.Request
+                    .WithCookies(j)
+#if NET5_0_OR_GREATER
+                    .WithHeader("Accept-Encoding", "gzip, deflate, br")
+#else
+                    .WithHeader("Accept-Encoding", "gzip, deflate")
+#endif
+                    ;
                 s.HttpClientFactory = ArkHttpClientFactory.Instance;
                 var jsonSettings = new ArkJsonSerializerSettings();
 
