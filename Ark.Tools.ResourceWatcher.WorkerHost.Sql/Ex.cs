@@ -52,7 +52,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             {
                 r.Container.RegisterSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
                 r.Container.RegisterInstance(config);
-                r.OnBeforeStart += () => r.Container.GetInstance<SqlStateProvider>().EnsureTableAreCreated();
+                r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider>() as SqlStateProvider).EnsureTableAreCreated();
             });
         }
     }
