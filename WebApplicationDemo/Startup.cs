@@ -114,7 +114,6 @@ namespace WebApplicationDemo
 
 				//c.OperationFilter<SecurityRequirementsOperationFilter>();
 
-				c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GetEntityPayload()); //Non funziona
 			});
 		}
 

@@ -31,8 +31,8 @@
   <ItemGroup>
     <PackageReference Include="AgileObjects.AgileMapper" Version="1.7.2" />
     <PackageReference Include="Microsoft.AspNetCore.OData.Versioning.ApiExplorer" Version="5.0.0" />
-    <PackageReference Include="Microsoft.OData.Core" Version="7.8.1" />
-    <PackageReference Include="RavenDB.Embedded" Version="5.1.2" />
+    <PackageReference Include="Microsoft.OData.Core" Version="7.8.3" />
+    <PackageReference Include="RavenDB.Embedded" Version="5.1.5" />
   </ItemGroup>
 
   <ItemGroup>

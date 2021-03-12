@@ -53,33 +53,14 @@ namespace Ark.Tools.AspNetCore.Startup
             services.Configure<SnapshotCollectorConfiguration>(Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
             services.AddSnapshotCollector();
 
-            services.AddCors();   
+            services.AddCors();
+            
         }
 
         public virtual void Configure(IApplicationBuilder app)
         {
             var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
-
-            app.Use(async (context, next) =>
-            {
-                try
-                {
-                    await next();
-                }
-                catch (Exception ex)
-                {
-                    if (context.Response.HasStarted)
-                    {
-                        throw;
-                    }
-                    context.Response.StatusCode = 500;
-                    context.Response.ContentType = "application/json";
-                    var json = JToken.FromObject(ex);
-                    await context.Response.WriteAsync(json.ToString());
-                    throw;
-                }
-            });
-            
+                        
             app.Use((context, next) =>
             {
                 if (context.Request.Headers.TryGetValue("X-Forwarded-PathBase", out var pathbase) && pathbase != "/")
@@ -87,7 +68,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 return next();
             });
             
-            app.UseSecurityHeaders();
+            app.UseSecurityHeaders(o => o.AddDefaultSecurityHeaders().RemoveServerHeader());
             app.UseHsts();
 
             app.UseStaticFiles();

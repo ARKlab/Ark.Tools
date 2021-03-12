@@ -19,7 +19,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="ArxOne.Ftp" Version="1.41.3" />
+    <PackageReference Include="ArxOne.Ftp" Version="1.41.4" />
   </ItemGroup>
 
   <ItemGroup>
