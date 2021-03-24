@@ -153,6 +153,13 @@ namespace Ark.Tools.Core
         private static readonly ISet<Type> _datetimeOffsetTypes = new HashSet<Type>()
         {
             typeof(OffsetDateTime),
+            typeof(OffsetDate)
+        };
+
+
+        private static readonly ISet<Type> _timeTypes = new HashSet<Type>()
+        {
+            typeof(LocalTime)
         };
 
         private Type _deriveColumnType(Type elementType)
@@ -164,10 +171,13 @@ namespace Ark.Tools.Core
             }
 
             if (_datetimeTypes.Contains(elementType))
-                elementType = typeof(DateTime);            
+                elementType = typeof(DateTime);        
 
             if (_datetimeOffsetTypes.Contains(elementType))
                 elementType = typeof(DateTimeOffset);
+
+            if (_timeTypes.Contains(elementType))
+                elementType = typeof(TimeSpan);
 
             if (elementType.IsEnum)
                 return typeof(string);
@@ -200,6 +210,10 @@ namespace Ark.Tools.Core
                     return i.ToDateTimeUtc();
                 case OffsetDateTime odt:
                     return odt.ToDateTimeOffset();
+                case OffsetDate od:
+                    return od.At(LocalTime.Midnight).ToDateTimeOffset();
+                case LocalTime lt:
+                    return TimeSpan.FromTicks(lt.TickOfDay);
             }
 
             return value;
