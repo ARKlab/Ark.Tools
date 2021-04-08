@@ -3,6 +3,7 @@
 using NodaTime;
 
 using System;
+using System.ComponentModel;
 using System.Data;
 
 namespace Ark.Tools.Nodatime.Dapper
@@ -21,13 +22,17 @@ namespace Ark.Tools.Nodatime.Dapper
         public override void SetValue(IDbDataParameter parameter, LocalTime value)
         {
             parameter.Value = TimeSpan.FromTicks(value.TickOfDay);
-            parameter.DbType = DbType.Time;
+            //DbType could throw depending on the Driver implementation
+            // see: https://community.oracle.com/tech/developers/discussion/2502273/converting-to-odp-net-oracletype-cursor-converts-to-dbtype
+            //parameter.DbType = DbType.Time;
 
             OnSetValue?.Invoke(this, parameter);
         }
 
         public override LocalTime Parse(object value)
         {
+            if (value == null || value is DBNull) return default;
+
             if (value is TimeSpan timeSpan)
             {
                 return LocalTime.FromTicksSinceMidnight(timeSpan.Ticks);
@@ -36,6 +41,13 @@ namespace Ark.Tools.Nodatime.Dapper
             if (value is DateTime dateTime)
             {
                 return LocalTime.FromTicksSinceMidnight(dateTime.TimeOfDay.Ticks);
+            }
+
+            if (value is string s)
+            {
+                var conv = TypeDescriptor.GetConverter(typeof(LocalTime));
+                if (conv?.CanConvertFrom(typeof(string)) == true)
+                    return (LocalTime)conv.ConvertFromString(s);
             }
 
             throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.LocalTime");

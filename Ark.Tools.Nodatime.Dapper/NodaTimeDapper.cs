@@ -6,6 +6,7 @@ namespace Ark.Tools.Nodatime.Dapper
     {
         public static void Setup()
         {
+            NodeTimeConverter.Register();
             SqlMapper.AddTypeHandler(InstantHandler.Instance);
             SqlMapper.AddTypeHandler(LocalDateHandler.Instance);
             SqlMapper.AddTypeHandler(LocalDateTimeHandler.Instance);

@@ -1,8 +1,10 @@
 ﻿using Dapper;
 
 using NodaTime;
+using NodaTime.Text;
 
 using System;
+using System.ComponentModel;
 using System.Data;
 
 namespace Ark.Tools.Nodatime.Dapper
@@ -20,16 +22,27 @@ namespace Ark.Tools.Nodatime.Dapper
         public override void SetValue(IDbDataParameter parameter, OffsetDateTime value)
         {
             parameter.Value = value.ToDateTimeOffset();
-            parameter.DbType = DbType.DateTimeOffset;
+            //DbType could throw depending on the Driver implementation
+            // see: https://community.oracle.com/tech/developers/discussion/2502273/converting-to-odp-net-oracletype-cursor-converts-to-dbtype
+            //parameter.DbType = DbType.DateTimeOffset;
 
             OnSetValue?.Invoke(this, parameter);
         }
 
         public override OffsetDateTime Parse(object value)
         {
+            if (value == null || value is DBNull) return default;
+
             if (value is DateTimeOffset dateTimeOffset)
             {
                 return OffsetDateTime.FromDateTimeOffset(dateTimeOffset);
+            }
+
+            if (value is string s)
+            {
+                var conv = TypeDescriptor.GetConverter(typeof(OffsetDateTime));
+                if (conv?.CanConvertFrom(typeof(string)) == true)
+                    return (OffsetDateTime)conv.ConvertFromString(s);
             }
 
             throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.OffsetDateTime");

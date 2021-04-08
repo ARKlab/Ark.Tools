@@ -1,19 +1,54 @@
 ﻿using Ark.Tools.Nodatime.Dapper;
 
-using Microsoft.Data.SqlClient;
-
 using Oracle.ManagedDataAccess.Client;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql.Oracle
 {
     public static class NodatimeDapperOracle
     {
+        static NodatimeDapperOracle()
+        {
+            InstantHandler.Instance.OnSetValue += (s, p) =>
+            {
+                if (p is OracleParameter orc)
+                {
+                    orc.Precision = 9;
+                    orc.OracleDbType = OracleDbType.TimeStamp;
+                }
+            };
+            LocalDateHandler.Instance.OnSetValue += (s, p) =>
+            {
+                if (p is OracleParameter orc)
+                {
+                    orc.OracleDbType = OracleDbType.Date;
+                }
+            };
+            LocalDateTimeHandler.Instance.OnSetValue += (s, p) =>
+            {
+                if (p is OracleParameter orc)
+                {
+                    orc.Precision = 9;
+                    orc.OracleDbType = OracleDbType.TimeStamp;
+                }
+            };
+            OffsetDateTimeHandler.Instance.OnSetValue += (s, p) =>
+            {
+                if (p is OracleParameter orc)
+                {
+                    orc.Precision = 9;
+                    orc.OracleDbType = OracleDbType.TimeStampTZ;
+                }
+            };
+            LocalTimeHandler.Instance.OnSetValue += (s, p) =>
+            {
+                if (p is OracleParameter orc)
+                {
+                    orc.Precision = 9;
+                    orc.OracleDbType = OracleDbType.TimeStamp;
+                }
+            };
+        }
+
         public static void Setup()
         {
             NodaTimeDapper.Setup();
