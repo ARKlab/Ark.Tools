@@ -8,7 +8,6 @@ using NLog;
 using NodaTime;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -146,7 +145,7 @@ namespace Ark.Tools.ResourceWatcher
 
                 if (_config.SkipResourcesOlderThanDays.HasValue)
                     infos = infos
-                            .Where(x => x.Modified.Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
+                            .Where(x => _getModified(x).Value.Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
                             ;
 
                 var list = infos.ToList();
@@ -196,7 +195,7 @@ namespace Ark.Tools.ResourceWatcher
                  {
                      x.ProcessType = ProcessType.New;
                  }
-                 else if (x.LastState.RetryCount == 0 && x.CurrentInfo.Modified > x.LastState.Modified)
+                 else if (x.LastState.RetryCount == 0 && _getModified(x.CurrentInfo) > _getModified(x.LastState))
                  {
                      x.ProcessType = ProcessType.Updated;
                  }
@@ -205,7 +204,7 @@ namespace Ark.Tools.ResourceWatcher
                      x.ProcessType = ProcessType.Retry;
                  }
                  else if (x.LastState.RetryCount > _config.MaxRetries
-                     && x.CurrentInfo.Modified > x.LastState.Modified
+                     && _getModified(x.CurrentInfo) > _getModified(x.LastState)
                      && x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()
                      // BAN expired and new version                
                      )
@@ -213,7 +212,7 @@ namespace Ark.Tools.ResourceWatcher
                      x.ProcessType = ProcessType.RetryAfterBan;
                  }
                  else if (x.LastState.RetryCount > _config.MaxRetries
-                     && x.CurrentInfo.Modified > x.LastState.Modified
+                     && _getModified(x.CurrentInfo) > _getModified(x.LastState)
                      && !(x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant())
                      // BAN               
                      )
@@ -274,6 +273,7 @@ namespace Ark.Tools.ResourceWatcher
                     Tenant = _config.Tenant,
                     ResourceId = info.ResourceId,
                     Modified = lastState?.Modified ?? info.Modified, // we want to update modified only on success or Ban or first run
+                    ModifiedMultiple = lastState?.ModifiedMultiple ?? info.ModifiedMultiple, // we want to update modified multiple only on success or Ban or first run
                     LastEvent = SystemClock.Instance.GetCurrentInstant(),
                     RetryCount = lastState?.RetryCount ?? 0,
                     CheckSum = lastState?.CheckSum,
@@ -314,6 +314,7 @@ namespace Ark.Tools.ResourceWatcher
 
                             state.Extensions = info.Extensions;
                             state.Modified = info.Modified;
+                            state.ModifiedMultiple = info.ModifiedMultiple;
                             state.RetryCount = 0; // success
                         }
                         else
@@ -339,6 +340,7 @@ namespace Ark.Tools.ResourceWatcher
 
                     state.Extensions = info.Extensions;
                     state.Modified = info.Modified;
+                    state.ModifiedMultiple = info.ModifiedMultiple;
 
                     _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
                 }
@@ -350,6 +352,18 @@ namespace Ark.Tools.ResourceWatcher
             {
                 // chomp it, we'll retry this file next time, forever, fuckit
                 _diagnosticSource.ProcessResourceSaveFailed(info.ResourceId, ex);
+            }
+        }
+
+        private LocalDateTime? _getModified(IResourceMetadata info)
+        {
+            if (info?.ModifiedMultiple != null && info.ModifiedMultiple.Any())
+            {
+                return info.ModifiedMultiple.Max(x => x.Value);
+            }
+            else
+            {
+                return info?.Modified;
             }
         }
     }

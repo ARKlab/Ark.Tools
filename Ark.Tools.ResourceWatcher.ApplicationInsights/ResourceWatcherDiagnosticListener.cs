@@ -1,16 +1,15 @@
 ﻿using Ark.Tools.NewtonsoftJson;
-using Ark.Tools.Nodatime.Json;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DiagnosticAdapter;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
-{ 
+{
     public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     {
         protected readonly TelemetryClient Client;
@@ -429,15 +428,14 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             if (pc.LastState != default)
             {
                 data.Properties.Add("CheckSum_Old", pc.LastState.CheckSum);
-                data.Properties.Add("Modified_Old", pc.LastState.Modified.ToString());
+                data.Properties.Add("Modified_Old", (pc.LastState.ModifiedMultiple != null && pc.LastState.ModifiedMultiple.Any()) ? pc.LastState.ModifiedMultiple.Max(x => x.Value).ToString() : pc.LastState.Modified.ToString());
             }
-
             if (pc.NewState != default)
             {
                 data.Properties.Add("RetryCount", pc.NewState.RetryCount.ToString());
                 data.Properties.Add("RetrievedAt", pc.NewState.ToString());
                 data.Properties.Add("CheckSum", pc.NewState.CheckSum);
-                data.Properties.Add("Modified", pc.NewState.Modified.ToString());
+                data.Properties.Add("Modified", (pc.NewState.ModifiedMultiple != null && pc.NewState.ModifiedMultiple.Any()) ? pc.NewState.ModifiedMultiple.Max(x => x.Value).ToString() : pc.NewState.Modified.ToString());
 
                 string extensionsString = JsonConvert.SerializeObject(pc.NewState.Extensions, ArkDefaultJsonSerializerSettings.Instance);
                 data.Properties.Add("Extensions", extensionsString);

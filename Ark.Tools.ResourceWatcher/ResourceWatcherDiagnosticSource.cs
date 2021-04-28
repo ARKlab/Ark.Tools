@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher
 {
@@ -191,8 +190,8 @@ namespace Ark.Tools.ResourceWatcher
         {
             _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
                 , processContext.CurrentInfo.ResourceId
-                , processContext.CurrentInfo.Modified
-                , processContext.LastState?.Modified
+                , (processContext.CurrentInfo.ModifiedMultiple != null && processContext.CurrentInfo.ModifiedMultiple.Any()) ? processContext.CurrentInfo.ModifiedMultiple.Max(x => x.Value) : processContext.CurrentInfo.Modified
+                , (processContext.LastState?.ModifiedMultiple != null && processContext.LastState.ModifiedMultiple.Any()) ? processContext.LastState?.ModifiedMultiple.Max(x => x.Value) : processContext.LastState?.Modified
                 , processContext.LastState?.RetryCount
                 , processContext.Index
                 , processContext.Total
