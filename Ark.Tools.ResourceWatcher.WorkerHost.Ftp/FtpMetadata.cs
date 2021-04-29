@@ -13,7 +13,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
             Entry = entry;
             ResourceId = entry.FullPath;
             Modified = LocalDateTime.FromDateTime(entry.Modified);
-            ModifiedMultiple = new Dictionary<string, LocalDateTime> { { entry.FullPath, LocalDateTime.FromDateTime(entry.Modified) } };
+            ModifiedMultiple = null;
         }
 
         public FtpEntry Entry { get; }

@@ -16,7 +16,8 @@ namespace Ark.Tools.ResourceWatcher
         /// </summary>
         LocalDateTime? Modified { get; }
         /// <summary>
-        /// The "versions" of the resource. Used to manage multiple sources for the resource to avoid retrival of the resource in case if the last version is already been processed successfully
+        /// The "versions" of the resource. Used to manage multiple sources for the resource.
+        /// The resource will be processed when a new source will be add or at least one source have an updated modified.
         /// </summary>
         Dictionary<string, LocalDateTime> ModifiedMultiple { get; }
         /// <summary>

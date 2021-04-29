@@ -145,7 +145,7 @@ namespace Ark.Tools.ResourceWatcher
 
                 if (_config.SkipResourcesOlderThanDays.HasValue)
                     infos = infos
-                            .Where(x => _getModified(x).Value.Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
+                            .Where(x => _getEarliestModified(x).Value.Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
                             ;
 
                 var list = infos.ToList();
@@ -195,7 +195,7 @@ namespace Ark.Tools.ResourceWatcher
                  {
                      x.ProcessType = ProcessType.New;
                  }
-                 else if (x.LastState.RetryCount == 0 && _getModified(x.CurrentInfo) > _getModified(x.LastState))
+                 else if (x.LastState.RetryCount == 0 && _checkNewResource(x))
                  {
                      x.ProcessType = ProcessType.Updated;
                  }
@@ -204,7 +204,7 @@ namespace Ark.Tools.ResourceWatcher
                      x.ProcessType = ProcessType.Retry;
                  }
                  else if (x.LastState.RetryCount > _config.MaxRetries
-                     && _getModified(x.CurrentInfo) > _getModified(x.LastState)
+                     && _checkNewResource(x)
                      && x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()
                      // BAN expired and new version                
                      )
@@ -212,7 +212,7 @@ namespace Ark.Tools.ResourceWatcher
                      x.ProcessType = ProcessType.RetryAfterBan;
                  }
                  else if (x.LastState.RetryCount > _config.MaxRetries
-                     && _getModified(x.CurrentInfo) > _getModified(x.LastState)
+                     && _checkNewResource(x)
                      && !(x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant())
                      // BAN               
                      )
@@ -355,7 +355,7 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        private LocalDateTime? _getModified(IResourceMetadata info)
+        private LocalDateTime? _getEarliestModified(IResourceMetadata info)
         {
             if (info?.ModifiedMultiple != null && info.ModifiedMultiple.Any())
             {
@@ -365,6 +365,55 @@ namespace Ark.Tools.ResourceWatcher
             {
                 return info?.Modified;
             }
+        }
+
+        private bool _checkNewResource(ProcessContext pc)
+        {
+            if (pc.CurrentInfo.ModifiedMultiple != null && pc.CurrentInfo.ModifiedMultiple.Any())
+            {
+                if (pc.LastState?.ModifiedMultiple != null && pc.LastState.ModifiedMultiple.Any())
+                {
+                    if (pc.CurrentInfo.ModifiedMultiple.Where(x => !pc.LastState.ModifiedMultiple.ContainsKey(x.Key)).Any())
+                    {
+                        //New State contains new sources modified for the resource
+                        return true;
+                    }
+                    else if (pc.CurrentInfo.ModifiedMultiple.Where(x => x.Value > pc.LastState.ModifiedMultiple[x.Key]).Any())
+                    {
+                        //One or more sources have an updated modified respect the corrisponding source into last state ModifiedMultiple
+                        return true;
+                    }
+                }
+                else if (pc.LastState?.Modified != null)
+                {
+                    if (pc.CurrentInfo.ModifiedMultiple.Where(x => x.Value > pc.LastState.Modified).Any())
+                    {
+                        //One or more sources have an updated modify respect to Modified
+                        return true;
+                    }
+                }
+            }
+            else if (pc.CurrentInfo.Modified != null)
+            {
+                if (pc.LastState?.ModifiedMultiple != null && pc.LastState.ModifiedMultiple.Any())
+                {
+                    if (pc.LastState.ModifiedMultiple.Where(x => x.Value < pc.CurrentInfo.Modified).Any())
+                    {
+                        //the new single modified is major at least of one old ModifiedMultiple
+                        return true;
+                    }
+                }
+                else if (pc.LastState?.Modified != null)
+                {
+                    if (pc.CurrentInfo.Modified > pc.LastState.Modified)
+                    {
+                        //the new single modified is major than the old
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 

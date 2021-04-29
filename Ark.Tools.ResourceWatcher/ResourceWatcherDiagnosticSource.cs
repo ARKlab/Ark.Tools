@@ -188,6 +188,8 @@ namespace Ark.Tools.ResourceWatcher
         #region ProcessResource
         public Activity ProcessResourceStart(ProcessContext processContext)
         {
+            
+
             _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
                 , processContext.CurrentInfo.ResourceId
                 , (processContext.CurrentInfo.ModifiedMultiple != null && processContext.CurrentInfo.ModifiedMultiple.Any()) ? processContext.CurrentInfo.ModifiedMultiple.Max(x => x.Value) : processContext.CurrentInfo.Modified
