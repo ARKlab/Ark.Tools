@@ -428,7 +428,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             if (pc.LastState != default)
             {
                 data.Properties.Add("CheckSum_Old", pc.LastState.CheckSum);
-                data.Properties.Add("Modified_Old", pc.LastState.Modified?.ToString());
+                data.Properties.Add("Modified_Old", pc.LastState.Modified.ToString());
                 if (pc.LastState.ModifiedMultiple != null && pc.LastState.ModifiedMultiple.Any())
                 {
                     foreach (var modified in pc.LastState.ModifiedMultiple)
@@ -442,7 +442,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 data.Properties.Add("RetryCount", pc.NewState.RetryCount.ToString());
                 data.Properties.Add("RetrievedAt", pc.NewState.ToString());
                 data.Properties.Add("CheckSum", pc.NewState.CheckSum);
-                data.Properties.Add("Modified", pc.NewState.Modified?.ToString());
+                data.Properties.Add("Modified", pc.NewState.Modified.ToString());
 
                 if (pc.NewState.ModifiedMultiple != null && pc.NewState.ModifiedMultiple.Any())
                 {

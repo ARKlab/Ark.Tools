@@ -8,6 +8,7 @@ using Dapper;
 using EnsureThat;
 using Newtonsoft.Json;
 using NodaTime;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -127,7 +128,7 @@ WHEN MATCHED THEN
                 {
                     x.Tenant,
                     x.ResourceId,
-                    Modified = x.Modified?.ToDateTimeUnspecified(),
+                    Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
                     ModifiedMultipleJson = x.ModifiedMultiple == null ? null : JsonConvert.SerializeObject(x.ModifiedMultiple, _jsonSerializerSettings),
                     LastEvent = x.LastEvent.ToDateTimeUtc(),
                     RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),

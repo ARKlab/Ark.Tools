@@ -14,12 +14,16 @@ namespace Ark.Tools.ResourceWatcher
         /// <summary>
         /// The "version" of the resource. Used to avoid retrival of the resource in case if the same version is already been processed successfully
         /// </summary>
-        LocalDateTime? Modified { get; }
+        LocalDateTime Modified { get; }
         /// <summary>
         /// The "versions" of the resource. Used to manage multiple sources for the resource.
         /// The resource will be processed when a new source will be add or at least one source have an updated modified.
         /// </summary>
+#if (NET472 || NETSTANDARD2_0)
         Dictionary<string, LocalDateTime> ModifiedMultiple { get; }
+#else
+        Dictionary<string, LocalDateTime> ModifiedMultiple { get => null; }
+#endif
         /// <summary>
         /// Additional info serialized to the State tracking
         /// </summary>

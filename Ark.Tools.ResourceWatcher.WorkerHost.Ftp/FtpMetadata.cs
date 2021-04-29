@@ -18,7 +18,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
 
         public FtpEntry Entry { get; }
 
-        public LocalDateTime? Modified { get; }
+        public LocalDateTime Modified { get; }
         public Dictionary<string, LocalDateTime> ModifiedMultiple { get; }
 
         public string ResourceId { get; }
