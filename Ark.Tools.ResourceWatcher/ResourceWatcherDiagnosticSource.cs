@@ -189,17 +189,17 @@ namespace Ark.Tools.ResourceWatcher
         #region ProcessResource
         public Activity ProcessResourceStart(ProcessContext processContext)
         {
-            Tuple<string, LocalDateTime?, LocalDateTime?> infos;
-            bool result = processContext.IsNewResource(out infos);
+            (string source, LocalDateTime? current, LocalDateTime? last)? infos;
+            bool result = processContext.IsResourceUpdated(out infos);
 
             _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.ModifiedSource={6},Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
                 , processContext.CurrentInfo.ResourceId
-                , infos.Item2.ToString()
-                , infos.Item3.ToString()
+                , infos.Value.current.ToString()
+                , infos.Value.last.ToString()
                 , processContext.LastState?.RetryCount
                 , processContext.Index
                 , processContext.Total
-                , (infos.Item1 == null) ? "" : infos.Item1
+                , (infos.Value.source == null) ? "" : infos.Value.source
             );
 
             Activity activity = _start("ProcessResource", () => new

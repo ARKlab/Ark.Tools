@@ -429,11 +429,11 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             {
                 data.Properties.Add("CheckSum_Old", pc.LastState.CheckSum);
                 data.Properties.Add("Modified_Old", pc.LastState.Modified.ToString());
-                if (pc.LastState.ModifiedMultiple != null && pc.LastState.ModifiedMultiple.Any())
+                if (pc.LastState.ModifiedSources != null && pc.LastState.ModifiedSources.Any())
                 {
-                    foreach (var modified in pc.LastState.ModifiedMultiple)
+                    foreach (var modified in pc.LastState.ModifiedSources)
                     {
-                        data.Properties.Add("Modified_Old_" + modified.Key , modified.Value.ToString());
+                        data.Properties.Add("Modified" + modified.Key + "_Old" , modified.Value.ToString());
                     }
                 }
             }
@@ -444,11 +444,11 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 data.Properties.Add("CheckSum", pc.NewState.CheckSum);
                 data.Properties.Add("Modified", pc.NewState.Modified.ToString());
 
-                if (pc.NewState.ModifiedMultiple != null && pc.NewState.ModifiedMultiple.Any())
+                if (pc.NewState.ModifiedSources != null && pc.NewState.ModifiedSources.Any())
                 {
-                    foreach (var modified in pc.NewState.ModifiedMultiple)
+                    foreach (var modified in pc.NewState.ModifiedSources)
                     {
-                        data.Properties.Add("Modified_" + modified.Key, modified.Value.ToString());
+                        data.Properties.Add("Modified" + modified.Key, modified.Value.ToString());
                     }
                 }
 

@@ -291,9 +291,9 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 var filter = _buildFilter();
                 var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetMetadata(filter, ctk);
 
-                if (meta.Where(x => x.Modified == default && (x.ModifiedMultiple == null || !x.ModifiedMultiple.Any())).Any())
+                if (meta.Where(x => x.Modified == default && (x.ModifiedSources == null || !x.ModifiedSources.Any())).Any())
                 {
-                    throw new Exception("At least one field between Modified and ModifiedMultiple must be populated");
+                    throw new Exception("At least one field between Modified and ModifiedSources must be populated");
                 }
 
                 foreach (var p in _metadataFilterChain)

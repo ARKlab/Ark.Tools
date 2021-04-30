@@ -13,7 +13,7 @@ namespace TestWorker.Dto
         string IResourceMetadata.ResourceId => FileName;
         LocalDateTime IResourceMetadata.Modified { get; } = LocalDateTime.FromDateTime(DateTime.UtcNow);
 
-        Dictionary<string, LocalDateTime> IResourceMetadata.ModifiedMultiple { get; } = new Dictionary<string, LocalDateTime>{ { "Key1",  LocalDateTime.FromDateTime(DateTime.UtcNow)} };
+        Dictionary<string, LocalDateTime> IResourceMetadata.ModifiedSources { get; } = new Dictionary<string, LocalDateTime>{ { "Source1",  LocalDateTime.FromDateTime(DateTime.UtcNow)} };
 
         object IResourceMetadata.Extensions => new
         {

@@ -13,6 +13,7 @@ namespace Ark.Tools.ResourceWatcher
         string ResourceId { get; }
         /// <summary>
         /// The "version" of the resource. Used to avoid retrival of the resource in case if the same version is already been processed successfully
+        /// This field is alternative to ModifiedSources field
         /// </summary>
         LocalDateTime Modified { get; }
         /// <summary>
@@ -20,9 +21,9 @@ namespace Ark.Tools.ResourceWatcher
         /// The resource will be processed when a new source will be add or at least one source have an updated modified.
         /// </summary>
 #if (NET472 || NETSTANDARD2_0)
-        Dictionary<string, LocalDateTime> ModifiedMultiple { get; }
+        Dictionary<string, LocalDateTime> ModifiedSources { get; }
 #else
-        Dictionary<string, LocalDateTime> ModifiedMultiple { get => null; }
+        Dictionary<string, LocalDateTime> ModifiedSources { get => null; }
 #endif
         /// <summary>
         /// Additional info serialized to the State tracking

@@ -145,7 +145,7 @@ namespace Ark.Tools.ResourceWatcher
 
                 if (_config.SkipResourcesOlderThanDays.HasValue)
                     infos = infos
-                            .Where(x => _getEarliestModified(x).Value.Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
+                            .Where(x => _getEarliestModified(x).Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
                             ;
 
                 var list = infos.ToList();
@@ -188,8 +188,6 @@ namespace Ark.Tools.ResourceWatcher
 
         private List<ProcessContext> _createEvalueteList(List<IResourceMetadata> list, IEnumerable<ResourceState> states)
         {
-            Tuple<string, LocalDateTime?, LocalDateTime?> a;
-
             var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
              {
                  var x = new ProcessContext { CurrentInfo = i, LastState = s.SingleOrDefault() };
@@ -197,7 +195,7 @@ namespace Ark.Tools.ResourceWatcher
                  {
                      x.ProcessType = ProcessType.New;
                  }
-                 else if (x.LastState.RetryCount == 0 && x.IsNewResource(out a))
+                 else if (x.LastState.RetryCount == 0 && x.IsResourceUpdated(out _))
                  {
                      x.ProcessType = ProcessType.Updated;
                  }
@@ -206,7 +204,7 @@ namespace Ark.Tools.ResourceWatcher
                      x.ProcessType = ProcessType.Retry;
                  }
                  else if (x.LastState.RetryCount > _config.MaxRetries
-                     && x.IsNewResource(out a)
+                     && x.IsResourceUpdated(out _)
                      && x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()
                      // BAN expired and new version                
                      )
@@ -214,7 +212,7 @@ namespace Ark.Tools.ResourceWatcher
                      x.ProcessType = ProcessType.RetryAfterBan;
                  }
                  else if (x.LastState.RetryCount > _config.MaxRetries
-                     && x.IsNewResource(out a)
+                     && x.IsResourceUpdated(out _)
                      && !(x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant())
                      // BAN               
                      )
@@ -275,7 +273,7 @@ namespace Ark.Tools.ResourceWatcher
                     Tenant = _config.Tenant,
                     ResourceId = info.ResourceId,
                     Modified = lastState?.Modified ?? info.Modified, // we want to update modified only on success or Ban or first run
-                    ModifiedMultiple = lastState?.ModifiedMultiple ?? info.ModifiedMultiple, // we want to update modified multiple only on success or Ban or first run
+                    ModifiedSources = lastState?.ModifiedSources ?? info.ModifiedSources, // we want to update modified multiple only on success or Ban or first run
                     LastEvent = SystemClock.Instance.GetCurrentInstant(),
                     RetryCount = lastState?.RetryCount ?? 0,
                     CheckSum = lastState?.CheckSum,
@@ -316,7 +314,7 @@ namespace Ark.Tools.ResourceWatcher
 
                             state.Extensions = info.Extensions;
                             state.Modified = info.Modified;
-                            state.ModifiedMultiple = info.ModifiedMultiple;
+                            state.ModifiedSources = info.ModifiedSources;
                             state.RetryCount = 0; // success
                         }
                         else
@@ -342,7 +340,7 @@ namespace Ark.Tools.ResourceWatcher
 
                     state.Extensions = info.Extensions;
                     state.Modified = info.Modified;
-                    state.ModifiedMultiple = info.ModifiedMultiple;
+                    state.ModifiedSources = info.ModifiedSources;
 
                     _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
                 }
@@ -357,15 +355,15 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        private LocalDateTime? _getEarliestModified(IResourceMetadata info)
+        private LocalDateTime _getEarliestModified(IResourceMetadata info)
         {
-            if (info?.ModifiedMultiple != null && info.ModifiedMultiple.Any())
+            if (info?.ModifiedSources != null && info.ModifiedSources.Any())
             {
-                return info.ModifiedMultiple.Max(x => x.Value);
+                return info.ModifiedSources.Max(x => x.Value);
             }
             else
             {
-                return info?.Modified;
+                return info.Modified;
             }
         }
 
@@ -419,64 +417,61 @@ namespace Ark.Tools.ResourceWatcher
         public int? Index { get; set; }
         public int? Total { get; set; }
 
-        public bool IsNewResource(out Tuple<string,LocalDateTime?,LocalDateTime?> changed)
+        public bool IsResourceUpdated(out (string source, LocalDateTime? current, LocalDateTime? last)? changed)
         {
-            if (CurrentInfo.ModifiedMultiple != null && CurrentInfo.ModifiedMultiple.Any())
+            if (CurrentInfo.ModifiedSources != null && CurrentInfo.ModifiedSources.Any())
             {
-                if (LastState?.ModifiedMultiple != null && LastState.ModifiedMultiple.Any())
+                if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Any())
                 {
-                    if (CurrentInfo.ModifiedMultiple.Where(x => !LastState.ModifiedMultiple.ContainsKey(x.Key)).Any())
+                    if (CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).Any())
                     {
                         //New State contains new sources modified for the resource
-                        changed = new Tuple<string, LocalDateTime?, LocalDateTime?>
-                                        (
-                                            CurrentInfo.ModifiedMultiple.Where(x => !LastState.ModifiedMultiple.ContainsKey(x.Key)).First().Key,
-                                            CurrentInfo.ModifiedMultiple.Where(x => !LastState.ModifiedMultiple.ContainsKey(x.Key)).First().Value,
-                                            null
-                                        );                           
+                        changed = (
+                                        source: CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).First().Key,
+                                        current: CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).First().Value,
+                                        last: null
+                                    );                           
                         
                         return true;
                     }
-                    else if (CurrentInfo.ModifiedMultiple.Where(x => x.Value > LastState.ModifiedMultiple[x.Key]).Any())
+                    else if (CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).Any())
                     {
-                        //One or more sources have an updated modified respect the corrisponding source into last state ModifiedMultiple
-                        changed = new Tuple<string, LocalDateTime?, LocalDateTime?>
-                                        (
-                                            CurrentInfo.ModifiedMultiple.Where(x => x.Value > LastState.ModifiedMultiple[x.Key]).First().Key,
-                                            CurrentInfo.ModifiedMultiple.Where(x => x.Value > LastState.ModifiedMultiple[x.Key]).First().Value,
-                                            LastState.ModifiedMultiple[CurrentInfo.ModifiedMultiple.Where(x => x.Value > LastState.ModifiedMultiple[x.Key]).First().Key]
-                                        );
+                        //One or more sources have an updated modified respect the corrisponding source into last state ModifiedSources
+                        changed = (
+                                        source: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Key,
+                                        current: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Value,
+                                        last: LastState.ModifiedSources[CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Key]
+                                    );
 
                         return true;
                     }
                 }
                 else if (LastState?.Modified != default)
                 {
-                    if (CurrentInfo.ModifiedMultiple.Where(x => x.Value > LastState.Modified).Any())
+                    if (CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).Any())
                     {
                         //One or more sources have an updated modify respect to Modified
-                        changed = new Tuple<string, LocalDateTime?, LocalDateTime?>
-                                        (
-                                            CurrentInfo.ModifiedMultiple.Where(x => x.Value > LastState.Modified).First().Key,
-                                            CurrentInfo.ModifiedMultiple.Where(x => x.Value > LastState.Modified).First().Value,
-                                            LastState.Modified
-                                        );
+                        changed = (
+                                        source: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).First().Key,
+                                        current: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).First().Value,
+                                        last: LastState.Modified
+                                    );
+
                         return true;
                     }
                 }
             }
             else if (CurrentInfo.Modified != default)
             {
-                if (LastState?.ModifiedMultiple != null && LastState.ModifiedMultiple.Any())
+                if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Any())
                 {
-                    if (LastState.ModifiedMultiple.Where(x => x.Value < CurrentInfo.Modified).Any())
+                    if (LastState.ModifiedSources.Where(x => x.Value < CurrentInfo.Modified).Any())
                     {
-                        //the new single modified is major at least of one old ModifiedMultiple
-                        changed = new Tuple<string, LocalDateTime?, LocalDateTime?>
-                                    (
-                                        null,
-                                        CurrentInfo.Modified,
-                                        LastState.ModifiedMultiple.Max(x => x.Value)
+                        //the new single modified is major at least of one old ModifiedSources
+                        changed = (
+                                        source: null,
+                                        current: CurrentInfo.Modified,
+                                        last: LastState.ModifiedSources.Max(x => x.Value)
                                     );
                         return true;
                     }
@@ -486,11 +481,10 @@ namespace Ark.Tools.ResourceWatcher
                     if (CurrentInfo.Modified > LastState.Modified)
                     {
                         //the new single modified is major than the old
-                        changed = new Tuple<string, LocalDateTime?, LocalDateTime?>
-                                    (
-                                        null,
-                                        CurrentInfo.Modified,
-                                        LastState.Modified
+                        changed = (
+                                        source: null,
+                                        current: CurrentInfo.Modified,
+                                        last: LastState.Modified
                                     );
                         return true;
                     }

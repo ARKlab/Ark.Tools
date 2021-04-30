@@ -13,7 +13,7 @@ namespace Ark.Tools.ResourceWatcher
         public virtual string ResourceId { get; set; }
         public virtual string CheckSum { get; set; }
         public virtual LocalDateTime Modified { get; set; }
-        public virtual Dictionary<string, LocalDateTime> ModifiedMultiple { get; set; }
+        public virtual Dictionary<string, LocalDateTime> ModifiedSources { get; set; }
         public virtual Instant LastEvent { get; set; }
         public virtual Instant? RetrievedAt { get; set; }
         public virtual int RetryCount { get; set; }
