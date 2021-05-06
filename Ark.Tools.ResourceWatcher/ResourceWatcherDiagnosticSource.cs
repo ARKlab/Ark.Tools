@@ -1,5 +1,4 @@
 ﻿using NLog;
-using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -189,8 +188,7 @@ namespace Ark.Tools.ResourceWatcher
         #region ProcessResource
         public Activity ProcessResourceStart(ProcessContext processContext)
         {
-            (string source, LocalDateTime? current, LocalDateTime? last)? infos;
-            bool result = processContext.IsResourceUpdated(out infos);
+            bool result = processContext.IsResourceUpdated(out var infos);
 
             _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.ModifiedSource={6},Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
                 , processContext.CurrentInfo.ResourceId
