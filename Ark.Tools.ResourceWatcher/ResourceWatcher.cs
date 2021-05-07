@@ -272,8 +272,8 @@ namespace Ark.Tools.ResourceWatcher
                 {
                     Tenant = _config.Tenant,
                     ResourceId = info.ResourceId,
-                    Modified = lastState?.Modified ?? info.Modified, // we want to update modified only on success or Ban or first run
-                    ModifiedSources = lastState?.ModifiedSources ?? info.ModifiedSources, // we want to update modified multiple only on success or Ban or first run
+                    Modified = lastState?.Modified ?? default, // we want to update modified only on success or Ban or first run
+                    ModifiedSources = lastState?.ModifiedSources, // we want to update modified multiple only on success or Ban or first run
                     LastEvent = SystemClock.Instance.GetCurrentInstant(),
                     RetryCount = lastState?.RetryCount ?? 0,
                     CheckSum = lastState?.CheckSum,
@@ -339,8 +339,6 @@ namespace Ark.Tools.ResourceWatcher
                     var isBanned = ++state.RetryCount == _config.MaxRetries;
 
                     state.Extensions = info.Extensions;
-                    state.Modified = info.Modified;
-                    state.ModifiedSources = info.ModifiedSources;
 
                     _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
                 }
@@ -351,6 +349,7 @@ namespace Ark.Tools.ResourceWatcher
             catch (Exception ex)
             {
                 // chomp it, we'll retry this file next time, forever, fuckit
+                pc.ResultType = ResultType.Error;
                 _diagnosticSource.ProcessResourceSaveFailed(info.ResourceId, ex);
             }
         }
@@ -417,7 +416,7 @@ namespace Ark.Tools.ResourceWatcher
         public int? Index { get; set; }
         public int? Total { get; set; }
 
-        public bool IsResourceUpdated(out (string source, LocalDateTime? current, LocalDateTime? last)? changed)
+        public bool IsResourceUpdated(out (string source, LocalDateTime? current, LocalDateTime? last) changed)
         {
             if (CurrentInfo.ModifiedSources != null && CurrentInfo.ModifiedSources.Any())
             {
@@ -430,8 +429,8 @@ namespace Ark.Tools.ResourceWatcher
                                         source: CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).First().Key,
                                         current: CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).First().Value,
                                         last: null
-                                    );                           
-                        
+                                    );
+
                         return true;
                     }
                     else if (CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).Any())
@@ -444,6 +443,11 @@ namespace Ark.Tools.ResourceWatcher
                                     );
 
                         return true;
+                    }
+                    else
+                    {
+                        changed = default;
+                        return false;
                     }
                 }
                 else if (LastState?.Modified != default)
@@ -459,6 +463,27 @@ namespace Ark.Tools.ResourceWatcher
 
                         return true;
                     }
+                    else
+                    {
+                        changed = default;
+                        return false;
+                    }
+                }
+                else if(LastState == null)
+                {
+                    //new resource
+                    changed = (
+                                    source: CurrentInfo.ModifiedSources.First().Key,
+                                    current: CurrentInfo.ModifiedSources.First().Value,
+                                    last: null
+                                );
+
+                    return true;
+                }
+                else
+                {
+                    changed = default;
+                    return false;
                 }
             }
             else if (CurrentInfo.Modified != default)
@@ -475,6 +500,11 @@ namespace Ark.Tools.ResourceWatcher
                                     );
                         return true;
                     }
+                    else
+                    {
+                        changed = default;
+                        return false;
+                    }
                 }
                 else if (LastState?.Modified != default)
                 {
@@ -488,12 +518,31 @@ namespace Ark.Tools.ResourceWatcher
                                     );
                         return true;
                     }
+                    else
+                    {
+                        changed = default;
+                        return false;
+                    }
+                }
+                else if (LastState == null)
+                {
+                    //new resource
+                    changed = (
+                                    source: null,
+                                    current: CurrentInfo.Modified,
+                                    last: null
+                                );
+
+                    return true;
+                }
+                else
+                {
+                    changed = default;
+                    return false;
                 }
             }
 
-            changed = null;
-
-            return false;
+            throw new Exception("Developer bug. One between Modified or ModifiedSources must be populated.");
         }
     }
 

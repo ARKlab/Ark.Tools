@@ -209,8 +209,7 @@ IF NOT EXISTS ( SELECT  1
                     FROM    information_schema.COLUMNS
                     WHERE   table_schema = 'dbo'
                             AND TABLE_NAME = 'State'
-                            AND column_Name = 'ModifiedSourcesJson'
-                            AND data_type = 'datetime')
+                            AND column_Name = 'ModifiedSourcesJson')
 BEGIN 
         ALTER TABLE State ADD [ModifiedSourcesJson] nvarchar(max) NULL
 END

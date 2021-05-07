@@ -190,15 +190,24 @@ namespace Ark.Tools.ResourceWatcher
         {
             bool result = processContext.IsResourceUpdated(out var infos);
 
-            _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.ModifiedSource={6},Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
-                , processContext.CurrentInfo.ResourceId
-                , infos.Value.current.ToString()
-                , infos.Value.last.ToString()
-                , processContext.LastState?.RetryCount
-                , processContext.Index
-                , processContext.Total
-                , (infos.Value.source == null) ? "" : infos.Value.source
-            );
+            if (!result)
+            {
+                _logger.Info("No changes detected on ResourceId=\"{0}\""
+                 , processContext.CurrentInfo.ResourceId
+                );
+            }
+            else
+            {
+                _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.ModifiedSource={6},Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
+                    , processContext.CurrentInfo.ResourceId
+                    , infos.current?.ToString()
+                    , infos.last?.ToString()
+                    , processContext.LastState?.RetryCount
+                    , processContext.Index
+                    , processContext.Total
+                    , infos.source ?? string.Empty
+                );
+            }
 
             Activity activity = _start("ProcessResource", () => new
             {

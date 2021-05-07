@@ -57,7 +57,7 @@
     <!-- Groups SUFFIX -->
     <ArkToolsCoreVersionSuffix>beta01</ArkToolsCoreVersionSuffix>
     <FtpClientGroupVersionSuffix>beta01</FtpClientGroupVersionSuffix>
-    <ResourceWatcherGroupVersionSuffix>beta01</ResourceWatcherGroupVersionSuffix>
+    <ResourceWatcherGroupVersionSuffix>beta04</ResourceWatcherGroupVersionSuffix>
 
     <EntityFrameworkGroupVersionSuffix>beta01</EntityFrameworkGroupVersionSuffix>
     <RavenDbGroupVersionSuffix>beta01</RavenDbGroupVersionSuffix>
