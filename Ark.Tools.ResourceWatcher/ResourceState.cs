@@ -1,7 +1,8 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
 using NodaTime;
+using System;
+using System.Collections.Generic;
 
 namespace Ark.Tools.ResourceWatcher
 {
@@ -12,6 +13,7 @@ namespace Ark.Tools.ResourceWatcher
         public virtual string ResourceId { get; set; }
         public virtual string CheckSum { get; set; }
         public virtual LocalDateTime Modified { get; set; }
+        public virtual Dictionary<string, LocalDateTime> ModifiedSources { get; set; }
         public virtual Instant LastEvent { get; set; }
         public virtual Instant? RetrievedAt { get; set; }
         public virtual int RetryCount { get; set; }

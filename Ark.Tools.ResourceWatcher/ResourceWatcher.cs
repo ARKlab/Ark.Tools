@@ -8,7 +8,6 @@ using NLog;
 using NodaTime;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -146,7 +145,7 @@ namespace Ark.Tools.ResourceWatcher
 
                 if (_config.SkipResourcesOlderThanDays.HasValue)
                     infos = infos
-                            .Where(x => x.Modified.Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
+                            .Where(x => _getEarliestModified(x).Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
                             ;
 
                 var list = infos.ToList();
@@ -196,7 +195,7 @@ namespace Ark.Tools.ResourceWatcher
                  {
                      x.ProcessType = ProcessType.New;
                  }
-                 else if (x.LastState.RetryCount == 0 && x.CurrentInfo.Modified > x.LastState.Modified)
+                 else if (x.LastState.RetryCount == 0 && x.IsResourceUpdated(out _))
                  {
                      x.ProcessType = ProcessType.Updated;
                  }
@@ -205,7 +204,7 @@ namespace Ark.Tools.ResourceWatcher
                      x.ProcessType = ProcessType.Retry;
                  }
                  else if (x.LastState.RetryCount > _config.MaxRetries
-                     && x.CurrentInfo.Modified > x.LastState.Modified
+                     && x.IsResourceUpdated(out _)
                      && x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()
                      // BAN expired and new version                
                      )
@@ -213,7 +212,7 @@ namespace Ark.Tools.ResourceWatcher
                      x.ProcessType = ProcessType.RetryAfterBan;
                  }
                  else if (x.LastState.RetryCount > _config.MaxRetries
-                     && x.CurrentInfo.Modified > x.LastState.Modified
+                     && x.IsResourceUpdated(out _)
                      && !(x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant())
                      // BAN               
                      )
@@ -273,7 +272,8 @@ namespace Ark.Tools.ResourceWatcher
                 {
                     Tenant = _config.Tenant,
                     ResourceId = info.ResourceId,
-                    Modified = lastState?.Modified ?? info.Modified, // we want to update modified only on success or Ban or first run
+                    Modified = lastState?.Modified ?? default, // we want to update modified only on success or Ban or first run
+                    ModifiedSources = lastState?.ModifiedSources, // we want to update modified multiple only on success or Ban or first run
                     LastEvent = SystemClock.Instance.GetCurrentInstant(),
                     RetryCount = lastState?.RetryCount ?? 0,
                     CheckSum = lastState?.CheckSum,
@@ -314,6 +314,7 @@ namespace Ark.Tools.ResourceWatcher
 
                             state.Extensions = info.Extensions;
                             state.Modified = info.Modified;
+                            state.ModifiedSources = info.ModifiedSources;
                             state.RetryCount = 0; // success
                         }
                         else
@@ -338,7 +339,6 @@ namespace Ark.Tools.ResourceWatcher
                     var isBanned = ++state.RetryCount == _config.MaxRetries;
 
                     state.Extensions = info.Extensions;
-                    state.Modified = info.Modified;
 
                     _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
                 }
@@ -349,9 +349,23 @@ namespace Ark.Tools.ResourceWatcher
             catch (Exception ex)
             {
                 // chomp it, we'll retry this file next time, forever, fuckit
+                pc.ResultType = ResultType.Error;
                 _diagnosticSource.ProcessResourceSaveFailed(info.ResourceId, ex);
             }
         }
+
+        private LocalDateTime _getEarliestModified(IResourceMetadata info)
+        {
+            if (info?.ModifiedSources != null && info.ModifiedSources.Any())
+            {
+                return info.ModifiedSources.Max(x => x.Value);
+            }
+            else
+            {
+                return info.Modified;
+            }
+        }
+
     }
 
     public interface IResourceWatcherConfig
@@ -401,6 +415,135 @@ namespace Ark.Tools.ResourceWatcher
         public ResultType? ResultType { get; set; }
         public int? Index { get; set; }
         public int? Total { get; set; }
+
+        public bool IsResourceUpdated(out (string source, LocalDateTime? current, LocalDateTime? last) changed)
+        {
+            if (CurrentInfo.ModifiedSources != null && CurrentInfo.ModifiedSources.Any())
+            {
+                if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Any())
+                {
+                    if (CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).Any())
+                    {
+                        //New State contains new sources modified for the resource
+                        changed = (
+                                        source: CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).First().Key,
+                                        current: CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).First().Value,
+                                        last: null
+                                    );
+
+                        return true;
+                    }
+                    else if (CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).Any())
+                    {
+                        //One or more sources have an updated modified respect the corrisponding source into last state ModifiedSources
+                        changed = (
+                                        source: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Key,
+                                        current: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Value,
+                                        last: LastState.ModifiedSources[CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Key]
+                                    );
+
+                        return true;
+                    }
+                    else
+                    {
+                        changed = default;
+                        return false;
+                    }
+                }
+                else if (LastState?.Modified != default)
+                {
+                    if (CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).Any())
+                    {
+                        //One or more sources have an updated modify respect to Modified
+                        changed = (
+                                        source: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).First().Key,
+                                        current: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).First().Value,
+                                        last: LastState.Modified
+                                    );
+
+                        return true;
+                    }
+                    else
+                    {
+                        changed = default;
+                        return false;
+                    }
+                }
+                else if(LastState == null)
+                {
+                    //new resource
+                    changed = (
+                                    source: CurrentInfo.ModifiedSources.First().Key,
+                                    current: CurrentInfo.ModifiedSources.First().Value,
+                                    last: null
+                                );
+
+                    return true;
+                }
+                else
+                {
+                    changed = default;
+                    return false;
+                }
+            }
+            else if (CurrentInfo.Modified != default)
+            {
+                if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Any())
+                {
+                    if (LastState.ModifiedSources.Where(x => x.Value < CurrentInfo.Modified).Any())
+                    {
+                        //the new single modified is major at least of one old ModifiedSources
+                        changed = (
+                                        source: null,
+                                        current: CurrentInfo.Modified,
+                                        last: LastState.ModifiedSources.Max(x => x.Value)
+                                    );
+                        return true;
+                    }
+                    else
+                    {
+                        changed = default;
+                        return false;
+                    }
+                }
+                else if (LastState?.Modified != default)
+                {
+                    if (CurrentInfo.Modified > LastState.Modified)
+                    {
+                        //the new single modified is major than the old
+                        changed = (
+                                        source: null,
+                                        current: CurrentInfo.Modified,
+                                        last: LastState.Modified
+                                    );
+                        return true;
+                    }
+                    else
+                    {
+                        changed = default;
+                        return false;
+                    }
+                }
+                else if (LastState == null)
+                {
+                    //new resource
+                    changed = (
+                                    source: null,
+                                    current: CurrentInfo.Modified,
+                                    last: null
+                                );
+
+                    return true;
+                }
+                else
+                {
+                    changed = default;
+                    return false;
+                }
+            }
+
+            throw new Exception("Developer bug. One between Modified or ModifiedSources must be populated.");
+        }
     }
 
     public sealed class ChangedStateContext<T> where T : IResourceState

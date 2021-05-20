@@ -1,7 +1,7 @@
 ﻿using Ark.Tools.ResourceWatcher;
 using NodaTime;
 using System;
-using System.Globalization;
+using System.Collections.Generic;
 
 namespace TestWorker.Dto
 {
@@ -12,6 +12,8 @@ namespace TestWorker.Dto
 
         string IResourceMetadata.ResourceId => FileName;
         LocalDateTime IResourceMetadata.Modified { get; } = LocalDateTime.FromDateTime(DateTime.UtcNow);
+
+        Dictionary<string, LocalDateTime> IResourceMetadata.ModifiedSources { get; } = new Dictionary<string, LocalDateTime>{ { "Source1",  LocalDateTime.FromDateTime(DateTime.UtcNow)} };
 
         object IResourceMetadata.Extensions => new
         {

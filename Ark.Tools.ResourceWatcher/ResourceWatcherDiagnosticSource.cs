@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher
 {
@@ -189,14 +188,26 @@ namespace Ark.Tools.ResourceWatcher
         #region ProcessResource
         public Activity ProcessResourceStart(ProcessContext processContext)
         {
-            _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
-                , processContext.CurrentInfo.ResourceId
-                , processContext.CurrentInfo.Modified
-                , processContext.LastState?.Modified
-                , processContext.LastState?.RetryCount
-                , processContext.Index
-                , processContext.Total
-            );
+            bool result = processContext.IsResourceUpdated(out var infos);
+
+            if (!result)
+            {
+                _logger.Info("No changes detected on ResourceId=\"{0}\""
+                 , processContext.CurrentInfo.ResourceId
+                );
+            }
+            else
+            {
+                _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.ModifiedSource={6},Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
+                    , processContext.CurrentInfo.ResourceId
+                    , infos.current?.ToString()
+                    , infos.last?.ToString()
+                    , processContext.LastState?.RetryCount
+                    , processContext.Index
+                    , processContext.Total
+                    , infos.source ?? string.Empty
+                );
+            }
 
             Activity activity = _start("ProcessResource", () => new
             {

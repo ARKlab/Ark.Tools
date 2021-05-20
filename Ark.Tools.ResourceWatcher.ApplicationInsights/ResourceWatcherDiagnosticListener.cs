@@ -1,16 +1,15 @@
 ﻿using Ark.Tools.NewtonsoftJson;
-using Ark.Tools.Nodatime.Json;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DiagnosticAdapter;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
-{ 
+{
     public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     {
         protected readonly TelemetryClient Client;
@@ -430,14 +429,28 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             {
                 data.Properties.Add("CheckSum_Old", pc.LastState.CheckSum);
                 data.Properties.Add("Modified_Old", pc.LastState.Modified.ToString());
+                if (pc.LastState.ModifiedSources != null && pc.LastState.ModifiedSources.Any())
+                {
+                    foreach (var modified in pc.LastState.ModifiedSources)
+                    {
+                        data.Properties.Add("Modified" + modified.Key + "_Old" , modified.Value.ToString());
+                    }
+                }
             }
-
             if (pc.NewState != default)
             {
                 data.Properties.Add("RetryCount", pc.NewState.RetryCount.ToString());
                 data.Properties.Add("RetrievedAt", pc.NewState.ToString());
                 data.Properties.Add("CheckSum", pc.NewState.CheckSum);
                 data.Properties.Add("Modified", pc.NewState.Modified.ToString());
+
+                if (pc.NewState.ModifiedSources != null && pc.NewState.ModifiedSources.Any())
+                {
+                    foreach (var modified in pc.NewState.ModifiedSources)
+                    {
+                        data.Properties.Add("Modified" + modified.Key, modified.Value.ToString());
+                    }
+                }
 
                 string extensionsString = JsonConvert.SerializeObject(pc.NewState.Extensions, ArkDefaultJsonSerializerSettings.Instance);
                 data.Properties.Add("Extensions", extensionsString);

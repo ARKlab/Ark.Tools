@@ -1,16 +1,18 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 
+using Ark.Tools.Core;
+using Ark.Tools.NewtonsoftJson;
+using Ark.Tools.Sql;
 using Dapper;
+using EnsureThat;
+using Newtonsoft.Json;
+using NodaTime;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using EnsureThat;
-using Newtonsoft.Json;
-using Ark.Tools.Sql;
-using Ark.Tools.Core;
-using Ark.Tools.NewtonsoftJson;
 
 namespace Ark.Tools.ResourceWatcher
 {
@@ -26,7 +28,7 @@ namespace Ark.Tools.ResourceWatcher
         private readonly JsonSerializerSettings _jsonSerializerSettings;
         private readonly IDbConnectionManager _connManager;
 
-        private const string _queryState = "SELECT [Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson] FROM [State] WHERE [Tenant] = @tenant";
+        private const string _queryState = "SELECT [Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [ModifiedSourcesJson] FROM [State] WHERE [Tenant] = @tenant";
 
         public SqlStateProvider(ISqlStateProviderConfig config, IDbConnectionManager connManager)
         {
@@ -43,6 +45,10 @@ namespace Ark.Tools.ResourceWatcher
         {
             public string ExtensionsJson { get; set; }
         }
+        class MMJ
+        {
+            public string ModifiedSourcesJson { get; set; }
+        }
 
         public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[] resourceIds = null, CancellationToken ctk = default(CancellationToken))
         {
@@ -51,10 +57,13 @@ namespace Ark.Tools.ResourceWatcher
                 foreach (var r in resourceIds)
                     Ensure.String.HasLengthBetween(r, 1, 300);
 
-            ResourceState map(ResourceState r, EJ e)
+            ResourceState map(ResourceState r, EJ e, MMJ m)
             {
                 if (e?.ExtensionsJson != null)
                     r.Extensions = JsonConvert.DeserializeObject(e.ExtensionsJson, _jsonSerializerSettings);
+
+                if (m?.ModifiedSourcesJson != null)
+                    r.ModifiedSources = JsonConvert.DeserializeObject<Dictionary<string, LocalDateTime>>(m.ModifiedSourcesJson, _jsonSerializerSettings);
 
                 return r;
             }
@@ -62,22 +71,22 @@ namespace Ark.Tools.ResourceWatcher
             using (var c = _connManager.Get(_config.DbConnectionString))
             {
                 if (resourceIds == null || resourceIds.Length == 0)
-                    return await c.QueryAsync<ResourceState, EJ, ResourceState>(_queryState
+                    return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState
                         , map
                         , param: new { tenant = tenant }
-                        , splitOn: "ExtensionsJson")
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
                         .ConfigureAwait(false);
                 else if (resourceIds.Length < 2000) //limit is 2100
-                    return await c.QueryAsync<ResourceState, EJ, ResourceState>(_queryState + " and [ResourceId] in @resources"
+                    return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in @resources"
                         , map
                         , param: new { tenant = tenant, resources = resourceIds }
-                        , splitOn: "ExtensionsJson")
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
                         .ConfigureAwait(false);
                 else
-                    return await c.QueryAsync<ResourceState, EJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
+                    return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
                         , map
                         , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
-                        , splitOn: "ExtensionsJson")
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
                         .ConfigureAwait(false);
             }
         }
@@ -100,11 +109,12 @@ USING @table AS src
     AND tgt.[Tenant] = src.[Tenant]
     AND tgt.[ResourceId] = src.[ResourceId]
 WHEN NOT MATCHED THEN
-    INSERT ([Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [Exception])
-    VALUES (src.[Tenant], src.[ResourceId], src.[Modified], src.[LastEvent], src.[RetrievedAt], src.[RetryCount], src.[CheckSum], src.[ExtensionsJson], src.[Exception])
+    INSERT ([Tenant], [ResourceId], [Modified], [ModifiedSourcesJson], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [Exception])
+    VALUES (src.[Tenant], src.[ResourceId], src.[Modified], src.[ModifiedSourcesJson], src.[LastEvent], src.[RetrievedAt], src.[RetryCount], src.[CheckSum], src.[ExtensionsJson], src.[Exception])
 WHEN MATCHED THEN
     UPDATE SET
         [Modified] = src.[Modified],
+        [ModifiedSourcesJson] = src.[ModifiedSourcesJson],
         [LastEvent] = src.[LastEvent],
         [RetryCount] = src.[RetryCount],
         [RetrievedAt] = src.[RetrievedAt],
@@ -118,7 +128,8 @@ WHEN MATCHED THEN
                 {
                     x.Tenant,
                     x.ResourceId,
-                    Modified = x.Modified.ToDateTimeUnspecified(),
+                    Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
+                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings),
                     LastEvent = x.LastEvent.ToDateTimeUtc(),
                     RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
                     x.RetryCount,
@@ -139,7 +150,8 @@ BEGIN
     CREATE TABLE [State](
         [Tenant] [varchar](128) NOT NULL,
 	    [ResourceId] [nvarchar](300) NOT NULL,
-	    [Modified] [datetime2] NOT NULL,
+	    [Modified] [datetime2] NULL,
+        [ModifiedSourcesJson] nvarchar(max) NULL,
         [LastEvent] [datetime2] NOT NULL,
         [RetrievedAt] [datetime2] NULL,
         [RetryCount] [int] NOT NULL DEFAULT 0,
@@ -150,7 +162,8 @@ BEGIN
         (
             [Tenant] ASC,
 	        [ResourceId] ASC
-        )
+        ),
+        CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson] CHECK ([Modified] IS NOT NULL OR [ModifiedSourcesJson] IS NOT NULL)
     )
 END
 
@@ -186,6 +199,25 @@ IF EXISTS ( SELECT  1
                     FROM    information_schema.COLUMNS
                     WHERE   table_schema = 'dbo'
                             AND TABLE_NAME = 'State'
+                            AND column_Name = 'Modified'
+                            AND IS_NULLABLE = 'NO')
+BEGIN 
+        ALTER TABLE State ALTER COLUMN [Modified] [datetime2] NULL
+END
+
+IF NOT EXISTS ( SELECT  1
+                    FROM    information_schema.COLUMNS
+                    WHERE   table_schema = 'dbo'
+                            AND TABLE_NAME = 'State'
+                            AND column_Name = 'ModifiedSourcesJson')
+BEGIN 
+        ALTER TABLE State ADD [ModifiedSourcesJson] nvarchar(max) NULL
+END
+
+IF EXISTS ( SELECT  1
+                    FROM    information_schema.COLUMNS
+                    WHERE   table_schema = 'dbo'
+                            AND TABLE_NAME = 'State'
                             AND column_Name = 'LastEvent'
                             AND data_type = 'datetime')
 BEGIN 
@@ -210,6 +242,15 @@ BEGIN
         ALTER TABLE State ADD [Exception] nvarchar(max) NULL
 END
 
+IF NOT EXISTS ( SELECT  1
+                    FROM    information_schema.constraint_column_usage
+                    WHERE   table_schema = 'dbo'
+                            AND TABLE_NAME = 'State'
+                            AND constraint_name = 'CHK_ModifiedOrModifiedSourcesJson' )
+BEGIN 
+        ALTER TABLE State ADD CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson] CHECK ([Modified] IS NOT NULL OR [ModifiedSourcesJson] IS NOT NULL)
+END
+
 IF TYPE_ID('udt_State') IS NOT NULL
 BEGIN
     DROP TYPE [udt_State]
@@ -218,7 +259,8 @@ END
 CREATE TYPE [udt_State] AS TABLE (
     [Tenant] [varchar](128) NOT NULL,
     [ResourceId] [nvarchar](300) NOT NULL,
-    [Modified] [datetime2] NOT NULL,
+    [Modified] [datetime2] NULL,
+    [ModifiedSourcesJson] nvarchar(max) NULL,
     [LastEvent] [datetime2] NOT NULL,
     [RetrievedAt] [datetime2] NULL,
     [RetryCount] [int] NOT NULL,
