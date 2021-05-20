@@ -20,6 +20,9 @@ namespace Ark.Tools.ResourceWatcher
         /// The "versions" of the resource. Used to manage multiple sources for the resource.
         /// The resource will be processed when a new source will be add or at least one source have an updated modified.
         /// </summary>
+        /// <remarks>
+        /// The keys are lowercase
+        /// </remarks>
 #if (NET472 || NETSTANDARD2_0)
         Dictionary<string, LocalDateTime> ModifiedSources { get; }
 #else
