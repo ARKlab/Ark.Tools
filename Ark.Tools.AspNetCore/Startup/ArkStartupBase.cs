@@ -5,12 +5,12 @@ using Ark.Tools.AspNetCore.ApplicationInsights;
 using Microsoft.ApplicationInsights.AspNetCore;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.SnapshotCollector;
+using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Options;
 using System;
 using System.Diagnostics;
 
@@ -33,11 +33,25 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
-            
+
+            services.AddSingleton<ITelemetryInitializer, DoNotSampleFailures>();
+
+            services.Configure<SamplingPercentageEstimatorSettings>(o =>
+            {
+                o.MovingAverageRatio = 0.5;
+                o.MaxTelemetryItemsPerSecond = 1;
+                o.SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(1);
+            });
+
+            services.Configure<SamplingPercentageEstimatorSettings>(o =>
+            {
+                Configuration.GetSection("ApplicationInsights:EstimatorSettings").Bind(o);
+            });
+
             services.AddApplicationInsightsTelemetry(o =>
             {
                 o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                o.EnableAdaptiveSampling = true;
+                o.EnableAdaptiveSampling = false;
                 o.EnableHeartbeat = true;
                 o.AddAutoCollectedMetricExtractor = true;
                 o.RequestCollectionOptions.InjectResponseHeaders = true;
@@ -45,6 +59,10 @@ namespace Ark.Tools.AspNetCore.Startup
                 o.DeveloperMode = Debugger.IsAttached;
                 o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
             });
+
+            // this MUST be after the MS AddApplicationInsightsTelemetry to work. IPostConfigureOptions is NOT working as expected.
+            services.AddSingleton<IConfigureOptions<TelemetryConfiguration>, ConfigureTelemetryOptions>();
+
             services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
 
             services.Configure<SnapshotCollectorConfiguration>(o =>
@@ -60,7 +78,7 @@ namespace Ark.Tools.AspNetCore.Startup
         public virtual void Configure(IApplicationBuilder app)
         {
             var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
-                        
+
             app.Use((context, next) =>
             {
                 if (context.Request.Headers.TryGetValue("X-Forwarded-PathBase", out var pathbase) && pathbase != "/")

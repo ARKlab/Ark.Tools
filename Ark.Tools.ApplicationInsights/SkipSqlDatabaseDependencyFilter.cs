@@ -36,4 +36,5 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
             return true;
         }
     }
+
 }
