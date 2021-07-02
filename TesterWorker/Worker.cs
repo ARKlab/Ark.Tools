@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,40 +31,36 @@ namespace TesterWorker
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                using (var op = _telemetryClient.StartOperation<RequestTelemetry>("Antani"))
+                using (var op = _telemetryClient.StartOperation<RequestTelemetry>("Run"))
                 {
 
                     Console.WriteLine(@$"TW");
+                    using var client = new HttpClient();
 
                     try
                     {
-                        using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("AntaniDep"))
+                        using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("Dep1"))
                         {
-                            string html = new WebClient().DownloadString("https://www.google.it/");
+                            await Task.Delay(TimeSpan.FromMilliseconds(100));
+                        }
+
+
+                        using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepFail"))
+                        {
 
                             await Task.Delay(TimeSpan.FromMilliseconds(100));
-                            _telemetryClient.TrackDependency(d1.Telemetry);
+                            d1.Telemetry.Success = false;
                         }
-                        //using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("AntaniDep"))
-                        //{
-                        //    await Task.Delay(TimeSpan.FromMilliseconds(100));
-                        //}
-                        //using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("AntaniDep"))
-                        //{
-                        //    await Task.Delay(TimeSpan.FromMilliseconds(100));
-                        //}
-                        //using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("AntaniDep"))
-                        //{
 
-                        //    await Task.Delay(TimeSpan.FromMilliseconds(100));
-                        //    d1.Telemetry.Success = false;
-                        //}
-                        //using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("AntaniDep"))
-                        //{
-                        //    await Task.Delay(TimeSpan.FromMilliseconds(100));
-                        //    throw new Exception();
-                        //}
-                }
+                        var _ = await client.GetStringAsync("https://www.google.it");
+
+                        using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepException"))
+                        {
+                            await Task.Delay(TimeSpan.FromMilliseconds(100));
+                            throw new Exception();
+                        }
+
+                    }
                 catch (Exception e)
                     {
                         _telemetryClient.TrackException(e);

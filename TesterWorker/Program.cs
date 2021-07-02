@@ -6,7 +6,7 @@ using System.IO;
 
 namespace TesterWorker
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {

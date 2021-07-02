@@ -61,9 +61,12 @@ namespace Ark.Tools.AspNetCore.Startup
             });
 
             // this MUST be after the MS AddApplicationInsightsTelemetry to work. IPostConfigureOptions is NOT working as expected.
-            services.AddSingleton<IConfigureOptions<TelemetryConfiguration>, ConfigureTelemetryOptions>();
+            services.AddSingleton<IConfigureOptions<TelemetryConfiguration>, EnableAdaptiveSamplingWithCustomSettings>();
 
-            services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
+
+            if (!string.IsNullOrWhiteSpace(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)))
+                services.AddSingleton<ITelemetryProcessorFactory>(
+                    new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
 
             services.Configure<SnapshotCollectorConfiguration>(o =>
             {
@@ -71,8 +74,7 @@ namespace Ark.Tools.AspNetCore.Startup
             services.Configure<SnapshotCollectorConfiguration>(Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
             services.AddSnapshotCollector();
 
-            services.AddCors();
-            
+            services.AddCors();    
         }
 
         public virtual void Configure(IApplicationBuilder app)

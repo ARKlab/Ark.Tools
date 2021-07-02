@@ -6,11 +6,11 @@ using Microsoft.Extensions.Options;
 
 namespace Ark.Tools.ApplicationInsights
 {
-    public class ConfigureTelemetryOptions : IConfigureOptions<TelemetryConfiguration>
+    public class EnableAdaptiveSamplingWithCustomSettings : IConfigureOptions<TelemetryConfiguration>
     {
         private IOptions<SamplingPercentageEstimatorSettings> _settings;
 
-        public ConfigureTelemetryOptions(IOptions<SamplingPercentageEstimatorSettings> settings)
+        public EnableAdaptiveSamplingWithCustomSettings(IOptions<SamplingPercentageEstimatorSettings> settings)
         {
             this._settings = settings;
         }
