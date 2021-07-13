@@ -26,7 +26,7 @@
   </ItemGroup>
   
   <ItemGroup>    
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.8.0" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.8.1" />
     <PackageReference Include="Auth0.ManagementApi" Version="7.8.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.7" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
