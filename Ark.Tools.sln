@@ -174,7 +174,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Outbox.Rebus", "A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Nodatime.Dapper", "Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj", "{84349CFF-2C3C-4602-BF50-E9F019B5FE47}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TesterWorker", "TesterWorker\TesterWorker.csproj", "{0B01C254-DEA8-468E-8B00-B20DC7EF3B99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TesterWorker", "TesterWorker\TesterWorker.csproj", "{0B01C254-DEA8-468E-8B00-B20DC7EF3B99}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
