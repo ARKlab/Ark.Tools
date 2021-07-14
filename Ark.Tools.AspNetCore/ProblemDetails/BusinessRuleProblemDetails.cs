@@ -17,8 +17,8 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
             Violation = businessRuleViolation;
 
-            var type = businessRuleViolation.GetType();
-            var properties = type.GetProperties().Where(p => p.DeclaringType.FullName != type.BaseType.FullName).ToArray();
+            var type = typeof(BusinessRuleViolation);
+            var properties = type.GetProperties().Where(p => p.DeclaringType != type).ToArray();
 
             foreach (var prop in properties)
                 Extensions.Add(prop.Name, prop.GetValue(businessRuleViolation, null));
