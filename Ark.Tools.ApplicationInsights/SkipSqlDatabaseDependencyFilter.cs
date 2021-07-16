@@ -9,22 +9,24 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
 {
     public class SkipSqlDatabaseDependencyFilter : ITelemetryProcessor
     {
-        private ITelemetryProcessor _next;
-        private SqlConnectionStringBuilder _sqlConnection;
+        private readonly ITelemetryProcessor _next;
+        private readonly SqlConnectionStringBuilder _sqlConnection;
+        private readonly bool _enabled;
 
         // Link processors to each other in a chain.
         public SkipSqlDatabaseDependencyFilter(ITelemetryProcessor next, string sqlConnection)
         {
             this._next = next;
             this._sqlConnection = new SqlConnectionStringBuilder(sqlConnection);
+            this._enabled = !string.IsNullOrWhiteSpace(_sqlConnection.DataSource) && !string.IsNullOrWhiteSpace(_sqlConnection.InitialCatalog);
         }
 
         public void Process(ITelemetry item)
         {
-            // To filter out an item, just return 
-            if (!_oktoSend(item)) { return; }
-
-            this._next.Process(item);
+            if (_enabled && _oktoSend(item))
+            {
+                this._next.Process(item);
+            }
         }
 
         // Example: replace with your own criteria.
@@ -36,4 +38,5 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
             return true;
         }
     }
+
 }

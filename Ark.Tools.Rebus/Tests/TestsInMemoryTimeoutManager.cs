@@ -49,6 +49,8 @@ namespace Ark.Tools.Rebus.Tests
         public TestsInMemoryTimeoutManager(IRebusTime rebusTime)
         {
             _rebusTime = rebusTime ?? throw new ArgumentNullException(nameof(rebusTime));
+            lock (_instances)
+                _instances.Add(this);
         }
 
         /// <summary>

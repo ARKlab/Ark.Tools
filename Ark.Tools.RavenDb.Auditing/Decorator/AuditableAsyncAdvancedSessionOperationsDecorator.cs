@@ -166,6 +166,19 @@ namespace Ark.Tools.RavenDb.Auditing
             }
         }
 
+        public event EventHandler<SessionDisposingEventArgs> OnSessionDisposing
+        {
+            add
+            {
+                _inner.OnSessionDisposing += value;
+            }
+
+            remove
+            {
+                _inner.OnSessionDisposing -= value;
+            }
+        }
+
         public IAsyncDocumentQuery<T> AsyncDocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractCommonApiForIndexes, new()
 		{
 			return _inner.AsyncDocumentQuery<T, TIndexCreator>();

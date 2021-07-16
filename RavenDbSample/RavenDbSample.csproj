@@ -29,10 +29,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AgileObjects.AgileMapper" Version="1.7.2" />
+    <PackageReference Include="AgileObjects.AgileMapper" Version="1.8.0" />
     <PackageReference Include="Microsoft.AspNetCore.OData.Versioning.ApiExplorer" Version="5.0.0" />
-    <PackageReference Include="Microsoft.OData.Core" Version="7.8.3" />
-    <PackageReference Include="RavenDB.Embedded" Version="5.1.5" />
+    <PackageReference Include="Microsoft.OData.Core" Version="7.9.0" />
+    <PackageReference Include="RavenDB.Embedded" Version="5.2.1" />
   </ItemGroup>
 
   <ItemGroup>

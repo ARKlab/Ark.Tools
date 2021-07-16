@@ -26,10 +26,13 @@ namespace Ark.Tools.ApplicationInsights
                 return;
 
             if (item is DependencyTelemetry d
-                && d.Success == true
-                && d.Name == "Receive"
-                && d.Type == "Azure Service Bus")
-                return;
+                && d.Success == true)
+            {
+                if (d.Name == "Receive" && d.Type == "Azure Service Bus")
+                    return;
+                if (d.Type == "SQL" && d.Data == "Commit")
+                    return;
+            }
 
             _next.Process(item);
         }
