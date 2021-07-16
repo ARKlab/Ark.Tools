@@ -10,6 +10,7 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Extensions.Options;
+using Microsoft.ApplicationInsights.DependencyCollector;
 
 namespace Ark.Tools.ApplicationInsights.HostedService
 {
@@ -46,6 +47,8 @@ namespace Ark.Tools.ApplicationInsights.HostedService
                     o.EnableDependencyTrackingTelemetryModule = true;
                     
                 });
+
+                services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) => { module.EnableSqlCommandTextInstrumentation = true; });
 
                 // this MUST be after the MS AddApplicationInsightsTelemetry to work. IPostConfigureOptions is NOT working as expected.
                 services.AddSingleton<IConfigureOptions<TelemetryConfiguration>, EnableAdaptiveSamplingWithCustomSettings>();

@@ -3,6 +3,7 @@
 using Ark.Tools.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights;
 using Microsoft.ApplicationInsights.AspNetCore;
+using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
@@ -51,7 +52,7 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddApplicationInsightsTelemetry(o =>
             {
                 o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                o.EnableAdaptiveSampling = false;
+                o.EnableAdaptiveSampling = false; // enabled below by EnableAdaptiveSamplingWithCustomSettings
                 o.EnableHeartbeat = true;
                 o.AddAutoCollectedMetricExtractor = true;
                 o.RequestCollectionOptions.InjectResponseHeaders = true;
@@ -60,9 +61,10 @@ namespace Ark.Tools.AspNetCore.Startup
                 o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
             });
 
+            services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) => { module.EnableSqlCommandTextInstrumentation = true; });
+
             // this MUST be after the MS AddApplicationInsightsTelemetry to work. IPostConfigureOptions is NOT working as expected.
             services.AddSingleton<IConfigureOptions<TelemetryConfiguration>, EnableAdaptiveSamplingWithCustomSettings>();
-
 
             if (!string.IsNullOrWhiteSpace(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)))
                 services.AddSingleton<ITelemetryProcessorFactory>(
