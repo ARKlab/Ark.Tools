@@ -46,7 +46,7 @@
     
     <ArkToolsCoreVersion>3.3.0</ArkToolsCoreVersion>
     <FtpClientGroupVersion>3.3.0</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>3.3.1</ResourceWatcherGroupVersion>
+    <ResourceWatcherGroupVersion>3.3.2</ResourceWatcherGroupVersion>
     
     <EntityFrameworkGroupVersion>3.3.0</EntityFrameworkGroupVersion>
     <RavenDbGroupVersion>3.3.0</RavenDbGroupVersion>
