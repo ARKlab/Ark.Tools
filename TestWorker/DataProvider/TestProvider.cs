@@ -33,7 +33,7 @@ namespace TestWorker.DataProvider
                     new Test_FileMetadataDto
                     {
                         FileName = "TestFileName" + x,
-                        Date = filter.Date,                        
+                        Date = filter.Date,
                     }
                 ).ToList();
 

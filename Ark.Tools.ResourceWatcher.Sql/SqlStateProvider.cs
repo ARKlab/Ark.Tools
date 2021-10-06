@@ -248,7 +248,7 @@ IF NOT EXISTS ( SELECT  1
                             AND TABLE_NAME = 'State'
                             AND constraint_name = 'CHK_ModifiedOrModifiedSourcesJson_v2' )
 BEGIN 
-        ALTER TABLE State ADD CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson_v2] CHECK (NOT([Modified] IS NOT NULL AND [ModifiedSourcesJson] IS NOT NULL))
+        EXEC('ALTER TABLE State ADD CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson_v2] CHECK (NOT([Modified] IS NOT NULL AND [ModifiedSourcesJson] IS NOT NULL))')
 END
 
 IF EXISTS ( SELECT  1
@@ -257,7 +257,7 @@ IF EXISTS ( SELECT  1
                     AND TABLE_NAME = 'State'
                     AND constraint_name = 'CHK_ModifiedOrModifiedSourcesJson' )
 BEGIN 
-        ALTER TABLE State DROP CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson]
+        EXEC('ALTER TABLE State DROP CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson]')
 END
 
 IF TYPE_ID('udt_State') IS NOT NULL

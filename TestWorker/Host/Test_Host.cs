@@ -79,7 +79,7 @@ namespace TestWorker.HostNs
                     deps.Container.RegisterInstance(config);
                 });
 
-                this.UseStateProvider<InMemStateProvider>();
+                this.UseSqlStateProvider(config);
             }
 
             public Task RunOnceAsync(LocalDate date, CancellationToken ctk = default)
