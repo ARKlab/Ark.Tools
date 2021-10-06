@@ -155,7 +155,7 @@ namespace TestWorker.HostNs
         {
             var baseCfg = new Test_Host_Config()
             {
-                StateDbConnectionString = configuration["ConnectionStrings:KTM.Database"],
+                StateDbConnectionString = configuration["ConnectionStrings:Workers.Database"],
             };
 
             var rebusCfg = new RebusResourceNotifier_Config()
@@ -167,7 +167,8 @@ namespace TestWorker.HostNs
 
             var h = new Host(baseCfg)
                 .WithTestWriter()
-                .WithNotifier(rebusCfg);
+                //.WithNotifier(rebusCfg)
+                ;
 
             h.AddProviderFilterConfigurer(c => c.Count = 100);
             return h;

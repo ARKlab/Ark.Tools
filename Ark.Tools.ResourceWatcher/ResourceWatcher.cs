@@ -272,8 +272,8 @@ namespace Ark.Tools.ResourceWatcher
                 {
                     Tenant = _config.Tenant,
                     ResourceId = info.ResourceId,
-                    Modified = lastState?.Modified ?? default, // we want to update modified only on success or Ban or first run
-                    ModifiedSources = lastState?.ModifiedSources, // we want to update modified multiple only on success or Ban or first run
+                    Modified = lastState?.Modified ?? default, // we want to update modified only on success so that can be used as 'Last successful Modified' by Process logic
+                    ModifiedSources = lastState?.ModifiedSources,
                     LastEvent = SystemClock.Instance.GetCurrentInstant(),
                     RetryCount = lastState?.RetryCount ?? 0,
                     CheckSum = lastState?.CheckSum,

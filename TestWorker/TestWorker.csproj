@@ -9,6 +9,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="appsettings.Development.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Activity\Ark.Tools.Activity.csproj" />
     <ProjectReference Include="..\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.ApplicationInsights\Ark.Tools.ResourceWatcher.ApplicationInsights.csproj" />
@@ -24,10 +36,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    
   </ItemGroup>
 
 </Project>

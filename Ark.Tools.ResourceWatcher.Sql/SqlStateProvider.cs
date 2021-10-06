@@ -163,7 +163,7 @@ BEGIN
             [Tenant] ASC,
 	        [ResourceId] ASC
         ),
-        CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson] CHECK ([Modified] IS NOT NULL OR [ModifiedSourcesJson] IS NOT NULL)
+        CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson_v2] CHECK (NOT([Modified] IS NOT NULL AND [ModifiedSourcesJson] IS NOT NULL))
     )
 END
 
@@ -246,9 +246,18 @@ IF NOT EXISTS ( SELECT  1
                     FROM    information_schema.constraint_column_usage
                     WHERE   table_schema = 'dbo'
                             AND TABLE_NAME = 'State'
-                            AND constraint_name = 'CHK_ModifiedOrModifiedSourcesJson' )
+                            AND constraint_name = 'CHK_ModifiedOrModifiedSourcesJson_v2' )
 BEGIN 
-        ALTER TABLE State ADD CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson] CHECK ([Modified] IS NOT NULL OR [ModifiedSourcesJson] IS NOT NULL)
+        ALTER TABLE State ADD CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson_v2] CHECK (NOT([Modified] IS NOT NULL AND [ModifiedSourcesJson] IS NOT NULL))
+END
+
+IF EXISTS ( SELECT  1
+            FROM    information_schema.constraint_column_usage
+            WHERE   table_schema = 'dbo'
+                    AND TABLE_NAME = 'State'
+                    AND constraint_name = 'CHK_ModifiedOrModifiedSourcesJson' )
+BEGIN 
+        ALTER TABLE State DROP CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson]
 END
 
 IF TYPE_ID('udt_State') IS NOT NULL
