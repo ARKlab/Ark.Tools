@@ -1,10 +1,10 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Routing;
 using System.Linq;
+using Microsoft.AspNetCore.OData.Routing.Controllers;
 
 namespace Ark.Tools.AspNetCore
 {

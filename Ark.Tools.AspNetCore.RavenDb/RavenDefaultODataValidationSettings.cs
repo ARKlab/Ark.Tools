@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNet.OData.Query;
+﻿using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Query.Validator;
 
 namespace Ark.Tools.AspNetCore.RavenDb
 {

@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNet.OData.Query;
-using Microsoft.AspNetCore.Mvc.Abstractions;
+﻿using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.OData.Query;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {

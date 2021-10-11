@@ -2,7 +2,6 @@
 using Ark.Tools.AspNetCore.RavenDb;
 using Ark.Tools.Core;
 using Ark.Tools.RavenDb.Auditing;
-using Microsoft.AspNet.OData.Query;
 using Raven.Client.Documents.Session;
 using System;
 using System.Threading;
@@ -14,6 +13,7 @@ using Raven.Client.Documents;
 using System.Linq;
 using EnsureThat;
 using RavenDbSample.Models;
+using Microsoft.AspNetCore.OData.Query;
 
 namespace RavenDbSample.Application.DAL
 {

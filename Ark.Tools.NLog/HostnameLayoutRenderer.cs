@@ -5,11 +5,13 @@ using NLog.Common;
 using NLog.Config;
 using NLog.LayoutRenderers;
 using System;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 
 namespace Ark.Tools.NLog
 {
+
     [LayoutRenderer("ark.hostname")]
     [AppDomainFixedOutput]
     [ThreadAgnostic]

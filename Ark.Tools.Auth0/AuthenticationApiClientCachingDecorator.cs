@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Builders;
@@ -82,42 +83,42 @@ namespace Ark.Tools.Auth0
             return _inner.BuildWsFedUrl();
         }
 
-        public Task<string> ChangePasswordAsync(ChangePasswordRequest request)
+        public Task<string> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
         {
-            return _inner.ChangePasswordAsync(request);
+            return _inner.ChangePasswordAsync(request, cancellationToken);
         }
 
-        public Task<Uri> GetImpersonationUrlAsync(ImpersonationRequest request)
+        public Task<Uri> GetImpersonationUrlAsync(ImpersonationRequest request, CancellationToken cancellationToken = default)
         {
-            return _inner.GetImpersonationUrlAsync(request);
+            return _inner.GetImpersonationUrlAsync(request, cancellationToken);
         }
 
-        public Task<SignupUserResponse> SignupUserAsync(SignupUserRequest request)
+        public Task<SignupUserResponse> SignupUserAsync(SignupUserRequest request, CancellationToken cancellationToken = default)
         {
-            return _inner.SignupUserAsync(request);
+            return _inner.SignupUserAsync(request, cancellationToken);
         }
 
-        public Task<PasswordlessEmailResponse> StartPasswordlessEmailFlowAsync(PasswordlessEmailRequest request)
+        public Task<PasswordlessEmailResponse> StartPasswordlessEmailFlowAsync(PasswordlessEmailRequest request, CancellationToken cancellationToken = default)
         {
-            return _inner.StartPasswordlessEmailFlowAsync(request);
+            return _inner.StartPasswordlessEmailFlowAsync(request, cancellationToken);
         }
 
-        public Task<PasswordlessSmsResponse> StartPasswordlessSmsFlowAsync(PasswordlessSmsRequest request)
+        public Task<PasswordlessSmsResponse> StartPasswordlessSmsFlowAsync(PasswordlessSmsRequest request, CancellationToken cancellationToken = default)
         {
-            return _inner.StartPasswordlessSmsFlowAsync(request);
+            return _inner.StartPasswordlessSmsFlowAsync(request, cancellationToken);
         }
 
         #endregion
 
         #region Caching
 
-        private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request)
+        private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request, CancellationToken cancellationToken = default)
         {
             var key = (string)_getKey((dynamic)request);
             var task = _pendingTasks.GetOrAdd(
                 key, 
                 k => _accessTokenResponseCachePolicy.ExecuteAsync(
-                    ctx => _inner.GetTokenAsync((dynamic)request), 
+                    ctx => _inner.GetTokenAsync((dynamic)request, cancellationToken), 
                     new Context(k)
                 )
             ) as Task<AccessTokenResponse>;
@@ -129,9 +130,9 @@ namespace Ark.Tools.Auth0
             return res;
         }
         
-        public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodeTokenRequest request)
+        public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodeTokenRequest request, CancellationToken cancellationToken = default)
         {
-            return _getToken(request);
+            return _getToken(request, cancellationToken);
         }
 
         private string _getKey(AuthorizationCodeTokenRequest r)
@@ -139,9 +140,9 @@ namespace Ark.Tools.Auth0
             return $"AuthorizationCodeTokenRequest{r.ClientId}{r.Code}"; // code should be enough, but being on safe side
         }
 
-        public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodePkceTokenRequest request)
+        public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodePkceTokenRequest request, CancellationToken cancellationToken = default)
         {
-            return _getToken(request);
+            return _getToken(request, cancellationToken);
         }
 
         private string _getKey(AuthorizationCodePkceTokenRequest r)
@@ -149,9 +150,9 @@ namespace Ark.Tools.Auth0
             return $"AuthorizationCodePkceTokenRequest{r.ClientId}{r.Code}{r.CodeVerifier}";
         }
 
-        public Task<AccessTokenResponse> GetTokenAsync(ClientCredentialsTokenRequest request)
+        public Task<AccessTokenResponse> GetTokenAsync(ClientCredentialsTokenRequest request, CancellationToken cancellationToken = default)
         {
-            return _getToken(request);
+            return _getToken(request, cancellationToken);
         }
 
         private string _getKey(ClientCredentialsTokenRequest r)
@@ -159,9 +160,9 @@ namespace Ark.Tools.Auth0
             return $"ClientCredentialsTokenRequest{r.ClientId}{r.Audience}";
         }
 
-        public Task<AccessTokenResponse> GetTokenAsync(RefreshTokenRequest request)
+        public Task<AccessTokenResponse> GetTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
         {
-            return _getToken(request);
+            return _getToken(request, cancellationToken);
         }
 
         private string _getKey(RefreshTokenRequest r)
@@ -169,9 +170,9 @@ namespace Ark.Tools.Auth0
             return $"RefreshTokenRequest{r.ClientId}{r.RefreshToken}{r.Audience}{r.Scope}";
         }
 
-        public Task<AccessTokenResponse> GetTokenAsync(ResourceOwnerTokenRequest request)
+        public Task<AccessTokenResponse> GetTokenAsync(ResourceOwnerTokenRequest request, CancellationToken cancellationToken = default)
         {
-            return _getToken(request);
+            return _getToken(request, cancellationToken);
         }
 
         private string _getKey(ResourceOwnerTokenRequest r)
@@ -179,9 +180,9 @@ namespace Ark.Tools.Auth0
             return $"ResourceOwnerTokenRequest{r.ClientId}{r.Username}{r.Realm}{r.Audience}{r.Scope}";
         }
 
-        public Task<UserInfo> GetUserInfoAsync(string accessToken)
+        public Task<UserInfo> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken = default)
         {
-            return _userInfoCachePolicy.ExecuteAsync(ctx => _inner.GetUserInfoAsync(accessToken), new Context(_getKey(accessToken), new Dictionary<string, object>()
+            return _userInfoCachePolicy.ExecuteAsync(ctx => _inner.GetUserInfoAsync(accessToken, cancellationToken), new Context(_getKey(accessToken), new Dictionary<string, object>()
             {
                 { ContextualTtl.TimeSpanKey, _expiresIn(accessToken) }
             }));
@@ -192,9 +193,9 @@ namespace Ark.Tools.Auth0
             return $"GetUserInfo{accessToken}";
         }
 
-        public Task<AccessTokenResponse> GetTokenAsync(PasswordlessEmailTokenRequest request)
+        public Task<AccessTokenResponse> GetTokenAsync(PasswordlessEmailTokenRequest request, CancellationToken cancellationToken = default)
         {
-            return _getToken(request);
+            return _getToken(request, cancellationToken);
         }
 
         private string _getKey(PasswordlessEmailTokenRequest r)
@@ -202,9 +203,9 @@ namespace Ark.Tools.Auth0
             return $"PasswordlessEmailTokenRequest{r.ClientId}{r.Email}{r.Audience}{r.Scope}";
         }
 
-        public Task<AccessTokenResponse> GetTokenAsync(PasswordlessSmsTokenRequest request)
+        public Task<AccessTokenResponse> GetTokenAsync(PasswordlessSmsTokenRequest request, CancellationToken cancellationToken = default)
         {
-            return _getToken(request);
+            return _getToken(request, cancellationToken);
         }
 
         private string _getKey(PasswordlessSmsTokenRequest r)
@@ -212,9 +213,9 @@ namespace Ark.Tools.Auth0
             return $"PasswordlessSmsTokenRequest{r.ClientId}{r.PhoneNumber}{r.Audience}{r.Scope}";
         }
 
-        public Task<AccessTokenResponse> GetTokenAsync(DeviceCodeTokenRequest request)
+        public Task<AccessTokenResponse> GetTokenAsync(DeviceCodeTokenRequest request, CancellationToken cancellationToken = default)
         {
-            return _getToken(request);
+            return _getToken(request, cancellationToken);
         }
 
         private string _getKey(DeviceCodeTokenRequest r)
@@ -222,9 +223,9 @@ namespace Ark.Tools.Auth0
             return $"DeviceCodeTokenRequest{r.ClientId}{r.DeviceCode}";
         }
 
-        public Task<DeviceCodeResponse> StartDeviceFlowAsync(DeviceCodeRequest request)
+        public Task<DeviceCodeResponse> StartDeviceFlowAsync(DeviceCodeRequest request, CancellationToken cancellationToken = default)
         {
-            return _inner.StartDeviceFlowAsync(request);
+            return _inner.StartDeviceFlowAsync(request, cancellationToken);
         }
         #endregion
     }

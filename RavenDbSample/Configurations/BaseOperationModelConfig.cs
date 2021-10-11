@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNet.OData.Builder;
+﻿using Microsoft.AspNetCore.OData.Builder;
 using Microsoft.AspNetCore.Mvc;
 using RavenDbSample.Models;
 

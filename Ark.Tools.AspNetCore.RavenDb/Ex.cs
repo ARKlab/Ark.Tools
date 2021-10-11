@@ -3,9 +3,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Linq;
-using Microsoft.AspNet.OData.Query;
 using Raven.Client.Documents.Session;
 using Ark.Tools.Core;
+using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Query.Validator;
 
 namespace Ark.Tools.AspNetCore.RavenDb
 {

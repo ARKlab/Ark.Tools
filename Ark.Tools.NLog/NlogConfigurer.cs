@@ -11,6 +11,7 @@ using System;
 using System.Linq;
 using NLog.Common;
 using System.Diagnostics;
+using NLog.LayoutRenderers;
 
 namespace Ark.Tools.NLog
 {

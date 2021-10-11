@@ -1,6 +1,6 @@
 ﻿using Ark.Tools.Core;
 using Ark.Tools.RavenDb.Auditing;
-using Microsoft.AspNet.OData.Query;
+using Microsoft.AspNetCore.OData.Query;
 using System.Threading;
 using System.Threading.Tasks;
 using RavenDbSample.Models;

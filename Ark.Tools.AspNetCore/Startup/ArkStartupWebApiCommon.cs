@@ -6,7 +6,7 @@ using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
 
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.AspNet.OData.Extensions;
+using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
@@ -240,7 +240,6 @@ namespace Ark.Tools.AspNetCore.Startup
 
 		protected virtual void _mvcRoute(IRouteBuilder routeBuilder)
 		{
-			routeBuilder.SetTimeZoneInfo(TimeZoneInfo.Utc);
 		}
 
 		protected virtual void RegisterContainer()
