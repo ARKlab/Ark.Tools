@@ -70,12 +70,14 @@ namespace Ark.Tools.ResourceWatcher
 
             using (var c = _connManager.Get(_config.DbConnectionString))
             {
-                if (resourceIds == null || resourceIds.Length == 0)
+                if (resourceIds == null)
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState
                         , map
                         , param: new { tenant = tenant }
                         , splitOn: "ExtensionsJson,ModifiedSourcesJson")
                         .ConfigureAwait(false);
+                else if (resourceIds.Length == 0)
+                    return Enumerable.Empty<ResourceState>(); //Empty array should just return empty result
                 else if (resourceIds.Length < 2000) //limit is 2100
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in @resources"
                         , map
