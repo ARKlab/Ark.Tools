@@ -24,6 +24,6 @@
     <PackageReference Include="Polly.Caching.Memory" Version="3.0.2" />
   </ItemGroup>
   <ItemGroup>
-    
+    <PackageReference Include="Polly.Contrib.DuplicateRequestCollapser" Version="0.2.1" />
   </ItemGroup>
 </Project>

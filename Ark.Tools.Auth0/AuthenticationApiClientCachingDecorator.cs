@@ -17,27 +17,33 @@ using Microsoft.Extensions.Caching.Memory;
 using Polly;
 using Polly.Caching;
 using Polly.Caching.Memory;
+using Polly.Contrib.DuplicateRequestCollapser;
 
 namespace Ark.Tools.Auth0
 {
     public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient
     {
         private IAuthenticationApiClient _inner;
-        private readonly AsyncCachePolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
-        private readonly AsyncCachePolicy<UserInfo> _userInfoCachePolicy;
+        private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
+        private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
         private readonly MemoryCacheProvider _memoryCacheProvider = new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions()));
-        private readonly ConcurrentDictionary<string, Task> _pendingTasks = new ConcurrentDictionary<string, Task>();
 
         public AuthenticationApiClientCachingDecorator(IAuthenticationApiClient inner)
         {
             _inner = inner;
-            _accessTokenResponseCachePolicy = Policy.CacheAsync(
-                _memoryCacheProvider.AsyncFor<AccessTokenResponse>(),
-                new ResultTtl<AccessTokenResponse>(r => new Ttl(_expiresIn(r), false)));
+            _accessTokenResponseCachePolicy = AsyncRequestCollapserPolicy.Create()
+                .WrapAsync(
+                    Policy.CacheAsync(
+                        _memoryCacheProvider.AsyncFor<AccessTokenResponse>(),
+                        new ResultTtl<AccessTokenResponse>(r => new Ttl(_expiresIn(r), false)))
+                );
 
-            _userInfoCachePolicy = Policy.CacheAsync(
-                _memoryCacheProvider.AsyncFor<UserInfo>(),
-                new ContextualTtl());
+            _userInfoCachePolicy = AsyncRequestCollapserPolicy.Create()
+                .WrapAsync(
+                    Policy.CacheAsync(
+                        _memoryCacheProvider.AsyncFor<UserInfo>(),
+                        new ContextualTtl())
+                );
         }
 
         private static TimeSpan _expiresIn(AccessTokenResponse r)
@@ -115,17 +121,10 @@ namespace Ark.Tools.Auth0
         private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request, CancellationToken cancellationToken = default)
         {
             var key = (string)_getKey((dynamic)request);
-            var task = _pendingTasks.GetOrAdd(
-                key, 
-                k => _accessTokenResponseCachePolicy.ExecuteAsync(
-                    ctx => _inner.GetTokenAsync((dynamic)request, cancellationToken), 
-                    new Context(k)
-                )
-            ) as Task<AccessTokenResponse>;
 
-            var res = await task;
-
-            _pendingTasks.TryRemove(key, out var _);
+            var res = await _accessTokenResponseCachePolicy.ExecuteAsync(
+                    (_, ctk) => _inner.GetTokenAsync((dynamic)request, ctk),
+                    new Context(key), cancellationToken);
 
             return res;
         }
@@ -182,10 +181,10 @@ namespace Ark.Tools.Auth0
 
         public Task<UserInfo> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken = default)
         {
-            return _userInfoCachePolicy.ExecuteAsync(ctx => _inner.GetUserInfoAsync(accessToken, cancellationToken), new Context(_getKey(accessToken), new Dictionary<string, object>()
+            return _userInfoCachePolicy.ExecuteAsync((_,ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(_getKey(accessToken), new Dictionary<string, object>()
             {
                 { ContextualTtl.TimeSpanKey, _expiresIn(accessToken) }
-            }));
+            }), cancellationToken);
         }
 
         private string _getKey(string accessToken)
