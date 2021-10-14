@@ -138,7 +138,7 @@ WHEN MATCHED THEN
                     x.CheckSum,
                     ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
                     Exception = x.LastException?.ToString()
-                }).ToDataTable().AsTableValuedParameter("[udt_State]") }).ConfigureAwait(false);
+                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]") }).ConfigureAwait(false);
             }
         }
 
@@ -267,7 +267,12 @@ BEGIN
     DROP TYPE [udt_State]
 END
 
-CREATE TYPE [udt_State] AS TABLE (
+IF TYPE_ID('udt_State_v2') IS NOT NULL
+BEGIN
+    DROP TYPE [udt_State_v2]
+END
+
+CREATE TYPE [udt_State_v2] AS TABLE (
     [Tenant] [varchar](128) NOT NULL,
     [ResourceId] [nvarchar](300) NOT NULL,
     [Modified] [datetime2] NULL,
