@@ -262,11 +262,6 @@ BEGIN
         EXEC('ALTER TABLE State DROP CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson]')
 END
 
-IF TYPE_ID('udt_State') IS NOT NULL
-BEGIN
-    DROP TYPE [udt_State]
-END
-
 IF TYPE_ID('udt_State_v2') IS NOT NULL
 BEGIN
     DROP TYPE [udt_State_v2]
