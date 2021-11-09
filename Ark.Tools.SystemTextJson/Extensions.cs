@@ -32,5 +32,49 @@ namespace System.Text.Json
 
             return @this;
         }
+
+        public static byte[] SerializeToByte<TObj>(this TObj obj, JsonSerializerOptions jsonSerializerOptions = null)
+        {
+            if (obj == null)
+                return null;
+
+            return JsonSerializer.SerializeToUtf8Bytes(obj, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        }
+
+        public static TOut DeserializeFromByte<TOut>(this byte[] bytes, JsonSerializerOptions jsonSerializerOptions = null)
+        {
+            if (bytes == null)
+                return default;
+
+            var readOnlySpan = new ReadOnlySpan<byte>(bytes);
+
+            return JsonSerializer.Deserialize<TOut>(readOnlySpan, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        }
+
+        public static string Serialize<TObj>(this TObj obj, JsonSerializerOptions jsonSerializerOptions = null)
+        {
+            if (obj == null)
+                return null;
+
+            return JsonSerializer.Serialize(obj, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        }
+
+        public static TOut Deserialize<TOut>(this string s, JsonSerializerOptions jsonSerializerOptions = null)
+        {
+            if (s == null)
+                return default;
+
+            return JsonSerializer.Deserialize<TOut>(s, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        }
+
+        public static T ToObject<T>(this JsonElement element, JsonSerializerOptions jsonSerializerOptions = null)
+        {
+            return element.GetRawText().Deserialize<T>(jsonSerializerOptions);
+        }
+
+        public static T ToObject<T>(this JsonDocument document, JsonSerializerOptions jsonSerializerOptions = null)
+        {
+            return document.RootElement.GetRawText().Deserialize<T>(jsonSerializerOptions);
+        }
     }
 }

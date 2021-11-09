@@ -4,6 +4,7 @@ using Flurl.Http;
 using Flurl.Http.Configuration;
 using System;
 using Ark.Tools.NewtonsoftJson;
+using System.Text.Json;
 
 namespace Ark.Tools.Http
 {
@@ -45,5 +46,37 @@ namespace Ark.Tools.Http
                 s.AllowedHttpStatusRange = "*";
             });
         }
+
+#if NET5_0_OR_GREATER
+        public static IFlurlClient ConfigureArkDefaultsSystemTextJson(this IFlurlClient client)
+        {
+            var j = new CookieJar();
+            client.AllowAnyHttpStatus();
+            return client.Configure(s =>
+            {
+                s.BeforeCall += c => c.Request
+                    .WithCookies(j)
+                    .WithHeader("Accept-Encoding", "gzip, deflate, br")
+                    ;
+                s.HttpClientFactory = ArkHttpClientFactory.Instance;
+
+                s.JsonSerializer = new SystemTextJsonSerializer(ArkSerializerOptions.JsonOptions);
+
+                s.ConnectionLeaseTimeout = TimeSpan.FromMinutes(60);
+                s.Timeout = TimeSpan.FromMinutes(5);
+            });
+        }
+
+        public static IFlurlRequest ConfigureRequestArkDefaultsSystemTextJson(this IFlurlRequest request)
+        {
+            return request.ConfigureRequest(s =>
+            {
+                s.JsonSerializer = new SystemTextJsonSerializer(ArkSerializerOptions.JsonOptions);
+
+                s.Timeout = TimeSpan.FromMinutes(5);
+                s.AllowedHttpStatusRange = "*";
+            });
+        }
+#endif
     }
 }
