@@ -21,4 +21,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
   </ItemGroup>
+  
+  
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.0" />
+  </ItemGroup>
 </Project>

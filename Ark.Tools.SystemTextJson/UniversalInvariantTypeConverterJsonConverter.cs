@@ -34,8 +34,14 @@ namespace Ark.Tools.SystemTextJson
             public override bool CanConvert(Type typeToConvert) =>
                 _typeConverter.CanConvertFrom(typeof(string)) || _typeConverter.CanConvertTo(typeof(string));
 
-            public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-                (T?)_typeConverter.ConvertFromInvariantString(reader.GetString());
+            public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var text = reader.GetString();
+                if (text == null) 
+                    return default;
+                else 
+                    return (T?)_typeConverter.ConvertFromInvariantString(text);
+            }
 
             public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
             {

@@ -19,8 +19,8 @@
   
   <ItemGroup>
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="5.0.1" />
-    <PackageReference Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.20" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.21" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.0" />
   </ItemGroup>
 
 </Project>
