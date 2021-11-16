@@ -27,6 +27,6 @@
     <PackageReference Include="Polly.Contrib.DuplicateRequestCollapser" Version="0.2.1" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.0" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
   </ItemGroup>
 </Project>

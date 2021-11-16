@@ -23,7 +23,7 @@
     <ProjectReference Include="..\Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.0" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
   </ItemGroup>
   <!--===============================================================================-->
 
