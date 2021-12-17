@@ -17,8 +17,8 @@ namespace Ark.Tools.FtpClient.Core
         private readonly ConcurrentStack<IFtpClientConnection> _pool;
         private readonly IFtpClientConnectionFactory _connectionFactory;
 
-        public FtpClientPool(int poolMaxSize, string host, NetworkCredential credential, IFtpClientConnectionFactory connectionFactory) 
-            : base(host, credential, poolMaxSize)
+        public FtpClientPool(int poolMaxSize, string host, NetworkCredential credential, IFtpClientConnectionFactory connectionFactory, int port = 0) 
+            : base(host, credential, poolMaxSize, port)
         {
             PoolMaxSize = poolMaxSize;
             _connectionFactory = connectionFactory;

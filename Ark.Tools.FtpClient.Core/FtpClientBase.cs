@@ -17,15 +17,16 @@ namespace Ark.Tools.FtpClient.Core
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         public string Host { get; }
+        public int Port { get; }
         public NetworkCredential Credentials { get; }
         public int MaxListingRecursiveParallelism { get; }
 
-        protected FtpClientBase(string host, NetworkCredential credential)
-            : this(host, credential, 3)
+        protected FtpClientBase(string host, NetworkCredential credential, int port = 0)
+            : this(host, credential, 3, port)
         {
         }
 
-        protected FtpClientBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism)
+        protected FtpClientBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism, int port)
         {
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credential);
@@ -33,6 +34,7 @@ namespace Ark.Tools.FtpClient.Core
             Host = host;
             Credentials = credential;
             MaxListingRecursiveParallelism = maxListingRecursiveParallelism;
+            Port = port;
         }
 
         public abstract Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default);

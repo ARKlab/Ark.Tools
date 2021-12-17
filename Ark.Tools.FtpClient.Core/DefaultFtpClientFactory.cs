@@ -13,9 +13,9 @@ namespace Ark.Tools.FtpClient.Core
             _connectionFactory = connectionFactory;
         }
 
-        public IFtpClient Create(string host, NetworkCredential credentials)
+        public IFtpClient Create(string host, NetworkCredential credentials, int port = 0)
         {
-            return new FtpClient(host, credentials, 2, _connectionFactory);
+            return new FtpClient(host, credentials, 2, _connectionFactory, port);
         }
     }
 }

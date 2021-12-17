@@ -7,6 +7,6 @@ namespace Ark.Tools.FtpClient.Core
 
     public interface IFtpClientFactory
     {
-        IFtpClient Create(string host, NetworkCredential credentials);
+        IFtpClient Create(string host, NetworkCredential credentials, int port = 0);
     }
 }
