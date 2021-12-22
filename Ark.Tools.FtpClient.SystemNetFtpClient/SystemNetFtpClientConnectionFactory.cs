@@ -9,11 +9,11 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
 
     public class SystemNetFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
-        public Ark.Tools.FtpClient.Core.IFtpClientConnection Create(string host, NetworkCredential credentials, int port = 0)
+        public Ark.Tools.FtpClient.Core.IFtpClientConnection Create(string host, NetworkCredential credentials)
         {
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credentials);
-            return new SystemNetFtpClientConnection(host, credentials, port);
+            return new SystemNetFtpClientConnection(host, credentials);
         }
     }
 }

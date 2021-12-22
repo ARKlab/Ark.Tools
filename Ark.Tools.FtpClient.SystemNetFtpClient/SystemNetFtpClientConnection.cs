@@ -3,14 +3,16 @@
 using NLog;
 using System;
 using System.Collections.Generic;
+
 using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace Ark.Tools.FtpClient.SystemNetFtpClient
 {
     using Ark.Tools.FtpClient.Core;
+    using Polly;
     using System.IO;
     using System.Net.FtpClient;
     using System.Net.FtpClient.Async;
@@ -20,8 +22,8 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly System.Net.FtpClient.IFtpClient _client;
 
-        public SystemNetFtpClientConnection(string host, NetworkCredential credentials, int port = 0)
-            : base(host, credentials, port)
+        public SystemNetFtpClientConnection(string host, NetworkCredential credentials)
+            : base(host, credentials)
         {
             _client = _getClient();
         }
@@ -103,7 +105,6 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
                 SocketKeepAlive = true,
                 StaleDataCheck = false,
                 UngracefullDisconnection = false,
-                Port = Port
             };
         }
     }

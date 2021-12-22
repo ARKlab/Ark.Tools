@@ -6,6 +6,6 @@ namespace Ark.Tools.FtpClient.Core
 {
     public interface IFtpClientPoolFactory
     {
-        IFtpClientPool Create(int maxPoolSize, string host, NetworkCredential credentials, int port = 0);
+        IFtpClientPool Create(int maxPoolSize, string host, NetworkCredential credentials);
     }
 }

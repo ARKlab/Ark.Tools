@@ -15,14 +15,14 @@ namespace Ark.Tools.FtpClient.Core
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
-        protected FtpClientWithConnectionBase(string host, NetworkCredential credential, int port = 0)
-            :base(host,credential,port)
+        protected FtpClientWithConnectionBase(string host, NetworkCredential credential)
+            :base(host,credential)
         {
         }
 
 
-        protected FtpClientWithConnectionBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism, int port = 0)
-            : base(host, credential, maxListingRecursiveParallelism, port)
+        protected FtpClientWithConnectionBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism)
+            : base(host, credential, maxListingRecursiveParallelism)
         {
         }
 

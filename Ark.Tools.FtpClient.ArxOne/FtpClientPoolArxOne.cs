@@ -1,15 +1,19 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.FtpClient.Core;
-using ArxOne.Ftp;
 using NLog;
+using Polly;
+using System.IO;
+using ArxOne.Ftp;
+using EnsureThat;
+using Ark.Tools.FtpClient.Core;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Net.Sockets;
+using Org.Mentalis.Network.ProxySocket;
 
 namespace Ark.Tools.FtpClient
 {

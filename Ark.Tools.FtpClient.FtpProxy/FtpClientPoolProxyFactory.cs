@@ -22,9 +22,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
             _tokenProvider = new TokenProvider(config);
         }
 
-        public IFtpClientPool Create(int maxPoolSize, string host, NetworkCredential credentials, int port = 0)
+        public IFtpClientPool Create(int maxPoolSize, string host, NetworkCredential credentials)
         {
-            return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, _tokenProvider, host, credentials, port);
+            return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, _tokenProvider, host, credentials);
         }
     }
 }

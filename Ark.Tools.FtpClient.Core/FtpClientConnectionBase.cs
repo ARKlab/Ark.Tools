@@ -17,17 +17,15 @@ namespace Ark.Tools.FtpClient.Core
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         public string Host { get; }
-        public int Port { get; }
         public NetworkCredential Credentials { get; }
 
-        protected FtpClientConnectionBase(string host, NetworkCredential credential, int port = 0)
+        protected FtpClientConnectionBase(string host, NetworkCredential credential)
         {
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credential);
 
             Host = host;
             Credentials = credential;
-            Port = port;
         }
 
         public abstract Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default);

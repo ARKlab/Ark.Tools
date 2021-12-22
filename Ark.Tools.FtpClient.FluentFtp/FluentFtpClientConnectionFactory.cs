@@ -8,11 +8,11 @@ namespace Ark.Tools.FtpClient.FluentFtp
 {
     public class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
-        public IFtpClientConnection Create(string host, NetworkCredential credentials, int port = 0)
+        public IFtpClientConnection Create(string host, NetworkCredential credentials)
         {
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credentials);
-            return new FluentFtpClientConnection(host, credentials, port);
+            return new FluentFtpClientConnection(host, credentials);
         }
     }
 }

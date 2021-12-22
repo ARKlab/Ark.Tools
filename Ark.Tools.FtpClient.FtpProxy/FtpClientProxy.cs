@@ -27,18 +27,17 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         private readonly IFlurlClient _client;
 
-        public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, string host, NetworkCredential credentials, int port = 0)
-            : this(config,client, new TokenProvider(config), host,credentials, port)
+        public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, string host, NetworkCredential credentials)
+            : this(config,client, new TokenProvider(config), host,credentials)
         {
         }
 
-        internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, string host, NetworkCredential credentials, int port)
+        internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, string host, NetworkCredential credentials)
         {
             this._config = config;
             _tokenProvider = tokenProvider;
             this.Host = host;
             this.Credentials = credentials;
-            this.Port = port;
 
             _client = client.Get(_config.FtpProxyWebInterfaceBaseUri)
                 .Configure(c => 
@@ -59,12 +58,10 @@ namespace Ark.Tools.FtpClient.FtpProxy
                 Host = this.Host,
                 Username = this.Credentials.UserName,
                 Password = this.Credentials.Password,
-                Port = this.Port
             };
         }
 
         public string Host { get; private set; }
-        public int Port { get; private set; }
 
         public NetworkCredential Credentials { get; private set; }
 
@@ -76,7 +73,6 @@ namespace Ark.Tools.FtpClient.FtpProxy
         class ConnectionInfo
         {
             public string Host { get; set; }
-            public int Port { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
         }
