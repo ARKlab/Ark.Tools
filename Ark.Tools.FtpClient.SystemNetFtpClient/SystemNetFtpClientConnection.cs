@@ -3,16 +3,14 @@
 using NLog;
 using System;
 using System.Collections.Generic;
-
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.FtpClient.SystemNetFtpClient
 {
     using Ark.Tools.FtpClient.Core;
-    using Polly;
     using System.IO;
     using System.Net.FtpClient;
     using System.Net.FtpClient.Async;
@@ -25,7 +23,13 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
         public SystemNetFtpClientConnection(string host, NetworkCredential credentials)
             : base(host, credentials)
         {
-            _client = _getClient();
+            _client = _getClientFromHost();
+        }
+
+        public SystemNetFtpClientConnection(Uri uri, NetworkCredential credentials)
+            : base(uri, credentials)
+        {
+            _client = _getClientFromUri();
         }
 
         public override async ValueTask ConnectAsync(CancellationToken ctk)
@@ -91,7 +95,7 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
                 _client?.Dispose();
         }
 
-        private System.Net.FtpClient.IFtpClient _getClient()
+        private System.Net.FtpClient.IFtpClient _getClientFromHost()
         {
             return new System.Net.FtpClient.FtpClient()
             {
@@ -102,6 +106,24 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
                 ReadTimeout = (int)TimeSpan.FromSeconds(15).TotalMilliseconds,
                 Host = this.Host,
                 InternetProtocolVersions = FtpIpVersion.IPv4,                
+                SocketKeepAlive = true,
+                StaleDataCheck = false,
+                UngracefullDisconnection = false,
+            };
+        }
+
+        private System.Net.FtpClient.IFtpClient _getClientFromUri()
+        {
+            return new System.Net.FtpClient.FtpClient()
+            {
+                Credentials = this.Credentials,
+                ConnectTimeout = (int)TimeSpan.FromSeconds(10).TotalMilliseconds,
+                DataConnectionConnectTimeout = (int)TimeSpan.FromSeconds(10).TotalMilliseconds,
+                DataConnectionReadTimeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds, // listing takes time
+                ReadTimeout = (int)TimeSpan.FromSeconds(15).TotalMilliseconds,
+                Host = this.Uri.Host,
+                Port = this.Uri.Port,
+                InternetProtocolVersions = FtpIpVersion.IPv4,
                 SocketKeepAlive = true,
                 StaleDataCheck = false,
                 UngracefullDisconnection = false,

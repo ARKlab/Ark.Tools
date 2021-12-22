@@ -32,11 +32,17 @@ namespace Ark.Tools.FtpClient.FtpProxy
         {
         }
 
+        public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, Uri uri, NetworkCredential credentials)
+            : this(config, client, new TokenProvider(config), uri, credentials)
+        {
+        }
+
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, string host, NetworkCredential credentials)
         {
             this._config = config;
             _tokenProvider = tokenProvider;
             this.Host = host;
+            this.Uri = null;
             this.Credentials = credentials;
 
             _client = client.Get(_config.FtpProxyWebInterfaceBaseUri)
@@ -56,12 +62,45 @@ namespace Ark.Tools.FtpClient.FtpProxy
             _connectionInfo = new ConnectionInfo
             {
                 Host = this.Host,
+                Uri = this.Uri,
+                Username = this.Credentials.UserName,
+                Password = this.Credentials.Password,
+            };
+        }
+
+        internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, Uri uri, NetworkCredential credentials)
+        {
+            this._config = config;
+            _tokenProvider = tokenProvider;
+            this.Host = null;
+            this.Uri = uri;
+            this.Credentials = credentials;
+
+            _client = client.Get(_config.FtpProxyWebInterfaceBaseUri)
+                .Configure(c =>
+                {
+                    c.HttpClientFactory = new UntrustedCertClientFactory();
+                    c.ConnectionLeaseTimeout = TimeSpan.FromMinutes(30);
+                })
+                .WithHeader("Accept", "application/json, text/json")
+                .WithHeader("Accept-Encoding", "gzip, deflate")
+                .WithTimeout(TimeSpan.FromMinutes(20))
+                .AllowHttpStatus(HttpStatusCode.NotFound)
+                ;
+
+            _client.BaseUrl = _config.FtpProxyWebInterfaceBaseUri.ToString();
+
+            _connectionInfo = new ConnectionInfo
+            {
+                Host = this.Host,
+                Uri = this.Uri,
                 Username = this.Credentials.UserName,
                 Password = this.Credentials.Password,
             };
         }
 
         public string Host { get; private set; }
+        public Uri Uri { get; private set; }
 
         public NetworkCredential Credentials { get; private set; }
 
@@ -73,6 +112,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         class ConnectionInfo
         {
             public string Host { get; set; }
+            public Uri Uri { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
         }

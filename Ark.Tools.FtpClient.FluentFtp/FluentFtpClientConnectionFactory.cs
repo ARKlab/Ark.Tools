@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using EnsureThat;
+using System;
 using System.Net;
 
 namespace Ark.Tools.FtpClient.FluentFtp
@@ -13,6 +14,13 @@ namespace Ark.Tools.FtpClient.FluentFtp
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credentials);
             return new FluentFtpClientConnection(host, credentials);
+        }
+
+        public IFtpClientConnection Create(Uri uri, NetworkCredential credentials)
+        {
+            EnsureArg.IsNotNull(uri);
+            EnsureArg.IsNotNull(credentials);
+            return new FluentFtpClientConnection(uri, credentials);
         }
     }
 }

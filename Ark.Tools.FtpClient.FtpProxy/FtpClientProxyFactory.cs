@@ -4,7 +4,7 @@ using Ark.Tools.FtpClient.Core;
 using Ark.Tools.Http;
 
 using EnsureThat;
-
+using System;
 using System.Net;
 
 namespace Ark.Tools.FtpClient.FtpProxy
@@ -24,6 +24,11 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public IFtpClient Create(string host, NetworkCredential credentials)
         {
             return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, _tokenProvider, host, credentials);
+        }
+
+        public IFtpClient Create(Uri uri, NetworkCredential credentials)
+        {
+            return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, _tokenProvider, uri, credentials);
         }
     }
 }

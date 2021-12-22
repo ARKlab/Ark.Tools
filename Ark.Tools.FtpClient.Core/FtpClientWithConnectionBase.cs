@@ -20,9 +20,19 @@ namespace Ark.Tools.FtpClient.Core
         {
         }
 
+        protected FtpClientWithConnectionBase(Uri uri, NetworkCredential credential)
+            : base(uri, credential)
+        {
+        }
+
 
         protected FtpClientWithConnectionBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism)
             : base(host, credential, maxListingRecursiveParallelism)
+        {
+        }
+
+        protected FtpClientWithConnectionBase(Uri uri, NetworkCredential credential, int maxListingRecursiveParallelism)
+            : base(uri, credential, maxListingRecursiveParallelism)
         {
         }
 

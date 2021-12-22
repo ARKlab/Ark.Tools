@@ -1,16 +1,16 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.FtpClient.Core;
 using NLog;
+using Renci.SshNet;
+using Renci.SshNet.Async;
+using Renci.SshNet.Sftp;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Renci.SshNet;
-using Renci.SshNet.Sftp;
-using Ark.Tools.FtpClient.Core;
-using Renci.SshNet.Async;
 
 namespace Ark.Tools.FtpClient.SftpClient
 {
@@ -24,7 +24,13 @@ namespace Ark.Tools.FtpClient.SftpClient
             : base(host, credentials)
         {
             Port = port;
-            _client = _getSFtpClient();
+            _client = _getSFtpClientFromHost();
+        }
+
+        public SftpClientConnection(Uri uri, NetworkCredential credentials)
+            : base(uri, credentials)
+        {
+            _client = _getSFtpClientFromUri();
         }
 
         public int Port { get; }
@@ -80,12 +86,25 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         #region private helpers
 
-        private Renci.SshNet.SftpClient _getSFtpClient()
+        private Renci.SshNet.SftpClient _getSFtpClientFromHost()
         {
             var connInfo = new ConnectionInfo(Host, Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
             connInfo.Timeout = TimeSpan.FromMinutes(5);
             connInfo.RetryAttempts = 2;
            
+            return new Renci.SshNet.SftpClient(connInfo)
+            {
+                KeepAliveInterval = TimeSpan.FromMinutes(1),
+                OperationTimeout = TimeSpan.FromMinutes(5),
+            };
+        }
+
+        private Renci.SshNet.SftpClient _getSFtpClientFromUri()
+        {
+            var connInfo = new ConnectionInfo(Uri.Host, Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
+            connInfo.Timeout = TimeSpan.FromMinutes(5);
+            connInfo.RetryAttempts = 2;
+
             return new Renci.SshNet.SftpClient(connInfo)
             {
                 KeepAliveInterval = TimeSpan.FromMinutes(1),

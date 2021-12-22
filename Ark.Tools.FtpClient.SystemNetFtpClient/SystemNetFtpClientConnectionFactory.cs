@@ -6,6 +6,7 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
 {
     using Ark.Tools.FtpClient.Core;
     using EnsureThat;
+    using System;
 
     public class SystemNetFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
@@ -14,6 +15,13 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credentials);
             return new SystemNetFtpClientConnection(host, credentials);
+        }
+
+        public Ark.Tools.FtpClient.Core.IFtpClientConnection Create(Uri uri, NetworkCredential credentials)
+        {
+            EnsureArg.IsNotNull(uri);
+            EnsureArg.IsNotNull(credentials);
+            return new SystemNetFtpClientConnection(uri, credentials);
         }
     }
 }

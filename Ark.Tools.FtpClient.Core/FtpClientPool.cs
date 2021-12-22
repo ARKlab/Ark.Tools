@@ -26,6 +26,15 @@ namespace Ark.Tools.FtpClient.Core
             _pool = new ConcurrentStack<IFtpClientConnection>();
         }
 
+        public FtpClientPool(int poolMaxSize, Uri uri, NetworkCredential credential, IFtpClientConnectionFactory connectionFactory)
+            : base(uri, credential, poolMaxSize)
+        {
+            PoolMaxSize = poolMaxSize;
+            _connectionFactory = connectionFactory;
+            _semaphore = new SemaphoreSlim(poolMaxSize, poolMaxSize);
+            _pool = new ConcurrentStack<IFtpClientConnection>();
+        }
+
         protected override async Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
         {
             IFtpClientConnection result = null;
@@ -79,7 +88,10 @@ namespace Ark.Tools.FtpClient.Core
 
         private IFtpClientConnection _createNewConnection()
         {
-            return _connectionFactory.Create(Host, Credentials);
+            if (Uri == null)
+                return _connectionFactory.Create(Host, Credentials);
+            else
+                return _connectionFactory.Create(Uri, Credentials);
         }
 
         #region IDisposable Support
@@ -123,6 +135,7 @@ namespace Ark.Tools.FtpClient.Core
             }
 
             public string Host => Inner.Host;
+            public Uri Uri => Inner.Uri;
 
             public NetworkCredential Credentials => Inner.Credentials;
 
