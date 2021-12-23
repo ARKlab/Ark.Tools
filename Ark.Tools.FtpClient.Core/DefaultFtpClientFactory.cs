@@ -14,6 +14,7 @@ namespace Ark.Tools.FtpClient.Core
             _connectionFactory = connectionFactory;
         }
 
+        [Obsolete("Use the constructor with URI", false)]
         public IFtpClient Create(string host, NetworkCredential credentials)
         {
             return new FtpClient(host, credentials, 2, _connectionFactory);

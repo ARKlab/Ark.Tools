@@ -8,7 +8,10 @@ namespace Ark.Tools.FtpClient.Core
 
     public interface IFtpClientFactory
     {
+        [Obsolete("Use the constructor with URI", false)]
+
         IFtpClient Create(string host, NetworkCredential credentials);
+
         IFtpClient Create(Uri uri, NetworkCredential credentials);
     }
 }

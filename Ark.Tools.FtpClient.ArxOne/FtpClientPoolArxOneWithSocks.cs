@@ -15,6 +15,7 @@ namespace Ark.Tools.FtpClient
         private readonly ISocksConfig _config;
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
+        [Obsolete("Use the constructor with URI", false)]
         public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, string host, NetworkCredential credentials) 
             : base(maxPoolSize, host, credentials)
         {

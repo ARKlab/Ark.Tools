@@ -20,6 +20,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         private readonly Renci.SshNet.SftpClient _client;
 
+        [Obsolete("Use the constructor with URI", false)]
         public SftpClientConnection(string host, NetworkCredential credentials, int port = 2222)
             : base(host, credentials)
         {

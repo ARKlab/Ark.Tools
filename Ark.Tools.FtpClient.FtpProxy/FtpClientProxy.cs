@@ -27,6 +27,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         private readonly IFlurlClient _client;
 
+        [Obsolete("Use the constructor with URI", false)]
         public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, string host, NetworkCredential credentials)
             : this(config,client, new TokenProvider(config), host,credentials)
         {
@@ -37,6 +38,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         {
         }
 
+        [Obsolete("Use the constructor with URI", false)]
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, string host, NetworkCredential credentials)
         {
             this._config = config;

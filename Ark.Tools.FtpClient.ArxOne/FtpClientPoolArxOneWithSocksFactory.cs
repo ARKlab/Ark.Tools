@@ -18,6 +18,7 @@ namespace Ark.Tools.FtpClient
             _config = config;
         }
 
+        [Obsolete("Use the constructor with URI", false)]
         public IFtpClientPool Create(int maxPoolSize, string host, NetworkCredential credentials)
         {
             EnsureArg.IsNotEmpty(host);

@@ -20,6 +20,7 @@ namespace Ark.Tools.FtpClient
         private readonly ArxOne.Ftp.FtpClient _client;
         private readonly SemaphoreSlim _semaphore;
 
+        [Obsolete("Use the constructor with URI", false)]
         public FtpClientPoolArxOne(int maxPoolSize, string host, NetworkCredential credentials)
             : base(host, credentials, maxPoolSize)
         {

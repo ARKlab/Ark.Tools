@@ -19,6 +19,8 @@ namespace Ark.Tools.FtpClient.FluentFtp
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly FluentFTP.IFtpClient _client;
 
+        [Obsolete("Use the constructor with URI", false)]
+
         public FluentFtpClientConnection(string host, NetworkCredential credential) 
             : base(host, credential)
         {

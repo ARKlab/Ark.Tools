@@ -20,6 +20,7 @@ namespace Ark.Tools.FtpClient.Core
         public Uri Uri { get; }
         public NetworkCredential Credentials { get; }
 
+        [Obsolete("Use the constructor with URI", false)]
         protected FtpClientConnectionBase(string host, NetworkCredential credential)
         {
             EnsureArg.IsNotEmpty(host);

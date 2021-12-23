@@ -20,6 +20,7 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly System.Net.FtpClient.IFtpClient _client;
 
+        [Obsolete("Use the constructor with URI", false)]
         public SystemNetFtpClientConnection(string host, NetworkCredential credentials)
             : base(host, credentials)
         {

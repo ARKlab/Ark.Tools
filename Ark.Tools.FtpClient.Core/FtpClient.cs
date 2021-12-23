@@ -11,6 +11,7 @@ namespace Ark.Tools.FtpClient.Core
     {
         private readonly IFtpClientConnectionFactory _connectionFactory;
 
+        [Obsolete("Use the constructor with URI", false)]
         public FtpClient(string host, NetworkCredential credential, IFtpClientConnectionFactory connectionFactory) 
             : base(host, credential)
         {
@@ -23,6 +24,7 @@ namespace Ark.Tools.FtpClient.Core
             _connectionFactory = connectionFactory;
         }
 
+        [Obsolete("Use the constructor with URI", false)]
         public FtpClient(string host, NetworkCredential credential, int maxListingParallelism, IFtpClientConnectionFactory connectionFactory)
             : base(host, credential, maxListingParallelism)
         {
@@ -39,7 +41,9 @@ namespace Ark.Tools.FtpClient.Core
         {
             if (Uri == null)
             {
+#pragma warning disable CS0618 // Type or member is obsolete
                 return Task.FromResult(_connectionFactory.Create(Host, Credentials));
+#pragma warning restore CS0618 // Type or member is obsolete
             }
             else
                 return Task.FromResult(_connectionFactory.Create(Uri, Credentials));

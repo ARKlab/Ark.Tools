@@ -9,6 +9,8 @@ namespace Ark.Tools.FtpClient.FluentFtp
 {
     public class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
+        [Obsolete("Use the constructor with URI", false)]
+
         public IFtpClientConnection Create(string host, NetworkCredential credentials)
         {
             EnsureArg.IsNotEmpty(host);

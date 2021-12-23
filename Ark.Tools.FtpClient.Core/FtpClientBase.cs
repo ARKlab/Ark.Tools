@@ -21,6 +21,7 @@ namespace Ark.Tools.FtpClient.Core
         public NetworkCredential Credentials { get; }
         public int MaxListingRecursiveParallelism { get; }
 
+        [Obsolete("Use the constructor with URI", false)]
         protected FtpClientBase(string host, NetworkCredential credential)
             : this(host, credential, 3)
         {
@@ -31,6 +32,7 @@ namespace Ark.Tools.FtpClient.Core
         {
         }
 
+        [Obsolete("Use the constructor with URI", false)]
         protected FtpClientBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism)
         {
             EnsureArg.IsNotEmpty(host);

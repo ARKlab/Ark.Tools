@@ -10,6 +10,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 {
     public sealed class SFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
+        [Obsolete("Use the constructor with URI", false)]
         public IFtpClientConnection Create(string host, NetworkCredential credentials)
         {
             EnsureArg.IsNotEmpty(host);

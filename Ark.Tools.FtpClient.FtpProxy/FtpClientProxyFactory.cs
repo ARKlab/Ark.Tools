@@ -21,6 +21,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
             _tokenProvider = new TokenProvider(config);
         }
 
+        [Obsolete("Use the constructor with URI", false)]
         public IFtpClient Create(string host, NetworkCredential credentials)
         {
             return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, _tokenProvider, host, credentials);
