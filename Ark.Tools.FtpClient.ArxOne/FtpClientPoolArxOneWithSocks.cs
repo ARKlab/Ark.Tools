@@ -28,43 +28,9 @@ namespace Ark.Tools.FtpClient
             this._config = config;
         }
 
-        private protected override ArxOne.Ftp.FtpClient _getClientFromHost()
+        private protected override ArxOne.Ftp.FtpClient _getClient()
         {
-            var client = new ArxOne.Ftp.FtpClient(new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
-            {
-                ConnectTimeout = TimeSpan.FromSeconds(60),
-                ProxyConnect = e =>
-                {
-                    var s = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-                    {
-                        ProxyEndPoint = new IPEndPoint(IPAddress.Parse(_config.IpAddress), _config.Port),
-                        ProxyUser = _config.UserName,
-                        ProxyPass = _config.Password,
-                        ProxyType = _config.Type
-                    };
-
-                    switch (e)
-                    {
-                        case DnsEndPoint dns:
-                            s.Connect(dns.Host, dns.Port);
-                            break;
-                        case IPEndPoint ip:
-                            s.Connect(ip);
-                            break;
-
-                        default: throw new NotSupportedException();
-                    }
-
-                    return s;
-                }
-            });
-
-            return client;
-        }
-
-        private protected override ArxOne.Ftp.FtpClient _getClientFromUri()
-        {
-            var client = new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, new FtpClientParameters()
+            var client = new ArxOne.Ftp.FtpClient(this.Uri != null ? this.Uri : new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
             {
                 ConnectTimeout = TimeSpan.FromSeconds(60),
                 ProxyConnect = e =>

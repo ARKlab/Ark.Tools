@@ -25,13 +25,13 @@ namespace Ark.Tools.FtpClient.SftpClient
             : base(host, credentials)
         {
             Port = port;
-            _client = _getSFtpClientFromHost();
+            _client = _getSFtpClient();
         }
 
         public SftpClientConnection(Uri uri, NetworkCredential credentials)
             : base(uri, credentials)
         {
-            _client = _getSFtpClientFromUri();
+            _client = _getSFtpClient();
         }
 
         public int Port { get; }
@@ -87,25 +87,12 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         #region private helpers
 
-        private Renci.SshNet.SftpClient _getSFtpClientFromHost()
+        private Renci.SshNet.SftpClient _getSFtpClient()
         {
-            var connInfo = new ConnectionInfo(Host, Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
+            var connInfo = new ConnectionInfo(Uri == null ? Host : Uri.Host, Uri == null ? Port : Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
             connInfo.Timeout = TimeSpan.FromMinutes(5);
             connInfo.RetryAttempts = 2;
            
-            return new Renci.SshNet.SftpClient(connInfo)
-            {
-                KeepAliveInterval = TimeSpan.FromMinutes(1),
-                OperationTimeout = TimeSpan.FromMinutes(5),
-            };
-        }
-
-        private Renci.SshNet.SftpClient _getSFtpClientFromUri()
-        {
-            var connInfo = new ConnectionInfo(Uri.Host, Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
-            connInfo.Timeout = TimeSpan.FromMinutes(5);
-            connInfo.RetryAttempts = 2;
-
             return new Renci.SshNet.SftpClient(connInfo)
             {
                 KeepAliveInterval = TimeSpan.FromMinutes(1),

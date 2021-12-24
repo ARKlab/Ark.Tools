@@ -24,32 +24,21 @@ namespace Ark.Tools.FtpClient
         public FtpClientPoolArxOne(int maxPoolSize, string host, NetworkCredential credentials)
             : base(host, credentials, maxPoolSize)
         {
-            _client = _getClientFromHost();
+            _client = _getClient();
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
         }
 
         public FtpClientPoolArxOne(int maxPoolSize, Uri uri, NetworkCredential credentials)
             : base(uri, credentials, maxPoolSize)
         {
-            _client = _getClientFromUri();
+            _client = _getClient();
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
         }
 
-        private protected virtual ArxOne.Ftp.FtpClient _getClientFromHost()
+        private protected virtual ArxOne.Ftp.FtpClient _getClient()
         {
             return new ArxOne.Ftp.FtpClient(
-                new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
-                {
-                    ConnectTimeout = TimeSpan.FromSeconds(60),
-                    ReadWriteTimeout = TimeSpan.FromMinutes(3),
-                    Passive = true,
-                });
-        }
-
-        private protected virtual ArxOne.Ftp.FtpClient _getClientFromUri()
-        {
-            return new ArxOne.Ftp.FtpClient(
-                this.Uri, this.Credentials, new FtpClientParameters()
+                this.Uri != null ? this.Uri : new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
                 {
                     ConnectTimeout = TimeSpan.FromSeconds(60),
                     ReadWriteTimeout = TimeSpan.FromMinutes(3),
