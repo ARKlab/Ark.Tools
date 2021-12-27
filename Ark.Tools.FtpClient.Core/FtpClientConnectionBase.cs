@@ -17,14 +17,27 @@ namespace Ark.Tools.FtpClient.Core
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         public string Host { get; }
+        public Uri Uri { get; }
         public NetworkCredential Credentials { get; }
 
+        [Obsolete("Use the constructor with URI", false)]
         protected FtpClientConnectionBase(string host, NetworkCredential credential)
         {
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credential);
 
             Host = host;
+            Uri = null;
+            Credentials = credential;
+        }
+
+        protected FtpClientConnectionBase(Uri uri, NetworkCredential credential)
+        {
+            EnsureArg.IsNotNull(uri);
+            EnsureArg.IsNotNull(credential);
+
+            Host = null;
+            Uri = uri;
             Credentials = credential;
         }
 

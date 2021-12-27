@@ -1,7 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
-using Ark.Tools.FtpClient;
 using Ark.Tools.FtpClient.Core;
 using NodaTime;
 using Polly;
@@ -67,7 +66,14 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
             public FtpProvider(IFtpConfig config, IFtpClientPoolFactory ftpClientFactory, IFtpParser<TPayload> parser)
             {
                 _config = config;
-                _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.Host, config.Credentials);
+
+                if (config.Uri == null)
+#pragma warning disable CS0618 // Type or member is obsolete
+                    _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.Host, config.Credentials);
+#pragma warning restore CS0618 // Type or member is obsolete
+                else
+                    _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.Uri, config.Credentials);
+
                 _parser = parser;
             }
 

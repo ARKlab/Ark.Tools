@@ -8,6 +8,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
     public interface IFtpConfig
     {
         string Host { get; }
+        Uri Uri { get; }
         NetworkCredential Credentials { get; }
         TimeSpan ListingTimeout { get; }
         TimeSpan DownloadTimeout { get; }

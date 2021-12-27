@@ -2,17 +2,27 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using EnsureThat;
+using System;
 using System.Net;
 
 namespace Ark.Tools.FtpClient.FluentFtp
 {
     public class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
+        [Obsolete("Use the constructor with URI", false)]
+
         public IFtpClientConnection Create(string host, NetworkCredential credentials)
         {
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credentials);
             return new FluentFtpClientConnection(host, credentials);
+        }
+
+        public IFtpClientConnection Create(Uri uri, NetworkCredential credentials)
+        {
+            EnsureArg.IsNotNull(uri);
+            EnsureArg.IsNotNull(credentials);
+            return new FluentFtpClientConnection(uri, credentials);
         }
     }
 }

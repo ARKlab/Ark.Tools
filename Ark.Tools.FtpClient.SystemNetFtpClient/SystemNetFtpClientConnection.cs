@@ -3,16 +3,14 @@
 using NLog;
 using System;
 using System.Collections.Generic;
-
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.FtpClient.SystemNetFtpClient
 {
     using Ark.Tools.FtpClient.Core;
-    using Polly;
     using System.IO;
     using System.Net.FtpClient;
     using System.Net.FtpClient.Async;
@@ -22,8 +20,15 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly System.Net.FtpClient.IFtpClient _client;
 
+        [Obsolete("Use the constructor with URI", false)]
         public SystemNetFtpClientConnection(string host, NetworkCredential credentials)
             : base(host, credentials)
+        {
+            _client = _getClient();
+        }
+
+        public SystemNetFtpClientConnection(Uri uri, NetworkCredential credentials)
+            : base(uri, credentials)
         {
             _client = _getClient();
         }
@@ -100,7 +105,8 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
                 DataConnectionConnectTimeout = (int)TimeSpan.FromSeconds(10).TotalMilliseconds,
                 DataConnectionReadTimeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds, // listing takes time
                 ReadTimeout = (int)TimeSpan.FromSeconds(15).TotalMilliseconds,
-                Host = this.Host,
+                Host = this.Uri == null ? this.Host : this.Uri.Host,
+                Port = this.Uri == null ? 0 : this.Uri.Port,
                 InternetProtocolVersions = FtpIpVersion.IPv4,                
                 SocketKeepAlive = true,
                 StaleDataCheck = false,

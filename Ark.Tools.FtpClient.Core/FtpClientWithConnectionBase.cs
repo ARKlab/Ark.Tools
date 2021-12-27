@@ -15,14 +15,27 @@ namespace Ark.Tools.FtpClient.Core
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
+        [Obsolete("Use the constructor with URI", false)]
+
         protected FtpClientWithConnectionBase(string host, NetworkCredential credential)
             :base(host,credential)
         {
         }
 
+        protected FtpClientWithConnectionBase(Uri uri, NetworkCredential credential)
+            : base(uri, credential)
+        {
+        }
+
+        [Obsolete("Use the constructor with URI", false)]
 
         protected FtpClientWithConnectionBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism)
             : base(host, credential, maxListingRecursiveParallelism)
+        {
+        }
+
+        protected FtpClientWithConnectionBase(Uri uri, NetworkCredential credential, int maxListingRecursiveParallelism)
+            : base(uri, credential, maxListingRecursiveParallelism)
         {
         }
 

@@ -1,19 +1,15 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using NLog;
-using Polly;
-using System.IO;
-using ArxOne.Ftp;
-using EnsureThat;
 using Ark.Tools.FtpClient.Core;
+using ArxOne.Ftp;
+using NLog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using System.Threading;
-using System.Net.Sockets;
-using Org.Mentalis.Network.ProxySocket;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.FtpClient
 {
@@ -24,8 +20,16 @@ namespace Ark.Tools.FtpClient
         private readonly ArxOne.Ftp.FtpClient _client;
         private readonly SemaphoreSlim _semaphore;
 
+        [Obsolete("Use the constructor with URI", false)]
         public FtpClientPoolArxOne(int maxPoolSize, string host, NetworkCredential credentials)
             : base(host, credentials, maxPoolSize)
+        {
+            _client = _getClient();
+            _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
+        }
+
+        public FtpClientPoolArxOne(int maxPoolSize, Uri uri, NetworkCredential credentials)
+            : base(uri, credentials, maxPoolSize)
         {
             _client = _getClient();
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
@@ -34,7 +38,7 @@ namespace Ark.Tools.FtpClient
         private protected virtual ArxOne.Ftp.FtpClient _getClient()
         {
             return new ArxOne.Ftp.FtpClient(
-                new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
+                this.Uri != null ? this.Uri : new Uri("ftp://" + this.Host), this.Credentials, new FtpClientParameters()
                 {
                     ConnectTimeout = TimeSpan.FromSeconds(60),
                     ReadWriteTimeout = TimeSpan.FromMinutes(3),

@@ -1,16 +1,16 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.FtpClient.Core;
 using NLog;
+using Renci.SshNet;
+using Renci.SshNet.Async;
+using Renci.SshNet.Sftp;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Renci.SshNet;
-using Renci.SshNet.Sftp;
-using Ark.Tools.FtpClient.Core;
-using Renci.SshNet.Async;
 
 namespace Ark.Tools.FtpClient.SftpClient
 {
@@ -20,10 +20,17 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         private readonly Renci.SshNet.SftpClient _client;
 
+        [Obsolete("Use the constructor with URI", false)]
         public SftpClientConnection(string host, NetworkCredential credentials, int port = 2222)
             : base(host, credentials)
         {
             Port = port;
+            _client = _getSFtpClient();
+        }
+
+        public SftpClientConnection(Uri uri, NetworkCredential credentials)
+            : base(uri, credentials)
+        {
             _client = _getSFtpClient();
         }
 
@@ -82,7 +89,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         private Renci.SshNet.SftpClient _getSFtpClient()
         {
-            var connInfo = new ConnectionInfo(Host, Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
+            var connInfo = new ConnectionInfo(Uri == null ? Host : Uri.Host, Uri == null ? Port : Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
             connInfo.Timeout = TimeSpan.FromMinutes(5);
             connInfo.RetryAttempts = 2;
            

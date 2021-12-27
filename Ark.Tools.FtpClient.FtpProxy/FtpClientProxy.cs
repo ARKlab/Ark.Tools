@@ -27,41 +27,42 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         private readonly IFlurlClient _client;
 
+        [Obsolete("Use the constructor with URI", false)]
         public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, string host, NetworkCredential credentials)
             : this(config,client, new TokenProvider(config), host,credentials)
         {
         }
 
+        public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, Uri uri, NetworkCredential credentials)
+            : this(config, client, new TokenProvider(config), uri, credentials)
+        {
+        }
+
+        [Obsolete("Use the constructor with URI", false)]
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, string host, NetworkCredential credentials)
         {
-            this._config = config;
+            _init(config, host, null, credentials);
+
             _tokenProvider = tokenProvider;
-            this.Host = host;
-            this.Credentials = credentials;
 
-            _client = client.Get(_config.FtpProxyWebInterfaceBaseUri)
-                .Configure(c => 
-                {
-                    c.HttpClientFactory = new UntrustedCertClientFactory();
-                    c.ConnectionLeaseTimeout = TimeSpan.FromMinutes(30);                  
-                })
-                .WithHeader("Accept", "application/json, text/json")
-                .WithHeader("Accept-Encoding", "gzip, deflate")
-                .WithTimeout(TimeSpan.FromMinutes(20))
-                .AllowHttpStatus(HttpStatusCode.NotFound)
-                ;
+            _client = _initClient(client);
 
-            _client.BaseUrl = _config.FtpProxyWebInterfaceBaseUri.ToString();
+            _connectionInfo = _initConnectionInfo();
+        }
 
-            _connectionInfo = new ConnectionInfo
-            {
-                Host = this.Host,
-                Username = this.Credentials.UserName,
-                Password = this.Credentials.Password,
-            };
+        internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, Uri uri, NetworkCredential credentials)
+        {
+            _init(config, null, uri, credentials);
+
+            _tokenProvider = tokenProvider;
+
+            _client = _initClient(client);
+
+            _connectionInfo = _initConnectionInfo();               
         }
 
         public string Host { get; private set; }
+        public Uri Uri { get; private set; }
 
         public NetworkCredential Credentials { get; private set; }
 
@@ -73,6 +74,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         class ConnectionInfo
         {
             public string Host { get; set; }
+            public Uri Uri { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
         }
@@ -207,7 +209,43 @@ namespace Ark.Tools.FtpClient.FtpProxy
             return _tokenProvider.GetToken(ctk);
         }
 
-        
+        private void _init(IFtpClientProxyConfig config, string host, Uri uri, NetworkCredential credentials)
+        {
+            this._config = config;
+            this.Host = host;
+            this.Uri = uri;
+            this.Credentials = credentials;
+        }
+        private IFlurlClient _initClient(IFlurlClientFactory client)
+        {
+            var flurlClient = client.Get(_config.FtpProxyWebInterfaceBaseUri)
+                .Configure(c =>
+                {
+                    c.HttpClientFactory = new UntrustedCertClientFactory();
+                    c.ConnectionLeaseTimeout = TimeSpan.FromMinutes(30);
+                })
+                .WithHeader("Accept", "application/json, text/json")
+                .WithHeader("Accept-Encoding", "gzip, deflate")
+                .WithTimeout(TimeSpan.FromMinutes(20))
+                .AllowHttpStatus(HttpStatusCode.NotFound)
+                ;
+
+            flurlClient.BaseUrl = _config.FtpProxyWebInterfaceBaseUri.ToString();
+
+            return flurlClient;
+        }
+        private ConnectionInfo _initConnectionInfo()
+        {
+            return new ConnectionInfo
+            {
+                Host = this.Host,
+                Uri = this.Uri,
+                Username = this.Credentials.UserName,
+                Password = this.Credentials.Password,
+            };
+        }
+
+
         public Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
             throw new NotImplementedException();
