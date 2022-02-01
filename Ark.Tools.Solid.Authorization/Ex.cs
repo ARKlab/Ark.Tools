@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Collections.Generic;
 using SimpleInjector;
 using System.Reflection;
+using System.Threading;
 
 namespace Ark.Tools.Solid.Authorization
 {
@@ -57,7 +58,7 @@ namespace Ark.Tools.Solid.Authorization
                 container.Collection.Append(typeof(IAuthorizationPolicy), policyType);
         }
 
-        public static async Task<object> GetResourceAsync<T,P>(Container c, T query, P policy)
+        public static async Task<object> GetResourceAsync<T,P>(Container c, T query, P policy, CancellationToken ctk = default)
         {
             var queryType = query.GetType();
             var policyType = policy.GetType();
@@ -67,7 +68,7 @@ namespace Ark.Tools.Solid.Authorization
 
             try
             {
-                return await handler.GetResouceAsync((dynamic)query);
+                return await handler.GetResouceAsync((dynamic)query, ctk);
             }
             finally
             {
@@ -77,7 +78,7 @@ namespace Ark.Tools.Solid.Authorization
             }
         }
 
-        public static async Task<IAuthorizationPolicy> GetPolicyAsync(PolicyAuthorizeAttribute p, IAuthorizationPolicyProvider policyProvider)
+        public static async Task<IAuthorizationPolicy> GetPolicyAsync(PolicyAuthorizeAttribute p, IAuthorizationPolicyProvider policyProvider, CancellationToken ctk = default)
         {
             var retVal = p.Policy;
             if (retVal == null)
@@ -85,7 +86,7 @@ namespace Ark.Tools.Solid.Authorization
                 if (string.IsNullOrWhiteSpace(p.PolicyName))
                     throw new ArgumentNullException(nameof(p.PolicyName));
 
-                retVal = await policyProvider.GetPolicyAsync(p.PolicyName);
+                retVal = await policyProvider.GetPolicyAsync(p.PolicyName, ctk);
                 if (retVal == null) throw new InvalidOperationException($"No policy found: {p.PolicyName}.");
             }
 

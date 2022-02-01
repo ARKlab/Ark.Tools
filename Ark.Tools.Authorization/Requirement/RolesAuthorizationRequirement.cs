@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Authorization.Requirement
@@ -33,8 +34,9 @@ namespace Ark.Tools.Authorization.Requirement
         /// </summary>
         /// <param name="context">The authorization context.</param>
         /// <param name="requirement">The requirement to evaluate.</param>
+        /// <param name="ctk">CancellationToken</param>
 
-        protected override Task HandleRequirementAsync(AuthorizationContext context, RolesAuthorizationRequirement requirement)
+        protected override Task HandleRequirementAsync(AuthorizationContext context, RolesAuthorizationRequirement requirement, CancellationToken ctk)
         {
             if (context.User != null)
             {
