@@ -57,7 +57,7 @@ namespace Ark.Tools.Authorization.Requirement
             _handler = handler;
         }
 
-        public override Task<bool> HandleAsync(AuthorizationContext context, TUser user, CancellationToken ctk)
+        public override Task<bool> HandleAsync(AuthorizationContext context, TUser user, CancellationToken ctk = default)
         {
             return _handler(context, user);
         }

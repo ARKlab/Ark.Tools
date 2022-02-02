@@ -8,7 +8,7 @@ namespace Ark.Tools.Solid.Authorization
             where T : class
             where R : IAuthorizationPolicy
     {
-        public Task<object> GetResouceAsync(T query, CancellationToken ctk)
+        public Task<object> GetResouceAsync(T query, CancellationToken ctk = default)
         {
             return Task.FromResult<object>(query);
         }

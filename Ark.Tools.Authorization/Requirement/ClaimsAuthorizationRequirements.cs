@@ -47,7 +47,7 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="context">The authorization context.</param>
         /// <param name="requirement">The requirement to evaluate.</param>
         /// <param name="ctk">CancellationToken</param>
-        protected override Task HandleRequirementAsync(AuthorizationContext context, ClaimsAuthorizationRequirement requirement, CancellationToken ctk)
+        protected override Task HandleRequirementAsync(AuthorizationContext context, ClaimsAuthorizationRequirement requirement, CancellationToken ctk = default)
         {
             if (context.User != null)
             {

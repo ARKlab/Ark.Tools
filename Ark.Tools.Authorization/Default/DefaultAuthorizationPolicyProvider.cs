@@ -55,7 +55,7 @@ namespace Ark.Tools.Authorization
         /// <param name="policyName">The policy name to retrieve.</param>
         /// <param name="ctk">CancellationToken</param>
         /// <returns>The named <see cref="IAuthorizationPolicy"/>.</returns>
-        public virtual Task<IAuthorizationPolicy> GetPolicyAsync(string policyName, CancellationToken ctk)
+        public virtual Task<IAuthorizationPolicy> GetPolicyAsync(string policyName, CancellationToken ctk = default)
         {
             // MVC caches policies specifically for this class, so this method MUST return the same policy per
             // policyName for every request or it could allow undesired access. It also must return synchronously.

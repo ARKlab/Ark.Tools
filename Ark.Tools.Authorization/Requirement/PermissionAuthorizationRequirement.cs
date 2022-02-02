@@ -96,7 +96,7 @@ namespace Ark.Tools.Authorization.Requirement
             _provider = provider;
         }
 
-        public async Task HandleAsync(AuthorizationContext context, CancellationToken ctk)
+        public async Task HandleAsync(AuthorizationContext context, CancellationToken ctk = default)
         {
             var permissionType = typeof(PermissionAuthorizationRequirement<TPermissionEnum>);
             if (context.Resource != null)

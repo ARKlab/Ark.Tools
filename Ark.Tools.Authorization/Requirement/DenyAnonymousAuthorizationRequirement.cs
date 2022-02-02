@@ -16,7 +16,7 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="context">The authorization context.</param>
         /// <param name="requirement">The requirement to evaluate.</param>
         /// <param name="ctk">CancellationToken</param>
-        protected override Task HandleRequirementAsync(AuthorizationContext context, DenyAnonymousAuthorizationRequirement requirement, CancellationToken ctk)
+        protected override Task HandleRequirementAsync(AuthorizationContext context, DenyAnonymousAuthorizationRequirement requirement, CancellationToken ctk = default)
         {
             var user = context.User;
             var userIsAnonymous =
