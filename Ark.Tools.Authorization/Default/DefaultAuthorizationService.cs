@@ -94,7 +94,7 @@ namespace Ark.Tools.Authorization
         /// Resource is an optional parameter and may be null. Please ensure that you check it is not 
         /// null before acting upon it.
         /// </remarks>
-        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, string policyName, CancellationToken ctk)
+        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, string policyName, CancellationToken ctk = default)
         {
             if (policyName == null)
             {
@@ -126,7 +126,7 @@ namespace Ark.Tools.Authorization
         /// Resource is an optional parameter and may be null. Please ensure that you check it is not 
         /// null before acting upon it.
         /// </remarks>
-        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, IAuthorizationPolicy policy, CancellationToken ctk)
+        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, IAuthorizationPolicy policy, CancellationToken ctk = default)
         {
             if (policy == null) throw new ArgumentNullException(nameof(policy));
 
