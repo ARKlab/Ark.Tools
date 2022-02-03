@@ -78,7 +78,7 @@ namespace Ark.Tools.Activity.Processor
             var bus = _container.GetInstance<IBus>();
             foreach (var d in _dependencies)
             {
-                await bus.Advanced.Topics.Subscribe(d.ToString()).ConfigureAwait(false);
+                await bus.Advanced.Topics.Subscribe(d.ToString());
             }
         }
     }

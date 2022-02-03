@@ -46,8 +46,8 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
         {
-            await _client.ConnectAsync().ConfigureAwait(false);
-            using (var istrm = await _client.OpenReadAsync(path).ConfigureAwait(false))
+            await _client.ConnectAsync();
+            using (var istrm = await _client.OpenReadAsync(path))
             using (var ms = new MemoryStream(81920))
             {
                 ctk.ThrowIfCancellationRequested();
@@ -63,8 +63,8 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
 
         public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default(CancellationToken))
         {
-            await _client.ConnectAsync().ConfigureAwait(false);
-            var res = await _client.GetListingAsync(path, options: FtpListOption.Modify | FtpListOption.DerefLinks).ConfigureAwait(false);
+            await _client.ConnectAsync();
+            var res = await _client.GetListingAsync(path, options: FtpListOption.Modify | FtpListOption.DerefLinks);
             return res.Select(x => new FtpEntry()
             {
                 FullPath = x.FullName,
@@ -77,8 +77,8 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
 
         public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            await _client.ConnectAsync().ConfigureAwait(false);
-            using (var ostrm = await _client.OpenWriteAsync(path).ConfigureAwait(false))
+            await _client.ConnectAsync();
+            using (var ostrm = await _client.OpenWriteAsync(path))
             {
                 await ostrm.WriteAsync(content, 0, content.Length, ctk);
                 await ostrm.FlushAsync(ctk);

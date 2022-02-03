@@ -85,8 +85,8 @@ namespace Ark.Tools.FtpClient.Core
                             conn = await GetConnection(ctk);
                             await conn.ConnectAsync(ctk);
                         }
-                        return await conn.ListDirectoryAsync(path, ct1).ConfigureAwait(false);
-                    }, ct).ConfigureAwait(false);
+                        return await conn.ListDirectoryAsync(path, ct1);
+                    }, ct);
 
                     foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                     {

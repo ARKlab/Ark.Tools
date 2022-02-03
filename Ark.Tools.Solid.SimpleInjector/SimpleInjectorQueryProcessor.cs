@@ -36,7 +36,7 @@ namespace Ark.Tools.Solid.SimpleInjector
         public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default(CancellationToken))
         {
             dynamic queryHandler = _getHandlerInstance(query);
-            TResult res = await queryHandler.ExecuteAsync((dynamic)query, ctk).ConfigureAwait(false);
+            TResult res = await queryHandler.ExecuteAsync((dynamic)query, ctk);
             return res;
         }
     }

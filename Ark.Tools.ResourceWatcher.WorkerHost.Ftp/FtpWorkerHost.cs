@@ -87,7 +87,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                     {
                         Predicate<FtpEntry> skipFolder = x => filter.FolderFilter?.Invoke(x.FullPath) == false;
 
-                        var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token).ConfigureAwait(false);
+                        var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token);
                         res = res.Concat(list.Select(e => new FtpMetadata(e)));
                     }
                     return res.ToList();
@@ -104,10 +104,10 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                         using (var cts1 = new CancellationTokenSource(_config.DownloadTimeout))
                         using (var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ct))
                         {
-                            return await _ftpClient.DownloadFileAsync(metadata.Entry.FullPath, ctk: cts2.Token).ConfigureAwait(false);
+                            return await _ftpClient.DownloadFileAsync(metadata.Entry.FullPath, ctk: cts2.Token);
 
                         }
-                    }, ctk).ConfigureAwait(false);
+                    }, ctk);
 
                 var checksum = _computeChecksum(contents);
                 if (lastState?.CheckSum == checksum)

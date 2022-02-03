@@ -95,7 +95,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// </returns>
         public async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
         {
-            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
+            var tok = await _getAccessToken(ctk);
 
             var res = await _client.Request("v2", "DownloadFile")
                 .SetQueryParam("filePath", path)
@@ -118,7 +118,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// <exception cref="System.NotImplementedException"></exception>
         public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default(CancellationToken))
         {
-            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
+            var tok = await _getAccessToken(ctk);
             
             var res = await _client.Request("v2", "ListFolder")
                 .WithOAuthBearerToken(tok)
@@ -146,7 +146,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// <exception cref="System.NotImplementedException"></exception>
         public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default(CancellationToken))
         {
-            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
+            var tok = await _getAccessToken(ctk);
             if (skipFolder == null) // no folders to skip, just recurse overall
             {
                 var res = await _client.Request("v2", "ListFolder")

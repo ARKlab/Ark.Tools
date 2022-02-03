@@ -55,7 +55,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                         ClientId = _config.ClientID,
                         ClientSecret = _config.ClientKey
                     }))
-                    .ConfigureAwait(false);
+                    ;
 
                 return result.AccessToken;
             }
@@ -74,7 +74,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     .Handle<AdalException>(ex => ex.ErrorCode == "temporarily_unavailable")
                     .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(3))
                     .ExecuteAsync(c => _adal.AcquireTokenAsync(_config.ApiIdentifier, new ClientCredential(this._config.ClientID, this._config.ClientKey)), ctk, false)
-                    .ConfigureAwait(false);
+                    ;
             }
             catch (Exception ex)
             {

@@ -47,14 +47,14 @@ namespace Ark.Tools.Outbox
         public async Task ClearAsync(CancellationToken ctk = default)
         {
             using var ctx = _outboxContextFactory();
-            await ctx.ClearAsync(ctk).ConfigureAwait(false);
+            await ctx.ClearAsync(ctk);
             ctx.Commit();           
         }
 
         public async Task<int> CountAsync(CancellationToken ctk = default)
         {
             using var ctx = _outboxContextFactory();
-            var ret = await ctx.CountAsync(ctk).ConfigureAwait(false);
+            var ret = await ctx.CountAsync(ctk);
             ctx.Commit();
             return ret;
         }
@@ -80,7 +80,7 @@ namespace Ark.Tools.Outbox
                 {
                     using var ctx = _outboxContextFactory();
                     var messages = await ctx.PeekLockMessagesAsync(BatchSize, ctk);
-                    await _processMessages(messages, ctk).ConfigureAwait(false);
+                    await _processMessages(messages, ctk);
                     ctx.Commit();                    
                 }
                 catch (Exception e) when (!(e is TaskCanceledException))
@@ -95,7 +95,7 @@ namespace Ark.Tools.Outbox
         protected virtual async Task _processMessages(IEnumerable<OutboxMessage> messages, CancellationToken ctk)
         {
             foreach (var m in messages)
-                await _processMessage(m, ctk).ConfigureAwait(false);
+                await _processMessage(m, ctk);
         }
 
         protected abstract Task _processMessage(OutboxMessage m, CancellationToken ctk);

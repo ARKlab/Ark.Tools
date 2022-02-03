@@ -64,8 +64,8 @@ namespace Ark.Tools.FtpClient.Core
 
                 return await retrier.ExecuteAsync(async ct1 =>
                 {
-                    return await this.ListDirectoryAsync(path, ct1).ConfigureAwait(false);
-                }, ct).ConfigureAwait(false);
+                    return await this.ListDirectoryAsync(path, ct1);
+                }, ct);
 
                 
             }

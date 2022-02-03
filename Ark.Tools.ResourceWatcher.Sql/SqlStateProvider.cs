@@ -75,7 +75,7 @@ namespace Ark.Tools.ResourceWatcher
                         , map
                         , param: new { tenant = tenant }
                         , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        .ConfigureAwait(false);
+                        ;
                 else if (resourceIds.Length == 0)
                     return Enumerable.Empty<ResourceState>(); //Empty array should just return empty result
                 else if (resourceIds.Length < 2000) //limit is 2100
@@ -83,13 +83,13 @@ namespace Ark.Tools.ResourceWatcher
                         , map
                         , param: new { tenant = tenant, resources = resourceIds }
                         , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        .ConfigureAwait(false);
+                        ;
                 else
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
                         , map
                         , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
                         , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        .ConfigureAwait(false);
+                        ;
             }
         }
 
@@ -138,7 +138,7 @@ WHEN MATCHED THEN
                     x.CheckSum,
                     ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
                     Exception = x.LastException?.ToString()
-                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]") }).ConfigureAwait(false);
+                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]") });
             }
         }
 

@@ -13,10 +13,10 @@ namespace Ark.Tools.Http
     {
         public static async Task<T> ReceiveMsgPack<T>(this Task<IFlurlResponse> response, IFormatterResolver formatterResolver)
         {
-            var resp = await response.ConfigureAwait(false);
+            var resp = await response;
             if (resp == null) return default;
 
-            using (var stream = await resp.ResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            using (var stream = await resp.ResponseMessage.Content.ReadAsStreamAsync())
             {
                 return await MessagePackSerializer.DeserializeAsync<T>(stream);
             }
