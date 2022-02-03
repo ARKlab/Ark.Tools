@@ -68,8 +68,8 @@ namespace Ark.Tools.FtpClient.Core
 
                 var list = await retrier.ExecuteAsync(async ct1 =>
                 {
-                    return await this.ListDirectoryAsync(path, ct1).ConfigureAwait(false);
-                }, ct).ConfigureAwait(false);
+                    return await this.ListDirectoryAsync(path, ct1);
+                }, ct);
 
                 foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                 {

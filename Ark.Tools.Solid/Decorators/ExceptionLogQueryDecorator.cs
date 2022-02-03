@@ -37,7 +37,7 @@ namespace Ark.Tools.Solid.Decorators
         {
             try
             {
-                return await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
+                return await _decorated.ExecuteAsync(query, ctk);
             } catch (Exception ex)
             {
                 Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());

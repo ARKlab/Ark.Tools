@@ -31,19 +31,19 @@ namespace Ark.Tools.Solid.Authorization
             return ExecuteAsync(query).GetAwaiter().GetResult();
         }
 
-        public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default(CancellationToken))
+        public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
         {
             if (_policies.Any())
             {
                 foreach (var p in _policies)
                 {
-                    var policy = await Ex.GetPolicyAsync(p, _authSvc.PolicyProvider);
-                    var resource = await Ex.GetResourceAsync(_container, query, policy);
+                    var policy = await Ex.GetPolicyAsync(p, _authSvc.PolicyProvider, ctk);
+                    var resource = await Ex.GetResourceAsync(_container, query, policy, ctk);
 
                     if (policy != null)
                     {
-                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy);
-                        if(!authorized)
+                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk);
+                        if (!authorized)
                             throw new UnauthorizedAccessException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
                     }                            
                 }

@@ -6,7 +6,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <TargetFrameworks>net5.0</TargetFrameworks>
+    <TargetFrameworks>net6.0</TargetFrameworks>
     
     <Description>Extensions of Auth0 for AspNetCore</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Auth0</PackageTags>
@@ -26,15 +26,15 @@
   </ItemGroup>
   
   <ItemGroup>    
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.11.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="7.11.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.11" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Polly" Version="7.2.2" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.12.1" />
+    <PackageReference Include="Auth0.ManagementApi" Version="7.12.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Polly" Version="7.2.3" />
   </ItemGroup>
   
   <ItemGroup>
-    
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
   </ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Security.Principal;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Authorization
@@ -35,8 +36,8 @@ namespace Ark.Tools.Authorization
         /// <param name="evaluator">The <see cref="IAuthorizationContextEvaluator"/> used to determine if authorzation was successful.</param>
         /// <param name="handlers">The <see cref="IAuthorizationHandler"/> used to handle policies' requirements.</param>
         public DefaultAuthorizationService(
-            IAuthorizationPolicyProvider policyProvider, 
-            IAuthorizationContextFactory contextFactory, 
+            IAuthorizationPolicyProvider policyProvider,
+            IAuthorizationContextFactory contextFactory,
             IAuthorizationContextEvaluator evaluator,
             IEnumerable<IAuthorizationHandler> handlers)
         {
@@ -51,7 +52,7 @@ namespace Ark.Tools.Authorization
             _evaluator = evaluator;
         }
 
-       
+
         private string _getUserNameForLogging(ClaimsPrincipal user)
         {
             var identity = user?.Identity;
@@ -83,6 +84,7 @@ namespace Ark.Tools.Authorization
         /// If a resource is not required for policy evaluation you may pass null as the value.
         /// </param>
         /// <param name="policyName">The name of the policy to check against a specific context.</param>
+        /// <param name="ctk">CancellationToken</param>
         /// <returns>
         /// A flag indicating whether authorization has succeeded.
         /// Returns a flag indicating whether the user, and optional resource has fulfilled the policy.    
@@ -92,17 +94,17 @@ namespace Ark.Tools.Authorization
         /// Resource is an optional parameter and may be null. Please ensure that you check it is not 
         /// null before acting upon it.
         /// </remarks>
-        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, string policyName)
+        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, string policyName, CancellationToken ctk = default)
         {
             if (policyName == null)
             {
                 throw new ArgumentNullException(nameof(policyName));
             }
 
-            var policy = await this.PolicyProvider.GetPolicyAsync(policyName);
+            var policy = await this.PolicyProvider.GetPolicyAsync(policyName, ctk);
             if (policy == null) throw new InvalidOperationException($"No policy found: {policyName}.");
 
-            return await AuthorizeAsync(user, resource, policy);
+            return await AuthorizeAsync(user, resource, policy, ctk);
         }
 
         /// <summary>
@@ -114,6 +116,7 @@ namespace Ark.Tools.Authorization
         /// If a resource is not required for policy evaluation you may pass null as the value.
         /// </param>
         /// <param name="policy">The name of the policy to check against a specific context.</param>
+        /// <param name="ctk">CancellationToken</param>
         /// <returns>
         /// A flag indicating whether authorization has succeeded.
         /// Returns a flag indicating whether the user, and optional resource has fulfilled the policy.    
@@ -123,14 +126,14 @@ namespace Ark.Tools.Authorization
         /// Resource is an optional parameter and may be null. Please ensure that you check it is not 
         /// null before acting upon it.
         /// </remarks>
-        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, IAuthorizationPolicy policy)
+        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, IAuthorizationPolicy policy, CancellationToken ctk = default)
         {
             if (policy == null) throw new ArgumentNullException(nameof(policy));
-            
+
             var authContext = _contextFactory.Create(policy, user, resource);
             foreach (var handler in _handlers)
             {
-                await handler.HandleAsync(authContext);
+                await handler.HandleAsync(authContext, ctk);
             }
 
             (var authorized, var messages) = _evaluator.Evaluate(authContext);
@@ -139,7 +142,8 @@ namespace Ark.Tools.Authorization
             {
                 _logger.UserAuthorizationSucceeded(_getUserNameForLogging(user), policy.Name);
                 return (authorized, messages);
-            } else
+            }
+            else
             {
                 _logger.UserAuthorizationFailed(_getUserNameForLogging(user), policy.Name, authContext.PendingRequirements);
                 return (authorized, messages);

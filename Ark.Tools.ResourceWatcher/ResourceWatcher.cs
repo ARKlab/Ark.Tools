@@ -87,7 +87,7 @@ namespace Ark.Tools.ResourceWatcher
 
             try
             {
-                await _runOnce(RunType.Once, ctk).ConfigureAwait(false);
+                await _runOnce(RunType.Once, ctk);
             }
             finally
             {
@@ -137,7 +137,7 @@ namespace Ark.Tools.ResourceWatcher
                 //GetResources
                 var activityResource = _diagnosticSource.GetResourcesStart();
 
-                var infos = await _getResourcesInfo(ctk).ConfigureAwait(false);
+                var infos = await _getResourcesInfo(ctk);
 
                 var bad = infos.GroupBy(x => x.ResourceId).FirstOrDefault(x => x.Count() > 1);
                 if (bad != null)
@@ -154,7 +154,7 @@ namespace Ark.Tools.ResourceWatcher
                 //Check State - check which entries are new or have been modified.
                 var activityCheckState = _diagnosticSource.CheckStateStart();
 
-                var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
+                var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk);
 
                 var evaluated = _createEvalueteList(list, states);
 
@@ -286,7 +286,7 @@ namespace Ark.Tools.ResourceWatcher
                     pc.ResultType = ResultType.Normal;
                     IResourceState newState = default;
 
-                    await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk).ConfigureAwait(false);
+                    await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk);
 
                     // if handlers retrived data, fetch the result to check the checksum
                     if (payload.IsStarted)
@@ -343,7 +343,7 @@ namespace Ark.Tools.ResourceWatcher
                     _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
                 }
 
-                await _stateProvider.SaveStateAsync(new[] { state }, ctk).ConfigureAwait(false);
+                await _stateProvider.SaveStateAsync(new[] { state }, ctk);
 
             }
             catch (Exception ex)

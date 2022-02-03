@@ -19,7 +19,7 @@ namespace WebApplicationDemo.Application.Handlers.Requests
 
 		public FileImport Execute(Post_FileImportRequest.V1 request)
 		{
-			return ExecuteAsync(request).ConfigureAwait(false).GetAwaiter().GetResult();
+			return ExecuteAsync(request).GetAwaiter().GetResult();
 		}
 
 		public async Task<FileImport> ExecuteAsync(Post_FileImportRequest.V1 request, CancellationToken ctk = default)

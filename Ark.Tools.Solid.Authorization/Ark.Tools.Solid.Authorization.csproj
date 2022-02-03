@@ -23,4 +23,9 @@
     <ProjectReference Include="..\Ark.Tools.Authorization\Ark.Tools.Authorization.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />
   </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+  </ItemGroup>
 </Project>

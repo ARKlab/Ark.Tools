@@ -32,24 +32,22 @@ namespace Ark.Tools.AspNetCore.NestedStartup
             var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();            
             var r2 = lifetime.ApplicationStopping.Register(() => webHostBuilder.StopAsync().GetAwaiter().GetResult());
 
-            Func<HttpContext, Task> branchDelegate = async ctx =>
+            async Task branchDelegate(HttpContext ctx)
             {
                 var server = webHostBuilder.Services.GetRequiredService<FakeServer>();
 
                 var nestedFactory = webHostBuilder.Services.GetRequiredService<IServiceScopeFactory>();
 
-                using (var nestedScope = nestedFactory.CreateScope())
-                {
-                    ctx.RequestServices = new BranchedServiceProvider(ctx.RequestServices, nestedScope.ServiceProvider);
-                    await server.Process(ctx);
-                }
-            };
+                using var nestedScope = nestedFactory.CreateScope();
+                ctx.RequestServices = new BranchedServiceProvider(ctx.RequestServices, nestedScope.ServiceProvider);
+                await server.Process(ctx);
+            }
 
             webHostBuilder.Start();
 
             return app.Map(url, builder =>
             {
-                builder.Use(async (context, next) =>
+                builder.Use(async (HttpContext context, RequestDelegate next) =>
                 {
                     var keepAlive = r2;
                     await branchDelegate(context);

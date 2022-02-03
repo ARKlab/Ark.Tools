@@ -37,7 +37,7 @@ namespace Ark.Tools.Solid.Decorators
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
-            var result = await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
+            var result = await _decorated.ExecuteAsync(query, ctk);
             stopWatch.Stop();
             _logger.Trace(() => string.Format("Query<{0}> executed in {1}ms", query.GetType(), stopWatch.ElapsedMilliseconds));
 

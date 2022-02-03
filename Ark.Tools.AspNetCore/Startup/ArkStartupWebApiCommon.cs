@@ -89,7 +89,6 @@ namespace Ark.Tools.AspNetCore.Startup
 				opt.ReturnHttpNotAcceptable = true;
 				opt.RespectBrowserAcceptHeader = true;
 			})
-			.SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
 			.AddFormatterMappings(s =>
 			{
 			})

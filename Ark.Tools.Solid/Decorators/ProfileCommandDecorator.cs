@@ -34,7 +34,7 @@ namespace Ark.Tools.Solid.Decorators
         public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default(CancellationToken))
         {
             Stopwatch stopWatch = Stopwatch.StartNew();
-            await _decorated.ExecuteAsync(command, ctk).ConfigureAwait(false);
+            await _decorated.ExecuteAsync(command, ctk);
             stopWatch.Stop();
             _logger.Trace(() => string.Format("Command<{0}> executed in {1}ms", command.GetType(), stopWatch.ElapsedMilliseconds));
         }

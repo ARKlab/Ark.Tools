@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Authorization.Requirement
@@ -41,7 +42,8 @@ namespace Ark.Tools.Authorization.Requirement
         /// Calls <see cref="AssertionRequirement.Handler"/> to see if authorization is allowed.
         /// </summary>
         /// <param name="context">The authorization information.</param>
-        public async Task HandleAsync(AuthorizationContext context)
+        /// <param name="ctk">CancellationToken</param>
+        public async Task HandleAsync(AuthorizationContext context, CancellationToken ctk = default)
         {
             if (await Handler(context))
             {

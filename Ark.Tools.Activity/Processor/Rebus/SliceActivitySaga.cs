@@ -83,7 +83,7 @@ namespace Ark.Tools.Activity.Processor
 
 		private async Task _process()
 		{
-			await _activity.Process(Data.ActivitySlice).ConfigureAwait(false);
+			await _activity.Process(Data.ActivitySlice);
 			await _bus.Advanced.Topics.Publish(_activity.Resource.ToString(), new ResourceSliceReady()
 			{
 				Resource = _activity.Resource,

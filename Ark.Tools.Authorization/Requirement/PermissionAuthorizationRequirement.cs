@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Ark.Tools.Authorization.Requirement
 {
@@ -95,7 +96,7 @@ namespace Ark.Tools.Authorization.Requirement
             _provider = provider;
         }
 
-        public async Task HandleAsync(AuthorizationContext context)
+        public async Task HandleAsync(AuthorizationContext context, CancellationToken ctk = default)
         {
             var permissionType = typeof(PermissionAuthorizationRequirement<TPermissionEnum>);
             if (context.Resource != null)

@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Authorization
@@ -13,11 +14,12 @@ namespace Ark.Tools.Authorization
         /// Makes a decision if authorization is allowed.
         /// </summary>
         /// <param name="context">The authorization context.</param>
-        public async Task HandleAsync(AuthorizationContext context)
+        /// <param name="ctk">Cancellation Token</param>
+        public async Task HandleAsync(AuthorizationContext context, CancellationToken ctk = default)
         {
             foreach (var handler in context.Policy.Requirements.OfType<IAuthorizationHandler>())
             {
-                await handler.HandleAsync(context);
+                await handler.HandleAsync(context, ctk);
             }
         }
     }

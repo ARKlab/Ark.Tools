@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Authorization.Requirement
@@ -14,7 +15,8 @@ namespace Ark.Tools.Authorization.Requirement
         /// </summary>
         /// <param name="context">The authorization context.</param>
         /// <param name="requirement">The requirement to evaluate.</param>
-        protected override Task HandleRequirementAsync(AuthorizationContext context, DenyAnonymousAuthorizationRequirement requirement)
+        /// <param name="ctk">CancellationToken</param>
+        protected override Task HandleRequirementAsync(AuthorizationContext context, DenyAnonymousAuthorizationRequirement requirement, CancellationToken ctk = default)
         {
             var user = context.User;
             var userIsAnonymous =

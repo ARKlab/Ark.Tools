@@ -112,7 +112,7 @@ namespace Ark.Tools.Outbox.SqlServer
 
                 var cmd = new CommandDefinition(_statements.Insert, parameters, transaction: this.Transaction, cancellationToken: ctk);
 
-                _ = await this.Connection.ExecuteAsync(cmd).ConfigureAwait(false);
+                _ = await this.Connection.ExecuteAsync(cmd);
             }
         }
 
@@ -120,7 +120,7 @@ namespace Ark.Tools.Outbox.SqlServer
         {
             var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: this.Transaction, cancellationToken: ctk);
 
-            var res = await this.Connection.QueryAsync<(string Headers, byte[] Body)>(cmd).ConfigureAwait(false);
+            var res = await this.Connection.QueryAsync<(string Headers, byte[] Body)>(cmd);
 
             return res.Select(x => new OutboxMessage
             {

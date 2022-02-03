@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Authorization.Requirement
@@ -18,8 +19,9 @@ namespace Ark.Tools.Authorization.Requirement
         /// </summary>
         /// <param name="context">The authorization context.</param>
         /// <param name="user">The user profile</param>
+        /// <param name="ctk">CancellationToken</param>
         /// <returns><value>true</value> when the the requirement has been fulfilled; otherwise <value>false</value></returns>
-        public abstract Task<bool> HandleAsync(AuthorizationContext context, TUser user);
+        public abstract Task<bool> HandleAsync(AuthorizationContext context, TUser user, CancellationToken ctk = default);
     }
 
 
@@ -55,7 +57,7 @@ namespace Ark.Tools.Authorization.Requirement
             _handler = handler;
         }
 
-        public override Task<bool> HandleAsync(AuthorizationContext context, TUser user)
+        public override Task<bool> HandleAsync(AuthorizationContext context, TUser user, CancellationToken ctk = default)
         {
             return _handler(context, user);
         }
@@ -76,7 +78,7 @@ namespace Ark.Tools.Authorization.Requirement
             _provider = provider;
         }
 
-        public async Task HandleAsync(AuthorizationContext context)
+        public async Task HandleAsync(AuthorizationContext context, CancellationToken ctk = default)
         {
             if (!context.Policy.Requirements.OfType<ApplicationUserAssertionRequirement<TUser>>().Any())
                 return;
@@ -87,7 +89,7 @@ namespace Ark.Tools.Authorization.Requirement
 
             foreach (var req in context.Policy.Requirements.OfType<ApplicationUserAssertionRequirement<TUser>>())
             {
-                if (await req.HandleAsync(context, user))
+                if (await req.HandleAsync(context, user, ctk))
                 {
                     context.Succeed(req);
                 }
