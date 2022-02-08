@@ -44,7 +44,7 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>4.0.0</ArkToolsCoreVersion>
+    <ArkToolsCoreVersion>4.0.1</ArkToolsCoreVersion>
     <FtpClientGroupVersion>4.0.0</FtpClientGroupVersion>
     <ResourceWatcherGroupVersion>4.0.0</ResourceWatcherGroupVersion>
     
