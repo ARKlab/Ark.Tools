@@ -13,7 +13,7 @@ namespace Ark.Tools.Rebus.Tests
 
     public class DrainableInMemTransport : InMemTransport
     {
-        private static int _drain = -1; // disabled
+        private static long _drain = -1; // disabled
 
         public static Drainer Drain()
         {
@@ -42,7 +42,8 @@ namespace Ark.Tools.Rebus.Tests
 
         public override Task<TransportMessage> Receive(ITransactionContext context, CancellationToken cancellationToken)
         {
-            if (Interlocked.CompareExchange(ref _drain, 1, 0) != -1)
+            var d = Interlocked.Read(ref _drain);
+            if (d != -1)
             {
                 return Task.FromResult<TransportMessage>(null);
             }
