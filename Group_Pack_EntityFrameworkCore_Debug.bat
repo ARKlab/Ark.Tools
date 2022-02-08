@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set PROGRAMS=%ProgramFiles(x86)%
+set PROGRAMS=%ProgramFiles%
 for %%e in (Community Professional Enterprise) do (
     if exist "%PROGRAMS%\Microsoft Visual Studio\2022\%%e\MSBuild\Current\Bin\MSBuild.exe" (
         set "MSBUILD=%PROGRAMS%\Microsoft Visual Studio\2022\%%e\MSBuild\Current\Bin\MSBuild.exe"
