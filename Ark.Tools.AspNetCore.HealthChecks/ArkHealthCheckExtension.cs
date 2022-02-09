@@ -5,6 +5,7 @@ using HealthChecks.UI.Configuration;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -51,25 +52,22 @@ namespace Ark.Tools.AspNetCore.HealthChecks
             return services.AddSingleton(setup);
         }
 
-        public static IApplicationBuilder UseArkHealthChecks(this IApplicationBuilder app)
+        public static IEndpointRouteBuilder MapArkHealthChecks(this IEndpointRouteBuilder endpoints)
         {
-            app.UseEndpoints(endpoints =>
+            endpoints.MapHealthChecks("/healthCheck", new HealthCheckOptions
             {
-                endpoints.MapHealthChecks("/healthCheck", new HealthCheckOptions
-                {
-                    Predicate = _ => true,
-                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
-                });
-
-                endpoints.MapHealthChecksUI(setup =>
-                {
-                    var configurers = app.ApplicationServices.GetServices<Action<Options>>();
-                    foreach (var c in configurers)
-                        c?.Invoke(setup);
-                });
+                Predicate = _ => true,
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
             });
 
-            return app;
+            endpoints.MapHealthChecksUI(setup =>
+            {
+                var configurers = endpoints.ServiceProvider.GetServices<Action<Options>>();
+                foreach (var c in configurers)
+                    c?.Invoke(setup);
+            });
+
+            return endpoints;
         }
 
         public static IHealthChecksBuilder AddSimpleInjectorCheck<T>(this IHealthChecksBuilder builder, string name, HealthStatus? failureStatus = null, IEnumerable<string> tags = null, TimeSpan? timeout = null) where T : class, IHealthCheck

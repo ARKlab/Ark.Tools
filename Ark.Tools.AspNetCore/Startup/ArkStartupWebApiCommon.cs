@@ -219,11 +219,8 @@ namespace Ark.Tools.AspNetCore.Startup
 
 			app.UseArkProblemDetails();
 
-			app.UseArkHealthChecks();
-
 			app.UseSwagger();
 			app.UseSwaggerUI();
-
 
 			//app.UseCors();
 
@@ -231,6 +228,8 @@ namespace Ark.Tools.AspNetCore.Startup
 			app.UseAuthorization();
 
 			app.UseEndpoints(endpoints => {
+
+				endpoints.MapArkHealthChecks();
 				endpoints.MapControllers();
 			});
 
