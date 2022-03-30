@@ -24,7 +24,7 @@ namespace Ark.Tools.Rebus.Tests
         private readonly ConcurrentDictionary<string, DeferredMessage> _deferredMessages = new ConcurrentDictionary<string, DeferredMessage>();
 
         public static int DueCount = 0;
-        private static List<TestsInMemoryTimeoutManager> _instances = new List<TestsInMemoryTimeoutManager>();
+        private static readonly List<TestsInMemoryTimeoutManager> _instances = new List<TestsInMemoryTimeoutManager>();
 
         public static void ClearPendingDue()
         {
@@ -39,6 +39,7 @@ namespace Ark.Tools.Rebus.Tests
         {
             lock (_deferredMessages)
             {
+                Interlocked.Add(ref DueCount, -_deferredMessages.Count);
                 _deferredMessages.Clear();
             }
         }
