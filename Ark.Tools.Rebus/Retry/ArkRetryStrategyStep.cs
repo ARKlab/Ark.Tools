@@ -113,26 +113,38 @@ If the maximum number of delivery attempts is reached, the message is moved to t
                 transportDeliveryCount = dc;
             }
 
-            _checkFinal(messageId, transportDeliveryCount, _arkRetryStrategySettings.MaxDeliveryAttempts, beforeTry);
+            _checkFinal(messageId, transportDeliveryCount, beforeTry);
 
             if (_arkRetryStrategySettings.SecondLevelRetriesEnabled)
             {
                 var secondLevelMessageId = GetSecondLevelMessageId(messageId);
-                _checkFinal(secondLevelMessageId, transportDeliveryCount, _arkRetryStrategySettings.MaxDeliveryAttempts * 2, beforeTry);
-            }
 
+                if (transportDeliveryCount != null)
+                {
+                    // can happen that we have fail-fasted the first-level and we're failing the 2nd-level
+                    transportDeliveryCount -= _arkRetryStrategySettings.MaxDeliveryAttempts;
+                    if (transportDeliveryCount <= 0)
+                        transportDeliveryCount = 1;
+                }
+
+                _checkFinal(secondLevelMessageId, transportDeliveryCount, beforeTry);
+            }
         }
 
-        private void _checkFinal(string messageId, int? deliveryCount, int maxDeliveryCount, bool beforeTry)
+        private void _checkFinal(string messageId, int? transportDeliveryCount, bool beforeTry)
         {
             var exceptions = _errorTracker.GetExceptions(messageId);
-            // if transport doesn't has deliveryCount, use the count of the Exceptions.
+
             // +1 as DeliveryCount is 1-based and is charged prior to 'receive'
-            deliveryCount ??= exceptions.Count() + 1;
+            var deliveryCountFromExceptions = exceptions.Count() + 1;
+
+            // if transport doesn't has deliveryCount, use the count of the Exceptions.
+            var deliveryCount = (transportDeliveryCount ?? 0) > deliveryCountFromExceptions ? transportDeliveryCount : deliveryCountFromExceptions;
+
             if (beforeTry == true) deliveryCount--;
 
-            if (deliveryCount >= maxDeliveryCount
-                && exceptions.Any() || exceptions.Any(x => _failFastChecker.ShouldFailFast(messageId, x)))
+            if ((deliveryCount >= _arkRetryStrategySettings.MaxDeliveryAttempts
+                && exceptions.Any()) || exceptions.Any(x => _failFastChecker.ShouldFailFast(messageId, x)))
             {
                 _errorTracker.MarkAsFinal(messageId);
             }
@@ -178,12 +190,15 @@ If the maximum number of delivery attempts is reached, the message is moved to t
             {
                 await next();
 
+                await transactionContext.Commit();
+
                 _errorTracker.CleanUp(messageId);
 
                 if (secondLevelMessageId != null)
+                {
                     _errorTracker.CleanUp(secondLevelMessageId);
+                }
 
-                await transactionContext.Commit();
             }
             catch (OperationCanceledException) when (_cancellationToken.IsCancellationRequested)
             {
