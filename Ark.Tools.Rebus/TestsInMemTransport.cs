@@ -14,6 +14,7 @@ namespace Ark.Tools.Rebus
 	public class TestsInMemTransport : InMemTransport
     {
         public static int InProcessMessageCount;
+
         public TestsInMemTransport(InMemNetwork network, string inputQueueAddress)
             : base(network, inputQueueAddress)
         {

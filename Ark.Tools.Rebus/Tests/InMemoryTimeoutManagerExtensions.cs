@@ -1,17 +1,8 @@
 ﻿using Rebus.Config;
-using Rebus.Extensions;
-using Rebus.Messages;
 using Rebus.Time;
 using Rebus.Timeouts;
 
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus.Tests
 {

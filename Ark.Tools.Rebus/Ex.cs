@@ -4,10 +4,12 @@ using Rebus.Messages;
 using Rebus.Pipeline;
 using Rebus.Pipeline.Receive;
 using Rebus.Pipeline.Send;
-using Rebus.Retry.Simple;
+using Rebus.Retry.FailFast;
 using Rebus.Transport;
 using Rebus.Transport.InMem;
+
 using SimpleInjector;
+
 using System;
 using System.Collections.Generic;
 
@@ -65,7 +67,7 @@ namespace Ark.Tools.Rebus
                 var pipeline = c.Get<IPipeline>();
                 var step = new ApplicationInsightsStep(container);
                 return new PipelineStepInjector(pipeline)
-                    .OnReceive(step, PipelineRelativePosition.Before, typeof(SimpleRetryStrategyStep))
+                    .OnReceive(step, PipelineRelativePosition.After, typeof(FailFastStep))
                     ;
             });
         }

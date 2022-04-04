@@ -1,16 +1,8 @@
 ﻿using Rebus.Config;
-using Rebus.Messages;
-using Rebus.Pipeline;
 using Rebus.Transport;
 using Rebus.Transport.InMem;
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reactive.Disposables;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus.Tests
 {

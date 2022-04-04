@@ -1,10 +1,12 @@
 ﻿using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+
 using Rebus.Extensions;
 using Rebus.Messages;
 using Rebus.Pipeline;
-using Rebus.Transport;
+
 using SimpleInjector;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus
 {
-	[StepDocumentation("Start ApplicationInsights Request on Receive")]
+    [StepDocumentation("Start ApplicationInsights Request on Receive")]
     public class ApplicationInsightsStep : IIncomingStep
     {
         private const string _activityName = "Rebus.Process";
