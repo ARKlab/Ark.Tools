@@ -68,7 +68,7 @@ which is then detected by this wrapper step.")]
             }
         }
 
-        static IFailed<TMessage> _wrap<TMessage>(Dictionary<string, string> headers, TMessage body, string errorDescription, IEnumerable<Exception> exceptions)
+        IFailed<TMessage> _wrap<TMessage>(Dictionary<string, string> headers, TMessage body, string errorDescription, IEnumerable<Exception> exceptions)
         {
             return new FailedMessageWrapper<TMessage>(headers, body, errorDescription, exceptions);
         }
