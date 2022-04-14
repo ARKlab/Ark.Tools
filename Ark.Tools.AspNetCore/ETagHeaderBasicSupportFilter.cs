@@ -17,12 +17,12 @@ namespace Ark.Tools.AspNetCore
             var reqHeader = context.HttpContext.Request.GetTypedHeaders();
 
             if (new[] { HttpMethods.Put, HttpMethods.Post, HttpMethods.Patch }.Contains(context.HttpContext.Request.Method)
-                && context.ActionArguments.Values.OfType<IEntityWithETag>().Count() == 1                
+                && context.ActionArguments.Values.OfType<IEntityWithETag>().Count() == 1
                 )
             {
                 var input = context.ActionArguments.Values.OfType<IEntityWithETag>().Single();
                 if (reqHeader.IfMatch?.Count == 1)
-                    input._ETag = reqHeader.IfMatch[0].Tag.Substring(1, reqHeader.IfMatch[0].Tag.Length -2);
+                    input._ETag = reqHeader.IfMatch[0].Tag.Substring(1, reqHeader.IfMatch[0].Tag.Length - 2);
                 if (reqHeader.IfNoneMatch?.Count == 1 && reqHeader.IfNoneMatch[0] == EntityTagHeaderValue.Any)
                     input._ETag = reqHeader.IfNoneMatch[0].Tag.Substring(1, reqHeader.IfMatch[0].Tag.Length - 2);
             }
@@ -43,9 +43,14 @@ namespace Ark.Tools.AspNetCore
                 if (new[] { HttpMethods.Get, HttpMethods.Head }.Contains(context.HttpContext.Request.Method)
                     && reqHeader.IfNoneMatch?.Contains(new EntityTagHeaderValue($"\"{etag._ETag}\"")) == true)
                     context.Result = new StatusCodeResult(304);
-                
-                // in any case add the ETag header
-                resHeader.ETag = new EntityTagHeaderValue($"\"{etag._ETag}\"");
+
+                //I add only if ETag is not null
+                if (etag._ETag != null)
+                    resHeader.ETag = new EntityTagHeaderValue($"\"{etag._ETag}\"");
+
+                //If is whitespace or empty I throw exception
+                if (etag._ETag.All(char.IsWhiteSpace) || etag._ETag == string.Empty)
+                    throw new InvalidOperationException("ETag value is empty or consists only of white-space characters");
             }
 
             base.OnResultExecuting(context);
