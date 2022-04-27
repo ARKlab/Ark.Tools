@@ -20,6 +20,9 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         private readonly Renci.SshNet.SftpClient _client;
 
+        private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(1);
+        private readonly TimeSpan _operationTimeout  = TimeSpan.FromMinutes(5);
+
         [Obsolete("Use the constructor with URI", false)]
         public SftpClientConnection(string host, NetworkCredential credentials, int port = 2222)
             : base(host, credentials)
@@ -28,10 +31,28 @@ namespace Ark.Tools.FtpClient.SftpClient
             _client = _getSFtpClient();
         }
 
-        public SftpClientConnection(Uri uri, NetworkCredential credentials)
+        //ONLY 1 of this 2
+        public SftpClientConnection(Uri uri, NetworkCredential credentials, PrivateKeyFile certificate = null)
             : base(uri, credentials)
         {
-            _client = _getSFtpClient();
+            if(certificate == null)
+                _client = _getSFtpClient();
+            else
+                _client = _getSFtpClientWithKeyCertificate(certificate); 
+        }
+
+        public SftpClientConnection(Uri uri, NetworkCredential credentials, string certificateFile = null, string certificatePassPhrase = null)
+            : base(uri, credentials)
+        {
+            if (certificateFile == null)
+                _client = _getSFtpClient();
+            else
+            {
+                if (string.IsNullOrWhiteSpace(certificatePassPhrase))
+                    throw new ArgumentException(message: "CertificatePassPhrase cannot be null or empty.", certificatePassPhrase);
+
+                _client = _getSFtpClientWithKeyCertificate(new PrivateKeyFile(certificateFile, certificatePassPhrase));
+            }
         }
 
         public int Port { get; }
@@ -87,16 +108,36 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         #region private helpers
 
+        private ConnectionInfo _getConnectionInfo()
+        {
+            var connrectionInfo = new ConnectionInfo(Uri == null ? Host : Uri.Host, Uri == null ? Port : Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password))
+            {
+                Timeout = TimeSpan.FromMinutes(5),
+                RetryAttempts = 2
+            };
+
+            return connrectionInfo;
+        }
+
         private Renci.SshNet.SftpClient _getSFtpClient()
         {
-            var connInfo = new ConnectionInfo(Uri == null ? Host : Uri.Host, Uri == null ? Port : Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password));
-            connInfo.Timeout = TimeSpan.FromMinutes(5);
-            connInfo.RetryAttempts = 2;
-           
+            var connInfo = _getConnectionInfo();
+
             return new Renci.SshNet.SftpClient(connInfo)
             {
-                KeepAliveInterval = TimeSpan.FromMinutes(1),
-                OperationTimeout = TimeSpan.FromMinutes(5),
+                KeepAliveInterval = _keepAliveInterval,
+                OperationTimeout = _operationTimeout,
+            };
+        }
+
+        private Renci.SshNet.SftpClient _getSFtpClientWithKeyCertificate(PrivateKeyFile privateKey)
+        {
+            var connInfo = _getConnectionInfo();
+
+            return new Renci.SshNet.SftpClient(connInfo.Host, connInfo.Username, new[] { privateKey })
+            {
+                KeepAliveInterval = _keepAliveInterval,
+                OperationTimeout = _operationTimeout,
             };
         }
 
