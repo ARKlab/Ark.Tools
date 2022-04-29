@@ -28,8 +28,18 @@ namespace Ark.Tools.FtpClient.Core
             _pool = new ConcurrentStack<IFtpClientConnection>();
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         public FtpClientPool(int poolMaxSize, Uri uri, NetworkCredential credential, IFtpClientConnectionFactory connectionFactory)
             : base(uri, credential, poolMaxSize)
+        {
+            PoolMaxSize = poolMaxSize;
+            _connectionFactory = connectionFactory;
+            _semaphore = new SemaphoreSlim(poolMaxSize, poolMaxSize);
+            _pool = new ConcurrentStack<IFtpClientConnection>();
+        }
+
+        public FtpClientPool(int poolMaxSize, FtpConfig ftpConfig, IFtpClientConnectionFactory connectionFactory)
+            : base(ftpConfig, poolMaxSize)
         {
             PoolMaxSize = poolMaxSize;
             _connectionFactory = connectionFactory;
@@ -95,7 +105,7 @@ namespace Ark.Tools.FtpClient.Core
                 return _connectionFactory.Create(Host, Credentials);
 #pragma warning restore CS0618 // Type or member is obsolete
             else
-                return _connectionFactory.Create(Uri, Credentials);
+                return _connectionFactory.Create(new FtpConfig(Uri, Credentials));
         }
 
         #region IDisposable Support

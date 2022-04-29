@@ -27,8 +27,15 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
             _client = _getClient();
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         public SystemNetFtpClientConnection(Uri uri, NetworkCredential credentials)
             : base(uri, credentials)
+        {
+            _client = _getClient();
+        }
+
+        public SystemNetFtpClientConnection(FtpConfig ftpConfig)
+            : base(ftpConfig)
         {
             _client = _getClient();
         }

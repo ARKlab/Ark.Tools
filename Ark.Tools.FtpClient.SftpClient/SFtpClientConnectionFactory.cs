@@ -28,12 +28,22 @@ namespace Ark.Tools.FtpClient.SftpClient
             return new SftpClientConnection(h, credentials, port);
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         public IFtpClientConnection Create(Uri uri, NetworkCredential credentials)
         {
             EnsureArg.IsNotNull(uri);
             EnsureArg.IsNotNull(credentials);
 
             return new SftpClientConnection(uri, credentials);
+        }
+
+        public IFtpClientConnection Create(FtpConfig ftpConfig)
+        {
+            EnsureArg.IsNotNull(ftpConfig);
+            EnsureArg.IsNotNull(ftpConfig.Uri);
+            EnsureArg.IsNotNull(ftpConfig.Credentials);
+
+            return new SftpClientConnection(ftpConfig);
         }
     }
 
