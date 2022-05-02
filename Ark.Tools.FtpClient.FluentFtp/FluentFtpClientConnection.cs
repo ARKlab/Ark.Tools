@@ -19,7 +19,6 @@ namespace Ark.Tools.FtpClient.FluentFtp
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly FluentFTP.IFtpClient _client;
 
-        private readonly FtpConfig _ftpConfig;
         private bool _isDisposed = false;
 
 
@@ -41,7 +40,6 @@ namespace Ark.Tools.FtpClient.FluentFtp
         public FluentFtpClientConnection(FtpConfig ftpConfig)
             : base(ftpConfig)
         {
-            _ftpConfig = ftpConfig;
             _client = _getClient();
         }
 
@@ -99,7 +97,6 @@ namespace Ark.Tools.FtpClient.FluentFtp
             if (disposing)
             {
                 _client?.Dispose();
-                _ftpConfig?.Dispose();
             }
 
             _isDisposed = true;

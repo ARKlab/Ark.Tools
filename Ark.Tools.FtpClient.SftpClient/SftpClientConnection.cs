@@ -26,7 +26,6 @@ namespace Ark.Tools.FtpClient.SftpClient
         private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(1);
         private readonly TimeSpan _operationTimeout  = TimeSpan.FromMinutes(5);
 
-        private readonly FtpConfig _ftpConfig;
         private bool _isDisposed = false;
 
         private const string _rsa = "1.2.840.113549.1.1.1";
@@ -51,7 +50,6 @@ namespace Ark.Tools.FtpClient.SftpClient
         public SftpClientConnection(FtpConfig ftpConfig)
             : base(ftpConfig)
         {
-            _ftpConfig = ftpConfig;
             _client = _getSFtpClient();
         }
 
@@ -110,13 +108,13 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         private ConnectionInfo _getConnectionInfo()
         {
-            var connrectionInfo = new ConnectionInfo(Uri == null ? Host : Uri.Host, Uri == null ? Port : Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password))
+            var connectionInfo = new ConnectionInfo(Uri == null ? Host : Uri.Host, Uri == null ? Port : Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password))
             {
                 Timeout = TimeSpan.FromMinutes(5),
                 RetryAttempts = 2
             };
 
-            return connrectionInfo;
+            return connectionInfo;
         }
 
         private Renci.SshNet.SftpClient _getSFtpClientWithCertificate()
@@ -127,7 +125,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 #endif
             var connInfo = _getConnectionInfo();
 
-            using var cert = _ftpConfig.ClientCertificate;
+            var cert = FtpConfig.ClientCertificate;
 
             string keyExchangeAlgorithm = null;
             byte[] privateKeyBytes = null;
@@ -203,7 +201,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         private Renci.SshNet.SftpClient _getSFtpClient()
         {
-            if (_ftpConfig.ClientCertificate != null)
+            if (FtpConfig.ClientCertificate != null)
             {
                 return _getSFtpClientWithCertificate();
             }
@@ -267,7 +265,6 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (disposing)
             {
                 _client?.Dispose();
-                _ftpConfig?.Dispose();
             }
 
             _isDisposed = true;

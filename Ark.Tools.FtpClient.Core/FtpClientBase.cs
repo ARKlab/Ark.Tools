@@ -21,6 +21,8 @@ namespace Ark.Tools.FtpClient.Core
         public NetworkCredential Credentials { get; }
         public int MaxListingRecursiveParallelism { get; }
 
+        public FtpConfig FtpConfig { get; }
+
         [Obsolete("Use the constructor with URI", false)]
         protected FtpClientBase(string host, NetworkCredential credential)
             : this(host, credential, 3)
@@ -72,6 +74,8 @@ namespace Ark.Tools.FtpClient.Core
             Uri = ftpConfig.Uri;
             Credentials = ftpConfig.Credentials;
             MaxListingRecursiveParallelism = maxListingRecursiveParallelism;
+
+            FtpConfig = ftpConfig;
         }
 
         public abstract Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default);

@@ -20,6 +20,8 @@ namespace Ark.Tools.FtpClient.Core
         public Uri Uri { get; }
         public NetworkCredential Credentials { get; }
 
+        public FtpConfig FtpConfig { get; }
+
         [Obsolete("Use the constructor with URI", false)]
         protected FtpClientConnectionBase(string host, NetworkCredential credential)
         {
@@ -51,6 +53,8 @@ namespace Ark.Tools.FtpClient.Core
             Host = null;
             Uri = ftpConfig.Uri;
             Credentials = ftpConfig.Credentials;
+            
+            FtpConfig = ftpConfig;
         }
 
         public abstract Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default);

@@ -21,7 +21,6 @@ namespace Ark.Tools.FtpClient
         private readonly ArxOne.Ftp.FtpClient _client;
         private readonly SemaphoreSlim _semaphore;
 
-        private readonly FtpConfig _ftpConfig;
         private bool _isDisposed  =  false;
 
         [Obsolete("Use the constructor with URI", false)]
@@ -43,8 +42,6 @@ namespace Ark.Tools.FtpClient
         public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig)
             : base(ftpConfig, maxPoolSize)
         {
-            _ftpConfig = ftpConfig;
-
             _client = _getClient();
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
         }
@@ -138,7 +135,6 @@ namespace Ark.Tools.FtpClient
             {
                 _client?.Dispose();
                 _semaphore?.Dispose();
-                _ftpConfig?.Dispose();
             }
 
             _isDisposed = true;
