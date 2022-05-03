@@ -49,7 +49,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
         [Obsolete("Use the constructor with URI", false)]
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, string host, NetworkCredential credentials)
         {
-            _init(config, host, null, credentials, null);
+            using var ftpConfig = new FtpConfig(null, credentials);
+
+            _init(config, host, ftpConfig);
 
             _tokenProvider = tokenProvider;
 
@@ -61,7 +63,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
         [Obsolete("Use the constructor with FtpConfig", false)]
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, Uri uri, NetworkCredential credentials)
         {
-            _init(config, null, uri, credentials, null);
+            using var ftpConfig = new FtpConfig(uri, credentials);
+
+            _init(config, null, ftpConfig);
 
             _tokenProvider = tokenProvider;
 
@@ -72,7 +76,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, FtpConfig ftpConfig)
         {
-            _init(config, null, ftpConfig.Uri, ftpConfig.Credentials, ftpConfig);
+            _init(config, null, ftpConfig);
 
             _tokenProvider = tokenProvider;
 
@@ -85,7 +89,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public Uri Uri { get; private set; }
 
         public NetworkCredential Credentials { get; private set; }
-        public FtpConfig FtpConfig;
+        public FtpConfig FtpConfig { get; private set; }
 
         class DownloadFileResult
         {
@@ -230,12 +234,12 @@ namespace Ark.Tools.FtpClient.FtpProxy
             return _tokenProvider.GetToken(ctk);
         }
 
-        private void _init(IFtpClientProxyConfig config, string host, Uri uri, NetworkCredential credentials, FtpConfig ftpConfig)
+        private void _init(IFtpClientProxyConfig config, string host, FtpConfig ftpConfig)
         {
             this._config = config;
             this.Host = host;
-            this.Uri = uri;
-            this.Credentials = credentials;
+            this.Uri = ftpConfig.Uri;
+            this.Credentials = ftpConfig.Credentials;
 
             this.FtpConfig = ftpConfig;
         }
