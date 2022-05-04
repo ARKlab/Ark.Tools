@@ -49,6 +49,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         [Obsolete("Use the constructor with URI", false)]
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, string host, NetworkCredential credentials)
         {
+            //In here we can dispose the FtpConfig because has no 'Certificate'
             using var ftpConfig = new FtpConfig(null, credentials);
 
             _init(config, host, ftpConfig);
@@ -63,6 +64,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         [Obsolete("Use the constructor with FtpConfig", false)]
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, Uri uri, NetworkCredential credentials)
         {
+            //In here we can dispose the FtpConfig because has no 'Certificate'
             using var ftpConfig = new FtpConfig(uri, credentials);
 
             _init(config, null, ftpConfig);
