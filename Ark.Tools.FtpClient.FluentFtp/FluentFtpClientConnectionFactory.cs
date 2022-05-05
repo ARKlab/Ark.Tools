@@ -18,11 +18,21 @@ namespace Ark.Tools.FtpClient.FluentFtp
             return new FluentFtpClientConnection(host, credentials);
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         public IFtpClientConnection Create(Uri uri, NetworkCredential credentials)
         {
             EnsureArg.IsNotNull(uri);
             EnsureArg.IsNotNull(credentials);
             return new FluentFtpClientConnection(uri, credentials);
+        }
+
+        public IFtpClientConnection Create(FtpConfig ftpConfig)
+        {
+            EnsureArg.IsNotNull(ftpConfig);
+            EnsureArg.IsNotNull(ftpConfig.Uri);
+            EnsureArg.IsNotNull(ftpConfig.Credentials);
+
+            return new FluentFtpClientConnection(ftpConfig);
         }
     }
 }

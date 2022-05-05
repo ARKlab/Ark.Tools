@@ -21,14 +21,22 @@ namespace Ark.Tools.FtpClient.Core
         public NetworkCredential Credentials { get; }
         public int MaxListingRecursiveParallelism { get; }
 
+        public FtpConfig FtpConfig { get; }
+
         [Obsolete("Use the constructor with URI", false)]
         protected FtpClientBase(string host, NetworkCredential credential)
             : this(host, credential, 3)
         {
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         protected FtpClientBase(Uri uri, NetworkCredential credential)
             : this(uri, credential, 3)
+        {
+        }
+
+        protected FtpClientBase(FtpConfig ftpConfig)
+            : this(ftpConfig, 3)
         {
         }
 
@@ -44,6 +52,7 @@ namespace Ark.Tools.FtpClient.Core
             MaxListingRecursiveParallelism = maxListingRecursiveParallelism;
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         protected FtpClientBase(Uri uri, NetworkCredential credential, int maxListingRecursiveParallelism)
         {
             EnsureArg.IsNotNull(uri);
@@ -53,6 +62,20 @@ namespace Ark.Tools.FtpClient.Core
             Uri = uri;
             Credentials = credential;
             MaxListingRecursiveParallelism = maxListingRecursiveParallelism;
+        }
+
+        protected FtpClientBase(FtpConfig ftpConfig, int maxListingRecursiveParallelism)
+        {
+            EnsureArg.IsNotNull(ftpConfig);
+            EnsureArg.IsNotNull(ftpConfig.Uri);
+            EnsureArg.IsNotNull(ftpConfig.Credentials);
+
+            Host = null;
+            Uri = ftpConfig.Uri;
+            Credentials = ftpConfig.Credentials;
+            MaxListingRecursiveParallelism = maxListingRecursiveParallelism;
+
+            FtpConfig = ftpConfig;
         }
 
         public abstract Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default);

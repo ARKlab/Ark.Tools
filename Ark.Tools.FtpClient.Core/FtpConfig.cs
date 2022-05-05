@@ -1,0 +1,40 @@
+﻿
+using System;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+
+namespace Ark.Tools.FtpClient.Core
+{
+    public class FtpConfig : IDisposable
+    {
+        private bool _isDisposed;
+
+        public Uri Uri { get; }
+        public NetworkCredential Credentials { get; }
+
+        public X509Certificate2 ClientCertificate { get; private set; }
+
+        public FtpConfig(Uri uri, NetworkCredential credential = null, X509Certificate2 certificate = null)
+        {
+            Uri = uri;
+            Credentials = credential;
+            ClientCertificate = certificate;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed) return;
+
+            if (disposing)
+                ClientCertificate?.Dispose();
+
+            _isDisposed = true;
+        }
+    }
+}

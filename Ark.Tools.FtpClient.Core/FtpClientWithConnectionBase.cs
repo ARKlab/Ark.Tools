@@ -22,8 +22,14 @@ namespace Ark.Tools.FtpClient.Core
         {
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         protected FtpClientWithConnectionBase(Uri uri, NetworkCredential credential)
             : base(uri, credential)
+        {
+        }
+
+        protected FtpClientWithConnectionBase(FtpConfig ftpConfig)
+            : base(ftpConfig)
         {
         }
 
@@ -34,8 +40,14 @@ namespace Ark.Tools.FtpClient.Core
         {
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         protected FtpClientWithConnectionBase(Uri uri, NetworkCredential credential, int maxListingRecursiveParallelism)
             : base(uri, credential, maxListingRecursiveParallelism)
+        {
+        }
+
+        protected FtpClientWithConnectionBase(FtpConfig ftpConfig, int maxListingRecursiveParallelism)
+            : base(ftpConfig, maxListingRecursiveParallelism)
         {
         }
 

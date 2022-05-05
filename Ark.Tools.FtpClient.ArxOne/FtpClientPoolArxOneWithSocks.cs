@@ -22,8 +22,15 @@ namespace Ark.Tools.FtpClient
             this._config = config;
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, Uri uri, NetworkCredential credentials)
             : base(maxPoolSize, uri, credentials)
+        {
+            this._config = config;
+        }
+
+        public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig)
+            : base(maxPoolSize, ftpConfig)
         {
             this._config = config;
         }

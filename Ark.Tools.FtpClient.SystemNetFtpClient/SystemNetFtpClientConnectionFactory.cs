@@ -11,18 +11,28 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
     public class SystemNetFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
         [Obsolete("Use the constructor with URI", false)]
-        public Ark.Tools.FtpClient.Core.IFtpClientConnection Create(string host, NetworkCredential credentials)
+        public IFtpClientConnection Create(string host, NetworkCredential credentials)
         {
             EnsureArg.IsNotEmpty(host);
             EnsureArg.IsNotNull(credentials);
             return new SystemNetFtpClientConnection(host, credentials);
         }
 
-        public Ark.Tools.FtpClient.Core.IFtpClientConnection Create(Uri uri, NetworkCredential credentials)
+        [Obsolete("Use the constructor with FtpConfig", false)]
+        public IFtpClientConnection Create(Uri uri, NetworkCredential credentials)
         {
             EnsureArg.IsNotNull(uri);
             EnsureArg.IsNotNull(credentials);
             return new SystemNetFtpClientConnection(uri, credentials);
+        }
+
+        public IFtpClientConnection Create(FtpConfig ftpConfig)
+        {
+            EnsureArg.IsNotNull(ftpConfig);
+            EnsureArg.IsNotNull(ftpConfig.Uri);
+            EnsureArg.IsNotNull(ftpConfig.Credentials);
+
+            return new SystemNetFtpClientConnection(ftpConfig);
         }
     }
 }

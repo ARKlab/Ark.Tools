@@ -17,8 +17,11 @@ namespace Ark.Tools.FtpClient
     public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
+
         private readonly ArxOne.Ftp.FtpClient _client;
         private readonly SemaphoreSlim _semaphore;
+
+        private bool _isDisposed  =  false;
 
         [Obsolete("Use the constructor with URI", false)]
         public FtpClientPoolArxOne(int maxPoolSize, string host, NetworkCredential credentials)
@@ -28,8 +31,16 @@ namespace Ark.Tools.FtpClient
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         public FtpClientPoolArxOne(int maxPoolSize, Uri uri, NetworkCredential credentials)
             : base(uri, credentials, maxPoolSize)
+        {
+            _client = _getClient();
+            _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
+        }
+
+        public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig)
+            : base(ftpConfig, maxPoolSize)
         {
             _client = _getClient();
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
@@ -118,11 +129,15 @@ namespace Ark.Tools.FtpClient
         
         protected virtual void Dispose(bool disposing)
         {
+            if (_isDisposed) return;
+
             if (disposing)
             {
                 _client?.Dispose();
                 _semaphore?.Dispose();
             }
+
+            _isDisposed = true;
         }
 
         public void Dispose()

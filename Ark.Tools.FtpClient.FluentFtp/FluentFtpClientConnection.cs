@@ -19,6 +19,9 @@ namespace Ark.Tools.FtpClient.FluentFtp
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly FluentFTP.IFtpClient _client;
 
+        private bool _isDisposed = false;
+
+
         [Obsolete("Use the constructor with URI", false)]
 
         public FluentFtpClientConnection(string host, NetworkCredential credential) 
@@ -27,8 +30,15 @@ namespace Ark.Tools.FtpClient.FluentFtp
             _client = _getClient();
         }
 
+        [Obsolete("Use the constructor with FtpConfig", false)]
         public FluentFtpClientConnection(Uri uri, NetworkCredential credential)
             : base(uri, credential)
+        {
+            _client = _getClient();
+        }
+
+        public FluentFtpClientConnection(FtpConfig ftpConfig)
+            : base(ftpConfig)
         {
             _client = _getClient();
         }
@@ -82,8 +92,14 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         protected override void Dispose(bool disposing)
         {
+            if (_isDisposed) return;
+
             if (disposing)
+            {
                 _client?.Dispose();
+            }
+
+            _isDisposed = true;
         }
 
         private FluentFTP.IFtpClient _getClient()
