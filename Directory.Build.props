@@ -45,8 +45,8 @@
   <PropertyGroup>
     
     <ArkToolsCoreVersion>4.1.2</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>4.1.3</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>4.1.3</ResourceWatcherGroupVersion>
+    <FtpClientGroupVersion>4.1.4</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>4.1.4</ResourceWatcherGroupVersion>
     
     <EntityFrameworkGroupVersion>4.1.2</EntityFrameworkGroupVersion>
     <RavenDbGroupVersion>4.1.2</RavenDbGroupVersion>
