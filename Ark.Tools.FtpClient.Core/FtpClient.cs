@@ -60,7 +60,7 @@ namespace Ark.Tools.FtpClient.Core
 #pragma warning restore CS0618 // Type or member is obsolete
             }
             else
-                return Task.FromResult(_connectionFactory.Create(new FtpConfig(Uri, Credentials)));
+                return Task.FromResult(_connectionFactory.Create(FtpConfig));
         }
     }
 }

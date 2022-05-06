@@ -120,9 +120,9 @@ namespace Ark.Tools.FtpClient.SftpClient
         private Renci.SshNet.SftpClient _getSFtpClientWithCertificate()
         {
 
-#if NETSTANDARD2_0
-            throw new NotSupportedException($"ClientCertificate does not support X509 Certificate in NETCORE2.0");
-#endif
+#if NETSTANDARD2_0 || NET472
+            throw new NotSupportedException($"ClientCertificate does not support X509 Certificate in NETCORE2.0 nor NET472");
+#else
             var connInfo = _getConnectionInfo();
 
             var cert = FtpConfig.ClientCertificate;
@@ -197,6 +197,7 @@ namespace Ark.Tools.FtpClient.SftpClient
                 KeepAliveInterval = _keepAliveInterval,
                 OperationTimeout = _operationTimeout,
             };
+#endif
         }
 
         private Renci.SshNet.SftpClient _getSFtpClient()

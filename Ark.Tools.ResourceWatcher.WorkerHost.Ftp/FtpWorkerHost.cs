@@ -72,7 +72,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                     _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.Host, config.Credentials);
 #pragma warning restore CS0618 // Type or member is obsolete
                 else
-                    _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, new FtpConfig(config.Uri, config.Credentials));
+                    _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.FtpConfig);
 
                 _parser = parser;
             }

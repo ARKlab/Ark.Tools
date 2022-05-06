@@ -105,7 +105,7 @@ namespace Ark.Tools.FtpClient.Core
                 return _connectionFactory.Create(Host, Credentials);
 #pragma warning restore CS0618 // Type or member is obsolete
             else
-                return _connectionFactory.Create(new FtpConfig(Uri, Credentials));
+                return _connectionFactory.Create(FtpConfig);
         }
 
         #region IDisposable Support
