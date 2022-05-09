@@ -180,5 +180,46 @@ namespace Ark.Tools.AspNetCore.Startup
 
             return services;
         }
+
+        public static IServiceCollection ArkConfigureSwaggerAzureB2C(this IServiceCollection services, string instance, string domain, string clientId, string signUpSignIn, string apiId)
+        {
+            services.ConfigureSwaggerGen(c =>
+            {
+                var oauthScheme = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.OAuth2,
+                    
+                    Flows = new OpenApiOAuthFlows()
+                    {
+                        AuthorizationCode = new OpenApiOAuthFlow()
+                        {
+                            AuthorizationUrl = new Uri($"{instance}/{domain}/{signUpSignIn}/oauth2/v2.0/authorize"),
+                            TokenUrl = new Uri($"{instance}/{domain}/{signUpSignIn}/oauth2/v2.0/token"),                            
+                            Scopes = new Dictionary<string, string>
+                            {
+                                { "openid", "Grant access to user" },
+                                { $"https://{domain}/{apiId}/default", "Default scope to retrieve user permissions" }
+                            }
+                        }
+                    },
+
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "oauth2"
+                    },
+                    Scheme = "oauth2"
+                };
+                c.AddSecurityDefinition("oauth2", oauthScheme);
+                c.OperationFilter<SecurityRequirementsOperationFilter>();
+            });
+            services.ArkConfigureSwaggerUI(c =>
+            {
+                c.OAuthClientId(clientId);
+                c.OAuthAppName("WebApi");
+                c.OAuthUsePkce();
+            });
+            return services;
+        }
     }
 }
