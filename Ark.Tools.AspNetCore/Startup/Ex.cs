@@ -198,7 +198,7 @@ namespace Ark.Tools.AspNetCore.Startup
                             Scopes = new Dictionary<string, string>
                             {
                                 { "openid", "Grant access to user" },
-                                { $"https://{domain}/{apiId}/default", "Default scope to retrieve user permissions" }
+                                { $"https://{domain}/{apiId}/access_as_user", "Default scope to retrieve user permissions" }
                             }
                         }
                     },
