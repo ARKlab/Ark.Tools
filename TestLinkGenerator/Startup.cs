@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -51,7 +55,7 @@ namespace TestWithoutArkTools
 				.RequireAuthenticatedUser()
 				.Build();
 
-			services.AddAuthentication(options =>
+            var authBuilder = services.AddAuthentication(options =>
 			{
 				options.DefaultAuthenticateScheme = auth0Scheme;
 				options.DefaultChallengeScheme = auth0Scheme;
@@ -69,11 +73,32 @@ namespace TestWithoutArkTools
 			})
 			;
 
-			services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
+            bool isAuth0 = String.IsNullOrWhiteSpace(Configuration["AzureAdB2C:Domain"]) ? true : false;
+
+            if (!isAuth0)
+            {
+                authBuilder.AddMicrosoftIdentityWebApi(options =>
+                {
+                    Configuration.Bind("AzureAdB2C", options);
+
+                    options.TokenValidationParameters.NameClaimType = "name";
+                    (options.SecurityTokenValidators[0] as JwtSecurityTokenHandler)?.InboundClaimTypeMap.Add("extension_Scope", "scope");
+                },
+                    options => {
+                        Configuration.Bind("AzureAdB2C", options);
+                    }, JwtBearerDefaults.AuthenticationScheme);
+
+                services.ArkConfigureSwaggerAzureB2C(Configuration["AzureAdB2C:Instance"], Configuration["AzureAdB2C:Domain"], Configuration["AzureAdB2C:ClientId"], Configuration["AzureAdB2C:SignUpSignInPolicyId"], Configuration["AzureAdB2C:ApiId"]);
+            }
+            else
+            {
+                services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
+            }
 
 
 
-			services.ArkConfigureSwaggerUI(c =>
+
+            services.ArkConfigureSwaggerUI(c =>
 			{
 				c.MaxDisplayedTags(100);
 				c.DefaultModelRendering(ModelRendering.Model);

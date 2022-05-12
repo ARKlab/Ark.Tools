@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -7,6 +8,8 @@ using System.Threading.Tasks;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -17,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -56,7 +60,7 @@ namespace WebApplicationDemo
 				.RequireAuthenticatedUser()
 				.Build();
 
-			services.AddAuthentication(options =>
+            var authBuilder = services.AddAuthentication(options =>
 			{
 				options.DefaultAuthenticateScheme = auth0Scheme;
 				options.DefaultChallengeScheme = auth0Scheme;
@@ -91,9 +95,29 @@ namespace WebApplicationDemo
 					setup.AddCustomStylesheet((String)AppDomain.CurrentDomain.BaseDirectory + "UIHealthChecks.css");
 			});
 
-			services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
+            bool isAuth0 = String.IsNullOrWhiteSpace(Configuration["AzureAdB2C:Domain"]) ? true : false;
 
-			services.ArkConfigureSwaggerUI(c =>
+            if (!isAuth0)
+            {
+                authBuilder.AddMicrosoftIdentityWebApi(options =>
+                {
+                    Configuration.Bind("AzureAdB2C", options);
+
+                    options.TokenValidationParameters.NameClaimType = "name";
+                    (options.SecurityTokenValidators[0] as JwtSecurityTokenHandler)?.InboundClaimTypeMap.Add("extension_Scope", "scope");
+                },
+                    options => {
+                        Configuration.Bind("AzureAdB2C", options);
+                    }, JwtBearerDefaults.AuthenticationScheme);
+
+                services.ArkConfigureSwaggerAzureB2C(Configuration["AzureAdB2C:Instance"], Configuration["AzureAdB2C:Domain"], Configuration["AzureAdB2C:ClientId"], Configuration["AzureAdB2C:SignUpSignInPolicyId"], Configuration["AzureAdB2C:ApiId"]);
+            }
+            else
+            {
+                services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
+            }
+
+            services.ArkConfigureSwaggerUI(c =>
 			{
 				c.MaxDisplayedTags(100);
 				c.DefaultModelRendering(ModelRendering.Model);
