@@ -46,11 +46,13 @@ namespace Ark.Tools.AspNetCore
 
                 //I add only if ETag is not null
                 if (etag._ETag != null)
-                    resHeader.ETag = new EntityTagHeaderValue($"\"{etag._ETag}\"");
+                {
+                    //If is whitespace or empty I throw exception
+                    if (etag._ETag.All(char.IsWhiteSpace) || etag._ETag == string.Empty)
+                        throw new InvalidOperationException("ETag value is empty or consists only of white-space characters");
 
-                //If is whitespace or empty I throw exception
-                if (etag._ETag.All(char.IsWhiteSpace) || etag._ETag == string.Empty)
-                    throw new InvalidOperationException("ETag value is empty or consists only of white-space characters");
+                    resHeader.ETag = new EntityTagHeaderValue($"\"{etag._ETag}\"");
+                }
             }
 
             base.OnResultExecuting(context);
