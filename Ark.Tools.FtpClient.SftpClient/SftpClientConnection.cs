@@ -32,21 +32,6 @@ namespace Ark.Tools.FtpClient.SftpClient
         private const string _dsa = "1.2.840.10040.4.1";
         private const string _ecdsa = "1.2.840.10045.2.1";
 
-        [Obsolete("Use the constructor with URI", false)]
-        public SftpClientConnection(string host, NetworkCredential credentials, int port = 2222)
-            : base(host, credentials)
-        {
-            Port = port;
-            _client = _getSFtpClient();
-        }
-
-        [Obsolete("Use the constructor with FtpConfig", false)]
-        public SftpClientConnection(Uri uri, NetworkCredential credentials)
-            : base(uri, credentials)
-        {
-            _client = _getSFtpClient();
-        }
-
         public SftpClientConnection(FtpConfig ftpConfig)
             : base(ftpConfig)
         {
@@ -108,7 +93,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         private ConnectionInfo _getConnectionInfo()
         {
-            var connectionInfo = new ConnectionInfo(Uri == null ? Host : Uri.Host, Uri == null ? Port : Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password))
+            var connectionInfo = new ConnectionInfo(Uri.Host, Uri.Port, Credentials.UserName, new PasswordAuthenticationMethod(Credentials.UserName, Credentials.Password))
             {
                 Timeout = TimeSpan.FromMinutes(5),
                 RetryAttempts = 2

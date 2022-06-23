@@ -9,23 +9,6 @@ namespace Ark.Tools.FtpClient.FluentFtp
 {
     public class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
-        [Obsolete("Use the constructor with URI", false)]
-
-        public IFtpClientConnection Create(string host, NetworkCredential credentials)
-        {
-            EnsureArg.IsNotEmpty(host);
-            EnsureArg.IsNotNull(credentials);
-            return new FluentFtpClientConnection(host, credentials);
-        }
-
-        [Obsolete("Use the constructor with FtpConfig", false)]
-        public IFtpClientConnection Create(Uri uri, NetworkCredential credentials)
-        {
-            EnsureArg.IsNotNull(uri);
-            EnsureArg.IsNotNull(credentials);
-            return new FluentFtpClientConnection(uri, credentials);
-        }
-
         public IFtpClientConnection Create(FtpConfig ftpConfig)
         {
             EnsureArg.IsNotNull(ftpConfig);

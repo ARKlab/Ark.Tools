@@ -17,7 +17,6 @@ namespace Ark.Tools.FtpClient.Core
 
     public interface IFtpClientConnection : IConnection
     {
-        string Host { get; }
         Uri Uri { get; }
         NetworkCredential Credentials { get; }
 

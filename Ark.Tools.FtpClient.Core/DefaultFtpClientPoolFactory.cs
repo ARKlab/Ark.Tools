@@ -14,18 +14,6 @@ namespace Ark.Tools.FtpClient.Core
             _connectionFactory = connectionFactory;
         }
 
-        [Obsolete("Use the constructor with URI", false)]
-        public IFtpClientPool Create(int maxPoolSize, string host, NetworkCredential credentials)
-        {
-            return new FtpClientPool(maxPoolSize, host, credentials, _connectionFactory);
-        }
-
-        [Obsolete("Use the constructor with FtpConfig", false)]
-        public IFtpClientPool Create(int maxPoolSize, Uri uri, NetworkCredential credentials)
-        {
-            return new FtpClientPool(maxPoolSize, uri, credentials, _connectionFactory);
-        }
-
         public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
         {
             return new FtpClientPool(maxPoolSize, ftpConfig, _connectionFactory);

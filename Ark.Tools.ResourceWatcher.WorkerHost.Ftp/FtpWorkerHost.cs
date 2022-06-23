@@ -67,12 +67,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
             {
                 _config = config;
 
-                if (config.Uri == null)
-#pragma warning disable CS0618 // Type or member is obsolete
-                    _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.Host, config.Credentials);
-#pragma warning restore CS0618 // Type or member is obsolete
-                else
-                    _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.FtpConfig);
+                _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.FtpConfig);
 
                 _parser = parser;
             }
