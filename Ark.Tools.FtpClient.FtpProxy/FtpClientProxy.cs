@@ -28,57 +28,15 @@ namespace Ark.Tools.FtpClient.FtpProxy
         private readonly IFlurlClient _client;
         private bool _isDisposed = false;
 
-        [Obsolete("Use the constructor with URI", false)]
-        public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, string host, NetworkCredential credentials)
-            : this(config,client, new TokenProvider(config), host,credentials)
-        {
-        }
-
-        [Obsolete("Use the constructor with FtpConfig", false)]
-        public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, Uri uri, NetworkCredential credentials)
-            : this(config, client, new TokenProvider(config), uri, credentials)
-        {
-        }
-
         public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, FtpConfig ftpConfig)
             : this(config, client, new TokenProvider(config), ftpConfig)
         {
             FtpConfig = ftpConfig;
         }
 
-        [Obsolete("Use the constructor with URI", false)]
-        internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, string host, NetworkCredential credentials)
-        {
-            //In here we can dispose the FtpConfig because has no 'Certificate'
-            using var ftpConfig = new FtpConfig(null, credentials);
-
-            _init(config, host, ftpConfig);
-
-            _tokenProvider = tokenProvider;
-
-            _client = _initClient(client);
-
-            _connectionInfo = _initConnectionInfo();
-        }
-
-        [Obsolete("Use the constructor with FtpConfig", false)]
-        internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, Uri uri, NetworkCredential credentials)
-        {
-            //In here we can dispose the FtpConfig because has no 'Certificate'
-            using var ftpConfig = new FtpConfig(uri, credentials);
-
-            _init(config, null, ftpConfig);
-
-            _tokenProvider = tokenProvider;
-
-            _client = _initClient(client);
-
-            _connectionInfo = _initConnectionInfo();               
-        }
-
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, FtpConfig ftpConfig)
         {
-            _init(config, null, ftpConfig);
+            _init(config, ftpConfig);
 
             _tokenProvider = tokenProvider;
 
@@ -87,7 +45,6 @@ namespace Ark.Tools.FtpClient.FtpProxy
             _connectionInfo = _initConnectionInfo();
         }
 
-        public string Host { get; private set; }
         public Uri Uri { get; private set; }
 
         public NetworkCredential Credentials { get; private set; }
@@ -100,7 +57,6 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         class ConnectionInfo
         {
-            public string Host { get; set; }
             public Uri Uri { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
@@ -236,10 +192,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
             return _tokenProvider.GetToken(ctk);
         }
 
-        private void _init(IFtpClientProxyConfig config, string host, FtpConfig ftpConfig)
+        private void _init(IFtpClientProxyConfig config, FtpConfig ftpConfig)
         {
             this._config = config;
-            this.Host = host;
             this.Uri = ftpConfig.Uri;
             this.Credentials = ftpConfig.Credentials;
 
@@ -268,7 +223,6 @@ namespace Ark.Tools.FtpClient.FtpProxy
         {
             return new ConnectionInfo
             {
-                Host = this.Host,
                 Uri = this.Uri,
                 Username = this.Credentials.UserName,
                 Password = this.Credentials.Password,

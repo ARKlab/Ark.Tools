@@ -21,22 +21,6 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         private bool _isDisposed = false;
 
-
-        [Obsolete("Use the constructor with URI", false)]
-
-        public FluentFtpClientConnection(string host, NetworkCredential credential) 
-            : base(host, credential)
-        {
-            _client = _getClient();
-        }
-
-        [Obsolete("Use the constructor with FtpConfig", false)]
-        public FluentFtpClientConnection(Uri uri, NetworkCredential credential)
-            : base(uri, credential)
-        {
-            _client = _getClient();
-        }
-
         public FluentFtpClientConnection(FtpConfig ftpConfig)
             : base(ftpConfig)
         {
@@ -106,28 +90,14 @@ namespace Ark.Tools.FtpClient.FluentFtp
         {
             FluentFTP.FtpClient client;
 
-            if (Uri != null)
+            client = new FluentFTP.FtpClient(Uri)
             {
-                client = new FluentFTP.FtpClient(Uri)
-                {
-                    Credentials = Credentials,
-                    SocketKeepAlive = true,
-                    //SocketPollInterval = 1000,
-                    //ConnectTimeout = 5000,
-                    //DataConnectionConnectTimeout = 5000,
-                };
-            }
-            else
-            {
-                client = new FluentFTP.FtpClient(Host)
-                {
-                    Credentials = Credentials,
-                    SocketKeepAlive = true,
-                    //SocketPollInterval = 1000,
-                    //ConnectTimeout = 5000,
-                    //DataConnectionConnectTimeout = 5000,
-                };
-            }          
+                Credentials = Credentials,
+                SocketKeepAlive = true,
+                //SocketPollInterval = 1000,
+                //ConnectTimeout = 5000,
+                //DataConnectionConnectTimeout = 5000,
+            };
 
             return client;
         }

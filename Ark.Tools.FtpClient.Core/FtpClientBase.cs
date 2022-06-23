@@ -16,52 +16,15 @@ namespace Ark.Tools.FtpClient.Core
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
-        public string Host { get; }
         public Uri Uri { get; }
         public NetworkCredential Credentials { get; }
         public int MaxListingRecursiveParallelism { get; }
 
         public FtpConfig FtpConfig { get; }
 
-        [Obsolete("Use the constructor with URI", false)]
-        protected FtpClientBase(string host, NetworkCredential credential)
-            : this(host, credential, 3)
-        {
-        }
-
-        [Obsolete("Use the constructor with FtpConfig", false)]
-        protected FtpClientBase(Uri uri, NetworkCredential credential)
-            : this(uri, credential, 3)
-        {
-        }
-
         protected FtpClientBase(FtpConfig ftpConfig)
             : this(ftpConfig, 3)
         {
-        }
-
-        [Obsolete("Use the constructor with URI", false)]
-        protected FtpClientBase(string host, NetworkCredential credential, int maxListingRecursiveParallelism)
-        {
-            EnsureArg.IsNotEmpty(host);
-            EnsureArg.IsNotNull(credential);
-
-            Host = host;
-            Uri = null;
-            Credentials = credential;
-            MaxListingRecursiveParallelism = maxListingRecursiveParallelism;
-        }
-
-        [Obsolete("Use the constructor with FtpConfig", false)]
-        protected FtpClientBase(Uri uri, NetworkCredential credential, int maxListingRecursiveParallelism)
-        {
-            EnsureArg.IsNotNull(uri);
-            EnsureArg.IsNotNull(credential);
-
-            Host = null;
-            Uri = uri;
-            Credentials = credential;
-            MaxListingRecursiveParallelism = maxListingRecursiveParallelism;
         }
 
         protected FtpClientBase(FtpConfig ftpConfig, int maxListingRecursiveParallelism)
@@ -70,7 +33,6 @@ namespace Ark.Tools.FtpClient.Core
             EnsureArg.IsNotNull(ftpConfig.Uri);
             EnsureArg.IsNotNull(ftpConfig.Credentials);
 
-            Host = null;
             Uri = ftpConfig.Uri;
             Credentials = ftpConfig.Credentials;
             MaxListingRecursiveParallelism = maxListingRecursiveParallelism;

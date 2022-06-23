@@ -9,7 +9,6 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
 {
     public interface IFtpConfig
     {
-        string Host { get; }
         Uri Uri { get; }
         NetworkCredential Credentials { get; }
         FtpConfig FtpConfig { get; }
