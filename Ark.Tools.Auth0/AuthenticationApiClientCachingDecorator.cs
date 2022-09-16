@@ -56,10 +56,12 @@ namespace Ark.Tools.Auth0
 
         private static TimeSpan _expiresIn(string accessToken)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             var decode = new JwtBuilder()
                                 .DoNotVerifySignature()
                                 .WithAlgorithm(new HMACSHA256Algorithm())
                                 .Decode<IDictionary<string, object>>(accessToken);
+#pragma warning restore CS0618 // Type or member is obsolete
 
             var res = DateTimeOffset.FromUnixTimeSeconds((long)decode["exp"]) - DateTimeOffset.UtcNow;
             return res;

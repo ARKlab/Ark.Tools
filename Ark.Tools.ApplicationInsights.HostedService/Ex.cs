@@ -40,7 +40,8 @@ namespace Ark.Tools.ApplicationInsights.HostedService
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
                 {           
                     o.ApplicationVersion = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
-                    o.InstrumentationKey = ctx.Configuration["ApplicationInsights:InstrumentationKey"] ?? Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
+                    o.ConnectionString = ctx.Configuration["ApplicationInsights:ConnectionString"] ?? $"InstrumentationKey=" +
+                        ctx.Configuration["ApplicationInsights:InstrumentationKey"] ?? Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
                     o.EnableAdaptiveSampling = false; // ENABLED BELOW by ConfigureTelemetryOptions with custom settings
                     o.EnableHeartbeat = true;
                     o.EnableDebugLogger = Debugger.IsAttached;

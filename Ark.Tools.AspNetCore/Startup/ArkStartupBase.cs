@@ -51,7 +51,8 @@ namespace Ark.Tools.AspNetCore.Startup
 
             services.AddApplicationInsightsTelemetry(o =>
             {
-                o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+                o.ConnectionString = Configuration["ApplicationInsights:ConnectionString"] ?? $"InstrumentationKey=" +
+                    Configuration["ApplicationInsights:InstrumentationKey"] ?? Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
                 o.EnableAdaptiveSampling = false; // enabled below by EnableAdaptiveSamplingWithCustomSettings
                 o.EnableHeartbeat = true;
                 o.AddAutoCollectedMetricExtractor = true;

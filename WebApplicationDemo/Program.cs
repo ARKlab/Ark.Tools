@@ -52,7 +52,7 @@ namespace WebApplicationDemo
 							.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
 							.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
 							.AddEnvironmentVariables()
-							.AddApplicationInsightsSettings(developerMode: env.IsDevelopment())
+							.AddApplicationInsightsSettings(null, developerMode: env.IsDevelopment())
 							.AddCommandLine(args)
 							;
 					})

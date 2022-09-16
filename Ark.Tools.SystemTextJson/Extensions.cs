@@ -24,7 +24,6 @@ namespace System.Text.Json
             @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
             @this.ConfigureForNodaTimeRanges();
 
-            @this.Converters.Add(new JsonTimeSpanConverter());
             @this.Converters.Add(new JsonIPAddressConverter());
             @this.Converters.Add(new JsonIPEndPointConverter());
 

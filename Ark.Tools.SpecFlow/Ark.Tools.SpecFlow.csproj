@@ -18,8 +18,8 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="SpecFlow" Version="3.9.58" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.16.0" />
+    <PackageReference Include="SpecFlow" Version="3.9.74" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.23.1" />
   </ItemGroup>
 
   <ItemGroup>

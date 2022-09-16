@@ -4,20 +4,20 @@ using Ark.Tools.FtpClient.Core;
 using FluentFTP;
 using NLog;
 using Sunlighter.AsyncQueueLib;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using FtpConfig = Ark.Tools.FtpClient.Core.FtpConfig;
 
 namespace Ark.Tools.FtpClient.FluentFtp
 {
     public class FluentFtpClientConnection : FtpClientConnectionBase
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
-        private readonly FluentFTP.IFtpClient _client;
+        private readonly FluentFTP.IAsyncFtpClient _client;
 
         private bool _isDisposed = false;
 
@@ -32,7 +32,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
             if (_client.IsConnected)
                 return;
 
-            await _client.ConnectAsync(ctk);
+            await _client.Connect(ctk);
         }
 
         public override async ValueTask DisconnectAsync(CancellationToken ctk = default)
@@ -40,12 +40,12 @@ namespace Ark.Tools.FtpClient.FluentFtp
             if (!_client.IsConnected)
                 return;
 
-            await _client.DisconnectAsync(ctk);
+            await _client.Disconnect(ctk);
         }
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            var res = await _client.DownloadAsync(path);
+            var res = await _client.DownloadBytes(path);
             return res;
         }
 
@@ -56,11 +56,11 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default)
         {
-            var lst = await _client.GetListingAsync(path, FtpListOption.Auto);
+            var lst = await _client.GetListing(path, FtpListOption.Auto);
             var res = lst.Select(x => new FtpEntry()
             {
                 FullPath = x.FullName,
-                IsDirectory = x.Type == FtpFileSystemObjectType.Directory,
+                IsDirectory = x.Type == FtpObjectType.Directory,
                 Modified = x.Modified,
                 Name = x.Name,
                 Size = x.Size
@@ -71,7 +71,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            await _client.UploadAsync(content, path, token:ctk);
+            await _client.UploadBytes(content, path, token:ctk);
         }
 
         protected override void Dispose(bool disposing)
@@ -86,18 +86,14 @@ namespace Ark.Tools.FtpClient.FluentFtp
             _isDisposed = true;
         }
 
-        private FluentFTP.IFtpClient _getClient()
+        private FluentFTP.IAsyncFtpClient _getClient()
         {
-            FluentFTP.FtpClient client;
+            FluentFTP.AsyncFtpClient client;
 
-            client = new FluentFTP.FtpClient(Uri)
+            client = new FluentFTP.AsyncFtpClient(Uri.Host, Credentials, Uri.Port, new FluentFTP.FtpConfig
             {
-                Credentials = Credentials,
                 SocketKeepAlive = true,
-                //SocketPollInterval = 1000,
-                //ConnectTimeout = 5000,
-                //DataConnectionConnectTimeout = 5000,
-            };
+            });
 
             return client;
         }
