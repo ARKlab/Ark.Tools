@@ -49,13 +49,17 @@ namespace Ark.Tools.Outbox.Rebus
 
                     return messages;
                 });
-
-                message.Headers.Add(_outboxRecepientHeader, destinationAddress);
+                
 
                 outgoingMessages.Enqueue(new OutboxMessage
                 {
                     Body = message.Body,
-                    Headers = message.Headers
+                    // in case of multiple subscribers and with distributed subscription store (InMemory and few other Transports)
+                    // the same TransportMessage is Send() to different 'destinationAddresses' thus the need to clone the Headers
+                    Headers = new Dictionary<string, string>(message.Headers)
+                    {
+                        {_outboxRecepientHeader,destinationAddress  }
+                    }
                 });
 
                 return Task.CompletedTask;
