@@ -14,8 +14,8 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus
 {
-    [StepDocumentation("Start ApplicationInsights Request on Receive")]
-    public class ApplicationInsightsStep : IIncomingStep
+    [StepDocumentation("ApplicationInsights Tracking compatible with native AI DependencyTracking instrumentation")]
+    public class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
     {
         private const string _activityName = "Rebus.Process";
         private readonly Container _container;
@@ -106,6 +106,18 @@ namespace Ark.Tools.Rebus
             }
 
             return true;
+        }
+        
+        public Task Process(OutgoingStepContext context, Func<Task> next)
+        {
+            // Flowing the ActivityId isn't really required as most .net libraries (ie. Azure Service Bus) do inject and instrument it already.
+            // This is needed because of the Outbox proxy
+            var message = context.Load<Message>();
+            var activity = Activity.Current;
+            if (activity is not null)
+                message.Headers["Diagnostic-Id"] = activity.Id;
+
+            return next();
         }
     }
 }

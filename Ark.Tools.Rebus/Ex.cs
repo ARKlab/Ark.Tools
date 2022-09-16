@@ -5,6 +5,7 @@ using Rebus.Pipeline;
 using Rebus.Pipeline.Receive;
 using Rebus.Pipeline.Send;
 using Rebus.Retry.FailFast;
+using Rebus.Time;
 using Rebus.Transport;
 using Rebus.Transport.InMem;
 
@@ -68,6 +69,21 @@ namespace Ark.Tools.Rebus
                 var step = new ApplicationInsightsStep(container);
                 return new PipelineStepInjector(pipeline)
                     .OnReceive(step, PipelineRelativePosition.After, typeof(FailFastStep))
+                    .OnSend(step, PipelineRelativePosition.Before, typeof(SerializeOutgoingMessageStep));
+                ;
+            });
+        }
+
+        public static void UseApplicationInsightMetrics(this OptionsConfigurer configurer, Container container)
+        {
+            configurer.Decorate<IPipeline>(c =>
+            {
+                var pipeline = c.Get<IPipeline>();
+                var time = c.Get<IRebusTime>();
+                var step = new ApplicationInsightsProcessingMetricsStep(container, time);
+
+                return new PipelineStepInjector(pipeline)
+                    .OnReceive(step, PipelineRelativePosition.Before, typeof(DispatchIncomingMessageStep))
                     ;
             });
         }

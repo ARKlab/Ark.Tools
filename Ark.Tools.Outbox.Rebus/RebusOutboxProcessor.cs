@@ -91,8 +91,15 @@ namespace Ark.Tools.Outbox.Rebus
 				catch (Exception exception)
 				{
 					_log.Error(exception, "Unhandled exception in outbox messages processor");
-					await _backoffStrategy.WaitErrorAsync(ctk);
-				}
+                    try
+                    {
+                        await _backoffStrategy.WaitErrorAsync(ctk);
+                    }
+                    catch (OperationCanceledException) when (ctk.IsCancellationRequested)
+                    {
+                        // we're shutting down
+                    }
+                }
 			}
 
 			_log.Debug("Outbox messages processor stopped");
