@@ -23,7 +23,14 @@ namespace Ark.Tools.Outbox.SqlServer
     /// </summary>
     public class HeaderSerializer
     {
-        private static readonly JsonSerializerOptions _options = new JsonSerializerOptions().ConfigureArkDefaults();
+        private static readonly JsonSerializerOptions _options = new JsonSerializerOptions()
+            .ConfigureArkDefaults();
+
+        static HeaderSerializer()
+        {
+            // ensure Dictionary Key are not mangled
+            _options.DictionaryKeyPolicy = null;
+        }
 
         /// <summary>
         /// Encodes the headers into a string
