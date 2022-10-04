@@ -30,7 +30,7 @@ namespace Ark.Tools.ApplicationInsights
             {
                 if (d.Name == "Receive" && d.Type == "Azure Service Bus")
                     return;
-                if (d.Name == "ServiceBusReceiver.Receive" && d.Type == "servicebus")
+                if (d.Name.StartsWith("ServiceBusReceiver.") && d.Type == "Azure Service Bus")
                     return;
                 if (d.Type == "SQL" && d.Data == "Commit")
                     return;
