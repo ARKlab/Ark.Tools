@@ -8,7 +8,9 @@ This is an alternative to a [Singleton Continous Webjob](https://github.com/proj
 
 The only external dependency of `SingletonBackgroundService` is `IDistributedLockProvider` which has to be provided.
 
-> Warning: choose an implementaion that support HandleLoss detection to guarantee that if one instance _lose_ the Singleton Lock it get's stopped. Otherwise Singleton behaviour is not guaranteed.
+> WARN: choose an implementaion that support HandleLoss detection to guarantee that if one instance _lose_ the Singleton Lock it get's stopped. Otherwise Singleton behaviour is not guaranteed.
+> 
+> DistributedLock.Azure and DistributedLock.SqlServer are **suggested**
 
 ```cs
 
