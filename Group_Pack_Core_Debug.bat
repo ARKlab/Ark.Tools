@@ -19,6 +19,7 @@ setlocal
 "%MSBUILD%" "Ark.Tools.Auth0\Ark.Tools.Auth0.csproj"													/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.Core\Ark.Tools.Core.csproj"														/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.Http\Ark.Tools.Http.csproj"														/t:Pack /p:Configuration=Debug
+"%MSBUILD%" "Ark.Tools.Hosting\Ark.Tools.Hosting.csproj"												/t:Pack /p:Configuration=Debug
 
 "%MSBUILD%" "Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj"								/t:Pack /p:Configuration=Debug
 "%MSBUILD%" "Ark.Tools.ApplicationInsights.HostedService\Ark.Tools.ApplicationInsights.HostedService.csproj"	/t:Pack /p:Configuration=Debug
