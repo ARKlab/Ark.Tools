@@ -1,5 +1,3 @@
-[[_TOC_]]
-
 # Singleton Background Service
 
 SingletonBackgroundService can be used as a replacement of [BackgroundService](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services?view=aspnetcore-6.0&tabs=visual-studio#backgroundservice-base-class) 
@@ -96,7 +94,8 @@ If your `BackgroundService` is inerently a Periodic runner, this behaviour can b
 ## How to test
 
 Use `Test.SingletonBackgroundService` project running AzureStorageEmulator or Azurite locally. Azurite on Docker is suggested.
-Use StorageExplorer to create the "locks" container on the local emulator.
+
+> The "locks" container must be created. Use StorageExplorer to create the "locks" container on the local emulator or add some code to make it happen.
 
 Launch multiple instances of the sample and observe how the two registered services behave.
 
