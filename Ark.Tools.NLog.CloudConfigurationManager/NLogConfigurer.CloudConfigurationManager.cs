@@ -33,6 +33,15 @@ namespace Ark.Tools.NLog
                 );
         }
 
+        public static Configurer WithSlackTargetFromAppSettings(this Configurer @this, bool async = true)
+        {
+            var cfgSlack = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SlackWebHook);
+            if (!string.IsNullOrWhiteSpace(cfgSlack))
+                @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
+
+            return @this;
+        }
+
         public static Configurer WithDatabaseTargetFromCloudConfiguration(this Configurer @this, string logTableName, bool async = true)
         {
             return @this.WithDatabaseTarget(logTableName, CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SqlConnStringName), async: async);
@@ -44,6 +53,7 @@ namespace Ark.Tools.NLog
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromCloudConfiguration(logTableName, async)
                         .WithMailTargetFromCloudConfiguration(mailTo, async: false)
+                        .WithSlackTargetFromAppSettings(async)
                         ;
         }
         public static Configurer WithDefaultTargetsFromCloudConfiguration(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
@@ -52,6 +62,7 @@ namespace Ark.Tools.NLog
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromCloudConfiguration(logTableName, async)
                         .WithMailTargetFromCloudConfiguration(mailFrom, mailTo, async: false)
+                        .WithSlackTargetFromAppSettings(async)
                         ;
         }
 

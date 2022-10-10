@@ -14,6 +14,11 @@ namespace Ark.Tools.NLog
                 logTableName, cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName), 
                 mailFrom, cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.',':')], 
                 cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName), async);
+
+            var cfgSlack = cfg[NLogDefaultConfigKeys.SlackWebHook];
+            if (!string.IsNullOrWhiteSpace(cfgSlack))
+                @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
+
             return @this;
         }
     }

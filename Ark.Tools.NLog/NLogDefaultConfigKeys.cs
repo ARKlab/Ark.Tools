@@ -13,5 +13,7 @@ namespace Ark.Tools.NLog
         public const string SmtpUserName = "NLog.SmtpUserName";
         public const string SmtpPassword = "NLog.SmtpPassword";
         public const string SmtpUseSsl = "NLog.SmtpUseSsl";
+
+        public const string SlackWebHook = "NLog.SlackWebHook";
     };
 }

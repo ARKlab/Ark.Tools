@@ -24,6 +24,15 @@ namespace Ark.Tools.NLog
                 );
         }
 
+        public static Configurer WithSlackTargetFromAppSettings(this Configurer @this, bool async = true)
+        {
+            var cfgSlack = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SlackWebHook];
+            if (!string.IsNullOrWhiteSpace(cfgSlack))
+                @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
+
+            return @this;
+        }
+
         public static Configurer WithDatabaseTargetFromAppSettings(this Configurer @this, string logTableName, bool async = true)
         {
             return @this.WithDatabaseTarget(logTableName, ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SqlConnStringName].ConnectionString, async: async);
@@ -35,6 +44,7 @@ namespace Ark.Tools.NLog
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromAppSettings(logTableName, async)
                         .WithMailTargetFromAppSettings(mailFrom, mailTo, async: false)
+                        .WithSlackTargetFromAppSettings(async)
                         ;
         }
 
