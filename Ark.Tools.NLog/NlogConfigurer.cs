@@ -12,12 +12,13 @@ using System.Linq;
 using NLog.Common;
 using System.Diagnostics;
 using NLog.LayoutRenderers;
+using Ark.Tools.NLog.Slack;
 
 namespace Ark.Tools.NLog
 {
-
     public static class NLogConfigurer
     {
+        public const string SlackTarget = "Ark.Slack";
         public const string ConsoleTarget = "Ark.Console";
         public const string FileTarget = "Ark.File";
         public const string DatabaseTarget = "Ark.Database";
@@ -86,12 +87,18 @@ namespace Ark.Tools.NLog
                         .WithMailTarget(mailFrom, mailTo, smtpConnectionString, async: false)
                         ;
         }
-
         public static Configurer WithDefaultRules(this Configurer @this)
         {
             return @this.WithConsoleRule("*", LogLevel.Trace)
                         .WithDatabaseRule("*", LogLevel.Info)
                         .WithMailRule("*", LogLevel.Fatal)
+                        ;
+        }
+
+        public static Configurer WithSlackDefaultRules(this Configurer @this)
+        {
+            return @this.WithSlackRule("*", LogLevel.Fatal)
+                        .WithSlackRule("Slack.*", LogLevel.Trace, LogLevel.Error)
                         ;
         }
 
@@ -165,6 +172,13 @@ namespace Ark.Tools.NLog
                     ;
             }
 
+            return @this;
+        }
+
+        public static Configurer WithSlackDefaultTargetsAndRules(this Configurer @this, string slackwebhook, bool async = true)
+        {
+            @this.WithSlackTarget(slackwebhook, async)
+                 .WithSlackDefaultRules();
             return @this;
         }
 
@@ -275,6 +289,17 @@ namespace Ark.Tools.NLog
             #endregion
 
             #region targets
+            public Configurer WithSlackTarget(string slackwebhook, bool async = true)
+            {
+                var slackTarget = new SlackTarget
+                {
+                    AppName = _appName,
+                    WebHookUrl = slackwebhook,
+                };
+                _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) as Target : slackTarget);
+                return this;
+            }
+
             public Configurer WithConsoleTarget(bool async = true)
             {
                 var consoleTarget = new ColoredConsoleTarget();
@@ -419,7 +444,20 @@ VALUES
 
             #endregion targets
             #region rules
+            public Configurer WithSlackRule(string loggerPattern, LogLevel level, bool final = false)
+            {
+                var target = _config.FindTargetByName(SlackTarget);
+                _config.LoggingRules.Add(new LoggingRule(loggerPattern, level, target) { Final = final });
 
+                return this;
+            }
+            public Configurer WithSlackRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
+            {
+                var target = _config.FindTargetByName(SlackTarget);
+                _config.LoggingRules.Add(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { Final = final });
+
+                return this;
+            }
             public Configurer WithConsoleRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(ConsoleTarget);
