@@ -17,6 +17,7 @@ namespace Ark.Tools.NLog
                 , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUserName)
                 , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpPassword)
                 , bool.Parse(CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUseSsl))
+                , async
                 );
         }
 
@@ -30,10 +31,11 @@ namespace Ark.Tools.NLog
                 , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUserName)
                 , CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpPassword)
                 , bool.Parse(CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUseSsl))
+                , async
                 );
         }
 
-        public static Configurer WithSlackTargetFromAppSettings(this Configurer @this, bool async = true)
+        public static Configurer WithSlackTargetFromCloudConfiguration(this Configurer @this, bool async = true)
         {
             var cfgSlack = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SlackWebHook);
             if (!string.IsNullOrWhiteSpace(cfgSlack))
@@ -52,8 +54,8 @@ namespace Ark.Tools.NLog
             return @this.WithConsoleTarget(async)
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromCloudConfiguration(logTableName, async)
-                        .WithMailTargetFromCloudConfiguration(mailTo, async: false)
-                        .WithSlackTargetFromAppSettings(async)
+                        .WithMailTargetFromCloudConfiguration(mailTo, async)
+                        .WithSlackTargetFromCloudConfiguration(async)
                         ;
         }
         public static Configurer WithDefaultTargetsFromCloudConfiguration(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
@@ -61,8 +63,8 @@ namespace Ark.Tools.NLog
             return @this.WithConsoleTarget(async)
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromCloudConfiguration(logTableName, async)
-                        .WithMailTargetFromCloudConfiguration(mailFrom, mailTo, async: false)
-                        .WithSlackTargetFromAppSettings(async)
+                        .WithMailTargetFromCloudConfiguration(mailFrom, mailTo, async)
+                        .WithSlackTargetFromCloudConfiguration(async)
                         ;
         }
 

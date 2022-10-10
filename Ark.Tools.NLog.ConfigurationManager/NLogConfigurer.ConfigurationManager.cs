@@ -21,6 +21,7 @@ namespace Ark.Tools.NLog
                 , ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUserName]
                 , ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPassword]
                 , bool.Parse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUseSsl])
+                , async
                 );
         }
 
@@ -43,7 +44,7 @@ namespace Ark.Tools.NLog
             return @this.WithConsoleTarget(async)
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromAppSettings(logTableName, async)
-                        .WithMailTargetFromAppSettings(mailFrom, mailTo, async: false)
+                        .WithMailTargetFromAppSettings(mailFrom, mailTo, async)
                         .WithSlackTargetFromAppSettings(async)
                         ;
         }
