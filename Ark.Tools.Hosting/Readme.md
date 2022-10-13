@@ -6,11 +6,13 @@ This is an alternative to a [Singleton Continous Webjob](https://github.com/proj
 
 ## How to use
 
-The only external dependency of `SingletonBackgroundService` is `IDistributedLockProvider` which has to be provided.
+The only non-Microsoft dependency of `SingletonBackgroundService` is the wonderful [DistributedLock](https://github.com/madelson/DistributedLock#readme) library.
 
-> WARN: choose an implementaion that support HandleLoss detection to guarantee that if one instance _lose_ the Singleton Lock it get's stopped. Otherwise Singleton behaviour is not guaranteed.
+Register the `IDistributedLockProvider` interface as singleton using the preferred implementation.
+
+> WARN: choose an implementaion that support HandleLoss to guarantee that if one instance _lose_ the Singleton Lock it get's stopped. Otherwise Singleton behaviour is not guaranteed.
 > 
-> DistributedLock.Azure and DistributedLock.SqlServer are **suggested**
+> [DistributedLock.Azure](https://github.com/madelson/DistributedLock/blob/master/docs/DistributedLock.Azure.md) and [DistributedLock.SqlServer](https://github.com/madelson/DistributedLock/blob/master/docs/DistributedLock.SqlServer.md) are known to support [HandleLoss detection](https://github.com/madelson/DistributedLock/blob/master/docs/Other%20topics.md#detecting-handle-loss).
 
 ```cs
 
@@ -25,11 +27,14 @@ The only external dependency of `SingletonBackgroundService` is `IDistributedLoc
 Then implement your `BackgroundService` based on `SingletonBackgroundService` overriding `RunAsync` instead of `ExecuteAsync`.
 
 ```cs
+using Ark.Tools.Hosting;
+using Medallion.Threading;
+using Microsoft.Extensions.Logging;
 
     internal class MyService : Ark.Tools.Hosting.SingletonBackgroundService
     {
 
-        public MyService(IDistributedLockProvider distributedLockProvider, ILogger<RunForeverThrowsRandomly> logger, string? serviceName = null)
+        public MyService(IDistributedLockProvider distributedLockProvider, ILogger<MyService> logger, string? serviceName = null)
             : base(distributedLockProvider, logger, serviceName)
         {
         }
@@ -43,6 +48,7 @@ Then implement your `BackgroundService` based on `SingletonBackgroundService` ov
             }
         }
     }
+}
 
 ```
 
