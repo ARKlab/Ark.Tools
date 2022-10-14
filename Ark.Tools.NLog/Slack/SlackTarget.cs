@@ -3,6 +3,8 @@ using NLog.Common;
 using NLog.Config;
 using NLog.Targets;
 
+using Slack.Webhooks;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +17,8 @@ namespace Ark.Tools.NLog.Slack
         [RequiredParameter]
         public string WebHookUrl { get; set; }
         public string AppName { get; set; }
+
+        private SlackClient _client = null;
 
         public SlackTarget() : base()
         {
@@ -34,6 +38,8 @@ namespace Ark.Tools.NLog.Slack
             Uri uriResult;
             if (!Uri.TryCreate(this.WebHookUrl, UriKind.Absolute, out uriResult))
                 throw new ArgumentOutOfRangeException("WebHookUrl", "Webhook URL is an invalid URL.");
+
+            _client = new SlackClient(this.WebHookUrl);
 
             if (this.ContextProperties.Count == 0)
             {
@@ -66,7 +72,7 @@ namespace Ark.Tools.NLog.Slack
             var message = RenderLogEvent(Layout, info.LogEvent);
 
             var slack = SlackMessageBuilder
-                .Build(this.WebHookUrl)
+                .Build()
                 .OnError(e => info.Continuation(e))
                 .WithMessage(message);
 
@@ -87,7 +93,7 @@ namespace Ark.Tools.NLog.Slack
                 slack.AddAttachment(exception.Message, color, new[] { ($"Type: {exception.GetType()}", exception.StackTrace ?? "N/A") });
             }
 
-            slack.Send();
+            slack.Send(_client);
         }
 
         private string _getSlackColorFromLogLevel(LogLevel level)
@@ -105,6 +111,14 @@ namespace Ark.Tools.NLog.Slack
             { LogLevel.Fatal, "danger" },
             { LogLevel.Info, "#2a80b9" },
         };
+
+        protected override void CloseTarget()
+        {
+            _client?.Dispose();
+            _client = null;
+
+            base.CloseTarget();
+        }
     }
 
 

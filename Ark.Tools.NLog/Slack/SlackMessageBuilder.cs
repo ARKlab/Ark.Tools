@@ -7,20 +7,18 @@ namespace Ark.Tools.NLog.Slack
 {
     public class SlackMessageBuilder
     {
-        private readonly string _webHookUrl;
         private readonly SlackMessage _slackMessage;
         private event Action<Exception> Error;
         private bool _existError = false;
 
-        public SlackMessageBuilder(string webHookUrl)
+        public SlackMessageBuilder()
         {
-            this._webHookUrl = webHookUrl;
             _slackMessage = new SlackMessage();
         }
 
-        public static SlackMessageBuilder Build(string webHookUrl)
+        public static SlackMessageBuilder Build()
         {
-            return new SlackMessageBuilder(webHookUrl);
+            return new SlackMessageBuilder();
         }
 
         public SlackMessageBuilder WithMessage(string message)
@@ -89,12 +87,11 @@ namespace Ark.Tools.NLog.Slack
             return this;
         }
 
-        public void Send()
+        public void Send(SlackClient client)
         {
             try
             {
-                using var c = new SlackClient(this._webHookUrl);
-                c.Post(_slackMessage);
+                client.Post(_slackMessage);
             }
             catch (Exception e)
             {
