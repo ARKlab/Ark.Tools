@@ -15,7 +15,7 @@ namespace Ark.Tools.NLog
                 mailFrom, cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.',':')], 
                 cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName), async);
 
-            var cfgSlack = cfg[NLogDefaultConfigKeys.SlackWebHook];
+            var cfgSlack = cfg[NLogDefaultConfigKeys.SlackWebHook.Replace('.', ':')];
             if (!string.IsNullOrWhiteSpace(cfgSlack))
                 @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
 
