@@ -113,3 +113,21 @@ Notice that:
 - Kill the console running `RunForeverThrowsRandomly` (via X), it's going to be started on another instance after about 1min, due to Lock Lease expire
 - Close the console running `RunForeverThrowsRandomly` using Ctrl+C, it's going to be started on another instance almost immediatly as the clean Shutdown release the Lock
 
+## Common Issue
+
+### RunAsync() is never called
+
+This is generally linked to a misconfiguration of the `IDistributedLock` library.
+When using the AzureStorage implementation, the `container` used for locks must be created. 
+
+```cs
+// create "locks" container prior to starting the Host
+var cfg = host.GetService<IConfiguration>();
+var container = new Azure.Storage.Blobs.BlobContainerClient(ctx.Configuration["ConnectionStrings:Storage"],"locks");
+await container.CreateIfNotExistsAsync();
+
+host.RunAsync();
+
+```
+
+Enable logging via `.ConfigureLogging()` to have information about the actual failure.
