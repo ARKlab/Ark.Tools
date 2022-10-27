@@ -13,7 +13,7 @@ namespace Test.SingletonBackgroundService
     {
         static async Task Main(string[] args)
         {
-            var host = Host.CreateDefaultBuilder(args)
+            var host = Host.CreateDefaultBuilder(args)                
                 .ConfigureServices((ctx,s) =>
                 {
                     s.AddSingleton<IDistributedLockProvider>(

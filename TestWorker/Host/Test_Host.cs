@@ -113,14 +113,9 @@ namespace TestWorker.HostNs
 
 		}
 
-        public static Host Configure(IConfiguration configuration, Test_Recipe? recipe = null, Action<ITest_Host_Config> configurer = null)
+        public static Host Configure(IConfiguration configuration, Test_Recipe? recipe = null, Action<Test_Host_Config> configurer = null)
         {
-            var mailingList = configuration["NLog:MailingList"];
-            var nlogConnectionString = configuration["ConnectionStrings:NLog.Database"];
-            var nlogSmtp = configuration["ConnectionStrings:NLog.Smtp"];
             var localRecipe = configuration["Test:Recipe"];
-
-            var ns = Test_Constants.AppName;
 
             Test_Recipe r = default(Test_Recipe);
 
@@ -128,11 +123,6 @@ namespace TestWorker.HostNs
             {
                 if (recipe.HasValue)
                     r = recipe.Value;
-
-                NLogConfigurer
-                    .For(ns)
-                    .WithDefaultTargetsAndRules(logTableName: $"{r}_{ns.Replace(".", "")}", nlogConnectionString, NLogConfigurer.MailFromDefault, mailingList, nlogSmtp)
-                    .Apply();
 
                 Host h = null;
 
@@ -151,11 +141,13 @@ namespace TestWorker.HostNs
             throw new InvalidOperationException("Invalid Recipe");
         }
 
-        private static Host _configureForTest(IConfiguration configuration, Action<ITest_Host_Config> configurer)
+        private static Host _configureForTest(IConfiguration configuration, Action<Test_Host_Config> configurer)
         {
             var baseCfg = new Test_Host_Config()
             {
                 StateDbConnectionString = configuration["ConnectionStrings:Workers.Database"],
+                Sleep = TimeSpan.FromSeconds(30),
+                MaxRetries = 2,
             };
 
             var rebusCfg = new RebusResourceNotifier_Config()

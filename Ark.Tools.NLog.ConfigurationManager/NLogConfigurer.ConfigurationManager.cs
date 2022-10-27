@@ -33,6 +33,13 @@ namespace Ark.Tools.NLog
 
             return @this;
         }
+        public static Configurer WithApplicationInsightsFromAppSettings(this Configurer @this, bool async = true)
+        {
+            var iKey = ConfigurationManager.AppSettings["APPINSIGHTS_INSTRUMENTATIONKEY"];
+            @this.WithApplicationInsightsTargetsAndRules(iKey, async);
+
+            return @this;
+        }
 
         public static Configurer WithDatabaseTargetFromAppSettings(this Configurer @this, string logTableName, bool async = true)
         {
@@ -45,17 +52,15 @@ namespace Ark.Tools.NLog
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromAppSettings(logTableName, async)
                         .WithMailTargetFromAppSettings(mailFrom, mailTo, async)
-                        .WithSlackTargetFromAppSettings(async)
                         ;
         }
 
-        public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true, bool disableMailInDevelop = true)
+        public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
         {
             @this.WithDefaultTargetsFromAppSettings(logTableName, mailFrom, mailTo, async);
             @this.WithDefaultRules();
-            if (disableMailInDevelop)
-                @this.DisableMailRuleWhenInVisualStudio();
-            @this.ThrowInternalExceptionsInVisualStudio();
+            @this.WithSlackTargetFromAppSettings(async);
+            @this.WithApplicationInsightsFromAppSettings(async);
             return @this;
         }
     }

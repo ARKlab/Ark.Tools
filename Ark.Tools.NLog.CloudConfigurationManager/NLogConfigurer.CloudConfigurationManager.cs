@@ -35,11 +35,18 @@ namespace Ark.Tools.NLog
                 );
         }
 
-        public static Configurer WithSlackTargetFromCloudConfiguration(this Configurer @this, bool async = true)
+        public static Configurer WithSlackTargetAndRuleFromCloudConfiguration(this Configurer @this, bool async = true)
         {
             var cfgSlack = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SlackWebHook);
             if (!string.IsNullOrWhiteSpace(cfgSlack))
                 @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
+
+            return @this;
+        }
+        public static Configurer WithApplicationInsightsTargetAndRuleFromCloudConfiguration(this Configurer @this, bool async = true)
+        {
+            var iKey = CloudConfigurationManager.GetSetting("APPINSIGHTS_INSTRUMENTATIONKEY");
+            @this.WithApplicationInsightsTargetsAndRules(iKey, async);
 
             return @this;
         }
@@ -55,7 +62,6 @@ namespace Ark.Tools.NLog
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromCloudConfiguration(logTableName, async)
                         .WithMailTargetFromCloudConfiguration(mailTo, async)
-                        .WithSlackTargetFromCloudConfiguration(async)
                         ;
         }
         public static Configurer WithDefaultTargetsFromCloudConfiguration(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
@@ -64,26 +70,23 @@ namespace Ark.Tools.NLog
                         .WithFileTarget(async)
                         .WithDatabaseTargetFromCloudConfiguration(logTableName, async)
                         .WithMailTargetFromCloudConfiguration(mailFrom, mailTo, async)
-                        .WithSlackTargetFromCloudConfiguration(async)
                         ;
         }
 
-        public static Configurer WithDefaultTargetsAndRulesFromCloudConfiguration(this Configurer @this, string logTableName, string mailTo, bool async = true, bool disableMailInDevelop = true)
+        public static Configurer WithDefaultTargetsAndRulesFromCloudConfiguration(this Configurer @this, string logTableName, string mailTo, bool async = true)
         {
             @this.WithDefaultTargetsFromCloudConfiguration(logTableName, mailTo, async);
             @this.WithDefaultRules();
-            if (disableMailInDevelop)
-                @this.DisableMailRuleWhenInVisualStudio();
-            @this.ThrowInternalExceptionsInVisualStudio();
+            @this.WithSlackTargetAndRuleFromCloudConfiguration(async);
+            @this.WithApplicationInsightsTargetAndRuleFromCloudConfiguration(async);
             return @this;
         }
-        public static Configurer WithDefaultTargetsAndRulesFromCloudConfiguration(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true, bool disableMailInDevelop = true)
+        public static Configurer WithDefaultTargetsAndRulesFromCloudConfiguration(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
         {
             @this.WithDefaultTargetsFromCloudConfiguration(logTableName, mailFrom, mailTo, async);
             @this.WithDefaultRules();
-            if (disableMailInDevelop)
-                @this.DisableMailRuleWhenInVisualStudio();
-            @this.ThrowInternalExceptionsInVisualStudio();
+            @this.WithSlackTargetAndRuleFromCloudConfiguration(async);
+            @this.WithApplicationInsightsTargetAndRuleFromCloudConfiguration(async);
             return @this;
         }
     }

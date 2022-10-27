@@ -129,7 +129,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             var now = DateTime.UtcNow;
 
-            MappedDiagnosticsLogicalContext.Set("RequestID", Guid.NewGuid().ToString());
+            using var _ = ScopeContext.PushProperty("RequestID", Guid.NewGuid().ToString());
             var activityRun = _diagnosticSource.RunStart(runType, now);
 
             try

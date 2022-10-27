@@ -17,7 +17,6 @@ namespace Ark.Tools.NLog
     /// </summary>
     [LayoutRenderer("exception")]
     [ThreadAgnostic]
-    [ThreadSafe]
     public class DemystifiedExceptionLayoutRenderer : ExceptionLayoutRenderer
     {
         /// <summary>

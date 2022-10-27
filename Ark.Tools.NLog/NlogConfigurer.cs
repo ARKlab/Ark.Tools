@@ -4,21 +4,21 @@ using NLog;
 using NLog.Config;
 using NLog.Targets;
 using Microsoft.Data.SqlClient;
-using Dapper;
 using NLog.Targets.Wrappers;
 using System.Text;
 using System;
 using System.Linq;
 using NLog.Common;
 using System.Diagnostics;
-using NLog.LayoutRenderers;
 using Ark.Tools.NLog.Slack;
+using Microsoft.ApplicationInsights.NLogTarget;
 
 namespace Ark.Tools.NLog
 {
     public static class NLogConfigurer
     {
         public const string SlackTarget = "Ark.Slack";
+        public const string ApplicationInsightsTarget = "Ark.ApplicationInsights";
         public const string ConsoleTarget = "Ark.Console";
         public const string FileTarget = "Ark.File";
         public const string DatabaseTarget = "Ark.Database";
@@ -102,6 +102,12 @@ namespace Ark.Tools.NLog
                         ;
         }
 
+        public static Configurer WithApplicationInsightsDefaultRules(this Configurer @this)
+        {
+            return @this.WithApplicationInsightsRule("*", LogLevel.Error)
+                        ;
+        }
+
         public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, string smtpConnectionString, bool consoleEnabled = false,  bool async = true)
         {            
             if (consoleEnabled)
@@ -182,18 +188,23 @@ namespace Ark.Tools.NLog
             return @this;
         }
 
-        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, bool async = true, bool disableMailInDevelop = true)
+        public static Configurer WithApplicationInsightsTargetsAndRules(this Configurer @this, string instrumentationKey, bool async = true)
+        {
+            @this.WithApplicationInsightsTarget(instrumentationKey, async)
+                 .WithApplicationInsightsDefaultRules();
+            return @this;
+        }
+
+        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, bool async = true)
         {
             @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, NLogConfigurer.MailFromDefault, mailTo, null, !_isProduction(), async);
-            if (disableMailInDevelop)
-                @this.DisableMailRuleWhenInVisualStudio();
-            @this.ThrowInternalExceptionsInVisualStudio();
+
             return @this;
         }
 
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo,
             string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl,
-            bool async = true, bool disableMailInDevelop = true)
+            bool async = true)
         {
             var cs = new SmtpConnectionBuilder();
             cs.Server = smtpServer;
@@ -203,9 +214,6 @@ namespace Ark.Tools.NLog
             cs.UseSsl = useSsl;
 
             @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, NLogConfigurer.MailFromDefault, mailTo, cs.ConnectionString, !_isProduction(), async);
-            if (disableMailInDevelop)
-                @this.DisableMailRuleWhenInVisualStudio();
-            @this.ThrowInternalExceptionsInVisualStudio();
 
             return @this;
         }
@@ -222,18 +230,16 @@ namespace Ark.Tools.NLog
                 ?? "";
         }
 
-        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, bool async = true, bool disableMailInDevelop = true)
+        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp")]
+        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, bool async = true)
         {
             @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, !_isProduction(), async);
-            if (disableMailInDevelop)
-                @this.DisableMailRuleWhenInVisualStudio();
-            @this.ThrowInternalExceptionsInVisualStudio();
             return @this;
         }
 
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo,
             string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl,
-            bool async = true, bool disableMailInDevelop = true)
+            bool async = true)
         {
             var cs = new SmtpConnectionBuilder();
             cs.Server = smtpServer;
@@ -243,21 +249,15 @@ namespace Ark.Tools.NLog
             cs.UseSsl = useSsl;
 
             @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, cs.ConnectionString, !_isProduction(), async);
-            if (disableMailInDevelop)
-                @this.DisableMailRuleWhenInVisualStudio();
-            @this.ThrowInternalExceptionsInVisualStudio();
 
             return @this;
         }
 
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo,
             string smtpConnectionString,
-            bool async = true, bool disableMailInDevelop = true)
+            bool async = true)
         {
             @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, smtpConnectionString, !_isProduction(), async);
-            if (disableMailInDevelop)
-                @this.DisableMailRuleWhenInVisualStudio();
-            @this.ThrowInternalExceptionsInVisualStudio();
 
             return @this;
         }
@@ -266,12 +266,28 @@ namespace Ark.Tools.NLog
         {
             internal LoggingConfiguration _config = new LoggingConfiguration();
             private readonly string _appName;
-            private bool _throwExceptions = false;
 
             internal Configurer(string appName)
             {
                 _appName = appName;
                 ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(Configurer).Assembly);
+
+                // exclude Microsoft and System logging when NLog.Extensions.Logging is in use
+                _config.AddRule(new LoggingRule()
+                {
+                    LoggerNamePattern = "System.*",
+                    FinalMinLevel = LogLevel.Warn,
+                });
+                _config.AddRule(new LoggingRule()
+                {
+                    LoggerNamePattern = "Microsoft.*",
+                    FinalMinLevel = LogLevel.Warn,
+                });
+                _config.AddRule(new LoggingRule()
+                {
+                    LoggerNamePattern = "Microsoft.Hosting.Lifetime*",
+                    FinalMinLevel = LogLevel.Info,
+                });
             }
 
             #region debugger
@@ -297,6 +313,15 @@ namespace Ark.Tools.NLog
                     WebHookUrl = slackwebhook,
                 };
                 _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) as Target : slackTarget);
+                return this;
+            }
+            public Configurer WithApplicationInsightsTarget(string instrumentationKey, bool async = true)
+            {
+                var target = new ApplicationInsightsTarget()
+                {
+                    InstrumentationKey = instrumentationKey
+                };
+                _config.AddTarget(ApplicationInsightsTarget, async ? _wrapWithAsyncTargetWrapper(target) as Target : target);
                 return this;
             }
 
@@ -458,6 +483,22 @@ VALUES
 
                 return this;
             }
+
+            public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel level, bool final = false)
+            {
+                var target = _config.FindTargetByName(ApplicationInsightsTarget);
+                _config.LoggingRules.Add(new LoggingRule(loggerPattern, level, target) { Final = final });
+
+                return this;
+            }
+            public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
+            {
+                var target = _config.FindTargetByName(ApplicationInsightsTarget);
+                _config.LoggingRules.Add(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { Final = final });
+
+                return this;
+            }
+
             public Configurer WithConsoleRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(ConsoleTarget);
@@ -520,12 +561,6 @@ VALUES
 
             #endregion
 
-            public Configurer ThrowInternalExceptionsInVisualStudio()
-            {
-                _throwExceptions = _isVisualStudioAttached();
-                return this;
-            }
-
             public Configurer DisableMailRuleWhenInVisualStudio()
             {
                 if (_isVisualStudioAttached())
@@ -541,7 +576,7 @@ VALUES
 
             private bool _isVisualStudioAttached()
             {
-                return !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("VisualStudioVersion"));
+                return !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("VisualStudioVersion")) || Debugger.IsAttached;
             }
 
             private static Target _wrapWithAsyncTargetWrapper(Target target)
@@ -553,9 +588,12 @@ VALUES
                 return asyncTargetWrapper;
             }
 
-            public void Apply()
+            public void Apply(bool doNotDisableMailsInDebug = false)
             {
-                LogManager.ThrowExceptions = _throwExceptions;
+                if (doNotDisableMailsInDebug == false)
+                    DisableMailRuleWhenInVisualStudio();
+
+                LogManager.ThrowExceptions = _isVisualStudioAttached();
                 LogManager.ThrowConfigExceptions = true;
                 InternalLogger.LogToTrace = true;
                 // this is last, so that ThrowConfigExceptions is respected on Config change
@@ -587,10 +625,11 @@ BEGIN
     )
 END 
             ", logTableName);
-            using (var conn = new SqlConnection(connString))
-            {
-                conn.Execute(creteLogTable);
-            }
+            using var conn = new SqlConnection(connString);
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = creteLogTable;
+            cmd.ExecuteNonQuery();
         }
 
     }

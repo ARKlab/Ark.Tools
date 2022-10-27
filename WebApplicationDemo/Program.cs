@@ -13,6 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+using NLog.Extensions.Logging;
+
 namespace WebApplicationDemo
 {
 	public static class Program
@@ -56,11 +58,16 @@ namespace WebApplicationDemo
 							.AddCommandLine(args)
 							;
 					})
-					.ConfigureLogging((hostingContext, logging) =>
-					{
-						logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-						logging.AddConsole();
-						logging.AddDebug();
+					.ConfigureLogging((ctx, logging) =>
+                    {
+                        var ns = "WebApplicationDemo";
+
+                        NLogConfigurer.For(ns)
+                            .WithDefaultTargetsAndRulesFromConfiguration(ns.Replace('.', '_'), "noreply@ark-energy.eu", ctx.Configuration)
+                            .Apply();
+
+                        logging.ClearProviders();
+                        logging.AddNLog();
 					})
 					.UseStartup<Startup>();
 				});
@@ -79,22 +86,6 @@ namespace WebApplicationDemo
 			ServicePointManager.EnableDnsRoundRobin = true;
 			ServicePointManager.DnsRefreshTimeout = 4 * 60 * 1000;
 
-			var cfg = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetCurrentDirectory())
-				.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-				.AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
-				.AddEnvironmentVariables()
-				.AddCommandLine(args)
-				.Build()
-				;
-
-			var ns = "WebApplicationDemo";
-
-			NLogConfigurer.For(ns)
-			   .WithArkDefaultTargetsAndRules(ns.Replace('.', '_'), cfg.GetConnectionString("NLog.Database")
-											   , "noreply@ark-energy.eu", cfg["NLog:NotificationList"]
-											   , cfg.GetConnectionString("NLog.Smtp"))
-				.Apply();
 		}
 
 		public static async Task Main(string[] args)
