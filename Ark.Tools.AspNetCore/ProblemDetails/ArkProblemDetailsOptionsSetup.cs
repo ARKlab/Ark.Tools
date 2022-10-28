@@ -11,6 +11,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
 using Ark.Tools.Core.BusinessRuleViolation;
 using System.Diagnostics;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -20,12 +22,12 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
     {
         public ArkProblemDetailsOptionsSetup(IWebHostEnvironment environment, IProblemDetailsLinkGenerator linkGenerator)
         {
-            Environment = environment;
-            LinkGenerator = linkGenerator;
+            _environment = environment;
+            _linkGenerator = linkGenerator;
         }
 
-        private IWebHostEnvironment Environment { get; }
-        private IProblemDetailsLinkGenerator LinkGenerator { get; }
+        private readonly IWebHostEnvironment _environment;
+        private readonly IProblemDetailsLinkGenerator _linkGenerator;
 
         public void Configure(ProblemDetailsOptions options)
         {
@@ -41,7 +43,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
             options.OnBeforeWriteDetails = (ctx, details) =>
             {
-                if ( Environment.IsProduction() && (details.Status >= 400 && details.Status < 500))
+                if ( _environment.IsProduction() && (details.Status >= 400 && details.Status < 500))
                 {
                     if (details.Extensions.ContainsKey(options.ExceptionDetailsPropertyName))
                     {
@@ -51,13 +53,13 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
                 if (details is ArkProblemDetails)
                 {
-                    var path = LinkGenerator.GetLink(details as ArkProblemDetails, ctx);
+                    var path = _linkGenerator.GetLink(details as ArkProblemDetails, ctx);
                     details.Type = details.Type ?? path;
                 }
 
                 if (details is BusinessRuleProblemDetails br)
                 {
-                    var path = LinkGenerator.GetLink(br.Violation, ctx);
+                    var path = _linkGenerator.GetLink(br.Violation, ctx);
                     details.Type = path;
                 }
             };
@@ -87,7 +89,14 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
             options.Map<FluentValidation.ValidationException>(ex => new FluentValidationProblemDetails(ex, StatusCodes.Status400BadRequest));
 
-            options.Map<BusinessRuleViolationException>(ex => new BusinessRuleProblemDetails(ex.BusinessRuleViolation));
+            options.Map<BusinessRuleViolationException>(_toProblemDetails);
+        }
+
+        private Microsoft.AspNetCore.Mvc.ProblemDetails _toProblemDetails(BusinessRuleViolationException arg)
+        {
+            var ret = arg.BusinessRuleViolation.Serialize(ArkSerializerOptions.JsonOptions).Deserialize<BusinessRuleProblemDetails>(ArkSerializerOptions.JsonOptions);
+            ret.Violation = arg.BusinessRuleViolation;
+            return ret;
         }
 
         private static bool _isServerError(int? statusCode)

@@ -24,7 +24,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
             var av = ctx?.Features.Get<IRouteValuesFeature>()?.RouteValues;
             var path = _provider.Router.GetVirtualPath(new VirtualPathContext(ctx, av, dictionary, "ProblemDetails"));
 
-            var link = UriHelper.BuildRelative(ctx.Request.PathBase, path.VirtualPath);
+            var link = UriHelper.BuildAbsolute(ctx.Request.Scheme, ctx.Request.Host, ctx.Request.PathBase, path.VirtualPath);
             return link;
         }
 
@@ -37,7 +37,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
             var av = ctx?.Features.Get<IRouteValuesFeature>()?.RouteValues;
             var path = _provider.Router.GetVirtualPath(new VirtualPathContext(ctx, av, dictionary, "ProblemDetails"));
 
-            var link = UriHelper.BuildRelative(ctx.Request.PathBase, path.VirtualPath);
+            var link = UriHelper.BuildAbsolute(ctx.Request.Scheme, ctx.Request.Host, ctx.Request.PathBase, path.VirtualPath);
             return link;
         }
     }
