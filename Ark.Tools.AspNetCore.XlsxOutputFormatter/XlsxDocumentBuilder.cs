@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.XlsxOutputFormatter
 {
-    public class XlsxDocumentBuilder : IDisposable
+    public sealed class XlsxDocumentBuilder : IDisposable
     {
         public ExcelPackage Package { get; set; }
         public ExcelWorksheet Worksheet { get; set; }

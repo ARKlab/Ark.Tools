@@ -185,7 +185,7 @@ namespace Ark.Tools.Nodatime.Intervals
                     return Duration.FromMinutes(30 * count);
             }
 
-            throw new ArgumentOutOfRangeException("period");
+            throw new ArgumentOutOfRangeException(nameof(period));
         }
 
         private static Period _getIncrementPeriod(TimePeriod period)
@@ -204,7 +204,7 @@ namespace Ark.Tools.Nodatime.Intervals
                     return NodaTime.Period.FromMinutes(30);
             }
 
-            throw new ArgumentOutOfRangeException("period");
+            throw new ArgumentOutOfRangeException(nameof(period));
         }
 
         private static bool _isValidperiodSplit(TimePeriod source, TimePeriod target)

@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher
 {
-    public abstract class ResourceWatcher<T> where T : IResourceState
+    public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IResourceWatcherConfig _config;
@@ -65,7 +65,6 @@ namespace Ark.Tools.ResourceWatcher
                 }
                 catch (TaskCanceledException)
                 {
-
                 }
             }
             , _cts.Token).FailFastOnException();
@@ -130,12 +129,12 @@ namespace Ark.Tools.ResourceWatcher
             var now = DateTime.UtcNow;
 
             using var _ = ScopeContext.PushProperty("RequestID", Guid.NewGuid().ToString());
-            var activityRun = _diagnosticSource.RunStart(runType, now);
+            using var activityRun = _diagnosticSource.RunStart(runType, now);
 
             try
             {
                 //GetResources
-                var activityResource = _diagnosticSource.GetResourcesStart();
+                using var activityResource = _diagnosticSource.GetResourcesStart();
 
                 var infos = await _getResourcesInfo(ctk);
 
@@ -152,7 +151,7 @@ namespace Ark.Tools.ResourceWatcher
                 _diagnosticSource.GetResourcesSuccessful(activityResource, list.Count);
 
                 //Check State - check which entries are new or have been modified.
-                var activityCheckState = _diagnosticSource.CheckStateStart();
+                using var activityCheckState = _diagnosticSource.CheckStateStart();
 
                 var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk);
 
@@ -242,7 +241,7 @@ namespace Ark.Tools.ResourceWatcher
             var info = pc.CurrentInfo;
             var lastState = pc.LastState;
 
-            var activity = _diagnosticSource.FetchResourceStart(pc);
+            using var activity = _diagnosticSource.FetchResourceStart(pc);
 
             try
             {
@@ -264,7 +263,7 @@ namespace Ark.Tools.ResourceWatcher
             
             try
             {
-                var processActivity = _diagnosticSource.ProcessResourceStart(pc);
+                using var processActivity = _diagnosticSource.ProcessResourceStart(pc);
 
                 AsyncLazy<T> payload = new AsyncLazy<T>(() => _fetchResource(pc, ctk));
 
@@ -366,6 +365,19 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _cts?.Dispose();
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 
     public interface IResourceWatcherConfig

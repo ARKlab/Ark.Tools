@@ -52,7 +52,7 @@ namespace Ark.Tools.FtpClient.Core
             IFtpClientConnection conn = null;            
             try
             {
-                _logger.Trace("List files starting from path: {0}", startPath);
+                _logger.Trace("List files starting from path: {Path}", startPath);
 
                 conn = await GetConnection(ctk);
                 await conn.ConnectAsync(ctk);
@@ -73,7 +73,7 @@ namespace Ark.Tools.FtpClient.Core
                             TimeSpan.FromSeconds(1),
                         }, (ex, ts) =>
                         {
-                            _logger.Warn(ex, "Failed to list folder {0}. Try again soon ...", path);                            
+                            _logger.Warn(ex, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);                            
                         });
 
                     var list = await retrier.ExecuteAsync(async ct1 =>
@@ -90,7 +90,7 @@ namespace Ark.Tools.FtpClient.Core
                     foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                     {
                         if (skipFolder.Invoke(d))
-                            _logger.Info("Skipping folder: {0}", d.FullPath);
+                            _logger.Info("Skipping folder: {Path}", d.FullPath);
                         else
                             pendingFolders.Push(d);
                     }

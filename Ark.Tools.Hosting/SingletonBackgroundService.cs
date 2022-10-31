@@ -16,9 +16,11 @@ namespace Ark.Tools.Hosting
     /// </summary>
     public abstract class SingletonBackgroundService : BackgroundService
     {
-        protected readonly IDistributedLock _lock;
-        protected readonly ILogger<SingletonBackgroundService> _logger;
+        private readonly IDistributedLock _lock;
         private bool _hasWarnedForHandleLoss;
+#pragma warning disable IDE1006 // Naming Styles
+        protected ILogger<SingletonBackgroundService> _logger { get; private set; }
+#pragma warning restore IDE1006 // Naming Styles
 
         /// <summary>
         /// Unique identifier of the Service. Used to compute the Singleton Lock name.
@@ -42,6 +44,7 @@ namespace Ark.Tools.Hosting
         /// </summary>
         public Guid LockId { get; }
 
+
         /// <summary>
         /// Singleton version of the <see cref="BackgroundService"/> based on Distributed Locks.
         /// </summary>
@@ -52,7 +55,9 @@ namespace Ark.Tools.Hosting
         {
             ServiceName = serviceName ?? this.GetType().FullName!;
 
+#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms | used only for identifier hash
             using var md5 = MD5.Create();
+#pragma warning restore CA5351 // Do Not Use Broken Cryptographic Algorithms
             var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(ServiceName));
             LockId = new Guid(hash);
 

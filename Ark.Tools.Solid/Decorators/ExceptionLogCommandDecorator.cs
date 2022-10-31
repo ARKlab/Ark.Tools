@@ -34,7 +34,7 @@ namespace Ark.Tools.Solid.Decorators
             }
         }
 
-        public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default(CancellationToken))
+        public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
         {
             try
             {

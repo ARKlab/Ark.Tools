@@ -20,7 +20,6 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
     public sealed class FtpClientProxy : IFtpClientPool
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
         private IFtpClientProxyConfig _config;
         private readonly TokenProvider _tokenProvider;
         private readonly ConnectionInfo _connectionInfo;
@@ -78,7 +77,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// <returns>
         /// The byte[] of the contents of the file.
         /// </returns>
-        public async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
+        public async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
             var tok = await _getAccessToken(ctk);
 
@@ -101,7 +100,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// All entries found (files, folders, symlinks)
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default(CancellationToken))
+        public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default)
         {
             var tok = await _getAccessToken(ctk);
             
@@ -129,7 +128,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// The files found.
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default(CancellationToken))
+        public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default)
         {
             var tok = await _getAccessToken(ctk);
             if (skipFolder == null) // no folders to skip, just recurse overall
@@ -187,7 +186,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
             }            
         }
 
-        private Task<string> _getAccessToken(CancellationToken ctk = default(CancellationToken))
+        private Task<string> _getAccessToken(CancellationToken ctk = default)
         {
             return _tokenProvider.GetToken(ctk);
         }

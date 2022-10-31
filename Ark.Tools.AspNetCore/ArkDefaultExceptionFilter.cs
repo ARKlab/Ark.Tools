@@ -43,7 +43,7 @@ namespace Ark.Tools.AspNetCore
             Exception e = context.Exception;
             var requestUri = context.HttpContext?.Request?.Path ?? new PathString();
             var requestMethod = context.HttpContext?.Request?.Method ?? "METHOD_NOT_SET";
-            logger.Error(e, "Exception for {0} - {1}: {2}", requestMethod, requestUri, e.Message);
+            logger.Error(e, "Exception for {Method} - {Uri}: {Message}", requestMethod, requestUri, e.Message);
         }
     }
 }

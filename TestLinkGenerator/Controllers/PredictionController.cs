@@ -25,7 +25,7 @@ namespace TestWithoutArkTools.Controllers
 		[HttpGet("{operationId}", Name = "V1.GetOperationById")]
 		[ProducesResponseType(typeof(string), 200)]
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-		public async Task<IActionResult> GetOperationById([FromRoute]string operationId, CancellationToken ctk = default(CancellationToken))
+		public async Task<IActionResult> GetOperationById([FromRoute]string operationId, CancellationToken ctk = default)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 		{
 			var res = "Prova";

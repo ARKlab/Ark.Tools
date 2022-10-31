@@ -12,12 +12,14 @@ using Rebus.NLog.Config;
 using Rebus.Serialization.Json;
 using Rebus.Retry.Simple;
 using Ark.Tools.Rebus;
+using System;
 
 namespace Ark.Tools.Activity.Provider
 {
-    public class RebusResourceNotifier : IResourceNotifier
+    public class RebusResourceNotifier : IResourceNotifier, IDisposable
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private bool _disposedValue;
         private readonly string _providerName;
         private readonly Container _container = new Container();
 
@@ -56,7 +58,7 @@ namespace Ark.Tools.Activity.Provider
         protected Task _notify(string resourceId, Slice slice)
         {
             var resource = new Resource { Provider = _providerName, Id = resourceId };
-            _logger.Trace("Notifing ready slice for {0}@{1}", resource, slice);
+            _logger.Trace("Notifing ready slice for {Resource}@{Slice}", resource, slice);
             return _container.GetInstance<IBus>().Advanced.Topics.Publish(resource.ToString(), new ResourceSliceReady() {
                 Resource = resource,
                 Slice = slice
@@ -76,6 +78,26 @@ namespace Ark.Tools.Activity.Provider
             {
                return _providerName;
             }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _container?.Dispose();
+                }
+
+                _disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 

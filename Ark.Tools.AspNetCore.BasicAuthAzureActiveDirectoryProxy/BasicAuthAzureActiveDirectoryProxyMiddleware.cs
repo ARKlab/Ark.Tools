@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
 {
-    public class BasicAuthAzureActiveDirectoryProxyMiddleware
+    public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     {
         private readonly RequestDelegate _next;
         private readonly BasicAuthAzureActiveDirectoryProxyConfig _config;
@@ -22,10 +22,17 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
         {
             _next = next;
             _config = config;
+#pragma warning disable CA2000 // Dispose objects before losing scope
             _client = new HttpClient(new HttpClientHandler()
             {
                 AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip
             });
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        }
+
+        public void Dispose()
+        {
+            ((IDisposable)_client).Dispose();
         }
 
         public async Task Invoke(HttpContext context)
@@ -53,7 +60,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                             string username = parts[0];
                             string password = parts[1];
 
-                            var content = new FormUrlEncodedContent(new[]
+                            using var content = new FormUrlEncodedContent(new[]
                                 {
                                     new KeyValuePair<string, string>("resource", _config.Resource),
                                     new KeyValuePair<string, string>("client_id", _config.ProxyClientId),
@@ -70,10 +77,10 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                                 .Handle<Exception>()
                                 .RetryAsync(2)
                                 .ExecuteAsync(async ct => {
-                                    var res = await _client.PostAsync(url, content);
+                                    using var res = await _client.PostAsync(url, content, context.RequestAborted);
                                     res.EnsureSuccessStatusCode();
 
-                                    var payload = await res.Content.ReadAsStringAsync();
+                                    var payload = await res.Content.ReadAsStringAsync(context.RequestAborted);
                                     return JsonConvert.DeserializeObject<OAuthResult>(payload);
                                 }, context.RequestAborted, true);
 

@@ -20,8 +20,15 @@ using Rebus.Bus;
 namespace Ark.Tools.Activity.Processor
 {
 
-    public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager<TActivity> where TActivity : class, ISliceActivity
+    public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager<TActivity>, IDisposable where TActivity : class, ISliceActivity
     {
+
+        private readonly Container _container = new Container();
+        private readonly string _name;
+        private readonly IEnumerable<Resource> _dependencies;
+        private readonly Func<TActivity> _activityFactory;
+        private readonly IRebusSliceActivityManagerConfig _config;
+
         public RebusSliceActivityManager(IRebusSliceActivityManagerConfig config, Func<TActivity> instanceCreator)
         {
             _config = config;
@@ -63,14 +70,12 @@ namespace Ark.Tools.Activity.Processor
 
         }
 
-        private readonly Container _container = new Container();
-        private readonly Random _rand = new Random();
-        private readonly string _name;
-        private readonly IEnumerable<Resource> _dependencies;
-        private readonly Func<TActivity> _activityFactory;
-        private readonly IRebusSliceActivityManagerConfig _config;
-
         public Container InnerContainer { get { return _container; } }
+
+        public void Dispose()
+        {
+            _container?.Dispose();
+        }
 
         public async Task Start()
         {

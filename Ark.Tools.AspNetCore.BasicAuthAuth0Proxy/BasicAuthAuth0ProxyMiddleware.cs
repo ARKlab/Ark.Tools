@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
 {
-    public class BasicAuthAuth0ProxyMiddleware
+    public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
     {
         private readonly RequestDelegate _next;
         private readonly BasicAuthAuth0ProxyConfig _config;
         private readonly AsyncPolicy _policy;
-        private readonly IAuthenticationApiClient _auth0;
+        private readonly AuthenticationApiClientCachingDecorator _auth0;
 
         public BasicAuthAuth0ProxyMiddleware(RequestDelegate next, BasicAuthAuth0ProxyConfig config)
         {
@@ -26,7 +26,14 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
             _policy = Policy.Handle<Exception>()
                 .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(r));
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
             _auth0 = new AuthenticationApiClientCachingDecorator(new AuthenticationApiClient($"{_config.Domain}"));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        }
+
+        public void Dispose()
+        {
+            _auth0.Dispose();
         }
 
         public async Task Invoke(HttpContext context)
@@ -66,7 +73,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                                         ClientSecret = _config.ProxySecret,
                                         Realm = _config.Realm,
                                         Scope = "openid profile email",
-                                    });
+                                    }, context.RequestAborted);
 
                                     return result.AccessToken;
                                 }, context.RequestAborted, true);

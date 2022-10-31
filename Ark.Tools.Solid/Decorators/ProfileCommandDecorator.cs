@@ -28,15 +28,15 @@ namespace Ark.Tools.Solid.Decorators
             Stopwatch stopWatch = Stopwatch.StartNew();
             _decorated.Execute(command);
             stopWatch.Stop();
-            _logger.Trace(() => string.Format("Command<{0}> executed in {1}ms", command.GetType(), stopWatch.ElapsedMilliseconds));
+            _logger.Trace("Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
         }
 
-        public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default(CancellationToken))
+        public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
         {
             Stopwatch stopWatch = Stopwatch.StartNew();
             await _decorated.ExecuteAsync(command, ctk);
             stopWatch.Stop();
-            _logger.Trace(() => string.Format("Command<{0}> executed in {1}ms", command.GetType(), stopWatch.ElapsedMilliseconds));
+            _logger.Trace("Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
         }
     }
 }

@@ -13,6 +13,6 @@ namespace Ark.Tools.Solid
     {
         TResult Execute(TQuery query);
 
-        Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default(CancellationToken));
+        Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default);
     }
 }

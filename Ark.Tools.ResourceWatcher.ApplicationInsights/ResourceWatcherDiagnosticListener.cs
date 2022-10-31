@@ -12,15 +12,13 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 {
     public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     {
-        protected readonly TelemetryClient Client;
-        protected readonly TelemetryConfiguration Configuration;
+        private readonly TelemetryClient _client;
 
         private const string _type = "ProcessStep";
 
         public ResourceWatcherDiagnosticListener(TelemetryConfiguration configuration)
-        {
-            this.Configuration = configuration;
-            this.Client = new TelemetryClient(configuration);
+        {            
+            this._client = new TelemetryClient(configuration);
         }
 
         #region Event
@@ -32,7 +30,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 Name = "Ark.Tools.ResourceWatcher.HostStartEvent",
             };
             
-            this.Client.TrackEvent(telemetry);
+            this._client.TrackEvent(telemetry);
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.RunTookTooLong")]
@@ -53,7 +51,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             telemetry.Metrics.Add("ElapsedSeconds", activity.Duration.TotalSeconds);
             telemetry.Metrics.Add("ElapsedMinutes", activity.Duration.Minutes);
 
-            this.Client.TrackEvent(telemetry);
+            this._client.TrackEvent(telemetry);
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceTookTooLong")]
@@ -75,7 +73,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             telemetry.Metrics.Add("ElapsedSeconds", activity.Duration.TotalSeconds);
             telemetry.Metrics.Add("ElapsedMinutes", activity.Duration.Minutes);
 
-            this.Client.TrackEvent(telemetry);
+            this._client.TrackEvent(telemetry);
         }
         #endregion
 
@@ -97,7 +95,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 			telemetryException.Context.Operation.Id = currentActivity?.RootId;
 			telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
 
-			this.Client.TrackException(telemetryException);
+			this._client.TrackException(telemetryException);
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ReportRunConsecutiveFailureLimitReached")]
@@ -117,7 +115,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 			telemetryException.Context.Operation.Id = currentActivity?.RootId;
 			telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
 
-			this.Client.TrackException(telemetryException);
+			this._client.TrackException(telemetryException);
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceSaveFailed")]
@@ -137,7 +135,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 			telemetryException.Context.Operation.Id = currentActivity?.RootId;
 			telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
 
-			this.Client.TrackException(telemetryException);
+			this._client.TrackException(telemetryException);
         }
         #endregion
 
@@ -198,10 +196,10 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 telemetryException.Metrics.Add("Result_Error", error);
                 telemetryException.Metrics.Add("Result_Skipped", skipped);
 
-                this.Client.TrackException(telemetryException);
+                this._client.TrackException(telemetryException);
             }
 
-            this.Client.TrackRequest(telemetry);
+            this._client.TrackRequest(telemetry);
         }
         #endregion 
 
@@ -242,10 +240,10 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 telemetryException.Properties.Add("Tenant", tenant);
                 telemetryException.Metrics.Add("ResourcesFound", resourcesFound);
 
-                this.Client.TrackException(telemetryException);
+                this._client.TrackException(telemetryException);
             }
 
-            this.Client.TrackDependency(telemetry);
+            this._client.TrackDependency(telemetry);
         }
         #endregion
 
@@ -310,10 +308,10 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 				telemetryException.Metrics.Add("Resources_Banned", resourcesBanned);
 				telemetryException.Metrics.Add("Resources_NothingToDo", resourcesNothingToDo);
 
-				this.Client.TrackException(telemetryException);
+				this._client.TrackException(telemetryException);
             }
 
-            this.Client.TrackDependency(telemetry);
+            this._client.TrackDependency(telemetry);
         }
         #endregion
 
@@ -358,10 +356,10 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 telemetryException.Properties.Add("Tenant", tenant);
                 _propertiesProcessContext(telemetryException, processContext);
 
-                this.Client.TrackException(telemetryException);
+                this._client.TrackException(telemetryException);
             }
 
-            this.Client.TrackDependency(telemetry);
+            this._client.TrackDependency(telemetry);
         }
 
         #endregion
@@ -407,10 +405,10 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 telemetryException.Properties.Add("Tenant", tenant);
                 _propertiesProcessContext(telemetryException, processContext);
 
-                this.Client.TrackException(telemetryException);
+                this._client.TrackException(telemetryException);
             }
 
-            this.Client.TrackDependency(telemetry);
+            this._client.TrackDependency(telemetry);
         }
         #endregion
 

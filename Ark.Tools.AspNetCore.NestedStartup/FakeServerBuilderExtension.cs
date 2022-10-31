@@ -12,7 +12,9 @@ namespace Ark.Tools.AspNetCore.NestedStartup
     {
         public static IWebHostBuilder UseFakeServer(this IWebHostBuilder builder, IFeatureCollection featureCollection)
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope
             var server = new FakeServer(featureCollection);
+#pragma warning restore CA2000 // Dispose objects before losing scope
             return builder
                 .UseServer(server)
                 .ConfigureServices(s => s.AddSingleton(server))

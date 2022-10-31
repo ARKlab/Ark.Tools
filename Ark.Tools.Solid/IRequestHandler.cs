@@ -13,6 +13,6 @@ namespace Ark.Tools.Solid
     {
         TResponse Execute(TRequest Request);
 
-        Task<TResponse> ExecuteAsync(TRequest Request, CancellationToken ctk = default(CancellationToken));
+        Task<TResponse> ExecuteAsync(TRequest Request, CancellationToken ctk = default);
     }
 }

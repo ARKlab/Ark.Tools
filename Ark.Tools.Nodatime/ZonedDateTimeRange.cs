@@ -85,7 +85,7 @@ namespace Ark.Tools.Nodatime
             //      |------------|
             //  |--------------------|
             if (other.Contains(this))
-                return new ZonedDateTimeRange[0];
+                return Array.Empty<ZonedDateTimeRange>();
             //  |----------------|
             //                      |----|
             else if (!Overlaps(other))

@@ -53,7 +53,7 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Attributes
         /// </summary>public int Order
         public int Order
         {
-            get { return _order ?? default(int); }
+            get { return _order ?? default; }
             set { _order = value; }
         }
 

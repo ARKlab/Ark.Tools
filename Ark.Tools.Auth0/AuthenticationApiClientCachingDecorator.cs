@@ -21,16 +21,18 @@ using Polly.Contrib.DuplicateRequestCollapser;
 
 namespace Ark.Tools.Auth0
 {
-    public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient
+    public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient, IDisposable
     {
         private IAuthenticationApiClient _inner;
         private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
         private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
-        private readonly MemoryCacheProvider _memoryCacheProvider = new MemoryCacheProvider(new MemoryCache(new MemoryCacheOptions()));
+        private readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+        private readonly MemoryCacheProvider _memoryCacheProvider;
 
         public AuthenticationApiClientCachingDecorator(IAuthenticationApiClient inner)
         {
             _inner = inner;
+            _memoryCacheProvider = new MemoryCacheProvider(_cache);
             _accessTokenResponseCachePolicy = AsyncRequestCollapserPolicy.Create()
                 .WrapAsync(
                     Policy.CacheAsync(
@@ -227,6 +229,12 @@ namespace Ark.Tools.Auth0
         public Task<DeviceCodeResponse> StartDeviceFlowAsync(DeviceCodeRequest request, CancellationToken cancellationToken = default)
         {
             return _inner.StartDeviceFlowAsync(request, cancellationToken);
+        }
+
+        public void Dispose()
+        {
+            ((IDisposable)_cache).Dispose();
+            if (_inner is IDisposable disposable) disposable?.Dispose();
         }
         #endregion
     }

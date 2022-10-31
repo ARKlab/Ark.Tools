@@ -45,7 +45,7 @@ namespace Ark.Tools.Activity.Processor
                     ));
             } else
             {
-                _logger.Warn("Received an ResourceSliceReady event for the resource {0} that is not a dependency. Removing subscription to the resource.", e.Resource);
+                _logger.Warn("Received an ResourceSliceReady event for the resource {Resource} that is not a dependency. Removing subscription to the resource.", e.Resource);
                 return _bus.Advanced.Topics.Unsubscribe(e.Resource.ToString());
             }
         }

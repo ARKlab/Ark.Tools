@@ -11,7 +11,6 @@ namespace Ark.Tools.Rebus
 	{
 		private readonly Func<IHandleMessages<T>> _inner;
 		private readonly Container _container;
-		private static Logger _logger = LogManager.GetCurrentClassLogger();
 
 		public RebusScopeDecorator(Func<IHandleMessages<T>> inner, Container container)
 		{

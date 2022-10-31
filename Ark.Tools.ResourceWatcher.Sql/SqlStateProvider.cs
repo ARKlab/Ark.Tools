@@ -50,7 +50,7 @@ namespace Ark.Tools.ResourceWatcher
             public string ModifiedSourcesJson { get; set; }
         }
 
-        public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[] resourceIds = null, CancellationToken ctk = default(CancellationToken))
+        public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[] resourceIds = null, CancellationToken ctk = default)
         {
             Ensure.String.HasLengthBetween(tenant, 1, 128);
             if (resourceIds != null)
@@ -93,7 +93,7 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default(CancellationToken))
+        public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
         {
             var st = states.AsList();
             foreach(var s in st)

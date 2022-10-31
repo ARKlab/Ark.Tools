@@ -28,13 +28,11 @@ namespace TestProject
 		public static void BeforeTests()
 		{
 			Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "SpecFlow");
-			Program.InitStatic(new string[] {
-
-			});
+			Program.InitStatic(Array.Empty<string>());
 
 			//_smtp = SimpleSmtpServer.Start();
 
-			var builder = Program.GetHostBuilder(new string[] { })
+			var builder = Program.GetHostBuilder(Array.Empty<string>())
 				.ConfigureWebHost(wh =>
 				{
 					wh.UseTestServer();

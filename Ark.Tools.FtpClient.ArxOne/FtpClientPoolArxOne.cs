@@ -16,8 +16,6 @@ namespace Ark.Tools.FtpClient
 
     public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
-
         private readonly ArxOne.Ftp.FtpClient _client;
         private readonly SemaphoreSlim _semaphore;
 
@@ -41,17 +39,15 @@ namespace Ark.Tools.FtpClient
                 });
         }
 
-        public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
+        public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
             await _semaphore.WaitAsync(ctk);
             try
             {
-                using (var istrm = _client.Retr(path, FtpTransferMode.Binary))
-                using (var ms = new MemoryStream(81920))
-                {
-                    await istrm.CopyToAsync(ms, 81920, ctk);
-                    return ms.ToArray();
-                }
+                using var istrm = _client.Retr(path, FtpTransferMode.Binary);
+                using var ms = new MemoryStream(81920);
+                await istrm.CopyToAsync(ms, 81920, ctk);
+                return ms.ToArray();
             }
             finally
             {
@@ -64,11 +60,14 @@ namespace Ark.Tools.FtpClient
             await _semaphore.WaitAsync(ctk);
             try
             {
-                using (var ostrm = _client.Stor(path, FtpTransferMode.Binary))
-                {
-                    await ostrm.WriteAsync(content, 0, content.Length, ctk);
-                    await ostrm.FlushAsync(ctk);
-                }
+                using var ostrm = _client.Stor(path, FtpTransferMode.Binary);
+#if NET5_0_OR_GREATER
+
+                await ostrm.WriteAsync(content, ctk);
+#else
+                await ostrm.WriteAsync(content, 0, content.Length, ctk);
+#endif
+                await ostrm.FlushAsync(ctk);
             }
             finally
             {
@@ -88,12 +87,12 @@ namespace Ark.Tools.FtpClient
             }
         }
 
-        public override async Task<IEnumerable<Core.FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default(CancellationToken))
+        public override async Task<IEnumerable<Core.FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default)
         {
             await _semaphore.WaitAsync(ctk);
             try
             {                
-                path = path ?? "./";
+                path ??= "./";
 
                 var list = _list(path);
                 return list.Select(x => new Core.FtpEntry
@@ -127,6 +126,7 @@ namespace Ark.Tools.FtpClient
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

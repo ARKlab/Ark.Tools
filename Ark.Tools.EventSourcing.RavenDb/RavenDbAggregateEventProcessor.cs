@@ -55,7 +55,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 from {RavenDbEventSourcingConstants.AggregateEventsCollectionName} as e
 where startsWith(id(e), '{prefix}')
                 "
-				});
+				}, token:ctk);
 			}
 			catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
 			{
@@ -207,6 +207,7 @@ where startsWith(id(e), '{prefix}')
 		public void Dispose()
 		{
 			Dispose(true);
+            GC.SuppressFinalize(this);
 		}
 	}
 }

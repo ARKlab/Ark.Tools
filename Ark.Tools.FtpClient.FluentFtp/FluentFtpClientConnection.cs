@@ -16,7 +16,6 @@ namespace Ark.Tools.FtpClient.FluentFtp
 {
     public class FluentFtpClientConnection : FtpClientConnectionBase
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly FluentFTP.IAsyncFtpClient _client;
 
         private bool _isDisposed = false;
@@ -45,7 +44,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            var res = await _client.DownloadBytes(path);
+            var res = await _client.DownloadBytes(path,token: ctk);
             return res;
         }
 
@@ -56,7 +55,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default)
         {
-            var lst = await _client.GetListing(path, FtpListOption.Auto);
+            var lst = await _client.GetListing(path, FtpListOption.Auto, ctk);
             var res = lst.Select(x => new FtpEntry()
             {
                 FullPath = x.FullName,

@@ -68,6 +68,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 

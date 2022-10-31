@@ -16,7 +16,7 @@ using System;
 
 namespace Ark.Tools.AspNetCore.Auth0
 {
-    [Obsolete]
+    [Obsolete("Do not use IdToken on server-side")]
     public class Auth0IdTokenJwtEvents : JwtBearerEvents
     {
         private readonly string _domain;
@@ -62,7 +62,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                     // TODO extract domain from autority
                     if (_isDelegation(jwt))
                     {
-                        var auth0 = new ManagementApiClient(token, _domain);
+                        using var auth0 = new ManagementApiClient(token, _domain);
                         profile = await auth0.Users.GetAsync(jwt.Subject);
                     }
                     else

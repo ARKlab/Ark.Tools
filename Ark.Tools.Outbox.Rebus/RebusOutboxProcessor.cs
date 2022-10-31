@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.Rebus
 {
-    internal class RebusOutboxProcessor : IRebusOutboxProcessor
+    internal sealed class RebusOutboxProcessor : IRebusOutboxProcessor, IDisposable
     {
 		private readonly int _topMessagesToRetrieve;
 		private readonly ITransport _transport;
@@ -37,7 +37,12 @@ namespace Ark.Tools.Outbox.Rebus
 			_log = rebusLoggerFactory.GetLogger<RebusOutboxProcessor>();
 		}
 
-		public void Start()
+        public void Dispose()
+        {
+            _busDisposalCancellationTokenSource?.Dispose();
+        }
+
+        public void Start()
         {
 			_task = _processOutboxMessages(_busDisposalCancellationTokenSource.Token);
 		}

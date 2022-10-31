@@ -23,8 +23,10 @@ namespace Ark.Tools.Rebus.Tests
         private readonly IRebusTime _rebusTime;
         private readonly ConcurrentDictionary<string, DeferredMessage> _deferredMessages = new ConcurrentDictionary<string, DeferredMessage>();
 
-        public static int DueCount = 0;
+        private static int _dueCount = 0;
         private static readonly List<TestsInMemoryTimeoutManager> _instances = new List<TestsInMemoryTimeoutManager>();
+
+        public static int DueCount { get => _dueCount; set => _dueCount = value; }
 
         public static void ClearPendingDue()
         {
@@ -39,7 +41,7 @@ namespace Ark.Tools.Rebus.Tests
         {
             lock (_deferredMessages)
             {
-                Interlocked.Add(ref DueCount, -_deferredMessages.Count);
+                Interlocked.Add(ref _dueCount, -_deferredMessages.Count);
                 _deferredMessages.Clear();
             }
         }
@@ -71,7 +73,7 @@ namespace Ark.Tools.Rebus.Tests
                         id => @new,
                         (id, existing) => existing);
 
-                if (added == @new) Interlocked.Increment(ref DueCount);
+                if (added == @new) Interlocked.Increment(ref _dueCount);
             }
 
             return Task.CompletedTask;
@@ -110,7 +112,7 @@ namespace Ark.Tools.Rebus.Tests
                         foreach (var kvp in keyValuePairsToRemove)
                         {
                             _deferredMessages[kvp.Key] = kvp.Value;
-                            Interlocked.Increment(ref DueCount);
+                            Interlocked.Increment(ref _dueCount);
                         }
                         return Task.CompletedTask;
                     });
@@ -119,7 +121,7 @@ namespace Ark.Tools.Rebus.Tests
                 {
                     if (_deferredMessages.TryRemove(kvp.Key, out var _))
                     {
-                        Interlocked.Decrement(ref DueCount);
+                        Interlocked.Decrement(ref _dueCount);
                     }
                 }
 

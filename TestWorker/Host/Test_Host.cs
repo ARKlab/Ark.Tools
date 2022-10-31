@@ -117,7 +117,7 @@ namespace TestWorker.HostNs
         {
             var localRecipe = configuration["Test:Recipe"];
 
-            Test_Recipe r = default(Test_Recipe);
+            Test_Recipe r = default;
 
             if (recipe.HasValue || Enum.TryParse<Test_Recipe>(localRecipe, out r))
             {

@@ -41,7 +41,7 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter
         protected override bool CanWriteType(Type type)
         {
             if (type == null)
-                throw new ArgumentNullException("type");
+                throw new ArgumentNullException(nameof(type));
 
             return _isTypeOfIEnumerable(type);
         }

@@ -28,18 +28,18 @@ namespace Ark.Tools.Solid.Decorators
             stopWatch.Start();
             var result = _decorated.Execute(request);
             stopWatch.Stop();
-            _logger.Trace(() => string.Format("Request<{0}> executed in {1}ms", request.GetType(), stopWatch.ElapsedMilliseconds));
+            _logger.Trace(() => string.Format("Request<{Request}> executed in {Elapsed}ms", request.GetType(), stopWatch.ElapsedMilliseconds));
 
             return result;
         }
 
-        public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default(CancellationToken))
+        public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
             var result = await _decorated.ExecuteAsync(request, ctk);
             stopWatch.Stop();
-            _logger.Trace(() => string.Format("Request<{0}> executed in {1}ms", request.GetType(), stopWatch.ElapsedMilliseconds));
+            _logger.Trace(() => string.Format("Request<{Request}> executed in {Elapsed}ms", request.GetType(), stopWatch.ElapsedMilliseconds));
 
             return result;
         }

@@ -33,7 +33,7 @@ namespace Ark.Tools.Solid.SimpleInjector
         }
 
         [DebuggerStepThrough]
-        public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default(CancellationToken))
+        public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
         {
             dynamic requestHandler = _getHandlerInstance(request);
             return await requestHandler.ExecuteAsync((dynamic)request, ctk);

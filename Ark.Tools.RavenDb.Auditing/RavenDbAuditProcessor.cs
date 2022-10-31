@@ -39,7 +39,7 @@ namespace Ark.Tools.RavenDb.Auditing
 					{
 						Name = _prefixName + name,
 						Query = $@"From {name}(Revisions = true)"
-					});
+					}, token:ctk);
 				}
 				catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
 				{

@@ -30,11 +30,12 @@ namespace Ark.Tools.Outbox
         Task<int> CountAsync(CancellationToken ctk = default);
     }
 
-    public abstract class OutboxConsumerBase : IOutboxConsumer
+    public abstract class OutboxConsumerBase : IOutboxConsumer, IDisposable
     {
         private readonly Func<IOutboxContext> _outboxContextFactory;
         private CancellationTokenSource _processorCT;
         private Task _processorTask;
+        private bool _disposedValue;
 
         public TimeSpan SleepInterval { get; set; } = TimeSpan.FromSeconds(1);
         public int BatchSize { get; set; } = 1000;
@@ -104,6 +105,26 @@ namespace Ark.Tools.Outbox
         {
             _processorCT?.Dispose();
             await Task.WhenAny(_processorTask, Task.Delay(Timeout.Infinite, ctk));
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _processorCT?.Dispose();
+                }
+
+                _disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -1,14 +1,12 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
-using NLog;
 using Renci.SshNet;
 using Renci.SshNet.Async;
 using Renci.SshNet.Sftp;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -17,9 +15,8 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.FtpClient.SftpClient
 {
-    public class SftpClientConnection : FtpClientConnectionBase  //former KailFtpClient ;-)
+    public class SftpClientConnection : FtpClientConnectionBase 
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         private readonly Renci.SshNet.SftpClient _client;
 
@@ -48,12 +45,11 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <returns>
         /// All entries found (files, folders, symlinks)
         /// </returns>
-        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default(CancellationToken))
+        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
             await _ensureConnected(ctk);
 
             var rawLs = await _client.ListDirectoryAsync(path);
-            _logger.Trace("Starting parsing response for path {0}", path);
             return _parse(rawLs);
 
         }
@@ -70,7 +66,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <param name="path">The path.</param>
         /// <param name="ctk">The CTK.</param>
         /// <returns></returns>
-        public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
+        public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
             await _ensureConnected(ctk);
             using (var ms = new MemoryStream(80 * 1024))

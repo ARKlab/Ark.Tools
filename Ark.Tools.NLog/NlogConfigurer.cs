@@ -12,6 +12,7 @@ using NLog.Common;
 using System.Diagnostics;
 using Ark.Tools.NLog.Slack;
 using Microsoft.ApplicationInsights.NLogTarget;
+using TargetPropertyWithContext = Microsoft.ApplicationInsights.NLogTarget.TargetPropertyWithContext;
 
 namespace Ark.Tools.NLog
 {
@@ -262,6 +263,7 @@ namespace Ark.Tools.NLog
             return @this;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Targets are Disposed by NLog")]
         public class Configurer
         {
             internal LoggingConfiguration _config = new LoggingConfiguration();
@@ -285,7 +287,7 @@ namespace Ark.Tools.NLog
                 });
                 _config.AddRule(new LoggingRule()
                 {
-                    LoggerNamePattern = "Microsoft.Hosting.Lifetime*",
+                    LoggerNamePattern = "Microsoft.Hosting.Lifetime.*",
                     FinalMinLevel = LogLevel.Info,
                 });
             }
@@ -319,7 +321,10 @@ namespace Ark.Tools.NLog
             {
                 var target = new ApplicationInsightsTarget()
                 {
-                    InstrumentationKey = instrumentationKey
+                    InstrumentationKey = instrumentationKey,
+                    ContextProperties = {
+                        new TargetPropertyWithContext("AppName", _appName),
+                    }
                 };
                 _config.AddTarget(ApplicationInsightsTarget, async ? _wrapWithAsyncTargetWrapper(target) as Target : target);
                 return this;

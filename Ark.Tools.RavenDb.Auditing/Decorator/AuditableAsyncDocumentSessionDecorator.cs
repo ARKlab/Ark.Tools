@@ -137,7 +137,7 @@ namespace Ark.Tools.RavenDb.Auditing
 
 				foreach (var entityId in changes.Keys)
 				{
-					var entity = await _inner.LoadAsync<object>(entityId);
+					var entity = await _inner.LoadAsync<object>(entityId, token);
 
 					if (entity is IAuditableEntity)
 					{
@@ -157,7 +157,7 @@ namespace Ark.Tools.RavenDb.Auditing
 		{
 			if (entity is IAuditableEntity)
 			{
-				_ensureEntityId(entity);
+				_ensureEntityId(entity, token);
 
 				if (_ensureAndCreateAudit())
 					await _inner.StoreAsync(_audit, token);

@@ -32,7 +32,7 @@ namespace Ark.Tools.Solid.SimpleInjector
         }
 
         [DebuggerStepThrough]
-        public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default(CancellationToken))
+        public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
         {
             dynamic commandHandler = _getHandlerInstance(command);
             await commandHandler.ExecuteAsync((dynamic)command, ctk);

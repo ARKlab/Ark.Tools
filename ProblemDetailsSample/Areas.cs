@@ -20,6 +20,6 @@ namespace ProblemDetailsSample
              "1.0"
         };
 
-        public static string EnforceEmptyPayload = string.Empty;
+        public static readonly string EnforceEmptyPayload = string.Empty;
     }
 }

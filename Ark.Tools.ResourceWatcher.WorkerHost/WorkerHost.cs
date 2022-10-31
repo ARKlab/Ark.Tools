@@ -57,8 +57,6 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         private readonly List<Predicate<TMetadata>> _predicates = new List<Predicate<TMetadata>> { };
         private readonly List<Action<TQueryFilter>> _configurers = new List<Action<TQueryFilter>> { };
 
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
         private Container _container { get; } = new Container();
         private event VoidEventHandler _onBeforeStart;
 
@@ -253,6 +251,8 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             private readonly Container _container;
             private Action<TQueryFilter> _filter = null;
 
+            private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
+
             public Watcher(
                   Container container
                 , IEnumerable<Action<TQueryFilter>> filterChainBuilder
@@ -320,17 +320,17 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
                 if (data != null)
                 {
-                    _logger.Info("Retrived ResourceId={0} in {1}", context.Info.ResourceId, sw.Elapsed);
+                    _logger.Info("Retrived ResourceId={ResourceId} in {Elapsed}", context.Info.ResourceId, sw.Elapsed);
                     
                     foreach (var w in _container.GetAllInstances<IResourceProcessor<TResource, TMetadata>>())
                     {
                         sw.Restart();
                         await w.Process(data, ctk);
-                        _logger.Info("Processed ResourceId={0} with {1} in {2}", context.Info.ResourceId, w.GetType().Name, sw.Elapsed);
+                        _logger.Info("Processed ResourceId={ResourceId} with {Name} in {Elapsed}", context.Info.ResourceId, w.GetType().Name, sw.Elapsed);
                     }
                 } else
                 {
-                    _logger.Info("Retrived ResourceId={0} in {1} but is NULL, so nothing to do", context.Info.ResourceId, sw.Elapsed);
+                    _logger.Info("Retrived ResourceId={ResourceId} in {Elapsed} but is NULL, so nothing to do", context.Info.ResourceId, sw.Elapsed);
                 }               
             }
 

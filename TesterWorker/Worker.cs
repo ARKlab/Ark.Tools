@@ -41,22 +41,26 @@ namespace TesterWorker
                     {
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("Dep1"))
                         {
-                            await Task.Delay(TimeSpan.FromMilliseconds(100));
+                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
                         }
 
 
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepFail"))
                         {
 
-                            await Task.Delay(TimeSpan.FromMilliseconds(100));
+                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
                             d1.Telemetry.Success = false;
                         }
 
-                        var _ = await client.GetStringAsync("https://www.google.it");
+                        var _ = await client.GetStringAsync("https://www.google.it"
+#if NET5_0_OR_GREATER
+                            , stoppingToken
+#endif
+                            );
 
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepException"))
                         {
-                            await Task.Delay(TimeSpan.FromMilliseconds(100));
+                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
                             throw new Exception();
                         }
 

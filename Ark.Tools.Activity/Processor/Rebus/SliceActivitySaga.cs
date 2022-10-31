@@ -1,5 +1,4 @@
 ﻿using Ark.Tools.Activity.Messages;
-using NLog;
 using System.Linq;
 using System.Threading.Tasks;
 using Rebus.Sagas;
@@ -18,7 +17,6 @@ namespace Ark.Tools.Activity.Processor
 		, IHandleMessages<CoolDownMessage>
 
 	{
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly ISliceActivity _activity;
         private readonly IBus _bus;
 
@@ -30,7 +28,7 @@ namespace Ark.Tools.Activity.Processor
 
         public async Task Handle(SliceReady message)
         {
-			_activity.Logger.Info("Slice {0} received dependency for resource {1}@{2}", message.ActivitySlice, message.Resource, message.ResourceSlice);
+			_activity.Logger.Info("Slice {ActivitySlice} received dependency for resource {Resource}@{ResourceSlice}", message.ActivitySlice, message.Resource, message.ResourceSlice);
             var sourceDep = _activity.Dependencies.Single(x => x.Resource == message.Resource);
             
             if (IsNew)
@@ -55,12 +53,12 @@ namespace Ark.Tools.Activity.Processor
 				}
 				else
 				{
-					_activity.Logger.Info($"Nothing to do for Slice { Data.ActivitySlice}");
+					_activity.Logger.Info("Nothing to do for Slice {ActivitySlice}", Data.ActivitySlice);
 				}
 			}
             else
             {
-                _activity.Logger.Info("Skipped materialization for slice {0}. Missing {1}", Data.ActivitySlice, string.Join(",", Data.MissingSlices.Select(m => string.Format("{0}@{1}", m.Resource, m.ResourceSlice))));
+                _activity.Logger.Info("Skipped materialization for slice {ActivitySlice}. Missing {MissingSlices}", Data.ActivitySlice, string.Join(",", Data.MissingSlices.Select(m => string.Format("{0}@{1}", m.Resource, m.ResourceSlice))));
             }
         }
 
@@ -77,7 +75,7 @@ namespace Ark.Tools.Activity.Processor
 
 		public async Task Handle(CoolDownMessage message)
 		{
-			_activity.Logger.Info($"Message Processed after CoolDown Time for Slice { Data.ActivitySlice}");
+			_activity.Logger.Info("Message Processed after CoolDown Time for Slice {ActivitySlice}", Data.ActivitySlice);
 			await _process();
 		}
 
@@ -89,7 +87,7 @@ namespace Ark.Tools.Activity.Processor
 				Resource = _activity.Resource,
 				Slice = Data.ActivitySlice
 			});
-			_activity.Logger.Info("Completed materialization for slice {0}.", Data.ActivitySlice);
+			_activity.Logger.Info("Completed materialization for slice {ActivitySlice}.", Data.ActivitySlice);
 
 			// Reset CD
 			Data.IsScheduled = false;
@@ -105,7 +103,7 @@ namespace Ark.Tools.Activity.Processor
 
 			if (timeToWait.TotalSeconds > 0)
 			{
-				_activity.Logger.Info($"Message Deferred after {timeToWait.TotalSeconds} seconds for Slice { Data.ActivitySlice}");
+				_activity.Logger.Info("Message Deferred after {TimeToWait}s seconds for Slice {ActivitySlice}", timeToWait.TotalSeconds, Data.ActivitySlice);
 
 				await _bus.DeferLocal(timeToWait, new CoolDownMessage()
 				{

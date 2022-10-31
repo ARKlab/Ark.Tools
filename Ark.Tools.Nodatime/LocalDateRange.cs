@@ -89,7 +89,7 @@ namespace Ark.Tools.Nodatime
             //      |------------|
             //  |--------------------|
             if (other.Contains(this))
-                return new LocalDateRange[0];
+                return Array.Empty<LocalDateRange>();
             //  |----------------|
             //                      |----|
             else if (!Overlaps(other))

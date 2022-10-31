@@ -42,7 +42,7 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Serialisation
 
             var members = GetDynamicMembers(first);
 
-            if (members.Count() == 0) return;
+            if (!members.Any()) return;
 
             // Add member names as headers.
             document.AppendRow(members);

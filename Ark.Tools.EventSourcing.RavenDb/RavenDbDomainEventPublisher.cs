@@ -36,7 +36,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 await _store.Subscriptions.CreateAsync<OutboxEvent>(new SubscriptionCreationOptions<OutboxEvent>
                 {
                     Name = "OutboxEventPublisher",
-                });
+                }, token: ctk);
             } catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
             {
             }

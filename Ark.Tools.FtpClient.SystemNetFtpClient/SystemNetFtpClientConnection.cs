@@ -1,10 +1,8 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,7 +15,6 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
 
     public class SystemNetFtpClientConnection : FtpClientConnectionBase
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly System.Net.FtpClient.IFtpClient _client;
 
         public SystemNetFtpClientConnection(FtpConfig ftpConfig)
@@ -42,7 +39,7 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
             await _client.DisconnectAsync();
         }
 
-        public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default(CancellationToken))
+        public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
             await _client.ConnectAsync();
             using (var istrm = await _client.OpenReadAsync(path))
@@ -59,7 +56,7 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
             return new ValueTask<bool>(_client.IsConnected);
         }
 
-        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default(CancellationToken))
+        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default)
         {
             await _client.ConnectAsync();
             var res = await _client.GetListingAsync(path, options: FtpListOption.Modify | FtpListOption.DerefLinks);

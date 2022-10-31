@@ -8,9 +8,9 @@ namespace Ark.Tools.Sql.StoredProcedure
 {
     public abstract class AbstractStoredProcedure<TResult, TParameter> : IStoredProcedure<TResult, TParameter>
     {
-        protected DbTransaction Transaction;
 
         public TResult LastResult { get; protected set; }
+        protected DbTransaction Transaction { get; private set; }
 
         protected AbstractStoredProcedure(DbTransaction transaction)
         {
@@ -35,7 +35,7 @@ namespace Ark.Tools.Sql.StoredProcedure
 
     public abstract class AbstractStoredProcedure<TResult> : IStoredProcedure<TResult>
     {
-        protected DbTransaction Transaction;
+        protected DbTransaction Transaction { get; private set; }
 
         public TResult LastResult { get; protected set; }
 

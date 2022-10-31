@@ -22,11 +22,11 @@ namespace Ark.Tools.Rebus
 			try
 			{
 				await _inner.Handle(message);
-				_logger.Debug($"Processed message type {typeof(T).FullName} in {sw.ElapsedMilliseconds}ms");
+				_logger.Debug("Processed message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
 			}
 			catch (Exception e)
 			{
-				_logger.Warn(e, $"Failed processing message type {typeof(T).FullName} after {sw.ElapsedMilliseconds}ms");
+				_logger.Warn(e, "Failed processing message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
 				throw;
 			}
 		}

@@ -38,7 +38,7 @@ namespace Ark.Tools.FtpClient.Core
         public abstract Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default);        
         public virtual async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default)
         {
-            _logger.Trace("List files starting from path: {0}", startPath);
+            _logger.Trace("List files starting from path: {Path}", startPath);
 
             if (skipFolder == null)
                 skipFolder = x => false;
@@ -55,7 +55,7 @@ namespace Ark.Tools.FtpClient.Core
                         TimeSpan.FromSeconds(1),
                     }, (ex, ts) =>
                     {
-                        _logger.Warn(ex, "Failed to list folder {0}. Try again soon ...", path);
+                        _logger.Warn(ex, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
                     });
 
                 var list = await retrier.ExecuteAsync(async ct1 =>
@@ -66,7 +66,7 @@ namespace Ark.Tools.FtpClient.Core
                 foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                 {
                     if (skipFolder.Invoke(d))
-                        _logger.Info("Skipping folder: {0}", d.FullPath);
+                        _logger.Info("Skipping folder: {Path}", d.FullPath);
                     else
                         pendingFolders.Push(d);
                 }
@@ -90,6 +90,7 @@ namespace Ark.Tools.FtpClient.Core
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
     }

@@ -28,18 +28,18 @@ namespace Ark.Tools.Solid.Decorators
             stopWatch.Start();
             var result = _decorated.Execute(query);
             stopWatch.Stop();
-            _logger.Trace(() => string.Format("Query<{0}> executed in {1}ms", query.GetType(), stopWatch.ElapsedMilliseconds));
+            _logger.Trace("Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
 
             return result;
         }
 
-        public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default(CancellationToken))
+        public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
             var result = await _decorated.ExecuteAsync(query, ctk);
             stopWatch.Stop();
-            _logger.Trace(() => string.Format("Query<{0}> executed in {1}ms", query.GetType(), stopWatch.ElapsedMilliseconds));
+            _logger.Trace("Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
 
             return result;
         }

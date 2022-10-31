@@ -33,7 +33,7 @@ namespace Ark.Tools.Solid.Decorators
             }
         }
 
-        public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default(CancellationToken))
+        public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
         {
             try
             {

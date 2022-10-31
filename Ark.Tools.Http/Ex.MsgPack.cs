@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Http
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "Mimiking Flurl signatures")]
     public static partial class Ex
     {
         public static async Task<T> ReceiveMsgPack<T>(this Task<IFlurlResponse> response, IFormatterResolver formatterResolver)
@@ -29,13 +30,17 @@ namespace Ark.Tools.Http
 
         public static Task<IFlurlResponse> PostMsgPackAsync<T>(this IFlurlRequest request, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope | Disposed by SendAsync()
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
+#pragma warning restore CA2000 // Dispose objects before losing scope
             return request.SendAsync(HttpMethod.Post, content, cancellationToken, completionOption);
         }
 
         public static Task<IFlurlResponse> PutMsgPackAsync<T>(this IFlurlRequest request, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope | Disposed by SendAsync()
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
+#pragma warning restore CA2000 // Dispose objects before losing scope
             return request.SendAsync(HttpMethod.Put, content, cancellationToken, completionOption);
         }
 
@@ -46,13 +51,17 @@ namespace Ark.Tools.Http
 
         public static Task<IFlurlResponse> PostMsgPackAsync<T>(this Url url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope | Disposed by SendAsync()
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
+#pragma warning restore CA2000 // Dispose objects before losing scope
             return new FlurlRequest(url).SendAsync(HttpMethod.Post, content, cancellationToken, completionOption);
         }
 
         public static Task<IFlurlResponse> PutMsgPackAsync<T>(this Url url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope | Disposed by SendAsync()
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
+#pragma warning restore CA2000 // Dispose objects before losing scope
             return new FlurlRequest(url).SendAsync(HttpMethod.Put, content, cancellationToken, completionOption);
         }
 
@@ -63,13 +72,17 @@ namespace Ark.Tools.Http
 
         public static Task<IFlurlResponse> PostMsgPackAsync<T>(this string url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope | Disposed by SendAsync()
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
+#pragma warning restore CA2000 // Dispose objects before losing scope
             return new FlurlRequest(url).SendAsync(HttpMethod.Post, content, cancellationToken, completionOption);
         }
 
         public static Task<IFlurlResponse> PutMsgPackAsync<T>(this string url, T data, IFormatterResolver formatterResolver, CancellationToken cancellationToken = default, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead)
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope | Disposed by SendAsync()
             var content = new ObjectContent<T>(data, new MessagePackMediaTypeFormatter(formatterResolver));
+#pragma warning restore CA2000 // Dispose objects before losing scope
             return new FlurlRequest(url).SendAsync(HttpMethod.Put, content, cancellationToken, completionOption);
         }
     }

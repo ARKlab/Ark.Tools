@@ -154,12 +154,12 @@ namespace Ark.Tools.Core
         /// <param name="name">The name of the field or property we want.</param>
         public static T GetFieldOrPropertyValue<T>(object obj, string name)
         {
-            if (obj == null) return default(T);
+            if (obj == null) return default;
 
             var type = obj.GetType();
             var member = type.GetField(name) ?? type.GetProperty(name) as MemberInfo;
 
-            if (member == null) return default(T);
+            if (member == null) return default;
 
             var value = GetFieldOrPropertyValue(obj, name);
 

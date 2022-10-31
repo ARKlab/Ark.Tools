@@ -12,7 +12,7 @@ namespace Ark.Tools.Solid
     {
         void Execute(TCommand command);
 
-        Task ExecuteAsync(TCommand command, CancellationToken ctk = default(CancellationToken));
+        Task ExecuteAsync(TCommand command, CancellationToken ctk = default);
     }
 
 }

@@ -13,6 +13,7 @@ namespace Ark.Tools.Sql
         private DbTransaction _transaction;
         private bool _disposed = false;
         private IsolationLevel _isolationLevel;
+        private object _lock = new object();
 
         protected AbstractSqlContext(DbConnection connection, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
@@ -33,7 +34,7 @@ namespace Ark.Tools.Sql
             // this is an helper class and this is just to ensure there is always a transaction active when using the Connection
             // and to restart the Transaction automatically after a commit ONLY if Connection is reused
 
-            lock (_connection)
+            lock (_lock)
             {
                 if (_connection.State != ConnectionState.Open)
                 {
@@ -65,7 +66,7 @@ namespace Ark.Tools.Sql
 
         public virtual void Commit()
         {
-            lock (_connection)
+            lock (_lock)
             {
                 _transaction?.Commit();
                 _transaction?.Dispose();
@@ -75,7 +76,7 @@ namespace Ark.Tools.Sql
 
         public virtual void Rollback()
         {
-            lock (_connection)
+            lock (_lock)
             {
                 _transaction?.Rollback();
                 _transaction?.Dispose();

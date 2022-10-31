@@ -27,7 +27,7 @@ namespace TestWithoutArkTools.Controllers
 		[HttpGet]
 		[ProducesResponseType(typeof(OutputObject), 200)]
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-		public async Task<IActionResult> Get(CancellationToken ctk = default(CancellationToken))
+		public async Task<IActionResult> Get(CancellationToken ctk = default)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 		{
 			var res = Guid.NewGuid().ToString();

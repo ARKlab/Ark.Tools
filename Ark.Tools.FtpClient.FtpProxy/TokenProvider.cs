@@ -28,7 +28,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
             _config = config;
 
             if (_config.UseAuth0)
+#pragma warning disable CA2000 // Dispose objects before losing scope
                 _auth0 = new AuthenticationApiClientCachingDecorator(new AuthenticationApiClient(_config.TenantID));
+#pragma warning restore CA2000 // Dispose objects before losing scope
             else
                 _adal = new AuthenticationContext("https://login.microsoftonline.com/" + this._config.TenantID);
         }
@@ -41,7 +43,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                 return _getAdalAccessToken(ctk);
         }
 
-        private async Task<string> _getAuth0AccessToken(CancellationToken ctk = default(CancellationToken))
+        private async Task<string> _getAuth0AccessToken(CancellationToken ctk = default)
         {
 
             try
@@ -65,7 +67,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
             }
         }
 
-        private async Task<string> _getAdalAccessToken(CancellationToken ctk = default(CancellationToken))
+        private async Task<string> _getAdalAccessToken(CancellationToken ctk = default)
         {
             AuthenticationResult result = null;
             try

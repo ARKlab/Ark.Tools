@@ -22,8 +22,6 @@ namespace TestProject
 		private IFlurlResponse _backProperty;
 		private IFlurlResponse LastResponse { get => _backProperty;  set { _backProperty?.Dispose(); _backProperty = value; } }
 
-		private static MediaTypeHeaderValue _jsonMediaType = new MediaTypeHeaderValue("application/json");
-
 		public TestClient(FeatureContext fctx, ScenarioContext sctx, IFlurlClient client)
 		{
 			_client = client;

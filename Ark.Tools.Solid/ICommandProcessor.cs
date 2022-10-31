@@ -9,6 +9,6 @@ namespace Ark.Tools.Solid
     {
         void Execute(ICommand command);
 
-        Task ExecuteAsync(ICommand command, CancellationToken ctk = default(CancellationToken));
+        Task ExecuteAsync(ICommand command, CancellationToken ctk = default);
     }
 }

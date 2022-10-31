@@ -80,7 +80,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
             public async Task<IEnumerable<FtpMetadata>> GetMetadata(FtpFilter filter, CancellationToken ctk = default)
             {
 
-                IEnumerable<FtpMetadata> res = new FtpMetadata[0];
+                IEnumerable<FtpMetadata> res = Array.Empty<FtpMetadata>();
                 using (var cts1 = new CancellationTokenSource(_config.ListingTimeout))
                 using (var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ctk))
                 {
@@ -124,6 +124,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                 return file;
             }
 
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "Used only for checksum")]
             private string _computeChecksum(byte[] contents)
             {
                 using (var hash = MD5.Create())

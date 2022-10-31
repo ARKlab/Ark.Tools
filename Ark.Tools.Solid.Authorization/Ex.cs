@@ -31,7 +31,7 @@ namespace Ark.Tools.Solid.Authorization
             container.Register<IAuthorizationService, DefaultAuthorizationService>(Lifestyle.Scoped);
 
             container.Collection.Register<IAuthorizationHandler>(typeof(PassThroughAuthorizationHandler));
-            container.Collection.Register(new IAuthorizationPolicy[0]);
+            container.Collection.Register(Array.Empty<IAuthorizationPolicy>());
             container.RegisterConditional(typeof(IAuthorizationResourceHandler<,>), typeof(PassThroughAuthorizationResourceHandler<,>), Lifestyle.Singleton,
                 c => !c.Handled);
         }

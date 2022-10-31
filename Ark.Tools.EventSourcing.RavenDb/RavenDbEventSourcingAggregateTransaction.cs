@@ -44,7 +44,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
 			if (_chex == null)
 			{
-				return new AggregateEventEnvelope<TAggregate>[0];
+				return Array.Empty<AggregateEventEnvelope<TAggregate>>();
 			}
 
 			maxVersion = Math.Min(_chex.Value, maxVersion);

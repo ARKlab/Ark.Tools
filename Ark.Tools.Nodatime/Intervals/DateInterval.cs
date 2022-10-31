@@ -186,7 +186,7 @@ namespace Ark.Tools.Nodatime.Intervals
                     return NodaTime.Period.FromYears(1 * c);
             }
 
-            throw new ArgumentOutOfRangeException("period");
+            throw new ArgumentOutOfRangeException(nameof(period));
         }
 
         private static bool _isValidperiodSplit(DatePeriod source, DatePeriod target)

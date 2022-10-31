@@ -34,7 +34,7 @@ namespace Ark.Tools.Rebus
             var messageType = transportMessage.Headers.GetValueOrNull(Headers.Type);
             var correlationId = transportMessage.Headers.GetValueOrNull(Headers.CorrelationId);
 
-            var activity = new Activity(_activityName + " | " + messageType);
+            using var activity = new Activity(_activityName + " | " + messageType);
             if (_tryExtractRequestId(transportMessage, out var id))
             {
                 activity.SetParentId(id);

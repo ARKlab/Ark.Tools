@@ -13,7 +13,6 @@ namespace Ark.Tools.FtpClient
     public class FtpClientPoolArxOneWithSocks : FtpClientPoolArxOne
     {
         private readonly ISocksConfig _config;
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig)
             : base(maxPoolSize, ftpConfig)

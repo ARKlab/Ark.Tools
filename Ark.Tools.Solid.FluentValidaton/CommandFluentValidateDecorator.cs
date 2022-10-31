@@ -29,9 +29,9 @@ namespace Ark.Tools.Solid
             _decorated.Execute(query);
         }
 
-        public async Task ExecuteAsync(TCommand query, CancellationToken ctk = default(CancellationToken))
+        public async Task ExecuteAsync(TCommand query, CancellationToken ctk = default)
         {
-            await _validator.ValidateAndThrowAsync(query);
+            await _validator.ValidateAndThrowAsync(query, ctk);
             await _decorated.ExecuteAsync(query, ctk);
         }
     }

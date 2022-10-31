@@ -36,7 +36,7 @@ namespace TestReceiver
 
 			try
 			{
-				var container = new Container();
+				using var container = new Container();
 
 				var cfg = new Config()
 				{

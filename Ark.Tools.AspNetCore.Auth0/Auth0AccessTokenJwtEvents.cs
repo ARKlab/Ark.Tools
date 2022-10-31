@@ -19,10 +19,11 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.Auth0
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "AuthenticationApiClient is a HttpClient which is long-lived")]
     public class Auth0AccessTokenJwtEvents : JwtBearerEvents
     {
         private readonly AuthenticationApiClient _auth0;
-        const string AuthorizationExtensionAudience = "urn:auth0-authz-api";
+        public const string AuthorizationExtensionAudience = "urn:auth0-authz-api";
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly string _authzApiUrl;
