@@ -12,10 +12,10 @@ namespace Ark.Tools.NLog
     {
         public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, string logTableName, string mailFrom, IConfiguration cfg, bool async = true)
         {
-            @this.WithDefaultTargetsAndRules(
-                logTableName, cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName), 
-                mailFrom, cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.',':')], 
-                cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName), async:async);
+            @this.WithArkDefaultTargetsAndRules(
+                logTableName, cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName),
+                cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.', ':')], cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName),
+                mailFrom, async:async);
 
             var cfgSlack = cfg[NLogDefaultConfigKeys.SlackWebHook.Replace('.', ':')];
             if (!string.IsNullOrWhiteSpace(cfgSlack))

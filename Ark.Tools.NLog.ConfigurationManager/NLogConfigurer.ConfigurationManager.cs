@@ -7,60 +7,33 @@ namespace Ark.Tools.NLog
 {
     using static Ark.Tools.NLog.NLogConfigurer;
 
-    // TODO rename FromAppSettings to FromConfigurationManager
-    // TODO add support for SmtpConnectionString
     public static class NLogConfigurerConfigurationManager
     {
-        public static Configurer WithMailTargetFromAppSettings(this Configurer @this, string from, string to, bool async = true)
-        {
-            return @this.WithMailTarget(
-                  from
-                , to
-                , ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpServer]
-                , int.Parse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPort])
-                , ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUserName]
-                , ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPassword]
-                , bool.Parse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUseSsl])
-                , async
-                );
-        }
 
-        public static Configurer WithSlackTargetFromAppSettings(this Configurer @this, bool async = true)
+        public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
         {
+            var smtp = new SmtpConnectionBuilder(ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SmtpConnStringName].ConnectionString)
+                ?? new SmtpConnectionBuilder()
+                {
+                    Server = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpServer],
+                    Port = int.Parse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPort]),
+                    Username = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUserName],
+                    Password = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPassword],
+                    UseSsl = bool.Parse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUseSsl])
+                };
+
+            @this.WithArkDefaultTargetsAndRules(
+                logTableName, ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SqlConnStringName].ConnectionString,
+                ConfigurationManager.AppSettings[NLogDefaultConfigKeys.MailNotificationAddresses] ?? mailTo, smtp.ConnectionString,
+                mailFrom, async: async);
+
             var cfgSlack = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SlackWebHook];
             if (!string.IsNullOrWhiteSpace(cfgSlack))
                 @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
 
-            return @this;
-        }
-        public static Configurer WithApplicationInsightsFromAppSettings(this Configurer @this, bool async = true)
-        {
-            var iKey = ConfigurationManager.AppSettings["APPINSIGHTS_INSTRUMENTATIONKEY"];
+            var iKey = ConfigurationManager.AppSettings["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? ConfigurationManager.AppSettings["ApplicationInsights:InstrumentationKey"];
             @this.WithApplicationInsightsTargetsAndRules(iKey, async);
 
-            return @this;
-        }
-
-        public static Configurer WithDatabaseTargetFromAppSettings(this Configurer @this, string logTableName, bool async = true)
-        {
-            return @this.WithDatabaseTarget(logTableName, ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SqlConnStringName].ConnectionString, async: async);
-        }
-
-        public static Configurer WithDefaultTargetsFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
-        {
-            return @this.WithConsoleTarget(async)
-                        .WithFileTarget(async)
-                        .WithDatabaseTargetFromAppSettings(logTableName, async)
-                        .WithMailTargetFromAppSettings(mailFrom, mailTo, async)
-                        ;
-        }
-
-        public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
-        {
-            @this.WithDefaultTargetsFromAppSettings(logTableName, mailFrom, mailTo, async);
-            @this.WithDefaultRules();
-            @this.WithSlackTargetFromAppSettings(async);
-            @this.WithApplicationInsightsFromAppSettings(async);
             return @this;
         }
     }

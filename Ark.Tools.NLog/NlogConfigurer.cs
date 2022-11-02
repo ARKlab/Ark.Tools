@@ -13,6 +13,7 @@ using System.Diagnostics;
 using Ark.Tools.NLog.Slack;
 using Microsoft.ApplicationInsights.NLogTarget;
 using TargetPropertyWithContext = Microsoft.ApplicationInsights.NLogTarget.TargetPropertyWithContext;
+using NLog.LayoutRenderers;
 
 namespace Ark.Tools.NLog
 {
@@ -31,71 +32,6 @@ namespace Ark.Tools.NLog
             return new Configurer(appName);
         }
 
-        public static Configurer WithDefaultTargets(this Configurer @this, string logTableName, string connectionString, string mailTo, bool async = true)
-        {
-            return @this.WithConsoleTarget(async)
-                        .WithDatabaseTarget(logTableName, connectionString, async)
-                        .WithMailTarget(mailTo, async: false)
-                        ;
-        }
-
-        public static Configurer WithDefaultTargets(this Configurer @this, string logTableName, string connectionString, string mailTo,
-            string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl,
-            bool async = true)
-        {
-            var smtp = new SmtpConnectionBuilder();
-            smtp.Server = smtpServer;
-            smtp.Port = smtpPort;
-            smtp.Username = smtpUserName;
-            smtp.Password = smtpPassword;
-            smtp.UseSsl = useSsl;
-
-            return @this.WithConsoleTarget(async)
-                        .WithDatabaseTarget(logTableName, connectionString, async)
-                        .WithMailTarget(mailTo, smtpServer, smtpPort, smtpUserName, smtpPassword, useSsl, async: false)
-                        ;
-        }
-
-        public static Configurer WithDefaultTargets(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, bool async = true)
-        {
-            return @this.WithConsoleTarget(async)
-                        .WithDatabaseTarget(logTableName, connectionString, async)
-                        .WithMailTarget(mailFrom, mailTo, async: false)
-                        ;
-        }
-
-
-        public static Configurer WithDefaultTargets(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo,
-            string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl,
-            bool async = true)
-        {
-            var smtp = new SmtpConnectionBuilder();
-            smtp.Server = smtpServer;
-            smtp.Port = smtpPort;
-            smtp.Username = smtpUserName;
-            smtp.Password = smtpPassword;
-            smtp.UseSsl = useSsl;
-
-            return @this.WithDefaultTargets(logTableName, connectionString, mailFrom, mailTo, smtp.ConnectionString, async);
-        }
-
-        public static Configurer WithDefaultTargets(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo,
-            string smtpConnectionString,
-            bool async = true)
-        {
-            return @this.WithConsoleTarget(async)
-                        .WithDatabaseTarget(logTableName, connectionString, async)
-                        .WithMailTarget(mailFrom, mailTo, smtpConnectionString, async: false)
-                        ;
-        }
-        public static Configurer WithDefaultRules(this Configurer @this)
-        {
-            return @this.WithConsoleRule("*", LogLevel.Trace)
-                        .WithDatabaseRule("*", LogLevel.Info)
-                        .WithMailRule("*", LogLevel.Fatal)
-                        ;
-        }
-
         public static Configurer WithSlackDefaultRules(this Configurer @this)
         {
             return @this.WithSlackRule("*", LogLevel.Fatal)
@@ -109,13 +45,15 @@ namespace Ark.Tools.NLog
                         ;
         }
 
-        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, string smtpConnectionString, bool consoleEnabled = false,  bool async = true)
-        {            
-            if (consoleEnabled)
+        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, string smtpConnectionString, string mailFrom = NLogConfigurer.MailFromDefault, bool? consoleEnabled = null,  bool async = true)
+        {
+            consoleEnabled ??= !_isProduction();
+
+            if (consoleEnabled == true)
             {
                 @this
                     .WithConsoleTarget(async)
-                    .WithConsoleRule("*", LogLevel.Trace);
+                    .WithConsoleRule("*", _isProduction() ? LogLevel.Info : LogLevel.Trace);
             }
 
             if (!string.IsNullOrWhiteSpace(connectionString))
@@ -128,49 +66,11 @@ namespace Ark.Tools.NLog
             if (!string.IsNullOrWhiteSpace(smtpConnectionString))
             {
                 @this
-                    .WithMailTarget(mailFrom, mailTo , smtpConnectionString, async: false)
+                    .WithMailTarget(mailFrom, mailTo, smtpConnectionString, async: false)
                     .WithMailRule("*", LogLevel.Fatal)
                     ;
             }
 
-            if (Debugger.IsAttached)
-            {
-                @this
-                    .WithDebuggerTarget()
-                    .WithDebuggerRule()
-                    ;
-            }
-
-            return @this;
-        }
-
-        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, bool isProduction = true, bool async = true)
-        {
-
-            @this.WithConsoleTarget(async);
-
-            if (!isProduction)
-            {
-                @this.WithConsoleRule("*", LogLevel.Trace);
-            } else
-            {
-                @this.WithConsoleRule("*", LogLevel.Warn);
-            }
-
-            if (!string.IsNullOrWhiteSpace(connectionString))
-            {
-                @this
-                    .WithDatabaseTarget(logTableName, connectionString, async)
-                    .WithDatabaseRule("*", LogLevel.Info);
-            }
-
-            // assume system.mail
-
-            @this
-                .WithMailTarget(mailFrom, mailTo, async: false)
-                .WithMailRule("*", LogLevel.Fatal)
-                ;
-            
             if (Debugger.IsAttached)
             {
                 @this
@@ -196,26 +96,17 @@ namespace Ark.Tools.NLog
             return @this;
         }
 
+        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, bool async = true)
         {
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, NLogConfigurer.MailFromDefault, mailTo, null, !_isProduction(), async);
-
             return @this;
         }
 
+        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo,
             string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl,
             bool async = true)
         {
-            var cs = new SmtpConnectionBuilder();
-            cs.Server = smtpServer;
-            cs.Port = smtpPort;
-            cs.Username = smtpUserName;
-            cs.Password = smtpPassword;
-            cs.UseSsl = useSsl;
-
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, NLogConfigurer.MailFromDefault, mailTo, cs.ConnectionString, !_isProduction(), async);
-
             return @this;
         }
 
@@ -231,34 +122,25 @@ namespace Ark.Tools.NLog
                 ?? "";
         }
 
-        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp")]
+        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, bool async = true)
         {
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, !_isProduction(), async);
             return @this;
         }
 
+        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo,
             string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl,
             bool async = true)
         {
-            var cs = new SmtpConnectionBuilder();
-            cs.Server = smtpServer;
-            cs.Port = smtpPort;
-            cs.Username = smtpUserName;
-            cs.Password = smtpPassword;
-            cs.UseSsl = useSsl;
-
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, cs.ConnectionString, !_isProduction(), async);
-
             return @this;
         }
 
+        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration or .WithArkDefaultTargetsAndRules(). Beware to use connectionString:NLog.Smtp", true)]
         public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo,
             string smtpConnectionString,
             bool async = true)
         {
-            @this.WithArkDefaultTargetsAndRules(logTableName, connectionString, mailFrom, mailTo, smtpConnectionString, !_isProduction(), async);
 
             return @this;
         }
@@ -273,10 +155,11 @@ namespace Ark.Tools.NLog
             {
                 _appName = appName;
                 ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(Configurer).Assembly);
+                ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(ActivityTraceLayoutRenderer).Assembly);
 
                 // exclude Microsoft and System logging when NLog.Extensions.Logging is in use
                 _config.AddRule(new LoggingRule()
-                {
+                {                    
                     LoggerNamePattern = "System.*",
                     FinalMinLevel = LogLevel.Warn,
                 });
@@ -295,7 +178,10 @@ namespace Ark.Tools.NLog
             #region debugger
             public Configurer WithDebuggerTarget()
             {
-                _config.AddTarget("Debugger", new DebuggerTarget("Debugger"));
+                _config.AddTarget("Debugger", new DebuggerTarget("Debugger")
+                {
+                    Layout= "${longdate}|${level:uppercase=true}|${logger}|ActivityId=${activity:property=TraceId}|${message:withexception=true}"
+                });
                 return this;
             }
 
@@ -342,7 +228,7 @@ namespace Ark.Tools.NLog
             {
                 var fileTarget = new FileTarget();
 
-                fileTarget.Layout = @"${longdate} - ${callsite} - ${level:uppercase=true}: ${message}${onexception:${newline}EXCEPTION\: ${exception:format=ToString}}";
+                fileTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message} ${onexception:${newline}EXCEPTION\: ${exception:format=ToString}}";
                 fileTarget.FileName = @"${basedir}\Logs\Trace.log";
                 fileTarget.KeepFileOpen = true;
                 fileTarget.ConcurrentWrites = false;
@@ -365,7 +251,7 @@ namespace Ark.Tools.NLog
                 databaseTarget.ConnectionString = connectionString;
                 databaseTarget.KeepConnection = true;
                 databaseTarget.CommandText = string.Format(@"
-INSERT INTO[dbo].[{0}]
+INSERT INTO [dbo].[{0}]
 ( 
       [TimestampUtc]
     , [TimestampTz]
@@ -374,6 +260,7 @@ INSERT INTO[dbo].[{0}]
     , [Callsite]
     , [AppName]
     , [RequestID]
+    , [ActivityId]
     , [Host]
     , [Message]
     , [ExceptionMessage]
@@ -387,6 +274,7 @@ VALUES
     , @Callsite
     , @AppName
     , TRY_CONVERT(UNIQUEIDENTIFIER, @RequestID)
+    , @ActivityId
     , @Host
     , @Message
     , @ExceptionMessage 
@@ -399,6 +287,7 @@ VALUES
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Callsite", @"${when:when=level>=LogLevel.Error:inner=${callsite:filename=true}}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", _appName));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("RequestID", @"${mdlc:item=RequestID}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("ActivityId", "${activity:property=TraceId}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=ToString}}"));
@@ -412,7 +301,7 @@ VALUES
                 var target = new MailTarget();
                 target.AddNewLines = true;
                 target.Encoding = Encoding.UTF8;
-                target.Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}${newline}${exception:format=ToString:innerFormat=ToString:maxInnerExceptionLevel=10}";
+                target.Layout = "${longdate}|${level:uppercase=true}|${logger}|${activity:property=TraceId}|${message}${newline}${exception:format=ToString:innerFormat=ToString:maxInnerExceptionLevel=10}";
                 target.Html = true;
                 target.ReplaceNewlineWithBrTagInHtml = true;
                 target.Subject = "Errors from " + _appName + "@${ark.hostname}";
@@ -477,14 +366,16 @@ VALUES
             public Configurer WithSlackRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(SlackTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, level, target) { Final = final });
+                _config.RemoveRuleByName(SlackTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = SlackTarget, Final = final });
 
                 return this;
             }
             public Configurer WithSlackRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(SlackTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { Final = final });
+                _config.RemoveRuleByName(SlackTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = SlackTarget, Final = final });
 
                 return this;
             }
@@ -492,14 +383,16 @@ VALUES
             public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(ApplicationInsightsTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, level, target) { Final = final });
+                _config.RemoveRuleByName(ApplicationInsightsTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ApplicationInsightsTarget, Final = final });
 
                 return this;
             }
             public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(ApplicationInsightsTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { Final = final });
+                _config.RemoveRuleByName(ApplicationInsightsTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ApplicationInsightsTarget, Final = final });
 
                 return this;
             }
@@ -507,14 +400,16 @@ VALUES
             public Configurer WithConsoleRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(ConsoleTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, level, target) { Final = final });
+                _config.RemoveRuleByName(ConsoleTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ConsoleTarget, Final = final });
 
                 return this;
             }
             public Configurer WithConsoleRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(ConsoleTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { Final = final });
+                _config.RemoveRuleByName(ConsoleTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ConsoleTarget, Final = final });
 
                 return this;
             }
@@ -522,14 +417,16 @@ VALUES
             public Configurer WithDatabaseRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(DatabaseTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, level, target) { Final = final });
+                _config.RemoveRuleByName(DatabaseTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = DatabaseTarget, Final = final });
 
                 return this;
             }
             public Configurer WithDatabaseRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(DatabaseTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { Final = final });
+                _config.RemoveRuleByName(DatabaseTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = DatabaseTarget, Final = final });
 
                 return this;
             }
@@ -537,14 +434,16 @@ VALUES
             public Configurer WithFileRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(FileTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, level, target) { Final = final });
+                _config.RemoveRuleByName(FileTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = FileTarget, Final = final });
 
                 return this;
             }
             public Configurer WithFileRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(FileTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { Final = final });
+                _config.RemoveRuleByName(FileTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = FileTarget, Final = final });
 
                 return this;
             }
@@ -552,14 +451,16 @@ VALUES
             public Configurer WithMailRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(MailTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, level, target) { Final = final });
+                _config.RemoveRuleByName(MailTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = MailTarget, Final = final });
 
                 return this;
             }
             public Configurer WithMailRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(MailTarget);
-                _config.LoggingRules.Add(new LoggingRule(loggerPattern, minLevel, maxLevel,  target) { Final = final });
+                _config.RemoveRuleByName(MailTarget);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel,  target) { RuleName = MailTarget, Final = final });
 
                 return this;
             }
@@ -570,11 +471,7 @@ VALUES
             {
                 if (_isVisualStudioAttached())
                 {
-                    var mt = _config.FindTargetByName(MailTarget);
-
-                    var rules = _config.LoggingRules.Where(r => r.Targets.Contains(mt)).ToList();
-                    foreach (var r in rules)
-                        _config.LoggingRules.Remove(r);
+                    _config.RemoveRuleByName(MailTarget);
                 }
                 return this;
             }
@@ -609,7 +506,7 @@ VALUES
         private static void _ensureTableIsCreated(string connString, string logTableName)
         {
             var creteLogTable = string.Format(@"
-IF OBJECT_ID('{0}', 'U') IS NULL
+IF OBJECT_ID('[dbo].[{0}]', 'U') IS NULL
 BEGIN
     CREATE TABLE [dbo].[{0}](
 	    [ID] [int] IDENTITY(1,1) NOT NULL,
@@ -619,7 +516,8 @@ BEGIN
 	    [Logger] [varchar](256) NULL,
 	    [Callsite] [varchar](256) NULL,
 	    [AppName] [varchar](256) NULL,
-	    [RequestID] [uniqueidentifier] NULL,
+        [RequestID] [uniqueidentifier] NULL,
+	    [ActivityId] [varchar](256) NULL,
 	    [Host] [varchar](256) NULL,
 	    [Message] [nvarchar](max) NULL,
 	    [ExceptionMessage] [nvarchar](max) NULL,
@@ -628,7 +526,21 @@ BEGIN
 	    [ID] ASC
     )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, DATA_COMPRESSION = PAGE)
     )
-END 
+END
+
+IF NOT EXISTS ( SELECT  1
+                FROM    information_schema.COLUMNS
+                WHERE   table_schema = 'dbo'
+                        AND TABLE_NAME = '{0}'
+						AND COLUMN_NAME = 'ActivityId'
+                        )
+BEGIN
+
+    EXEC('ALTER TABLE [dbo].[{0}] ADD [ActivityId] [varchar](256) NULL')
+
+END
+
+
             ", logTableName);
             using var conn = new SqlConnection(connString);
             conn.Open();
