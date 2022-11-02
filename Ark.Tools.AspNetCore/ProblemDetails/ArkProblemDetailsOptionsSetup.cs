@@ -13,6 +13,9 @@ using Ark.Tools.Core.BusinessRuleViolation;
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Ark.Tools.Core.Reflection;
+using System.Collections.Concurrent;
+using System.Linq;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -24,10 +27,14 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         {
             _environment = environment;
             _linkGenerator = linkGenerator;
+            _dynamicTypeAssembly = new DynamicTypeAssembly();
+            _brvMap = new ConcurrentDictionary<Type, Type>();
         }
 
         private readonly IWebHostEnvironment _environment;
         private readonly IProblemDetailsLinkGenerator _linkGenerator;
+        private readonly DynamicTypeAssembly _dynamicTypeAssembly;
+        private readonly ConcurrentDictionary<Type, Type> _brvMap;
 
         public void Configure(ProblemDetailsOptions options)
         {
@@ -54,13 +61,15 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                 if (details is ArkProblemDetails)
                 {
                     var path = _linkGenerator.GetLink(details as ArkProblemDetails, ctx);
-                    details.Type = details.Type ?? path;
+                    details.Type ??= path;
                 }
 
-                if (details is BusinessRuleProblemDetails br)
+                if (details.Extensions.TryGetValue("@BusinessRuleViolation", out var v))
                 {
-                    var path = _linkGenerator.GetLink(br.Violation, ctx);
-                    details.Type = path;
+                    details.Extensions.Remove("@BusinessRuleViolation");
+
+                    var path = _linkGenerator.GetLink(v as BusinessRuleViolation, ctx);
+                    details.Type ??= path;
                 }
             };
 
@@ -94,8 +103,15 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
         private Microsoft.AspNetCore.Mvc.ProblemDetails _toProblemDetails(BusinessRuleViolationException arg)
         {
-            var ret = arg.BusinessRuleViolation.Serialize(ArkSerializerOptions.JsonOptions).Deserialize<BusinessRuleProblemDetails>(ArkSerializerOptions.JsonOptions);
-            ret.Violation = arg.BusinessRuleViolation;
+            var pdt = _brvMap.GetOrAdd(arg.BusinessRuleViolation.GetType(), t =>
+            {
+                var props = t.GetProperties().Where(x => x.DeclaringType != typeof(BusinessRuleViolation)).Select(x => (x.Name, x.PropertyType)).ToArray();
+                return _dynamicTypeAssembly.CreateNewTypeWithDynamicProperties(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), props);
+            });
+
+            var js = (arg.BusinessRuleViolation as object).SerializeToByte(ArkSerializerOptions.JsonOptions);                
+            var ret = (Microsoft.AspNetCore.Mvc.ProblemDetails)JsonSerializer.Deserialize(js, pdt, ArkSerializerOptions.JsonOptions);
+            ret.Extensions["@BusinessRuleViolation"] = arg.BusinessRuleViolation;
             return ret;
         }
 
