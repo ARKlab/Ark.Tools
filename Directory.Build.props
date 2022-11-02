@@ -7,6 +7,13 @@
     <NoWarn>1591</NoWarn>	
   </PropertyGroup>
 
+
+    <PropertyGroup>
+	    <!-- https://developercommunity.visualstudio.com/t/application-insight-doesnt-show-logs-from-local-de/1240506 -->
+	    <!-- https://stackoverflow.com/a/64877356 -->
+	    <ApplicationInsightsResourceId>/subscriptions/dummy</ApplicationInsightsResourceId>
+    </PropertyGroup>
+
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
