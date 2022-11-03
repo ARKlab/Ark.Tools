@@ -94,10 +94,10 @@ where startsWith(id(e), '{prefix}')
 					// here we are able to be informed of any exception that happens during processing                    
 					subscriptionWorker.OnSubscriptionConnectionRetry += ex =>
 					{
-						_logger.Error(ex, "Error during subscription processing: " + SubscriptionName);
+						_logger.Error(ex, "Error during subscription processing: {SubscriptionName}", SubscriptionName);
 					};
 
-					_logger.Info($"Start processing {SubscriptionName}");
+					_logger.Info("Start processing {SubscriptionName}", SubscriptionName);
 					await subscriptionWorker.Run(_exec, ctk);
 
 					// Run will complete normally if you have disposed the subscription

@@ -54,7 +54,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 request.Body.Seek(0L, SeekOrigin.Begin);
             }
 
-            var result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, _options);
+            var result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, _options, context.HttpContext.RequestAborted);
 
             return await InputFormatterResult.SuccessAsync(result);
         }

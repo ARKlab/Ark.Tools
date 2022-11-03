@@ -50,7 +50,7 @@ namespace TestWorker.DataProvider
                     DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
                 };
 
-                _logger.Info($"File {downloadedFile.Metadata.FileName} downloaded successfully");
+                _logger.Info("File {FileName} downloaded successfully", downloadedFile.Metadata.FileName);
 
                 return downloadedFile;
             });

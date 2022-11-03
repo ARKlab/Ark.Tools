@@ -119,7 +119,7 @@ namespace Ark.Tools.ResourceWatcher
 
                 ctk.ThrowIfCancellationRequested();
 
-                _logger.Info("Going to sleep for {0}s", _config.SleepSeconds);
+                _logger.Info("Going to sleep for {SleepSeconds}s", _config.SleepSeconds);
                 await Task.Delay(_config.SleepSeconds * 1000, ctk);
             }
         }
@@ -128,7 +128,6 @@ namespace Ark.Tools.ResourceWatcher
         {
             var now = DateTime.UtcNow;
 
-            using var _ = ScopeContext.PushProperty("RequestID", Guid.NewGuid().ToString());
             using var activityRun = _diagnosticSource.RunStart(runType, now);
 
             try
@@ -163,8 +162,8 @@ namespace Ark.Tools.ResourceWatcher
                 var skipped = evaluated.Where(x => x.ResultType == ResultType.Skipped).ToList();
                 var toProcess = evaluated.Where(x => !x.ResultType.HasValue).ToList();
 
-                _logger.Info($"Found {skipped.Count} resources to skip");
-                _logger.Info($"Found {toProcess.Count} resources to process with parallelism {_config.DegreeOfParallelism}");
+                _logger.Info("Found {SkippedCount} resources to skip", skipped.Count);
+                _logger.Info("Found {ToProcessCount} resources to process with parallelism {DegreeOfParallelism}", toProcess.Count, _config.DegreeOfParallelism);
 
                 var count = toProcess.Count;
                 await toProcess.Parallel((int)_config.DegreeOfParallelism, (i, x, ct) => {
@@ -260,7 +259,12 @@ namespace Ark.Tools.ResourceWatcher
             var info = pc.CurrentInfo;
             var lastState = pc.LastState;
             var dataType = pc.ProcessType;
-            
+            using var scope = ScopeContext.PushNestedStateProperties(info.ResourceId, new[]
+            {
+                // when 'logging' these, 'info' is serialized as the actual implementation which may contain a lot of data. slice to 'log' only the Interface
+                new KeyValuePair<string, object>("currentInfo", new { info.ResourceId, info.Modified, info.ModifiedSources, info.Extensions }),
+                new KeyValuePair<string, object>("lastState", lastState)
+            }); 
             try
             {
                 using var processActivity = _diagnosticSource.ProcessResourceStart(pc);
@@ -299,7 +303,7 @@ namespace Ark.Tools.ResourceWatcher
                             if (newState != null)
                             {
                                 if (!string.IsNullOrWhiteSpace(newState.CheckSum) && state.CheckSum != newState.CheckSum)
-                                    _logger.Info("Checksum changed on ResourceId=\"{0}\" from \"{1}\" to \"{2}\"", state.ResourceId, state.CheckSum, newState.CheckSum);
+                                    _logger.Info("Checksum changed on ResourceId=\"{ResourceId}\" from \"{OldChecksum}\" to \"{NewChecksum}\"", state.ResourceId, state.CheckSum, newState.CheckSum);
 
                                 state.CheckSum = newState.CheckSum;
                                 state.RetrievedAt = newState.RetrievedAt;

@@ -94,7 +94,7 @@ namespace Ark.Tools.FtpClient.Core
                     foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                     {
                         if (skipFolder.Invoke(d))
-                            _logger.Info("Skipping folder: {0}", d.FullPath);
+                            _logger.Info("Skipping folder: {Path}", d.FullPath);
                         else
                             pendingFolders.Push(d);
                     }

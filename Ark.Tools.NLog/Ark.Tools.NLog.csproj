@@ -36,6 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
     
   </ItemGroup>
 

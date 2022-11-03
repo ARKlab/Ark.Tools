@@ -82,7 +82,7 @@ namespace Ark.Tools.Hosting
             {
                 try
                 {
-                    _logger.LogDebug("Service<{0}> is trying to acquire Lock<{1}>", ServiceName, LockId);
+                    _logger.LogDebug("Service<{ServiceName}> is trying to acquire Lock<{LockId}>", ServiceName, LockId);
                     await using var handle = await _lock.AcquireAsync(cancellationToken: cancellationToken);
                     _checkHandleLossSupport(handle);
 

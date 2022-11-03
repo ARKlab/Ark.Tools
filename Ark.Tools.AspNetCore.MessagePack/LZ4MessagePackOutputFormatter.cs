@@ -47,12 +47,12 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 }
                 else
                 {
-                    return MessagePackSerializer.SerializeAsync(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _options);
+                    return MessagePackSerializer.SerializeAsync(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _options, context.HttpContext.RequestAborted);
                 }
             }
             else
             {
-                return MessagePackSerializer.SerializeAsync(context.ObjectType, context.HttpContext.Response.Body, context.Object, _options);
+                return MessagePackSerializer.SerializeAsync(context.ObjectType, context.HttpContext.Response.Body, context.Object, _options, context.HttpContext.RequestAborted);
             }
         }
     }

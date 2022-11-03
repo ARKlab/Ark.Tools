@@ -38,7 +38,7 @@ namespace WebApplicationDemo.Api.Queries
                 }
             };
 
-            _logger.Info($"Entity {entity.EntityId} found!");
+            _logger.Info("Entity {EntityId} found!", entity.EntityId);
 
             return await Task.FromResult(entity);
         }

@@ -7,13 +7,14 @@ using Microsoft.Data.SqlClient;
 using NLog.Targets.Wrappers;
 using System.Text;
 using System;
-using System.Linq;
 using NLog.Common;
 using System.Diagnostics;
 using Ark.Tools.NLog.Slack;
 using Microsoft.ApplicationInsights.NLogTarget;
 using TargetPropertyWithContext = Microsoft.ApplicationInsights.NLogTarget.TargetPropertyWithContext;
 using NLog.LayoutRenderers;
+using NLog.Layouts;
+using System.Text.Json;
 
 namespace Ark.Tools.NLog
 {
@@ -26,6 +27,15 @@ namespace Ark.Tools.NLog
         public const string DatabaseTarget = "Ark.Database";
         public const string MailTarget = "Ark.Mail";
         public const string MailFromDefault = "noreply@ark-energy.eu";
+
+        static NLogConfigurer()
+        {
+
+            ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(Configurer).Assembly);
+            ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(ActivityTraceLayoutRenderer).Assembly);
+            LogManager.LogFactory.ServiceRepository.RegisterService(typeof(IJsonConverter), new STJSerializer());
+
+        }
 
         public static Configurer For(string appName)
         {
@@ -154,9 +164,6 @@ namespace Ark.Tools.NLog
             internal Configurer(string appName)
             {
                 _appName = appName;
-                ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(Configurer).Assembly);
-                ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(ActivityTraceLayoutRenderer).Assembly);
-
                 // exclude Microsoft and System logging when NLog.Extensions.Logging is in use
                 _config.AddRule(new LoggingRule()
                 {                    
@@ -261,6 +268,7 @@ INSERT INTO [dbo].[{0}]
     , [AppName]
     , [RequestID]
     , [ActivityId]
+    , [Properties]
     , [Host]
     , [Message]
     , [ExceptionMessage]
@@ -275,6 +283,7 @@ VALUES
     , @AppName
     , TRY_CONVERT(UNIQUEIDENTIFIER, @RequestID)
     , @ActivityId
+    , @Properties
     , @Host
     , @Message
     , @ExceptionMessage 
@@ -284,10 +293,19 @@ VALUES
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("TimestampTz", @"${date:format=dd-MMM-yyyy h\:mm\:ss.fff tt K}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("LogLevel", @"${level:uppercase=true}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Logger", @"${logger}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Callsite", @"${when:when=level>=LogLevel.Error:inner=${callsite:filename=true}}"));
+                // callsite is very-very expensive. Disable in Production.
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Callsite", _isProduction() ? "" : @"${when:when=level>=LogLevel.Error:inner=${callsite:filename=true}}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", _appName));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("RequestID", @"${mdlc:item=RequestID}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ActivityId", "${activity:property=TraceId}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", new JsonLayout() { 
+                    ExcludeEmptyProperties = true,
+                    IncludeGdc = true,
+                    IncludeScopeProperties = true,
+                    RenderEmptyObject = true,
+                    IncludeEventProperties = true,
+                    ExcludeProperties = {"Message","Exception"}
+                }));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=ToString}}"));
@@ -518,6 +536,7 @@ BEGIN
 	    [AppName] [varchar](256) NULL,
         [RequestID] [uniqueidentifier] NULL,
 	    [ActivityId] [varchar](256) NULL,
+        [Properties] [nvarchar](max) NULL,
 	    [Host] [varchar](256) NULL,
 	    [Message] [nvarchar](max) NULL,
 	    [ExceptionMessage] [nvarchar](max) NULL,
@@ -540,7 +559,17 @@ BEGIN
 
 END
 
+IF NOT EXISTS ( SELECT  1
+                FROM    information_schema.COLUMNS
+                WHERE   table_schema = 'dbo'
+                        AND TABLE_NAME = '{0}'
+						AND COLUMN_NAME = 'Properties'
+                        )
+BEGIN
 
+    EXEC('ALTER TABLE [dbo].[{0}] ADD [Properties] [nvarchar](MAX) NULL')
+
+END
             ", logTableName);
             using var conn = new SqlConnection(connString);
             conn.Open();
@@ -549,6 +578,28 @@ END
             cmd.ExecuteNonQuery();
         }
 
+
+        internal class STJSerializer : IJsonConverter
+        {
+
+            /// <summary>Serialization of an object into JSON format.</summary>
+            /// <param name="value">The object to serialize to JSON.</param>
+            /// <param name="builder">Output destination.</param>
+            /// <returns>Serialize succeeded (true/false)</returns>
+            public bool SerializeObject(object value, StringBuilder builder)
+            {
+                try
+                {
+                    builder.Append(JsonSerializer.Serialize(value, ArkSerializerOptions.JsonOptions));
+                }
+                catch (Exception e)
+                {
+                    InternalLogger.Error(e, "Error when custom JSON serialization");
+                    return false;
+                }
+                return true;
+            }
+        }
     }
 
 

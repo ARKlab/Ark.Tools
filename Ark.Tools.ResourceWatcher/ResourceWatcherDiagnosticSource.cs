@@ -58,7 +58,7 @@ namespace Ark.Tools.ResourceWatcher
         #region Run
         public Activity RunStart(RunType type, DateTime now)
         {
-            _logger.Info($"Check started for tenant {_tenant} at {now}");
+            _logger.Info("Check started for tenant {Tenant} at {Now}", _tenant, now);
 
             Activity activity = _start("Run", () => new
             {
@@ -111,7 +111,7 @@ namespace Ark.Tools.ResourceWatcher
             }
             );
 
-            _logger.Info($"Check successful for tenant {_tenant} in {activity.Duration}");
+            _logger.Info("Check successful for tenant {Tenant} in {Duration}", _tenant, activity?.Duration);
         }
         #endregion
 
@@ -146,7 +146,7 @@ namespace Ark.Tools.ResourceWatcher
             }
             );
 
-            _logger.Info($"Found {count} resources in {activity.Duration}");
+            _logger.Info("Found {ResourceCount} resources in {Duration}", count, activity?.Duration);
         }
         #endregion
 
@@ -192,20 +192,20 @@ namespace Ark.Tools.ResourceWatcher
 
             if (!result)
             {
-                _logger.Info("No changes detected on ResourceId=\"{0}\""
+                _logger.Info("No changes detected on ResourceId=\"{ResourceId}\""
                  , processContext.CurrentInfo.ResourceId
                 );
             }
             else
             {
-                _logger.Info("({4}/{5}) Detected change on ResourceId=\"{0}\", Resource.ModifiedSource={6},Resource.Modified={1}, OldState.Modified={2}, OldState.Retry={3}. Processing..."
+                _logger.Info("({Index}/{Total}) Detected change on ResourceId=\"{ResourceId}\", Resource.ModifiedSource={ModifiedSource}, Resource.Modified={Modified}, OldState.Modified={OldModified}, OldState.Retry={OldRetryCount}. Processing..."
+                    , processContext.Index
+                    , processContext.Total
                     , processContext.CurrentInfo.ResourceId
+                    , infos.source ?? string.Empty
                     , infos.current?.ToString()
                     , infos.last?.ToString()
                     , processContext.LastState?.RetryCount
-                    , processContext.Index
-                    , processContext.Total
-                    , infos.source ?? string.Empty
                 );
             }
 
@@ -221,7 +221,7 @@ namespace Ark.Tools.ResourceWatcher
         public void ProcessResourceFailed(Activity activity, ProcessContext pc, bool isBanned, Exception ex)
         {
             var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
-            _logger.Log(lvl, ex, $"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" process Failed");
+            _logger.Log(lvl, ex, "({Index}/{Total}) ResourceId=\"{ResourceId}\" process Failed", pc.Index , pc.Total, pc.CurrentInfo.ResourceId);
 
             _stop(activity, () => new
             {
@@ -233,8 +233,6 @@ namespace Ark.Tools.ResourceWatcher
 
         public void ProcessResourceSuccessful(Activity activity, ProcessContext pc)
         {
-            //_setTags(activity, processType.ToString(), processType.ToString());
-
             _stop(activity, () => new
             {
                 ProcessContext = pc,
@@ -243,15 +241,18 @@ namespace Ark.Tools.ResourceWatcher
 
             if (pc.ResultType == ResultType.NoNewData)
             {
-                _logger.Info($"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" No payload retrived, so no new state. Generally due to a same-checksum");
+                _logger.Info("({Index}/{Total}) ResourceId=\"{ResourceId}\" No payload retrived, so no new state. Generally due to a same-checksum", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
             }
             else if (pc.ResultType == ResultType.NoAction)
             {
-                _logger.Info($"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" No action has been triggered and payload has not been retrieved. We do not change the state");
+                _logger.Info("({Index}/{Total}) ResourceId=\"{ResourceId}\" No action has been triggered and payload has not been retrieved. We do not change the state", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
             }
             else if (pc.ResultType == ResultType.Normal)
             {
-                _logger.Info($"({pc.Index}/{pc.Total}) ResourceId=\"{pc.CurrentInfo.ResourceId}\" handled {(pc.NewState.RetryCount == 0 ? "" : "not ")}successfully {(activity != null ? " in" + (activity.Duration.ToString()) : "")}");
+                if (pc.NewState.RetryCount == 0)
+                    _logger.Info("({Index}/{Total}) ResourceId=\"{ResourceId}\" handled successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
+                else
+                    _logger.Info("({Index}/{Total}) ResourceId=\"{ResourceId}\" handled not successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
             }
         }
         #endregion
