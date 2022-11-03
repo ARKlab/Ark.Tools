@@ -159,11 +159,10 @@ namespace Ark.Tools.NLog
         public class Configurer
         {
             internal LoggingConfiguration _config = new LoggingConfiguration();
-            private readonly string _appName;
 
             internal Configurer(string appName)
             {
-                _appName = appName;
+                GlobalDiagnosticsContext.Set("AppName", appName);
                 // exclude Microsoft and System logging when NLog.Extensions.Logging is in use
                 _config.AddRule(new LoggingRule()
                 {                    
@@ -204,7 +203,6 @@ namespace Ark.Tools.NLog
             {
                 var slackTarget = new SlackTarget
                 {
-                    AppName = _appName,
                     WebHookUrl = slackwebhook,
                 };
                 _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) as Target : slackTarget);
@@ -216,7 +214,6 @@ namespace Ark.Tools.NLog
                 {
                     InstrumentationKey = instrumentationKey,
                     ContextProperties = {
-                        new TargetPropertyWithContext("AppName", _appName),
                         new TargetPropertyWithContext("Properties", new JsonLayout() {
                             ExcludeEmptyProperties = true,
                             IncludeGdc = true,
@@ -303,7 +300,7 @@ VALUES
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Logger", @"${logger}"));
                 // callsite is very-very expensive. Disable in Production.
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Callsite", _isProduction() ? "" : @"${when:when=level>=LogLevel.Error:inner=${callsite:filename=true}}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", _appName));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", "${gdc:item=AppName}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("RequestID", @"${mdlc:item=RequestID}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ActivityId", "${activity:property=TraceId}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", new JsonLayout() { 
@@ -312,7 +309,7 @@ VALUES
                     IncludeScopeProperties = true,
                     RenderEmptyObject = true,
                     IncludeEventProperties = true,
-                    ExcludeProperties = {"Message","Exception"}
+                    ExcludeProperties = {"Message","Exception", "AppName"}
                 }));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
@@ -330,7 +327,7 @@ VALUES
                 target.Layout = "${longdate}|${level:uppercase=true}|${logger}|${activity:property=TraceId}|${message}${newline}${exception:format=ToString:innerFormat=ToString:maxInnerExceptionLevel=10}";
                 target.Html = true;
                 target.ReplaceNewlineWithBrTagInHtml = true;
-                target.Subject = "Errors from " + _appName + "@${ark.hostname}";
+                target.Subject = "Errors from ${gdc:item=AppName}@${ark.hostname}";
 
                 return target;
             }

@@ -16,7 +16,6 @@ namespace Ark.Tools.NLog.Slack
     {
         [RequiredParameter]
         public string WebHookUrl { get; set; }
-        public string AppName { get; set; }
 
         private SlackClient _client = null;
 
@@ -47,8 +46,7 @@ namespace Ark.Tools.NLog.Slack
                 this.ContextProperties.Add(new TargetPropertyWithContext("LogLevel", "${level:uppercase=true}"));
                 this.ContextProperties.Add(new TargetPropertyWithContext("Host", "${machinename}"));
                 this.ContextProperties.Add(new TargetPropertyWithContext("Logger", "${logger}"));
-                if (!string.IsNullOrWhiteSpace(AppName))
-                    this.ContextProperties.Add(new TargetPropertyWithContext("AppName", AppName));
+                this.ContextProperties.Add(new TargetPropertyWithContext("AppName", "${gdc:item=AppName}"));
             }
 
             base.InitializeTarget();
