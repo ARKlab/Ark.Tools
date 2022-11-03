@@ -51,27 +51,27 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>4.4.2</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>4.4.2</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>4.4.2</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>4.5.0</ArkToolsCoreVersion>
+    <FtpClientGroupVersion>4.5.0</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>4.5.0</ResourceWatcherGroupVersion>
     
-    <EntityFrameworkGroupVersion>4.4.2</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>4.4.2</RavenDbGroupVersion>
+    <EntityFrameworkGroupVersion>4.5.0</EntityFrameworkGroupVersion>
+    <RavenDbGroupVersion>4.5.0</RavenDbGroupVersion>
     
-    <AspNetCoreGroupVersion>4.4.2</AspNetCoreGroupVersion>
-    <EventSourcingGroupVersion>4.4.2</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
+    <AspNetCoreGroupVersion>4.5.0</AspNetCoreGroupVersion>
+    <EventSourcingGroupVersion>4.5.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
     <!-- Groups SUFFIX -->
-    <ArkToolsCoreVersionSuffix></ArkToolsCoreVersionSuffix>
-    <FtpClientGroupVersionSuffix></FtpClientGroupVersionSuffix>
-    <ResourceWatcherGroupVersionSuffix></ResourceWatcherGroupVersionSuffix>
+    <ArkToolsCoreVersionSuffix>beta01</ArkToolsCoreVersionSuffix>
+    <FtpClientGroupVersionSuffix>beta01</FtpClientGroupVersionSuffix>
+    <ResourceWatcherGroupVersionSuffix>beta01</ResourceWatcherGroupVersionSuffix>
 
-    <EntityFrameworkGroupVersionSuffix></EntityFrameworkGroupVersionSuffix>
-    <RavenDbGroupVersionSuffix></RavenDbGroupVersionSuffix>
+    <EntityFrameworkGroupVersionSuffix>beta01</EntityFrameworkGroupVersionSuffix>
+    <RavenDbGroupVersionSuffix>beta01</RavenDbGroupVersionSuffix>
 
-    <AspNetCoreGroupVersionSuffix></AspNetCoreGroupVersionSuffix>
+    <AspNetCoreGroupVersionSuffix>beta01</AspNetCoreGroupVersionSuffix>
 
-    <EventSourcingGroupVersionSuffix></EventSourcingGroupVersionSuffix>
+    <EventSourcingGroupVersionSuffix>beta01</EventSourcingGroupVersionSuffix>
 
 </PropertyGroup>
   
