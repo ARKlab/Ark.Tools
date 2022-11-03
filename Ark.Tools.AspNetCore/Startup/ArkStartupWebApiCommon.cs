@@ -132,6 +132,7 @@ namespace Ark.Tools.AspNetCore.Startup
 				c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
 				c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @""));
+                c.EnableAnnotations();
 			});
 
 			services.ArkConfigureSwaggerVersions(Versions, MakeInfo);
@@ -151,6 +152,8 @@ namespace Ark.Tools.AspNetCore.Startup
 				c.DocExpansion(DocExpansion.None);
 				c.EnableDeepLinking();
 				c.EnableFilter();
+                c.EnablePersistAuthorization();
+                c.ShowCommonExtensions();                
 				c.MaxDisplayedTags(100);
 				c.ShowExtensions();
 				c.EnableValidator();
