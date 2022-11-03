@@ -85,7 +85,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				catch (Exception)
 				{
 					if (retryCount > 10)
-						throw new Exception($"Task Process for pachting records failed after {retryCount-1} times"); 
+						throw new InvalidOperationException($"Task Process for pachting records failed after {retryCount-1} times"); 
 
 					// retry
 				}

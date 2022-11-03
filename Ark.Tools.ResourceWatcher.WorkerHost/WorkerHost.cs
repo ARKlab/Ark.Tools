@@ -293,7 +293,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
                 if (meta.Where(x => x.Modified == default && (x.ModifiedSources == null || !x.ModifiedSources.Any())).Any())
                 {
-                    throw new Exception("At least one field between Modified and ModifiedSources must be populated");
+                    throw new InvalidOperationException("At least one field between Modified and ModifiedSources must be populated");
                 }
 
                 foreach (var p in _metadataFilterChain)

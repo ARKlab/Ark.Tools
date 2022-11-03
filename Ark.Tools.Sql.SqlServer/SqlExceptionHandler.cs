@@ -43,7 +43,7 @@ namespace Ark.Tools.Sql.SqlServer
             {
                 Logger logger = LogManager.GetLogger(e.Procedure + "@" + e.Server);
                 var logMessage = e.Message;
-                var logException = new Exception("Exception at Line: " + e.LineNumber);
+                var logException = new InvalidOperationException("Exception at Line: " + e.LineNumber);
 
                 switch (e.Class)
                 {

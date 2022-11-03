@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using Ark.Tools.Core;
+
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +21,7 @@ namespace WebApplicationDemo.Dto
                 return Task.CompletedTask;
             }
 
-            return Task.FromException(new Exception("Failed"));
+            return Task.FromException(new OperationException("Failed"));
         }
     }
 }

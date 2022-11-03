@@ -79,7 +79,7 @@ namespace Ark.Tools.ResourceWatcher
             lock (_lock)
             {
                 if (_isStarted)
-                    throw new ApplicationException("Invalid use of RunOnce: the watcher has been started and is working in background or another RunOnce is running.");
+                    throw new InvalidOperationException("Invalid use of RunOnce: the watcher has been started and is working in background or another RunOnce is running.");
                 _onBeforeStart();
                 _isStarted = true;
             }
@@ -558,7 +558,7 @@ namespace Ark.Tools.ResourceWatcher
                 }
             }
 
-            throw new Exception("Developer bug. One between Modified or ModifiedSources must be populated.");
+            throw new InvalidOperationException("Developer bug. One between Modified or ModifiedSources must be populated.");
         }
     }
 

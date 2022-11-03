@@ -38,7 +38,7 @@ namespace Ark.Tools.Sql.Oracle
             {
                 Logger logger = LogManager.GetLogger(e.Procedure + "@" + e.Source);
                 var logMessage = e.Message;
-                var logException = new Exception(e.Message);
+                var logException = new InvalidOperationException(e.Message);
 
                 switch (e.Number)
                 {

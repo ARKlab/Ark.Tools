@@ -59,7 +59,7 @@ namespace Test.SingletonBackgroundService
             {
                 _logger.LogInformation(nameof(RunForeverThrowsRandomly));
 
-                if (_random.NextDouble() > 0.8) throw new ApplicationException("Random crash");
+                if (_random.NextDouble() > 0.8) throw new InvalidOperationException("Random crash");
 
                 await Task.Delay(3000, stoppingToken);
             }

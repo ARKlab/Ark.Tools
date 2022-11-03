@@ -112,7 +112,7 @@ namespace WebApplicationDemo.Controllers
         [HttpGet(@"GenericException")]
         public IActionResult Get_GenericException()
         {
-            throw new Exception("This is a Generic Exception thrown from an Web API controller.");
+            throw new OperationException("This is a Generic Exception thrown from an Web API controller.");
         }
 
         /// <summary>

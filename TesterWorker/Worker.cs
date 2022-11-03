@@ -61,7 +61,7 @@ namespace TesterWorker
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepException"))
                         {
                             await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
-                            throw new Exception();
+                            throw new InvalidOperationException();
                         }
 
                     }

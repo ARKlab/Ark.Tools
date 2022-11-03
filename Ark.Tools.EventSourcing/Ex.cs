@@ -25,7 +25,7 @@ namespace Ark.Tools.EventSourcing
 			{
 				var genericTypeDefinition = entityType.GetGenericTypeDefinition();
 				var sb = new StringBuilder(genericTypeDefinition.FullName);
-				sb.Append("[");
+				sb.Append('[');
 				bool first = true;
 				foreach (var genericArgument in entityType.GetGenericArguments())
 				{
@@ -34,9 +34,9 @@ namespace Ark.Tools.EventSourcing
 						sb.Append(", ");
 					}
 					first = false;
-					sb.Append("[")
+					sb.Append('[')
 						.Append(GetFullNameWithoutVersionInformation(genericArgument))
-						.Append("]");
+						.Append(']');
 				}
 				sb.Append("], ")
 					.Append(asmName);

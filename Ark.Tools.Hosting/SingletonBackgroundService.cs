@@ -114,7 +114,7 @@ namespace Ark.Tools.Hosting
                         { }
                     }
 
-                    _logger.LogDebug("Service<{0}> releasing Lock<{1}>", ServiceName, LockId);
+                    _logger.LogDebug("Service<{ServiceName}> releasing Lock<{LockId}>", ServiceName, LockId);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
                 catch (Exception e) // either the ExecuteAsync failed or the AcquireAsync failed or its disposal (strange)

@@ -70,7 +70,7 @@ namespace Ark.Tasks
                 ZonedDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<G> z", DateTimeZoneProviders.Tzdb)
             , x =>
             {
-                if (x.Calendar != CalendarSystem.Iso) throw new ApplicationException("Invalid Calendar for ZonedDateTime");
+                if (x.Calendar != CalendarSystem.Iso) throw new InvalidOperationException("Invalid Calendar for ZonedDateTime");
             }
             );
 
