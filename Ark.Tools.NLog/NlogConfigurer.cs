@@ -217,6 +217,14 @@ namespace Ark.Tools.NLog
                     InstrumentationKey = instrumentationKey,
                     ContextProperties = {
                         new TargetPropertyWithContext("AppName", _appName),
+                        new TargetPropertyWithContext("Properties", new JsonLayout() {
+                            ExcludeEmptyProperties = true,
+                            IncludeGdc = true,
+                            IncludeScopeProperties = true,
+                            RenderEmptyObject = true,
+                            IncludeEventProperties = true,
+                            ExcludeProperties = {"Message","Exception"}
+                        })
                     }
                 };
                 _config.AddTarget(ApplicationInsightsTarget, async ? _wrapWithAsyncTargetWrapper(target) as Target : target);
