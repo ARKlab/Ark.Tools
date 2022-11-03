@@ -20,6 +20,72 @@ The main library used by Ark in its stack are
 If you want to learn more about each project, look the respective Readme when present or directly at code.
 Documentation improvements are up-for-grabs ;)
 
+## Upgrade to NLog v5 in Ark.Tools>=v4.5
+
+In v4.5 has been revisited the NLog integration and helpers to make use of new features.
+
+### NLog 'default' Configuration
+
+The best way to configure NLog is
+
+```cs
+    .ConfigureLogging((ctx,l) =>
+    {
+        NLogConfigurer
+            .For("MyApp")
+            // Load default settings from IConfiguration
+            .WithDefaultTargetsAndRulesFromConfiguration("MyApp", NLogConfigurer.MailFromDefault, ctx.Configuration)
+            .Apply();
+
+        l.ClearProviders(); // remove all Microsoft providers
+        l.AddNLog(); // sink all Microsoft.Logging logs to NLog
+    })
+```
+
+`.WithDefaultTargetsAndRulesFromAppSettings()` and `.WithDefaultTargetsAndRulesFromCloudSettings()` exists for older Configuration sources.
+
+The NLog auto-configurer expect the following settings:
+- `NLog.Database` for SQL Server target. The table name is passed in as paramter to the configuration extension method.
+- `NLog.Smtp` for the Mail target, paired with `NLog:NotificationList` for the receipient address. The sender address is configurable from the extension and by default is `noreply@ark-energy.eu`
+- `NLog:SlackWebHook` for the Slack target. By default only `Fatal` and `LoggerName=Slack.*` are sent.
+- `APPINSIGHTS_INSTRUMENTATIONKEY` or `ApplicationInsights:InstrumentationKey` for the ApplicationInsights target. By default only `>=Error` are sent.
+
+### NLog Structured Logging
+
+Logging represent a non trivial part of the CPU consumption of a running Assembly: strings are bad, concateneting them is costly.
+Log Messages are also generally structured to present some context variables which are of interest.
+
+`NLog@v4.5` introduced [StructuredLogging](https://github.com/NLog/NLog/wiki/How-to-use-structured-logging) template support.
+`Ark.Tools@v4.5` (same version, just a coincidence...) supports writing these captured properties in ApplicationInsights and Database Targets.
+
+StructuredLogging is also more performant of string interpolation: string interpolation ($"{variable}") **SHALL NOT** be used for Logging!
+String interpolation is always performed even for Trace or Debug even if those are Level are not enabled and its properties are not captured and cannot be easily used for log analysis.
+
+```cs
+// BAD
+_logger.Info($"Logon by {user} from {ip_address}");
+
+// GOOD
+logger.Info("Logon by {user} from {ip_address}", user, ip_address); // ordered by position
+```
+
+### NLog Slack (>=v4.4)
+
+Starting `Ark.Tools@v4.4` there is support for Logging to Slack via [WebHook](https://api.slack.com/messaging/webhooks).
+
+The Configuration auto-loaders like `WithDefaultTargetsAndRulesFromConfiguration()` looks for a `NLog:SlackWebHook` and if non-empty configure to send Logs as chat message to Slack.
+The default Rules are either:
+- LoggerName="Slack.*" (created via `_slackLogger = LogManager.CreateLogger("Slack.MyStuff");`)
+- Fatal
+
+### NLog ApplicationInsights
+
+Starting `Ark.Tools@v4.5` there is support for Logging to ApplicationInsights.
+
+The Configuration auto-loaders like `WithDefaultTargetsAndRulesFromConfiguration()` looks for the Microsoft's default settings like `APPINSIGHTS_INSTRUMENTATIONKEY` and `ApplicationInsights:InstrumentationKey`.
+
+The default Rules to log any `Error` or `Fatal` to ApplicationInsights, including any `Exception` and StructuredLogging properties.
+
 ## Migrate from v2 to v3
 
 - **BREAKING:** Microsoft.AspNetCore v5
