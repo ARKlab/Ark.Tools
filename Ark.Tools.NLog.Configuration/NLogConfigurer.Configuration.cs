@@ -17,34 +17,36 @@ namespace Ark.Tools.NLog
     {
         public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, bool async = true)
         {
-            @this.WithArkDefaultTargetsAndRules(
-                @this.AppName, cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName),
-                cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.', ':')], cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName),
-                async:async);
+            var config = new Config
+            {
+                SQLConnectionString = cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName),
+                SmtpConnectionString = cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName),
+                MailTo = cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.', ':')],
+                ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
+                SlackWebhook = cfg[NLogDefaultConfigKeys.SlackWebHook.Replace('.', ':')],
+                Async = async
+            };
 
-            var cfgSlack = cfg[NLogDefaultConfigKeys.SlackWebHook.Replace('.', ':')];
-            if (!string.IsNullOrWhiteSpace(cfgSlack))
-                @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
-
-            var key = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"];
-            @this.WithApplicationInsightsTargetsAndRules(key, async);
+            @this.WithArkDefaultTargetsAndRules(config);
 
             return @this;
         }
 
         public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, string logTableName, string mailFrom = null, bool async = true)
         {
-            @this.WithArkDefaultTargetsAndRules(
-                logTableName, cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName),
-                cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.', ':')], cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName),
-                mailFrom, async: async);
+            var config = new Config
+            {
+                SQLConnectionString = cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName),
+                SQLTableName = logTableName,
+                SmtpConnectionString = cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName),
+                MailTo = cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.', ':')],
+                MailFrom = mailFrom,
+                ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
+                SlackWebhook = cfg[NLogDefaultConfigKeys.SlackWebHook.Replace('.', ':')],
+                Async = async
+            };
 
-            var cfgSlack = cfg[NLogDefaultConfigKeys.SlackWebHook.Replace('.', ':')];
-            if (!string.IsNullOrWhiteSpace(cfgSlack))
-                @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
-
-            var key = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"];
-            @this.WithApplicationInsightsTargetsAndRules(key, async);
+            @this.WithArkDefaultTargetsAndRules(config);
 
             return @this;
         }

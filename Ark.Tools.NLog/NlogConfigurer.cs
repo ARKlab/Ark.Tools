@@ -55,30 +55,52 @@ namespace Ark.Tools.NLog
                         ;
         }
 
-        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, string smtpConnectionString, string mailFrom = null, bool? consoleEnabled = null,  bool async = true)
+        public record Config(
+            string SQLConnectionString = null,
+            string SQLTableName = null,
+            string SmtpConnectionString = null,
+            string MailTo = null,
+            string MailFrom = null,
+            string SlackWebhook = null,
+            string ApplicationInsightsInstrumentationKey = null,
+            bool? EnableConsole = null,
+            bool Async = true);
+
+
+        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, Config config)
         {
-            consoleEnabled ??= !_isProduction();
+            var consoleEnabled = config.EnableConsole ?? !_isProduction();
 
             if (consoleEnabled == true)
             {
                 @this
-                    .WithConsoleTarget(async)
+                    .WithConsoleTarget(config.Async)
                     .WithConsoleRule("*", _isProduction() ? LogLevel.Info : LogLevel.Trace);
             }
 
-            if (!string.IsNullOrWhiteSpace(connectionString))
+            if (!string.IsNullOrWhiteSpace(config.SQLConnectionString))
             {
                 @this
-                    .WithDatabaseTarget(logTableName, connectionString, async)
+                    .WithDatabaseTarget(config.SQLTableName ?? @this.AppName, config.SQLConnectionString, config.Async)
                     .WithDatabaseRule("*", LogLevel.Info);
             }
 
-            if (!string.IsNullOrWhiteSpace(smtpConnectionString))
+            if (!string.IsNullOrWhiteSpace(config.SmtpConnectionString))
             {
                 @this
-                    .WithMailTarget(mailFrom, mailTo, smtpConnectionString, async: false)
+                    .WithMailTarget(config.MailFrom, config.MailTo, config.SmtpConnectionString, async: false)
                     .WithMailRule("*", LogLevel.Fatal)
                     ;
+            }
+
+            if (!string.IsNullOrWhiteSpace(config.SlackWebhook))
+            {
+                @this.WithSlackDefaultTargetsAndRules(config.SlackWebhook, config.Async);
+            }
+
+            if (!string.IsNullOrWhiteSpace(config.ApplicationInsightsInstrumentationKey))
+            {
+                @this.WithApplicationInsightsTargetsAndRules(config.ApplicationInsightsInstrumentationKey, config.Async);
             }
 
             if (Debugger.IsAttached)
@@ -129,7 +151,7 @@ namespace Ark.Tools.NLog
         {
             return Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
                 ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
-                ?? "";
+                ?? "Production";
         }
 
         [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]

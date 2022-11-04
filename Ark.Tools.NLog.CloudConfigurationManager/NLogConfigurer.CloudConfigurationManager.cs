@@ -10,7 +10,7 @@ namespace Ark.Tools.NLog
 
         public static Configurer WithDefaultTargetsAndRulesFromCloudConfiguration(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
         {            
-            var smtp = new SmtpConnectionBuilder(CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpConnStringName))
+            var smtp = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpConnStringName)
                 ?? new SmtpConnectionBuilder()
                 {
                     Server = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpServer),
@@ -18,19 +18,22 @@ namespace Ark.Tools.NLog
                     Username = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUserName),
                     Password = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpPassword),
                     UseSsl = bool.Parse(CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SmtpUseSsl))
-                };
+                }.ConnectionString;
 
-            @this.WithArkDefaultTargetsAndRules(
-                logTableName, CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SqlConnStringName),
-                CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.MailNotificationAddresses) ?? mailTo, smtp.ConnectionString,
-                mailFrom, async: async);
+            var cfg = new Config
+            {
+                SQLConnectionString = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SqlConnStringName),
+                SQLTableName = logTableName,
+                SmtpConnectionString = smtp,
+                MailTo = mailTo ?? CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
+                MailFrom = mailFrom,
+                SlackWebhook = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SlackWebHook),
+                ApplicationInsightsInstrumentationKey = CloudConfigurationManager.GetSetting("APPINSIGHTS_INSTRUMENTATIONKEY") 
+                    ?? CloudConfigurationManager.GetSetting("ApplicationInsights:InstrumentationKey"),
+                Async = async
+            };
 
-            var cfgSlack = CloudConfigurationManager.GetSetting(NLogDefaultConfigKeys.SlackWebHook);
-            if (!string.IsNullOrWhiteSpace(cfgSlack))
-                @this.WithSlackDefaultTargetsAndRules(cfgSlack, async);
-
-            var iKey = CloudConfigurationManager.GetSetting("APPINSIGHTS_INSTRUMENTATIONKEY") ?? CloudConfigurationManager.GetSetting("ApplicationInsights:InstrumentationKey");
-            @this.WithApplicationInsightsTargetsAndRules(iKey, async);
+            @this.WithArkDefaultTargetsAndRules(cfg);
 
             return @this;
         }
