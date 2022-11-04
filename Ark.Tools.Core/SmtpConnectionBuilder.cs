@@ -72,6 +72,12 @@ namespace Ark.Tools
                             this.UseSsl = bool.Parse(pair[1]);
                             break;
                         }
+
+                    case "from":
+                        {
+                            this.From = pair[1];
+                            break;
+                        }
                 }
             }
         }
@@ -79,7 +85,7 @@ namespace Ark.Tools
         public string ConnectionString {
             get
             {
-                return $"Server={Server};Port={Port};Username={Username};Password={Password};UseSsl={UseSsl}";
+                return $"Server={Server};Port={Port};Username={Username};Password={Password};UseSsl={UseSsl}" + (!string.IsNullOrWhiteSpace(From) ? $";From={From}" : string.Empty);
             }
             set
             {
@@ -92,5 +98,6 @@ namespace Ark.Tools
         public string Username { get; set; }
         public string Password { get; set; }
         public bool UseSsl { get; set; }
+        public string From { get; set; }
     }
 }

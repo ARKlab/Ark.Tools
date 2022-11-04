@@ -23,7 +23,7 @@ namespace TestWorker
 
                     NLogConfigurer
                         .For(Test_Constants.AppName)
-                        .WithDefaultTargetsAndRulesFromConfiguration(Test_Constants.AppName.Replace(".", ""), NLogConfigurer.MailFromDefault, ctx.Configuration)
+                        .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, Test_Constants.AppName.Replace(".", ""))
                         .Apply();
 
                     l.ClearProviders();

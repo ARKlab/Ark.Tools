@@ -63,7 +63,7 @@ namespace WebApplicationDemo
                         var ns = "WebApplicationDemo";
 
                         NLogConfigurer.For(ns)
-                            .WithDefaultTargetsAndRulesFromConfiguration(ns.Replace('.', '_'), "noreply@ark-energy.eu", ctx.Configuration)
+                            .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration)
                             .Apply();
 
                         logging.ClearProviders();

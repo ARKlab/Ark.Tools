@@ -55,7 +55,7 @@ namespace Ark.Tools.NLog
                         ;
         }
 
-        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, string smtpConnectionString, string mailFrom = NLogConfigurer.MailFromDefault, bool? consoleEnabled = null,  bool async = true)
+        public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, string smtpConnectionString, string mailFrom = null, bool? consoleEnabled = null,  bool async = true)
         {
             consoleEnabled ??= !_isProduction();
 
@@ -160,8 +160,11 @@ namespace Ark.Tools.NLog
         {
             internal LoggingConfiguration _config = new LoggingConfiguration();
 
+            public string AppName { get; }
+
             internal Configurer(string appName)
             {
+                AppName = appName;
                 GlobalDiagnosticsContext.Set("AppName", appName);
                 // exclude Microsoft and System logging when NLog.Extensions.Logging is in use
                 _config.AddRule(new LoggingRule()
@@ -257,6 +260,8 @@ namespace Ark.Tools.NLog
 
             public Configurer WithDatabaseTarget(string logTableName, string connectionString, bool async = true)
             {
+                logTableName = logTableName.Replace("[", string.Empty).Replace("]", string.Empty).Replace('.','_');
+
                 _ensureTableIsCreated(connectionString, logTableName);
                 var databaseTarget = new DatabaseTarget();
                 databaseTarget.DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"; // see https://github.com/NLog/NLog/wiki/Database-target#microsoftdatasqlclient-and-net-core
@@ -334,14 +339,14 @@ VALUES
 
             public Configurer WithMailTarget(string to, bool async = true)
             {
-                return this.WithMailTarget(NLogConfigurer.MailFromDefault, to, async);
+                return this.WithMailTarget(null, to, async);
             }
 
             public Configurer WithMailTarget(string from, string to, bool async = true)
             {
                 var target = _getBasicMailTarget();
 
-                target.From = from;
+                target.From = from ?? NLogConfigurer.MailFromDefault;
                 target.To = to;
 
                 target.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
@@ -354,7 +359,7 @@ VALUES
 
             public Configurer WithMailTarget(string to, string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl, bool async = true)
             {
-                return this.WithMailTarget(NLogConfigurer.MailFromDefault, to, smtpServer, smtpPort, smtpUserName, smtpPassword, useSsl, async);
+                return this.WithMailTarget(null, to, smtpServer, smtpPort, smtpUserName, smtpPassword, useSsl, async);
             }
 
             public Configurer WithMailTarget(string from, string to, string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl, bool async = true)
@@ -381,7 +386,7 @@ VALUES
             public Configurer WithMailTarget(string from, string to, string smtpConnectionString, bool async = true)
             {
                 var cs = new SmtpConnectionBuilder(smtpConnectionString);
-                return this.WithMailTarget(from, to, cs.Server, cs.Port, cs.Username, cs.Password, cs.UseSsl, async);
+                return this.WithMailTarget(from ?? cs.From ?? NLogConfigurer.MailFromDefault, to, cs.Server, cs.Port, cs.Username, cs.Password, cs.UseSsl, async);
             }
 
             #endregion targets

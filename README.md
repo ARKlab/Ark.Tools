@@ -29,12 +29,23 @@ In v4.5 has been revisited the NLog integration and helpers to make use of new f
 The best way to configure NLog is
 
 ```cs
+    Host.CreateDefaultBuilder(args)
+        .ConfigureNLog()
+        .ConfigureServices(...)
+    ;
+```
+
+is equivalent to
+
+```cs
+
     .ConfigureLogging((ctx,l) =>
     {
+        var appName = Assembly.GetEntryAssembly().GetName().Name;
         NLogConfigurer
-            .For("MyApp")
+            .For(appName)
             // Load default settings from IConfiguration
-            .WithDefaultTargetsAndRulesFromConfiguration("MyApp", NLogConfigurer.MailFromDefault, ctx.Configuration)
+            .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration)
             .Apply();
 
         l.ClearProviders(); // remove all Microsoft providers
@@ -46,7 +57,9 @@ The best way to configure NLog is
 
 The NLog auto-configurer expect the following settings:
 - `NLog.Database` for SQL Server target. The table name is passed in as paramter to the configuration extension method.
-- `NLog.Smtp` for the Mail target, paired with `NLog:NotificationList` for the receipient address. The sender address is configurable from the extension and by default is `noreply@ark-energy.eu`
+- `NLog.Smtp` for the Mail target
+   - `NLog:NotificationList` for the receipient address. 
+   - **NEW** The sender address is taken from Smtp connection string `;From=noreply@example.com` or from `.ConfigureNLog(mailfrom:"me@myapp.com")` (defaults to `noreply@ark-energy.eu`)
 - `NLog:SlackWebHook` for the Slack target. By default only `Fatal` and `LoggerName=Slack.*` are sent.
 - `APPINSIGHTS_INSTRUMENTATIONKEY` or `ApplicationInsights:InstrumentationKey` for the ApplicationInsights target. By default only `>=Error` are sent.
 
@@ -58,8 +71,9 @@ Log Messages are also generally structured to present some context variables whi
 `NLog@v4.5` introduced [StructuredLogging](https://github.com/NLog/NLog/wiki/How-to-use-structured-logging) template support.
 `Ark.Tools@v4.5` (same version, just a coincidence...) supports writing these captured properties in ApplicationInsights and Database Targets.
 
-StructuredLogging is also more performant of string interpolation: string interpolation ($"{variable}") **SHALL NOT** be used for Logging!
-String interpolation is always performed even for Trace or Debug even if those are Level are not enabled and its properties are not captured and cannot be easily used for log analysis.
+StructuredLogging is also more performant of string interpolation: string interpolation (`$"Message {variable}"`) **SHALL NOT be used for Logging!**
+String interpolation is always performed even usually disabled levels like `Trace` or `Debug` causing a performance loss. 
+Additionally the variables are not captured and cannot be used for log analysis querying the JSON fields.
 
 ```cs
 // BAD

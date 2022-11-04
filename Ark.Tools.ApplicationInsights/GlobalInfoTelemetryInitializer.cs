@@ -14,12 +14,12 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
 
         public GlobalInfoTelemetryInitializer()
         {
-            _processName = Assembly.GetEntryAssembly().GetName().Name;
+            _processName = Assembly.GetEntryAssembly()?.GetName().Name;
         }
 
         public void Initialize(ITelemetry telemetry)
         {
-            if (telemetry != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
+            if (telemetry != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
             {
                 telemetry.Context.GlobalProperties.Add(_processNameProperty, _processName);
             }
