@@ -528,6 +528,9 @@ VALUES
                 InternalLogger.LogToTrace = true;
                 // this is last, so that ThrowConfigExceptions is respected on Config change
                 LogManager.Configuration = _config;
+
+                if (_isProduction())
+                    LogManager.GlobalThreshold = LogLevel.Info;
             }
         }
 
@@ -542,7 +545,7 @@ BEGIN
 	    [TimestampTz] [datetimeoffset](7) NULL,
 	    [LogLevel] [varchar](20) NULL,
 	    [Logger] [varchar](256) NULL,
-	    [Callsite] [varchar](256) NULL,
+	    [Callsite] [varchar](max) NULL,
 	    [AppName] [varchar](256) NULL,
         [RequestID] [uniqueidentifier] NULL,
 	    [ActivityId] [varchar](256) NULL,
@@ -580,11 +583,27 @@ BEGIN
     EXEC('ALTER TABLE [dbo].[{0}] ADD [Properties] [nvarchar](MAX) NULL')
 
 END
+
+
+IF EXISTS ( SELECT  1
+                FROM    information_schema.COLUMNS
+                WHERE   table_schema = 'dbo'
+                        AND TABLE_NAME = '{0}'
+						AND COLUMN_NAME = 'Callsite'
+						AND CHARACTER_MAXIMUM_LENGTH = 256
+                        )
+BEGIN
+
+    EXEC('ALTER TABLE [dbo].[{0}] ALTER COLUMN [Callsite] [varchar](MAX) NULL')
+
+END
+
             ", logTableName);
             using var conn = new SqlConnection(connString);
             conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = creteLogTable;
+            cmd.CommandTimeout = 180;
             cmd.ExecuteNonQuery();
         }
 

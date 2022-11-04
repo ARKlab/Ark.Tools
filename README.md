@@ -38,7 +38,6 @@ The best way to configure NLog is
 is equivalent to
 
 ```cs
-
     .ConfigureLogging((ctx,l) =>
     {
         var appName = Assembly.GetEntryAssembly().GetName().Name;
@@ -80,7 +79,7 @@ Additionally the variables are not captured and cannot be used for log analysis 
 _logger.Info($"Logon by {user} from {ip_address}");
 
 // GOOD
-logger.Info("Logon by {user} from {ip_address}", user, ip_address); // ordered by position
+_logger.Info("Logon by {user} from {ip_address}", user, ip_address); // ordered by position
 ```
 
 ### NLog Slack (>=v4.4)
@@ -90,7 +89,7 @@ Starting `Ark.Tools@v4.4` there is support for Logging to Slack via [WebHook](ht
 The Configuration auto-loaders like `WithDefaultTargetsAndRulesFromConfiguration()` looks for a `NLog:SlackWebHook` and if non-empty configure to send Logs as chat message to Slack.
 The default Rules are either:
 - LoggerName="Slack.*" (created via `_slackLogger = LogManager.CreateLogger("Slack.MyStuff");`)
-- Fatal
+- Level==Fatal
 
 ### NLog ApplicationInsights
 
