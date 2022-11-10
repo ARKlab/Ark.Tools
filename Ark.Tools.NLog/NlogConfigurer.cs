@@ -211,7 +211,7 @@ namespace Ark.Tools.NLog
             {
                 _config.AddTarget("Debugger", new DebuggerTarget("Debugger")
                 {
-                    Layout= "${longdate}|${level:uppercase=true}|${logger}|ActivityId=${activity:property=TraceId}|${message:withexception=true}"
+                    Layout= @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}"
                 });
                 return this;
             }
@@ -256,7 +256,7 @@ namespace Ark.Tools.NLog
             public Configurer WithConsoleTarget(bool async = true)
             {
                 var consoleTarget = new ColoredConsoleTarget();
-                consoleTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message} ${onexception:${newline}EXCEPTION\: ${exception:format=ToString}}";
+                consoleTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
                 _config.AddTarget(ConsoleTarget, async ? _wrapWithAsyncTargetWrapper(consoleTarget) as Target : consoleTarget);
                 return this;
             }
@@ -265,7 +265,7 @@ namespace Ark.Tools.NLog
             {
                 var fileTarget = new FileTarget();
 
-                fileTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message} ${onexception:${newline}EXCEPTION\: ${exception:format=ToString}}";
+                fileTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
                 fileTarget.FileName = @"${basedir}\Logs\Trace.log";
                 fileTarget.KeepFileOpen = true;
                 fileTarget.ConcurrentWrites = false;
@@ -304,6 +304,7 @@ INSERT INTO [dbo].[{0}]
     , [Host]
     , [Message]
     , [ExceptionMessage]
+    , [StackTrace]
 ) 
 VALUES
 (
@@ -319,6 +320,7 @@ VALUES
     , @Host
     , @Message
     , @ExceptionMessage 
+    , @StackTrace
 )
           ", logTableName);
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("TimestampUtc", @"${date:universalTime=true}"));
@@ -340,7 +342,8 @@ VALUES
                 }));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=ToString}}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=Type,Message}}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString}}"));
                 _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) as Target : databaseTarget);
 
                 return this;
@@ -351,7 +354,7 @@ VALUES
                 var target = new MailTarget();
                 target.AddNewLines = true;
                 target.Encoding = Encoding.UTF8;
-                target.Layout = "${longdate}|${level:uppercase=true}|${logger}|${activity:property=TraceId}|${message}${newline}${exception:format=ToString:innerFormat=ToString:maxInnerExceptionLevel=10}";
+                target.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
                 target.Html = true;
                 target.ReplaceNewlineWithBrTagInHtml = true;
                 target.Subject = "Errors from ${gdc:item=AppName}@${ark.hostname}";
@@ -575,6 +578,7 @@ BEGIN
 	    [Host] [varchar](256) NULL,
 	    [Message] [nvarchar](max) NULL,
 	    [ExceptionMessage] [nvarchar](max) NULL,
+	    [StackTrace] [nvarchar](max) NULL
     CONSTRAINT [{0}_PK] PRIMARY KEY CLUSTERED 
     (
 	    [ID] ASC
@@ -603,6 +607,18 @@ IF NOT EXISTS ( SELECT  1
 BEGIN
 
     EXEC('ALTER TABLE [dbo].[{0}] ADD [Properties] [nvarchar](MAX) NULL')
+
+END
+
+IF NOT EXISTS ( SELECT  1
+                FROM    information_schema.COLUMNS
+                WHERE   table_schema = 'dbo'
+                        AND TABLE_NAME = '{0}'
+						AND COLUMN_NAME = 'StackTrace'
+                        )
+BEGIN
+
+    EXEC('ALTER TABLE [dbo].[{0}] ADD [StackTrace] [nvarchar](MAX) NULL')
 
 END
 
