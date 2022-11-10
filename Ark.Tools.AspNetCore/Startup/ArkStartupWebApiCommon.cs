@@ -183,7 +183,8 @@ namespace Ark.Tools.AspNetCore.Startup
 			services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
 			_integrateSimpleInjectorContainer(services);
 
-			services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>());
+			services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
+                ?? throw new InvalidOperationException("RequestTelemetry"));
 		}
 
 		private void _integrateSimpleInjectorContainer(IServiceCollection services)

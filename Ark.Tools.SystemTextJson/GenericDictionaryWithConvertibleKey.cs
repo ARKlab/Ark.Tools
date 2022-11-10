@@ -12,8 +12,8 @@ namespace Ark.Tools.SystemTextJson
     {
         public override bool CanConvert(Type typeToConvert)
         {
-            Type actualTypeToConvert;
-            Type keyType = null;
+            Type? actualTypeToConvert;
+            Type? keyType = null;
             if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericBaseClass(typeof(Dictionary<,>))) != null)
             {
                 keyType = actualTypeToConvert.GetGenericArguments()[0];
@@ -36,10 +36,10 @@ namespace Ark.Tools.SystemTextJson
             return false;
         }
 
-        public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+        public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
-            Type actualTypeToConvert;
-            Type converterType = null;
+            Type? actualTypeToConvert;
+            Type? converterType = null;
             if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericBaseClass(typeof(Dictionary<,>))) != null)
             {
                 var args = actualTypeToConvert.GetGenericArguments();
@@ -73,7 +73,7 @@ namespace Ark.Tools.SystemTextJson
             }
 
             if (converterType != null)
-                return (JsonConverter)Activator.CreateInstance(converterType, options);
+                return (JsonConverter?)Activator.CreateInstance(converterType, options);
 
             return null;
         }

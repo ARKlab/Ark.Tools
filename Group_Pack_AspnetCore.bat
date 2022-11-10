@@ -26,7 +26,6 @@ setlocal
 "%MSBUILD%" "Ark.Tools.AspNetCore.NestedStartup\Ark.Tools.AspNetCore.NestedStartup.csproj"											    /t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.AspNetCore.RavenDb\Ark.Tools.AspNetCore.RavenDb.csproj"															/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.AspNetCore.Swashbuckle\Ark.Tools.AspNetCore.Swashbuckle.csproj"												    /t:Pack /p:Configuration=Release
-"%MSBUILD%" "Ark.Tools.AspNetCore.XlsxOutputFormatter\Ark.Tools.AspNetCore.XlsxOutputFormatter.csproj"								    /t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.AspNetCore.HealthChecks\Ark.Tools.AspNetCore.HealthChecks.csproj"												/t:Pack /p:Configuration=Release
 
 pause

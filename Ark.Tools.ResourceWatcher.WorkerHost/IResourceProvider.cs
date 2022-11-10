@@ -18,6 +18,6 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         where TQueryFilter : class, new()
     {
         Task<IEnumerable<TMetadata>> GetMetadata(TQueryFilter filter, CancellationToken ctk = default);
-        Task<TResource> GetResource(TMetadata metadata, IResourceTrackedState lastState, CancellationToken ctk = default);
+        Task<TResource?> GetResource(TMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default);
     }
 }

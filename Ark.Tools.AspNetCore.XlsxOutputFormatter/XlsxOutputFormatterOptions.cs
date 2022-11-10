@@ -10,12 +10,12 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter
         /// <summary>
         /// An action method that can be used to set the default cell style.
         /// </summary>
-        public Action<ExcelStyle> CellStyle { get; set; }
+        public Action<ExcelStyle>? CellStyle { get; set; }
 
         /// <summary>
         /// An action method that can be used to set the default header row style.
         /// </summary>
-        public Action<ExcelStyle> HeaderStyle { get; set; }
+        public Action<ExcelStyle>? HeaderStyle { get; set; }
 
         /// <summary>
         /// True if columns should be auto-fit to the cell contents after writing.

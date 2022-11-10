@@ -18,7 +18,7 @@ namespace Ark.Tools.Outbox
 #endif
             ;
 
-        Task PublishAsync<T>(IOutboxContext ctx, T message, IDictionary<string, string> optionalHeaders = null, CancellationToken ctk = default) where T : class;
+        Task PublishAsync<T>(IOutboxContext ctx, T message, IDictionary<string, string>? optionalHeaders = null, CancellationToken ctk = default) where T : class;
     }
 
     public interface IOutboxConsumer
@@ -33,8 +33,8 @@ namespace Ark.Tools.Outbox
     public abstract class OutboxConsumerBase : IOutboxConsumer, IDisposable
     {
         private readonly Func<IOutboxContext> _outboxContextFactory;
-        private CancellationTokenSource _processorCT;
-        private Task _processorTask;
+        private CancellationTokenSource? _processorCT;
+        private Task? _processorTask;
         private bool _disposedValue;
 
         public TimeSpan SleepInterval { get; set; } = TimeSpan.FromSeconds(1);
@@ -104,7 +104,8 @@ namespace Ark.Tools.Outbox
         public async Task StopAsync(CancellationToken ctk)
         {
             _processorCT?.Dispose();
-            await Task.WhenAny(_processorTask, Task.Delay(Timeout.Infinite, ctk));
+            if (_processorTask is not null)
+                await Task.WhenAny(_processorTask, Task.Delay(Timeout.Infinite, ctk));            
         }
 
         protected virtual void Dispose(bool disposing)

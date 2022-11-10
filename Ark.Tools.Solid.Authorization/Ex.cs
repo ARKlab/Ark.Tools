@@ -58,7 +58,9 @@ namespace Ark.Tools.Solid.Authorization
                 container.Collection.Append(typeof(IAuthorizationPolicy), policyType);
         }
 
-        public static async Task<object> GetResourceAsync<T,P>(Container c, T query, P policy, CancellationToken ctk = default)
+        public static async Task<object> GetResourceAsync<T,P>(Container c, T query, P policy, CancellationToken ctk = default) 
+            where T : notnull 
+            where P : notnull
         {
             var queryType = query.GetType();
             var policyType = policy.GetType();
@@ -72,7 +74,7 @@ namespace Ark.Tools.Solid.Authorization
             }
             finally
             {
-                IDisposable disp = handler as IDisposable;
+                IDisposable? disp = handler as IDisposable;
                 if (disp != null)
                     disp.Dispose();
             }
@@ -86,7 +88,7 @@ namespace Ark.Tools.Solid.Authorization
                 if (string.IsNullOrWhiteSpace(p.PolicyName))
                     throw new ArgumentNullException(nameof(p.PolicyName));
 
-                retVal = await policyProvider.GetPolicyAsync(p.PolicyName, ctk);
+                retVal = await policyProvider.GetPolicyAsync(p.PolicyName!, ctk);
                 if (retVal == null) throw new InvalidOperationException($"No policy found: {p.PolicyName}.");
             }
 

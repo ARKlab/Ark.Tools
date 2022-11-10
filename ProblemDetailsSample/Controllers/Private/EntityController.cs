@@ -216,9 +216,4 @@ namespace ProblemDetailsSample.Controllers.Private
             return this.Ok(res);
         }
     }
-
-    internal class Error
-    {
-        public string Message { get; set; }
-    }
 }

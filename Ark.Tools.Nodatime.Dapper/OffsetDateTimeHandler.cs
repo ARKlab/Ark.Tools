@@ -17,7 +17,7 @@ namespace Ark.Tools.Nodatime.Dapper
 
         public static readonly OffsetDateTimeHandler Instance = new OffsetDateTimeHandler();
 
-        public event EventHandler<IDbDataParameter> OnSetValue;
+        public event EventHandler<IDbDataParameter>? OnSetValue;
 
         public override void SetValue(IDbDataParameter parameter, OffsetDateTime value)
         {
@@ -29,7 +29,7 @@ namespace Ark.Tools.Nodatime.Dapper
             OnSetValue?.Invoke(this, parameter);
         }
 
-        public override OffsetDateTime Parse(object value)
+        public override OffsetDateTime Parse(object? value)
         {
             if (value == null || value is DBNull) return default;
 
@@ -42,7 +42,7 @@ namespace Ark.Tools.Nodatime.Dapper
             {
                 var conv = TypeDescriptor.GetConverter(typeof(OffsetDateTime));
                 if (conv?.CanConvertFrom(typeof(string)) == true)
-                    return (OffsetDateTime)conv.ConvertFromString(s);
+                    return (OffsetDateTime)(conv.ConvertFromString(s) ?? throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.OffsetDateTime"));
             }
 
             throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.OffsetDateTime");

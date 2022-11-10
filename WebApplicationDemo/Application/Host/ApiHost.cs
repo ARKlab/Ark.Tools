@@ -67,7 +67,7 @@ namespace WebApplicationDemo.Application.Host
 
 			//HealthChecks
 			container.Register<ExampleHealthCheck>();
-			Container.Register<IExampleHealthCheckService, ExampleHealthCheckService>();
+			container.Register<IExampleHealthCheckService, ExampleHealthCheckService>();
 
 			// DAL
 			//container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
@@ -84,7 +84,7 @@ namespace WebApplicationDemo.Application.Host
 			Thread.Sleep(Timeout.Infinite);
 		}
 
-		public Container Container { get; private set; }
+		public Container? Container { get; private set; }
 
 		public ApiConfig Config { get; private set; }
 

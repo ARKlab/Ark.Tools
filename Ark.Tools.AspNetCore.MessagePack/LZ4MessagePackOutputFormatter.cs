@@ -18,7 +18,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
         {
         }
 
-        public LZ4MessagePackOutputFormatter(IFormatterResolver resolver)
+        public LZ4MessagePackOutputFormatter(IFormatterResolver? resolver)
         {
             SupportedMediaTypes.Add(ContentType);
 
@@ -30,7 +30,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
             _options = _options.WithCompression(MessagePackCompression.Lz4Block);
         }
 
-        protected override bool CanWriteType(Type type)
+        protected override bool CanWriteType(Type? type)
         {
             return _options.Resolver.GetFormatterDynamic(type) != null;
         }

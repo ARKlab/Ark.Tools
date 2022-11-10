@@ -12,7 +12,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
 {
     public sealed class FakeServer : IServer
     {
-        private Func<HttpContext, Task> _process;
+        private Func<HttpContext, Task>? _process;
 
         public FakeServer(IFeatureCollection featureCollection)
         {
@@ -21,9 +21,9 @@ namespace Ark.Tools.AspNetCore.NestedStartup
 
         public IFeatureCollection Features { get; }
 
-        public Task StartAsync<TContext>(IHttpApplication<TContext> application, CancellationToken cancellationToken)
+        public Task StartAsync<TContext>(IHttpApplication<TContext> application, CancellationToken cancellationToken) where TContext : notnull
         {
-            var prop = typeof(TContext).GetProperty("HttpContext");
+            var prop = typeof(TContext).GetProperty("HttpContext") ?? throw new InvalidOperationException("TContext do not expose HttpContext property");
 
             _process = (HttpContext ctx) =>
             {
@@ -43,7 +43,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
         }
 
         public Task Process(HttpContext ctx)
-            => _process(ctx);
+            => _process?.Invoke(ctx) ?? throw new InvalidOperationException("Server has not been Started");
     }
 
 

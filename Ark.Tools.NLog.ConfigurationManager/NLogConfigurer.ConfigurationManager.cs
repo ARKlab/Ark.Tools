@@ -16,10 +16,10 @@ namespace Ark.Tools.NLog
                 ?? new SmtpConnectionBuilder()
                 {
                     Server = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpServer],
-                    Port = int.Parse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPort]),
+                    Port = int.TryParse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPort], out var p) ? p : null,
                     Username = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUserName],
                     Password = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPassword],
-                    UseSsl = bool.Parse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUseSsl])
+                    UseSsl = bool.TryParse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUseSsl], out var b) ? b : true
                 }.ConnectionString;
 
             var config = new Config

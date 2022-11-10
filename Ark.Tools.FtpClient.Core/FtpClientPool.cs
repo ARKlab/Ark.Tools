@@ -28,7 +28,7 @@ namespace Ark.Tools.FtpClient.Core
 
         protected override async Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
         {
-            IFtpClientConnection result = null;
+            IFtpClientConnection? result = null;
             await _semaphore.WaitAsync(ctk);
             try
             {
@@ -60,9 +60,10 @@ namespace Ark.Tools.FtpClient.Core
             }
         }
 
-        private void _pooled_Disposing(object sender, EventArgs e)
+        private void _pooled_Disposing(object? sender, EventArgs e)
         {
             var pooled = sender as PooledFtpConnection;
+            if (pooled is null) return;
             try
             {
                 _pool.Push(pooled.Inner);                
@@ -115,7 +116,7 @@ namespace Ark.Tools.FtpClient.Core
         {
             private bool _disposedValue = false; // To detect redundant calls
             public IFtpClientConnection Inner { get; }
-            public event EventHandler Disposing;
+            public event EventHandler? Disposing;
 
             public PooledFtpConnection(IFtpClientConnection inner)
             {
@@ -148,12 +149,12 @@ namespace Ark.Tools.FtpClient.Core
                 return Inner.DownloadFileAsync(path, ctk);
             }
 
-            public Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default)
+            public Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
             {
                 return Inner.ListDirectoryAsync(path, ctk);
             }
 
-            public Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default)
+            public Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
             {
                 return Inner.ListFilesRecursiveAsync(startPath, skipFolder, ctk);
             }

@@ -35,7 +35,7 @@ namespace Ark.Tools.Outbox.SqlServer
         /// <summary>
         /// Encodes the headers into a string
         /// </summary>
-        public string SerializeToString(Dictionary<string, string> headers)
+        public string SerializeToString(Dictionary<string, string>? headers)
         {
             return JsonSerializer.Serialize(headers, _options);
         }
@@ -43,7 +43,7 @@ namespace Ark.Tools.Outbox.SqlServer
         /// <summary>
         /// Encodes the headers into a byte array
         /// </summary>
-        public byte[] Serialize(Dictionary<string, string> headers)
+        public byte[] Serialize(Dictionary<string, string>? headers)
         {
             return JsonSerializer.SerializeToUtf8Bytes(headers, _options);
         }
@@ -51,7 +51,7 @@ namespace Ark.Tools.Outbox.SqlServer
         /// <summary>
         /// Decodes the headers from the given byte array
         /// </summary>
-        public Dictionary<string, string> Deserialize(byte[] bytes)
+        public Dictionary<string, string>? Deserialize(byte[] bytes)
         {
             var readOnlySpan = new ReadOnlySpan<byte>(bytes);
 
@@ -61,7 +61,7 @@ namespace Ark.Tools.Outbox.SqlServer
         /// <summary>
         /// Decodes the headers from the given string
         /// </summary>
-        public Dictionary<string, string> DeserializeFromString(string str)
+        public Dictionary<string, string>? DeserializeFromString(string str)
         {
             return JsonSerializer.Deserialize<Dictionary<string, string>>(str, _options);
         }

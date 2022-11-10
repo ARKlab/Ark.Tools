@@ -18,9 +18,6 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="allowedRoles">A collection of allowed roles.</param>
         public RolesAuthorizationRequirement(IEnumerable<string> allowedRoles)
         {
-            Contract.Requires(allowedRoles != null);
-            Contract.Requires(allowedRoles.Any());
-            
             AllowedRoles = allowedRoles;
         }
 

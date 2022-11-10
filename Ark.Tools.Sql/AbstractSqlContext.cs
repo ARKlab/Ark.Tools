@@ -10,7 +10,7 @@ namespace Ark.Tools.Sql
     public abstract class AbstractSqlContext<Tag> : ISqlContext<Tag>
     {
         private DbConnection _connection;
-        private DbTransaction _transaction;
+        private DbTransaction? _transaction;
         private bool _disposed = false;
         private IsolationLevel _isolationLevel;
         private object _lock = new object();
@@ -24,7 +24,7 @@ namespace Ark.Tools.Sql
         protected AbstractSqlContext(DbTransaction transaction)
         {
             _transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
-            _connection = transaction.Connection;
+            _connection = transaction.Connection ?? throw new ArgumentNullException(nameof(transaction.Connection));
             _isolationLevel = _transaction.IsolationLevel;
         }
 
@@ -51,7 +51,7 @@ namespace Ark.Tools.Sql
             get
             {
                 _ensureOpened();
-                return _transaction.Connection;
+                return _connection;
             }
         }
 
@@ -60,7 +60,7 @@ namespace Ark.Tools.Sql
             get
             {
                 _ensureOpened();
-                return _transaction;
+                return _transaction!;
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Ark.Tools.Activity
 {
@@ -7,9 +8,8 @@ namespace Ark.Tools.Activity
     {
         public Resource Resource { get; internal set; }
 
-        internal Func<Slice, IEnumerable<Slice>> _getDependentSlice;
+        internal Func<Slice, IEnumerable<Slice>> _getDependentSlice = s => Enumerable.Empty<Slice>();
         
-
         public virtual IEnumerable<Slice> GetResourceSlices(Slice activitySlice)
         {
             return _getDependentSlice(activitySlice);

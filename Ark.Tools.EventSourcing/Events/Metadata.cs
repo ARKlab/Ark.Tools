@@ -18,13 +18,13 @@ namespace Ark.Tools.EventSourcing.Events
 
         public string EventId
         {
-            get => _container.GetMetadataValue(MetadataKeys.EventId);
+            get => _container.GetMetadataValue(MetadataKeys.EventId) ?? throw new InvalidOperationException(MetadataKeys.EventId + " cannot be null");
             set => _container.Add(MetadataKeys.EventId, value);
         }
 
         public string EventName
         {
-            get => _container.GetMetadataValue(MetadataKeys.EventName);
+            get => _container.GetMetadataValue(MetadataKeys.EventName) ?? throw new InvalidOperationException(MetadataKeys.EventName + " cannot be null");
             set => _container.Add(MetadataKeys.EventName, value);
         }
 

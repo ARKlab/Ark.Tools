@@ -48,6 +48,7 @@ namespace Ark.Tools.SystemTextJson
 
     public sealed class DictionaryConverter<TK, TV>
         : AbstractDictionaryConverter<IDictionary<TK, TV>, TK, TV>
+        where TK : notnull
     {
         public DictionaryConverter(JsonSerializerOptions options) : base(options)
         {

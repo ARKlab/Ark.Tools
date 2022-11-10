@@ -23,7 +23,7 @@ namespace Ark.Tools.Auth0
 {
     public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient, IDisposable
     {
-        private IAuthenticationApiClient _inner;
+        private readonly IAuthenticationApiClient _inner;
         private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
         private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
         private readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
@@ -122,7 +122,7 @@ namespace Ark.Tools.Auth0
 
         #region Caching
 
-        private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request, CancellationToken cancellationToken = default)
+        private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest:notnull
         {
             var key = (string)_getKey((dynamic)request);
 
@@ -138,7 +138,7 @@ namespace Ark.Tools.Auth0
             return _getToken(request, cancellationToken);
         }
 
-        private string _getKey(AuthorizationCodeTokenRequest r)
+        private static string _getKey(AuthorizationCodeTokenRequest r)
         {
             return $"AuthorizationCodeTokenRequest{r.ClientId}{r.Code}"; // code should be enough, but being on safe side
         }
@@ -148,7 +148,7 @@ namespace Ark.Tools.Auth0
             return _getToken(request, cancellationToken);
         }
 
-        private string _getKey(AuthorizationCodePkceTokenRequest r)
+        private static string _getKey(AuthorizationCodePkceTokenRequest r)
         {
             return $"AuthorizationCodePkceTokenRequest{r.ClientId}{r.Code}{r.CodeVerifier}";
         }
@@ -158,7 +158,7 @@ namespace Ark.Tools.Auth0
             return _getToken(request, cancellationToken);
         }
 
-        private string _getKey(ClientCredentialsTokenRequest r)
+        private static string _getKey(ClientCredentialsTokenRequest r)
         {
             return $"ClientCredentialsTokenRequest{r.ClientId}{r.Audience}";
         }
@@ -168,7 +168,7 @@ namespace Ark.Tools.Auth0
             return _getToken(request, cancellationToken);
         }
 
-        private string _getKey(RefreshTokenRequest r)
+        private static string _getKey(RefreshTokenRequest r)
         {
             return $"RefreshTokenRequest{r.ClientId}{r.RefreshToken}{r.Audience}{r.Scope}";
         }
@@ -178,20 +178,20 @@ namespace Ark.Tools.Auth0
             return _getToken(request, cancellationToken);
         }
 
-        private string _getKey(ResourceOwnerTokenRequest r)
+        private static string _getKey(ResourceOwnerTokenRequest r)
         {
             return $"ResourceOwnerTokenRequest{r.ClientId}{r.Username}{r.Realm}{r.Audience}{r.Scope}";
         }
 
         public Task<UserInfo> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken = default)
         {
-            return _userInfoCachePolicy.ExecuteAsync((_,ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(_getKey(accessToken), new Dictionary<string, object>()
+            return _userInfoCachePolicy.ExecuteAsync((_,ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>()
             {
                 { ContextualTtl.TimeSpanKey, _expiresIn(accessToken) }
             }), cancellationToken);
         }
 
-        private string _getKey(string accessToken)
+        private static string _getKey(string accessToken)
         {
             return $"GetUserInfo{accessToken}";
         }
@@ -201,7 +201,7 @@ namespace Ark.Tools.Auth0
             return _getToken(request, cancellationToken);
         }
 
-        private string _getKey(PasswordlessEmailTokenRequest r)
+        private static string _getKey(PasswordlessEmailTokenRequest r)
         {
             return $"PasswordlessEmailTokenRequest{r.ClientId}{r.Email}{r.Audience}{r.Scope}";
         }
@@ -211,7 +211,7 @@ namespace Ark.Tools.Auth0
             return _getToken(request, cancellationToken);
         }
 
-        private string _getKey(PasswordlessSmsTokenRequest r)
+        private static string _getKey(PasswordlessSmsTokenRequest r)
         {
             return $"PasswordlessSmsTokenRequest{r.ClientId}{r.PhoneNumber}{r.Audience}{r.Scope}";
         }
@@ -221,7 +221,7 @@ namespace Ark.Tools.Auth0
             return _getToken(request, cancellationToken);
         }
 
-        private string _getKey(DeviceCodeTokenRequest r)
+        private static string _getKey(DeviceCodeTokenRequest r)
         {
             return $"DeviceCodeTokenRequest{r.ClientId}{r.DeviceCode}";
         }

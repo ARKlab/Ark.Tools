@@ -21,8 +21,8 @@ namespace Ark.Tools.ResourceWatcher
         private readonly IStateProvider _stateProvider;
         private object _lock = new object { };
         private volatile bool _isStarted = false;
-        private CancellationTokenSource _cts;
-        private Task _task;
+        private CancellationTokenSource? _cts;
+        private Task? _task;
         private readonly ResourceWatcherDiagnosticSource _diagnosticSource;
 
         public ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
@@ -43,7 +43,7 @@ namespace Ark.Tools.ResourceWatcher
 
         public void Stop()
         {
-            _cts.Cancel();
+            _cts?.Cancel();
         }
 
         private void _start()
@@ -188,7 +188,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
              {
-                 var x = new ProcessContext { CurrentInfo = i, LastState = s.SingleOrDefault() };
+                 var x = new ProcessContext(i) { LastState = s.SingleOrDefault() };
                  if (x.LastState == null)
                  {
                      x.ProcessType = ProcessType.New;
@@ -232,10 +232,10 @@ namespace Ark.Tools.ResourceWatcher
         }
 
         protected abstract Task<IEnumerable<IResourceMetadata>> _getResourcesInfo(CancellationToken ctk = default);
-        protected abstract Task<T> _retrievePayload(IResourceMetadata info, IResourceTrackedState lastState, CancellationToken ctk = default);
+        protected abstract Task<T?> _retrievePayload(IResourceMetadata info, IResourceTrackedState? lastState, CancellationToken ctk = default);
         protected abstract Task _processResource(ChangedStateContext<T> context, CancellationToken ctk = default);
 
-        private async Task<T> _fetchResource(ProcessContext pc, CancellationToken ctk = default)
+        private async Task<T?> _fetchResource(ProcessContext pc, CancellationToken ctk = default)
         {
             var info = pc.CurrentInfo;
             var lastState = pc.LastState;
@@ -262,14 +262,14 @@ namespace Ark.Tools.ResourceWatcher
             using var scope = ScopeContext.PushNestedStateProperties(info.ResourceId, new[]
             {
                 // when 'logging' these, 'info' is serialized as the actual implementation which may contain a lot of data. slice to 'log' only the Interface
-                new KeyValuePair<string, object>("currentInfo", new { info.ResourceId, info.Modified, info.ModifiedSources, info.Extensions }),
-                new KeyValuePair<string, object>("lastState", lastState)
+                new KeyValuePair<string, object?>("currentInfo", new { info.ResourceId, info.Modified, info.ModifiedSources, info.Extensions }),
+                new KeyValuePair<string, object?>("lastState", lastState)
             }); 
             try
             {
                 using var processActivity = _diagnosticSource.ProcessResourceStart(pc);
 
-                AsyncLazy<T> payload = new AsyncLazy<T>(() => _fetchResource(pc, ctk));
+                var payload = new AsyncLazy<T?>(() => _fetchResource(pc, ctk));
 
                 var state = pc.NewState = new ResourceState()
                 {
@@ -287,7 +287,7 @@ namespace Ark.Tools.ResourceWatcher
                 try
                 {
                     pc.ResultType = ResultType.Normal;
-                    IResourceState newState = default;
+                    IResourceState? newState = default;
 
                     await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk);
 
@@ -359,7 +359,7 @@ namespace Ark.Tools.ResourceWatcher
 
         private LocalDateTime _getEarliestModified(IResourceMetadata info)
         {
-            if (info?.ModifiedSources != null && info.ModifiedSources.Any())
+            if (info.ModifiedSources != null && info.ModifiedSources.Any())
             {
                 return info.ModifiedSources.Max(x => x.Value);
             }
@@ -424,15 +424,20 @@ namespace Ark.Tools.ResourceWatcher
 
     public class ProcessContext
     {
-        public IResourceMetadata CurrentInfo { get; set; }
-        public ResourceState LastState { get; set; }
-        public ResourceState NewState { get; set; }
+        public ProcessContext(IResourceMetadata currentInfo)
+        {
+            CurrentInfo = currentInfo;
+        }
+
+        public IResourceMetadata CurrentInfo { get; }
+        public ResourceState? LastState { get; set; }
+        public ResourceState? NewState { get; set; }
         public ProcessType ProcessType { get; set; }
         public ResultType? ResultType { get; set; }
         public int? Index { get; set; }
         public int? Total { get; set; }
 
-        public bool IsResourceUpdated(out (string source, LocalDateTime? current, LocalDateTime? last) changed)
+        public bool IsResourceUpdated(out (string? source, LocalDateTime? current, LocalDateTime? last) changed)
         {
             if (CurrentInfo.ModifiedSources != null && CurrentInfo.ModifiedSources.Any())
             {
@@ -466,7 +471,7 @@ namespace Ark.Tools.ResourceWatcher
                         return false;
                     }
                 }
-                else if (LastState?.Modified != default)
+                else if (LastState?.Modified != null && LastState.Modified != default)
                 {
                     if (CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).Any())
                     {
@@ -485,7 +490,7 @@ namespace Ark.Tools.ResourceWatcher
                         return false;
                     }
                 }
-                else if(LastState == null)
+                else if (LastState == null)
                 {
                     //new resource
                     changed = (
@@ -522,7 +527,7 @@ namespace Ark.Tools.ResourceWatcher
                         return false;
                     }
                 }
-                else if (LastState?.Modified != default)
+                else if (LastState != null && LastState.Modified != default)
                 {
                     if (CurrentInfo.Modified > LastState.Modified)
                     {
@@ -564,7 +569,7 @@ namespace Ark.Tools.ResourceWatcher
 
     public sealed class ChangedStateContext<T> where T : IResourceState
     {
-        public ChangedStateContext(IResourceMetadata info, IResourceTrackedState lastState, AsyncLazy<T> payload)
+        public ChangedStateContext(IResourceMetadata info, IResourceTrackedState? lastState, AsyncLazy<T?> payload)
         {
             EnsureArg.IsNotNull(info);
             EnsureArg.IsNotNull(payload);
@@ -574,8 +579,8 @@ namespace Ark.Tools.ResourceWatcher
             LastState = lastState;
         }
 
-        public AsyncLazy<T> Payload { get; }
+        public AsyncLazy<T?> Payload { get; }
         public IResourceMetadata Info { get; }
-        public IResourceTrackedState LastState { get; }
+        public IResourceTrackedState? LastState { get; }
     }
 }

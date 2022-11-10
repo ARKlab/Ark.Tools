@@ -18,7 +18,7 @@ namespace Ark.Tools.RavenDb
 {
 	public static class Ex
 	{
-		public static void EnsureDatabaseExists(this IDocumentStore store, string database = null, bool createDatabaseIfNotExists = true, int replicationFactor = 3, Action<DatabaseRecord> configureRecord = null)
+		public static void EnsureDatabaseExists(this IDocumentStore store, string? database = null, bool createDatabaseIfNotExists = true, int replicationFactor = 3, Action<DatabaseRecord>? configureRecord = null)
 		{
 			database = database ?? store.Database;
 
@@ -76,7 +76,7 @@ namespace Ark.Tools.RavenDb
 			operation.WaitForCompletion(TimeSpan.FromSeconds(timeSpan));
 		}
 
-		public static void WaitForIndexing(this IDocumentStore store, string databaseName = null, TimeSpan? timeout = null)
+		public static void WaitForIndexing(this IDocumentStore store, string? databaseName = null, TimeSpan? timeout = null)
 		{
 			var admin = store.Maintenance.ForDatabase(databaseName);
 

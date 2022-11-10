@@ -43,7 +43,7 @@ namespace Ark.Tools.EventSourcing.Events
             return string.Join(Environment.NewLine, this.Select(kv => $"{kv.Key}: {kv.Value}"));
         }
 
-        public string GetMetadataValue(string key)
+        public string? GetMetadataValue(string key)
         {
             return GetMetadataValue(key, s => s);
         }
@@ -59,7 +59,7 @@ namespace Ark.Tools.EventSourcing.Events
             return converter(value);
         }
 
-        public T GetMetadataValue<T>(string key, Func<string, T> converter, T defaultValue = null)
+        public T? GetMetadataValue<T>(string key, Func<string, T> converter, T? defaultValue = null)
             where T : class
         {
             if (!TryGetValue(key, out var value))

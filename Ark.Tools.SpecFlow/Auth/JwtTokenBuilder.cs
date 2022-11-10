@@ -9,7 +9,7 @@ namespace Ark.Tools.SpecFlow.Auth
 {
     public sealed class JwtTokenBuilder
     {
-        private SecurityKey securityKey = null;
+        private SecurityKey? securityKey = null;
         private string subject = "";
         private string issuer = "";
         private string audience = "";

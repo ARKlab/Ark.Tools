@@ -37,7 +37,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
 
         public async Task Invoke(HttpContext context)
         {
-            System.Net.Http.Headers.AuthenticationHeaderValue authHeader;
+            System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;
 
             if (System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Authorization"], out authHeader)
                 || System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["WWW-Authenticate"], out authHeader)
@@ -51,7 +51,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                     {
                         string parameter = Encoding.UTF8.GetString(
                                               Convert.FromBase64String(
-                                                    authHeader.Parameter));
+                                                    authHeader.Parameter ?? string.Empty));
 
                         var parts = parameter.Split(':');
 
@@ -62,13 +62,13 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
 
                             using var content = new FormUrlEncodedContent(new[]
                                 {
-                                    new KeyValuePair<string, string>("resource", _config.Resource),
-                                    new KeyValuePair<string, string>("client_id", _config.ProxyClientId),
+                                    new KeyValuePair<string, string>("resource", _config.Resource ?? string.Empty),
+                                    new KeyValuePair<string, string>("client_id", _config.ProxyClientId ?? string.Empty),
                                     new KeyValuePair<string, string>("grant_type", "password"),
                                     new KeyValuePair<string, string>("username", username),
                                     new KeyValuePair<string, string>("password", password),
                                     new KeyValuePair<string, string>("scope", "openid"),
-                                    new KeyValuePair<string, string>("client_secret", _config.ProxyClientSecret),
+                                    new KeyValuePair<string, string>("client_secret", _config.ProxyClientSecret ?? string.Empty),
                                 });
 
                             var url = $"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token";
@@ -84,7 +84,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                                     return JsonConvert.DeserializeObject<OAuthResult>(payload);
                                 }, context.RequestAborted, true);
 
-                            context.Request.Headers["Authorization"] = $"Bearer {result.Access_Token}";
+                            context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";
                         }
                     }
                     catch (Exception)
@@ -98,14 +98,14 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
 
         class OAuthResult
         {
-            public string Token_Type { get; set; }
-            public string Scope { get; set; }
+            public string? Token_Type { get; set; }
+            public string? Scope { get; set; }
             public int Expires_In { get; set; }
             public int Ext_Expires_In { get; set; }
             public int Expires_On { get; set; }
             public int Not_Before { get; set; }
-            public Uri Resource { get; set; }
-            public string Access_Token { get; set; }
+            public Uri? Resource { get; set; }
+            public string? Access_Token { get; set; }
         }
     }
 }

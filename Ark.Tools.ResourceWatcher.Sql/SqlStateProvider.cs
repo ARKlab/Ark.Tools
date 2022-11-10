@@ -43,14 +43,14 @@ namespace Ark.Tools.ResourceWatcher
 
         class EJ
         {
-            public string ExtensionsJson { get; set; }
+            public string? ExtensionsJson { get; set; }
         }
         class MMJ
         {
-            public string ModifiedSourcesJson { get; set; }
+            public string? ModifiedSourcesJson { get; set; }
         }
 
-        public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[] resourceIds = null, CancellationToken ctk = default)
+        public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
         {
             Ensure.String.HasLengthBetween(tenant, 1, 128);
             if (resourceIds != null)

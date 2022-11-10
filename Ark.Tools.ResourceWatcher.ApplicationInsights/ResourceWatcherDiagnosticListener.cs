@@ -81,7 +81,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.ThrowDuplicateResourceIdRetrived")]
         public override void OnDuplicateResourceIdRetrived(string tenant, Exception exception)
         {
-			Activity currentActivity = Activity.Current;
+			var currentActivity = Activity.Current;
 
 			var telemetryException = new ExceptionTelemetry
             {
@@ -101,7 +101,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.ReportRunConsecutiveFailureLimitReached")]
         public override void OnReportRunConsecutiveFailureLimitReached(string tenant, Exception exception)
         {
-			Activity currentActivity = Activity.Current;
+			var currentActivity = Activity.Current;
 
 			var telemetryException = new ExceptionTelemetry
             {
@@ -121,7 +121,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceSaveFailed")]
         public override void OnProcessResourceSaveFailed(string resourceId, string tenant, Exception exception)
         {
-			Activity currentActivity = Activity.Current;
+			var currentActivity = Activity.Current;
 
 			var telemetryException = new ExceptionTelemetry
             {
@@ -150,7 +150,9 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                                         , string tenant
                                         , Exception exception)
         {
-            Activity currentActivity = Activity.Current;
+            var currentActivity = Activity.Current;
+            if (currentActivity == null)
+                return;
 
             var telemetry = new RequestTelemetry
             {
@@ -207,7 +209,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.GetResources.Stop")]
         public override void OnGetResourcesStop(int resourcesFound, TimeSpan elapsed, string tenant, Exception exception)
         {
-            Activity currentActivity = Activity.Current;
+            var currentActivity = Activity.Current;
+            if (currentActivity == null) return;
 
             var telemetry = new DependencyTelemetry
             {
@@ -259,7 +262,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                                                 , string tenant
                                                 , Exception exception)
         {
-            Activity currentActivity = Activity.Current;
+            var currentActivity = Activity.Current;
+            if (currentActivity == null) return;
 
             var telemetry = new DependencyTelemetry
             {
@@ -319,7 +323,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
         public override void OnProcessResourceStop(string tenant, ProcessContext processContext, Exception exception)
         {
-            Activity currentActivity = Activity.Current;
+            var currentActivity = Activity.Current;
+            if (currentActivity == null) return;
 
             var telemetry = new DependencyTelemetry
             {
@@ -368,7 +373,8 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.FetchResource.Stop")]
         public override void OnFetchResourceStop(string tenant, ProcessContext processContext, Exception exception)
         {
-            Activity currentActivity = Activity.Current;
+            var currentActivity = Activity.Current;
+            if (currentActivity == null) return;
 
             var telemetry = new DependencyTelemetry
             {

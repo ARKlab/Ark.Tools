@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql.StoredProcedure
 {
-    public abstract class AbstractStoredProcedure<TResult, TParameter> : IStoredProcedure<TResult, TParameter>
+    public abstract class AbstractStoredProcedure<TResult, TParameter> : IStoredProcedure<TResult, TParameter> where TResult : notnull
     {
 
-        public TResult LastResult { get; protected set; }
+        public TResult? LastResult { get; protected set; }
         protected DbTransaction Transaction { get; private set; }
 
         protected AbstractStoredProcedure(DbTransaction transaction)
@@ -17,45 +17,45 @@ namespace Ark.Tools.Sql.StoredProcedure
             Transaction = transaction;
         }
 
-        public TResult Execute(TParameter param)
+        public TResult? Execute(TParameter param)
         {
             LastResult = ExecuteImplAsync(Transaction, param).GetAwaiter().GetResult();
             return LastResult;
         }
 
-        public async Task<TResult> ExecuteAsync(TParameter param)
+        public async Task<TResult?> ExecuteAsync(TParameter param)
         {
             LastResult = await ExecuteImplAsync(Transaction, param);
             return LastResult;
         }
 
 
-        protected abstract Task<TResult> ExecuteImplAsync(DbTransaction transaction, TParameter param);
+        protected abstract Task<TResult?> ExecuteImplAsync(DbTransaction transaction, TParameter param);
     }
 
-    public abstract class AbstractStoredProcedure<TResult> : IStoredProcedure<TResult>
+    public abstract class AbstractStoredProcedure<TResult> : IStoredProcedure<TResult> where TResult : notnull
     {
         protected DbTransaction Transaction { get; private set; }
 
-        public TResult LastResult { get; protected set; }
+        public TResult? LastResult { get; protected set; }
 
         protected AbstractStoredProcedure(DbTransaction transaction)
         {
             Transaction = transaction;
         }
-        public TResult Execute()
+        public TResult? Execute()
         {
             LastResult = ExecuteImplAsync(Transaction).GetAwaiter().GetResult();
             return LastResult;
         }
 
-        public async Task<TResult> ExecuteAsync()
+        public async Task<TResult?> ExecuteAsync()
         {
             LastResult = await ExecuteImplAsync(Transaction);
             return LastResult;
         }
 
 
-        protected abstract Task<TResult> ExecuteImplAsync(DbTransaction transaction);
+        protected abstract Task<TResult?> ExecuteImplAsync(DbTransaction transaction);
     }
 }

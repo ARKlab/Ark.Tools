@@ -41,10 +41,10 @@ namespace Ark.Tools.FtpClient.Core
         }
 
         public abstract Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default);
-        public abstract Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default);
+        public abstract Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default);
         public abstract Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default);
         
-        public virtual async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default)
+        public virtual async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
             _logger.Trace("List files starting from path: {Path}", startPath);
 

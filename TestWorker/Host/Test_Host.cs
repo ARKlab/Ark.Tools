@@ -113,7 +113,7 @@ namespace TestWorker.HostNs
 
 		}
 
-        public static Host Configure(IConfiguration configuration, Test_Recipe? recipe = null, Action<Test_Host_Config> configurer = null)
+        public static Host Configure(IConfiguration configuration, Test_Recipe? recipe = null, Action<Test_Host_Config>? configurer = null)
         {
             var localRecipe = configuration["Test:Recipe"];
 
@@ -124,7 +124,7 @@ namespace TestWorker.HostNs
                 if (recipe.HasValue)
                     r = recipe.Value;
 
-                Host h = null;
+                Host? h = null;
 
                 switch (r)
                 {
@@ -141,7 +141,7 @@ namespace TestWorker.HostNs
             throw new InvalidOperationException("Invalid Recipe");
         }
 
-        private static Host _configureForTest(IConfiguration configuration, Action<Test_Host_Config> configurer)
+        private static Host _configureForTest(IConfiguration configuration, Action<Test_Host_Config>? configurer)
         {
             var baseCfg = new Test_Host_Config()
             {

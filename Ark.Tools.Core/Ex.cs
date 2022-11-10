@@ -119,14 +119,14 @@ namespace Ark.Tools.Core
             return SqlLikeStringUtilities.SqlLike(toFind, toSearch);
         }
 
-        public static string GetUserId(this ClaimsPrincipal principal)
+        public static string? GetUserId(this ClaimsPrincipal principal)
         {
             return principal.GetUserEmail()
                 ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
 
 
-        public static string GetUserEmail(this ClaimsPrincipal principal)
+        public static string? GetUserEmail(this ClaimsPrincipal principal)
         {
             return principal.FindFirst(AuthClaims.ArkEmailClaim)?.Value
                 ?? principal.FindFirst(ClaimTypes.Email)?.Value

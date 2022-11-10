@@ -21,9 +21,9 @@ namespace Ark.Tools.AspNetCore
                 )
             {
                 var input = context.ActionArguments.Values.OfType<IEntityWithETag>().Single();
-                if (reqHeader.IfMatch?.Count == 1)
+                if (reqHeader.IfMatch.Count == 1)
                     input._ETag = reqHeader.IfMatch[0].Tag.Substring(1, reqHeader.IfMatch[0].Tag.Length - 2);
-                if (reqHeader.IfNoneMatch?.Count == 1 && reqHeader.IfNoneMatch[0] == EntityTagHeaderValue.Any)
+                if (reqHeader.IfNoneMatch.Count == 1 && reqHeader.IfNoneMatch[0] == EntityTagHeaderValue.Any)
                     input._ETag = reqHeader.IfNoneMatch[0].Tag.Substring(1, reqHeader.IfMatch[0].Tag.Length - 2);
             }
 

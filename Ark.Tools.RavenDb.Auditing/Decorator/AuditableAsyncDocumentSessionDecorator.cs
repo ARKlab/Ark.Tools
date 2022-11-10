@@ -18,7 +18,7 @@ namespace Ark.Tools.RavenDb.Auditing
 	{
 		private readonly IAsyncDocumentSession _inner;
 		private readonly IContextProvider<ClaimsPrincipal> _principalProvider;
-		private Audit _audit;
+		private Audit? _audit;
 
 		public AuditableAsyncDocumentSessionDecorator(IAsyncDocumentSession inner, IContextProvider<ClaimsPrincipal> principalProvider)
 		{
@@ -38,7 +38,7 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.CountersFor(entity);
 		}
 
-		public void Delete<T>(T entity)
+		public void Delete<T>(T entity) where T : notnull
 		{
 			if (_ensureAndCreateAudit())
 				_inner.StoreAsync(_audit);
@@ -50,7 +50,7 @@ namespace Ark.Tools.RavenDb.Auditing
 			var metadata = _inner.Advanced.GetMetadataFor(entity);
 			var lastMod = (string) metadata["@last-modified"];
 
-			_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName, lastMod, "Delete");
+			_fillAudit(_audit!, infos.entityId, infos.cv, infos.collectionName, lastMod, "Delete");
 
 			_inner.Delete(entity);
 		}
@@ -116,7 +116,7 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.LoadAsync(ids, includes, token);
 		}
 
-		public IRavenQueryable<T> Query<T>(string indexName = null, string collectionName = null, bool isMapReduce = false)
+		public IRavenQueryable<T> Query<T>(string? indexName = null, string? collectionName = null, bool isMapReduce = false)
 		{
 			return _inner.Query<T>(indexName, collectionName, isMapReduce);
 		}
@@ -144,7 +144,7 @@ namespace Ark.Tools.RavenDb.Auditing
 						_setAuditIdOnEntity(entity);
 
 						var infos = _getEntityInfo(entity);
-						_fillAudit(_audit, entityId, infos.cv, infos.collectionName);
+						_fillAudit(_audit!, entityId, infos.cv, infos.collectionName);
 					}
 				}
 			}
@@ -167,7 +167,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				await _inner.StoreAsync(entity, token);
 
 				var infos = _getEntityInfo(entity);
-				_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
+				_fillAudit(_audit!, infos.entityId, infos.cv, infos.collectionName);
 			}
 			else
 				await _inner.StoreAsync(entity, token);
@@ -190,7 +190,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				if (entity is IAuditableEntity)
 				{
 					var infos = _getEntityInfo(entity);
-					_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
+					_fillAudit(_audit!, infos.entityId, infos.cv, infos.collectionName);
 				}
 			}
 			else
@@ -214,7 +214,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				if (entity is IAuditableEntity)
 				{
 					var infos = _getEntityInfo(entity);
-					_fillAudit(_audit, infos.entityId, infos.cv, infos.collectionName);
+					_fillAudit(_audit!, infos.entityId, infos.cv, infos.collectionName);
 				}
 			}
 			else
@@ -223,7 +223,8 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		private void _setAuditIdOnEntity(object entity)
 		{
-			(entity as IAuditableEntity).AuditId = _audit.AuditId;
+            if (entity is IAuditableEntity auditable) 
+                auditable.AuditId = _audit?.AuditId ?? default;
 		}
 
 		private bool _ensureAndCreateAudit()
@@ -250,22 +251,25 @@ namespace Ark.Tools.RavenDb.Auditing
 				throw new NotSupportedException("Entity Id generation incompatible with audit");
 		}
 
-		private void _fillAudit(Audit audit, string entityId, string cv, string collectionName, string lastMod = null, string operation = null)
+		private void _fillAudit(Audit audit, string entityId, string cv, string collectionName, string? lastMod = null, string? operation = null)
 		{
-			_audit.LastUpdatedUtc = DateTime.UtcNow;
-			//_audit.UserId = _principalProvider.Current?.Identity?.Name;
-			_audit.UserId = _principalProvider.Current?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            audit.LastUpdatedUtc = DateTime.UtcNow;
+            //_audit.UserId = _principalProvider.Current?.Identity?.Name;
+            audit.UserId = _principalProvider.Current?.FindFirst(ClaimTypes.NameIdentifier)?.Value
 				?? throw new InvalidOperationException("UserId not found: audit requires an identified claims principal");
 
-			if (!_audit.EntityInfo.Any(s => s.EntityId == entityId))
+			if (!audit.EntityInfo.Any(s => s.EntityId == entityId))
 			{
-				_audit.EntityInfo.Add(new EntityInfo
+                audit.EntityInfo.Add(new EntityInfo
 				{
 					EntityId = entityId,
 					PrevChangeVector = cv,
 					CollectionName = collectionName,
 					Operation = operation,
-					LastModified = operation == "Delete" ? DateTime.Parse(lastMod) : default
+					LastModified = operation == "Delete" 
+                        ? lastMod != null ? DateTime.Parse(lastMod)
+                            : default
+                        : default
 				});
 			}
 		}
@@ -289,22 +293,22 @@ namespace Ark.Tools.RavenDb.Auditing
             return _inner.TimeSeriesFor(entity, name);
         }
 
-        public IAsyncSessionDocumentTypedTimeSeries<TValues> TimeSeriesFor<TValues>(string documentId, string name = null) where TValues : new()
+        public IAsyncSessionDocumentTypedTimeSeries<TValues> TimeSeriesFor<TValues>(string documentId, string? name = null) where TValues : new()
         {
             return _inner.TimeSeriesFor<TValues>(documentId, name);
         }
 
-        public IAsyncSessionDocumentTypedTimeSeries<TValues> TimeSeriesFor<TValues>(object entity, string name = null) where TValues : new()
+        public IAsyncSessionDocumentTypedTimeSeries<TValues> TimeSeriesFor<TValues>(object entity, string? name = null) where TValues : new()
         {
             return _inner.TimeSeriesFor<TValues>(entity, name);
         }
 
-        public IAsyncSessionDocumentRollupTypedTimeSeries<TValues> TimeSeriesRollupFor<TValues>(object entity, string policy, string raw = null) where TValues : new()
+        public IAsyncSessionDocumentRollupTypedTimeSeries<TValues> TimeSeriesRollupFor<TValues>(object entity, string policy, string? raw = null) where TValues : new()
         {
             return _inner.TimeSeriesRollupFor<TValues>(entity, policy, raw);
         }
 
-        public IAsyncSessionDocumentRollupTypedTimeSeries<TValues> TimeSeriesRollupFor<TValues>(string documentId, string policy, string raw = null) where TValues : new()
+        public IAsyncSessionDocumentRollupTypedTimeSeries<TValues> TimeSeriesRollupFor<TValues>(string documentId, string policy, string? raw = null) where TValues : new()
         {
             return _inner.TimeSeriesRollupFor<TValues>(documentId, policy, raw);
         }

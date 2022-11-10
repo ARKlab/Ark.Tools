@@ -9,7 +9,7 @@ namespace Ark.Tools.Nodatime.SystemTextJson
     {
         public override LocalDateTimeRange Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            var x = JsonSerializer.Deserialize<Surrogate>(ref reader, options);
+            var x = JsonSerializer.Deserialize<Surrogate>(ref reader, options) ?? throw new JsonException("cannot parse LocalDateTimeRange");
             return new LocalDateTimeRange(x.Start, x.End);
         }
 

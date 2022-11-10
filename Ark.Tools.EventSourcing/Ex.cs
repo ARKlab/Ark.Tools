@@ -15,12 +15,11 @@ namespace Ark.Tools.EventSourcing
 		/// <returns></returns>
 		public static string GetFullNameWithoutVersionInformation(Type entityType)
 		{
-			string result;
 			var localFullName = _fullNameCache;
-			if (localFullName.TryGetValue(entityType, out result))
+			if (localFullName.TryGetValue(entityType, out var result))
 				return result;
 
-			var asmName = new AssemblyName(entityType.GetTypeInfo().Assembly.FullName).Name;
+			var asmName = entityType.GetTypeInfo().Assembly.GetName().Name;
 			if (entityType.GetTypeInfo().IsGenericType)
 			{
 				var genericTypeDefinition = entityType.GetGenericTypeDefinition();
@@ -72,19 +71,20 @@ namespace Ark.Tools.EventSourcing
 				return false;
 			}
 
-			while (!baseType.IsAssignableFrom(extendType))
+            Type? parent = extendType;
+			while (parent != null && !baseType.IsAssignableFrom(parent))
 			{
-				if (extendType.Equals(typeof(object)))
+				if (parent.Equals(typeof(object)))
 				{
 					return false;
 				}
-				if (extendType.IsGenericType && !extendType.IsGenericTypeDefinition)
+				if (parent.IsGenericType && !parent.IsGenericTypeDefinition)
 				{
-					extendType = extendType.GetGenericTypeDefinition();
+                    parent = parent.GetGenericTypeDefinition();
 				}
 				else
 				{
-					extendType = extendType.BaseType;
+                    parent = extendType.BaseType;
 				}
 			}
 			return true;

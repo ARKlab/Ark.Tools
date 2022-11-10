@@ -35,7 +35,7 @@ namespace Ark.Tools.Core
         /// <param name="options">Specifies how values from the source sequence will be applied to 
         /// existing rows in the table.</param> 
         /// <returns>A DataTable created from the source sequence.</returns> 
-        public DataTable Shred(IEnumerable<T> source, DataTable table, LoadOption? options)
+        public DataTable Shred(IEnumerable<T> source, DataTable? table, LoadOption? options)
         {
             // Load the table from the scalar sequence if T is a primitive type. 
             if (typeof(T).IsPrimitive)
@@ -60,7 +60,7 @@ namespace Ark.Tools.Core
                 {
                     if (options != null)
                     {
-                        table.LoadDataRow(ShredObject(table, e.Current), (LoadOption)options);
+                        table.LoadDataRow(ShredObject(table, e.Current), options.Value);
                     }
                     else
                     {
@@ -74,7 +74,7 @@ namespace Ark.Tools.Core
             return table;
         }
 
-        public DataTable ShredPrimitive(IEnumerable<T> source, DataTable table, LoadOption? options)
+        public DataTable ShredPrimitive(IEnumerable<T> source, DataTable? table, LoadOption? options)
         {
             // Create a new table if the input table is null. 
             if (table == null)
@@ -91,10 +91,10 @@ namespace Ark.Tools.Core
             table.BeginLoadData();
             using (IEnumerator<T> e = source.GetEnumerator())
             {
-                Object[] values = new object[table.Columns.Count];
+                var values = new object?[table.Columns.Count];
                 while (e.MoveNext())
                 {
-                    values[table.Columns["Value"].Ordinal] = e.Current;
+                    values[table.Columns["Value"]!.Ordinal] = e.Current;
 
                     if (options != null)
                     {
@@ -112,13 +112,13 @@ namespace Ark.Tools.Core
             return table;
         }
 
-        public object[] ShredObject(DataTable table, T instance)
+        public object?[] ShredObject(DataTable table, T instance)
         {
 
             FieldInfo[] fi = _fi;
             PropertyInfo[] pi = _pi;
 
-            if (instance.GetType() != typeof(T))
+            if (instance is not null && instance.GetType() != typeof(T))
             {
                 // If the instance is derived from T, extend the table schema 
                 // and get the properties and fields.
@@ -128,7 +128,7 @@ namespace Ark.Tools.Core
             }
 
             // Add the property and field values of the instance to an array.
-            object[] values = new object[table.Columns.Count];
+            var values = new object?[table.Columns.Count];
             foreach (FieldInfo f in fi)
             {
                 values[_ordinalMap[f.Name]] = _convertColumnValue(f.GetValue(instance));
@@ -185,7 +185,7 @@ namespace Ark.Tools.Core
             return elementType;
         }
 
-        private object _convertColumnValue(object value)
+        private object? _convertColumnValue(object? value)
         {
             if (value == null) return value;
 
@@ -231,7 +231,8 @@ namespace Ark.Tools.Core
 
                     // Add the field as a column in the table if it doesn't exist 
                     // already.
-                    DataColumn dc = table.Columns.Contains(f.Name) ? table.Columns[f.Name]
+                    DataColumn dc = table.Columns.Contains(f.Name) 
+                        ? table.Columns[f.Name]!
                         : table.Columns.Add(f.Name, t);
 
                     // Add the field to the ordinal map.
@@ -246,7 +247,8 @@ namespace Ark.Tools.Core
 
                     // Add the property as a column in the table if it doesn't exist 
                     // already.
-                    DataColumn dc = table.Columns.Contains(p.Name) ? table.Columns[p.Name]
+                    DataColumn dc = table.Columns.Contains(p.Name) 
+                        ? table.Columns[p.Name]!
                         : table.Columns.Add(p.Name, t);
 
                     // Add the property to the ordinal map.

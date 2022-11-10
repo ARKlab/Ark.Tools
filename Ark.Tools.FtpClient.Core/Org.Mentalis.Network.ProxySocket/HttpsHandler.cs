@@ -59,7 +59,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <param name="pass">The password to use.</param>
 		/// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> -or- <c>pass</c> is null.</exception>
 		public HttpsHandler(Socket server, string user, string pass) : base(server, user) {
-			Password = pass;
+			m_Password = pass;
 		}
 		/// <summary>
 		/// Creates an array of bytes that has to be sent when the user wants to connect to a specific IPEndPoint.
@@ -180,14 +180,14 @@ namespace Org.Mentalis.Network.ProxySocket {
 				Server.EndConnect(ar);
 			}
 			catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
 				Server.BeginSend(Buffer, 0, Buffer.Length, SocketFlags.None, new AsyncCallback(this.OnConnectSent), null);
 			}
 			catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -203,7 +203,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				Server.BeginReceive(Buffer, 0, 13, SocketFlags.None, new AsyncCallback(this.OnConnectReceive), Server);
 			}
 			catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -216,7 +216,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				HandleEndReceive(ar);
 			}
 			catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
@@ -228,7 +228,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				}
 			}
 			catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -251,7 +251,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 					m_receivedNewlineChars = Buffer[0] == '\r' ? 1 : 0;
 			}
 			if (m_receivedNewlineChars == 4) {
-				ProtocolComplete(null);
+				ProtocolComplete?.Invoke(null);
 			} else {
 				Server.BeginReceive(Buffer, 0, 1, SocketFlags.None, new AsyncCallback(this.OnEndHeadersReceive), Server);
 			}
@@ -269,7 +269,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				ReadUntilHeadersEnd(false);
 			}
 			catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>

@@ -193,9 +193,9 @@ namespace Ark.Tools.Nodatime
             return !x.Equals(y);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (!(obj is LocalDateTimeRange))
+            if (obj is not LocalDateTimeRange)
                 return false;
 
             return Equals((LocalDateTimeRange)obj);

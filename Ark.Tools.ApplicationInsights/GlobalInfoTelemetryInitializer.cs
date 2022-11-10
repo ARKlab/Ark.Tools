@@ -10,7 +10,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
     public class GlobalInfoTelemetryInitializer : ITelemetryInitializer
     {
         private const string _processNameProperty = "ProcessName";
-        private readonly string _processName;
+        private readonly string? _processName;
 
         public GlobalInfoTelemetryInitializer()
         {
@@ -19,7 +19,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
 
         public void Initialize(ITelemetry telemetry)
         {
-            if (telemetry != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
+            if (telemetry != null && _processName != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
             {
                 telemetry.Context.GlobalProperties.Add(_processNameProperty, _processName);
             }

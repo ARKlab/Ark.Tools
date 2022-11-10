@@ -79,7 +79,7 @@ namespace ProblemDetailsSample.Application.Handlers.Host
             Thread.Sleep(Timeout.Infinite);
         }
 
-        public Container Container { get; private set; }
+        public Container? Container { get; private set; }
 
         public ApiConfig Config { get; private set; }
 

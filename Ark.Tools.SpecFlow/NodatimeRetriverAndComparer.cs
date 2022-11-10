@@ -87,7 +87,7 @@ namespace Ark.Tools.SpecFlow
             return false;
         }
 
-        public object Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
+        public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
         {
             var t = Nullable.GetUnderlyingType(propertyType);
             if (t != null)

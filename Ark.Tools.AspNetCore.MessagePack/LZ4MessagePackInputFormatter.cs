@@ -23,7 +23,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
         {
         }
 
-        public LZ4MessagePackInputFormatter(IFormatterResolver resolver)
+        public LZ4MessagePackInputFormatter(IFormatterResolver? resolver)
         {
             SupportedMediaTypes.Add(ContentType);
 

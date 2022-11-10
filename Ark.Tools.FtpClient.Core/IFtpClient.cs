@@ -12,7 +12,7 @@ namespace Ark.Tools.FtpClient.Core
     public interface IFtpClient
     {
         Uri Uri { get; }
-        NetworkCredential Credentials { get; }
+        NetworkCredential? Credentials { get; }
 
         /// <summary>
         /// Download a file.
@@ -36,7 +36,7 @@ namespace Ark.Tools.FtpClient.Core
         /// <param name="path">The folder path to list</param>
         /// <param name="ctk"></param>
         /// <returns>All entries found (files, folders, symlinks)</returns>
-        Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default);
+        Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default);
 
         /// <summary>
         /// List a directory recursively and returns the files found. 
@@ -45,6 +45,6 @@ namespace Ark.Tools.FtpClient.Core
         /// <param name="skipFolder">Predicate returns true for folders that are to be skipped.</param>
         /// <param name="ctk"></param>
         /// <returns>The files found.</returns>
-        Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default);
+        Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default);
     }
 }

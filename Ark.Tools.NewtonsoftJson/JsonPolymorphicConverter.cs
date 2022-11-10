@@ -4,7 +4,7 @@ using System;
 
 namespace Ark.Tools.NewtonsoftJson
 {
-	public abstract class JsonPolymorphicConverter<T> : JsonConverter
+	public abstract class JsonPolymorphicConverter<T> : JsonConverter where T : notnull
 	{
 		/// <summary>
 		/// Create an instance of objectType, based properties in the JSON object
@@ -23,15 +23,15 @@ namespace Ark.Tools.NewtonsoftJson
 
 		public override bool CanWrite => false;
 
-		public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+		public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override object ReadJson(JsonReader reader,
+		public override object? ReadJson(JsonReader reader,
 										Type objectType,
-										 object existingValue,
-										 JsonSerializer serializer)
+										object? existingValue,
+										JsonSerializer serializer)
 		{
 			if (reader.TokenType == JsonToken.Null) return null;
 

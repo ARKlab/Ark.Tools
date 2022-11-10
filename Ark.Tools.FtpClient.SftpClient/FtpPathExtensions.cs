@@ -46,9 +46,9 @@ namespace Ark.Tools.FtpClient.SftpClient
             return path;
         }
 
-        public static string GetFtpFileName(this string path)
+        public static string? GetFtpFileName(this string? path)
         {
-            string tpath = (path == null ? null : path);
+            var tpath = (path == null ? null : path);
             int lastslash = -1;
 
             if (tpath == null)

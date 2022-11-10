@@ -8,7 +8,7 @@ namespace ProblemDetailsSample.Api.Queries
     {
         public class V1 : IQuery<Entity.V1.Output>
         {
-            public string EntityId { get; set; }
+            public string? EntityId { get; set; }
             public Instant? AsOf { get; set; }
         }
     }

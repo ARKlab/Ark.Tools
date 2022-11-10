@@ -9,8 +9,9 @@ namespace Ark.Tools.Http
     {
         public override HttpMessageHandler CreateMessageHandler()
         {
-            var res = base.CreateMessageHandler() as HttpClientHandler;
-            res.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
+            var res = base.CreateMessageHandler();
+            if (res is HttpClientHandler httpHandler)
+                httpHandler.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
             return res;
         }
     }

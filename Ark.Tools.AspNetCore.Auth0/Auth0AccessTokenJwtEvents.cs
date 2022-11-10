@@ -72,8 +72,8 @@ namespace Ark.Tools.AspNetCore.Auth0
 
         class CacheEntry
         {
-            public UserInfo UserInfo { get; set; }
-            public PolicyResult Policy { get; set; }
+            public UserInfo? UserInfo { get; set; }
+            public PolicyResult? Policy { get; set; }
         }
 
         // TODO: the "Pending" is a poor way to limit the requests to Auth0 API. Very poor!
@@ -82,107 +82,111 @@ namespace Ark.Tools.AspNetCore.Auth0
             var cache = ctx.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
 
             var jwt = (ctx.SecurityToken as JwtSecurityToken);
-            var token = jwt.RawData;
-            var cacheKey = $"auth0:userInfo:{token}";
-            var cid = ctx.Principal.Identity as ClaimsIdentity;
-            if (_shouldGetRoles() && !_isUnattendedClient(cid))
+            var cid = ctx.Principal?.Identity as ClaimsIdentity;
+            if (cid != null && jwt != null)
             {
-                CacheEntry cacheEntry = null;
-                var res = await cache.GetStringAsync(cacheKey);
-                if (res == null)
+                var token = jwt.RawData;
+                var cacheKey = $"auth0:userInfo:{token}";
+                if (_shouldGetRoles() && !_isUnattendedClient(cid))
                 {
-                    var t1 = cache.SetStringAsync(cacheKey, "Pending", new DistributedCacheEntryOptions {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5)
-                    });
-
-                    var userInfo = await _auth0.GetUserInfoAsync(token);
-                    var policyPayload = jwt.Claims.FirstOrDefault(x => x.Type == Auth0ClaimTypes.PolicyPostPayload)?.Value;
-
-                    if (userInfo != null)
+                    CacheEntry? cacheEntry = null;
+                    var res = await cache.GetStringAsync(cacheKey);
+                    if (res == null)
                     {
-                        cacheEntry = new CacheEntry
+                        var t1 = cache.SetStringAsync(cacheKey, "Pending", new DistributedCacheEntryOptions
                         {
-                            UserInfo = userInfo
-                        };
+                            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5)
+                        });
 
-                        if (policyPayload != null)
+                        var userInfo = await _auth0.GetUserInfoAsync(token);
+                        var policyPayload = jwt.Claims.FirstOrDefault(x => x.Type == Auth0ClaimTypes.PolicyPostPayload)?.Value;
+
+                        if (userInfo != null)
                         {
-                            var authzToken = await _getAuthzToken(cache);
-                            var url = $"{_authzApiUrl}/api/users/{WebUtility.UrlEncode(userInfo.UserId)}/policy/{WebUtility.UrlEncode(_clientId)}";
-
-                            using (var client = new HttpClient())
-                            using (var req = new HttpRequestMessage(HttpMethod.Post, url))
+                            cacheEntry = new CacheEntry
                             {
-                                req.Content = new StringContent(policyPayload, Encoding.UTF8, "application/json");
-                                req.Headers.Add("Authorization", "Bearer " + authzToken);
-                                
-                                var policyRes = await client.SendAsync(req);
+                                UserInfo = userInfo
+                            };
 
-                                if (policyRes.IsSuccessStatusCode)
+                            if (policyPayload != null)
+                            {
+                                var authzToken = await _getAuthzToken(cache);
+                                var url = $"{_authzApiUrl}/api/users/{WebUtility.UrlEncode(userInfo.UserId)}/policy/{WebUtility.UrlEncode(_clientId)}";
+
+                                using (var client = new HttpClient())
+                                using (var req = new HttpRequestMessage(HttpMethod.Post, url))
                                 {
-                                    var policyJson = await policyRes.Content.ReadAsStringAsync();
-                                    var policy = JsonConvert.DeserializeObject<PolicyResult>(policyJson);
-                                    if (policy != null)
+                                    req.Content = new StringContent(policyPayload, Encoding.UTF8, "application/json");
+                                    req.Headers.Add("Authorization", "Bearer " + authzToken);
+
+                                    var policyRes = await client.SendAsync(req);
+
+                                    if (policyRes.IsSuccessStatusCode)
                                     {
-                                        cacheEntry.Policy = policy;
+                                        var policyJson = await policyRes.Content.ReadAsStringAsync();
+                                        var policy = JsonConvert.DeserializeObject<PolicyResult>(policyJson);
+                                        if (policy != null)
+                                        {
+                                            cacheEntry.Policy = policy;
+                                        }
+                                        else
+                                        {
+                                            cacheEntry = null;
+                                        }
                                     }
                                     else
                                     {
                                         cacheEntry = null;
                                     }
                                 }
-                                else
-                                {
-                                    cacheEntry = null;
-                                }
                             }
                         }
+
+                        await t1;
+
+                        if (cacheEntry != null)
+                        {
+                            await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(cacheEntry), new DistributedCacheEntryOptions
+                            {
+                                AbsoluteExpiration = jwt.ValidTo - TimeSpan.FromMinutes(2)
+                            });
+                        }
+                        else
+                        {
+                            await cache.RemoveAsync(cacheKey);
+                        }
+
+                    }
+                    else if (res == "Pending")
+                    {
+                        res = await Policy.HandleResult<string>(r => r == "Pending")
+                            .WaitAndRetryForeverAsync(x => TimeSpan.FromMilliseconds(100)) // Actually cannot be greater than 5sec as key would expire returning null
+                            .ExecuteAsync(() => cache.GetStringAsync(cacheKey))
+                            ;
                     }
 
-                    await t1;
+                    if (res != null)
+                    {
+                        cacheEntry = JsonConvert.DeserializeObject<CacheEntry>(res);
+                    }
 
                     if (cacheEntry != null)
-                    {
-                        await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(cacheEntry), new DistributedCacheEntryOptions
-                        {
-                            AbsoluteExpiration = jwt.ValidTo - TimeSpan.FromMinutes(2)
-                        });
-                    } else
-                    {
-                        await cache.RemoveAsync(cacheKey);
-                    }
-
+                        _convertUserToClaims(cid, cacheEntry);
                 }
-                else if (res == "Pending")
+
+                // if the identity still doesn't have a name (unattended client) add a name == nameidentifier for logging/metrics purporse
+                if (string.IsNullOrWhiteSpace(cid.Name))
                 {
-                    res = await Policy.HandleResult<string>(r => r == "Pending")
-                        .WaitAndRetryForeverAsync(x => TimeSpan.FromMilliseconds(100)) // Actually cannot be greater than 5sec as key would expire returning null
-                        .ExecuteAsync(() => cache.GetStringAsync(cacheKey))
-                        ;
-                }
-                
-                if (res != null)
-                {
-                    cacheEntry = JsonConvert.DeserializeObject<CacheEntry>(res);
+                    cid.AddClaim(new Claim(cid.NameClaimType, jwt.Subject));
                 }
 
-                if (cacheEntry != null)
-                    _convertUserToClaims(cid, cacheEntry);
+                var scopes = cid.FindFirst(c => c.Type == "scope" && c.Issuer == _issuer)?.Value?.Split(' ');
+                if (scopes != null)
+                    cid.AddClaims(scopes.Select(r => new Claim(Auth0ClaimTypes.Scope, r, ClaimValueTypes.String, _issuer)));
+
+                //if (ctx.Options.SaveToken)
+                //    cid.AddClaim(new Claim("id_token", token, ClaimValueTypes.String, "Auth0"));
             }
-
-            // if the identity still doesn't have a name (unattended client) add a name == nameidentifier for logging/metrics purporse
-            if (string.IsNullOrWhiteSpace(cid.Name))
-            {
-                cid.AddClaim(new Claim(cid.NameClaimType, jwt.Subject));
-            }
-
-            var scopes = cid.FindFirst(c => c.Type == "scope" && c.Issuer == _issuer)?.Value?.Split(' ');
-            if (scopes != null)
-                cid.AddClaims(scopes.Select(r => new Claim(Auth0ClaimTypes.Scope, r, ClaimValueTypes.String, _issuer)));
-
-            //if (ctx.Options.SaveToken)
-            //    cid.AddClaim(new Claim("id_token", token, ClaimValueTypes.String, "Auth0"));
-
             await base.TokenValidated(ctx);
         }
 
@@ -206,32 +210,36 @@ namespace Ark.Tools.AspNetCore.Auth0
         {
             //var id = profile.Identities.Single(i => i.Provider + "|" + i.UserId == profile.UserId);
             var profile = entry.UserInfo;
-            
-
-            if (!string.IsNullOrWhiteSpace(profile.Email))
+            if (profile != null)
             {
-                identity.AddClaim(new Claim(ClaimTypes.Email, profile.Email, ClaimValueTypes.String, _issuer));
-                identity.AddClaim(new Claim("email", profile.Email, ClaimValueTypes.String, _issuer));
+
+                if (!string.IsNullOrWhiteSpace(profile.Email))
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Email, profile.Email, ClaimValueTypes.String, _issuer));
+                    identity.AddClaim(new Claim("email", profile.Email, ClaimValueTypes.String, _issuer));
+                }
+
+                if (!string.IsNullOrWhiteSpace(profile.FullName))
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Name, profile.FullName, ClaimValueTypes.String, _issuer));
+                    identity.AddClaim(new Claim("name", profile.FullName, ClaimValueTypes.String, _issuer));
+                }
+
+                if (!string.IsNullOrWhiteSpace(profile.NickName))
+                    identity.AddClaim(new Claim("nickname", profile.NickName, ClaimValueTypes.String, _issuer));
+                if (!string.IsNullOrWhiteSpace(profile.FirstName))
+                    identity.AddClaim(new Claim("given_name", profile.FirstName, ClaimValueTypes.String, _issuer));
+                if (!string.IsNullOrWhiteSpace(profile.LastName))
+                    identity.AddClaim(new Claim("family_name", profile.LastName, ClaimValueTypes.String, _issuer));
+                if (!string.IsNullOrWhiteSpace(profile.Picture))
+                    identity.AddClaim(new Claim("picture", profile.Picture, ClaimValueTypes.String, _issuer));
             }
 
-            if (!string.IsNullOrWhiteSpace(profile.FullName))
+            if (entry.Policy != null)
             {
-                identity.AddClaim(new Claim(ClaimTypes.Name, profile.FullName, ClaimValueTypes.String, _issuer));
-                identity.AddClaim(new Claim("name", profile.FullName, ClaimValueTypes.String, _issuer));
+                identity.AddClaims(entry.Policy.Roles.Select(r => new Claim(identity.RoleClaimType, r, ClaimValueTypes.String, _issuer)));
+                identity.AddClaims(entry.Policy.Permissions.Select(r => new Claim(Auth0ClaimTypes.Permission, r, ClaimValueTypes.String, _issuer)));
             }
-
-            if (!string.IsNullOrWhiteSpace(profile.NickName))
-                identity.AddClaim(new Claim("nickname", profile.NickName, ClaimValueTypes.String, _issuer));
-            if (!string.IsNullOrWhiteSpace(profile.FirstName))
-                identity.AddClaim(new Claim("given_name", profile.FirstName, ClaimValueTypes.String, _issuer));
-            if (!string.IsNullOrWhiteSpace(profile.LastName))
-                identity.AddClaim(new Claim("family_name", profile.LastName, ClaimValueTypes.String, _issuer));
-            if (!string.IsNullOrWhiteSpace(profile.Picture))
-                identity.AddClaim(new Claim("picture", profile.Picture, ClaimValueTypes.String, _issuer));
-            
-            identity.AddClaims(entry.Policy.Roles.Select(r => new Claim(identity.RoleClaimType, r, ClaimValueTypes.String, _issuer)));
-            identity.AddClaims(entry.Policy.Permissions.Select(r => new Claim(Auth0ClaimTypes.Permission, r, ClaimValueTypes.String, _issuer)));
-
         }
     }
 }

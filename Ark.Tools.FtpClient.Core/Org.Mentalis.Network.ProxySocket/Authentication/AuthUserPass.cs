@@ -46,8 +46,8 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication {
 		/// <param name="pass">The password to use.</param>
 		/// <exception cref="ArgumentNullException"><c>user</c> -or- <c>pass</c> is null.</exception>
 		public AuthUserPass(Socket server, string user, string pass) : base(server) {
-			Username = user;
-			Password = pass;
+			m_Username = user;
+			m_Password = pass;
 		}
 		/// <summary>
 		/// Creates an array of bytes that has to be sent if the user wants to authenticate with the username/password authentication scheme.
@@ -106,7 +106,7 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication {
 				Buffer = new byte[2];
 				Server.BeginReceive(Buffer, 0, 2, SocketFlags.None, new AsyncCallback(this.OnReceive), Server);
 			} catch (Exception e) {
-				CallBack(e);
+				CallBack?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -121,13 +121,13 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication {
 				Received += recv;
 				if (Received == Buffer.Length)
 					if (Buffer[1] == 0)
-						CallBack(null);
+						CallBack?.Invoke(null);
 					else
 						throw new ProxyException("Username/password combination not accepted.");
 				else
 					Server.BeginReceive(Buffer, Received, Buffer.Length - Received, SocketFlags.None, new AsyncCallback(this.OnReceive), Server);
 			} catch (Exception e) {
-				CallBack(e);
+				CallBack?.Invoke(e);
 			}
 		}
 		/// <summary>

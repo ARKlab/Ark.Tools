@@ -27,7 +27,7 @@ namespace Ark.Tools.AspNetCore
                 var matchedSelectors = controller.Selectors.Where(x => x.AttributeRouteModel != null).ToList();
                 if (matchedSelectors.Any())
                 {
-                    foreach (var selectorModel in matchedSelectors.Where(x => !x.AttributeRouteModel.IsAbsoluteTemplate))
+                    foreach (var selectorModel in matchedSelectors.Where(x => x.AttributeRouteModel?.IsAbsoluteTemplate == false))
                     {
                         selectorModel.AttributeRouteModel = AttributeRouteModel.CombineAttributeRouteModel(_centralPrefix,
                             selectorModel.AttributeRouteModel);

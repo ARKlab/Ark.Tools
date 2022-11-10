@@ -17,7 +17,7 @@ namespace Ark.Tools.NLog
     [ThreadAgnostic]
     public class HostNameLayoutRenderer : LayoutRenderer
     {
-        internal string HostName { get; private set; }
+        internal string? HostName { get; private set; }
 
         /// <summary>
         /// Initializes the layout renderer.

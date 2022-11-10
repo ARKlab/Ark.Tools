@@ -6,7 +6,8 @@ using System.Linq;
 
 namespace Ark.Tools.Core
 {
-    public abstract class ValueObject<T> : IEquatable<T>, IEquatable<ValueObject<T>>
+    public abstract class ValueObject<T> 
+        : IEquatable<T>, IEquatable<ValueObject<T>>
         where T : ValueObject<T>
     {
         protected static bool EqualOperator(ValueObject<T> left, ValueObject<T> right)
@@ -25,14 +26,14 @@ namespace Ark.Tools.Core
 
         protected abstract IEnumerable<object> GetAtomicValues();
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is null || obj.GetType() != GetType())
             {
                 return false;
             }
 
-            return _equals(obj as ValueObject<T>);
+            return _equals((ValueObject<T>)obj);
         }
 
         public override int GetHashCode()
@@ -63,7 +64,7 @@ namespace Ark.Tools.Core
             return true;
         }
 
-        public bool Equals(ValueObject<T> obj)
+        public bool Equals(ValueObject<T>? obj)
         {
             if (obj is null || obj.GetType() != GetType())
                 return false;
@@ -71,9 +72,9 @@ namespace Ark.Tools.Core
             return _equals(obj);
         }
 
-        public bool Equals(T obj)
+        public bool Equals(T? obj)
         {
-            return _equals(obj as ValueObject<T>);
+            return Equals(obj as ValueObject<T>);
         }
 
         public override string ToString()

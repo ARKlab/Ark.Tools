@@ -45,7 +45,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
         internal void Load(IDictionary envVariables)
         {
-            var data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
             var filteredEnvVariables = envVariables
                 .Cast<DictionaryEntry>()
@@ -55,7 +55,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
             foreach (var envVariable in filteredEnvVariables)
             {
                 var key = ((string)envVariable.Key).Substring(_prefix.Length);
-                data[key] = (string)envVariable.Value;
+                data[key] = (string?)envVariable.Value;
             }
 
             Data = data;

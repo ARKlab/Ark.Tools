@@ -5,7 +5,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     public interface IProblemDetailsRouterProvider
     {
-        IRouter Router { get; }
-        IRouter BuildRouter(IApplicationBuilder app);
+        IRouter? Router { get; }
+        void BuildRouter(IApplicationBuilder app);
     }
 }

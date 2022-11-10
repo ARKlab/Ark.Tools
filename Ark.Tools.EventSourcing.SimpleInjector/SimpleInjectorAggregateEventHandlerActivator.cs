@@ -14,12 +14,12 @@ namespace Ark.Tools.EventSourcing.SimpleInjector
 			_container = container;
 		}
 
-		public IAggregateEventHandler<TAggregate, TEvent> GetHandler<TAggregate, TEvent>(TEvent @event)
+		public IAggregateEventHandler<TAggregate, TEvent>? GetHandler<TAggregate, TEvent>(TEvent @event)
 			where TAggregate : IAggregate
 			where TEvent : IAggregateEvent<TAggregate>
 		{
 			IServiceProvider provider = _container;
-			var instance = (IAggregateEventHandler<TAggregate, TEvent>)provider.GetService(typeof(IAggregateEventHandler<TAggregate, TEvent>));
+			var instance = (IAggregateEventHandler<TAggregate, TEvent>?)provider.GetService(typeof(IAggregateEventHandler<TAggregate, TEvent>));
 			return instance;
 		}
 	}

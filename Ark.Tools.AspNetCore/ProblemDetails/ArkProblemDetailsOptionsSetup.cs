@@ -58,18 +58,20 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                     }
                 }
 
-                if (details is ArkProblemDetails)
+                if (details is ArkProblemDetails apd)
                 {
-                    var path = _linkGenerator.GetLink(details as ArkProblemDetails, ctx);
+                    var path = _linkGenerator.GetLink(apd, ctx);
                     details.Type ??= path;
                 }
 
                 if (details.Extensions.TryGetValue("@BusinessRuleViolation", out var v))
                 {
                     details.Extensions.Remove("@BusinessRuleViolation");
-
-                    var path = _linkGenerator.GetLink(v as BusinessRuleViolation, ctx);
-                    details.Type ??= path;
+                    if (v is BusinessRuleViolation brv)
+                    {
+                        var path = _linkGenerator.GetLink(brv, ctx);
+                        details.Type ??= path;
+                    }
                 }
             };
 
@@ -110,7 +112,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
             });
 
             var js = (arg.BusinessRuleViolation as object).SerializeToByte(ArkSerializerOptions.JsonOptions);                
-            var ret = (Microsoft.AspNetCore.Mvc.ProblemDetails)JsonSerializer.Deserialize(js, pdt, ArkSerializerOptions.JsonOptions);
+            var ret = (Microsoft.AspNetCore.Mvc.ProblemDetails)JsonSerializer.Deserialize(js, pdt, ArkSerializerOptions.JsonOptions)!;
             ret.Extensions["@BusinessRuleViolation"] = arg.BusinessRuleViolation;
             return ret;
         }

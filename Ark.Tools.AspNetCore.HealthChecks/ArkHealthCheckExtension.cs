@@ -70,12 +70,12 @@ namespace Ark.Tools.AspNetCore.HealthChecks
             return endpoints;
         }
 
-        public static IHealthChecksBuilder AddSimpleInjectorCheck<T>(this IHealthChecksBuilder builder, string name, HealthStatus? failureStatus = null, IEnumerable<string> tags = null, TimeSpan? timeout = null) where T : class, IHealthCheck
+        public static IHealthChecksBuilder AddSimpleInjectorCheck<T>(this IHealthChecksBuilder builder, string name, HealthStatus? failureStatus = null, IEnumerable<string>? tags = null, TimeSpan? timeout = null) where T : class, IHealthCheck
         {
             return builder.AddCheck<SimpleInjectorCheck<T>>(name, failureStatus, tags, timeout);
         }
 
-        public static IHealthChecksBuilder AddSimpleInjectorLambdaCheck<T>(this IHealthChecksBuilder builder, string name, Func<T, CancellationToken, Task> action, HealthStatus? failureStatus = null, IEnumerable<string> tags = null, TimeSpan? timeout = null) where T : class
+        public static IHealthChecksBuilder AddSimpleInjectorLambdaCheck<T>(this IHealthChecksBuilder builder, string name, Func<T, CancellationToken, Task> action, HealthStatus? failureStatus = null, IEnumerable<string>? tags = null, TimeSpan? timeout = null) where T : class
         {
             return builder.Add(new HealthCheckRegistration(name, sp => new LambdaCheck<T>(sp.GetRequiredService<Container>(), action), failureStatus, tags, timeout));
         }
@@ -83,11 +83,14 @@ namespace Ark.Tools.AspNetCore.HealthChecks
         public static void FromConnectionString(this SmtpHealthCheckOptions setup, string cs)
         {
             var c = new SmtpConnectionBuilder(cs);
-            setup.Host = c.Server;
-            setup.Port = c.Port;
-            setup.ConnectionType = c.UseSsl ? SmtpConnectionType.TLS : SmtpConnectionType.PLAIN;
+            if (c.Server is not null)
+                setup.Host = c.Server;
+            if (c.Port is not null)
+                setup.Port = c.Port.Value;
+
+            setup.ConnectionType = c.UseSsl == false ? SmtpConnectionType.PLAIN : SmtpConnectionType.AUTO;
             if (c.Username != null)
-                setup.LoginWith(c.Username, c.Password);
+                setup.LoginWith(c.Username, c.Password ?? string.Empty);
         }
 
         private class SimpleInjectorCheck<T> : IHealthCheck where T : class, IHealthCheck

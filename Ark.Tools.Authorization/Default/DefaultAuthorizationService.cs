@@ -65,12 +65,13 @@ namespace Ark.Tools.Authorization
                 }
                 return _getClaimValue(identity, "sub")
                     ?? _getClaimValue(identity, ClaimTypes.Name)
-                    ?? _getClaimValue(identity, ClaimTypes.NameIdentifier);
+                    ?? _getClaimValue(identity, ClaimTypes.NameIdentifier)
+                    ?? "Anonymous";
             }
-            return null;
+            return "Anonymous";
         }
 
-        private static string _getClaimValue(IIdentity identity, string claimsType)
+        private static string? _getClaimValue(IIdentity identity, string claimsType)
         {
             return (identity as ClaimsIdentity)?.FindFirst(claimsType)?.Value;
         }
@@ -94,7 +95,7 @@ namespace Ark.Tools.Authorization
         /// Resource is an optional parameter and may be null. Please ensure that you check it is not 
         /// null before acting upon it.
         /// </remarks>
-        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, string policyName, CancellationToken ctk = default)
+        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName, CancellationToken ctk = default)
         {
             if (policyName == null)
             {
@@ -126,7 +127,7 @@ namespace Ark.Tools.Authorization
         /// Resource is an optional parameter and may be null. Please ensure that you check it is not 
         /// null before acting upon it.
         /// </remarks>
-        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, IAuthorizationPolicy policy, CancellationToken ctk = default)
+        public virtual async Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object? resource, IAuthorizationPolicy policy, CancellationToken ctk = default)
         {
             if (policy == null) throw new ArgumentNullException(nameof(policy));
 

@@ -20,7 +20,7 @@ namespace Ark.Tools.SystemTextJson
 
         protected abstract Type GetType(TDiscriminatorEnum discriminatorValue);
 
-        public override TBase Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override TBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
             {
@@ -36,7 +36,7 @@ namespace Ark.Tools.SystemTextJson
                     throw new JsonException();
                 }
 
-                Type type = null;
+                Type? type = null;
 
                 if (typeProperty.ValueKind == JsonValueKind.Number
                     && typeProperty.TryGetInt32(out var enumInt)
@@ -56,7 +56,7 @@ namespace Ark.Tools.SystemTextJson
                 }
 
                 var jsonObject = jsonDocument.RootElement.GetRawText();
-                var result = (TBase)JsonSerializer.Deserialize(jsonObject, type, options);
+                var result = (TBase?)JsonSerializer.Deserialize(jsonObject, type, options);
 
                 return result;
             }
@@ -64,7 +64,7 @@ namespace Ark.Tools.SystemTextJson
 
         public override void Write(Utf8JsonWriter writer, TBase value, JsonSerializerOptions options)
         {
-            JsonSerializer.Serialize(writer, (object)value, options);
+            JsonSerializer.Serialize(writer, (object?)value, options);
         }
     }
 }

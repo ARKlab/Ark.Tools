@@ -15,21 +15,21 @@ namespace Ark.Tools.Core
     {
         public static Task Parallel<T>(this IList<T> list, int degree, Func<T, Task> action, CancellationToken ctk = default)
         {
-            return list.Parallel(degree, (i, x, ct) => action?.Invoke(x), ctk);
+            return list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk);
         }
         public static Task<IList<U>> Parallel<T,U>(this IList<T> list, int degree, Func<T, Task<U>> action, CancellationToken ctk = default)
         {
-            return list.Parallel(degree, (i, x, ct) => action?.Invoke(x), ctk);
+            return list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk);
         }
 
         public static Task Parallel<T>(this IList<T> list, int degree, Func<int, T, Task> action, CancellationToken ctk = default)
         {
-            return list.Parallel(degree, (i, x, ct) => action?.Invoke(i, x), ctk);
+            return list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk);
         }
 
         public static Task<IList<U>> Parallel<T, U>(this IList<T> list, int degree, Func<int, T, Task<U>> action, CancellationToken ctk = default)
         {
-            return list.Parallel(degree, (i, x, ct) => action?.Invoke(i, x), ctk);
+            return list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk);
         }
 
         public static Task Parallel<T>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task> action, CancellationToken ctk = default)

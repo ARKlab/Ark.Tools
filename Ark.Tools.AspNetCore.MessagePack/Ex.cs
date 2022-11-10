@@ -10,7 +10,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 {
     public static class Ex
     {
-        public static void AddMessagePackFormatter(this IServiceCollection services, IFormatterResolver resolver = null)
+        public static void AddMessagePackFormatter(this IServiceCollection services, IFormatterResolver? resolver = null)
         {
             if (resolver != null)
                 services.TryAddSingleton<IFormatterResolver>(resolver);

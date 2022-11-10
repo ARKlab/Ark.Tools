@@ -83,7 +83,7 @@ namespace Ark.Tools.Core.Reflection
             foreach (var (name, type) in dynamicProperties)
                 _addDynamicPropertyToType(typeBuilder, name, type);
 
-            return typeBuilder.CreateType();
+            return typeBuilder.CreateType() ?? throw new InvalidOperationException("CreateType() retuned null");
         }
 
         private void _addDynamicPropertyToType(TypeBuilder typeBuilder, string propertyName, Type propertyType)

@@ -39,7 +39,7 @@ namespace Ark.Tasks
             return !x.Equals(y);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is Resource))
                 return false;
@@ -80,10 +80,10 @@ namespace Ark.Tasks
         public override bool CanConvert(Type objectType)
             => _converter.CanConvert(objectType);
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
             => _converter.ReadJson(reader, objectType, existingValue, serializer);
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
             => _converter.WriteJson(writer, value, serializer);
     }
 
@@ -137,7 +137,7 @@ namespace Ark.Tasks
             return !x.Equals(y);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is Slice))
                 return false;
@@ -173,7 +173,7 @@ namespace Ark.Tasks.Messages
 
         public Slice ActivitySlice { get; set; }
 
-        public bool Equals(SliceReady other)
+        public bool Equals(SliceReady? other)
         {
             if (ReferenceEquals(this, other))
                 return true;
@@ -206,7 +206,7 @@ namespace Ark.Tasks.Messages
                 return true;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is SliceReady))
                 return false;

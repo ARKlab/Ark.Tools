@@ -12,7 +12,7 @@ namespace Ark.Tools.Nodatime
     {
         private readonly LocalTimePattern _pattern = LocalTimePattern.ExtendedIso;
 
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
         {
             if (sourceType == typeof(string))
                 return true;
@@ -26,7 +26,7 @@ namespace Ark.Tools.Nodatime
             return base.CanConvertFrom(context, sourceType);
         }
 
-        public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+        public override object? ConvertFrom(ITypeDescriptorContext? context, System.Globalization.CultureInfo? culture, object value)
         {
             if (value is LocalTime lt)
             {
@@ -49,7 +49,7 @@ namespace Ark.Tools.Nodatime
             return base.ConvertFrom(context, culture, value);
         }
 
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
         {
             if (destinationType == typeof(string) || destinationType == typeof(DateTime))
                 return true;
@@ -57,12 +57,15 @@ namespace Ark.Tools.Nodatime
             return base.CanConvertTo(context, destinationType);
         }
 
-        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
-            if (destinationType == typeof(string))
-                return _pattern.Format((LocalTime)value);
-            if (destinationType == typeof(DateTime))
-                return DateTime.MinValue.AddTicks(((LocalTime)value).TickOfDay);
+            if (value is LocalTime lt)
+            {
+                if (destinationType == typeof(string))
+                    return _pattern.Format(lt);
+                if (destinationType == typeof(DateTime))
+                    return DateTime.MinValue.AddTicks(lt.TickOfDay);
+            }
 
             return base.ConvertTo(context, culture, value, destinationType);
         }

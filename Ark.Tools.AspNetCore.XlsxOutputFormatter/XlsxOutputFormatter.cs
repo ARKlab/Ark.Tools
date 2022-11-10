@@ -48,8 +48,10 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter
 
         private bool _isTypeOfIEnumerable(Type type) => typeof(IEnumerable).IsAssignableFrom(type);
 
-        private Type _elementType(Type type)
+        private Type? _elementType(Type? type)
         {
+            if (type == null) return type;
+
             // Type is Array
             // short-circuit if you expect lots of arrays 
             if (type.IsArray)
@@ -106,7 +108,7 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter
             using (var document = new XlsxDocumentBuilder())
             {
                 Options.CellStyle?.Invoke(document.Worksheet.Cells.Style);
-                IEnumerable data = context.Object as IEnumerable;
+                IEnumerable? data = context.Object as IEnumerable;
                 if (data == null && context.Object != null)
                 {
                     var array = Array.CreateInstance(elementType, 1);
@@ -116,11 +118,11 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter
 
                 var serializer = SerialisersFactory().FirstOrDefault(x => x.CanSerialiseType(context.ObjectType, elementType));
 
-                serializer.Serialise(elementType, data, document);
+                serializer?.Serialise(elementType, data, document);
 
                 if (document.RowCount > 0)
                 {
-                    if (serializer.IgnoreFormatting)
+                    if (serializer?.IgnoreFormatting == true)
                     {
                         // Autofit cells if specified.
                         if (Options.AutoFit) document.AutoFit();

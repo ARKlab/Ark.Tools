@@ -10,7 +10,7 @@ namespace Ark.Tools.ResourceWatcher
 {
     public interface IStateProvider
     {
-        Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[] resourceIds = null, CancellationToken ctk = default);
+        Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default);
         Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default);
     }
 
@@ -19,7 +19,7 @@ namespace Ark.Tools.ResourceWatcher
     {
         private ConcurrentDictionary<string, ResourceState> _store = new ConcurrentDictionary<string, ResourceState>();
 
-        public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[] resourceIds = null, CancellationToken ctk = default)
+        public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
         {
             var res = new List<ResourceState>();
             if (resourceIds == null)

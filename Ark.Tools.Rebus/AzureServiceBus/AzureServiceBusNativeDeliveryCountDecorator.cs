@@ -29,7 +29,7 @@ namespace Ark.Tools.Rebus.AzureServiceBus
                 _inner.CreateQueue(address);
             }
 
-            public async Task<TransportMessage> Receive(ITransactionContext transactionContext, CancellationToken cancellationToken)
+            public async Task<TransportMessage?> Receive(ITransactionContext transactionContext, CancellationToken cancellationToken)
             {
                 var m = await _inner.Receive(transactionContext, cancellationToken);
                 if (m != null)

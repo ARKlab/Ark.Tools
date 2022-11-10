@@ -7,6 +7,7 @@ using Slack.Webhooks;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Ark.Tools.NLog.Slack
@@ -15,9 +16,9 @@ namespace Ark.Tools.NLog.Slack
     public class SlackTarget : TargetWithContext
     {
         [RequiredParameter]
-        public string WebHookUrl { get; set; }
+        public string? WebHookUrl { get; set; }
 
-        private SlackClient _client = null;
+        private SlackClient? _client = null;
 
         public SlackTarget() : base()
         {
@@ -34,8 +35,7 @@ namespace Ark.Tools.NLog.Slack
             if (String.IsNullOrWhiteSpace(this.WebHookUrl))
                 throw new ArgumentOutOfRangeException("WebHookUrl", "Webhook URL cannot be empty.");
 
-            Uri uriResult;
-            if (!Uri.TryCreate(this.WebHookUrl, UriKind.Absolute, out uriResult))
+            if (!Uri.TryCreate(this.WebHookUrl, UriKind.Absolute, out var _))
                 throw new ArgumentOutOfRangeException("WebHookUrl", "Webhook URL is an invalid URL.");
 
             _client = new SlackClient(this.WebHookUrl);
@@ -91,7 +91,7 @@ namespace Ark.Tools.NLog.Slack
                 slack.AddAttachment(exception.Message, color, new[] { ($"Type: {exception.GetType()}", exception.StackTrace ?? "N/A") });
             }
 
-            slack.Send(_client);
+            slack.Send(_client ?? throw new InvalidOperationException("SlackClient is null"));
         }
 
         private string _getSlackColorFromLogLevel(LogLevel level)

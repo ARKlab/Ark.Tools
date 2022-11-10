@@ -22,8 +22,6 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="handler">Function that is called to handle this requirement.</param>
         public AssertionRequirement(Func<AuthorizationContext, bool> handler)
         {
-            Contract.Requires(handler != null);
-
             Handler = context => Task.FromResult(handler(context));
         }
 
@@ -33,8 +31,6 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="handler">Function that is called to handle this requirement.</param>
         public AssertionRequirement(Func<AuthorizationContext, Task<bool>> handler)
         {
-            Contract.Requires(handler != null);
-
             Handler = handler;
         }
 

@@ -32,7 +32,7 @@ namespace Ark.Tools.Authorization
             if (!typeof(IAuthorizationPolicy).IsAssignableFrom(policyType) || policyType.GetConstructor(Type.EmptyTypes) == null)
                 throw new ArgumentException("should implement IAuthorizationPolicy", nameof(policyType));
 
-            this.Policy = (IAuthorizationPolicy)Activator.CreateInstance(policyType);
+            this.Policy = (IAuthorizationPolicy?)Activator.CreateInstance(policyType);
         }
 
         /// <summary>
@@ -45,17 +45,17 @@ namespace Ark.Tools.Authorization
             if (!typeof(IAuthorizationPolicy).IsAssignableFrom(policyType))
                 throw new ArgumentException("should implement IAuthorizationPolicy", nameof(policyType));
 
-            this.Policy = (IAuthorizationPolicy)Activator.CreateInstance(policyType, args);
+            this.Policy = (IAuthorizationPolicy?)Activator.CreateInstance(policyType, args);
         }
 
         /// <summary>
         /// The required policy.
         /// </summary>
-        public string PolicyName { get; }
+        public string? PolicyName { get; }
 
         /// <summary>
         /// The required policy.
         /// </summary>
-        public IAuthorizationPolicy Policy { get; }
+        public IAuthorizationPolicy? Policy { get; }
     }
 }

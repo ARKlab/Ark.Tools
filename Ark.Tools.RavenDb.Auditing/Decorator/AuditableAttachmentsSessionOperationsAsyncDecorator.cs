@@ -12,7 +12,7 @@ namespace Ark.Tools.RavenDb.Auditing
 	{
 		private readonly IAttachmentsSessionOperationsAsync _inner;
 
-		public AuditableAttachmentsSessionOperationsAsyncDecorator(IAttachmentsSessionOperationsAsync inner, object audit)
+		public AuditableAttachmentsSessionOperationsAsyncDecorator(IAttachmentsSessionOperationsAsync inner, object? audit)
 		{
 			_inner = inner;
 		}
@@ -87,12 +87,12 @@ namespace Ark.Tools.RavenDb.Auditing
 			_inner.Rename(documentId, name, newName);
 		}
 
-		public void Store(string documentId, string name, Stream stream, string contentType = null)
+		public void Store(string documentId, string name, Stream stream, string? contentType = null)
 		{
 			_inner.Store(documentId, name, stream, contentType);
 		}
 
-		public void Store(object entity, string name, Stream stream, string contentType = null)
+		public void Store(object entity, string name, Stream stream, string? contentType = null)
 		{
 			_inner.Store(entity, name, stream, contentType);
 		}

@@ -14,7 +14,7 @@ namespace Ark.Tools.AspNetCore.RavenDb
 	{
 		public static async Task<PagedResult<T>> GetPagedWithODataOptions<T>(this IRavenQueryable<T> query
 																			, ODataQueryOptions<T> options
-																			, ODataValidationSettings validations = null
+																			, ODataValidationSettings? validations = null
 																			, int defaultPageSize = 100
 																			, CancellationToken ctk = default)
 																			where T : class
@@ -30,8 +30,8 @@ namespace Ark.Tools.AspNetCore.RavenDb
 			options.Validate(validations ?? new RavenDefaultODataValidationSettings());
 
 			//Query
-			query = (options.Filter?.ApplyTo(query, settings) ?? query) as IRavenQueryable<T>;
-			query = (options.OrderBy?.ApplyTo(query, settings) ?? query) as IRavenQueryable<T>;
+			query = (options.Filter?.ApplyTo(query, settings) as IRavenQueryable<T>) ?? query;
+			query = (options.OrderBy?.ApplyTo(query, settings) as IRavenQueryable<T>) ?? query;
 			query = query.Skip(options.Skip?.Value ?? 0).Take(options.Top?.Value ?? defaultPageSize);
 
 			var data = await query.ToListAsync(ctk);

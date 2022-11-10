@@ -8,7 +8,7 @@ namespace Ark.Tools.NLog.Slack
     public class SlackMessageBuilder
     {
         private readonly SlackMessage _slackMessage;
-        private event Action<Exception> Error;
+        private event Action<Exception>? Error;
         private bool _existError = false;
 
         public SlackMessageBuilder()
@@ -28,7 +28,7 @@ namespace Ark.Tools.NLog.Slack
             return this;
         }
 
-        public SlackMessageBuilder AddAttachment(string color, IEnumerable<(string title, string text)> fields)
+        public SlackMessageBuilder AddAttachment(string color, IEnumerable<(string title, string? text)> fields)
         {
             var a = new SlackAttachment
             {

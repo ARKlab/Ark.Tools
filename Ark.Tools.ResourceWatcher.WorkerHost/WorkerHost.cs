@@ -58,7 +58,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         private readonly List<Action<TQueryFilter>> _configurers = new List<Action<TQueryFilter>> { };
 
         private Container _container { get; } = new Container();
-        private event VoidEventHandler _onBeforeStart;
+        private event VoidEventHandler? _onBeforeStart;
 
         public class Dependencies
         {
@@ -71,13 +71,6 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
             public Container Container => _host._container;
             public event VoidEventHandler OnBeforeStart { add { _host._onBeforeStart += value; } remove { _host._onBeforeStart -= value; } }
-        }
-
-        static WorkerHost()
-        {
-            ServicePointManager.DefaultConnectionLimit = 100;
-            ServicePointManager.Expect100Continue = false;
-            ServicePointManager.UseNagleAlgorithm = false;
         }
 
         public WorkerHost(IHostConfig config)
@@ -100,7 +93,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         /// Add dependencies
         /// </summary>
         /// <param name="deps">Used to register host dependencies</param>
-        public void Use(Action<Dependencies> deps = null)
+        public void Use(Action<Dependencies>? deps = null)
         {
             deps?.Invoke(new Dependencies(this));
         }
@@ -111,7 +104,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         /// <typeparam name="TDataProvider">The data provider</typeparam>
         /// <param name="deps">Used to register provider dependencies</param>
         /// <param name="lifeStyle">The lifeStyle of the DataProvider (Default: Singleton)</param>
-        public void UseDataProvider<TDataProvider>(Action<Dependencies> deps = null, Lifestyle lifeStyle = null)
+        public void UseDataProvider<TDataProvider>(Action<Dependencies>? deps = null, Lifestyle? lifeStyle = null)
             where TDataProvider : class, IResourceProvider<TMetadata, TResource, TQueryFilter>
         {
             this.Use(d =>
@@ -127,7 +120,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         /// <typeparam name="TFileProcessor">The processor</typeparam>
         /// <param name="deps">Used to register processor dependencies</param>
         /// <param name="lifeStyle">The lifeStyle of the FileProcessor (Default: Singleton)</param>
-        public void AppendFileProcessor<TFileProcessor>(Action<Dependencies> deps = null, Lifestyle lifeStyle = null)
+        public void AppendFileProcessor<TFileProcessor>(Action<Dependencies>? deps = null, Lifestyle? lifeStyle = null)
             where TFileProcessor : class, IResourceProcessor<TResource, TMetadata>
         {
             this.Use(d =>
@@ -143,7 +136,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         /// </summary>
         /// <typeparam name="TStateProvider">The state provider</typeparam>
         /// <param name="deps"></param>
-        public void UseStateProvider<TStateProvider>(Action<Dependencies> deps = null)
+        public void UseStateProvider<TStateProvider>(Action<Dependencies>? deps = null)
             where TStateProvider : class, IStateProvider
         {
             this.Use(d =>
@@ -181,7 +174,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         /// <param name="filterConfigurer">Additional filter configurer to apply as last</param>
         /// <param name="ctk"></param>
         /// <returns></returns>
-        public async Task RunOnceAsync(Action<TQueryFilter> filterConfigurer = null, CancellationToken ctk = default)
+        public async Task RunOnceAsync(Action<TQueryFilter>? filterConfigurer = null, CancellationToken ctk = default)
         {
             _onInit();
 
@@ -249,7 +242,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             private readonly IEnumerable<Action<TQueryFilter>> _filterChainBuilder;
             private readonly IEnumerable<Predicate<TMetadata>> _metadataFilterChain;
             private readonly Container _container;
-            private Action<TQueryFilter> _filter = null;
+            private Action<TQueryFilter>? _filter = null;
 
             private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
@@ -265,7 +258,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 _container = container;
             }
 
-            public async Task RunOnce(Action<TQueryFilter> filter, CancellationToken ctk = default)
+            public async Task RunOnce(Action<TQueryFilter>? filter, CancellationToken ctk = default)
             {
                 _filter = filter;
                 try
@@ -334,9 +327,9 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 }               
             }
 
-            protected override Task<TResource> _retrievePayload(IResourceMetadata info, IResourceTrackedState lastState, CancellationToken ctk = default)
+            protected override Task<TResource?> _retrievePayload(IResourceMetadata info, IResourceTrackedState? lastState, CancellationToken ctk = default)
             {
-                return _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetResource(info as TMetadata, lastState, ctk);
+                return _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetResource((TMetadata)info, lastState, ctk);
             }
         }
     }

@@ -19,7 +19,7 @@ namespace WebApplicationDemo.Dto
 	[System.Text.Json.Serialization.JsonConverter(typeof(PolymorphicConverterSTJ))]
 	public abstract class Polymorphic
 	{
-		public string Id { get; set; }
+		public string? Id { get; set; }
 		public BaseKind Kind { get; set; }
 	}
 
@@ -33,8 +33,8 @@ namespace WebApplicationDemo.Dto
 		public int ValueFromA { get; set; }
 		public LocalDateRange? Range { get; set; }
 
-		public IList<string> StringList { get; set; }
-		public IDictionary<LocalDate, double?> Ts { get; set; }
+		public IList<string> StringList { get; set; } = new List<string>();
+		public IDictionary<LocalDate, double?> Ts { get; set; } = new Dictionary<LocalDate, double?>();
 	}
 
 	public class B : Polymorphic
@@ -64,7 +64,7 @@ namespace WebApplicationDemo.Dto
 					return typeof(B);
 			}
 
-			return null;
+			throw new NotSupportedException();
 		}
 	}
 

@@ -24,7 +24,7 @@ namespace Ark.Tools.Nodatime.Json
             public ZonedDateTime End { get; set; }
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
 
             if (reader.TokenType == JsonToken.Null)
@@ -48,11 +48,12 @@ namespace Ark.Tools.Nodatime.Json
             }
 
             var s = jo.ToObject<Surrogate>(serializer);
+            if (s == null) return null;
             
             return new ZonedDateTimeRange(s.Start, s.End); 
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
             if (value == null)
             {

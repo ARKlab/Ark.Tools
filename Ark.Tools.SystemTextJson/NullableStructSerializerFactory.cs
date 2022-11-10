@@ -13,11 +13,11 @@ namespace Ark.Tools.SystemTextJson
             return t != null;
         }
 
-        public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+        public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
             var structType = typeToConvert.GenericTypeArguments[0];
 
-            return (JsonConverter)Activator.CreateInstance(typeof(NullableStructSerializer<>).MakeGenericType(structType));
+            return (JsonConverter?)Activator.CreateInstance(typeof(NullableStructSerializer<>).MakeGenericType(structType));
         }
     }
 }

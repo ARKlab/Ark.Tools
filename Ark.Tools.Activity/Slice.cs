@@ -22,10 +22,10 @@ namespace Ark.Tools.Activity
         public override bool CanConvert(Type objectType) 
             => _converter.CanConvert(objectType);
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
             => _converter.ReadJson(reader, objectType, existingValue, serializer);
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
             => _converter.WriteJson(writer, value, serializer);
     }
 
@@ -79,7 +79,7 @@ namespace Ark.Tools.Activity
             return !x.Equals(y);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is Slice))
                 return false;

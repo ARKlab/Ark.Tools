@@ -12,7 +12,7 @@ namespace Ark.Tools.Core
             if (args?.Length > 0)
             {
                 var argmin = args.Min();
-                return argmin.CompareTo(first) < 0 ? argmin : first;
+                return argmin?.CompareTo(first) < 0 ? argmin : first;
             }
             return first;
         }
@@ -22,7 +22,7 @@ namespace Ark.Tools.Core
             if (args?.Length > 0)
             {
                 var argmax = args.Max();
-                return argmax.CompareTo(first) > 0 ? argmax : first;
+                return argmax?.CompareTo(first) > 0 ? argmax : first;
             }
             return first;
         }

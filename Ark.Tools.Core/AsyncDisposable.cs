@@ -12,7 +12,7 @@ namespace Ark.Tools.Core
 
         private class AnonymousDisposable : IAsyncDisposable
         {
-            private volatile Func<ValueTask> _cleanup;
+            private volatile Func<ValueTask>? _cleanup;
 
             public AnonymousDisposable(Func<ValueTask> cleanup)
             {

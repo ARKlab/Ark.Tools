@@ -25,7 +25,7 @@ namespace Ark.Tools.Activity.Provider
 
         public RebusResourceNotifier(IRebusResourceNotifier_Config config)
         {
-            _providerName = config.ProviderName;
+            _providerName = config.ProviderName ?? throw new ArgumentNullException(nameof(config.ProviderName));
             _container.ConfigureRebus(c => c
                 .Logging(l => l.NLog())
                 .Transport(t => t.UseAzureServiceBusAsOneWayClient(config.AsbConnectionString).UseLegacyNaming())

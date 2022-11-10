@@ -6,14 +6,14 @@ namespace Ark.Tools.SpecFlow
 {
     public class EnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
     {
-        public object GetValue(string value, Type enumType)
+        public object? GetValue(string value, Type enumType)
         {
             CheckThatTheValueIsAnEnum(value, enumType);
 
             return ConvertTheStringToAnEnum(value, enumType);
         }
 
-        public object Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
+        public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
         {
             return GetValue(keyValuePair.Value, propertyType);
         }
@@ -30,7 +30,7 @@ namespace Ark.Tools.SpecFlow
             return t.IsEnum;
         }
 
-        private static object ConvertTheStringToAnEnum(string value, Type enumType)
+        private static object? ConvertTheStringToAnEnum(string value, Type enumType)
         {
             if (!ThisIsNotANullableEnum(enumType) && string.IsNullOrWhiteSpace(value))
                 return null;
@@ -38,7 +38,7 @@ namespace Ark.Tools.SpecFlow
             if (underlyingType != null)
                 enumType = underlyingType;
 
-            Enum res = null;
+            Enum? res = null;
             foreach (Enum refValue in Enum.GetValues(enumType))
             {
                 if (refValue.ToString() == value)
@@ -99,7 +99,7 @@ namespace Ark.Tools.SpecFlow
             if (string.IsNullOrWhiteSpace(expectedValue) && actualValue == null)
                 return true;
             var e = ConvertTheStringToAnEnum(expectedValue, actualValue.GetType());
-            return e.Equals(actualValue);
+            return e?.Equals(actualValue) == true;
         }
     }
 }

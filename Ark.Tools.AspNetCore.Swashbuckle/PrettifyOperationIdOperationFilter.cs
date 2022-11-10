@@ -12,7 +12,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 		{
 			if (context.ApiDescription.ActionDescriptor is ControllerActionDescriptor cad)
 			{
-				operation.OperationId = $@"{context.ApiDescription.HttpMethod}{context.ApiDescription.RelativePath
+				operation.OperationId = $@"{context.ApiDescription.HttpMethod}{context.ApiDescription.RelativePath?
 					.Replace(@"v{api-version}", "")
 					.Replace(@"/", @"_")
 					.Replace(@"{", @"_")

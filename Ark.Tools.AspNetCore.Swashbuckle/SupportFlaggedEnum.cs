@@ -22,7 +22,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					var t = x.i.Type;
 					if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
 					{
-						t = Nullable.GetUnderlyingType(t);
+						t = Nullable.GetUnderlyingType(t) ?? t;
 					}
 					return t.IsEnum && t.IsDefined(typeof(FlagsAttribute), false);
 				})

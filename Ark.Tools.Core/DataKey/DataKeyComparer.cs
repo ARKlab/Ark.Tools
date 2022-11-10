@@ -19,7 +19,7 @@ namespace Ark.Tools.Core.DataKey
                 ;
         }
 
-        public bool Equals(T x, T y)
+        public bool Equals(T? x, T? y)
         {
             if (x == null || y == null) return false;
             if (_keyProperties.Length == 0) return x == y;

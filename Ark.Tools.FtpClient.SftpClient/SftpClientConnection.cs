@@ -106,10 +106,10 @@ namespace Ark.Tools.FtpClient.SftpClient
 #else
             var connInfo = _getConnectionInfo();
 
-            var cert = FtpConfig.ClientCertificate;
+            var cert = FtpConfig.ClientCertificate ?? throw new InvalidOperationException("ClientCertificate is not set");
 
-            string keyExchangeAlgorithm = null;
-            byte[] privateKeyBytes = null;
+            string? keyExchangeAlgorithm = null;
+            byte[]? privateKeyBytes = null;
             string privateKeyPemString;
             bool isKeyNull = false;
 
@@ -117,9 +117,9 @@ namespace Ark.Tools.FtpClient.SftpClient
             {
                 case _rsa:
                     {
-                        using RSA rsaKey = cert.GetRSAPrivateKey();
+                        using RSA? rsaKey = cert.GetRSAPrivateKey();
 
-                        keyExchangeAlgorithm = rsaKey.KeyExchangeAlgorithm;
+                        keyExchangeAlgorithm = rsaKey?.KeyExchangeAlgorithm;
                         if (rsaKey != null)
                             privateKeyBytes = rsaKey.ExportRSAPrivateKey();
                         else
@@ -128,9 +128,9 @@ namespace Ark.Tools.FtpClient.SftpClient
                     }
                 case _dsa:
                     {
-                        using DSA dsaKey = cert.GetDSAPrivateKey();
+                        using DSA? dsaKey = cert.GetDSAPrivateKey();
 
-                        keyExchangeAlgorithm = dsaKey.KeyExchangeAlgorithm;
+                        keyExchangeAlgorithm = dsaKey?.KeyExchangeAlgorithm;
                         if (dsaKey != null)
                             privateKeyBytes = dsaKey.ExportPkcs8PrivateKey();
                         else
@@ -139,9 +139,9 @@ namespace Ark.Tools.FtpClient.SftpClient
                     }
                 case _ecdsa:
                     {
-                        using ECDsa ecdsaKey = cert.GetECDsaPrivateKey();
+                        using ECDsa? ecdsaKey = cert.GetECDsaPrivateKey();
 
-                        keyExchangeAlgorithm = ecdsaKey.KeyExchangeAlgorithm;
+                        keyExchangeAlgorithm = ecdsaKey?.KeyExchangeAlgorithm;
                         if (ecdsaKey != null)
                             privateKeyBytes = ecdsaKey.ExportPkcs8PrivateKey();
                         else
@@ -170,10 +170,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 
             var byteArray = Encoding.UTF8.GetBytes(privateKeyPemString);
 
-            using var ms = new MemoryStream(byteArray);
-            using var privateKeyFile = new PrivateKeyFile(ms);
-
-            return new Renci.SshNet.SftpClient(connInfo.Host, connInfo.Username, new PrivateKeyFile[] { privateKeyFile })
+            return new Renci.SshNet.SftpClient(connInfo.Host, connInfo.Username, new PrivateKeyFile[] { new PrivateKeyFile(new MemoryStream(byteArray)) })
             {
                 KeepAliveInterval = _keepAliveInterval,
                 OperationTimeout = _operationTimeout,
@@ -205,12 +202,14 @@ namespace Ark.Tools.FtpClient.SftpClient
 
             foreach (var file in files)
             {
-                var entry = new FtpEntry();
-                entry.FullPath = file.FullName;
-                entry.IsDirectory = file.IsDirectory;
-                entry.Modified = file.LastWriteTimeUtc;
-                entry.Name = file.Name;
-                entry.Size = file.Length;
+                var entry = new FtpEntry
+                {
+                    FullPath = file.FullName,
+                    IsDirectory = file.IsDirectory,
+                    Modified = file.LastWriteTimeUtc,
+                    Name = file.Name,
+                    Size = file.Length
+                };
                 result.Add(entry);
             }
             return result;

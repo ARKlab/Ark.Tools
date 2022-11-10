@@ -12,13 +12,13 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
     public class SeparatedQueryValueProvider : QueryStringValueProvider
     {
         private readonly char _separator;
-        private readonly string _key;
+        private readonly string? _key;
 
         public SeparatedQueryValueProvider(char separator, IQueryCollection values) 
             : this(null, separator, values)
         { }
 
-        public SeparatedQueryValueProvider(string key, char separator, IQueryCollection values) 
+        public SeparatedQueryValueProvider(string? key, char separator, IQueryCollection values) 
             : base(BindingSource.Query, values, CultureInfo.InvariantCulture)
         {
             _separator = separator;

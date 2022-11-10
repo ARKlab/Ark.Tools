@@ -18,7 +18,7 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
         {
         }
 
-        public SeparatedQueryValueAttribute(string key, char separator)
+        public SeparatedQueryValueAttribute(string? key, char separator)
         {
             _factory = new SeparatedQueryValueProviderFactory(key, separator);
         }

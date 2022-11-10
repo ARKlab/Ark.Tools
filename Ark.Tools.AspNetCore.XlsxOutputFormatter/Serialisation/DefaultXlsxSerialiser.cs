@@ -87,9 +87,8 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Serialisation
             else if (info.ExcelAttribute != null && info.ExcelAttribute.FalseValue != null && cellValue.Equals("False"))
                 return info.ExcelAttribute.FalseValue;
 
-            else if (!string.IsNullOrWhiteSpace(info.FormatString) & string.IsNullOrEmpty(info.ExcelNumberFormat))
+            else if (!string.IsNullOrWhiteSpace(info.FormatString) && string.IsNullOrEmpty(info.ExcelNumberFormat))
                 return string.Format(info.FormatString, cellValue);
-
             else
                 return cellValue;
         }

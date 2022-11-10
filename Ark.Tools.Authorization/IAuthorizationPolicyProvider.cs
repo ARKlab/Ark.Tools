@@ -14,6 +14,6 @@ namespace Ark.Tools.Authorization
         /// <param name="policyName">The policy name to retrieve.</param>
         /// <param name="ctk">CancellationToken</param>
         /// <returns>The named <see cref="IAuthorizationPolicy"/>.</returns>
-        Task<IAuthorizationPolicy> GetPolicyAsync(string policyName, CancellationToken ctk = default);
+        Task<IAuthorizationPolicy?> GetPolicyAsync(string policyName, CancellationToken ctk = default);
     }
 }

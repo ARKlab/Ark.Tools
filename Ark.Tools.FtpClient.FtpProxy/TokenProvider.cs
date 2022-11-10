@@ -19,8 +19,8 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
     internal class TokenProvider
     {
-        private readonly AuthenticationContext _adal;
-        private readonly IAuthenticationApiClient _auth0;
+        private readonly AuthenticationContext? _adal;
+        private readonly IAuthenticationApiClient? _auth0;
         private readonly IFtpClientProxyConfig _config;
 
         public TokenProvider(IFtpClientProxyConfig config)
@@ -45,18 +45,18 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         private async Task<string> _getAuth0AccessToken(CancellationToken ctk = default)
         {
-
+            var auth0 = _auth0 ?? throw new InvalidOperationException("Auth0 client is not initialized");
             try
             {
                 var result = await Policy
                     .Handle<Exception>()
                     .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(3))
-                    .ExecuteAsync(() => _auth0.GetTokenAsync(new ClientCredentialsTokenRequest
+                    .ExecuteAsync((ct) => auth0.GetTokenAsync(new ClientCredentialsTokenRequest
                     {
                         Audience = _config.ApiIdentifier,
                         ClientId = _config.ClientID,
                         ClientSecret = _config.ClientKey
-                    }))
+                    }, ct),ctk)
                     ;
 
                 return result.AccessToken;
@@ -69,13 +69,14 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         private async Task<string> _getAdalAccessToken(CancellationToken ctk = default)
         {
-            AuthenticationResult result = null;
+            AuthenticationResult? result = null;
+            var adal = _adal ?? throw new InvalidOperationException("ADAL client is not initialized");
             try
             {
                 result = await Policy
                     .Handle<AdalException>(ex => ex.ErrorCode == "temporarily_unavailable")
                     .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(3))
-                    .ExecuteAsync(c => _adal.AcquireTokenAsync(_config.ApiIdentifier, new ClientCredential(this._config.ClientID, this._config.ClientKey)), ctk, false)
+                    .ExecuteAsync(c => adal.AcquireTokenAsync(_config.ApiIdentifier, new ClientCredential(this._config.ClientID, this._config.ClientKey)), ctk, false)
                     ;
             }
             catch (Exception ex)

@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.AspNetCore
 {
-    public class AspNetCoreUserContextProvider : IContextProvider<ClaimsPrincipal>
+    public class AspNetCoreUserContextProvider : IContextProvider<ClaimsPrincipal?>
     {
         private readonly IHttpContextAccessor _accessor;
 
@@ -15,11 +15,11 @@ namespace Ark.Tools.AspNetCore
             _accessor = accessor;
         }
 
-        public ClaimsPrincipal Current
+        public ClaimsPrincipal? Current
         {
             get
             {
-                return _accessor.HttpContext.User;
+                return _accessor.HttpContext?.User;
             }
         }
     }
