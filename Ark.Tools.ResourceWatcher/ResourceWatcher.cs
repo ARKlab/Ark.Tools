@@ -303,7 +303,7 @@ namespace Ark.Tools.ResourceWatcher
                             if (newState != null)
                             {
                                 if (!string.IsNullOrWhiteSpace(newState.CheckSum) && state.CheckSum != newState.CheckSum)
-                                    _logger.Info("Checksum changed on ResourceId=\"{ResourceId}\" from \"{OldChecksum}\" to \"{NewChecksum}\"", state.ResourceId, state.CheckSum, newState.CheckSum);
+                                    _logger.Info("Checksum changed on ResourceId={ResourceId} from {OldChecksum} to {NewChecksum}", state.ResourceId, state.CheckSum, newState.CheckSum);
 
                                 state.CheckSum = newState.CheckSum;
                                 state.RetrievedAt = newState.RetrievedAt;

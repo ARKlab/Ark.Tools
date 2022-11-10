@@ -43,7 +43,7 @@ namespace Ark.Tools.ResourceWatcher
 
         public void ProcessResourceTookTooLong(string resourceId, Activity activity)
         {
-            _logger.Fatal($"Processing of ResourceId=\"{resourceId}\" took too much: {activity.Duration}");
+            _logger.Fatal($"Processing of ResourceId={resourceId} took too much: {activity.Duration}");
 
             _reportEvent("ProcessResourceTookTooLong",
                 () => new
@@ -192,13 +192,13 @@ namespace Ark.Tools.ResourceWatcher
 
             if (!result)
             {
-                _logger.Info("No changes detected on ResourceId=\"{ResourceId}\""
+                _logger.Info("No changes detected on ResourceId={ResourceId}"
                  , processContext.CurrentInfo.ResourceId
                 );
             }
             else
             {
-                _logger.Info("({Index}/{Total}) Detected change on ResourceId=\"{ResourceId}\", Resource.ModifiedSource={ModifiedSource}, Resource.Modified={Modified}, OldState.Modified={OldModified}, OldState.Retry={OldRetryCount}. Processing..."
+                _logger.Info("({Index}/{Total}) Detected change on ResourceId={ResourceId}, Resource.ModifiedSource={ModifiedSource}, Resource.Modified={Modified}, OldState.Modified={OldModified}, OldState.Retry={OldRetryCount}. Processing..."
                     , processContext.Index
                     , processContext.Total
                     , processContext.CurrentInfo.ResourceId
@@ -221,7 +221,7 @@ namespace Ark.Tools.ResourceWatcher
         public void ProcessResourceFailed(Activity activity, ProcessContext pc, bool isBanned, Exception ex)
         {
             var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
-            _logger.Log(lvl, ex, "({Index}/{Total}) ResourceId=\"{ResourceId}\" process Failed", pc.Index , pc.Total, pc.CurrentInfo.ResourceId);
+            _logger.Log(lvl, ex, "({Index}/{Total}) ResourceId={ResourceId} process Failed", pc.Index , pc.Total, pc.CurrentInfo.ResourceId);
 
             _stop(activity, () => new
             {
@@ -241,18 +241,18 @@ namespace Ark.Tools.ResourceWatcher
 
             if (pc.ResultType == ResultType.NoNewData)
             {
-                _logger.Info("({Index}/{Total}) ResourceId=\"{ResourceId}\" No payload retrived, so no new state. Generally due to a same-checksum", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
+                _logger.Info("({Index}/{Total}) ResourceId={ResourceId} No payload retrived, so no new state. Generally due to a same-checksum", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
             }
             else if (pc.ResultType == ResultType.NoAction)
             {
-                _logger.Info("({Index}/{Total}) ResourceId=\"{ResourceId}\" No action has been triggered and payload has not been retrieved. We do not change the state", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
+                _logger.Info("({Index}/{Total}) ResourceId={ResourceId} No action has been triggered and payload has not been retrieved. We do not change the state", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
             }
             else if (pc.ResultType == ResultType.Normal)
             {
                 if (pc.NewState.RetryCount == 0)
-                    _logger.Info("({Index}/{Total}) ResourceId=\"{ResourceId}\" handled successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
+                    _logger.Info("({Index}/{Total}) ResourceId={ResourceId} handled successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
                 else
-                    _logger.Info("({Index}/{Total}) ResourceId=\"{ResourceId}\" handled not successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
+                    _logger.Info("({Index}/{Total}) ResourceId={ResourceId} handled not successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
             }
         }
         #endregion
@@ -298,7 +298,7 @@ namespace Ark.Tools.ResourceWatcher
         #region Exception
         public void ProcessResourceSaveFailed(string resourceId, Exception ex)
         {
-            _logger.Error(ex, $"Saving of ResourceId=\"{resourceId}\" failed");
+            _logger.Error(ex, $"Saving of ResourceId={resourceId} failed");
 
             _reportException("ProcessResourceSaveFailed", ex);
         }
