@@ -300,11 +300,11 @@ INSERT INTO [dbo].[{0}]
     , [AppName]
     , [RequestID]
     , [ActivityId]
-    , [Properties]
     , [Host]
     , [Message]
     , [ExceptionMessage]
     , [StackTrace]
+    , [Properties]
 ) 
 VALUES
 (
@@ -316,11 +316,11 @@ VALUES
     , @AppName
     , TRY_CONVERT(UNIQUEIDENTIFIER, @RequestID)
     , @ActivityId
-    , @Properties
     , @Host
     , @Message
     , @ExceptionMessage 
     , @StackTrace
+    , @Properties
 )
           ", logTableName);
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("TimestampUtc", @"${date:universalTime=true}"));
@@ -567,22 +567,22 @@ BEGIN
     CREATE TABLE [dbo].[{0}](
 	    [ID] [int] IDENTITY(1,1) NOT NULL,
 	    [TimestampUtc] [datetime2](7) NULL,
-	    [TimestampTz] [datetimeoffset](7) NULL,
 	    [LogLevel] [varchar](20) NULL,
 	    [Logger] [varchar](256) NULL,
-	    [Callsite] [varchar](max) NULL,
 	    [AppName] [varchar](256) NULL,
-        [RequestID] [uniqueidentifier] NULL,
-	    [ActivityId] [varchar](256) NULL,
-        [Properties] [nvarchar](max) NULL,
-	    [Host] [varchar](256) NULL,
 	    [Message] [nvarchar](max) NULL,
 	    [ExceptionMessage] [nvarchar](max) NULL,
-	    [StackTrace] [nvarchar](max) NULL
+	    [StackTrace] [nvarchar](max) NULL,
+        [Properties] [nvarchar](max) NULL,
+	    [Host] [varchar](256) NULL,
+	    [TimestampTz] [datetimeoffset](7) NULL,
+	    [Callsite] [varchar](max) NULL,
+	    [ActivityId] [varchar](256) NULL,
+        [RequestID] [uniqueidentifier] NULL
     CONSTRAINT [{0}_PK] PRIMARY KEY CLUSTERED 
     (
-	    [ID] ASC
-    )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, DATA_COMPRESSION = PAGE)
+	    [ID] DESC
+    ) WITH (DATA_COMPRESSION = PAGE)
     )
 END
 
