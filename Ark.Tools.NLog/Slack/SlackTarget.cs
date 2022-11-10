@@ -17,6 +17,7 @@ namespace Ark.Tools.NLog.Slack
         [RequiredParameter]
         public string WebHookUrl { get; set; }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "CloseTarget() is called during Dispose() by NLog")]
         private SlackClient _client = null;
 
         public SlackTarget() : base()
@@ -117,6 +118,7 @@ namespace Ark.Tools.NLog.Slack
 
             base.CloseTarget();
         }
+
     }
 
 
