@@ -284,7 +284,16 @@ namespace Ark.Tools.NLog
             {
                 logTableName = logTableName.Replace("[", string.Empty).Replace("]", string.Empty).Replace('.','_');
 
-                _ensureTableIsCreated(connectionString, logTableName);
+                try
+                {
+                    _ensureTableIsCreated(connectionString, logTableName);
+                } catch (Exception ex)
+                {
+                    InternalLogger.Fatal(ex, "Failed to setup Ark Database Target. Database logging is disabled");
+                    // continue setup the Target: it's not going to work but NLog handles it gracefully
+                }
+                
+
                 var databaseTarget = new DatabaseTarget();
                 databaseTarget.DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"; // see https://github.com/NLog/NLog/wiki/Database-target#microsoftdatasqlclient-and-net-core
                 databaseTarget.ConnectionString = connectionString;
@@ -576,7 +585,7 @@ BEGIN
         [Properties] [nvarchar](max) NULL,
 	    [Host] [varchar](256) NULL,
 	    [TimestampTz] [datetimeoffset](7) NULL,
-	    [Callsite] [varchar](max) NULL,
+	    [Callsite] [varchar](8000) NULL,
 	    [ActivityId] [varchar](256) NULL,
         [RequestID] [uniqueidentifier] NULL
     CONSTRAINT [{0}_PK] PRIMARY KEY CLUSTERED 
@@ -632,7 +641,9 @@ IF EXISTS ( SELECT  1
                         )
 BEGIN
 
-    EXEC('ALTER TABLE [dbo].[{0}] ALTER COLUMN [Callsite] [varchar](MAX) NULL')
+    -- limiting 'migration' to 8000 instead of MAX to ensure is only a metadata update. 
+    -- (max) requires data move and long time
+    EXEC('ALTER TABLE [dbo].[{0}] ALTER COLUMN [Callsite] [varchar](8000) NULL')
 
 END
 
