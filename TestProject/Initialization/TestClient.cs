@@ -9,6 +9,7 @@ using Ark.Tools.Core.EntityTag;
 using Flurl.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using FluentAssertions;
 
 namespace TestProject
 {
@@ -156,26 +157,26 @@ namespace TestProject
 		[Then("The request succeded")]
 		public void ThenTheRequestSucceded()
 		{
-			_lastResponse.ResponseMessage.EnsureSuccessStatusCode();
+            _lastResponse.ResponseMessage.Should().BeSuccessful();
 		}
 
 		[Then(@"The request fails with (.*)")]
 		public void ThenTheRequestFailsWith(HttpStatusCode code)
 		{
-			Assert.AreEqual(code, _lastResponse.StatusCode);
+            _lastResponse.ResponseMessage.Should().HaveHttpStatusCode(code);
 		}
 
 		[Then(@"The problem detail type contains (.*)")]
 		public void ThenTheProblemDetailTypeContains(string expectedProblemDetailType)
 		{
 			var problemDetail = _lastResponse.GetJsonAsync<ProblemDetails>().GetAwaiter().GetResult();
-			Assert.IsTrue(problemDetail?.Type?.Contains(expectedProblemDetailType));
+            problemDetail?.Type?.Should().Contain(expectedProblemDetailType);
 		}
 
 		[Then(@"The request returns (.*)")]
 		public void ThenTheRequestReturns(HttpStatusCode code)
 		{
-			Assert.AreEqual(code, _lastResponse.StatusCode);
+            _lastResponse.ResponseMessage.Should().HaveStatusCode(code);
 		}
 
         public void Dispose()
