@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    public sealed class OutboxContextSql<Tag> : IOutboxContext
+    internal sealed class OutboxContextSql<Tag> : IOutboxContext
     {
         private readonly ISqlContext<Tag> _sqlContext;
         private readonly IOutboxContextSqlConfig _config;
@@ -157,7 +157,6 @@ namespace Ark.Tools.Outbox.SqlServer
 
         public void Dispose()
         {
-            _sqlContext.Dispose();
         }
     }
 }

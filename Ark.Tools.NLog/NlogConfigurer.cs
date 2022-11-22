@@ -211,7 +211,7 @@ namespace Ark.Tools.NLog
             {
                 _config.AddTarget("Debugger", new DebuggerTarget("Debugger")
                 {
-                    Layout= "${longdate}|${level:uppercase=true}|${logger}|ActivityId=${activity:property=TraceId}|${message:withexception=true}"
+                    Layout= @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}"
                 });
                 return this;
             }
@@ -256,7 +256,7 @@ namespace Ark.Tools.NLog
             public Configurer WithConsoleTarget(bool async = true)
             {
                 var consoleTarget = new ColoredConsoleTarget();
-                consoleTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message} ${onexception:${newline}EXCEPTION\: ${exception:format=ToString}}";
+                consoleTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
                 _config.AddTarget(ConsoleTarget, async ? _wrapWithAsyncTargetWrapper(consoleTarget) as Target : consoleTarget);
                 return this;
             }
@@ -265,7 +265,7 @@ namespace Ark.Tools.NLog
             {
                 var fileTarget = new FileTarget();
 
-                fileTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message} ${onexception:${newline}EXCEPTION\: ${exception:format=ToString}}";
+                fileTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
                 fileTarget.FileName = @"${basedir}\Logs\Trace.log";
                 fileTarget.KeepFileOpen = true;
                 fileTarget.ConcurrentWrites = false;
@@ -284,7 +284,16 @@ namespace Ark.Tools.NLog
             {
                 logTableName = logTableName.Replace("[", string.Empty).Replace("]", string.Empty).Replace('.','_');
 
-                _ensureTableIsCreated(connectionString, logTableName);
+                try
+                {
+                    _ensureTableIsCreated(connectionString, logTableName);
+                } catch (Exception ex)
+                {
+                    InternalLogger.Fatal(ex, "Failed to setup Ark Database Target. Database logging is disabled");
+                    // continue setup the Target: it's not going to work but NLog handles it gracefully
+                }
+                
+
                 var databaseTarget = new DatabaseTarget();
                 databaseTarget.DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"; // see https://github.com/NLog/NLog/wiki/Database-target#microsoftdatasqlclient-and-net-core
                 databaseTarget.ConnectionString = connectionString;
@@ -300,10 +309,11 @@ INSERT INTO [dbo].[{0}]
     , [AppName]
     , [RequestID]
     , [ActivityId]
-    , [Properties]
     , [Host]
     , [Message]
     , [ExceptionMessage]
+    , [StackTrace]
+    , [Properties]
 ) 
 VALUES
 (
@@ -315,10 +325,11 @@ VALUES
     , @AppName
     , TRY_CONVERT(UNIQUEIDENTIFIER, @RequestID)
     , @ActivityId
-    , @Properties
     , @Host
     , @Message
     , @ExceptionMessage 
+    , @StackTrace
+    , @Properties
 )
           ", logTableName);
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("TimestampUtc", @"${date:universalTime=true}"));
@@ -340,7 +351,8 @@ VALUES
                 }));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=ToString}}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=Type,Message}}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString}}"));
                 _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) as Target : databaseTarget);
 
                 return this;
@@ -351,7 +363,7 @@ VALUES
                 var target = new MailTarget();
                 target.AddNewLines = true;
                 target.Encoding = Encoding.UTF8;
-                target.Layout = "${longdate}|${level:uppercase=true}|${logger}|${activity:property=TraceId}|${message}${newline}${exception:format=ToString:innerFormat=ToString:maxInnerExceptionLevel=10}";
+                target.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
                 target.Html = true;
                 target.ReplaceNewlineWithBrTagInHtml = true;
                 target.Subject = "Errors from ${gdc:item=AppName}@${ark.hostname}";
@@ -564,21 +576,22 @@ BEGIN
     CREATE TABLE [dbo].[{0}](
 	    [ID] [int] IDENTITY(1,1) NOT NULL,
 	    [TimestampUtc] [datetime2](7) NULL,
-	    [TimestampTz] [datetimeoffset](7) NULL,
 	    [LogLevel] [varchar](20) NULL,
 	    [Logger] [varchar](256) NULL,
-	    [Callsite] [varchar](max) NULL,
 	    [AppName] [varchar](256) NULL,
-        [RequestID] [uniqueidentifier] NULL,
-	    [ActivityId] [varchar](256) NULL,
-        [Properties] [nvarchar](max) NULL,
-	    [Host] [varchar](256) NULL,
 	    [Message] [nvarchar](max) NULL,
 	    [ExceptionMessage] [nvarchar](max) NULL,
+	    [StackTrace] [nvarchar](max) NULL,
+        [Properties] [nvarchar](max) NULL,
+	    [Host] [varchar](256) NULL,
+	    [TimestampTz] [datetimeoffset](7) NULL,
+	    [Callsite] [varchar](8000) NULL,
+	    [ActivityId] [varchar](256) NULL,
+        [RequestID] [uniqueidentifier] NULL
     CONSTRAINT [{0}_PK] PRIMARY KEY CLUSTERED 
     (
-	    [ID] ASC
-    )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, DATA_COMPRESSION = PAGE)
+	    [ID] DESC
+    ) WITH (DATA_COMPRESSION = PAGE)
     )
 END
 
@@ -606,6 +619,18 @@ BEGIN
 
 END
 
+IF NOT EXISTS ( SELECT  1
+                FROM    information_schema.COLUMNS
+                WHERE   table_schema = 'dbo'
+                        AND TABLE_NAME = '{0}'
+						AND COLUMN_NAME = 'StackTrace'
+                        )
+BEGIN
+
+    EXEC('ALTER TABLE [dbo].[{0}] ADD [StackTrace] [nvarchar](MAX) NULL')
+
+END
+
 
 IF EXISTS ( SELECT  1
                 FROM    information_schema.COLUMNS
@@ -616,7 +641,9 @@ IF EXISTS ( SELECT  1
                         )
 BEGIN
 
-    EXEC('ALTER TABLE [dbo].[{0}] ALTER COLUMN [Callsite] [varchar](MAX) NULL')
+    -- limiting 'migration' to 8000 instead of MAX to ensure is only a metadata update. 
+    -- (max) requires data move and long time
+    EXEC('ALTER TABLE [dbo].[{0}] ALTER COLUMN [Callsite] [varchar](8000) NULL')
 
 END
 
