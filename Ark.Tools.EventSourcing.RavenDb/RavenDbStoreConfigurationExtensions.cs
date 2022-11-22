@@ -34,7 +34,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
             return store;
         }
 
-        public static DocumentConventions AddFindCollectionName(this DocumentConventions conventions, Func<Type, string> func)
+        public static DocumentConventions AddFindCollectionName(this DocumentConventions conventions, Func<Type, string?> func)
         {
             var current = conventions.FindCollectionName;
             conventions.FindCollectionName = type =>

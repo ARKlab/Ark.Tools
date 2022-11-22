@@ -24,8 +24,8 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
 		private readonly IDocumentStore _store;
 		private IAggregateEventHandlerActivator _handlerActivator;
-		private Task _subscriptionWorkerTask;
-		private CancellationTokenSource _tokenSource;
+		private Task? _subscriptionWorkerTask;
+		private CancellationTokenSource? _tokenSource;
 		private object _gate = new object();
 
 		readonly ConcurrentDictionary<Type, MethodInfo> _dispatchMethods = new ConcurrentDictionary<Type, MethodInfo>();
@@ -153,7 +153,7 @@ where startsWith(id(e), '{prefix}')
 						var methodToInvoke = _dispatchMethods
 							.GetOrAdd(evtType, type => _getDispatchMethod(evtType));
 
-						await (Task)methodToInvoke.Invoke(this, new object[] { envelope.Event, envelope.Metadata });
+						await (Task)methodToInvoke.Invoke(this, new object[] { envelope.Event, envelope.Metadata })!;
 					}
 				});
 
@@ -167,7 +167,7 @@ where startsWith(id(e), '{prefix}')
 			var handler = _handlerActivator.GetHandler<TAggregate, TEvent>(evt);
 
 			if (handler != null)
-				return handler.HandleAsync(evt, metadata, _tokenSource.Token);
+				return handler.HandleAsync(evt, metadata, _tokenSource?.Token ?? default);
 			else
 				return Task.CompletedTask;
 		}
@@ -183,10 +183,10 @@ where startsWith(id(e), '{prefix}')
 
 		public async Task StopAsync()
 		{
-			Task runtask;
+			Task? runtask;
 			lock (_gate)
 			{
-				_tokenSource.Cancel();
+				_tokenSource?.Cancel();
 				_tokenSource = null;
 				runtask = _subscriptionWorkerTask;
 				_subscriptionWorkerTask = null;
@@ -194,7 +194,8 @@ where startsWith(id(e), '{prefix}')
 
 			try
 			{
-				await runtask;
+                if (runtask is not null)
+				    await runtask;
 			}
 			catch (TaskCanceledException) { }
 		}

@@ -40,7 +40,7 @@ namespace Ark.Tools.EventSourcing.Events
 
         public override string ToString()
         {
-            return string.Join(Environment.NewLine, this.Select(kv => $"{kv.Key}: {kv.Value}"));
+            return string.Join(Environment.NewLine, this.Select(kv => $"{kv.Key}:{kv.Value}"));
         }
 
         public string? GetMetadataValue(string key)
@@ -49,12 +49,14 @@ namespace Ark.Tools.EventSourcing.Events
         }
 
         public T? GetMetadataValue<T>(string key, Func<string, T> converter, T? defaultValue = null)
-            where T:struct
+            where T: struct
         {
             if (!TryGetValue(key, out var value))
             {
                 return defaultValue;
             }
+
+            if (value is null) return null;
 
             return converter(value);
         }
@@ -67,7 +69,47 @@ namespace Ark.Tools.EventSourcing.Events
                 return defaultValue;
             }
 
+            if (value is null) return null;
+
             return converter(value);
+        }
+
+        public void SetMetadataValue<T>(string key, T? value, Func<T, string> converter)
+            where T : struct
+        {
+            if (!value.HasValue)
+            {
+                Remove(key);
+            }
+            else
+            {
+                this[key] = converter(value.Value);
+            }
+        }
+
+        public void SetMetadataValue<T>(string key, T? value, Func<T, string> converter)
+            where T : class
+        {
+            if (value is null)
+            {
+                Remove(key);
+            }
+            else
+            {
+                this[key] = converter(value);
+            }
+        }
+
+        public void SetMetadataValue(string key, string? value)
+        {
+            if (value is null)
+            {
+                Remove(key);
+            }
+            else
+            {
+                this[key] = value;
+            }
         }
     }
 

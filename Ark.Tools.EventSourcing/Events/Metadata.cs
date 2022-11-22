@@ -19,49 +19,49 @@ namespace Ark.Tools.EventSourcing.Events
         public string EventId
         {
             get => _container.GetMetadataValue(MetadataKeys.EventId) ?? throw new InvalidOperationException(MetadataKeys.EventId + " cannot be null");
-            set => _container.Add(MetadataKeys.EventId, value);
+            set => _container[MetadataKeys.EventId] = value;
         }
 
         public string EventName
         {
             get => _container.GetMetadataValue(MetadataKeys.EventName) ?? throw new InvalidOperationException(MetadataKeys.EventName + " cannot be null");
-            set => _container.Add(MetadataKeys.EventName, value);
+            set => _container[MetadataKeys.EventName] = value;
         }
 
         public int? EventVersion
         {
             get => _container.GetMetadataValue(MetadataKeys.EventVersion, Convert.ToInt32);
-            set => _container.Add(MetadataKeys.EventVersion, Convert.ToString(value));
+            set => _container.SetMetadataValue(MetadataKeys.EventVersion, value, Convert.ToString);
         }
 
         public DateTimeOffset? Timestamp
         {
             get => _container.GetMetadataValue(MetadataKeys.Timestamp, DateTimeOffset.Parse);
-            set => _container.Add(MetadataKeys.Timestamp, value?.ToString("O"));
+            set => _container.SetMetadataValue(MetadataKeys.Timestamp, value, v => v.ToString("O"));
         }
 
         public long? TimestampEpoch
         {
             get => _container.GetMetadataValue(MetadataKeys.TimestampEpoch, Convert.ToInt64);
-            set => _container.Add(MetadataKeys.TimestampEpoch, Convert.ToString(value));
+            set => _container.SetMetadataValue(MetadataKeys.TimestampEpoch, value, Convert.ToString);
         }
 
         public long? AggregateVersion
         {
             get => _container.GetMetadataValue(MetadataKeys.AggregateVersion, Convert.ToInt64);
-            set => _container.Add(MetadataKeys.AggregateVersion, Convert.ToString(value));
+            set => _container.SetMetadataValue(MetadataKeys.AggregateVersion, value, Convert.ToString);
         }
 
-        public string AggregateId
+        public string? AggregateId
         {
             get => _container.GetMetadataValue(MetadataKeys.AggregateId);
-            set => _container.Add(MetadataKeys.AggregateId, value);
+            set => _container.SetMetadataValue(MetadataKeys.AggregateId, value);
         }
 
-        public string AggregateName
+        public string? AggregateName
         {
             get => _container.GetMetadataValue(MetadataKeys.AggregateName);
-            set => _container.Add(MetadataKeys.AggregateName, value);
+            set => _container.SetMetadataValue(MetadataKeys.AggregateName, value);
         }
 
         public IReadOnlyDictionary<string, string> Values => _container;

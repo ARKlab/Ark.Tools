@@ -11,8 +11,8 @@ namespace Ark.Tools.EventSourcing.Events
         DateTimeOffset? Timestamp { get; }
         long? TimestampEpoch { get; }
         long? AggregateVersion { get; }
-        string AggregateId { get; }
-        string AggregateName { get; }
+        string? AggregateId { get; }
+        string? AggregateName { get; }
 
         IReadOnlyDictionary<string, string> Values { get; }
 
