@@ -26,7 +26,7 @@ namespace Ark.Tools.SpecFlow
         private bool _isEnum(Type t)
         {
             if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                return typeof(Enum).IsAssignableFrom(t.GetGenericArguments()[0]);
+                return t.GetGenericArguments()[0].IsEnum;
             return t.IsEnum;
         }
 

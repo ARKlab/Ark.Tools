@@ -5,14 +5,14 @@ namespace Ark.Tools.SpecFlow.Auth
 {
     public sealed class JwtToken
     {
-        private JwtSecurityToken token;
+        private JwtSecurityToken _token;
 
         internal JwtToken(JwtSecurityToken token)
         {
-            this.token = token;
+            this._token = token;
         }
 
-        public DateTime ValidTo => token.ValidTo;
-        public string Value => new JwtSecurityTokenHandler().WriteToken(this.token);
+        public DateTime ValidTo => _token.ValidTo;
+        public string Value => new JwtSecurityTokenHandler().WriteToken(this._token);
     }
 }
