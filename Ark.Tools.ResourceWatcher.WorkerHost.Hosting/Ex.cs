@@ -15,16 +15,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Hosting
         {
             return builder.ConfigureAppConfiguration((ctx, cfg) =>
             {
-                cfg.AddJsonFile("appsettings.json", true);
-                cfg.AddJsonFile($"appsettings.{ctx.HostingEnvironment.EnvironmentName}.json", true);
-                cfg.AddEnvironmentVariables();
                 cfg.AddArkLegacyEnvironmentVariables();
-            })
-            .ConfigureLogging((context, b) =>
-            {
-                b.SetMinimumLevel(LogLevel.Debug);
-                b.AddConsole();
-                b.AddAzureWebAppDiagnostics();
             });
         }
 

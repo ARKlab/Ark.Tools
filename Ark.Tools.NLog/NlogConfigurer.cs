@@ -15,6 +15,7 @@ using TargetPropertyWithContext = Microsoft.ApplicationInsights.NLogTarget.Targe
 using NLog.LayoutRenderers;
 using NLog.Layouts;
 using System.Text.Json;
+using System.Reflection;
 
 namespace Ark.Tools.NLog
 {
@@ -30,11 +31,20 @@ namespace Ark.Tools.NLog
 
         static NLogConfigurer()
         {
-
             ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(Configurer).Assembly);
             ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(ActivityTraceLayoutRenderer).Assembly);
             LogManager.LogFactory.ServiceRepository.RegisterService(typeof(IJsonConverter), new STJSerializer());
 
+            InternalLogger.LogLevel = LogLevel.Warn;
+            InternalLogger.LogToConsole = true;
+
+            var appName = AppDomain.CurrentDomain.FriendlyName ?? Assembly.GetEntryAssembly()?.GetName().Name ?? "Unknown";
+
+            NLogConfigurer.For(appName)
+                .WithConsoleTarget(false)
+                .WithConsoleRule("*", global::NLog.LogLevel.Info)
+                .Apply()
+                ;
         }
 
         public static Configurer For(string appName)
@@ -69,9 +79,7 @@ namespace Ark.Tools.NLog
 
         public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, Config config)
         {
-            var consoleEnabled = config.EnableConsole ?? !_isProduction();
-
-            if (consoleEnabled == true)
+            if (config.EnableConsole != false)
             {
                 @this
                     .WithConsoleTarget(config.Async)
@@ -245,7 +253,7 @@ namespace Ark.Tools.NLog
                             IncludeScopeProperties = true,
                             RenderEmptyObject = true,
                             IncludeEventProperties = true,
-                            ExcludeProperties = {"Message","Exception"}
+                            ExcludeProperties = {"Message","Exception", "AppName"}
                         })
                     }
                 };
@@ -290,7 +298,6 @@ namespace Ark.Tools.NLog
                 } catch (Exception ex)
                 {
                     InternalLogger.Fatal(ex, "Failed to setup Ark Database Target. Database logging is disabled");
-                    // continue setup the Target: it's not going to work but NLog handles it gracefully
                 }
                 
 

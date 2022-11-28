@@ -16,19 +16,8 @@ namespace TestWorker
         static void Main(string[] args)
         {
             var hostBuilder = Host.CreateDefaultBuilder(args)
-                .AddWorkerHostInfrastracture()
                 .AddApplicationInsightsForWorkerHost()
-                .ConfigureLogging((ctx,l) =>
-                {
-
-                    NLogConfigurer
-                        .For(Test_Constants.AppName)
-                        .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, Test_Constants.AppName.Replace(".", ""))
-                        .Apply();
-
-                    l.ClearProviders();
-                    l.AddNLog();
-                })
+                .ConfigureNLog(Test_Constants.AppName)
                 .AddWorkerHost(
                     s => {
                         var cfg = s.GetService<IConfiguration>();
@@ -37,9 +26,9 @@ namespace TestWorker
                             //c.IgnoreState = Debugger.IsAttached;
                         });
 
-                return h;
-            })
-            .UseConsoleLifetime();
+                    return h;
+                })
+                .UseConsoleLifetime();
 
             hostBuilder.StartAndWaitForShutdown();
         }

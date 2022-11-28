@@ -15,57 +15,12 @@ using Ark.Tools.Activity.Provider;
 using TestWorker.Constants;
 using Ark.Tools.NLog;
 using Microsoft.Extensions.Configuration;
+using NLog;
 
 namespace TestWorker.HostNs
 {
     public static class Test_Host
     {
-     //   public static IHostBuilder ConfigureFromAppSettings(bool ignoreStateServiceInDev = true, bool useSingleThread = false, Action<ITest_Host_Config> configurationOverrider = null)
-     //   {
-     //       try
-     //       {
-     //           var hostBuilder = new HostBuilder()
-     //               .AddWorkerHostInfrastracture()
-     //               .AddApplicationInsightsForWorkerHost()
-     //               .ConfigureServices((ctx,s) =>
-     //               {
-     //                   NLogConfigurer.For("Test_Worker")
-     //                       .WithDefaultTargetsAndRulesFromConfiguration("Test_Worker", NLogConfigurer.MailFromDefault, ctx.Configuration)
-     //                       .Apply();
-     //               })
-     //               .AddWorkerHost<Host>(s =>
-     //               {
-     //                   //var config = s.GetService<IConfiguration>();
-     //                   var baseCfg1 = new Test_Host_Config()
-     //                   {
-     //                       StateDbConnectionString = "" //config.GetConnectionString("boh")
-     //                   };
-
-
-					//	var rebusCfg = new RebusResourceNotifier_Config()
-					//	{
-					//		AsbConnectionString = Test_Constants.RebusConnString
-					//	};
-
-					//	configurationOverrider?.Invoke(baseCfg1);
-
-     //                   var h = new Host(baseCfg1)
-     //                       .WithTestWriter()
-     //                       .WithNotifier(rebusCfg);
-
-     //                   h.AddProviderFilterConfigurer(c => c.Count = 100);
-     //                   return h;
-					//})
-     //               .UseConsoleLifetime();
-
-     //           return hostBuilder;
-     //       }
-     //       catch (Exception e)
-     //       {
-     //           throw e;
-     //       }
-     //   }
-
         public class Host : WorkerHost<Test_File, Test_FileMetadataDto, Test_ProviderFilter>
         {
             public ITest_Host_Config Config { get; private set; }
@@ -145,7 +100,7 @@ namespace TestWorker.HostNs
         {
             var baseCfg = new Test_Host_Config()
             {
-                StateDbConnectionString = configuration["ConnectionStrings:Workers.Database"],
+                StateDbConnectionString = configuration["ConnectionStrings:Workers_Database"],
                 Sleep = TimeSpan.FromSeconds(30),
                 MaxRetries = 2,
             };

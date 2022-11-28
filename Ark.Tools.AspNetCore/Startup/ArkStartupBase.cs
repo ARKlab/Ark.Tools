@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights;
+using Ark.Tools.NLog;
+
 using Microsoft.ApplicationInsights.AspNetCore;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -30,52 +32,10 @@ namespace Ark.Tools.AspNetCore.Startup
         {
             services.AddHttpContextAccessor();
 
-            services.AddApplicationInsightsTelemetryProcessor<ArkSkipUselessSpamTelemetryProcessor>();
             services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
-            services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
 
-            services.AddSingleton<ITelemetryInitializer, DoNotSampleFailures>();
-
-            services.Configure<SamplingPercentageEstimatorSettings>(o =>
-            {
-                o.MovingAverageRatio = 0.5;
-                o.MaxTelemetryItemsPerSecond = 1;
-                o.SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(1);
-            });
-
-            services.Configure<SamplingPercentageEstimatorSettings>(o =>
-            {
-                Configuration.GetSection("ApplicationInsights:EstimatorSettings").Bind(o);
-            });
-
-            services.AddApplicationInsightsTelemetry(o =>
-            {
-                o.ConnectionString = Configuration["ApplicationInsights:ConnectionString"] ?? $"InstrumentationKey=" +
-                    Configuration["ApplicationInsights:InstrumentationKey"] ?? Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
-                o.EnableAdaptiveSampling = false; // enabled below by EnableAdaptiveSamplingWithCustomSettings
-                o.EnableHeartbeat = true;
-                o.AddAutoCollectedMetricExtractor = true;
-                o.RequestCollectionOptions.InjectResponseHeaders = true;
-                o.RequestCollectionOptions.TrackExceptions = true;
-                o.DeveloperMode = Debugger.IsAttached;
-                o.ApplicationVersion = FileVersionInfo.GetVersionInfo(this.GetType().Assembly.Location).FileVersion;
-            });
-
-            services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) => { module.EnableSqlCommandTextInstrumentation = true; });
-
-            // this MUST be after the MS AddApplicationInsightsTelemetry to work. IPostConfigureOptions is NOT working as expected.
-            services.AddSingleton<IConfigureOptions<TelemetryConfiguration>, EnableAdaptiveSamplingWithCustomSettings>();
-
-            if (!string.IsNullOrWhiteSpace(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)))
-                services.AddSingleton<ITelemetryProcessorFactory>(
-                    new SkipSqlDatabaseDependencyFilterFactory(Configuration.GetConnectionString(NLog.NLogDefaultConfigKeys.SqlConnStringName)));
-
-            services.Configure<SnapshotCollectorConfiguration>(o =>
-            {
-            });
-            services.Configure<SnapshotCollectorConfiguration>(Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
-            services.AddSnapshotCollector();
+            HostedServiceConfiguration.ConfigureServices(Configuration, services);
 
             services.AddCors();    
         }
