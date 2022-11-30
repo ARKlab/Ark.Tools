@@ -36,7 +36,7 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
 
-            services.ConfigureServicesWebHostArk(Configuration);
+            services.ArkApplicationInsightsTelemetry(Configuration);
 
             services.AddCors();    
         }

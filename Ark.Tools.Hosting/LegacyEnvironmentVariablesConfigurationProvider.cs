@@ -54,8 +54,8 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
             var filteredEnvVariables = envVariables
                 .Cast<DictionaryEntry>()
                 .SelectMany(_azureEnvToAppEnv);
-
-            filteredEnvVariables = _duplicateConnectionStringForDifferentEnvinroment(filteredEnvVariables)
+                
+            filteredEnvVariables = _normalizeConnectionString(filteredEnvVariables)
                 .Where(entry => ((string)entry.Key).StartsWith(_prefix, StringComparison.OrdinalIgnoreCase));
 
             foreach (var envVariable in filteredEnvVariables)
@@ -77,9 +77,9 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
             return _normalizeConnectionStringKey(key).Replace(".", ConfigurationPath.KeyDelimiter);
         }
 
-        private IEnumerable<DictionaryEntry> _duplicateConnectionStringForDifferentEnvinroment(IEnumerable<DictionaryEntry> filteredEnvVariables)
+        private IEnumerable<DictionaryEntry> _normalizeConnectionString(IEnumerable<DictionaryEntry> filteredEnvVariables)
         {
-            var newfilteredEnvVariables = new List<DictionaryEntry>(filteredEnvVariables);
+            var newFilteredEnvVariables = new List<DictionaryEntry>();
 
             foreach (var entry in filteredEnvVariables)
             {
@@ -87,13 +87,14 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
                 if (key.StartsWith(_connStrKey, StringComparison.OrdinalIgnoreCase))
                 {
-                    var entryNew = new DictionaryEntry(entry.Key, entry.Value);
-                    entryNew.Key = key.Replace("_", ".");
-                    newfilteredEnvVariables.Add(entryNew);
+                    var newEntry = new DictionaryEntry(key.Replace("_", "."), entry.Value);
+                    newFilteredEnvVariables.Add(newEntry);
                 }
+                else
+                    newFilteredEnvVariables.Add(entry);
             }
 
-            return newfilteredEnvVariables;
+            return newFilteredEnvVariables;
         }
 
         private static IEnumerable<DictionaryEntry> _azureEnvToAppEnv(DictionaryEntry entry)

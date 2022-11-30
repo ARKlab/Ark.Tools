@@ -23,7 +23,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
         {
             return builder.ConfigureServices((ctx, services) =>
             {
-                services.ConfigureServicesWebHostArk(ctx.Configuration);
+                services.ArkApplicationInsightsTelemetry(ctx.Configuration);
             });
         }
 
