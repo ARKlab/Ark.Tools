@@ -100,7 +100,7 @@ namespace TestWorker.HostNs
         {
             var baseCfg = new Test_Host_Config()
             {
-                StateDbConnectionString = configuration["ConnectionStrings:Workers_Database"],
+                StateDbConnectionString = configuration["ConnectionStrings:Workers.Database"],
                 Sleep = TimeSpan.FromSeconds(30),
                 MaxRetries = 2,
             };

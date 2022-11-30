@@ -1,17 +1,23 @@
-﻿using NLog;
+﻿using Microsoft.Extensions.Hosting;
 
+using NLog;
+
+using System;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LinuxWebJobHosting.Utils
 {
     public class HostedService : BackgroundService
     {
         private Logger _logger = LogManager.GetCurrentClassLogger();
-        
+        private readonly Random _random;
+
         public HostedService()
         {
             var enabled = _logger.IsEnabled(NLog.LogLevel.Info);
-            Console.WriteLine($"HostedService constructor{enabled}");
+            _random = new Random();
         }
 
         protected override async Task ExecuteAsync(CancellationToken ctk)
@@ -40,9 +46,10 @@ namespace LinuxWebJobHosting.Utils
 
         private async Task _do(CancellationToken cancellationToken)
         {
-            Console.WriteLine("WebJob: I am alive");
             _logger.Info("I am alive");
             await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+            if (_random.NextDouble() > 0.8)
+                throw new InvalidOperationException("Random crash");
         }
 
     }

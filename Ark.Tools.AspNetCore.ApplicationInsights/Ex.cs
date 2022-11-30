@@ -13,16 +13,17 @@ using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.AspNetCore;
 using Ark.Tools.NLog;
 using Ark.Tools.ApplicationInsights;
+using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 
 namespace Ark.Tools.AspNetCore.ApplicationInsights
 {
     public static partial class Ex
     {
-        public static IHostBuilder AddWebServiceInsightsForHostedService(this IHostBuilder builder)
+        public static IHostBuilder AddApplicationInsithsTelemetryForWebHostArk(this IHostBuilder builder)
         {
             return builder.ConfigureServices((ctx, services) =>
             {
-                HostedServiceConfiguration.ConfigureServices(ctx.Configuration, services);
+                services.ConfigureServicesWebHostArk(ctx.Configuration);
             });
         }
 

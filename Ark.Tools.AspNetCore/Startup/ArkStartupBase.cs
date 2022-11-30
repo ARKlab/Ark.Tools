@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights;
+using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.NLog;
 
 using Microsoft.ApplicationInsights.AspNetCore;
@@ -35,7 +36,7 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
             services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
 
-            HostedServiceConfiguration.ConfigureServices(Configuration, services);
+            services.ConfigureServicesWebHostArk(Configuration);
 
             services.AddCors();    
         }

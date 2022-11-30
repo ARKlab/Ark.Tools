@@ -8,7 +8,7 @@
         /// <summary>
         /// A prefix used to filter environment variables.
         /// </summary>
-        public string Prefix { get; set; }
+        public string Prefix { get; set; } = string.Empty;
 
         /// <summary>
         /// Builds the <see cref="ArkLegacyEnvironmentVariablesConfigurationProvider"/> for this source.

@@ -43,11 +43,14 @@ namespace Processor.Service.WebInterface
                         .CaptureStartupErrors(true)
                         .UseStartup<Startup>();
                 })
-                .AddWebServiceInsightsForHostedService()
+                .AddApplicationInsithsTelemetryForWebHostArk()
                 .ConfigureNLog()
                 .ConfigureServices((ctx, services) =>
                 {
                     services.AddSingleton<IHostedService, HostedService>();
+                }).ConfigureAppConfiguration((ctx, cfg) =>
+                {
+                    cfg.AddArkLegacyEnvironmentVariables();
                 })
                 .AddWorkerHost(
                     s =>
@@ -72,8 +75,7 @@ namespace Processor.Service.WebInterface
         {
             try
             {
-                // NLog is not yet initialized, use console
-                Console.WriteLine("Starting program.");
+                _logger.Info("Starting program.");
                 InitStatic(args);
 
                 using (var h = GetHostBuilder(args)
@@ -85,7 +87,6 @@ namespace Processor.Service.WebInterface
             catch (Exception ex)
             {
                 _logger.Fatal(ex, $@"Unhandled Fatal Exception occurred: {ex.Message}");
-                Console.WriteLine(ex.ToString());
             }
             finally
             {

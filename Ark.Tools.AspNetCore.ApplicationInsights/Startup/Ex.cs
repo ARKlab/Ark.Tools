@@ -18,11 +18,11 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.AspNetCore.ApplicationInsights
+namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
 {
-    public static class HostedServiceConfiguration
+    public static partial class Ex
     {
-        public static void ConfigureServices(IConfiguration configuration, IServiceCollection services)
+        public static IServiceCollection ConfigureServicesWebHostArk(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddApplicationInsightsTelemetryProcessor<ArkSkipUselessSpamTelemetryProcessor>();
             services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
@@ -56,7 +56,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
                 o.RequestCollectionOptions.InjectResponseHeaders = true;
                 o.RequestCollectionOptions.TrackExceptions = true;
                 o.DeveloperMode = Debugger.IsAttached;
-                o.ApplicationVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;                
+                o.ApplicationVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
             });
 
             services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) => { module.EnableSqlCommandTextInstrumentation = true; });
@@ -74,6 +74,8 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
             });
             services.Configure<SnapshotCollectorConfiguration>(configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
             services.AddSnapshotCollector();
+
+            return services;
         }
     }
 }

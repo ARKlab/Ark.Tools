@@ -26,6 +26,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Hosting\Ark.Tools.Hosting.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.ApplicationInsights\Ark.Tools.ResourceWatcher.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
   </ItemGroup>

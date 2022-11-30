@@ -1,4 +1,7 @@
-﻿namespace LinuxWebJobHosting
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace LinuxWebJobHosting
 {
     public class Startup
     {

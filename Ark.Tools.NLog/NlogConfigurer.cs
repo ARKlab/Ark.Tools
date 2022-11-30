@@ -35,6 +35,8 @@ namespace Ark.Tools.NLog
             ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(ActivityTraceLayoutRenderer).Assembly);
             LogManager.LogFactory.ServiceRepository.RegisterService(typeof(IJsonConverter), new STJSerializer());
 
+            // This has been added support NLog loggers output to Console during application initialization,
+            // before Configuration is Read and Host is Built.
             InternalLogger.LogLevel = LogLevel.Warn;
             InternalLogger.LogToConsole = true;
 
@@ -298,8 +300,9 @@ namespace Ark.Tools.NLog
                 } catch (Exception ex)
                 {
                     InternalLogger.Fatal(ex, "Failed to setup Ark Database Target. Database logging is disabled");
+                    // continue setup the Target: it's not going to work but NLog handles it gracefully
                 }
-                
+
 
                 var databaseTarget = new DatabaseTarget();
                 databaseTarget.DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"; // see https://github.com/NLog/NLog/wiki/Database-target#microsoftdatasqlclient-and-net-core
