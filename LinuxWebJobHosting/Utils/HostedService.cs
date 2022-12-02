@@ -22,6 +22,7 @@ namespace LinuxWebJobHosting.Utils
 
         protected override async Task ExecuteAsync(CancellationToken ctk)
         {
+            using var hostName = ScopeContext.PushProperty("AppName", nameof(HostedService));
             _logger.Info("WebJob: Start");
             while (!ctk.IsCancellationRequested)
             {

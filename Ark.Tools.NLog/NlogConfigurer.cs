@@ -63,8 +63,7 @@ namespace Ark.Tools.NLog
 
         public static Configurer WithApplicationInsightsDefaultRules(this Configurer @this)
         {
-            return @this.WithApplicationInsightsRule("*", LogLevel.Error)
-                        ;
+            return @this.WithApplicationInsightsRule("*", LogLevel.Error);
         }
 
         public record Config(
@@ -255,7 +254,7 @@ namespace Ark.Tools.NLog
                             IncludeScopeProperties = true,
                             RenderEmptyObject = true,
                             IncludeEventProperties = true,
-                            ExcludeProperties = {"Message","Exception", "AppName"}
+                            ExcludeProperties = {"Message","Exception"}
                         })
                     }
                 };
@@ -348,16 +347,16 @@ VALUES
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Logger", @"${logger}"));
                 // callsite is very-very expensive. Disable in Production.
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Callsite", _isProduction() ? "" : @"${when:when=level>=LogLevel.Error:inner=${callsite:filename=true}}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", "${gdc:item=AppName}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", "${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("RequestID", @"${mdlc:item=RequestID}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ActivityId", "${activity:property=TraceId}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", new JsonLayout() { 
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", new JsonLayout() {                     
                     ExcludeEmptyProperties = true,
-                    IncludeGdc = true,
+                    IncludeGdc = false, //false, due to NLog not respecting ExcludeProperties for GDC and we want to exclude AppName :(
                     IncludeScopeProperties = true,
                     RenderEmptyObject = true,
                     IncludeEventProperties = true,
-                    ExcludeProperties = {"Message","Exception", "AppName"}
+                    ExcludeProperties = { "Message", "Exception","AppName" }
                 }));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
@@ -376,7 +375,7 @@ VALUES
                 target.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
                 target.Html = true;
                 target.ReplaceNewlineWithBrTagInHtml = true;
-                target.Subject = "Errors from ${gdc:item=AppName}@${ark.hostname}";
+                target.Subject = "Errors from ${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}@${ark.hostname}";
 
                 return target;
             }
