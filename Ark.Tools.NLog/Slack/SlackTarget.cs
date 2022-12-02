@@ -47,7 +47,7 @@ namespace Ark.Tools.NLog.Slack
                 this.ContextProperties.Add(new TargetPropertyWithContext("LogLevel", "${level:uppercase=true}"));
                 this.ContextProperties.Add(new TargetPropertyWithContext("Host", "${machinename}"));
                 this.ContextProperties.Add(new TargetPropertyWithContext("Logger", "${logger}"));
-                this.ContextProperties.Add(new TargetPropertyWithContext("AppName", "${gdc:item=AppName}"));
+                this.ContextProperties.Add(new TargetPropertyWithContext("AppName", "${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}"));
             }
 
             base.InitializeTarget();
