@@ -19,11 +19,11 @@ namespace Ark.Tools.NLog
         {
             var config = new Config
             {
-                SQLConnectionString = cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName),
-                SmtpConnectionString = cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName),
-                MailTo = cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.', ':')],
+                SQLConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SqlConnStringName),
+                SmtpConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SmtpConnStringName),
+                MailTo = cfg.GetNLogSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
                 ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
-                SlackWebhook = cfg[NLogDefaultConfigKeys.SlackWebHook.Replace('.', ':')],
+                SlackWebhook = cfg.GetNLogSetting(NLogDefaultConfigKeys.SlackWebHook),
                 Async = async
             };
 
@@ -32,17 +32,36 @@ namespace Ark.Tools.NLog
             return @this;
         }
 
+        public static string? GetNLogSetting(this IConfiguration cfg, string key)
+        {
+            // 1. Settings consts are defined with '.' separator for hierarchy (historical)
+            // 2. For AppSettings we need to replace '.' with ':'
+            // 3. For ConnectionStrings we need to try both with '.' and with '_' because
+            //    On Windows hosting '.' is permitted 
+            //    On Linux hosting '.' is replaced by Azure with '_'
+            var res = cfg[key];
+            if (res != null) return res;
+
+            res = cfg[key.Replace('.', ':')];
+            if (res != null) return res;
+
+            res = cfg[key.Replace('.', '_')];
+            if (res != null) return res;
+            
+            return res;
+        }
+
         public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, string logTableName, string? mailFrom = null, bool async = true)
         {
             var config = new Config
             {
-                SQLConnectionString = cfg.GetConnectionString(NLogDefaultConfigKeys.SqlConnStringName),
+                SQLConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SqlConnStringName),
                 SQLTableName = logTableName,
-                SmtpConnectionString = cfg.GetConnectionString(NLogDefaultConfigKeys.SmtpConnStringName),
-                MailTo = cfg[NLogDefaultConfigKeys.MailNotificationAddresses.Replace('.', ':')],
+                SmtpConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SmtpConnStringName),
+                MailTo = cfg.GetNLogSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
                 MailFrom = mailFrom,
                 ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
-                SlackWebhook = cfg[NLogDefaultConfigKeys.SlackWebHook.Replace('.', ':')],
+                SlackWebhook = cfg.GetNLogSetting(NLogDefaultConfigKeys.SlackWebHook),
                 Async = async
             };
 

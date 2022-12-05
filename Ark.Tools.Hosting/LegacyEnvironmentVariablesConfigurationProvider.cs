@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime;
 
 namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 {
@@ -10,13 +13,14 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
     /// </summary>
     public class ArkLegacyEnvironmentVariablesConfigurationProvider : ConfigurationProvider
     {
-        private const string MySqlServerPrefix = "MYSQLCONNSTR_";
-        private const string SqlAzureServerPrefix = "SQLAZURECONNSTR_";
-        private const string SqlServerPrefix = "SQLCONNSTR_";
-        private const string CustomPrefix = "CUSTOMCONNSTR_";
+        private const string _mySqlServerPrefix = "MYSQLCONNSTR_";
+        private const string _sqlAzureServerPrefix = "SQLAZURECONNSTR_";
+        private const string _sqlServerPrefix = "SQLCONNSTR_";
+        private const string _customPrefix = "CUSTOMCONNSTR_";
 
-        private const string ConnStrKeyFormat = "ConnectionStrings:{0}";
-        private const string ProviderKeyFormat = "ConnectionStrings:{0}_ProviderName";
+        private const string _connStrKeyFormat = _connStrKey+"{0}";
+        private const string _connStrKey = "ConnectionStrings:";
+        private const string _providerKeyFormat = "ConnectionStrings:{0}_ProviderName";
 
         private readonly string _prefix;
 
@@ -49,7 +53,9 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
             var filteredEnvVariables = envVariables
                 .Cast<DictionaryEntry>()
-                .SelectMany(AzureEnvToAppEnv)
+                .SelectMany(_azureEnvToAppEnv);
+                
+            filteredEnvVariables = _normalizeConnectionString(filteredEnvVariables)
                 .Where(entry => ((string)entry.Key).StartsWith(_prefix, StringComparison.OrdinalIgnoreCase));
 
             foreach (var envVariable in filteredEnvVariables)
@@ -61,59 +67,78 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
             Data = data;
         }
 
-        private static string NormalizeConnectionStringKey(string key)
+        private static string _normalizeConnectionStringKey(string key)
         {
             return key.Replace("__", ConfigurationPath.KeyDelimiter);
         }
 
-
-        private static string NormalizeAppSettingsKey(string key)
+        private static string _normalizeAppSettingsKey(string key)
         {
-            return NormalizeConnectionStringKey(key).Replace(".", ConfigurationPath.KeyDelimiter);
+            return _normalizeConnectionStringKey(key).Replace(".", ConfigurationPath.KeyDelimiter);
         }
 
-        private static IEnumerable<DictionaryEntry> AzureEnvToAppEnv(DictionaryEntry entry)
+        private IEnumerable<DictionaryEntry> _normalizeConnectionString(IEnumerable<DictionaryEntry> filteredEnvVariables)
+        {
+            var newFilteredEnvVariables = new List<DictionaryEntry>();
+
+            foreach (var entry in filteredEnvVariables)
+            {
+                var key = (string)entry.Key;
+
+                if (key.StartsWith(_connStrKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    var newEntry = new DictionaryEntry(key.Replace("_", "."), entry.Value);
+                    newFilteredEnvVariables.Add(newEntry);
+                }
+                else
+                    newFilteredEnvVariables.Add(entry);
+            }
+
+            return newFilteredEnvVariables;
+        }
+
+        private static IEnumerable<DictionaryEntry> _azureEnvToAppEnv(DictionaryEntry entry)
         {
             var key = (string)entry.Key;
             var prefix = string.Empty;
             var provider = string.Empty;
 
-            if (key.StartsWith(MySqlServerPrefix, StringComparison.OrdinalIgnoreCase))
+            if (key.StartsWith(_mySqlServerPrefix, StringComparison.OrdinalIgnoreCase))
             {
-                prefix = MySqlServerPrefix;
+                prefix = _mySqlServerPrefix;
                 provider = "MySql.Data.MySqlClient";
             }
-            else if (key.StartsWith(SqlAzureServerPrefix, StringComparison.OrdinalIgnoreCase))
+            else if (key.StartsWith(_sqlAzureServerPrefix, StringComparison.OrdinalIgnoreCase))
             {
-                prefix = SqlAzureServerPrefix;
+                prefix = _sqlAzureServerPrefix;
                 provider = "Microsoft.Data.SqlClient";
             }
-            else if (key.StartsWith(SqlServerPrefix, StringComparison.OrdinalIgnoreCase))
+            else if (key.StartsWith(_sqlServerPrefix, StringComparison.OrdinalIgnoreCase))
             {
-                prefix = SqlServerPrefix;
+                prefix = _sqlServerPrefix;
                 provider = "Microsoft.Data.SqlClient";
             }
-            else if (key.StartsWith(CustomPrefix, StringComparison.OrdinalIgnoreCase))
+            else if (key.StartsWith(_customPrefix, StringComparison.OrdinalIgnoreCase))
             {
-                prefix = CustomPrefix;
+                prefix = _customPrefix;
             }
             else
             {
-                entry.Key = NormalizeAppSettingsKey(key);
+                entry.Key = _normalizeAppSettingsKey(key);
                 yield return entry;
                 yield break;
             }
 
             // Return the key-value pair for connection string
             yield return new DictionaryEntry(
-                string.Format(ConnStrKeyFormat, NormalizeConnectionStringKey(key.Substring(prefix.Length))),
+                string.Format(_connStrKeyFormat, _normalizeConnectionStringKey(key.Substring(prefix.Length))),
                 entry.Value);
 
             if (!string.IsNullOrEmpty(provider))
             {
                 // Return the key-value pair for provider name
                 yield return new DictionaryEntry(
-                    string.Format(ProviderKeyFormat, NormalizeConnectionStringKey(key.Substring(prefix.Length))),
+                    string.Format(_providerKeyFormat, _normalizeConnectionStringKey(key.Substring(prefix.Length))),
                     provider);
             }
         }
