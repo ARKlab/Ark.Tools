@@ -5,7 +5,7 @@ This is a set of core libraries developed and maintained by Ark as a set of help
 ## Getting Started
 All libraries are provided in NuGet.
 
-Support for .NET Framework 4.7.1,.NET Standard 2.x, .NET 5.0. 
+Support for .NET Framework 4.7.1,.NET Standard 2.x, .NET 6.0. 
 Support for other frameworks is up-for-grabs ;)
 
 ## Quick Start

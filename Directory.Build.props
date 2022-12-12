@@ -2,7 +2,7 @@
   
   <PropertyGroup>
     <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0;net472</TargetFrameworks>
-    <LangVersion>10.0</LangVersion>
+    <LangVersion>11.0</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>
     <Nullable>enable</Nullable>
@@ -22,14 +22,11 @@
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
 
     <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
-	
-	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
-
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>ark-dark.png</PackageIcon>
-    <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
-      
+    <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>      
     <Authors>ARK Labs</Authors>
-    <Copyright>Copyright (C) 2020 ARK S.r.l</Copyright>
+    <Copyright>Copyright (C) 2022 ARK S.r.l</Copyright>
 
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -53,15 +50,15 @@
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>4.5.3</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>4.5.3</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>4.5.3</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>4.6.0</ArkToolsCoreVersion>
+    <FtpClientGroupVersion>4.6.0</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>4.6.0</ResourceWatcherGroupVersion>
     
-    <EntityFrameworkGroupVersion>4.5.3</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>4.5.3</RavenDbGroupVersion>
+    <EntityFrameworkGroupVersion>4.6.0</EntityFrameworkGroupVersion>
+    <RavenDbGroupVersion>4.6.0</RavenDbGroupVersion>
     
-    <AspNetCoreGroupVersion>4.5.3</AspNetCoreGroupVersion>
-    <EventSourcingGroupVersion>4.5.3</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
+    <AspNetCoreGroupVersion>4.6.0</AspNetCoreGroupVersion>
+    <EventSourcingGroupVersion>4.6.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
     <!-- Groups SUFFIX -->
     <ArkToolsCoreVersionSuffix></ArkToolsCoreVersionSuffix>
