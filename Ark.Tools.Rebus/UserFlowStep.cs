@@ -22,14 +22,14 @@ namespace Ark.Tools.Rebus
 
         public async Task Process(OutgoingStepContext context, Func<Task> next)
         {
-            var userContext = _container.GetInstance<IContextProvider<ClaimsPrincipal>>()!;
-            if (userContext.Current?.Identity?.IsAuthenticated == true)
+            var userContext = _container.GetInstance<IContextProvider<ClaimsPrincipal>>();
+            if (userContext.Current.Identity?.IsAuthenticated == true)
             {
-                var authType = userContext.Current?.Identity.AuthenticationType;
-                var userId = userContext.Current?.GetUserId();
-                var userEmail = userContext.Current?.GetUserEmail();
-                var scopes = userContext.Current?.FindFirst("scope")?.Value;
-                var roles = userContext.Current?.FindAll(ClaimTypes.Role).Select(x => x.Value) ?? Enumerable.Empty<string>();
+                var authType = userContext.Current.Identity.AuthenticationType;
+                var userId = userContext.Current.GetUserId();
+                var userEmail = userContext.Current.GetUserEmail();
+                var scopes = userContext.Current.FindFirst("scope")?.Value;
+                var roles = userContext.Current.FindAll(ClaimTypes.Role).Select(x => x.Value) ?? Enumerable.Empty<string>();
 
                 var message = context.Load<Message>();
 

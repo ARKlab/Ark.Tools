@@ -28,39 +28,39 @@ namespace Ark.Tools.EventSourcing.Events
             set => _container[MetadataKeys.EventName] = value;
         }
 
-        public int? EventVersion
+        public int EventVersion
         {
-            get => _container.GetMetadataValue(MetadataKeys.EventVersion, Convert.ToInt32);
-            set => _container.SetMetadataValue(MetadataKeys.EventVersion, value, Convert.ToString);
+            get => _container.GetMetadataValue(MetadataKeys.EventVersion, Convert.ToInt32) ?? throw new InvalidOperationException(MetadataKeys.EventVersion + " cannot be null");
+            set => _container.SetMetadataValue<int>(MetadataKeys.EventVersion, value, Convert.ToString);
         }
 
-        public DateTimeOffset? Timestamp
+        public DateTimeOffset Timestamp
         {
-            get => _container.GetMetadataValue(MetadataKeys.Timestamp, DateTimeOffset.Parse);
-            set => _container.SetMetadataValue(MetadataKeys.Timestamp, value, v => v.ToString("O"));
+            get => _container.GetMetadataValue(MetadataKeys.Timestamp, DateTimeOffset.Parse) ?? throw new InvalidOperationException(MetadataKeys.Timestamp + " cannot be null");
+            set => _container.SetMetadataValue<DateTimeOffset>(MetadataKeys.Timestamp, value, v => v.ToString("O"));
         }
 
-        public long? TimestampEpoch
+        public long TimestampEpoch
         {
-            get => _container.GetMetadataValue(MetadataKeys.TimestampEpoch, Convert.ToInt64);
-            set => _container.SetMetadataValue(MetadataKeys.TimestampEpoch, value, Convert.ToString);
+            get => _container.GetMetadataValue(MetadataKeys.TimestampEpoch, Convert.ToInt64) ?? throw new InvalidOperationException(MetadataKeys.TimestampEpoch + " cannot be null");
+            set => _container.SetMetadataValue<long>(MetadataKeys.TimestampEpoch, value, Convert.ToString);
         }
 
-        public long? AggregateVersion
+        public long AggregateVersion
         {
-            get => _container.GetMetadataValue(MetadataKeys.AggregateVersion, Convert.ToInt64);
-            set => _container.SetMetadataValue(MetadataKeys.AggregateVersion, value, Convert.ToString);
+            get => _container.GetMetadataValue(MetadataKeys.AggregateVersion, Convert.ToInt64) ?? throw new InvalidOperationException(MetadataKeys.AggregateVersion + " cannot be null");
+            set => _container.SetMetadataValue<long>(MetadataKeys.AggregateVersion, value, Convert.ToString);
         }
 
-        public string? AggregateId
+        public string AggregateId
         {
-            get => _container.GetMetadataValue(MetadataKeys.AggregateId);
+            get => _container.GetMetadataValue(MetadataKeys.AggregateId) ?? throw new InvalidOperationException(MetadataKeys.AggregateId + " cannot be null");
             set => _container.SetMetadataValue(MetadataKeys.AggregateId, value);
         }
 
-        public string? AggregateName
+        public string AggregateName
         {
-            get => _container.GetMetadataValue(MetadataKeys.AggregateName);
+            get => _container.GetMetadataValue(MetadataKeys.AggregateName) ?? throw new InvalidOperationException(MetadataKeys.AggregateName + " cannot be null");
             set => _container.SetMetadataValue(MetadataKeys.AggregateName, value);
         }
 

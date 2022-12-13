@@ -70,9 +70,9 @@ namespace Ark.Tools.EventSourcing.Store
             evt.EventName = e.Metadata.EventName;
             evt.AggregateId = e.Metadata.AggregateId;
             evt.AggregateName = e.Metadata.AggregateName;
-            evt.AggregateVersion = e.Metadata.AggregateVersion ?? 0;
+            evt.AggregateVersion = e.Metadata.AggregateVersion;
 
-            evt.Timestamp = e.Metadata.Timestamp ?? default;
+            evt.Timestamp = e.Metadata.Timestamp;
 
             evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value);
 

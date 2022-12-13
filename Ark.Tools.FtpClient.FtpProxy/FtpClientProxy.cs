@@ -105,7 +105,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// All entries found (files, folders, symlinks)
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
+        public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "/", CancellationToken ctk = default)
         {
             var tok = await _getAccessToken(ctk);
             
@@ -133,7 +133,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// The files found.
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
+        public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "/", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
             var tok = await _getAccessToken(ctk);
             if (skipFolder == null) // no folders to skip, just recurse overall

@@ -3,7 +3,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.Sql
 {
@@ -28,6 +28,7 @@ namespace Ark.Tools.Sql
             _isolationLevel = _transaction.IsolationLevel;
         }
 
+        [MemberNotNull(nameof(_transaction))]
         private void _ensureOpened()
         {
             // we consider this double check "safe" given if someone tries to get a CONNECTION during a COMMIT ... well he should be kicked
@@ -60,7 +61,7 @@ namespace Ark.Tools.Sql
             get
             {
                 _ensureOpened();
-                return _transaction!;
+                return _transaction;
             }
         }
 

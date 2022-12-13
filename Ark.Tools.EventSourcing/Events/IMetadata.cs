@@ -7,12 +7,12 @@ namespace Ark.Tools.EventSourcing.Events
     {
         string EventId { get; }
         string EventName { get; }
-        int? EventVersion { get; }
-        DateTimeOffset? Timestamp { get; }
-        long? TimestampEpoch { get; }
-        long? AggregateVersion { get; }
-        string? AggregateId { get; }
-        string? AggregateName { get; }
+        int EventVersion { get; }
+        DateTimeOffset Timestamp { get; }
+        long TimestampEpoch { get; }
+        long AggregateVersion { get; }
+        string AggregateId { get; }
+        string AggregateName { get; }
 
         IReadOnlyDictionary<string, string> Values { get; }
 

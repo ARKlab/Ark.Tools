@@ -9,7 +9,7 @@ namespace Ark.Tools.Authorization
 
         public AuthorizationPolicy()
         {
-            var builder = new AuthorizationPolicyBuilder(this.GetType().Name);
+            var builder = new AuthorizationPolicyBuilder(this.GetType().FullName ?? this.GetType().Name);
             Build(builder);
             _inner = builder.Build();
         }

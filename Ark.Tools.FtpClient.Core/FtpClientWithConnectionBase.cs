@@ -36,7 +36,7 @@ namespace Ark.Tools.FtpClient.Core
             }
         }
 
-        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
+        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "/", CancellationToken ctk = default)
         {
             using (var client = await GetConnection(ctk))
             {
@@ -47,7 +47,7 @@ namespace Ark.Tools.FtpClient.Core
             }
         }
 
-        public override async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
+        public override async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "/", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
             IFtpClientConnection? conn = null;            
             try

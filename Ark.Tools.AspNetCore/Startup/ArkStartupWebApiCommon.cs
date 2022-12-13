@@ -184,7 +184,8 @@ namespace Ark.Tools.AspNetCore.Startup
 			_integrateSimpleInjectorContainer(services);
 
 			services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
-                ?? throw new InvalidOperationException("RequestTelemetry"));
+                ?? throw new InvalidOperationException("Failed to obtain the RequestTelemetry from the current HttpContext. " +
+                    "Make sure trying to access RequestTelemetry within a Request context, and not a BackgroundService."));
 		}
 
 		private void _integrateSimpleInjectorContainer(IServiceCollection services)

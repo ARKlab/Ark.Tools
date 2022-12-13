@@ -17,7 +17,7 @@ namespace Ark.Tools.AspNetCore
     {
         public static void RegisterAuthorizationAspNetCoreUser(this Container container)
         {
-            container.RegisterSingleton<IContextProvider<ClaimsPrincipal?>, AspNetCoreUserContextProvider>();
+            container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, AspNetCoreUserContextProvider>();
         }
 
         /// <summary>

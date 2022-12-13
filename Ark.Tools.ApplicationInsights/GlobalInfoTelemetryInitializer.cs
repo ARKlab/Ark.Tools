@@ -1,7 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using System.Reflection;
 
@@ -19,7 +18,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
 
         public void Initialize(ITelemetry telemetry)
         {
-            if (telemetry != null && _processName != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
+            if (telemetry != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
             {
                 telemetry.Context.GlobalProperties.Add(_processNameProperty, _processName);
             }

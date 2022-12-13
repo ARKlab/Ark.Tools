@@ -72,7 +72,13 @@ namespace Ark.Tools.AspNetCore.Auth0
 
         class CacheEntry
         {
-            public UserInfo? UserInfo { get; set; }
+            public CacheEntry(UserInfo userInfo)
+            {
+                UserInfo = userInfo;
+            }
+
+            public UserInfo UserInfo { get; set; }
+
             public PolicyResult? Policy { get; set; }
         }
 
@@ -103,10 +109,7 @@ namespace Ark.Tools.AspNetCore.Auth0
 
                         if (userInfo != null)
                         {
-                            cacheEntry = new CacheEntry
-                            {
-                                UserInfo = userInfo
-                            };
+                            cacheEntry = new CacheEntry(userInfo);
 
                             if (policyPayload != null)
                             {
