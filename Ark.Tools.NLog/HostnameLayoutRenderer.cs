@@ -6,6 +6,7 @@ using NLog.Config;
 using NLog.LayoutRenderers;
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Text;
 using System.Threading;
 
@@ -27,9 +28,19 @@ namespace Ark.Tools.NLog
             base.InitializeLayoutRenderer();
             try
             {
-                this.HostName = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME")
-                    ?? Environment.GetEnvironmentVariable("RoleName")
-                    ?? Environment.MachineName;
+                this.HostName = Environment.MachineName;
+                try
+                {
+
+                    var dns = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME")
+                        ?? Environment.GetEnvironmentVariable("RoleName")
+                        ?? Dns.GetHostName()
+                        ;
+
+                    if (dns is not null)
+                        this.HostName = dns + "@" + this.HostName;
+
+                } catch { /* if we cannot get hostname - ignore */ }
             }
             catch (Exception exception)
             {

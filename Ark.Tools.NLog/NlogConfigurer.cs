@@ -358,7 +358,7 @@ VALUES
                     IncludeEventProperties = true,
                     ExcludeProperties = { "Message", "Exception","AppName" }
                 }));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=Type,Message}}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString}}"));
