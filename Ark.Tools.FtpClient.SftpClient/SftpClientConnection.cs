@@ -45,8 +45,9 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <returns>
         /// All entries found (files, folders, symlinks)
         /// </returns>
-        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "/", CancellationToken ctk = default)
+        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
+            path ??= "./";
             await _ensureConnected(ctk);
 
             var rawLs = await _client.ListDirectoryAsync(path);

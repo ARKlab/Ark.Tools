@@ -149,12 +149,12 @@ namespace Ark.Tools.FtpClient.Core
                 return Inner.DownloadFileAsync(path, ctk);
             }
 
-            public Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "/", CancellationToken ctk = default)
+            public Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
             {
                 return Inner.ListDirectoryAsync(path, ctk);
             }
 
-            public Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "/", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
+            public Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
             {
                 return Inner.ListFilesRecursiveAsync(startPath, skipFolder, ctk);
             }

@@ -56,8 +56,9 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
             return new ValueTask<bool>(_client.IsConnected);
         }
 
-        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "/", CancellationToken ctk = default)
+        public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
+            path ??= "./";
             await _client.ConnectAsync();
             var res = await _client.GetListingAsync(path, options: FtpListOption.Modify | FtpListOption.DerefLinks);
             return res.Select(x => new FtpEntry()
