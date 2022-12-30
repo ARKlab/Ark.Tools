@@ -27,6 +27,11 @@ namespace Ark.Tools.AspNetCore.HealthChecks
                 .AddApplicationInsightsPublisher()
                 ;
 
+            return services;
+        }
+
+        public static IServiceCollection AddArkHealthChecksUI(this IServiceCollection services)
+        {
             services.AddHealthChecksUI(setupSettings: setup =>
             {
                 setup.SetEvaluationTimeInSeconds(60);
@@ -60,6 +65,11 @@ namespace Ark.Tools.AspNetCore.HealthChecks
                 ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
             });
 
+            return endpoints;
+        }
+
+        public static IEndpointRouteBuilder MapArkHealthChecksUI(this IEndpointRouteBuilder endpoints)
+        {
             endpoints.MapHealthChecksUI(setup =>
             {
                 var configurers = endpoints.ServiceProvider.GetServices<Action<Options>>();
