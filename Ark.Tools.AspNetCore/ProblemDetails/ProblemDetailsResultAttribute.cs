@@ -23,7 +23,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                 // as though they did this instead:
                 //   `return BadRequest(new ValidationProblemDetails(ModelState));`
 
-                var problemDetails = ToValidationProblemDetails(errors);
+                var problemDetails = _toValidationProblemDetails(errors);
                 context.Result = badRequest = new BadRequestObjectResult(problemDetails);
                 ProblemDetailsHelper.SetType(problemDetails, badRequest.StatusCode.HasValue == true ? badRequest.StatusCode.Value : default);
             }
@@ -39,11 +39,12 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         {
         }
 
-        private static ValidationProblemDetails ToValidationProblemDetails(SerializableError serializableError)
+        private static ValidationProblemDetails _toValidationProblemDetails(SerializableError serializableError)
         {
             var validationErrors = serializableError
                 .Where(x => x.Value is string[])
-                .ToDictionary(x => x.Key, x => x.Value as string[]);
+                .ToDictionary(x => x.Key, x => (string[])x.Value);
+
             return new ValidationProblemDetails(validationErrors);
         }
     }

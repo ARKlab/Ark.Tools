@@ -58,9 +58,9 @@ which is then detected by this wrapper step.")]
 
                         var genericWrapMethod = GetType().GetMethod(nameof(_wrap), bindingFlags);
 
-                        return genericWrapMethod.MakeGenericMethod(type);
+                        return genericWrapMethod!.MakeGenericMethod(type);
                     })
-                    .Invoke(this, new[] { headers, body, errorDescription, exceptions });
+                    .Invoke(this, new[] { headers, body, errorDescription, exceptions })!;
             }
             catch (Exception exception)
             {

@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" Version="6.0.4" />
+		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" Version="6.1.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.Network" Version="6.0.4" />
 		<PackageReference Include="AspNetCore.HealthChecks.Oracle" Version="6.0.3" />
 		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" Version="6.0.2" />
@@ -37,7 +37,7 @@
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="6.0.5" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="6.0.5" />
 		<PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.2.0" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.10" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.12" />
 		<PackageReference Include="SimpleInjector" Version="5.4.1" />
 	</ItemGroup>
 

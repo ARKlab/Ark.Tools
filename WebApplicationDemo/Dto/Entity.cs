@@ -12,18 +12,18 @@ namespace WebApplicationDemo.Dto
         {
 			public class Input : IEntityWithETag
 			{
-				public virtual string _ETag { get; set; }
+				public virtual string? _ETag { get; set; }
 
 				[Required]
-				public string EntityId { get; set; }
+				public string? EntityId { get; set; }
 
 				public EntityResult EntityResult { get; set; }
 
 				public EntityTest? EntityTest { get; set; }
 
-				public IList<string> Strings { get; set; }
+				public IList<string>? Strings { get; set; }
 
-				public IDictionary<LocalDate, double?> Ts { get; set; }
+				public IDictionary<LocalDate, double?> Ts { get; set; } = new Dictionary<LocalDate, double?>();
 			}
 
             public class Output : Input

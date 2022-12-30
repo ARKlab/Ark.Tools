@@ -21,7 +21,7 @@ namespace Ark.Tools.Outbox.Rebus
         private readonly IOutboxContextFactory _outboxContextFactory;
         private readonly CancellationTokenSource _busDisposalCancellationTokenSource = new CancellationTokenSource();
 		private readonly ILog _log;
-        private Task _task;
+        private Task _task = Task.CompletedTask;
 
         public RebusOutboxProcessor(
 			int topMessagesToRetrieve,
@@ -71,9 +71,9 @@ namespace Ark.Tools.Outbox.Rebus
 							{
 								foreach (var message in messages)
 								{
-									var destinationAddress = message.Headers[OutboxTransportDecorator._outboxRecepientHeader];
-									message.Headers.Remove(OutboxTransportDecorator._outboxRecepientHeader);
-									await _transport.Send(destinationAddress, new TransportMessage(message.Headers, message.Body),
+									var destinationAddress = message?.Headers?[OutboxTransportDecorator._outboxRecepientHeader];
+									message?.Headers?.Remove(OutboxTransportDecorator._outboxRecepientHeader);
+									await _transport.Send(destinationAddress!, new TransportMessage(message?.Headers, message?.Body),
 										rebusTransactionScope.TransactionContext).WithCancellation(ctk);
 								}
 								await rebusTransactionScope.CompleteAsync().WithCancellation(ctk);

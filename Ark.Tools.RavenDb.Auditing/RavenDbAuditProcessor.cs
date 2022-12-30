@@ -14,8 +14,8 @@ namespace Ark.Tools.RavenDb.Auditing
 	public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 	{
 		private readonly IDocumentStore _store;
-		private List<Task> _subscriptionWorkerTasks = new List<Task>();
-		private CancellationTokenSource _tokenSource;
+		private readonly List<Task> _subscriptionWorkerTasks = new List<Task>();
+		private CancellationTokenSource? _tokenSource;
 		private readonly object _gate = new object();
 		private readonly HashSet<string> _names = new HashSet<string>();
 		private const string _prefixName= "AuditProcessor";
@@ -99,9 +99,9 @@ namespace Ark.Tools.RavenDb.Auditing
 			{
 				foreach (var e in batch.Items)
 				{
-					if (e.Result.Current?.AuditId != null) //Delete does not have an audit 
+					if (e.Result?.Current?.AuditId != null) //Delete does not have an audit 
 					{
-						string operation = default;
+						string? operation = default;
 
 						if (e.Result.Previous != null && e.Result.Current == null)
 							operation = Operations.Delete.ToString();
@@ -111,7 +111,7 @@ namespace Ark.Tools.RavenDb.Auditing
 							operation = Operations.Insert.ToString();
 
 						session.Advanced.Defer(new PatchCommandData(
-							id: (string)e.Result.Current.AuditId,
+							id: (string?)e.Result?.Current?.AuditId,
 							changeVector: null,
 							patch: new PatchRequest
 							{
@@ -154,7 +154,7 @@ namespace Ark.Tools.RavenDb.Auditing
 			List<Task> runtask = new List<Task>();
 			lock (_gate)
 			{
-				_tokenSource.Cancel();
+				_tokenSource?.Cancel();
 				_tokenSource = null;
 				runtask.AddRange(_subscriptionWorkerTasks);
 				_subscriptionWorkerTasks.Clear();

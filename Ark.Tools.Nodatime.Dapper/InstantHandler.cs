@@ -17,7 +17,7 @@ namespace Ark.Tools.Nodatime.Dapper
 
         public static readonly InstantHandler Instance = new InstantHandler();
 
-        public event EventHandler<IDbDataParameter> OnSetValue;
+        public event EventHandler<IDbDataParameter>? OnSetValue;
 
         public override void SetValue(IDbDataParameter parameter, Instant value)
         {
@@ -29,7 +29,7 @@ namespace Ark.Tools.Nodatime.Dapper
             OnSetValue?.Invoke(this, parameter);
         }
 
-        public override Instant Parse(object value)
+        public override Instant Parse(object? value)
         {
             if (value == null || value is DBNull) return default;
 
@@ -48,7 +48,7 @@ namespace Ark.Tools.Nodatime.Dapper
             {
                 var conv = TypeDescriptor.GetConverter(typeof(Instant));
                 if (conv?.CanConvertFrom(typeof(string)) == true)
-                    return (Instant)conv.ConvertFromString(s);
+                    return (Instant)(conv.ConvertFromString(s) ?? throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.Instant"));
             }
 
             throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.Instant");

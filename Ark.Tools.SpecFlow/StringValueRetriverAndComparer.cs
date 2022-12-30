@@ -25,7 +25,7 @@ namespace Ark.Tools.SpecFlow
             return t == e;
         }
 
-        public object Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
+        public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
         {
             return string.IsNullOrEmpty(keyValuePair.Value) ? null : keyValuePair.Value;
         }

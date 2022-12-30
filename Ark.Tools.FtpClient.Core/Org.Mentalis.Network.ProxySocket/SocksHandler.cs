@@ -36,7 +36,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 	/// <summary>
 	/// References the callback method to be called when the protocol negotiation is completed.
 	/// </summary>
-	internal delegate void HandShakeComplete(Exception error);
+	internal delegate void HandShakeComplete(Exception? error);
 	/// <summary>
 	/// Implements a specific version of the SOCKS protocol. This is an abstract class; it must be inherited.
 	/// </summary>
@@ -48,8 +48,9 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <param name="user">The username to use when authenticating with the server.</param>
 		/// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> is null.</exception>
 		public SocksHandler(Socket server, string user) {
-			Server = server;
-			Username = user;
+			m_Server = server;
+            m_Username = user ?? string.Empty;
+            m_Buffer = Array.Empty<byte>();
 		}
 		/// <summary>
 		/// Converts a port number to an array of bytes.
@@ -153,7 +154,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// Gets or sets the return value of the BeginConnect call.
 		/// </summary>
 		/// <value>An IAsyncProxyResult object that is the return value of the BeginConnect call.</value>
-		protected IAsyncProxyResult AsyncResult {
+		protected IAsyncProxyResult? AsyncResult {
 			get {
 				return m_AsyncResult;
 			}
@@ -191,13 +192,13 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <summary>Holds the value of the Username property.</summary>
 		private string m_Username;
 		/// <summary>Holds the value of the AsyncResult property.</summary>
-		private IAsyncProxyResult m_AsyncResult;
+		private IAsyncProxyResult? m_AsyncResult;
 		/// <summary>Holds the value of the Buffer property.</summary>
 		private byte[] m_Buffer;
 		/// <summary>Holds the value of the Received property.</summary>
 		private int m_Received;
 		/// <summary>Holds the address of the method to call when the SOCKS protocol has been completed.</summary>
-		protected HandShakeComplete ProtocolComplete;
+		protected HandShakeComplete? ProtocolComplete;
 		/// <summary>
 		/// Starts negotiating with a SOCKS proxy server.
 		/// </summary>

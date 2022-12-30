@@ -27,7 +27,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
         }
 
 		//TODO MJ
-        public static void AddPolymorphismSupport<TBase>(this SwaggerGenOptions o, string discriminatorName = "discriminator", HashSet<Type> derivedTypes = null)
+        public static void AddPolymorphismSupport<TBase>(this SwaggerGenOptions o, string discriminatorName = "discriminator", HashSet<Type>? derivedTypes = null)
         {
             if (derivedTypes == null || derivedTypes.Count == 0)
                 derivedTypes = _init<TBase>();
@@ -62,13 +62,13 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
         }
 
         [Obsolete("Use UseSwagger() without a setup action", true)]
-        public static IApplicationBuilder ArkUseSwagger(this IApplicationBuilder app, Action<SwaggerOptions> setup = null)
+        public static IApplicationBuilder ArkUseSwagger(this IApplicationBuilder app, Action<SwaggerOptions>? setup = null)
         {
             throw new NotImplementedException();
         }
 
         [Obsolete("Use UseSwaggerUI() without a setup action", true)]
-        public static IApplicationBuilder ArkUseSwaggerUI(this IApplicationBuilder app, Action<SwaggerUIOptions> setup = null)
+        public static IApplicationBuilder ArkUseSwaggerUI(this IApplicationBuilder app, Action<SwaggerUIOptions>? setup = null)
         {
             throw new NotImplementedException();
         }

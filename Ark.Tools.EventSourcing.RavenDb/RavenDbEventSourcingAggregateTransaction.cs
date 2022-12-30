@@ -19,7 +19,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
     {
         private readonly IAsyncDocumentSession _session;
         private readonly string _chexKey;
-        private CompareExchangeValue<long> _chex;
+        private CompareExchangeValue<long>? _chex;
 
         public RavenDbEventSourcingAggregateTransaction(
             IAsyncDocumentSession session,
@@ -49,7 +49,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
 			maxVersion = Math.Min(_chex.Value, maxVersion);
 
-			string lastId = null;
+			string? lastId = null;
 			while (envelopes.Count != maxVersion)
 			{
 				var results = await _session.Advanced.StreamAsync<AggregateEventStore>(
@@ -87,7 +87,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     var eventType = e.Event.GetType();
                     var outboxType = typeof(OutboxEvent<>).MakeGenericType(eventType);
 
-                    var evt = (OutboxEvent)Activator.CreateInstance(outboxType);
+                    var evt = (OutboxEvent)(Activator.CreateInstance(outboxType) ?? throw new InvalidOperationException($"Failed to create instance for type {outboxType}"));
 
                     evt.Id = e.Metadata.EventId;
                     evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value);

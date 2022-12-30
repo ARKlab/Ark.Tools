@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+#nullable disable
+
 namespace Ark.Tools.SystemTextJson
 {
     public abstract class AbstractDictionaryConverter<TC, TK, TV> : JsonConverter<TC>
@@ -56,7 +58,7 @@ namespace Ark.Tools.SystemTextJson
                     throw new JsonException();
                 }
 
-                TK key = (TK)_keyConverter.ConvertFromInvariantString(reader.GetString());
+                TK key = (TK)_keyConverter.ConvertFromInvariantString(reader.GetString() ?? throw new JsonException());
 
                 reader.Read();
                 TV value = _valueConverter.Read(ref reader, typeof(TV), options);
@@ -79,7 +81,7 @@ namespace Ark.Tools.SystemTextJson
 
             foreach (KeyValuePair<TK, TV> kvp in value)
             {
-                 writer.WritePropertyName(_keyConverter.ConvertToInvariantString(kvp.Key));
+                 writer.WritePropertyName(_keyConverter.ConvertToInvariantString(kvp.Key) ?? throw new InvalidOperationException("Key cannot be converted to String"));
              
                 _valueConverter.Write(writer, kvp.Value, options);
             }

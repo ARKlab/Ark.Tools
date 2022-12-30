@@ -8,7 +8,7 @@ namespace Ark.Tools.Core.DataKey
 {
     public static class DataKeyPrinter
     {
-        public static string PrintKey<T>(T obj) where T : class
+        public static string? PrintKey<T>(T obj) where T : class
         {
             return DataKeyPrinter<T>.Print(obj);
         }
@@ -28,7 +28,7 @@ namespace Ark.Tools.Core.DataKey
                 ;
         }
 
-        public static string Print(T obj)
+        public static string? Print(T? obj)
         {
             if (obj == null) return null;
             if (_keyProperties.Length == 0) return obj.ToString();

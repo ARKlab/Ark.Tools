@@ -13,7 +13,7 @@ namespace Ark.Tools.AspNetCore
         {
         }
 
-        public override string GetFormat(ActionContext context)
+        public override string? GetFormat(ActionContext context)
         {
             var query = context.HttpContext.Request.Query["$format"];
             if (query.Count > 0)

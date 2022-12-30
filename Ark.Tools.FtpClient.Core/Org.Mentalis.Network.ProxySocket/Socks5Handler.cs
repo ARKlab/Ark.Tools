@@ -60,7 +60,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <param name="pass">The password to use.</param>
 		/// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> -or- <c>pass</c> is null.</exception>
 		public Socks5Handler(Socket server, string user, string pass) : base(server, user) {
-			Password = pass;
+			m_Password = pass;
 		}
 		/// <summary>
 		/// Starts the synchronous authentication process.
@@ -227,13 +227,13 @@ namespace Org.Mentalis.Network.ProxySocket {
 			try {
 				Server.EndConnect(ar);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
 				Server.BeginSend(new byte [] {5, 2, 0, 2}, 0, 4, SocketFlags.None, new AsyncCallback(this.OnAuthSent), Server);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -244,7 +244,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			try {
 				HandleEndSend(ar, 4);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
@@ -252,7 +252,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				Received = 0;
 				Server.BeginReceive(Buffer, 0, Buffer.Length, SocketFlags.None, new AsyncCallback(this.OnAuthReceive), Server);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -263,7 +263,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			try {
 				HandleEndReceive(ar);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
@@ -279,28 +279,29 @@ namespace Org.Mentalis.Network.ProxySocket {
 							authenticate = new AuthUserPass(Server, Username, Password);
 							break;
 						default:
-							ProtocolComplete(new SocketException());
+							ProtocolComplete?.Invoke(new SocketException());
 							return;
 					}
 					authenticate.BeginAuthenticate(new HandShakeComplete(this.OnAuthenticated));
 				}
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
 		/// Called when the socket has been successfully authenticated with the server.
 		/// </summary>
 		/// <param name="e">The exception that has occurred while authenticating, or <em>null</em> if no error occurred.</param>
-		private void OnAuthenticated(Exception e) {
+		private void OnAuthenticated(Exception? e) {
 			if (e != null) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
+                if (HandShake is null) throw new InvalidOperationException(nameof(HandShake) + " has not been set");
 				Server.BeginSend(HandShake, 0, HandShake.Length, SocketFlags.None, new AsyncCallback(this.OnSent), Server);
 			} catch (Exception ex) {
-				ProtocolComplete(ex);
+				ProtocolComplete?.Invoke(ex);
 			}
 		}
 		/// <summary>
@@ -309,9 +310,9 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <param name="ar">Stores state information for this asynchronous operation as well as any user-defined data.</param>
 		private void OnSent(IAsyncResult ar) {
 			try {
-				HandleEndSend(ar, HandShake.Length);
+				HandleEndSend(ar, HandShake?.Length ?? 0);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
@@ -319,7 +320,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				Received = 0;
 				Server.BeginReceive(Buffer, 0, Buffer.Length, SocketFlags.None, new AsyncCallback(this.OnReceive), Server);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -330,7 +331,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			try {
 				HandleEndReceive(ar);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
@@ -339,7 +340,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				else
 					Server.BeginReceive(Buffer, Received, Buffer.Length - Received, SocketFlags.None, new AsyncCallback(this.OnReceive), Server);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -372,16 +373,16 @@ namespace Org.Mentalis.Network.ProxySocket {
 			try {
 				HandleEndReceive(ar);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
 				if (Received == Buffer.Length)
-					ProtocolComplete(null);
+					ProtocolComplete?.Invoke(null);
 				else
 					Server.BeginReceive(Buffer, Received, Buffer.Length - Received, SocketFlags.None, new AsyncCallback(this.OnReadLast), Server);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -393,16 +394,14 @@ namespace Org.Mentalis.Network.ProxySocket {
 				return m_Password;
 			}
 			set {
-				if (value == null)
-					throw new ArgumentNullException();
-				m_Password = value;
+                m_Password = value ?? throw new ArgumentNullException();
 			}
 		}
 		/// <summary>
 		/// Gets or sets the bytes to use when sending a connect request to the proxy server.
 		/// </summary>
 		/// <value>The array of bytes to use when sending a connect request to the proxy server.</value>
-		private byte[] HandShake {
+		private byte[]? HandShake {
 			get {
 				return m_HandShake;
 			}
@@ -414,6 +413,6 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <summary>Holds the value of the Password property.</summary>
 		private string m_Password;
 		/// <summary>Holds the value of the HandShake property.</summary>
-		private byte[] m_HandShake;
+		private byte[]? m_HandShake;
 	}
 }

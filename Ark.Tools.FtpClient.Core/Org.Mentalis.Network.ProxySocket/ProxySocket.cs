@@ -81,8 +81,8 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="SocketException">The combination of addressFamily, socketType, and protocolType results in an invalid socket.</exception>
 		/// <exception cref="ArgumentNullException"><c>proxyUsername</c> -or- <c>proxyPassword</c> is null.</exception>
 		public ProxySocket(AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, string proxyUsername, string proxyPassword) : base(addressFamily, socketType, protocolType) {
-			ProxyUser = proxyUsername;
-			ProxyPass = proxyPassword;
+			ProxyUser = proxyUsername ?? String.Empty;
+			ProxyPass = proxyPassword ?? String.Empty;
 			ToThrow = new InvalidOperationException();
 		}
 		/// <summary>
@@ -146,7 +146,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ArgumentNullException">The remoteEP parameter is a null reference (Nothing in Visual Basic).</exception>
 		/// <exception cref="SocketException">An operating system error occurs while creating the Socket.</exception>
 		/// <exception cref="ObjectDisposedException">The Socket has been closed.</exception>
-		public new IAsyncResult BeginConnect(EndPoint remoteEP, AsyncCallback callback, object state) {
+		public new IAsyncResult? BeginConnect(EndPoint remoteEP, AsyncCallback callback, object state) {
 			if (remoteEP == null)
 				throw new ArgumentNullException();
 			if (this.ProtocolType != ProtocolType.Tcp || ProxyType == ProxyTypes.None || ProxyEndPoint == null) {
@@ -178,7 +178,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ArgumentException">The port parameter is invalid.</exception>
 		/// <exception cref="SocketException">An operating system error occurs while creating the Socket.</exception>
 		/// <exception cref="ObjectDisposedException">The Socket has been closed.</exception>
-		public new IAsyncResult BeginConnect(string host, int port, AsyncCallback callback, object state) {
+		public new IAsyncResult? BeginConnect(string host, int port, AsyncCallback callback, object state) {
 			if (host == null)
 				throw new ArgumentNullException();
 			if (port <= 0 || port >  65535)
@@ -269,19 +269,22 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// Called when the Socket has finished talking to the proxy server and is ready to relay data.
 		/// </summary>
 		/// <param name="error">The error to throw when the EndConnect method is called.</param>
-		private void OnHandShakeComplete(Exception error) {
+		private void OnHandShakeComplete(Exception? error) {
 			if (error != null)
 				this.Close();
 			ToThrow = error;
-			AsyncResult.Reset();
-			if (CallBack != null)
-				CallBack(AsyncResult);
+            if (AsyncResult is not null)
+            {
+                AsyncResult.Reset();
+                if (CallBack != null)
+                    CallBack(AsyncResult);
+            }
 		}
 		/// <summary>
 		/// Gets or sets the EndPoint of the proxy server.
 		/// </summary>
 		/// <value>An IPEndPoint object that holds the IP address and the port of the proxy server.</value>
-		public IPEndPoint ProxyEndPoint {
+		public IPEndPoint? ProxyEndPoint {
 			get {
 				return m_ProxyEndPoint;
 			}
@@ -305,7 +308,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// Gets or sets a user-defined object.
 		/// </summary>
 		/// <value>The user-defined object.</value>
-		private object State {
+		private object? State {
 			get {
 				return m_State;
 			}
@@ -347,7 +350,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// Gets or sets the asynchronous result object.
 		/// </summary>
 		/// <value>An instance of the IAsyncProxyResult class.</value>
-		private IAsyncProxyResult AsyncResult {
+		private IAsyncProxyResult? AsyncResult {
 			get {
 				return m_AsyncResult;
 			}
@@ -359,7 +362,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// Gets or sets the exception to throw when the EndConnect method is called.
 		/// </summary>
 		/// <value>An instance of the Exception class (or subclasses of Exception).</value>
-		private Exception ToThrow {
+		private Exception? ToThrow {
 			get {
 				return m_ToThrow;
 			}
@@ -381,21 +384,21 @@ namespace Org.Mentalis.Network.ProxySocket {
 		}
 		// private variables
 		/// <summary>Holds the value of the State property.</summary>
-		private object m_State;
+		private object? m_State;
 		/// <summary>Holds the value of the ProxyEndPoint property.</summary>
-		private IPEndPoint m_ProxyEndPoint = null;
+		private IPEndPoint? m_ProxyEndPoint = null;
 		/// <summary>Holds the value of the ProxyType property.</summary>
 		private ProxyTypes m_ProxyType = ProxyTypes.None;
 		/// <summary>Holds the value of the ProxyUser property.</summary>
-		private string m_ProxyUser = null;
+		private string m_ProxyUser = String.Empty;
 		/// <summary>Holds the value of the ProxyPass property.</summary>
-		private string m_ProxyPass = null;
+		private string m_ProxyPass = String.Empty;
 		/// <summary>Holds a pointer to the method that should be called when the Socket is connected to the remote device.</summary>
-		private AsyncCallback CallBack = null;
+		private AsyncCallback? CallBack = null;
 		/// <summary>Holds the value of the AsyncResult property.</summary>
-		private IAsyncProxyResult m_AsyncResult;
+		private IAsyncProxyResult? m_AsyncResult;
 		/// <summary>Holds the value of the ToThrow property.</summary>
-		private Exception m_ToThrow = null;
+		private Exception? m_ToThrow = null;
 		/// <summary>Holds the value of the RemotePort property.</summary>
 		private int m_RemotePort;
 	}

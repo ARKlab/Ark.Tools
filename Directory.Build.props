@@ -1,10 +1,11 @@
 <Project>
   
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net5.0;netstandard2.1;netstandard2.0;net472</TargetFrameworks>
-    <LangVersion>10.0</LangVersion>
+    <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0;net472</TargetFrameworks>
+    <LangVersion>11.0</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1591</NoWarn>	
+    <NoWarn>1591</NoWarn>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
 
@@ -21,14 +22,11 @@
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
 
     <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
-	
-	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
-
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>ark-dark.png</PackageIcon>
-    <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
-      
+    <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>      
     <Authors>ARK Labs</Authors>
-    <Copyright>Copyright (C) 2020 ARK S.r.l</Copyright>
+    <Copyright>Copyright (C) 2022 ARK S.r.l</Copyright>
 
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -46,33 +44,42 @@
    
 	<ItemGroup>
         <None Include="..\ark-dark.png" Pack="true" PackagePath="\"/>
-		<Compile Include="..\ExternalInitBecauseMSWtf.cs" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
+		
+		<PackageReference Include="Nullable" Version="1.3.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+
+		<PackageReference Include="IsExternalInit" Version="1.0.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 
   <PropertyGroup>
     
-    <ArkToolsCoreVersion>4.5.5</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>4.5.5</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>4.5.5</ResourceWatcherGroupVersion>
+    <ArkToolsCoreVersion>4.6.0</ArkToolsCoreVersion>
+    <FtpClientGroupVersion>4.6.0</FtpClientGroupVersion>
+    <ResourceWatcherGroupVersion>4.6.0</ResourceWatcherGroupVersion>
     
-    <EntityFrameworkGroupVersion>4.5.5</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>4.5.5</RavenDbGroupVersion>
+    <EntityFrameworkGroupVersion>4.6.0</EntityFrameworkGroupVersion>
+    <RavenDbGroupVersion>4.6.0</RavenDbGroupVersion>
     
-    <AspNetCoreGroupVersion>4.5.5</AspNetCoreGroupVersion>
-    <EventSourcingGroupVersion>4.5.5</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
+    <AspNetCoreGroupVersion>4.6.0</AspNetCoreGroupVersion>
+    <EventSourcingGroupVersion>4.6.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
 
     <!-- Groups SUFFIX -->
-    <ArkToolsCoreVersionSuffix></ArkToolsCoreVersionSuffix>
-    <FtpClientGroupVersionSuffix></FtpClientGroupVersionSuffix>
-    <ResourceWatcherGroupVersionSuffix></ResourceWatcherGroupVersionSuffix>
+    <ArkToolsCoreVersionSuffix>beta01</ArkToolsCoreVersionSuffix>
+    <FtpClientGroupVersionSuffix>beta01</FtpClientGroupVersionSuffix>
+    <ResourceWatcherGroupVersionSuffix>beta01</ResourceWatcherGroupVersionSuffix>
 
-    <EntityFrameworkGroupVersionSuffix></EntityFrameworkGroupVersionSuffix>
-    <RavenDbGroupVersionSuffix></RavenDbGroupVersionSuffix>
+    <EntityFrameworkGroupVersionSuffix>beta01</EntityFrameworkGroupVersionSuffix>
+    <RavenDbGroupVersionSuffix>beta01</RavenDbGroupVersionSuffix>
 
-    <AspNetCoreGroupVersionSuffix></AspNetCoreGroupVersionSuffix>
+    <AspNetCoreGroupVersionSuffix>beta01</AspNetCoreGroupVersionSuffix>
 
-    <EventSourcingGroupVersionSuffix></EventSourcingGroupVersionSuffix>
+    <EventSourcingGroupVersionSuffix>beta01</EventSourcingGroupVersionSuffix>
 
 </PropertyGroup>
   

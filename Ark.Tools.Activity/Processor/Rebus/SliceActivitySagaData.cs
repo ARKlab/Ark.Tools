@@ -16,7 +16,7 @@ namespace Ark.Tools.Activity.Processor
             }
         }
 
-        public List<SliceReady> MissingSlices { get; set; }
+        public List<SliceReady> MissingSlices { get; set; } = new List<SliceReady> { };
 
 		public DateTimeOffset? CoolDownTill { get; set; }
 

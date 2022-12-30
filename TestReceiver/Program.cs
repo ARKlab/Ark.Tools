@@ -12,13 +12,13 @@ namespace TestReceiver
 {
 	class Config : TestReceiver_Config, IRebusSliceActivityManagerConfig
 	{
-		public string RebusConnstring { get; set; }
+		public string? RebusConnstring { get; set; }
 		public string ActivitySqlConnectionString
 		{
 			get { return "DB"; }
 		}
 
-		public string AsbConnectionString => RebusConnstring;
+		public string AsbConnectionString => RebusConnstring ?? throw new InvalidOperationException("");
 
 		public string SagaSqlConnectionString
 		{

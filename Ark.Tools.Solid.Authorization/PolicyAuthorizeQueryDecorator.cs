@@ -23,7 +23,7 @@ namespace Ark.Tools.Solid.Authorization
             _authSvc = authSvc;
             _currentUser = currentUser;
             _container = container;
-            _policies = typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Select(a => (a as PolicyAuthorizeAttribute)).ToArray();
+            _policies = typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
         }
 
         public TResult Execute(TQuery query)

@@ -36,17 +36,17 @@ namespace TestWithoutArkTools.Controllers
 
 			var rd = new RouteValueDictionary(new { operationId = res })
 			{
-				{ "api-version", ambients["api-version"] }
+				{ "api-version", ambients?["api-version"] }
 			};
 
 			var rd2 = new RouteValueDictionary(new { operationId = res });
-			rd2.Add("api-version", ambients["api-version"]);
+			rd2.Add("api-version", ambients?["api-version"]);
 
 			var uri = this.Url.Link("V1.GetOperationById", rd);
 
 			var u_GetPathByName = _linkGenerator.GetPathByName("V1.GetOperationById", new { operationId = res });
 
-			var u_GetPathByNameHttp = _linkGenerator.GetPathByName(this.HttpContext, "V1.GetOperationById", rd);
+			var u_GetPathByNameHttp = _linkGenerator.GetPathByName(this.HttpContext!, "V1.GetOperationById", rd);
 
 			var u = Url.RouteUrl("V1.GetOperationById", rd);
 			

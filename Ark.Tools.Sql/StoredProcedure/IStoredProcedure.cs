@@ -4,17 +4,17 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql.StoredProcedure
 {
-    public interface IStoredProcedure<TResult>
+    public interface IStoredProcedure<TResult> where TResult : notnull
     {
-        TResult LastResult { get; }
-        TResult Execute();
-        Task<TResult> ExecuteAsync();
+        TResult? LastResult { get; }
+        TResult? Execute();
+        Task<TResult?> ExecuteAsync();
     }
 
-    public interface IStoredProcedure<TResult, TParameter>
+    public interface IStoredProcedure<TResult, TParameter> where TResult : notnull
     {
-        TResult LastResult { get; }
-        TResult Execute(TParameter param);
-        Task<TResult> ExecuteAsync(TParameter param);
+        TResult? LastResult { get; }
+        TResult? Execute(TParameter param);
+        Task<TResult?> ExecuteAsync(TParameter param);
     }
 }

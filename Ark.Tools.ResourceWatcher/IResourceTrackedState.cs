@@ -8,7 +8,7 @@ namespace Ark.Tools.ResourceWatcher
     {
         int RetryCount { get; }
         Instant LastEvent { get; }
-        string CheckSum { get; }
+        string? CheckSum { get; }
         Instant? RetrievedAt { get; }
     }
 }

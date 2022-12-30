@@ -8,7 +8,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
         where TAggregate : IAggregate
     {
         internal bool _isRootManaged = false;
-        internal string _identifier;
+        internal string _identifier = string.Empty;
         internal long _version;
 
         public string Identifier 

@@ -33,7 +33,7 @@ namespace Ark.Tools.Authorization.Requirement
     /// <typeparam name="TUser">The user profile type.</typeparam>
     public class FuncApplicationUserAssertionRequirement<TUser> : ApplicationUserAssertionRequirement<TUser>
     {
-        private Func<AuthorizationContext, TUser, Task<bool>> _handler;
+        private readonly Func<AuthorizationContext, TUser, Task<bool>> _handler;
 
         /// <summary>
         /// Creates a new instance of <see cref="FuncApplicationUserAssertionRequirement{TUser}"/>. 
@@ -41,8 +41,6 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="handler">The assertion handler.</param>
         public FuncApplicationUserAssertionRequirement(Func<AuthorizationContext, TUser, bool> handler)
         {
-            Contract.Requires(handler != null);
-
             _handler = (context, user) => Task.FromResult(handler(context, user));
         }
 
@@ -52,8 +50,6 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="handler">The assertion handler.</param>
         public FuncApplicationUserAssertionRequirement(Func<AuthorizationContext, TUser, Task<bool>> handler)
         {
-            Contract.Requires(handler != null);
-
             _handler = handler;
         }
 

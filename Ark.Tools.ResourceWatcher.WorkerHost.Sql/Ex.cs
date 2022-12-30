@@ -12,7 +12,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
     {
         class SqlStateProviderConfig : ISqlStateProviderConfig
         {
-            public string DbConnectionString { get; set; }
+            public string DbConnectionString { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             {
                 r.Container.RegisterSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
                 r.Container.RegisterInstance(config);
-                r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider>() as SqlStateProvider).EnsureTableAreCreated();
+                r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider>() as SqlStateProvider)!.EnsureTableAreCreated();
             });
         }
     }

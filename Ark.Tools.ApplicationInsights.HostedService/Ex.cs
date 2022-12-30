@@ -40,7 +40,7 @@ namespace Ark.Tools.ApplicationInsights.HostedService
 
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
                 {           
-                    o.ApplicationVersion = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
+                    o.ApplicationVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
                     o.ConnectionString = ctx.Configuration["ApplicationInsights:ConnectionString"] 
                         ?? ctx.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
                         ?? $"InstrumentationKey=" + (
@@ -62,8 +62,7 @@ namespace Ark.Tools.ApplicationInsights.HostedService
 
                 var cs = ctx.Configuration.GetNLogSetting("ConnectionStrings:" + NLog.NLogDefaultConfigKeys.SqlConnStringName);
                 if (!string.IsNullOrWhiteSpace(cs))
-                    services.AddSingleton<ITelemetryProcessorFactory>(
-                        new SkipSqlDatabaseDependencyFilterFactory(cs));
+                    services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(cs!));
 
 #if NET5_0
                 services.Configure<SnapshotCollectorConfiguration>(o =>

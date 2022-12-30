@@ -40,15 +40,12 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (path.Length == 0)
                 path = "./";
 
-            /*if (!path.StartsWith("/") || !path.StartsWith("./"))
-                path = "./" + path;*/
-
             return path;
         }
 
-        public static string GetFtpFileName(this string path)
+        public static string? GetFtpFileName(this string? path)
         {
-            string tpath = (path == null ? null : path);
+            var tpath = (path == null ? null : path);
             int lastslash = -1;
 
             if (tpath == null)

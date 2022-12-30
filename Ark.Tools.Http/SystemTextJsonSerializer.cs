@@ -16,9 +16,9 @@ namespace Ark.Tools.Http
 
     public class SystemTextJsonSerializer : ISerializer
     {
-        private readonly JsonSerializerOptions _options;
+        private readonly JsonSerializerOptions? _options;
 
-        public SystemTextJsonSerializer(JsonSerializerOptions options = null)
+        public SystemTextJsonSerializer(JsonSerializerOptions? options = null)
         {
             _options = options;
         }

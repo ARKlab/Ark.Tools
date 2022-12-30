@@ -7,7 +7,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 {
     public class DefaultHostConfig : IHostConfig
     {
-        public virtual string WorkerName { get; set; }
+        public virtual string WorkerName { get; set; } = "Worker";
         public virtual uint DegreeOfParallelism { get; set; } = (uint)Environment.ProcessorCount;
         public virtual bool IgnoreState { get; set; } = false;
         public virtual TimeSpan Sleep { get; set; } = TimeSpan.FromMinutes(5);

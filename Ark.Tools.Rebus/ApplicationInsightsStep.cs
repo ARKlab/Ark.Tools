@@ -81,7 +81,7 @@ namespace Ark.Tools.Rebus
 
         static bool _tryExtractContext(TransportMessage transportMessage, out IList<KeyValuePair<string, string>> context)
         {
-            context = null;
+            context = new List<KeyValuePair<string, string>>();
             var ctxStr = transportMessage.Headers.GetValueOrNull("Correlation-Context");
 
             if (string.IsNullOrEmpty(ctxStr))
@@ -95,7 +95,6 @@ namespace Ark.Tools.Rebus
                 return false;
             }
 
-            context = new List<KeyValuePair<string, string>>();
             foreach (string item in ctxList)
             {
                 var kvp = item.Split('=');

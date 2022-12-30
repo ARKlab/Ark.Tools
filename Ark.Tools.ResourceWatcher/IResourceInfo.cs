@@ -24,13 +24,13 @@ namespace Ark.Tools.ResourceWatcher
         /// The keys are lowercase
         /// </remarks>
 #if (NET472 || NETSTANDARD2_0)
-        Dictionary<string, LocalDateTime> ModifiedSources { get; }
+        Dictionary<string, LocalDateTime>? ModifiedSources { get; }
 #else
-        Dictionary<string, LocalDateTime> ModifiedSources { get => null; }
+        Dictionary<string, LocalDateTime>? ModifiedSources { get => null; }
 #endif
         /// <summary>
         /// Additional info serialized to the State tracking
         /// </summary>
-        object Extensions { get; }
+        object? Extensions { get; }
     }
 }

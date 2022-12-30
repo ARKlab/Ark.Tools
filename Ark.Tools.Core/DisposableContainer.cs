@@ -39,14 +39,14 @@ namespace Ark.Tools.Core
         /// </summary>
         public void Dispose()
         {
-            List<IDisposable> disposables = null;
+            List<IDisposable>? disposables = null;
 
             lock (_gate)
             {
                 if (!_disposed)
                 {
                     disposables = _disposables;
-                    _disposables = null;
+                    _disposables.Clear();
                     Volatile.Write(ref _disposed, true);
                 }
             }

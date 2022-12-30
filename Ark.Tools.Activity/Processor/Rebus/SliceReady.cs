@@ -10,7 +10,7 @@ namespace Ark.Tools.Activity.Messages
 
         public Slice ActivitySlice { get; set; }
 
-        public bool Equals(SliceReady other)
+        public bool Equals(SliceReady? other)
         {
             if (ReferenceEquals(this, other))
                 return true;
@@ -43,7 +43,7 @@ namespace Ark.Tools.Activity.Messages
                 return true;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is SliceReady))
                 return false;

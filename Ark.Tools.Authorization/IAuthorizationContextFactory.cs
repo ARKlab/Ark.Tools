@@ -18,6 +18,6 @@ namespace Ark.Tools.Authorization
         /// If a resource is not required for policy evaluation you may pass null as the value.
         /// </param>
         /// <returns>The <see cref="AuthorizationContext"/>.</returns>
-        AuthorizationContext Create(IAuthorizationPolicy policy, ClaimsPrincipal user, object resource);
+        AuthorizationContext Create(IAuthorizationPolicy policy, ClaimsPrincipal user, object? resource);
     }
 }

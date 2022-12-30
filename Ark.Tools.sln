@@ -63,8 +63,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.CommaS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.NestedStartup", "Ark.Tools.AspNetCore.NestedStartup\Ark.Tools.AspNetCore.NestedStartup.csproj", "{C12575DE-10DB-4A5B-BF94-AB7EDBA0EF07}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.XlsxOutputFormatter", "Ark.Tools.AspNetCore.XlsxOutputFormatter\Ark.Tools.AspNetCore.XlsxOutputFormatter.csproj", "{1130DF1F-76A0-47CB-9F53-224370948E0F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.AspNetCore.Auth0", "Ark.Tools.AspNetCore.Auth0\Ark.Tools.AspNetCore.Auth0.csproj", "{E61C2704-F957-4B58-9E3A-6D45F66F26A2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.NLog.Configuration", "Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj", "{E1D65725-E469-446D-8584-F8360610A163}"
@@ -309,10 +307,6 @@ Global
 		{C12575DE-10DB-4A5B-BF94-AB7EDBA0EF07}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C12575DE-10DB-4A5B-BF94-AB7EDBA0EF07}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C12575DE-10DB-4A5B-BF94-AB7EDBA0EF07}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1130DF1F-76A0-47CB-9F53-224370948E0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1130DF1F-76A0-47CB-9F53-224370948E0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1130DF1F-76A0-47CB-9F53-224370948E0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1130DF1F-76A0-47CB-9F53-224370948E0F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E61C2704-F957-4B58-9E3A-6D45F66F26A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E61C2704-F957-4B58-9E3A-6D45F66F26A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E61C2704-F957-4B58-9E3A-6D45F66F26A2}.Release|Any CPU.ActiveCfg = Release|Any CPU

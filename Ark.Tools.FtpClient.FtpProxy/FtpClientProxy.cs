@@ -20,7 +20,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
     public sealed class FtpClientProxy : IFtpClientPool
     {
-        private IFtpClientProxyConfig _config;
+        private readonly IFtpClientProxyConfig _config;
         private readonly TokenProvider _tokenProvider;
         private readonly ConnectionInfo _connectionInfo;
 
@@ -35,7 +35,12 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, FtpConfig ftpConfig)
         {
-            _init(config, ftpConfig);
+            _config = config;
+
+            this.Uri = ftpConfig.Uri;
+            this.Credentials = ftpConfig.Credentials;
+
+            this.FtpConfig = ftpConfig;
 
             _tokenProvider = tokenProvider;
 
@@ -46,27 +51,27 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         public Uri Uri { get; private set; }
 
-        public NetworkCredential Credentials { get; private set; }
+        public NetworkCredential? Credentials { get; private set; }
         public FtpConfig FtpConfig { get; private set; }
 
         class DownloadFileResult
         {
-            public byte[] Content { get; set; }
+            public byte[]? Content { get; set; }
         }
 
         class ConnectionInfo
         {
-            public Uri Uri { get; set; }
-            public string Username { get; set; }
-            public string Password { get; set; }
+            public Uri? Uri { get; set; }
+            public string? Username { get; set; }
+            public string? Password { get; set; }
         }
 
         class ListingRequest
         {
-            public ConnectionInfo Info { get; set; }
+            public ConnectionInfo? Info { get; set; }
             public int? DegreeOfParallelism { get; set; }
             public bool? Recursive { get; set; }
-            public string[] Paths { get; set; }
+            public string[]? Paths { get; set; }
         }
 
         /// <summary>
@@ -88,7 +93,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                 .ReceiveJson<DownloadFileResult>()
                 ;
 
-            return res.Content;
+            return res.Content ?? Array.Empty<byte>();
         }
 
         /// <summary>
@@ -100,8 +105,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// All entries found (files, folders, symlinks)
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default)
+        public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
+            path ??= "./";
             var tok = await _getAccessToken(ctk);
             
             var res = await _client.Request("v2", "ListFolder")
@@ -109,7 +115,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                 .PostJsonAsync(new ListingRequest
                 {
                     Info = _connectionInfo,
-                    Paths = path != null ? new[] { path } : null,
+                    Paths = new[] { path },
                     Recursive = false,
                 }, ctk)
                 .ReceiveJson<IEnumerable<FtpEntry>>()
@@ -128,8 +134,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// The files found.
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = null, Predicate<FtpEntry> skipFolder = null, CancellationToken ctk = default)
+        public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
+            startPath ??= "./";
             var tok = await _getAccessToken(ctk);
             if (skipFolder == null) // no folders to skip, just recurse overall
             {
@@ -138,7 +145,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     .PostJsonAsync(new ListingRequest
                     {
                         Info = _connectionInfo,
-                        Paths = startPath != null ? new[] { startPath } : null,
+                        Paths = new[] { startPath },
                         Recursive = true,
                         DegreeOfParallelism = _config.ListingDegreeOfParallelism
                     }, ctk)
@@ -156,7 +163,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     .PostJsonAsync(new ListingRequest
                     {
                         Info = _connectionInfo,
-                        Paths = startPath != null ? new[] { startPath } : null,
+                        Paths = new[] { startPath },
                         Recursive = false,
                     }, ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
@@ -191,15 +198,6 @@ namespace Ark.Tools.FtpClient.FtpProxy
             return _tokenProvider.GetToken(ctk);
         }
 
-        private void _init(IFtpClientProxyConfig config, FtpConfig ftpConfig)
-        {
-            this._config = config;
-            this.Uri = ftpConfig.Uri;
-            this.Credentials = ftpConfig.Credentials;
-
-            this.FtpConfig = ftpConfig;
-        }
-
         private IFlurlClient _initClient(IFlurlClientFactory client)
         {
             var flurlClient = client.Get(_config.FtpProxyWebInterfaceBaseUri)
@@ -223,8 +221,8 @@ namespace Ark.Tools.FtpClient.FtpProxy
             return new ConnectionInfo
             {
                 Uri = this.Uri,
-                Username = this.Credentials.UserName,
-                Password = this.Credentials.Password,
+                Username = this.Credentials?.UserName,
+                Password = this.Credentials?.Password,
             };
         }
 

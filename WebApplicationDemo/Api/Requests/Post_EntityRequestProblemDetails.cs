@@ -7,7 +7,7 @@ namespace WebApplicationDemo.Api.Requests
     {
         public class V1 : IRequest<Entity.V1.Output>
         {
-            public string EntityId { get; set; }
+            public string? EntityId { get; set; }
         }
     }
 }

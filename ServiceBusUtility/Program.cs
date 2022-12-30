@@ -73,7 +73,7 @@ namespace ServiceBusUtility
 
 		public class SubsInfo
 		{
-			public string SubName { get; set; }
+			public string? SubName { get; set; }
 			public int ActiveMessage { get; set; }
 			public int DeadMessage { get; set; }
 		}

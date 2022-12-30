@@ -38,7 +38,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
 
         public async Task Invoke(HttpContext context)
         {
-            System.Net.Http.Headers.AuthenticationHeaderValue authHeader;
+            System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;
 
             if (System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Authorization"], out authHeader)
                 || System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["WWW-Authenticate"], out authHeader)
@@ -53,7 +53,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                     {
                         string parameter = Encoding.UTF8.GetString(
                                               Convert.FromBase64String(
-                                                    authHeader.Parameter));
+                                                    authHeader.Parameter ?? string.Empty));
 
                         var parts = parameter.Split(':');
 

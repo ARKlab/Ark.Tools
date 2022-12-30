@@ -99,13 +99,13 @@ namespace Ark.Tools.Activity.Processor
 
 		private async Task _schedule(SliceReady message)
 		{
-			var timeToWait = (Data.CoolDownTill.Value - DateTimeOffset.UtcNow);
+			var timeToWait = (Data.CoolDownTill - DateTimeOffset.UtcNow);
 
-			if (timeToWait.TotalSeconds > 0)
+			if (timeToWait != null && timeToWait.Value.TotalSeconds > 0)
 			{
-				_activity.Logger.Info("Message Deferred after {TimeToWait}s seconds for Slice {ActivitySlice}", timeToWait.TotalSeconds, Data.ActivitySlice);
+				_activity.Logger.Info("Message Deferred after {TimeToWait}s seconds for Slice {ActivitySlice}", timeToWait.Value.TotalSeconds, Data.ActivitySlice);
 
-				await _bus.DeferLocal(timeToWait, new CoolDownMessage()
+				await _bus.DeferLocal(timeToWait.Value, new CoolDownMessage()
 				{
 					ActivitySlice = Slice.From(message.ActivitySlice.SliceStart),
 					Resource = Resource.Create(message.Resource.Provider, message.Resource.Id),

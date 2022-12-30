@@ -34,17 +34,17 @@ namespace Ark.Tools.Rebus.Tests
             }
         }
 
-        public DrainableInMemTransport(InMemNetwork network, string inputQueueAddress)
+        public DrainableInMemTransport(InMemNetwork network, string? inputQueueAddress)
             : base(network, inputQueueAddress)
         {
         }
 
-        public override Task<TransportMessage> Receive(ITransactionContext context, CancellationToken cancellationToken)
+        public override Task<TransportMessage?> Receive(ITransactionContext context, CancellationToken cancellationToken)
         {
             var d = Interlocked.Read(ref _drain);
             if (d != -1)
             {
-                return Task.FromResult<TransportMessage>(null);
+                return Task.FromResult<TransportMessage?>(null);
             }
             return base.Receive(context, cancellationToken);
         }

@@ -5,11 +5,11 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 {
     public sealed class ResourceWatcherTelemetryModule : ITelemetryModule, IDisposable
     {
-        private ResourceWatcherDiagnosticListener _diagnosticListener;
+        private ResourceWatcherDiagnosticListener? _diagnosticListener;
 
         public void Dispose()
         {
-            ((IDisposable)_diagnosticListener)?.Dispose();
+            _diagnosticListener?.Dispose();
         }
 
         public void Initialize(TelemetryConfiguration configuration)

@@ -15,8 +15,8 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
 
         public Instant RetrievedAt { get; internal set; }
 
-        public string CheckSum { get; internal set; }
+        public string? CheckSum { get; internal set; }
 
-        public TPayload ParsedData { get; internal set; }
+        public TPayload? ParsedData { get; internal set; }
     }
 }

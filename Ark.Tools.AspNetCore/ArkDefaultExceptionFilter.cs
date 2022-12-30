@@ -13,8 +13,7 @@ namespace Ark.Tools.AspNetCore
         public override void OnException(ExceptionContext context)
         {
             _log(context);
-            var message = context.Exception.Message;
-            IActionResult result = null;
+            IActionResult? result = null;
 
             if (result != null)
             {
@@ -25,7 +24,7 @@ namespace Ark.Tools.AspNetCore
                 }
 
                 context.Result = result;
-                context.Exception = null;
+                context.ExceptionHandled = true;
             }
 
             base.OnException(context);
@@ -35,7 +34,7 @@ namespace Ark.Tools.AspNetCore
         {
             Logger logger;
 
-            if (context?.ActionDescriptor?.DisplayName != null)
+            if (context.ActionDescriptor?.DisplayName != null)
                 logger = LogManager.GetLogger(context.ActionDescriptor.DisplayName);
             else
                 logger = LogManager.GetCurrentClassLogger();

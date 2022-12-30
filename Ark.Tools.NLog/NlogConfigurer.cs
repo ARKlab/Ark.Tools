@@ -67,13 +67,13 @@ namespace Ark.Tools.NLog
         }
 
         public record Config(
-            string SQLConnectionString = null,
-            string SQLTableName = null,
-            string SmtpConnectionString = null,
-            string MailTo = null,
-            string MailFrom = null,
-            string SlackWebhook = null,
-            string ApplicationInsightsInstrumentationKey = null,
+            string? SQLConnectionString = null,
+            string? SQLTableName = null,
+            string? SmtpConnectionString = null,
+            string? MailTo = null,
+            string? MailFrom = null,
+            string? SlackWebhook = null,
+            string? ApplicationInsightsInstrumentationKey = null,
             bool? EnableConsole = null,
             bool Async = true);
 
@@ -90,26 +90,26 @@ namespace Ark.Tools.NLog
             if (!string.IsNullOrWhiteSpace(config.SQLConnectionString))
             {
                 @this
-                    .WithDatabaseTarget(config.SQLTableName ?? @this.AppName, config.SQLConnectionString, config.Async)
+                    .WithDatabaseTarget(config.SQLTableName ?? @this.AppName, config.SQLConnectionString!, config.Async)
                     .WithDatabaseRule("*", LogLevel.Info);
             }
 
-            if (!string.IsNullOrWhiteSpace(config.SmtpConnectionString))
+            if (!string.IsNullOrWhiteSpace(config.SmtpConnectionString) && config.MailTo is not null)
             {
                 @this
-                    .WithMailTarget(config.MailFrom, config.MailTo, config.SmtpConnectionString, async: false)
+                    .WithMailTarget(config.MailFrom, config.MailTo, config.SmtpConnectionString!, async: false)
                     .WithMailRule("*", LogLevel.Fatal)
                     ;
             }
 
             if (!string.IsNullOrWhiteSpace(config.SlackWebhook))
             {
-                @this.WithSlackDefaultTargetsAndRules(config.SlackWebhook, config.Async);
+                @this.WithSlackDefaultTargetsAndRules(config.SlackWebhook!, config.Async);
             }
 
             if (!string.IsNullOrWhiteSpace(config.ApplicationInsightsInstrumentationKey))
             {
-                @this.WithApplicationInsightsTargetsAndRules(config.ApplicationInsightsInstrumentationKey, config.Async);
+                @this.WithApplicationInsightsTargetsAndRules(config.ApplicationInsightsInstrumentationKey!, config.Async);
             }
 
             if (Debugger.IsAttached)
@@ -358,7 +358,7 @@ VALUES
                     IncludeEventProperties = true,
                     ExcludeProperties = { "Message", "Exception","AppName" }
                 }));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${machinename}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=Type,Message}}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString}}"));
@@ -385,7 +385,7 @@ VALUES
                 return this.WithMailTarget(null, to, async);
             }
 
-            public Configurer WithMailTarget(string from, string to, bool async = true)
+            public Configurer WithMailTarget(string? from, string to, bool async = true)
             {
                 var target = _getBasicMailTarget();
 
@@ -405,7 +405,7 @@ VALUES
                 return this.WithMailTarget(null, to, smtpServer, smtpPort, smtpUserName, smtpPassword, useSsl, async);
             }
 
-            public Configurer WithMailTarget(string from, string to, string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl, bool async = true)
+            public Configurer WithMailTarget(string? from, string to, string? smtpServer, int? smtpPort, string? smtpUserName, string? smtpPassword, bool useSsl, bool async = true)
             {
                 var target = _getBasicMailTarget();
                 
@@ -426,7 +426,7 @@ VALUES
                 return this;
             }
 
-            public Configurer WithMailTarget(string from, string to, string smtpConnectionString, bool async = true)
+            public Configurer WithMailTarget(string? from, string to, string smtpConnectionString, bool async = true)
             {
                 var cs = new SmtpConnectionBuilder(smtpConnectionString);
                 return this.WithMailTarget(from ?? cs.From ?? NLogConfigurer.MailFromDefault, to, cs.Server, cs.Port, cs.Username, cs.Password, cs.UseSsl, async);

@@ -11,12 +11,14 @@ namespace Ark.Tools.Solid.Decorators
     public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>, IDisposable
     {
         private readonly IQueryHandler<TQuery, TResult> _decorated;
+        private readonly ILogger _logger;
 
         public ExceptionLogQueryDecorator(IQueryHandler<TQuery, TResult> decorated)
         {
             Ensure.Any.IsNotNull(decorated, nameof(decorated));
 
             _decorated = decorated;
+            _logger = LogManager.GetLogger(_decorated.GetType().ToString());
         }
 
         public TResult Execute(TQuery query)
@@ -27,8 +29,7 @@ namespace Ark.Tools.Solid.Decorators
             }
             catch (Exception ex)
             {
-                Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
-                logger.Error(ex, "Exception occured");
+                _logger.Error(ex, "Exception occured");
                 throw;
             }
         }
@@ -40,8 +41,7 @@ namespace Ark.Tools.Solid.Decorators
                 return await _decorated.ExecuteAsync(query, ctk);
             } catch (Exception ex)
             {
-                Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
-                logger.Error(ex, "Exception occured");
+                _logger.Error(ex, "Exception occured");
                 throw;
             }
         }

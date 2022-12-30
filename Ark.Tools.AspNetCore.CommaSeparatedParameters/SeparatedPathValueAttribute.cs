@@ -14,11 +14,12 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
         {
         }
 
-        public SeparatedPathValueAttribute(char separator) : this(null, separator)
+        public SeparatedPathValueAttribute(char separator) 
+            : this(null, separator)
         {
         }
 
-        public SeparatedPathValueAttribute(string key, char separator)
+        public SeparatedPathValueAttribute(string? key, char separator)
         {
             _factory = new SeparatedPathValueProviderFactory(key, separator);
         }

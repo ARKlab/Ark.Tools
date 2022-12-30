@@ -13,7 +13,7 @@ namespace Ark.Tools.ResourceWatcher
         public const string ExceptionEventName = BaseActivityName + "Exception";
 
         private readonly string _tenant;
-        private static Logger _logger;
+        private readonly Logger _logger;
 
         private static readonly DiagnosticListener _source = new DiagnosticListener(DiagnosticListenerName);
 
@@ -89,7 +89,9 @@ namespace Ark.Tools.ResourceWatcher
             _stop(activity, () =>
             {
                 var total = 0;
-                var counts = evaluated.GroupBy(x => x.ResultType).ToDictionary(x => x.Key, x => x.Count());
+                var counts = evaluated
+                    .GroupBy(x => x.ResultType ?? throw new InvalidOperationException("ResultType is null"))
+                    .ToDictionary(x => x.Key, x => x.Count());
                 foreach (var k in Enum.GetValues(typeof(ResultType)).Cast<ResultType>())
                 {
                     if (!counts.ContainsKey(k))
@@ -249,7 +251,7 @@ namespace Ark.Tools.ResourceWatcher
             }
             else if (pc.ResultType == ResultType.Normal)
             {
-                if (pc.NewState.RetryCount == 0)
+                if (pc.NewState?.RetryCount == 0)
                     _logger.Info("({Index}/{Total}) ResourceId={ResourceId} handled successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
                 else
                     _logger.Info("({Index}/{Total}) ResourceId={ResourceId} handled not successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
@@ -338,7 +340,7 @@ namespace Ark.Tools.ResourceWatcher
             return activity;
         }
 
-        internal void _stop(Activity activity, Func<object> getPayload)
+        private void _stop(Activity activity, Func<object> getPayload)
         {
             if (activity != null)
             {
@@ -346,20 +348,7 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        private void _setTags(Activity activity, string messageKey, string message)
-        {
-            if (activity != null)
-            {
-                if (message == null)
-                {
-                    return;
-                }
-
-                activity.AddTag(messageKey, message);
-            }
-        }
-
-        internal void _reportEvent(string eventName, Func<object> getPayload)
+        private void _reportEvent(string eventName, Func<object> getPayload)
         {
             var name = BaseActivityName + "." + eventName;
 
@@ -369,7 +358,7 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        internal void _reportException(string exceptionName, Exception ex)
+        private void _reportException(string exceptionName, Exception ex)
         {
             var name = BaseActivityName + "." + exceptionName;
 

@@ -9,6 +9,7 @@ using Ark.Tools.Core.EntityTag;
 using Flurl.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using FluentAssertions;
 
 namespace TestProject
 {
@@ -19,8 +20,11 @@ namespace TestProject
 
 		private readonly string _version;
 
-		private IFlurlResponse _backProperty;
-		private IFlurlResponse LastResponse { get => _backProperty;  set { _backProperty?.Dispose(); _backProperty = value; } }
+		private IFlurlResponse? _backProperty;
+		private IFlurlResponse _lastResponse { 
+            get => _backProperty ?? throw new InvalidOperationException("Make a request first");  
+            set { _backProperty?.Dispose(); _backProperty = value; } 
+        }
 
 		public TestClient(FeatureContext fctx, ScenarioContext sctx, IFlurlClient client)
 		{
@@ -28,12 +32,12 @@ namespace TestProject
 
 			var tags = sctx.ScenarioInfo.Tags.Concat(fctx.FeatureInfo.Tags);
 
-			_version = tags.FirstOrDefault(x => x.StartsWith("Api:"))?.Substring("Api:".Length) ?? "v" + "1.0"/*CommonConstants.ApiVersions.Last()*/;
+			_version = tags?.FirstOrDefault(x => x.StartsWith("Api:"))?.Substring("Api:".Length) ?? "v" + "1.0"/*CommonConstants.ApiVersions.Last()*/;
 		}
 
 		public HttpStatusCode GetLastStatusCode()
 		{
-			return (HttpStatusCode)LastResponse.StatusCode;
+			return (HttpStatusCode)_lastResponse.StatusCode;
 		}
 
 		public void Get(string requestUri, IEntityWithETag e)
@@ -41,7 +45,7 @@ namespace TestProject
 			Get(requestUri, e != null ? new EntityTagHeaderValue($"\"{e?._ETag}\"") : null);
 		}
 
-		public void Get(string requestUri, EntityTagHeaderValue e)
+		public void Get(string requestUri, EntityTagHeaderValue? e)
 		{
 			var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -50,10 +54,10 @@ namespace TestProject
 			if (e != null)
 				req.Headers.Add("If-None-Match", e.ToString());
 
-			LastResponse = req.GetAsync().GetAwaiter().GetResult();
+			_lastResponse = req.GetAsync().GetAwaiter().GetResult();
 		}
 
-		public void Get(string[] requestUriParts, EntityTagHeaderValue e)
+		public void Get(string[] requestUriParts, EntityTagHeaderValue? e)
 		{
 			var req = _client.Request(new[] { _version });
 
@@ -63,15 +67,15 @@ namespace TestProject
 			if (e != null)
 				req.Headers.Add("If-None-Match", e.ToString());
 
-			LastResponse = req.GetAsync().GetAwaiter().GetResult();
+			_lastResponse = req.GetAsync().GetAwaiter().GetResult();
 		}
 
-		public void Get(string[] requestUriParts, string etag = null)
+		public void Get(string[] requestUriParts, string? etag = null)
 		{
 			Get(requestUriParts, etag != null ? new EntityTagHeaderValue($"\"{etag}\"") : null);
 		}
 
-		public void Get(string requestUri, string etag = null)
+		public void Get(string requestUri, string? etag = null)
 		{
 			Get(requestUri, etag != null ? new EntityTagHeaderValue($"\"{etag}\"") : null);
 		}
@@ -82,12 +86,12 @@ namespace TestProject
 
 			var req = _client.Request(reqUriComposed);
 
-			LastResponse = req.DeleteAsync().GetAwaiter().GetResult();
+			_lastResponse = req.DeleteAsync().GetAwaiter().GetResult();
 		}
 
-		public void PostAsJson(string requestUri) => PostAsJson(requestUri, (String)null);
+		public void PostAsJson(string requestUri) => PostAsJson<string>(requestUri, null);
 
-		public void PostAsJson<T>(string requestUri, T body = null) where T : class
+		public void PostAsJson<T>(string requestUri, T? body = null) where T : class
 		{
 			var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -96,12 +100,12 @@ namespace TestProject
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.Headers.Add("If-Match", $"\"{eTag._ETag}\"");
 
-			LastResponse = req.PostJsonAsync(body).GetAwaiter().GetResult();
+			_lastResponse = req.PostJsonAsync(body).GetAwaiter().GetResult();
 		}
 
-		public void PutAsJson(string requestUri) => PutAsJson(requestUri, (String)null);
+		public void PutAsJson(string requestUri) => PutAsJson<string>(requestUri, null);
 
-		public void PutAsJson<T>(string requestUri, T body = null) where T : class
+		public void PutAsJson<T>(string requestUri, T? body = null) where T : class
 		{
 			var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -110,12 +114,12 @@ namespace TestProject
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.WithHeader("If-Match", $"\"{eTag._ETag}\"");
 
-			LastResponse = req.PutJsonAsync(body).GetAwaiter().GetResult();
+			_lastResponse = req.PutJsonAsync(body).GetAwaiter().GetResult();
 		}
 
-		public void PatchAsJson(string requestUri) => PatchAsJson(requestUri, (String)null);
+		public void PatchAsJson(string requestUri) => PatchAsJson<string>(requestUri, null);
 
-		public void PatchAsJson<T>(string requestUri, T body = null) where T : class
+		public void PatchAsJson<T>(string requestUri, T? body = null) where T : class
 		{
 			var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -124,60 +128,60 @@ namespace TestProject
 			if (body is IEntityWithETag eTag && !string.IsNullOrEmpty(eTag._ETag))
 				req.WithHeader("If-Match", $"\"{eTag._ETag}\"");
 
-			LastResponse = req.PatchJsonAsync(body).GetAwaiter().GetResult();
+			_lastResponse = req.PatchJsonAsync(body).GetAwaiter().GetResult();
 		}
 
 		public T ReadAs<T>()
 		{
-			if (LastResponse == null)
+			if (_lastResponse == null)
 				throw new InvalidOperationException("I suggest to make a request first ...");
 
-			return LastResponse.GetJsonAsync<T>().GetAwaiter().GetResult();
+			return _lastResponse.GetJsonAsync<T>().GetAwaiter().GetResult();
 		}
 
 		public string ReadAsString()
 		{
-			if (LastResponse == null)
+			if (_lastResponse == null)
 				throw new InvalidOperationException("I suggest to make a request first ...");
 
-			return LastResponse.GetStringAsync().GetAwaiter().GetResult();
+			return _lastResponse.GetStringAsync().GetAwaiter().GetResult();
 		}
 
 		[When(@"I get url (.*)")]
 		public void WhenIGetUrl(string url)
 		{
 			var req = _client.Request(url);
-			LastResponse = req.GetAsync().GetAwaiter().GetResult();
+			_lastResponse = req.GetAsync().GetAwaiter().GetResult();
 		}
 
 		[Then("The request succeded")]
 		public void ThenTheRequestSucceded()
 		{
-			LastResponse.ResponseMessage.EnsureSuccessStatusCode();
+            _lastResponse.ResponseMessage.Should().BeSuccessful();
 		}
 
 		[Then(@"The request fails with (.*)")]
 		public void ThenTheRequestFailsWith(HttpStatusCode code)
 		{
-			Assert.AreEqual(code, LastResponse.StatusCode);
+            _lastResponse.ResponseMessage.Should().HaveHttpStatusCode(code);
 		}
 
 		[Then(@"The problem detail type contains (.*)")]
 		public void ThenTheProblemDetailTypeContains(string expectedProblemDetailType)
 		{
-			var problemDetail = LastResponse.GetJsonAsync<ProblemDetails>().GetAwaiter().GetResult();
-			Assert.IsTrue(problemDetail.Type.Contains(expectedProblemDetailType));
+			var problemDetail = _lastResponse.GetJsonAsync<ProblemDetails>().GetAwaiter().GetResult();
+            problemDetail?.Type?.Should().Contain(expectedProblemDetailType);
 		}
 
 		[Then(@"The request returns (.*)")]
 		public void ThenTheRequestReturns(HttpStatusCode code)
 		{
-			Assert.AreEqual(code, LastResponse.StatusCode);
+            _lastResponse.ResponseMessage.Should().HaveStatusCode(code);
 		}
 
         public void Dispose()
         {
-			LastResponse?.Dispose();
+			_lastResponse?.Dispose();
         }
     }
 }

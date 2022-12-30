@@ -22,9 +22,9 @@ namespace Ark.Tools.RavenDb.Auditing
 	public class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSessionOperations
 	{
 		private readonly IAsyncAdvancedSessionOperations _inner;
-		private readonly object _audit;
+		private readonly object? _audit;
 
-		public AuditableAsyncAdvancedSessionOperationsDecorator(IAsyncAdvancedSessionOperations inner, object audit)
+		public AuditableAsyncAdvancedSessionOperationsDecorator(IAsyncAdvancedSessionOperations inner, object? audit)
 		{
 			_inner = inner;
 			_audit = audit;
@@ -184,7 +184,7 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.AsyncDocumentQuery<T, TIndexCreator>();
 		}
 
-		public IAsyncDocumentQuery<T> AsyncDocumentQuery<T>(string indexName = null, string collectionName = null, bool isMapReduce = false)
+		public IAsyncDocumentQuery<T> AsyncDocumentQuery<T>(string? indexName = null, string? collectionName = null, bool isMapReduce = false)
 		{
 			return _inner.AsyncDocumentQuery<T>(indexName, collectionName, isMapReduce);
 		}
@@ -297,12 +297,12 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.LoadIntoStreamAsync(ids, output, token);
 		}
 
-		public Task<IEnumerable<T>> LoadStartingWithAsync<T>(string idPrefix, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null, CancellationToken token = default)
+		public Task<IEnumerable<T>> LoadStartingWithAsync<T>(string idPrefix, string? matches = null, int start = 0, int pageSize = 25, string? exclude = null, string? startAfter = null, CancellationToken token = default)
 		{
 			return _inner.LoadStartingWithAsync<T>(idPrefix, matches, start, pageSize, exclude, startAfter, token);
 		}
 
-		public Task LoadStartingWithIntoStreamAsync(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null, CancellationToken token = default)
+		public Task LoadStartingWithIntoStreamAsync(string idPrefix, Stream output, string? matches = null, int start = 0, int pageSize = 25, string? exclude = null, string? startAfter = null, CancellationToken token = default)
 		{
 			return _inner.LoadStartingWithIntoStreamAsync(idPrefix, output, matches, start, pageSize, exclude, startAfter, token);
 		}
@@ -382,7 +382,7 @@ namespace Ark.Tools.RavenDb.Auditing
             return _inner.StreamAsync(query, out streamQueryStats, token);
         }
 
-        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null, CancellationToken token = default)
+        public Task<IAsyncEnumerator<StreamResult<T>>> StreamAsync<T>(string startsWith, string? matches = null, int start = 0, int pageSize = int.MaxValue, string? startAfter = null, CancellationToken token = default)
         {
             return _inner.StreamAsync<T>(startsWith, matches, start, pageSize, startAfter, token);
         }
@@ -517,7 +517,7 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.StreamIntoAsync(query, output, token);
 		}
 
-		public void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, string[] indexes = null)
+		public void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, string[]? indexes = null)
 		{
 			_inner.WaitForIndexesAfterSaveChanges(timeout, throwOnTimeout, indexes);
 		}

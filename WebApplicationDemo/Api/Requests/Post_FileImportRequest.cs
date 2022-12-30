@@ -6,10 +6,10 @@ namespace WebApplicationDemo.Api.Requests
 {
 	public static class Post_FileImportRequest
 	{
-		public class V1 : IRequest<FileImport>
+		public class V1 : IRequest<FileImport?>
 		{
-			public string FileName { get; set; }
-			public Stream File { get; set; }
+			public string? FileName { get; set; }
+			public Stream? File { get; set; }
 		}
 	}
 }

@@ -87,13 +87,13 @@ namespace Ark.Tools.FtpClient
             }
         }
 
-        public override async Task<IEnumerable<Core.FtpEntry>> ListDirectoryAsync(string path = null, CancellationToken ctk = default)
+        public override async Task<IEnumerable<Core.FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
+            path ??= "./";
+
             await _semaphore.WaitAsync(ctk);
             try
-            {                
-                path ??= "./";
-
+            {
                 var list = _list(path);
                 return list.Select(x => new Core.FtpEntry
                 {

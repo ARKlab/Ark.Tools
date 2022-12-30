@@ -17,14 +17,14 @@ namespace Ark.Tools.Nodatime
 			typeof(string),typeof(OffsetDateTime),typeof(DateTimeOffset)
 		};
 
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+		public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
 		{
 			if (_supportedFrom.Contains(sourceType)) return true;
 
 			return base.CanConvertFrom(context, sourceType);
 		}
 
-		public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+		public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
 		{
 			if (value is OffsetDateTime i)
 			{
@@ -44,7 +44,7 @@ namespace Ark.Tools.Nodatime
 			return base.ConvertFrom(context, culture, value);
 		}
 
-		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+		public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
 		{
 			if (destinationType == typeof(string) || destinationType == typeof(DateTimeOffset))
 				return true;
@@ -52,12 +52,15 @@ namespace Ark.Tools.Nodatime
 			return base.CanConvertTo(context, destinationType);
 		}
 
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
 		{
-			if (destinationType == typeof(string))
-				return _pattern.Format((OffsetDateTime)value);
-			if (destinationType == typeof(DateTimeOffset))
-				return ((OffsetDateTime)value).ToDateTimeOffset();
+            if (value is OffsetDateTime odt)
+            {
+                if (destinationType == typeof(string))
+                    return _pattern.Format(odt);
+                if (destinationType == typeof(DateTimeOffset))
+                    return odt.ToDateTimeOffset();
+            }
 
 			return base.ConvertTo(context, culture, value, destinationType);
 		}

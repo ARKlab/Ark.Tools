@@ -11,7 +11,7 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Attributes
         /// <summary>
         /// Set properties of Excel documents generated from this type.
         /// </summary>
-        public ExcelDocumentAttribute() { }
+        public ExcelDocumentAttribute() : this(string.Empty) { }
 
         /// <summary>
         /// Set properties of Excel documents generated from this type.

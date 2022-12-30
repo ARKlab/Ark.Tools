@@ -10,9 +10,9 @@ namespace Ark.Tools.Authorization
     /// </summary>
     public class AuthorizationContext
     {
-        private HashSet<IAuthorizationRequirement> _pendingRequirements;
-        private HashSet<IAuthorizationRequirement> _failedRequirements;
-        private HashSet<IAuthorizationRequirement> _succeededRequirements;
+        private readonly HashSet<IAuthorizationRequirement> _pendingRequirements;
+        private readonly HashSet<IAuthorizationRequirement> _failedRequirements;
+        private readonly HashSet<IAuthorizationRequirement> _succeededRequirements;
         private bool _failCalled;
 
         /// <summary>
@@ -24,10 +24,8 @@ namespace Ark.Tools.Authorization
         public AuthorizationContext(
             IAuthorizationPolicy policy,
             ClaimsPrincipal user,
-            object resource)
+            object? resource)
         {
-            Contract.Requires(policy != null);
-
             Policy = policy;
             User = user;
             Resource = resource;
@@ -52,7 +50,7 @@ namespace Ark.Tools.Authorization
         /// <summary>
         /// The optional resource to evaluate the <see cref="AuthorizationContext.Policy"/> against.
         /// </summary>
-        public virtual object Resource { get; }
+        public virtual object? Resource { get; }
 
         /// <summary>
         /// Gets the requirements that have not yet been marked as succeeded.
@@ -102,10 +100,10 @@ namespace Ark.Tools.Authorization
         /// <summary>
         /// Called to indicate that a requirement is failed with a message
         /// </summary>
-        public virtual void Fail(IAuthorizationRequirement requirement, string message = null)
+        public virtual void Fail(IAuthorizationRequirement requirement, string? message = null)
         {
             if(!string.IsNullOrWhiteSpace(message))
-                Messages.Add(requirement, message);
+                Messages.Add(requirement, message!);
 
             _pendingRequirements.Remove(requirement);
             _failedRequirements.Add(requirement);
@@ -117,10 +115,10 @@ namespace Ark.Tools.Authorization
         /// </summary>
         /// <param name="requirement">The requirement whose evaluation has succeeded.</param>
         /// <param name="message">Optional: message we want to pass.</param>
-        public virtual void Succeed(IAuthorizationRequirement requirement, string message = null)
+        public virtual void Succeed(IAuthorizationRequirement requirement, string? message = null)
         {
             if (!string.IsNullOrWhiteSpace(message))
-                Messages.Add(requirement, message);
+                Messages.Add(requirement, message!);
 
             _pendingRequirements.Remove(requirement);
             _succeededRequirements.Add(requirement);

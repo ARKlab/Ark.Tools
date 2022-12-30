@@ -38,7 +38,7 @@ namespace WebApplicationDemo.Controllers
 		/// <returns></returns>
 		[HttpGet(@"{entityId}")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Get_Entity([FromRoute] string entityId, [FromQuery] EntityResult result, [FromQuery] EntityTest[] tests, CancellationToken ctk = default)
+        public async Task<IActionResult> Get_Entity([FromRoute] string? entityId, [FromQuery] EntityResult result, [FromQuery] EntityTest[] tests, CancellationToken ctk = default)
         {
             var query = new Get_EntityByIdQuery.V1()
             {

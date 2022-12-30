@@ -37,11 +37,11 @@ namespace Ark.Tools.Rebus
 
         class FakeMessageContext : IMessageContext
         {
-            public ITransactionContext TransactionContext { get; }
-            public IncomingStepContext IncomingStepContext { get; }
-            public TransportMessage TransportMessage { get; }
-            public Message Message { get; }
-            public Dictionary<string, string> Headers { get; }
+            public ITransactionContext? TransactionContext { get; }
+            public IncomingStepContext? IncomingStepContext { get; }
+            public TransportMessage? TransportMessage { get; }
+            public Message? Message { get; }
+            public Dictionary<string, string>? Headers { get; }
         }
 
         public static void StartBus(this Container container)

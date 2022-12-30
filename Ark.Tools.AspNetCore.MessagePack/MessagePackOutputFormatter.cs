@@ -17,7 +17,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
             : this(null)
         {            
         }
-        public MessagePackOutputFormatter(IFormatterResolver resolver)
+        public MessagePackOutputFormatter(IFormatterResolver? resolver)
         {
             SupportedMediaTypes.Add(ContentType);
 
@@ -27,7 +27,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
         }
 
-        protected override bool CanWriteType(Type type)
+        protected override bool CanWriteType(Type? type)
         {
             return _options.Resolver.GetFormatterDynamic(type) != null;
         }

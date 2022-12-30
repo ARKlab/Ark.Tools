@@ -49,61 +49,63 @@ namespace Ark.Tools.AspNetCore.Auth0
             var cache = ctx.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
 
             var jwt = (ctx.SecurityToken as JwtSecurityToken);
-            var token = jwt.RawData;
+            var token = jwt?.RawData;
             var cacheKey = $"auth0:userInfo:{token}";
-            var cid = ctx.Principal.Identity as ClaimsIdentity;
+            var cid = ctx.Principal?.Identity as ClaimsIdentity;
 
-            if (!_isUnattendedClient(cid))
+            if (cid != null && jwt != null)
             {
-                User profile = null;
-                var res = await cache.GetStringAsync(cacheKey);
-                if (res == null)
+                if (!_isUnattendedClient(cid))
                 {
-                    // TODO extract domain from autority
-                    if (_isDelegation(jwt))
+                    User? profile = null;
+                    var res = await cache.GetStringAsync(cacheKey);
+                    if (res == null)
                     {
-                        using var auth0 = new ManagementApiClient(token, _domain);
-                        profile = await auth0.Users.GetAsync(jwt.Subject);
+                        // TODO extract domain from autority
+                        if (_isDelegation(jwt))
+                        {
+                            using var auth0 = new ManagementApiClient(token, _domain);
+                            profile = await auth0.Users.GetAsync(jwt.Subject);
+                        }
+                        else
+                        {
+                            //var auth0 = new AuthenticationApiClient(_domain);
+                            //profile = await auth0.Connection.PostAsync<User>("tokeninfo", new
+                            //{
+                            //    id_token = token
+                            //}, null, null, null, null, null);
+                        }
+
+                        if (profile != null)
+                        {
+                            await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(profile), new DistributedCacheEntryOptions
+                            {
+                                AbsoluteExpiration = jwt.ValidTo
+                            });
+                        }
                     }
                     else
                     {
-                        //var auth0 = new AuthenticationApiClient(_domain);
-                        //profile = await auth0.Connection.PostAsync<User>("tokeninfo", new
-                        //{
-                        //    id_token = token
-                        //}, null, null, null, null, null);
+                        profile = JsonConvert.DeserializeObject<User>(res);
                     }
 
                     if (profile != null)
-                    {
-                        await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(profile), new DistributedCacheEntryOptions
-                        {
-                            AbsoluteExpiration = jwt.ValidTo
-                        });
-                    }
+                        _convertUserToClaims(cid, profile);
                 }
-                else
+
+                // if the identity still doesn't have a name (unattended client) add a name == nameidentifier for logging/metrics purporse
+                if (string.IsNullOrWhiteSpace(cid.Name))
                 {
-                    profile = JsonConvert.DeserializeObject<User>(res);
+                    cid.AddClaim(new Claim(cid.NameClaimType, jwt.Subject));
                 }
 
-                if (profile != null)
-                    _convertUserToClaims(cid, profile);
+                var scopes = cid.FindFirst(c => c.Type == "scope" && c.Issuer == _issuer)?.Value?.Split(' ');
+                if (scopes != null)
+                    cid.AddClaims(scopes.Select(r => new Claim(Auth0ClaimTypes.Scope, r, ClaimValueTypes.String, _issuer)));
+
+                if (ctx.Options.SaveToken && token != null)
+                    cid.AddClaim(new Claim("id_token", token, ClaimValueTypes.String, "Auth0"));
             }
-
-            // if the identity still doesn't have a name (unattended client) add a name == nameidentifier for logging/metrics purporse
-            if (string.IsNullOrWhiteSpace(cid.Name))
-            {
-                cid.AddClaim(new Claim(cid.NameClaimType, jwt.Subject));
-            }
-
-            var scopes = cid.FindFirst(c => c.Type == "scope" && c.Issuer == _issuer)?.Value?.Split(' ');
-            if (scopes != null)
-                cid.AddClaims(scopes.Select(r => new Claim(Auth0ClaimTypes.Scope, r, ClaimValueTypes.String, _issuer)));
-
-            if (ctx.Options.SaveToken)
-                cid.AddClaim(new Claim("id_token", token, ClaimValueTypes.String, "Auth0"));
-
             await base.TokenValidated(ctx);
         }
 
@@ -138,31 +140,31 @@ namespace Ark.Tools.AspNetCore.Auth0
 
             var roles = new HashSet<string>();
             if (profile.AppMetadata?.authorization?.roles != null)
-                roles.UnionWith((profile.AppMetadata?.authorization?.roles as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                roles.UnionWith((profile.AppMetadata?.authorization?.roles as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             if (profile.ProviderAttributes.ContainsKey("authorization"))
-                roles.UnionWith((profile.ProviderAttributes["authorization"]["roles"] as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                roles.UnionWith((profile.ProviderAttributes["authorization"]["roles"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             if (profile.ProviderAttributes.ContainsKey("roles"))
-                roles.UnionWith((profile.ProviderAttributes["roles"] as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                roles.UnionWith((profile.ProviderAttributes["roles"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             roles.UnionWith(identity.FindAll("roles").Select(x => x.Value));
             identity.AddClaims(roles.Select(r => new Claim(identity.RoleClaimType, r, ClaimValueTypes.String, "Auth0")));
 
             var groups = new HashSet<string>();
             if (profile.AppMetadata?.authorization?.groups != null)
-                groups.UnionWith((profile.AppMetadata?.authorization?.groups as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                groups.UnionWith((profile.AppMetadata?.authorization?.groups as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             if (profile.ProviderAttributes.ContainsKey("authorization"))
-                groups.UnionWith((profile.ProviderAttributes["authorization"]["groups"] as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                groups.UnionWith((profile.ProviderAttributes["authorization"]["groups"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             if (profile.ProviderAttributes.ContainsKey("groups"))
-                groups.UnionWith((profile.ProviderAttributes["groups"] as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                groups.UnionWith((profile.ProviderAttributes["groups"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             groups.UnionWith(identity.FindAll("groups").Select(x => x.Value));
             identity.AddClaims(groups.Select(r => new Claim(Auth0ClaimTypes.Group, r, ClaimValueTypes.String, "Auth0")));
 
             var permissions = new HashSet<string>();
             if (profile.AppMetadata?.authorization?.permissions != null)
-                permissions.UnionWith((profile.AppMetadata?.authorization?.permissions as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                permissions.UnionWith((profile.AppMetadata?.authorization?.permissions as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             if (profile.ProviderAttributes.ContainsKey("authorization"))
-                permissions.UnionWith((profile.ProviderAttributes["authorization"]["permissions"] as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                permissions.UnionWith((profile.ProviderAttributes["authorization"]["permissions"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             if (profile.ProviderAttributes.ContainsKey("permissions"))
-                permissions.UnionWith((profile.ProviderAttributes["permissions"] as IEnumerable<dynamic>).Select(r => r.ToString() as string));
+                permissions.UnionWith((profile.ProviderAttributes["permissions"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
             permissions.UnionWith(identity.FindAll("permissions").Select(x => x.Value));
             identity.AddClaims(permissions.Select(r => new Claim(Auth0ClaimTypes.Permission, r, ClaimValueTypes.String, "Auth0")));
 

@@ -53,7 +53,7 @@ namespace Ark.Tools.RavenDb.Auditing
 		public static void RegisterRavenDbAudit(this IServiceCollection services, IContextProvider<ClaimsPrincipal> principalProvider)
 		{
 			services.AddScoped<IAsyncDocumentSession>(
-				ss => new AuditableAsyncDocumentSessionDecorator(ss.GetService<IDocumentStore>().OpenAsyncSession(), principalProvider));
+				ss => new AuditableAsyncDocumentSessionDecorator(ss.GetRequiredService<IDocumentStore>().OpenAsyncSession(), principalProvider));
 		}
 
 	}

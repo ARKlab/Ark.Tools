@@ -181,9 +181,9 @@ namespace Ark.Tools.Nodatime
             return !x.Equals(y);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (!(obj is ZonedDateTimeRange))
+            if (obj is not ZonedDateTimeRange)
                 return false;
 
             return Equals((ZonedDateTimeRange)obj);

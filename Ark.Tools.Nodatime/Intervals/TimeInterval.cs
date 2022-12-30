@@ -269,9 +269,9 @@ namespace Ark.Tools.Nodatime.Intervals
             return CompareTo(x, y) >= 0;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (!(obj is TimeInterval))
+            if (obj is not TimeInterval)
                 return false;
 
             return Equals((TimeInterval)obj);

@@ -15,8 +15,8 @@ namespace Ark.Tools.EventSourcing.RavenDb
         private readonly IDocumentStore _store;
         private SubscriptionWorker<OutboxEvent> _worker;
         private readonly IDomainEventPublisher _publisher;
-        private Task _subscriptionWorkerTask;
-        private CancellationTokenSource _tokenSource;
+        private Task? _subscriptionWorkerTask;
+        private CancellationTokenSource? _tokenSource;
         private object _gate = new object();
 
         public RavenDbDomainEventPublisher(IDocumentStore store, IDomainEventPublisher publisher)
@@ -85,10 +85,10 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
         public async Task StopAsync()
         {
-            Task runtask;
+            Task? runtask;
             lock (_gate)
             {
-                _tokenSource.Cancel();
+                _tokenSource?.Cancel();
                 _tokenSource = null;
                 runtask = _subscriptionWorkerTask;
                 _subscriptionWorkerTask = null;
@@ -96,7 +96,8 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
             try
             {
-                await runtask;
+                if (runtask != null)
+                    await runtask;
             }
             catch (TaskCanceledException) { }
         }

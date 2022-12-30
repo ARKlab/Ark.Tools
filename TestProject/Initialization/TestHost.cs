@@ -18,8 +18,8 @@ namespace TestProject
 	public static class TestHost
 	{
 		private const string _baseUri = "https://localhost:5001";
-		private static IHost _server;
-		private static ClientFactory _factory;
+		private static IHost? _server;
+		private static ClientFactory? _factory;
 
 
 		//internal static string SqlConnection;
@@ -53,6 +53,7 @@ namespace TestProject
 		[BeforeScenario(Order = 0)]
 		public static void BeforeScenario(ScenarioContext ctx)
 		{
+            if (_factory == null) throw new InvalidOperationException("");
 			ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
 		}
 

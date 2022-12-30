@@ -20,7 +20,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
             return services;
         }
 
-        public static IServiceCollection AddArkProblemDetails(this IServiceCollection services, Action<ProblemDetailsOptions> configure = null)
+        public static IServiceCollection AddArkProblemDetails(this IServiceCollection services, Action<ProblemDetailsOptions>? configure = null)
         {
             if (configure != null)
             {

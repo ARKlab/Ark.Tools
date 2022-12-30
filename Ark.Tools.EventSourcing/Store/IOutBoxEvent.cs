@@ -14,7 +14,7 @@ namespace Ark.Tools.EventSourcing.Store
     public interface IOutboxEvent<TEvent> : IOutboxEvent
         where TEvent : class, IDomainEvent
     {
-        TEvent Event { get; }
+        TEvent? Event { get; }
     }
 
 }

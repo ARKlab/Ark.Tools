@@ -29,6 +29,6 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Serialisation
         /// <param name="itemType">Type of item being serialised.</param>
         /// <param name="value">Value passed for serialisation, cast to an <c>IEnumerable</c> if necessary.</param>
         /// <param name="document">Document builder utility class.</param>
-        void Serialise(Type itemType, object value, XlsxDocumentBuilder document);
+        void Serialise(Type itemType, object? value, XlsxDocumentBuilder document);
     }
 }

@@ -5,7 +5,12 @@ namespace TestWorker.Configs
 {
 	public class RebusResourceNotifier_Config : IRebusResourceNotifier_Config
 	{
-		public string AsbConnectionString { get; set; }
+        public RebusResourceNotifier_Config(string asbConnectionString)
+        {
+            AsbConnectionString = asbConnectionString;
+        }
+
+        public string AsbConnectionString { get; set; }
 		public string ProviderName { get; set; } = Test_Constants.ProviderName;
 		public bool StartAtCreation { get; set; } = Test_Constants.StartAtCreationDefault;
 

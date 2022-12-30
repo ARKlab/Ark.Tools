@@ -9,7 +9,7 @@ namespace Ark.Tools.Nodatime.SystemTextJson
     {
         public override ZonedDateTimeRange Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            var x = JsonSerializer.Deserialize<Surrogate>(ref reader, options);
+            var x = JsonSerializer.Deserialize<Surrogate>(ref reader, options) ?? throw new JsonException("cannot parse ZonedDateTimeRange");
             return new ZonedDateTimeRange(x.Start, x.End);
         }
 

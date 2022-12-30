@@ -32,7 +32,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
         /// </summary>
         /// <typeparam name="TFtpFactory">IFtpClientFactory implementation</typeparam>
         /// <param name="deps">Callback to register additinal dependencies of the TFtpFactory</param>
-        public void UseFtpClientPoolFactory<TFtpFactory>(Action<Dependencies> deps = null)
+        public void UseFtpClientPoolFactory<TFtpFactory>(Action<Dependencies>? deps = null)
             where TFtpFactory : class, IFtpClientPoolFactory
         {
             base.UseDataProvider<FtpProvider>(r =>
@@ -47,7 +47,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
         /// </summary>
         /// <typeparam name="TParser">The parser implementation</typeparam>
         /// <param name="deps">Callback to register additinal dependencies of the TFtpFactory</param>
-        public void UseParser<TParser>(Action<Dependencies> deps = null)
+        public void UseParser<TParser>(Action<Dependencies>? deps = null)
             where TParser : class, IFtpParser<TPayload>
         {
             this.Use(d =>
@@ -95,7 +95,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                 }
             }
 
-            public async Task<FtpFile<TPayload>> GetResource(FtpMetadata metadata, IResourceTrackedState lastState, CancellationToken ctk = default)
+            public async Task<FtpFile<TPayload>?> GetResource(FtpMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
             {
                 var contents = await Policy
                     .Handle<Exception>()

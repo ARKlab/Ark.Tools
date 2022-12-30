@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Ark.Tools.ResourceWatcher;
@@ -15,7 +16,7 @@ namespace TestWorker.Configs
             WorkerName = Test_Constants.AppName;
         }
 
-        public string StateDbConnectionString { get; set; }
-        string ISqlStateProviderConfig.DbConnectionString => StateDbConnectionString;
+        public string? StateDbConnectionString { get; set; }
+        string ISqlStateProviderConfig.DbConnectionString => StateDbConnectionString ?? throw new InvalidOperationException("");
     }
 }

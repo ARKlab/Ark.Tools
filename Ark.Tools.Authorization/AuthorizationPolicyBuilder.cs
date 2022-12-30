@@ -57,8 +57,6 @@ namespace Ark.Tools.Authorization
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public AuthorizationPolicyBuilder Combine(IAuthorizationPolicy policy)
         {
-            Contract.Requires(policy != null);
-
             AddRequirements(policy.Requirements.ToArray());
             return this;
         }
@@ -72,8 +70,6 @@ namespace Ark.Tools.Authorization
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public AuthorizationPolicyBuilder RequireClaim(string claimType, params string[] requiredValues)
         {
-            Contract.Requires(claimType != null);
-
             return RequireClaim(claimType, (IEnumerable<string>)requiredValues);
         }
 
@@ -86,8 +82,6 @@ namespace Ark.Tools.Authorization
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public AuthorizationPolicyBuilder RequireClaim(string claimType, IEnumerable<string> requiredValues)
         {
-            Contract.Requires(claimType != null);
-
             _requirements.Add(new ClaimsAuthorizationRequirement(claimType, requiredValues));
             return this;
         }
@@ -96,12 +90,10 @@ namespace Ark.Tools.Authorization
         /// Adds a <see cref="ClaimsAuthorizationRequirement"/>
         /// to the current instance.
         /// </summary>
-        /// <param name="claimType">The claim type required, which no restrictions on claim value.</param>
+        /// <param name="claimType">The claim type required, with no restrictions on claim value.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public AuthorizationPolicyBuilder RequireClaim(string claimType)
         {
-            Contract.Requires(claimType != null);
-
             _requirements.Add(new ClaimsAuthorizationRequirement(claimType, allowedValues: null));
             return this;
         }
@@ -114,8 +106,6 @@ namespace Ark.Tools.Authorization
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public AuthorizationPolicyBuilder RequireRole(params string[] roles)
         {
-            Contract.Requires(roles != null);
-
             return RequireRole((IEnumerable<string>)roles);
         }
 
@@ -127,8 +117,6 @@ namespace Ark.Tools.Authorization
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public AuthorizationPolicyBuilder RequireRole(IEnumerable<string> roles)
         {
-            Contract.Requires(roles != null);
-
             _requirements.Add(new RolesAuthorizationRequirement(roles));
             return this;
         }        
@@ -150,8 +138,6 @@ namespace Ark.Tools.Authorization
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public AuthorizationPolicyBuilder RequireAssertion(Func<AuthorizationContext, bool> handler)
         {
-            Contract.Requires(handler != null);
-
             _requirements.Add(new AssertionRequirement(handler));
             return this;
         }
@@ -163,8 +149,6 @@ namespace Ark.Tools.Authorization
         /// <returns>A reference to this instance after the operation has completed.</returns>
         public AuthorizationPolicyBuilder RequireAssertion(Func<AuthorizationContext, Task<bool>> handler)
         {
-            Contract.Requires(handler != null);
-
             _requirements.Add(new AssertionRequirement(handler));
             return this;
         }

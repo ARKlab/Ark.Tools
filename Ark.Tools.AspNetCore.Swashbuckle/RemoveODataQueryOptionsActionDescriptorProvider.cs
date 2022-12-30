@@ -16,7 +16,9 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 				{
 					if (typeof(ODataQueryOptions).IsAssignableFrom(descriptor.Parameters[i].ParameterType))
 					{
-						descriptor.Parameters[i].BindingInfo.BindingSource = BindingSource.Special;
+                        var info = descriptor.Parameters[i].BindingInfo;
+                        if (info != null)
+                            info.BindingSource = BindingSource.Special;
 					}
 				}
 			}

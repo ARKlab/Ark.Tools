@@ -18,17 +18,15 @@ namespace Ark.Tools.Nodatime
             typeof(string),typeof(LocalDate),typeof(DateTime)
         };
 
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
         {
             if (_supportedFrom.Contains(sourceType)) return true;
 
             return base.CanConvertFrom(context, sourceType);
         }
 
-        public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
         {
-            if (value == null) return null;
-
             if (value is LocalDate res)
             {
                 return res;
@@ -51,7 +49,7 @@ namespace Ark.Tools.Nodatime
             return base.ConvertFrom(context, culture, value);
         }
 
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+        public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
         {
             if (destinationType == typeof(string) || destinationType == typeof(DateTime))
                 return true;
@@ -59,13 +57,16 @@ namespace Ark.Tools.Nodatime
             return base.CanConvertTo(context, destinationType);
         }
 
-        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
-            if (destinationType == typeof(string))
-                return _pattern.Format((LocalDate)value);
+            if (value is LocalDate ld)
+            {
+                if (destinationType == typeof(string))
+                    return _pattern.Format(ld);
 
-            if (destinationType == typeof(DateTime))
-                return ((LocalDate)value).ToDateTimeUnspecified();
+                if (destinationType == typeof(DateTime))
+                    return ld.ToDateTimeUnspecified();
+            }
 
             return base.ConvertTo(context, culture, value, destinationType);
         }

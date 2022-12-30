@@ -8,10 +8,10 @@ namespace Ark.Tools.EventSourcing.Store
 {
 	public interface IAggregateEventStore
     {
-        string Id { get; }
+        string? Id { get; }
         long AggregateVersion { get; }
-        string EventName { get; }
-        string TypeName { get; }
+        string? EventName { get; }
+        string? TypeName { get; }
         
         Dictionary<string, string> Metadata { get; }
         void SetEvent(object @event);
@@ -22,24 +22,22 @@ namespace Ark.Tools.EventSourcing.Store
         where TEvent : class, IAggregateEvent<TAggregate>
         where TAggregate : class, IAggregate
     {
-        TEvent Event { get; }
+        TEvent? Event { get; }
     }
 
 	public abstract class AggregateEventStore : IAggregateEventStore//, IAuditableEntity
 	{
-        public string Id { get; set; }
-        public string TypeName { get; set; }
-        public Dictionary<string, string> Metadata { get; set; }
-        public string AggregateId { get; set; }
-        public string AggregateName { get; set; }
+        public string? Id { get; set; }
+        public string? TypeName { get; set; }
+        public Dictionary<string, string> Metadata { get; set; } = new();
+        public string? AggregateId { get; set; }
+        public string? AggregateName { get; set; }
         public long AggregateVersion { get; set; }
-        public string EventName { get; set; }
+        public string? EventName { get; set; }
         public DateTimeOffset Timestamp { get; set; }
 
-		//public Guid AuditId { get; set; }
-
 		public abstract void SetEvent(object @event);
-        public abstract object GetEvent();
+        public abstract object? GetEvent();
     }
 
     public sealed class AggregateEventStore<TAggregate, TEvent> 
@@ -48,12 +46,12 @@ namespace Ark.Tools.EventSourcing.Store
         where TEvent : class, IAggregateEvent<TAggregate>
         where TAggregate : class, IAggregate
     {
-        public TEvent Event { get; set; }
+        public TEvent? Event { get; set; }
 
         public override void SetEvent(object @event)
             => Event = @event as TEvent;
 
-        public override object GetEvent()
+        public override object? GetEvent()
             => Event;
     }
 
@@ -65,15 +63,16 @@ namespace Ark.Tools.EventSourcing.Store
             var eventType = e.Event.GetType();
             var outboxType = typeof(AggregateEventStore<,>).MakeGenericType(typeof(TAggregate), eventType);
 
-            var evt = (AggregateEventStore)Activator.CreateInstance(outboxType);
+            var evt = (AggregateEventStore?)Activator.CreateInstance(outboxType);
+            if (evt is null) throw new InvalidOperationException($"Failed to create instance of {outboxType}");
 
             evt.Id = e.Metadata.EventId;
             evt.EventName = e.Metadata.EventName;
             evt.AggregateId = e.Metadata.AggregateId;
             evt.AggregateName = e.Metadata.AggregateName;
-            evt.AggregateVersion = e.Metadata.AggregateVersion.Value;
+            evt.AggregateVersion = e.Metadata.AggregateVersion;
 
-            evt.Timestamp = e.Metadata.Timestamp.Value;
+            evt.Timestamp = e.Metadata.Timestamp;
 
             evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value);
 
@@ -85,7 +84,9 @@ namespace Ark.Tools.EventSourcing.Store
         public static AggregateEventEnvelope<TAggregate> FromStore<TAggregate>(this AggregateEventStore store)
             where TAggregate : IAggregate
         {
-            return new AggregateEventEnvelope<TAggregate>(store.GetEvent() as IAggregateEvent<TAggregate>, new Metadata(new MetadataContainer(store.Metadata)));
+            return new AggregateEventEnvelope<TAggregate>(
+                store.GetEvent() as IAggregateEvent<TAggregate> ?? throw new InvalidOperationException("Stored Event cannot be null")
+                , new Metadata(new MetadataContainer(store.Metadata)));
             
         }
     }

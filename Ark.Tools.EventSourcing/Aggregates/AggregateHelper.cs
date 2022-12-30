@@ -26,8 +26,8 @@ namespace Ark.Tools.EventSourcing.Aggregates
                 throw new ArgumentException("is not an event for this aggregate", nameof(t));
 
             var helperType = typeof(EventHelper<>).MakeGenericType(t);
-            var prop = helperType.GetProperty("Name");
-            return (string)prop.GetValue(null, null);
+            var prop = helperType.GetProperty("Name")!;
+            return (string)prop.GetValue(null, null)!;
         }
 
         private static string _getName()
@@ -47,8 +47,8 @@ namespace Ark.Tools.EventSourcing.Aggregates
                 throw new ArgumentException("is not an aggregate root", nameof(t));
 
             var helperType = typeof(AggregateHelper<>).MakeGenericType(t);
-            var prop = helperType.GetProperty("Name");
-            return (string)prop.GetValue(null, null);
+            var prop = helperType.GetProperty("Name")!;
+            return (string)prop.GetValue(null, null)!;
         }
     }
 }

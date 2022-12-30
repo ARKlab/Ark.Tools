@@ -33,7 +33,7 @@ namespace Ark.Tools.SpecFlow
             _settings = s;
         }
 
-        public object Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
+        public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
         {
             if (string.IsNullOrWhiteSpace(keyValuePair.Value)) return null;
 
@@ -54,6 +54,7 @@ namespace Ark.Tools.SpecFlow
         {
             if (actualValue == null ^ string.IsNullOrWhiteSpace(expectedValue)) return false;
             if (string.IsNullOrWhiteSpace(expectedValue) && actualValue == null) return true;
+            if (actualValue == null) return false;
 
             return JToken.DeepEquals(JToken.Parse(expectedValue), JToken.FromObject(actualValue, JsonSerializer.Create(_settings)));
         }

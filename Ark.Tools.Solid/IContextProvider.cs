@@ -3,7 +3,6 @@
 namespace Ark.Tools.Solid
 {
     public interface IContextProvider<TItem>
-        where TItem : class
     {
         TItem Current { get; }
     }

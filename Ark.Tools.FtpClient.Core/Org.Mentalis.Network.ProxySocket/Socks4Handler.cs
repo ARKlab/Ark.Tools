@@ -172,13 +172,13 @@ namespace Org.Mentalis.Network.ProxySocket {
 			try {
 				Server.EndConnect(ar);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
 				Server.BeginSend(Buffer, 0, Buffer.Length, SocketFlags.None, new AsyncCallback(this.OnSent), Server);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -189,7 +189,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			try {
 				HandleEndSend(ar, Buffer.Length);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 				return;
 			}
 			try {
@@ -197,7 +197,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				Received = 0;
 				Server.BeginReceive(Buffer, 0, Buffer.Length, SocketFlags.None, new AsyncCallback(this.OnReceive), Server);
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 		/// <summary>
@@ -209,16 +209,16 @@ namespace Org.Mentalis.Network.ProxySocket {
 				HandleEndReceive(ar);
 				if (Received == 8) {
 					if (Buffer[1] == 90)
-						ProtocolComplete(null);
+						ProtocolComplete?.Invoke(null);
 					else {
 						Server.Close();
-						ProtocolComplete(new ProxyException("Negotiation failed."));
+						ProtocolComplete?.Invoke(new ProxyException("Negotiation failed."));
 					}
 				} else {
 					Server.BeginReceive(Buffer, Received, Buffer.Length - Received, SocketFlags.None, new AsyncCallback(this.OnReceive), Server);
 				}
 			} catch (Exception e) {
-				ProtocolComplete(e);
+				ProtocolComplete?.Invoke(e);
 			}
 		}
 	}

@@ -5,8 +5,8 @@ namespace Ark.Tools.EventSourcing.Store
 {
 	public abstract class OutboxEvent : IOutboxEvent
     {
-        public string Id { get; set; }
-        public Dictionary<string, string> Metadata { get; set; }
+        public string Id { get; set; } = string.Empty;
+        public Dictionary<string, string> Metadata { get; set; } = new();
 
         public abstract void SetEvent(object @event);
         public abstract object GetEvent();
@@ -15,12 +15,12 @@ namespace Ark.Tools.EventSourcing.Store
     public sealed class OutboxEvent<TEvent> : OutboxEvent, IOutboxEvent<TEvent>
         where TEvent : class, IDomainEvent
     {
-        public TEvent Event { get; set; }
+        public TEvent? Event { get; set; }
 
         public override void SetEvent(object @event)
             => Event = @event as TEvent;
 
         public override object GetEvent()
-            => Event;
+            => Event!;
     }
 }

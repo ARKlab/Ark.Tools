@@ -1,7 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using System.Reflection;
 
@@ -10,7 +9,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
     public class GlobalInfoTelemetryInitializer : ITelemetryInitializer
     {
         private const string _processNameProperty = "ProcessName";
-        private readonly string _processName;
+        private readonly string? _processName;
 
         public GlobalInfoTelemetryInitializer()
         {

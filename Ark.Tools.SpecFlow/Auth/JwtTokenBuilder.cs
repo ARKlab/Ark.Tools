@@ -9,79 +9,79 @@ namespace Ark.Tools.SpecFlow.Auth
 {
     public sealed class JwtTokenBuilder
     {
-        private SecurityKey securityKey = null;
-        private string subject = "";
-        private string issuer = "";
-        private string audience = "";
-        private List<Claim> claims = new List<Claim>();
-        private int expiryInMinutes = 5;
+        private SecurityKey? _securityKey = null;
+        private string _subject = "";
+        private string _issuer = "";
+        private string _audience = "";
+        private readonly List<Claim> _claims = new List<Claim>();
+        private int _expiryInMinutes = 5;
 
         public JwtTokenBuilder AddSecurityKey(SecurityKey securityKey)
         {
-            this.securityKey = securityKey;
+            this._securityKey = securityKey;
             return this;
         }
 
         public JwtTokenBuilder AddSubject(string subject)
         {
-            this.subject = subject;
+            this._subject = subject;
             return this;
         }
 
         public JwtTokenBuilder AddIssuer(string issuer)
         {
-            this.issuer = issuer;
+            this._issuer = issuer;
             return this;
         }
 
         public JwtTokenBuilder AddAudience(string audience)
         {
-            this.audience = audience;
+            this._audience = audience;
             return this;
         }
 
         public JwtTokenBuilder AddClaim(string type, string value)
         {
-            this.claims.Add(new Claim(type, value));
+            this._claims.Add(new Claim(type, value));
             return this;
         }
 
         public JwtTokenBuilder RemoveClaim(string type)
         {
-            this.claims.RemoveAll(x => x.Type == type);
+            this._claims.RemoveAll(x => x.Type == type);
             return this;
         }
 
         public JwtTokenBuilder ClearClaims()
         {
-            this.claims.Clear();
+            this._claims.Clear();
             return this;
         }
 
         public JwtTokenBuilder AddExpiry(int expiryInMinutes)
         {
-            this.expiryInMinutes = expiryInMinutes;
+            this._expiryInMinutes = expiryInMinutes;
             return this;
         }
 
         public JwtToken Build()
         {
-            EnsureArguments();
+            _ensureArguments();
 
             var claims = new List<Claim>
             {
-              new Claim(JwtRegisteredClaimNames.Sub, this.subject),
+              new Claim(JwtRegisteredClaimNames.Sub, this._subject),
               new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             }
-            .Union(this.claims);
+            .Union(this._claims);
 
             var token = new JwtSecurityToken(
-                              issuer: this.issuer,
-                              audience: this.audience,
+                              issuer: this._issuer,
+                              audience: this._audience,
                               claims: claims,
-                              expires: DateTime.UtcNow.AddMinutes(expiryInMinutes),
+                              expires: DateTime.UtcNow.AddMinutes(_expiryInMinutes),
                               signingCredentials: new SigningCredentials(
-                                                        this.securityKey,
+                                                        this._securityKey,
                                                         SecurityAlgorithms.HmacSha256));
 
             return new JwtToken(token);
@@ -89,18 +89,18 @@ namespace Ark.Tools.SpecFlow.Auth
 
         #region " private "
 
-        private void EnsureArguments()
+        private void _ensureArguments()
         {
-            if (this.securityKey == null)
+            if (this._securityKey == null)
                 throw new ArgumentNullException("Security Key");
 
-            if (string.IsNullOrEmpty(this.subject))
+            if (string.IsNullOrEmpty(this._subject))
                 throw new ArgumentNullException("Subject");
 
-            if (string.IsNullOrEmpty(this.issuer))
+            if (string.IsNullOrEmpty(this._issuer))
                 throw new ArgumentNullException("Issuer");
 
-            if (string.IsNullOrEmpty(this.audience))
+            if (string.IsNullOrEmpty(this._audience))
                 throw new ArgumentNullException("Audience");
         }
 

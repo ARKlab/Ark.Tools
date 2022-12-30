@@ -18,50 +18,50 @@ namespace Ark.Tools.EventSourcing.Events
 
         public string EventId
         {
-            get => _container.GetMetadataValue(MetadataKeys.EventId);
-            set => _container.Add(MetadataKeys.EventId, value);
+            get => _container.GetMetadataValue(MetadataKeys.EventId) ?? throw new InvalidOperationException(MetadataKeys.EventId + " cannot be null");
+            set => _container[MetadataKeys.EventId] = value;
         }
 
         public string EventName
         {
-            get => _container.GetMetadataValue(MetadataKeys.EventName);
-            set => _container.Add(MetadataKeys.EventName, value);
+            get => _container.GetMetadataValue(MetadataKeys.EventName) ?? throw new InvalidOperationException(MetadataKeys.EventName + " cannot be null");
+            set => _container[MetadataKeys.EventName] = value;
         }
 
-        public int? EventVersion
+        public int EventVersion
         {
-            get => _container.GetMetadataValue(MetadataKeys.EventVersion, Convert.ToInt32);
-            set => _container.Add(MetadataKeys.EventVersion, Convert.ToString(value));
+            get => _container.GetMetadataValue(MetadataKeys.EventVersion, Convert.ToInt32) ?? throw new InvalidOperationException(MetadataKeys.EventVersion + " cannot be null");
+            set => _container.SetMetadataValue<int>(MetadataKeys.EventVersion, value, Convert.ToString);
         }
 
-        public DateTimeOffset? Timestamp
+        public DateTimeOffset Timestamp
         {
-            get => _container.GetMetadataValue(MetadataKeys.Timestamp, DateTimeOffset.Parse);
-            set => _container.Add(MetadataKeys.Timestamp, value?.ToString("O"));
+            get => _container.GetMetadataValue(MetadataKeys.Timestamp, DateTimeOffset.Parse) ?? throw new InvalidOperationException(MetadataKeys.Timestamp + " cannot be null");
+            set => _container.SetMetadataValue<DateTimeOffset>(MetadataKeys.Timestamp, value, v => v.ToString("O"));
         }
 
-        public long? TimestampEpoch
+        public long TimestampEpoch
         {
-            get => _container.GetMetadataValue(MetadataKeys.TimestampEpoch, Convert.ToInt64);
-            set => _container.Add(MetadataKeys.TimestampEpoch, Convert.ToString(value));
+            get => _container.GetMetadataValue(MetadataKeys.TimestampEpoch, Convert.ToInt64) ?? throw new InvalidOperationException(MetadataKeys.TimestampEpoch + " cannot be null");
+            set => _container.SetMetadataValue<long>(MetadataKeys.TimestampEpoch, value, Convert.ToString);
         }
 
-        public long? AggregateVersion
+        public long AggregateVersion
         {
-            get => _container.GetMetadataValue(MetadataKeys.AggregateVersion, Convert.ToInt64);
-            set => _container.Add(MetadataKeys.AggregateVersion, Convert.ToString(value));
+            get => _container.GetMetadataValue(MetadataKeys.AggregateVersion, Convert.ToInt64) ?? throw new InvalidOperationException(MetadataKeys.AggregateVersion + " cannot be null");
+            set => _container.SetMetadataValue<long>(MetadataKeys.AggregateVersion, value, Convert.ToString);
         }
 
         public string AggregateId
         {
-            get => _container.GetMetadataValue(MetadataKeys.AggregateId);
-            set => _container.Add(MetadataKeys.AggregateId, value);
+            get => _container.GetMetadataValue(MetadataKeys.AggregateId) ?? throw new InvalidOperationException(MetadataKeys.AggregateId + " cannot be null");
+            set => _container.SetMetadataValue(MetadataKeys.AggregateId, value);
         }
 
         public string AggregateName
         {
-            get => _container.GetMetadataValue(MetadataKeys.AggregateName);
-            set => _container.Add(MetadataKeys.AggregateName, value);
+            get => _container.GetMetadataValue(MetadataKeys.AggregateName) ?? throw new InvalidOperationException(MetadataKeys.AggregateName + " cannot be null");
+            set => _container.SetMetadataValue(MetadataKeys.AggregateName, value);
         }
 
         public IReadOnlyDictionary<string, string> Values => _container;

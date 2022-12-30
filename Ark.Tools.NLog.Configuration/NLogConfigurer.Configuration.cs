@@ -32,7 +32,7 @@ namespace Ark.Tools.NLog
             return @this;
         }
 
-        public static string GetNLogSetting(this IConfiguration cfg, string key)
+        public static string? GetNLogSetting(this IConfiguration cfg, string key)
         {
             // 1. Settings consts are defined with '.' separator for hierarchy (historical)
             // 2. For AppSettings we need to replace '.' with ':'
@@ -51,7 +51,7 @@ namespace Ark.Tools.NLog
             return res;
         }
 
-        public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, string logTableName, string mailFrom = null, bool async = true)
+        public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, string logTableName, string? mailFrom = null, bool async = true)
         {
             var config = new Config
             {
@@ -70,7 +70,7 @@ namespace Ark.Tools.NLog
             return @this;
         }
 
-        public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string appName = null, string mailFrom = null)
+        public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string? appName = null, string? mailFrom = null)
         {
             appName ??= Assembly.GetEntryAssembly()?.GetName().Name ?? AppDomain.CurrentDomain.FriendlyName ?? "Unknown";
 

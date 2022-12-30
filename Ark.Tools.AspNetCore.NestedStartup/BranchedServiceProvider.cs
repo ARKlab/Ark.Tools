@@ -15,7 +15,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
             _service = service;
         }
 
-        public object GetService(Type serviceType)
+        public object? GetService(Type serviceType)
         {
             return _service.GetService(serviceType) ?? _parentService.GetService(serviceType);
         }

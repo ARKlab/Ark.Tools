@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Web" Version="1.25.10" />
-    <PackageReference Include="NLog.Extensions.Hosting" Version="5.2.0" />
+    <PackageReference Include="NLog.Extensions.Hosting" Version="5.2.1" />
   </ItemGroup>
 
   <ItemGroup>

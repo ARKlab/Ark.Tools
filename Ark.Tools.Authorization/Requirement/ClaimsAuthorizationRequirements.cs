@@ -19,14 +19,9 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="claimType">The claim type that must be present.</param>
         /// <param name="allowedValues">The optional list of claim values, which, if present, 
         /// the claim must match.</param>
-        public ClaimsAuthorizationRequirement(string claimType, IEnumerable<string> allowedValues)
+        public ClaimsAuthorizationRequirement(string claimType, IEnumerable<string>? allowedValues)
         {
-            if (claimType == null)
-            {
-                throw new ArgumentNullException(nameof(claimType));
-            }
-
-            ClaimType = claimType;
+            ClaimType = claimType ?? throw new ArgumentNullException(nameof(claimType));
             AllowedValues = allowedValues;
         }
 
@@ -39,7 +34,7 @@ namespace Ark.Tools.Authorization.Requirement
         /// Gets the optional list of claim values, which, if present, 
         /// the claim must match.
         /// </summary>
-        public IEnumerable<string> AllowedValues { get; }
+        public IEnumerable<string>? AllowedValues { get; }
 
         /// <summary>
         /// Makes a decision if authorization is allowed based on the claims requirements specified.

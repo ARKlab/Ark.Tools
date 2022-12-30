@@ -8,13 +8,13 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
     public class SeparatedPathValueProviderFactory : IValueProviderFactory
     {
         private readonly char _separator;
-        private readonly string _key;
+        private readonly string? _key;
 
         public SeparatedPathValueProviderFactory(char separator) : this(null, separator)
         {
         }
 
-        public SeparatedPathValueProviderFactory(string key, char separator)
+        public SeparatedPathValueProviderFactory(string? key, char separator)
         {
             _separator = separator;
             _key = key;

@@ -103,7 +103,7 @@ namespace Ark.Tools.AspNetCore.Startup
 					  , string authenticationScheme
 			          , string audience
 					  , string domain
-					  , Action<JwtBearerOptions> configureOptions = null)
+					  , Action<JwtBearerOptions>? configureOptions = null)
 		{
 			return  builder.AddJwtBearer(authenticationScheme, o =>
 			{

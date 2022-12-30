@@ -1,6 +1,8 @@
 ﻿using Ark.Tools.EventSourcing.Events;
 using Ark.Tools.EventSourcing.Store;
+
 using EnsureThat;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,18 +13,19 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.Aggregates
 {
-	public abstract class AggregateTransaction<TAggregateRoot, TAggregateState, TAggregate> 
+    public abstract class AggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
         : IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
         where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
         where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
         where TAggregate : IAggregate
     {
-        public TAggregateRoot Aggregate { get; private set; } = null;
+        public TAggregateRoot Aggregate { get; private set; }
         public string Identifier { get; }
 
-        public IEnumerable<AggregateEventEnvelope<TAggregate>> History { get; private set; }
+        public IEnumerable<AggregateEventEnvelope<TAggregate>> History { get; private set; } = Enumerable.Empty<AggregateEventEnvelope<TAggregate>>();
 
-		public AggregateTransaction(string identifier, IAggregateRootFactory aggregateRootFactory)
+
+        public AggregateTransaction(string identifier, IAggregateRootFactory aggregateRootFactory)
         {
             Identifier = identifier;
             Aggregate = aggregateRootFactory.Create<TAggregateRoot>();
@@ -33,7 +36,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
             Aggregate.SetState(state);
         }
 
-        private void _createFromHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history, TAggregateState snapshot = null)
+        private void _createFromHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history, TAggregateState? snapshot = null)
         {
             if (snapshot != null)
                 Aggregate.SetState(snapshot);
@@ -47,21 +50,21 @@ namespace Ark.Tools.EventSourcing.Aggregates
             Aggregate.ApplyHistory(history);
         }
 
-		public async Task LoadAsync(long maxVersion, CancellationToken ctk = default)
-		{
-			var events = await LoadHistory(maxVersion, ctk);
-			History = events;
+        public async Task LoadAsync(long maxVersion, CancellationToken ctk = default)
+        {
+            var events = await LoadHistory(maxVersion, ctk);
+            History = events;
 
-			_createFromHistory(events);
-		}
+            _createFromHistory(events);
+        }
 
-		public Task LoadAsync(CancellationToken ctk = default)
-		{
-			return LoadAsync(long.MaxValue, ctk);
-		}
+        public Task LoadAsync(CancellationToken ctk = default)
+        {
+            return LoadAsync(long.MaxValue, ctk);
+        }
 
-		public abstract Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default);
-		public abstract Task SaveChangesAsync(CancellationToken ctk = default);
+        public abstract Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default);
+        public abstract Task SaveChangesAsync(CancellationToken ctk = default);
 
         protected virtual void Dispose(bool disposing) { }
 
@@ -84,15 +87,15 @@ namespace Ark.Tools.EventSourcing.Aggregates
         private readonly List<DomainEventEnvelope> _uncommittedDomainEvents = new List<DomainEventEnvelope>();
         private bool _applying;
 
-        public TAggregateState State { get; private set; }
+        public TAggregateState? State { get; private set; }
 
         public string Name => _aggregateName;
-        public string Identifier => State.Identifier;
-        public long Version => State.Version;
+        public string Identifier => State!.Identifier;
+        public long Version => State!.Version;
         public bool IsNew => Version == 0;
         public IEnumerable<AggregateEventEnvelope<TAggregate>> UncommittedAggregateEvents => _uncommittedAggregateEvents;
         public IEnumerable<DomainEventEnvelope> UncommittedDomainEvents => _uncommittedDomainEvents;
-        
+
         static AggregateRoot()
         {
             var aggregateEventType = typeof(IAggregateEvent<TAggregate>);
@@ -102,40 +105,42 @@ namespace Ark.Tools.EventSourcing.Aggregates
                 .GetTypeInfo()
                 .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
                 .Where(mi => mi.Name == "Apply")
-                .Where(mi => {
+                .Where(mi =>
+                {
                     var parameters = mi.GetParameters();
                     return parameters.Length == 2
                         && aggregateEventType.GetTypeInfo().IsAssignableFrom(parameters[0].ParameterType)
                         ;
-                    })
+                })
                 ;
 
             _applyMethods = methods
                 .ToDictionary(
                     mi => mi.GetParameters()[0].ParameterType,
-                    mi => {
+                    mi =>
+                    {
                         var eventType = mi.GetParameters()[0].ParameterType;
                         var aggregateParam = Expression.Parameter(typeof(TAggregateRoot), "agg");
                         var eventParam = Expression.Parameter(aggregateEventType, "evt");
-						var metadataParam = Expression.Parameter(typeof(IMetadata), "metadata");
+                        var metadataParam = Expression.Parameter(typeof(IMetadata), "metadata");
 
-						var lambda = Expression.Lambda<Action<TAggregateRoot, IAggregateEvent<TAggregate>, IMetadata>>(
+                        var lambda = Expression.Lambda<Action<TAggregateRoot, IAggregateEvent<TAggregate>, IMetadata>>(
                             Expression.Call(
                                 aggregateParam,
                                 mi,
                                 Expression.Convert(eventParam, eventType),
-								metadataParam
-							),
+                                metadataParam
+                            ),
                             aggregateParam,
                             eventParam,
-							metadataParam
-						);
+                            metadataParam
+                        );
 
                         return lambda.Compile();
                     }
                 );
         }
-        
+
         internal void SetState(TAggregateState state)
         {
             if (State != null)
@@ -151,7 +156,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
                 _apply(e);
         }
 
-        protected virtual void Emit<TEvent>(TEvent aggregateEvent, IDictionary<string,string> metadata = null)
+        protected virtual void Emit<TEvent>(TEvent aggregateEvent, IDictionary<string, string>? metadata = null)
             where TEvent : class, IAggregateEvent<TAggregate>
         {
             Ensure.Any.IsNotNull(aggregateEvent, nameof(aggregateEvent));
@@ -187,7 +192,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
             _uncommittedAggregateEvents.Add(uncommittedEvent);
         }
 
-        protected virtual void Publish<TEvent>(TEvent domainEvent, IMetadata metadata = null)
+        protected virtual void Publish<TEvent>(TEvent domainEvent, IMetadata? metadata = null)
             where TEvent : class, IDomainEvent
         {
             Ensure.Any.IsNotNull(domainEvent, nameof(domainEvent));
@@ -198,7 +203,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
             var now = DateTimeOffset.Now;
             var eventMetadata = new Metadata
             {
-                Timestamp = now,                
+                Timestamp = now,
                 EventId = Guid.NewGuid().ToString(),
                 TimestampEpoch = now.ToUnixTimeMilliseconds(),
 
@@ -226,11 +231,11 @@ namespace Ark.Tools.EventSourcing.Aggregates
                     $"Aggregate '{Name}' does have an 'Apply' method that takes aggregate event '{eventType}' as argument");
             }
 
-            applyMethod(this as TAggregateRoot, aggregateEvent.Event, aggregateEvent.Metadata);
+            applyMethod((TAggregateRoot)this, aggregateEvent.Event, aggregateEvent.Metadata);
 
             ValidateInvariantsOrThrow();
 
-            ++State._version;
+            ++State!._version;
             _applying = false;
         }
 

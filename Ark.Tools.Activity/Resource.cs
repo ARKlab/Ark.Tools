@@ -34,7 +34,7 @@ namespace Ark.Tools.Activity
             return !x.Equals(y);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (!(obj is Resource))
                 return false;

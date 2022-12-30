@@ -41,9 +41,9 @@ namespace TestWorker.DataProvider
             });
         }
 
-        public Task<Test_File> GetResource(Test_FileMetadataDto metadata, IResourceTrackedState lastState, CancellationToken ctk = default)
+        public Task<Test_File?> GetResource(Test_FileMetadataDto metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
         {
-            return Task.Run(() =>
+            return Task.Run<Test_File?>(() =>
             {
                 var downloadedFile = new Test_File(metadata)
                 {

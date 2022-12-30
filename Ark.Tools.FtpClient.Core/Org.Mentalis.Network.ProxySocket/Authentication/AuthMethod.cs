@@ -43,7 +43,8 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication {
 		/// </summary>
 		/// <param name="server">The socket connection with the proxy server.</param>
 		public AuthMethod(Socket server) {
-			Server = server;
+			m_Server = server;
+            m_Buffer = Array.Empty<byte>();
 		}
 		/// <summary>
 		/// Authenticates the user.
@@ -106,7 +107,7 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication {
 		/// <summary>Holds the value of the Server property.</summary>
 		private Socket m_Server;
 		/// <summary>Holds the address of the method to call when the proxy has authenticated the client.</summary>
-		protected HandShakeComplete CallBack;
+		protected HandShakeComplete? CallBack;
 		/// <summary>Holds the value of the Received property.</summary>
 		private int m_Received;
 	}

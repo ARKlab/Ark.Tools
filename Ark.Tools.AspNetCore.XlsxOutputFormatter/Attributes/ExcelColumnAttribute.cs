@@ -13,12 +13,12 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Attributes
         /// <summary>
         /// Control the output of this property when serialized to Excel.
         /// </summary>
-        public ExcelColumnAttribute() { }
+        public ExcelColumnAttribute() : this(null) { }
 
         /// <summary>
         /// Control the output of this property when serialized to Excel.
         /// </summary>
-        public ExcelColumnAttribute(string header) : this()
+        public ExcelColumnAttribute(string? header)
         {
             Header = header;
         }
@@ -26,17 +26,17 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Attributes
         /// <summary>
         /// Column header to use for this property.
         /// </summary>
-        public string Header { get; set; }
+        public string? Header { get; set; }
 
         /// <summary>
         /// Value to use if this field is a boolean value and equals <c>true</c>.
         /// </summary>
-        public string TrueValue { get; set; }
+        public string? TrueValue { get; set; }
 
         /// <summary>
         /// Value to use if this field is a boolean value and equals <c>false</c>.
         /// </summary>
-        public string FalseValue { get; set; }
+        public string? FalseValue { get; set; }
 
         /// <summary>
         /// Whether to use the display format string set for this field.
@@ -60,6 +60,6 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Attributes
         /// <summary>
         /// Apply the specified Excel number format string to this property in the generated Excel output.
         /// </summary>
-        public string NumberFormat { get; set; }
+        public string? NumberFormat { get; set; }
     }
 }

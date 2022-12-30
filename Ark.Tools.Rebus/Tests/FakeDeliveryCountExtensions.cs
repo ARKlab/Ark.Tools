@@ -96,7 +96,7 @@ namespace MET.International.Common.Rebus.Tests
                 _inner.CreateQueue(address);
             }
 
-            public async Task<TransportMessage> Receive(ITransactionContext context, CancellationToken cancellationToken)
+            public async Task<TransportMessage?> Receive(ITransactionContext context, CancellationToken cancellationToken)
             {
                 var m = await _inner.Receive(context, cancellationToken);
                 if (m!= null)

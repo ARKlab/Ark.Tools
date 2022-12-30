@@ -16,7 +16,7 @@ namespace Ark.Tools.Nodatime.Dapper
 
         public static readonly LocalDateTimeHandler Instance = new LocalDateTimeHandler();
 
-        public event EventHandler<IDbDataParameter> OnSetValue;
+        public event EventHandler<IDbDataParameter>? OnSetValue;
 
         public override void SetValue(IDbDataParameter parameter, LocalDateTime value)
         {
@@ -28,7 +28,7 @@ namespace Ark.Tools.Nodatime.Dapper
             OnSetValue?.Invoke(this, parameter);
         }
 
-        public override LocalDateTime Parse(object value)
+        public override LocalDateTime Parse(object? value)
         {
             if (value == null || value is DBNull) return default;
 
@@ -41,7 +41,7 @@ namespace Ark.Tools.Nodatime.Dapper
             {
                 var conv = TypeDescriptor.GetConverter(typeof(LocalDateTime));
                 if (conv?.CanConvertFrom(typeof(string)) == true)
-                    return (LocalDateTime)conv.ConvertFromString(s);
+                    return (LocalDateTime)(conv.ConvertFromString(s) ?? throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.LocalDateTime"));
             }
 
             throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.LocalDateTime");

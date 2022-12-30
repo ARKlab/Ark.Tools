@@ -20,7 +20,7 @@ namespace TestWorker
                 .ConfigureNLog(Test_Constants.AppName)
                 .AddWorkerHost(
                     s => {
-                        var cfg = s.GetService<IConfiguration>();
+                        var cfg = s.GetRequiredService<IConfiguration>();
                         var h = HostNs.Test_Host.Configure(cfg, configurer: c =>
                         {
                             //c.IgnoreState = Debugger.IsAttached;

@@ -10,8 +10,8 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Serialisation
     public class ExcelColumnInfo
     {
         public string PropertyName { get; set; }
-        public ExcelColumnAttribute ExcelAttribute { get; set; }
-        public string FormatString { get; set; }
+        public ExcelColumnAttribute? ExcelAttribute { get; set; }
+        public string? FormatString { get; set; }
         public string Header { get; set; }
 
         public string ExcelNumberFormat
@@ -24,7 +24,7 @@ namespace Ark.Tools.AspNetCore.XlsxOutputFormatter.Serialisation
             get { return ExcelAttribute != null && ExcelAttribute.Header != null; }
         }
 
-        public ExcelColumnInfo(string propertyName, ExcelColumnAttribute excelAttribute = null, string formatString = null)
+        public ExcelColumnInfo(string propertyName, ExcelColumnAttribute? excelAttribute = null, string? formatString = null)
         {
             PropertyName = propertyName;
             ExcelAttribute = excelAttribute;

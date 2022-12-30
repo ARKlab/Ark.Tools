@@ -11,9 +11,10 @@ namespace Ark.Tools.SimpleInjector
 {
     public static partial class Ex
     {
-        private static void _resolveCollectionsHandler(object sender, UnregisteredTypeEventArgs e)
+        private static void _resolveCollectionsHandler(object? sender, UnregisteredTypeEventArgs e)
         {
             var container = sender as Container;
+            if (container == null) throw new ArgumentNullException(nameof(sender));
 
             // Only handle IEnumerable<>.
             // Works only with GetAllInstances
@@ -35,12 +36,12 @@ namespace Ark.Tools.SimpleInjector
             {
                 var instances = registrations.Select(r => r.GetInstance());
 
-                var castMethod = typeof(Enumerable).GetMethod("Cast")
+                var castMethod = typeof(Enumerable).GetMethod("Cast")!
                     .MakeGenericMethod(serviceType);
 
                 var castedInstances = castMethod.Invoke(null, new[] { instances });
 
-                e.Register(() => castedInstances);
+                e.Register(() => castedInstances!);
             }
         }
 
@@ -56,7 +57,7 @@ namespace Ark.Tools.SimpleInjector
         }
 
         public static void RegisterFuncFactory<TService, TImpl>(
-                this Container container, Lifestyle lifestyle = null)
+                this Container container, Lifestyle? lifestyle = null)
             where TService : class
             where TImpl : class, TService
         {
@@ -81,9 +82,10 @@ namespace Ark.Tools.SimpleInjector
             });
         }
 
-        private static void _resolveVariantCollectionsHandler(object sender, UnregisteredTypeEventArgs e)
+        private static void _resolveVariantCollectionsHandler(object? sender, UnregisteredTypeEventArgs e)
         {
             var container = sender as Container;
+            if (container == null) throw new ArgumentNullException(nameof(sender));
 
             // Only handle IEnumerable<>.
             // Works only with GetAllInstances
@@ -114,12 +116,12 @@ namespace Ark.Tools.SimpleInjector
             {
                 var instances = registrations.Select(r => r.GetInstance());
 
-                var castMethod = typeof(Enumerable).GetMethod("Cast")
+                var castMethod = typeof(Enumerable).GetMethod("Cast")!
                     .MakeGenericMethod(serviceType);
 
                 var castedInstances = castMethod.Invoke(null, new[] { instances });
 
-                e.Register(() => castedInstances);
+                e.Register(() => castedInstances!);
             }
         }
 
@@ -134,10 +136,11 @@ namespace Ark.Tools.SimpleInjector
             container.ResolveUnregisteredType += _resolveVariantCollectionsHandler;
         }
 
-        private static void _resolveVariantTypesHandler(object sender, UnregisteredTypeEventArgs e)
+        private static void _resolveVariantTypesHandler(object? sender, UnregisteredTypeEventArgs e)
         {
-            Type serviceType = e.UnregisteredServiceType;
             var container = sender as Container;
+            if (container == null) throw new ArgumentNullException(nameof(sender));
+            Type serviceType = e.UnregisteredServiceType;
 
             if (!serviceType.IsGenericType)
             {
@@ -183,10 +186,11 @@ namespace Ark.Tools.SimpleInjector
             container.ResolveUnregisteredType += _resolveVariantTypesHandler;
         }
 
-        private static void _resolvingFuncFactoriesHandler(object sender, UnregisteredTypeEventArgs e)
+        private static void _resolvingFuncFactoriesHandler(object? sender, UnregisteredTypeEventArgs e)
         {
-            var type = e.UnregisteredServiceType;
             var container = sender as Container;
+            if (container == null) throw new ArgumentNullException(nameof(sender));
+            var type = e.UnregisteredServiceType;
 
             if (!type.IsGenericType ||
                 type.GetGenericTypeDefinition() != typeof(Func<>))
@@ -197,7 +201,8 @@ namespace Ark.Tools.SimpleInjector
             Type serviceType = type.GetGenericArguments().First();
 
             InstanceProducer producer = container
-                .GetRegistration(serviceType, true);
+                .GetRegistration(serviceType, true)!;
+
             producer.Registration.SuppressDiagnosticWarning(DiagnosticType.DisposableTransientComponent, "Ignored during automatic Func Registration");
 
             Type funcType =
@@ -206,7 +211,7 @@ namespace Ark.Tools.SimpleInjector
             var factoryDelegate = Expression.Lambda(funcType,
                 producer.BuildExpression()).Compile();
 
-            var registration = Lifestyle.Singleton.CreateRegistration(funcType, () => factoryDelegate, (Container)sender);
+            var registration = Lifestyle.Singleton.CreateRegistration(funcType, () => factoryDelegate, container);
 
             e.Register(registration);
         }
@@ -219,10 +224,11 @@ namespace Ark.Tools.SimpleInjector
             container.ResolveUnregisteredType += _resolvingFuncFactoriesHandler;
         }
 
-        private static void _resolvingLazyServicesHandler(object sender, UnregisteredTypeEventArgs e)
+        private static void _resolvingLazyServicesHandler(object? sender, UnregisteredTypeEventArgs e)
         {
-            var type = e.UnregisteredServiceType;
             var container = sender as Container;
+            if (container == null) throw new ArgumentNullException(nameof(sender));
+            var type = e.UnregisteredServiceType;
 
             if (!type.IsGenericType ||
                 type.GetGenericTypeDefinition() != typeof(Lazy<>))
@@ -233,7 +239,7 @@ namespace Ark.Tools.SimpleInjector
             Type serviceType = type.GetGenericArguments().First();
 
             InstanceProducer registration = container
-                .GetRegistration(serviceType, true);
+                .GetRegistration(serviceType, true)!;
             registration.Registration.SuppressDiagnosticWarning(DiagnosticType.DisposableTransientComponent, "Ignored during automatic Lazy Registration");
 
             Type funcType =
@@ -246,10 +252,9 @@ namespace Ark.Tools.SimpleInjector
                 registration.BuildExpression());
 
             var lazyDelegate = Expression.Lambda(lazyType,
-                Expression.New(lazyType.GetConstructor(new[] { funcType }), funcExpression)).Compile();
+                Expression.New(lazyType.GetConstructor(new[] { funcType })!, funcExpression)).Compile();
 
             e.Register(Expression.Constant(lazyDelegate));
-
         }
 
         public static void AllowResolvingLazyServices(

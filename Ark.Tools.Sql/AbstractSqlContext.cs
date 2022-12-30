@@ -3,14 +3,14 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.Sql
 {
     public abstract class AbstractSqlContext<Tag> : ISqlContext<Tag>
     {
         private DbConnection _connection;
-        private DbTransaction _transaction;
+        private DbTransaction? _transaction;
         private bool _disposed = false;
         private IsolationLevel _isolationLevel;
         private object _lock = new object();
@@ -24,10 +24,11 @@ namespace Ark.Tools.Sql
         protected AbstractSqlContext(DbTransaction transaction)
         {
             _transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
-            _connection = transaction.Connection;
+            _connection = transaction.Connection ?? throw new ArgumentNullException(nameof(transaction.Connection));
             _isolationLevel = _transaction.IsolationLevel;
         }
 
+        [MemberNotNull(nameof(_transaction))]
         private void _ensureOpened()
         {
             // we consider this double check "safe" given if someone tries to get a CONNECTION during a COMMIT ... well he should be kicked
@@ -51,7 +52,7 @@ namespace Ark.Tools.Sql
             get
             {
                 _ensureOpened();
-                return _transaction.Connection;
+                return _connection;
             }
         }
 

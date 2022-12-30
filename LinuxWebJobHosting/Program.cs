@@ -55,7 +55,7 @@ namespace Processor.Service.WebInterface
                 .AddWorkerHost(
                     s =>
                     {
-                        var cfg = s.GetService<IConfiguration>();
+                        var cfg = s.GetRequiredService<IConfiguration>();
                         var h = TestWorker.HostNs.Test_Host.Configure(cfg, configurer: c =>
                         {
                         });

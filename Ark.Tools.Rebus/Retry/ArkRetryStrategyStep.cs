@@ -184,7 +184,7 @@ If the maximum number of delivery attempts is reached, the message is moved to t
         /// </summary>
         public static string GetSecondLevelMessageId(string messageId) => messageId + "-2nd-level";
 
-        async Task _handle(IncomingStepContext context, Func<Task> next, string identifierToTrackMessageBy, ITransactionContext transactionContext, string messageId, string secondLevelMessageId = null)
+        async Task _handle(IncomingStepContext context, Func<Task> next, string identifierToTrackMessageBy, ITransactionContext transactionContext, string messageId, string? secondLevelMessageId = null)
         {
             try
             {

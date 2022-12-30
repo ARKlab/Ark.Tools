@@ -32,7 +32,7 @@ namespace Ark.Tools.Authorization
         /// Resource is an optional parameter and may be null. Please ensure that you check it is not 
         /// null before acting upon it.
         /// </remarks>
-        Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, string policyName, CancellationToken ctk = default);
+        Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName, CancellationToken ctk = default);
 
         /// <summary>
         /// Checks if a user meets a specific authorization policy
@@ -53,6 +53,6 @@ namespace Ark.Tools.Authorization
         /// Resource is an optional parameter and may be null. Please ensure that you check it is not 
         /// null before acting upon it.
         /// </remarks>
-        Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object resource, IAuthorizationPolicy policy, CancellationToken ctk = default);
+        Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object? resource, IAuthorizationPolicy policy, CancellationToken ctk = default);
     }
 }

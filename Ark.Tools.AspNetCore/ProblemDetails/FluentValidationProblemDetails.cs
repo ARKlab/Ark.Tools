@@ -19,35 +19,20 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                         ErrorMessage = error.ErrorMessage,
                         FormattedMessagePlaceholderValues = error.FormattedMessagePlaceholderValues,
                     }
-                ).ToArray());
+                ).ToArray()) ?? new Dictionary<string, FluentValidationErrors[]>();
 
-			Detail = string.Join(Environment.NewLine, Errors?.SelectMany(s => s.Value.Select(x => x.ErrorMessage)));
+			Detail = string.Join(Environment.NewLine, Errors.SelectMany(s => s.Value.Select(x => x.ErrorMessage)));
 		}
 
         public Dictionary<string, FluentValidationErrors[]> Errors { get; set; }
     }
 
-    public class FluentValidationErrors
-    {
-        //
-        // Summary:
-        //     The error message
-        public string ErrorMessage { get; set; }
-        //
-        // Summary:
-        //     The property value that caused the failure.
-        public object AttemptedValue { get; set; }
-        //
-        // Summary:
-        //     Custom state associated with the failure.
-        public object CustomState { get; set; }
-        //
-        // Summary:
-        //     Gets or sets the error code.
-        public string ErrorCode { get; set; }
-        //
-        // Summary:
-        //     Gets or sets the formatted message placeholder values.
-        public Dictionary<string, object> FormattedMessagePlaceholderValues { get; set; }
+    public record FluentValidationErrors
+    {        
+        public string? ErrorMessage { get; init; }
+        public object? AttemptedValue { get; init; }
+        public object? CustomState { get; init; }
+        public string? ErrorCode { get; init; }
+        public Dictionary<string, object> FormattedMessagePlaceholderValues { get; init; } = new Dictionary<string, object>();
     }
 }
