@@ -5,7 +5,7 @@ using Ark.Tools.Auth0;
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Identity.Client;
 
 using Polly;
 
@@ -19,7 +19,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
     internal class TokenProvider
     {
-        private readonly AuthenticationContext? _adal;
+        private readonly IConfidentialClientApplication? _adal;
         private readonly IAuthenticationApiClient? _auth0;
         private readonly IFtpClientProxyConfig _config;
 
@@ -32,7 +32,10 @@ namespace Ark.Tools.FtpClient.FtpProxy
                 _auth0 = new AuthenticationApiClientCachingDecorator(new AuthenticationApiClient(_config.TenantID));
 #pragma warning restore CA2000 // Dispose objects before losing scope
             else
-                _adal = new AuthenticationContext("https://login.microsoftonline.com/" + this._config.TenantID);
+                _adal = ConfidentialClientApplicationBuilder.Create(_config.ClientID)
+                                          .WithClientSecret(_config.ClientKey)
+                                          .WithAuthority(new Uri("https://login.microsoftonline.com/" + this._config.TenantID))
+                                          .Build();
         }
 
         public Task<string> GetToken(CancellationToken ctk = default)
@@ -74,9 +77,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
             try
             {
                 result = await Policy
-                    .Handle<AdalException>(ex => ex.ErrorCode == "temporarily_unavailable")
+                    .Handle<MsalException>(ex => ex.IsRetryable)
                     .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(3))
-                    .ExecuteAsync(c => adal.AcquireTokenAsync(_config.ApiIdentifier, new ClientCredential(this._config.ClientID, this._config.ClientKey)), ctk, false)
+                    .ExecuteAsync(c => adal.AcquireTokenForClient(new[] { _config.ApiIdentifier + "/.default" }).ExecuteAsync(c), ctk, false)
                     ;
             }
             catch (Exception ex)
