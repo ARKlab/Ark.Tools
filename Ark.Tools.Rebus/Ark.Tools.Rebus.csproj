@@ -26,17 +26,15 @@
 		<PackageReference Include="Rebus.NLog" Version="5.0.0" />
 		<PackageReference Include="Rebus.AzureServiceBus" Version="9.2.0" />
 		<PackageReference Include="Rebus.SqlServer" Version="7.2.0" />
-    <PackageReference Include="Rebus.AzureBlobs" Version="0.6.0" />
-    <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" /> <!-- needed for a clash in Azure.Messaging.ServiceBus 7.2.1 -->
-    <PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.2.0" />
+        <PackageReference Include="Rebus.AzureBlobs" Version="0.6.0" />
+        <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.11.1" />
 	</ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
-    <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
-    
+    <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />    
   </ItemGroup>
   
   <ItemGroup>
