@@ -77,9 +77,9 @@ If the maximum number of delivery attempts is reached, the message is moved to t
                 return;
             }
 
-            _checkFinal(context, true);
+            await _checkFinal(context, true);
 
-            if (_errorTracker.HasFailedTooManyTimes(messageId))
+            if (await _errorTracker.HasFailedTooManyTimes(messageId))
             {
                 await _handleError(context, next, messageId);
             }
@@ -100,7 +100,7 @@ If the maximum number of delivery attempts is reached, the message is moved to t
         /// DeliveryCount is natively 1-based: first try has count=1 before trying.
         /// When this is the last try we need first to execute.
         /// </remarks>
-        private void _checkFinal(IncomingStepContext context, bool beforeTry = false)
+        private async Task _checkFinal(IncomingStepContext context, bool beforeTry = false)
         {
             var transportMessage = context.Load<TransportMessage>();
             var messageId = transportMessage.Headers.GetValue(Headers.MessageId);
@@ -113,7 +113,7 @@ If the maximum number of delivery attempts is reached, the message is moved to t
                 transportDeliveryCount = dc;
             }
 
-            _checkFinal(messageId, transportDeliveryCount, beforeTry);
+            await _checkFinal(messageId, transportDeliveryCount, beforeTry);
 
             if (_arkRetryStrategySettings.SecondLevelRetriesEnabled)
             {
@@ -127,13 +127,13 @@ If the maximum number of delivery attempts is reached, the message is moved to t
                         transportDeliveryCount = 1;
                 }
 
-                _checkFinal(secondLevelMessageId, transportDeliveryCount, beforeTry);
+                await _checkFinal(secondLevelMessageId, transportDeliveryCount, beforeTry);
             }
         }
 
-        private void _checkFinal(string messageId, int? transportDeliveryCount, bool beforeTry)
+        private async Task _checkFinal(string messageId, int? transportDeliveryCount, bool beforeTry)
         {
-            var exceptions = _errorTracker.GetExceptions(messageId);
+            var exceptions = await _errorTracker.GetExceptions(messageId);
 
             // +1 as DeliveryCount is 1-based and is charged prior to 'receive'
             var deliveryCountFromExceptions = exceptions.Count() + 1;
@@ -146,7 +146,7 @@ If the maximum number of delivery attempts is reached, the message is moved to t
             if ((deliveryCount >= _arkRetryStrategySettings.MaxDeliveryAttempts
                 && exceptions.Any()) || exceptions.Any(x => _failFastChecker.ShouldFailFast(messageId, x)))
             {
-                _errorTracker.MarkAsFinal(messageId);
+                await _errorTracker.MarkAsFinal(messageId);
             }
         }
 
@@ -157,12 +157,12 @@ If the maximum number of delivery attempts is reached, the message is moved to t
             var messageId = transportMessage.Headers.GetValueOrNull(Headers.MessageId);
             var secondLevelMessageId = GetSecondLevelMessageId(messageId);
 
-            if (!_errorTracker.HasFailedTooManyTimes(handledMessageId)) // let's try again
+            if (!await _errorTracker.HasFailedTooManyTimes(handledMessageId)) // let's try again
             {
                 transactionContext.Abort();
                 return;
             }
-            else if (messageId == handledMessageId && _arkRetryStrategySettings.SecondLevelRetriesEnabled && !_errorTracker.HasFailedTooManyTimes(secondLevelMessageId))
+            else if (messageId == handledMessageId && _arkRetryStrategySettings.SecondLevelRetriesEnabled && !await _errorTracker.HasFailedTooManyTimes(secondLevelMessageId))
             {
                 context.Save(DispatchAsFailedMessageKey, true);
                 await _handle(context, next, secondLevelMessageId, transactionContext, messageId, secondLevelMessageId);
@@ -170,13 +170,6 @@ If the maximum number of delivery attempts is reached, the message is moved to t
             }
 
             await _handlePoisonMessage(context, transactionContext, messageId, secondLevelMessageId);
-        }
-
-        AggregateException _getAggregateException(params string[] ids)
-        {
-            var exceptions = ids.SelectMany(_errorTracker.GetExceptions).ToArray();
-
-            return new AggregateException($"{exceptions.Length} unhandled exceptions", exceptions);
         }
 
         /// <summary>
@@ -192,11 +185,11 @@ If the maximum number of delivery attempts is reached, the message is moved to t
 
                 await transactionContext.Commit();
 
-                _errorTracker.CleanUp(messageId);
+                await _errorTracker.CleanUp(messageId);
 
                 if (secondLevelMessageId != null)
                 {
-                    _errorTracker.CleanUp(secondLevelMessageId);
+                    await _errorTracker.CleanUp(secondLevelMessageId);
                 }
 
             }
@@ -208,8 +201,8 @@ If the maximum number of delivery attempts is reached, the message is moved to t
             }
             catch (Exception exception)
             {
-                _errorTracker.RegisterError(identifierToTrackMessageBy, exception);
-                _checkFinal(context);
+                await _errorTracker.RegisterError(identifierToTrackMessageBy, exception);
+                await _checkFinal(context);
 
                 await _handleError(context, next, identifierToTrackMessageBy);
             }
@@ -218,12 +211,14 @@ If the maximum number of delivery attempts is reached, the message is moved to t
 
         private async Task _handlePoisonMessage(IncomingStepContext context, ITransactionContext transactionContext, string messageId, string secondLevelMessageId)
         {
-            var aggregateException = _getAggregateException(new[] { messageId, secondLevelMessageId }.Where(x => x != null).ToArray());
-            await _moveMessageToErrorQueue(context, transactionContext, aggregateException);
+            string messageIdForException = secondLevelMessageId ?? messageId;
+            var exceptions = await _errorTracker.GetExceptions(messageIdForException);
 
-            _errorTracker.CleanUp(messageId);
+            await _moveMessageToErrorQueue(context, transactionContext, new AggregateException(exceptions));
+
+            await _errorTracker.CleanUp(messageId);
             if (secondLevelMessageId != null)
-                _errorTracker.CleanUp(secondLevelMessageId);
+                await _errorTracker.CleanUp(secondLevelMessageId);
         }
 
         async Task _moveMessageToErrorQueue(IncomingStepContext context, ITransactionContext transactionContext, Exception exception)

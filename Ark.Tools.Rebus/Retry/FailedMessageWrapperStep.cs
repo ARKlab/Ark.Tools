@@ -30,8 +30,8 @@ which is then detected by this wrapper step.")]
                 var originalMessage = context.Load<Message>();
 
                 var messageId = originalMessage.GetMessageId();
-                var fullErrorDescription = _errorTracker.GetFullErrorDescription(messageId) ?? "(not available in the error tracker!)";
-                var exceptions = _errorTracker.GetExceptions(messageId);
+                var fullErrorDescription = await _errorTracker.GetFullErrorDescription(messageId) ?? "(not available in the error tracker!)";
+                var exceptions = await _errorTracker.GetExceptions(messageId);
                 var headers = originalMessage.Headers;
                 var body = originalMessage.Body;
                 var wrappedBody = _wrapInFailed(headers, body, fullErrorDescription, exceptions);
