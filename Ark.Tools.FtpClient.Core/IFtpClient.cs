@@ -11,7 +11,22 @@ namespace Ark.Tools.FtpClient.Core
 
     public interface IFtpClient
     {
+        /// <summary>
+        /// Gets URI of the document.
+        /// </summary>
+        ///
+        /// <value>
+        /// The URI.
+        /// </value>
         Uri Uri { get; }
+
+        /// <summary>
+        /// Gets the credentials.
+        /// </summary>
+        ///
+        /// <value>
+        /// The credentials.
+        /// </value>
         NetworkCredential? Credentials { get; }
 
         /// <summary>
@@ -46,5 +61,21 @@ namespace Ark.Tools.FtpClient.Core
         /// <param name="ctk"></param>
         /// <returns>The files found.</returns>
         Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default);
+
+        /// <summary>
+        /// Deletes the file asynchronous.
+        /// </summary>
+        ///
+        /// <param name="path">The path to the file.</param>
+        /// <param name="ctk"> (Optional)</param>
+        Task DeleteFileAsync(string path, CancellationToken ctk = default);
+
+        /// <summary>
+        /// Deletes the directory asynchronous.
+        /// </summary>
+        ///
+        /// <param name="path">The path to the file.</param>
+        /// <param name="ctk"> (Optional)</param>
+        Task DeleteDirectoryAsync(string path, CancellationToken ctk = default);
     }
 }

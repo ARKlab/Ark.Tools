@@ -75,6 +75,33 @@ namespace Ark.Tools.FtpClient
             }
         }
 
+        public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
+        {
+            await _semaphore.WaitAsync(ctk);
+            try
+            {
+                _client.Delete(path, false);
+
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
+        {
+            await _semaphore.WaitAsync(ctk);
+            try
+            {
+                _client.Delete(path, true);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
         private IEnumerable<ArxOne.Ftp.FtpEntry> _list(string path)
         {
             if (_client.ServerFeatures.HasFeature("MLSD"))

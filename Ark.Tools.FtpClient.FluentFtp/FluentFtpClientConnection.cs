@@ -2,6 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using FluentFTP;
+
+using Microsoft.Identity.Client;
+
 using NLog;
 using Sunlighter.AsyncQueueLib;
 using System.Collections.Generic;
@@ -24,6 +27,16 @@ namespace Ark.Tools.FtpClient.FluentFtp
             : base(ftpConfig)
         {
             _client = _getClient();
+        }
+
+        public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
+        {
+            await _client.DeleteDirectory(path, ctk);
+        }
+
+        public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
+        {
+            await _client.DeleteFile(path, ctk);
         }
 
         public override async ValueTask ConnectAsync(CancellationToken ctk)

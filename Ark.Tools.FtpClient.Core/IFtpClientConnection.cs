@@ -52,6 +52,22 @@ namespace Ark.Tools.FtpClient.Core
         /// <param name="ctk"></param>
         /// <returns>The files found.</returns>
         Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default);
+
+        /// <summary>
+        /// Deletes the file asynchronous.
+        /// </summary>
+        ///
+        /// <param name="path">The path to the file.</param>
+        /// <param name="ctk"> (Optional)</param>
+        Task DeleteFileAsync(string path, CancellationToken ctk = default);
+
+        /// <summary>
+        /// Deletes the directory asynchronous.
+        /// </summary>
+        ///
+        /// <param name="path">Full pathname of the file.</param>
+        /// <param name="ctk"> (Optional) A token that allows processing to be cancelled.</param>
+        Task DeleteDirectoryAsync(string path, CancellationToken ctk = default);
     }
-    
+
 }

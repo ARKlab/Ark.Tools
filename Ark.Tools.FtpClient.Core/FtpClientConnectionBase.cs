@@ -83,6 +83,8 @@ namespace Ark.Tools.FtpClient.Core
             return files;
         }
 
+        public abstract Task DeleteDirectoryAsync(string path, CancellationToken ctk = default);
+        public abstract Task DeleteFileAsync(string path, CancellationToken ctk = default);
         public abstract ValueTask ConnectAsync(CancellationToken ctk);
         public abstract ValueTask<bool> IsConnectedAsync(CancellationToken ctk = default);
         public abstract ValueTask DisconnectAsync(CancellationToken ctk = default);
