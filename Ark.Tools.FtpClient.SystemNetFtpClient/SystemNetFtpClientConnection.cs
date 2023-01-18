@@ -1,8 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 
-using Microsoft.Identity.Client;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;

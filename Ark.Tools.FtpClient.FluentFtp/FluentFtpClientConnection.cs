@@ -3,13 +3,8 @@
 using Ark.Tools.FtpClient.Core;
 using FluentFTP;
 
-using Microsoft.Identity.Client;
-
-using NLog;
-using Sunlighter.AsyncQueueLib;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
