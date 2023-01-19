@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using System;
 using Microsoft.Data.SqlClient;
 using System.Net.Http;
 using Ark.Tools.Core;

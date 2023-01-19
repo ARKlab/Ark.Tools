@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;

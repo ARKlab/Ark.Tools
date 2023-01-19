@@ -26,7 +26,7 @@
     <PackageIcon>ark-dark.png</PackageIcon>
     <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>      
     <Authors>ARK Labs</Authors>
-    <Copyright>Copyright (C) 2022 ARK S.r.l</Copyright>
+    <Copyright>Copyright (C) 2023 ARK S.r.l</Copyright>
 
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>

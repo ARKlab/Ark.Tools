@@ -1,4 +1,6 @@
-﻿using Ark.Tools.AspNetCore.ApplicationInsights;
+﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.AspNetCore.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.Extensions.Configuration;

@@ -1,4 +1,6 @@
-﻿using Ark.Tools.Core.BusinessRuleViolation;
+﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Core.BusinessRuleViolation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Http.Features;

@@ -76,6 +76,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{157C2BDE-AA77-4AFE-8194-5E049B6AFC96}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		Ark.Tools.sln.licenseheader = Ark.Tools.sln.licenseheader
 		Directory.Build.props = Directory.Build.props
 		global.json = global.json
 		Group_Pack_All.bat = Group_Pack_All.bat
