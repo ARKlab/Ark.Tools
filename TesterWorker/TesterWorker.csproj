@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0</TargetFrameworks>
     <UserSecretsId>dotnet-TesterWorker-A308A58B-1C99-4F72-BF65-587212925FBB</UserSecretsId>
+	<IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
