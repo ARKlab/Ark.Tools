@@ -124,5 +124,25 @@ namespace Ark.Tools.FtpClient.Core
         }
 
         protected abstract Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default);
+
+        public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
+        {
+            using (var client = await GetConnection(ctk))
+            {
+                await client.ConnectAsync(ctk);
+                await client.DeleteFileAsync(path, ctk);
+                await client.DisconnectAsync(ctk);
+            }
+        }
+
+        public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
+        {
+            using (var client = await GetConnection(ctk))
+            {
+                await client.ConnectAsync(ctk);
+                await client.DeleteDirectoryAsync(path, ctk);
+                await client.DisconnectAsync(ctk);
+            }
+        }
     }
 }

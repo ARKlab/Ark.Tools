@@ -1,5 +1,6 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,18 @@ namespace Ark.Tools.FtpClient.SystemNetFtpClient
             : base(ftpConfig)
         {
             _client = _getClient();
+        }
+
+        public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
+        {
+            await _client.ConnectAsync();
+            await _client.DeleteFileAsync(path);
+        }
+
+        public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
+        {
+            await _client.ConnectAsync();
+            await _client.DeleteDirectoryAsync(path);
         }
 
         public override async ValueTask ConnectAsync(CancellationToken ctk)

@@ -159,6 +159,16 @@ namespace Ark.Tools.FtpClient.Core
                 return Inner.ListFilesRecursiveAsync(startPath, skipFolder, ctk);
             }
 
+            public Task DeleteFileAsync(string path, CancellationToken ctk = default)
+            {
+                return Inner.DeleteFileAsync(path, ctk);
+            }
+
+            public Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
+            {
+                return Inner.DeleteDirectoryAsync(path, ctk);
+            }
+
             public Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
             {
                 return Inner.UploadFileAsync(path, content, ctk);

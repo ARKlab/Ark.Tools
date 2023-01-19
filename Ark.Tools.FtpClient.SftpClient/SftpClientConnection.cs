@@ -86,6 +86,18 @@ namespace Ark.Tools.FtpClient.SftpClient
             }
         }
 
+        public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
+        {
+            await _ensureConnected(ctk);
+            _client.DeleteDirectory(path);
+        }
+
+        public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
+        {
+            await _ensureConnected(ctk);
+            _client.DeleteFile(path);
+        }
+
         #region private helpers
 
         private ConnectionInfo _getConnectionInfo()

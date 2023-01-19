@@ -193,6 +193,16 @@ namespace Ark.Tools.FtpClient.FtpProxy
             }            
         }
 
+        public Task DeleteFileAsync(string path, CancellationToken ctk = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
+        {
+            throw new NotImplementedException();
+        }
+
         private Task<string> _getAccessToken(CancellationToken ctk = default)
         {
             return _tokenProvider.GetToken(ctk);

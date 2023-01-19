@@ -41,10 +41,10 @@ namespace Ark.Tasks
 
         public override bool Equals(object? obj)
         {
-            if (!(obj is Resource))
+            if (!(obj is Resource resource))
                 return false;
 
-            return Equals((Resource)obj);
+            return Equals(resource);
         }
 
         public override int GetHashCode()
