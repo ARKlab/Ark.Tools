@@ -6,9 +6,6 @@
     <PackageTags>Ark;C#;.NET;Framework;Activity;Slice;ETL</PackageTags>
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
-    <Version>$(ArkToolsCoreVersion)</Version>
-    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
-    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
 

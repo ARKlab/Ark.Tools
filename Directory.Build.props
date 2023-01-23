@@ -2,12 +2,11 @@
   
   <PropertyGroup>
     <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0;net472</TargetFrameworks>
-    <LangVersion>11.0</LangVersion>
+    <LangVersion>10.0</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
 
     <PropertyGroup>
 	    <!-- https://developercommunity.visualstudio.com/t/application-insight-doesnt-show-logs-from-local-de/1240506 -->
@@ -55,39 +54,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
-	</ItemGroup>
-
-  <PropertyGroup>
-    
-    <ArkToolsCoreVersion>4.7.0</ArkToolsCoreVersion>
-    <FtpClientGroupVersion>4.7.0</FtpClientGroupVersion>
-    <ResourceWatcherGroupVersion>4.7.0</ResourceWatcherGroupVersion>
-    
-    <EntityFrameworkGroupVersion>4.7.0</EntityFrameworkGroupVersion>
-    <RavenDbGroupVersion>4.7.0</RavenDbGroupVersion>
-    
-    <AspNetCoreGroupVersion>4.7.0</AspNetCoreGroupVersion>
-    <EventSourcingGroupVersion>4.7.0</EventSourcingGroupVersion> <!--depends from ArkToolsCore Only -->
-
-    <!-- Groups SUFFIX -->
-    <ArkToolsCoreVersionSuffix></ArkToolsCoreVersionSuffix>
-    <FtpClientGroupVersionSuffix></FtpClientGroupVersionSuffix>
-    <ResourceWatcherGroupVersionSuffix></ResourceWatcherGroupVersionSuffix>
-
-    <EntityFrameworkGroupVersionSuffix></EntityFrameworkGroupVersionSuffix>
-    <RavenDbGroupVersionSuffix></RavenDbGroupVersionSuffix>
-
-    <AspNetCoreGroupVersionSuffix></AspNetCoreGroupVersionSuffix>
-
-    <EventSourcingGroupVersionSuffix></EventSourcingGroupVersionSuffix>
-
-</PropertyGroup>
-  
-  <Target Name="PushNugetPackage" AfterTargets="Pack" Condition="('$(Configuration)' == 'Release' And $(VersionSuffix) == '') Or ('$(Configuration)' == 'Debug' And $(VersionSuffix) != '')">
-    <Exec Command="dotnet nuget push -s https://api.nuget.org/v3/index.json $(MSBuildProjectDirectory)\$(OutputPath)$(PackageId).$(PackageVersion).nupkg" />
-  </Target>
-	
-    	
+	</ItemGroup> 	
 
 
 </Project>
