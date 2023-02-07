@@ -10,8 +10,8 @@ namespace Ark.Tools.SpecFlow
 {
     public class NodaTimeValueRetriverAndComparer : IValueRetriever, IValueComparer
     {
-        private Type[] _types = new[] { typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime) };
-        private Type[] _nullableTypes = new[] { typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?) };
+        private Type[] _types = new[] { typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime), typeof(ZonedDateTime) };
+        private Type[] _nullableTypes = new[] { typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?), typeof(ZonedDateTime) };
 
         public bool CanCompare(object actualValue)
         {
@@ -25,6 +25,7 @@ namespace Ark.Tools.SpecFlow
 
         public bool Compare(string expectedValue, object actualValue)
         {
+            
             switch (actualValue)
             {
                 case LocalDate ld:
@@ -79,6 +80,13 @@ namespace Ark.Tools.SpecFlow
                         {
                             return OffsetDateTime.FromDateTimeOffset(o) == odt;
                         }
+
+                        return false;
+                    }
+                case ZonedDateTime zdt:
+                    {
+                        var res7 = ZonedDateTimePattern.ExtendedFormatOnlyIso.WithZoneProvider(DateTimeZoneProviders.Tzdb).Parse(expectedValue);
+                        if (res7.Success) return res7.Value == zdt;
 
                         return false;
                     }
@@ -157,6 +165,13 @@ namespace Ark.Tools.SpecFlow
                 }
 
                 throw _getInvalidOperationException(keyValuePair.Value);
+            }
+
+            if (t == typeof(ZonedDateTime))
+            {
+                var res = ZonedDateTimePattern.ExtendedFormatOnlyIso.WithZoneProvider(DateTimeZoneProviders.Tzdb).Parse(keyValuePair.Value);
+                if (!res.Success) throw _getInvalidOperationException(keyValuePair.Value);
+                return res.Value;
             }
 
             throw new NotImplementedException();
