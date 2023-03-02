@@ -24,11 +24,11 @@ namespace Ark.Tools.FtpClient.SftpClient
         private readonly TimeSpan _operationTimeout  = TimeSpan.FromMinutes(5);
 
         private bool _isDisposed = false;
-
+#if !(NETSTANDARD2_0 || NET472)
         private const string _rsa = "1.2.840.113549.1.1.1";
         private const string _dsa = "1.2.840.10040.4.1";
         private const string _ecdsa = "1.2.840.10045.2.1";
-
+#endif
         public SftpClientConnection(FtpConfig ftpConfig)
             : base(ftpConfig)
         {
