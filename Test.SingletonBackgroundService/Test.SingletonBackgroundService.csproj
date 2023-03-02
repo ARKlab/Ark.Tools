@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <PackageReference Include="DistributedLock.Azure" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
   </ItemGroup>
 	
 	<ItemGroup>

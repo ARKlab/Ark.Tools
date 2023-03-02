@@ -16,16 +16,18 @@
 
 		<Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
 	</PropertyGroup>
-	<ItemGroup>
-	  <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.2" />
-	  <PackageReference Include="Azure.Identity" Version="1.8.2" />
-	  <PackageReference Include="DistributedLock.Core" Version="1.0.5" />
-	  <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
-	  <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
-	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
-	</ItemGroup>
 	<!--===============================================================================-->
 
+	<ItemGroup>
+		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.2" />
+		<PackageReference Include="Azure.Identity" Version="1.8.2" />
+		<PackageReference Include="DistributedLock.Core" Version="1.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="[6.0.1,7)" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="[6.0.1,7)" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[6.0.0,7)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[6.0.3,7)" />
+	</ItemGroup>
+	
 	<ItemGroup>
 		<PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
 	</ItemGroup>

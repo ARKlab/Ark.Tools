@@ -1,44 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <!-- the other props are defined in Directory.Build.props -->
-  <!--===================Configuration for Nuget Package=========================-->
-  <PropertyGroup>
+	<!-- the other props are defined in Directory.Build.props -->
+	<!--===================Configuration for Nuget Package=========================-->
+	<PropertyGroup>
 
-    <Description>NLog configuration helper and extensions for Ark standard configuration using code and not config files.</Description>
-    <PackageTags>Ark;C#;.NET;Framework;NLog</PackageTags>
+		<Description>NLog configuration helper and extensions for Ark standard configuration using code and not config files.</Description>
+		<PackageTags>Ark;C#;.NET;Framework;NLog</PackageTags>
 
-    <!--Update these information when releasing a new version of the NugetPackage-->
-    <PackageReleaseNotes></PackageReleaseNotes>
+		<!--Update these information when releasing a new version of the NugetPackage-->
+		<PackageReleaseNotes></PackageReleaseNotes>
 
-    <Version>$(ArkToolsCoreVersion)</Version>
-    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+		<Version>$(ArkToolsCoreVersion)</Version>
+		<VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
 
-    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
-  </PropertyGroup>
-  <!--===============================================================================-->
+		<Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+	</PropertyGroup>
+	<!--===============================================================================-->
 
-	<ItemGroup>			
+	<ItemGroup>
 		<PackageReference Include="Rebus" Version="7.0.0" />
 		<PackageReference Include="Rebus.NLog" Version="5.0.0" />
-		<PackageReference Include="Rebus.AzureServiceBus" Version="9.3.2" />
+		<PackageReference Include="Rebus.AzureServiceBus" Version="9.3.3" />
 		<PackageReference Include="Rebus.SqlServer" Version="7.3.1" />
-    <PackageReference Include="Rebus.AzureBlobs" Version="0.6.0" />
-    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.12.0" />
+		<PackageReference Include="Rebus.AzureBlobs" Version="0.6.0" />
+		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.12.0" />
 	</ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
-    <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
-    <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
-    <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />    
-  </ItemGroup>
-  
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
-  </ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
+		<ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+		<ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
+		<ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+	</ItemGroup>
 
 </Project>

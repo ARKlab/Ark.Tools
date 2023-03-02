@@ -42,6 +42,8 @@
   </PropertyGroup>
    
 	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="7.0.0" />
+		
         <None Include="..\ark-dark.png" Pack="true" PackagePath="\"/>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
 		
