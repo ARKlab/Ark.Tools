@@ -34,7 +34,7 @@ jobs:
       uses: battila7/get-version-action@v2
 
     - name: 'Pack project'
-      run: dotnet pack --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+      run: dotnet pack --no-restore --configuration Release --include-symbols -p:Version=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
       # --no-build somehow cannot be used due to being needed: 
 
     - name: 'Push package'
