@@ -9,6 +9,8 @@ using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
+using Asp.Versioning;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -36,7 +38,11 @@ namespace WebApplicationDemo
 		{
         }
 
-		public override IEnumerable<ApiVersion> Versions => new[] { new ApiVersion(1, 0) };
+		public override IEnumerable<ApiVersion> Versions => new[] 
+        { 
+            new ApiVersion(1, 0),
+            new ApiVersion(2, 0)
+        };
 
         public override OpenApiInfo MakeInfo(ApiVersion version)
 			=> new OpenApiInfo
