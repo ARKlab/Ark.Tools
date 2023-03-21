@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 
 using NodaTime;
 using NodaTime.Text;
@@ -49,6 +49,11 @@ namespace Ark.Tools.Nodatime.Dapper
                 var conv = TypeDescriptor.GetConverter(typeof(Instant));
                 if (conv?.CanConvertFrom(typeof(string)) == true)
                     return (Instant)(conv.ConvertFromString(s) ?? throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.Instant"));
+            }
+            
+            if (value is long l)
+            {
+                return Instant.FromUnixTimeTicks(l);
             }
 
             throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.Instant");
