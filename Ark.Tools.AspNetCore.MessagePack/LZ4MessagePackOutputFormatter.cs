@@ -9,7 +9,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 {
     public class LZ4MessagePackOutputFormatter : OutputFormatter
     {
-        const string ContentType = "application/x.msgpacklz4";
+        const string _contentType = "application/x.msgpacklz4";
 
         readonly MessagePackSerializerOptions _options;
 
@@ -20,7 +20,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 
         public LZ4MessagePackOutputFormatter(IFormatterResolver? resolver)
         {
-            SupportedMediaTypes.Add(ContentType);
+            SupportedMediaTypes.Add(_contentType);
 
             if (resolver == null)
                 _options = MessagePackSerializer.DefaultOptions;
@@ -32,6 +32,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 
         protected override bool CanWriteType(Type? type)
         {
+            if (type == null) return false;
             return _options.Resolver.GetFormatterDynamic(type) != null;
         }
 
@@ -52,7 +53,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
             }
             else
             {
-                return MessagePackSerializer.SerializeAsync(context.ObjectType, context.HttpContext.Response.Body, context.Object, _options, context.HttpContext.RequestAborted);
+                return MessagePackSerializer.SerializeAsync(context.ObjectType!, context.HttpContext.Response.Body, context.Object, _options, context.HttpContext.RequestAborted);
             }
         }
     }
