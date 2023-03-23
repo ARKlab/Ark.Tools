@@ -96,8 +96,8 @@ namespace Ark.Tools.AspNetCore.Startup
                 })
                 .AddOData(options =>
                 {
-                    options.Count().Select().OrderBy();
-                    options.RouteOptions.EnableKeyInParenthesis = false;
+                    options.EnableQueryFeatures();
+                    options.RouteOptions.EnableKeyInParenthesis = true;
                     options.RouteOptions.EnableNonParenthesisForEmptyParameterFunction = true;
                     options.RouteOptions.EnablePropertyNameCaseInsensitive = true;
                     options.RouteOptions.EnableQualifiedOperationCall = false;
@@ -235,6 +235,12 @@ namespace Ark.Tools.AspNetCore.Startup
         {
             app.UseSimpleInjector(Container);
             app.UseRouting();
+
+            if (HostEnvironment.IsDevelopment())
+            {
+                app.UseODataRouteDebug();
+            }
+
             app.UseCors(p => p
                 .AllowAnyHeader()
                 .AllowAnyMethod()

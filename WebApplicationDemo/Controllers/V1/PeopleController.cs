@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Asp.Versioning.OData;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.OData.Routing.Controllers;
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
@@ -18,68 +20,46 @@ using static Microsoft.AspNetCore.OData.Query.AllowedQueryOptions;
 
 namespace WebApplicationDemo.Controllers.V1
 {
-    /// <summary>
-    /// Represents a RESTful people service.
-    /// </summary>
     [ApiVersion(1.0)]
     public class PeopleController : ODataController
     {
-        /// <summary>
-        /// Gets a single person.
-        /// </summary>
-        /// <param name="key">The requested person identifier.</param>
-        /// <param name="options">The current OData query options.</param>
-        /// <returns>The requested person.</returns>
-        /// <response code="200">The person was successfully retrieved.</response>
-        /// <response code="404">The person does not exist.</response>
-        [HttpGet]
-        [Produces("application/json")]
-        [ProducesResponseType(typeof(Person), Status200OK)]
-        [ProducesResponseType(Status404NotFound)]
-        public IActionResult Get(int key, ODataQueryOptions<Person> options)
+        private static List<Person> _people = new List<Person>()
         {
-            var people = new Person[]
-            {
             new()
             {
-                Id = key,
+                Id = 1,
                 FirstName = "John",
                 LastName = "Doe",
+                Email = "john.doe@somewhere.com",
             },
-            };
-
-            var person = options.ApplyTo(people.AsQueryable()).SingleOrDefault();
-
-            if (person == null)
+            new()
             {
-                return NotFound();
+                Id = 2,
+                FirstName = "Bob",
+                LastName = "Smith",
+                Email = "bob.smith@somewhere.com",
+            },
+            new()
+            {
+                Id = 3,
+                FirstName = "Jane",
+                LastName = "Doe",
+                Email = "jane.doe@somewhere.com",
             }
+        };
 
-            return Ok(person);
+        [HttpGet]
+        [EnableQuery(AllowedQueryOptions = All)]
+        public IEnumerable<Person> Get(ODataQueryOptions<Person> query)
+        {
+            return ((IQueryable<Person>)query.ApplyTo(_people.AsQueryable())).ToArray();
         }
 
-        /// <summary>
-        /// Gets the most expensive person.
-        /// </summary>
-        /// <returns>The most expensive person.</returns>
-        /// <response code="200">The person was successfully retrieved.</response>
-        /// <response code="404">No people exist.</response>
         [HttpGet]
-        [MapToApiVersion(1.0)]
-        [Produces("application/json")]
-        [ProducesResponseType(typeof(Person), Status200OK)]
-        [ProducesResponseType(Status404NotFound)]
-        [EnableQuery(AllowedQueryOptions = Select)]
-        public SingleResult<Person> MostExpensive(ODataQueryOptions<Person> options, CancellationToken ct) =>
-                SingleResult.Create(
-                    new Person[]
-                    {
-                new()
-                {
-                    Id = 42,
-                    FirstName = "Elon",
-                    LastName = "Musk",
-                },
-                    }.AsQueryable());
+        [EnableQuery]
+        public IActionResult Get([FromRoute] int key)
+        {
+            return Ok(_people.FirstOrDefault(p => p.Id == key));
+        }
     }
 }

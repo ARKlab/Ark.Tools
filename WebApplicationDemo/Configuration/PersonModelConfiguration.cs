@@ -7,14 +7,17 @@ namespace WebApplicationDemo.Configuration
 {
     public class PersonModelConfiguration : IModelConfiguration
     {
-        /// <inheritdoc />
         public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string? routePrefix)
         {
             var person = builder.EntitySet<Person>("People").EntityType;
-            //var address = builder.EntityType<Address>().HasKey( a => a.Id );
 
             person.HasKey(p => p.Id);
-            person.Select().OrderBy("firstName", "lastName");
+            person.Select().OrderBy("firstName", "lastName").Filter();
+
+            if(apiVersion < ApiVersions.V2)
+            {
+                person.Ignore(p => p.Phone);
+            }
         }
     }
 }
