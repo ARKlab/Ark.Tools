@@ -117,16 +117,15 @@ namespace Ark.Tools.AspNetCore.Startup
                 o.AssumeDefaultVersionWhenUnspecified = true;
                 o.DefaultApiVersion = Versions.Last();
             })
-            .AddOData(options => options.AddRouteComponents("api"))
+            .AddOData(options => 
+            {
+                options.AddRouteComponents("v{api-version:apiVersion}");
+            })
             .AddODataApiExplorer(options =>
             {
-                // add the versioned api explorer, which also adds IApiVersionDescriptionProvider service
-                // note: the specified format code will format the version as "'v'major[.minor][-status]"
                 options.GroupNameFormat = "'v'VVVV";
-
-                // note: this option is only necessary when versioning by url segment. the SubstitutionFormat
-                // can also be used to control the format of the API version in route templates
                 options.SubstituteApiVersionInUrl = true;
+                options.SubstitutionFormat = "VVVV";
             })
             .AddApiExplorer(o =>
             {
