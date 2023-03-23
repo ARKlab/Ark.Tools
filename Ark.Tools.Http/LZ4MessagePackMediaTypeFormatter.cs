@@ -44,7 +44,7 @@ namespace Ark.Tools.Http
             return _options.Resolver.GetFormatterDynamic(type) != null;
         }
 
-        public override Task WriteToStreamAsync(Type type, object value, Stream writeStream, HttpContent content, TransportContext transportContext)
+        public override Task WriteToStreamAsync(Type type, object? value, Stream writeStream, HttpContent content, TransportContext transportContext)
         {
             if (type == null)
             {
@@ -58,7 +58,7 @@ namespace Ark.Tools.Http
             return MessagePackSerializer.SerializeAsync(type, writeStream, value, _options);
         }
 
-        public override async Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger)
+        public override async Task<object?> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger)
         {
             if (type == null)
             {

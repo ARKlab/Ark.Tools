@@ -9,7 +9,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 {
     public class MessagePackOutputFormatter : OutputFormatter
     {
-        const string ContentType = "application/x-msgpack";
+        const string _contentType = "application/x-msgpack";
 
         readonly MessagePackSerializerOptions _options;
 
@@ -19,7 +19,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
         }
         public MessagePackOutputFormatter(IFormatterResolver? resolver)
         {
-            SupportedMediaTypes.Add(ContentType);
+            SupportedMediaTypes.Add(_contentType);
 
             if (resolver == null)
                 _options = MessagePackSerializer.DefaultOptions;
@@ -29,6 +29,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 
         protected override bool CanWriteType(Type? type)
         {
+            if (type == null) return false;
             return _options.Resolver.GetFormatterDynamic(type) != null;
         }
 
@@ -50,7 +51,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
             }
             else
             {
-                MessagePackSerializer.Serialize(context.ObjectType, context.HttpContext.Response.Body, context.Object, _options);
+                MessagePackSerializer.Serialize(context.ObjectType!, context.HttpContext.Response.Body, context.Object, _options);
                 return Task.CompletedTask;
             }
         }
