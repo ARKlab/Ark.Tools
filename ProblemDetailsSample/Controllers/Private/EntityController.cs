@@ -10,6 +10,7 @@ using ProblemDetailsSample.Common.Dto;
 using ProblemDetailsSample.Api.Requests;
 using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Core;
+using Asp.Versioning;
 
 namespace ProblemDetailsSample.Controllers.Private
 {
