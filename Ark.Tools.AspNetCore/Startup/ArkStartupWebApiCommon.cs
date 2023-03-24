@@ -78,8 +78,6 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
 
                     opt.Filters.Add(new ArkDefaultExceptionFilter());
-                    //opt.Filters.Add(new ProducesAttribute("application/json")); // To be specified after
-                    //opt.Filters.Add(new ConsumesAttribute("application/json")); // broken in aspnetcore 2.2 as is enforced on GET too
                     opt.Conventions.Add(new ArkDefaultConventions());
                     opt.Filters.Add(new ResponseCacheAttribute()
                     {
@@ -92,7 +90,7 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.Filters.Add(new ETagHeaderBasicSupportFilter());
                     opt.Filters.Add(new ApiControllerAttribute());
                     opt.ReturnHttpNotAcceptable = true;
-                    opt.RespectBrowserAcceptHeader = true;
+                    opt.RespectBrowserAcceptHeader = true;                    
                 })
                 .AddOData(options =>
                 {

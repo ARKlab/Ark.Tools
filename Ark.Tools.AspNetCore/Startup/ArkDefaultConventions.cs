@@ -31,15 +31,11 @@ namespace Ark.Tools.AspNetCore.Startup
                 action.Filters.Add(new ConsumesAttribute("application/json"));
             }
 
-            if (!_isODataController(action)
-                && !action.Filters.OfType<ProducesAttribute>().Any()
+            if (!action.Filters.OfType<ProducesAttribute>().Any()
                 && !action.Controller.Filters.OfType<ProducesAttribute>().Any()
                 )
                 action.Filters.Add(new ProducesAttribute("application/json"));
 
         }
-
-		private bool _isODataController(ActionModel action)
-			=> typeof(ODataController).IsAssignableFrom(action.Controller.ControllerType);
 	}
 }
