@@ -23,6 +23,7 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
 using WebApplicationDemo.Application.Host;
+using WebApplicationDemo.Configuration;
 using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo
@@ -34,11 +35,7 @@ namespace WebApplicationDemo
 		{
         }
 
-		public override IEnumerable<ApiVersion> Versions => new[] 
-        { 
-            new ApiVersion(1, 0),
-            new ApiVersion(2, 0)
-        };
+        public override IEnumerable<ApiVersion> Versions => ApiVersions.All;
 
         public override OpenApiInfo MakeInfo(ApiVersion version)
 			=> new OpenApiInfo
