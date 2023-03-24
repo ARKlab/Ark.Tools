@@ -99,7 +99,6 @@ namespace Ark.Tools.AspNetCore.Startup
                     options.EnableQueryFeatures();
                     options.RouteOptions.EnableKeyInParenthesis = true;
                     options.RouteOptions.EnableNonParenthesisForEmptyParameterFunction = true;
-                    options.RouteOptions.EnablePropertyNameCaseInsensitive = true;
                     options.RouteOptions.EnableQualifiedOperationCall = false;
                     options.RouteOptions.EnableUnqualifiedOperationCall = true;
                 })

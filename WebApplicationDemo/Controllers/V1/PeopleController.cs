@@ -58,9 +58,9 @@ namespace WebApplicationDemo.Controllers.V1
 
         [HttpGet]
         [EnableQuery]
-        public ActionResult<Person> Get([FromODataUri] int key)
+        public SingleResult<Person> Get(int key)
         {
-            return Ok(_people.FirstOrDefault(p => p.Id == key));
+            return SingleResult.Create(_people.Where(p => p.Id == key).AsQueryable());
         }
     }
 }

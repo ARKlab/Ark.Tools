@@ -3,6 +3,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 
 using System;
@@ -46,16 +47,16 @@ namespace WebApplicationDemo.Controllers.V1
 
         [HttpGet]
         [EnableQuery]
-        public ActionResult<MarketRecord> Get(
-            [FromODataUri] DateTimeOffset keyDateTimeOffset,
-            [FromODataUri] string keyMarket)
+        public SingleResult<MarketRecord> Get(
+            DateTimeOffset keydateTimeOffset,  // format is key{nameOfTheProperty in camelCase}
+            string keymarket)
         {
             var record = _values
-                .SingleOrDefault(r => r.Market == keyMarket &&
-                            r.DateTimeOffset == keyDateTimeOffset)
+                .Where(r => r.Market == keymarket &&
+                            r.DateTimeOffset == keydateTimeOffset)
                 ;
 
-            return Ok(record);
+            return SingleResult.Create(record.AsQueryable());
         }
     }
 }

@@ -4,6 +4,7 @@ using Asp.Versioning.OData;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Query.Validator;
+using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.Azure.Amqp.Framing;
 using Microsoft.OData;
@@ -50,16 +51,17 @@ namespace WebApplicationDemo.Controllers.V2
 
         [HttpGet]
         [EnableQuery(AllowedQueryOptions = All)]
-        public IEnumerable<Person> Get(ODataQueryOptions<Person> query)
+        public IQueryable<Person> Get()
         {
-            return ((IQueryable<Person>)query.ApplyTo(_people.AsQueryable())).ToArray();
+            return _people.AsQueryable();
         }
+
 
         [HttpGet]
         [EnableQuery]
-        public IActionResult Get([FromRoute] int key)
+        public SingleResult<Person> Get(int key)
         {
-            return Ok(_people.FirstOrDefault(p => p.Id == key));
+            return SingleResult.Create(_people.Where(p => p.Id == key).AsQueryable());
         }
     }
 }
