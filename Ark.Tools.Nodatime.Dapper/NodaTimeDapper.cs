@@ -1,6 +1,5 @@
-﻿using Dapper;
-
-using System.Reflection;
+﻿using System;
+using Dapper;
 
 namespace Ark.Tools.Nodatime.Dapper
 {
@@ -24,9 +23,12 @@ namespace Ark.Tools.Nodatime.Dapper
                     SqlMapper.AddTypeHandler(InstantSecondHandler.Instance);
                     break;
 
-                default:
+                case InstantHandlerType.DateTime:
                     SqlMapper.AddTypeHandler(InstantHandler.Instance);
                     break;
+
+                default:
+                    throw new NotImplementedException();
             }
 
             SqlMapper.AddTypeHandler(LocalDateHandler.Instance);

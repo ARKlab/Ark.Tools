@@ -1,10 +1,8 @@
 ﻿using Dapper;
 
 using NodaTime;
-using NodaTime.Text;
 
 using System;
-using System.ComponentModel;
 using System.Data;
 
 namespace Ark.Tools.Nodatime.Dapper
