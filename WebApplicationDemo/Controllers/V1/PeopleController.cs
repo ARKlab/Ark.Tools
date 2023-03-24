@@ -2,6 +2,7 @@
 using Asp.Versioning.OData;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -50,14 +51,14 @@ namespace WebApplicationDemo.Controllers.V1
 
         [HttpGet]
         [EnableQuery(AllowedQueryOptions = All)]
-        public IEnumerable<Person> Get(ODataQueryOptions<Person> query)
+        public IQueryable<Person> Get()
         {
-            return ((IQueryable<Person>)query.ApplyTo(_people.AsQueryable())).ToArray();
+            return _people.AsQueryable();
         }
 
         [HttpGet]
         [EnableQuery]
-        public IActionResult Get([FromRoute] int key)
+        public ActionResult<Person> Get([FromODataUri] int key)
         {
             return Ok(_people.FirstOrDefault(p => p.Id == key));
         }

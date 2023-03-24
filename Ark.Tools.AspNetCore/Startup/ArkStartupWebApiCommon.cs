@@ -135,15 +135,12 @@ namespace Ark.Tools.AspNetCore.Startup
             })
             ;
 
-            services.AddTransient<IActionDescriptorProvider, RemoveODataQueryOptionsActionDescriptorProvider>();
-
             services.AddSwaggerGen(c =>
             {
                 c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
 
                 c.MapNodaTimeTypes();
 
-                c.OperationFilter<ODataParamsOnSwagger>();
                 c.OperationFilter<SupportFlaggedEnums>();
 
                 c.OperationFilter<PrettifyOperationIdOperationFilter>();

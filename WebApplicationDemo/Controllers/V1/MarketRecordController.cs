@@ -39,21 +39,21 @@ namespace WebApplicationDemo.Controllers.V1
 
         [HttpGet]
         [EnableQuery]
-        public IEnumerable<MarketRecord> Get(ODataQueryOptions<MarketRecord> query)
+        public IQueryable<MarketRecord> Get()
         {
-            return ((IQueryable<MarketRecord>)query.ApplyTo(_values.AsQueryable())).ToArray();
+            return _values.AsQueryable();
         }
 
         [HttpGet]
         [EnableQuery]
-        public IActionResult Get(
+        public ActionResult<MarketRecord> Get(
             [FromODataUri] DateTimeOffset keyDateTimeOffset,
             [FromODataUri] string keyMarket)
         {
             var record = _values
-                .Where(r => r.Market == keyMarket &&
+                .SingleOrDefault(r => r.Market == keyMarket &&
                             r.DateTimeOffset == keyDateTimeOffset)
-                .FirstOrDefault();
+                ;
 
             return Ok(record);
         }

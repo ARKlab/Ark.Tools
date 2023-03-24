@@ -36,6 +36,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 && !action.Controller.Filters.OfType<ProducesAttribute>().Any()
                 )
                 action.Filters.Add(new ProducesAttribute("application/json"));
+
         }
 
 		private bool _isODataController(ActionModel action)
