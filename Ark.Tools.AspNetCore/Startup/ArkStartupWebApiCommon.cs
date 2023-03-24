@@ -233,18 +233,9 @@ namespace Ark.Tools.AspNetCore.Startup
         public virtual void Configure(IApplicationBuilder app)
         {
             app.UseSimpleInjector(Container);
+            app.UseArkProblemDetails();
+
             app.UseRouting();
-
-            if (HostEnvironment.IsDevelopment())
-            {
-                app.UseODataRouteDebug();
-            }
-
-            app.UseCors(p => p
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()
-                .SetIsOriginAllowed(_ => true));
 
             app.UseRequestLocalization(new RequestLocalizationOptions
             {
@@ -252,12 +243,20 @@ namespace Ark.Tools.AspNetCore.Startup
                 SupportedCultures = CultureInfo.GetCultures(CultureTypes.InstalledWin32Cultures | CultureTypes.NeutralCultures | CultureTypes.SpecificCultures)
             });
 
-            app.UseArkProblemDetails();
+            app.UseCors(p => p
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .SetIsOriginAllowed(_ => true));
+
+
+            if (HostEnvironment.IsDevelopment())
+            {
+                app.UseODataRouteDebug();
+            }
 
             app.UseSwagger();
             app.UseSwaggerUI();
-
-            //app.UseCors();
 
             app.UseAuthentication();
             app.UseAuthorization();
