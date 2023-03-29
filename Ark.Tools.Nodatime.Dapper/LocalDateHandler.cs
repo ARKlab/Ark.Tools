@@ -3,6 +3,7 @@
 using NodaTime;
 
 using System;
+using System.ComponentModel;
 using System.Data;
 
 namespace Ark.Tools.Nodatime.Dapper
