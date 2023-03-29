@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
+using Asp.Versioning;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;

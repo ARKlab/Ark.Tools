@@ -2,41 +2,40 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
+using Asp.Versioning;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Swagger;
+
 using Swashbuckle.AspNetCore.SwaggerUI;
+
 using WebApplicationDemo.Application.Host;
+using WebApplicationDemo.Configuration;
 using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo
 {
-	public class Startup : ArkStartupWebApi
+    public class Startup : ArkStartupWebApi
 	{
 		public Startup(IConfiguration configuration, IHostEnvironment env)
 			: base(configuration, env, false)
 		{
         }
 
-		public override IEnumerable<ApiVersion> Versions => new[] { new ApiVersion(1, 0) };
+        public override IEnumerable<ApiVersion> Versions => ApiVersions.All;
 
         public override OpenApiInfo MakeInfo(ApiVersion version)
 			=> new OpenApiInfo
@@ -139,6 +138,12 @@ namespace WebApplicationDemo
 				//c.OperationFilter<SecurityRequirementsOperationFilter>();
 
 			});
+
+            services.Configure<ODataOptions>(options =>
+            {
+                // make the Odata independent from 'the hosting timezone'. Set this to the Timezone of 'DATA', if any, or UTC, so that is not dependant on the PC/Server Local timezone (reliable results ...)
+                options.TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time"); 
+            });
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
