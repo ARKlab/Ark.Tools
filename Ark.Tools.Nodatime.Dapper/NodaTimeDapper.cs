@@ -5,7 +5,10 @@ namespace Ark.Tools.Nodatime.Dapper
 {
     public static class NodaTimeDapper
     {
-        public static void Setup(InstantHandlerType instantHandlerType = InstantHandlerType.DateTime)
+        public static void Setup()
+            => Setup(InstantHandlerType.DateTime);
+
+        public static void Setup(InstantHandlerType instantHandlerType)
         {
             NodeTimeConverter.Register();
             
