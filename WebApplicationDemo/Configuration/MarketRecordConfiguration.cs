@@ -12,15 +12,30 @@ namespace WebApplicationDemo.Configuration
     {
         public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string? routePrefix)
         {
-            var record = builder.EntitySet<MarketRecord>("MarketRecord").EntityType;
-
-            record.HasKey(p => new 
+            if (apiVersion == ApiVersions.V1)
             { 
-                p.Market, 
-                p.DateTimeOffset 
-            });
+                var recordv1 = builder.EntitySet<MarketRecordV1>("MarketRecordV1").EntityType;
 
-            record.Select().Filter();
+                recordv1.HasKey(p => new
+                {
+                    p.Market,
+                    p.DateTimeOffset
+                });
+
+                recordv1.Select().Filter();
+            }
+
+            if (apiVersion == ApiVersions.V0)
+            {
+                var recordv0 = builder.EntitySet<MarketRecordV0>("MarketRecord").EntityType;
+
+                recordv0.HasKey(p => new
+                {
+                    p.Market,
+                    p.DateTimeOffset
+                });
+                recordv0.Select().Filter();
+            }
         }
     }
 }
