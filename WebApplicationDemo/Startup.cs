@@ -8,6 +8,7 @@ using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
+using Asp.Versioning.Conventions;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -118,7 +119,7 @@ namespace WebApplicationDemo
 
             services.ArkConfigureSwaggerUI(c =>
 			{
-				c.MaxDisplayedTags(100);
+				c.MaxDisplayedTags(10000);
 				c.DefaultModelRendering(ModelRendering.Model);
 				c.ShowExtensions();
 				//c.OAuthAppName("Public API");
@@ -144,10 +145,13 @@ namespace WebApplicationDemo
                 // make the Odata independent from 'the hosting timezone'. Set this to the Timezone of 'DATA', if any, or UTC, so that is not dependant on the PC/Server Local timezone (reliable results ...)
                 options.TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time"); 
             });
-		}
 
-		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-		public override void Configure(IApplicationBuilder app)
+            //https://github.com/dotnet/aspnet-api-versioning/wiki/Controller-Conventions
+            services.AddTransient(s => ControllerNameConvention.Original);
+        }
+
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public override void Configure(IApplicationBuilder app)
 		{
 			base.Configure(app);
 		}
