@@ -26,7 +26,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
                 o.IncludeXmlComments(path);
         }
 
-		//TODO MJ
+        [Obsolete("Use SelectDiscriminatorName/Value from SwaggerGen options. See https://github.com/domaindrivendev/Swashbuckle.AspNetCore#inheritance-and-polymorphism")]
         public static void AddPolymorphismSupport<TBase>(this SwaggerGenOptions o, string discriminatorName = "discriminator", HashSet<Type>? derivedTypes = null)
         {
             if (derivedTypes == null || derivedTypes.Count == 0)

@@ -6,12 +6,10 @@ using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
 
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -33,8 +31,6 @@ using System.Linq;
 using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.OData;
-using Microsoft.Extensions.Options;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
@@ -95,6 +91,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 .AddOData(options =>
                 {
                     options.EnableQueryFeatures();
+                    
                     options.RouteOptions.EnableKeyInParenthesis = true;
                     options.RouteOptions.EnableNonParenthesisForEmptyParameterFunction = true;
                     options.RouteOptions.EnableQualifiedOperationCall = false;
@@ -116,7 +113,7 @@ namespace Ark.Tools.AspNetCore.Startup
             })
             .AddOData(options => 
             {
-                options.AddRouteComponents("v{api-version:apiVersion}");
+                options.AddRouteComponents("v{api-version:apiVersion}");               
             })
             .AddODataApiExplorer(options =>
             {
@@ -133,11 +130,16 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.MapNodaTimeTypes();
 
                 c.OperationFilter<SupportFlaggedEnums>();
+                c.OperationFilter<SwaggerDefaultValues>();
 
                 c.OperationFilter<PrettifyOperationIdOperationFilter>();
                 c.SchemaFilter<RequiredSchemaFilter>();
 
-                c.DocumentFilter<SetVersionInPaths>();
+                c.UseOneOfForPolymorphism();
+                c.UseAllOfForInheritance();
+                c.UseAllOfToExtendReferenceSchemas();
+                
+                c.CustomOperationIds(x => x.HttpMethod + " " + x.RelativePath);
 
                 c.OperationFilter<DefaultResponsesOperationFilter>();
 
@@ -169,6 +171,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.MaxDisplayedTags(100);
                 c.ShowExtensions();
                 c.EnableValidator();
+                c.EnableTryItOutByDefault();                
             });
 
             if (UseNewtonsoftJson)
@@ -255,6 +258,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 endpoints.MapControllers();
                 endpoints.Redirect("/", "/swagger");
             });
+
 
             //app.UseMvc(_mvcRoute); //Not Usable without setting 	MVC opt.EnableEndpointRouting = false;
         }

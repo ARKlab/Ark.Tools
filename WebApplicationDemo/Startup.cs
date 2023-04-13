@@ -95,7 +95,7 @@ namespace WebApplicationDemo
 					setup.AddCustomStylesheet((String)AppDomain.CurrentDomain.BaseDirectory + "UIHealthChecks.css");
 			});
 
-            bool isAuth0 = String.IsNullOrWhiteSpace(Configuration["AzureAdB2C:Domain"]) ? true : false;
+            bool isAuth0 = string.IsNullOrWhiteSpace(Configuration["AzureAdB2C:Domain"]) ? true : false;
 
             if (!isAuth0)
             {
@@ -134,9 +134,8 @@ namespace WebApplicationDemo
 
 				c.AddSecurityRequirement(dict);
 
-				c.AddPolymorphismSupport<Polymorphic>("kind");
-
-				//c.OperationFilter<SecurityRequirementsOperationFilter>();
+                c.SelectDiscriminatorNameUsing(t => "kind");
+                c.SelectDiscriminatorValueUsing(t => t.Name);
 
 			});
 

@@ -6,10 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="UIHealthChecks.css" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="UIHealthChecks.css" />
   </ItemGroup>
 

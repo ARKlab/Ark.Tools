@@ -102,10 +102,6 @@ namespace TestWithoutArkTools
 
             services.ArkConfigureSwaggerUI(c =>
 			{
-				c.MaxDisplayedTags(100);
-				c.DefaultModelRendering(ModelRendering.Model);
-				c.ShowExtensions();
-				//c.OAuthAppName("Public API");
 			});
 
 			services.ConfigureSwaggerGen(c =>
@@ -116,10 +112,6 @@ namespace TestWithoutArkTools
 				};
 
 				c.AddSecurityRequirement(dict);
-				
-				//c.OperationFilter<SecurityRequirementsOperationFilter>();
-
-				//c.SchemaFilter<ExampleSchemaFilter<Entity.V1.Output>>(Examples.GeEntityPayload()); //Non funziona
 			});
 		}
 
@@ -127,7 +119,6 @@ namespace TestWithoutArkTools
 		public override void Configure(IApplicationBuilder app)
 		{
 			base.Configure(app);
-
 		}
 
 		protected override void RegisterContainer(IServiceProvider services)

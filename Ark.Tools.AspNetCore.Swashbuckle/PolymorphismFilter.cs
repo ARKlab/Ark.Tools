@@ -8,7 +8,8 @@ using System.Linq;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-	public class PolymorphismSchemaFilter<T> : ISchemaFilter
+    [Obsolete("Use SelectDiscriminatorName/Value from SwaggerGen options. See https://github.com/domaindrivendev/Swashbuckle.AspNetCore#inheritance-and-polymorphism")]
+    public class PolymorphismSchemaFilter<T> : ISchemaFilter
 	{
 		private readonly HashSet<Type> _derivedTypes;
 
@@ -32,6 +33,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 		}
 	}
 
+    [Obsolete("Use SelectDiscriminatorName/Value from SwaggerGen options. See https://github.com/domaindrivendev/Swashbuckle.AspNetCore#inheritance-and-polymorphism")]
 	public class PolymorphismDocumentFilter<T> : IDocumentFilter
 	{
 		private readonly string _discriminatorName;
