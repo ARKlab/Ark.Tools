@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
  
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
@@ -18,7 +18,7 @@
   <!--===============================================================================-->
   
   <ItemGroup>
-    <PackageReference Include="CacheCow.Client" Version="2.11.3" />
+    <PackageReference Include="CacheCow.Client" Version="2.12.1" />
     <PackageReference Include="Flurl.Http" Version="3.2.4" />
     <PackageReference Include="MessagePack.NodaTime" Version="3.1.1" />
   </ItemGroup>
