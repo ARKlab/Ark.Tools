@@ -1,15 +1,13 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
 using Asp.Versioning;
 
 using Microsoft.AspNetCore.Mvc;
-using NLog;
-using NodaTime;
+
 using WebApplicationDemo.Api.Queries;
 using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;

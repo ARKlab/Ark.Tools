@@ -31,6 +31,7 @@ using System.Linq;
 using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.OData.NewtonsoftJson;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
@@ -96,12 +97,14 @@ namespace Ark.Tools.AspNetCore.Startup
                     options.RouteOptions.EnableNonParenthesisForEmptyParameterFunction = true;
                     options.RouteOptions.EnableQualifiedOperationCall = false;
                     options.RouteOptions.EnableUnqualifiedOperationCall = true;
-                })
-                .AddFormatterMappings(s =>
-                {
+                    options.RouteOptions.EnableActionNameCaseInsensitive = false;
+                    options.RouteOptions.EnablePropertyNameCaseInsensitive = false;                    
+
+                    options.EnableNoDollarQueryOptions = false;
+                    options.EnableAttributeRouting = false;
+                    options.UrlKeyDelimiter = Microsoft.OData.ODataUrlKeyDelimiter.Parentheses;
                 })
                 ;
-
 
             services.AddAuthorization();
 
@@ -110,6 +113,9 @@ namespace Ark.Tools.AspNetCore.Startup
                 o.ReportApiVersions = true;
                 o.AssumeDefaultVersionWhenUnspecified = true;
                 o.DefaultApiVersion = Versions.Last();
+            })
+            .AddMvc(o =>
+            {
             })
             .AddOData(options => 
             {
@@ -174,23 +180,22 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.EnableTryItOutByDefault();                
             });
 
-            if (UseNewtonsoftJson)
-				services.AddSwaggerGenNewtonsoftSupport();
-
 			if (UseNewtonsoftJson)
 			{
 				mvcBuilder.AddNewtonsoftJson(s =>
 				{
 					s.SerializerSettings.ConfigureArkDefaults();
 				});
-			}
-			else
+                mvcBuilder.AddODataNewtonsoftJson();
+                    services.AddSwaggerGenNewtonsoftSupport();
+                }
+			else // STJ
 			{
 				mvcBuilder.AddJsonOptions(options =>
 				{
 					options.JsonSerializerOptions.ConfigureArkDefaults();
 				});
-			}
+            }
 
 			//	Api Behaviour override for disabling automatic Problem details
 			services.ConfigureOptions<ApiBehaviourOptionsSetup>();
