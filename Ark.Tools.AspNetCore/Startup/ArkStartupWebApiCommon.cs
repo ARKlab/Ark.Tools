@@ -124,12 +124,6 @@ namespace Ark.Tools.AspNetCore.Startup
                 options.SubstituteApiVersionInUrl = true;
                 options.SubstitutionFormat = "VVVV";
             })
-            .AddApiExplorer(o =>
-            {
-                o.GroupNameFormat = "'v'VVVV";
-                o.SubstituteApiVersionInUrl = true;
-                o.SubstitutionFormat = "VVVV";
-            })
             ;
 
             services.AddSwaggerGen(c =>
