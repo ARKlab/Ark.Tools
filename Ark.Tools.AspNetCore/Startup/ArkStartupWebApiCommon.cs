@@ -259,6 +259,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
                 endpoints.MapArkHealthChecks();
                 endpoints.MapControllers();
+                endpoints.Redirect("/", "/swagger");
             });
 
             //app.UseMvc(_mvcRoute); //Not Usable without setting 	MVC opt.EnableEndpointRouting = false;
