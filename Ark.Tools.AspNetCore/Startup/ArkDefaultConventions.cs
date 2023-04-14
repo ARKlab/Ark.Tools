@@ -16,14 +16,27 @@ namespace Ark.Tools.AspNetCore.Startup
 		public void Apply(ActionModel action)
 		{
             var models = action.Selectors.OfType<SelectorModel>();
-            var mm = models?
+            var methods = models
                 .SelectMany(m => m.EndpointMetadata)
                 .OfType<HttpMethodMetadata>()
                 .SelectMany(m => m.HttpMethods)
                 .ToList();
 
-            if (mm != null
-                && _consumeMethods.Intersect(mm).Any()
+            var isOData = models
+                .SelectMany(m => m.EndpointMetadata)
+                .OfType<Microsoft.AspNetCore.OData.Routing.ODataRoutingMetadata> ()
+                .Any();
+
+            if (isOData) return;
+
+            // TODO: this should be extended with support for
+            //       1. ProblemDetails defaults (400, 401, 403, 500)
+            //       2. Alter ProducesResponseType adding ContentTypes there (possible?)
+            //       3. 'Remove' default xml, plain, etc Formatters which are registered by default by MVC
+            // Long story short: content-negotiation is a mess.
+
+            if (methods != null
+                && _consumeMethods.Intersect(methods).Any()
                 && action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any())
                 && !action.Filters.OfType<ConsumesAttribute>().Any()
                 && !action.Controller.Filters.OfType<ConsumesAttribute>().Any())

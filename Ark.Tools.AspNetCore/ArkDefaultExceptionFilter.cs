@@ -13,19 +13,6 @@ namespace Ark.Tools.AspNetCore
         public override void OnException(ExceptionContext context)
         {
             _log(context);
-            IActionResult? result = null;
-
-            if (result != null)
-            {
-                if (result is ObjectResult o)
-                {
-                    o.ContentTypes.Clear();
-                    o.ContentTypes.Add("application/json");
-                }
-
-                context.Result = result;
-                context.ExceptionHandled = true;
-            }
 
             base.OnException(context);
         }

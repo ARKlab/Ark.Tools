@@ -74,8 +74,11 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.Conventions.Add(new ProblemDetailsResultApiConvention());
                     opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
 
-                    opt.Filters.Add(new ArkDefaultExceptionFilter());
+                    if (!HostEnvironment.IsProduction())
+                        opt.Filters.Add(new ArkDefaultExceptionFilter());
+
                     opt.Conventions.Add(new ArkDefaultConventions());
+
                     opt.Filters.Add(new ResponseCacheAttribute()
                     {
                         Location = ResponseCacheLocation.Any,
@@ -106,6 +109,8 @@ namespace Ark.Tools.AspNetCore.Startup
                 })
                 ;
 
+            services.AddODataQueryFilter();
+
             services.AddAuthorization();
 
             services.AddApiVersioning(o =>
@@ -119,7 +124,8 @@ namespace Ark.Tools.AspNetCore.Startup
             })
             .AddOData(options => 
             {
-                options.AddRouteComponents("v{api-version:apiVersion}");               
+                options.AddRouteComponents("v{api-version:apiVersion}");
+                
             })
             .AddODataApiExplorer(options =>
             {
@@ -137,8 +143,9 @@ namespace Ark.Tools.AspNetCore.Startup
 
                 c.OperationFilter<SupportFlaggedEnums>();
                 c.OperationFilter<SwaggerDefaultValues>();
-
+                c.OperationFilter<FixODataMediaTypeOnNonOData>();
                 c.OperationFilter<PrettifyOperationIdOperationFilter>();
+
                 c.SchemaFilter<RequiredSchemaFilter>();
 
                 c.UseOneOfForPolymorphism();
@@ -187,8 +194,8 @@ namespace Ark.Tools.AspNetCore.Startup
 					s.SerializerSettings.ConfigureArkDefaults();
 				});
                 mvcBuilder.AddODataNewtonsoftJson();
-                    services.AddSwaggerGenNewtonsoftSupport();
-                }
+                services.AddSwaggerGenNewtonsoftSupport();
+            }
 			else // STJ
 			{
 				mvcBuilder.AddJsonOptions(options =>
@@ -256,6 +263,8 @@ namespace Ark.Tools.AspNetCore.Startup
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseODataQueryRequest();
 
             app.UseEndpoints(endpoints => {
 
