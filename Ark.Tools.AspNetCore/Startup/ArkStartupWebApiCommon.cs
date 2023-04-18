@@ -32,25 +32,26 @@ using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.NewtonsoftJson;
+using Microsoft.AspNetCore.ResponseCompression;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
     public abstract class ArkStartupWebApiCommon
-	{
-		public IConfiguration Configuration { get; }
-		public bool UseNewtonsoftJson { get; }
-		public Container Container { get; } = new Container();
-		public IHostEnvironment HostEnvironment { get; }
+    {
+        public IConfiguration Configuration { get; }
+        public bool UseNewtonsoftJson { get; }
+        public Container Container { get; } = new Container();
+        public IHostEnvironment HostEnvironment { get; }
 
-		public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
-			: this(configuration, hostEnvironment, false)
-		{
-		}
+        public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
+            : this(configuration, hostEnvironment, false)
+        {
+        }
 
-		public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
-		{
-			Configuration = configuration;
-			UseNewtonsoftJson = useNewtonsoftJson;
+        public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
+        {
+            Configuration = configuration;
+            UseNewtonsoftJson = useNewtonsoftJson;
             HostEnvironment = hostEnvironment;
         }
 
@@ -65,6 +66,13 @@ namespace Ark.Tools.AspNetCore.Startup
 
             //HealthChecks
             services.AddArkHealthChecks();
+
+            services.AddResponseCompression(options =>
+            {
+                 options.EnableForHttps = true;
+                 options.Providers.Add<BrotliCompressionProvider>();
+                 options.Providers.Add<GzipCompressionProvider>();
+            });
 
             // Add minumum framework services.
             var mvcBuilder = services
@@ -90,18 +98,18 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.Filters.Add(new ETagHeaderBasicSupportFilter());
                     opt.Filters.Add(new ApiControllerAttribute());
                     opt.ReturnHttpNotAcceptable = true;
-                    opt.RespectBrowserAcceptHeader = true;                    
+                    opt.RespectBrowserAcceptHeader = true;
                 })
                 .AddOData(options =>
                 {
                     options.EnableQueryFeatures();
-                    
+
                     options.RouteOptions.EnableKeyInParenthesis = true;
                     options.RouteOptions.EnableNonParenthesisForEmptyParameterFunction = true;
                     options.RouteOptions.EnableQualifiedOperationCall = false;
                     options.RouteOptions.EnableUnqualifiedOperationCall = true;
                     options.RouteOptions.EnableActionNameCaseInsensitive = false;
-                    options.RouteOptions.EnablePropertyNameCaseInsensitive = false;                    
+                    options.RouteOptions.EnablePropertyNameCaseInsensitive = false;
 
                     options.EnableNoDollarQueryOptions = false;
                     options.EnableAttributeRouting = false;
@@ -122,10 +130,10 @@ namespace Ark.Tools.AspNetCore.Startup
             .AddMvc(o =>
             {
             })
-            .AddOData(options => 
+            .AddOData(options =>
             {
                 options.AddRouteComponents("v{api-version:apiVersion}");
-                
+
             })
             .AddODataApiExplorer(options =>
             {
@@ -151,7 +159,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.UseOneOfForPolymorphism();
                 c.UseAllOfForInheritance();
                 c.UseAllOfToExtendReferenceSchemas();
-                
+
                 c.CustomOperationIds(x => x.HttpMethod + " " + x.RelativePath);
 
                 c.OperationFilter<DefaultResponsesOperationFilter>();
@@ -184,50 +192,50 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.MaxDisplayedTags(100);
                 c.ShowExtensions();
                 c.EnableValidator();
-                c.EnableTryItOutByDefault();                
+                c.EnableTryItOutByDefault();
             });
 
-			if (UseNewtonsoftJson)
-			{
-				mvcBuilder.AddNewtonsoftJson(s =>
-				{
-					s.SerializerSettings.ConfigureArkDefaults();
-				});
+            if (UseNewtonsoftJson)
+            {
+                mvcBuilder.AddNewtonsoftJson(s =>
+                {
+                    s.SerializerSettings.ConfigureArkDefaults();
+                });
                 mvcBuilder.AddODataNewtonsoftJson();
                 services.AddSwaggerGenNewtonsoftSupport();
             }
-			else // STJ
-			{
-				mvcBuilder.AddJsonOptions(options =>
-				{
-					options.JsonSerializerOptions.ConfigureArkDefaults();
-				});
+            else // STJ
+            {
+                mvcBuilder.AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.ConfigureArkDefaults();
+                });
             }
 
-			//	Api Behaviour override for disabling automatic Problem details
-			services.ConfigureOptions<ApiBehaviourOptionsSetup>();
+            //	Api Behaviour override for disabling automatic Problem details
+            services.ConfigureOptions<ApiBehaviourOptionsSetup>();
 
-			services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
-			_integrateSimpleInjectorContainer(services);
+            services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
+            _integrateSimpleInjectorContainer(services);
 
-			services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
+            services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
                 ?? throw new InvalidOperationException("Failed to obtain the RequestTelemetry from the current HttpContext. " +
                     "Make sure trying to access RequestTelemetry within a Request context, and not a BackgroundService."));
-		}
+        }
 
-		private void _integrateSimpleInjectorContainer(IServiceCollection services)
-		{
-			services.AddSimpleInjector(Container, o =>
-			{
-				o.AddAspNetCore().AddControllerActivation();
+        private void _integrateSimpleInjectorContainer(IServiceCollection services)
+        {
+            services.AddSimpleInjector(Container, o =>
+            {
+                o.AddAspNetCore().AddControllerActivation();
 
-                Container.Options.ContainerLocking += (s,e) =>
-				{
-					RegisterContainer(o.ApplicationServices);
-				};
-			});
-			RegisterContainer();
-		}
+                Container.Options.ContainerLocking += (s, e) =>
+                {
+                    RegisterContainer(o.ApplicationServices);
+                };
+            });
+            RegisterContainer();
+        }
 
         public abstract IEnumerable<ApiVersion> Versions { get; }
 
@@ -237,6 +245,9 @@ namespace Ark.Tools.AspNetCore.Startup
         {
             app.UseSimpleInjector(Container);
             app.UseArkProblemDetails();
+
+            // the rationale not to be before UseArkProblemDetails() is to avoid compressing errors for easy of use of them.
+            app.UseResponseCompression();
 
             app.UseRouting();
 
@@ -266,7 +277,8 @@ namespace Ark.Tools.AspNetCore.Startup
 
             app.UseODataQueryRequest();
 
-            app.UseEndpoints(endpoints => {
+            app.UseEndpoints(endpoints =>
+            {
 
                 endpoints.MapArkHealthChecks();
                 endpoints.MapControllers();
@@ -278,16 +290,16 @@ namespace Ark.Tools.AspNetCore.Startup
         }
 
         protected virtual void _mvcRoute(IRouteBuilder routeBuilder)
-		{
-		}
+        {
+        }
 
-		protected virtual void RegisterContainer()
-		{
-			Container.RegisterAuthorizationAspNetCoreUser();
-		}
+        protected virtual void RegisterContainer()
+        {
+            Container.RegisterAuthorizationAspNetCoreUser();
+        }
 
-		protected virtual void RegisterContainer(IServiceProvider services)
-		{
-		}
-	}
+        protected virtual void RegisterContainer(IServiceProvider services)
+        {
+        }
+    }
 }
