@@ -167,6 +167,8 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
                 c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @""));
+                c.SupportNonNullableReferenceTypes();
+                
                 c.EnableAnnotations();
             });
 

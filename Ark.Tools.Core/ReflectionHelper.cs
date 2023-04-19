@@ -194,7 +194,7 @@ namespace Ark.Tools.Core
             else if (type == typeof(decimal)) { return "decimal"; }
             else if (type.IsGenericType)
             {
-                return $"{_toGenericTypeString(type)}";
+                return _toGenericTypeString(type);
             }
             else if (type.IsArray)
             {
@@ -203,11 +203,15 @@ namespace Ark.Tools.Core
                 {
                     arrayLength.Add("[]");
                 }
-                return GetCSTypeName(type.GetElementType()!) + string.Join("", arrayLength).Replace("+", ".");
+                return GetCSTypeName(type.GetElementType()!) + string.Join(string.Empty, arrayLength).Replace('+', '.');
+            }
+            else if (type.IsGenericParameter)
+            {
+                return type.Name;
             }
             else
             {
-                return type.FullName?.Replace("+", ".") ?? throw new InvalidOperationException("Type has a null FullName");
+                return (type.FullName ?? type.Name).Replace('+', '.');
             }
         }
 
@@ -232,21 +236,20 @@ namespace Ark.Tools.Core
             else if (type == typeof(decimal)) { return "decimal"; }
             else
             {
-                if (fullName)
+                if (fullName && type.FullName is not null)
                 {
-                    return type.FullName ?? throw new InvalidOperationException("Type has a null FullName");
+                    return type.FullName;
                 }
                 else
                 {
                     return type.Name;
                 }
-
             }
         }
 
-        private static string? _toGenericTypeString(this Type t, params Type[] arg)
+        private static string _toGenericTypeString(this Type t, params Type[] arg)
         {
-            if (t.IsGenericParameter || t.FullName == null) return t.FullName;//Generic argument stub
+            if (t.IsGenericParameter || t.FullName == null) return t.Name; //Generic argument stub
             bool isGeneric = t.IsGenericType || t.FullName.IndexOf('`') >= 0;//an array of generic types is not considered a generic type although it still have the genetic notation
             bool isArray = !t.IsGenericType && t.FullName.IndexOf('`') >= 0;
             Type genericType = t;
