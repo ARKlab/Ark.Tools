@@ -167,8 +167,12 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
                 c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @""));
-                c.SelectSubTypesUsing(t => t.Assembly.GetTypes().Where(type => type.IsSubclassOf(t)
-                    && !type.IsGenericTypeDefinition && !type.IsAbstract && !type.IsInterface));
+                c.SelectSubTypesUsing(t =>
+                {
+                    if (t.IsGenericTypeDefinition) return Enumerable.Empty<Type>();
+                    return t.Assembly.GetExportedTypes()
+                         .Where(subType => subType.IsSubclassOf(t) && !subType.IsGenericTypeDefinition);
+                });
                 c.SupportNonNullableReferenceTypes();
                 
                 c.EnableAnnotations();
