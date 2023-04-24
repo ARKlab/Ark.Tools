@@ -170,7 +170,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.SelectSubTypesUsing(t =>
                 {
                     if (t.IsGenericTypeDefinition) return Enumerable.Empty<Type>();
-                    return t.Assembly.GetExportedTypes()
+                    return t.Assembly.GetTypes()
                          .Where(subType => subType.IsSubclassOf(t) && !subType.IsGenericTypeDefinition);
                 });
                 c.SupportNonNullableReferenceTypes();
