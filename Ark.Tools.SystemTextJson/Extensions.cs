@@ -20,6 +20,7 @@ namespace System.Text.Json
             //@this.Converters.Insert(0, new NullableStructSerializerFactory()); // not required anymore in v5
             @this.Converters.Add(new JsonStringEnumMemberConverter()); // from macross
             @this.Converters.Add(new GenericDictionaryWithConvertibleKey());
+            @this.Converters.Add(new ValueCollectionJsonConverterFactory());
 
             @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
             @this.ConfigureForNodaTimeRanges();

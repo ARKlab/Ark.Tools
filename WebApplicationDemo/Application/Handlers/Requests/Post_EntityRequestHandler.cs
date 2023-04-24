@@ -1,6 +1,11 @@
 ﻿using Ark.Tools.Solid;
 using EnsureThat;
 using NLog;
+
+using NodaTime;
+
+using Slack.Webhooks.Blocks;
+
 using System.Threading;
 using System.Threading.Tasks;
 using WebApplicationDemo.Api.Requests;
@@ -19,9 +24,10 @@ namespace WebApplicationDemo.Application.Handlers.Requests
         {
             EnsureArg.IsNotNull(request, nameof(request));
 
-            var entity = new Entity.V1.Output()
+            var entity = new Entity.V1.Output(request)
             {
-                EntityId = request.EntityId
+                Value = 42,
+                Date = LocalDate.MinIsoValue,
             };
 
             return await Task.FromResult(entity);

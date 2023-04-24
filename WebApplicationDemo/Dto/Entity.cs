@@ -1,4 +1,5 @@
-﻿using Ark.Tools.Core.EntityTag;
+﻿using Ark.Tools.Core;
+using Ark.Tools.Core.EntityTag;
 using NodaTime;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace WebApplicationDemo.Dto
     {
         public static class V1
         {
-			public class Input : IEntityWithETag
+			public record Input : IEntityWithETag
 			{
 				public virtual string? _ETag { get; set; }
 
@@ -21,13 +22,24 @@ namespace WebApplicationDemo.Dto
 
 				public EntityTest? EntityTest { get; set; }
 
-				public IList<string>? Strings { get; set; }
+				public ValueCollection<string>? Strings { get; set; }
 
 				public IDictionary<LocalDate, double?> Ts { get; set; } = new Dictionary<LocalDate, double?>();
+
 			}
 
-            public class Output : Input
+            public record Output : Input
             {
+                public Output() { }
+                public Output(Input other)
+                {
+                    _ETag= other._ETag;
+                    EntityId = other.EntityId;
+                    EntityResult = other.EntityResult;
+                    Strings = other.Strings;
+                    Ts = other.Ts;
+                }
+
                 public int Value { get; set; }
 				public LocalDate? Date { get; set; }
 			}

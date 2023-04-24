@@ -1,4 +1,5 @@
-﻿using Ark.Tools.Nodatime;
+﻿using Ark.Tools.NewtonsoftJson;
+using Ark.Tools.Nodatime;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using NodaTime;
@@ -15,6 +16,7 @@ namespace Newtonsoft.Json
             @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
             @this.ConfigureForNodaTimeRanges();
             @this.Converters.Add(new StringEnumConverter());
+            @this.Converters.Add(new ValueCollectionConverter());
             @this.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
             return @this;

@@ -31,7 +31,7 @@ namespace WebApplicationDemo.Api.Queries
                 Date = NodaTime.SystemClock.Instance.GetCurrentInstant().InUtc().Date,
                 EntityResult = EntityResult.Success1 | EntityResult.Success2,
                 EntityTest = EntityTest.Prova1,
-                Strings = new List<string>() { "antani" },
+                Strings = new Ark.Tools.Core.ValueCollection<string>() { "antani" },
                 Ts = new Dictionary<LocalDate, double?>
                 {
                     { NodaTime.SystemClock.Instance.GetCurrentInstant().InUtc().Date, null }
