@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Identity.Web" Version="2.10.0" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="2.11.1" />
   </ItemGroup>
 
   <ItemGroup>
