@@ -31,8 +31,9 @@ namespace Ark.Tools.NLog
 
         static NLogConfigurer()
         {
-            ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(Configurer).Assembly);
-            ConfigurationItemFactory.Default.RegisterItemsFromAssembly(typeof(ActivityTraceLayoutRenderer).Assembly);
+            LogManager.Setup().SetupExtensions(b => b
+                .RegisterAssembly(typeof(Configurer).Assembly)
+                .RegisterAssembly(typeof(ActivityTraceLayoutRenderer).Assembly));
             LogManager.LogFactory.ServiceRepository.RegisterService(typeof(IJsonConverter), new STJSerializer());
 
             // This has been added support NLog loggers output to Console during application initialization,

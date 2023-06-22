@@ -236,6 +236,11 @@ namespace Ark.Tools.Auth0
             ((IDisposable)_cache).Dispose();
             if (_inner is IDisposable disposable) disposable?.Dispose();
         }
+
+        public Task RevokeRefreshTokenAsync(RevokeRefreshTokenRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.RevokeRefreshTokenAsync(request, cancellationToken);
+        }
         #endregion
     }
 }
