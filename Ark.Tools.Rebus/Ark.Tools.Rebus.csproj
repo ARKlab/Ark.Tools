@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -22,7 +22,7 @@
 	<!--===============================================================================-->
 
 	<ItemGroup>
-		<PackageReference Include="Rebus" Version="7.1.0" />
+		<PackageReference Include="Rebus" Version="7.2.0" />
 		<PackageReference Include="Rebus.NLog" Version="5.0.0" />
 		<PackageReference Include="Rebus.AzureServiceBus" Version="9.3.5" />
 		<PackageReference Include="Rebus.SqlServer" Version="7.3.1" />
