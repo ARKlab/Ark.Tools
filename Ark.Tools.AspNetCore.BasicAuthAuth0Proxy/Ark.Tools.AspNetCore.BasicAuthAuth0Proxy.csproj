@@ -25,13 +25,6 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   
-  <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.21.0" />
-    <PackageReference Include="JWT" Version="10.0.3" />
-    <PackageReference Include="Polly.Caching.Memory" Version="3.0.2" />
-    <PackageReference Include="Polly" Version="7.2.4" />
-  </ItemGroup>
-  
   
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Auth0\Ark.Tools.Auth0.csproj" />
