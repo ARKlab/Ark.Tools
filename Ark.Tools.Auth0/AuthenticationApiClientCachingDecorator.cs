@@ -1,19 +1,22 @@
 ﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Builders;
 using Auth0.AuthenticationApi.Models;
-using Auth0.Core.Http;
+
 using JWT.Algorithms;
 using JWT.Builder;
+
 using Microsoft.Extensions.Caching.Memory;
+
+using Newtonsoft.Json;
+
 using Polly;
 using Polly.Caching;
 using Polly.Caching.Memory;
@@ -62,10 +65,10 @@ namespace Ark.Tools.Auth0
             var decode = new JwtBuilder()
                                 .DoNotVerifySignature()
                                 .WithAlgorithm(new HMACSHA256Algorithm())
-                                .Decode<IDictionary<string, object>>(accessToken);
+                                .Decode<Token>(accessToken);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            var res = DateTimeOffset.FromUnixTimeSeconds((long)decode["exp"]) - DateTimeOffset.UtcNow;
+            var res = DateTimeOffset.FromUnixTimeSeconds(decode.Exp) - DateTimeOffset.UtcNow;
             return res;
         }
 
@@ -242,5 +245,11 @@ namespace Ark.Tools.Auth0
             return _inner.RevokeRefreshTokenAsync(request, cancellationToken);
         }
         #endregion
+    }
+
+    record Token
+    {
+        [JsonProperty("exp")]
+        public long Exp { get; set; }
     }
 }
