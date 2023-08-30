@@ -68,7 +68,7 @@ namespace Ark.Tools.Auth0
                                 .Decode<Token>(accessToken);
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            var res = DateTimeOffset.FromUnixTimeSeconds((long)decode.ExpiresIn) - DateTimeOffset.UtcNow;
+            var res = DateTimeOffset.FromUnixTimeSeconds(decode.ExpiresIn) - DateTimeOffset.UtcNow;
             return res;
         }
 
@@ -250,6 +250,6 @@ namespace Ark.Tools.Auth0
     record Token
     {
         [JsonProperty("expires_in")]
-        public int ExpiresIn { get; set; }
+        public long ExpiresIn { get; set; }
     }
 }
