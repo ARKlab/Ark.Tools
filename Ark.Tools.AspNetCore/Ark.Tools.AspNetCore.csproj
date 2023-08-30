@@ -30,7 +30,7 @@
     <PackageReference Include="Asp.Versioning.OData.ApiExplorer" Version="[6.4.1,7)" />
     <PackageReference Include="FluentValidation" Version="11.5.2" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.16" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.21" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.OData.NewtonsoftJson" Version="8.2.0" />
     <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders" Version="0.20.0" />
