@@ -67,7 +67,10 @@ namespace Ark.Tools.ResourceWatcher
                 return r;
             }
 
-            using (var c = _connManager.Get(_config.DbConnectionString))
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
+            await 
+#endif
+                using (var c = await _connManager.GetAsync(_config.DbConnectionString, ctk))
             {
                 if (resourceIds == null)
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState
@@ -101,7 +104,11 @@ namespace Ark.Tools.ResourceWatcher
                 Ensure.String.HasLengthBetween(s.ResourceId, 1, 300);
             }
 
-            using (var c = _connManager.Get(_config.DbConnectionString))
+
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
+            await
+#endif 
+                using (var c = await _connManager.GetAsync(_config.DbConnectionString, ctk))
             {
                 var q = @"
 MERGE INTO [State] AS tgt
