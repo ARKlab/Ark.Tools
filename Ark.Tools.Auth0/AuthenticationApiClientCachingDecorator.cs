@@ -3,6 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,11 +14,8 @@ using Auth0.AuthenticationApi.Models;
 
 using JWT.Algorithms;
 using JWT.Builder;
-using JWT.Serializers;
 
 using Microsoft.Extensions.Caching.Memory;
-
-using Newtonsoft.Json;
 
 using Polly;
 using Polly.Caching;
@@ -63,14 +62,22 @@ namespace Ark.Tools.Auth0
         private static TimeSpan _expiresIn(string accessToken)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            var decode = new JwtBuilder()
+            var decodeJson = new JwtBuilder()
                                 .DoNotVerifySignature()
                                 .WithAlgorithm(new HMACSHA256Algorithm())
-                                .WithJsonSerializer(new JsonNetSerializer())
-                                .Decode<Token>(accessToken);
+                                .Decode(accessToken);
+
+            long exp = 0;
+
+            if (!string.IsNullOrEmpty(decodeJson))
+            {
+                var decode = JsonSerializer.Deserialize<Token>(decodeJson);
+                exp = decode != null ? decode.Exp : 0;
+            }
+
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            var res = DateTimeOffset.FromUnixTimeSeconds(decode.Exp) - DateTimeOffset.UtcNow;
+            var res = DateTimeOffset.FromUnixTimeSeconds(exp) - DateTimeOffset.UtcNow;
             return res;
         }
 
@@ -251,7 +258,7 @@ namespace Ark.Tools.Auth0
 
     record Token
     {
-        [JsonProperty("exp")]
+        [JsonPropertyName("exp")]
         public long Exp { get; set; }
     }
 }
