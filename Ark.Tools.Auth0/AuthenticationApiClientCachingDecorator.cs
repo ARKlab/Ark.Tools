@@ -14,6 +14,7 @@ using Auth0.AuthenticationApi.Models;
 
 using JWT.Algorithms;
 using JWT.Builder;
+using JWT.Serializers;
 
 using Microsoft.Extensions.Caching.Memory;
 
@@ -62,22 +63,15 @@ namespace Ark.Tools.Auth0
         private static TimeSpan _expiresIn(string accessToken)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            var decodeJson = new JwtBuilder()
+            var decode = new JwtBuilder()
                                 .DoNotVerifySignature()
                                 .WithAlgorithm(new HMACSHA256Algorithm())
-                                .Decode(accessToken);
-
-            long exp = 0;
-
-            if (!string.IsNullOrEmpty(decodeJson))
-            {
-                var decode = JsonSerializer.Deserialize<Token>(decodeJson);
-                exp = decode != null ? decode.Exp : 0;
-            }
+                                .WithJsonSerializer(new SystemTextSerializer())
+                                .Decode<Token>(accessToken);
 
 #pragma warning restore CS0618 // Type or member is obsolete
 
-            var res = DateTimeOffset.FromUnixTimeSeconds(exp) - DateTimeOffset.UtcNow;
+            var res = DateTimeOffset.FromUnixTimeSeconds(decode.Exp) - DateTimeOffset.UtcNow;
             return res;
         }
 
