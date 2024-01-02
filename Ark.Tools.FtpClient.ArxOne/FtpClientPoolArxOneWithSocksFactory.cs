@@ -4,6 +4,8 @@ using Ark.Tools.FtpClient.Core;
 using EnsureThat;
 using System;
 using System.Net;
+using System.Text;
+using ArxOne.Ftp;
 
 namespace Ark.Tools.FtpClient
 {
@@ -18,13 +20,13 @@ namespace Ark.Tools.FtpClient
             _config = config;
         }
 
-        public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
+        public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig, FtpClientParameters? FtpClientParameters = null)
         {
             EnsureArg.IsNotNull(ftpConfig);
             EnsureArg.IsNotNull(ftpConfig.Uri);
             EnsureArg.IsNotNull(ftpConfig.Credentials);
 
-            return new FtpClientPoolArxOneWithSocks(_config, maxPoolSize, ftpConfig);
+            return new FtpClientPoolArxOneWithSocks(_config, maxPoolSize, ftpConfig, FtpClientParameters);
         }
     }
 }

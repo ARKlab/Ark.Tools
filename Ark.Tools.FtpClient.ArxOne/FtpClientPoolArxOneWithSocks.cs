@@ -7,25 +7,44 @@ using Org.Mentalis.Network.ProxySocket;
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace Ark.Tools.FtpClient
 {
     public class FtpClientPoolArxOneWithSocks : FtpClientPoolArxOne
     {
         private readonly ISocksConfig _config;
+        private readonly FtpClientParameters? _ftpClientParameters;
 
-        public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig)
+        public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig, FtpClientParameters? ftpClientParameters = null)
             : base(maxPoolSize, ftpConfig)
         {
             this._config = config;
+            this._ftpClientParameters = ftpClientParameters;
         }
 
         private protected override ArxOne.Ftp.FtpClient _getClient()
         {
-            var client = new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, new FtpClientParameters()
+            var ftpClientParameters = _createFtpClientParameters();
+
+            var client = new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, ftpClientParameters);
+
+            return client;
+        }
+
+        private FtpClientParameters _createFtpClientParameters()
+        {
+            var ftpClientParameters = 
+                this._ftpClientParameters != null || this._ftpClientParameters != default(FtpClientParameters) ? 
+                this._ftpClientParameters : 
+                new FtpClientParameters();
+
+            if (ftpClientParameters.ChannelProtection == null || ftpClientParameters.ChannelProtection == default)
+                ftpClientParameters.ConnectTimeout = TimeSpan.FromSeconds(60);
+
+            if (ftpClientParameters.ProxyConnect == null || ftpClientParameters.ProxyConnect == default)
             {
-                ConnectTimeout = TimeSpan.FromSeconds(60),
-                ProxyConnect = e =>
+                ftpClientParameters.ProxyConnect = e =>
                 {
                     var s = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
                     {
@@ -48,10 +67,10 @@ namespace Ark.Tools.FtpClient
                     }
 
                     return s;
-                }
-            });
+                };
+            }
 
-            return client;
+            return ftpClientParameters;
         }
     }
 }

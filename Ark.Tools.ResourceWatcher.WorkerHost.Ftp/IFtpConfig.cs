@@ -2,8 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 
+using ArxOne.Ftp;
+
 using System;
 using System.Net;
+using System.Text;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
 {
@@ -13,5 +16,6 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
         TimeSpan ListingTimeout { get; }
         TimeSpan DownloadTimeout { get; }
         int MaxConcurrentConnections { get; }
+        FtpClientParameters? FtpClientParameters { get; }
     }
 }

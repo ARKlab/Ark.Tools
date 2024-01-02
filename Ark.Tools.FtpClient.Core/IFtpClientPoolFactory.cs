@@ -2,11 +2,13 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 using System.Net;
+using System.Text;
+using ArxOne.Ftp;
 
 namespace Ark.Tools.FtpClient.Core
 {
     public interface IFtpClientPoolFactory
     {
-        IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig);
+        IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig, FtpClientParameters? ftpClientParameters);
     }
 }
