@@ -14,63 +14,50 @@ namespace Ark.Tools.FtpClient
     public class FtpClientPoolArxOneWithSocks : FtpClientPoolArxOne
     {
         private readonly ISocksConfig _config;
-        private readonly FtpClientParameters? _ftpClientParameters;
+        private static FtpConfig _ftpConfig = new FtpConfig();
+        private FtpClientParameters _ftpClientParameters = new FtpClientParameters();
 
-        public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig, FtpClientParameters? ftpClientParameters = null)
-            : base(maxPoolSize, ftpConfig)
+        public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, Action<FtpConfig, FtpClientParameters> ftpParameters)
+            : base(maxPoolSize, ftpParameters)
         {
             this._config = config;
-            this._ftpClientParameters = ftpClientParameters;
+
+            ftpParameters.Invoke(_ftpConfig, _ftpClientParameters);
         }
 
         private protected override ArxOne.Ftp.FtpClient _getClient()
         {
-            var ftpClientParameters = _createFtpClientParameters();
+            var ftpClientParameters = this._ftpClientParameters;
 
-            var client = new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, ftpClientParameters);
-
-            return client;
-        }
-
-        private FtpClientParameters _createFtpClientParameters()
-        {
-            var ftpClientParameters = 
-                this._ftpClientParameters != null || this._ftpClientParameters != default(FtpClientParameters) ? 
-                this._ftpClientParameters : 
-                new FtpClientParameters();
-
-            if (ftpClientParameters.ChannelProtection == null || ftpClientParameters.ChannelProtection == default)
-                ftpClientParameters.ConnectTimeout = TimeSpan.FromSeconds(60);
-
-            if (ftpClientParameters.ProxyConnect == null || ftpClientParameters.ProxyConnect == default)
+            ftpClientParameters.ConnectTimeout = TimeSpan.FromSeconds(60);
+            ftpClientParameters.ReadWriteTimeout = TimeSpan.FromMinutes(3);
+            ftpClientParameters.Passive = true;
+            ftpClientParameters.ProxyConnect = e =>
             {
-                ftpClientParameters.ProxyConnect = e =>
+                var s = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
                 {
-                    var s = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-                    {
-                        ProxyEndPoint = new IPEndPoint(IPAddress.Parse(_config.IpAddress), _config.Port),
-                        ProxyUser = _config.UserName,
-                        ProxyPass = _config.Password,
-                        ProxyType = _config.Type
-                    };
-
-                    switch (e)
-                    {
-                        case DnsEndPoint dns:
-                            s.Connect(dns.Host, dns.Port);
-                            break;
-                        case IPEndPoint ip:
-                            s.Connect(ip);
-                            break;
-
-                        default: throw new NotSupportedException();
-                    }
-
-                    return s;
+                    ProxyEndPoint = new IPEndPoint(IPAddress.Parse(_config.IpAddress), _config.Port),
+                    ProxyUser = _config.UserName,
+                    ProxyPass = _config.Password,
+                    ProxyType = _config.Type
                 };
-            }
 
-            return ftpClientParameters;
+                switch (e)
+                {
+                    case DnsEndPoint dns:
+                        s.Connect(dns.Host, dns.Port);
+                        break;
+                    case IPEndPoint ip:
+                        s.Connect(ip);
+                        break;
+
+                    default: throw new NotSupportedException();
+                }
+
+                return s;
+            };
+            
+            return new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, ftpClientParameters);
         }
     }
 }

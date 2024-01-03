@@ -12,10 +12,9 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
 {
     public interface IFtpConfig
     {
-        FtpConfig FtpConfig { get; }
+        Action<FtpConfig, FtpClientParameters> FtpParameters { get; }
         TimeSpan ListingTimeout { get; }
         TimeSpan DownloadTimeout { get; }
         int MaxConcurrentConnections { get; }
-        FtpClientParameters? FtpClientParameters { get; }
     }
 }

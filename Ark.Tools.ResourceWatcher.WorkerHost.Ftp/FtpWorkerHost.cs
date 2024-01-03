@@ -67,7 +67,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
             {
                 _config = config;
 
-                _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.FtpConfig, config.FtpClientParameters);
+                _ftpClient = ftpClientFactory.Create(config.MaxConcurrentConnections, config.FtpParameters);
 
                 _parser = parser;
             }

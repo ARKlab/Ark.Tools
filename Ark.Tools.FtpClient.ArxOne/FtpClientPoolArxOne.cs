@@ -13,30 +13,31 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.FtpClient
 {
-
     public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
     {
         private readonly ArxOne.Ftp.FtpClient _client;
         private readonly SemaphoreSlim _semaphore;
+        private static FtpConfig _ftpConfig = new FtpConfig();
+        private FtpClientParameters _ftpClientParameters = new FtpClientParameters();
 
         private bool _isDisposed  =  false;
 
-        public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig)
-            : base(ftpConfig, maxPoolSize)
+        public FtpClientPoolArxOne(int maxPoolSize, Action<FtpConfig, FtpClientParameters> ftpParameters)
+            : base(_ftpConfig, maxPoolSize)
         {
+            ftpParameters.Invoke(_ftpConfig, _ftpClientParameters);
             _client = _getClient();
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
         }
 
         private protected virtual ArxOne.Ftp.FtpClient _getClient()
         {
-            return new ArxOne.Ftp.FtpClient(
-                this.Uri, this.Credentials, new FtpClientParameters()
-                {
-                    ConnectTimeout = TimeSpan.FromSeconds(60),
-                    ReadWriteTimeout = TimeSpan.FromMinutes(3),
-                    Passive = true,
-                });
+            var ftpClientParameters = _ftpClientParameters;
+            ftpClientParameters.ConnectTimeout = TimeSpan.FromSeconds(60);
+            ftpClientParameters.ReadWriteTimeout = TimeSpan.FromMinutes(3);
+            ftpClientParameters.Passive = true;
+
+            return new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, ftpClientParameters);
         }
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)

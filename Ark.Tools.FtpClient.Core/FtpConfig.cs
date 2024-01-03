@@ -11,12 +11,12 @@ namespace Ark.Tools.FtpClient.Core
     {
         private bool _isDisposed;
 
-        public Uri Uri { get; }
+        public Uri? Uri { get; }
         public NetworkCredential? Credentials { get; }
 
         public X509Certificate2? ClientCertificate { get; private set; }
 
-        public FtpConfig(Uri uri, NetworkCredential? credential = null, X509Certificate2? certificate = null)
+        public FtpConfig(Uri? uri = null, NetworkCredential? credential = null, X509Certificate2? certificate = null)
         {
             Uri = uri;
             Credentials = credential;
