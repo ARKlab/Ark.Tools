@@ -17,11 +17,11 @@ namespace Ark.Tools.FtpClient
     {
         private readonly ArxOne.Ftp.FtpClient _client;
         private readonly SemaphoreSlim _semaphore;
-        private readonly Action<FtpConfig, FtpClientParameters>? _configurer;
+        private readonly Action<FtpClientParameters>? _configurer;
 
         private bool _isDisposed  =  false;
 
-        public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig, Action<FtpConfig, FtpClientParameters>? configurer = null)
+        public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig, Action<FtpClientParameters>? configurer = null)
             : base(ftpConfig, maxPoolSize)
         {
             _client = _getClient();
@@ -39,7 +39,7 @@ namespace Ark.Tools.FtpClient
             };
             
             if (_configurer != null)
-                _configurer(base.FtpConfig, ftpClientParameters);
+                _configurer(ftpClientParameters);
 
             return new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, ftpClientParameters);
         }

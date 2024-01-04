@@ -14,9 +14,9 @@ namespace Ark.Tools.FtpClient
     public class FtpClientPoolArxOneWithSocks : FtpClientPoolArxOne
     {
         private readonly ISocksConfig _config;
-        private readonly Action<FtpConfig, FtpClientParameters>? _configurer;
+        private readonly Action<FtpClientParameters>? _configurer;
 
-        public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig, Action<FtpConfig, FtpClientParameters>? configurer = null)
+        public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig, Action<FtpClientParameters>? configurer = null)
             : base(maxPoolSize, ftpConfig)
         {
             this._config = config;
@@ -57,7 +57,7 @@ namespace Ark.Tools.FtpClient
             };
 
             if (_configurer != null)
-                _configurer(base.FtpConfig, ftpClientParameters);
+                _configurer(ftpClientParameters);
             
             return new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, ftpClientParameters);
         }

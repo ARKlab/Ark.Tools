@@ -13,9 +13,9 @@ namespace Ark.Tools.FtpClient
     public class FtpClientPoolArxOneWithSocksFactory : IFtpClientPoolFactory
     {
         private readonly ISocksConfig _config;
-        private readonly Action<FtpConfig, FtpClientParameters>? _configurer;
+        private readonly Action<FtpClientParameters>? _configurer;
 
-        public FtpClientPoolArxOneWithSocksFactory(ISocksConfig config, Action<FtpConfig, FtpClientParameters>? configurer = null)
+        public FtpClientPoolArxOneWithSocksFactory(ISocksConfig config, Action<FtpClientParameters>? configurer = null)
         {
             EnsureArg.IsNotNull(config);
 
