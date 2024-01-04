@@ -6,25 +6,30 @@ using System;
 using System.Net;
 using System.Text;
 using ArxOne.Ftp;
+using Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
 
 namespace Ark.Tools.FtpClient
 {
     public class FtpClientPoolArxOneWithSocksFactory : IFtpClientPoolFactory
     {
         private readonly ISocksConfig _config;
+        private readonly Action<FtpConfig, FtpClientParameters>? _configurer;
 
-        public FtpClientPoolArxOneWithSocksFactory(ISocksConfig config)
+        public FtpClientPoolArxOneWithSocksFactory(ISocksConfig config, Action<FtpConfig, FtpClientParameters>? configurer = null)
         {
             EnsureArg.IsNotNull(config);
 
             _config = config;
+            _configurer = configurer;
         }
 
-        public IFtpClientPool Create(int maxPoolSize, Action<FtpConfig, FtpClientParameters> ftpParameters)
+        public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
         {
-            EnsureArg.IsNotNull(ftpParameters);
+            EnsureArg.IsNotNull(ftpConfig);
+            EnsureArg.IsNotNull(ftpConfig.Uri);
+            EnsureArg.IsNotNull(ftpConfig.Credentials);
 
-            return new FtpClientPoolArxOneWithSocks(_config, maxPoolSize, ftpParameters);
+            return new FtpClientPoolArxOneWithSocks(_config, maxPoolSize, ftpConfig, _configurer);
         }
     }
 }

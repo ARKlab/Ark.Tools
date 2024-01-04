@@ -9,6 +9,6 @@ namespace Ark.Tools.FtpClient.Core
 {
     public interface IFtpClientPoolFactory
     {
-        IFtpClientPool Create(int maxPoolSize, Action<FtpConfig, FtpClientParameters> ftpParameters);
+        IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig);
     }
 }

@@ -13,11 +13,20 @@ namespace Ark.Tools.FtpClient
 {
     public class FtpClientPoolArxOneFactory : IFtpClientPoolFactory
     {
-        public IFtpClientPool Create(int maxPoolSize, Action<FtpConfig, FtpClientParameters> ftpParameters)
-        {
-            EnsureArg.IsNotNull(ftpParameters);
+        private readonly Action<FtpConfig, FtpClientParameters>? _configurer;
 
-            return new FtpClientPoolArxOne(maxPoolSize, ftpParameters);
+        public FtpClientPoolArxOneFactory(Action<FtpConfig, FtpClientParameters>? configurer = null)
+        {
+            _configurer = configurer;
+        }
+
+        public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
+        {
+            EnsureArg.IsNotNull(ftpConfig);
+            EnsureArg.IsNotNull(ftpConfig.Uri);
+            EnsureArg.IsNotNull(ftpConfig.Credentials);
+
+            return new FtpClientPoolArxOne(maxPoolSize, ftpConfig, _configurer);
         }
     }
 }
