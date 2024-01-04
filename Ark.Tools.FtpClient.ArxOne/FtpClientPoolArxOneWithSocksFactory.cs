@@ -6,7 +6,6 @@ using System;
 using System.Net;
 using System.Text;
 using ArxOne.Ftp;
-using Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
 
 namespace Ark.Tools.FtpClient
 {
