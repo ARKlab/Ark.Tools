@@ -24,9 +24,9 @@ namespace Ark.Tools.FtpClient
         public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig, Action<FtpClientParameters>? configurer = null)
             : base(ftpConfig, maxPoolSize)
         {
-            _client = _getClient();
             _configurer = configurer;
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
+            _client = _getClient();
         }
 
         private protected virtual ArxOne.Ftp.FtpClient _getClient()

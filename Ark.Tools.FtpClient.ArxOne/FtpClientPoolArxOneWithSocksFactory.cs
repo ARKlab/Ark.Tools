@@ -18,8 +18,8 @@ namespace Ark.Tools.FtpClient
         {
             EnsureArg.IsNotNull(config);
 
-            _config = config;
             _configurer = configurer;
+            _config = config;
         }
 
         public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)

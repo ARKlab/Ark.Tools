@@ -19,8 +19,8 @@ namespace Ark.Tools.FtpClient
         public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig, Action<FtpClientParameters>? configurer = null)
             : base(maxPoolSize, ftpConfig)
         {
-            this._config = config;
             this._configurer = configurer;
+            this._config = config;
         }
 
         private protected override ArxOne.Ftp.FtpClient _getClient()
