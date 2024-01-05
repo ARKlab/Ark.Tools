@@ -3,7 +3,6 @@
 using System;
 using System.Net;
 using System.Text;
-using ArxOne.Ftp;
 
 namespace Ark.Tools.FtpClient.Core
 {
