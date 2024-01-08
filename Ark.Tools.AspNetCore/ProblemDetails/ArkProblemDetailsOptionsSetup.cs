@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc;
 using Ark.Tools.Core.Reflection;
 using System.Collections.Concurrent;
 using System.Linq;
+using ProblemDetailsOptions = Hellang.Middleware.ProblemDetails.ProblemDetailsOptions;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -142,7 +143,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
             return false;
         }
 
-        public void PostConfigure(string name, ProblemDetailsOptions options)
+        public void PostConfigure(string? name, ProblemDetailsOptions options)
         {
             // If an exception other than above specified is thrown, this will handle it.
             options.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);

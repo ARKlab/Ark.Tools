@@ -184,7 +184,7 @@ namespace Ark.Tools.AspNetCore.Startup
             return services;
         }
 
-        public static IServiceCollection ArkConfigureSwaggerAzureB2C(this IServiceCollection services, string instance, string domain, string clientId, string signUpSignIn, string apiId)
+        public static IServiceCollection ArkConfigureSwaggerAzureB2C(this IServiceCollection services, string? instance, string? domain, string? clientId, string? signUpSignIn, string? apiId)
         {
             services.ConfigureSwaggerGen(c =>
             {

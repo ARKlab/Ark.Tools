@@ -26,54 +26,56 @@ namespace Ark.Tools.Rebus.Retry
         /// Configures the simple retry strategy, using the specified error queue address and number of delivery attempts
         /// </summary>
         /// <param name="optionsConfigurer">(extension method target)</param>
-        /// <param name="errorQueueAddress">Specifies the name of the error queue</param>
+        /// <param name="errorQueueName">Specifies the name of the error queue</param>
         /// <param name="maxDeliveryAttempts">Specifies how many delivery attempts should be made before forwarding a failed message to the error queue</param>
         /// <param name="secondLevelRetriesEnabled">Specifies whether second level retries should be enabled - when enabled, the message will be dispatched wrapped in an <see cref="IFailed{TMessage}"/> after the first <paramref name="maxDeliveryAttempts"/> delivery attempts, allowing a different handler to handle the message. Dispatch of the <see cref="IFailed{TMessage}"/> is subject to the same <paramref name="maxDeliveryAttempts"/> delivery attempts</param>
         /// <param name="errorDetailsHeaderMaxLength">Specifies a MAX length of the error details to be enclosed as the <see cref="Headers.ErrorDetails"/> header. As the enclosed error details can sometimes become very long (especially when using many delivery attempts), depending on the transport's capabilities it might sometimes be necessary to truncate the error details</param>
         /// <param name="errorTrackingMaxAgeMinutes">Specifies the max age of in-mem error trackings, for tracked messages that have not had any activity registered on them.</param>
+        /// <param name="errorQueueErrorCooldownTimeSeconds">Specifies the time in seconds that the bus instance will wait if forwarding to the dead-letter queue fails.</param>
         public static void ArkRetryStrategy(this OptionsConfigurer optionsConfigurer,
-            string errorQueueAddress = SimpleRetryStrategySettings.DefaultErrorQueueName,
-            int maxDeliveryAttempts = SimpleRetryStrategySettings.DefaultNumberOfDeliveryAttempts,
+            string errorQueueName = RetryStrategySettings.DefaultErrorQueueName,
+            int maxDeliveryAttempts = RetryStrategySettings.DefaultNumberOfDeliveryAttempts,
             bool secondLevelRetriesEnabled = false,
             int errorDetailsHeaderMaxLength = int.MaxValue,
-            int errorTrackingMaxAgeMinutes = SimpleRetryStrategySettings.DefaultErrorTrackingMaxAgeMinutes
+            int errorTrackingMaxAgeMinutes = RetryStrategySettings.DefaultErrorTrackingMaxAgeMinutes,
+            int errorQueueErrorCooldownTimeSeconds = RetryStrategySettings.DefaultErrorQueueErrorCooldownTimeSeconds
         )
         {
             if (optionsConfigurer == null) throw new ArgumentNullException(nameof(optionsConfigurer));
 
-            optionsConfigurer.Register(c =>
+            optionsConfigurer.Register(_ =>
             {
-                var settings = new SimpleRetryStrategySettings(
-                    errorQueueAddress,
+                var settings = new RetryStrategySettings(
+                    errorQueueName,
                     maxDeliveryAttempts,
                     secondLevelRetriesEnabled,
                     errorDetailsHeaderMaxLength,
-                    errorTrackingMaxAgeMinutes
+                    errorTrackingMaxAgeMinutes,
+                    errorQueueErrorCooldownTimeSeconds: errorQueueErrorCooldownTimeSeconds
                 );
 
                 return settings;
             });
 
+
             optionsConfigurer.Register<IRetryStrategy>(c =>
             {
-                var simpleRetryStrategySettings = c.Get<SimpleRetryStrategySettings>();
+                var simpleRetryStrategySettings = c.Get<RetryStrategySettings>();
                 var rebusLoggerFactory = c.Get<IRebusLoggerFactory>();
                 var errorTracker = c.Get<IErrorTracker>();
                 var errorHandler = c.Get<IErrorHandler>();
                 var failFastChecker = c.Get<IFailFastChecker>();
+                var exceptionInfoFactory = c.Get<IExceptionInfoFactory>();
                 var cancellationToken = c.Get<CancellationToken>();
-                return new ArkRetryStrategy(simpleRetryStrategySettings, rebusLoggerFactory, errorTracker, errorHandler, failFastChecker, cancellationToken);
+                return new ArkRetryStrategy(simpleRetryStrategySettings, rebusLoggerFactory, errorTracker, errorHandler, failFastChecker, exceptionInfoFactory, cancellationToken);
             });
 
-            optionsConfigurer.Register<IErrorTracker>(c =>
+            optionsConfigurer.Decorate<IErrorTracker>(c =>
             {
-                return new InMemErrorTracker(
-                    c.Get<SimpleRetryStrategySettings>(),
-                    c.Get<IRebusLoggerFactory>(),
-                    c.Get<IAsyncTaskFactory>(),
-                    c.Get<ITransport>(),
-                    c.Get<IRebusTime>()
-                    );
+                var errorTracker = c.Get<IErrorTracker>();
+                var simpleRetryStrategySettings = c.Get<RetryStrategySettings>();
+
+                return new ErrorTrackerNativeCountDecorator(errorTracker, simpleRetryStrategySettings);
             });
 
             if (secondLevelRetriesEnabled)

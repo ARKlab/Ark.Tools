@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Rebus.Logging;
+using Rebus.Messages;
+using Rebus.Pipeline;
 using Rebus.Retry;
+using Rebus.Retry.ErrorTracking;
 using Rebus.Retry.FailFast;
 using Rebus.Retry.Simple;
+using Rebus.Transport;
 
 namespace Ark.Tools.Rebus.Retry
 {
@@ -13,35 +19,38 @@ namespace Ark.Tools.Rebus.Retry
     /// </summary>
     public class ArkRetryStrategy : IRetryStrategy
     {
-        readonly SimpleRetryStrategySettings _simpleRetryStrategySettings;
+        readonly RetryStrategySettings _retryStrategySettings;
         readonly IRebusLoggerFactory _rebusLoggerFactory;
         readonly IErrorTracker _errorTracker;
         readonly IErrorHandler _errorHandler;
         readonly IFailFastChecker _failFastChecker;
+        readonly IExceptionInfoFactory _exceptionInfoFactory;
         readonly CancellationToken _cancellationToken;
 
         /// <summary>
         /// Constructs the retry strategy with the given settings, creating an error queue with the configured name if necessary
         /// </summary>
-        public ArkRetryStrategy(SimpleRetryStrategySettings simpleRetryStrategySettings, IRebusLoggerFactory rebusLoggerFactory, IErrorTracker errorTracker, IErrorHandler errorHandler, IFailFastChecker failFastChecker, CancellationToken cancellationToken)
+        public ArkRetryStrategy(RetryStrategySettings retryStrategySettings, IRebusLoggerFactory rebusLoggerFactory, IErrorTracker errorTracker, IErrorHandler errorHandler, IFailFastChecker failFastChecker, IExceptionInfoFactory exceptionInfoFactory, CancellationToken cancellationToken)
         {
-            _simpleRetryStrategySettings = simpleRetryStrategySettings ?? throw new ArgumentNullException(nameof(simpleRetryStrategySettings));
+            _retryStrategySettings = retryStrategySettings ?? throw new ArgumentNullException(nameof(retryStrategySettings));
             _rebusLoggerFactory = rebusLoggerFactory ?? throw new ArgumentNullException(nameof(rebusLoggerFactory));
             _errorTracker = errorTracker ?? throw new ArgumentNullException(nameof(errorTracker));
             _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
-            _failFastChecker = failFastChecker;
+            _failFastChecker = failFastChecker ?? throw new ArgumentNullException(nameof(failFastChecker));
+            _exceptionInfoFactory = exceptionInfoFactory ?? throw new ArgumentNullException(nameof(exceptionInfoFactory));
             _cancellationToken = cancellationToken;
         }
 
         /// <summary>
-        /// Gets the retry step with appropriate settings for this <see cref="ArkRetryStrategy"/>
+        /// Gets the retry step with appropriate settings for this <see cref="DefaultRetryStrategy"/>
         /// </summary>
-        public IRetryStrategyStep GetRetryStep() => new ArkRetryStrategyStep(
-            _simpleRetryStrategySettings,
+        public IRetryStep GetRetryStep() => new ArkRetryStrategyStep(
             _rebusLoggerFactory,
-            _errorTracker,
             _errorHandler,
+            _errorTracker,
             _failFastChecker,
+            _exceptionInfoFactory,
+            _retryStrategySettings.SecondLevelRetriesEnabled,
             _cancellationToken
         );
     }

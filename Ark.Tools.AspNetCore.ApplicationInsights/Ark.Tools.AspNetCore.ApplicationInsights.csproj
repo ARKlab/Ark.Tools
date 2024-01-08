@@ -6,7 +6,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
 
     <Description>Extensions of ApplicationInsights for AspNetCore</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;ApplicationInsights</PackageTags>
@@ -22,7 +22,7 @@
   <!--===============================================================================-->
   
   <ItemGroup>  
-      <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
+      <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
       <PackageReference Include="Microsoft.ApplicationInsights.SnapshotCollector" Version="1.4.4" />
   </ItemGroup>
   
@@ -33,7 +33,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

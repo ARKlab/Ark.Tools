@@ -20,6 +20,19 @@ The main library used by Ark in its stack are
 If you want to learn more about each project, look the respective Readme when present or directly at code.
 Documentation improvements are up-for-grabs ;)
 
+## Ark.Tools v5 Breaking Changes
+
+### .NET 8.0
+
+### Flurl v4
+
+See [Flurl](https://flurl.dev/docs/upgrade/) for details, but long-story-short is:
+- Default to STJ thus use `XXXXX` to configure a Newtonsoft client factory
+
+### Rebus v8
+
+
+
 ## Upgrade to NLog v5 in Ark.Tools>=v4.5
 
 In v4.5 has been revisited the NLog integration and helpers to make use of new features.

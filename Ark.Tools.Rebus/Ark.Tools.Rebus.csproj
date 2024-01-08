@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -22,12 +22,12 @@
 	<!--===============================================================================-->
 
 	<ItemGroup>
-		<PackageReference Include="Rebus" Version="7.2.1" />
-		<PackageReference Include="Rebus.NLog" Version="5.0.0" />
-		<PackageReference Include="Rebus.AzureServiceBus" Version="9.4.0" />
-		<PackageReference Include="Rebus.SqlServer" Version="7.3.1" />
-		<PackageReference Include="Rebus.AzureBlobs" Version="0.6.0" />
-		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.17.0" />
+		<PackageReference Include="Rebus" Version="8.1.0" />
+		<PackageReference Include="Rebus.NLog" Version="6.0.0" />
+		<PackageReference Include="Rebus.AzureServiceBus" Version="10.0.0" />
+		<PackageReference Include="Rebus.SqlServer" Version="8.0.2" />
+		<PackageReference Include="Rebus.AzureBlobs" Version="1.0.1" />
+		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.17.1" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -35,10 +35,6 @@
 		<ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
 		<ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
 		<ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
 	</ItemGroup>
 
 </Project>

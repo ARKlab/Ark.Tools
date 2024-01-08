@@ -27,13 +27,13 @@ namespace Ark.Tools.FtpClient.FtpProxy
         private readonly IFlurlClient _client;
         private bool _isDisposed = false;
 
-        public FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, FtpConfig ftpConfig)
-            : this(config, client, new TokenProvider(config), ftpConfig)
+        public FtpClientProxy(IFtpClientProxyConfig config, FtpConfig ftpConfig)
+            : this(config, new TokenProvider(config), ftpConfig)
         {
             FtpConfig = ftpConfig;
         }
 
-        internal FtpClientProxy(IFtpClientProxyConfig config, IFlurlClientFactory client, TokenProvider tokenProvider, FtpConfig ftpConfig)
+        internal FtpClientProxy(IFtpClientProxyConfig config, TokenProvider tokenProvider, FtpConfig ftpConfig)
         {
             _config = config;
 
@@ -44,7 +44,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
             _tokenProvider = tokenProvider;
 
-            _client = _initClient(client);
+            _client = _initClient();
 
             _connectionInfo = _initConnectionInfo();
         }
@@ -89,7 +89,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
             var res = await _client.Request("v2", "DownloadFile")
                 .SetQueryParam("filePath", path)
                 .WithOAuthBearerToken(tok)
-                .PostJsonAsync(_connectionInfo, ctk)
+                .PostJsonAsync(_connectionInfo, cancellationToken: ctk)
                 .ReceiveJson<DownloadFileResult>()
                 ;
 
@@ -117,7 +117,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     Info = _connectionInfo,
                     Paths = new[] { path },
                     Recursive = false,
-                }, ctk)
+                }, cancellationToken: ctk)
                 .ReceiveJson<IEnumerable<FtpEntry>>()
                 ;
 
@@ -148,7 +148,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                         Paths = new[] { startPath },
                         Recursive = true,
                         DegreeOfParallelism = _config.ListingDegreeOfParallelism
-                    }, ctk)
+                    }, cancellationToken: ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
                     ;
                 
@@ -165,7 +165,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                         Info = _connectionInfo,
                         Paths = new[] { startPath },
                         Recursive = false,
-                    }, ctk)
+                    }, cancellationToken: ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
                     ;
 
@@ -181,7 +181,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                             Info = _connectionInfo,
                             Paths = folders.Select(f => f.FullPath).ToArray(),
                             Recursive = false,
-                        }, ctk)
+                        }, cancellationToken: ctk)
                         .ReceiveJson<IEnumerable<FtpEntry>>()
                         ;
 
@@ -208,21 +208,18 @@ namespace Ark.Tools.FtpClient.FtpProxy
             return _tokenProvider.GetToken(ctk);
         }
 
-        private IFlurlClient _initClient(IFlurlClientFactory client)
+        private IFlurlClient _initClient()
         {
-            var flurlClient = client.Get(_config.FtpProxyWebInterfaceBaseUri)
-                .Configure(c =>
-                {
-                    c.HttpClientFactory = new UntrustedCertClientFactory();
-                    c.ConnectionLeaseTimeout = TimeSpan.FromMinutes(30);
+            var flurlClient = new FlurlClientBuilder(_config.FtpProxyWebInterfaceBaseUri.ToString())
+                .ConfigureArkDefaults()
+                .ConfigureInnerHandler(h => {
+                    h.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
                 })
                 .WithHeader("Accept", "application/json, text/json")
                 .WithHeader("Accept-Encoding", "gzip, deflate")
                 .WithTimeout(TimeSpan.FromMinutes(20))
-                .AllowHttpStatus(HttpStatusCode.NotFound)
+                .Build()
                 ;
-
-            flurlClient.BaseUrl = _config.FtpProxyWebInterfaceBaseUri.ToString();
 
             return flurlClient;
         }

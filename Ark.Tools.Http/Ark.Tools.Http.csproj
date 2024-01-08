@@ -19,8 +19,9 @@
   
   <ItemGroup>
     <PackageReference Include="CacheCow.Client" Version="2.12.1" />
-    <PackageReference Include="Flurl.Http" Version="3.2.4" />
-    <PackageReference Include="MessagePack.NodaTime" Version="3.1.2" />
+    <PackageReference Include="Flurl.Http" Version="4.0.0" />
+	  <PackageReference Include="Flurl.Http.Newtonsoft" Version="0.9.0" />
+    <PackageReference Include="MessagePack.NodaTime" Version="3.2.1" />
   </ItemGroup>
   
   <ItemGroup>
@@ -32,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

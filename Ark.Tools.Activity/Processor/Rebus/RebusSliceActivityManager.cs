@@ -11,10 +11,9 @@ using Ark.Tools.Activity.Messages;
 using Rebus.Config;
 using Rebus.Compression;
 using Rebus.Handlers;
-using Rebus.NLog.Config;
 using Rebus.Serialization.Json;
-using Rebus.Retry.Simple;
 using Ark.Tools.Rebus;
+using Ark.Tools.Rebus.Retry;
 using Rebus.Bus;
 
 namespace Ark.Tools.Activity.Processor
@@ -47,7 +46,7 @@ namespace Ark.Tools.Activity.Processor
                     o.EnableCompression();
                     o.SetMaxParallelism(1);
                     o.SetNumberOfWorkers(1);
-                    o.SimpleRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
+                    o.ArkRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
                 })
                 .Serialization(s =>
                 {

@@ -1,4 +1,5 @@
 ﻿
+using Rebus.Retry;
 using Rebus.Retry.Simple;
 
 using System;
@@ -25,7 +26,7 @@ namespace Ark.Tools.Rebus.Retry
         /// <summary>
         /// Gets all exceptions that were caught leading to this <see cref="IFailed{TMessage}"/>
         /// </summary>
-        public IEnumerable<Exception> Exceptions { get; }
+        public IEnumerable<ExceptionInfo> Exceptions { get; }
 
         /// <summary>
         /// Gets the headers of the message that failed
@@ -35,7 +36,7 @@ namespace Ark.Tools.Rebus.Retry
         /// <summary>
         /// Constructs the wrapper with the given message
         /// </summary>
-        public FailedMessageWrapper(Dictionary<string, string> headers, TMessage message, string errorDescription, IEnumerable<Exception> exceptions)
+        public FailedMessageWrapper(Dictionary<string, string> headers, TMessage message, string errorDescription, IEnumerable<ExceptionInfo> exceptions)
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
             if (exceptions == null) throw new ArgumentNullException(nameof(exceptions));

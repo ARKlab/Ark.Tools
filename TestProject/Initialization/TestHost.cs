@@ -19,7 +19,7 @@ namespace TestProject
 	{
 		private const string _baseUri = "https://localhost:5001";
 		private static IHost? _server;
-		private static ClientFactory? _factory;
+		private static ArkFlurlClientFactory? _factory;
 
 
 		//internal static string SqlConnection;
@@ -39,7 +39,7 @@ namespace TestProject
 				});
 
 			_server = builder.Start();
-			_factory = new ClientFactory(_server.GetTestServer());
+			_factory = new ArkFlurlClientFactory(new TestServerfactory(_server.GetTestServer()));
 		}
 
 		[BeforeFeature(Order = 0)]
@@ -54,8 +54,8 @@ namespace TestProject
 		public static void BeforeScenario(ScenarioContext ctx)
 		{
             if (_factory == null) throw new InvalidOperationException("");
-			ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
-		}
+            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
+        }
 
 		[AfterScenario]
 		public static void FlushLogs()
@@ -74,14 +74,13 @@ namespace TestProject
 		public static void AfterTests()
 		{
 			_server?.Dispose();
-			_factory?.Dispose();
 			//_smtp?.Dispose();
 
 		}
 
 	}
 
-	class TestServerfactory : DefaultHttpClientFactory
+	class TestServerfactory : DefaultFlurlClientFactory
 	{
 		private readonly TestServer _server;
 
@@ -90,26 +89,9 @@ namespace TestProject
 			_server = server;
 		}
 
-		public override HttpMessageHandler CreateMessageHandler()
+        public override HttpMessageHandler CreateInnerHandler()
 		{
 			return _server.CreateHandler();
-		}
-	}
-
-	class ClientFactory : PerBaseUrlFlurlClientFactory
-	{
-		private readonly TestServerfactory _server;
-
-		public ClientFactory(TestServer server)
-		{
-			_server = new TestServerfactory(server);
-		}
-
-		protected override IFlurlClient Create(Url url)
-		{
-			return base.Create(url)
-				.ConfigureArkDefaults()
-				.Configure(s => s.HttpClientFactory = _server);
 		}
 	}
 }

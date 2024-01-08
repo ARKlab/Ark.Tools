@@ -67,9 +67,11 @@ namespace Ark.Tools.Rebus
             {
                 var pipeline = c.Get<IPipeline>();
                 var step = new ApplicationInsightsStep(container);
-                return new PipelineStepInjector(pipeline)
-                    .OnReceive(step, PipelineRelativePosition.After, typeof(FailFastStep))
-                    .OnSend(step, PipelineRelativePosition.Before, typeof(SerializeOutgoingMessageStep));
+                return new PipelineStepConcatenator(
+                    new PipelineStepInjector(pipeline)
+                        .OnSend(step, PipelineRelativePosition.Before, typeof(SerializeOutgoingMessageStep)))
+                    .OnReceive(step, PipelineAbsolutePosition.Front)
+                    ;
                 ;
             });
         }

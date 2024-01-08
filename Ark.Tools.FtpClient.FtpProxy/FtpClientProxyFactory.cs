@@ -23,7 +23,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         public IFtpClient Create(FtpConfig ftpConfig)
         {
-            return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, _tokenProvider, ftpConfig);
+            return new FtpClientProxy(_config, _tokenProvider, ftpConfig);
         }
     }
 }

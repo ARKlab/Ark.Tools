@@ -37,7 +37,7 @@ namespace Ark.Tools.Rebus.AzureServiceBus
                     if (transactionContext.Items.TryGetValue("asb-message", out var messageObject)
                         && messageObject is ServiceBusReceivedMessage message)
                     {
-                        m.Headers[ArkRetryStrategyStep.DeliveryCountHeader] = message.DeliveryCount.ToString();
+                        m.Headers[ErrorTrackerNativeCountDecorator.DeliveryCountHeader] = message.DeliveryCount.ToString();
                     }
                 }
 
