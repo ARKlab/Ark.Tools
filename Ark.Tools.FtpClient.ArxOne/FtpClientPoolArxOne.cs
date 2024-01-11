@@ -26,10 +26,10 @@ namespace Ark.Tools.FtpClient
         {
             _configurer = configurer;
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
-            _client = _getClient();
+            _client = _getClient(_configurer);
         }
 
-        private protected virtual ArxOne.Ftp.FtpClient _getClient()
+        private protected virtual ArxOne.Ftp.FtpClient _getClient(Action<FtpClientParameters>? configurer = null)
         {
             var ftpClientParameters = new FtpClientParameters()
             { 
@@ -38,8 +38,8 @@ namespace Ark.Tools.FtpClient
                 Passive = true,
             };
             
-            if (_configurer != null)
-                _configurer(ftpClientParameters);
+            if (configurer != null)
+                configurer(ftpClientParameters);
 
             return new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, ftpClientParameters);
         }

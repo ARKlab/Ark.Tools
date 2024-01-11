@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using ArxOne.Ftp;
-using NLog;
 using Org.Mentalis.Network.ProxySocket;
 using System;
 using System.Net;
@@ -10,17 +9,19 @@ using System.Net.Sockets;
 
 namespace Ark.Tools.FtpClient
 {
-    public class FtpClientPoolArxOneWithSocks : FtpClientPoolArxOne
+    public class FtpClientPoolArxOneWithSocksAndConfigurer : FtpClientPoolArxOne
     {
         private readonly ISocksConfig _config;
+        private readonly Action<FtpClientParameters> _configurer;
 
-        public FtpClientPoolArxOneWithSocks(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig)
-            : base(maxPoolSize, ftpConfig, null)
+        public FtpClientPoolArxOneWithSocksAndConfigurer(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig, Action<FtpClientParameters> configurer)
+            : base(maxPoolSize, ftpConfig)
         {
+            this._configurer = configurer;
             this._config = config;
         }
 
-        private protected override ArxOne.Ftp.FtpClient _getClient(Action<FtpClientParameters>? configurer = null)
+        private protected override ArxOne.Ftp.FtpClient _getClient(Action<FtpClientParameters>? configurer)
         {
             var ftpClientParameters = new FtpClientParameters()
             {

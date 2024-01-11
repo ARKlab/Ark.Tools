@@ -2,17 +2,21 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using EnsureThat;
+using System;
+using ArxOne.Ftp;
 
 namespace Ark.Tools.FtpClient
 {
-    public class FtpClientPoolArxOneWithSocksFactory : IFtpClientPoolFactory
+    public class FtpClientPoolArxOneWithSocksAndConfigurerFactory : IFtpClientPoolFactory
     {
         private readonly ISocksConfig _config;
+        private readonly Action<FtpClientParameters> _configurer;
 
-        public FtpClientPoolArxOneWithSocksFactory(ISocksConfig config)
+        public FtpClientPoolArxOneWithSocksAndConfigurerFactory(ISocksConfig config, Action<FtpClientParameters> configurer)
         {
             EnsureArg.IsNotNull(config);
 
+            _configurer = configurer;
             _config = config;
         }
 
@@ -22,7 +26,7 @@ namespace Ark.Tools.FtpClient
             EnsureArg.IsNotNull(ftpConfig.Uri);
             EnsureArg.IsNotNull(ftpConfig.Credentials);
 
-            return new FtpClientPoolArxOneWithSocks(_config, maxPoolSize, ftpConfig);
+            return new FtpClientPoolArxOneWithSocksAndConfigurer(_config, maxPoolSize, ftpConfig, _configurer);
         }
     }
 }
