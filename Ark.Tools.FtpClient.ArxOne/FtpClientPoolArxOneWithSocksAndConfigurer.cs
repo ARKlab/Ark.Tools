@@ -11,13 +11,11 @@ namespace Ark.Tools.FtpClient
 {
     public class FtpClientPoolArxOneWithSocksAndConfigurer : FtpClientPoolArxOne
     {
-        private readonly ISocksConfig _config;
-        private readonly Action<FtpClientParameters> _configurer;
+        private readonly IArxOneConfig _config;
 
-        public FtpClientPoolArxOneWithSocksAndConfigurer(ISocksConfig config, int maxPoolSize, FtpConfig ftpConfig, Action<FtpClientParameters> configurer)
-            : base(maxPoolSize, ftpConfig)
+        public FtpClientPoolArxOneWithSocksAndConfigurer(IArxOneConfig config, int maxPoolSize, FtpConfig ftpConfig)
+            : base(maxPoolSize, ftpConfig, config.Configurer)
         {
-            this._configurer = configurer;
             this._config = config;
         }
 
@@ -32,10 +30,10 @@ namespace Ark.Tools.FtpClient
                 {
                     var s = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
                     {
-                        ProxyEndPoint = new IPEndPoint(IPAddress.Parse(_config.IpAddress), _config.Port),
-                        ProxyUser = _config.UserName,
-                        ProxyPass = _config.Password,
-                        ProxyType = _config.Type
+                        ProxyEndPoint = new IPEndPoint(IPAddress.Parse(_config.SocksConfig.IpAddress), _config.SocksConfig.Port),
+                        ProxyUser = _config.SocksConfig.UserName,
+                        ProxyPass = _config.SocksConfig.Password,
+                        ProxyType = _config.SocksConfig.Type
                     };
 
                     switch (e)
