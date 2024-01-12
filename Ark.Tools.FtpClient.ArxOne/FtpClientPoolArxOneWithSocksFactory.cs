@@ -22,7 +22,7 @@ namespace Ark.Tools.FtpClient
             EnsureArg.IsNotNull(ftpConfig.Uri);
             EnsureArg.IsNotNull(ftpConfig.Credentials);
 
-            return new FtpClientPoolArxOneWithSocks(_config, maxPoolSize, ftpConfig);
+            return new FtpClientPoolArxOne(_config, maxPoolSize, ftpConfig);
         }
     }
 }
