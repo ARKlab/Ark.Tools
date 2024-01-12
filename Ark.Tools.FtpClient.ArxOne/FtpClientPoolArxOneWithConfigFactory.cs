@@ -7,11 +7,11 @@ using ArxOne.Ftp;
 
 namespace Ark.Tools.FtpClient
 {
-    public class FtpClientPoolArxOneWithSocksAndConfigurerFactory : IFtpClientPoolFactory
+    public class FtpClientPoolArxOneWithConfigFactory : IFtpClientPoolFactory
     {
         private readonly IArxOneConfig _config;
 
-        public FtpClientPoolArxOneWithSocksAndConfigurerFactory(IArxOneConfig config)
+        public FtpClientPoolArxOneWithConfigFactory(IArxOneConfig config)
         {
             EnsureArg.IsNotNull(config);
 
