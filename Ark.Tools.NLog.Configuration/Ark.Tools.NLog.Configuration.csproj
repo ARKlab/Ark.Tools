@@ -22,7 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[8.0.0,9)" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="[8.0.0,9)" />
 	
-	<PackageReference Include="NLog.Extensions.Logging" Version="5.3.7" />
+	<PackageReference Include="NLog.Extensions.Logging" Version="5.3.8" />
   </ItemGroup>
 
   <ItemGroup>
