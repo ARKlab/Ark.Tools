@@ -118,6 +118,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                 {
                     CheckSum = checksum,
                     RetrievedAt = SystemClock.Instance.GetCurrentInstant(),
+                    LastModified = lastState?.Modified,
                     ParsedData = _parser.Parse(metadata, contents)
                 };
 
