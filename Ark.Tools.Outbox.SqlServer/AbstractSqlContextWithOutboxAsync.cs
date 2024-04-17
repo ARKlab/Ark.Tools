@@ -18,11 +18,6 @@ namespace Ark.Tools.Outbox.SqlServer
             _outbox = new OutboxContextSqlAsync<Tag>(this, config);
         }
 
-        public Task ClearAsync(CancellationToken ctk = default)
-        {
-            return _outbox.ClearAsync(ctk);
-        }
-
         public Task<int> ClearAsync(CancellationToken ctk = default)
         {
             return _outbox.CountAsync(ctk);
@@ -33,16 +28,6 @@ namespace Ark.Tools.Outbox.SqlServer
             return _outbox.CountAsync(ctk);
         }
 
-        public Task<int> CountAsync(CancellationToken ctk = default)
-        {
-            return _outbox.CountAsync(ctk);
-        }
-
-        public Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
-        {
-            return _outbox.PeekLockMessagesAsync(messageCount, ctk);
-        }
-
         public Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
         {
             return _outbox.PeekLockMessagesAsync(messageCount, ctk);
@@ -51,11 +36,6 @@ namespace Ark.Tools.Outbox.SqlServer
         public Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
         {
             return _outbox.SendAsync(messages, ctk);
-        }
-
-        public Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
-        {
-            return _outbox.CountAsync(ctk);
         }
 
         protected override void Dispose(bool disposing)
