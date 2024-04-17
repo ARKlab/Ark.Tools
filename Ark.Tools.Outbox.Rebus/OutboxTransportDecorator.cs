@@ -35,7 +35,7 @@ namespace Ark.Tools.Outbox.Rebus
             return _inner.Receive(context, cancellationToken);
         }
 
-        public Task Send(string destinationAddress, TransportMessage message, ITransactionContext context)
+        public Task<TransportMessage> Receive(ITransactionContext context, CancellationToken cancellationToken)
         {
             // if there is a IOutboxContext associated with this Send(), batch message and store them on commit
             var ctx = context.GetOrNull<IOutboxContext>(_outboxContextItemsKey);
