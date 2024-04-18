@@ -18,7 +18,6 @@ namespace Ark.Tools.Sql
 
         public IDbConnectionManager? ConnectionManager { get { return _connectionManager; } set { _connectionManager = value; } }
 
-
         public AbstractSqlContextAsync(DbConnection connection, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -57,25 +56,29 @@ namespace Ark.Tools.Sql
             }
         }
 
-        public async ValueTask CommitAysnc(CancellationToken ctk)
+        public virtual async ValueTask CommitAysnc(CancellationToken ctk)
         {
             if (_transaction != null)
             {
-                await _transaction.CommitAsync(ctk);
-                await _transaction.DisposeAsync();
+                await Task.Run(() => 
+                {
+                    _transaction.Commit();
+                    _transaction.Dispose();
+                }, ctk);
             }
+            _transaction = null;
         }
 
-        //public virtual async ValueTask CommitAndRestartTransactionAsync(IsolationLevel isolationLevel, CancellationToken ctk)
-        //{
-        //    if (_transaction != null)
-        //    {
-        //        await _transaction.CommitAsync(ctk);
-        //        await _transaction.DisposeAsync();
-        //    }
-        //    _transaction = null;
-        //    await _createAsync(isolationLevel, ctk);
-        //}
+        public virtual async ValueTask CommitAndRestartTransactionAsync(IsolationLevel isolationLevel, CancellationToken ctk)
+        {
+            if (_transaction != null)
+            {
+                _transaction.Commit();
+                _transaction.Dispose();
+            }
+            _transaction = null;
+            await _createAsync(isolationLevel, ctk);
+        }
 
         public async ValueTask ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk)
         {
@@ -87,38 +90,37 @@ namespace Ark.Tools.Sql
         {
             if (_transaction != null)
             {
-                await _transaction.RollbackAsync(ctk);
-                await _transaction.DisposeAsync();
+                await Task.Run(() =>
+                {
+                    _transaction.Rollback();
+                    _transaction.Dispose();
+                }, ctk);
             }
 
             _transaction = null;
         }
 
-        //private async ValueTask _createAsync(IsolationLevel isolationLevel, CancellationToken ctk)
-        //{
-        //    if (_connectionManager == null)
-        //        throw new MissingMemberException("We don't have a connection manager");
-
-        //    // What Config ?????
-        //    //_connection = await _connectionManager?.GetAsync(_config.SQLConnectionString);
-        //    _connection = await _connectionManager.GetAsync("SQLConnectionString", ctk);
-
-        //    if (_connection.State != ConnectionState.Open)
-        //    {
-        //        if (_connection.State == ConnectionState.Closed)
-        //            await _connection.OpenAsync(ctk);
-        //    }
-        //    if (_transaction == null)
-        //        _transaction = await _connection.BeginTransactionAsync(isolationLevel, ctk);
-        //}
+        private async ValueTask _createAsync(IsolationLevel isolationLevel, CancellationToken ctk)
+        {
+            if (_connection.State != ConnectionState.Open)
+            {
+                if (_connection.State == ConnectionState.Closed)
+                    await _connection.OpenAsync(ctk);
+            }
+            if (_transaction == null)
+                _transaction = _connection.BeginTransaction(isolationLevel);
+        }
 
         public async ValueTask DisposeAsync()
         {
             if (_transaction != null)
             {
-                await _transaction.DisposeAsync();
+                _transaction.Dispose();
             }
-            GC.SuppressFinalize(this);
+            await Task.Run(() =>
+            {
+                GC.SuppressFinalize(this);
+            });
         }
     }
 }
