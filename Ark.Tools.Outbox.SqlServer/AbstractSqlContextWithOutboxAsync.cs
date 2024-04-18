@@ -23,6 +23,11 @@ namespace Ark.Tools.Outbox.SqlServer
             return _outbox.CountAsync(ctk);
         }
 
+        public async Task CommitAsync(CancellationToken ctk = default)
+        {
+            await _outbox.CommitAysnc(ctk);
+        }
+
         public Task<int> CountAsync(CancellationToken ctk = default)
         {
             return _outbox.CountAsync(ctk);
@@ -38,12 +43,5 @@ namespace Ark.Tools.Outbox.SqlServer
             return _outbox.SendAsync(messages, ctk);
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-                _outbox.Dispose();
-
-            base.Dispose(disposing);
-        }
     }
 }

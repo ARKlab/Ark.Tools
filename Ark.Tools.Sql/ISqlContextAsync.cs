@@ -10,12 +10,9 @@ namespace Ark.Tools.Sql
 {
     public interface ISqlContextAsync<Tag> : IContextAsync
     {
-        Task<DbConnection> ConnectionAsync(CancellationToken ctk = default);
-        Task<DbTransaction> TransactionAsync(CancellationToken ctk = default);
-        void ConnectionAsync(DbConnection dbConnection);
-        void TransactionAsync(DbTransaction transaction);
-        Task CommitAsync();
-        Task RollbackAsync();
-        void ChangeIsolationLevel(IsolationLevel isolationLevel);
+        DbConnection Connection { get; }
+        DbTransaction? Transaction { get; }
+        ValueTask RollbackAsync(CancellationToken ctk);
+        ValueTask ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk);
     }
 }

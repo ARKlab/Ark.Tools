@@ -22,8 +22,8 @@ namespace Ark.Tools.Outbox.SqlServer
 
         private static readonly HeaderSerializer _headerSerializer = new HeaderSerializer();
 
-        public Task<DbConnection> ConnectionAsync => _sqlContext.ConnectionAsync();
-        public Task<DbTransaction> TransactionAsync => _sqlContext.TransactionAsync();
+        public DbConnection Connection => _sqlContext.Connection;
+        public DbTransaction? Transaction => _sqlContext.Transaction ?? null;
 
         public OutboxContextSqlAsync(ISqlContextAsync<Tag> sqlContextParent, IOutboxContextSqlConfig config)
         {
@@ -111,17 +111,17 @@ namespace Ark.Tools.Outbox.SqlServer
                     pBody = message.Body
                 });
 
-                var cmd = new CommandDefinition(_statements.Insert, parameters, transaction: await this.TransactionAsync, cancellationToken: ctk);
+                var cmd = new CommandDefinition(_statements.Insert, parameters, transaction: this.Transaction, cancellationToken: ctk);
 
-                _ = await (await this.ConnectionAsync).ExecuteAsync(cmd);
+                _ = await Connection.ExecuteAsync(cmd);
             }
         }
 
         public async Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
         {
-            var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: await this.TransactionAsync, cancellationToken: ctk);
+            var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: this.Transaction, cancellationToken: ctk);
 
-            var res = await (await this.ConnectionAsync).QueryAsync<(string Headers, byte[] Body)>(cmd);
+            var res = await Connection.QueryAsync<(string Headers, byte[] Body)>(cmd);
 
             return res.Select(x => new OutboxMessage
             {
@@ -132,26 +132,26 @@ namespace Ark.Tools.Outbox.SqlServer
 
         public async Task<int> CountAsync(CancellationToken ctk = default)
         {
-            var cmd = new CommandDefinition(_statements.Count, transaction: await this.TransactionAsync, cancellationToken: ctk);
+            var cmd = new CommandDefinition(_statements.Count, transaction: this.Transaction, cancellationToken: ctk);
 
-            return await (await this.ConnectionAsync).QuerySingleAsync<int>(cmd);
+            return await this.Connection.QuerySingleAsync<int>(cmd);
         }
 
         public async Task<int> ClearAsync(CancellationToken ctk = default)
         {
-            var cmd = new CommandDefinition(_statements.Clear, transaction: await this.TransactionAsync, cancellationToken: ctk);
+            var cmd = new CommandDefinition(_statements.Clear, transaction: this.Transaction, cancellationToken: ctk);
 
-            return await (await this.ConnectionAsync).ExecuteAsync(cmd);
+            return await this.Connection.ExecuteAsync(cmd);
         }
 
-        public void Commit()
+        public async ValueTask CommitAysnc(CancellationToken ctk)
         {
-            _sqlContext.Commit();
+            await _sqlContext.CommitAysnc(ctk);
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
+            await _sqlContext.DisposeAsync();
         }
-
     }
 }

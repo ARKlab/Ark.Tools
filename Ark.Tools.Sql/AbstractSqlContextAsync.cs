@@ -13,132 +13,112 @@ namespace Ark.Tools.Sql
     {
         private DbConnection _connection;
         private DbTransaction? _transaction;
-        private bool _disposed = false;
         private IsolationLevel _isolationLevel;
-        private object _lock = new object();
+        private IDbConnectionManager? _connectionManager;
 
-        protected AbstractSqlContextAsync(DbConnection connection, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+        public IDbConnectionManager? ConnectionManager { get { return _connectionManager; } set { _connectionManager = value; } }
+
+
+        public AbstractSqlContextAsync(DbConnection connection, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
             _connection = connection ?? throw new ArgumentNullException(nameof(connection));
             _isolationLevel = isolationLevel;
         }
 
-        protected AbstractSqlContextAsync(DbTransaction transaction)
+        public AbstractSqlContextAsync(DbTransaction transaction)
         {
             _transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
             _connection = transaction.Connection ?? throw new ArgumentNullException(nameof(transaction.Connection));
-            _isolationLevel = _transaction.IsolationLevel;
+            _isolationLevel = transaction.IsolationLevel;
         }
 
-        [MemberNotNull(nameof(_transaction))]
-        private void _ensureOpened()
-        {
-            // we consider this double check "safe" given if someone tries to get a CONNECTION during a COMMIT ... well he should be kicked
-            // this is an helper class and this is just to ensure there is always a transaction active when using the Connection
-            // and to restart the Transaction automatically after a commit ONLY if Connection is reused
 
-            lock (_lock)
+        public DbConnection Connection
+        {
+            get
             {
-                if (_connection.State != ConnectionState.Open)
-                {
-                    if (_connection.State == ConnectionState.Closed)
-                        _connection.Open();
-                }
+                if (_connection == null)
+                    throw new InvalidOperationException("Not valid Operation");
+                return _connection;
+            }
+        }
+
+        public DbTransaction Transaction
+        {
+            get
+            {
                 if (_transaction == null)
-                    _transaction = _connection.BeginTransaction(_isolationLevel);
+                    throw new InvalidOperationException("Not valid Operation");
+                return _transaction;
             }
-        }
-
-        Task<DbConnection> ISqlContextAsync<Tag>.ConnectionAsync(CancellationToken ctk)
-        {
-            _ensureOpened();
-
-            return new Task<DbConnection>(() => { return _connection; });
-        }
-
-        public Task<DbTransaction> TransactionAsync(CancellationToken ctk = default)
-        {
-            _ensureOpened();
-
-            return new Task<DbTransaction>(() => {  return _transaction; });
-        }
-
-        public void ConnectionAsync(DbConnection dbConnection)
-        {
-            //not sure if we should just assign and then execute ensureOpen :/ 
-            lock (_lock)
+            set
             {
-                if (dbConnection.State != ConnectionState.Open)
-                {
-                    if (dbConnection.State == ConnectionState.Closed)
-                        dbConnection.OpenAsync();
-                }
-
-                _connection = dbConnection;
+                _transaction = value;
             }
         }
 
-        public void TransactionAsync(DbTransaction transaction)
+        public async ValueTask CommitAysnc(CancellationToken ctk)
         {
-            //not sure if we should just assign and then execute ensureOpen :/ 
-            lock (_lock)
+            if (_transaction != null)
             {
-                if (transaction == null)
-                    transaction = _connection.BeginTransaction(_isolationLevel);
-
-                _transaction = transaction;
+                await _transaction.CommitAsync(ctk);
+                await _transaction.DisposeAsync();
             }
         }
 
-        public Task CommitAsync() => new Task(() => { Commit(); });
+        //public virtual async ValueTask CommitAndRestartTransactionAsync(IsolationLevel isolationLevel, CancellationToken ctk)
+        //{
+        //    if (_transaction != null)
+        //    {
+        //        await _transaction.CommitAsync(ctk);
+        //        await _transaction.DisposeAsync();
+        //    }
+        //    _transaction = null;
+        //    await _createAsync(isolationLevel, ctk);
+        //}
 
-        public virtual void Commit()
-        {
-            lock (_lock)
-            {
-                _transaction?.Commit();
-                _transaction?.Dispose();
-                _transaction = null;
-            }
-        }
-
-        Task ISqlContextAsync<Tag>.RollbackAsync() => new Task(() => { Rollback(); });
-
-        public virtual void Rollback()
-        {
-            lock (_lock)
-            {
-                _transaction?.Rollback();
-                _transaction?.Dispose();
-                _transaction = null;
-            }
-        }
-
-        public virtual void ChangeIsolationLevel(IsolationLevel isolationLevel)
+        public async ValueTask ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk)
         {
             _isolationLevel = isolationLevel;
-            Rollback();
+            await RollbackAsync(ctk);
         }
 
-        public void Dispose()
+        public async ValueTask RollbackAsync(CancellationToken ctk)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-            
-            if (disposing)
+            if (_transaction != null)
             {
-                _transaction?.Dispose();
-                _connection.Dispose();
+                await _transaction.RollbackAsync(ctk);
+                await _transaction.DisposeAsync();
             }
 
-            _disposed = true;
+            _transaction = null;
         }
 
+        //private async ValueTask _createAsync(IsolationLevel isolationLevel, CancellationToken ctk)
+        //{
+        //    if (_connectionManager == null)
+        //        throw new MissingMemberException("We don't have a connection manager");
+
+        //    // What Config ?????
+        //    //_connection = await _connectionManager?.GetAsync(_config.SQLConnectionString);
+        //    _connection = await _connectionManager.GetAsync("SQLConnectionString", ctk);
+
+        //    if (_connection.State != ConnectionState.Open)
+        //    {
+        //        if (_connection.State == ConnectionState.Closed)
+        //            await _connection.OpenAsync(ctk);
+        //    }
+        //    if (_transaction == null)
+        //        _transaction = await _connection.BeginTransactionAsync(isolationLevel, ctk);
+        //}
+
+        public async ValueTask DisposeAsync()
+        {
+            if (_transaction != null)
+            {
+                await _transaction.DisposeAsync();
+            }
+            GC.SuppressFinalize(this);
+        }
     }
 }

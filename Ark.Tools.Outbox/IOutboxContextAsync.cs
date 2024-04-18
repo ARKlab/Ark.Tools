@@ -15,7 +15,7 @@ namespace Ark.Tools.Outbox
     /// <remarks>
     /// A given Context must be estended with this interface to be then used by the Producer to send messages in the same transaction of another Context.
     /// </remarks>
-    public interface IOutboxContextAsync : IContext
+    public interface IOutboxContextAsync : IContextAsync
     {
         /// <summary>
         /// Store messages to the Outbox to be then Sent via Processor to the broker
