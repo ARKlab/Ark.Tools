@@ -45,7 +45,7 @@ namespace Ark.Tools.Outbox.Rebus
                 {
                     var messages = new ConcurrentQueue<OutboxMessage>();
 
-                    context.OnCommitted(tc => ctx.SendAsync(messages));
+                    context.OnAck(tc => ctx.SendAsync(messages));
 
                     return messages;
                 });

@@ -47,16 +47,16 @@ namespace Ark.Tools.Outbox
 
         public async Task ClearAsync(CancellationToken ctk = default)
         {
-            using var ctx = _outboxContextFactory();
+            await using var ctx = _outboxContextFactory();
             await ctx.ClearAsync(ctk);
-            ctx.Commit();           
+            await ctx.CommitAysnc(ctk);           
         }
 
         public async Task<int> CountAsync(CancellationToken ctk = default)
         {
-            using var ctx = _outboxContextFactory();
+            await using var ctx = _outboxContextFactory();
             var ret = await ctx.CountAsync(ctk);
-            ctx.Commit();
+            await ctx.CommitAysnc(ctk);
             return ret;
         }
 
@@ -79,10 +79,10 @@ namespace Ark.Tools.Outbox
             {
                 try
                 {
-                    using var ctx = _outboxContextFactory();
+                    await using var ctx = _outboxContextFactory();
                     var messages = await ctx.PeekLockMessagesAsync(BatchSize, ctk);
-                    await _processMessages(messages, ctk);
-                    ctx.Commit();                    
+                    await ProcessMessages(messages, ctk);
+                    await ctx.CommitAysnc(ctk);                    
                 }
                 catch (Exception e) when (!(e is TaskCanceledException))
                 {
@@ -93,13 +93,13 @@ namespace Ark.Tools.Outbox
             }
         }
 
-        protected virtual async Task _processMessages(IEnumerable<OutboxMessage> messages, CancellationToken ctk)
+        protected virtual async Task ProcessMessages(IEnumerable<OutboxMessage> messages, CancellationToken ctk)
         {
             foreach (var m in messages)
-                await _processMessage(m, ctk);
+                await ProcessMessage(m, ctk);
         }
 
-        protected abstract Task _processMessage(OutboxMessage m, CancellationToken ctk);
+        protected abstract Task ProcessMessage(OutboxMessage m, CancellationToken ctk);
 
         public async Task StopAsync(CancellationToken ctk)
         {

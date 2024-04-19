@@ -62,7 +62,7 @@ namespace Ark.Tools.Outbox.Rebus
 				try
 				{
 					bool waitForMessages = true;
-					using (var ctx = _outboxContextFactory.Create())
+					await using (var ctx = _outboxContextFactory.Create())
 					{
 						var messages = await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk);
 						if (messages.Any())
@@ -81,7 +81,7 @@ namespace Ark.Tools.Outbox.Rebus
 							waitForMessages = false;
 							_backoffStrategy.Reset();
 						}
-						ctx.Commit();
+						await ctx.CommitAysnc(ctk);
 					}
 
 					if (waitForMessages)
