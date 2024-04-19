@@ -5,69 +5,56 @@ using Flurl.Http.Configuration;
 using System;
 using Ark.Tools.NewtonsoftJson;
 using System.Text.Json;
+using System.Net;
 
 namespace Ark.Tools.Http
 {
     public static partial class Ex
     {
-        public static IFlurlClient ConfigureArkDefaults(this IFlurlClient client)
+        public static IFlurlClientBuilder ConfigureArkDefaults(this IFlurlClientBuilder builder, bool useNewtonsoft = false)
         {
             var j = new CookieJar();
-            client.AllowAnyHttpStatus();
-            
-            return client.Configure(s =>
-            {
-                s.BeforeCall += c => c.Request.WithCookies(j);
-                s.HttpClientFactory = ArkHttpClientFactory.Instance;
-                var jsonSettings = new ArkJsonSerializerSettings();
-
-                s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
-
-                s.ConnectionLeaseTimeout = TimeSpan.FromMinutes(60);
-                s.Timeout = TimeSpan.FromMinutes(5);
-            });
-        }
-
-        public static IFlurlRequest ConfigureRequestArkDefaults(this IFlurlRequest request)
-        {
-            return request.ConfigureRequest(s =>
-            {
-                var jsonSettings = new ArkJsonSerializerSettings();
-
-                s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
-
-                s.Timeout = TimeSpan.FromMinutes(5);
-                s.AllowedHttpStatusRange = "*";
-            });
-        }
-
+            return builder
+                .AddMiddleware(() => new CacheCow.Client.CachingHandler())
+                .AllowAnyHttpStatus()
+                .WithTimeout(TimeSpan.FromMinutes(5))
+                .ConfigureInnerHandler(h =>
+                {
+                    if (h is null) return; // can be null when using TestServer.CreateHandler() as inner handler
 #if NET5_0_OR_GREATER
-        public static IFlurlClient ConfigureArkDefaultsSystemTextJson(this IFlurlClient client)
+                    h.AutomaticDecompression = System.Net.DecompressionMethods.All;
+#else
+                    h.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+#endif
+                })
+                .BeforeCall(c => c.Request.WithCookies(j))
+                .WithAutoRedirect(true)
+                .WithSettings(s =>
+                {
+                    if (!useNewtonsoft)
+                        s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
+                    else
+                        s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
+                })
+                ;
+        }
+
+        public static IFlurlClient ConfigureArkDefaults(this IFlurlClient client, bool useNewtonsoft = false)
         {
             var j = new CookieJar();
-            client.AllowAnyHttpStatus();
-            return client.Configure(s =>
-            {
-                s.BeforeCall += c => c.Request.WithCookies(j);
-                s.HttpClientFactory = ArkHttpClientFactory.Instance;
-
-                s.JsonSerializer = new SystemTextJsonSerializer(ArkSerializerOptions.JsonOptions);
-
-                s.ConnectionLeaseTimeout = TimeSpan.FromMinutes(60);
-                s.Timeout = TimeSpan.FromMinutes(5);
-            });
+            return client
+                .AllowAnyHttpStatus()
+                .WithTimeout(TimeSpan.FromMinutes(5))
+                .BeforeCall(c => c.Request.WithCookies(j))
+                .WithAutoRedirect(true)
+                .WithSettings(s =>
+                {
+                    if (!useNewtonsoft)
+                        s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
+                    else
+                        s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
+                })
+                ;
         }
-
-        public static IFlurlRequest ConfigureRequestArkDefaultsSystemTextJson(this IFlurlRequest request)
-        {
-            return request.ConfigureRequest(s =>
-            {
-                s.JsonSerializer = new SystemTextJsonSerializer(ArkSerializerOptions.JsonOptions);
-
-                s.Timeout = TimeSpan.FromMinutes(5);
-                s.AllowedHttpStatusRange = "*";
-            });
-        }
-#endif
     }
 }

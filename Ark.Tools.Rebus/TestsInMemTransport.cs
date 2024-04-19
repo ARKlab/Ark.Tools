@@ -23,7 +23,7 @@ namespace Ark.Tools.Rebus
 
         public override Task<TransportMessage> Receive(ITransactionContext context, CancellationToken cancellationToken)
         {
-            context.OnCompleted(ctx =>
+            context.OnAck(ctx =>
             {
                 Interlocked.Decrement(ref InProcessMessageCount);
                 return Task.CompletedTask;
@@ -32,7 +32,7 @@ namespace Ark.Tools.Rebus
             return base.Receive(context, cancellationToken);
         }
 
-        protected override async Task SendOutgoingMessages(IEnumerable<OutgoingMessage> outgoingMessages, ITransactionContext context)
+        protected override async Task SendOutgoingMessages(IEnumerable<OutgoingTransportMessage> outgoingMessages, ITransactionContext context)
         {
             var cnt = outgoingMessages.Where(x => x.DestinationAddress != "error").Count();
 

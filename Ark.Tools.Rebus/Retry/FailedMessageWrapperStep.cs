@@ -44,7 +44,7 @@ which is then detected by this wrapper step.")]
 
         static readonly ConcurrentDictionary<Type, MethodInfo> _wrapperMethods = new ConcurrentDictionary<Type, MethodInfo>();
 
-        object _wrapInFailed(Dictionary<string, string> headers, object body, string errorDescription, IEnumerable<Exception> exceptions)
+        object _wrapInFailed(Dictionary<string, string> headers, object body, string errorDescription, IEnumerable<ExceptionInfo> exceptions)
         {
             if (headers == null) throw new ArgumentNullException(nameof(headers));
             if (body == null) throw new ArgumentNullException(nameof(body));
@@ -68,7 +68,7 @@ which is then detected by this wrapper step.")]
             }
         }
 
-        IFailed<TMessage> _wrap<TMessage>(Dictionary<string, string> headers, TMessage body, string errorDescription, IEnumerable<Exception> exceptions)
+        IFailed<TMessage> _wrap<TMessage>(Dictionary<string, string> headers, TMessage body, string errorDescription, IEnumerable<ExceptionInfo> exceptions)
         {
             return new FailedMessageWrapper<TMessage>(headers, body, errorDescription, exceptions);
         }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 
   <!-- the other props are defined in Directory.Build.props -->
@@ -6,7 +6,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     
     <Description>Extensions of Auth0 for AspNetCore</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Auth0</PackageTags>
@@ -26,15 +26,15 @@
   </ItemGroup>
   
   <ItemGroup>    
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.21.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="7.21.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.20" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="[6.0.0,7)" />
-    <PackageReference Include="Polly" Version="7.2.4" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.26.1" />
+    <PackageReference Include="Auth0.ManagementApi" Version="7.26.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="[8.0.0,9)" />
+    <PackageReference Include="Polly" Version="8.2.1" />
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

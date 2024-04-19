@@ -164,7 +164,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                     {
                         res = await Policy.HandleResult<string>(r => r == "Pending")
                             .WaitAndRetryForeverAsync(x => TimeSpan.FromMilliseconds(100)) // Actually cannot be greater than 5sec as key would expire returning null
-                            .ExecuteAsync(() => cache.GetStringAsync(cacheKey))
+                            .ExecuteAsync(async () => await cache.GetStringAsync(cacheKey) ?? string.Empty)
                             ;
                     }
 

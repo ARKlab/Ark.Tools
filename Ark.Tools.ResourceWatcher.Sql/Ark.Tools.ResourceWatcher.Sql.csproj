@@ -18,7 +18,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.24" />
+    <PackageReference Include="Dapper" Version="2.1.28" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

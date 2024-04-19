@@ -12,9 +12,5 @@ namespace Ark.Tools.Core.DataKey
 
         public DataKeyHashSet(IEnumerable<T> collection) : base(collection, new DataKeyComparer<T>())
         { }
-
-        protected DataKeyHashSet(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

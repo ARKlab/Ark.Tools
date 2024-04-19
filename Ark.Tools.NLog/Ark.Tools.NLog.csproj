@@ -23,13 +23,13 @@
 
   <ItemGroup>
     <PackageReference Include="Ben.Demystifier" Version="0.4.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.21.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
-    <PackageReference Include="NLog" Version="5.2.7" />
-    <PackageReference Include="NLog.Database" Version="5.2.7" />
-    <PackageReference Include="NLog.DiagnosticSource" Version="5.0.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.22.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.4" />
+    <PackageReference Include="NLog" Version="5.2.8" />
+    <PackageReference Include="NLog.Database" Version="5.2.8" />
+    <PackageReference Include="NLog.DiagnosticSource" Version="5.2.0" />
     <PackageReference Include="Slack.Webhooks" Version="1.1.5" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.1" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,7 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

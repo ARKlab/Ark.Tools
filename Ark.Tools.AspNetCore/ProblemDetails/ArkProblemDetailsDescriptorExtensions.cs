@@ -31,7 +31,8 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
             services.AddArkProblemDetailsDescriptor();
             services.ConfigureOptions<ArkProblemDetailsOptionsSetup>();
-            services.AddProblemDetails();
+
+            ProblemDetailsExtensions.AddProblemDetails(services);
 
             return services;
         }

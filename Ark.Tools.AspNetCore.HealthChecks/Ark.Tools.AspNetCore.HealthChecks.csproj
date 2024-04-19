@@ -5,7 +5,7 @@
 	<!--===================Configuration for Nuget Package=========================-->
 	<PropertyGroup>
 
-		<TargetFrameworks>net6.0</TargetFrameworks>
+		<TargetFrameworks>net8.0</TargetFrameworks>
 
 		<Description>Extensions of AspNetCore HealthChecks</Description>
 		<PackageTags>Ark;C#;.NET;Framework;AspNetCore;HealthCheck;</PackageTags>
@@ -28,17 +28,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" Version="6.1.0" />
-		<PackageReference Include="AspNetCore.HealthChecks.Network" Version="6.0.4" />
-		<PackageReference Include="AspNetCore.HealthChecks.Oracle" Version="6.0.3" />
-		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" Version="6.0.2" />
-		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="6.0.2" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="6.0.5" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="6.0.5" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="6.0.5" />
-		<PackageReference Include="Microsoft.Azure.ServiceBus" Version="5.2.0" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.20" />
-		<PackageReference Include="SimpleInjector" Version="5.4.1" />
+		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" Version="8.0.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.Network" Version="8.0.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.Oracle" Version="8.0.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" Version="8.0.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="8.0.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.1" />
+		<PackageReference Include="SimpleInjector" Version="5.4.4" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -52,6 +51,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+	  <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
 	</ItemGroup>
 </Project>

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,211 +23,210 @@ namespace Ark.Tools.Rebus.Retry
 {
     /// <summary>
     /// Incoming message pipeline step that implements a retry mechanism - if the call to the rest of the pipeline fails,
-    /// the exception is caught and the queue transaction is rolled back. Caught exceptions are tracked in-mem, and after
-    /// a configurable number of retries, the message will be forwarded to the configured error queue and the rest of the pipeline will not be called
+    /// the exception is caught and the queue transaction is rolled back. Caught exceptions are tracked with <see cref="IErrorTracker"/>, and after
+    /// a configurable number of retries, the message will be passed to the configured <see cref="IErrorHandler"/>.
     /// </summary>
     [StepDocumentation(@"Wraps the invocation of the entire receive pipeline in an exception handler, tracking the number of times the received message has been attempted to be delivered.
 
-If the maximum number of delivery attempts is reached, the message is moved to the error queue.")]
-    public class ArkRetryStrategyStep : IRetryStrategyStep
+If the maximum number of delivery attempts is reached, the message is passed to the error handler, which by default will move the message to the error queue.")]
+    public class ArkRetryStrategyStep : IRetryStep
     {
         /// <summary>
         /// Key of a step context item that indicates that the message must be wrapped in a <see cref="FailedMessageWrapper{TMessage}"/> after being deserialized
         /// </summary>
         public const string DispatchAsFailedMessageKey = "dispatch-as-failed-message";
-        public const string DeliveryCountHeader = "rbs-deliverycount";
 
-        readonly SimpleRetryStrategySettings _arkRetryStrategySettings;
-        readonly IErrorTracker _errorTracker;
-        readonly IErrorHandler _errorHandler;
-        readonly IFailFastChecker _failFastChecker;
         readonly CancellationToken _cancellationToken;
-        readonly ILog _logger;
+        readonly IErrorHandler _errorHandler;
+        readonly IErrorTracker _errorTracker;
+        readonly IFailFastChecker _failFastChecker;
+        readonly IExceptionInfoFactory _exceptionInfoFactory;
+        readonly bool _secondLevelRetriesEnabled;
+        readonly ILog _log;
 
         /// <summary>
-        /// Constructs the step, using the given transport and settings
+        /// Creates the step
         /// </summary>
-        public ArkRetryStrategyStep(SimpleRetryStrategySettings arkRetryStrategySettings, IRebusLoggerFactory rebusLoggerFactory, IErrorTracker errorTracker, IErrorHandler errorHandler, IFailFastChecker failFastChecker, CancellationToken cancellationToken)
+        public ArkRetryStrategyStep(IRebusLoggerFactory rebusLoggerFactory, IErrorHandler errorHandler, IErrorTracker errorTracker, IFailFastChecker failFastChecker, IExceptionInfoFactory exceptionInfoFactory, bool secondLevelRetriesEnabled, CancellationToken cancellationToken)
         {
-            _arkRetryStrategySettings = arkRetryStrategySettings ?? throw new ArgumentNullException(nameof(arkRetryStrategySettings));
-            _errorTracker = errorTracker ?? throw new ArgumentNullException(nameof(errorTracker));
+            _log = rebusLoggerFactory?.GetLogger<DefaultRetryStep>() ?? throw new ArgumentNullException(nameof(rebusLoggerFactory));
             _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
-            _failFastChecker = failFastChecker;
-            _logger = rebusLoggerFactory?.GetLogger<ArkRetryStrategyStep>() ?? throw new ArgumentNullException(nameof(rebusLoggerFactory));
+            _errorTracker = errorTracker ?? throw new ArgumentNullException(nameof(errorTracker));
+            _failFastChecker = failFastChecker ?? throw new ArgumentNullException(nameof(failFastChecker));
+            _exceptionInfoFactory = exceptionInfoFactory ?? throw new ArgumentNullException(nameof(exceptionInfoFactory));
+            _secondLevelRetriesEnabled = secondLevelRetriesEnabled;
             _cancellationToken = cancellationToken;
         }
 
         /// <summary>
-        /// Executes the entire message processing pipeline in an exception handler, tracking the number of failed delivery attempts.
-        /// Forwards the message to the error queue when the max number of delivery attempts has been exceeded.
+        /// Executes the entire message processing pipeline in an exception handler, tracking the number of failed delivery using <see cref="IErrorTracker"/>.
+        /// Passes the message to the <see cref="IErrorHandler"/> when the max number of delivery attempts has been exceeded.
         /// </summary>
         public async Task Process(IncomingStepContext context, Func<Task> next)
         {
-            var transportMessage = context.Load<TransportMessage>() ?? throw new RebusApplicationException("Could not find a transport message in the current incoming step context");
             var transactionContext = context.Load<ITransactionContext>() ?? throw new RebusApplicationException("Could not find a transaction context in the current incoming step context");
-
+            var transportMessage = context.Load<TransportMessage>() ?? throw new RebusApplicationException("Could not find a transport message in the current incoming step context");
             var messageId = transportMessage.Headers.GetValueOrNull(Headers.MessageId);
 
             if (string.IsNullOrWhiteSpace(messageId))
             {
-                await _moveMessageToErrorQueue(context, transactionContext,
-                    new RebusApplicationException($"Received message with empty or absent '{Headers.MessageId}' header! All messages must be" +
-                                                  " supplied with an ID . If no ID is present, the message cannot be tracked" +
-                                                  " between delivery attempts, and other stuff would also be much harder to" +
-                                                  " do - therefore, it is a requirement that messages be supplied with an ID."));
+                transactionContext.SetResult(commit: false, ack: true);
+
+                await _passToErrorHandler(context, _exceptionInfoFactory.CreateInfo(new RebusApplicationException(
+                    $"Received message with empty or absent '{Headers.MessageId}' header! All messages must carry" +
+                    " an ID. If no ID is present, the message cannot be tracked" +
+                    " between delivery attempts, and other stuff would also be much harder to" +
+                    " do - therefore, it is a requirement that messages carry an ID.")));
 
                 return;
             }
 
-            await _checkFinal(context, true);
-
-            if (await _errorTracker.HasFailedTooManyTimes(messageId))
-            {
-                await _handleError(context, next, messageId);
-            }
-            else
-            {
-                await _handle(context, next, messageId, transactionContext, messageId);
-            }
-        }
-
-        /// <summary>
-        /// Check if the current message handling is 'done' and flag MessageId as FINAL.
-        /// Support also 2nd-level retries and FailFast.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="beforeTry">true if the check is prior to handling, to bailout before event try.</param>
-        /// <remarks>
-        /// At the start of the Handling we want to bailout if the current DeliveryCount is greater than the threashold.
-        /// DeliveryCount is natively 1-based: first try has count=1 before trying.
-        /// When this is the last try we need first to execute.
-        /// </remarks>
-        private async Task _checkFinal(IncomingStepContext context, bool beforeTry = false)
-        {
-            var transportMessage = context.Load<TransportMessage>();
-            var messageId = transportMessage.Headers.GetValue(Headers.MessageId);
-
-            int? transportDeliveryCount = null;
-
-            if (transportMessage.Headers.TryGetValue(DeliveryCountHeader, out var dch)
-                            && int.TryParse(dch, out var dc))
-            {
-                transportDeliveryCount = dc;
-            }
-
-            await _checkFinal(messageId, transportDeliveryCount, beforeTry);
-
-            if (_arkRetryStrategySettings.SecondLevelRetriesEnabled)
-            {
-                var secondLevelMessageId = GetSecondLevelMessageId(messageId);
-
-                if (transportDeliveryCount != null)
-                {
-                    // can happen that we have fail-fasted the first-level and we're failing the 2nd-level
-                    transportDeliveryCount -= _arkRetryStrategySettings.MaxDeliveryAttempts;
-                    if (transportDeliveryCount <= 0)
-                        transportDeliveryCount = 1;
-                }
-
-                await _checkFinal(secondLevelMessageId, transportDeliveryCount, beforeTry);
-            }
-        }
-
-        private async Task _checkFinal(string messageId, int? transportDeliveryCount, bool beforeTry)
-        {
-            var exceptions = await _errorTracker.GetExceptions(messageId);
-
-            // +1 as DeliveryCount is 1-based and is charged prior to 'receive'
-            var deliveryCountFromExceptions = exceptions.Count() + 1;
-
-            // if transport doesn't has deliveryCount, use the count of the Exceptions.
-            var deliveryCount = (transportDeliveryCount ?? 0) > deliveryCountFromExceptions ? transportDeliveryCount : deliveryCountFromExceptions;
-
-            if (beforeTry == true) deliveryCount--;
-
-            if ((deliveryCount >= _arkRetryStrategySettings.MaxDeliveryAttempts
-                && exceptions.Any()) || exceptions.Any(x => _failFastChecker.ShouldFailFast(messageId, x)))
-            {
-                await _errorTracker.MarkAsFinal(messageId);
-            }
-        }
-
-        private async Task _handleError(IncomingStepContext context, Func<Task> next, string handledMessageId)
-        {
-            var transportMessage = context.Load<TransportMessage>() ?? throw new RebusApplicationException("Could not find a transport message in the current incoming step context");
-            var transactionContext = context.Load<ITransactionContext>();
-            var messageId = transportMessage.Headers.GetValueOrNull(Headers.MessageId);
-            var secondLevelMessageId = GetSecondLevelMessageId(messageId);
-
-            if (!await _errorTracker.HasFailedTooManyTimes(handledMessageId)) // let's try again
-            {
-                transactionContext.Abort();
-                return;
-            }
-            else if (messageId == handledMessageId && _arkRetryStrategySettings.SecondLevelRetriesEnabled && !await _errorTracker.HasFailedTooManyTimes(secondLevelMessageId))
-            {
-                context.Save(DispatchAsFailedMessageKey, true);
-                await _handle(context, next, secondLevelMessageId, transactionContext, messageId, secondLevelMessageId);
-                return;
-            }
-
-            await _handlePoisonMessage(context, transactionContext, messageId, secondLevelMessageId);
-        }
-
-        /// <summary>
-        /// Gets the 2nd level retry surrogate message ID corresponding to <paramref name="messageId"/>
-        /// </summary>
-        public static string GetSecondLevelMessageId(string messageId) => messageId + "-2nd-level";
-
-        async Task _handle(IncomingStepContext context, Func<Task> next, string identifierToTrackMessageBy, ITransactionContext transactionContext, string messageId, string? secondLevelMessageId = null)
-        {
             try
             {
                 await next();
+                await _handleManualDeadlettering(context);
+                transactionContext.SetResult(commit: true, ack: true);
 
-                await transactionContext.Commit();
-
-                await _errorTracker.CleanUp(messageId);
-
-                if (secondLevelMessageId != null)
+                if (transactionContext is ICanEagerCommit canEagerCommit)
                 {
-                    await _errorTracker.CleanUp(secondLevelMessageId);
+                    await canEagerCommit.CommitAsync();
                 }
-
             }
             catch (OperationCanceledException) when (_cancellationToken.IsCancellationRequested)
             {
-                _logger.Info("Dispatch of message with ID {messageId} was cancelled", messageId);
-
-                transactionContext.Abort();
+                _log.Info("Dispatch of message with ID {messageId} was cancelled", messageId);
+                transactionContext.SetResult(commit: false, ack: false);
             }
             catch (Exception exception)
             {
-                await _errorTracker.RegisterError(identifierToTrackMessageBy, exception);
-                await _checkFinal(context);
+                await _handleException(exception, transactionContext, messageId, context, next);
+            }
+        }
 
-                await _handleError(context, next, identifierToTrackMessageBy);
+        async Task _handleException(Exception exception, ITransactionContext transactionContext, string messageId, IncomingStepContext context, Func<Task> next)
+        {
+            await _errorTracker.RegisterError(messageId, exception);
+
+            // this bool is to avoid a HasFailedTooManyTimes() remote call in case ErrorTracker is distributed
+            bool firstLevelIsFinal;
+
+            // first check if this 'Error' is to 'fail fast'
+            if (_failFastChecker.ShouldFailFast(messageId, exception))
+            {
+                await _errorTracker.MarkAsFinal(messageId);
+                firstLevelIsFinal = true;
+            } else
+            {
+                firstLevelIsFinal = await _errorTracker.HasFailedTooManyTimes(messageId);
             }
 
+            // if we're not done, let's bail-out
+            if (!firstLevelIsFinal)
+            {
+                transactionContext.SetResult(commit: false, ack: false);
+                return;
+            }
+
+            // otherwise, if not 2nd Level, pass to errorhandling/poison and ACK this message
+            if (!_secondLevelRetriesEnabled) 
+            {
+                await _passToErrorHandler(context, _getAggregateException(await _errorTracker.GetExceptions(messageId)));
+                await _errorTracker.CleanUp(messageId);
+                transactionContext.SetResult(commit: false, ack: true);
+                return;
+            }
+            else // handle 2nd level retry
+            {
+                var msgId = messageId + "_2nd";
+                try
+                {
+                    await _dispatchSecondLevelRetry(transactionContext, context, next);
+                    await _handleManualDeadlettering(context);
+                    transactionContext.SetResult(commit: true, ack: true);
+                    await _errorTracker.CleanUp(messageId);
+                    await _errorTracker.CleanUp(msgId);
+                    return;
+                }
+                catch (OperationCanceledException) when (_cancellationToken.IsCancellationRequested)
+                {
+                    _log.Info("Dispatch of message with ID {messageId} was cancelled", msgId);
+                }
+                catch (Exception secondLevelException)
+                {
+                    await _errorTracker.RegisterError(msgId, exception);
+
+                    // this bool is to avoid a HasFailedTooManyTimes() remote call in case ErrorTracker is distributed
+                    bool secondLevelIsFinal;
+
+                    // first check if this 'Error' is to 'fail fast'
+                    if (_failFastChecker.ShouldFailFast(msgId, exception))
+                    {
+                        await _errorTracker.MarkAsFinal(msgId);
+                        secondLevelIsFinal = true;
+                    }
+                    else
+                    {
+                        secondLevelIsFinal = await _errorTracker.HasFailedTooManyTimes(msgId);
+                    }
+
+                    // if we're not done, let's bail-out
+                    if (!secondLevelIsFinal)
+                    {
+                        transactionContext.SetResult(commit: false, ack: false);
+                        return;
+                    }
+
+                    var exceptions = await _errorTracker.GetExceptions(messageId);
+                    await _passToErrorHandler(context, _getAggregateException(exceptions.Concat(new[] { _exceptionInfoFactory.CreateInfo(secondLevelException), })));
+                    await _errorTracker.CleanUp(msgId);
+                    await _errorTracker.CleanUp(messageId);
+                    transactionContext.SetResult(commit: false, ack: true);
+                    return;
+                }
+            }
         }
 
-        private async Task _handlePoisonMessage(IncomingStepContext context, ITransactionContext transactionContext, string messageId, string secondLevelMessageId)
+        async Task _handleManualDeadlettering(IncomingStepContext context)
         {
-            string messageIdForException = secondLevelMessageId ?? messageId;
-            var exceptions = await _errorTracker.GetExceptions(messageIdForException);
+            var manualDeadletterCommand = context.Load<ManualDeadletterCommand>();
 
-            await _moveMessageToErrorQueue(context, transactionContext, new AggregateException(exceptions));
+            if (manualDeadletterCommand == null) return;
 
-            await _errorTracker.CleanUp(messageId);
-            if (secondLevelMessageId != null)
-                await _errorTracker.CleanUp(secondLevelMessageId);
+            await _passToErrorHandler(context, ExceptionInfo.FromException(manualDeadletterCommand.Exception));
         }
 
-        async Task _moveMessageToErrorQueue(IncomingStepContext context, ITransactionContext transactionContext, Exception exception)
+        static async Task _dispatchSecondLevelRetry(ITransactionContext transactionContext, StepContext context, Func<Task> next)
         {
-            var transportMessage = context.Load<OriginalTransportMessage>().TransportMessage.Clone();
-            await _errorHandler.HandlePoisonMessage(transportMessage, transactionContext, exception);
+            if (transactionContext.Items.TryGetValue("outgoing-messages", out var result)
+                && result is ConcurrentQueue<OutgoingTransportMessage> outgoingMessages)
+            {
+                outgoingMessages.Clear();
+            }
+
+            context.Save(DispatchAsFailedMessageKey, true);
+
+            await next();
         }
 
+        async Task _passToErrorHandler(StepContext context, ExceptionInfo exception)
+        {
+            var originalTransportMessage = context.Load<OriginalTransportMessage>() ?? throw new RebusApplicationException("Could not find the original transport message in the current incoming step context");
+            var transportMessage = originalTransportMessage.TransportMessage.Clone();
+
+            using var scope = new RebusTransactionScope();
+            await _errorHandler.HandlePoisonMessage(transportMessage, scope.TransactionContext, exception);
+            await scope.CompleteAsync();
+        }
+
+        static ExceptionInfo _getAggregateException(IEnumerable<ExceptionInfo> exceptions)
+        {
+            var list = exceptions.ToList();
+
+            return new(typeof(AggregateException).GetSimpleAssemblyQualifiedName(),
+                $"{list.Count} unhandled exceptions",
+                string.Join(Environment.NewLine + Environment.NewLine, list.Select(e => e.GetFullErrorDescription())),
+                DateTimeOffset.Now
+            );
+        }
     }
 }

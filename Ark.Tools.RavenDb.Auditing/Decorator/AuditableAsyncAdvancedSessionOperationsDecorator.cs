@@ -179,6 +179,21 @@ namespace Ark.Tools.RavenDb.Auditing
             }
         }
 
+        public void AddOrIncrement<T, TU>(string id, T entity, Expression<Func<T, TU>> path, TU valToAdd)
+        {
+            _inner.AddOrIncrement(id, entity, path, valToAdd);
+        }
+
+        public void AddOrPatch<T, TU>(string id, T entity, Expression<Func<T, TU>> path, TU value)
+        {
+            _inner.AddOrPatch(id, entity, path, value);
+        }
+
+        public void AddOrPatch<T, TU>(string id, T entity, Expression<Func<T, List<TU>>> path, Expression<Func<JavaScriptArray<TU>, object>> arrayAdder)
+        {
+            _inner.AddOrPatch(id, entity, path, arrayAdder);
+        }
+
         public IAsyncDocumentQuery<T> AsyncDocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractCommonApiForIndexes, new()
 		{
 			return _inner.AsyncDocumentQuery<T, TIndexCreator>();
@@ -187,11 +202,6 @@ namespace Ark.Tools.RavenDb.Auditing
 		public IAsyncDocumentQuery<T> AsyncDocumentQuery<T>(string? indexName = null, string? collectionName = null, bool isMapReduce = false)
 		{
 			return _inner.AsyncDocumentQuery<T>(indexName, collectionName, isMapReduce);
-		}
-
-		public IAsyncGraphQuery<T> AsyncGraphQuery<T>(string query)
-		{
-			return _inner.AsyncGraphQuery<T>(query);
 		}
 
 		public IAsyncRawDocumentQuery<T> AsyncRawQuery<T>(string query)
@@ -265,6 +275,11 @@ namespace Ark.Tools.RavenDb.Auditing
         public List<string> GetTimeSeriesFor<T>(T instance)
         {
             return _inner.GetTimeSeriesFor(instance);
+        }
+
+        public IDictionary<string, Raven.Client.Documents.Session.EntityInfo> GetTrackedEntities()
+        {
+            return _inner.GetTrackedEntities();
         }
 
         public bool HasChanged(object entity)
@@ -346,8 +361,12 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.RefreshAsync(entity, token);
 		}
 
+        public Task RefreshAsync<T>(IEnumerable<T> entities, CancellationToken token = default)
+        {
+            return _inner.RefreshAsync(entities, token);
+        }
 
-		public void SetTransactionMode(TransactionMode mode)
+        public void SetTransactionMode(TransactionMode mode)
 		{
 			_inner.SetTransactionMode(mode);
 		}
@@ -531,5 +550,10 @@ namespace Ark.Tools.RavenDb.Auditing
 		{
 			return _inner.WhatChanged();
 		}
+
+        public DocumentsChanges[] WhatChangedFor(object entity)
+        {
+            return _inner.WhatChangedFor(entity);
+        }
     }
 }

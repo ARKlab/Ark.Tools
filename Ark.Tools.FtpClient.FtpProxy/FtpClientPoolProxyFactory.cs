@@ -24,7 +24,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
         {
-            return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, _tokenProvider, ftpConfig);
+            return new FtpClientProxy(_config, _tokenProvider, ftpConfig);
         }
     }
 }

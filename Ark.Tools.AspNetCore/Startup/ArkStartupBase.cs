@@ -48,7 +48,7 @@ namespace Ark.Tools.AspNetCore.Startup
             app.Use((context, next) =>
             {
                 if (context.Request.Headers.TryGetValue("X-Forwarded-PathBase", out var pathbase) && pathbase != "/")
-                    context.Request.PathBase = pathbase + context.Request.PathBase;
+                    context.Request.PathBase = pathbase[0] ?? "" + context.Request.PathBase;
                 return next();
             });
             

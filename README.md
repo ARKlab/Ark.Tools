@@ -20,9 +20,31 @@ The main library used by Ark in its stack are
 If you want to learn more about each project, look the respective Readme when present or directly at code.
 Documentation improvements are up-for-grabs ;)
 
-## Upgrade to NLog v5 in Ark.Tools>=v4.5
+## Ark.Tools v5 Breaking Changes
 
-In v4.5 has been revisited the NLog integration and helpers to make use of new features.
+### .NET 8.0
+
+.NET SDK has been updated to .NET 8. AspNetCore packages only target .NET8 (latest LTS).
+
+### Deprecated .NET Framework, NetStandard 2.0
+
+NetStandard 2.1 is the minimum version going forward.
+
+### Flurl upgrade to v4
+
+See [Flurl](https://flurl.dev/docs/upgrade/) for details, but long-story-short is:
+- Default to STJ thus use `XXXXX` to configure a Newtonsoft client factory
+
+### Rebus upgrade to v8
+
+Rebus has been upgraded to v8. There is a Breaking Change on SecondLevelRetries where IFailed<T> no longer has the Exception object, but a serialization friendly ExceptionInfo.
+Use `exceptionInfo.ToException()` to obtain an exception: do note that the original StackTrace is in the Exception.Message.
+
+
+
+## Upgrade Ark.Tools v4.5
+
+In v4.5 has been revisited the NLog integration and helpers to make use of new features present in NLog v5.
 
 ### NLog 'default' Configuration
 

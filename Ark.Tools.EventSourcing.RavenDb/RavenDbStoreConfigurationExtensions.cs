@@ -29,7 +29,6 @@ namespace Ark.Tools.EventSourcing.RavenDb
             });
 
             store.Conventions.UseOptimisticConcurrency = true;
-            store.Conventions.ThrowIfQueryPageSizeIsNotSet = true;
 
             return store;
         }
