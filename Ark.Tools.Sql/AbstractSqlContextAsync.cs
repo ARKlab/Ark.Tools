@@ -58,69 +58,72 @@ namespace Ark.Tools.Sql
 
         public virtual async ValueTask CommitAysnc(CancellationToken ctk)
         {
+#if !(NETSTANDARD2_0 || NET472)
             if (_transaction != null)
             {
-                await Task.Run(() => 
-                {
-                    _transaction.Commit();
-                    _transaction.Dispose();
-                }, ctk);
+                await _transaction.CommitAsync(ctk);
+                await _transaction.DisposeAsync();
             }
             _transaction = null;
+#endif
         }
 
         public virtual async ValueTask CommitAndRestartTransactionAsync(IsolationLevel isolationLevel, CancellationToken ctk)
         {
+#if !(NETSTANDARD2_0 || NET472)
             if (_transaction != null)
             {
-                _transaction.Commit();
-                _transaction.Dispose();
+                await _transaction.CommitAsync(ctk);
+                await _transaction.DisposeAsync();
             }
             _transaction = null;
             await _createAsync(isolationLevel, ctk);
+#endif
         }
 
         public async ValueTask ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk)
         {
+#if !(NETSTANDARD2_0 || NET472)
             _isolationLevel = isolationLevel;
             await RollbackAsync(ctk);
+#endif
         }
 
         public async ValueTask RollbackAsync(CancellationToken ctk)
         {
+#if !(NETSTANDARD2_0 || NET472)
             if (_transaction != null)
             {
-                await Task.Run(() =>
-                {
-                    _transaction.Rollback();
-                    _transaction.Dispose();
-                }, ctk);
+                await _transaction.RollbackAsync(ctk);
+                await _transaction.DisposeAsync();
             }
 
             _transaction = null;
+#endif
         }
 
         private async ValueTask _createAsync(IsolationLevel isolationLevel, CancellationToken ctk)
         {
+#if !(NETSTANDARD2_0 || NET472)
             if (_connection.State != ConnectionState.Open)
             {
                 if (_connection.State == ConnectionState.Closed)
                     await _connection.OpenAsync(ctk);
             }
             if (_transaction == null)
-                _transaction = _connection.BeginTransaction(isolationLevel);
+                _transaction = await _connection.BeginTransactionAsync(isolationLevel, ctk);
+#endif
         }
 
         public async ValueTask DisposeAsync()
         {
+#if !(NETSTANDARD2_0 || NET472)
             if (_transaction != null)
             {
-                _transaction.Dispose();
+                await _transaction.DisposeAsync();
             }
-            await Task.Run(() =>
-            {
-                GC.SuppressFinalize(this);
-            });
+            GC.SuppressFinalize(this);
+#endif
         }
     }
 }
