@@ -12,6 +12,7 @@ namespace Ark.Tools.Sql
     {
         DbConnection Connection { get; }
         DbTransaction? Transaction { get; }
+
         ValueTask RollbackAsync(CancellationToken ctk);
         ValueTask ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk);
     }
