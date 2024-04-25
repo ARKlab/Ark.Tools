@@ -29,6 +29,9 @@
     <PackageReference Include="NLog.Database" Version="5.2.7" />
     <PackageReference Include="NLog.DiagnosticSource" Version="5.0.0" />
     <PackageReference Include="Slack.Webhooks" Version="1.1.5" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.1" />
   </ItemGroup>
 
@@ -36,7 +39,7 @@
     <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
-    
+
   </ItemGroup>
 
   <ItemGroup>

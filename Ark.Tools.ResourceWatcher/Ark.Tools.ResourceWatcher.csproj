@@ -16,11 +16,14 @@
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
-  
+
   <ItemGroup>
     <PackageReference Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.1" />
   </ItemGroup>
 
   <ItemGroup>
