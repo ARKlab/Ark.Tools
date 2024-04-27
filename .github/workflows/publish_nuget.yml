@@ -2,57 +2,18 @@ name: "Deploy to NuGet"
 
 on:
   push:
-    branches: [ master ]
     tags:
     - 'v[0-9]+\.[0-9]+\.[0-9]+'
     - 'v[0-9]+\.[0-9]+\.[0-9]+-beta[0-9][0-9]'
-  pull_request:
-    branches: [ master ]
 
 env:
   PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
   NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
 
-permissions:
-  contents: read
-  statuses: write
-  checks: write
-
 jobs:
-  build:
-    name: 'Build'
-    runs-on: 'windows-latest'
-    steps:
-    - name: 'Checkout'
-      uses: actions/checkout@v3
-
-    - name: 'Install dotnet'
-      uses: actions/setup-dotnet@v3
-      with:
-        global-json-file: global.json
-      
-    - name: 'Restore packages'
-      run: dotnet restore
-
-    - name: 'Build project'
-      run: dotnet build --no-restore --configuration Debug
-
-    - name: Test
-      run: dotnet test --no-restore --configuration Debug --logger "trx;LogFileName=test-results.trx" || true
-
-    - name: Test Report
-      uses: dorny/test-reporter@v1
-      if: always()
-      with:
-        name: DotNET Tests
-        path: "**/test-results.trx"                            
-        reporter: dotnet-trx
-        fail-on-error: true  
-
   deploy:
     name: 'Nuget Push'
     runs-on: 'windows-latest'
-    needs: build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
 
     steps:
@@ -68,9 +29,11 @@ jobs:
       id: version
       uses: battila7/get-version-action@v2
 
+    - name: Test
+      run: dotnet test --configuration Debug --logger "trx;LogFileName=test-results.trx"
+
     - name: 'Pack project'
       run: dotnet pack --configuration Release --include-symbols -p:Version=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
-      # --no-build somehow cannot be used due to being needed: 
 
     - name: 'Push package'
       run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_AUTH_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }}
