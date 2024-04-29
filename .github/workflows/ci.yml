@@ -30,7 +30,7 @@ jobs:
       run: dotnet test --no-restore --configuration Debug --logger "trx;LogFileName=test-results.trx"
       
     # see https://github.com/dorny/test-reporter?tab=readme-ov-file#recommended-setup-for-public-repositories
-    - uses: actions/upload-artifact@v3  # upload test results
+    - uses: actions/upload-artifact@v4  # upload test results
       if: success() || failure()        # run this step even if previous step failed
       with:
         name: test-results
