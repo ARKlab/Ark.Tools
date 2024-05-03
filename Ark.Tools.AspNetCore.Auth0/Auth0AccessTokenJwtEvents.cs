@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace Ark.Tools.AspNetCore.Auth0
 {
@@ -40,10 +41,10 @@ namespace Ark.Tools.AspNetCore.Auth0
             _authzApiUrl = authzApiUrl;
         }
 
-        private async Task<string> _getAuthzToken(IDistributedCache cache)
+        private async Task<string> _getAuthzToken(IDistributedCache cache, CancellationToken ctk)
         {
             var cacheKey = "auth0:authzToken";
-            var res = await cache.GetStringAsync(cacheKey);
+            var res = await cache.GetStringAsync(cacheKey, ctk);
             if (res != null)
                 return res;
 
@@ -53,12 +54,12 @@ namespace Ark.Tools.AspNetCore.Auth0
                 Audience = AuthorizationExtensionAudience,
                 ClientId = _clientId,
                 ClientSecret = _clientSecret
-            });
+            },ctk);
 
             await cache.SetStringAsync(cacheKey, resp.AccessToken, new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(resp.ExpiresIn - 2*60)
-            });
+            },ctk);
 
             return resp.AccessToken;
         }
@@ -86,6 +87,7 @@ namespace Ark.Tools.AspNetCore.Auth0
         public override async Task TokenValidated(TokenValidatedContext ctx)
         {
             var cache = ctx.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
+            var ctk = ctx.HttpContext.RequestAborted;
 
             var jwt = (ctx.SecurityToken as JwtSecurityToken);
             var cid = ctx.Principal?.Identity as ClaimsIdentity;
@@ -96,15 +98,15 @@ namespace Ark.Tools.AspNetCore.Auth0
                 if (_shouldGetRoles() && !_isUnattendedClient(cid))
                 {
                     CacheEntry? cacheEntry = null;
-                    var res = await cache.GetStringAsync(cacheKey);
+                    var res = await cache.GetStringAsync(cacheKey, ctk);
                     if (res == null)
                     {
                         var t1 = cache.SetStringAsync(cacheKey, "Pending", new DistributedCacheEntryOptions
                         {
                             AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5)
-                        });
+                        }, ctk);
 
-                        var userInfo = await _auth0.GetUserInfoAsync(token);
+                        var userInfo = await _auth0.GetUserInfoAsync(token, ctk);
                         var policyPayload = jwt.Claims.FirstOrDefault(x => x.Type == Auth0ClaimTypes.PolicyPostPayload)?.Value;
 
                         if (userInfo != null)
@@ -113,7 +115,7 @@ namespace Ark.Tools.AspNetCore.Auth0
 
                             if (policyPayload != null)
                             {
-                                var authzToken = await _getAuthzToken(cache);
+                                var authzToken = await _getAuthzToken(cache, ctk);
                                 var url = $"{_authzApiUrl}/api/users/{WebUtility.UrlEncode(userInfo.UserId)}/policy/{WebUtility.UrlEncode(_clientId)}";
 
                                 using (var client = new HttpClient())
@@ -122,11 +124,11 @@ namespace Ark.Tools.AspNetCore.Auth0
                                     req.Content = new StringContent(policyPayload, Encoding.UTF8, "application/json");
                                     req.Headers.Add("Authorization", "Bearer " + authzToken);
 
-                                    var policyRes = await client.SendAsync(req);
+                                    var policyRes = await client.SendAsync(req, ctk);
 
                                     if (policyRes.IsSuccessStatusCode)
                                     {
-                                        var policyJson = await policyRes.Content.ReadAsStringAsync();
+                                        var policyJson = await policyRes.Content.ReadAsStringAsync(ctk);
                                         var policy = JsonConvert.DeserializeObject<PolicyResult>(policyJson);
                                         if (policy != null)
                                         {
@@ -152,11 +154,11 @@ namespace Ark.Tools.AspNetCore.Auth0
                             await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(cacheEntry), new DistributedCacheEntryOptions
                             {
                                 AbsoluteExpiration = jwt.ValidTo - TimeSpan.FromMinutes(2)
-                            });
+                            }, ctk);
                         }
                         else
                         {
-                            await cache.RemoveAsync(cacheKey);
+                            await cache.RemoveAsync(cacheKey, ctk);
                         }
 
                     }
@@ -164,7 +166,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                     {
                         res = await Policy.HandleResult<string>(r => r == "Pending")
                             .WaitAndRetryForeverAsync(x => TimeSpan.FromMilliseconds(100)) // Actually cannot be greater than 5sec as key would expire returning null
-                            .ExecuteAsync(async () => await cache.GetStringAsync(cacheKey) ?? string.Empty)
+                            .ExecuteAsync(async ct => await cache.GetStringAsync(cacheKey, ct) ?? string.Empty, ctk)
                             ;
                     }
 
