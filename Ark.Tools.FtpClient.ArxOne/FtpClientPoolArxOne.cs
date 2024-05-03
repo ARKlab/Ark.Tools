@@ -2,41 +2,92 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using ArxOne.Ftp;
-using NLog;
+using Org.Mentalis.Network.ProxySocket;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.FtpClient
 {
-
     public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
     {
         private readonly ArxOne.Ftp.FtpClient _client;
         private readonly SemaphoreSlim _semaphore;
+        private readonly ISocksConfig? _socksConfig;
+        private readonly Action<FtpClientParameters>? _configurer;
 
         private bool _isDisposed  =  false;
 
-        public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig)
+        public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig) 
+            : base (ftpConfig, maxPoolSize)
+        {
+            _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
+            _client = _getClient();
+        }
+
+        public FtpClientPoolArxOne(ISocksConfig socksConfig, int maxPoolSize, FtpConfig ftpConfig)
             : base(ftpConfig, maxPoolSize)
         {
-            _client = _getClient();
+            _socksConfig = socksConfig;
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
+            _client = _getClient();
+        }
+
+        public FtpClientPoolArxOne(IArxOneConfig arxOneConfig, int maxPoolSize, FtpConfig ftpConfig)
+            : base(ftpConfig, maxPoolSize)
+        {
+            _socksConfig = arxOneConfig.SocksConfig;
+            _configurer = arxOneConfig.Configurer;
+            _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
+            _client = _getClient();
         }
 
         private protected virtual ArxOne.Ftp.FtpClient _getClient()
         {
-            return new ArxOne.Ftp.FtpClient(
-                this.Uri, this.Credentials, new FtpClientParameters()
+            var ftpClientParameters = new FtpClientParameters()
+            { 
+                ConnectTimeout = TimeSpan.FromSeconds(60),
+                ReadWriteTimeout = TimeSpan.FromMinutes(3),
+                Passive = true,
+            };
+            
+            if (_socksConfig != null) 
+            {
+                ftpClientParameters.ProxyConnect = e =>
                 {
-                    ConnectTimeout = TimeSpan.FromSeconds(60),
-                    ReadWriteTimeout = TimeSpan.FromMinutes(3),
-                    Passive = true,
-                });
+                    var s = new ProxySocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+                    {
+                        ProxyEndPoint = new IPEndPoint(IPAddress.Parse(_socksConfig.IpAddress), _socksConfig.Port),
+                        ProxyUser = _socksConfig.UserName,
+                        ProxyPass = _socksConfig.Password,
+                        ProxyType = _socksConfig.Type
+                    };
+
+                    switch (e)
+                    {
+                        case DnsEndPoint dns:
+                            s.Connect(dns.Host, dns.Port);
+                            break;
+                        case IPEndPoint ip:
+                            s.Connect(ip);
+                            break;
+
+                        default: throw new NotSupportedException();
+                    }
+
+                    return s;
+                };
+            }
+
+            if (_configurer != null)
+                _configurer(ftpClientParameters);
+
+            return new ArxOne.Ftp.FtpClient(this.Uri, this.Credentials, ftpClientParameters);
         }
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)

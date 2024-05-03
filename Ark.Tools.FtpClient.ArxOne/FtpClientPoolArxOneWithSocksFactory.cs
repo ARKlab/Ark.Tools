@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using EnsureThat;
-using System;
-using System.Net;
 
 namespace Ark.Tools.FtpClient
 {
@@ -24,7 +22,7 @@ namespace Ark.Tools.FtpClient
             EnsureArg.IsNotNull(ftpConfig.Uri);
             EnsureArg.IsNotNull(ftpConfig.Credentials);
 
-            return new FtpClientPoolArxOneWithSocks(_config, maxPoolSize, ftpConfig);
+            return new FtpClientPoolArxOne(_config, maxPoolSize, ftpConfig);
         }
     }
 }
