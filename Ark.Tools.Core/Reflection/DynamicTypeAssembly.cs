@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Core.Reflection
 {
-#if !NETSTANDARD2_0
     /// <summary>
     /// Generates new Types with dynamically added properties.
     /// </summary>
@@ -118,5 +117,4 @@ namespace Ark.Tools.Core.Reflection
             propertyBuilder.SetSetMethod(setMethodBuilder);
         }
     }
-#endif
 }

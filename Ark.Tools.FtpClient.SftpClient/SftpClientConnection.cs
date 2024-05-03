@@ -24,11 +24,11 @@ namespace Ark.Tools.FtpClient.SftpClient
         private readonly TimeSpan _operationTimeout  = TimeSpan.FromMinutes(5);
 
         private bool _isDisposed = false;
-#if !(NETSTANDARD2_0 || NET472)
+        
         private const string _rsa = "1.2.840.113549.1.1.1";
         private const string _dsa = "1.2.840.10040.4.1";
         private const string _ecdsa = "1.2.840.10045.2.1";
-#endif
+        
         public SftpClientConnection(FtpConfig ftpConfig)
             : base(ftpConfig)
         {
@@ -113,10 +113,6 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         private Renci.SshNet.SftpClient _getSFtpClientWithCertificate()
         {
-
-#if NETSTANDARD2_0 || NET472
-            throw new NotSupportedException($"ClientCertificate does not support X509 Certificate in NETCORE2.0 nor NET472");
-#else
             var connInfo = _getConnectionInfo();
 
             var cert = FtpConfig.ClientCertificate ?? throw new InvalidOperationException("ClientCertificate is not set");
@@ -168,18 +164,8 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (isKeyNull)
                 throw new ArgumentNullException($"ClientCertificate has a null Key");
 
-#if NET5_0_OR_GREATER
             var privateKeyPem = PemEncoding.Write($"{keyExchangeAlgorithm} PRIVATE KEY", privateKeyBytes);
             privateKeyPemString = new string(privateKeyPem);
-#else
-            var builder = new StringBuilder();
-            builder.AppendLine($"-----BEGIN {keyExchangeAlgorithm} PRIVATE KEY-----");
-            builder.AppendLine(
-                Convert.ToBase64String(privateKeyBytes, Base64FormattingOptions.InsertLineBreaks));
-            builder.AppendLine($"-----END {keyExchangeAlgorithm} PRIVATE KEY-----");
-
-            privateKeyPemString = builder.ToString();    
-#endif
 
             var byteArray = Encoding.UTF8.GetBytes(privateKeyPemString);
 
@@ -188,7 +174,6 @@ namespace Ark.Tools.FtpClient.SftpClient
                 KeepAliveInterval = _keepAliveInterval,
                 OperationTimeout = _operationTimeout,
             };
-#endif
         }
 
         private Renci.SshNet.SftpClient _getSFtpClient()

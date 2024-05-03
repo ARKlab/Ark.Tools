@@ -112,11 +112,7 @@ namespace Ark.Tools.FtpClient
             try
             {
                 using var ostrm = _client.Stor(path, FtpTransferMode.Binary);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
                 await ostrm.WriteAsync(content, ctk);
-#else
-                await ostrm.WriteAsync(content, 0, content.Length, ctk);
-#endif
                 await ostrm.FlushAsync(ctk);
             }
             finally

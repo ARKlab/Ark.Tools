@@ -86,13 +86,8 @@ namespace Ark.Tools.Rebus.Tests
         {
             lock (_deferredMessages)
             {
-#if NETSTANDARD2_0
-                var keyValuePairsToRemove = MoreLinq.MoreEnumerable.ToHashSet(_deferredMessages
-                    .Where(v => _rebusTime.Now >= v.Value.DueTime));
-#else
                 var keyValuePairsToRemove = System.Linq.Enumerable.ToHashSet(_deferredMessages
                     .Where(v => _rebusTime.Now >= v.Value.DueTime));
-#endif
 
                 var result = new DueMessagesResult(keyValuePairsToRemove
                         .Select(kvp =>

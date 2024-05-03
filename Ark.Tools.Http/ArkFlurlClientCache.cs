@@ -24,6 +24,7 @@ namespace Ark.Tools.Http
                 .ConfigureArkDefaults()
                 .Build();
         }
+        
         public IFlurlClient Get(Uri baseUrl)
         {
             return new ArkFlurlClientBuilder(baseUrl.ToString(), _clientFactory)
