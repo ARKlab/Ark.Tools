@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
 
 using FtpConfig = Ark.Tools.FtpClient.Core.FtpConfig;
 
 namespace Ark.Tools.FtpClient.FluentFtp
 {
-    public class FluentFtpClientConnection : FtpClientConnectionBase
+    public sealed class FluentFtpClientConnection : FtpClientConnectionBase
     {
         private readonly FluentFTP.IAsyncFtpClient _client;
 
@@ -85,12 +86,8 @@ namespace Ark.Tools.FtpClient.FluentFtp
         protected override void Dispose(bool disposing)
         {
             if (_isDisposed) return;
-
             if (disposing)
-            {
-                _client?.Dispose();
-            }
-
+                (_client as IDisposable)?.Dispose();
             _isDisposed = true;
         }
 

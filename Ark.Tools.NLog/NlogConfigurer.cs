@@ -569,7 +569,7 @@ VALUES
 
                 LogManager.ThrowExceptions = _isVisualStudioAttached();
                 LogManager.ThrowConfigExceptions = true;
-                InternalLogger.LogToTrace = true;
+                InternalLogger.LogToConsole = true;
                 // this is last, so that ThrowConfigExceptions is respected on Config change
                 LogManager.Configuration = _config;
 
