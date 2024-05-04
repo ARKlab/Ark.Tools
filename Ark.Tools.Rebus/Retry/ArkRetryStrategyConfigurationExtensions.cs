@@ -41,58 +41,13 @@ namespace Ark.Tools.Rebus.Retry
             int errorQueueErrorCooldownTimeSeconds = RetryStrategySettings.DefaultErrorQueueErrorCooldownTimeSeconds
         )
         {
-            if (optionsConfigurer == null) throw new ArgumentNullException(nameof(optionsConfigurer));
-
-            optionsConfigurer.Register(_ =>
-            {
-                var settings = new RetryStrategySettings(
-                    errorQueueName,
-                    maxDeliveryAttempts,
-                    secondLevelRetriesEnabled,
-                    errorDetailsHeaderMaxLength,
-                    errorTrackingMaxAgeMinutes,
-                    errorQueueErrorCooldownTimeSeconds: errorQueueErrorCooldownTimeSeconds
-                );
-
-                return settings;
-            });
-
-
-            optionsConfigurer.Register<IRetryStrategy>(c =>
-            {
-                var simpleRetryStrategySettings = c.Get<RetryStrategySettings>();
-                var rebusLoggerFactory = c.Get<IRebusLoggerFactory>();
-                var errorTracker = c.Get<IErrorTracker>();
-                var errorHandler = c.Get<IErrorHandler>();
-                var failFastChecker = c.Get<IFailFastChecker>();
-                var exceptionInfoFactory = c.Get<IExceptionInfoFactory>();
-                var cancellationToken = c.Get<CancellationToken>();
-                return new ArkRetryStrategy(simpleRetryStrategySettings, rebusLoggerFactory, errorTracker, errorHandler, failFastChecker, exceptionInfoFactory, cancellationToken);
-            });
-
-            optionsConfigurer.Decorate<IErrorTracker>(c =>
-            {
-                var errorTracker = c.Get<IErrorTracker>();
-                var simpleRetryStrategySettings = c.Get<RetryStrategySettings>();
-
-                return new ErrorTrackerNativeCountDecorator(errorTracker, simpleRetryStrategySettings);
-            });
-
-            if (secondLevelRetriesEnabled)
-            {
-                optionsConfigurer.Decorate<IPipeline>(c =>
-                {
-                    var pipeline = c.Get<IPipeline>();
-                    var errorTracker = c.Get<IErrorTracker>();
-
-                    var incomingStep = new FailedMessageWrapperStep(errorTracker);
-                    var outgoingStep = new VerifyCannotSendFailedMessageWrapperStep();
-
-                    return new PipelineStepInjector(pipeline)
-                        .OnReceive(incomingStep, PipelineRelativePosition.After, typeof(DeserializeIncomingMessageStep))
-                        .OnSend(outgoingStep, PipelineRelativePosition.Before, typeof(SerializeOutgoingMessageStep));
-                });
-            }
+            optionsConfigurer.RetryStrategy(
+                errorQueueName, 
+                maxDeliveryAttempts, 
+                secondLevelRetriesEnabled, 
+                errorDetailsHeaderMaxLength, 
+                errorTrackingMaxAgeMinutes, 
+                errorQueueErrorCooldownTimeSeconds);
         }
     }
 }

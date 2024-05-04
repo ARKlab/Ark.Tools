@@ -1,14 +1,18 @@
-![image](http://www.ark-energy.eu/wp-content/uploads/ark-dark.png)
+![image](http://raw.githubusercontent.com/ARKlab/Ark.Tools/master/ark-dark.png)
+
 # Ark.Tools
+
 This is a set of core libraries developed and maintained by Ark as a set of helper or extensions of the libraries Ark choose to use in their LOB applications.
 
 ## Getting Started
+
 All libraries are provided in NuGet.
 
-Support for .NET Framework 4.7.1,.NET Standard 2.x, .NET 6.0. 
+Support for .NET Framework 4.7.1,.NET Standard 2.x, .NET 6.0.
 Support for other frameworks is up-for-grabs ;)
 
 ## Quick Start
+
 The main library used by Ark in its stack are
 
 * [NodaTime](https://nodatime.org/)
@@ -33,14 +37,15 @@ NetStandard 2.1 is the minimum version going forward.
 ### Flurl upgrade to v4
 
 See [Flurl](https://flurl.dev/docs/upgrade/) for details, but long-story-short is:
-- Default to STJ thus use `XXXXX` to configure a Newtonsoft client factory
+
+* Flurl now default to STJ thus use `XXXXX` to configure a Newtonsoft client factory
 
 ### Rebus upgrade to v8
 
-Rebus has been upgraded to v8. There is a Breaking Change on SecondLevelRetries where IFailed<T> no longer has the Exception object, but a serialization friendly ExceptionInfo.
-Use `exceptionInfo.ToException()` to obtain an exception: do note that the original StackTrace is in the Exception.Message.
+Rebus has been upgraded to v8. 
 
-
+1. There is a Breaking Change on SecondLevelRetries where `IFailed<T>` no longer has the `Exception` object, but a serialization friendly `ExceptionInfo`. Use `exceptionInfo.ToException()` to obtain an exception: do note that the original `StackTrace` is in the `Exception.Message` and not in the `Exception.StackTrace`.
+2. The `UseAzureServiceBusNativeDeliveryCount()` is deprecated in favor of native support by Rebus. Migrate to `UseAzureServiceBus(...).UseNativeMessageDeliveryCount()`.
 
 ## Upgrade Ark.Tools v4.5
 
@@ -77,12 +82,13 @@ is equivalent to
 `.WithDefaultTargetsAndRulesFromAppSettings()` and `.WithDefaultTargetsAndRulesFromCloudSettings()` exists for older Configuration sources.
 
 The NLog auto-configurer expect the following settings:
-- `NLog.Database` for SQL Server target. The table name is passed in as paramter to the configuration extension method.
-- `NLog.Smtp` for the Mail target
-   - `NLog:NotificationList` for the receipient address. 
-   - **NEW** The sender address is taken from Smtp connection string `;From=noreply@example.com` or from `.ConfigureNLog(mailfrom:"me@myapp.com")` (defaults to `noreply@ark-energy.eu`)
-- `NLog:SlackWebHook` for the Slack target. By default only `Fatal` and `LoggerName=Slack.*` are sent.
-- `APPINSIGHTS_INSTRUMENTATIONKEY` or `ApplicationInsights:InstrumentationKey` for the ApplicationInsights target. By default only `>=Error` are sent.
+
+* `NLog.Database` for SQL Server target. The table name is passed in as paramter to the configuration extension method.
+* `NLog.Smtp` for the Mail target
+  * `NLog:NotificationList` for the receipient address.
+  * **NEW** The sender address is taken from Smtp connection string `;From=noreply@example.com` or from `.ConfigureNLog(mailfrom:"me@myapp.com")` (defaults to `noreply@ark-energy.eu`)
+* `NLog:SlackWebHook` for the Slack target. By default only `Fatal` and `LoggerName=Slack.*` are sent.
+* `APPINSIGHTS_INSTRUMENTATIONKEY` or `ApplicationInsights:InstrumentationKey` for the ApplicationInsights target. By default only `>=Error` are sent.
 
 ### NLog Structured Logging
 
@@ -93,7 +99,7 @@ Log Messages are also generally structured to present some context variables whi
 `Ark.Tools@v4.5` (same version, just a coincidence...) supports writing these captured properties in ApplicationInsights and Database Targets.
 
 StructuredLogging is also more performant of string interpolation: string interpolation (`$"Message {variable}"`) **SHALL NOT be used for Logging!**
-String interpolation is always performed even usually disabled levels like `Trace` or `Debug` causing a performance loss. 
+String interpolation is always performed even usually disabled levels like `Trace` or `Debug` causing a performance loss.
 Additionally the variables are not captured and cannot be used for log analysis querying the JSON fields.
 
 ```cs
@@ -110,8 +116,9 @@ Starting `Ark.Tools@v4.4` there is support for Logging to Slack via [WebHook](ht
 
 The Configuration auto-loaders like `WithDefaultTargetsAndRulesFromConfiguration()` looks for a `NLog:SlackWebHook` and if non-empty configure to send Logs as chat message to Slack.
 The default Rules are either:
-- LoggerName="Slack.*" (created via `_slackLogger = LogManager.CreateLogger("Slack.MyStuff");`)
-- Level==Fatal
+
+* LoggerName="Slack.*" (created via `_slackLogger = LogManager.CreateLogger("Slack.MyStuff");`)
+* Level==Fatal
 
 ### NLog ApplicationInsights
 
@@ -123,33 +130,36 @@ The default Rules to log any `Error` or `Fatal` to ApplicationInsights, includin
 
 ## Migrate from v2 to v3
 
-- **BREAKING:** Microsoft.AspNetCore v5
-   - change netcoreapp3.1 to net5.0 on all projects referencing Ark.Tools.AspNetCore.* projects
-- **BREAKING:** from `System.Data.SqlClient` to `Microsoft.Data.SqlClient`
-   - remove any Nuget reference to `System.Data.SqlClient` and replace, where needed, with `Microsoft.Data.SqlClient`
-- **BREAKING:** upgraded to Flurl v3
-   - most usages should be fine, but those that expected Flurl method to return a HttpMessageResponse, as not returns IFlurlResponse **Disposable!**
-- **BREAKING:** change to AspNetCore base Startup on RegisterContainer()
-   - RegisterContainer() no longer takes IApplicationBuilder parameter but a IServiceProvider as the Container registration has been moved during ConfigureServices()
-   - this affects mostly those cases where IServiceProvider was used to check for Tests overrides of mocked services
-   - Use IHostEnvironment or services.HasService if possible instead of relying on IServiceProvider
-- **BREAKING:** change to AspNetCore Startups. Now defaults to System.Text.Json instead of Newtonsoft.Json. 
-   - Use the parameter `useNewtonsoftJson: true` of base ctor to keep old behaviour
-   - Migrate from the `Ark.Tools.SystemTextJson.JsonPolymorphicConverter` instead of `Ark.Tools.NewtonsoftJson.JsonPolymorphicConverter`
+* **BREAKING:** Microsoft.AspNetCore v5
+  * change netcoreapp3.1 to net5.0 on all projects referencing Ark.Tools.AspNetCore.* projects
+* **BREAKING:** from `System.Data.SqlClient` to `Microsoft.Data.SqlClient`
+  * remove any Nuget reference to `System.Data.SqlClient` and replace, where needed, with `Microsoft.Data.SqlClient`
+* **BREAKING:** upgraded to Flurl v3
+  * most usages should be fine, but those that expected Flurl method to return a HttpMessageResponse, as not returns IFlurlResponse **Disposable!**
+* **BREAKING:** change to AspNetCore base Startup on RegisterContainer()
+  * RegisterContainer() no longer takes IApplicationBuilder parameter but a IServiceProvider as the Container registration has been moved during ConfigureServices()
+  * this affects mostly those cases where IServiceProvider was used to check for Tests overrides of mocked services
+  * Use IHostEnvironment or services.HasService if possible instead of relying on IServiceProvider
+* **BREAKING:** change to AspNetCore Startups. Now defaults to System.Text.Json instead of Newtonsoft.Json.
+  * Use the parameter `useNewtonsoftJson: true` of base ctor to keep old behaviour
+  * Migrate from the `Ark.Tools.SystemTextJson.JsonPolymorphicConverter` instead of `Ark.Tools.NewtonsoftJson.JsonPolymorphicConverter`
 
 ## Contributing
+
 Feel free to send PRs or to raise issues if you spot them. We try our best to improve our libraries.
 Please avoid adding more dependencies to 3rd party libraries.
 
 ## Links
+
 * [Nuget](https://www.nuget.org/packages/MessagePack.NodaTime/)
 * [Github](https://github.com/ARKlab/MessagePack)
 * [Ark Energy](http://www.ark-energy.eu/)
 
 ## License
+
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/ARKlab/Ark.Tools/blob/master/LICENSE) file for details.
 
 ## Licence Claims
-A part of this code is taken from StackOverflow or blogs or example. Where possible we included reference to original links 
-but if you spot some missing Acknolegment please open an Issue right away.
 
+A part of this code is taken from StackOverflow or blogs or example. Where possible we included reference to original links
+but if you spot some missing Acknolegment please open an Issue right away.
