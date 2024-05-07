@@ -70,19 +70,6 @@ namespace Ark.Tools.Sql
 #endif
         }
 
-//        public virtual async ValueTask CommitAndRestartTransactionAsync(IsolationLevel isolationLevel, CancellationToken ctk)
-//        {
-//#if !(NETSTANDARD2_0 || NET472)
-//            if (_transaction != null)
-//            {
-//                await _transaction.CommitAsync(ctk);
-//                await _transaction.DisposeAsync();
-//            }
-//            _transaction = null;
-//            await _createAsync(isolationLevel, ctk);
-//#endif
-//        }
-
         public async ValueTask ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk)
         {
 #if !(NETSTANDARD2_0 || NET472)
@@ -107,19 +94,6 @@ namespace Ark.Tools.Sql
             throw new NotSupportedException("Async SQL not supported for this .NET framework");
 #endif
         }
-
-        //        private async ValueTask _createAsync(IsolationLevel isolationLevel, CancellationToken ctk)
-        //        {
-        //#if !(NETSTANDARD2_0 || NET472)
-        //            if (_connection.State != ConnectionState.Open)
-        //            {
-        //                if (_connection.State == ConnectionState.Closed)
-        //                    await _connection.OpenAsync(ctk);
-        //            }
-        //            if (_transaction == null)
-        //                _transaction = await _connection.BeginTransactionAsync(isolationLevel, ctk);
-        //#endif
-        //        }
 
         public async ValueTask DisposeAsync()
         {
