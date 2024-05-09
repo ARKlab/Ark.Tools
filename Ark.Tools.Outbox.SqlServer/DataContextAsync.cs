@@ -12,21 +12,20 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    public class RECDataContextFactory : IContextFactory<IRECDataContext>, IAsyncDisposable
+    public class DataContextAsync : IDataContextAsync, IAsyncDisposable
     {
-        private readonly IRECDataContextConfig _contextConfig;
+        private readonly IDataContextConfig _contextConfig;
         private readonly IDbConnectionManager _dbConnectionManager;
         private DbConnection? _dbConnection;
         private DbTransaction? _dbTransaction;
-        private RECDataContext_Sql? _recContext;
 
-        public RECDataContextFactory(IRECDataContextConfig contextConfig, IDbConnectionManager dbConnectionManager)
+        public DataContextAsync(IDataContextConfig contextConfig, IDbConnectionManager dbConnectionManager)
         {
             _contextConfig = contextConfig;
             _dbConnectionManager = dbConnectionManager;
         }
 
-        public async ValueTask<IRECDataContext> CreateAsync(System.Data.IsolationLevel isolationLevel, CancellationToken cancellationToken)
+        public async Task<T> CreateAsync<T>(IsolationLevel isolationLevel, CancellationToken cancellationToken)
         {
             _dbConnection = await _dbConnectionManager.GetAsync(_contextConfig.SqlConnectionString, cancellationToken);
 
@@ -41,10 +40,10 @@ namespace Ark.Tools.Outbox.SqlServer
             {
                 _dbTransaction = await _dbConnection.BeginTransactionAsync(isolationLevel, cancellationToken);
 
-                _recContext = new RECDataContext_Sql(_contextConfig, _dbConnection, _dbTransaction, isolationLevel);
+                var ctx = Activator.CreateInstance(typeof(T), new object[]{ _contextConfig, _dbConnection, _dbTransaction, isolationLevel });
 
-                if (_dbTransaction != null)
-                    return _recContext;
+                if (_dbTransaction != null && ctx != null)
+                    return (T)ctx;
             }
 
             throw new InvalidOperationException("Error");
@@ -57,8 +56,6 @@ namespace Ark.Tools.Outbox.SqlServer
 
         public async ValueTask DisposeAsync()
         {
-            if ( _recContext != null )
-                await _recContext.DisposeAsync();
 
 #if !(NET472 || NETSTANDARD2_0)
             if ( _dbTransaction != null )

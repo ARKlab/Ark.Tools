@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    public interface IRECDataContextConfig : IOutboxContextSqlConfig
+    public interface IDataContextConfig : IOutboxContextSqlConfig
     {
         public string SqlConnectionString { get; }
     }

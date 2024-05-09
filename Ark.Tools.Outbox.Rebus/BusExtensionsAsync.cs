@@ -7,7 +7,7 @@ namespace Ark.Tools.Outbox.Rebus
     {
         public static RebusTransactionScope Enlist(this RebusTransactionScope tx, IOutboxContextAsync context)
         {
-            tx.TransactionContext.Items.TryAdd(OutboxAsyncTransportDecorator._outboxContextItemsKey, context);
+            tx.TransactionContext.Items.TryAdd(OutboxTransportDecorator._outboxContextItemsKey, context);
             return tx;
         }
 

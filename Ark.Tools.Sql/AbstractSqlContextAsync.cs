@@ -6,12 +6,14 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NodaTime;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.Sql
 {
     public abstract class AbstractSqlContextAsync<Tag> : ISqlContextAsync<Tag>
     {
-        private DbConnection _connection;
+        private DbConnection? _connection;
         private DbTransaction? _transaction;
         private IsolationLevel _isolationLevel;
         private IDbConnectionManager? _connectionManager;
@@ -36,9 +38,7 @@ namespace Ark.Tools.Sql
         {
             get
             {
-                if (_connection == null)
-                    throw new InvalidOperationException("Not valid Operation");
-                return _connection;
+                return _connection?? throw new InvalidProgramException("There's no connection");
             }
         }
 
@@ -46,14 +46,35 @@ namespace Ark.Tools.Sql
         {
             get
             {
-                if (_transaction == null)
-                    throw new InvalidOperationException("Not valid Operation");
-                return _transaction;
+                return _transaction?? throw new InvalidProgramException("There's no transaction");
             }
-            set
+        }
+
+        public async Task CreateAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken)
+        {
+            if (_connectionManager == null)
+                throw new ConstraintException("There is no connection manager available to create the connection from");
+
+            _connection = await _connectionManager.GetAsync("_contextConfig.SqlConnectionString", cancellationToken);
+
+            if (Connection?.State != ConnectionState.Open)
             {
-                _transaction = value;
+                if (Connection?.State == ConnectionState.Closed)
+                    await Connection.OpenAsync(cancellationToken);
             }
+
+#if !(NET472 || NETSTANDARD2_0)
+            if (Connection != null)
+            {
+                _transaction = await Connection.BeginTransactionAsync(isolationLevel, cancellationToken);
+            }
+
+            throw new InvalidOperationException("Error");
+
+#else
+            throw new NotSupportedException("Async SQL not supported for this .NET framework");
+#endif
+
         }
 
         public virtual async ValueTask CommitAysnc(CancellationToken ctk)

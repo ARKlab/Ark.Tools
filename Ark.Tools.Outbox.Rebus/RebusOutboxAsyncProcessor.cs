@@ -25,11 +25,11 @@ namespace Ark.Tools.Outbox.Rebus
         private Task _task = Task.CompletedTask;
 
         public RebusOutboxAsyncProcessor(
-        int topMessagesToRetrieve,
-        ITransport transport,
-        IBackoffStrategy backoffStrategy,
-        IRebusLoggerFactory rebusLoggerFactory,
-        IOutboxContextAsyncFactory outboxContextFactory)
+            int topMessagesToRetrieve,
+            ITransport transport,
+            IBackoffStrategy backoffStrategy,
+            IRebusLoggerFactory rebusLoggerFactory,
+            IOutboxContextAsyncFactory outboxContextFactory)
         {
             _topMessagesToRetrieve = topMessagesToRetrieve;
             _transport = transport;
@@ -67,7 +67,7 @@ namespace Ark.Tools.Outbox.Rebus
                 try
                 {
                     bool waitForMessages = true;
-                    await using (var ctx = _outboxContextFactory.Create())
+                    await using (var ctx = await _outboxContextFactory.CreateAsync(ctk))
                     {
                         var messages = await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk);
                         if (messages.Any())
@@ -76,8 +76,8 @@ namespace Ark.Tools.Outbox.Rebus
                             {
                                 foreach (var message in messages)
                                 {
-                                    var destinationAddress = message?.Headers?[OutboxAsyncTransportDecorator._outboxRecepientHeader];
-                                    message?.Headers?.Remove(OutboxAsyncTransportDecorator._outboxRecepientHeader);
+                                    var destinationAddress = message?.Headers?[OutboxTransportDecorator._outboxRecepientHeader];
+                                    message?.Headers?.Remove(OutboxTransportDecorator._outboxRecepientHeader);
                                     await _transport.Send(destinationAddress!, new TransportMessage(message?.Headers, message?.Body),
                                       rebusTransactionScope.TransactionContext).WithCancellation(ctk);
                                 }

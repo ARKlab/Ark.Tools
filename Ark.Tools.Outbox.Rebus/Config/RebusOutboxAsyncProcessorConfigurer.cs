@@ -39,7 +39,7 @@ namespace Ark.Tools.Outbox.Rebus.Config
                     events.BusDisposing += () => p.Stop();
                 }
 
-                return new OutboxAsyncTransportDecorator(transport);
+                return new OutboxTransportDecorator(transport);
             });
         }
 
