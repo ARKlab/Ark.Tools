@@ -12,20 +12,22 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    public class DataContextAsync : IDataContextAsync, IAsyncDisposable
+    public abstract class SqlContextAsyncFactory<T> : IContextFactory<T> where T : ISqlContextAsync, IAsyncDisposable
     {
         private readonly IDataContextConfig _contextConfig;
         private readonly IDbConnectionManager _dbConnectionManager;
+        private IsolationLevel _isolationLevel;
         private DbConnection? _dbConnection;
         private DbTransaction? _dbTransaction;
 
-        public DataContextAsync(IDataContextConfig contextConfig, IDbConnectionManager dbConnectionManager)
+        public SqlContextAsyncFactory(IDataContextConfig contextConfig, IDbConnectionManager dbConnectionManager, IsolationLevel isolationLevel)
         {
             _contextConfig = contextConfig;
             _dbConnectionManager = dbConnectionManager;
+            _isolationLevel = isolationLevel;
         }
 
-        public async Task<T> CreateAsync<T>(IsolationLevel isolationLevel, CancellationToken cancellationToken)
+        public async ValueTask<T> CreateAsync(CancellationToken cancellationToken)
         {
             _dbConnection = await _dbConnectionManager.GetAsync(_contextConfig.SqlConnectionString, cancellationToken);
 
@@ -38,25 +40,22 @@ namespace Ark.Tools.Outbox.SqlServer
 #if !(NET472 || NETSTANDARD2_0)
             if (_dbConnection != null)
             {
-                _dbTransaction = await _dbConnection.BeginTransactionAsync(isolationLevel, cancellationToken);
+                _dbTransaction = await _dbConnection.BeginTransactionAsync(cancellationToken);
 
-                var ctx = Activator.CreateInstance(typeof(T), new object[]{ _contextConfig, _dbConnection, _dbTransaction, isolationLevel });
-
-                if (_dbTransaction != null && ctx != null)
-                    return (T)ctx;
+                if (_dbTransaction != null)
+                    return Create(_dbConnection, _dbTransaction);
             }
 
-            throw new InvalidOperationException("Error");
-
+            throw new ArgumentException("Missing transaction");
 #else
             throw new NotSupportedException("Async SQL not supported for this .NET framework");
 #endif
-
         }
+
+        public abstract T Create(DbConnection dbConnection, DbTransaction dbTransaction);
 
         public async ValueTask DisposeAsync()
         {
-
 #if !(NET472 || NETSTANDARD2_0)
             if ( _dbTransaction != null )
                 await _dbTransaction.DisposeAsync();
@@ -68,7 +67,6 @@ namespace Ark.Tools.Outbox.SqlServer
             if ( _dbConnection != null )
                 _dbConnection.Dispose();
 #endif
-            GC.SuppressFinalize(this);
         }
     }
 }

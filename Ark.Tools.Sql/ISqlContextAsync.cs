@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql
 {
-    public interface ISqlContextAsync<Tag> : IContextAsync
+    public interface ISqlContextAsync : IContextAsync
     {
         DbConnection Connection { get; }
         DbTransaction? Transaction { get; }

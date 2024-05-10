@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Core
 {
-    public interface IDataContextAsync
+    public interface IContextFactory<T> where T : IContextAsync
     {
-        Task<T> CreateAsync<T>(IsolationLevel isolationLevel, CancellationToken cancellationToken);
+        ValueTask<T> CreateAsync(CancellationToken cancellationToken);
     }
 }

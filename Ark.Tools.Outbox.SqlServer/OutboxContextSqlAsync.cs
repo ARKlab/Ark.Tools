@@ -17,7 +17,7 @@ namespace Ark.Tools.Outbox.SqlServer
 {
     internal sealed class OutboxContextSqlAsync<Tag> : BaseOutboxContextStatements, IOutboxContextAsync
     {
-        private readonly ISqlContextAsync<Tag> _sqlContext;
+        private readonly ISqlContextAsync _sqlContext;
         private readonly IOutboxContextSqlConfig _config;
 
         private static readonly HeaderSerializer _headerSerializer = new HeaderSerializer();
@@ -25,7 +25,7 @@ namespace Ark.Tools.Outbox.SqlServer
         public DbConnection Connection => _sqlContext.Connection;
         public DbTransaction? Transaction => _sqlContext.Transaction ?? null;
 
-        public OutboxContextSqlAsync(ISqlContextAsync<Tag> sqlContextParent, IOutboxContextSqlConfig config) : base (config)
+        public OutboxContextSqlAsync(ISqlContextAsync sqlContextParent, IOutboxContextSqlConfig config) : base (config)
         {
             _sqlContext = sqlContextParent;
             _config = config;
