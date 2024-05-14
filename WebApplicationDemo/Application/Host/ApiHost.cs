@@ -9,6 +9,9 @@ using Ark.Tools.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql.SqlServer;
 using WebApplicationDemo.Dto;
+using Ark.Tools.Core;
+using Ark.Tools.Outbox.SqlServer;
+using WebApplicationDemo.Configuration;
 
 namespace WebApplicationDemo.Application.Host
 {
@@ -34,6 +37,10 @@ namespace WebApplicationDemo.Application.Host
 			Container.RequireSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
 			Container.RequireSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
 			Container.RequireSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
+			
+            Container.RequireSingleton<IContextFactory<ITestContext>, TestContextAsync>();
+            Container.RegisterSingleton<TestContextAsync>();
+            Container.RegisterSingleton<Ark.Tools.Outbox.SqlServer.IDataContextConfig, DataContextConfig>();
 
 			_registerContainer(Container);
 

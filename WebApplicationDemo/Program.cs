@@ -8,6 +8,7 @@ using Ark.Tools.NLog;
 using Ark.Tools.Nodatime;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,8 +34,8 @@ namespace WebApplicationDemo
 			return builder
 				.ConfigureServices(s =>
 				{
-					s.AddSingleton<IExternalInjected, ExternalInjected>();
-				})
+					s.AddSingleton<IInitializeDbInjected>(new InitializeDbInjected());
+                })
 				//.UseContentRoot(Directory.GetCurrentDirectory())
 				.ConfigureWebHostDefaults(webBuilder =>
 				{
@@ -128,10 +129,55 @@ namespace WebApplicationDemo
 		//		});
 	}
 
-	public interface IExternalInjected
+    public interface IExternalInjected
     {
 
     }
 
-	public class ExternalInjected : IExternalInjected { }
+    public class ExternalInjected : IExternalInjected
+    {
+    }
+
+    public interface IInitializeDbInjected
+    {
+
+    }
+
+	public class InitializeDbInjected : IInitializeDbInjected 
+    { 
+        public InitializeDbInjected() 
+        {            
+            var cs = @"Data Source=(localdb)\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True;";
+
+            var qTxt = @"IF OBJECT_ID('People', 'U') IS NULL
+            begin
+            create table [dbo].[People]
+            (
+                ID [int] not null,
+                FirstName [varchar](50) not null,
+                LastName [varchar](50) null
+                primary key (ID)
+            ); 
+            end";
+
+            string query = @"TRUNCATE TABLE [dbo].[People]
+            INSERT INTO [dbo].[People] (ID, FirstName, LastName) VALUES (9, 'John', 'Doe')";
+
+            using (var conn = new SqlConnection(cs))
+            {
+                conn.Open();
+                using (var cmd = new SqlCommand(qTxt, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                conn.Close();
+            }
+        }
+    }
 }

@@ -15,20 +15,21 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    internal sealed class OutboxContextSqlAsync<Tag> : BaseOutboxContextStatements, IOutboxContextAsync
+    internal sealed class OutboxContextSqlAsync<Tag> : IOutboxContextAsync
     {
         private readonly ISqlContextAsync _sqlContext;
         private readonly IOutboxContextSqlConfig _config;
-
+        private BaseOutboxContextStatements _baseOutboxContextStatements;
         private static readonly HeaderSerializer _headerSerializer = new HeaderSerializer();
 
         public DbConnection Connection => _sqlContext.Connection;
         public DbTransaction? Transaction => _sqlContext.Transaction ?? null;
 
-        public OutboxContextSqlAsync(ISqlContextAsync sqlContextParent, IOutboxContextSqlConfig config) : base (config)
+        public OutboxContextSqlAsync(ISqlContextAsync sqlContextParent, IOutboxContextSqlConfig config)
         {
             _sqlContext = sqlContextParent;
             _config = config;
+            _baseOutboxContextStatements = new BaseOutboxContextStatements(config);
         }
 
         public async Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
@@ -41,7 +42,7 @@ namespace Ark.Tools.Outbox.SqlServer
                     pBody = message.Body
                 });
 
-                var cmd = new CommandDefinition(base.Insert, parameters, transaction: this.Transaction, cancellationToken: ctk);
+                var cmd = new CommandDefinition(_baseOutboxContextStatements.Insert, parameters, transaction: this.Transaction, cancellationToken: ctk);
 
                 _ = await Connection.ExecuteAsync(cmd);
             }
@@ -49,7 +50,7 @@ namespace Ark.Tools.Outbox.SqlServer
 
         public async Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
         {
-            var cmd = new CommandDefinition(base.PeekLock(messageCount), transaction: this.Transaction, cancellationToken: ctk);
+            var cmd = new CommandDefinition(_baseOutboxContextStatements.PeekLock(messageCount), transaction: this.Transaction, cancellationToken: ctk);
 
             var res = await Connection.QueryAsync<(string Headers, byte[] Body)>(cmd);
 
@@ -62,14 +63,14 @@ namespace Ark.Tools.Outbox.SqlServer
 
         public async Task<int> CountAsync(CancellationToken ctk = default)
         {
-            var cmd = new CommandDefinition(base.Count, transaction: this.Transaction, cancellationToken: ctk);
+            var cmd = new CommandDefinition(_baseOutboxContextStatements.Count, transaction: this.Transaction, cancellationToken: ctk);
 
             return await this.Connection.QuerySingleAsync<int>(cmd);
         }
 
         public async Task<int> ClearAsync(CancellationToken ctk = default)
         {
-            var cmd = new CommandDefinition(base.Clear, transaction: this.Transaction, cancellationToken: ctk);
+            var cmd = new CommandDefinition(_baseOutboxContextStatements.Clear, transaction: this.Transaction, cancellationToken: ctk);
 
             return await this.Connection.ExecuteAsync(cmd);
         }

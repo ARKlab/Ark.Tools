@@ -12,24 +12,25 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    public abstract class SqlContextAsyncFactory<T> : IContextFactory<T> where T : ISqlContextAsync, IAsyncDisposable
+    public abstract class SqlContextAsyncFactory<T> : IContextFactory<T> where T : ISqlContextAsync
     {
-        private readonly IDataContextConfig _contextConfig;
+        private readonly string _connectionString;
         private readonly IDbConnectionManager _dbConnectionManager;
-        private IsolationLevel _isolationLevel;
-        private DbConnection? _dbConnection;
-        private DbTransaction? _dbTransaction;
+        private readonly IsolationLevel _isolationLevel;
 
-        public SqlContextAsyncFactory(IDataContextConfig contextConfig, IDbConnectionManager dbConnectionManager, IsolationLevel isolationLevel)
+        public SqlContextAsyncFactory(IDbConnectionManager dbConnectionManager, string connectionString, IsolationLevel isolationLevel = IsolationLevel.ReadUncommitted)
         {
-            _contextConfig = contextConfig;
             _dbConnectionManager = dbConnectionManager;
             _isolationLevel = isolationLevel;
+            _connectionString = connectionString;
         }
 
         public async ValueTask<T> CreateAsync(CancellationToken cancellationToken)
         {
-            _dbConnection = await _dbConnectionManager.GetAsync(_contextConfig.SqlConnectionString, cancellationToken);
+            DbConnection? _dbConnection;
+            DbTransaction? _dbTransaction;
+
+            _dbConnection = await _dbConnectionManager.GetAsync(_connectionString, cancellationToken);
 
             if (_dbConnection?.State != ConnectionState.Open)
             {
@@ -40,7 +41,7 @@ namespace Ark.Tools.Outbox.SqlServer
 #if !(NET472 || NETSTANDARD2_0)
             if (_dbConnection != null)
             {
-                _dbTransaction = await _dbConnection.BeginTransactionAsync(cancellationToken);
+                _dbTransaction = await _dbConnection.BeginTransactionAsync(_isolationLevel, cancellationToken);
 
                 if (_dbTransaction != null)
                     return Create(_dbConnection, _dbTransaction);
@@ -53,20 +54,5 @@ namespace Ark.Tools.Outbox.SqlServer
         }
 
         public abstract T Create(DbConnection dbConnection, DbTransaction dbTransaction);
-
-        public async ValueTask DisposeAsync()
-        {
-#if !(NET472 || NETSTANDARD2_0)
-            if ( _dbTransaction != null )
-                await _dbTransaction.DisposeAsync();
-            if ( _dbConnection != null )
-                await _dbConnection.DisposeAsync();
-#else
-            if ( _dbTransaction != null )
-                _dbTransaction.Dispose();
-            if ( _dbConnection != null )
-                _dbConnection.Dispose();
-#endif
-        }
     }
 }

@@ -11,7 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.Sql
 {
-    public abstract class AbstractSqlContextAsync<Tag> : ISqlContextAsync<Tag>
+    public abstract class AbstractSqlContextAsync<Tag> : ISqlContextAsync
     {
         private DbConnection? _connection;
         private DbTransaction? _transaction;
