@@ -4,11 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+
 using Ark.Tools.NLog;
 using Ark.Tools.Nodatime;
+
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,7 +19,7 @@ using NLog.Extensions.Logging;
 
 namespace WebApplicationDemo
 {
-	public static class Program
+    public static class Program
 	{
 		public static IHostBuilder GetHostBuilder(string[] args)
 		{
@@ -35,7 +36,6 @@ namespace WebApplicationDemo
 				.ConfigureServices(s =>
 				{
                     s.AddSingleton<IExternalInjected, ExternalInjected>();
-                    s.AddSingleton<IInitializeDbInjected, InitializeDbInjected>();
                 })
 				//.UseContentRoot(Directory.GetCurrentDirectory())
 				.ConfigureWebHostDefaults(webBuilder =>
@@ -88,6 +88,7 @@ namespace WebApplicationDemo
 			ServicePointManager.EnableDnsRoundRobin = true;
 			ServicePointManager.DnsRefreshTimeout = 4 * 60 * 1000;
 
+            new InitializeDb();
 		}
 
 		public static async Task Main(string[] args)
@@ -137,47 +138,5 @@ namespace WebApplicationDemo
 
     public class ExternalInjected : IExternalInjected
     {
-    }
-
-    public interface IInitializeDbInjected
-    {
-
-    }
-
-	public class InitializeDbInjected : IInitializeDbInjected 
-    { 
-        // Need to replace this with a DB initialization
-        public InitializeDbInjected() 
-        {            
-            var cs = @"Data Source=(localdb)\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True;";
-
-            var queryTxt = @"IF OBJECT_ID('People', 'U') IS NULL
-            BEGIN
-                CREATE TABLE [dbo].[People]
-                (
-                    ID [int] NOT NULL,
-                    FirstName [varchar](50) NOT NULL,
-                    LastName [varchar](50) NULL
-                    PRIMARY KEY (ID)
-                ); 
-            END
-            ELSE
-                TRUNCATE TABLE [dbo].[People]
-            BEGIN
-            END
-
-            INSERT INTO [dbo].[People] (ID, FirstName, LastName) VALUES (9, 'John', 'Doe')
-            ";
-
-            using (var conn = new SqlConnection(cs))
-            {
-                conn.Open();
-                using (var cmd = new SqlCommand(queryTxt, conn))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                conn.Close();
-            }
-        }
     }
 }

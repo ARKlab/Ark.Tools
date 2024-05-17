@@ -9,7 +9,7 @@ using Ark.Tools.Sql;
 
 namespace WebApplicationDemo.Application
 {
-    public interface ISqlDataContext : IAsyncDisposable, IOutboxContextAsync, ISqlContextAsync //should it be ioutboxcontextasync??? SqlContextAsyncFactory<ISqlContextAsync>
+    public interface ISqlDataContext : IAsyncDisposable, IOutboxContextAsync, ISqlContextAsync
     {
         Task<Person?> ReadFirstEntityAsync(CancellationToken ctk = default);
     }
