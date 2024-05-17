@@ -1,4 +1,6 @@
-﻿using Rebus.Bus;
+﻿using Ark.Tools.Core;
+
+using Rebus.Bus;
 using Rebus.Config;
 using Rebus.Logging;
 using Rebus.Transport;
@@ -24,7 +26,7 @@ namespace Ark.Tools.Outbox.Rebus.Config
                         s.Get<ITransport>(),
                         s.Get<IBackoffStrategy>(),
                         s.Get<IRebusLoggerFactory>(),
-                        s.Get<IOutboxContextAsyncFactory>());
+                        s.Get<IContextFactory<IOutboxContextAsync>>());
                 });
 
             _configurer.Decorate(c =>
@@ -43,9 +45,9 @@ namespace Ark.Tools.Outbox.Rebus.Config
             });
         }
 
-        public RebusOutboxAsyncProcessorConfigurer OutboxContextAsyncFactory(Action<StandardConfigurer<IOutboxContextAsyncFactory>> configurer)
+        public RebusOutboxAsyncProcessorConfigurer OutboxContextAsyncFactory(Action<StandardConfigurer<IContextFactory<IOutboxContextAsync>>> configurer)
         {
-            configurer?.Invoke(_configurer.OtherService<IOutboxContextAsyncFactory>());
+            configurer?.Invoke(_configurer.OtherService<IContextFactory<IOutboxContextAsync>>());
             return this;
         }
 

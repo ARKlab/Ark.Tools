@@ -19,7 +19,7 @@ namespace Ark.Tools.Outbox.Rebus
         private readonly int _topMessagesToRetrieve;
         private readonly ITransport _transport;
         private readonly IBackoffStrategy _backoffStrategy;
-        private readonly IOutboxContextAsyncFactory _outboxContextFactory;
+        private readonly IContextFactory<IOutboxContextAsync> _contextFactory;
         private readonly CancellationTokenSource _busDisposalCancellationTokenSource = new CancellationTokenSource();
         private readonly ILog _log;
         private Task _task = Task.CompletedTask;
@@ -29,12 +29,12 @@ namespace Ark.Tools.Outbox.Rebus
             ITransport transport,
             IBackoffStrategy backoffStrategy,
             IRebusLoggerFactory rebusLoggerFactory,
-            IOutboxContextAsyncFactory outboxContextFactory)
+            IContextFactory<IOutboxContextAsync> contextFactory)
         {
             _topMessagesToRetrieve = topMessagesToRetrieve;
             _transport = transport;
             _backoffStrategy = backoffStrategy;
-            _outboxContextFactory = outboxContextFactory;
+            _contextFactory = contextFactory;
             _log = rebusLoggerFactory.GetLogger<RebusOutboxAsyncProcessor>();
         }
 
@@ -67,7 +67,7 @@ namespace Ark.Tools.Outbox.Rebus
                 try
                 {
                     bool waitForMessages = true;
-                    await using (var ctx = await _outboxContextFactory.CreateAsync(ctk))
+                    await using (var ctx = await _contextFactory.CreateAsync(ctk))
                     {
                         var messages = await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk);
                         if (messages.Any())

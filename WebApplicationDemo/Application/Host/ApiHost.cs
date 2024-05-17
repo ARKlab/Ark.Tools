@@ -12,6 +12,7 @@ using WebApplicationDemo.Dto;
 using Ark.Tools.Core;
 using Ark.Tools.Outbox.SqlServer;
 using WebApplicationDemo.Configuration;
+using System;
 
 namespace WebApplicationDemo.Application.Host
 {
@@ -38,9 +39,16 @@ namespace WebApplicationDemo.Application.Host
 			Container.RequireSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
 			Container.RequireSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
 			
-            Container.RequireSingleton<IContextFactory<ITestContext>, TestContextAsync>();
-            Container.RegisterSingleton<TestContextAsync>();
-            Container.RegisterSingleton<Ark.Tools.Outbox.SqlServer.IDataContextConfig, DataContextConfig>();
+            Container.RequireSingleton<IContextFactory<ISqlContextAsync>, TestContextAsyncFactory>();
+            Container.RegisterSingleton<TestContextAsyncFactory>();
+            container.RegisterSingleton<Func<SqlContextAsyncFactory<ISqlDataContext>>>();
+            //Container.RequireSingleton<IContextFactory<DataContextSql>, TestContextAsyncFactory>();
+            //Container.RegisterSingleton<SqlContextAsyncFactory<ISqlDataContext>, TestContextAsyncFactory>();
+            //Container.RegisterSingleton<typeof(SqlContextAsyncFactory<ISqlDataContext>), typeof(TestContextAsyncFactory)>();
+            //Container.AddRegistration(typeof(SqlContextAsyncFactory<ISqlDataContext>), typeof(TestContextAsyncFactory));
+
+            Container.RegisterSingleton<ISqlDataContextConfig, SqlDataContextConfig>();
+            Container.RegisterSingleton<IDataContextConfig, DataContextConfig>();
 
 			_registerContainer(Container);
 

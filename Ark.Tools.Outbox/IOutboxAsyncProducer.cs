@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Ark.Tools.Core;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -32,7 +34,7 @@ namespace Ark.Tools.Outbox
 
     public abstract class OutboxAsyncConsumerBase : IOutboxAsyncConsumer, IAsyncDisposable
     {
-        private readonly Func<IOutboxContextAsync> _outboxContextFactory;
+        private readonly Func<IContextFactory<IOutboxContextAsync>> _outboxContextAsyncFactory;
         private CancellationTokenSource? _processorCT;
         private Task? _processorTask;
         private bool _disposedValue;
@@ -40,21 +42,21 @@ namespace Ark.Tools.Outbox
         public TimeSpan SleepInterval { get; set; } = TimeSpan.FromSeconds(1);
         public int BatchSize { get; set; } = 1000;
 
-        public OutboxAsyncConsumerBase(Func<IOutboxContextAsync> contextFactory)
+        public OutboxAsyncConsumerBase(Func<IContextFactory<IOutboxContextAsync>> outboxContextAsyncFactory)
         {
-            _outboxContextFactory = contextFactory;
+            _outboxContextAsyncFactory = outboxContextAsyncFactory;
         }
 
         public async Task ClearAsync(CancellationToken ctk = default)
         {
-            await using var ctx = _outboxContextFactory();
+            await using var ctx = await _outboxContextAsyncFactory().CreateAsync(ctk);
             await ctx.ClearAsync(ctk);
             await ctx.CommitAysnc(ctk);
         }
 
         public async Task<int> CountAsync(CancellationToken ctk = default)
         {
-            await using var ctx = _outboxContextFactory();
+            await using var ctx = await _outboxContextAsyncFactory().CreateAsync(ctk);
             var ret = await ctx.CountAsync(ctk);
             await ctx.CommitAysnc(ctk);
             return ret;
@@ -79,7 +81,7 @@ namespace Ark.Tools.Outbox
             {
                 try
                 {
-                    await using var ctx = _outboxContextFactory();
+                    await using var ctx = await _outboxContextAsyncFactory().CreateAsync(ctk);
                     var messages = await ctx.PeekLockMessagesAsync(BatchSize, ctk);
                     await _processMessages(messages, ctk);
                     await ctx.CommitAysnc(ctk);

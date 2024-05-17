@@ -34,7 +34,8 @@ namespace WebApplicationDemo
 			return builder
 				.ConfigureServices(s =>
 				{
-					s.AddSingleton<IInitializeDbInjected>(new InitializeDbInjected());
+                    s.AddSingleton<IExternalInjected, ExternalInjected>();
+                    s.AddSingleton<IInitializeDbInjected, InitializeDbInjected>();
                 })
 				//.UseContentRoot(Directory.GetCurrentDirectory())
 				.ConfigureWebHostDefaults(webBuilder =>
@@ -145,37 +146,36 @@ namespace WebApplicationDemo
 
 	public class InitializeDbInjected : IInitializeDbInjected 
     { 
+        // Need to replace this with a DB initialization
         public InitializeDbInjected() 
         {            
             var cs = @"Data Source=(localdb)\MSSQLLocalDB;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True;";
 
-            var qTxt = @"IF OBJECT_ID('People', 'U') IS NULL
-            begin
-            create table [dbo].[People]
-            (
-                ID [int] not null,
-                FirstName [varchar](50) not null,
-                LastName [varchar](50) null
-                primary key (ID)
-            ); 
-            end";
+            var queryTxt = @"IF OBJECT_ID('People', 'U') IS NULL
+            BEGIN
+                CREATE TABLE [dbo].[People]
+                (
+                    ID [int] NOT NULL,
+                    FirstName [varchar](50) NOT NULL,
+                    LastName [varchar](50) NULL
+                    PRIMARY KEY (ID)
+                ); 
+            END
+            ELSE
+                TRUNCATE TABLE [dbo].[People]
+            BEGIN
+            END
 
-            string query = @"TRUNCATE TABLE [dbo].[People]
-            INSERT INTO [dbo].[People] (ID, FirstName, LastName) VALUES (9, 'John', 'Doe')";
+            INSERT INTO [dbo].[People] (ID, FirstName, LastName) VALUES (9, 'John', 'Doe')
+            ";
 
             using (var conn = new SqlConnection(cs))
             {
                 conn.Open();
-                using (var cmd = new SqlCommand(qTxt, conn))
+                using (var cmd = new SqlCommand(queryTxt, conn))
                 {
                     cmd.ExecuteNonQuery();
                 }
-
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    cmd.ExecuteNonQuery();
-                }
-
                 conn.Close();
             }
         }

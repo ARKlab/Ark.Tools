@@ -27,24 +27,24 @@ namespace Ark.Tools.Outbox.SqlServer
 
         public async ValueTask<T> CreateAsync(CancellationToken cancellationToken)
         {
-            DbConnection? _dbConnection;
-            DbTransaction? _dbTransaction;
+            DbConnection? dbConnection;
+            DbTransaction? dbTransaction;
 
-            _dbConnection = await _dbConnectionManager.GetAsync(_connectionString, cancellationToken);
+            dbConnection = await _dbConnectionManager.GetAsync(_connectionString, cancellationToken);
 
-            if (_dbConnection?.State != ConnectionState.Open)
+            if (dbConnection?.State != ConnectionState.Open)
             {
-                if (_dbConnection?.State == ConnectionState.Closed)
-                    await _dbConnection.OpenAsync(cancellationToken);
+                if (dbConnection?.State == ConnectionState.Closed)
+                    await dbConnection.OpenAsync(cancellationToken);
             }
 
 #if !(NET472 || NETSTANDARD2_0)
-            if (_dbConnection != null)
+            if (dbConnection != null)
             {
-                _dbTransaction = await _dbConnection.BeginTransactionAsync(_isolationLevel, cancellationToken);
+                dbTransaction = await dbConnection.BeginTransactionAsync(_isolationLevel, cancellationToken);
 
-                if (_dbTransaction != null)
-                    return Create(_dbConnection, _dbTransaction);
+                if (dbTransaction != null)
+                    return Create(dbConnection, dbTransaction);
             }
 
             throw new ArgumentException("Missing transaction");
@@ -53,6 +53,6 @@ namespace Ark.Tools.Outbox.SqlServer
 #endif
         }
 
-        public abstract T Create(DbConnection dbConnection, DbTransaction dbTransaction);
+        protected abstract T Create(DbConnection dbConnection, DbTransaction dbTransaction);
     }
 }

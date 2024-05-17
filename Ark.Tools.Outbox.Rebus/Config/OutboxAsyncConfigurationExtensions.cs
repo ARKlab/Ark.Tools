@@ -1,6 +1,8 @@
-﻿
-using System;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
+using Ark.Tools.Core;
 using Ark.Tools.Outbox;
 using Ark.Tools.Outbox.Rebus.Config;
 
@@ -31,23 +33,23 @@ namespace Rebus.Config
 			return configurer;
 		}
 
-		public static StandardConfigurer<IOutboxContextAsyncFactory> Use(this StandardConfigurer<IOutboxContextAsyncFactory> configurer, Func<IOutboxContextAsync> factory)
+		public static StandardConfigurer<IContextFactory<IOutboxContextAsync>> Use(this StandardConfigurer<IContextFactory<IOutboxContextAsync>> configurer, Func<IContextFactory<IOutboxContextAsync>> factory)
         {
 			configurer.Register(c => new LambdaOutboxContextAsyncFactory(factory));
 			return configurer;
 		}
 
-		class LambdaOutboxContextAsyncFactory : IOutboxContextAsyncFactory
+		class LambdaOutboxContextAsyncFactory : IContextFactory<IOutboxContextAsync>
         {
-            private readonly Func<IOutboxContextAsync> _factory;
+            private readonly Func<IContextFactory<IOutboxContextAsync>> _factory;
 
-            internal LambdaOutboxContextAsyncFactory(Func<IOutboxContextAsync> factory)
+            internal LambdaOutboxContextAsyncFactory(Func<IContextFactory<IOutboxContextAsync>> factory)
             {
                 _factory = factory;
             }
 
-			public IOutboxContextAsync Create()
-				=> _factory();
+            ValueTask<IOutboxContextAsync> IContextFactory<IOutboxContextAsync>.CreateAsync(CancellationToken ctk)
+                => _factory().CreateAsync(ctk);
         }
 	}
 }
