@@ -7,23 +7,25 @@ using MoreLinq;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    internal sealed class OutboxContextSql<Tag> : IOutboxContext
+    internal sealed class OutboxContextSqlAsync<Tag> : IOutboxContextAsync
     {
-        private readonly ISqlContext<Tag> _sqlContext;
+        private readonly ISqlContextAsync _sqlContext;
         private readonly IOutboxContextSqlConfig _config;
         private BaseOutboxContextStatements _baseOutboxContextStatements;
         private static readonly HeaderSerializer _headerSerializer = new HeaderSerializer();
 
-        public IDbConnection Connection => _sqlContext.Connection;
-        public IDbTransaction Transaction => _sqlContext.Transaction;
+        public DbConnection Connection => _sqlContext.Connection;
+        public DbTransaction? Transaction => _sqlContext.Transaction ?? null;
 
-        public OutboxContextSql(ISqlContext<Tag> sqlContextParent, IOutboxContextSqlConfig config)
+        public OutboxContextSqlAsync(ISqlContextAsync sqlContextParent, IOutboxContextSqlConfig config)
         {
             _sqlContext = sqlContextParent;
             _config = config;
@@ -42,7 +44,7 @@ namespace Ark.Tools.Outbox.SqlServer
 
                 var cmd = new CommandDefinition(_baseOutboxContextStatements.Insert, parameters, transaction: this.Transaction, cancellationToken: ctk);
 
-                _ = await this.Connection.ExecuteAsync(cmd);
+                _ = await Connection.ExecuteAsync(cmd);
             }
         }
 
@@ -50,7 +52,7 @@ namespace Ark.Tools.Outbox.SqlServer
         {
             var cmd = new CommandDefinition(_baseOutboxContextStatements.PeekLock(messageCount), transaction: this.Transaction, cancellationToken: ctk);
 
-            var res = await this.Connection.QueryAsync<(string Headers, byte[] Body)>(cmd);
+            var res = await Connection.QueryAsync<(string Headers, byte[] Body)>(cmd);
 
             return res.Select(x => new OutboxMessage
             {
@@ -59,34 +61,28 @@ namespace Ark.Tools.Outbox.SqlServer
             }).ToList();
         }
 
-        public Task<int> CountAsync(CancellationToken ctk = default)
+        public async Task<int> CountAsync(CancellationToken ctk = default)
         {
             var cmd = new CommandDefinition(_baseOutboxContextStatements.Count, transaction: this.Transaction, cancellationToken: ctk);
 
-            return this.Connection.QuerySingleAsync<int>(cmd);
+            return await this.Connection.QuerySingleAsync<int>(cmd);
         }
 
-        public Task ClearAsync(CancellationToken ctk = default)
+        public async Task<int> ClearAsync(CancellationToken ctk = default)
         {
             var cmd = new CommandDefinition(_baseOutboxContextStatements.Clear, transaction: this.Transaction, cancellationToken: ctk);
 
-            return this.Connection.ExecuteAsync(cmd);
+            return await this.Connection.ExecuteAsync(cmd);
         }
 
-        public Task EnsureTableAreCreated(CancellationToken ctk = default)
+        public async ValueTask CommitAysnc(CancellationToken ctk)
         {
-            var cmd = new CommandDefinition(_baseOutboxContextStatements.CreateTable, transaction: this.Transaction, cancellationToken: ctk);
-
-            return this.Connection.ExecuteAsync(cmd);
+            await _sqlContext.CommitAysnc(ctk);
         }
 
-        public void Commit()
+        public async ValueTask DisposeAsync()
         {
-            _sqlContext.Commit();
-        }
-
-        public void Dispose()
-        {
+            await _sqlContext.DisposeAsync();
         }
     }
 }

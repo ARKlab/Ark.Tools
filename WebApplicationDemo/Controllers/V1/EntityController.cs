@@ -14,6 +14,7 @@ using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Controllers.V1
 {
+    [ApiVersion(0.0)]
     [ApiVersion("1.0")]
     [Route("entity")]
     [ApiController]
@@ -44,6 +45,31 @@ namespace WebApplicationDemo.Controllers.V1
             var query = new Get_EntityByIdQuery.V1()
             {
                 EntityId = entityId,
+            };
+
+            var res = await _queryProcessor.ExecuteAsync(query, ctk);
+
+            if (res == null)
+                return NotFound();
+
+            return Ok(res);
+        }
+
+        /// <summary>
+        /// Get a Entity by Id - Try with text: 'null' for a null entity - 'ensure' for ensure error
+        /// </summary>
+        /// <param name="entityId">The Entity identifier</param>
+        /// <param name="result">The Entity Result </param>
+        /// <param name="tests">The Entity test array </param>
+        /// <param name="ctk"></param>
+        /// <returns></returns>
+        [HttpGet(@"WithAsyncSql/{entityId}")]
+        [ProducesResponseType(typeof(Person), 200)]
+        public async Task<IActionResult> Get_EntityWithAsyncSql([FromRoute] string? entityId, [FromQuery] EntityResult result, [FromQuery] EntityTest[] tests, CancellationToken ctk = default)
+        {
+            var query = new Get_EntityByIdWithAsyncSqlQuery.V1()
+            {
+                Name = entityId,
             };
 
             var res = await _queryProcessor.ExecuteAsync(query, ctk);

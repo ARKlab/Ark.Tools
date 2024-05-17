@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+
 using Ark.Tools.NLog;
 using Ark.Tools.Nodatime;
+
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -17,7 +19,7 @@ using NLog.Extensions.Logging;
 
 namespace WebApplicationDemo
 {
-	public static class Program
+    public static class Program
 	{
 		public static IHostBuilder GetHostBuilder(string[] args)
 		{
@@ -33,8 +35,8 @@ namespace WebApplicationDemo
 			return builder
 				.ConfigureServices(s =>
 				{
-					s.AddSingleton<IExternalInjected, ExternalInjected>();
-				})
+                    s.AddSingleton<IExternalInjected, ExternalInjected>();
+                })
 				//.UseContentRoot(Directory.GetCurrentDirectory())
 				.ConfigureWebHostDefaults(webBuilder =>
 				{
@@ -86,6 +88,7 @@ namespace WebApplicationDemo
 			ServicePointManager.EnableDnsRoundRobin = true;
 			ServicePointManager.DnsRefreshTimeout = 4 * 60 * 1000;
 
+            new InitializeDb();
 		}
 
 		public static async Task Main(string[] args)
@@ -128,10 +131,12 @@ namespace WebApplicationDemo
 		//		});
 	}
 
-	public interface IExternalInjected
+    public interface IExternalInjected
     {
 
     }
 
-	public class ExternalInjected : IExternalInjected { }
+    public class ExternalInjected : IExternalInjected
+    {
+    }
 }
