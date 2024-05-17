@@ -5,14 +5,14 @@ using System.Data.Common;
 
 namespace WebApplicationDemo.Application
 {
-    public class TestContextAsyncFactory : SqlContextAsyncFactory<ISqlContextAsync>
+    public class TestContextAsyncFactory : SqlContextAsyncFactory<ISqlDataContext>
     {
         public TestContextAsyncFactory(ISqlDataContextConfig contextConfig, IDbConnectionManager dbConnectionManager) : 
             base(dbConnectionManager, contextConfig.SQLConnectionString)
         {
         }
 
-        protected override ISqlContextAsync Create(DbConnection dbConnection, DbTransaction dbTransaction)
+        protected override ISqlDataContext Create(DbConnection dbConnection, DbTransaction dbTransaction)
         {
             var ctx = new TestContext(dbConnection, dbTransaction);
 

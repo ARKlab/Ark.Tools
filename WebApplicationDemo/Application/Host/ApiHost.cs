@@ -39,9 +39,9 @@ namespace WebApplicationDemo.Application.Host
 			Container.RequireSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
 			Container.RequireSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
 			
-            Container.RequireSingleton<IContextFactory<ISqlContextAsync>, TestContextAsyncFactory>();
-            Container.RegisterSingleton<TestContextAsyncFactory>();
-            container.RegisterSingleton<Func<SqlContextAsyncFactory<ISqlDataContext>>>();
+            Container.RequireSingleton<IContextFactory<ISqlDataContext>, TestContextAsyncFactory>();
+            //Container.RegisterSingleton<TestContextAsyncFactory>();
+            //container.RegisterSingleton<Func<SqlContextAsyncFactory<ISqlDataContext>>>();
             //Container.RequireSingleton<IContextFactory<DataContextSql>, TestContextAsyncFactory>();
             //Container.RegisterSingleton<SqlContextAsyncFactory<ISqlDataContext>, TestContextAsyncFactory>();
             //Container.RegisterSingleton<typeof(SqlContextAsyncFactory<ISqlDataContext>), typeof(TestContextAsyncFactory)>();
