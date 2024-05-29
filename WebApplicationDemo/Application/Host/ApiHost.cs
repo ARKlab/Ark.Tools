@@ -9,6 +9,7 @@ using Ark.Tools.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql.SqlServer;
 using WebApplicationDemo.Dto;
+using Flurl.Http.Configuration;
 
 namespace WebApplicationDemo.Application.Host
 {
