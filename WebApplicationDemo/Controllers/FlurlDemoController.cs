@@ -25,26 +25,25 @@ namespace WebApplicationDemo.Controllers
     [ApiVersion(3.0)]
     public class FlurlDemoController : ApiController
     {
-        private readonly IFlurlClientCache _flurl;
-        private string _url;
+        private readonly IQueryProcessor _queryProcessor;
 
-        public FlurlDemoController(IFlurlClientCache flurl) 
+
+        public FlurlDemoController(IQueryProcessor queryProcessor) 
         {
-            _flurl = flurl;
-            _url = "https://jsonplaceholder.typicode.com/";
+            _queryProcessor = queryProcessor;
         }
 
         [Route("posts")]
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(CancellationToken ctk)
         {
-            var client = _flurl.GetOrAdd(_url, _url);
+            var query = new Get_PostsQuery.V1()
+            {
+            };
 
-            var response = await client.Request("posts").GetStringAsync();
+            var res = await _queryProcessor.ExecuteAsync(query, ctk);
 
-            var data = JsonSerializer.Deserialize<List<Post>>(response);
-
-            return Ok(data);    
+            return Ok(res);
         }
     }
 }
