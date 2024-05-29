@@ -8,9 +8,6 @@ using Ark.Reference.Core.WebInterface;
 
 using FluentAssertions;
 
-using Flurl;
-using Flurl.Http;
-using Flurl.Http.Configuration;
 
 using Ark.Reference.Common;
 
@@ -40,6 +37,8 @@ using System.Threading;
 
 using TechTalk.SpecFlow;
 using System.Threading.Tasks;
+using Flurl.Http.Configuration;
+using Flurl.Http;
 
 namespace Ark.Reference.Core.Tests.Init
 {
@@ -52,7 +51,7 @@ namespace Ark.Reference.Core.Tests.Init
         public static ICoreDataContextConfig DBConfig => TestConfig;
 
         private static IHost _server;
-        private static IFlurlClientCache _factory;
+        private static ArkFlurlClientFactory _factory;
         public static readonly TestEnv Env = new TestEnv();
 
         private static ScenarioContext _scenarioContext;
@@ -184,7 +183,7 @@ namespace Ark.Reference.Core.Tests.Init
 
             //ApplicationConstants.ComputeIdleDetectWindow = TimeSpan.FromSeconds(1);
 
-            var builder = Program.GetHostBuilder(Array.Empty<string>()) 
+            var builder = Program.GetHostBuilder(Array.Empty<string>())
                 .ConfigureWebHost(wh =>
                 {
                     wh.UseTestServer()
@@ -198,31 +197,26 @@ namespace Ark.Reference.Core.Tests.Init
                 });
 
             _server = builder.Start();
-            _factory = new FlurlClientCache()
-                .WithDefaults(builder =>
-                {
-                    builder.ConfigureArkDefaults();
-                    builder.ConfigureHttpClient(c => c.BaseAddress = new Uri(_baseUri));
-                    builder.AddMiddleware(() => new TestServerMessageHandler(_server.GetTestServer()));
-                });
+            _factory = new ArkFlurlClientFactory(new TestServerfactory(_server.GetTestServer()));
 
             var configuration = _server.Services.GetRequiredService<IConfiguration>();
 
             TestConfig = configuration.BuildApiHostConfig();
         }
 
-        [BeforeFeature(Order = int.MinValue)]
+        [BeforeFeature(Order = 0)]
         public static void BeforeFeature(FeatureContext ctx)
         {
             ctx.Set(_server);
+            //ctx.Set(_client);
+            //ctx.Set(_smtp);
         }
 
         [BeforeScenario(Order = 0)]
         public static void BeforeScenario(ScenarioContext ctx)
         {
             if (_factory == null) throw new InvalidOperationException("");
-
-            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.GetOrAdd(_baseUri, _baseUri));
+            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
         }
 
         [AfterScenario]
@@ -241,7 +235,6 @@ namespace Ark.Reference.Core.Tests.Init
         public static void AfterTests()
         {
             _server?.Dispose();
-            _factory?.Clear();
         }
 
         public void Dispose()
@@ -256,13 +249,18 @@ namespace Ark.Reference.Core.Tests.Init
         }
     }
 
-    public class TestServerMessageHandler(TestServer testServer) : DelegatingHandler
+    class TestServerfactory : DefaultFlurlClientFactory
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        private readonly TestServer _server;
+
+        public TestServerfactory(TestServer server)
         {
-            InnerHandler?.Dispose();
-            InnerHandler = testServer.CreateHandler();
-            return base.SendAsync(request, cancellationToken);
+            _server = server;
+        }
+
+        public override HttpMessageHandler CreateInnerHandler()
+        {
+            return _server.CreateHandler();
         }
     }
 

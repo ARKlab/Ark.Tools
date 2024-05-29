@@ -29,6 +29,7 @@
 	</ItemGroup>
 	
   <ItemGroup>
+	<ProjectReference Include="..\..\..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
     <ProjectReference Include="..\..\..\Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj" />
     <ProjectReference Include="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.API\Ark.Reference.Core.API.csproj" />

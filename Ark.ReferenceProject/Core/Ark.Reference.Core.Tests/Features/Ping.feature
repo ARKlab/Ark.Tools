@@ -140,8 +140,8 @@ Scenario: Endpoint_ Ping_ Create and SendMsg
 	When I request the Ping 'PingName1' by id
 	Then the request succeded
 	Then the Ping response should match
-		| Name      | Type  | Code     |
-		| PingName1 | Ping1 | HandleOk |
+		| Name      | Type  | Code                |
+		| PingName1 | Ping1 | HandleOk_MsgCount_1 |
 
 
  Scenario: Endpoint_ Ping_ Create and SendMsg Fails
@@ -154,7 +154,12 @@ Scenario: Endpoint_ Ping_ Create and SendMsg
 		| PingFails | Ping1 | PING_CODE_PingFails |
 
 	When I wait background bus to idle and outbox to be empty
-	Then the request fails with 400
+
+	When I request the Ping 'PingFails' by id
+	Then the request succeded
+	Then the Ping response should match
+		| Name      | Type  | Code                                        |
+		| PingFails | Ping1 | HandleFailed_NormalEx_MsgCount_1_MsgCount_3 |
 
  Scenario: Endpoint_ Ping_ Create and SendMsg FastFails
 	When I create a single Ping And SendMsg with
@@ -162,11 +167,16 @@ Scenario: Endpoint_ Ping_ Create and SendMsg
 		| PingFailsFast | Ping1 |
 	Then the request succeded
 	Then the stored Ping response should be 
-		| Name      | Type  | Code                    |
-		| PingFails | Ping1 | PING_CODE_PingFailsFast |
+		| Name          | Type  | Code                    |
+		| PingFailsFast | Ping1 | PING_CODE_PingFailsFast |
 
 	When I wait background bus to idle and outbox to be empty
-	Then the request fails with 400
+
+	When I request the Ping 'PingFailsFast' by id
+	Then the request succeded
+	Then the Ping response should match
+		| Name          | Type  | Code                                        |
+		| PingFailsFast | Ping1 | HandleFailed_FailFastEx_MsgCount_1_MsgCount_1 |
 
 ### Audit ##################################################################################################
 Scenario: Audit_ Check Ping_ Create
