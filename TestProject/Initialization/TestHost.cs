@@ -11,6 +11,9 @@ using System.Net.Http;
 using Flurl;
 using WebApplicationDemo;
 using Microsoft.Extensions.Hosting;
+using FluentAssertions.Common;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace TestProject
 {
@@ -19,7 +22,7 @@ namespace TestProject
 	{
 		private const string _baseUri = "https://localhost:5001";
 		private static IHost? _server;
-		private static ArkFlurlClientFactory? _factory;
+		private static IFlurlClientCache? _factory;
 
 
 		//internal static string SqlConnection;
@@ -39,8 +42,15 @@ namespace TestProject
 				});
 
 			_server = builder.Start();
-			_factory = new ArkFlurlClientFactory(new TestServerfactory(_server.GetTestServer()));
-		}
+
+            _factory = new FlurlClientCache()
+                .WithDefaults(builder =>
+                {
+                    builder.ConfigureArkDefaults();
+                    builder.ConfigureHttpClient(c => c.BaseAddress = new Uri(_baseUri));
+                    builder.AddMiddleware(() => new TestServerMessageHandler(_server.GetTestServer()));
+                });
+        }
 
 		[BeforeFeature(Order = 0)]
 		public static void BeforeFeature(FeatureContext ctx)
@@ -54,7 +64,8 @@ namespace TestProject
 		public static void BeforeScenario(ScenarioContext ctx)
 		{
             if (_factory == null) throw new InvalidOperationException("");
-            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
+
+            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.GetOrAdd(_baseUri, _baseUri));
         }
 
 		[AfterScenario]
@@ -80,18 +91,13 @@ namespace TestProject
 
 	}
 
-	class TestServerfactory : DefaultFlurlClientFactory
-	{
-		private readonly TestServer _server;
-
-		public TestServerfactory(TestServer server)
-		{
-			_server = server;
-		}
-
-        public override HttpMessageHandler CreateInnerHandler()
-		{
-			return _server.CreateHandler();
-		}
-	}
+    public class TestServerMessageHandler(TestServer testServer) : DelegatingHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            InnerHandler?.Dispose();
+            InnerHandler = testServer.CreateHandler();
+            return base.SendAsync(request, cancellationToken);
+        }
+    }
 }
