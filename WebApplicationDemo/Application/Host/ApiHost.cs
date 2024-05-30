@@ -75,7 +75,7 @@ namespace WebApplicationDemo.Application.Host
             //container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
 
 
-            container.RegisterSingleton<IPostService, PostService>();
+            container.Register<IPostService, PostService>(Lifestyle.Scoped);
         }
 
         public void RunInBackground()

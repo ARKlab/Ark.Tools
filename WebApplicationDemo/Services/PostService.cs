@@ -7,17 +7,22 @@ using WebApplicationDemo.Dto;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Threading;
+using System;
 
 namespace WebApplicationDemo.Services
 {
-    public class PostService : IPostService
+    public sealed class PostService : IPostService, IDisposable
     {
+        private readonly IFlurlClientCache _clientCache;
         private readonly IFlurlClient _jsonPlaceHolderClient;
+
         private string _url = "https://jsonplaceholder.typicode.com/";
 
-        public PostService(IFlurlClientCache flurl)
+        public PostService(IFlurlClientCache clientCache)
         {
-            _jsonPlaceHolderClient = flurl.GetOrAdd(typeof(PostService).FullName, _url, builder =>
+            _clientCache = clientCache;
+
+            _jsonPlaceHolderClient = _clientCache.GetOrAdd(typeof(PostService).FullName, _url, builder =>
             {
                 // customize client
                 builder.WithTimeout(10);
@@ -31,6 +36,12 @@ namespace WebApplicationDemo.Services
             var data = JsonSerializer.Deserialize<List<Post>>(response);
 
             return data ?? new List<Post>();
+        }
+
+        public void Dispose()
+        {
+            _clientCache.Remove(typeof(PostService).FullName);
+            _jsonPlaceHolderClient?.Dispose();
         }
     }
 }
