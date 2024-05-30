@@ -9,6 +9,8 @@ using Ark.Tools.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql.SqlServer;
 using WebApplicationDemo.Dto;
+using Flurl.Http.Configuration;
+using WebApplicationDemo.Services;
 
 namespace WebApplicationDemo.Application.Host
 {
@@ -69,11 +71,14 @@ namespace WebApplicationDemo.Application.Host
 			container.Register<ExampleHealthCheck>();
 			container.Register<IExampleHealthCheckService, ExampleHealthCheckService>();
 
-			// DAL
-			//container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
-		}
+            // DAL
+            //container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
 
-		public void RunInBackground()
+
+            container.Register<IPostService, PostService>(Lifestyle.Scoped);
+        }
+
+        public void RunInBackground()
 		{
 
 		}

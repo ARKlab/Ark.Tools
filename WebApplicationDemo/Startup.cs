@@ -6,9 +6,15 @@ using System.IO;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Ark.Tools.Http;
+using Ark.Tools.NewtonsoftJson;
 
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
+
+using Flurl.Http;
+using Flurl.Http.Configuration;
+using Flurl.Http.Newtonsoft;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -149,6 +155,12 @@ namespace WebApplicationDemo
 
             //https://github.com/dotnet/aspnet-api-versioning/wiki/Controller-Conventions
             services.AddTransient(s => ControllerNameConvention.Original);
+
+            services.AddSingleton<IFlurlClientCache>(_ => new FlurlClientCache()
+                .WithDefaults(builder => 
+                {
+                    builder.ConfigureArkDefaults();
+                }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -167,7 +179,11 @@ namespace WebApplicationDemo
 			{
 			};
 
-			var apiHost = new ApiHost(cfg)
+
+
+
+
+            var apiHost = new ApiHost(cfg)
 				.WithContainer(Container);
 		}
 	}
