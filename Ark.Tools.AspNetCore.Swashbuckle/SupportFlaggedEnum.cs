@@ -20,6 +20,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 				.Where(x =>
 				{
 					var t = x.i.Type;
+					if (t is null) return false;
+					
 					if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
 					{
 						t = Nullable.GetUnderlyingType(t) ?? t;
