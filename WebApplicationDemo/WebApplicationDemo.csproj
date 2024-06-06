@@ -16,6 +16,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Hosting\Ark.Tools.Hosting.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj" />
     <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid.FluentValidaton\Ark.Tools.Solid.FluentValidaton.csproj" />
     <ProjectReference Include="..\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />
