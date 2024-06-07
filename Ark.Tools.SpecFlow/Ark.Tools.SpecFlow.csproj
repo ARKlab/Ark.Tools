@@ -19,9 +19,9 @@
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
-    <PackageReference Include="FluentAssertions.Web" Version="1.3.0" />
+    <PackageReference Include="FluentAssertions.Web" Version="1.4.0" />
     <PackageReference Include="SpecFlow" Version="3.9.74" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
   </ItemGroup>
 
   <ItemGroup>
