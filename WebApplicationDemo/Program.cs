@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Ark.Tools.NLog;
 using Ark.Tools.Nodatime;
+using Ark.Tools.Nodatime.Dapper;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -38,10 +39,7 @@ namespace WebApplicationDemo
 				//.UseContentRoot(Directory.GetCurrentDirectory())
 				.ConfigureWebHostDefaults(webBuilder =>
 				{
-					webBuilder.ConfigureKestrel(serverOptions =>
-					{
-						// Set properties and call methods on options
-					})
+					webBuilder
 					.CaptureStartupErrors(true)
 					.UseSetting(WebHostDefaults.DetailedErrorsKey, "true")
 					.UseSetting(WebHostDefaults.PreventHostingStartupKey, "true")
@@ -53,31 +51,21 @@ namespace WebApplicationDemo
 							.SetBasePath(Directory.GetCurrentDirectory())
 							.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
 							.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-							.AddEnvironmentVariables()
+							.AddArkEnvironmentVariables()
 							.AddApplicationInsightsSettings(null, developerMode: env.IsDevelopment())
 							.AddCommandLine(args)
 							;
 					})
-					.ConfigureLogging((ctx, logging) =>
-                    {
-                        var ns = "WebApplicationDemo";
-
-                        NLogConfigurer.For(ns)
-                            .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration)
-                            .Apply();
-
-                        logging.ClearProviders();
-                        logging.AddNLog();
-					})
 					.UseStartup<Startup>();
-				});
+				})
+				.ConfigureNLog();
 		}
 
 		public static void InitStatic(string[] args)
 		{
 			args = args ?? Array.Empty<string>();
 
-			//DapperNodaTimeSetup.Register();
+			NodaTimeDapper.Setup();
 			NodeTimeConverter.Register();
 			ServicePointManager.UseNagleAlgorithm = true;
 			ServicePointManager.Expect100Continue = false;

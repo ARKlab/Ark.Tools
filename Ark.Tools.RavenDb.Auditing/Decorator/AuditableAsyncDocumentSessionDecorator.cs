@@ -312,5 +312,25 @@ namespace Ark.Tools.RavenDb.Auditing
         {
             return _inner.TimeSeriesRollupFor<TValues>(documentId, policy, raw);
         }
+
+        public IAsyncSessionDocumentIncrementalTimeSeries IncrementalTimeSeriesFor(string documentId, string name)
+        {
+            return _inner.IncrementalTimeSeriesFor(documentId, name);
+        }
+
+        public IAsyncSessionDocumentIncrementalTimeSeries IncrementalTimeSeriesFor(object entity, string name)
+        {
+            return _inner.IncrementalTimeSeriesFor(entity, name);
+        }
+
+        public IAsyncSessionDocumentTypedIncrementalTimeSeries<TValues> IncrementalTimeSeriesFor<TValues>(string documentId, string? name = null) where TValues : new()
+        {
+            return _inner.IncrementalTimeSeriesFor<TValues>(documentId, name);
+        }
+
+        public IAsyncSessionDocumentTypedIncrementalTimeSeries<TValues> IncrementalTimeSeriesFor<TValues>(object entity, string? name = null) where TValues : new()
+        {
+            return _inner.IncrementalTimeSeriesFor<TValues>(entity, name);
+        }
     }
 }

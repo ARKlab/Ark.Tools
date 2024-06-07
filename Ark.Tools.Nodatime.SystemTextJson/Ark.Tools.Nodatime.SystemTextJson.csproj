@@ -21,7 +21,7 @@
   <!--===============================================================================-->
   <ItemGroup>
 
-    <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.1.2" />
+    <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

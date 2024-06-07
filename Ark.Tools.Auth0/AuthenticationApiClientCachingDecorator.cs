@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 using System.Collections.Generic;
@@ -41,7 +41,8 @@ namespace Ark.Tools.Auth0
                 .WrapAsync(
                     Policy.CacheAsync(
                         _memoryCacheProvider.AsyncFor<AccessTokenResponse>(),
-                        new ResultTtl<AccessTokenResponse>(r => new Ttl(_expiresIn(r), false)))
+                        new ResultTtl<AccessTokenResponse>(r => r is not null ? new Ttl(_expiresIn(r)) : new Ttl(TimeSpan.Zero))
+                        )
                 );
 
             _userInfoCachePolicy = AsyncRequestCollapserPolicy.Create()
@@ -246,6 +247,11 @@ namespace Ark.Tools.Auth0
         public Task RevokeRefreshTokenAsync(RevokeRefreshTokenRequest request, CancellationToken cancellationToken = default)
         {
             return _inner.RevokeRefreshTokenAsync(request, cancellationToken);
+        }
+
+        public Task<PushedAuthorizationRequestResponse> PushedAuthorizationRequestAsync(PushedAuthorizationRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.PushedAuthorizationRequestAsync(request, cancellationToken);
         }
         #endregion
     }

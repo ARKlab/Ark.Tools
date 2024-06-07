@@ -49,7 +49,7 @@ namespace Ark.Tools.Rebus.Tests
             return base.Receive(context, cancellationToken);
         }
 
-        protected override async Task SendOutgoingMessages(IEnumerable<OutgoingMessage> outgoingMessages, ITransactionContext context)
+        protected override async Task SendOutgoingMessages(IEnumerable<OutgoingTransportMessage> outgoingMessages, ITransactionContext context)
         {
             if (Interlocked.CompareExchange(ref _drain, 1, 0) != -1)
             {

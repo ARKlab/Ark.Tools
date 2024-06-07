@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DistributedLock.Azure" Version="1.0.0" />
+    <PackageReference Include="DistributedLock.Azure" Version="1.0.1" />
   </ItemGroup>
 	
 	<ItemGroup>

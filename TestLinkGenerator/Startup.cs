@@ -84,7 +84,7 @@ namespace TestWithoutArkTools
                     Configuration.Bind("AzureAdB2C", options);
 
                     options.TokenValidationParameters.NameClaimType = "name";
-                    (options.SecurityTokenValidators[0] as JwtSecurityTokenHandler)?.InboundClaimTypeMap.Add("extension_Scope", "scope");
+                    (options.TokenHandlers[0] as JwtSecurityTokenHandler)?.InboundClaimTypeMap.Add("extension_Scope", "scope");
                 },
                     options => {
                         Configuration.Bind("AzureAdB2C", options);

@@ -11,7 +11,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
     /// <summary>
     /// An environment variable based <see cref="ConfigurationProvider"/>.
     /// </summary>
-    public class ArkLegacyEnvironmentVariablesConfigurationProvider : ConfigurationProvider
+    public class ArkEnvironmentVariablesConfigurationProvider : ConfigurationProvider
     {
         private const string _mySqlServerPrefix = "MYSQLCONNSTR_";
         private const string _sqlAzureServerPrefix = "SQLAZURECONNSTR_";
@@ -27,14 +27,14 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
         /// <summary>
         /// Initializes a new instance.
         /// </summary>
-        public ArkLegacyEnvironmentVariablesConfigurationProvider() : this(string.Empty)
+        public ArkEnvironmentVariablesConfigurationProvider() : this(string.Empty)
         { }
 
         /// <summary>
         /// Initializes a new instance with the specified prefix.
         /// </summary>
         /// <param name="prefix">A prefix used to filter the environment variables.</param>
-        public ArkLegacyEnvironmentVariablesConfigurationProvider(string prefix)
+        public ArkEnvironmentVariablesConfigurationProvider(string prefix)
         {
             _prefix = prefix ?? string.Empty;
         }

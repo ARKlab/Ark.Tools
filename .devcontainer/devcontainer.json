@@ -1,0 +1,4 @@
+{
+    "name": ".NET 8",
+    "image": "mcr.microsoft.com/devcontainers/dotnet:8.0"
+}

@@ -15,7 +15,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Hosting
         {
             return builder.ConfigureAppConfiguration((ctx, cfg) =>
             {
-                cfg.AddArkLegacyEnvironmentVariables();
+                cfg.AddArkEnvironmentVariables();
             });
         }
 

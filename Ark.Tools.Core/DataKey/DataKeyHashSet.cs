@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -12,9 +12,5 @@ namespace Ark.Tools.Core.DataKey
 
         public DataKeyHashSet(IEnumerable<T> collection) : base(collection, new DataKeyComparer<T>())
         { }
-
-        protected DataKeyHashSet(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using FluentFTP;
@@ -7,12 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System;
 
 using FtpConfig = Ark.Tools.FtpClient.Core.FtpConfig;
 
 namespace Ark.Tools.FtpClient.FluentFtp
 {
-    public class FluentFtpClientConnection : FtpClientConnectionBase
+    public sealed class FluentFtpClientConnection : FtpClientConnectionBase
     {
         private readonly FluentFTP.IAsyncFtpClient _client;
 
@@ -85,12 +86,8 @@ namespace Ark.Tools.FtpClient.FluentFtp
         protected override void Dispose(bool disposing)
         {
             if (_isDisposed) return;
-
             if (disposing)
-            {
-                _client?.Dispose();
-            }
-
+                (_client as IDisposable)?.Dispose();
             _isDisposed = true;
         }
 

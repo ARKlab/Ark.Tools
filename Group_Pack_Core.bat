@@ -25,7 +25,6 @@ setlocal
 "%MSBUILD%" "Ark.Tools.ApplicationInsights.HostedService\Ark.Tools.ApplicationInsights.HostedService.csproj"	/t:Pack /p:Configuration=Release
 
 "%MSBUILD%" "Ark.Tools.NLog\Ark.Tools.NLog.csproj" 														/t:Pack /p:Configuration=Release
-"%MSBUILD%" "Ark.Tools.NLog.CloudConfigurationManager\Ark.Tools.NLog.CloudConfigurationManager.csproj" 	/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" 							/t:Pack /p:Configuration=Release
 "%MSBUILD%" "Ark.Tools.NLog.ConfigurationManager\Ark.Tools.NLog.ConfigurationManager.csproj" 			/t:Pack /p:Configuration=Release
 
