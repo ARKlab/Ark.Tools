@@ -1,0 +1,9 @@
+﻿namespace Core.Service.Common
+{
+    public class ApplicationConstants
+    {
+        public static readonly string[] Versions = {
+             "1.0"
+        };
+    }
+}

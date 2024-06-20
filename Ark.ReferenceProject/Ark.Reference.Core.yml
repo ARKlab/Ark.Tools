@@ -1,0 +1,230 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+name: $(SourceBranchName)_$(date:yyyyMMdd)$(rev:.r)
+trigger:
+  branches:
+    include:
+    - develop
+    - master
+  paths:
+    include:
+    - Core/*
+    - KtE.ReportSubmission.Common/*
+
+variables:
+  workingDirectory: '$(Build.SourcesDirectory)'
+  vmImageName: 'windows-2022'
+  vmPoolName: 'Agents of Shield'
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    BuildConfiguration: 'release'
+  ${{ if not(eq(variables['Build.SourceBranchName'], 'master')) }}:
+    BuildConfiguration: 'debug'
+  BuildPlatform: 'any cpu'
+
+stages:
+    - stage: Build_Stage
+      displayName: Build stage
+      jobs:
+      - job: BuildJob
+        timeoutInMinutes: 60 # how long to run the job before automatically cancelling
+        cancelTimeoutInMinutes: 2 # how much time to give 'run always even if cancelled tasks' before stopping them
+        pool:
+          #vmImage: $(vmImageName)
+          name: $(vmPoolName)
+          demands:
+          - msbuild
+          - visualstudio
+          - vstest
+        variables:
+          NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
+        steps:
+        - task: NuGetToolInstaller@1
+          displayName: 'Use NuGet 6.x'
+          inputs:
+            versionSpec: 6.x
+        - task: UseDotNet@2
+          displayName: 'Use .Net Core sdk'
+          inputs:
+            useGlobalJson: true
+
+        - task: Cache@2
+          displayName: Cache NuGet
+          inputs:
+            key: 'nuget | "$(Agent.OS)" | **/packages.lock.json,!/bin/**,!**/obj/**'
+            path: '$(NUGET_PACKAGES)'
+            restoreKeys: |
+              nuget | "$(Agent.OS)"
+              nuget
+            cacheHitVar: 'CACHE_RESTORED'
+
+        - task: NuGetCommand@2
+          condition: ne(variables.CACHE_RESTORED, true)
+          displayName: 'NuGet restore'
+          inputs:
+            command: 'restore'
+            restoreSolution: KtE.ReportSubmission.Services.sln
+            feedsToUse: config
+            nugetConfigPath: .nuget/nuget.config
+
+        - task: VSBuild@1
+          displayName: 'Build solution KtE.ReportSubmission.Services.sln'
+          inputs:
+            solution: KtE.ReportSubmission.Services.sln
+            vsVersion: '17.0'
+            platform: '$(BuildPlatform)'
+            configuration: '$(BuildConfiguration)'
+            clean: true
+            maximumCpuCount: true
+
+        - task: VSBuild@1
+          displayName: 'Build solution KtE.ReportSubmission.Services.sln copy'
+          inputs:
+            solution: KtE.ReportSubmission.Services.sln
+            vsVersion: '17.0'
+            platform: '$(BuildPlatform)'
+            configuration: '$(BuildConfiguration)'
+            maximumCpuCount: true
+
+        - task: PowerShell@2
+          displayName: 'Ensure Docker Desktop is Running with Azurite'
+          inputs:
+            targetType: 'inline'
+            script: |
+                $containerName = "azurite"
+                # Check if the container is running
+                if (docker ps -q --filter "name=$containerName")
+                {
+                    Write-Host "The container '$containerName' is running."
+                }
+                else
+                {
+                    Write-Host "The container '$containerName' is not running or does not exist. Starting it..."
+                    # Start the container
+                    docker start $containerName
+                    Write-Host "The container '$containerName' has been started."
+                }
+
+        - task: VisualStudioTestPlatformInstaller@1
+          inputs:
+            packageFeedSelector: 'nugetOrg' # Options: nugetOrg, customFeed, netShare
+            versionSelector: 'latestStable' # Required when packageFeedSelector == NugetOrg || PackageFeedSelector == CustomFeed# Options: latestPreRelease, latestStable, specificVersion
+      
+        - task: VSTest@2
+          displayName: 'VsTest - testAssemblies'
+          condition: and(succeeded(), not(or(contains(variables['Build.SourceVersionMessage'], '[SkipTests]'), contains(variables['OverrideField'], '[SkipTests]'), contains(variables['Build.SourceVersionMessage'], 'hotfix/'))))
+          inputs:
+            testAssemblyVer2: |
+             **\*.Tests\**\$(BuildConfiguration)\**\*.Tests.dll
+             **\*.UnitTests\**\$(BuildConfiguration)\**\*.UnitTests.dll
+             !**\obj\**
+             !**\ref\**
+            searchFolder: '$(build.sourcesdirectory)/Core'
+            runSettingsFile: CodeCoverage.runsettings
+            codeCoverageEnabled: true
+
+
+        - task: CopyFiles@2
+          displayName: 'Copy Files to: $(build.artifactstagingdirectory)\sql'
+          inputs:
+            SourceFolder: '$(build.sourcesdirectory)/Core'
+            Contents: |
+             **\*.dacpac
+             **\*.publish.xml
+             **\_Migrations\*.sql
+            TargetFolder: '$(build.artifactstagingdirectory)\sql'
+            flattenFolders: true
+
+        - task: DotNetCoreCLI@2
+          displayName: 'dotnet publish'
+          inputs:
+            command: publish
+            publishWebProjects: false
+            projects: '$(build.sourcesdirectory)/Core/Core.Service.WebInterface/Core.Service.WebInterface.csproj'
+            arguments: '-o "$(build.artifactstagingdirectory)/Core/Core.Service.WebInterface" --framework "net6.0" --configuration $(BuildConfiguration) --no-build'
+
+        - task: PublishSymbols@2
+          displayName: 'Publish symbols path'
+          inputs:
+            SymbolServerType: TeamServices
+
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish Artifact: drop'
+
+    - ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature')) }}:
+      - stage: DevEnv_Stage
+        displayName: Dev Deploy Service
+        dependsOn: Build_Stage
+        jobs:
+        - deployment: DevEnv_Deploy
+          displayName: 'Dev Deploy Service'
+          environment: 'EE-eBilling-Dev'
+          variables:
+            resourceGroup: 'EE-eBilling-Shared' 
+            subscription: 'Esperto Energia'
+            deploymentName: 'Dev-eBilling-'
+          pool:
+            #vmImage: $(vmImageName)
+            name: $(vmPoolName)
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                - task: ARM Outputs@6
+                  displayName: 'ARM Outputs'
+                  inputs:
+                    ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
+                    ConnectedServiceNameARM: '${{ variables.subscription }}'
+                    resourceGroupName: $(resourceGroup)
+                    prefix: 'arm.'
+                    whenLastDeploymentIsFailed: 'latestSuccesful'
+                    deploymentNameFilter: '$(deploymentName)*'
+                - task: AzureAppServiceManage@0
+                  displayName: 'Stop Azure App Service: $(arm.CoreService)'
+                  inputs:
+                    azureSubscription: '${{ variables.subscription }}'
+                    Action: 'Stop Azure App Service'
+                    WebAppName: '$(arm.coreService)'
+                - task: SqlAzureDacpacDeployment@1
+                  displayName: 'Pre Migrations'
+                  inputs:
+                    azureSubscription: '${{ variables.subscription }}'
+                    ServerName: '$(arm.serverFQDN)'
+                    DatabaseName: '$(arm.coredb)'
+                    SqlUsername: '$(arm.adminUsername)'
+                    SqlPassword: '$(arm.adminPassword)'
+                    deployType: SqlTask
+                    SqlFile: '$(Pipeline.Workspace)/drop/sql/RunMigration.PreDeployment.sql'
+                    SqlAdditionalArguments: '-Variable "MyPath = $(Pipeline.Workspace)\drop\sql\" -QueryTimeout 360'
+                - task: SqlAzureDacpacDeployment@1
+                  displayName: DacPac
+                  inputs:
+                    azureSubscription: '${{ variables.subscription }}'
+                    ServerName: '$(arm.serverFQDN)'
+                    DatabaseName: '$(arm.coredb)'
+                    SqlUsername: '$(arm.adminUsername)'
+                    SqlPassword: '$(arm.adminPassword)'
+                    DacpacFile: '$(Pipeline.Workspace)/drop/sql/Core.Service.Database.dacpac'
+                    PublishProfile: '$(Pipeline.Workspace)/drop/sql/Core.Service.Database.publish.xml'
+                - task: AzureRmWebAppDeployment@4
+                  displayName: 'Azure App Service Deploy: Core.Service.WebInterface'
+                  inputs:
+                    azureSubscription: '${{ variables.subscription }}'
+                    WebAppName: '$(arm.coreService)'
+                    packageForLinux: '$(Pipeline.Workspace)/drop/Core/Core.Service.WebInterface/Core.Service.WebInterface.zip'
+                    enableCustomDeployment: true
+                    DeploymentType: zipDeploy
+                - task: AzureAppServiceManage@0
+                  displayName: 'Start Azure App Service: $(arm.coreService)'
+                  inputs:
+                    azureSubscription: '${{ variables.subscription }}'
+                    Action: 'Start Azure App Service'
+                    WebAppName: '$(arm.coreService)'
+                - task: OneLuckiDev.release-web-smoke-test-task.vsts-release-web-test.oneluckidevWebSmokeTest@1
+                  displayName: 'Web Smoke Test'
+                  inputs:
+                    url: 'https://$(arm.coreService).azurewebsites.net/swagger'
+                    retryAttemptCount: 10
+                    retryDelay: 5000
