@@ -215,7 +215,14 @@ namespace Core.Service.Tests.Init
         public static void BeforeFeature(FeatureContext ctx)
         {
             ctx.Set(_server);
-            ctx.FeatureContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
+        }
+
+        [BeforeScenario(Order = 0)]
+        public static void BeforeScenario(ScenarioContext ctx)
+        {
+            if (_factory == null) throw new InvalidOperationException("");
+
+            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.GetOrAdd(_baseUri, _baseUri));
         }
 
         [AfterScenario]
