@@ -44,6 +44,11 @@ namespace Core.Service.Application.Handlers.Messages
             //** Check if exists InvoiceRun 
             var entity = await ctx.ReadPingByIdAsync(message.Id);
 
+            if (entity.Name.ToLowerInvariant().Contains("fails".ToLowerInvariant()))
+            {
+                throw new Exception("Test Exception 1");
+            }
+
             await _updateEntityAndCommit(ctx, entity, "HandleOk");
         }
 
@@ -59,6 +64,7 @@ namespace Core.Service.Application.Handlers.Messages
             using var ctx = _coreDataContext();
             var invoiceRun = await ctx.ReadPingByIdAsync(message.Id);
 
+            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async");
             var e = ex.Message;
 
             await _updateEntityAndCommit(ctx, invoiceRun, "HandleFailed");
