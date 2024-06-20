@@ -39,6 +39,7 @@ using System.Security.Claims;
 using System.Threading;
 
 using TechTalk.SpecFlow;
+using System.Threading.Tasks;
 
 namespace Core.Service.Tests.Init
 {
@@ -51,7 +52,7 @@ namespace Core.Service.Tests.Init
         public static ICoreDataContextConfig DBConfig => TestConfig;
 
         private static IHost _server;
-        private static ClientFactory _factory;
+        private static IFlurlClientCache _factory;
         public static readonly TestEnv Env = new TestEnv();
 
         private static ScenarioContext _scenarioContext;
@@ -197,7 +198,13 @@ namespace Core.Service.Tests.Init
                 });
 
             _server = builder.Start();
-            _factory = new ClientFactory(_server.GetTestServer());
+            _factory = new FlurlClientCache()
+                .WithDefaults(builder =>
+                {
+                    builder.ConfigureArkDefaults();
+                    builder.ConfigureHttpClient(c => c.BaseAddress = new Uri(_baseUri));
+                    builder.AddMiddleware(() => new TestServerMessageHandler(_server.GetTestServer()));
+                });
 
             var configuration = _server.Services.GetRequiredService<IConfiguration>();
 
@@ -227,7 +234,7 @@ namespace Core.Service.Tests.Init
         public static void AfterTests()
         {
             _server?.Dispose();
-            _factory?.Dispose();
+            _factory?.Clear();
         }
 
         public void Dispose()
@@ -242,40 +249,16 @@ namespace Core.Service.Tests.Init
         }
     }
 
-    internal class TestServerfactory : DefaultHttpClientFactory
+    public class TestServerMessageHandler(TestServer testServer) : DelegatingHandler
     {
-        private readonly TestServer _server;
-
-        public TestServerfactory(TestServer server)
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            _server = server;
-        }
-
-        public override HttpMessageHandler CreateMessageHandler()
-        {
-            return _server.CreateHandler();
+            InnerHandler?.Dispose();
+            InnerHandler = testServer.CreateHandler();
+            return base.SendAsync(request, cancellationToken);
         }
     }
 
-    internal class ClientFactory : PerBaseUrlFlurlClientFactory
-    {
-        private readonly TestServerfactory _server;
-
-        public ClientFactory(TestServer server)
-        {
-            _server = new TestServerfactory(server);
-        }
-
-        protected override IFlurlClient Create(Url url)
-        {
-            return base.Create(url)
-                .ConfigureArkDefaultsSystemTextJson()
-                .Configure(s =>
-                {
-                    s.HttpClientFactory = _server;
-                });
-        }
-    }
 
     public class TestEnv
     {
