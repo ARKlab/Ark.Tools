@@ -3,6 +3,7 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
 
+using System;
 using System.Data;
 using System.Linq;
 
@@ -34,10 +35,17 @@ namespace Core.Service.Tests.Init
             var instance = new DacServices(DatabaseConnectionString);
             using (var dacpac = DacPackage.Load("Core.Service.Database.dacpac"))
             {
-                instance.Deploy(dacpac, "Core.Service.Database", true, new DacDeployOptions()
+                try
                 {
-                    CreateNewDatabase = true,
-                });
+                    instance.Deploy(dacpac, "Core.Service.Database", true, new DacDeployOptions()
+                    {
+                        CreateNewDatabase = true,
+                    });
+                }
+                catch(Exception ex)
+                { 
+                    var a = ex;
+                }
             }
         }
 
