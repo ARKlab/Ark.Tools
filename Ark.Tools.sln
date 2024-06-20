@@ -176,7 +176,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.SingletonBackgroundSer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinuxWebJobHosting", "LinuxWebJobHosting\LinuxWebJobHosting.csproj", "{1851D53C-83EB-425D-8F07-E593D20F7577}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ark.ReferenceProject", "Ark.ReferenceProject", "{0AF092FD-C941-4E11-91A2-A88748F48415}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ArkReferenceProject", "ArkReferenceProject", "{0AF092FD-C941-4E11-91A2-A88748F48415}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.Service.API", "Ark.ReferenceProject\Core\Core.Service.API\Core.Service.API.csproj", "{0F0621AA-0440-405E-B201-B7F9439B3727}"
 EndProject
