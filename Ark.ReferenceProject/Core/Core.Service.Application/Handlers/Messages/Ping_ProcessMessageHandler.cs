@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Core.Service.API.Messages;
 using Core.Service.Application.DAL;
 using Core.Service.Common.Dto;
+using Core.Service.Common;
 
 namespace Core.Service.Application.Handlers.Messages
 {
@@ -21,7 +22,6 @@ namespace Core.Service.Application.Handlers.Messages
     {
         private readonly Func<ICoreDataContext> _coreDataContext;
         private readonly IContextProvider<ClaimsPrincipal> _userContext;
-
 
         public Ping_ProcessMessageHandler(
               Func<ICoreDataContext> coreDataContext
@@ -37,6 +37,7 @@ namespace Core.Service.Application.Handlers.Messages
 
         public async Task Handle(Ping_ProcessMessage.V1 message)
         {
+            int currentMessageCount = MessageCounter.Increment();
             using var ctx = _coreDataContext();
 
             await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async");
@@ -44,12 +45,17 @@ namespace Core.Service.Application.Handlers.Messages
             //** Check if exists InvoiceRun 
             var entity = await ctx.ReadPingByIdAsync(message.Id);
 
-            if (entity.Name.ToLowerInvariant().Contains("fails".ToLowerInvariant()))
+            if (entity.Name.Contains("fails", StringComparison.InvariantCultureIgnoreCase))
             {
-                throw new Exception("Test Exception 1");
+                if (entity.Name.Contains("fast", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    throw new NotImplementedException("FailFastEx");
+                }
+
+                throw new Exception("NormalEx");
             }
 
-            await _updateEntityAndCommit(ctx, entity, "HandleOk");
+            await _updateEntityAndCommit(ctx, entity, $"HandleOk_MsgCount_{currentMessageCount}");
         }
 
         public async Task Handle(IFailed<Ping_ProcessMessage.V1> message)
@@ -61,13 +67,15 @@ namespace Core.Service.Application.Handlers.Messages
 
         private async Task _fail(Ping_ProcessMessage.V1 message, Rebus.Retry.ExceptionInfo ex)
         {
+            int currentMessageCount = MessageCounter.GetCount();
+
             using var ctx = _coreDataContext();
             var invoiceRun = await ctx.ReadPingByIdAsync(message.Id);
 
             await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async");
             var e = ex.Message;
 
-            await _updateEntityAndCommit(ctx, invoiceRun, "HandleFailed");
+            await _updateEntityAndCommit(ctx, invoiceRun, $"HandleFailed_{ex.Message}_MsgCount_{currentMessageCount}");
         }
 
         private async Task _updateEntityAndCommit(ICoreDataContext ctx, Ping.V1.Output entity, string code)

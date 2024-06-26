@@ -4,6 +4,7 @@ using Ark.Tools.Solid;
 using Core.Service.API.Messages;
 using Core.Service.API.Requests;
 using Core.Service.Application.DAL;
+using Core.Service.Common;
 using Core.Service.Common.Dto;
 using Core.Service.Common.Enum;
 
@@ -59,6 +60,8 @@ namespace Core.Service.Application.Handlers.Requests
             var id = await ctx.InsertPingAsync(createPingData, ctk);
 
             var entity = await ctx.ReadPingByIdAsync(id, ctk);
+
+            MessageCounter.ResetCount();
 
             using var scope = _bus.Enlist(ctx);
 

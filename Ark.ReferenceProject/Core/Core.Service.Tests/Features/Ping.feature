@@ -156,6 +156,17 @@ Scenario: Endpoint_ Ping_ Create and SendMsg
 	When I wait background bus to idle and outbox to be empty
 	Then the request fails with 400
 
+ Scenario: Endpoint_ Ping_ Create and SendMsg FastFails
+	When I create a single Ping And SendMsg with
+		| Name          | Type  |
+		| PingFailsFast | Ping1 |
+	Then the request succeded
+	Then the stored Ping response should be 
+		| Name      | Type  | Code                    |
+		| PingFails | Ping1 | PING_CODE_PingFailsFast |
+
+	When I wait background bus to idle and outbox to be empty
+	Then the request fails with 400
 
 ### Audit ##################################################################################################
 Scenario: Audit_ Check Ping_ Create

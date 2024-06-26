@@ -134,6 +134,8 @@ namespace Core.Service.Application.Host
 
         public ApiHost WithRebus(Queue queue = Queue.Main, InMemNetwork inMemNetwork = null, InMemorySubscriberStore inMemorySubscriberStore = null)
         {
+            var useRealAzureServiceBus = !string.IsNullOrEmpty(this.Config.AsbConnectionString) || (inMemorySubscriberStore == null && inMemorySubscriberStore == null);
+
             if (queue != Queue.OneWay)
             {
                 var handlers = Container.GetTypesToRegister((queue switch
@@ -153,7 +155,7 @@ namespace Core.Service.Application.Host
                 {
                     if (queue == Queue.OneWay)
                     {
-                        if (inMemNetwork == null)
+                        if (useRealAzureServiceBus)
                         {
                             if (this.Config.AsbConnectionString.Contains("SharedAccess"))
                                 t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString);
@@ -170,7 +172,7 @@ namespace Core.Service.Application.Host
                             Queue.Main => "",
                             _ => throw new NotSupportedException()
                         };
-                        if (inMemNetwork == null)
+                        if (useRealAzureServiceBus)
                         {
                             if (this.Config.AsbConnectionString.Contains("SharedAccess"))
                                 t.UseAzureServiceBus(this.Config.AsbConnectionString, listeningQueue)
@@ -204,7 +206,7 @@ namespace Core.Service.Application.Host
                 })
                 .Subscriptions(s =>
                 {
-                    if (inMemorySubscriberStore != null)
+                    if (!useRealAzureServiceBus)
                         s.StoreInMemory(inMemorySubscriberStore);
                 })
                 .Routing(r =>
@@ -232,7 +234,7 @@ namespace Core.Service.Application.Host
                     o.UseApplicationInsight(Container);
                     o.UseApplicationInsightMetrics(Container);
                     o.FailFastOn<Exception>(ex => ex.IsFinal());
-                    if (inMemNetwork != null)
+                    if (!useRealAzureServiceBus)
                         o.AddInProcessMessageInspector();
                 })
                 .DataBus(d =>
@@ -254,7 +256,7 @@ namespace Core.Service.Application.Host
                 .Timeouts(t =>
                 {
                     t.OtherService<IRebusTime>().Register(c => new RebusIClock(Container.GetInstance<IClock>()));
-                    if (inMemNetwork != null)
+                    if (!useRealAzureServiceBus)
                         t.StoreInMemoryTests();
                 })
             );
