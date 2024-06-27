@@ -134,7 +134,7 @@ namespace Core.Service.Application.Host
 
         public ApiHost WithRebus(Queue queue = Queue.Main, InMemNetwork inMemNetwork = null, InMemorySubscriberStore inMemorySubscriberStore = null)
         {
-            var useRealAzureServiceBus = !string.IsNullOrEmpty(this.Config.AsbConnectionString) || (inMemorySubscriberStore == null && inMemorySubscriberStore == null);
+            var useRealAzureServiceBus = !string.IsNullOrEmpty(this.Config.AsbConnectionString) || (inMemNetwork == null && inMemorySubscriberStore == null);
 
             if (queue != Queue.OneWay)
             {
@@ -187,7 +187,7 @@ namespace Core.Service.Application.Host
                                     .UseNativeMessageDeliveryCount()
                                     ;
 
-                            t.UseNativeDeadlettering();     
+                            t.UseNativeDeadlettering();
                         }
                         else
                         {
@@ -220,7 +220,7 @@ namespace Core.Service.Application.Host
                 {
                     o.ArkRetryStrategy(errorDetailsHeaderMaxLength: 10000, secondLevelRetriesEnabled: true, maxDeliveryAttempts: 3);
 
-                    if (inMemNetwork != null)
+                    if (!useRealAzureServiceBus)
                     {
                         o.SetMaxParallelism(2);
                     }
