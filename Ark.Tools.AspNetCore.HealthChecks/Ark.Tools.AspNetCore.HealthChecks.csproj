@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<!-- the other props are defined in Directory.Build.props -->
 
@@ -36,8 +36,8 @@
 		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.1" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.4" />
-		<PackageReference Include="SimpleInjector" Version="5.4.5" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.6" />
+		<PackageReference Include="SimpleInjector" Version="5.4.6" />
 	</ItemGroup>
 
 	<ItemGroup>
