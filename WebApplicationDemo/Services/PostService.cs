@@ -8,24 +8,21 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Threading;
 using System;
+using Ark.Tools.Http;
 
 namespace WebApplicationDemo.Services
 {
     public sealed class PostService : IPostService, IDisposable
     {
-        private readonly IFlurlClientCache _clientCache;
         private readonly IFlurlClient _jsonPlaceHolderClient;
 
         private string _url = "https://jsonplaceholder.typicode.com/";
 
-        public PostService(IFlurlClientCache clientCache)
+        public PostService(IArkFlurlClientFactory factory)
         {
-            _clientCache = clientCache;
-
-            _jsonPlaceHolderClient = _clientCache.GetOrAdd(typeof(PostService).FullName, _url, builder =>
+            _jsonPlaceHolderClient = factory.Get(_url, s =>
             {
-                // customize client
-                builder.WithTimeout(10);
+                s.Timeout = TimeSpan.FromSeconds(10);
             });
         }
 
@@ -40,7 +37,6 @@ namespace WebApplicationDemo.Services
 
         public void Dispose()
         {
-            _clientCache.Remove(typeof(PostService).FullName);
             _jsonPlaceHolderClient?.Dispose();
         }
     }

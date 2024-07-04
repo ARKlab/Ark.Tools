@@ -11,6 +11,7 @@ using Ark.Tools.Sql.SqlServer;
 using WebApplicationDemo.Dto;
 using Flurl.Http.Configuration;
 using WebApplicationDemo.Services;
+using Ark.Tools.Http;
 
 namespace WebApplicationDemo.Application.Host
 {
@@ -74,8 +75,9 @@ namespace WebApplicationDemo.Application.Host
             // DAL
             //container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
 
-
             container.Register<IPostService, PostService>(Lifestyle.Scoped);
+
+            container.RegisterInstance<IArkFlurlClientFactory>(new ArkFlurlClientFactory());
         }
 
         public void RunInBackground()

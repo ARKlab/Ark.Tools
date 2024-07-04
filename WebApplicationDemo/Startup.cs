@@ -155,12 +155,6 @@ namespace WebApplicationDemo
 
             //https://github.com/dotnet/aspnet-api-versioning/wiki/Controller-Conventions
             services.AddTransient(s => ControllerNameConvention.Original);
-
-            services.AddSingleton<IFlurlClientCache>(_ => new FlurlClientCache()
-                .WithDefaults(builder => 
-                {
-                    builder.ConfigureArkDefaults();
-                }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

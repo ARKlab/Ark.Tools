@@ -17,7 +17,6 @@ namespace Ark.Tools.Http
     /// </summary>
     public class ArkFlurlClientBuilder : FlurlClientBuilder
     {
-
         static readonly FieldInfo? _factoryField =
                 typeof(FlurlClientBuilder)
                     .GetField("_factory", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -31,11 +30,8 @@ namespace Ark.Tools.Http
             if (flurlClientFactory != null)
             {
                 if (_factoryField is null) throw new ArgumentException("private _factory not found. Check Flurl for changes");
-                    _factoryField.SetValue(this, flurlClientFactory);
+                _factoryField.SetValue(this, flurlClientFactory);
             }
-
-            this.ConfigureArkDefaults();
         }
-
     }
 }
