@@ -40,6 +40,38 @@ See [Flurl](https://flurl.dev/docs/upgrade/) for details, but long-story-short i
 
 * Flurl now default to STJ thus use `XXXXX` to configure a Newtonsoft client factory
 
+### Flurl v4 Migration Guide
+
+In services that use `IFlurlClient`, the `IFlurlClientFactory` will be replaced with the new `IArkFlurlClientFactory`. The difference in services is that now the flurl clients must be manually disposed after use by implementing IDisposable. An example implementation can be found in the WebApplicationDemo in the `PostService`.
+
+In the TestHost for initializing tests that use Flurl, we now use `ArkFlurlClientFactory` as the factory. To connect to the test server we extend the `DefaultFlurlClientFactory` as such:
+
+```class TestServerfactory : DefaultFlurlClientFactory
+{
+    private readonly TestServer _server;
+
+    public TestServerfactory(TestServer server)
+    {
+        _server = server;
+    }
+
+    public override HttpMessageHandler CreateInnerHandler()
+    {
+        return _server.CreateHandler();
+    }
+}
+```
+
+We then initialize the factory:
+
+`_factory = new ArkFlurlClientFactory(new TestServerfactory(_server.GetTestServer()));`
+
+We then register the factor as usual:
+
+`ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));`
+
+An example can be found in the TestProject under `TestHost`.
+
 ### Rebus upgrade to v8
 
 Rebus has been upgraded to v8. 
