@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
     <ProjectReference Include="..\Ark.Tools.Hosting\Ark.Tools.Hosting.csproj" />
     <ProjectReference Include="..\Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj" />
     <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />

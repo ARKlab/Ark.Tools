@@ -6,9 +6,15 @@ using System.IO;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Ark.Tools.Http;
+using Ark.Tools.NewtonsoftJson;
 
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
+
+using Flurl.Http;
+using Flurl.Http.Configuration;
+using Flurl.Http.Newtonsoft;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -167,7 +173,11 @@ namespace WebApplicationDemo
 			{
 			};
 
-			var apiHost = new ApiHost(cfg)
+
+
+
+
+            var apiHost = new ApiHost(cfg)
 				.WithContainer(Container);
 		}
 	}

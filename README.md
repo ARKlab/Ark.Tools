@@ -34,11 +34,39 @@ Documentation improvements are up-for-grabs ;)
 
 NetStandard 2.1 is the minimum version going forward.
 
-### Flurl upgrade to v4
+### Flurl v4 Migration Guide
 
-See [Flurl](https://flurl.dev/docs/upgrade/) for details, but long-story-short is:
+In services that use `IFlurlClient`, the `IFlurlClientFactory` will be replaced with the new `IArkFlurlClientFactory`. The difference in services is that now the flurl clients must be manually disposed after use by implementing IDisposable. An example implementation can be found in the WebApplicationDemo in the `PostService`.
 
-* Flurl now default to STJ thus use `XXXXX` to configure a Newtonsoft client factory
+*Note: To continue using Newtonsoft as the json serializer, there is a param `useNewtonsoft` in the `IArkFlurlClientFactory.Get()` method.
+
+In the TestHost for initializing tests that use Flurl, we now use `ArkFlurlClientFactory` as the factory. To connect to the test server we extend the `DefaultFlurlClientFactory` as such:
+
+```class TestServerfactory : DefaultFlurlClientFactory
+{
+    private readonly TestServer _server;
+
+    public TestServerfactory(TestServer server)
+    {
+        _server = server;
+    }
+
+    public override HttpMessageHandler CreateInnerHandler()
+    {
+        return _server.CreateHandler();
+    }
+}
+```
+
+We then initialize the factory:
+
+`_factory = new ArkFlurlClientFactory(new TestServerfactory(_server.GetTestServer()));`
+
+We then register the factor as usual:
+
+`ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));`
+
+An example can be found in the TestProject under `TestHost`.
 
 ### Rebus upgrade to v8
 
