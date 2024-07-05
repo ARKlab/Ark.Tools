@@ -4,18 +4,10 @@ using Flurl.Http;
 using Flurl.Http.Configuration;
 
 using System;
-using System.Net.Http;
-using System.Net;
+using Flurl.Http.Newtonsoft;
 
 namespace Ark.Tools.Http
 {
-    public interface IArkFlurlClientFactory
-    {
-        IFlurlClient Get(string baseUrl, Action<FlurlHttpSettings>? settings = null);
-
-        IFlurlClient Get(Uri baseUrl, Action<FlurlHttpSettings>? settings = null);
-    }
-
     public class ArkFlurlClientFactory : IArkFlurlClientFactory
     {
         private readonly IFlurlClientFactory _clientFactory;
@@ -27,17 +19,20 @@ namespace Ark.Tools.Http
             _clientFactory = clientFactory ?? new DefaultFlurlClientFactory();
         }
 
-        public IFlurlClient Get(string baseUrl, Action<FlurlHttpSettings>? settings = null)
+        public IFlurlClient Get(string baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoft = null)
         {
             var builder = new ArkFlurlClientBuilder(baseUrl, _clientFactory)
-                .ConfigureArkDefaults();
+                .ConfigureArkDefaults(useNewtonsoft ?? false);
 
             if (settings != null)
                 builder = builder.WithSettings(settings);
 
+            if (useNewtonsoft.HasValue && useNewtonsoft.Value)
+                builder = builder.UseNewtonsoft();
+
             return builder.Build();
         }
         
-        public IFlurlClient Get(Uri baseUrl, Action<FlurlHttpSettings>? settings = null) => Get(baseUrl.ToString(), settings);
+        public IFlurlClient Get(Uri baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoft = null) => Get(baseUrl.ToString(), settings, useNewtonsoft);
     }
 }

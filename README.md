@@ -34,15 +34,11 @@ Documentation improvements are up-for-grabs ;)
 
 NetStandard 2.1 is the minimum version going forward.
 
-### Flurl upgrade to v4
-
-See [Flurl](https://flurl.dev/docs/upgrade/) for details, but long-story-short is:
-
-* Flurl now default to STJ thus use `XXXXX` to configure a Newtonsoft client factory
-
 ### Flurl v4 Migration Guide
 
 In services that use `IFlurlClient`, the `IFlurlClientFactory` will be replaced with the new `IArkFlurlClientFactory`. The difference in services is that now the flurl clients must be manually disposed after use by implementing IDisposable. An example implementation can be found in the WebApplicationDemo in the `PostService`.
+
+*Note: To continue using Newtonsoft as the json serializer, there is a param `useNewtonsoft` in the `IArkFlurlClientFactory.Get()` method.
 
 In the TestHost for initializing tests that use Flurl, we now use `ArkFlurlClientFactory` as the factory. To connect to the test server we extend the `DefaultFlurlClientFactory` as such:
 
