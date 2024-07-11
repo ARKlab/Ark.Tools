@@ -78,8 +78,12 @@ If the maximum number of delivery attempts is reached, the message is passed to 
                 return;
             }
 
+            int? deliveryCountValue = null;
+
             if (transportMessage.Headers.TryGetValue(Headers.DeliveryCount, out var value) && int.TryParse(value, out var deliveryCount))
             {
+                deliveryCountValue = deliveryCount;
+
                 var maxDeliveryAttempts = _retryStrategySettings.SecondLevelRetriesEnabled
                     ? 2 * _retryStrategySettings.MaxDeliveryAttempts
                     : _retryStrategySettings.MaxDeliveryAttempts;
@@ -122,13 +126,15 @@ If the maximum number of delivery attempts is reached, the message is passed to 
             }
             catch (Exception exception)
             {
-                await _handleException(exception, transactionContext, messageId, context, next);
+                await _handleException(exception, transactionContext, messageId, context, next, deliveryCountValue);
             }
         }
 
-        async Task _handleException(Exception exception, ITransactionContext transactionContext, string messageId, IncomingStepContext context, Func<Task> next)
+        async Task _handleException(Exception exception, ITransactionContext transactionContext, string messageId, IncomingStepContext context, Func<Task> next, int? deliveryCountValue)
         {
-            if (_failFastChecker.ShouldFailFast(messageId, exception))
+            if (_failFastChecker.ShouldFailFast(messageId, exception)
+                || (deliveryCountValue != null && deliveryCountValue > _retryStrategySettings.MaxDeliveryAttempts)
+                )
             {
                 // special case - it we're supposed to fail fast, AND 2nd level retries are enabled, AND this is the first delivery attempt, try to dispatch as 2nd level:
                 if (_retryStrategySettings.SecondLevelRetriesEnabled)
