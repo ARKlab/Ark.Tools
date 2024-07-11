@@ -1,0 +1,4 @@
+﻿CREATE SCHEMA [ops]
+GO
+CREATE SCHEMA [core]
+GO

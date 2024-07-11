@@ -1,0 +1,37 @@
+<Project>
+	<PropertyGroup>	
+		<LangVersion>latest</LangVersion>
+		<TargetFramework>net6.0</TargetFramework>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+
+		<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+
+		<Version>0.9.1</Version>
+    
+	</PropertyGroup>
+
+  
+  <PropertyGroup>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildProjectDirectory)\appsettings*.json" >
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+		</None>
+		<None Include="$(MSBuildProjectDirectory)\appsettings.*.json" >
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+		</None>
+	</ItemGroup>
+	
+	
+</Project>
