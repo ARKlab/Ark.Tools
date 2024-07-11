@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -31,26 +32,25 @@ namespace Ark.Tools.Auth0
         private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
         private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
         private readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
-        private readonly MemoryCacheProvider _memoryCacheProvider;
+        private readonly MemoryCacheProvider _memoryCacheProvider; 
+        private readonly ConcurrentDictionary<string, Task> _pendingTasks = new ConcurrentDictionary<string, Task>();
+
 
         public AuthenticationApiClientCachingDecorator(IAuthenticationApiClient inner)
         {
             _inner = inner;
             _memoryCacheProvider = new MemoryCacheProvider(_cache);
-            _accessTokenResponseCachePolicy = AsyncRequestCollapserPolicy.Create()
-                .WrapAsync(
+            _accessTokenResponseCachePolicy =
                     Policy.CacheAsync(
                         _memoryCacheProvider.AsyncFor<AccessTokenResponse>(),
                         new ResultTtl<AccessTokenResponse>(r => r is not null ? new Ttl(_expiresIn(r)) : new Ttl(TimeSpan.Zero))
-                        )
-                );
+                        );
 
-            _userInfoCachePolicy = AsyncRequestCollapserPolicy.Create()
-                .WrapAsync(
+            _userInfoCachePolicy =
                     Policy.CacheAsync(
                         _memoryCacheProvider.AsyncFor<UserInfo>(),
-                        new ContextualTtl())
-                );
+                        new ContextualTtl());
+                        
         }
 
         private static TimeSpan _expiresIn(AccessTokenResponse r)
@@ -133,10 +133,17 @@ namespace Ark.Tools.Auth0
         {
             var key = (string)_getKey((dynamic)request);
 
-            var res = await _accessTokenResponseCachePolicy.ExecuteAsync(
-                    (_, ctk) => _inner.GetTokenAsync((dynamic)request, ctk),
-                    new Context(key), cancellationToken);
+            var task = _pendingTasks.GetOrAdd(
+                key,
+                k => _accessTokenResponseCachePolicy.ExecuteAsync(
+                    ctx => _inner.GetTokenAsync((dynamic)request, cancellationToken),
+                    new Context(k)
+                )
+            ) as Task<AccessTokenResponse>;
 
+            var res = await task!;
+
+            _pendingTasks.TryRemove(key, out var _);
             return res;
         }
         
