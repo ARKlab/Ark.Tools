@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: 'Build'
-    runs-on: 'windows-latest'
+    runs-on: 'ubuntu-latest'
     services:
       azurite:
         image: mcr.microsoft.com/azure-storage/azurite:latest

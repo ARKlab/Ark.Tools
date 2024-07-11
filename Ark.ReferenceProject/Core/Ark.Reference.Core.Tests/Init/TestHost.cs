@@ -269,10 +269,7 @@ namespace Ark.Reference.Core.Tests.Init
     {
         public TestEnv()
         {
-            var codeBase = Assembly.GetExecutingAssembly().Location;
-            var uri = new UriBuilder(codeBase);
-            string path = Uri.UnescapeDataString(uri.Path);
-            TestDataFilePath = Path.GetDirectoryName(path) + @"\TestData\";
+            TestDataFilePath = Path.GetDirectoryName(AppContext.BaseDirectory) + @"\TestData\";
         }
 
         public ClaimsPrincipal TestPrincipal { get; } = new ClaimsPrincipal(new ClaimsIdentity(new[]{
