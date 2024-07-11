@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -20,6 +20,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 				.Where(x =>
 				{
 					var t = x.i.Type;
+					if (t is null) return false;
+					
 					if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
 					{
 						t = Nullable.GetUnderlyingType(t) ?? t;

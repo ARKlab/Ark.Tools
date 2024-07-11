@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "dependencies": {
+    ".NETFramework,Version=v4.7.2": {
+      "Microsoft.NETFramework.ReferenceAssemblies": {
+        "type": "Direct",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "7D2TMufjGiowmt0E941kVoTIS+GTNzaPopuzM1/1LSaJAdJdBrVP0SkZW7AgDd0a2U1DjsIeaKG1wxGVBNLDMw==",
+        "dependencies": {
+          "Microsoft.NETFramework.ReferenceAssemblies.net472": "1.0.0"
+        }
+      },
+      "Microsoft.SqlServer.Dacpacs.Master": {
+        "type": "Direct",
+        "requested": "[160.0.0, )",
+        "resolved": "160.0.0",
+        "contentHash": "bgiN77Hfpev7+LON0WOZbgz1VvL6abuUkw14ulLwAnAiuYCcav8HCAoGlgSXVhsLd8U5+jSgeX/ZrNBuPF24qA=="
+      },
+      "Microsoft.NETFramework.ReferenceAssemblies.net472": {
+        "type": "Transitive",
+        "resolved": "1.0.0",
+        "contentHash": "VI0f22cH/xOlXLUVY7t6vr2Gi7cg0vzwpspNGz5isRusyspZblF7jJMw49E8mF1m071JyeVmZVkIK9c5kbiyFA=="
+      }
+    }
+  }
+}

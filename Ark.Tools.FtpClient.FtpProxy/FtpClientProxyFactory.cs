@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using Ark.Tools.Http;
@@ -23,7 +23,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         public IFtpClient Create(FtpConfig ftpConfig)
         {
-            return new FtpClientProxy(_config, ArkFlurlClientFactory.Instance, _tokenProvider, ftpConfig);
+            return new FtpClientProxy(_config, _tokenProvider, ftpConfig);
         }
     }
 }

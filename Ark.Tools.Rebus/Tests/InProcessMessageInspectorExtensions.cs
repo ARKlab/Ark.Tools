@@ -12,8 +12,8 @@ namespace Ark.Tools.Rebus.Tests
             {
                 var pipeline = c.Get<IPipeline>();
                 var step = new InProcessMessageInspectorStep();
-                return new PipelineStepInjector(pipeline)
-                    .OnReceive(step, PipelineRelativePosition.Before, typeof(DeserializeIncomingMessageStep));
+                return new PipelineStepConcatenator(pipeline)
+                    .OnReceive(step, PipelineAbsolutePosition.Front);
             });
         }
     }

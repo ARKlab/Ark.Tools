@@ -1,13 +1,16 @@
 ﻿using Ark.Tools.Activity.Provider;
+
+using System;
+
 using TestWorker.Constants;
 
 namespace TestWorker.Configs
 {
 	public class RebusResourceNotifier_Config : IRebusResourceNotifier_Config
 	{
-        public RebusResourceNotifier_Config(string asbConnectionString)
+        public RebusResourceNotifier_Config(string? asbConnectionString)
         {
-            AsbConnectionString = asbConnectionString;
+            AsbConnectionString = asbConnectionString ?? throw new ArgumentNullException(nameof(asbConnectionString));
         }
 
         public string AsbConnectionString { get; set; }

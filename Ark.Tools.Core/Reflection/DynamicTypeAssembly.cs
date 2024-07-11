@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Core.Reflection
 {
-#if !NETSTANDARD2_0
     /// <summary>
     /// Generates new Types with dynamically added properties.
     /// </summary>
@@ -118,5 +117,4 @@ namespace Ark.Tools.Core.Reflection
             propertyBuilder.SetSetMethod(setMethodBuilder);
         }
     }
-#endif
 }

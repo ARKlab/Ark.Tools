@@ -50,7 +50,7 @@ namespace Processor.Service.WebInterface
                     services.AddSingleton<IHostedService, HostedService>();
                 }).ConfigureAppConfiguration((ctx, cfg) =>
                 {
-                    cfg.AddArkLegacyEnvironmentVariables();
+                    cfg.AddArkEnvironmentVariables();
                 })
                 .AddWorkerHost(
                     s =>

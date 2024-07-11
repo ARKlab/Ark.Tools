@@ -1,29 +1,38 @@
-﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Flurl;
 using Flurl.Http;
 using Flurl.Http.Configuration;
 
+using System;
+using Flurl.Http.Newtonsoft;
+
 namespace Ark.Tools.Http
 {
-    public class ArkFlurlClientFactory : DefaultFlurlClientFactory
+    public class ArkFlurlClientFactory : IArkFlurlClientFactory
     {
+        private readonly IFlurlClientFactory _clientFactory;
+
         public static ArkFlurlClientFactory Instance { get; } = new ArkFlurlClientFactory();
 
-        protected override IFlurlClient Create(Url url)
+        public ArkFlurlClientFactory(IFlurlClientFactory? clientFactory = null)
         {
-            var client = base.Create(url);
-            client.ConfigureArkDefaults();
-
-            return client;
+            _clientFactory = clientFactory ?? new DefaultFlurlClientFactory();
         }
 
-        public static void RegisterGlobally()
+        public IFlurlClient Get(string baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoft = null)
         {
-            FlurlHttp.Configure(settings =>
-            {
-                settings.FlurlClientFactory = Instance;
-            });
+            var builder = new ArkFlurlClientBuilder(baseUrl, _clientFactory)
+                .ConfigureArkDefaults(useNewtonsoft ?? false);
+
+            if (settings != null)
+                builder = builder.WithSettings(settings);
+
+            if (useNewtonsoft.HasValue && useNewtonsoft.Value)
+                builder = builder.UseNewtonsoft();
+
+            return builder.Build();
         }
+        
+        public IFlurlClient Get(Uri baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoft = null) => Get(baseUrl.ToString(), settings, useNewtonsoft);
     }
 }

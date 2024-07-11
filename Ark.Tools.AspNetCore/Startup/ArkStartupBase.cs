@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2023 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights;
@@ -48,7 +48,7 @@ namespace Ark.Tools.AspNetCore.Startup
             app.Use((context, next) =>
             {
                 if (context.Request.Headers.TryGetValue("X-Forwarded-PathBase", out var pathbase) && pathbase != "/")
-                    context.Request.PathBase = pathbase + context.Request.PathBase;
+                    context.Request.PathBase = pathbase[0] ?? "" + context.Request.PathBase;
                 return next();
             });
             

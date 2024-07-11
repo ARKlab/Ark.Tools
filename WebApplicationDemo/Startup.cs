@@ -6,9 +6,15 @@ using System.IO;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Ark.Tools.Http;
+using Ark.Tools.NewtonsoftJson;
 
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
+
+using Flurl.Http;
+using Flurl.Http.Configuration;
+using Flurl.Http.Newtonsoft;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.OpenApi.Models;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -104,7 +111,8 @@ namespace WebApplicationDemo
                     Configuration.Bind("AzureAdB2C", options);
 
                     options.TokenValidationParameters.NameClaimType = "name";
-                    (options.SecurityTokenValidators[0] as JwtSecurityTokenHandler)?.InboundClaimTypeMap.Add("extension_Scope", "scope");
+                    
+                    (options.TokenHandlers[0] as JsonWebTokenHandler)?.InboundClaimTypeMap.Add("extension_Scope", "scope");
                 },
                     options => {
                         Configuration.Bind("AzureAdB2C", options);
@@ -165,7 +173,11 @@ namespace WebApplicationDemo
 			{
 			};
 
-			var apiHost = new ApiHost(cfg)
+
+
+
+
+            var apiHost = new ApiHost(cfg)
 				.WithContainer(Container);
 		}
 	}
