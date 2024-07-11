@@ -224,10 +224,6 @@ namespace Ark.Reference.Core.Application.Host
                     {
                         o.SetMaxParallelism(1);
                     }
-                    else
-                    {
-                        o.SetMaxParallelism(1);
-                    }
 
                     o.EnableCompression();
                     o.AutomaticallyFlowUserContext(Container);
