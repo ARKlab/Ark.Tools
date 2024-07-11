@@ -8,8 +8,7 @@ This is a set of core libraries developed and maintained by Ark as a set of help
 
 All libraries are provided in NuGet.
 
-Support for .NET Framework 4.7.1,.NET Standard 2.x, .NET 6.0.
-Support for other frameworks is up-for-grabs ;)
+Support for .NET Standard 2.1, .NET 8.0 LTS.
 
 ## Quick Start
 
