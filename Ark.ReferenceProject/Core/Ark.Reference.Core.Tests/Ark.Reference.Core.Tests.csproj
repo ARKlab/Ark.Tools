@@ -12,18 +12,16 @@
 
 	<ItemGroup>
 		<PackageReference Include="BizArk.Core" Version="4.0.1.50" />
-		<PackageReference Include="ExcelDataReader" Version="3.6.0" />
-		<PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
-		<PackageReference Include="FluentAssertions" Version="6.10.0" />
-		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.16" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
-		<PackageReference Include="Microsoft.SqlServer.DacFx" Version="162.0.52" />
-		<PackageReference Include="Moq" Version="4.18.4" />
-		<PackageReference Include="MSTest.TestAdapter" Version="3.0.4" />
-		<PackageReference Include="MSTest.TestFramework" Version="3.0.4" />
-		<PackageReference Include="netDumbster" Version="3.0.1" />
-		<PackageReference Include="NodaTime.Testing" Version="3.1.9" />
-		<PackageReference Include="Polly" Version="7.2.3" />
+		<PackageReference Include="ExcelDataReader" Version="3.7.0" />
+		<PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.7" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+		<PackageReference Include="Microsoft.SqlServer.DacFx" Version="162.3.566" />
+		<PackageReference Include="Moq" Version="4.20.70" />
+		<PackageReference Include="MSTest.TestAdapter" Version="3.4.3" />
+		<PackageReference Include="MSTest.TestFramework" Version="3.4.3" />
+		<PackageReference Include="netDumbster" Version="3.1.0" />
+		<PackageReference Include="NodaTime.Testing" Version="3.1.11" />
 		<PackageReference Include="SpecFlow.MsTest" Version="3.9.74" />
 		<PackageReference Include="SpecFlow.Tools.MsBuild.Generation" Version="3.9.74" />
 	</ItemGroup>

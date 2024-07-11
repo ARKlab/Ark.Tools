@@ -1,23 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project DefaultTargets="Build">
+  <Sdk Name="Microsoft.Build.Sql" Version="0.1.19-preview" />
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <Name>Ark.Reference.Core.Database</Name>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{bee200d4-b2fc-4384-bda2-5ccab62c1597}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
-    <RootPath>
-    </RootPath>
-    <RootNamespace>Ark.Reference.Core.Database</RootNamespace>
-    <AssemblyName>Ark.Reference.Core.Database</AssemblyName>
     <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
-    <DeployToDatabase>True</DeployToDatabase>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <TargetLanguage>CS</TargetLanguage>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <SqlServerVerification>False</SqlServerVerification>
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
@@ -30,76 +20,46 @@
     <AutoUpdateStatisticsAsynchronously>True</AutoUpdateStatisticsAsynchronously>
     <AllowSnapshotIsolation>True</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>bin\Release\</OutputPath>
-    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
-    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <DefineDebug>false</DefineDebug>
-    <DefineTrace>true</DefineTrace>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <RunSqlCodeAnalysis>False</RunSqlCodeAnalysis>
-    <SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0004;-Microsoft.Rules.Data.SR0016</SqlCodeAnalysisRules>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>bin\Debug\</OutputPath>
-    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <DefineDebug>true</DefineDebug>
-    <DefineTrace>true</DefineTrace>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <RunSqlCodeAnalysis>False</RunSqlCodeAnalysis>
-    <SqlCodeAnalysisRules>-Microsoft.Rules.Data.SR0004;-Microsoft.Rules.Data.SR0016</SqlCodeAnalysisRules>
-  </PropertyGroup>
-  <PropertyGroup>
-    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
-    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
-    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
-    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
-  </PropertyGroup>
-  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
-  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
-    <Folder Include="Properties" />
-    <Folder Include="dbo" />
-    <Folder Include="ops" />
-    <Folder Include="Security" />
-    <Folder Include="dbo\Tables" />
-    <Folder Include="_Migrations" />
-    <Folder Include="core" />
-    <Folder Include="core\Tables" />
-    <Folder Include="core\Types" />
+    <PackageReference Include="Microsoft.SqlServer.Dacpacs.Master" Version="160.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <Build Include="Security\Schemas.sql" />
-    <Build Include="dbo\Tables\Audit.sql" />
-    <Build Include="ops\InitConfig.sql" />
-    <Build Include="ops\ResetFull_OnlyForTesting.sql" />
+    <!-- Build default globbing pattern includes all sql files in all subfolders, excluding bin and obj -->
+    <Build Include="**/*.sql" />
+    <Build Remove="bin/**/*.sql" />
+    <Build Remove="obj/**/*.sql" />
+    <Build Remove="_Migrations/**/*.sql" />
+  </ItemGroup>
+  <ItemGroup>
     <Build Include="dbo\Tables\Outbox.sql" />
     <Build Include="dbo\Tables\Ping.sql" />
+    <Build Include="ops\InitConfig.sql" />
+    <Build Include="ops\ResetFull_OnlyForTesting.sql" />
+    <Build Include="Security\Schemas.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Ark.Reference.Core.Database.publish.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="_Migrations\RunMigration.PreDeployment.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment.sql">
       <CopyToOutputDirectory>DoNotCopy</CopyToOutputDirectory>
     </PostDeploy>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="dbo\" />
+    <Folder Include="dbo\Tables\" />
+    <Folder Include="ops\" />
+    <Folder Include="Security\" />
+    <Folder Include="_Migrations\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="_Migrations/*.sql" />
+  </ItemGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy /y "$(ProjectDir)$(OutputPath)$(TargetName).dacpac" "$(SolutionDir)\Ark.ReferenceProject\Core\Ark.Reference.Core.Tests\"</PostBuildEvent>
+    <PostBuildEvent>copy /y "$(SolutionDir)Ark.ReferenceProject\Core\Ark.Reference.Core.Database\bin\$(Configuration)\*.dacpac" "$(SolutionDir)Ark.ReferenceProject\Core\Ark.Reference.Core.Tests\"</PostBuildEvent>
   </PropertyGroup>
 </Project>
