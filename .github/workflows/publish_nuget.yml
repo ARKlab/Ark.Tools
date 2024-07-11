@@ -43,6 +43,9 @@ jobs:
       id: version
       uses: battila7/get-version-action@v2
 
+    - name: Build
+      run: dotnet build --configuration Debug
+      
     - name: Test
       run: dotnet test --configuration Debug --logger "trx;LogFileName=test-results.trx"
 
