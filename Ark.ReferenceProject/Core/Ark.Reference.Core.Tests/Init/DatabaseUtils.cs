@@ -14,7 +14,7 @@ namespace Ark.Reference.Core.Tests.Init
     [Binding]
     class DatabaseUtils
     {
-        public const string DatabaseConnectionString = @"Data Source=(localdb)\MSSQLLocalDB;Integrated Security=True";
+        public const string DatabaseConnectionString = @"Data Source=127.0.0.1;Encrypt=True;TrustServerCertificate=True;User Id=sa;Password=ArkSpecFlow123Stella!;";
 
         [BeforeTestRun(Order = -1)]
         public static void CreateNLogDatabaseIfNotExists()
