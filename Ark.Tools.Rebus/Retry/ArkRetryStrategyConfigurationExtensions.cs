@@ -1,19 +1,11 @@
-﻿using System;
-using System.Threading;
-
-using Rebus.Config;
+﻿using Rebus.Config;
 using Rebus.Logging;
 using Rebus.Messages;
-using Rebus.Pipeline;
-using Rebus.Pipeline.Receive;
-using Rebus.Pipeline.Send;
-using Rebus.Retry;
-using Rebus.Retry.ErrorTracking;
 using Rebus.Retry.FailFast;
+using Rebus.Retry;
 using Rebus.Retry.Simple;
-using Rebus.Threading;
-using Rebus.Time;
-using Rebus.Transport;
+
+using System.Threading;
 
 namespace Ark.Tools.Rebus.Retry
 {
@@ -48,6 +40,19 @@ namespace Ark.Tools.Rebus.Retry
                 errorDetailsHeaderMaxLength, 
                 errorTrackingMaxAgeMinutes, 
                 errorQueueErrorCooldownTimeSeconds);
+
+            //ArkDefault --> IRetryStrategy
+            optionsConfigurer.Register<IRetryStrategy>(c =>
+            {
+                var simpleRetryStrategySettings = c.Get<RetryStrategySettings>();
+                var rebusLoggerFactory = c.Get<IRebusLoggerFactory>();
+                var errorTracker = c.Get<IErrorTracker>();
+                var errorHandler = c.Get<IErrorHandler>();
+                var failFastChecker = c.Get<IFailFastChecker>();
+                var exceptionInfoFactory = c.Get<IExceptionInfoFactory>();
+                var cancellationToken = c.Get<CancellationToken>();
+                return new ArkDefaultRetryStrategy(simpleRetryStrategySettings, rebusLoggerFactory, errorTracker, errorHandler, failFastChecker, exceptionInfoFactory, cancellationToken);
+            });
         }
     }
 }

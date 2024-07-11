@@ -49,10 +49,10 @@ namespace Core.Service.Application.Handlers.Messages
             {
                 if (entity.Name.Contains("fast", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    throw new NotImplementedException("FailFastEx");
+                    throw new NotImplementedException($"FailFastEx_MsgCount_{currentMessageCount}");
                 }
 
-                throw new Exception("NormalEx");
+                throw new Exception($"NormalEx_MsgCount_{currentMessageCount}");
             }
 
             await _updateEntityAndCommit(ctx, entity, $"HandleOk_MsgCount_{currentMessageCount}");

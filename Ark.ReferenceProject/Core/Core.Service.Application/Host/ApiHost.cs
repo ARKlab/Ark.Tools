@@ -222,11 +222,11 @@ namespace Core.Service.Application.Host
 
                     if (!useRealAzureServiceBus)
                     {
-                        o.SetMaxParallelism(2);
+                        o.SetMaxParallelism(1);
                     }
                     else
                     {
-                        o.SetMaxParallelism(Environment.ProcessorCount * 4);
+                        o.SetMaxParallelism(1);
                     }
 
                     o.EnableCompression();
