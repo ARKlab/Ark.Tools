@@ -22,7 +22,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Polly;
 using Polly.Caching;
 using Polly.Caching.Memory;
-using Polly.Contrib.DuplicateRequestCollapser;
 
 namespace Ark.Tools.Auth0
 {
