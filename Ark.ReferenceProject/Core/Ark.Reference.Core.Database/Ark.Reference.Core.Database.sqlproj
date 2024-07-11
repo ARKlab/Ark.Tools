@@ -60,7 +60,7 @@
     <None Include="_Migrations/*.sql" />
   </ItemGroup>
   <PropertyGroup>
-    <PostBuildEvent Condition="'$(IsWindows)' == 'true'">copy /y "$(SolutionDir)Ark.ReferenceProject\Core\Ark.Reference.Core.Database\bin\$(Configuration)/*.dacpac" "$(SolutionDir)Ark.ReferenceProject\Core\Ark.Reference.Core.Tests\"</PostBuildEvent>
-    <PostBuildEvent Condition="'$(IsLinux)' == 'true'">cp -f "$(SolutionDir)Ark.ReferenceProject\Core\Ark.Reference.Core.Database\bin\$(Configuration)/*.dacpac" "$(SolutionDir)Ark.ReferenceProject\Core\Ark.Reference.Core.Tests\"</PostBuildEvent>
+    <PostBuildEvent Condition="'$(IsWindows)' == 'true'">copy /y "$(SolutionDir)Ark.ReferenceProject\Core\Ark.Reference.Core.Database\bin\$(Configuration)\*.dacpac" "$(SolutionDir)Ark.ReferenceProject\Core\Ark.Reference.Core.Tests\"</PostBuildEvent>
+    <PostBuildEvent Condition="'$(IsLinux)' == 'true'">cp -f "$(SolutionDir)Ark.ReferenceProject/Core\Ark.Reference.Core.Database/bin/$(Configuration)/*.dacpac" "$(SolutionDir)Ark.ReferenceProject/Core\Ark.Reference.Core.Tests/"</PostBuildEvent>
   </PropertyGroup>
 </Project>
