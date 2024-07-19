@@ -5,6 +5,7 @@ using Flurl.Http.Configuration;
 
 using System;
 using Flurl.Http.Newtonsoft;
+using Ark.Tools.NewtonsoftJson;
 
 namespace Ark.Tools.Http
 {
@@ -19,20 +20,17 @@ namespace Ark.Tools.Http
             _clientFactory = clientFactory ?? new DefaultFlurlClientFactory();
         }
 
-        public IFlurlClient Get(string baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoft = null)
+        public IFlurlClient Get(string baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoftJson = null)
         {
             var builder = new ArkFlurlClientBuilder(baseUrl, _clientFactory)
-                .ConfigureArkDefaults(useNewtonsoft ?? false);
+                .ConfigureArkDefaults(useNewtonsoftJson ?? false);
 
             if (settings != null)
                 builder = builder.WithSettings(settings);
 
-            if (useNewtonsoft.HasValue && useNewtonsoft.Value)
-                builder = builder.UseNewtonsoft();
-
             return builder.Build();
         }
         
-        public IFlurlClient Get(Uri baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoft = null) => Get(baseUrl.ToString(), settings, useNewtonsoft);
+        public IFlurlClient Get(Uri baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoftJson = null) => Get(baseUrl.ToString(), settings, useNewtonsoftJson);
     }
 }
