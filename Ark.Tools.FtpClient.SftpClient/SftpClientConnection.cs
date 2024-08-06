@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 using Renci.SshNet;
-using Renci.SshNet.Async;
 using Renci.SshNet.Sftp;
 using System;
 using System.Collections.Generic;
@@ -12,6 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Ark.Tools.FtpClient.SftpClient
 {
@@ -50,7 +50,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             path ??= "./";
             await _ensureConnected(ctk);
 
-            var rawLs = await _client.ListDirectoryAsync(path);
+            var rawLs = await _client.ListDirectoryAsync(path, ctk).ToListAsync(ctk);
             return _parse(rawLs);
 
         }
@@ -204,7 +204,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             }
         }
 
-        private List<FtpEntry> _parse(IEnumerable<SftpFile> files)
+        private List<FtpEntry> _parse(IEnumerable<ISftpFile> files)
         {
             var result = new List<FtpEntry>();
 
