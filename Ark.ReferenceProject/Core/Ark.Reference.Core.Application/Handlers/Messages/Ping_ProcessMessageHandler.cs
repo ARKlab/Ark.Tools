@@ -52,7 +52,7 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
                     throw new NotImplementedException($"FailFastEx_MsgCount_{currentMessageCount}");
                 }
 
-                throw new Exception($"NormalEx_MsgCount_{currentMessageCount}");
+                throw new InvalidOperationException($"NormalEx_MsgCount_{currentMessageCount}");
             }
 
             await _updateEntityAndCommit(ctx, entity, $"HandleOk_MsgCount_{currentMessageCount}");

@@ -40,9 +40,6 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
             if (count == 0)
                 throw new EntityNotFoundException($"Audit with AuditId {query.AuditId} not found");
 
-            if (count != 1)
-                throw new ApplicationException($"Multiple Audits found for AuditId {query.AuditId}");
-
             var audit = records.Single();
 
             switch (audit.Kind)
@@ -55,7 +52,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
                     );
 
                 default:
-                    throw new ApplicationException($"AuditKind {audit.Kind} is not supported");
+                    throw new NotSupportedException($"AuditKind {audit.Kind} is not supported");
             }
         }
     }

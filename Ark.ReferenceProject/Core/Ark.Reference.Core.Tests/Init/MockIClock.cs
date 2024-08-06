@@ -52,7 +52,7 @@ namespace Ark.Reference.Core.Tests.Init
         [Given(@"the time will auto-increment")]
         public static void GivenTheClockAutoIncrement()
         {
-            if (_swappableClock.Clock != _fakeClock) throw new ApplicationException("Current scenario is not using the FakeClock");
+            if (_swappableClock.Clock != _fakeClock) throw new InvalidOperationException("Current scenario is not using the FakeClock");
             _fakeClock.AutoAdvance = Duration.FromMilliseconds(1000);
         }
     }

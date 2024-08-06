@@ -1893,8 +1893,8 @@
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "Transitive",
-        "resolved": "6.6.2",
-        "contentHash": "mBBb+/8Hm2Q3Wygag+hu2jj69tZW5psuv0vMRXY07Wy+Rrj40vRP8ZTbKBhs91r45/HXT4aY4z0iSBYx1h6JvA=="
+        "resolved": "6.7.0",
+        "contentHash": "Oxyf8IcU28J0FlEVpBhywIAMRo1gvOERMyIZ56iOdyLJSkhz4MJRo4MDR++q+gh+R2f2+4KnATUvpU4wHweZJg=="
       },
       "System.AppContext": {
         "type": "Transitive",
@@ -3035,7 +3035,7 @@
           "Swashbuckle.AspNetCore.Newtonsoft": "[6.6.2, )",
           "Swashbuckle.AspNetCore.Swagger": "[6.6.2, )",
           "Swashbuckle.AspNetCore.SwaggerGen": "[6.6.2, )",
-          "Swashbuckle.AspNetCore.SwaggerUI": "[6.6.2, )"
+          "Swashbuckle.AspNetCore.SwaggerUI": "[6.7.0, )"
         }
       },
       "ark.tools.authorization": {

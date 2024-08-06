@@ -1,4 +1,12 @@
 {
     "name": ".NET 8",
-    "image": "mcr.microsoft.com/devcontainers/dotnet:8.0"
+    "customizations": {
+      "vscode": {
+        "extensions": ["ms-dotnettools.csdevkit"]
+      }
+    },
+    "dockerComposeFile": "docker-compose.yml",
+	  "service": "app",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "forwardPorts": [1433]
 }
