@@ -50,9 +50,15 @@ namespace Ark.Tools.FtpClient.SftpClient
             path ??= "./";
             await _ensureConnected(ctk);
 
-            var rawLs = await _client.ListDirectoryAsync(path);
-            return _parse(rawLs);
+            var rawLs = _client.ListDirectoryAsync(path, cancellationToken: ctk);
+            var res = new List<FtpEntry>();
 
+            await foreach (var file in rawLs)
+            {
+                res.Add(_parse(file));
+            }
+
+            return res;
         }
 
         private async Task _ensureConnected(CancellationToken ctk)
@@ -210,17 +216,22 @@ namespace Ark.Tools.FtpClient.SftpClient
 
             foreach (var file in files)
             {
-                var entry = new FtpEntry
-                {
-                    FullPath = file.FullName,
-                    IsDirectory = file.IsDirectory,
-                    Modified = file.LastWriteTimeUtc,
-                    Name = file.Name,
-                    Size = file.Length
-                };
+                FtpEntry entry = _parse(file);
                 result.Add(entry);
             }
             return result;
+        }
+
+        private static FtpEntry _parse(ISftpFile file)
+        {
+            return new FtpEntry
+            {
+                FullPath = file.FullName,
+                IsDirectory = file.IsDirectory,
+                Modified = file.LastWriteTimeUtc,
+                Name = file.Name,
+                Size = file.Length
+            };
         }
 
         public override async ValueTask ConnectAsync(CancellationToken ctk)
