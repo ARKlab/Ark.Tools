@@ -15,9 +15,9 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 {
     internal class Audit_GetQueryHandler : IQueryHandler<Audit_GetQuery.V1, PagedResult<AuditDto<AuditKind>>>
     {
-        private readonly Func<ICoreDataContext> _dataContext;
+        private readonly ICoreDataContextFactory _dataContext;
 
-        public Audit_GetQueryHandler(Func<ICoreDataContext> dataContext)
+        public Audit_GetQueryHandler(ICoreDataContextFactory dataContext)
         {
             _dataContext = dataContext;
         }
@@ -29,7 +29,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 
         public async Task<PagedResult<AuditDto<AuditKind>>> ExecuteAsync(Audit_GetQuery.V1 query, CancellationToken ctk = default)
         {
-            using var ctx = _dataContext();
+            await using var ctx = await _dataContext.CreateAsync(ctk);
 
             var (records, count) = await ctx.ReadAuditByFilterAsync(query, ctk: ctk);
 

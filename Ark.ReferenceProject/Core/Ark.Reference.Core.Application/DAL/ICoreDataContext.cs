@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.DAL
 {
-    public interface ICoreDataContext : IOutboxContext, IContext, IDisposable, IAuditDataContext<AuditKind>
+    public interface ICoreDataContext : IOutboxAsyncContext, IAsyncContext, IAuditDataContext<AuditKind>
     {
         #region Ping
         Task<Ping.V1.Output> ReadPingByIdAsync(

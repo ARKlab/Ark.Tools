@@ -7,7 +7,7 @@ namespace Ark.Reference.Common.Services.Audit
     public static class AuditQueryDto
     {
         public class V1<TAuditKind>
-            where TAuditKind : struct, IConvertible
+            where TAuditKind : struct, Enum
         {
             public Guid[] AuditIds { get; set; }
             public string[] Users { get; set; }

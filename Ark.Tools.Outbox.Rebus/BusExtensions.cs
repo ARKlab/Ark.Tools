@@ -1,22 +1,17 @@
-﻿using Ark.Tools.Core;
-
-using Rebus.Bus;
+﻿using Rebus.Bus;
 using Rebus.Transport;
-
-using System;
-using System.Reactive.Disposables;
 
 namespace Ark.Tools.Outbox.Rebus
 {
     public static class BusExtensions
     {
-        public static RebusTransactionScope Enlist(this RebusTransactionScope tx, IOutboxContext context)
+        public static RebusTransactionScope Enlist(this RebusTransactionScope tx, IOutboxContextCore context)
         {
             tx.TransactionContext.Items.TryAdd(OutboxTransportDecorator._outboxContextItemsKey, context);
             return tx;
         }
 
-        public static RebusTransactionScope Enlist(this IBus bus, IOutboxContext context)
+        public static RebusTransactionScope Enlist(this IBus bus, IOutboxContextCore context)
         {
             var current = AmbientTransactionContext.Current;
             var scope = new RebusTransactionScope();

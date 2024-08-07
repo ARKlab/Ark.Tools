@@ -19,9 +19,9 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 {
     public class Audit_GetChangesQueryHandler : IQueryHandler<Audit_GetChangesQuery.V1, IAuditRecordReturn<IAuditEntity>>
     {
-        private readonly Func<ICoreDataContext> _dataContext;
+        private readonly ICoreDataContextFactory _dataContext;
 
-        public Audit_GetChangesQueryHandler(Func<ICoreDataContext> dataContext)
+        public Audit_GetChangesQueryHandler(ICoreDataContextFactory dataContext)
         {
             _dataContext = dataContext;
         }
@@ -33,7 +33,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 
         public async Task<IAuditRecordReturn<IAuditEntity>> ExecuteAsync(Audit_GetChangesQuery.V1 query, CancellationToken ctk = default)
         {
-            using var ctx = _dataContext();
+            await using var ctx = await _dataContext.CreateAsync(ctk);
 
             var (records, count) = await ctx.ReadAuditByFilterAsync(new Audit_GetQuery.V1 { AuditIds = [query.AuditId] }, ctk);
 

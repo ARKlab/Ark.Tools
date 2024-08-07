@@ -51,6 +51,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using Ark.Reference.Core.API.Messages;
+using Ark.Tools.Core;
 
 namespace Ark.Reference.Core.Application.Host
 {
@@ -132,7 +133,7 @@ namespace Ark.Reference.Core.Application.Host
             return this;
         }
 
-        public ApiHost WithRebus(Queue queue = Queue.Main, InMemNetwork inMemNetwork = null, InMemorySubscriberStore inMemorySubscriberStore = null)
+        public ApiHost WithRebus(Queue queue = Queue.Core, InMemNetwork inMemNetwork = null, InMemorySubscriberStore inMemorySubscriberStore = null)
         {
             var useRealAzureServiceBus = !string.IsNullOrEmpty(this.Config.AsbConnectionString) || (inMemNetwork == null && inMemorySubscriberStore == null);
 
@@ -140,7 +141,7 @@ namespace Ark.Reference.Core.Application.Host
             {
                 var handlers = Container.GetTypesToRegister((queue switch
                 {
-                    Queue.Main => typeof(IHandleMessagesCore<>),
+                    Queue.Core => typeof(IHandleMessagesCore<>),
                     _ => throw new NotSupportedException()
                 }), this._applicationAssemblies);
                 Container.Collection.Register(typeof(IHandleMessages<>), handlers);
@@ -169,7 +170,7 @@ namespace Ark.Reference.Core.Application.Host
                     {
                         var listeningQueue = this.Config.RequestQueue + queue switch
                         {
-                            Queue.Main => "",
+                            Queue.Core => "",
                             _ => throw new NotSupportedException()
                         };
                         if (useRealAzureServiceBus)
@@ -192,15 +193,14 @@ namespace Ark.Reference.Core.Application.Host
                         else
                         {
                             t.UseDrainableInMemoryTransport(inMemNetwork, listeningQueue);
-                            //t.UseFakeDeliveryCount(3); // =maxDeliveryAttempts
                         }
                     }
 
                     t.Outbox(o =>
                     {
                         // this is used only by the Outbox processor, not on Send() or Publish()
-                        o.OutboxContextFactory(c => c.Use(Container.GetInstance<Func<IOutboxContext>>()));
-                        o.OutboxOptions(o => o.StartProcessor = queue == Queue.Main);
+                        o.OutboxAsyncContextFactory(c => c.Use(Container.GetInstance<IOutboxAsyncContextFactory>()));
+                        o.OutboxOptions(o => o.StartProcessor = queue == Queue.Core);
                         o.OutboxOptions(o => o.MaxMessagesPerBatch = 10);
                     });
                 })
@@ -309,16 +309,8 @@ namespace Ark.Reference.Core.Application.Host
                 );
 
             //Dal
-            container.RegisterSingleton<CoreDataContextFactory>();
-
-            var rw = Lifestyle.Singleton.CreateRegistration<Func<ICoreDataContext>>(() => () => container.GetInstance<CoreDataContextFactory>().Get(), container);
-            var ro = Lifestyle.Singleton.CreateRegistration<Func<ICoreDataContext>>(() => () => container.GetInstance<CoreDataContextFactory>().Get(), container);
-
-            var isIQuery = (PredicateContext ctx) => ctx.HasConsumer && ctx.Consumer.ImplementationType.IsClosedTypeOf(typeof(IQueryHandler<,>));
-            container.RegisterConditional<Func<ICoreDataContext>>(rw, ctx => !isIQuery(ctx));
-            container.RegisterConditional<Func<ICoreDataContext>>(ro, ctx => isIQuery(ctx));
-
-            container.RegisterInstance<Func<IOutboxContext>>(() => container.GetInstance<CoreDataContextFactory>().Get());
+            container.RegisterSingleton<ICoreDataContextFactory, CoreDataContextFactory>();
+            container.RegisterSingleton<IOutboxAsyncContextFactory, CoreDataContextFactory>();
 
             //Service
             container.Register<IFileStorageService, FileStorageService>();
@@ -381,7 +373,7 @@ namespace Ark.Reference.Core.Application.Host
     public enum Queue
     {
         OneWay,
-        Main,
+        Core,
     }
 
     class CoreRequiredScopePolicyHandler : RequiredScopePolicyHandler

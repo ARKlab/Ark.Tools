@@ -32,7 +32,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             new ApiHost(cfg)
                 .WithContainer(_container)
                 .WithIClock(services.GetService<IClock>())
-                .WithRebus(Queue.Main,
+                .WithRebus(Queue.Core,
                     services.GetService<InMemNetwork>(),
                     services.GetService<InMemorySubscriberStore>()
                     )

@@ -20,11 +20,11 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
                 : IHandleMessagesCore<Ping_ProcessMessage.V1>
                 , IHandleMessagesCore<IFailed<Ping_ProcessMessage.V1>>
     {
-        private readonly Func<ICoreDataContext> _coreDataContext;
+        private readonly ICoreDataContextFactory _coreDataContext;
         private readonly IContextProvider<ClaimsPrincipal> _userContext;
 
         public Ping_ProcessMessageHandler(
-              Func<ICoreDataContext> coreDataContext
+              ICoreDataContextFactory coreDataContext
             , IContextProvider<ClaimsPrincipal> userContext
             )
         {
@@ -38,7 +38,7 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
         public async Task Handle(Ping_ProcessMessage.V1 message)
         {
             int currentMessageCount = MessageCounter.Increment();
-            using var ctx = _coreDataContext();
+            await using var ctx = await _coreDataContext.CreateAsync();
 
             await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async");
 
@@ -69,7 +69,7 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
         {
             int currentMessageCount = MessageCounter.GetCount();
 
-            using var ctx = _coreDataContext();
+            await using var ctx = await _coreDataContext.CreateAsync();
             var invoiceRun = await ctx.ReadPingByIdAsync(message.Id);
 
             await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async");
@@ -84,7 +84,7 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
 
             await ctx.PatchPingAsync(entity);
 
-            ctx.Commit();
+            await ctx.CommitAsync();
         }
     }
 }
