@@ -18,7 +18,6 @@ namespace Ark.Reference.Core.WebInterface.Utils
 {
     public sealed class RebusProcessorService : IHostedService, IDisposable
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "Ark.Tools bug")]
         private readonly Container _container;
 
         public RebusProcessorService(IConfiguration config, IServiceProvider services)
@@ -43,8 +42,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
         public void Dispose()
         {
-            // BUG: Ark.Tools.Outbox.Rebus has a bug in Disposing in which it hangs
-            // _container?.Dispose();
+            _container?.Dispose();
         }
 
         public Task StartAsync(CancellationToken ctk = default)

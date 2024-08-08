@@ -41,7 +41,7 @@ namespace Ark.Tools.Outbox.Rebus
 
         public void Stop()
         {
-			_busDisposalCancellationTokenSource.Dispose();
+            _busDisposalCancellationTokenSource.Cancel();
 			_task.GetAwaiter().GetResult(); // wait for batch to complete
 		}
 
