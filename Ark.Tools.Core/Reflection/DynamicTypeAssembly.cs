@@ -2,12 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Core.Reflection
 {
@@ -87,7 +84,7 @@ namespace Ark.Tools.Core.Reflection
             return typeBuilder.CreateType() ?? throw new InvalidOperationException("CreateType() retuned null");
         }
 
-        private void _addDynamicPropertyToType(TypeBuilder typeBuilder, string propertyName, Type propertyType)
+        private static void _addDynamicPropertyToType(TypeBuilder typeBuilder, string propertyName, Type propertyType)
         {
             string fieldName = $"_{propertyName}";
 

@@ -347,10 +347,10 @@
       },
       "Azure.Identity": {
         "type": "Transitive",
-        "resolved": "1.11.4",
-        "contentHash": "Sf4BoE6Q3jTgFkgBkx7qztYOFELBCo+wQgpYDwal/qJ1unBH73ywPztIJKXBXORRzAeNijsuxhk94h0TIMvfYg==",
+        "resolved": "1.12.0",
+        "contentHash": "OBIM3aPz8n9oEO5fdnee+Vsc5Nl4W3FeslPpESyDiyByntQI5BAa76KD60eFXm9ulevnwxGZP9YXL8Y+paI5Uw==",
         "dependencies": {
-          "Azure.Core": "1.38.0",
+          "Azure.Core": "1.40.0",
           "Microsoft.Identity.Client": "4.61.3",
           "Microsoft.Identity.Client.Extensions.Msal": "4.61.3",
           "System.Memory": "4.5.4",
@@ -461,6 +461,11 @@
         "type": "Transitive",
         "resolved": "2.1.35",
         "contentHash": "YKRwjVfrG7GYOovlGyQoMvr1/IJdn+7QzNXJxyMh0YfFF5yvDmTYaJOVYWsckreNjGsGSEtrMTpnzxTUq/tZQw=="
+      },
+      "DistributedLock.Core": {
+        "type": "Transitive",
+        "resolved": "1.0.7",
+        "contentHash": "lRqvqlnN6hNtHargjhHCh9NUlJw0MPs25IYitnV82mSxXU8J74oZbpdNiUJ9eK94JmE00Bp90dF5ZVePcP5YAg=="
       },
       "Ensure.That": {
         "type": "Transitive",
@@ -1645,11 +1650,6 @@
         "resolved": "7.20.0",
         "contentHash": "nJLDCOv3qemN0XI5kmUN9h38Qw+ZQBoYtWwSGhPkDEiiZSDcAwLMgqbGNKmK3myhVWASCqXtOqrj5jUnGZrH/Q=="
       },
-      "Microsoft.SqlServer.Dacpacs.Master": {
-        "type": "Transitive",
-        "resolved": "160.0.0",
-        "contentHash": "bgiN77Hfpev7+LON0WOZbgz1VvL6abuUkw14ulLwAnAiuYCcav8HCAoGlgSXVhsLd8U5+jSgeX/ZrNBuPF24qA=="
-      },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
         "resolved": "1.0.0",
@@ -2662,6 +2662,14 @@
           "System.Runtime.Extensions": "4.3.0"
         }
       },
+      "System.Linq.Async": {
+        "type": "Transitive",
+        "resolved": "6.0.1",
+        "contentHash": "0YhHcaroWpQ9UCot3Pizah7ryAzQhNvobLMSxeDIGmnXfkQn8u5owvpOH0K6EVB+z9L7u6Cc4W17Br/+jyttEQ==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "6.0.0"
+        }
+      },
       "System.Linq.Expressions": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -3385,12 +3393,6 @@
           "Ark.Reference.Common": "[0.9.1, )"
         }
       },
-      "ark.reference.core.database": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.SqlServer.Dacpacs.Master": "[160.0.0, )"
-        }
-      },
       "ark.reference.core.webinterface": {
         "type": "Project",
         "dependencies": {
@@ -3421,6 +3423,7 @@
           "Ark.Tools.AspNetCore.NestedStartup": "[1.0.0, )",
           "Ark.Tools.AspNetCore.Swashbuckle": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.Hosting": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
           "Ark.Tools.Nodatime.Json": "[1.0.0, )",
@@ -3530,8 +3533,22 @@
           "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "NodaTime": "[3.1.11, )",
           "Polly": "[8.4.1, )",
+          "System.Linq.Async": "[6.0.1, )",
           "System.Reactive": "[6.0.1, )",
           "morelinq": "[4.3.0, )"
+        }
+      },
+      "ark.tools.hosting": {
+        "type": "Project",
+        "dependencies": {
+          "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.3.1, )",
+          "Azure.Identity": "[1.12.0, )",
+          "DistributedLock.Core": "[1.0.7, )",
+          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
+          "Microsoft.Extensions.Configuration": "[8.0.0, 9.0.0)",
+          "Microsoft.Extensions.Hosting": "[8.0.0, 9.0.0)",
+          "Microsoft.Extensions.Hosting.Abstractions": "[8.0.0, 9.0.0)",
+          "Microsoft.Extensions.Logging.Abstractions": "[8.0.1, 9.0.0)"
         }
       },
       "ark.tools.http": {

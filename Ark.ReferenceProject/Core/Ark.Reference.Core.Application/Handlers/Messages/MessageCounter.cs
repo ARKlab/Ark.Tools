@@ -1,0 +1,22 @@
+﻿namespace Ark.Reference.Core.Application
+{
+    public static class MessageCounter
+    {
+        private static int _messageCount = 0;
+
+        public static int Increment()
+        {
+            return ++_messageCount;
+        }
+
+        public static int GetCount()
+        {
+            return _messageCount;
+        }
+
+        public static void ResetCount()
+        {
+            _messageCount = 0;
+        }
+    }
+}

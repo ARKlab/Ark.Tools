@@ -47,12 +47,13 @@ namespace Ark.Reference.Core.WebInterface.Utils
             // _container?.Dispose();
         }
 
-        public async Task StartAsync(CancellationToken ctk = default)
+        public Task StartAsync(CancellationToken ctk = default)
         {
             var apiHost = _container.GetInstance<ApiHost>();
             apiHost.RunBusInBackground();
 
             var bus = _container.GetInstance<IBus>();
+            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken ctk = default)

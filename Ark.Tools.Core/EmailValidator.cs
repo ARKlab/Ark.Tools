@@ -1,5 +1,6 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Ark.Tools.Core
@@ -23,11 +24,11 @@ namespace Ark.Tools.Core
             string word = $"({atom}|{quoted_string})"; //atom / quoted-string
             string domain_literal = $"\\x5b({dtext}|{quoted_pair})*\\x5d"; // "[" *(dtext / quoted-pair) "]"
             string domain_ref = atom; // atom 
-            string sub_domain = string.Format("({0}|{1})", domain_ref, domain_literal); // domain-ref / domain-literal
-            string domain = string.Format("{0}(\\x2e{0})*", sub_domain); // sub-domain *("." sub-domain)
-            string local_part = string.Format("{0}(\\x2e{0})*", word); // word *("." word) 
-            string addr_spec = string.Format("{0}\\x40{1}", local_part, domain); //local-part "@" domain
-            return new Regex(string.Format("^{0}$", addr_spec), RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture);
+            string sub_domain = string.Format(CultureInfo.InvariantCulture, "({0}|{1})", domain_ref, domain_literal); // domain-ref / domain-literal
+            string domain = string.Format(CultureInfo.InvariantCulture, "{0}(\\x2e{0})*", sub_domain); // sub-domain *("." sub-domain)
+            string local_part = string.Format(CultureInfo.InvariantCulture, "{0}(\\x2e{0})*", word); // word *("." word) 
+            string addr_spec = string.Format(CultureInfo.InvariantCulture, "{0}\\x40{1}", local_part, domain); //local-part "@" domain
+            return new Regex(string.Format(CultureInfo.InvariantCulture, "^{0}$", addr_spec), RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture);
         }
     }
 }

@@ -5,6 +5,7 @@ using NodaTime;
 
 using System.Text.Json.Serialization;
 using NodaTime.Serialization.SystemTextJson;
+using System.IO;
 
 namespace System.Text.Json
 {
@@ -41,14 +42,16 @@ namespace System.Text.Json
             return JsonSerializer.SerializeToUtf8Bytes(obj, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
         }
 
-        public static TOut? DeserializeFromByte<TOut>(this byte[] bytes, JsonSerializerOptions? jsonSerializerOptions = null)
+        public static TOut? Deserialize<TOut>(this byte[] bytes, JsonSerializerOptions? jsonSerializerOptions = null)
         {
             if (bytes == null)
                 return default;
 
-            var readOnlySpan = new ReadOnlySpan<byte>(bytes);
+            var span = new ReadOnlySpan<byte>(bytes);
+            if (span.StartsWith(Encoding.UTF8.Preamble)) // UTF8 BOM
+                span = span.Slice(Encoding.UTF8.Preamble.Length);
 
-            return JsonSerializer.Deserialize<TOut>(readOnlySpan, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+            return JsonSerializer.Deserialize<TOut>(span, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
         }
 
         public static string? Serialize<TObj>(this TObj obj, JsonSerializerOptions? jsonSerializerOptions = null)
@@ -69,12 +72,49 @@ namespace System.Text.Json
 
         public static T? ToObject<T>(this JsonElement element, JsonSerializerOptions? jsonSerializerOptions = null)
         {
-            return element.GetRawText().Deserialize<T>(jsonSerializerOptions);
+            return element.GetRawText().Deserialize<T>(jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
         }
 
         public static T? ToObject<T>(this JsonDocument document, JsonSerializerOptions? jsonSerializerOptions = null)
         {
-            return document.RootElement.GetRawText().Deserialize<T>(jsonSerializerOptions);
+            return document.RootElement.GetRawText().Deserialize<T>(jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        }
+
+
+        public static object? Deserialize(this byte[] bytes, Type type, JsonSerializerOptions? jsonSerializerOptions = null)
+        {
+            if (bytes == null)
+                return default;
+
+            return JsonSerializer.Deserialize(bytes, type, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        }
+
+        public static object? Deserialize(this string jsonString, Type type, JsonSerializerOptions? jsonSerializerOptions = null)
+        {
+            if (string.IsNullOrEmpty(jsonString))
+                return default;
+
+            return JsonSerializer.Deserialize(jsonString, type, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        }
+
+
+        public static TOut? DeserializeFromFile<TOut>(this string jsonStringFilePath, JsonSerializerOptions? jsonSerializerOptions = null)
+        {
+            if (string.IsNullOrEmpty(jsonStringFilePath))
+                return default;
+
+            using (var fs = new FileStream(jsonStringFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                return JsonSerializer.Deserialize<TOut>(fs, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+            }
+        }
+
+        public static string? Serialize(this object obj, JsonSerializerOptions? jsonSerializerOptions = null)
+        {
+            if (obj == null)
+                return null;
+
+            return JsonSerializer.Serialize(obj, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
         }
     }
 }

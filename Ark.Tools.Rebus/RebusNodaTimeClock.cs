@@ -2,13 +2,13 @@
 using Rebus.Time;
 using NodaTime;
 
-namespace Ark.Reference.Common
+namespace Ark.Tools.Rebus
 {
-    public sealed class RebusIClock : IRebusTime
+    public sealed class RebusNodaTimeClock : IRebusTime
     {
         private readonly IClock _clock;
 
-        public RebusIClock(IClock clock)
+        public RebusNodaTimeClock(IClock clock)
         {
             _clock = clock;
         }

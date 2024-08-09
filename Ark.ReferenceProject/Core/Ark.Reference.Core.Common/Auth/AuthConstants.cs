@@ -17,6 +17,6 @@
         public const string AzureAdSchema = "AzureAd";
         public const string AzureAdB2CSchema = "AzureAdB2C";
 
-        public const string AzureB2CSection = "AzureAdB2C";
+        public const string AzureB2CConfigSection = "AzureAdB2C";
     }
 }

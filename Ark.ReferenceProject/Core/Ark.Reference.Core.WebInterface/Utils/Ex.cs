@@ -66,7 +66,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             {
                 o.ForwardDefaultSelector = ctx =>
                 {
-                    string authorization = ctx.Request.Headers["Authorization"];
+                    string authorization = ctx.Request.Headers.Authorization;
 
                     if (String.IsNullOrWhiteSpace(authorization))
                         return null;
@@ -80,7 +80,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
                     var decoded = new JwtSecurityToken(token);
 
-                    if (decoded.Issuer.StartsWith("https://login.microsoftonline.com/"))
+                    if (decoded.Issuer.StartsWith("https://login.microsoftonline.com/", StringComparison.Ordinal))
                         return AuthConstants.AzureAdSchema;
                     else
                         return AuthConstants.AzureAdB2CSchema;
@@ -90,8 +90,8 @@ namespace Ark.Reference.Core.WebInterface.Utils
             })
             .AddJwtBearer(AuthConstants.AzureAdSchema, o =>
             {
-                var tenantId = configuration.GetSection(AuthConstants.AzureB2CSection)["TenantId"];
-                var audience = configuration.GetSection(AuthConstants.AzureB2CSection)["ClientId"];
+                var tenantId = configuration.GetSection(AuthConstants.AzureB2CConfigSection)["TenantId"];
+                var audience = configuration.GetSection(AuthConstants.AzureB2CConfigSection)["ClientId"];
 
                 o.TokenValidationParameters = TokenValidator();
 
@@ -113,7 +113,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             })
             .AddMicrosoftIdentityWebApi(o =>
             {
-                configuration.Bind(AuthConstants.AzureB2CSection, o);
+                configuration.Bind(AuthConstants.AzureB2CConfigSection, o);
 
                 o.TokenValidationParameters = TokenValidator();
 
@@ -129,7 +129,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             },
             options =>
             {
-                configuration.Bind(AuthConstants.AzureB2CSection, options);
+                configuration.Bind(AuthConstants.AzureB2CConfigSection, options);
             }, AuthConstants.AzureAdB2CSchema);
         }
 

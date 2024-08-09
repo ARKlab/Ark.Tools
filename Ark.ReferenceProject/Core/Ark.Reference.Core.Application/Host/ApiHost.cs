@@ -251,7 +251,7 @@ namespace Ark.Reference.Core.Application.Host
                 })
                 .Timeouts(t =>
                 {
-                    t.OtherService<IRebusTime>().Register(c => new RebusIClock(Container.GetInstance<IClock>()));
+                    t.OtherService<IRebusTime>().Register(c => new RebusNodaTimeClock(Container.GetInstance<IClock>()));
                     if (!useRealAzureServiceBus)
                         t.StoreInMemoryTests();
                 })

@@ -81,7 +81,7 @@ namespace Ark.Tools.Authorization.Requirement
     public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHandler
         where TPermissionEnum : System.Enum
     {
-        private IUserPermissionsProvider<TPermissionEnum> _provider;
+        private readonly IUserPermissionsProvider<TPermissionEnum> _provider;
 
         static PermissionAuthorizationHandler()
         {

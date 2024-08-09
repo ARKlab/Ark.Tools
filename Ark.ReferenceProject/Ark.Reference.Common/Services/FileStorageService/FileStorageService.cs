@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs;
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -53,7 +54,7 @@ namespace Ark.Reference.Common.Services.FileStorageService
 
         private BlobClient _getBlobFor(Guid guid, string filename)
         {
-            var name = string.Format("{0}/{1}", guid.ToString(), filename);
+            var name = string.Format(CultureInfo.InvariantCulture, "{0}/{1}", guid.ToString(), filename);
             return _fileClient
                 .GetBlobClient(name);
         }

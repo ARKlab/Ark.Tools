@@ -1,11 +1,17 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using System;
+using System.Collections.Generic;
 using System.Data;
+using Dapper;
+
+using System.Threading.Tasks;
+
 using Microsoft.Data.SqlClient;
 
 namespace Ark.Tools.Sql.SqlServer
 {
-	public class ReliableSqlConnectionManager : SqlConnectionManager
+    public class ReliableSqlConnectionManager : SqlConnectionManager
 	{
 		protected override SqlConnection Build(string connectionString)
 		{

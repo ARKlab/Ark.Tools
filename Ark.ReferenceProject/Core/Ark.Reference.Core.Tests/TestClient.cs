@@ -38,7 +38,7 @@ namespace Ark.Reference.Core.Tests
             _authContext = authContext;
             var tags = fctx.FeatureInfo.Tags;
 
-            _version = tags.FirstOrDefault(x => x.StartsWith("Api:"))?.Substring("Api:".Length) ?? "v" + ApplicationConstants.Versions.First();
+            _version = tags.FirstOrDefault(x => x.StartsWith("Api:", StringComparison.Ordinal))?.Substring("Api:".Length) ?? "v" + ApplicationConstants.Versions.First();
         }
 
         public void SetAuthorization(bool auth)
@@ -141,7 +141,7 @@ namespace Ark.Reference.Core.Tests
             LastResponse = req.PostStringAsync(body).GetAwaiter().GetResult();
         }
 
-        public async void PostAsMultipart(string requestUri, FileData fileData)
+        public void PostAsMultipart(string requestUri, FileData fileData)
         {
             var reqUriComposed = $"/{_version}/{requestUri}";
 
