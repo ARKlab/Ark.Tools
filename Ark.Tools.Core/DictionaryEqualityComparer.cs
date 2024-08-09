@@ -1,31 +1,31 @@
-﻿using System;
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace Ark.Reference.Common
+namespace Ark.Tools.Core
 {
-
-    public sealed class DictionaryEqualityComparer<TKey, TValue> : IEqualityComparer<IDictionary<TKey, TValue>>
+    public sealed class DictionaryEqualityComparer<TKey, TValue> : IEqualityComparer<IReadOnlyDictionary<TKey, TValue>>
     {
         private readonly IEqualityComparer<TValue> _valueComparer;
 
         public static readonly DictionaryEqualityComparer<TKey, TValue> Default = new DictionaryEqualityComparer<TKey, TValue>();
 
-        public DictionaryEqualityComparer() : this(null, null) { }
-        public DictionaryEqualityComparer(IEqualityComparer<TKey> keyComparer, IEqualityComparer<TValue> valueComparer)
+        public DictionaryEqualityComparer() : this(null) { }
+        public DictionaryEqualityComparer(IEqualityComparer<TValue>? valueComparer)
         {
             this._valueComparer = valueComparer ?? EqualityComparer<TValue>.Default;
         }
 
-        public bool Equals(IDictionary<TKey, TValue> x, IDictionary<TKey, TValue> y)
+        public bool Equals(IReadOnlyDictionary<TKey, TValue>? x, IReadOnlyDictionary<TKey, TValue>? y)
         {
             if (x == null || y == null) return (x == null && y == null); //treat null == null, null != nonNull
             return _bothHaveTheSameNumberOfItems(x, y)
                 && _bothHaveIdenticalKeyValuePairs(x, y);
         }
 
-        public int GetHashCode(IDictionary<TKey, TValue> obj)
+        public int GetHashCode(IReadOnlyDictionary<TKey, TValue> obj)
         {
             //this is far from the most efficient formula for even distribution, but is good enough
             if (obj == null) return 0;
@@ -38,14 +38,14 @@ namespace Ark.Reference.Common
             return (int)hashCode; //safe conversion thanks to the above %
         }
 
-        private bool _bothHaveTheSameNumberOfItems(IDictionary<TKey, TValue> x, IDictionary<TKey, TValue> y)
+        private bool _bothHaveTheSameNumberOfItems(IReadOnlyDictionary<TKey, TValue> x, IReadOnlyDictionary<TKey, TValue> y)
         {
             Debug.Assert(x != null);
             Debug.Assert(y != null);
             return x.Count == y.Count;
         }
 
-        private bool _bothHaveIdenticalKeyValuePairs(IDictionary<TKey, TValue> x, IDictionary<TKey, TValue> y)
+        private bool _bothHaveIdenticalKeyValuePairs(IReadOnlyDictionary<TKey, TValue> x, IReadOnlyDictionary<TKey, TValue> y)
         {
 
             Debug.Assert(x != null);
@@ -60,41 +60,4 @@ namespace Ark.Reference.Common
         }
 
     }
-
-    public sealed class CollectionComparer<T> : IEqualityComparer<IEnumerable<T>>
-    {
-        private readonly IEqualityComparer<T> _comparer;
-
-        public static readonly CollectionComparer<T> Default = new CollectionComparer<T>();
-
-        public CollectionComparer(IEqualityComparer<T> comparer = null)
-        {
-            _comparer = comparer ?? EqualityComparer<T>.Default;
-        }
-
-        public bool Equals(IEnumerable<T> first, IEnumerable<T> second)
-        {
-            if (first == null)
-                return second == null;
-            if (second == null)
-                return first == null;
-
-            if (ReferenceEquals(first, second))
-                return true;
-
-            return first.SequenceEqual(second, _comparer);
-        }
-
-        public int GetHashCode(IEnumerable<T> enumerable)
-        {
-            HashCode hash = new();
-
-            if (enumerable != null)
-                foreach (var e in enumerable)
-                    hash.Add(e, _comparer);
-
-            return hash.ToHashCode();
-        }
-    }
-    
 }

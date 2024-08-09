@@ -13,6 +13,8 @@ using SimpleInjector;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus
 {
@@ -90,6 +92,23 @@ namespace Ark.Tools.Rebus
             });
         }
 
+        public static Task RetryDeferred(this IBus bus, int maxRetries, TimeSpan delay, Action? onRetryFailure = null)
+        {
+            int cnt = 0;
+            var currentContext = MessageContext.Current;
+            if (!currentContext.Headers.TryGetValue("defer-retry", out var count)
+                || !int.TryParse(count, out cnt)
+                || cnt < maxRetries)
+                return bus.Defer(delay, new Dictionary<string, string>
+                {
+                    { "defer-retry", (++cnt).ToString(CultureInfo.InvariantCulture) }
+                });
+
+            onRetryFailure?.Invoke();
+
+            return Task.CompletedTask;
+        }
+
         [Obsolete("Use UseDrainableInMemoryTransport", true)]
         public static void UseTestsInMemoryTransport(this StandardConfigurer<ITransport> configurer, InMemNetwork network, string inputQueueName)
         {
@@ -116,5 +135,6 @@ namespace Ark.Tools.Rebus
 
             OneWayClientBackdoor.ConfigureOneWayClient(configurer);
         }
+
     }
 }

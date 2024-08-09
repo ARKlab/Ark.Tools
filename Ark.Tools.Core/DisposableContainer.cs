@@ -12,7 +12,7 @@ namespace Ark.Tools.Core
     /// </summary>
     public sealed class DisposableContainer : IDisposable
     {
-        private List<IDisposable> _disposables;
+        private readonly List<IDisposable> _disposables;
         private const int DefaultCapacity = 16;
         private readonly object _gate = new object();
         private bool _disposed;

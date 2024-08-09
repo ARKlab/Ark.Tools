@@ -13,9 +13,8 @@ namespace Ark.Reference.Common
 
         public const string FileStorageContainer = "files-container";
 
-        public const string ZipFileExtension = "application/zip";
-        public const string ZipFileExtensionOld = "application/x-zip-compressed";
+        public const string ZipFileMimeType = "application/zip";
 
-        public const string ExcelFileExtension = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        public const string ExcelFileMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     }
 }

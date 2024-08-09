@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime;
 
@@ -55,7 +56,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
                 .Cast<DictionaryEntry>()
                 .SelectMany(_azureEnvToAppEnv);
                 
-            filteredEnvVariables = _normalizeConnectionString(filteredEnvVariables)
+            filteredEnvVariables = ArkEnvironmentVariablesConfigurationProvider._normalizeConnectionString(filteredEnvVariables)
                 .Where(entry => ((string)entry.Key).StartsWith(_prefix, StringComparison.OrdinalIgnoreCase));
 
             foreach (var envVariable in filteredEnvVariables)
@@ -77,7 +78,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
             return _normalizeConnectionStringKey(key).Replace(".", ConfigurationPath.KeyDelimiter);
         }
 
-        private IEnumerable<DictionaryEntry> _normalizeConnectionString(IEnumerable<DictionaryEntry> filteredEnvVariables)
+        private static IEnumerable<DictionaryEntry> _normalizeConnectionString(IEnumerable<DictionaryEntry> filteredEnvVariables)
         {
             var newFilteredEnvVariables = new List<DictionaryEntry>();
 
@@ -131,14 +132,14 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
             // Return the key-value pair for connection string
             yield return new DictionaryEntry(
-                string.Format(_connStrKeyFormat, _normalizeConnectionStringKey(key.Substring(prefix.Length))),
+                string.Format(CultureInfo.InvariantCulture, _connStrKeyFormat, _normalizeConnectionStringKey(key.Substring(prefix.Length))),
                 entry.Value);
 
             if (!string.IsNullOrEmpty(provider))
             {
                 // Return the key-value pair for provider name
                 yield return new DictionaryEntry(
-                    string.Format(_providerKeyFormat, _normalizeConnectionStringKey(key.Substring(prefix.Length))),
+                    string.Format(CultureInfo.InvariantCulture, _providerKeyFormat, _normalizeConnectionStringKey(key.Substring(prefix.Length))),
                     provider);
             }
         }

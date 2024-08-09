@@ -177,6 +177,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinuxWebJobHosting", "LinuxWebJobHosting\LinuxWebJobHosting.csproj", "{1851D53C-83EB-425D-8F07-E593D20F7577}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ArkReferenceProject", "ArkReferenceProject", "{0AF092FD-C941-4E11-91A2-A88748F48415}"
+	ProjectSection(SolutionItems) = preProject
+		Ark.ReferenceProject\.editorconfig = Ark.ReferenceProject\.editorconfig
+		Ark.ReferenceProject\Directory.Build.props = Ark.ReferenceProject\Directory.Build.props
+		Ark.ReferenceProject\global.json = Ark.ReferenceProject\global.json
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{62635DF8-3FC7-49C7-82E4-D8C7C2E147A0}"
 EndProject

@@ -10,7 +10,7 @@ namespace Ark.Reference.Common.Auth
     {
         public async Task<IEnumerable<Permissions>> GetPermissions(AuthorizationContext context)
         {
-            return context.User.GetAdminPermissions();
+            return context.User.GetPermissions();
         }
     }
 }

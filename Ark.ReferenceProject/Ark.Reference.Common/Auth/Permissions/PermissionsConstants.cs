@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Ark.Reference.Common.Auth
 {
@@ -13,9 +14,9 @@ namespace Ark.Reference.Common.Auth
 
         public static readonly string AdminGrant = "grant:admin";
 
-        public static readonly Dictionary<string, Permissions> PermissionsMap = new()
+        public static readonly IReadOnlyDictionary<string, Permissions> PermissionsMap = new Dictionary<string, Permissions>()
         {
              { AdminGrant, Permissions.Admin }
-        };
+        }.ToImmutableDictionary();
     }
 }

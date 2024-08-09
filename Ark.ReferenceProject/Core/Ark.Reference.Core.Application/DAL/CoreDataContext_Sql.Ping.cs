@@ -10,6 +10,7 @@ using Ark.Reference.Core.Common.Enum;
 using System;
 using Ark.Reference.Common.Services.Audit;
 using NodaTime;
+using Ark.Tools.Sql.SqlServer;
 
 namespace Ark.Reference.Core.Application.DAL
 {
@@ -65,7 +66,7 @@ namespace Ark.Reference.Core.Application.DAL
                   {(query.Name?.Any()   ?? false ? "AND E.[Name] IN @Name"  : "")}
                   {(query.Type?.Any()   ?? false ? "AND E.[Type] IN @Type"  : "")}
             "
-            .ConvertToPaged(sortFields);
+            .AsSqlServerPagedQuery(sortFields);
 
             var cmd = new CommandDefinition(cmdText, parameters, transaction: Transaction, cancellationToken: ctk);
 

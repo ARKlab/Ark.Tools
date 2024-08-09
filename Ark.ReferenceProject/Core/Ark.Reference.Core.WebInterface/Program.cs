@@ -79,7 +79,7 @@ namespace Ark.Reference.Core.WebInterface
             {
                 GlobalInit.InitStatics();
 
-                using (var h = GetHostBuilder(args).Build())
+                using var h = GetHostBuilder(args).Build();
 
                 await h.RunAsync();
             }

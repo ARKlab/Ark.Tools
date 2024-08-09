@@ -10,6 +10,7 @@ namespace Ark.Reference.Common.Auth
     public abstract class RequiredScopePolicyHandler : AuthorizationHandler<RequiredScopePolicy>
     {
         private readonly string _serviceScope;
+        private static readonly char[] _separator = new[] { ' ' };
 
         protected RequiredScopePolicyHandler(
             string serviceScope)
@@ -21,7 +22,7 @@ namespace Ark.Reference.Common.Auth
         {
             var scopes = context.User
                 .FindAll(x => x.Type == _serviceScope)
-                .SelectMany(x => x.Value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
+                .SelectMany(x => x.Value.Split(_separator, StringSplitOptions.RemoveEmptyEntries))
                 .ToList();
 
             var requiredScope = requirement.Scope;

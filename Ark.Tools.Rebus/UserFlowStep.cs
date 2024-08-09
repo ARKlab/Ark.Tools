@@ -14,6 +14,7 @@ namespace Ark.Tools.Rebus
     public class UserFlowStep : IOutgoingStep, IIncomingStep
     {
         private readonly Container _container;
+        private static readonly char[] _separator = new[] { ',' };
 
         public UserFlowStep(Container container)
         {
@@ -84,7 +85,7 @@ namespace Ark.Tools.Rebus
 
                 if (headers.TryGetValue("ark-user-roles", out var roles))
                     identity.AddClaims(
-                        roles.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                        roles.Split(_separator, StringSplitOptions.RemoveEmptyEntries)
                             .Select(x => new Claim(ClaimTypes.Role, x)));
 
                 context.Save(new ClaimsPrincipal(new[] { identity }));

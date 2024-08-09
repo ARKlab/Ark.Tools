@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace Ark.Reference.Common.Exceptions
 {
@@ -10,7 +11,7 @@ namespace Ark.Reference.Common.Exceptions
 		}
 
 		public ExternalServiceException(string format, params object[] args)
-			: base(string.Format(format, args))
+			: base(string.Format(CultureInfo.InvariantCulture, format, args))
 		{
 		}
 
@@ -21,7 +22,7 @@ namespace Ark.Reference.Common.Exceptions
 		}
 
 		public ExternalServiceException(Exception inner, string format, params object[] args)
-			: base(string.Format(format, args), inner)
+			: base(string.Format(CultureInfo.InvariantCulture, format, args), inner)
 		{
 		}
 

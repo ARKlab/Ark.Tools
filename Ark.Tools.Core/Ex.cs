@@ -1,16 +1,13 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.Auth;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Core
 {
-    public static unsafe partial class Ex
+    public static unsafe class StringExtensions
     {
         private static readonly uint[] _lookup32Unsafe = _createLookup32Unsafe();
         private static readonly uint* _lookup32UnsafeP = (uint*)GCHandle.Alloc(_lookup32Unsafe, GCHandleType.Pinned).AddrOfPinnedObject();
@@ -20,7 +17,7 @@ namespace Ark.Tools.Core
             var result = new uint[256];
             for (int i = 0; i < 256; i++)
             {
-                string s = i.ToString("X2");
+                string s = i.ToString("X2", CultureInfo.InvariantCulture);
                 if (BitConverter.IsLittleEndian)
                     result[i] = ((uint)s[0]) + ((uint)s[1] << 16);
                 else
@@ -50,17 +47,7 @@ namespace Ark.Tools.Core
             return _byteArrayToHexViaLookup32UnsafeDirect(bytes);
         }
 
-        public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct
-        {
-            if (string.IsNullOrWhiteSpace(inputString)) return null;
 
-            if (Enum.TryParse<TEnum>(inputString, ignoreCase, out var retVal))
-            {
-                return retVal;
-            }
-
-            return null;
-        }
 
         public static string Left(this string sValue, int iMaxLength)
         {
@@ -119,19 +106,12 @@ namespace Ark.Tools.Core
             return SqlLikeStringUtilities.SqlLike(toFind, toSearch);
         }
 
-        public static string? GetUserId(this ClaimsPrincipal principal)
+        public static string Truncate(this string value, int maxLength)
         {
-            return principal.GetUserEmail()
-                ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Length <= maxLength ? value : value[..maxLength];
         }
 
-
-        public static string? GetUserEmail(this ClaimsPrincipal principal)
-        {
-            return principal.FindFirst(AuthClaims.ArkEmailClaim)?.Value
-                ?? principal.FindFirst(ClaimTypes.Email)?.Value
-                ;
-        }
     }
 
     static class SqlLikeStringUtilities
@@ -186,9 +166,9 @@ namespace Ark.Tools.Core
                         set.Clear();
                         if (pattern[patternIndex + 1] == '-' && pattern[patternIndex + 3] == ']')
                         {
-                            char start = char.ToUpper(pattern[patternIndex]);
+                            char start = char.ToUpperInvariant(pattern[patternIndex]);
                             patternIndex += 2;
-                            char end = char.ToUpper(pattern[patternIndex]);
+                            char end = char.ToUpperInvariant(pattern[patternIndex]);
                             if (start <= end)
                             {
                                 for (char ci = start; ci <= end; ci++)
@@ -211,7 +191,7 @@ namespace Ark.Tools.Core
 
                 if (isWildCardOn)
                 {
-                    if (char.ToUpper(c) == char.ToUpper(p))
+                    if (char.ToUpperInvariant(c) == char.ToUpperInvariant(p))
                     {
                         isWildCardOn = false;
                         patternIndex++;
@@ -223,7 +203,7 @@ namespace Ark.Tools.Core
                 }
                 else if (isCharSetOn || isNotCharSetOn)
                 {
-                    bool charMatch = (set.Contains(char.ToUpper(c)));
+                    bool charMatch = (set.Contains(char.ToUpperInvariant(c)));
                     if ((isNotCharSetOn && charMatch) || (isCharSetOn && !charMatch))
                     {
                         if (lastWildCard >= 0) patternIndex = lastWildCard;
@@ -237,7 +217,7 @@ namespace Ark.Tools.Core
                 }
                 else
                 {
-                    if (char.ToUpper(c) == char.ToUpper(p))
+                    if (char.ToUpperInvariant(c) == char.ToUpperInvariant(p))
                     {
                         patternIndex++;
                     }

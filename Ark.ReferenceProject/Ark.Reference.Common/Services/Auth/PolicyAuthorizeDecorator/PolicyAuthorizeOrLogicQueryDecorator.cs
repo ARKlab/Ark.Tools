@@ -36,7 +36,7 @@ namespace Ark.Reference.Common.Services.Auth
 
         public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
         {
-            if (_policies.Any())
+            if (_policies.Length != 0)
             {
                 var policyFailed = new Dictionary<string, List<string>>();
 
