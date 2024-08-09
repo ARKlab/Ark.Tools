@@ -38,7 +38,7 @@ namespace Ark.Tools.Outbox.Rebus
         public Task Send(string destinationAddress, TransportMessage message, ITransactionContext context)
         {
             // if there is a IOutboxContext associated with this Send(), batch message and store them on commit
-            var ctx = context.GetOrNull<IOutboxContext>(_outboxContextItemsKey);
+            var ctx = context.GetOrNull<IOutboxContextCore>(_outboxContextItemsKey);
             if (ctx != null)
             {
                 var outgoingMessages = context.GetOrAdd(_outgoingMessagesItemsKey, () =>

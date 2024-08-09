@@ -64,7 +64,7 @@ namespace Ark.Reference.Core.Tests.Init
 
         private void _cleanUpEntireDb(bool resetProfileCalendar = false)
         {
-            using (var ctx = new SqlConnection(TestHost.DBConfig.SQLConnectionString))
+            using (var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString))
             {
                 ctx.Open();
                 using (SqlTransaction tx = ctx.BeginTransaction())

@@ -1,9 +1,12 @@
 ﻿using Ark.Reference.Common;
 using Ark.Reference.Common.Services.FileStorageService;
+using Ark.Tools.Outbox.SqlServer;
+using Ark.Tools.Sql;
 
 using Microsoft.Extensions.Configuration;
 
 using System;
+using System.Data;
 
 namespace Ark.Reference.Core.Application.Config
 {
@@ -34,12 +37,16 @@ namespace Ark.Reference.Core.Application.Config
         string IRebusBusConfig.AsbConnectionString => RebusBusConfig_AsbConnectionString;
         string IRebusBusConfig.RequestQueue => RebusBusConfig_RequestQueue;
         string IRebusBusConfig.StorageConnectionString => RebusBusConfig_StorageConnectionString;
-        string ICoreDataContextConfig.SQLConnectionString => CoreDataContextConfig_SQLConnectionString;
+
+        string ISqlContextConfig.ConnectionString => CoreDataContextConfig_SQLConnectionString;
 
         string ICoreConfig.Environment => CoreConfig_Environment;
 
         string IFileStorageServiceConfig.StorageAccount => FileServiceStorageAccount;
         string IFileStorageServiceConfig.StoragePrefix => FileServiceStoragePrefix;
+
+
+        IsolationLevel? ISqlContextConfig.IsolationLevel => null;
     }
 
     public static class Ex

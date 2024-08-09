@@ -17,15 +17,6 @@ namespace Ark.Tools.Outbox.Rebus.Config
         public RebusOutboxProcessorConfigurer(StandardConfigurer<ITransport> configurer)
         {
             _configurer = configurer;
-            _configurer.OtherService<IRebusOutboxProcessor>()
-                .Register(s =>
-                {
-                    return new RebusOutboxProcessor(_options.MaxMessagesPerBatch,
-                        s.Get<ITransport>(),
-                        s.Get<IBackoffStrategy>(),
-                        s.Get<IRebusLoggerFactory>(),
-                        s.Get<IOutboxContextFactory>());
-                });
 
             _configurer.Decorate(c =>
             {
@@ -45,7 +36,30 @@ namespace Ark.Tools.Outbox.Rebus.Config
 
         public RebusOutboxProcessorConfigurer OutboxContextFactory(Action<StandardConfigurer<IOutboxContextFactory>> configurer)
         {
+            _configurer.OtherService<IRebusOutboxProcessor>()
+                .Register(s =>
+                {
+                    return new RebusOutboxProcessor(_options.MaxMessagesPerBatch,
+                        s.Get<ITransport>(),
+                        s.Get<IBackoffStrategy>(),
+                        s.Get<IRebusLoggerFactory>(),
+                        s.Get<IOutboxContextFactory>());
+                });
             configurer?.Invoke(_configurer.OtherService<IOutboxContextFactory>());
+            return this;
+        }
+        public RebusOutboxProcessorConfigurer OutboxAsyncContextFactory(Action<StandardConfigurer<IOutboxAsyncContextFactory>> configurer)
+        {
+            _configurer.OtherService<IRebusOutboxProcessor>()
+                .Register(s =>
+                {
+                    return new RebusAsyncOutboxProcessor(_options.MaxMessagesPerBatch,
+                        s.Get<ITransport>(),
+                        s.Get<IBackoffStrategy>(),
+                        s.Get<IRebusLoggerFactory>(),
+                        s.Get<IOutboxAsyncContextFactory>());
+                });
+            configurer?.Invoke(_configurer.OtherService<IOutboxAsyncContextFactory>());
             return this;
         }
 

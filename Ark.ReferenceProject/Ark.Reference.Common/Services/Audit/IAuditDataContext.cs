@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Ark.Reference.Common.Services.Audit
 {
-    public interface IAuditDataContext<TAuditKind> : IContext, IDisposable
-            where TAuditKind : struct, IConvertible
+    public interface IAuditDataContext<TAuditKind> : IAsyncContext
+            where TAuditKind : struct, Enum
     {
         #region Audit
         Task<(IEnumerable<AuditDto<TAuditKind>> records, int totalCount)> ReadAuditByFilterAsync(

@@ -4,12 +4,11 @@ using System.Data;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-
-    internal sealed class OutboxContextSql<Tag> : OutboxContextSqlCore
+    internal sealed class OutboxAsyncContextSql<Tag> : OutboxContextSqlCore
     {
-        private readonly ISqlContext<Tag> _context;
+        private readonly ISqlAsyncContext<Tag> _context;
 
-        public OutboxContextSql(ISqlContext<Tag> context, IOutboxContextSqlConfig config) : base(config)
+        public OutboxAsyncContextSql(ISqlAsyncContext<Tag> context, IOutboxContextSqlConfig config) : base(config)
         {
             _context = context;
         }

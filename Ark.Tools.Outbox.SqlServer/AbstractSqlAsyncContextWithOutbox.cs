@@ -1,21 +1,20 @@
 ﻿using Ark.Tools.Sql;
 
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    public abstract class AbstractSqlContextWithOutbox<Tag> : AbstractSqlContext<Tag>, IOutboxContext
+    public abstract class AbstractSqlAsyncContextWithOutbox<Tag> : AbstractSqlAsyncContext<Tag>, IOutboxAsyncContext
     {
-        private readonly OutboxContextSql<Tag> _outbox;
+        private readonly OutboxAsyncContextSql<Tag> _outbox;
 
-        protected AbstractSqlContextWithOutbox(DbConnection connection, IOutboxContextSqlConfig config, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted) 
-            : base(connection, isolationLevel)
+        protected AbstractSqlAsyncContextWithOutbox(DbTransaction transaction, IOutboxContextSqlConfig config)
+            : base(transaction)
         {
-            _outbox = new OutboxContextSql<Tag>(this, config);
+            _outbox = new OutboxAsyncContextSql<Tag>(this, config);
         }
 
         public Task ClearAsync(CancellationToken ctk = default)
@@ -37,5 +36,6 @@ namespace Ark.Tools.Outbox.SqlServer
         {
             return _outbox.SendAsync(messages, ctk);
         }
+
     }
 }

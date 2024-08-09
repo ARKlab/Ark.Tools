@@ -12,9 +12,9 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 {
     internal class Audit_GetUsersQueryHandler : IQueryHandler<Audit_GetUsersQuery.V1, IEnumerable<string>>
     {
-        private readonly Func<ICoreDataContext> _dataContext;
+        private readonly ICoreDataContextFactory _dataContext;
 
-        public Audit_GetUsersQueryHandler(Func<ICoreDataContext> dataContext)
+        public Audit_GetUsersQueryHandler(ICoreDataContextFactory dataContext)
         {
             _dataContext = dataContext;
         }
@@ -26,7 +26,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 
         public async Task<IEnumerable<string>> ExecuteAsync(Audit_GetUsersQuery.V1 query, CancellationToken ctk = default)
         {
-            using var ctx = _dataContext();
+            await using var ctx = await _dataContext.CreateAsync(ctk);
             return await ctx.ReadAuditUsersAsync(ctk: ctk);
         }
     }

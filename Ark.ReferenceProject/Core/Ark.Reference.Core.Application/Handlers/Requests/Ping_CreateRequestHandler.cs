@@ -16,11 +16,11 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 {
     public class Ping_CreateRequestHandler : IRequestHandler<Ping_CreateRequest.V1, Ping.V1.Output>
     {
-        private readonly Func<ICoreDataContext> _coreDataContext;
+        private readonly ICoreDataContextFactory _coreDataContext;
         private readonly IContextProvider<ClaimsPrincipal> _userContext;
 
         public Ping_CreateRequestHandler(
-              Func<ICoreDataContext> coreDataContext
+              ICoreDataContextFactory coreDataContext
               , IContextProvider<ClaimsPrincipal> userContext
             )
         {
@@ -38,7 +38,7 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 
         public async Task<Ping.V1.Output> ExecuteAsync(Ping_CreateRequest.V1 request, CancellationToken ctk = default)
         {
-            using var ctx = _coreDataContext();
+            await using var ctx = await _coreDataContext.CreateAsync(ctk);
 
             await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Create a new Ping", ctk);
 
@@ -53,7 +53,7 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 
             var entity = await ctx.ReadPingByIdAsync(id, ctk);
 
-            ctx.Commit();
+            await ctx.CommitAsync(ctk);
 
             return entity;
         }

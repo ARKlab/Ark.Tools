@@ -87,26 +87,26 @@ namespace Ark.Reference.Core.Tests.Init
 
         [Then("I wait background bus to idle and outbox to be empty")]
         [When("I wait background bus to idle and outbox to be empty")]
-        public void ThenIWaitBackgroundBusToIdleAndOutboxToBeEmpty()
+        public Task ThenIWaitBackgroundBusToIdleAndOutboxToBeEmpty()
         {
-            _backgroundBus(false);
+            return _backgroundBus(false);
         }
 
 
         [When("I wait background bus to idle and outbox to be empty ignoring scheduled message")]
-        public void ThenIWaitBackgroundBusToIdleAndOutboxToBeEmptyIgnoringScheduledMessage()
+        public Task ThenIWaitBackgroundBusToIdleAndOutboxToBeEmptyIgnoringScheduledMessage()
         {
-            _backgroundBus(true);
+            return _backgroundBus(true);
         }
 
-        private void _backgroundBus(bool ignoreDeferred)
+        private async Task _backgroundBus(bool ignoreDeferred)
         {
             using var _ = new FluentAssertions.Execution.AssertionScope();
 
-            var ctx = _server.Services.GetService<Container>().GetInstance<Func<IOutboxContext>>();
+            var ctx = _server.Services.GetService<Container>().GetInstance<IOutboxAsyncContextFactory>();;
 
             var (inqueue, inprocess, deferred, outbox, errorMessages) =
-                Policy
+                await Policy
                     .HandleResult<(int inqueue, int inprocess, int deferred, int outbox, int errorMessages)>(
                         (c) =>
                         {
@@ -114,8 +114,8 @@ namespace Ark.Reference.Core.Tests.Init
                             return c.errorMessages == 0 && (c.inqueue + c.inprocess + def + c.outbox) == 0;
                         }
                     ) // if true, go again
-                    .WaitAndRetry(1, i => TimeSpan.FromMilliseconds(100))
-                    .Wrap(
+                    .WaitAndRetryAsync(1, i => TimeSpan.FromMilliseconds(100))
+                    .WrapAsync(
                         Policy
                             .HandleResult<(int inqueue, int inprocess, int deferred, int outbox, int errorMessages)>(
                                 (c) =>
@@ -124,9 +124,9 @@ namespace Ark.Reference.Core.Tests.Init
                                     return c.errorMessages == 0 && (c.inqueue + c.inprocess + def + c.outbox) > 0; // if true, go again
                                 }
                             )
-                            .WaitAndRetry(600, _ => TimeSpan.FromMilliseconds(100))
+                            .WaitAndRetryAsync(600, _ => TimeSpan.FromMilliseconds(100))
                      )
-                    .Execute(() =>
+                    .ExecuteAsync(async () =>
                     {
                         var inqueue = Env.RebusNetwork.Count();
                         var inprocess = InProcessMessageInspectorStep.Count;
@@ -134,9 +134,9 @@ namespace Ark.Reference.Core.Tests.Init
                         var due = ignoreDeferred ? 0 : TestsInMemoryTimeoutManager.DueCount;
 
 
-                        using var outbox = ctx();
-                        var outboxCount = outbox.CountAsync().GetAwaiter().GetResult();
-                        outbox.Commit();
+                        await using var outbox = await ctx.CreateAsync();
+                        var outboxCount = await outbox.CountAsync();
+                        await outbox.CommitAsync();
 
                         return (inqueue, inprocess, due, outboxCount, errorMessages);
                     });
@@ -149,15 +149,15 @@ namespace Ark.Reference.Core.Tests.Init
         }
 
         [AfterScenario(Order = int.MaxValue - 1)]
-        public void ClearRebus()
+        public async Task ClearRebus()
         {
             using var drainer = DrainableInMemTransport.Drain();
             do
             {
                 {
-                    using var outbox = _server.Services.GetService<Container>().GetInstance<Func<IOutboxContext>>()();
-                    outbox.ClearAsync().GetAwaiter().GetResult();
-                    outbox.Commit();
+                    await using var outbox = await _server.Services.GetService<Container>().GetInstance<IOutboxAsyncContextFactory>().CreateAsync();
+                    await outbox.ClearAsync();
+                    await outbox.CommitAsync();
                 }
                 TestsInMemoryTimeoutManager.ClearPendingDue();
                 Env.RebusNetwork.Reset();

@@ -16,11 +16,11 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 {
     public class Ping_DeleteRequestHandler : IRequestHandler<Ping_DeleteRequest.V1, bool>
     {
-        private readonly Func<ICoreDataContext> _coreDataContext;
+        private readonly ICoreDataContextFactory _coreDataContext;
         private readonly IContextProvider<ClaimsPrincipal> _userContext;
 
         public Ping_DeleteRequestHandler(
-              Func<ICoreDataContext> coreDataContext
+              ICoreDataContextFactory coreDataContext
               , IContextProvider<ClaimsPrincipal> userContext
             )
         {
@@ -38,7 +38,7 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 
         public async Task<bool> ExecuteAsync(Ping_DeleteRequest.V1 request, CancellationToken ctk = default)
         {
-            using var ctx = _coreDataContext();
+            await using var ctx = await _coreDataContext.CreateAsync(ctk);
 
             var entity = await ctx.ReadPingByIdAsync(request.Id, ctk);
 
@@ -49,7 +49,7 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 
             await ctx.DeletePingAsync(request.Id, ctk);
 
-            ctx.Commit();
+            await ctx.CommitAsync(ctk);
 
             return true;
         }

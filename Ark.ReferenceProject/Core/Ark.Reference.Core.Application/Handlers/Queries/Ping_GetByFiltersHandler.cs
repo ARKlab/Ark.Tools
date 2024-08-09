@@ -16,9 +16,9 @@ namespace Core.Services.Application.Handlers.Queries
 {
     public class Ping_GetByFiltersHandler : IQueryHandler<Ping_GetByFiltersQuery.V1, PagedResult<Ping.V1.Output>>
     {
-        private readonly Func<ICoreDataContext> _coreDataContext;
+        private readonly ICoreDataContextFactory _coreDataContext;
 
-        public Ping_GetByFiltersHandler(Func<ICoreDataContext> coreDataContext)
+        public Ping_GetByFiltersHandler(ICoreDataContextFactory coreDataContext)
         {
             EnsureArg.IsNotNull(coreDataContext, nameof(coreDataContext));
 
@@ -34,7 +34,7 @@ namespace Core.Services.Application.Handlers.Queries
         {
             EnsureArg.IsNotNull(query, nameof(query));
 
-            using var ctx = _coreDataContext();
+            await using var ctx = await _coreDataContext.CreateAsync(ctk);
 
             var (data, count) = await ctx.ReadPingByFiltersAsync(query, ctk);
 

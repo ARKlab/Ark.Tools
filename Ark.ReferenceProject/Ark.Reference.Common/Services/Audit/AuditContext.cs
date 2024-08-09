@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Ark.Reference.Common.Services.Audit
 {
     public class AuditContext<TAuditKind>
-        where TAuditKind : struct, IConvertible
+        where TAuditKind : struct, Enum
     {
         private readonly Logger _logger;
         private readonly IDbConnection _dbConnection;
