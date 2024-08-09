@@ -34,7 +34,9 @@ namespace Ark.Reference.Core.WebInterface
         public static IHostBuilder Config(this IHostBuilder builder, string[] args)
         {
             return builder
-                .ConfigureNLog("Ark.Reference.Core.WebInterface")
+                .ConfigureNLog("Ark.Reference.Core.WebInterface"
+                    // , configure: c => c.WithDatabaseRule("*", NLog.LogLevel.Info) // always log INFO to Database Target if present
+                ) 
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder

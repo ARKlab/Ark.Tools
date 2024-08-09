@@ -70,7 +70,7 @@ namespace Ark.Tools.NLog
             return @this;
         }
 
-        public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string? appName = null, string? mailFrom = null)
+        public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string? appName = null, string? mailFrom = null, Action<Configurer>? configure = null)
         {
             appName ??= Assembly.GetEntryAssembly()?.GetName().Name ?? AppDomain.CurrentDomain.FriendlyName ?? "Unknown";
 
@@ -82,14 +82,17 @@ namespace Ark.Tools.NLog
 
             return builder.ConfigureLogging((ctx, logging) =>
             {
-                NLogConfigurer.For(appName)
-                   .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, appName, mailFrom, async: !ctx.HostingEnvironment.IsEnvironment("SpecFlow"))
-                   .Apply();
+                var c = NLogConfigurer.For(appName)
+                   .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, appName, mailFrom, async: !ctx.HostingEnvironment.IsEnvironment("SpecFlow"))                   
+                   ;
+
+                configure ?.Invoke(c);
+
+                c.Apply();
 
                 logging.ClearProviders();
                 logging.AddNLog();
             });
-
         }
     }
 }
