@@ -66,7 +66,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             {
                 o.ForwardDefaultSelector = ctx =>
                 {
-                    string authorization = ctx.Request.Headers.Authorization;
+                    string? authorization = ctx.Request.Headers.Authorization;
 
                     if (String.IsNullOrWhiteSpace(authorization))
                         return null;

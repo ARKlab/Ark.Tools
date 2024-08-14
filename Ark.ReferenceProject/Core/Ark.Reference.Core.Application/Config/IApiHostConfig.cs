@@ -8,6 +8,6 @@ namespace Ark.Reference.Core.Application.Config
         , ICoreConfig
         , IFileStorageServiceConfig
     {
-        string SwaggerClientId { get; }
+        string? SwaggerClientId { get; }
     }
 }

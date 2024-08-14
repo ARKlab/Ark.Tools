@@ -20,7 +20,7 @@ namespace Ark.Reference.Core.Tests.Auth
         public const string AUTH0_APIKEY = "banana";
         public string Token => _getToken();
 
-        public string ApiKey { get; private set; }
+        public string? ApiKey { get; private set; }
 
         private readonly JwtTokenBuilder _builder = new JwtTokenBuilder()
                                 .AddSecurityKey(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.SpecFlowEncryptionKey)))

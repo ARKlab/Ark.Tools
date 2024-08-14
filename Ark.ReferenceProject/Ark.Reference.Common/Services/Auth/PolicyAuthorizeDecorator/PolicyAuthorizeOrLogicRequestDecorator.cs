@@ -26,7 +26,7 @@ namespace Ark.Reference.Common.Services.Auth
             _authSvc = authSvc;
             _currentUser = currentUser;
             _container = container;
-            _policies = typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Select(a => (a as PolicyAuthorizeAttribute)).ToArray();
+            _policies = typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
         }
 
         public TResult Execute(TRequest request)
@@ -47,14 +47,14 @@ namespace Ark.Reference.Common.Services.Auth
 
                     if (policy != null)
                     {
-                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk);
+                            (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk);
 
-                        if (authorized)
-                            return await _inner.ExecuteAsync(request, ctk);
-                        else
-                            policyFailed.Add(policy.Name, messages.ToList());
+                            if (authorized)
+                                return await _inner.ExecuteAsync(request, ctk);
+                            else
+                                policyFailed.Add(policy.Name, messages.ToList());
+                        }
                     }
-                }
 
                 if (policyFailed.Count > 0)
                 {

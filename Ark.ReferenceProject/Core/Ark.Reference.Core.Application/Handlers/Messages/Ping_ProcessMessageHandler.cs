@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using Ark.Reference.Core.API.Messages;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
-using Ark.Reference.Core.Common;
 
 namespace Ark.Reference.Core.Application.Handlers.Messages
 {
@@ -44,8 +43,9 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
 
             //** Check if exists InvoiceRun 
             var entity = await ctx.ReadPingByIdAsync(message.Id);
+            if (entity == null) return; // nothing to do ... been deleted?
 
-            if (entity.Name.Contains("fails", StringComparison.InvariantCultureIgnoreCase))
+            if (entity.Name?.Contains("fails", StringComparison.InvariantCultureIgnoreCase) == true)
             {
                 if (entity.Name.Contains("fast", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -65,22 +65,23 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
             await _fail(message.Message, ex);
         }
 
-        private async Task _fail(Ping_ProcessMessage.V1 message, Rebus.Retry.ExceptionInfo ex)
+        private async Task _fail(Ping_ProcessMessage.V1 message, Rebus.Retry.ExceptionInfo? ex)
         {
             int currentMessageCount = MessageCounter.GetCount();
 
             await using var ctx = await _coreDataContext.CreateAsync();
             var invoiceRun = await ctx.ReadPingByIdAsync(message.Id);
+            if (invoiceRun == null) return;
 
             await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async");
-            var e = ex.Message;
+            var e = ex?.Message;
 
-            await _updateEntityAndCommit(ctx, invoiceRun, $"HandleFailed_{ex.Message}_MsgCount_{currentMessageCount}");
+            await _updateEntityAndCommit(ctx, invoiceRun, $"HandleFailed_{e ?? "<unknown>"}_MsgCount_{currentMessageCount}");
         }
 
         private async Task _updateEntityAndCommit(ICoreDataContext ctx, Ping.V1.Output entity, string code)
         {
-            entity.Code = code;
+            entity = entity with { Code = code };
 
             await ctx.PatchPingAsync(entity);
 

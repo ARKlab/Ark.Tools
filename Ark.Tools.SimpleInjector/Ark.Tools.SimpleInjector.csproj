@@ -18,11 +18,8 @@
   <!--===============================================================================-->
   
   <ItemGroup>
-    <PackageReference Include="SimpleInjector" Version="5.4.6" />
+    <PackageReference Include="SimpleInjector" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-  </ItemGroup>
+ 
 
 </Project>

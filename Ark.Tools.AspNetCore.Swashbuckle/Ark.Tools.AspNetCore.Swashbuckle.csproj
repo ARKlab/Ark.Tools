@@ -26,14 +26,14 @@
   </ItemGroup>
       
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.2.5" />
-	<PackageReference Include="Asp.Versioning.OData.ApiExplorer" Version="8.1.0" />    
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.7.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.7.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.7.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.7.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.7.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.OData" />
+	<PackageReference Include="Asp.Versioning.OData.ApiExplorer" />    
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations"  />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger"  />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
   </ItemGroup>
       
   <ItemGroup>
@@ -41,9 +41,4 @@
     <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
       
-      
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-  </ItemGroup>
-
 </Project>

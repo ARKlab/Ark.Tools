@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Ark.Tools.Core;
-using Ark.Tools.Solid;
 
 using Asp.Versioning;
 
@@ -14,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace TestWithoutArkTools.Controllers
 {
-	[ApiVersion("1.0")]
+    [ApiVersion("1.0")]
 	[Route("test")]
 	public class TestController : ApiController
 	{

@@ -28,8 +28,8 @@ namespace Ark.Reference.Core.Application.DAL
 
         public ValueTask<AuditDto<AuditKind>> EnsureAudit(
             AuditKind kind
-            , string userId
-            , string infoMessage
+            , string? userId
+            , string? infoMessage
             , CancellationToken ctk = default)
         {
             return _auditContext.EnsureAudit(kind, userId, infoMessage, ctk);

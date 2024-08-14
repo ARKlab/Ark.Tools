@@ -1,20 +1,14 @@
 ﻿using Microsoft.ApplicationInsights.Metrics;
 using Microsoft.ApplicationInsights;
-using Rebus.Config;
 using Rebus.Messages;
 using Rebus.Pipeline;
 using Rebus.Time;
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using SimpleInjector;
 using Rebus.Extensions;
-using Rebus.Retry.FailFast;
-using Rebus.Pipeline.Receive;
 
 namespace Ark.Tools.Rebus
 {

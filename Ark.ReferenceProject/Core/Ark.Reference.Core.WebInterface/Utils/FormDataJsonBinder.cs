@@ -42,13 +42,13 @@ namespace Ark.Reference.Core.WebInterface.Utils
             else bindingContext.ModelState.SetModelValue(fieldName, valueProviderResult);
 
             // Do nothing if the value is null or empty
-            string value = valueProviderResult.FirstValue;
+            string? value = valueProviderResult.FirstValue;
             if (string.IsNullOrEmpty(value)) return Task.CompletedTask;
 
             try
             {
                 // Deserialize the provided value and set the binding result
-                object result = System.Text.Json.JsonSerializer.Deserialize(value, bindingContext.ModelType, _options);
+                object? result = System.Text.Json.JsonSerializer.Deserialize(value, bindingContext.ModelType, _options);
                 bindingContext.Result = ModelBindingResult.Success(result);
 
             }
@@ -72,7 +72,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             _inputFormatters = inputFormatters;
         }
 
-        public IModelBinder GetBinder(ModelBinderProviderContext context)
+        public IModelBinder? GetBinder(ModelBinderProviderContext context)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -82,8 +82,11 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
             // Do not use this provider if the binding target is not a property
             var propName = context.Metadata.PropertyName;
+            if (propName == null) 
+                return null;
+
             var propInfo = context.Metadata.ContainerType?.GetProperty(propName);
-            if (propName == null || propInfo == null)
+            if (propInfo == null)
                 return null;
 
             // Do not use this provider if the target property type implements IFormFile

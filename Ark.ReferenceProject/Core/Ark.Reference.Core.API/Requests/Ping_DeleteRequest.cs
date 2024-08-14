@@ -4,9 +4,9 @@ namespace Ark.Reference.Core.API.Requests
 {
     public static class Ping_DeleteRequest
     {
-        public class V1 : IRequest<bool>
+        public record V1 : IRequest<bool>
         {
-            public int Id { get; set; }
+            public int Id { get; init; }
         }
     }
 }

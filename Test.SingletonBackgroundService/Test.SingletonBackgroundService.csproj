@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DistributedLock.Azure" Version="1.0.1" />
+    <PackageReference Include="DistributedLock.Azure" />
   </ItemGroup>
 	
 	<ItemGroup>

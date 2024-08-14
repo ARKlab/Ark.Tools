@@ -31,7 +31,6 @@ using SimpleInjector;
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
 using System.Security.Claims;
 using System.Threading;
 
@@ -47,15 +46,18 @@ namespace Ark.Reference.Core.Tests.Init
     {
         private const string _baseUri = "https://localhost:5001";
 
-        public static ApiHostConfig TestConfig { get; private set; }
-        public static ICoreDataContextConfig DBConfig => TestConfig;
+        public static ApiHostConfig? TestConfig { get; private set; }
+        public static ICoreDataContextConfig DBConfig => TestConfig ?? throw new InvalidOperationException("TestConfig is null");
 
-        private static IHost _server;
-        private static ArkFlurlClientFactory _factory;
+        public static IHost Server { get => _server ?? throw new InvalidOperationException("_server is null"); set => _server = value; }
+        public static ArkFlurlClientFactory Factory { get => _factory ?? throw new InvalidOperationException("_server is null"); set => _factory = value; }
+
+        private static ArkFlurlClientFactory? _factory;
         public static readonly TestEnv Env = new TestEnv();
 
-        private static ScenarioContext _scenarioContext;
-        private FluentAssertions.Execution.AssertionScope _afterScenarioAssertionScope;
+        private static ScenarioContext? _scenarioContext;
+        private static IHost? _server;
+        private FluentAssertions.Execution.AssertionScope? _afterScenarioAssertionScope;
 
         [BeforeScenario(Order = 0)]
         public void Set(ScenarioContext ctx)
@@ -82,6 +84,7 @@ namespace Ark.Reference.Core.Tests.Init
             catch
             {
             }
+            _afterScenarioAssertionScope = null;
             _scenarioContext = null;
         }
 
@@ -103,7 +106,7 @@ namespace Ark.Reference.Core.Tests.Init
         {
             using var _ = new FluentAssertions.Execution.AssertionScope();
 
-            var ctx = _server.Services.GetService<Container>().GetInstance<IOutboxAsyncContextFactory>();;
+            var ctx = Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>();;
 
             var (inqueue, inprocess, deferred, outbox, errorMessages) =
                 await Policy
@@ -155,7 +158,7 @@ namespace Ark.Reference.Core.Tests.Init
             do
             {
                 {
-                    await using var outbox = await _server.Services.GetService<Container>().GetInstance<IOutboxAsyncContextFactory>().CreateAsync();
+                    await using var outbox = await Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>().CreateAsync();
                     await outbox.ClearAsync();
                     await outbox.CommitAsync();
                 }
@@ -189,17 +192,17 @@ namespace Ark.Reference.Core.Tests.Init
                     wh.UseTestServer()
                     .ConfigureServices(services =>
                     {
-                        services.AddTransient<Func<ScenarioContext>>(s => () => _scenarioContext);
+                        services.AddTransient<Func<ScenarioContext>>(s => () => _scenarioContext ?? throw new InvalidOperationException("ScenarioContext is accessed outside of a Scenario."));
                         services.AddSingleton(Env.RebusNetwork);
                         services.AddSingleton(Env.RebusSubscriber);
                         services.AddSingleton<IClock>(MockIClock.FakeClock);
                     });
                 });
 
-            _server = builder.Start();
-            _factory = new ArkFlurlClientFactory(new TestServerfactory(_server.GetTestServer()));
+            Server = builder.Start();
+            Factory = new ArkFlurlClientFactory(new TestServerfactory(Server.GetTestServer()));
 
-            var configuration = _server.Services.GetRequiredService<IConfiguration>();
+            var configuration = Server.Services.GetRequiredService<IConfiguration>();
 
             TestConfig = configuration.BuildApiHostConfig();
         }
@@ -207,7 +210,7 @@ namespace Ark.Reference.Core.Tests.Init
         [BeforeFeature(Order = 0)]
         public static void BeforeFeature(FeatureContext ctx)
         {
-            ctx.Set(_server);
+            ctx.Set(Server);
             //ctx.Set(_client);
             //ctx.Set(_smtp);
         }
@@ -215,8 +218,8 @@ namespace Ark.Reference.Core.Tests.Init
         [BeforeScenario(Order = 0)]
         public static void BeforeScenario(ScenarioContext ctx)
         {
-            if (_factory == null) throw new InvalidOperationException("");
-            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
+            if (Factory == null) throw new InvalidOperationException("");
+            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => Factory.Get(_baseUri));
         }
 
         [AfterScenario]
@@ -234,7 +237,7 @@ namespace Ark.Reference.Core.Tests.Init
         [AfterTestRun]
         public static void AfterTests()
         {
-            _server?.Dispose();
+            Server?.Dispose();
         }
 
         public void Dispose()

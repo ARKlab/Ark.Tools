@@ -2,13 +2,13 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
+
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace TestWithoutArkTools.Controllers
 {
-	[ApiVersion("1.0")]
+    [ApiVersion("1.0")]
 	[Route("prediction")]
 	public class PredictionController : ApiController
 	{

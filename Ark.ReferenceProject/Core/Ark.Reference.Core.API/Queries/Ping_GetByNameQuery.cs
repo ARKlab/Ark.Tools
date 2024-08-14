@@ -6,9 +6,9 @@ namespace Ark.Reference.Core.API.Queries
 {
     public static class Ping_GetByNameQuery
     {
-        public class V1 : IQuery<Ping.V1.Output>
+        public record V1 : IQuery<Ping.V1.Output>
         {
-            public string Name { get; set; }
+            public string? Name { get; init; }
         }
     }
 }

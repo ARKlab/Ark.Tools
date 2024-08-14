@@ -1,9 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TechTalk.SpecFlow;
+﻿using TechTalk.SpecFlow;
 
 namespace TestProject
 {
-	[Binding]
+    [Binding]
 	public class SpecFlowSteps
 	{
 		private readonly TestClient _client;

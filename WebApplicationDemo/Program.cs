@@ -1,24 +1,22 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+
 using Ark.Tools.NLog;
 using Ark.Tools.Nodatime;
 using Ark.Tools.Nodatime.Dapper;
-using Microsoft.AspNetCore;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 using NLog.Extensions.Logging;
 
 namespace WebApplicationDemo
 {
-	public static class Program
+    public static class Program
 	{
 		public static IHostBuilder GetHostBuilder(string[] args)
 		{

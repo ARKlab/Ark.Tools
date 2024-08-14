@@ -1,6 +1,4 @@
-﻿using Ark.Tools.Hosting;
-
-using Medallion.Threading;
+﻿using Medallion.Threading;
 using Medallion.Threading.Azure;
 
 using Microsoft.Extensions.DependencyInjection;

@@ -1,15 +1,15 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Org.Mentalis.Network.ProxySocket.Authentication {
-	/// <summary>
-	/// This class implements the 'username/password authentication' scheme.
-	/// </summary>
-	internal sealed class AuthUserPass : AuthMethod {
+namespace Org.Mentalis.Network.ProxySocket.Authentication
+{
+    /// <summary>
+    /// This class implements the 'username/password authentication' scheme.
+    /// </summary>
+    internal sealed class AuthUserPass : AuthMethod {
 		/// <summary>
 		/// Initializes a new AuthUserPass instance.
 		/// </summary>

@@ -1,19 +1,16 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using TechTalk.SpecFlow;
 using System;
 using System.Net.Http.Headers;
 using System.Linq;
 using Ark.Tools.Core.EntityTag;
 using Flurl.Http;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using FluentAssertions;
 
 namespace TestProject
 {
-	[Binding]
+    [Binding]
 	public sealed class TestClient : IDisposable
 	{
 		internal IFlurlClient _client;

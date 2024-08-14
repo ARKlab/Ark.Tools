@@ -10,21 +10,21 @@ namespace Ark.Reference.Core.Common.Dto
     {
         public static class V1
         {
-            public class Create 
+            public record Create 
             {
-                public string Name { get; set; }
-                public PingType? Type { get; set; }
+                public string? Name { get; init; }
+                public PingType? Type { get; init; }
             }
 
-            public class Update: Create
+            public record Update : Create
             {
-                public int Id { get; set; }
+                public int Id { get; init; }
             }
 
-            public class Output : Update, IAuditEntity
+            public record Output : Update, IAuditEntity
             {
-                public string Code { get; set; }
-                public Guid AuditId { get; set; }
+                public string? Code { get; init; }
+                public Guid AuditId { get; init; }
             }
         }
     }

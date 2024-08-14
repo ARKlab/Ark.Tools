@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Threading.Tasks;
-using NLog;
+
 using Rebus.Handlers;
+
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 namespace Ark.Tools.Rebus
 {
-	public class RebusScopeDecorator<T> : IHandleMessages<T>
+    public class RebusScopeDecorator<T> : IHandleMessages<T>
 	{
 		private readonly Func<IHandleMessages<T>> _inner;
 		private readonly Container _container;

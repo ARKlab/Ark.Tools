@@ -4,6 +4,7 @@ using NodaTime.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Ark.Tools.Core;
 
 namespace Ark.Reference.Core.Common
 {
@@ -20,9 +21,9 @@ namespace Ark.Reference.Core.Common
         }
 
         public UrlComposer AddQueryParam<TEnum>(string key, TEnum value)
-            where TEnum : struct
+            where TEnum : struct, System.Enum
         {
-            _tuples.Add((key, value.ToString()));
+            _tuples.Add((key, value.AsString()));
             return this;
         }
 
@@ -63,9 +64,9 @@ namespace Ark.Reference.Core.Common
 
         public UrlComposer AddQueryParam<T>(string key, IEnumerable<T> values)
         {
-            var toAdd = values?
-                   .Where(w => !string.IsNullOrWhiteSpace($"{w}"))
-                   .Select(s => (key, s.ToString()));
+            var toAdd = values
+                   .Where(x => !string.IsNullOrWhiteSpace($"{x}"))
+                   .Select(x => (key, $"{x}"));
 
             if (toAdd != null && toAdd.Any())
                 this._tuples.AddRange(toAdd);

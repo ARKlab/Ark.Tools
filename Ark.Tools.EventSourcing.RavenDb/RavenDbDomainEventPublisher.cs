@@ -1,10 +1,10 @@
 ﻿using Ark.Tools.EventSourcing.DomainEventPublisher;
 using Ark.Tools.EventSourcing.Store;
+
 using Raven.Client.Documents;
 using Raven.Client.Documents.Subscriptions;
+
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 

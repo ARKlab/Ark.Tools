@@ -15,23 +15,17 @@
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.35" />
-  </ItemGroup>
   <!--===============================================================================-->
 
+	<ItemGroup>
+		<PackageReference Include="Dapper" />
+	</ItemGroup>
+	
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
     <ProjectReference Include="..\Ark.Tools.Outbox\Ark.Tools.Outbox.csproj" />
     <ProjectReference Include="..\Ark.Tools.Sql\Ark.Tools.Sql.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+	  <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
 
 </Project>

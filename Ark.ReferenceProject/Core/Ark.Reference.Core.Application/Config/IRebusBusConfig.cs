@@ -2,8 +2,8 @@
 {
     public interface IRebusBusConfig
     {
-        string AsbConnectionString { get; }
-        string RequestQueue { get; }
-        string StorageConnectionString { get; }
+        string? AsbConnectionString { get; }
+        string? RequestQueue { get; }
+        string? StorageConnectionString { get; }
     }
 }

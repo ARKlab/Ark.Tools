@@ -6,8 +6,6 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 
 using EnsureThat;
-
-using System;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,9 +42,9 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 
             var createPingData = new Ping.V1.Output()
             {
-                Name = request.Data.Name,
-                Type = request.Data.Type,
-                Code = $"PING_CODE_{request.Data.Name}"
+                Name = request.Data?.Name,
+                Type = request.Data?.Type,
+                Code = $"PING_CODE_{request.Data?.Name}"
             };
 
             var id = await ctx.InsertPingAsync(createPingData, ctk);
@@ -55,7 +53,7 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 
             await ctx.CommitAsync(ctk);
 
-            return entity;
+            return entity!;
         }
     }
 }

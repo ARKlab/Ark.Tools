@@ -1,22 +1,15 @@
 ﻿using Asp.Versioning;
-using Asp.Versioning.OData;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
-using Microsoft.AspNetCore.OData.Query.Validator;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
-using Microsoft.Azure.Amqp.Framing;
-using Microsoft.OData;
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 using WebApplicationDemo.Dto;
 
-using static Microsoft.AspNetCore.Http.StatusCodes;
 using static Microsoft.AspNetCore.OData.Query.AllowedQueryOptions;
 
 namespace WebApplicationDemo.Controllers.V2

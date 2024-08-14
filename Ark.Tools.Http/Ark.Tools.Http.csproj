@@ -18,22 +18,15 @@
   <!--===============================================================================-->
   
   <ItemGroup>
-    <PackageReference Include="CacheCow.Client" Version="2.13.1" />
-    <PackageReference Include="Flurl.Http" Version="4.0.2" />
-	  <PackageReference Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
-    <PackageReference Include="MessagePack.NodaTime" Version="3.2.2" />
+    <PackageReference Include="CacheCow.Client" />
+    <PackageReference Include="Flurl.Http" />
+	<PackageReference Include="Flurl.Http.Newtonsoft" />
+    <PackageReference Include="MessagePack.NodaTime" />
   </ItemGroup>
-  
+ 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

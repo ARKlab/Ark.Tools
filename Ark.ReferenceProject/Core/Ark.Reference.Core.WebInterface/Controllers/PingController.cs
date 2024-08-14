@@ -163,7 +163,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
         {
             if (update.Id == 0)
             {
-                update.Id = id;
+                update = update with { Id = id };
             }
 
             var res = await _requestProcessor.ExecuteAsync(new Ping_UpdatePutRequest.V1()
@@ -195,7 +195,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
         {
             if (update.Id == 0)
             {
-                update.Id = id;
+                update = update with { Id = id };
             }
 
             var res = await _requestProcessor.ExecuteAsync(new Ping_UpdatePatchRequest.V1()

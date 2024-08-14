@@ -2,14 +2,14 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.AspNetCore.Routing;
+
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
-	internal class ArkDefaultConventions : IActionModelConvention
+    internal class ArkDefaultConventions : IActionModelConvention
 	{
 		private static HashSet<string> _consumeMethods = new HashSet<string> { "POST", "PUT", "PATCH" };
 

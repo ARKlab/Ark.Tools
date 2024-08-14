@@ -13,19 +13,19 @@
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
     <TargetDatabaseSet>True</TargetDatabaseSet>
     <DefaultCollation>SQL_Latin1_General_CP1_CI_AS</DefaultCollation>
-    <CompatibilityMode>150</CompatibilityMode>
+    <CompatibilityMode>160</CompatibilityMode>
     <AutoShrink>True</AutoShrink>
     <DbScopedConfigOptimizerHotfixes>On</DbScopedConfigOptimizerHotfixes>
     <Parameterization>FORCED</Parameterization>
     <AutoUpdateStatisticsAsynchronously>True</AutoUpdateStatisticsAsynchronously>
     <AllowSnapshotIsolation>True</AllowSnapshotIsolation>
-    <ReadCommittedSnapshot>False</ReadCommittedSnapshot>
+    <ReadCommittedSnapshot>True</ReadCommittedSnapshot>
 	<IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
     <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.SqlServer.Dacpacs.Master" Version="160.0.0" />
+    <PackageReference Include="Microsoft.SqlServer.Dacpacs.Master" />
   </ItemGroup>
   <ItemGroup>
     <!-- Build default globbing pattern includes all sql files in all subfolders, excluding bin and obj -->

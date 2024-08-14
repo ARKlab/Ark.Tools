@@ -22,20 +22,14 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Ensure.That" Version="10.1.0" />
-    <PackageReference Include="morelinq" Version="4.3.0" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    <PackageReference Include="NodaTime" Version="3.1.11" />
-    <PackageReference Include="Polly" Version="8.4.1" />
-    <PackageReference Include="System.Reactive" Version="6.0.1" />
+    <PackageReference Include="Ensure.That" />
+    <PackageReference Include="morelinq" />
+    <PackageReference Include="System.Linq.Async"  />
+    <PackageReference Include="NodaTime"  />
+    <PackageReference Include="Polly" />
+    <PackageReference Include="System.Reactive"  />
+	<PackageReference Include="FluentValidation"  />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-	  <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="[8.0.0,9)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-  </ItemGroup>
 
 </Project>

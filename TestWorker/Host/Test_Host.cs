@@ -7,15 +7,8 @@ using Ark.Tools.ResourceWatcher.WorkerHost;
 using TestWorker.DataProvider;
 using TestWorker.Configs;
 using TestWorker.Writer;
-using Ark.Tools.ResourceWatcher;
-using Ark.Tools.ResourceWatcher.ApplicationInsights;
-using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
-using Microsoft.Extensions.Hosting;
 using Ark.Tools.Activity.Provider;
-using TestWorker.Constants;
-using Ark.Tools.NLog;
 using Microsoft.Extensions.Configuration;
-using NLog;
 
 namespace TestWorker.HostNs
 {

@@ -4,7 +4,6 @@ using Rebus.Messages;
 using Rebus.Pipeline;
 using Rebus.Pipeline.Receive;
 using Rebus.Pipeline.Send;
-using Rebus.Retry.FailFast;
 using Rebus.Time;
 using Rebus.Transport;
 using Rebus.Transport.InMem;

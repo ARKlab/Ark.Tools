@@ -20,6 +20,7 @@ namespace Ark.Reference.Common.Services.Audit
 
         private readonly string _schemaAudit = "dbo";
         private readonly string _tableAudit = "Audit";
+        private AuditDto<TAuditKind>? _currentAudit;
 
         public AuditContext(Logger logger, IDbConnection dbConnection, IDbTransaction dbTransaction)
         {
@@ -27,7 +28,7 @@ namespace Ark.Reference.Common.Services.Audit
             _dbConnection = dbConnection;
             _dbTransaction = dbTransaction;
         }
-
+        public AuditDto<TAuditKind> CurrentAudit => _currentAudit ?? throw new InvalidOperationException("CurrentAudit is null. Call EnsureAudit(...) before accessing CurrentAudit");
 
         public async Task<(IEnumerable<AuditDto<TAuditKind>> records, int totalCount)> ReadAuditByFilterAsync(
                   AuditQueryDto.V1<TAuditKind> query
@@ -105,13 +106,12 @@ namespace Ark.Reference.Common.Services.Audit
             return retVal;
         }
 
-        public AuditDto<TAuditKind> CurrentAudit { get; private set; }
 
-        public async ValueTask<AuditDto<TAuditKind>> EnsureAudit(TAuditKind kind, string userId, string infoMessage, CancellationToken ctk = default)
+        public async ValueTask<AuditDto<TAuditKind>> EnsureAudit(TAuditKind kind, string? userId, string? infoMessage, CancellationToken ctk = default)
         {
-            if (CurrentAudit == null)
+            if (_currentAudit == null)
             {
-                CurrentAudit = new AuditDto<TAuditKind>
+                _currentAudit = new AuditDto<TAuditKind>
                 {
                     AuditId = Guid.NewGuid(),
                     UserId = userId,

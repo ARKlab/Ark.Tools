@@ -4,9 +4,9 @@ using Ark.Reference.Common.Services.Audit;
 
 namespace Ark.Reference.Core.API.Queries
 {
-    public class Audit_GetChangesQuery
+    public static class Audit_GetChangesQuery
     {
-        public class V1
+        public record V1
             : AuditChangesQueryDto.V1
             , IQuery<IAuditRecordReturn<IAuditEntity>>
         {
