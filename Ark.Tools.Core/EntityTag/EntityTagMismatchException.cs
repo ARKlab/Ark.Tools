@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
+using System.Globalization;
 
 namespace Ark.Tools.Core.EntityTag
 {
@@ -12,7 +13,7 @@ namespace Ark.Tools.Core.EntityTag
         }
 
         public EntityTagMismatchException(string format, params object[] args)
-            : base(string.Format(format, args))
+            : base(string.Format(CultureInfo.InvariantCulture, format, args))
         {
         }
 
@@ -23,7 +24,7 @@ namespace Ark.Tools.Core.EntityTag
         }
 
         public EntityTagMismatchException(Exception inner, string format, params object[] args)
-            : base(string.Format(format, args), inner)
+            : base(string.Format(CultureInfo.InvariantCulture, format, args), inner)
         {
         }
 

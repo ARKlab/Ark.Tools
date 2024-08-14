@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NodaTime;
 using System;
+using System.Globalization;
 
 namespace Ark.Tools.Nodatime.Json
 {
@@ -61,7 +62,7 @@ namespace Ark.Tools.Nodatime.Json
 
             if (!(value is LocalDateTimeRange || value is Nullable<LocalDateTimeRange>))
             {
-                throw new ArgumentException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateTimeRange).FullName, value.GetType().FullName));
+                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateTimeRange).FullName, value.GetType().FullName));
             }
 
             LocalDateTimeRange? r = null;

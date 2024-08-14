@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NodaTime;
 using System;
+using System.Globalization;
 
 namespace Ark.Tools.Nodatime.Json
 {
@@ -31,7 +32,7 @@ namespace Ark.Tools.Nodatime.Json
             {
                 if (objectType != _nullableType)
                 {
-                    throw new JsonReaderException(string.Format("Cannot convert null value to {0}.", objectType));
+                    throw new JsonReaderException(string.Format(CultureInfo.InvariantCulture, "Cannot convert null value to {0}.", objectType));
                 }
                 return null;
             }
@@ -42,7 +43,7 @@ namespace Ark.Tools.Nodatime.Json
             {
                 if (objectType != _nullableType)
                 {
-                    throw new JsonReaderException(string.Format("Cannot convert null value to {0}.", objectType));
+                    throw new JsonReaderException(string.Format(CultureInfo.InvariantCulture, "Cannot convert null value to {0}.", objectType));
                 }
                 return null;
             }

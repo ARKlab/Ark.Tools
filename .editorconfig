@@ -190,43 +190,43 @@ dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
 
 dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.interface.required_modifiers = 
+dotnet_naming_symbols.interface.required_modifiers =
 
 dotnet_naming_symbols.private_method.applicable_kinds = method
 dotnet_naming_symbols.private_method.applicable_accessibilities = private
-dotnet_naming_symbols.private_method.required_modifiers = 
+dotnet_naming_symbols.private_method.required_modifiers =
 
 dotnet_naming_symbols.private_property.applicable_kinds = property
 dotnet_naming_symbols.private_property.applicable_accessibilities = private
-dotnet_naming_symbols.private_property.required_modifiers = 
+dotnet_naming_symbols.private_property.required_modifiers =
 
 dotnet_naming_symbols.private_or_internal_field.applicable_kinds = field
 dotnet_naming_symbols.private_or_internal_field.applicable_accessibilities = internal, private
-dotnet_naming_symbols.private_or_internal_field.required_modifiers = 
+dotnet_naming_symbols.private_or_internal_field.required_modifiers =
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.types.required_modifiers = 
+dotnet_naming_symbols.types.required_modifiers =
 
 dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.non_field_members.required_modifiers = 
+dotnet_naming_symbols.non_field_members.required_modifiers =
 
 # Naming styles
 
-dotnet_naming_style.pascal_case.required_prefix = 
-dotnet_naming_style.pascal_case.required_suffix = 
-dotnet_naming_style.pascal_case.word_separator = 
+dotnet_naming_style.pascal_case.required_prefix =
+dotnet_naming_style.pascal_case.required_suffix =
+dotnet_naming_style.pascal_case.word_separator =
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
 dotnet_naming_style.begins_with_i.required_prefix = I
-dotnet_naming_style.begins_with_i.required_suffix = 
-dotnet_naming_style.begins_with_i.word_separator = 
+dotnet_naming_style.begins_with_i.required_suffix =
+dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
 dotnet_naming_style.begins_with__.required_prefix = _
-dotnet_naming_style.begins_with__.required_suffix = 
-dotnet_naming_style.begins_with__.word_separator = 
+dotnet_naming_style.begins_with__.required_suffix =
+dotnet_naming_style.begins_with__.word_separator =
 dotnet_naming_style.begins_with__.capitalization = camel_case
 csharp_style_namespace_declarations = block_scoped:warning
 dotnet_diagnostic.CA1825.severity = warning
@@ -244,6 +244,7 @@ csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
 csharp_style_prefer_tuple_swap = true:suggestion
 csharp_style_prefer_utf8_string_literals = true:suggestion
 dotnet_code_quality.ca1051.exclude_structs = true
+csharp_style_prefer_primary_constructors = true:suggestion
 
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
@@ -268,7 +269,7 @@ dotnet_diagnostic.CA1061.severity = warning
 dotnet_diagnostic.CA1067.severity = warning
 dotnet_diagnostic.CA1068.severity = error
 dotnet_diagnostic.CA1069.severity = error
-dotnet_diagnostic.CA1304.severity = suggestion
+dotnet_diagnostic.CA1304.severity = warning
 dotnet_diagnostic.CA1305.severity = suggestion
 dotnet_diagnostic.CA1310.severity = suggestion
 dotnet_diagnostic.CA1821.severity = error
@@ -293,6 +294,10 @@ dotnet_diagnostic.CA2215.severity = warning
 dotnet_diagnostic.CA2219.severity = warning
 dotnet_diagnostic.CA2242.severity = warning
 dotnet_diagnostic.CA2245.severity = error
+dotnet_diagnostic.CA1510.severity = suggestion
+dotnet_diagnostic.CA1050.severity = warning
+dotnet_diagnostic.CA1862.severity = warning
+dotnet_diagnostic.CA1850.severity = warning
 dotnet_style_readonly_field = true:suggestion
 dotnet_diagnostic.CA1063.severity = error
 dotnet_diagnostic.CA2213.severity = warning

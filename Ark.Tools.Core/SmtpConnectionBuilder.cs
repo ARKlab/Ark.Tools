@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
+using System.Globalization;
 using System.Linq;
 
 namespace Ark.Tools
@@ -51,7 +52,7 @@ namespace Ark.Tools
 
                     case "port":
                         {
-                            this.Port = Int32.Parse(pair[1]);
+                            this.Port = Int32.Parse(pair[1], CultureInfo.InvariantCulture);
                             break;
                         }
 

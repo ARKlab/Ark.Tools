@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace Ark.Tools.Activity
         public static string ToValidAzureServiceBusEntityName(this string topic)
         {
             return string.Concat(topic
-                .Select(c => char.IsLetterOrDigit(c) || c == '/' ? char.ToLower(c) : '_'));
+                .Select(c => char.IsLetterOrDigit(c) || c == '/' ? char.ToLower(c, CultureInfo.InvariantCulture) : '_'));
         }
     }
 }

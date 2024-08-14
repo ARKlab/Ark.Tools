@@ -99,7 +99,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
         private static void _addEncoding(OpenApiMediaType mediaType, PropertyInfo propertyInfo)
         {
             mediaType.Encoding = mediaType.Encoding
-                .Where(pair => !pair.Key.ToLower().Contains(propertyInfo.Name.ToLower()))
+                .Where(pair => !pair.Key.ToLowerInvariant().Contains(propertyInfo.Name.ToLowerInvariant(), StringComparison.Ordinal))
                 .ToDictionary(pair => pair.Key, pair => pair.Value);
             mediaType.Encoding.Add(propertyInfo.Name, new OpenApiEncoding()
             {

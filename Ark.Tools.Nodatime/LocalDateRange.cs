@@ -5,6 +5,7 @@ using EnsureThat;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Ark.Tools.Nodatime
 {
@@ -22,7 +23,7 @@ namespace Ark.Tools.Nodatime
         }
         public override string ToString()
         {
-            return string.Format("Start:{0} | End:{1}", _start,_end);
+            return string.Format(CultureInfo.InvariantCulture, "Start:{0} | End:{1}", _start,_end);
         }
 
 

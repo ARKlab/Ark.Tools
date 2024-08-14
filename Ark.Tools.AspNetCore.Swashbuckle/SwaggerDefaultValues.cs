@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 
@@ -35,7 +36,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
             foreach (var responseType in context.ApiDescription.SupportedResponseTypes)
             {
                 // REF: https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/b7cf75e7905050305b115dd96640ddd6e74c7ac9/src/Swashbuckle.AspNetCore.SwaggerGen/SwaggerGenerator/SwaggerGenerator.cs#L383-L387
-                var responseKey = responseType.IsDefaultResponse ? "default" : responseType.StatusCode.ToString();
+                var responseKey = responseType.IsDefaultResponse ? "default" : responseType.StatusCode.ToString(CultureInfo.InvariantCulture);
                 var response = operation.Responses[responseKey];
 
                 foreach (var contentType in response.Content.Keys)

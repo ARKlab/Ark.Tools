@@ -4,6 +4,7 @@ using SimpleInjector;
 using SimpleInjector.Diagnostics;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -170,9 +171,9 @@ namespace Ark.Tools.SimpleInjector
             else
             {
                 var names = string.Join(", ", registrations
-                    .Select(r => string.Format("{0}", r.ServiceType)));
+                    .Select(r => string.Format(CultureInfo.InvariantCulture, "{0}", r.ServiceType)));
 
-                throw new ActivationException(string.Format(
+                throw new ActivationException(string.Format(CultureInfo.InvariantCulture,
                     "It is impossible to resolve type {0}, because there are {1} " +
                     "registrations that are applicable. Ambiguous registrations: {2}.",
                     serviceType, registrations.Length, names));

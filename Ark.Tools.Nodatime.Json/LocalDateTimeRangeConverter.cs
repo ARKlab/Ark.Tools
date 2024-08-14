@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NodaTime;
 using System;
+using System.Globalization;
 
 namespace Ark.Tools.Nodatime.Json
 {
@@ -41,7 +42,7 @@ namespace Ark.Tools.Nodatime.Json
             {
                 if (objectType != _nullableType)
                 {
-                    throw new JsonReaderException(string.Format("Cannot convert null value to {0}.", objectType));
+                    throw new JsonReaderException(string.Format(CultureInfo.InvariantCulture, "Cannot convert null value to {0}.", objectType));
                 }
                 return null;
             }
@@ -61,7 +62,7 @@ namespace Ark.Tools.Nodatime.Json
 
             if (!(value is LocalDateRange || value is Nullable<LocalDateRange>))
             {
-                throw new ArgumentException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateRange).FullName, value.GetType().FullName));
+                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateRange).FullName, value.GetType().FullName));
             }
 
             LocalDateRange? r = null;

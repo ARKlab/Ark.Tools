@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -39,11 +40,11 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <returns>An array of bytes that has to be sent when the user wants to connect to a specific IPEndPoint.</returns>
 		private byte[] GetConnectBytes(string host, int port) {
 			StringBuilder sb = new StringBuilder();
-			sb.AppendLine(string.Format("CONNECT {0}:{1} HTTP/1.1", host, port));
-			sb.AppendLine(string.Format("Host: {0}:{1}", host, port));
+			sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "CONNECT {0}:{1} HTTP/1.1", host, port));
+			sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "Host: {0}:{1}", host, port));
 			if (!string.IsNullOrEmpty(Username)) {
-				string auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(String.Format("{0}:{1}", Username, Password)));
-				sb.AppendLine(string.Format("Proxy-Authorization: Basic {0}", auth));
+				string auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(String.Format(CultureInfo.InvariantCulture, "{0}:{1}", Username, Password)));
+				sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "Proxy-Authorization: Basic {0}", auth));
 			}
 			sb.AppendLine();
 			byte[] buffer = Encoding.ASCII.GetBytes(sb.ToString());

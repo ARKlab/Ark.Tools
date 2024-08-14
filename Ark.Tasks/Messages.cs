@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
+using System.Globalization;
+
 using Ark.Tools.Nodatime;
 using Newtonsoft.Json;
 using NodaTime;
@@ -62,7 +64,7 @@ namespace Ark.Tasks
 
         public override string ToString()
         {
-            return string.Format("{0}.{1}", Provider, Id);
+            return string.Format(CultureInfo.InvariantCulture, "{0}.{1}", Provider, Id);
         }
     }
 

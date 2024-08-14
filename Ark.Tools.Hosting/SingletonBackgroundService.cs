@@ -54,11 +54,15 @@ namespace Ark.Tools.Hosting
         protected SingletonBackgroundService(IDistributedLockProvider distributedLockProvider, ILogger<SingletonBackgroundService> logger, string? serviceName = null)
         {
             ServiceName = serviceName ?? this.GetType().FullName!;
-
 #pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms | used only for identifier hash
+#if NET6_0_OR_GREATER
+            var hash = MD5.HashData(Encoding.UTF8.GetBytes(ServiceName));
+#else
             using var md5 = MD5.Create();
-#pragma warning restore CA5351 // Do Not Use Broken Cryptographic Algorithms
             var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(ServiceName));
+#endif
+
+#pragma warning restore CA5351 // Do Not Use Broken Cryptographic Algorithms
             LockId = new Guid(hash);
 
             _lock = distributedLockProvider.CreateLock(LockId.ToString("N"));

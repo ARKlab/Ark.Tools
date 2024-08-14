@@ -16,6 +16,7 @@ using NLog.LayoutRenderers;
 using NLog.Layouts;
 using System.Text.Json;
 using System.Reflection;
+using System.Globalization;
 
 namespace Ark.Tools.NLog
 {
@@ -308,7 +309,7 @@ namespace Ark.Tools.NLog
                 databaseTarget.DBProvider = "Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient"; // see https://github.com/NLog/NLog/wiki/Database-target#microsoftdatasqlclient-and-net-core
                 databaseTarget.ConnectionString = connectionString;
                 databaseTarget.KeepConnection = true;
-                databaseTarget.CommandText = string.Format(@"
+                databaseTarget.CommandText = string.Format(CultureInfo.InvariantCulture, @"
 INSERT INTO [dbo].[{0}]
 ( 
       [TimestampUtc]
