@@ -1,17 +1,13 @@
 name: 'Dependency Review'
-on: [pull_request]
+on: 
+  workflows: ["CI"]
+    types:
+      - completed
 
 permissions:
-  id-token: write
-  contents: write
+  contents: read
 
 jobs:
-  dependency-submission:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Component detection 
-        uses: advanced-security/component-detection-dependency-submission-action@v0.0.2
   dependency-review:
     runs-on: ubuntu-latest
     steps:
