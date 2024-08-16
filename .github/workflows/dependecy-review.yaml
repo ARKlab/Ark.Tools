@@ -1,6 +1,7 @@
 name: 'Dependency Review'
-on: 
-  workflows: ["CI"]
+on:
+  workflow_run:
+    workflows: ['CI']                     # runs after CI workflow
     types:
       - completed
 
