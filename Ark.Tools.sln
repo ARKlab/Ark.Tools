@@ -75,6 +75,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Ark.Tools.sln.licenseheader = Ark.Tools.sln.licenseheader
 		Directory.Build.props = Directory.Build.props
 		.devcontainer\docker-compose.yml = .devcontainer\docker-compose.yml
+		Directory.Packages.props.disable = Directory.Packages.props.disable
 		global.json = global.json
 		Group_Pack_All.bat = Group_Pack_All.bat
 		Group_Pack_AspnetCore.bat = Group_Pack_AspnetCore.bat

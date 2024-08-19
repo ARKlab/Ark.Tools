@@ -1,16 +1,11 @@
 ﻿using Ark.Tools.Activity.Processor;
 using SimpleInjector;
-using System.Configuration;
 using System.Threading;
-using NLog;
-using Ark.Tools.NLog;
 using System;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
 
 namespace TestReceiver
 {
-	class Config : TestReceiver_Config, IRebusSliceActivityManagerConfig
+    class Config : TestReceiver_Config, IRebusSliceActivityManagerConfig
 	{
 		public string? RebusConnstring { get; set; }
 		public string ActivitySqlConnectionString

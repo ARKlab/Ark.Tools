@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TestWorker.Configs
+﻿namespace TestWorker.Configs
 {
     public enum Test_Recipe
     {

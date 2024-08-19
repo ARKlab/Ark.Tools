@@ -11,17 +11,12 @@
     <VersionSuffix>$(EventSourcingGroupVersionSuffix)</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Rebus" Version="8.4.3" />
-  </ItemGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.EventSourcing\Ark.Tools.EventSourcing.csproj" />
+	<ProjectReference Include="..\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-  </ItemGroup>
 
 </Project>

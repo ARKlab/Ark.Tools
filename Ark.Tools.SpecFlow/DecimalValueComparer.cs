@@ -1,5 +1,4 @@
-﻿using System;
-using TechTalk.SpecFlow.Assist;
+﻿using TechTalk.SpecFlow.Assist;
 
 namespace Ark.Tools.SpecFlow
 {

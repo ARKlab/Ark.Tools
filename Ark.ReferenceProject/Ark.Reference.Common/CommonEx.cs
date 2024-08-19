@@ -4,7 +4,7 @@ namespace Ark.Reference.Common
 {
     public static class CommonEx
     {
-        public static IChanges<TObject> ToChanges<TObject>(this (TObject pre, TObject cur) input)
+        public static IChanges<TObject> ToChanges<TObject>(this (TObject? pre, TObject? cur) input)
         {
             return new Changes<TObject>.V1()
             {

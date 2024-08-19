@@ -120,7 +120,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             openApiSchema.Example = new OpenApiString(json);
         }
 
-        private object _getExampleFor(Type parameterType)
+        private object? _getExampleFor(Type parameterType)
         {
             var makeGenericType = typeof(IExamplesProvider<>).MakeGenericType(parameterType);
             var method = makeGenericType.GetMethod("GetExamples");
@@ -132,7 +132,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             return example;
         }
 
-        private static PropertyInfo _getPropertyInfo(ParameterDescriptor descriptor) =>
+        private static PropertyInfo? _getPropertyInfo(ParameterDescriptor descriptor) =>
             descriptor.ParameterType.GetProperties()
                 .SingleOrDefault(f => f.GetCustomAttribute<FromJsonAttribute>() != null);
     }

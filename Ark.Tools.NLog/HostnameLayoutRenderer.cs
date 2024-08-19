@@ -4,8 +4,8 @@ using NLog;
 using NLog.Common;
 using NLog.Config;
 using NLog.LayoutRenderers;
+
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Threading;

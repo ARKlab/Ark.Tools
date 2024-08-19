@@ -8,5 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj" />
   </ItemGroup>
+	
+
 
 </Project>

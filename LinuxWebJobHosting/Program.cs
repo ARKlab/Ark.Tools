@@ -1,8 +1,4 @@
 using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 
 using LinuxWebJobHosting;
@@ -11,12 +7,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using LinuxWebJobHosting.Utils;
 using Ark.Tools.NLog;
-using Ark.Tools.ApplicationInsights.HostedService;
 using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
-using Ark.Tools.ResourceWatcher.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights;
 
 namespace Processor.Service.WebInterface

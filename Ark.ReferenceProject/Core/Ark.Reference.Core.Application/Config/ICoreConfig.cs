@@ -2,6 +2,6 @@
 {
     public interface ICoreConfig
     {
-        string Environment { get; }
+        string? Environment { get; }
     }
 }

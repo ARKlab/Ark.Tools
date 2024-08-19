@@ -1,16 +1,17 @@
-﻿using Ark.Tools.Core;
-using Ark.Tools.NewtonsoftJson;
+﻿using Ark.Tools.NewtonsoftJson;
 using Ark.Tools.Nodatime;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace WebApplicationDemo.Dto
 {
-	public enum BaseKind
+    public enum BaseKind
 	{
 		A, B
 	}

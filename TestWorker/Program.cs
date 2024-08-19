@@ -6,8 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Ark.Tools.NLog;
 using TestWorker.Constants;
 using NLog.Extensions.Logging;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
 namespace TestWorker
 {

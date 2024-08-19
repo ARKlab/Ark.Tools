@@ -1,7 +1,6 @@
 ﻿using Asp.Versioning;
 using Asp.Versioning.OData;
 
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.OData.ModelBuilder;
 
 using WebApplicationDemo.Dto;

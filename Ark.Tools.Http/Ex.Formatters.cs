@@ -2,11 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Flurl;
 using Flurl.Http;
+
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 

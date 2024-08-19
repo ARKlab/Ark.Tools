@@ -19,16 +19,11 @@
 
   <ItemGroup>
     <PackageReference Include="FluentFTP" Version="51.0.0" />
-    <PackageReference Include="Sunlighter.AsyncQueueLib" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

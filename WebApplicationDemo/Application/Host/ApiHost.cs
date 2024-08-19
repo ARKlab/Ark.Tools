@@ -9,13 +9,12 @@ using Ark.Tools.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql.SqlServer;
 using WebApplicationDemo.Dto;
-using Flurl.Http.Configuration;
 using WebApplicationDemo.Services;
 using Ark.Tools.Http;
 
 namespace WebApplicationDemo.Application.Host
 {
-	public class ApiHost
+    public class ApiHost
 	{
 		public ApiHost(ApiConfig config)
 		{

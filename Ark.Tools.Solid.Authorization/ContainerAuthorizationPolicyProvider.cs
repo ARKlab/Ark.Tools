@@ -1,7 +1,6 @@
 ﻿using Ark.Tools.Authorization;
+
 using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid.Authorization
 {

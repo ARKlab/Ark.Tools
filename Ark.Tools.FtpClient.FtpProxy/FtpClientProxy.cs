@@ -6,8 +6,6 @@ using Ark.Tools.Http;
 using Flurl.Http;
 using Flurl.Http.Configuration;
 
-using NLog;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,8 +1,9 @@
 ﻿using Ark.Tools.EventSourcing.Aggregates;
 using Ark.Tools.EventSourcing.Store;
-using Raven.Client.Documents;
+
 using Raven.Client.Documents.Operations.CompareExchange;
 using Raven.Client.Documents.Session;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

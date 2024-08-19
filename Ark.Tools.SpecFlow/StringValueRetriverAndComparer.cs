@@ -1,5 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
+
+using TechTalk.SpecFlow;
 using TechTalk.SpecFlow.Assist;
 
 namespace Ark.Tools.SpecFlow

@@ -13,6 +13,6 @@ namespace Ark.Reference.Core.API.ProblemDetails
             Detail = $"The amount is not nice: {amount}";
         }
 
-        public int Amount { get; set; }
+        public int Amount { get; }
     }
 }

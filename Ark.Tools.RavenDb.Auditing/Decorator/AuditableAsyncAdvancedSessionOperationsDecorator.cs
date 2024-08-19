@@ -11,7 +11,6 @@ using Raven.Client.Documents;
 using Sparrow.Json;
 using Raven.Client.Documents.Commands.Batches;
 using System.IO;
-using Raven.Client.Util;
 using Raven.Client.Documents.Commands;
 using System.Linq;
 using Raven.Client.Json.Serialization;
@@ -19,7 +18,7 @@ using Raven.Client.Documents.Queries.TimeSeries;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
-	public class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSessionOperations
+    public class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSessionOperations
 	{
 		private readonly IAsyncAdvancedSessionOperations _inner;
 		private readonly object? _audit;

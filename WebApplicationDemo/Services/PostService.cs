@@ -1,8 +1,5 @@
-﻿using Flurl.Http.Configuration;
-using Flurl.Http;
+﻿using Flurl.Http;
 using System.Collections.Generic;
-
-using WebApplicationDemo.Application.Handlers.Queries;
 using WebApplicationDemo.Dto;
 using System.Threading.Tasks;
 using System.Text.Json;

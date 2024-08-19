@@ -1,17 +1,18 @@
 ﻿using Microsoft.Extensions.Hosting;
+
 using Raven.Client.Documents;
 using Raven.Client.Documents.Commands.Batches;
 using Raven.Client.Documents.Operations;
 using Raven.Client.Documents.Subscriptions;
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
-	public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
+    public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 	{
 		private readonly IDocumentStore _store;
 		private readonly List<Task> _subscriptionWorkerTasks = new List<Task>();
