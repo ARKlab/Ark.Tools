@@ -4,8 +4,6 @@ using Flurl.Http;
 using Flurl.Http.Configuration;
 
 using System;
-using Flurl.Http.Newtonsoft;
-using Ark.Tools.NewtonsoftJson;
 
 namespace Ark.Tools.Http
 {

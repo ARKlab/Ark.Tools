@@ -1,16 +1,20 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.SimpleInjector;
+
 using EnsureThat;
+
 using NLog;
+
 using NodaTime;
+
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 

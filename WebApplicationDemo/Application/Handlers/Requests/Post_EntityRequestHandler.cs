@@ -1,13 +1,12 @@
 ﻿using Ark.Tools.Solid;
+
 using EnsureThat;
-using NLog;
 
 using NodaTime;
 
-using Slack.Webhooks.Blocks;
-
 using System.Threading;
 using System.Threading.Tasks;
+
 using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;
 

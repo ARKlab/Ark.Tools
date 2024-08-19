@@ -2,7 +2,7 @@
 {
     public interface IFileStorageServiceConfig
     {
-        string StorageAccount { get; }
-        string StoragePrefix { get; }
+        string? StorageAccount { get; }
+        string? StoragePrefix { get; }
     }
 }

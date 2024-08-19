@@ -1,21 +1,25 @@
-﻿using NodaTime;
+﻿using Ark.Tools.Core;
+
+using NodaTime;
 
 using System;
+using System.Collections.Generic;
 
 namespace Ark.Reference.Common.Services.Audit
 {
     public static class AuditQueryDto
     {
-        public class V1<TAuditKind>
+        public record V1<TAuditKind> : IQueryPaged
             where TAuditKind : struct, Enum
         {
-            public Guid[] AuditIds { get; set; }
-            public string[] Users { get; set; }
-            public LocalDateTime? FromDateTime { get; set; }
-            public LocalDateTime? ToDateTime { get; set; }
-            public TAuditKind[] AuditKinds { get; set; }
+            public Guid[] AuditIds { get; init; } = [];
+            public string[] Users { get; init; } = [];
+            public LocalDateTime? FromDateTime { get; init; }
+            public LocalDateTime? ToDateTime { get; init; }
+            public TAuditKind[] AuditKinds { get; init; } = [];
             public int Skip { get; set; } = 0;
-            public int Limit { get; set; } = 10;
+            public int Limit { get; init; } = 10;
+            public IEnumerable<string> Sort { get; init; } = [];
         }
     }
 }

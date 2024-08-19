@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TestWorker.Constants
+﻿namespace TestWorker.Constants
 {
-	public static class Test_Constants
+    public static class Test_Constants
 	{
 		//public const int WorkerSleepDefault = 5;
 		//public static int ThreadCountDefault = Environment.ProcessorCount;

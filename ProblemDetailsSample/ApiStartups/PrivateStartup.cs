@@ -1,12 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Swagger;
-using SimpleInjector;
 using System;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.AspNetCore.Startup;

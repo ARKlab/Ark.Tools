@@ -1,6 +1,5 @@
 ﻿using Rebus.Config;
 using Rebus.Pipeline;
-using Rebus.Pipeline.Receive;
 
 namespace Ark.Tools.Rebus.Tests
 {

@@ -1,22 +1,15 @@
 ﻿using Asp.Versioning;
-using Asp.Versioning.OData;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
-using WebApplicationDemo.Controllers.V2;
 using WebApplicationDemo.Dto;
 
-using static Microsoft.AspNetCore.Http.StatusCodes;
 using static Microsoft.AspNetCore.OData.Query.AllowedQueryOptions;
 
 namespace WebApplicationDemo.Controllers.V1

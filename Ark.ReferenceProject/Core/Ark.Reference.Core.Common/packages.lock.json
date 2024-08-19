@@ -2,6 +2,12 @@
   "version": 1,
   "dependencies": {
     "net8.0": {
+      "Microsoft.CodeAnalysis.NetAnalyzers": {
+        "type": "Direct",
+        "requested": "[8.0.0, )",
+        "resolved": "8.0.0",
+        "contentHash": "DxiTgkCl3CGq1rYmBX2wjY7XGbxiBdL4J+/AJIAFLKy5z70NxhnVRnPghnicXZ8oF6JKVXlW3xwznRbI3ioEKg=="
+      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.41.0",
@@ -203,6 +209,16 @@
           "NLog": "4.5.11"
         }
       },
+      "Microsoft.ApplicationInsights.SnapshotCollector": {
+        "type": "Transitive",
+        "resolved": "1.4.6",
+        "contentHash": "UGXpUjW3YFSFq+u4CXwJrU3Rf7Hc3dMrMVTBJ8E3LB0eV2MF8lOHnXc+kHEmLKO4gxHhvulaVIld7U5aDzLZ8A==",
+        "dependencies": {
+          "Microsoft.ApplicationInsights": "2.15.0",
+          "Microsoft.Extensions.Options": "2.1.1",
+          "System.IO.FileSystem.AccessControl": "4.7.0"
+        }
+      },
       "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": {
         "type": "Transitive",
         "resolved": "2.22.0",
@@ -230,11 +246,6 @@
         "type": "Transitive",
         "resolved": "6.0.0",
         "contentHash": "UcSjPsst+DfAdJGVDsu346FX0ci0ah+lw3WRtn18NUwEqRt70HaOQ7lI72vy3+1LxtqI3T5GWwV39rQSrCzAeg=="
-      },
-      "Microsoft.CodeAnalysis.NetAnalyzers": {
-        "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "DxiTgkCl3CGq1rYmBX2wjY7XGbxiBdL4J+/AJIAFLKy5z70NxhnVRnPghnicXZ8oF6JKVXlW3xwznRbI3ioEKg=="
       },
       "Microsoft.CSharp": {
         "type": "Transitive",
@@ -662,11 +673,6 @@
           "Microsoft.NETCore.Targets": "1.1.0",
           "System.Runtime": "4.3.0"
         }
-      },
-      "morelinq": {
-        "type": "Transitive",
-        "resolved": "4.3.0",
-        "contentHash": "mQ0CBsO+dgrLOR8jC8NUcuz7ohH1NAbRn3XRrfpVt5PqcK8YLUmDbmIQfUEosQwtI7l41QcIf1xBhkR0w3b72A=="
       },
       "NETStandard.Library": {
         "type": "Transitive",
@@ -1815,15 +1821,16 @@
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.3.1, )",
-          "Azure.Storage.Blobs": "[12.21.2, )"
+          "Azure.Storage.Blobs": "[12.21.2, )",
+          "Polly": "[8.4.1, )"
         }
       },
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
           "Microsoft.ApplicationInsights": "[2.22.0, )",
+          "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
           "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.22.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "Microsoft.Data.SqlClient": "[5.2.1, )",
           "Microsoft.Extensions.Options": "[8.0.2, 9.0.0)"
         }
@@ -1831,20 +1838,16 @@
       "ark.tools.authorization": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.NLog": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
           "Ensure.That": "[10.1.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "NodaTime": "[3.1.11, )",
-          "Polly": "[8.4.1, )",
           "System.Linq.Async": "[6.0.1, )",
-          "System.Reactive": "[6.0.1, )",
-          "morelinq": "[4.3.0, )"
+          "System.Reactive": "[6.0.1, )"
         }
       },
       "ark.tools.http": {
@@ -1855,15 +1858,13 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.2.2, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "MessagePack.NodaTime": "[3.2.2, )"
         }
       },
       "ark.tools.newtonsoftjson": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime.Json": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "Newtonsoft.Json": "[13.0.3, )"
         }
       },
@@ -1875,7 +1876,6 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.22.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "Microsoft.Data.SqlClient": "[5.2.1, )",
           "NLog": "[5.3.3, )",
           "NLog.Database": "[5.3.3, )",
@@ -1887,7 +1887,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.NLog": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Hosting": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.1, 9.0.0)",
@@ -1897,23 +1896,20 @@
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "Ark.Tools.Core": "[1.0.0, )"
         }
       },
       "ark.tools.nodatime.dapper": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Dapper": "[2.1.35, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "Dapper": "[2.1.35, )"
         }
       },
       "ark.tools.nodatime.json": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "Newtonsoft.Json": "[13.0.3, )",
           "NodaTime.Serialization.JsonNet": "[3.1.0, )"
         }
@@ -1922,7 +1918,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.2.0, )"
         }
       },
@@ -1934,7 +1929,6 @@
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Messaging.ServiceBus": "[7.18.1, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "Rebus": "[8.4.3, )",
           "Rebus.AzureBlobs": "[1.0.1, )",
           "Rebus.AzureServiceBus": "[10.2.0, )",
@@ -1945,7 +1939,6 @@
       "ark.tools.simpleinjector": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "SimpleInjector": "[5.4.6, )"
         }
       },
@@ -1953,39 +1946,34 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.NLog": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.solid.authorization": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Authorization": "[1.0.0, )",
-          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )"
         }
       },
       "ark.tools.solid.fluentvalidaton": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Solid": "[1.0.0, )",
-          "FluentValidation": "[11.9.2, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "FluentValidation": "[11.9.2, )"
         }
       },
       "ark.tools.solid.simpleinjector": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "Ark.Tools.Solid": "[1.0.0, )"
         }
       },
       "ark.tools.sql": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "Ark.Tools.Core": "[1.0.0, )"
         }
       },
       "ark.tools.sql.sqlserver": {
@@ -1994,7 +1982,6 @@
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.Nodatime.Dapper": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )",
           "Microsoft.Data.SqlClient": "[5.2.1, )"
         }
       },
@@ -2003,8 +1990,7 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Macross.Json.Extensions": "[3.0.0, )",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "[8.0.0, )"
+          "Macross.Json.Extensions": "[3.0.0, )"
         }
       }
     }

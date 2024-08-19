@@ -1,19 +1,19 @@
 ﻿using Ark.Tools.Solid;
+
 using EnsureThat;
-using Hellang.Middleware.ProblemDetails;
-using Microsoft.AspNetCore.Http;
+
 using NLog;
-using System;
+
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Claims;
+
 using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Application.Handlers.Requests
 {
-	public class Post_FileImportRequestHandler : IRequestHandler<Post_FileImportRequest.V1, FileImport?>
+    public class Post_FileImportRequestHandler : IRequestHandler<Post_FileImportRequest.V1, FileImport?>
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 

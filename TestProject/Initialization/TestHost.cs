@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System;
 using TechTalk.SpecFlow;
@@ -8,7 +7,6 @@ using Ark.Tools.Http;
 using Flurl.Http;
 using Flurl.Http.Configuration;
 using System.Net.Http;
-using Flurl;
 using WebApplicationDemo;
 using Microsoft.Extensions.Hosting;
 

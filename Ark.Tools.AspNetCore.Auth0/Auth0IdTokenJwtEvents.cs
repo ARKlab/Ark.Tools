@@ -9,7 +9,6 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Caching.Distributed;
 using Auth0.ManagementApi;
-using Auth0.AuthenticationApi;
 using Auth0.ManagementApi.Models;
 using Newtonsoft.Json;
 using System;

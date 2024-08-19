@@ -1,14 +1,15 @@
 ﻿using Ark.Tools.Activity;
 using Ark.Tools.Activity.Processor;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace TestReceiver
 {
-	public interface TestReceiver_Config
+    public interface TestReceiver_Config
 	{
 		string ActivitySqlConnectionString { get; }
 	}

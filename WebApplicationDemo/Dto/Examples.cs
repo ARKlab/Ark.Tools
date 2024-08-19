@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace WebApplicationDemo.Dto
+﻿namespace WebApplicationDemo.Dto
 {
-	public static class Examples
+    public static class Examples
 	{
 		public static Entity.V1.Output GetEntityPayload()
 		{

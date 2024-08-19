@@ -1,14 +1,13 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
-using System.Net;
 using System.Net.Sockets;
 
-namespace Org.Mentalis.Network.ProxySocket.Authentication {
-	/// <summary>
-	/// This class implements the 'No Authentication' scheme.
-	/// </summary>
-	internal sealed class AuthNone : AuthMethod {
+namespace Org.Mentalis.Network.ProxySocket.Authentication
+{
+    /// <summary>
+    /// This class implements the 'No Authentication' scheme.
+    /// </summary>
+    internal sealed class AuthNone : AuthMethod {
 		/// <summary>
 		/// Initializes an AuthNone instance.
 		/// </summary>

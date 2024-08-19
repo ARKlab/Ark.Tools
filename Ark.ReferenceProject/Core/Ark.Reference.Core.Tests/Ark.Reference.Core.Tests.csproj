@@ -11,7 +11,6 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BizArk.Core" Version="4.0.1.50" />
 		<PackageReference Include="ExcelDataReader" Version="3.7.0" />
 		<PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
 		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.8" />
@@ -29,6 +28,9 @@
   <ItemGroup>
 	<ProjectReference Include="..\..\..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
     <ProjectReference Include="..\..\..\Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.API\Ark.Reference.Core.API.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.Application\Ark.Reference.Core.Application.csproj" />
@@ -53,10 +55,4 @@
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Update="Microsoft.CodeAnalysis.NetAnalyzers" Version="7.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
 </Project>

@@ -1,23 +1,13 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
 using Asp.Versioning;
 
-using Flurl.Http;
-using Flurl.Http.Configuration;
-using Flurl.Http.Newtonsoft;
-
 using Microsoft.AspNetCore.Mvc;
 
 using WebApplicationDemo.Api.Queries;
-using WebApplicationDemo.Api.Requests;
-using WebApplicationDemo.Dto;
-
-using System.Text.Json;
-using System.Collections.Generic;
 
 namespace WebApplicationDemo.Controllers
 {

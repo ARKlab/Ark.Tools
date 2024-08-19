@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Renci.SshNet.Sftp;
+
 using Renci.SshNet;
 
 namespace Ark.Tools.FtpClient.SftpClient

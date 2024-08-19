@@ -42,7 +42,9 @@ namespace Ark.Tools.Solid.Authorization
 
                     if (policy != null)
                     {
-                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk);
+                        var user = _currentUser.Current;
+
+                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(user, resource, policy, ctk);
                         if (!authorized)
                             throw new UnauthorizedAccessException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
                     }

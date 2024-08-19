@@ -1,10 +1,9 @@
-﻿using Ark.Tools.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
-	public class Audit
+    public class Audit
 	{
 		public Guid AuditId { get; set; }
 		public string Id => AuditId.ToString();

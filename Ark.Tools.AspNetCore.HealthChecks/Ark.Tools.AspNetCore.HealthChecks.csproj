@@ -28,20 +28,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" Version="8.0.1" />
-		<PackageReference Include="AspNetCore.HealthChecks.Network" Version="8.0.1" />
-		<PackageReference Include="AspNetCore.HealthChecks.Oracle" Version="8.0.1" />
-		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" Version="8.0.1" />
-		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="8.0.2" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.1" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.8" />
-		<PackageReference Include="SimpleInjector" Version="5.4.6" />
-	</ItemGroup>
+		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" Version="[8.0.1,9)" />
+		<PackageReference Include="AspNetCore.HealthChecks.Network" Version="[8.0.1,9)" />
+		<PackageReference Include="AspNetCore.HealthChecks.Oracle" Version="[8.0.1,9)" />
+		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" Version="[8.0.1,9)" />
+		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="[8.0.2,9)" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="[8.0.1,9)" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="[8.0.1,9)" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="[8.0.1,9)" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="[8.0.8,9)" />	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+	  <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -50,7 +49,4 @@
 	  </None>
 	</ItemGroup>
 
-	<ItemGroup>
-	  <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-	</ItemGroup>
 </Project>

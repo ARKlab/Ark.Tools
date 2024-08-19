@@ -21,7 +21,7 @@ namespace Ark.Reference.Core.Tests.Features
         private readonly string _controllerName = "ping";
 
         //** Entity related private section **
-        private Ping.V1.Output _output;
+        private Ping.V1.Output? _output;
         private readonly Dictionary<string, int> _entityNameId = new();
 
         public PingSteps(TestClient client)
@@ -72,9 +72,10 @@ namespace Ark.Reference.Core.Tests.Features
 
             if (_client.LastResponse.ResponseMessage.IsSuccessStatusCode)
             {
-                var c = _client.ReadAs<Ping.V1.Output>();
+                var c = _client.ReadAs<Ping.V1.Output?>();
                 _output = c;
-                _entityNameId.TryAdd(c.Name, c.Id);
+                if (c?.Name != null)
+                    _entityNameId.TryAdd(c.Name, c.Id);
             }
         }
 
@@ -90,8 +91,9 @@ namespace Ark.Reference.Core.Tests.Features
 
                 if (_client.LastStatusCodeIsSuccess())
                 {
-                    var res = _client.ReadAs<Ping.V1.Output>();
-                    _entityNameId.Add(res.Name, res.Id);
+                    var res = _client.ReadAs<Ping.V1.Output?>();
+                    if (res?.Name != null)
+                        _entityNameId.Add(res.Name, res.Id);
                 }
             }
         }
@@ -124,8 +126,9 @@ namespace Ark.Reference.Core.Tests.Features
 
             if (_client.LastStatusCodeIsSuccess())
             {
-                var res = _client.ReadAs<Ping.V1.Output>();
-                _entityNameId.TryAdd(res.Name, res.Id);
+                var res = _client.ReadAs<Ping.V1.Output?>();
+                if (res?.Name != null)
+                    _entityNameId.TryAdd(res.Name, res.Id);
             }
         }
 
@@ -171,9 +174,9 @@ namespace Ark.Reference.Core.Tests.Features
         [Then(@"the Ping response should match")]
         public void ThenThePingResponseShouldMatch(Table table)
         {
-            var res = _client.ReadAs<Ping.V1.Output>();
+            var res = _client.ReadAs<Ping.V1.Output?>();
             _output = res;
-            PingMatched(res, table);
+            ThenThePingResponseShouldBe(table);
         }
 
         [Then(@"the stored Ping response should be")]
@@ -189,10 +192,8 @@ namespace Ark.Reference.Core.Tests.Features
             pagedRes.Count.Should().Be(count);
         }
 
-        
-
         //** MATCH **********************************************************************
-        public static void PingMatched(Ping.V1.Output res, Table table)
+        public static void PingMatched(Ping.V1.Output? res, Table table)
         {
             var expected = table.CreateInstance<Ping.V1.Output>();
 
@@ -214,9 +215,10 @@ namespace Ark.Reference.Core.Tests.Features
 
             if (_client.LastResponse.ResponseMessage.IsSuccessStatusCode)
             {
-                var c = _client.ReadAs<Ping.V1.Output>();
+                var c = _client.ReadAs<Ping.V1.Output?>();
                 _output = c;
-                _entityNameId.TryAdd(c.Name, c.Id);
+                if (c?.Name != null)
+                    _entityNameId.TryAdd(c.Name, c.Id);
             }
         }
     }

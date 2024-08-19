@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Ark.Tools.Activity.Messages
+﻿namespace Ark.Tools.Activity.Messages
 {
     public class CoolDownMessage
 	{

@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 namespace Ark.Reference.Core.API.Queries
 {
-    public class Audit_GetUsersQuery
+    public static class Audit_GetUsersQuery
     {
-        public class V1 : IQuery<IEnumerable<string>>
+        public record V1 : IQuery<IEnumerable<string>>
         {
         }
     }

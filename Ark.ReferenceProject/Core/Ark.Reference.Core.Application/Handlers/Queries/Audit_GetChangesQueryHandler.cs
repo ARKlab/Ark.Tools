@@ -10,7 +10,6 @@ using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Common.Services.Audit.Dto;
 
 using System;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,7 +47,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 
                 case AuditKind.Ping:
                     return AuditRecordReturn.V1<Ping.V1.Output>.From(
-                        await ctx.ReadPingAuditAsync(query.AuditId, ctk)
+                        (await ctx.ReadPingAuditAsync(query.AuditId, ctk))!
                     );
 
                 default:

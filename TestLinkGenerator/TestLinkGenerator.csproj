@@ -24,8 +24,5 @@
     <PackageReference Include="Microsoft.Identity.Web" Version="3.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-  </ItemGroup>
 
 </Project>

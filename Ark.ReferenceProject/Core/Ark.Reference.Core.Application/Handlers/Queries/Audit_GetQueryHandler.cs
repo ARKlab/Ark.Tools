@@ -6,8 +6,6 @@ using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Enum;
 
 using Ark.Reference.Common.Services.Audit;
-
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 

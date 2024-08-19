@@ -3,7 +3,6 @@
 using Ark.Tools.FtpClient.Core;
 
 using System;
-using System.Net;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
 {

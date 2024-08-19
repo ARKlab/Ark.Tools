@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
-	public interface IAuditableTypeProvider
+    public interface IAuditableTypeProvider
 	{
 		List<Type> TypeList { get; }
 	}

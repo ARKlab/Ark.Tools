@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+
 using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
-using NodaTime;
+
 using TestWorker.Constants;
 
 namespace TestWorker.Configs

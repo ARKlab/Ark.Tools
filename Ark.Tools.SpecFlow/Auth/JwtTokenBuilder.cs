@@ -1,7 +1,7 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 
@@ -75,15 +75,18 @@ namespace Ark.Tools.SpecFlow.Auth
             }
             .Union(this._claims);
 
-            var token = new JwtSecurityToken(
-                              issuer: this._issuer,
-                              audience: this._audience,
-                              claims: claims,
-                              expires: DateTime.UtcNow.AddMinutes(_expiryInMinutes),
-                              signingCredentials: new SigningCredentials(
-                                                        this._securityKey,
-                                                        SecurityAlgorithms.HmacSha256));
-
+            var token = new SecurityTokenDescriptor
+            {
+                Issuer = this._issuer,
+                Audience = this._audience,
+                Claims = claims.ToDictionary(x => x.Type, x => x.Value as object),
+                NotBefore = DateTime.UtcNow,
+                IssuedAt = DateTime.UtcNow,
+                Expires = DateTime.UtcNow.AddMinutes(_expiryInMinutes),
+                SigningCredentials = new SigningCredentials(
+                    this._securityKey,
+                    SecurityAlgorithms.HmacSha256)
+            };
             return new JwtToken(token);
         }
 

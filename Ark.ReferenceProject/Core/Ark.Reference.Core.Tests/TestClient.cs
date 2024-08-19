@@ -26,8 +26,8 @@ namespace Ark.Reference.Core.Tests
         internal IFlurlClient _client;
         private readonly AuthTestContext _authContext;
         private readonly string _version;
-        private IFlurlResponse _backProperty;
-        public IFlurlResponse LastResponse { get => _backProperty; set { _backProperty?.Dispose(); _backProperty = value; } }
+        private IFlurlResponse? _backProperty;
+        public IFlurlResponse LastResponse { get => _backProperty ?? throw new InvalidOperationException("LastResponse is null. Try making one first"); set { _backProperty?.Dispose(); _backProperty = value; } }
         private bool _isAuthenticated = true;
 
         private string _eTag = "";
@@ -56,12 +56,12 @@ namespace Ark.Reference.Core.Tests
             return LastResponse.ResponseMessage.IsSuccessStatusCode;
         }
 
-        public void Get(string requestUri, IEntityWithETag e)
+        public void Get(string requestUri, IEntityWithETag? e)
         {
-            Get(requestUri, e != null ? new EntityTagHeaderValue($"\"{e?._ETag}\"") : null);
+            Get(requestUri, e != null ? new EntityTagHeaderValue($"\"{e._ETag}\"") : null);
         }
 
-        public void Get(string requestUri, EntityTagHeaderValue e)
+        public void Get(string requestUri, EntityTagHeaderValue? e)
         {
             var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -73,7 +73,7 @@ namespace Ark.Reference.Core.Tests
             LastResponse = req.GetAsync().GetAwaiter().GetResult();
         }
 
-        public void Get(string[] requestUriParts, EntityTagHeaderValue e)
+        public void Get(string[] requestUriParts, EntityTagHeaderValue? e)
         {
             var req = _client.Request(new[] { _version });
 
@@ -86,12 +86,12 @@ namespace Ark.Reference.Core.Tests
             LastResponse = req.GetAsync().GetAwaiter().GetResult();
         }
 
-        public void Get(string[] requestUriParts, string etag = null)
+        public void Get(string[] requestUriParts, string? etag = null)
         {
             Get(requestUriParts, etag != null ? new EntityTagHeaderValue($"\"{etag}\"") : null);
         }
 
-        public void Get(string requestUri, string etag = null)
+        public void Get(string requestUri, string? etag = null)
         {
             Get(requestUri, etag != null ? new EntityTagHeaderValue($"\"{etag}\"") : null);
         }
@@ -99,7 +99,7 @@ namespace Ark.Reference.Core.Tests
         [When(@"I get versioned url (.*)")]
         public void Get(string requestUri)
         {
-            Get(requestUri, (EntityTagHeaderValue)null);
+            Get(requestUri, (EntityTagHeaderValue?)null);
         }
 
         public void Delete(string requestUri)
@@ -112,9 +112,9 @@ namespace Ark.Reference.Core.Tests
             LastResponse = req.DeleteAsync().GetAwaiter().GetResult();
         }
 
-        public void PostAsJson(string requestUri) => PostAsJson(requestUri, (String)null);
+        public void PostAsJson(string requestUri) => PostAsJson(requestUri, (String?)null);
 
-        public void PostAsJson<T>(string requestUri, T body = null) where T : class
+        public void PostAsJson<T>(string requestUri, T? body = null) where T : class
         {
             var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -128,7 +128,7 @@ namespace Ark.Reference.Core.Tests
             _eTag = "";
             LastResponse = req.PostJsonAsync(body).GetAwaiter().GetResult();
         }
-        public void PostString(string requestUri, string body)
+        public void PostString(string requestUri, string? body)
         {
             var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -157,7 +157,7 @@ namespace Ark.Reference.Core.Tests
             LastResponse = res.GetAwaiter().GetResult();
         }
 
-        public void PostAsMultipart<T>(string requestUri, FileData fileData, T body = null) where T : class
+        public void PostAsMultipart<T>(string requestUri, FileData fileData, T? body = null) where T : class
         {
             var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -176,9 +176,9 @@ namespace Ark.Reference.Core.Tests
             }).GetAwaiter().GetResult();
         }
 
-        public void PutAsJson(string requestUri) => PutAsJson(requestUri, (String)null);
+        public void PutAsJson(string requestUri) => PutAsJson(requestUri, (String?)null);
 
-        public void PutAsJson<T>(string requestUri, T body = null) where T : class
+        public void PutAsJson<T>(string requestUri, T? body = null) where T : class
         {
             var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -190,9 +190,9 @@ namespace Ark.Reference.Core.Tests
             LastResponse = req.PutJsonAsync(body).GetAwaiter().GetResult();
         }
 
-        public void PatchAsJson(string requestUri) => PatchAsJson(requestUri, (String)null);
+        public void PatchAsJson(string requestUri) => PatchAsJson(requestUri, (String?)null);
 
-        public void PatchAsJson<T>(string requestUri, T body = null) where T : class
+        public void PatchAsJson<T>(string requestUri, T? body = null) where T : class
         {
             var reqUriComposed = $"/{_version}/{requestUri}";
 
@@ -206,33 +206,21 @@ namespace Ark.Reference.Core.Tests
 
         public T ReadAs<T>()
         {
-            if (LastResponse == null)
-                throw new InvalidOperationException("I suggest to make a request first ...");
-
             return LastResponse.GetJsonAsync<T>().GetAwaiter().GetResult();
         }
 
         public string ReadResponseContent()
         {
-            if (LastResponse == null)
-                throw new InvalidOperationException("I suggest to make a request first ...");
-
             return LastResponse.GetStringAsync().GetAwaiter().GetResult();
         }
 
         public string ReadAsString()
         {
-            if (LastResponse == null)
-                throw new InvalidOperationException("I suggest to make a request first ...");
-
             return LastResponse.GetStringAsync().GetAwaiter().GetResult();
         }
 
         public byte[] ReadAsBytes()
         {
-            if (LastResponse == null)
-                throw new InvalidOperationException("I suggest to make a request first ...");
-
             return LastResponse.GetBytesAsync().GetAwaiter().GetResult();
         }
 

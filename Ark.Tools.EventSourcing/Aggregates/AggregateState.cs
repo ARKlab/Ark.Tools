@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace Ark.Tools.EventSourcing.Aggregates
-{    
-	public abstract class AggregateState<TAggregateState, TAggregate> : IAggregateState
+{
+    public abstract class AggregateState<TAggregateState, TAggregate> : IAggregateState
         where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
         where TAggregate : IAggregate
     {

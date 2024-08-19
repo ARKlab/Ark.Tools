@@ -24,7 +24,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
         {
             _container = new Container();
             _container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-            _container.Register(() => services.GetService<TelemetryClient>());
+            _container.Register(() => services.GetRequiredService<TelemetryClient>());
 
             var cfg = config.BuildApiHostConfig();
 

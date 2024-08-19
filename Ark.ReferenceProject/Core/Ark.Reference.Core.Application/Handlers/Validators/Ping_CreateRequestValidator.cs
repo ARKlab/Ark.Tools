@@ -12,7 +12,8 @@ namespace Ark.Reference.Core.Application.Handlers.Validators
         public Ping_CreateRequestValidator(IValidator<Ping.V1.Create> validator)
         {
             RuleFor(x => x.Data)
-                .SetValidator(validator);
+                .NotNull()
+                .SetValidator(validator!);
         }
     }
 
