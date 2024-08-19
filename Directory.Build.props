@@ -43,8 +43,7 @@
   </PropertyGroup>
 
 	<ItemGroup>
-
-		<None Include="..\ark-dark.png" Pack="true" PackagePath="\"/>
+		<None Include="..\ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
 	</ItemGroup>
 	
 	<ItemGroup>

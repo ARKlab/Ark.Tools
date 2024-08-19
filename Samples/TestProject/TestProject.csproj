@@ -7,10 +7,6 @@
 	<IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="appsettings.json" />
-    <None Remove="appsettings.Specflow.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="appsettings.json">
