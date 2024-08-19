@@ -37,8 +37,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
-	<ProjectReference Include="..\Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
+	<ProjectReference Include="..\..\Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj" />
     <ProjectReference Include="..\WebApplicationDemo\WebApplicationDemo.csproj" />
   </ItemGroup>
 

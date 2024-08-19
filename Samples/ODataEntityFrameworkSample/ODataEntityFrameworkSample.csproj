@@ -10,24 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Migrations\20190418101028_Test.cs" />
-    <Compile Remove="Migrations\20190418101028_Test.Designer.cs" />
-    <Compile Remove="Migrations\20190502132115_Init.cs" />
-    <Compile Remove="Migrations\20190502132115_Init.Designer.cs" />
-    <Compile Remove="Migrations\20190502150253_Init.cs" />
-    <Compile Remove="Migrations\20190502150253_Init.Designer.cs" />
-    <Compile Remove="Migrations\20190502151447_Init.cs" />
-    <Compile Remove="Migrations\20190502151447_Init.Designer.cs" />
-    <Compile Remove="Migrations\20190502152235_Init2.cs" />
-    <Compile Remove="Migrations\20190502152235_Init2.Designer.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -23,7 +23,7 @@
   </ItemGroup>
 	
 	<ItemGroup>
-		<ProjectReference Include="..\Ark.Tools.Hosting\Ark.Tools.Hosting.csproj" />
+		<ProjectReference Include="..\..\Ark.Tools.Hosting\Ark.Tools.Hosting.csproj" />
 	</ItemGroup>
 
 </Project>

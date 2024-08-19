@@ -18,14 +18,14 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.AspNetCore.RavenDb\Ark.Tools.AspNetCore.RavenDb.csproj" />
-    <ProjectReference Include="..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
-    <ProjectReference Include="..\Ark.Tools.EventSourcing.RavenDb\Ark.Tools.EventSourcing.RavenDb.csproj" />
-    <ProjectReference Include="..\Ark.Tools.EventSourcing.Rebus\Ark.Tools.EventSourcing.Rebus.csproj" />
-    <ProjectReference Include="..\Ark.Tools.RavenDb.Auditing\Ark.Tools.RavenDb.Auditing.csproj" />
-    <ProjectReference Include="..\Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj" />
-    <ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
-    <ProjectReference Include="..\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.AspNetCore.RavenDb\Ark.Tools.AspNetCore.RavenDb.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.EventSourcing.RavenDb\Ark.Tools.EventSourcing.RavenDb.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.EventSourcing.Rebus\Ark.Tools.EventSourcing.Rebus.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.RavenDb.Auditing\Ark.Tools.RavenDb.Auditing.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.RavenDb\Ark.Tools.RavenDb.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />
   </ItemGroup>
 
   <ItemGroup>

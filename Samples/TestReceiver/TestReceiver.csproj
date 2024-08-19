@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.Activity\Ark.Tools.Activity.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.Activity\Ark.Tools.Activity.csproj" />
   </ItemGroup>
 
 </Project>

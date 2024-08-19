@@ -48,7 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
     <ProjectReference Include="..\RavenDbSample\RavenDbSample.csproj" />
   </ItemGroup>
 

@@ -6,9 +6,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Ark.Tools.ApplicationInsights.HostedService\Ark.Tools.ApplicationInsights.HostedService.csproj" />
-		<ProjectReference Include="..\Ark.Tools.AspNetCore.ApplicationInsights\Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
-		<ProjectReference Include="..\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />
+		<ProjectReference Include="..\..\Ark.Tools.ApplicationInsights.HostedService\Ark.Tools.ApplicationInsights.HostedService.csproj" />
+		<ProjectReference Include="..\..\Ark.Tools.AspNetCore.ApplicationInsights\Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
+		<ProjectReference Include="..\..\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />
 		<ProjectReference Include="..\TestWorker\TestWorker.csproj" />
 	</ItemGroup>
 
