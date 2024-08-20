@@ -1903,8 +1903,8 @@
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "Transitive",
-        "resolved": "6.7.0",
-        "contentHash": "Oxyf8IcU28J0FlEVpBhywIAMRo1gvOERMyIZ56iOdyLJSkhz4MJRo4MDR++q+gh+R2f2+4KnATUvpU4wHweZJg=="
+        "resolved": "6.7.1",
+        "contentHash": "aJ/UfnrODbj/S3FDAnVQ7qz2txj7OcIXGu7ViXsi3bu3xMzhMcizVrH7T+utB2yWcPMBp0VMfc1nwRh77Ct1HQ=="
       },
       "System.AppContext": {
         "type": "Transitive",
@@ -3017,6 +3017,7 @@
           "AspNetCore.HealthChecks.UI": "[8.0.1, 9.0.0)",
           "AspNetCore.HealthChecks.UI.Client": "[8.0.1, 9.0.0)",
           "AspNetCore.HealthChecks.UI.InMemory.Storage": "[8.0.1, 9.0.0)",
+          "Azure.Messaging.ServiceBus": "[7.18.1, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[8.0.8, 9.0.0)"
         }
       },
@@ -3042,7 +3043,7 @@
           "Swashbuckle.AspNetCore.Newtonsoft": "[6.7.0, )",
           "Swashbuckle.AspNetCore.Swagger": "[6.7.0, )",
           "Swashbuckle.AspNetCore.SwaggerGen": "[6.7.0, )",
-          "Swashbuckle.AspNetCore.SwaggerUI": "[6.7.0, )"
+          "Swashbuckle.AspNetCore.SwaggerUI": "[6.7.1, )"
         }
       },
       "ark.tools.authorization": {

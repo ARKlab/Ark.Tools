@@ -1,13 +1,6 @@
 ﻿using Ark.Tools.SpecFlow;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
-using System.Text.RegularExpressions;
 
 using TechTalk.SpecFlow;
-using TechTalk.SpecFlow.Assist;
 
 namespace Ark.Reference.Core.Tests.Init
 {

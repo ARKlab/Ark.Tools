@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration.EnvironmentVariables;
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 
 
 namespace Microsoft.Extensions.Configuration

@@ -1,7 +1,6 @@
 ﻿using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Core;
 
-using System;
 using System.Collections.Generic;
 
 namespace Ark.Reference.Core.Common.Dto
