@@ -13,6 +13,15 @@
           "Microsoft.Extensions.Configuration": "2.1.0"
         }
       },
+      "Microsoft.AspNetCore.Authentication.JwtBearer": {
+        "type": "Direct",
+        "requested": "[8.0.8, 9.0.0)",
+        "resolved": "8.0.8",
+        "contentHash": "J145j2LgD4kkkNkrf5DW/pKzithZRKN5EFY+KAO3SqweMyDfv4cgKgtOIsv2bhrOLGqPJixuZkZte7LfK1seYQ==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.1.2"
+        }
+      },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
         "requested": "[8.0.0, )",
@@ -540,14 +549,6 @@
         "dependencies": {
           "Newtonsoft.Json": "10.0.1",
           "Newtonsoft.Json.Bson": "1.0.1"
-        }
-      },
-      "Microsoft.AspNetCore.Authentication.JwtBearer": {
-        "type": "Transitive",
-        "resolved": "8.0.8",
-        "contentHash": "J145j2LgD4kkkNkrf5DW/pKzithZRKN5EFY+KAO3SqweMyDfv4cgKgtOIsv2bhrOLGqPJixuZkZte7LfK1seYQ==",
-        "dependencies": {
-          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.1.2"
         }
       },
       "Microsoft.AspNetCore.Authentication.OpenIdConnect": {
@@ -1853,10 +1854,10 @@
       },
       "Swashbuckle.AspNetCore.Annotations": {
         "type": "Transitive",
-        "resolved": "6.7.0",
-        "contentHash": "UP2mA7xUuYaP/z0mAp4/CauJ0MZfnuR2yatnjx3QnM8OZq+JpqMjhGn4DLH6KTK4MYtEtCgPGYVqw7+YK0ydYw==",
+        "resolved": "6.7.1",
+        "contentHash": "oJRLCmQKf8aK4JfkQw1Rn+kQsfSElAbv0C5KTdsPHuX2iv5NwXPBxHkUJ8OyBqftF6VzatA7qlQaFRHsTurhHA==",
         "dependencies": {
-          "Swashbuckle.AspNetCore.SwaggerGen": "6.7.0"
+          "Swashbuckle.AspNetCore.SwaggerGen": "6.7.1"
         }
       },
       "Swashbuckle.AspNetCore.Filters": {
@@ -1878,27 +1879,27 @@
       },
       "Swashbuckle.AspNetCore.Newtonsoft": {
         "type": "Transitive",
-        "resolved": "6.7.0",
-        "contentHash": "YGttaigfjCKEJK3H9zexdcA6d/7gSveYnIXboWuyaCtnQfVT+RfXWCI+t4DYC64DSSI6VjZLM7NxPvbzXoWfIQ==",
+        "resolved": "6.7.1",
+        "contentHash": "hcwfymVFuM+1XSMG6AOlXg9/kn9jARH4GRtFNoChMA1PLxDGPiBg2FzDAHMjTbQiyxRe8shZmfp4+u8ZF+ah/A==",
         "dependencies": {
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "8.0.0",
-          "Swashbuckle.AspNetCore.SwaggerGen": "6.7.0"
+          "Swashbuckle.AspNetCore.SwaggerGen": "6.7.1"
         }
       },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "Transitive",
-        "resolved": "6.7.0",
-        "contentHash": "qI1ntGtNnt1Nksi/oDNkmCULVrImHyLWodJhQzghGj9W6uKYMqVl8Y7M2oU8VbHTQZFImD2kYR9ay8LZkJwaqA==",
+        "resolved": "6.7.1",
+        "contentHash": "+inGEUziCH4qoAOnWxLYX+4ZjBTAj+Y74acJ5akLcPgNzk/qGHwQvt6nZq8Bgb3XmhsxDNMCIACc7iMbuG/h9Q==",
         "dependencies": {
           "Microsoft.OpenApi": "1.6.14"
         }
       },
       "Swashbuckle.AspNetCore.SwaggerGen": {
         "type": "Transitive",
-        "resolved": "6.7.0",
-        "contentHash": "e2eRUBYnMBWzyl0esJfcB4YHuG/boD6nmuDcKdRa+nYPU/57+kbZ3Ot4TGpRDTJcZ0BrWoQiYe5mWRy6whvTkQ==",
+        "resolved": "6.7.1",
+        "contentHash": "iMtGuSAtzpvnLaqiqvPy453XaweX6hkTTY0ZXUvpkRNk++7fOBAFXX3/39kJ4F79qoRAd5XX8MXXBd0oic7N5Q==",
         "dependencies": {
-          "Swashbuckle.AspNetCore.Swagger": "6.7.0"
+          "Swashbuckle.AspNetCore.Swagger": "6.7.1"
         }
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
@@ -2996,7 +2997,7 @@
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.26.2, )",
           "Auth0.ManagementApi": "[7.26.2, )",
-          "Microsoft.AspNetCore.Authentication.JwtBearer": "[8.0.8, )",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "[8.0.8, 9.0.0)",
           "Microsoft.Extensions.Caching.Abstractions": "[8.0.0, 9.0.0)",
           "Polly": "[8.4.1, )"
         }
@@ -3018,6 +3019,7 @@
           "AspNetCore.HealthChecks.UI.Client": "[8.0.1, 9.0.0)",
           "AspNetCore.HealthChecks.UI.InMemory.Storage": "[8.0.1, 9.0.0)",
           "Azure.Messaging.ServiceBus": "[7.18.1, )",
+          "Microsoft.ApplicationInsights": "[2.22.0, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[8.0.8, 9.0.0)"
         }
       },
@@ -3038,11 +3040,11 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Asp.Versioning.OData.ApiExplorer": "[8.1.0, 9.0.0)",
           "Microsoft.AspNetCore.OData": "[8.2.5, 9.0.0)",
-          "Swashbuckle.AspNetCore.Annotations": "[6.7.0, )",
+          "Swashbuckle.AspNetCore.Annotations": "[6.7.1, )",
           "Swashbuckle.AspNetCore.Filters": "[8.0.2, )",
-          "Swashbuckle.AspNetCore.Newtonsoft": "[6.7.0, )",
-          "Swashbuckle.AspNetCore.Swagger": "[6.7.0, )",
-          "Swashbuckle.AspNetCore.SwaggerGen": "[6.7.0, )",
+          "Swashbuckle.AspNetCore.Newtonsoft": "[6.7.1, )",
+          "Swashbuckle.AspNetCore.Swagger": "[6.7.1, )",
+          "Swashbuckle.AspNetCore.SwaggerGen": "[6.7.1, )",
           "Swashbuckle.AspNetCore.SwaggerUI": "[6.7.1, )"
         }
       },
