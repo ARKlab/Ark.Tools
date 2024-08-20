@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Ark.Reference.Core.WebInterface": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "LOCAL_DEBUG": "True"
+      },
+      "applicationUrl": "https://localhost:51041;http://localhost:51042"
+    }
+  }
+}

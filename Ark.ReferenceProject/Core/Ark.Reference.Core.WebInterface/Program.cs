@@ -62,8 +62,8 @@ namespace Ark.Reference.Core.WebInterface
                     {
                         services.AddSingleton<IHostedService, RebusProcessorService>();
 
-                        if (Environment.GetEnvironmentVariable("LOCAL_DEBUG") == "True"
-                            || Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+                        // remember to add LOCAL_DEBUG to launchSetting.json when developing in local
+                        if (Environment.GetEnvironmentVariable("LOCAL_DEBUG") == "True")
                         {
                             services.AddSingleton<InMemNetwork>();
                             services.AddSingleton<InMemorySubscriberStore>();
