@@ -4,6 +4,7 @@ trigger:
     include:
     - develop
     - master
+# Change Paths below as needed (cannot use variable!)
   paths:
     include:
     - Core/*
