@@ -162,6 +162,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ArkReferenceProject", "ArkR
 	ProjectSection(SolutionItems) = preProject
 		Ark.ReferenceProject\.editorconfig = Ark.ReferenceProject\.editorconfig
 		Ark.ReferenceProject\Directory.Build.props = Ark.ReferenceProject\Directory.Build.props
+		Ark.ReferenceProject\Directory.Build.targets = Ark.ReferenceProject\Directory.Build.targets
 		Ark.ReferenceProject\global.json = Ark.ReferenceProject\global.json
 	EndProjectSection
 EndProject

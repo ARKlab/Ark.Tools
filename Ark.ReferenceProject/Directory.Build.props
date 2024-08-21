@@ -23,17 +23,6 @@
 	  </PropertyGroup>
 
 	<ItemGroup>
-		<None Include="$(MSBuildProjectDirectory)\appsettings*.json" >
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
-		</None>
-		<None Include="$(MSBuildProjectDirectory)\appsettings.*.json" >
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
 
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0" >
 			<PrivateAssets>all</PrivateAssets>
