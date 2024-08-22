@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recomended",
+    "config:recommended",
     ":prImmediately",
     ":prImmediately",
     ":semanticCommits", 
@@ -11,7 +11,7 @@
     ":automergeMinor",
     ":automergePr",
     "group:allNonMajor",
-    ":pinVersions"
+    ":pinAllExceptPeerDependencies"
   ],
   "configMigration": true,
   "osvVulnerabilityAlerts": true,
