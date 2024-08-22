@@ -19,7 +19,7 @@ namespace Ark.Reference.Core.Application.DAL
         private const string _schemaPing = "dbo";
         private const string _tablePing = "Ping";
 
-        public async Task<Ping.V1.Output> ReadPingByIdAsync(int id, CancellationToken ctk = default)
+        public async Task<Ping.V1.Output?> ReadPingByIdAsync(int id, CancellationToken ctk = default)
         {
             _logger.Trace("ReadPingByIdAsync called");
 
@@ -88,7 +88,7 @@ namespace Ark.Reference.Core.Application.DAL
                 @Name = entity.Name,
                 @Type = entity.Type.ToString(),
                 @Code = entity.Code,
-                @AuditId = CurrentAudit.AuditId,
+                @AuditId = CurrentAudit?.AuditId,
             };
 
             var cmdText = $@"
@@ -134,7 +134,7 @@ namespace Ark.Reference.Core.Application.DAL
                 @Name = entity.Name,
                 @Type = entity.Type.ToString(),
                 @Code = entity.Code,
-                @AuditId = CurrentAudit.AuditId,
+                @AuditId = CurrentAudit?.AuditId,
             };
 
             var query = @$"
@@ -173,7 +173,7 @@ namespace Ark.Reference.Core.Application.DAL
                 @Name = entity.Name,
                 @Type = entity.Type?.ToString(),
                 @Code = entity.Code,
-                @AuditId = CurrentAudit.AuditId,
+                @AuditId = CurrentAudit?.AuditId,
             };
 
             var updateValues = new List<string>();
@@ -239,7 +239,7 @@ namespace Ark.Reference.Core.Application.DAL
         }
 
 
-        public async Task<(AuditedEntityDto<Ping.V1.Output> pre, AuditedEntityDto<Ping.V1.Output> cur)> ReadPingAuditAsync(Guid auditId, CancellationToken ctk = default)
+        public async Task<(AuditedEntityDto<Ping.V1.Output>? pre, AuditedEntityDto<Ping.V1.Output>? cur)> ReadPingAuditAsync(Guid auditId, CancellationToken ctk = default)
         {
             var param = new
             {
@@ -279,13 +279,13 @@ namespace Ark.Reference.Core.Application.DAL
                 .Select(s => new AuditedEntityDto<Ping.V1.Output>()
                 {
                     Entity = s.ToOutput(),
-                    SysStartTime = s.SysStartTime.Value,
-                    SysEndTime = s.SysEndTime.Value
+                    SysStartTime = s.SysStartTime!.Value,
+                    SysEndTime = s.SysEndTime!.Value
                 })
                 .ToList();
 
-            var cur = resTable.FirstOrDefault(w => w.Entity.AuditId == auditId);
-            var pre = resTable.FirstOrDefault(w => w.Entity.AuditId != auditId);
+            var cur = resTable.FirstOrDefault(w => w.Entity!.AuditId == auditId);
+            var pre = resTable.FirstOrDefault(w => w.Entity!.AuditId != auditId);
 
             return (pre, cur);
         }
@@ -296,9 +296,9 @@ namespace Ark.Reference.Core.Application.DAL
         private class PingView
         {
             public int Id { get; set; }
-            public string Name { get; set; }
-            public string Type { get; set; }
-            public string Code { get; set; }
+            public string? Name { get; set; }
+            public string? Type { get; set; }
+            public string? Code { get; set; }
 
 
             public Guid AuditId { get; set; }

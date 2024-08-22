@@ -4,9 +4,9 @@ namespace Ark.Reference.Common.Services.Audit
 {
     public static class AuditChangesQueryDto
     {
-        public class V1
+        public record V1
         {
-            public Guid AuditId { get; set; }
+            public Guid AuditId { get; init; }
         }
     }
 }

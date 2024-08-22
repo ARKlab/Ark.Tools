@@ -9,7 +9,7 @@ namespace Ark.Reference.Core.Tests.Auth
 {
     public sealed class JwtTokenBuilder
     {
-        private SecurityKey _securityKey = null;
+        private SecurityKey? _securityKey = null;
         private string _subject = "";
         private string _issuer = "";
         private string _audience = "";

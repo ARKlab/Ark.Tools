@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="[8.0.0,9)" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[8.0.0,9)" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="[8.0.0,9)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="8.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="[8.0.8,9)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="[8.0.0,9)" />
   </ItemGroup>
   
@@ -31,8 +31,5 @@
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
   </ItemGroup>
   
-  <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-  </ItemGroup>
   
 </Project>

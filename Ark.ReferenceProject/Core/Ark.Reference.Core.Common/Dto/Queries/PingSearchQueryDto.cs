@@ -1,8 +1,6 @@
 ﻿using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Core;
 
-using Ark.Reference.Common.Dto;
-
-using System;
 using System.Collections.Generic;
 
 namespace Ark.Reference.Core.Common.Dto
@@ -11,12 +9,12 @@ namespace Ark.Reference.Core.Common.Dto
     {
         public record V1 : IQueryPaged
         {
-            public int[] Id { get; set; }
-            public string[] Name { get; set; }
-            public PingType[] Type { get; set; }
+            public int[] Id { get; init; } = [];
+            public string[] Name { get; init; } = [];
+            public PingType[] Type { get; init; } = [];
 
-            public IEnumerable<string> Sort { get; set; } = Array.Empty<string>();
-            public int Limit { get; set; } = 10;
+            public IEnumerable<string> Sort { get; set; } = [];
+            public int Limit { get; init; } = 10;
             public int Skip { get; set; } = 0;
         }
     }

@@ -5,8 +5,6 @@ using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 
 using EnsureThat;
-
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Hosting;
 using System.Threading;
 using System.Threading.Tasks;
 using System;
-using Microsoft.Extensions.Logging;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Hosting
 {

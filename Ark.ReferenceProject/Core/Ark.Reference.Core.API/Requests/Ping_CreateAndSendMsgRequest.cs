@@ -8,7 +8,7 @@ namespace Ark.Reference.Core.API.Requests
     {
         public record V1 : IRequest<Ping.V1.Output>
         {
-            public Ping.V1.Create Data { get; set; }
+            public Ping.V1.Create? Data { get; init; }
         }
     }
 }

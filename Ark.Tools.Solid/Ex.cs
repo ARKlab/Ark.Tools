@@ -9,7 +9,7 @@ namespace Ark.Tools.Solid
     {
         public static string? GetUserId(this IContextProvider<ClaimsPrincipal> context)
         {
-            return context.Current?.GetUserId();
+            return context.Current.GetUserId();
         }
     }
 }

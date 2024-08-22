@@ -16,7 +16,7 @@ namespace Ark.Reference.Core.Application.DAL
     public interface ICoreDataContext : IOutboxAsyncContext, IAsyncContext, IAuditDataContext<AuditKind>
     {
         #region Ping
-        Task<Ping.V1.Output> ReadPingByIdAsync(
+        Task<Ping.V1.Output?> ReadPingByIdAsync(
               int id
             , CancellationToken ctk = default
         );
@@ -46,7 +46,7 @@ namespace Ark.Reference.Core.Application.DAL
             , CancellationToken ctk = default
         );
 
-        Task<(AuditedEntityDto<Ping.V1.Output> pre, AuditedEntityDto<Ping.V1.Output> cur)> ReadPingAuditAsync(
+        Task<(AuditedEntityDto<Ping.V1.Output>? pre, AuditedEntityDto<Ping.V1.Output>? cur)> ReadPingAuditAsync(
             Guid auditId,
             CancellationToken ctk = default
         );

@@ -4,7 +4,6 @@ using Ark.Tools.Core.BusinessRuleViolation;
 using Dapper;
 
 using Ark.Reference.Common.Auth;
-using Ark.Reference.Common.Dto;
 
 using FluentValidation;
 
@@ -16,10 +15,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Reference.Common
@@ -72,73 +69,9 @@ namespace Ark.Reference.Common
                 IsCountPartial = pagedResult.IsCountPartial,
                 Limit = pagedResult.Limit,
                 Skip = pagedResult.Skip,
-                Data = pagedResult.Data?
-                                  .Select(s => func(s))
-                                  .ToArray()
+                Data = pagedResult.Data.Select(func).ToList()
             };
         }
-
-
-        public static async Task<(IEnumerable<TResult>, int count)> ReadAllPagesAsync<TResult, TQuery>(this TQuery query, Func<TQuery, CancellationToken, Task<PagedResult<TResult>>> funcAsync, CancellationToken ctk = default)
-        where TQuery : IQueryPaged
-        {
-            return await ReadAllEnumerableAsync<TResult, TQuery>(query, async (q, c) =>
-            {
-                var a = await funcAsync(q, c);
-                var retVal = (a.Data, (int)a.Count);
-                return retVal;
-            }, ctk);
-        }
-
-        public static async Task<(IEnumerable<TResult>, int count)> ReadAllEnumerableAsync<TResult, TQuery>(
-              this TQuery query
-            , Func<TQuery, CancellationToken, Task<(IEnumerable<TResult> Data, int Count)>> funcAsync
-            , CancellationToken ctk = default)
-        where TQuery : IQueryPaged
-        {
-            var skip = 0;
-            var limit = 1000;
-
-            var count = 0;
-            var retVal = new List<TResult>();
-
-            while (count > skip || count == 0)
-            {
-                query.Limit = limit;
-                query.Skip = skip;
-
-                var res = await funcAsync(query, ctk);
-
-                if (res.Count > 0)
-                {
-                    count = (int)res.Count;
-                    skip += limit;
-                    retVal.AddRange(res.Data);
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            return (retVal, count);
-        }
-
-        public static async IAsyncEnumerable<TResult> QueryAllPagesAsync<TQuery, TResult>(this TQuery query,
-                                                                                          Func<TQuery, CancellationToken, Task<PagedResult<TResult>>> executor,
-                                                                                          [EnumeratorCancellation] CancellationToken ctk = default)
-            where TQuery : IQueryPaged
-        {
-            PagedResult<TResult> page;
-            do
-            {
-                page = await executor(query, ctk);
-                foreach (var e in page.Data)
-                    yield return e;
-                query.Skip += query.Limit;
-            } while (page.Count > query.Skip);
-        }
-
 
         public static IRuleBuilderOptions<T, TElement> OneOf<T, TElement>(this IRuleBuilder<T, TElement> ruleBuilder, params TElement[] choices)
         {
@@ -161,13 +94,14 @@ namespace Ark.Reference.Common
         /// <summary>
         /// Check if Exception is 'Final', thus not to be retried under any circumstances.
         /// </summary>
-        /// <param name="ex"></param>
+        /// <param name="exception"></param>
         /// <returns>true if Final, false otherwise</returns>
-        public static bool IsFinal(this Exception ex)
+        public static bool IsFinal(this Exception exception)
         {
+            Exception? ex = exception;
             while (ex != null)
             {
-                if (ex is FluentValidation.ValidationException
+                if (ex is ValidationException
                   || ex is BusinessRuleViolationException
                   || ex is NotImplementedException
                   || ex is NotSupportedException
@@ -182,22 +116,22 @@ namespace Ark.Reference.Common
         /// <summary>
         /// Check if Exception is 'Optimistic', thus can be retried immediatly
         /// </summary>
-        /// <param name="ex"></param>
+        /// <param name="exception"></param>
         /// <returns>true if Optimistic, false otherwise</returns>
-        public static bool IsOptimistic(this Exception ex)
+        public static bool IsOptimistic(this Exception exception)
         {
+            Exception? ex = exception;
             while (ex != null)
             {
                 if (ex is SqlException sex && sex.Number == 13535 /* Data modification failed on system-versioned... */)
                     return true;
-                if (ex is Ark.Tools.Core.OptimisticConcurrencyException)
+                if (ex is OptimisticConcurrencyException)
                     return true;
 
                 ex = ex.InnerException;
             }
             return false;
         }
-
 
         public static OffsetDateTime StartOfDayInZone(this OffsetDateTime odt, int plusDays, DateTimeZone tz)
         {

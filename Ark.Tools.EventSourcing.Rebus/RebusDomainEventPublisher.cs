@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Ark.Tools.EventSourcing.Aggregates;
+﻿using System.Threading.Tasks;
+
 using Ark.Tools.EventSourcing.DomainEventPublisher;
 using Ark.Tools.EventSourcing.Store;
+
 using Rebus.Bus;
 
 namespace Ark.Tools.DomainEventPublisher.Rebus

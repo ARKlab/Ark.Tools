@@ -2,6 +2,7 @@
 	<PropertyGroup>	
 		<LangVersion>latest</LangVersion>
 		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -17,7 +18,7 @@
 	</PropertyGroup>
 
 	  <PropertyGroup>
-		<DebugType>full</DebugType>
+		<DebugType>portable</DebugType>
 		<DebugSymbols>true</DebugSymbols>
 	  </PropertyGroup>
 
@@ -31,6 +32,14 @@
 			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
 		</None>
 	</ItemGroup>
-	
+
+	<ItemGroup>
+
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0" >
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+
+	</ItemGroup>
 	
 </Project>

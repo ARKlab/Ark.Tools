@@ -21,8 +21,8 @@ namespace Ark.Reference.Common.Services.Audit
 
         ValueTask<AuditDto<TAuditKind>> EnsureAudit(
             TAuditKind kind
-            , string userId
-            , string infoMessage
+            , string? userId
+            , string? infoMessage
             , CancellationToken ctk = default
             );
 

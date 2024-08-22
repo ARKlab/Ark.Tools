@@ -2,7 +2,6 @@
 using Ark.Tools.NewtonsoftJson;
 using Ark.Tools.Outbox;
 using Ark.Tools.Rebus;
-using Ark.Tools.Rebus.AzureServiceBus;
 using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.SimpleInjector;
@@ -51,7 +50,6 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using Ark.Reference.Core.API.Messages;
-using Ark.Tools.Core;
 
 namespace Ark.Reference.Core.Application.Host
 {
@@ -63,6 +61,7 @@ namespace Ark.Reference.Core.Application.Host
             this._applicationAssemblies = new Assembly[] {
                   typeof(ApiHost).Assembly
             };
+            this.Container = new Container();
         }
 
         public void RegisterInto(Container container)
@@ -121,7 +120,7 @@ namespace Ark.Reference.Core.Application.Host
             return this;
         }
 
-        public ApiHost WithIClock(IClock clock = null)
+        public ApiHost WithIClock(IClock? clock = null)
         {
             if (clock == null)
             {
@@ -133,9 +132,9 @@ namespace Ark.Reference.Core.Application.Host
             return this;
         }
 
-        public ApiHost WithRebus(Queue queue = Queue.Core, InMemNetwork inMemNetwork = null, InMemorySubscriberStore inMemorySubscriberStore = null)
+        public ApiHost WithRebus(Queue queue = Queue.Core, InMemNetwork? inMemNetwork = null, InMemorySubscriberStore? inMemorySubscriberStore = null)
         {
-            var useRealAzureServiceBus = !string.IsNullOrEmpty(this.Config.AsbConnectionString) || (inMemNetwork == null && inMemorySubscriberStore == null);
+            var isInMemory = inMemNetwork != null && inMemorySubscriberStore != null;            
 
             if (queue != Queue.OneWay)
             {
@@ -150,21 +149,21 @@ namespace Ark.Reference.Core.Application.Host
                 Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusLogDecorator<>));
             }
 
-            Container.ConfigureRebus(_ => _
+            Container?.ConfigureRebus(_ => _
                 .Logging(l => l.NLog())
                 .Transport(t =>
                 {
                     if (queue == Queue.OneWay)
                     {
-                        if (useRealAzureServiceBus)
+                        if (!isInMemory)
                         {
-                            if (this.Config.AsbConnectionString.Contains("SharedAccess"))
+                            if (this.Config.AsbConnectionString?.Contains("SharedAccess") == true)
                                 t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString);
                             else
                                 t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString, new DefaultAzureCredential());
                         }
                         else
-                            t.UseDrainableInMemoryTransportAsOneWayClient(inMemNetwork);
+                            t.UseDrainableInMemoryTransportAsOneWayClient(inMemNetwork!);
                     }
                     else
                     {
@@ -173,9 +172,9 @@ namespace Ark.Reference.Core.Application.Host
                             Queue.Core => "",
                             _ => throw new NotSupportedException()
                         };
-                        if (useRealAzureServiceBus)
+                        if (!isInMemory)
                         {
-                            if (this.Config.AsbConnectionString.Contains("SharedAccess"))
+                            if (this.Config.AsbConnectionString?.Contains("SharedAccess") == true)
                                 t.UseAzureServiceBus(this.Config.AsbConnectionString, listeningQueue)
                                       .EnablePartitioning()
                                       .AutomaticallyRenewPeekLock()
@@ -192,7 +191,7 @@ namespace Ark.Reference.Core.Application.Host
                         }
                         else
                         {
-                            t.UseDrainableInMemoryTransport(inMemNetwork, listeningQueue);
+                            t.UseDrainableInMemoryTransport(inMemNetwork!, listeningQueue);
                         }
                     }
 
@@ -206,7 +205,7 @@ namespace Ark.Reference.Core.Application.Host
                 })
                 .Subscriptions(s =>
                 {
-                    if (!useRealAzureServiceBus)
+                    if (isInMemory)
                         s.StoreInMemory(inMemorySubscriberStore);
                 })
                 .Routing(r =>
@@ -220,7 +219,7 @@ namespace Ark.Reference.Core.Application.Host
                 {
                     o.ArkRetryStrategy(errorDetailsHeaderMaxLength: 10000, secondLevelRetriesEnabled: true, maxDeliveryAttempts: 3);
 
-                    if (!useRealAzureServiceBus)
+                    if (isInMemory)
                     {
                         o.SetMaxParallelism(1);
                     }
@@ -230,7 +229,7 @@ namespace Ark.Reference.Core.Application.Host
                     o.UseApplicationInsight(Container);
                     o.UseApplicationInsightMetrics(Container);
                     o.FailFastOn<Exception>(ex => ex.IsFinal());
-                    if (!useRealAzureServiceBus)
+                    if (isInMemory)
                         o.AddInProcessMessageInspector();
                 })
                 .DataBus(d =>
@@ -252,7 +251,7 @@ namespace Ark.Reference.Core.Application.Host
                 .Timeouts(t =>
                 {
                     t.OtherService<IRebusTime>().Register(c => new RebusNodaTimeClock(Container.GetInstance<IClock>()));
-                    if (!useRealAzureServiceBus)
+                    if (isInMemory)
                         t.StoreInMemoryTests();
                 })
             );
@@ -367,7 +366,9 @@ namespace Ark.Reference.Core.Application.Host
             _messageContextProvider = messageContextProvider;
         }
 
-        public ClaimsPrincipal Current => _messageContextProvider.Current?.IncomingStepContext.Load<ClaimsPrincipal>();
+        public ClaimsPrincipal Current => _messageContextProvider.Current?.IncomingStepContext.Load<ClaimsPrincipal>() ??
+                    throw new InvalidOperationException("MessageContextProvider is null. " +
+                        "This is usually caused by trying to access the 'Current Request User' outside a Message context");
     }
 
     public enum Queue

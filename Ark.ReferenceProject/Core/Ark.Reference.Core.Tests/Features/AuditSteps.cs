@@ -23,8 +23,8 @@ namespace Ark.Reference.Core.Tests.Features
     internal class AuditSteps
     {
         private readonly TestClient _client;
-        private AuditDto<AuditKind> _lastAudit;
-        private AuditRecordReturn<JsonElement> _changes;
+        private AuditDto<AuditKind>? _lastAudit;
+        private AuditRecordReturn<JsonElement?>? _changes;
 
         public AuditSteps(TestClient client)
         {
@@ -50,9 +50,9 @@ namespace Ark.Reference.Core.Tests.Features
         [When(@"I get the list of changes for this audit")]
         public void WhenIGetTheChangesForThisAudit()
         {
-            _client.Get($"audit/{_lastAudit.AuditId}/changes");
+            _client.Get($"audit/{_lastAudit?.AuditId}/changes");
 
-            _changes = _client.ReadAs<AuditRecordReturn<JsonElement>>();
+            _changes = _client.ReadAs<AuditRecordReturn<JsonElement?>>();
         }
 
         [Then(@"the list of changes contains (.*) records")]
@@ -65,20 +65,18 @@ namespace Ark.Reference.Core.Tests.Features
         [Then(@"the (current|previous) Ping audit is")]
         public void ThenTheCurrentContractAuditIs(string choice, Table table)
         {
-            var changes = _changes.Changes.First();
+            var changes = _changes?.Changes?.First();
 
             var expected = table.CreateInstance<Ping.V1.Output>();
 
-            Ping.V1.Output res;
+            Ping.V1.Output? res;
             if (choice == "current")
             {
-                res = changes.Cur.ToObject<AuditedEntityDto<Ping.V1.Output>>().Entity;
-                expected.AuditId = _lastAudit.AuditId;
+                res = changes?.Cur?.ToObject<AuditedEntityDto<Ping.V1.Output>>()?.Entity;
             }
             else
             {
-                res = changes.Pre.ToObject<AuditedEntityDto<Ping.V1.Output>>().Entity;
-                res.AuditId = default;
+                res = changes?.Pre?.ToObject<AuditedEntityDto<Ping.V1.Output>>()?.Entity;
             }
 
             res.Should().BeEquivalentTo(expected, options => options
@@ -89,7 +87,7 @@ namespace Ark.Reference.Core.Tests.Features
         
         public class AuditRecordReturn<TAuditObject>
         {
-            public IEnumerable<Changes<TAuditObject>.V1> Changes { get; set; }
+            public IEnumerable<Changes<TAuditObject>.V1>? Changes { get; set; }
         }
     }
 }

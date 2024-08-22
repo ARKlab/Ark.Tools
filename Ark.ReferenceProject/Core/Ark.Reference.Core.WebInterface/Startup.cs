@@ -74,12 +74,12 @@ namespace Ark.Reference.Core.WebInterface
             else
             {
                 schemes.Add(JwtBearerDefaults.AuthenticationScheme);
-                authBuilder.AddMicrosoftIdentityWebApi(Configuration.GetSection(AuthConstants.EntraIdSchema));
+                authBuilder.AddMicrosoftIdentityWebApi(Configuration.GetRequiredSection(AuthConstants.EntraIdSchema));
 
-                services.ArkConfigureSwaggerEntraId(Configuration["EntraId:Instance"]
-                        , Configuration["EntraId:Domain"]
-                        , Configuration["EntraId:ClientId"]
-                        , Configuration["EntraId:TenantId"]);
+                services.ArkConfigureSwaggerEntraId(Configuration.GetRequiredValue<string>("EntraId:Instance")
+                        , Configuration.GetRequiredValue<string>("EntraId:Domain")
+                        , Configuration.GetRequiredValue<string>("EntraId:ClientId")
+                        , Configuration.GetRequiredValue<string>("EntraId:TenantId"));
 
                 services.ConfigureSwaggerGen(c =>
                 {

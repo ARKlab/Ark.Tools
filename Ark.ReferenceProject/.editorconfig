@@ -298,6 +298,7 @@ dotnet_diagnostic.CA1510.severity = suggestion
 dotnet_diagnostic.CA1050.severity = warning
 dotnet_diagnostic.CA1862.severity = warning
 dotnet_diagnostic.CA1850.severity = warning
+dotnet_diagnostic.IDE0005.severity = warning
 dotnet_style_readonly_field = true:suggestion
 dotnet_diagnostic.CA1063.severity = error
 dotnet_diagnostic.CA2213.severity = warning

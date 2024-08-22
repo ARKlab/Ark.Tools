@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+	  <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Ark.Tools.AspNetCore.NestedStartup\Ark.Tools.AspNetCore.NestedStartup.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.Solid.FluentValidaton\Ark.Tools.Solid.FluentValidaton.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />
+    <ProjectReference Include="..\..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+  </ItemGroup>
+ 
+
+</Project>

@@ -4,6 +4,6 @@ namespace Ark.Reference.Common.Services.Audit
 {
     public interface IAuditEntity
     {
-        Guid AuditId { get; set; }
+        Guid AuditId { get; }
     }
 }

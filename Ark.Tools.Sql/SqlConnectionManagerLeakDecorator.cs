@@ -80,12 +80,12 @@ namespace Ark.Tools.Sql
                 StackTrace = Environment.StackTrace;
 
                 connection.StateChange += _connectionOnStateChange;
-                System.Diagnostics.Debug.WriteLine("Connection opened " + _connectionId);
+                System.Diagnostics.Trace.TraceInformation("Connection opened " + _connectionId);
 
                 _timer = new Timer(x =>
                 {
                     //The timeout expired without the connection being closed. Write to debug output the stack trace of the connection creation to assist in pinpointing the problem
-                    System.Diagnostics.Debug.WriteLine("Suspected connection leak with origin: {0}{1}{0}Connection id: {2}", Environment.NewLine, StackTrace, _connectionId);
+                    System.Diagnostics.Trace.TraceError("Suspected connection leak with origin: {0}{1}{0}Connection id: {2}", Environment.NewLine, StackTrace, _connectionId);
                     //That's it - we're done. Clean up by calling Dispose.
                     Dispose();
                 }, null, 30000, Timeout.Infinite);

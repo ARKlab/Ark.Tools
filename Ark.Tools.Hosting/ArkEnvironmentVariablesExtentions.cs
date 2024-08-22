@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration.EnvironmentVariables;
 
 using System;
-using System.Text;
 
 
 namespace Microsoft.Extensions.Configuration
@@ -82,5 +81,13 @@ namespace Microsoft.Extensions.Configuration
         [Obsolete("Use AddArkEnvironmentVariables()", true)]
         public static IConfigurationBuilder AddArkLegacyEnvironmentVariables(this IConfigurationBuilder builder, Action<ArkEnvironmentVariablesConfigurationSource> configureSource)
             => builder.Add(configureSource);
+    }
+
+    public static class ConfigurationExtensions
+    {
+        public static T GetRequiredValue<T>(this IConfiguration configuration, string key)
+        {
+            return configuration.GetValue<T>(key) ?? throw new ArgumentException("Parameter not found in configuration", key);
+        }
     }
 }

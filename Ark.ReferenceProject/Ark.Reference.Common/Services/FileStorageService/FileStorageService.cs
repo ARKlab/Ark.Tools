@@ -17,6 +17,9 @@ namespace Ark.Reference.Common.Services.FileStorageService
 
         public FileStorageService(IFileStorageServiceConfig config)
         {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StoragePrefix);
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StorageAccount);
+
             _config = config;
 
             // there is no straigh support for switching between AccountKey and MSI supported by Blob library
