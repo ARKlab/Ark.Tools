@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":prImmediately",
+    ":prImmediately",
+    ":semanticCommits", 
+    ":semanticPrefixChore",
+    ":separateMultipleMajorReleases",
+    "npm:unpublishSafe",        
+    ":automergeMinor",
+    ":automergePr",
+    "group:allNonMajor",
+    ":pinVersions"
+  ],
+  "configMigration": true,
+  "osvVulnerabilityAlerts": true,
+  "postUpdateOptions": ["npmDedupe"],
+  "packageRules": [
+      {
+          "groupName": "Ark.Tools",
+          "description": "Ark Tools group",
+          "matchPackagePatterns": [
+              "^Ark\\.Tools"
+          ]
+      },
+      {
+          "extends": ["monorepo:dotnet", "monorepo:aspnet extensions", "monorepo:aspnet-api-versioning"],
+          "allowedVersions": "/^(6|8|10|12)\\.[0-9]+\\.[0-9]+$/"
+      }
+  ]
+}
