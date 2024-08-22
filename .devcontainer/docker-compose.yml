@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: mcr.microsoft.com/devcontainers/dotnet:8.0
+    image: mcr.microsoft.com/devcontainers/dotnet:8.0@sha256:f4b17096f51bae9d0a2eaf8a2332cbb9958f8486121b4a0ce7727a44ef40e14e
 
     volumes:
       - ../..:/workspaces:cached
@@ -15,14 +15,14 @@ services:
 
 
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2022-latest@sha256:c1aa8afe9b06eab64c9774a4802dcd032205d1be785b1fd51e1c0151e7586b74
     restart: unless-stopped
     environment:
       ACCEPT_EULA: Y
       MSSQL_SA_PASSWORD: ArkSpecFlow123Stella!
 
   azurite:
-    image: mcr.microsoft.com/azure-storage/azurite:latest
+    image: mcr.microsoft.com/azure-storage/azurite:latest@sha256:47a392f1c93a6b639999fc505dcae348e350183b47f2a7526c765ddd7fa56e0e
     restart: unless-stopped
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
     network_mode: service:db

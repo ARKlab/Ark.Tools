@@ -12,13 +12,13 @@ jobs:
     runs-on: 'ubuntu-latest'
     services:
       azurite:
-        image: mcr.microsoft.com/azure-storage/azurite:latest
+        image: mcr.microsoft.com/azure-storage/azurite:latest@sha256:47a392f1c93a6b639999fc505dcae348e350183b47f2a7526c765ddd7fa56e0e
         ports:
           - 10000:10000
           - 10001:10001
           - 10002:10002
       sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
+        image: mcr.microsoft.com/mssql/server:2022-latest@sha256:c1aa8afe9b06eab64c9774a4802dcd032205d1be785b1fd51e1c0151e7586b74
         ports:
           - 1433:1433
         env:
@@ -27,10 +27,10 @@ jobs:
 
     steps:
     - name: 'Checkout'
-      uses: actions/checkout@v4
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
     - name: 'Install dotnet'
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@6bd8b7f7774af54e05809fcc5431931b3eb1ddee # v4
       with:
         global-json-file: global.json
       
@@ -44,7 +44,7 @@ jobs:
       run: dotnet test --no-restore --configuration Debug --logger "trx;LogFileName=test-results.trx"
       
     # see https://github.com/dorny/test-reporter?tab=readme-ov-file#recommended-setup-for-public-repositories
-    - uses: actions/upload-artifact@v4  # upload test results
+    - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4  # upload test results
       if: success() || failure()        # run this step even if previous step failed
       with:
         name: test-results
