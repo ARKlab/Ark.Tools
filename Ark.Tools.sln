@@ -161,7 +161,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ArkReferenceProject", "ArkReferenceProject", "{0AF092FD-C941-4E11-91A2-A88748F48415}"
 	ProjectSection(SolutionItems) = preProject
 		Ark.ReferenceProject\.editorconfig = Ark.ReferenceProject\.editorconfig
+		Ark.ReferenceProject\Ark.Reference.Core.yml = Ark.ReferenceProject\Ark.Reference.Core.yml
+		Ark.ReferenceProject\CodeCoverage.runsettings = Ark.ReferenceProject\CodeCoverage.runsettings
 		Ark.ReferenceProject\Directory.Build.props = Ark.ReferenceProject\Directory.Build.props
+		Ark.ReferenceProject\Directory.Build.targets = Ark.ReferenceProject\Directory.Build.targets
 		Ark.ReferenceProject\global.json = Ark.ReferenceProject\global.json
 	EndProjectSection
 EndProject

@@ -1,0 +1,20 @@
+<Project>
+	<!-- DO NOT MOVE THIS TO Directory.Build.props. 
+	     Props are evaluated early, before any Targets. 
+	     Target is evaluated last, after all Targets. 
+		 appsettings.json are added automatically by AspNetCore targets as Content
+	-->
+	<ItemGroup>
+		<Content Remove="$(MSBuildProjectDirectory)\appsettings*.json" />
+		<Content Remove="$(MSBuildProjectDirectory)\appsettings.*.json" />
+		<None Include="$(MSBuildProjectDirectory)\appsettings*.json" >
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
+		</None>
+		<None Include="$(MSBuildProjectDirectory)\appsettings.*.json" >
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
+		</None>
+	</ItemGroup>
+	
+</Project>

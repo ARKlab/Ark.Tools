@@ -1,45 +1,50 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 name: $(SourceBranchName)_$(date:yyyyMMdd)$(rev:.r)
 trigger:
   branches:
     include:
     - develop
     - master
+# Change Paths below as needed (cannot use variable!)
   paths:
     include:
     - Core/*
-    - KtE.ReportSubmission.Common/*
+    - Ark.Reference.Common/*
 
 variables:
   workingDirectory: '$(Build.SourcesDirectory)'
-  vmImageName: 'windows-2022'
-  vmPoolName: 'Agents of Shield'
+  vmImageName: 'ubuntu-latest'
   ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
     BuildConfiguration: 'release'
   ${{ if not(eq(variables['Build.SourceBranchName'], 'master')) }}:
     BuildConfiguration: 'debug'
   BuildPlatform: 'any cpu'
-
+  projectName: 'Ark.ReferenceProject'
+  service: 'Core'
+  devEnvironment: 'Ark-Reference-Dev'
+  devResourceGroup: 'Ark-Reference-Shared'
+  devSubscription: 'Ark'
+  devDeploymentNamePrefix: 'Ark-Reference'
+  
 stages:
     - stage: Build_Stage
       displayName: Build stage
+      variables:
+        solutionPath: '${{ variables.projectName }}.sln'
+        webInterfaceProject: '${{ variables.projectName }}.${{ variables.service }}.WebInterface'
+        databaseProject: '${{ variables.projectName }}.${{ variables.service }}.Database'
+        servicePath: '$(Build.SourcesDirectory)/${{ variables.service }}'
       jobs:
       - job: BuildJob
         timeoutInMinutes: 60 # how long to run the job before automatically cancelling
         cancelTimeoutInMinutes: 2 # how much time to give 'run always even if cancelled tasks' before stopping them
         pool:
-          #vmImage: $(vmImageName)
-          name: $(vmPoolName)
+          vmImage: $(vmImageName)
           demands:
           - msbuild
           - visualstudio
           - vstest
         variables:
-          NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
+          NUGET_PACKAGES: $(Build.SourcesDirectory)/.nuget/packages
         steps:
         - task: NuGetToolInstaller@1
           displayName: 'Use NuGet 6.x'
@@ -65,14 +70,12 @@ stages:
           displayName: 'NuGet restore'
           inputs:
             command: 'restore'
-            restoreSolution: KtE.ReportSubmission.Services.sln
-            feedsToUse: config
-            nugetConfigPath: .nuget/nuget.config
+            restoreSolution: ${{ variables.solutionPath }}
 
         - task: VSBuild@1
-          displayName: 'Build solution KtE.ReportSubmission.Services.sln'
+          displayName: 'Build solution'
           inputs:
-            solution: KtE.ReportSubmission.Services.sln
+            solution: ${{ variables.solutionPath }}
             vsVersion: '17.0'
             platform: '$(BuildPlatform)'
             configuration: '$(BuildConfiguration)'
@@ -80,32 +83,13 @@ stages:
             maximumCpuCount: true
 
         - task: VSBuild@1
-          displayName: 'Build solution KtE.ReportSubmission.Services.sln copy'
+          displayName: 'Build solution again (for dacpac)'
           inputs:
-            solution: KtE.ReportSubmission.Services.sln
+            solution: ${{ variables.solutionPath }}
             vsVersion: '17.0'
             platform: '$(BuildPlatform)'
             configuration: '$(BuildConfiguration)'
             maximumCpuCount: true
-
-        - task: PowerShell@2
-          displayName: 'Ensure Docker Desktop is Running with Azurite'
-          inputs:
-            targetType: 'inline'
-            script: |
-                $containerName = "azurite"
-                # Check if the container is running
-                if (docker ps -q --filter "name=$containerName")
-                {
-                    Write-Host "The container '$containerName' is running."
-                }
-                else
-                {
-                    Write-Host "The container '$containerName' is not running or does not exist. Starting it..."
-                    # Start the container
-                    docker start $containerName
-                    Write-Host "The container '$containerName' has been started."
-                }
 
         - task: VisualStudioTestPlatformInstaller@1
           inputs:
@@ -117,24 +101,23 @@ stages:
           condition: and(succeeded(), not(or(contains(variables['Build.SourceVersionMessage'], '[SkipTests]'), contains(variables['OverrideField'], '[SkipTests]'), contains(variables['Build.SourceVersionMessage'], 'hotfix/'))))
           inputs:
             testAssemblyVer2: |
-             **\*.Tests\**\$(BuildConfiguration)\**\*.Tests.dll
-             **\*.UnitTests\**\$(BuildConfiguration)\**\*.UnitTests.dll
-             !**\obj\**
-             !**\ref\**
+             **/*.Tests/**/$(BuildConfiguration)/**/*.Tests.dll
+             **/*.UnitTests/**/$(BuildConfiguration)/**/*.UnitTests.dll
+             !**/obj/**
+             !**/ref/**
             searchFolder: '$(build.sourcesdirectory)/Core'
             runSettingsFile: CodeCoverage.runsettings
             codeCoverageEnabled: true
 
-
         - task: CopyFiles@2
-          displayName: 'Copy Files to: $(build.artifactstagingdirectory)\sql'
+          displayName: 'Copy SQL Files'
           inputs:
-            SourceFolder: '$(build.sourcesdirectory)/Core'
+            SourceFolder: '$(build.sourcesdirectory)/${{ variables.service }}/${{ variables.databaseProject }}'
             Contents: |
-             **\*.dacpac
-             **\*.publish.xml
-             **\_Migrations\*.sql
-            TargetFolder: '$(build.artifactstagingdirectory)\sql'
+             **/*.dacpac
+             **/*.publish.xml
+             **/_Migrations\*.sql
+            TargetFolder: '$(build.artifactstagingdirectory)/${{ variables.service }}/${{ variables.databaseProject }}'
             flattenFolders: true
 
         - task: DotNetCoreCLI@2
@@ -142,8 +125,8 @@ stages:
           inputs:
             command: publish
             publishWebProjects: false
-            projects: '$(build.sourcesdirectory)/Core/Core.Service.WebInterface/Core.Service.WebInterface.csproj'
-            arguments: '-o "$(build.artifactstagingdirectory)/Core/Core.Service.WebInterface" --framework "net6.0" --configuration $(BuildConfiguration) --no-build'
+            projects: '$(build.sourcesdirectory)/${{ variables.service }}/${{ variables.webInterfaceProject }}/${{ variables.webInterfaceProject }}.csproj'
+            arguments: '-o "$(build.artifactstagingdirectory)/${{ variables.service }}/${{ variables.webInterfaceProject }}" --framework "net8.0" --configuration $(BuildConfiguration) --no-build'
 
         - task: PublishSymbols@2
           displayName: 'Publish symbols path'
@@ -155,19 +138,22 @@ stages:
 
     - ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature')) }}:
       - stage: DevEnv_Stage
-        displayName: Dev Deploy Service
+        displayName: Dev Deploy ${{ variables.projectName }}
         dependsOn: Build_Stage
+        variables:
+          webInterfaceProject: '${{ variables.projectName }}.${{ variables.service }}.WebInterface'
+          databaseProject: '${{ variables.projectName }}.${{ variables.service }}.Database'
         jobs:
         - deployment: DevEnv_Deploy
-          displayName: 'Dev Deploy Service'
-          environment: 'EE-eBilling-Dev'
+          displayName: Dev Deploy ${{ variables.projectName }}
+          environment: ${{ variables.devEnvironment }}
           variables:
-            resourceGroup: 'EE-eBilling-Shared' 
-            subscription: 'Esperto Energia'
-            deploymentName: 'Dev-eBilling-'
+            resourceGroup: ${{ variables.devResourceGroup }}
+            subscription: ${{ variables.devSubscription }}
+            deploymentNamePrefix: ${{ variables.deploymentNamePrefix }}
           pool:
-            #vmImage: $(vmImageName)
-            name: $(vmPoolName)
+            vmImage: $(vmImageName)
+            #name: $(vmPoolName)
           strategy:
             runOnce:
               deploy:
@@ -180,7 +166,7 @@ stages:
                     resourceGroupName: $(resourceGroup)
                     prefix: 'arm.'
                     whenLastDeploymentIsFailed: 'latestSuccesful'
-                    deploymentNameFilter: '$(deploymentName)*'
+                    deploymentNameFilter: '${{ variables.deploymentNamePrefix }}*'
                 - task: AzureAppServiceManage@0
                   displayName: 'Stop Azure App Service: $(arm.CoreService)'
                   inputs:
@@ -196,8 +182,8 @@ stages:
                     SqlUsername: '$(arm.adminUsername)'
                     SqlPassword: '$(arm.adminPassword)'
                     deployType: SqlTask
-                    SqlFile: '$(Pipeline.Workspace)/drop/sql/RunMigration.PreDeployment.sql'
-                    SqlAdditionalArguments: '-Variable "MyPath = $(Pipeline.Workspace)\drop\sql\" -QueryTimeout 360'
+                    SqlFile: '$(Pipeline.Workspace)/drop/${{ variables.service }}/${{ variables.databaseProject }}/RunMigration.PreDeployment.sql'
+                    SqlAdditionalArguments: '-Variable "MyPath = $(Pipeline.Workspace)/drop/${{ variables.service }}/${{ variables.databaseProject }}/" -QueryTimeout 360'
                 - task: SqlAzureDacpacDeployment@1
                   displayName: DacPac
                   inputs:
@@ -206,14 +192,14 @@ stages:
                     DatabaseName: '$(arm.coredb)'
                     SqlUsername: '$(arm.adminUsername)'
                     SqlPassword: '$(arm.adminPassword)'
-                    DacpacFile: '$(Pipeline.Workspace)/drop/sql/Core.Service.Database.dacpac'
-                    PublishProfile: '$(Pipeline.Workspace)/drop/sql/Core.Service.Database.publish.xml'
+                    DacpacFile: '$(Pipeline.Workspace)/drop/${{ variables.service }}/${{ variables.databaseProject }}/${{ variables.databaseProject }}.dacpac'
+                    PublishProfile: '$(Pipeline.Workspace)/drop/${{ variables.service }}/${{ variables.databaseProject }}/${{ variables.databaseProject }}.publish.xml'
                 - task: AzureRmWebAppDeployment@4
-                  displayName: 'Azure App Service Deploy: Core.Service.WebInterface'
+                  displayName: 'Azure App Service Deploy: $(arm.coreService)'
                   inputs:
                     azureSubscription: '${{ variables.subscription }}'
                     WebAppName: '$(arm.coreService)'
-                    packageForLinux: '$(Pipeline.Workspace)/drop/Core/Core.Service.WebInterface/Core.Service.WebInterface.zip'
+                    packageForLinux: '$(Pipeline.Workspace)/drop/${{ variables.service }}/${{ variables.webInterfaceProject }}/${{variables.webInterfaceProject }}.zip'
                     enableCustomDeployment: true
                     DeploymentType: zipDeploy
                 - task: AzureAppServiceManage@0
