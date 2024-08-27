@@ -15,7 +15,6 @@ namespace Ark.Tools.Http
         {
             var j = new CookieJar();
             return builder
-                .AddMiddleware(() => new CacheCow.Client.CachingHandler())
                 .AllowAnyHttpStatus()
                 .WithTimeout(TimeSpan.FromMinutes(5))
                 .ConfigureInnerHandler(h =>
