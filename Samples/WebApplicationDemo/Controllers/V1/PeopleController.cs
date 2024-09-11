@@ -17,7 +17,7 @@ namespace WebApplicationDemo.Controllers.V1
     [ApiVersion(1.0)]
     public class PeopleController : ODataController
     {
-        private static List<Person> _people = new List<Person>()
+        private static List<Person.V1> _people = new ()
         {
             new()
             {
@@ -44,14 +44,14 @@ namespace WebApplicationDemo.Controllers.V1
 
         [HttpGet]
         [EnableQuery(AllowedQueryOptions = All)]
-        public IQueryable<Person> Get()
+        public IQueryable<Person.V1> Get()
         {
             return _people.AsQueryable();
         }
 
         [HttpGet]
         [EnableQuery]
-        public SingleResult<Person> Get(int key)
+        public SingleResult<Person.V1> Get(int key)
         {
             return SingleResult.Create(_people.Where(p => p.Id == key).AsQueryable());
         }
