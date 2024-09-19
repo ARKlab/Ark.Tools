@@ -22,7 +22,7 @@
 	<!--===============================================================================-->
 
 	<ItemGroup>
-		<PackageReference Include="Rebus" Version="8.5.0" />
+		<PackageReference Include="Rebus" Version="8.6.0" />
 		<PackageReference Include="Rebus.NLog" Version="6.0.0" />
 		<PackageReference Include="Rebus.AzureServiceBus" Version="10.2.0" />
 		<PackageReference Include="Rebus.SqlServer" Version="8.1.2" />
