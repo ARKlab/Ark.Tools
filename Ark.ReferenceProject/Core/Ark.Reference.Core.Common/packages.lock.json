@@ -762,8 +762,8 @@
       },
       "NLog.Extensions.Logging": {
         "type": "Transitive",
-        "resolved": "5.3.13",
-        "contentHash": "i1n5+ZB6Hd5na2eWj7zjeIH4SS3qzmSgoSIGpxp3B0lJ8p/Cmg59NrDE9GReAAmKbQVbP0d/+e3S/6j79Tnaww==",
+        "resolved": "5.3.14",
+        "contentHash": "ZFcdwdIYcGvWY268QMw2lIqnE8ziJTaS4iLm2ajRMUdgy9MFxJl+Y5s0zQxfgjTxbownGrAkJfoTkquAayKG6A==",
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "8.0.0",
           "Microsoft.Extensions.Logging": "8.0.0",
@@ -1890,7 +1890,7 @@
           "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Hosting": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.1, 9.0.0)",
-          "NLog.Extensions.Logging": "[5.3.13, )"
+          "NLog.Extensions.Logging": "[5.3.14, )"
         }
       },
       "ark.tools.nodatime": {
