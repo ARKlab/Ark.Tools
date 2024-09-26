@@ -30,7 +30,7 @@
     <PackageReference Include="Auth0.ManagementApi" Version="7.26.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="[8.0.8,9)" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="[8.0.0,9)" />
-    <PackageReference Include="Polly" Version="8.4.1" />
+    <PackageReference Include="Polly" Version="8.4.2" />
   </ItemGroup>
   
 </Project>
