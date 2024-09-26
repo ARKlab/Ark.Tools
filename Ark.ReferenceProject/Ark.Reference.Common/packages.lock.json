@@ -15,9 +15,9 @@
       },
       "Azure.Storage.Blobs": {
         "type": "Direct",
-        "requested": "[12.22.0, )",
-        "resolved": "12.22.0",
-        "contentHash": "ZULEgyKLEeSVdc3k5tM40zts5fwET/CT3RkOn/0kJruPj2dI9XB/R9pT53sqNWCs744qjaPI03Y8UtIYA8p54Q==",
+        "requested": "[12.22.1, )",
+        "resolved": "12.22.1",
+        "contentHash": "x0TZRhkLQwVf+BYjFJybRu0G8OdIXm0mYZJUgUX2I27DHxHmW6+qR4q3VsbOKYT1r/CFwDKBt7wDVohr14k4bQ==",
         "dependencies": {
           "Azure.Storage.Common": "12.21.0",
           "System.Text.Json": "6.0.9"
