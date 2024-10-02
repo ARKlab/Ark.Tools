@@ -57,7 +57,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 
-		<PackageReference Include="ReferenceTrimmer" Version="3.3.6" Condition="'true' == 'false'">
+		<PackageReference Include="ReferenceTrimmer" Version="3.3.10" Condition="'true' == 'false'">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
