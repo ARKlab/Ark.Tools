@@ -30,12 +30,15 @@ namespace Ark.Tools.NLog
         public const string MailTarget = "Ark.Mail";
         public const string MailFromDefault = "noreply@ark-energy.eu";
 
+        public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
+                                             
         static NLogConfigurer()
         {
-            LogManager.Setup().SetupExtensions(b => b
-                .RegisterAssembly(typeof(Configurer).Assembly)
-                .RegisterAssembly(typeof(ActivityTraceLayoutRenderer).Assembly));
-            LogManager.LogFactory.ServiceRepository.RegisterService(typeof(IJsonConverter), new STJSerializer());
+            LogManager.Setup()
+                .SetupExtensions(b => b
+                    .RegisterAssembly(typeof(Configurer).Assembly)
+                    .RegisterAssembly(typeof(ActivityTraceLayoutRenderer).Assembly))
+                ;
 
             // This has been added support NLog loggers output to Console during application initialization,
             // before Configuration is Read and Host is Built.
@@ -222,7 +225,7 @@ namespace Ark.Tools.NLog
             {
                 _config.AddTarget("Debugger", new DebuggerTarget("Debugger")
                 {
-                    Layout= @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}"
+                    Layout= TextLineLayout
                 });
                 return this;
             }
@@ -266,8 +269,11 @@ namespace Ark.Tools.NLog
 
             public Configurer WithConsoleTarget(bool async = true)
             {
-                var consoleTarget = new ColoredConsoleTarget();
-                consoleTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
+                var consoleTarget = new ConsoleTarget();
+                consoleTarget.WriteBuffer = async;
+                consoleTarget.AutoFlush = !async;
+                consoleTarget.Layout = TextLineLayout;
+
                 _config.AddTarget(ConsoleTarget, async ? _wrapWithAsyncTargetWrapper(consoleTarget) as Target : consoleTarget);
                 return this;
             }
@@ -276,7 +282,7 @@ namespace Ark.Tools.NLog
             {
                 var fileTarget = new FileTarget();
 
-                fileTarget.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
+                fileTarget.Layout = TextLineLayout;
                 fileTarget.FileName = @"${basedir}\Logs\Trace.log";
                 fileTarget.KeepFileOpen = true;
                 fileTarget.ConcurrentWrites = false;
@@ -374,7 +380,7 @@ VALUES
                 var target = new MailTarget();
                 target.AddNewLines = true;
                 target.Encoding = Encoding.UTF8;
-                target.Layout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
+                target.Layout = TextLineLayout;
                 target.Html = true;
                 target.ReplaceNewlineWithBrTagInHtml = true;
                 target.Subject = "Errors from ${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}@${ark.hostname}";
@@ -680,13 +686,13 @@ END
                 try
                 {
                     builder.Append(JsonSerializer.Serialize(value, ArkSerializerOptions.JsonOptions));
+                    return true;
                 }
                 catch (Exception e)
                 {
-                    InternalLogger.Error(e, "Error when custom JSON serialization");
+                    InternalLogger.Error(e, "Error when serializing type '{type}' '{string}' as json.", value?.GetType(), value?.ToString());
                     return false;
                 }
-                return true;
             }
         }
     }
