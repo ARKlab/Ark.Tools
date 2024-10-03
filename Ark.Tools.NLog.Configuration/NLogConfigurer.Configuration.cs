@@ -83,7 +83,8 @@ namespace Ark.Tools.NLog
             return builder.ConfigureLogging((ctx, logging) =>
             {
                 var c = NLogConfigurer.For(appName)
-                   .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, appName, mailFrom, async: !ctx.HostingEnvironment.IsEnvironment("SpecFlow"))                   
+                   .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, appName, mailFrom, 
+                        async: !ctx.HostingEnvironment.EnvironmentName.Contains("SpecFlow", StringComparison.OrdinalIgnoreCase))
                    ;
 
                 configure ?.Invoke(c);
