@@ -14,7 +14,7 @@ namespace Ark.Reference.Core.Tests.Init
     [Binding]
     class DatabaseUtils
     {
-        public const string DatabaseConnectionString = @"Data Source=127.0.0.1;Encrypt=True;TrustServerCertificate=True;User Id=sa;Password=ArkSpecFlow123Stella!;";
+        public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=ArkSpecFlow123Stella!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
 
         [BeforeTestRun(Order = -1)]
         public static void CreateNLogDatabaseIfNotExists()
@@ -35,17 +35,10 @@ namespace Ark.Reference.Core.Tests.Init
             var instance = new DacServices(DatabaseConnectionString);
             using (var dacpac = DacPackage.Load("Ark.Reference.Core.Database.dacpac"))
             {
-                try
+                instance.Deploy(dacpac, "Ark.Reference.Core.Database", true, new DacDeployOptions()
                 {
-                    instance.Deploy(dacpac, "Ark.Reference.Core.Database", true, new DacDeployOptions()
-                    {
-                        CreateNewDatabase = true,
-                    });
-                }
-                catch(Exception ex)
-                { 
-                    var a = ex;
-                }
+                    CreateNewDatabase = true,
+                });
             }
         }
 

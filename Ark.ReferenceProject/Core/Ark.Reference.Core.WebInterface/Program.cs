@@ -93,7 +93,7 @@ namespace Ark.Reference.Core.WebInterface
             finally
             {
                 NLog.LogManager.GetLogger("Main").Info("Shutting down");
-                NLog.LogManager.Flush();
+                NLog.LogManager.Shutdown();
             }
         }
     }

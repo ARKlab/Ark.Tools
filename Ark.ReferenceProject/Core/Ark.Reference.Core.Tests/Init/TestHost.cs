@@ -237,7 +237,7 @@ namespace Ark.Reference.Core.Tests.Init
         [AfterTestRun]
         public static void AfterTests()
         {
-            Server?.Dispose();
+            _server?.Dispose();
         }
 
         public void Dispose()
