@@ -19,9 +19,9 @@
       },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
-        "requested": "[8.0.8, )",
-        "resolved": "8.0.8",
-        "contentHash": "mQSMZMA72IK/N79HgLn7tCCkN+stEq6yhq0vr6xfw2wvcfjAV2R6JFUYGUDHmWVUxTjDWjQX+Yrd5S9vQKnPLA==",
+        "requested": "[8.0.10, )",
+        "resolved": "8.0.10",
+        "contentHash": "4mBNOllpDEmgzF+c7ZfnPM7CnuD25TQ7V6VMz8a66EqAyzx3Hys9rSoO4PahsmNPQc6LtB3tJG/QU/BBUbR9+w==",
         "dependencies": {
           "System.IO.Pipelines": "8.0.0"
         }
