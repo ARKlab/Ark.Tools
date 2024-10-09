@@ -18,10 +18,6 @@
               An item must first match at least one entry in the include list to be included.
               Included items must then not match any entries in the exclude list to remain included.
               -->
-              <Include>
-                <ModulePath>.*Core\.[^\\/]*\.dll$</ModulePath>
-                <ModulePath>.*Core\.[^\\/]*\.exe$</ModulePath>
-              </Include>
               <Exclude>
                 <ModulePath>.*\.tests\.dll$</ModulePath>
                 <ModulePath>.*\.unittests\.dll$</ModulePath>
@@ -30,7 +26,6 @@
             <!-- common excludes -->
             <Functions>
               <Exclude>
-                <Function>^Fabrikam\.UnitTest\..*</Function>
                 <Function>^std::.*</Function>
                 <Function>^ATL::.*</Function>
                 <Function>.*::__GetTestMethodInfo.*</Function>
@@ -47,20 +42,6 @@
                 <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
               </Exclude>
             </Attributes>
-            <Sources>
-              <Exclude>
-                <Source>.*\\atlmfc\\.*</Source>
-                <Source>.*\\vctools\\.*</Source>
-                <Source>.*\\public\\sdk\\.*</Source>
-                <Source>.*\\microsoft sdks\\.*</Source>
-                <Source>.*\\vc\\include\\.*</Source>
-              </Exclude>
-            </Sources>
-            <CompanyNames>
-              <Exclude>
-                <CompanyName>.*microsoft.*</CompanyName>
-              </Exclude>
-            </CompanyNames>
             <PublicKeyTokens>
               <Exclude>
                 <PublicKeyToken>^B77A5C561934E089$</PublicKeyToken>
