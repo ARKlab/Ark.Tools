@@ -108,6 +108,7 @@ stages:
             searchFolder: '$(build.sourcesdirectory)/Core'
             runSettingsFile: CodeCoverage.runsettings
             codeCoverageEnabled: true
+            diagnosticsEnabled: true
 
         - task: CopyFiles@2
           displayName: 'Copy SQL Files'
