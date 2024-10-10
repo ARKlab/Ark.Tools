@@ -22,10 +22,10 @@
 		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.3.2" />
 		<PackageReference Include="Azure.Identity" Version="1.12.1" />
 		<PackageReference Include="DistributedLock.Core" Version="1.0.7" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="[8.0.0,9)" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="[8.0.0,9)" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[8.0.0,9)" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[8.0.1,9)" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="[8.0.2,9)" />
 		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="[8.0.0,9)" />
 	</ItemGroup>
