@@ -1,5 +1,4 @@
 ﻿using Ark.Tools.Authorization.Requirement;
-using Ark.Tools.NewtonsoftJson;
 using Ark.Tools.Outbox;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
@@ -24,9 +23,6 @@ using Ark.Reference.Common.Services.Decorators;
 using Ark.Reference.Common.Services.FileStorageService;
 
 using FluentValidation;
-
-using Newtonsoft.Json;
-
 using NodaTime;
 
 using Rebus.Compression;
@@ -50,6 +46,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using Ark.Reference.Core.API.Messages;
+using System.Text.Json;
 
 namespace Ark.Reference.Core.Application.Host
 {
@@ -243,10 +240,8 @@ namespace Ark.Reference.Core.Application.Host
                 })
                 .Serialization(s =>
                 {
-                    var cfg = new ArkDefaultJsonSerializerSettings();
-                    cfg.TypeNameHandling = TypeNameHandling.Auto;
-                    cfg.ObjectCreationHandling = ObjectCreationHandling.Replace;
-                    s.UseNewtonsoftJson(cfg);
+                    var cfg = new JsonSerializerOptions().ConfigureArkDefaults();
+                    s.UseSystemTextJson(cfg);
                 })
                 .Timeouts(t =>
                 {
