@@ -184,12 +184,12 @@
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.2.2",
-        "contentHash": "zTLRG2hxdzUfEZA5dosRe7RNcr16M+oR7rUCcPz2itoUQ7VYF3RRsxMcYKOif634Hs4WGy8hHQ4+qL2OAzkhRw==",
+        "resolved": "3.3.0",
+        "contentHash": "mdWEf5PUIlv0K6MGaxzoKUHli8U9WAx4H4x3SMoescUOxWaVEYuNzgO44kH8CnSsKVPkuzCJD05RMwrnaLG/dw==",
         "dependencies": {
           "MessagePack": "2.5.172",
-          "Microsoft.CodeAnalysis.NetAnalyzers": "7.0.4",
-          "NodaTime": "3.1.11"
+          "Microsoft.CodeAnalysis.NetAnalyzers": "8.0.0",
+          "NodaTime": "3.2.0"
         }
       },
       "Microsoft.ApplicationInsights": {
@@ -768,11 +768,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.1.12",
-        "contentHash": "nDcUbG0jiEXmV8cOz7V8GnUKlmPJjqZm/R+E2JNnUSdlMoaQ19xSU8GXFLReGs/Nt8xdBfA8XfO77xVboWO1Vg==",
-        "dependencies": {
-          "System.Runtime.CompilerServices.Unsafe": "4.7.1"
-        }
+        "resolved": "3.2.0",
+        "contentHash": "yoRA3jEJn8NM0/rQm78zuDNPA3DonNSZdsorMUj+dltc1D+/Lc5h9YXGqbEEZozMGr37lAoYkcSM/KjTVqD0ow=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "Transitive",
@@ -1847,7 +1844,7 @@
         "type": "Project",
         "dependencies": {
           "Ensure.That": "[10.1.0, )",
-          "NodaTime": "[3.1.12, )",
+          "NodaTime": "[3.2.0, )",
           "System.Linq.Async": "[6.0.1, )",
           "System.Reactive": "[6.0.1, )"
         }
@@ -1860,7 +1857,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.2.2, )"
+          "MessagePack.NodaTime": "[3.3.0, )"
         }
       },
       "ark.tools.newtonsoftjson": {
