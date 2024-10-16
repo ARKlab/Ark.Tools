@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "https://schemas.reqnroll.net/reqnroll-config-latest.json",
+  "language": {
+    "feature": "en-GB"
+  },
+  "generator": {
+    "addNonParallelizableMarkerForTags": [ "nonParallelizable" ]
+  },
+  "runtime": {
+    "missingOrPendingStepsOutcome": "Error"
+  }
+}

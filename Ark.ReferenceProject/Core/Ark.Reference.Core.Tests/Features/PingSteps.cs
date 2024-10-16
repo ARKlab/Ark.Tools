@@ -8,8 +8,8 @@ using Flurl;
 
 using System.Collections.Generic;
 
-using TechTalk.SpecFlow;
-using TechTalk.SpecFlow.Assist;
+using Reqnroll;
+using Reqnroll.Assist;
 
 namespace Ark.Reference.Core.Tests.Features
 {
