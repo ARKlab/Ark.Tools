@@ -170,24 +170,24 @@
       },
       "MessagePack": {
         "type": "Transitive",
-        "resolved": "2.5.172",
-        "contentHash": "tO/SIeix4UjmHo0J7Z1IRMvHEfqLlN9FAQCzwGcoG50mt7gPyYsAuMU9Ngu9iDSv0ak/YZOyobs0BidFde+gDw==",
+        "resolved": "2.5.187",
+        "contentHash": "uW4j8m4Nc+2Mk5n6arOChavJ9bLjkis0qWASOj2h2OwmfINuzYv+mjCHUymrYhmyyKTu3N+ObtTXAY4uQ7jIhg==",
         "dependencies": {
-          "MessagePack.Annotations": "2.5.172",
+          "MessagePack.Annotations": "2.5.187",
           "Microsoft.NET.StringTools": "17.6.3"
         }
       },
       "MessagePack.Annotations": {
         "type": "Transitive",
-        "resolved": "2.5.172",
-        "contentHash": "LJWMr5BDpvLaIfsUXufFWQW3VRFg7EKnGAHjArbwCaSeTIWEXaRoClkQtPaXvtVPZk5ZIpc9SBQd/WJD/m99Ww=="
+        "resolved": "2.5.187",
+        "contentHash": "/IvvMMS8opvlHjEJ/fR2Cal4Co726Kj77Z8KiohFhuHfLHHmb9uUxW5+tSCL4ToKFfkQlrS3HD638mRq83ySqA=="
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.3.0",
-        "contentHash": "mdWEf5PUIlv0K6MGaxzoKUHli8U9WAx4H4x3SMoescUOxWaVEYuNzgO44kH8CnSsKVPkuzCJD05RMwrnaLG/dw==",
+        "resolved": "3.3.1",
+        "contentHash": "6u+zYG76lbfZS3magmaVMjKFsp0QxlvaH9qojgbiTXXrnPG2g2+vUPGMYWBh0ezC46zyifJjgchKHo+Y8AnfKg==",
         "dependencies": {
-          "MessagePack": "2.5.172",
+          "MessagePack": "2.5.187",
           "Microsoft.CodeAnalysis.NetAnalyzers": "8.0.0",
           "NodaTime": "3.2.0"
         }
@@ -1874,7 +1874,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.3.0, )"
+          "MessagePack.NodaTime": "[3.3.1, )"
         }
       },
       "ark.tools.newtonsoftjson": {
