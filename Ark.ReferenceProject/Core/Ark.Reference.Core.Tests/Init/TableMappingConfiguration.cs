@@ -1,6 +1,6 @@
-﻿using Ark.Tools.SpecFlow;
+﻿using Ark.Tools.Reqnroll;
 
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace Ark.Reference.Core.Tests.Init
 {
@@ -11,22 +11,22 @@ namespace Ark.Reference.Core.Tests.Init
         public static void SupportTableWithNodaTime()
         {
             // last takes prio, this is a last resort
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueRetrievers.Register(new StringTypeConverterValueRetriver());
+            Reqnroll.Assist.Service.Instance.ValueRetrievers.Register(new StringTypeConverterValueRetriver());
 
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueRetrievers.Register(new NodaTimeValueRetriverAndComparer());
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueComparers.Register(new NodaTimeValueRetriverAndComparer());
+            Reqnroll.Assist.Service.Instance.ValueRetrievers.Register(new NodaTimeValueRetriverAndComparer());
+            Reqnroll.Assist.Service.Instance.ValueComparers.Register(new NodaTimeValueRetriverAndComparer());
 
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueRetrievers.Register(new EnumValueRetrieverAndComparer());
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueComparers.Register(new EnumValueRetrieverAndComparer());
+            Reqnroll.Assist.Service.Instance.ValueRetrievers.Register(new EnumValueRetrieverAndComparer());
+            Reqnroll.Assist.Service.Instance.ValueComparers.Register(new EnumValueRetrieverAndComparer());
 
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueRetrievers.Register(new StringValueRetriverAndComparer());
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueComparers.Register(new StringValueRetriverAndComparer());
+            Reqnroll.Assist.Service.Instance.ValueRetrievers.Register(new StringValueRetriverAndComparer());
+            Reqnroll.Assist.Service.Instance.ValueComparers.Register(new StringValueRetriverAndComparer());
 
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueRetrievers.Register(new NestedJsonRetrieverAndComparer<decimal[]>());
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueComparers.Register(new NestedJsonRetrieverAndComparer<decimal[]>());
+            Reqnroll.Assist.Service.Instance.ValueRetrievers.Register(new NestedJsonRetrieverAndComparer<decimal[]>());
+            Reqnroll.Assist.Service.Instance.ValueComparers.Register(new NestedJsonRetrieverAndComparer<decimal[]>());
 
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueRetrievers.Register(new NestedJsonRetrieverAndComparer<decimal?[]>());
-            TechTalk.SpecFlow.Assist.Service.Instance.ValueComparers.Register(new NestedJsonRetrieverAndComparer<decimal?[]>());
+            Reqnroll.Assist.Service.Instance.ValueRetrievers.Register(new NestedJsonRetrieverAndComparer<decimal?[]>());
+            Reqnroll.Assist.Service.Instance.ValueComparers.Register(new NestedJsonRetrieverAndComparer<decimal?[]>());
         }
     }
 

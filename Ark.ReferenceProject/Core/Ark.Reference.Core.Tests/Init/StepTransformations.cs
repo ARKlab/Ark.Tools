@@ -1,6 +1,6 @@
 ﻿using NodaTime;
 using NodaTime.Text;
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace Ark.Reference.Core.Tests.Init
 {

@@ -117,24 +117,24 @@
           "NodaTime": "3.2.0"
         }
       },
-      "SpecFlow.MsTest": {
+      "Reqnroll.MsTest": {
         "type": "Direct",
-        "requested": "[3.9.74, )",
-        "resolved": "3.9.74",
-        "contentHash": "HRRPSZOOBNHtOG9bWhmYGp8trRr715rVTr0bJlq6qYhgi/xqfnx0OEC9H68u3gshGbCni7TBbg3sPhKlNaxpgQ==",
+        "requested": "[2.1.1, )",
+        "resolved": "2.1.1",
+        "contentHash": "G2lDlvqx9Op9sGu5f2n+HMzXbueq62Rs7AJBhxE4nD8XJIdopVBEyX7nG4c9ZriHUPf/Q7yavWrkUQjKDcCWkA==",
         "dependencies": {
-          "MSTest.TestFramework": "2.1.2",
-          "SpecFlow": "[3.9.74]",
-          "SpecFlow.Tools.MsBuild.Generation": "[3.9.74]"
+          "MSTest.TestFramework": "2.2.8",
+          "Reqnroll": "[2.1.1]",
+          "Reqnroll.Tools.MsBuild.Generation": "[2.1.1]"
         }
       },
-      "SpecFlow.Tools.MsBuild.Generation": {
+      "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[3.9.74, )",
-        "resolved": "3.9.74",
-        "contentHash": "I/9OvmKOohJqIUNJ0xGYJCWfL6WKDaes8OoOAD/2yhGX+tzC5ofs9yqkP9Cu/xfnIx+11IR3pZs7YhBhGAcgWQ==",
+        "requested": "[2.1.1, )",
+        "resolved": "2.1.1",
+        "contentHash": "xjv2ihoRHpAAjhZX9d964/0R8mhgHiquPBjnJmhc2sYQnemDCkHIsb4d2VAMKS/HeiXLi6NAxujjgAYFBcxDKg==",
         "dependencies": {
-          "SpecFlow": "[3.9.74]"
+          "Reqnroll": "[2.1.1]"
         }
       },
       "Asp.Versioning.Abstractions": {
@@ -414,11 +414,6 @@
           "System.Reflection.Metadata": "5.0.0"
         }
       },
-      "BoDi": {
-        "type": "Transitive",
-        "resolved": "1.5.0",
-        "contentHash": "CzIPzdIAFSd2zuLxI+0K9s48Qv3HQDbWiApn9h96j284rHs2bSPrn/PMca3mi4q3xLSEqOp+GUJ6+mXDD9prKg=="
-      },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
         "resolved": "2.4.0",
@@ -451,6 +446,11 @@
         "dependencies": {
           "System.Diagnostics.EventLog": "6.0.0"
         }
+      },
+      "Cucumber.CucumberExpressions": {
+        "type": "Transitive",
+        "resolved": "17.1.0",
+        "contentHash": "IZFDLLwrUCKuGDXQzmAWZa+kQFpVmVwWD8wEl0UWGOR83UQfzqg8hZeSSNUOXlW0Kh3vMO6kEm3FpNC4amKMaw=="
       },
       "Dapper": {
         "type": "Transitive",
@@ -519,8 +519,8 @@
       },
       "Gherkin": {
         "type": "Transitive",
-        "resolved": "19.0.3",
-        "contentHash": "kq9feqMojMj9aABrHb/ABEPaH2Y4dSclseSahAru6qxCeqVQNLLTgw/6vZMauzI1yBUL2fz03ub5yEd5btLfvg=="
+        "resolved": "29.0.0",
+        "contentHash": "az9zmD5V72UZUzYcDyHoZHFRT5eSLOg1Co2r3AtlshPe41Am7iMwOJG+xHxZ1Pfn6agGoWw1dhm6Pn8Dg6QBUg=="
       },
       "Hellang.Middleware.ProblemDetails": {
         "type": "Transitive",
@@ -1154,11 +1154,11 @@
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "NSmDw3K0ozNDgShSIpsZcbFIzBX4w28nDag+TfaQujkXGazBm+lid5onlWoCBy4VsLxqnnKjEBbGSJVWJMf43g==",
+        "resolved": "8.0.1",
+        "contentHash": "5Ou6varcxLBzQ+Agfm0k0pnH7vrEITYlXMDuE6s7ZHlZHz6/G8XJ3iISZDr5rfwfge6RnXJ1+Wc479mMn52vjA==",
         "dependencies": {
           "System.Text.Encodings.Web": "8.0.0",
-          "System.Text.Json": "8.0.0"
+          "System.Text.Json": "8.0.4"
         }
       },
       "Microsoft.Extensions.Diagnostics": {
@@ -1595,8 +1595,8 @@
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
-        "resolved": "1.1.1",
-        "contentHash": "TMBuzAHpTenGbGgk0SMTwyEkyijY/Eae4ZGsFNYJvAr/LDn1ku3Etp3FPxChmDp5HHF3kzJuoaa08N0xjqAJfQ=="
+        "resolved": "1.1.0",
+        "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
       },
       "Microsoft.NETCore.Targets": {
         "type": "Transitive",
@@ -1642,11 +1642,6 @@
         "type": "Transitive",
         "resolved": "7.20.0",
         "contentHash": "nJLDCOv3qemN0XI5kmUN9h38Qw+ZQBoYtWwSGhPkDEiiZSDcAwLMgqbGNKmK3myhVWASCqXtOqrj5jUnGZrH/Q=="
-      },
-      "Microsoft.SqlServer.Dacpacs.Master": {
-        "type": "Transitive",
-        "resolved": "160.0.0",
-        "contentHash": "bgiN77Hfpev7+LON0WOZbgz1VvL6abuUkw14ulLwAnAiuYCcav8HCAoGlgSXVhsLd8U5+jSgeX/ZrNBuPF24qA=="
       },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
@@ -1963,6 +1958,18 @@
           "rebus": "8.4.2"
         }
       },
+      "Reqnroll": {
+        "type": "Transitive",
+        "resolved": "2.1.1",
+        "contentHash": "RhV5B0lxVXzP+0U9OUkWf3nMGfSlWnxQdUp0mcatvuQISxB8ZPjdhJB3T4Vjo3bFMiQb/0LUXUmNZ0IqBPZldw==",
+        "dependencies": {
+          "Cucumber.CucumberExpressions": "17.1.0",
+          "Gherkin": "29.0.0",
+          "Microsoft.Extensions.DependencyModel": "8.0.1",
+          "SpecFlow.Internal.Json": "1.0.8",
+          "System.Runtime.Loader": "4.3.0"
+        }
+      },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
         "type": "Transitive",
         "resolved": "4.3.2",
@@ -2136,20 +2143,6 @@
         "dependencies": {
           "NETStandard.Library": "1.6.1",
           "Newtonsoft.Json": "10.0.3"
-        }
-      },
-      "SpecFlow": {
-        "type": "Transitive",
-        "resolved": "3.9.74",
-        "contentHash": "n6kcg9ZeQWxqJFoT23SsFT89U1QQNwvcN9pAX5alB6ZPr6K0p5D5nGIJ1PZsSaFaRFutiwQ+DicmxBCPAZVYIA==",
-        "dependencies": {
-          "BoDi": "1.5.0",
-          "Gherkin": "19.0.3",
-          "Microsoft.Extensions.DependencyModel": "1.0.3",
-          "SpecFlow.Internal.Json": "1.0.8",
-          "System.Configuration.ConfigurationManager": "4.5.0",
-          "System.Net.Http": "4.3.4",
-          "System.Runtime.Loader": "4.3.0"
         }
       },
       "SpecFlow.Internal.Json": {
@@ -2678,10 +2671,10 @@
       },
       "System.Net.Http": {
         "type": "Transitive",
-        "resolved": "4.3.4",
-        "contentHash": "aOa2d51SEbmM+H+Csw7yJOuNZoHkrP2XnAurye5HWYgGVVU54YZDvsLUYRv6h18X3sPnjNCANmN7ZhIPiqMcjA==",
+        "resolved": "4.3.0",
+        "contentHash": "sYg+FtILtRQuYWSIAuNOELwVuVsxVyJGWQyOnlAzhV4xvhyFnON1bAzYYC+jjRW8JREM45R0R5Dgi8MTC5sEwA==",
         "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.1",
+          "Microsoft.NETCore.Platforms": "1.1.0",
           "System.Collections": "4.3.0",
           "System.Diagnostics.Debug": "4.3.0",
           "System.Diagnostics.DiagnosticSource": "4.3.0",
@@ -2706,7 +2699,7 @@
           "System.Threading.Tasks": "4.3.0",
           "runtime.native.System": "4.3.0",
           "runtime.native.System.Net.Http": "4.3.0",
-          "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2"
+          "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.0"
         }
       },
       "System.Net.Primitives": {
@@ -3362,12 +3355,6 @@
           "Ark.Reference.Common": "[0.9.1, )"
         }
       },
-      "ark.reference.core.database": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.SqlServer.Dacpacs.Master": "[160.0.0, )"
-        }
-      },
       "ark.reference.core.webinterface": {
         "type": "Project",
         "dependencies": {
@@ -3624,6 +3611,16 @@
           "Rebus.SqlServer": "[8.1.2, )"
         }
       },
+      "ark.tools.reqnroll": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Http": "[1.0.0, )",
+          "FluentAssertions": "[6.12.1, )",
+          "FluentAssertions.Web": "[1.5.0, )",
+          "Microsoft.IdentityModel.JsonWebTokens": "[8.1.2, )",
+          "Reqnroll": "[2.1.1, )"
+        }
+      },
       "ark.tools.simpleinjector": {
         "type": "Project",
         "dependencies": {
@@ -3656,16 +3653,6 @@
         "dependencies": {
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )"
-        }
-      },
-      "ark.tools.specflow": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Http": "[1.0.0, )",
-          "FluentAssertions": "[6.12.1, )",
-          "FluentAssertions.Web": "[1.5.0, )",
-          "Microsoft.IdentityModel.JsonWebTokens": "[8.1.2, )",
-          "SpecFlow": "[3.9.74, )"
         }
       },
       "ark.tools.sql": {

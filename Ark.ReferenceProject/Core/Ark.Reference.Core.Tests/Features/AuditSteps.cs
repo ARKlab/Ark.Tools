@@ -14,8 +14,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 
-using TechTalk.SpecFlow;
-using TechTalk.SpecFlow.Assist;
+using Reqnroll;
+using Reqnroll.Assist;
 
 namespace Ark.Reference.Core.Tests.Features
 {
@@ -62,7 +62,7 @@ namespace Ark.Reference.Core.Tests.Features
         }
 
         
-        [Then(@"the (current|previous) Ping audit is")]
+        [Then(@"^the (current|previous) Ping audit is$")]
         public void ThenTheCurrentContractAuditIs(string choice, Table table)
         {
             var changes = _changes?.Changes?.First();

@@ -7,7 +7,7 @@ using System;
 using System.Data;
 using System.Linq;
 
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 namespace Ark.Reference.Core.Tests.Init
 {
