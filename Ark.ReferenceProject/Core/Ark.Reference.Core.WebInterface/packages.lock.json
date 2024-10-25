@@ -191,28 +191,28 @@
       },
       "Auth0.AuthenticationApi": {
         "type": "Transitive",
-        "resolved": "7.27.0",
-        "contentHash": "9ZESFRrM+pn+aWMrryxa+OxWXworF8umNymoC25TSCN177UMwP0x37LRko59uZVztHWrCwsk3FncbfTNny7a/Q==",
+        "resolved": "7.28.0",
+        "contentHash": "Ysv0rVImuv9GO7f6qN7VZjYKbHRL5Z1MQSVkQ5yguhbLgBJ3P+VpSXwtx0dXyxCYPG0duq+J0L+PYTaI9Vdlog==",
         "dependencies": {
-          "Auth0.Core": "7.27.0",
+          "Auth0.Core": "7.28.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "6.5.0",
           "System.IdentityModel.Tokens.Jwt": "6.34.0"
         }
       },
       "Auth0.Core": {
         "type": "Transitive",
-        "resolved": "7.27.0",
-        "contentHash": "bIteWJKddD0UGxOnKVhsmhsgcAKlLGqbI3LB814I4W0k7ahPxnfaeoD9mfY8pCar/xRB3hB5YPFU6TykuqhJFA==",
+        "resolved": "7.28.0",
+        "contentHash": "Jt2L4EK+PwQ+8KORR0VaMK39hEhvlaZ6NCCw7v/0nQtqsvgk3UPppFqRXKtmMwkzmFRaK8lM30AQpxYexhBiYA==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1"
         }
       },
       "Auth0.ManagementApi": {
         "type": "Transitive",
-        "resolved": "7.27.0",
-        "contentHash": "OvmtwfW/rohLRwl2Qe6mcBrD4NPqUQhZUaerVJo5Eh7SZ49b41Rf+dmztk3hs8mcHmLi3cFiHDCWim+LRPtq3g==",
+        "resolved": "7.28.0",
+        "contentHash": "3mwLj+Vp66d9FnABzWrYlA+KdIAEtE2HeIz6kUqOus1l2Jt+CVo3ScB0XCEnDmMr9H9JukPdhltXiE9WfG454A==",
         "dependencies": {
-          "Auth0.Core": "7.27.0"
+          "Auth0.Core": "7.28.0"
         }
       },
       "Azure.Core": {
@@ -2984,8 +2984,8 @@
       "ark.tools.aspnetcore.auth0": {
         "type": "Project",
         "dependencies": {
-          "Auth0.AuthenticationApi": "[7.27.0, )",
-          "Auth0.ManagementApi": "[7.27.0, )",
+          "Auth0.AuthenticationApi": "[7.28.0, )",
+          "Auth0.ManagementApi": "[7.28.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[8.0.10, )",
           "Microsoft.Extensions.Caching.Abstractions": "[8.0.0, 9.0.0)",
           "Polly": "[8.4.2, )"
