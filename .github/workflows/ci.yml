@@ -41,7 +41,7 @@ jobs:
       run: dotnet build --no-restore --configuration Debug
 
     - name: Test
-      run: dotnet test --no-restore --configuration Debug --logger "trx;LogFileName=test-results.trx" --blame --blame-crash --blame-hang --blame-hang-timeout 10m
+      run: dotnet test --no-restore --configuration Debug --logger "trx;LogFileName=test-results.trx" --blame --blame-crash --blame-hang --blame-hang-timeout 10m --settings "./Ark.ReferenceProject/CodeCoverage.runsettings"
       
     # see https://github.com/dorny/test-reporter?tab=readme-ov-file#recommended-setup-for-public-repositories
     - uses: actions/upload-artifact@v4  # upload test results
@@ -49,4 +49,12 @@ jobs:
       with:
         name: test-results
         path: "**/test-results.trx"
+
+    - name: Create code coverage report
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+        reportgenerator -reports:**/*.cobertura.xml -targetdir:CodeCoverage -reporttypes:'MarkdownSummaryGithub;Cobertura'
+
+    - name: Write to Job Summary
+      run: cat CodeCoverage/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
     
