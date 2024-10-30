@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseName>Core</TargetDatabaseName>
+    <BlockOnPossibleDataLoss>True</BlockOnPossibleDataLoss>
+    <DropObjectsNotInSource>True</DropObjectsNotInSource>
+    <DoNotDropLogins>True</DoNotDropLogins>
+    <DoNotDropUsers>True</DoNotDropUsers>
+    <DoNotDropApplicationRoles>False</DoNotDropApplicationRoles>
+    <DoNotDropCredentials>True</DoNotDropCredentials>
+    <GenerateSmartDefaults>True</GenerateSmartDefaults>
+    <IncludeTransactionalScripts>True</IncludeTransactionalScripts>
+    <ProfileVersionNumber>1</ProfileVersionNumber>
+    <BackupDatabaseBeforeChanges>False</BackupDatabaseBeforeChanges>
+    <DoNotDropDatabaseScopedCredentials>True</DoNotDropDatabaseScopedCredentials>
+    <DoNotDropDatabaseRoles>True</DoNotDropDatabaseRoles>
+    <DoNotDropRoleMembership>True</DoNotDropRoleMembership>
+    <DoNotDropSymmetricKeys>True</DoNotDropSymmetricKeys>
+    <DeployDatabaseInSingleUserMode>False</DeployDatabaseInSingleUserMode>
+    <IgnoreColumnOrder>True</IgnoreColumnOrder>
+    <IgnoreComments>True</IgnoreComments>
+    <AllowUnsafeRowLevelSecurityDataMovement>True</AllowUnsafeRowLevelSecurityDataMovement>
+    <DoNotDropPermissions>True</DoNotDropPermissions>
+    <ScriptDatabaseCompatibility>True</ScriptDatabaseCompatibility>
+    <ScriptDatabaseCollation>True</ScriptDatabaseCollation>
+  </PropertyGroup>
+</Project>

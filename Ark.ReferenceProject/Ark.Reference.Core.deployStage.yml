@@ -1,0 +1,110 @@
+parameters:
+  - name: name
+    type: string
+  - name: dependsOn
+    type: string
+    default: ''
+  - name: projectName
+    type: string
+  - name: serviceName
+    type: string
+  - name: vmImageName
+    type: string
+  - name: environmentName
+    type: string
+  - name: subscription
+    type: string
+  - name: resourceGroup
+    type: string
+  - name: deploymentNamePrefix
+    type: string
+  - name: appServiceArmOutputVariable
+    type: string
+  - name: dbArmOutputVariable
+    type: string
+  - name: BuildConfiguration
+    type: string
+  - name: 'additionalVariables'
+    type: object
+    default: {}
+  
+  
+stages:
+  - stage: ${{ parameters.name }} 
+    displayName: ${{ parameters.name }}
+    dependsOn: ${{ parameters.dependsOn }}
+    variables:
+      serviceName: ${{ parameters.serviceName }}
+      webInterfaceProject: '${{ parameters.projectName }}.${{ parameters.serviceName }}.WebInterface'
+      databaseProject: '${{ parameters.projectName }}.${{ parameters.serviceName }}.Database'
+      resourceGroup: ${{ parameters.resourceGroup }}
+      subscription: ${{ parameters.subscription }}
+      deploymentNamePrefix: ${{ parameters.deploymentNamePrefix }}
+      appServiceArmOutputVariable: ${{ parameters.appServiceArmVariable }}
+      dbArmOutputVariable: ${{ parameters.dbArmOutputVariable }}
+    jobs:
+    - deployment: '${{ parameters.name }} Deploy'
+      displayName: '${{ parameters.name }} Deploy'
+      environment: ${{ parameters.environmentName }}
+      pool:
+        vmImage: ${{ parameters.vmImageName }}
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: ARM Outputs@6
+              displayName: 'ARM Outputs'
+              inputs:
+                ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
+                ConnectedServiceNameARM: '${{ variables.subscription }}'
+                resourceGroupName: ${{ variables.resourceGroup }}
+                prefix: 'arm.'
+                whenLastDeploymentIsFailed: 'latestSuccesful'
+                deploymentNameFilter: '${{ variables.deploymentNamePrefix }}*'
+            - task: AzureAppServiceManage@0
+              displayName: 'Stop Azure App Service: $(arm.${{ variables.appServiceArmName }})'
+              inputs:
+                azureSubscription: '${{ variables.subscription }}'
+                Action: 'Stop Azure App Service'
+                WebAppName: '$(arm.${{ variables.appServiceArmName }})'
+            - task: SqlAzureDacpacDeployment@1
+              displayName: 'Pre Migrations'
+              inputs:
+                azureSubscription: '${{ variables.subscription }}'
+                ServerName: '$(arm.serverFQDN)'
+                DatabaseName: '$(arm.${{ variables.dbArmOutputName }})'
+                SqlUsername: '$(arm.adminUsername)'
+                SqlPassword: '$(arm.adminPassword)'
+                deployType: SqlTask
+                SqlFile: '$(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/RunMigration.PreDeployment.sql'
+                SqlAdditionalArguments: '-Variable "MyPath = $(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/" -QueryTimeout 360'
+            - task: SqlAzureDacpacDeployment@1
+              displayName: DacPac
+              inputs:
+                azureSubscription: '${{ variables.subscription }}'
+                ServerName: '$(arm.serverFQDN)'
+                DatabaseName: '$(arm.${{ variables.dbArmOutputName }})'
+                SqlUsername: '$(arm.adminUsername)'
+                SqlPassword: '$(arm.adminPassword)'
+                DacpacFile: '$(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/${{ variables.databaseProject }}.dacpac'
+                PublishProfile: '$(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/${{ variables.databaseProject }}.publish.xml'
+            - task: AzureRmWebAppDeployment@4
+              displayName: 'Azure App Service Deploy: $(arm.${{ variables.appServiceArmName }})'
+              inputs:
+                azureSubscription: '${{ variables.subscription }}'
+                WebAppName: $(arm.${{ variables.appServiceArmName }})
+                packageForLinux: '$(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.webInterfaceProject }}/${{variables.webInterfaceProject }}.zip'
+                enableCustomDeployment: true
+                DeploymentType: zipDeploy
+            - task: AzureAppServiceManage@0
+              displayName: 'Start Azure App Service: $(arm.${{ variables.appServiceArmName }})'
+              inputs:
+                azureSubscription: '${{ variables.subscription }}'
+                Action: 'Start Azure App Service'
+                WebAppName: '$(arm.${{ variables.appServiceArmName }})'
+            - task: OneLuckiDev.release-web-smoke-test-task.vsts-release-web-test.oneluckidevWebSmokeTest@1
+              displayName: 'Web Smoke Test'
+              inputs:
+                url: 'https://$(arm.${{ variables.appServiceArmName }}).azurewebsites.net/swagger'
+                retryAttemptCount: 10
+                retryDelay: 5000

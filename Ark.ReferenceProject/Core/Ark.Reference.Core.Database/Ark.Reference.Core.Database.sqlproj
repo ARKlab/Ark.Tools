@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Name>Ark.Reference.Core.Database</Name>
     <ProjectGuid>{bee200d4-b2fc-4384-bda2-5ccab62c1597}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>

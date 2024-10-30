@@ -8,7 +8,6 @@
     <DataCollectors>
       <DataCollector friendlyName="Code Coverage">
         <Configuration>
-			<Format>cobertura</Format>
 			<ExcludeAssembliesWithoutSources>MissingAll</ExcludeAssembliesWithoutSources>
           <CodeCoverage>
             <ModulePaths>
