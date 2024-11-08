@@ -23,6 +23,21 @@ The main library used by Ark in its stack are
 If you want to learn more about each project, look the respective Readme when present or directly at code.
 Documentation improvements are up-for-grabs ;)
 
+## Migrate from Specflow to Reqnroll (v5.1)
+
+**Support for Speflow is no longer mainteined and will be removed in next Major.**
+
+The ReferenceProject has been migrated from Specflow to Reqnroll. For reasons you can read [this](https://reqnroll.net/news/2024/02/from-specflow-to-reqnroll-why-and-how/) but long story short: Specflow is no longer mainteined.
+
+`Ark.Tools.Reqnroll` replaces `Ark.Tools.Specflow`: the only changes are in `namespace`.
+
+To migrate:
+1. Replace `Techtalk.Specflow` to `Reqnroll` in `using`
+1. Replace `Ark.Tools.Specflow` to `Ark.Tools.Reqnroll` in both `using` and `PackageReference`
+1. Replace `Specflow.*` to `Reqnroll.*` in `PackageReference`
+1. Add [`reqnroll.json`](./ArkReferenceProject/Core/Tests/reqnroll.json) to test projects
+1. Fix Verbs: Reqnroll default to Gherking style parameters instead of Regex style thus it might be required to update verbs as described [here](https://docs.reqnroll.net/latest/guides/migrating-from-specflow.html#cucumber-expressions-support-compatibility-of-existing-expressions), specifying the regex start/end markers (^/$).
+
 ## Ark.Tools v5 Breaking Changes
 
 ### .NET 8.0
