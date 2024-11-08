@@ -14,7 +14,7 @@ namespace Ark.Reference.Core.Tests.Init
     [Binding]
     class DatabaseUtils
     {
-        public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=ArkSpecFlow123Stella!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
+        public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=SpecFlowLocalDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
 
         [BeforeTestRun(Order = -1)]
         public static void CreateNLogDatabaseIfNotExists()
@@ -38,6 +38,7 @@ namespace Ark.Reference.Core.Tests.Init
                 instance.Deploy(dacpac, "Ark.Reference.Core.Database", true, new DacDeployOptions()
                 {
                     CreateNewDatabase = true,
+                    AllowIncompatiblePlatform = true // needed since Database project is AzureV12 and under tests 2022 is used
                 });
             }
         }

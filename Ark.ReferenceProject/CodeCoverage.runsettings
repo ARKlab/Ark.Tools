@@ -6,8 +6,9 @@
   <!-- Configurations for data collectors -->
   <DataCollectionRunSettings>
     <DataCollectors>
-      <DataCollector friendlyName="Code Coverage" uri="datacollector://Microsoft/CodeCoverage/2.0" assemblyQualifiedName="Microsoft.VisualStudio.Coverage.DynamicCoverageDataCollector, Microsoft.VisualStudio.TraceCollector, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <DataCollector friendlyName="Code Coverage">
         <Configuration>
+			<ExcludeAssembliesWithoutSources>MissingAll</ExcludeAssembliesWithoutSources>
           <CodeCoverage>
             <ModulePaths>
               <!--
@@ -21,6 +22,7 @@
               <Exclude>
                 <ModulePath>.*\.tests\.dll$</ModulePath>
                 <ModulePath>.*\.unittests\.dll$</ModulePath>
+				<ModulePath>.*Ark\.Tools\.(\w|\.)+\.dll$</ModulePath>
               </Exclude>
             </ModulePaths>
             <!-- common excludes -->
