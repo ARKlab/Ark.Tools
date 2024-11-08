@@ -21,7 +21,7 @@
     <PackageReference Include="FluentAssertions" Version="6.12.1" />
     <PackageReference Include="FluentAssertions.Web" Version="1.5.0" />
     <PackageReference Include="SpecFlow" Version="3.9.74" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.1.2" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.0" />
   </ItemGroup>
 
   <ItemGroup>
