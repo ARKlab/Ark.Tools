@@ -62,7 +62,17 @@ namespace Ark.Tools.RavenDb.Auditing
 			return _inner.GetNames(entity);
 		}
 
-		public Task<AttachmentResult> GetRevisionAsync(string documentId, string name, string changeVector, CancellationToken token = default)
+        public Task<AttachmentResult> GetRangeAsync(string documentId, string name, long? from, long? to, CancellationToken token = default)
+        {
+            return _inner.GetRangeAsync(documentId, name, from, to, token);
+        }
+
+        public Task<AttachmentResult> GetRangeAsync(object entity, string name, long? from, long? to, CancellationToken token = default)
+        {
+            return _inner.GetRangeAsync(entity, name, from, to, token);
+        }
+
+        public Task<AttachmentResult> GetRevisionAsync(string documentId, string name, string changeVector, CancellationToken token = default)
 		{
 			return _inner.GetRevisionAsync(documentId, name, changeVector, token);
 		}
