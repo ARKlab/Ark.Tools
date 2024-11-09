@@ -119,22 +119,22 @@
       },
       "Reqnroll.MsTest": {
         "type": "Direct",
-        "requested": "[2.2.0, )",
-        "resolved": "2.2.0",
-        "contentHash": "e0jQPozrf9QwtQu2J7hzcvEs6+a2sn6+mVxx6gEkwt9l1H4G0WNlzvvsPIZXtyf+62tGYl80F3UCHt8QZtz7Pg==",
+        "requested": "[2.2.1, )",
+        "resolved": "2.2.1",
+        "contentHash": "n6QTqcSs72plbS6/dJVhtb2Rj8tzJ30LwbjdPBxYmTDtjnL37ge1a5/ohdlKgzykCmAzikTGM7akHCjj0ofaPg==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "[2.2.0]",
-          "Reqnroll.Tools.MsBuild.Generation": "[2.2.0]"
+          "Reqnroll": "[2.2.1]",
+          "Reqnroll.Tools.MsBuild.Generation": "[2.2.1]"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[2.2.0, )",
-        "resolved": "2.2.0",
-        "contentHash": "atFfenvpjMYuT1AFSYb1Uhq4Cb0Lw5/eLM+g96LDjKU2L/L8eRmD5/TJ1F/xntw8duGruAfUaVbYtb2JznzCJA==",
+        "requested": "[2.2.1, )",
+        "resolved": "2.2.1",
+        "contentHash": "A8a5dcZXfk3UlRJur9XzkJsBNHr/hwrHEzCYdJe1VUV1/NsN4cPK+S+7DV0haR4sJ2PfDhqds3FOK4rVRNDXmQ==",
         "dependencies": {
-          "Reqnroll": "[2.2.0]"
+          "Reqnroll": "[2.2.1]"
         }
       },
       "Asp.Versioning.Abstractions": {
@@ -1961,8 +1961,8 @@
       },
       "Reqnroll": {
         "type": "Transitive",
-        "resolved": "2.2.0",
-        "contentHash": "6q0WVklqfsW+Dx8ngYorhukFvROkTmOeyQUoxK1+OfR7x9P3FOdDd+gJsmbJCPvi85SeD7kzshj5PM17QtB1/w==",
+        "resolved": "2.2.1",
+        "contentHash": "v83D63zou3tsmcPp1MV0CLgt0DzThJwVm941ZSOHHNMnY7TbxBMWDimMifORjbhlukA6CQSNy+u0/Tx3d3Kaxg==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Gherkin": "30.0.0",
@@ -3625,7 +3625,7 @@
           "FluentAssertions": "[6.12.2, )",
           "FluentAssertions.Web": "[1.5.0, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.2.0, )",
-          "Reqnroll": "[2.2.0, )"
+          "Reqnroll": "[2.2.1, )"
         }
       },
       "ark.tools.simpleinjector": {
