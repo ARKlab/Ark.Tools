@@ -17,8 +17,8 @@
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
 		<PackageReference Include="Microsoft.SqlServer.DacFx" Version="162.4.92" />
 		<PackageReference Include="Moq" Version="4.20.72" />
-		<PackageReference Include="MSTest.TestAdapter" Version="3.6.2" />
-		<PackageReference Include="MSTest.TestFramework" Version="3.6.2" />
+		<PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
+		<PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
 		<PackageReference Include="netDumbster" Version="3.1.1" />
 		<PackageReference Include="NodaTime.Testing" Version="3.2.0" />
 		<PackageReference Include="Reqnroll.MsTest" Version="2.2.1" />
