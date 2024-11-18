@@ -868,11 +868,6 @@
         "resolved": "8.0.0",
         "contentHash": "3WA9q9yVqJp222P3x1wYIGDAkpjAku0TMUaaQV22g6L67AI0LdOIrVS7Ht2vJfLHGSPVuqN94vIr15qn+HEkHw=="
       },
-      "Microsoft.Bcl.TimeProvider": {
-        "type": "Transitive",
-        "resolved": "8.0.1",
-        "contentHash": "C7kWHJnMRY7EvJev2S8+yJHZ1y7A4ZlLbA4NE+O23BDIAN5mHeqND1m+SKv1ChRS5YlCDW7yAMUe7lttRsJaAA=="
-      },
       "Microsoft.Build": {
         "type": "Transitive",
         "resolved": "15.9.20",
@@ -1509,24 +1504,23 @@
       },
       "Microsoft.IdentityModel.Abstractions": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "27ClfnelIu92kLGOaz0vjdXR1Jv7hAdLffxxNgR8T0+IMWmxeVyO3cU8oohmuTrWUFOfd2tsSGaRNewnuClIZw=="
+        "resolved": "8.2.1",
+        "contentHash": "8sMlmHhh5HdP3+yCSCUpJpN1yYrJ6J/V39df9siY8PeMckRMrSBRL/TMs/Jex6P1ly/Ie2mFqvhcPHHrNmCd/w=="
       },
       "Microsoft.IdentityModel.JsonWebTokens": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "/DAx+9HeqfkH/PccwHx7cUtQe9fYM6AxEmTla8WXUT+w+mapKLnigWmdKtF55hNvxiSnmGhSSCcG7XrvkpGKFA==",
+        "resolved": "8.2.1",
+        "contentHash": "Oo0SBOzK6p3YIUcc1YTJCaYezVUa5HyUJ/AAB35QwxhhD6Blei5tNjNYDR0IbqHdb5EPUIiKcIbQGoj2b1mIbg==",
         "dependencies": {
-          "Microsoft.Bcl.TimeProvider": "8.0.1",
-          "Microsoft.IdentityModel.Tokens": "8.2.0"
+          "Microsoft.IdentityModel.Tokens": "8.2.1"
         }
       },
       "Microsoft.IdentityModel.Logging": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "mZsjOZlbmCZfM71y8Fyo+D5UJ1RZFvmKXkxTfE2llQ0/CrfEeWmbpoew51w++EWs+G8B/peZqR1DQtbX3bB6Fg==",
+        "resolved": "8.2.1",
+        "contentHash": "EgSEAtBoWBynACdhKnMlVAFGGWqOIdmbpW7Vvx2SQ7u7ogZ50NcEGSoGljEsQoGIRYpo0UxXYktKcYMp+G/Bcg==",
         "dependencies": {
-          "Microsoft.IdentityModel.Abstractions": "8.2.0"
+          "Microsoft.IdentityModel.Abstractions": "8.2.1"
         }
       },
       "Microsoft.IdentityModel.LoggingExtensions": {
@@ -1557,11 +1551,10 @@
       },
       "Microsoft.IdentityModel.Tokens": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "/I+6D3SwW8hQh5wznGzQCrS4L5y5Re/0AEKKfXXAduWzz4WKqJzY8RmjwZ6W66bIFUhPrqOy6zsLKPik4Ppnbw==",
+        "resolved": "8.2.1",
+        "contentHash": "oQeLWCATuVXOCdIvouM4GG2xl1YNng+uAxYwu7CG6RuW+y+1+slXrOBq5csTU2pnV2SH3B1GmugDf6Jv/lexjw==",
         "dependencies": {
-          "Microsoft.Bcl.TimeProvider": "8.0.1",
-          "Microsoft.IdentityModel.Logging": "8.2.0"
+          "Microsoft.IdentityModel.Logging": "8.2.1"
         }
       },
       "Microsoft.IdentityModel.Validators": {
@@ -3624,7 +3617,7 @@
           "Ark.Tools.Http": "[1.0.0, )",
           "FluentAssertions": "[6.12.2, )",
           "FluentAssertions.Web": "[1.5.0, )",
-          "Microsoft.IdentityModel.JsonWebTokens": "[8.2.0, )",
+          "Microsoft.IdentityModel.JsonWebTokens": "[8.2.1, )",
           "Reqnroll": "[2.2.1, )"
         }
       },
