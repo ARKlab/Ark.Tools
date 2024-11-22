@@ -86,7 +86,7 @@ namespace Ark.Tools.ResourceWatcher
             _logger.Error(ex, $"Check failed for tenant {_tenant} in {activity.Duration}");
         }
 
-        public void RunSuccessful(Activity activity, List<ProcessContext> evaluated)
+        public void RunSuccessful(Activity activity, IList<ProcessContext> evaluated)
         {
             _stop(activity, () =>
             {
@@ -184,6 +184,17 @@ namespace Ark.Tools.ResourceWatcher
                     ResourcesNothingToDo = counts[ProcessType.NothingToDo],
                     Tenant = _tenant,
                 };
+            }
+            );
+        }
+
+
+        public void CheckStateFailed(Activity activity, Exception ex)
+        {
+            _stop(activity, () => new
+            {
+                Exception = ex,
+                Tenant = _tenant,
             }
             );
         }
@@ -324,7 +335,7 @@ namespace Ark.Tools.ResourceWatcher
         }
         #endregion
 
-        private Activity _start(string operationName, Func<object> getPayload)
+        private Activity _start(string operationName, Func<object> getPayload, bool unlinkFromParent = false)
         {
             string activityName = BaseActivityName + "." + operationName;
 

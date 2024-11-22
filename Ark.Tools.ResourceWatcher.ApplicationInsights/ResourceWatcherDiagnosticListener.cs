@@ -326,20 +326,19 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             var currentActivity = Activity.Current;
             if (currentActivity == null) return;
 
-            var telemetry = new DependencyTelemetry
+            var telemetry = new RequestTelemetry
             {
                 Id = currentActivity.Id,
                 Duration = currentActivity.Duration,
                 Name = currentActivity.OperationName,
                 Success = exception == null ? true : false,
                 Timestamp = currentActivity.StartTimeUtc,
-                Type = _type
             };
 
             //Telemetry operation context
             telemetry.Context.Operation.Id = currentActivity.RootId;
             telemetry.Context.Operation.ParentId = currentActivity.ParentId;
-
+            
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
             _propertiesProcessContext(telemetry, processContext);
@@ -364,7 +363,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 this._client.TrackException(telemetryException);
             }
 
-            this._client.TrackDependency(telemetry);
+            this._client.TrackRequest(telemetry);
         }
 
         #endregion

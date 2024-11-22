@@ -98,9 +98,9 @@ namespace TestWorker.HostNs
                 MaxRetries = 2,
             };
 
-            var rebusCfg = new RebusResourceNotifier_Config(configuration["ConnectionStrings:Test.Rebus"])
-            {
-            };
+            //var rebusCfg = new RebusResourceNotifier_Config(configuration["ConnectionStrings:Test.Rebus"])
+            //{
+            //};
 
             configurer?.Invoke(baseCfg);
 

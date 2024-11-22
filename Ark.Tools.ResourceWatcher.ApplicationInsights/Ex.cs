@@ -2,6 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Ark.Tools.ApplicationInsights.HostedService;
+using System.Threading.Tasks;
+using System.Threading;
+using Microsoft.ApplicationInsights;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 {
@@ -14,7 +17,31 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 .ConfigureServices((ctx, services) =>
                 {
                     services.AddSingleton<ITelemetryModule, ResourceWatcherTelemetryModule>();
+                    services.AddHostedService<StartTelemetryHack>();
                 });
+        }
+
+        private class StartTelemetryHack : IHostedService
+        {
+#pragma warning disable IDE0052 // Remove unread private members
+            private readonly TelemetryClient _client;
+#pragma warning restore IDE0052 // Remove unread private members
+
+            public StartTelemetryHack(TelemetryClient client)
+            {
+                // only used to 'force' creation of the TelemetryClient which in turn triggers the ResourceWatcherTelemetryModule init and thus the subscription of the Listener.
+                _client = client;
+            }
+
+            public Task StartAsync(CancellationToken cancellationToken)
+            {
+                return Task.CompletedTask;
+            }
+
+            public Task StopAsync(CancellationToken cancellationToken)
+            {
+                return Task.CompletedTask;
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ using NLog;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -132,45 +133,36 @@ namespace Ark.Tools.ResourceWatcher
             try
             {
                 //GetResources
-                using var activityResource = _diagnosticSource.GetResourcesStart();
-
-                var infos = await _getResourcesInfo(ctk);
-
-                var bad = infos.GroupBy(x => x.ResourceId).FirstOrDefault(x => x.Count() > 1);
-                if (bad != null)
-                    _diagnosticSource.ThrowDuplicateResourceIdRetrived(bad.Key);
-
-                if (_config.SkipResourcesOlderThanDays.HasValue)
-                    infos = infos
-                            .Where(x => _getEarliestModified(x).Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
-                            ;
-
-                var list = infos.ToList();
-                _diagnosticSource.GetResourcesSuccessful(activityResource, list.Count);
+                var list = await _getResources(now, ctk);
 
                 //Check State - check which entries are new or have been modified.
-                using var activityCheckState = _diagnosticSource.CheckStateStart();
-
-                var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk);
-
-                var evaluated = _createEvalueteList(list, states);
-
-                _diagnosticSource.CheckStateSuccessful(activityCheckState, evaluated);
+                var evaluated = await _evaluateActions(list, ctk);
 
                 //Process
-                var skipped = evaluated.Where(x => x.ResultType == ResultType.Skipped).ToList();
                 var toProcess = evaluated.Where(x => !x.ResultType.HasValue).ToList();
+                var skipped = evaluated.Count - toProcess.Count;
 
-                _logger.Info("Found {SkippedCount} resources to skip", skipped.Count);
+                _logger.Info("Found {SkippedCount} resources to skip", skipped);
                 _logger.Info("Found {ToProcessCount} resources to process with parallelism {DegreeOfParallelism}", toProcess.Count, _config.DegreeOfParallelism);
 
-                var count = toProcess.Count;
-                await toProcess.Parallel((int)_config.DegreeOfParallelism, (i, x, ct) => {
-                    x.Total = count;
-                    x.Index = i + 1;
-                    return _processEntry(x, ct);
-                }, ctk);
-                
+                // Unlink the _processEntry Span from the parent run to avoid RootId being too big
+                // This is mainly an hack for Application Insights but in general we want to avoid too big RootId with 100s of 1000s Spans
+                Activity.Current = null;
+                try
+                {
+                    var count = toProcess.Count;
+                    await toProcess.Parallel((int)_config.DegreeOfParallelism, (i, x, ct) =>
+                    {
+                        x.Total = count;
+                        x.Index = i + 1;
+                        return _processEntry(x, ct);
+                    }, ctk);
+                }
+                finally
+                {
+                    Activity.Current = activityRun;
+                }
+
                 _diagnosticSource.RunSuccessful(activityRun, evaluated);
 
                 if (activityRun.Duration > _config.RunDurationNotificationLimit)
@@ -183,7 +175,54 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        private List<ProcessContext> _createEvalueteList(List<IResourceMetadata> list, IEnumerable<ResourceState> states)
+        private async Task<IList<ProcessContext>> _evaluateActions(IList<IResourceMetadata> list, CancellationToken ctk)
+        {
+            using var activityCheckState = _diagnosticSource.CheckStateStart();
+            try
+            {
+                var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk);
+
+                var evaluated = _createEvalueteList(list, states);
+
+                _diagnosticSource.CheckStateSuccessful(activityCheckState, evaluated);
+
+                return evaluated;
+            } catch (Exception ex) {
+                _diagnosticSource.CheckStateFailed(activityCheckState, ex);
+                throw;
+            }
+        }
+
+        private async Task<IList<IResourceMetadata>> _getResources(DateTime now, CancellationToken ctk)
+        {
+            using var activityResource = _diagnosticSource.GetResourcesStart();
+
+            try
+            {
+                var infos = await _getResourcesInfo(ctk);
+
+                var bad = infos.GroupBy(x => x.ResourceId).FirstOrDefault(x => x.Count() > 1);
+                if (bad != null)
+                    _diagnosticSource.ThrowDuplicateResourceIdRetrived(bad.Key);
+
+                if (_config.SkipResourcesOlderThanDays.HasValue)
+                    infos = infos
+                            .Where(x => _getEarliestModified(x).Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
+                            ;
+
+                var list = infos.ToList();
+
+                _diagnosticSource.GetResourcesSuccessful(activityResource, list.Count);
+                return list;
+            }
+            catch (Exception ex)
+            {
+                _diagnosticSource.GetResourcesFailed(activityResource, ex);
+                throw;
+            }
+        }
+
+        private IList<ProcessContext> _createEvalueteList(IList<IResourceMetadata> list, IEnumerable<ResourceState> states)
         {
             var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
              {
