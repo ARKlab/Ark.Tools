@@ -44,9 +44,9 @@
       },
       "Microsoft.SqlServer.DacFx": {
         "type": "Direct",
-        "requested": "[162.4.92, )",
-        "resolved": "162.4.92",
-        "contentHash": "z1/3Cx04bO8sMIIeFURa2D5ib+6Yc+jXOQTBY6wAYDJq8xrImc5BMQb03CujeKHnxHel/RYP2gpTX+1il4hoog==",
+        "requested": "[162.5.57, )",
+        "resolved": "162.5.57",
+        "contentHash": "Y+2wuqLkIk3/j9s5dIRLN/P6aS6Bu0FWncFqFnBlKdVBYGGXedltoEJWAkGH/s4b9W7cLy6QHN8g6BAcwyiVmQ==",
         "dependencies": {
           "Azure.Core": "1.41.0",
           "Azure.Identity": "1.11.4",
@@ -63,10 +63,10 @@
           "System.ComponentModel.Composition": "8.0.0",
           "System.IO.FileSystem": "4.3.0",
           "System.IO.FileSystem.Primitives": "4.3.0",
-          "System.IO.Packaging": "8.0.0",
+          "System.IO.Packaging": "8.0.1",
           "System.Net.Primitives": "4.3.0",
           "System.Resources.Extensions": "4.7.1",
-          "System.Runtime.Caching": "8.0.0",
+          "System.Runtime.Caching": "8.0.1",
           "System.Security.Cryptography.Algorithms": "4.3.1",
           "System.Security.Permissions": "8.0.0",
           "System.Security.Principal": "4.3.0",
@@ -1631,6 +1631,11 @@
         "resolved": "7.20.0",
         "contentHash": "nJLDCOv3qemN0XI5kmUN9h38Qw+ZQBoYtWwSGhPkDEiiZSDcAwLMgqbGNKmK3myhVWASCqXtOqrj5jUnGZrH/Q=="
       },
+      "Microsoft.SqlServer.Dacpacs.Master": {
+        "type": "Transitive",
+        "resolved": "160.0.0",
+        "contentHash": "bgiN77Hfpev7+LON0WOZbgz1VvL6abuUkw14ulLwAnAiuYCcav8HCAoGlgSXVhsLd8U5+jSgeX/ZrNBuPF24qA=="
+      },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
         "resolved": "1.0.0",
@@ -2336,10 +2341,10 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "JlYi9XVvIREURRUlGMr1F6vOFLk7YSY4p1vHo4kX3tQ0AGrjqlRWHDi66ImHhy6qwXBG3BJ6Y1QlYQ+Qz6Xgww==",
+        "resolved": "8.0.1",
+        "contentHash": "gPYFPDyohW2gXNhdQRSjtmeS6FymL2crg4Sral1wtvEJ7DUqFCDWDVbbLobASbzxfic8U1hQEdC7hmg9LHncMw==",
         "dependencies": {
-          "System.Diagnostics.EventLog": "8.0.0",
+          "System.Diagnostics.EventLog": "8.0.1",
           "System.Security.Cryptography.ProtectedData": "8.0.0"
         }
       },
@@ -2592,8 +2597,8 @@
       },
       "System.IO.Packaging": {
         "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "8g1V4YRpdGAxFcK8v9OjuMdIOJSpF30Zb1JGicwVZhly3I994WFyBdV6mQEo8d3T+URQe55/M0U0eIH0Hts1bg=="
+        "resolved": "8.0.1",
+        "contentHash": "KYkIOAvPexQOLDxPO2g0BVoWInnQhPpkFzRqvNrNrMhVT6kqhVr0zEb6KCHlptLFukxnZrjuMVAnxK7pOGUYrw=="
       },
       "System.IO.Pipelines": {
         "type": "Transitive",
@@ -2847,10 +2852,10 @@
       },
       "System.Runtime.Caching": {
         "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "4TmlmvGp4kzZomm7J2HJn6IIx0UUrQyhBDyb5O1XiunZlQImXW+B8b7W/sTPcXhSf9rp5NR5aDtQllwbB5elOQ==",
+        "resolved": "8.0.1",
+        "contentHash": "tdl7Q47P09UpRu0C/OQsGJU6GacBzzk4vfp5My9rodD+BchrxmajORnTthH8RxPUTPrIoVDJmLyvJcGxB267nQ==",
         "dependencies": {
-          "System.Configuration.ConfigurationManager": "8.0.0"
+          "System.Configuration.ConfigurationManager": "8.0.1"
         }
       },
       "System.Runtime.CompilerServices.Unsafe": {
@@ -3341,6 +3346,12 @@
         "type": "Project",
         "dependencies": {
           "Ark.Reference.Common": "[0.9.1, )"
+        }
+      },
+      "ark.reference.core.database": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.SqlServer.Dacpacs.Master": "[160.0.0, )"
         }
       },
       "ark.reference.core.webinterface": {
