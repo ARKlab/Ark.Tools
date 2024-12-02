@@ -6,6 +6,16 @@
   
   "constraints": {
     "dotnet": "8.0.404"
-  }
+  },
 
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^renovate.json$"],
+      "matchStrings": ["\"dotnet\":\\s*\"(?<currentValue>.*?)\""],
+      "depNameTemplate": "dotnet-sdk",
+      "datasourceTemplate": "nuget",
+      "versioningTemplate": "semver"
+    }
+  ]
 }
