@@ -469,10 +469,10 @@
       },
       "FluentAssertions": {
         "type": "Transitive",
-        "resolved": "6.12.2",
-        "contentHash": "8YE+xJmT8wgzEpFuzJ4S62oFhEL/AKouMz1RWPEMEUhy9H11aRQlGIWcHurH5BEy7tbF6gb0CJrs0wOw/AtDcQ==",
+        "resolved": "7.0.0",
+        "contentHash": "mTLbcU991EQ1SEmNbVBaGGGJy0YFzvGd1sYJGNZ07nlPKuyHSn1I22aeKzqQXgEiaKyRO6MSCto9eN9VxMwBdA==",
         "dependencies": {
-          "System.Configuration.ConfigurationManager": "4.4.0"
+          "System.Configuration.ConfigurationManager": "6.0.0"
         }
       },
       "FluentAssertions.Web": {
@@ -3617,7 +3617,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Http": "[1.0.0, )",
-          "FluentAssertions": "[6.12.2, )",
+          "FluentAssertions": "[7.0.0, )",
           "FluentAssertions.Web": "[1.7.0, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.2.1, )",
           "Reqnroll": "[2.2.1, )"
