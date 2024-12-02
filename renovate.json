@@ -14,7 +14,7 @@
       "fileMatch": ["^renovate.json$"],
       "matchStrings": ["\"dotnet\":\\s*\"(?<currentValue>.*?)\""],
       "depNameTemplate": "dotnet-sdk",
-      "datasourceTemplate": "nuget",
+      "datasourceTemplate": "dotnet-version",
       "versioningTemplate": "semver"
     }
   ]
