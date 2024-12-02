@@ -16,8 +16,8 @@
   </PropertyGroup>
   <!--===============================================================================-->
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.29.0" />
-    <PackageReference Include="Auth0.ManagementApi" Version="7.29.0" />
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.30.0" />
+    <PackageReference Include="Auth0.ManagementApi" Version="7.30.0" />
     <PackageReference Include="JWT" Version="10.1.1" />
     <PackageReference Include="Polly" Version="8.5.0" />
     <PackageReference Include="Polly.Caching.Memory" Version="3.0.2" />
