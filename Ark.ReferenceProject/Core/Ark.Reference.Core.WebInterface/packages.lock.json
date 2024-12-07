@@ -340,8 +340,8 @@
       },
       "DistributedLock.Core": {
         "type": "Transitive",
-        "resolved": "1.0.7",
-        "contentHash": "lRqvqlnN6hNtHargjhHCh9NUlJw0MPs25IYitnV82mSxXU8J74oZbpdNiUJ9eK94JmE00Bp90dF5ZVePcP5YAg=="
+        "resolved": "1.0.8",
+        "contentHash": "LAOsY8WxX8JU/n3lfXFz+f2pfnv0+4bHkCrOO3bwa28u9HrS3DlxSG6jf+u76SqesKs+KehZi0CndkfaUXBKvg=="
       },
       "Ensure.That": {
         "type": "Transitive",
@@ -3046,7 +3046,7 @@
         "dependencies": {
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.3.2, )",
           "Azure.Identity": "[1.13.1, )",
-          "DistributedLock.Core": "[1.0.7, )",
+          "DistributedLock.Core": "[1.0.8, )",
           "Microsoft.Extensions.Configuration": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Hosting": "[8.0.1, )",
           "Microsoft.Extensions.Hosting.Abstractions": "[8.0.1, )",
