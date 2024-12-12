@@ -426,32 +426,32 @@
       },
       "MessagePack": {
         "type": "Transitive",
-        "resolved": "3.0.308",
-        "contentHash": "88zw/8RB2WU5UQR9qTbXpxG0gTvsdG/ue991kifYLILxDDr1ZpM1PIwbCMRUlh+E1GoqE/d159dARj1j9TTuSw==",
+        "resolved": "3.1.0",
+        "contentHash": "hxj7V0A7cBWLSXxNGwkMRtN9IcF/rO0ZT3kTCneH6N4l1upZfpnL2dcuY/gqEG6+NXEE5qiFIp/GV1lJWEaICw==",
         "dependencies": {
-          "MessagePack.Annotations": "3.0.308",
-          "MessagePackAnalyzer": "3.0.308",
+          "MessagePack.Annotations": "3.1.0",
+          "MessagePackAnalyzer": "3.1.0",
           "Microsoft.NET.StringTools": "17.11.4"
         }
       },
       "MessagePack.Annotations": {
         "type": "Transitive",
-        "resolved": "3.0.308",
-        "contentHash": "gATDsU/BzxjYOiQ6AIy0OwXC+24YLiGP9Hb6WSpJp6uuJtPALMBK+prMVHtThHkNseRzfYoF7MyQ6LURNbplmQ=="
+        "resolved": "3.1.0",
+        "contentHash": "mAHg+d+eMF0p4grdJS04vUt3ECxj6hfSEr+Xvb1JcW48S/Vz2wahXU64O9ST+PAGw/icnANksXX+ceSaH/mv2A=="
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.3.2",
-        "contentHash": "5+Bez6rXAIkpWROj4QJ+C5v+rUj+mhzqlK4AsM6gxVRJE7PgMG5pGaxSpqPWbjLNHCxJ/gd2EPAekGsKMZUfzQ==",
+        "resolved": "3.4.1",
+        "contentHash": "UFuM7haJ4RS3tbyiaMNjQuRgOf6NP9ZxZ63mXqzH8j13hdl5Arq4oC0M4ZVIrcHThOOyuNSKO0tPjvzMczQr+g==",
         "dependencies": {
-          "MessagePack": "2.5.192",
+          "MessagePack": "3.1.0",
           "NodaTime": "3.2.0"
         }
       },
       "MessagePackAnalyzer": {
         "type": "Transitive",
-        "resolved": "3.0.308",
-        "contentHash": "lEqNxGuLsmeuAdA1ZGmdBEGbXnWwqIVK/HAQ6/XgBI9g8a++Cz9EDZX2v/heM+BmE0Xi6euFB+63dMo+osvD5A=="
+        "resolved": "3.1.0",
+        "contentHash": "SRpt29jXfDgH20dyjXdAWRnRaDS+LpjQkORD+IDI96XNDH+u++9JTgKbH2VG0pNyMjOO1IoPPRteSOTx1yv2Vw=="
       },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
@@ -3011,7 +3011,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "MessagePack": "[3.0.308, )"
+          "MessagePack": "[3.1.0, )"
         }
       },
       "ark.tools.aspnetcore.nestedstartup": {
@@ -3069,7 +3069,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.3.2, )"
+          "MessagePack.NodaTime": "[3.4.1, )"
         }
       },
       "ark.tools.newtonsoftjson": {

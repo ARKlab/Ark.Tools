@@ -170,26 +170,32 @@
       },
       "MessagePack": {
         "type": "Transitive",
-        "resolved": "2.5.192",
-        "contentHash": "Jtle5MaFeIFkdXtxQeL9Tu2Y3HsAQGoSntOzrn6Br/jrl6c8QmG22GEioT5HBtZJR0zw0s46OnKU8ei2M3QifA==",
+        "resolved": "3.1.0",
+        "contentHash": "hxj7V0A7cBWLSXxNGwkMRtN9IcF/rO0ZT3kTCneH6N4l1upZfpnL2dcuY/gqEG6+NXEE5qiFIp/GV1lJWEaICw==",
         "dependencies": {
-          "MessagePack.Annotations": "2.5.192",
-          "Microsoft.NET.StringTools": "17.6.3"
+          "MessagePack.Annotations": "3.1.0",
+          "MessagePackAnalyzer": "3.1.0",
+          "Microsoft.NET.StringTools": "17.11.4"
         }
       },
       "MessagePack.Annotations": {
         "type": "Transitive",
-        "resolved": "2.5.192",
-        "contentHash": "jaJuwcgovWIZ8Zysdyf3b7b34/BrADw4v82GaEZymUhDd3ScMPrYd/cttekeDteJJPXseJxp04yTIcxiVUjTWg=="
+        "resolved": "3.1.0",
+        "contentHash": "mAHg+d+eMF0p4grdJS04vUt3ECxj6hfSEr+Xvb1JcW48S/Vz2wahXU64O9ST+PAGw/icnANksXX+ceSaH/mv2A=="
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.3.2",
-        "contentHash": "5+Bez6rXAIkpWROj4QJ+C5v+rUj+mhzqlK4AsM6gxVRJE7PgMG5pGaxSpqPWbjLNHCxJ/gd2EPAekGsKMZUfzQ==",
+        "resolved": "3.4.1",
+        "contentHash": "UFuM7haJ4RS3tbyiaMNjQuRgOf6NP9ZxZ63mXqzH8j13hdl5Arq4oC0M4ZVIrcHThOOyuNSKO0tPjvzMczQr+g==",
         "dependencies": {
-          "MessagePack": "2.5.192",
+          "MessagePack": "3.1.0",
           "NodaTime": "3.2.0"
         }
+      },
+      "MessagePackAnalyzer": {
+        "type": "Transitive",
+        "resolved": "3.1.0",
+        "contentHash": "SRpt29jXfDgH20dyjXdAWRnRaDS+LpjQkORD+IDI96XNDH+u++9JTgKbH2VG0pNyMjOO1IoPPRteSOTx1yv2Vw=="
       },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
@@ -641,8 +647,8 @@
       },
       "Microsoft.NET.StringTools": {
         "type": "Transitive",
-        "resolved": "17.6.3",
-        "contentHash": "N0ZIanl1QCgvUumEL1laasU0a7sOE5ZwLZVTn0pAePnfhq8P7SvTjF8Axq+CnavuQkmdQpGNXQ1efZtu5kDFbA=="
+        "resolved": "17.11.4",
+        "contentHash": "mudqUHhNpeqIdJoUx2YDWZO/I9uEDYVowan89R6wsomfnUJQk6HteoQTlNjZDixhT2B4IXMkMtgZtoceIjLRmA=="
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
@@ -1873,7 +1879,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.3.2, )"
+          "MessagePack.NodaTime": "[3.4.1, )"
         }
       },
       "ark.tools.newtonsoftjson": {
