@@ -2,5 +2,20 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>ARKlab/renovate-config"
+  ],
+  
+  "constraints": {
+    "dotnet": "8.0.404"
+  },
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^renovate.json$"],
+      "matchStrings": ["\"dotnet\":\\s*\"(?<currentValue>.*?)\""],
+      "depNameTemplate": "dotnet-sdk",
+      "datasourceTemplate": "dotnet-version",
+      "versioningTemplate": "semver"
+    }
   ]
 }
