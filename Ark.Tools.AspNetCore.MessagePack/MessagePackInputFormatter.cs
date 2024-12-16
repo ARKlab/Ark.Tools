@@ -1,13 +1,12 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using MessagePack;
-using Microsoft.AspNetCore.Http;
+
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.WebUtilities;
+
 using System;
-using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter
@@ -31,6 +30,8 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 _options = MessagePackSerializer.DefaultOptions;
             else
                 _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
+
+            _options = _options.WithSecurity(MessagePackSecurity.UntrustedData);
         }
 
         protected override bool CanReadType(Type type)
@@ -43,18 +44,10 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
             EnsureArg.IsNotNull(context);
 
             var request = context.HttpContext.Request;
+            var ctk = context.HttpContext.RequestAborted;
 
-            if (!request.Body.CanSeek)
-            {
-				request.EnableBuffering();
-
-				await request.Body.DrainAsync(CancellationToken.None);
-                request.Body.Seek(0L, SeekOrigin.Begin);
-            }
-
-            var result = MessagePackSerializer.Deserialize(context.ModelType, request.Body, _options);
-
-            return await InputFormatterResult.SuccessAsync(result);
+            var result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, _options, ctk).ConfigureAwait(false);
+            return await InputFormatterResult.SuccessAsync(result).ConfigureAwait(false);
         }
     }
 }

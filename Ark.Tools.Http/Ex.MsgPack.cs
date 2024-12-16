@@ -17,9 +17,14 @@ namespace Ark.Tools.Http
             var resp = await response;
             if (resp == null) return default;
 
-            using (var stream = await resp.ResponseMessage.Content.ReadAsStreamAsync())
+            return await GetMsgPackAsync<T>(resp, formatterResolver);
+        }
+
+        public static async Task<T?> GetMsgPackAsync<T>(this IFlurlResponse response, IFormatterResolver formatterResolver)
+        {
+            using (var stream = await response.ResponseMessage.Content.ReadAsStreamAsync())
             {
-                return await MessagePackSerializer.DeserializeAsync<T>(stream);
+                return await MessagePackSerializer.DeserializeAsync<T>(stream, MessagePackSerializerOptions.Standard.WithResolver(formatterResolver));
             }
         }
 

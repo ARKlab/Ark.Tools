@@ -1,5 +1,8 @@
 ﻿using Ark.Tools.Core;
 using Ark.Tools.Core.EntityTag;
+
+using MessagePack;
+
 using NodaTime;
 using System;
 using System.Collections.Generic;
@@ -11,23 +14,30 @@ namespace WebApplicationDemo.Dto
     {
         public static class V1
         {
+            [MessagePackObject]
 			public record Input : IEntityWithETag
 			{
-				public virtual string? _ETag { get; set; }
-
+                [MessagePack.Key(0)]
 				[Required]
 				public string? EntityId { get; set; }
+                [MessagePack.Key(1)]
+                public virtual string? _ETag { get; set; }
 
-				public EntityResult EntityResult { get; set; }
+                [MessagePack.Key(2)]
+                public EntityResult EntityResult { get; set; }
 
-				public EntityTest? EntityTest { get; set; }
+                [MessagePack.Key(3)]
+                public EntityTest? EntityTest { get; set; }
 
-				public ValueCollection<string>? Strings { get; set; }
+                [MessagePack.Key(4)]
+                public ValueCollection<string> Strings { get; set; } = new ValueCollection<string>();
 
-				public IDictionary<LocalDate, double?> Ts { get; set; } = new Dictionary<LocalDate, double?>();
+                [MessagePack.Key(5)]
+                public IDictionary<LocalDate, double?> Ts { get; set; } = new Dictionary<LocalDate, double?>();
 
 			}
 
+            [MessagePackObject]
             public record Output : Input
             {
                 public Output() { }
@@ -40,8 +50,12 @@ namespace WebApplicationDemo.Dto
                     Ts = other.Ts;
                 }
 
+
+                [MessagePack.Key(6)]
                 public int Value { get; set; }
-				public LocalDate? Date { get; set; }
+
+                [MessagePack.Key(7)]
+                public LocalDate? Date { get; set; }
 			}
         }
 

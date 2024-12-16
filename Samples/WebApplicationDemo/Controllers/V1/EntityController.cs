@@ -39,6 +39,8 @@ namespace WebApplicationDemo.Controllers.V1
         /// <returns></returns>
         [HttpGet(@"{entityId}")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        [Produces("application/json", "application/problem+json", "application/x-msgpack")]
+        [Consumes("application/json", "application/x-msgpack")]
         public async Task<IActionResult> Get_Entity([FromRoute] string? entityId, [FromQuery] EntityResult result, [FromQuery] EntityTest[] tests, CancellationToken ctk = default)
         {
             var query = new Get_EntityByIdQuery.V1()
@@ -124,6 +126,8 @@ namespace WebApplicationDemo.Controllers.V1
         /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
+        [Produces("application/json", "application/problem+json", "application/x-msgpack")]
+        [Consumes("application/json", "application/x-msgpack")]
         public async Task<IActionResult> Post([FromBody] Entity.V1.Input body)
         {
             var request = new Post_EntityRequest.V1(body)

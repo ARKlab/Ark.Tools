@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 
 using Ark.Tools.AspNetCore.HealthChecks;
+using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
+
+using MessagePack.NodaTime;
+using MessagePack.Resolvers;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -78,8 +82,16 @@ namespace WebApplicationDemo
 			})
 			;
 
-			//HealthChecks
-			services.AddHealthChecks()
+            var resolver = CompositeResolver.Create(new[] {
+                NodatimeResolver.Instance,
+                DynamicEnumAsStringResolver.Instance,
+                StandardResolver.Instance
+            });
+
+            services.AddMessagePackFormatter(resolver);
+
+            //HealthChecks
+            services.AddHealthChecks()
 				//.AddCheck<ExampleHealthCheck>("Example Web App Demo Health Check", tags: new string[]{ "ArkTools", "WebDemo"})
 				.AddSimpleInjectorCheck<ExampleHealthCheck>(name: "Example SimpleInjector Check", failureStatus: HealthStatus.Unhealthy, tags: new string[] { "Example" })
 				.AddSimpleInjectorLambdaCheck<IExampleHealthCheckService>(name: "Example SimpleInjector Lamda Check", (adapter, ctk) => adapter.CheckHealthAsync(ctk), failureStatus: HealthStatus.Unhealthy, tags: new string[] { "Example" })
