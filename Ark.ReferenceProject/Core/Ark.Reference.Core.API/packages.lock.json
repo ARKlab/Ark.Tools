@@ -844,10 +844,10 @@
       },
       "Rebus.SqlServer": {
         "type": "Transitive",
-        "resolved": "8.1.2",
-        "contentHash": "3REsdhSsBCmZu9hVeQqhnWmrFXvUyf0WG09dRCbCBznnTfqiYwmoHjR4SjMgb+qd+cN00WP66g35ZGl2HUGczg==",
+        "resolved": "8.2.0",
+        "contentHash": "lkNGmXcqToyPv4w4kW/0jI/pBrjJlK7RpQVSfE29obGXA5RLkDa4A1QLso847NPCZNdbmJuB4RIaAADRLwZ9Ig==",
         "dependencies": {
-          "microsoft.data.sqlclient": "5.1.5",
+          "microsoft.data.sqlclient": "5.2.2",
           "rebus": "8.4.2"
         }
       },
@@ -1943,7 +1943,7 @@
           "Rebus.AzureBlobs": "[1.0.1, )",
           "Rebus.AzureServiceBus": "[10.2.0, )",
           "Rebus.NLog": "[6.0.0, )",
-          "Rebus.SqlServer": "[8.1.2, )"
+          "Rebus.SqlServer": "[8.2.0, )"
         }
       },
       "ark.tools.simpleinjector": {
