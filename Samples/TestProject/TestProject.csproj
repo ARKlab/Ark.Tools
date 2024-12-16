@@ -7,6 +7,10 @@
 	<IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <SpecFlowObsoleteCodeBehindFiles Remove="Tests\SpecFlowTest - Copy.feature.cs" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <Content Include="appsettings.json">
@@ -36,6 +40,19 @@
     <ProjectReference Include="..\..\Ark.Tools.Http\Ark.Tools.Http.csproj" />
 	<ProjectReference Include="..\..\Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj" />
     <ProjectReference Include="..\WebApplicationDemo\WebApplicationDemo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Tests\MsgPack.feature.cs">
+      <DependentUpon>MsgPack.feature</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <SpecFlowFeatureFiles Update="Tests\MsgPack.feature">
+      <Visible>$(UsingMicrosoftNETSdk)</Visible>
+      <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+    </SpecFlowFeatureFiles>
   </ItemGroup>
 
 

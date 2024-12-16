@@ -35,24 +35,33 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 
         public override Task WriteResponseBodyAsync(OutputFormatterWriteContext context)
         {
-            // 'object' want to use anonymous type serialize, etc...
-            if (context.ObjectType == typeof(object))
+
+            if (context.Object == null)
             {
-                if (context.Object == null)
+                var writer = context.HttpContext.Response.BodyWriter;
+                if (writer == null)
                 {
                     context.HttpContext.Response.Body.WriteByte(MessagePackCode.Nil);
                     return Task.CompletedTask;
                 }
-                else
-                {
-                    MessagePackSerializer.Serialize(context.Object.GetType(), context.HttpContext.Response.Body, context.Object, _options);
-                    return Task.CompletedTask;
-                }
+
+                var span = writer.GetSpan(1);
+                span[0] = MessagePackCode.Nil;
+                writer.Advance(1);
+                return writer.FlushAsync().AsTask();
             }
             else
             {
-                MessagePackSerializer.Serialize(context.ObjectType!, context.HttpContext.Response.Body, context.Object, _options);
-                return Task.CompletedTask;
+                var objectType = context.ObjectType == null || context.ObjectType == typeof(object) ? context.Object.GetType() : context.ObjectType;
+
+                var writer = context.HttpContext.Response.BodyWriter;
+                if (writer == null)
+                {
+                    return MessagePackSerializer.SerializeAsync(objectType, context.HttpContext.Response.Body, context.Object, _options, context.HttpContext.RequestAborted);
+                }
+
+                MessagePackSerializer.Serialize(objectType, writer, context.Object, _options, context.HttpContext.RequestAborted);
+                return writer.FlushAsync().AsTask();
             }
         }
     }

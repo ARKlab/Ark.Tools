@@ -117,8 +117,7 @@ namespace Ark.Reference.Core.WebInterface
 
                     // add custom model binders to beginning of collection
                     opt.ModelBinderProviders.Insert(0, new FormDataJsonBinderProvider(opt.InputFormatters));
-                })
-                .AddXmlSerializerFormatters();
+                });
 
             services.Configure<SnapshotCollectorConfiguration>(o =>
             {

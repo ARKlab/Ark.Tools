@@ -1,4 +1,9 @@
-﻿using TechTalk.SpecFlow;
+﻿using FluentAssertions;
+
+using TechTalk.SpecFlow;
+using TechTalk.SpecFlow.Assist;
+
+using WebApplicationDemo.Dto;
 
 namespace TestProject
 {
@@ -18,5 +23,27 @@ namespace TestProject
 			var url = $@"entity/null";
 			_client.Get(url);
 		}
-	}
+
+        [When(@"^I get Entity with id (.*)$")]
+        public void WhenIGetEntityWithId(string id)
+        {
+            _client.Get(new string[] { "entity", id });
+        }
+
+        [Then("^Content-Type is (.*)$")]
+        public void ThenContentTypeIs(string contentType)
+        {
+            _client.LastResponse.Headers.GetAll("Content-Type").Should().Contain(contentType);
+        }
+
+
+        [Then(@"the Entity has")]
+        public void ThenTheEntityHas(Table table)
+        {
+            var obj = _client.ReadAsMsgPack<Entity.V1.Output>();
+            table.CompareToInstance(obj);
+        }
+
+
+    }
 }

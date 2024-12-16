@@ -5,7 +5,9 @@ using Flurl.Http.Configuration;
 using System;
 using Ark.Tools.NewtonsoftJson;
 using System.Text.Json;
+#if !NET5_0_OR_GREATER
 using System.Net;
+#endif
 
 namespace Ark.Tools.Http
 {

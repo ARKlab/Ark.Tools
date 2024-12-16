@@ -3,19 +3,21 @@ using TechTalk.SpecFlow;
 using System;
 using System.Net.Http.Headers;
 using System.Linq;
+using Ark.Tools.Http;
 using Ark.Tools.Core.EntityTag;
 using Flurl.Http;
 using Microsoft.AspNetCore.Mvc;
 using FluentAssertions;
+using MessagePack;
 
 namespace TestProject
 {
     [Binding]
 	public sealed class TestClient : IDisposable
 	{
-		internal IFlurlClient _client;
-
-		private readonly string _version;
+		private readonly IFlurlClient _client;
+        private readonly IFormatterResolver _formatter;
+        private readonly string _version;
 
 		private IFlurlResponse? _backProperty;
 		private IFlurlResponse _lastResponse { 
@@ -23,9 +25,17 @@ namespace TestProject
             set { _backProperty?.Dispose(); _backProperty = value; } 
         }
 
+        public IFlurlResponse LastResponse => _lastResponse;
+
 		public TestClient(FeatureContext fctx, ScenarioContext sctx, IFlurlClient client)
 		{
-			_client = client;
+			_client = client.WithHeader("Accept", "application/x-msgpack;q=1.0, application/json;q=0.9");
+
+            _formatter = MessagePack.Resolvers.CompositeResolver.Create(
+                MessagePack.NodaTime.NodatimeResolver.Instance,
+                MessagePack.Resolvers.DynamicEnumAsStringResolver.Instance,
+                MessagePack.Resolvers.StandardResolver.Instance
+                );
 
 			var tags = sctx.ScenarioInfo.Tags.Concat(fctx.FeatureInfo.Tags);
 
@@ -128,13 +138,21 @@ namespace TestProject
 			_lastResponse = req.PatchJsonAsync(body).GetAwaiter().GetResult();
 		}
 
-		public T ReadAs<T>()
+		public T ReadAsJson<T>()
 		{
 			if (_lastResponse == null)
 				throw new InvalidOperationException("I suggest to make a request first ...");
 
 			return _lastResponse.GetJsonAsync<T>().GetAwaiter().GetResult();
 		}
+
+        public T? ReadAsMsgPack<T>()
+        {
+            if (_lastResponse == null)
+                throw new InvalidOperationException("I suggest to make a request first ...");
+
+            return _lastResponse.GetMsgPackAsync<T>(_formatter).GetAwaiter().GetResult();
+        }
 
 		public string ReadAsString()
 		{
@@ -179,6 +197,7 @@ namespace TestProject
         public void Dispose()
         {
 			_lastResponse?.Dispose();
+            _client?.Dispose();
         }
     }
 }
