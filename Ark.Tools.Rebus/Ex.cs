@@ -1,5 +1,6 @@
 ﻿using Rebus.Bus;
 using Rebus.Config;
+using Rebus.Exceptions;
 using Rebus.Messages;
 using Rebus.Pipeline;
 using Rebus.Pipeline.Receive;
@@ -90,22 +91,19 @@ namespace Ark.Tools.Rebus
                     ;
             });
         }
-
         public static Task RetryDeferred(this IBus bus, int maxRetries, TimeSpan delay, Action? onRetryFailure = null)
         {
             int cnt = 0;
             var currentContext = MessageContext.Current;
-            if (!currentContext.Headers.TryGetValue("defer-retry", out var count)
+            if (!currentContext.Headers.TryGetValue(Headers.DeferCount, out var count)
                 || !int.TryParse(count, out cnt)
                 || cnt < maxRetries)
-                return bus.Defer(delay, new Dictionary<string, string>
-                {
-                    { "defer-retry", (++cnt).ToString(CultureInfo.InvariantCulture) }
-                });
-
-            onRetryFailure?.Invoke();
-
-            return Task.CompletedTask;
+                return bus.Advanced.TransportMessage.Defer(delay);
+            else
+            {
+                onRetryFailure?.Invoke();
+                return bus.Advanced.TransportMessage.Deadletter("RetryDeferred reached maxRetries=" + maxRetries);
+            }
         }
 
         [Obsolete("Use UseDrainableInMemoryTransport", true)]
