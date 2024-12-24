@@ -12,11 +12,11 @@ parameters:
     type: string
   - name: BuildConfiguration
     type: string
+  - name: workingDirectory
+    type: string
   - name: 'additionalVariables'
     type: object
     default: {}
-  - name: rootPath
-    type: string
   
   
 stages:
@@ -26,10 +26,10 @@ stages:
     variables:
       serviceName: ${{ parameters.serviceName }}
       projectName: ${{ parameters.projectName }}
-      solutionPath: '${{ parameters.projectName }}.sln'
+      solutionPath: '${{ parameters.workingDirectory }}/${{ parameters.projectName }}.sln'
+      servicePath: '${{ parameters.workingDirectory }}/${{ parameters.serviceName }}'
       webInterfaceProject: '${{ parameters.projectName }}.${{ parameters.serviceName }}.WebInterface'
       databaseProject: '${{ parameters.projectName }}.${{ parameters.serviceName }}.Database'
-      servicePath: '${{ parameters.rootPath }}/${{ parameters.serviceName }}'
       BuildConfiguration: ${{ parameters.BuildConfiguration }}
       ${{ insert }}: ${{ parameters.additionalVariables }}
     jobs:
@@ -39,7 +39,7 @@ stages:
       pool:
         vmImage: ${{ parameters.vmImageName }}
       variables:
-        NUGET_PACKAGES: '${{ parameters.rootPath }}/.nuget/packages'
+        NUGET_PACKAGES: '${{ parameters.workingDirectory }}/.nuget/packages'
       services:
         azurite:
           image: mcr.microsoft.com/azure-storage/azurite:latest
@@ -101,13 +101,13 @@ stages:
         inputs:
           command: 'test'
           projects: ${{ variables.solutionPath }}
-          arguments: '--logger "trx" --blame --blame-crash --blame-hang --blame-hang-timeout 10m --settings "${{ parameters.rootPath }}/CodeCoverage.runsettings" --no-build --no-restore'
+          arguments: '--logger "trx" --blame --blame-crash --blame-hang --blame-hang-timeout 10m --settings "${{ parameters.workingDirectory }}/CodeCoverage.runsettings" --no-build --no-restore'
           configuration: $(BuildConfiguration)
 
       - task: CopyFiles@2
         displayName: 'Copy SQL Files'
         inputs:
-          SourceFolder: '${{ parameters.rootPath }}/${{ variables.serviceName }}/${{ variables.databaseProject }}'
+          SourceFolder: '${{ parameters.workingDirectory }}/${{ variables.serviceName }}/${{ variables.databaseProject }}'
           Contents: |
            **/*.dacpac
            **/*.publish.xml
@@ -120,7 +120,7 @@ stages:
         inputs:
           command: publish
           publishWebProjects: false
-          projects: '${{ parameters.rootPath }}/${{ variables.serviceName }}/${{ variables.webInterfaceProject }}/${{ variables.webInterfaceProject }}.csproj'
+          projects: '${{ parameters.workingDirectory }}/${{ variables.serviceName }}/${{ variables.webInterfaceProject }}/${{ variables.webInterfaceProject }}.csproj'
           arguments: '-o "$(build.artifactstagingdirectory)/${{ variables.serviceName }}/${{ variables.webInterfaceProject }}" --configuration $(BuildConfiguration) --no-build  --no-restore'
 
       - task: PublishSymbols@2

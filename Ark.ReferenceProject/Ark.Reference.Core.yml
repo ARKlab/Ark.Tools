@@ -11,7 +11,7 @@ pr:
     - master
 
 variables:
-  workingDirectory: '$(Build.SourcesDirectory)'
+  workingDirectory: '$(Build.SourcesDirectory)/Ark.ReferenceProject'
   vmImageName: 'ubuntu-22.04'
   ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/master') ) }}:
     BuildConfiguration: 'Release'
@@ -29,7 +29,7 @@ stages:
       serviceName: ${{ variables.serviceName }}
       vmImageName: ${{ variables.vmImageName }}
       BuildConfiguration: ${{ variables.BuildConfiguration }}
-      rootPath: '${{ variables['Build.SourcesDirectory'] }}/Ark.ReferenceProject'
+      workingDirectory: '${{ variables.workingDirectory }}'
 
   - ${{ if false }}:
 #  - ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature')) }}:
