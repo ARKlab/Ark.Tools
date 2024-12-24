@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build">
-  <Sdk Name="Microsoft.Build.Sql" Version="0.2.3-preview" />
+  <Sdk Name="Microsoft.Build.Sql" Version="1.0.0-rc1" />
   <PropertyGroup>
     <Name>Ark.Reference.Core.Database</Name>
     <ProjectGuid>{bee200d4-b2fc-4384-bda2-5ccab62c1597}</ProjectGuid>
