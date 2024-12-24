@@ -29,6 +29,7 @@ stages:
       serviceName: ${{ variables.serviceName }}
       vmImageName: ${{ variables.vmImageName }}
       BuildConfiguration: ${{ variables.BuildConfiguration }}
+      rootPath: '${{ variables['Build.SourcesDirectory'] }}/Ark.ReferenceProject'
 
   - ${{ if false }}:
 #  - ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature')) }}:

@@ -17,7 +17,6 @@ parameters:
     default: {}
   - name: rootPath
     type: string
-    default: ${{ variables['Build.SourcesDirectory'] }}
   
   
 stages:
