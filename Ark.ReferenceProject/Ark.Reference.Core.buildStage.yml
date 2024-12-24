@@ -101,7 +101,7 @@ stages:
         inputs:
           command: 'test'
           projects: ${{ variables.solutionPath }}
-          arguments: '--logger "trx" --blame --blame-crash --blame-hang --blame-hang-timeout 10m --settings "${{ parameters.workingDirectory }}/CodeCoverage.runsettings" --no-build --no-restore'
+          arguments: '--logger "trx" --blame --blame-crash --blame-hang --blame-hang-timeout 10m --settings "${{ parameters.workingDirectory }}/CodeCoverage.runsettings" --configuration $(BuildConfiguration) --no-build --no-restore'
           configuration: $(BuildConfiguration)
 
       - task: CopyFiles@2
