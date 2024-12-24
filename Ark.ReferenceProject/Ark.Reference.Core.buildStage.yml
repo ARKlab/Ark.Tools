@@ -81,6 +81,7 @@ stages:
         inputs:
           command: 'restore'
           projects: ${{ variables.solutionPath }}
+          arguments: '--configuration $(BuildConfiguration)'
 
       - task: DotNetCoreCLI@2
         displayName: 'Build solution'
@@ -121,7 +122,7 @@ stages:
           command: publish
           publishWebProjects: false
           projects: '${{ parameters.workingDirectory }}/${{ variables.serviceName }}/${{ variables.webInterfaceProject }}/${{ variables.webInterfaceProject }}.csproj'
-          arguments: '-o "$(build.artifactstagingdirectory)/${{ variables.serviceName }}/${{ variables.webInterfaceProject }}" --configuration $(BuildConfiguration) --no-build  --no-restore'
+          arguments: '-o "$(build.artifactstagingdirectory)/${{ variables.serviceName }}/${{ variables.webInterfaceProject }}" --configuration $(BuildConfiguration)'
 
       - task: PublishSymbols@2
         displayName: 'Publish symbols path'
