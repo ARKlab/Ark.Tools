@@ -25,6 +25,7 @@ stages:
       vmImageName: ${{ variables.vmImageName }}
       BuildConfiguration: ${{ variables.BuildConfiguration }}
 
+  - ${{ if false }}:
   - ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature')) }}:
     - template: Ark.Reference.Core.deployStage.yml
       parameters:
