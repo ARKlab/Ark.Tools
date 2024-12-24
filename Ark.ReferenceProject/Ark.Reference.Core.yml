@@ -4,6 +4,11 @@ trigger:
     include:
     - develop
     - master
+  pr:
+    branches:
+      include:
+      - develop
+      - master
 
 variables:
   workingDirectory: '$(Build.SourcesDirectory)'

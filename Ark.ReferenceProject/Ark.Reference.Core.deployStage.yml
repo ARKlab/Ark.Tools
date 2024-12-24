@@ -43,7 +43,7 @@ stages:
       appServiceArmOutputVariable: ${{ parameters.appServiceArmVariable }}
       dbArmOutputVariable: ${{ parameters.dbArmOutputVariable }}
     jobs:
-    - deployment: '${{ parameters.name }} Deploy'
+    - deployment: '${{ parameters.name }}_Deploy'
       displayName: '${{ parameters.name }} Deploy'
       environment: ${{ parameters.environmentName }}
       pool:
