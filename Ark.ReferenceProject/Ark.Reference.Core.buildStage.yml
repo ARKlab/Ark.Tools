@@ -76,7 +76,6 @@ stages:
           cacheHitVar: 'CACHE_RESTORED'
 
       - task: DotNetCoreCLI@2
-        condition: ne(variables.CACHE_RESTORED, true)
         displayName: 'dotnet restore'
         inputs:
           command: 'restore'
