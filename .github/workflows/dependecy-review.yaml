@@ -24,3 +24,4 @@ jobs:
         with:
           # Use comma-separated names to pass list arguments:
           allow-licenses: Apache-2.0,BSD-3-Clause,BSD-2-Clause,MIT,Apache-2.0 AND MIT,LicenseRef-scancode-generic-cla AND MIT
+          allow-dependencies-licenses: pkg:nuget/System.Net.Http@4.3.4, pkg:nuget/System.Text.RegularExpressions@4.3.1
