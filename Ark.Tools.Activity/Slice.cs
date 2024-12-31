@@ -1,9 +1,13 @@
 ﻿using Ark.Tools.Nodatime;
+
 using EnsureThat;
+
 using Newtonsoft.Json;
+
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
 using NodaTime.Text;
+
 using System;
 
 
@@ -11,7 +15,7 @@ namespace Ark.Tools.Activity
 {
     internal sealed class ZonedDateTimeTzdbConverter : JsonConverter
     {
-        private JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
+        private readonly JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
                 ZonedDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<G> z", DateTimeZoneProviders.Tzdb)
             , x => Ensure.Bool.IsTrue(x.Calendar == CalendarSystem.Iso)
             );
@@ -19,7 +23,7 @@ namespace Ark.Tools.Activity
         public override bool CanRead => _converter.CanRead;
         public override bool CanWrite => _converter.CanWrite;
 
-        public override bool CanConvert(Type objectType) 
+        public override bool CanConvert(Type objectType)
             => _converter.CanConvert(objectType);
 
         public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)

@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Solid;
+
 using Microsoft.AspNetCore.Http;
 
 using System;
@@ -22,7 +23,7 @@ namespace Ark.Tools.AspNetCore
             get
             {
                 var ctx = _accessor.HttpContext;
-                if (ctx is null) 
+                if (ctx is null)
                     throw new InvalidOperationException("HttpContext is null. " +
                         "This is usually caused by trying to access the 'Current Request User' outside a Request context, " +
                         "like a background HostedService.");

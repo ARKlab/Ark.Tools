@@ -8,8 +8,8 @@ namespace Ark.Tools.FtpClient.FtpProxy
     public interface IFtpClientProxyConfig
     {
         string ClientID { get; }
-        string ClientKey { get;  }
-        Uri FtpProxyWebInterfaceBaseUri { get;  }
+        string ClientKey { get; }
+        Uri FtpProxyWebInterfaceBaseUri { get; }
         string ApiIdentifier { get; }
         string TenantID { get; }
         bool UseAuth0 { get; }

@@ -1,11 +1,11 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-
-using Ark.Tools.Solid;
+﻿using Ark.Tools.Solid;
 
 using Asp.Versioning;
 
 using Microsoft.AspNetCore.Mvc;
+
+using System.Threading;
+using System.Threading.Tasks;
 
 using WebApplicationDemo.Api.Queries;
 
@@ -18,7 +18,7 @@ namespace WebApplicationDemo.Controllers
         private readonly IQueryProcessor _queryProcessor;
 
 
-        public FlurlDemoController(IQueryProcessor queryProcessor) 
+        public FlurlDemoController(IQueryProcessor queryProcessor)
         {
             _queryProcessor = queryProcessor;
         }

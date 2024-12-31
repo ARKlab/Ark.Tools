@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Reqnroll.Assist;
 
-using Reqnroll.Assist;
+using System;
+using System.Collections.Generic;
 
 namespace Ark.Tools.Reqnroll
 {

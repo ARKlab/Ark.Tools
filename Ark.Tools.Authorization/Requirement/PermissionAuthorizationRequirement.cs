@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Authorization.Requirement
 {
@@ -11,7 +11,7 @@ namespace Ark.Tools.Authorization.Requirement
     /// Use of this kind of requirement, require a paired implementation of <see cref="IUserPermissionsProvider{TPermissionEnum}"/>
     /// </summary>
     /// <typeparam name="TPermissionEnum">The enum of possible permissions.</typeparam>
-    public class PermissionAuthorizationRequirement<TPermissionEnum> 
+    public class PermissionAuthorizationRequirement<TPermissionEnum>
         : IAuthorizationRequirement
         where TPermissionEnum : System.Enum
     {

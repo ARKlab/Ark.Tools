@@ -1,17 +1,20 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Distributed;
 using Auth0.ManagementApi;
 using Auth0.ManagementApi.Models;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
+
 using Newtonsoft.Json;
+
 using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.Auth0
 {
@@ -62,7 +65,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                     {
 
 #pragma warning disable MA0026 // Fix TODO comment
-                              // TODO extract domain from autority
+                        // TODO extract domain from autority
                         if (_isDelegation(jwt))
                         {
                             using var auth0 = new ManagementApiClient(token, _domain);
@@ -177,5 +180,5 @@ namespace Ark.Tools.AspNetCore.Auth0
             }
         }
     }
-    
+
 }

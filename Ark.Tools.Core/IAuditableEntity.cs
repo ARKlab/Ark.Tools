@@ -5,7 +5,7 @@ using System;
 namespace Ark.Tools.Core
 {
     public interface IAuditableEntity
-	{
-		Guid AuditId { get; set; }
-	}
+    {
+        Guid AuditId { get; set; }
+    }
 }

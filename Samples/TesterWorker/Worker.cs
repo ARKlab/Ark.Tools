@@ -65,7 +65,7 @@ namespace TesterWorker
                         }
 
                     }
-                catch (Exception e)
+                    catch (Exception e)
                     {
                         _telemetryClient.TrackException(e);
                     }

@@ -1,8 +1,11 @@
 ﻿using Ark.Tools.Core;
 using Ark.Tools.Solid;
+
 using Rebus.Messages;
 using Rebus.Pipeline;
+
 using SimpleInjector;
+
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -10,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus
 {
-	[StepDocumentation("Automatically flow UserId and UserEmail from context into a header if possible")]
+    [StepDocumentation("Automatically flow UserId and UserEmail from context into a header if possible")]
     public class UserFlowStep : IOutgoingStep, IIncomingStep
     {
         private readonly Container _container;

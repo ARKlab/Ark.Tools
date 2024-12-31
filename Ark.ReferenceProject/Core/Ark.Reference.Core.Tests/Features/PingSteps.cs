@@ -1,15 +1,14 @@
-﻿using Ark.Tools.Core;
-
-using Ark.Reference.Core.Common.Dto;
+﻿using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.Core;
 
 using FluentAssertions;
 
 using Flurl;
 
-using System.Collections.Generic;
-
 using Reqnroll;
 using Reqnroll.Assist;
+
+using System.Collections.Generic;
 
 namespace Ark.Reference.Core.Tests.Features
 {
@@ -41,7 +40,7 @@ namespace Ark.Reference.Core.Tests.Features
         {
             var res = _client.ReadAs<string>();
 
-            expected.Should().Be(res);  
+            expected.Should().Be(res);
         }
 
 

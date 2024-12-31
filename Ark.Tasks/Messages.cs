@@ -1,14 +1,16 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
-using System.Diagnostics;
-using System.Globalization;
-
 using Ark.Tools.Nodatime;
+
 using Newtonsoft.Json;
+
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
 using NodaTime.Text;
+
+using System;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace Ark.Tasks
 {
@@ -77,7 +79,7 @@ namespace Ark.Tasks
 
     internal sealed class ZonedDateTimeTzdbConverter : JsonConverter
     {
-        private JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
+        private readonly JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
                 ZonedDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<G> z", DateTimeZoneProviders.Tzdb)
             , x =>
             {

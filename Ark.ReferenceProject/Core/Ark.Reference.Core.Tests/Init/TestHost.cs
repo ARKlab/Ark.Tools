@@ -1,15 +1,15 @@
-﻿using Ark.Tools.Http;
-using Ark.Tools.Outbox;
-using Ark.Tools.Rebus.Tests;
-
+﻿using Ark.Reference.Common;
 using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Application.Config;
 using Ark.Reference.Core.WebInterface;
+using Ark.Tools.Http;
+using Ark.Tools.Outbox;
+using Ark.Tools.Rebus.Tests;
 
 using FluentAssertions;
 
-
-using Ark.Reference.Common;
+using Flurl.Http;
+using Flurl.Http.Configuration;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -26,17 +26,15 @@ using Polly;
 using Rebus.Persistence.InMem;
 using Rebus.Transport.InMem;
 
+using Reqnroll;
+
 using SimpleInjector;
 
 using System;
 using System.IO;
 using System.Net.Http;
 using System.Security.Claims;
-
-using Reqnroll;
 using System.Threading.Tasks;
-using Flurl.Http.Configuration;
-using Flurl.Http;
 
 namespace Ark.Reference.Core.Tests.Init
 {

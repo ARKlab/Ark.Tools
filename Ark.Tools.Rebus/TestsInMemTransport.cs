@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Ark.Tools.Rebus
 {
     [Obsolete("Use DrainableInMemTransport", true)]
-	public class TestsInMemTransport : InMemTransport
+    public class TestsInMemTransport : InMemTransport
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible", Justification = "Testing Purpose")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0069:Non-constant static fields should not be visible", Justification = "Testing Purpose")]

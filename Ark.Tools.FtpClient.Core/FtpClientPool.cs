@@ -52,7 +52,8 @@ namespace Ark.Tools.FtpClient.Core
                 var pooled = new PooledFtpConnection(result);
                 pooled.Disposing += _pooled_Disposing;
                 return pooled;
-            } catch
+            }
+            catch
             {
                 result?.Dispose();
                 _semaphore.Release();
@@ -66,7 +67,7 @@ namespace Ark.Tools.FtpClient.Core
             if (pooled is null) return;
             try
             {
-                _pool.Push(pooled.Inner);                
+                _pool.Push(pooled.Inner);
             }
             catch
             {

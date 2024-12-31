@@ -1,9 +1,11 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Microsoft.AspNetCore.Mvc.Formatters;
 using MessagePack;
-using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.Mvc.Formatters;
+
 using System;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter
 {
@@ -15,7 +17,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 
         public MessagePackOutputFormatter()
             : this(null)
-        {            
+        {
         }
         public MessagePackOutputFormatter(IFormatterResolver? resolver)
         {

@@ -1,17 +1,21 @@
-﻿using Dapper;
+﻿using Ark.Reference.Common;
+using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Core.Common.Dto;
+using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Sql.SqlServer;
+
+using Dapper;
+
+using NodaTime;
+
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Ark.Reference.Core.Common.Dto;
+
 using static Dapper.SqlMapper;
-using Ark.Reference.Common;
-using System.Collections.Generic;
-using System.Linq;
-using Ark.Reference.Core.Common.Enum;
-using System;
-using Ark.Reference.Common.Services.Audit;
-using NodaTime;
-using Ark.Tools.Sql.SqlServer;
-using System.Globalization;
 
 namespace Ark.Reference.Core.Application.DAL
 {
@@ -24,8 +28,8 @@ namespace Ark.Reference.Core.Application.DAL
         {
             _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByIdAsync called");
 
-            var (data, _) = await ReadPingByFiltersAsync(new PingSearchQueryDto.V1() 
-            { 
+            var (data, _) = await ReadPingByFiltersAsync(new PingSearchQueryDto.V1()
+            {
                 Id = [id],
                 Limit = 1
             }, ctk);
@@ -64,9 +68,9 @@ namespace Ark.Reference.Core.Application.DAL
                 FROM [{_schemaPing}].[{_tablePing}] E
 
                 WHERE 1 = 1
-                  {(query.Id?.Any()     ?? false ? "AND E.[Id]   IN @Id"    : "")}
-                  {(query.Name?.Any()   ?? false ? "AND E.[Name] IN @Name"  : "")}
-                  {(query.Type?.Any()   ?? false ? "AND E.[Type] IN @Type"  : "")}
+                  {(query.Id?.Any() ?? false ? "AND E.[Id]   IN @Id" : "")}
+                  {(query.Name?.Any() ?? false ? "AND E.[Name] IN @Name" : "")}
+                  {(query.Type?.Any() ?? false ? "AND E.[Type] IN @Type" : "")}
             "
             .AsSqlServerPagedQuery(sortFields);
 
@@ -114,9 +118,9 @@ namespace Ark.Reference.Core.Application.DAL
             ";
 
             var cmd = new CommandDefinition(
-                cmdText, 
-                parameters, 
-                transaction: Transaction, 
+                cmdText,
+                parameters,
+                transaction: Transaction,
                 cancellationToken: ctk
             );
 
@@ -131,7 +135,8 @@ namespace Ark.Reference.Core.Application.DAL
         {
             _logger.Trace(CultureInfo.InvariantCulture, "PutPingAsync called");
 
-            var parameters = new {
+            var parameters = new
+            {
                 @Id = entity.Id,
                 @Name = entity.Name,
                 @Type = entity.Type.ToString(),
@@ -227,9 +232,9 @@ namespace Ark.Reference.Core.Application.DAL
             ";
 
             var cmd = new CommandDefinition(
-                cmdText, 
-                parameters, 
-                transaction: Transaction, 
+                cmdText,
+                parameters,
+                transaction: Transaction,
                 cancellationToken: ctk
             );
 

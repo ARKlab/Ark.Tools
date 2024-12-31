@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Ark.Tools.Core.DataKey
 {
-    public class DataKeyHashSet<T> : HashSet<T> where T:class
+    public class DataKeyHashSet<T> : HashSet<T> where T : class
     {
         public DataKeyHashSet() : base(new DataKeyComparer<T>())
         { }

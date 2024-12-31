@@ -1,34 +1,36 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
+
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace Ark.Tools.FtpClient.SftpClient
 {
-    public class SftpClientConnection : FtpClientConnectionBase 
+    public class SftpClientConnection : FtpClientConnectionBase
     {
 
         private readonly Renci.SshNet.SftpClient _client;
 
         private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(1);
-        private readonly TimeSpan _operationTimeout  = TimeSpan.FromMinutes(5);
+        private readonly TimeSpan _operationTimeout = TimeSpan.FromMinutes(5);
 
         private bool _isDisposed = false;
-        
+
         private const string _rsa = "1.2.840.113549.1.1.1";
         private const string _dsa = "1.2.840.10040.4.1";
         private const string _ecdsa = "1.2.840.10045.2.1";
-        
+
         public SftpClientConnection(FtpConfig ftpConfig)
             : base(ftpConfig)
         {
@@ -36,7 +38,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         }
 
         public int Port { get; }
-        
+
         /// <summary>
         /// List all entries of a folder.
         /// </summary>
@@ -170,7 +172,7 @@ namespace Ark.Tools.FtpClient.SftpClient
                 Convert.ToBase64String(privateKeyBytes, Base64FormattingOptions.InsertLineBreaks));
             builder.Append("-----END ").Append(keyExchangeAlgorithm).AppendLine(" PRIVATE KEY-----");
 
-            privateKeyPemString = builder.ToString();    
+            privateKeyPemString = builder.ToString();
 #endif
 
             var byteArray = Encoding.UTF8.GetBytes(privateKeyPemString);
@@ -255,7 +257,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             _isDisposed = true;
         }
 
-#endregion private helpers
+        #endregion private helpers
 
     }
 

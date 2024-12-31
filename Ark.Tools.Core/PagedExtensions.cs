@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Core
 {
@@ -25,7 +25,8 @@ namespace Ark.Tools.Core
             , CancellationToken ctk = default)
             where TQuery : IQueryPaged
         {
-            var data = await QueryAllPagesAsync(query, async (q, ctk) => {
+            var data = await QueryAllPagesAsync(query, async (q, ctk) =>
+            {
                 var res = await funcAsync(q, ctk).ConfigureAwait(false);
 
                 return new PagedResult<TResult>

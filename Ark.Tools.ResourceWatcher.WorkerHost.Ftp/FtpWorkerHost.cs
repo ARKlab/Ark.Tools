@@ -89,7 +89,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                 using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ctk);
                 foreach (var f in filter.FoldersToWatch)
                 {
-                    Predicate<FtpEntry> skipFolder = x => filter.FolderFilter?.Invoke(x.FullPath) == false;
+                    bool skipFolder(FtpEntry x) => filter.FolderFilter?.Invoke(x.FullPath) == false;
 
                     var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token).ConfigureAwait(false);
                     res = res.Concat(list.Select(e => new FtpMetadata(e)));

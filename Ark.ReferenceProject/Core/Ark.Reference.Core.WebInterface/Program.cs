@@ -1,8 +1,6 @@
-using Ark.Tools.NLog;
-
-using Ark.Reference.Core.WebInterface.Utils;
-
 using Ark.Reference.Common;
+using Ark.Reference.Core.WebInterface.Utils;
+using Ark.Tools.NLog;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -35,8 +33,8 @@ namespace Ark.Reference.Core.WebInterface
         {
             return builder
                 .ConfigureNLog("Ark.Reference.Core.WebInterface"
-                    // , configure: c => c.WithDatabaseRule("*", NLog.LogLevel.Info) // always log INFO to Database Target if present
-                ) 
+                // , configure: c => c.WithDatabaseRule("*", NLog.LogLevel.Info) // always log INFO to Database Target if present
+                )
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder

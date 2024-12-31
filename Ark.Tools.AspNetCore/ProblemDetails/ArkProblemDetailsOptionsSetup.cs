@@ -1,27 +1,31 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
-using Microsoft.Data.SqlClient;
-using System.Net.Http;
 using Ark.Tools.Core;
+using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Core.EntityTag;
+using Ark.Tools.Core.Reflection;
 using Ark.Tools.Sql.SqlServer;
+
 using Hellang.Middleware.ProblemDetails;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Hosting;
-using Ark.Tools.Core.BusinessRuleViolation;
-using System.Diagnostics;
-using System.Text.Json;
-using Ark.Tools.Core.Reflection;
+using Microsoft.Extensions.Options;
+
+using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+
 using ProblemDetailsOptions = Hellang.Middleware.ProblemDetails.ProblemDetailsOptions;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
-    public class ArkProblemDetailsOptionsSetup 
+    public class ArkProblemDetailsOptionsSetup
         : IConfigureOptions<ProblemDetailsOptions>
         , IPostConfigureOptions<ProblemDetailsOptions>
     {
@@ -52,7 +56,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
             options.OnBeforeWriteDetails = (ctx, details) =>
             {
-                if ( _environment.IsProduction() && (details.Status >= 400 && details.Status < 500))
+                if (_environment.IsProduction() && (details.Status >= 400 && details.Status < 500))
                 {
                     if (details.Extensions.ContainsKey(options.ExceptionDetailsPropertyName))
                     {
@@ -96,7 +100,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 
             options.MapToStatusCode<OptimisticConcurrencyException>(StatusCodes.Status409Conflict);
 
-            options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex) 
+            options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex)
                 ? StatusCodeProblemDetails.Create(StatusCodes.Status409Conflict)
                 : StatusCodeProblemDetails.Create(StatusCodes.Status500InternalServerError));
 
@@ -113,7 +117,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                 return _dynamicTypeAssembly.CreateNewTypeWithDynamicProperties(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), props);
             });
 
-            var js = (arg.BusinessRuleViolation as object).SerializeToByte(ArkSerializerOptions.JsonOptions);                
+            var js = (arg.BusinessRuleViolation as object).SerializeToByte(ArkSerializerOptions.JsonOptions);
             var ret = (Microsoft.AspNetCore.Mvc.ProblemDetails)JsonSerializer.Deserialize(js, pdt, ArkSerializerOptions.JsonOptions)!;
             ret.Extensions["@BusinessRuleViolation"] = arg.BusinessRuleViolation;
             return ret;

@@ -1,13 +1,14 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
+
 using FluentFTP;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System;
 
 using FtpConfig = Ark.Tools.FtpClient.Core.FtpConfig;
 
@@ -53,7 +54,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            var res = await _client.DownloadBytes(path,token: ctk).ConfigureAwait(false);
+            var res = await _client.DownloadBytes(path, token: ctk).ConfigureAwait(false);
             return res;
         }
 
@@ -80,7 +81,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            await _client.UploadBytes(content, path, token:ctk).ConfigureAwait(false);
+            await _client.UploadBytes(content, path, token: ctk).ConfigureAwait(false);
         }
 
         protected override void Dispose(bool disposing)

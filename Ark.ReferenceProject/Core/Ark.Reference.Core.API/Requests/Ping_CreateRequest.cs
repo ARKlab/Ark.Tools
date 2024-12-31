@@ -1,6 +1,5 @@
-﻿using Ark.Tools.Solid;
-
-using Ark.Reference.Core.Common.Dto;
+﻿using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.Solid;
 
 namespace Ark.Reference.Core.API.Requests
 {

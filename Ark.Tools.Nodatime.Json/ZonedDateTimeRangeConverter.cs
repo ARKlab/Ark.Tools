@@ -2,13 +2,15 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using NodaTime;
+
 using System;
 using System.Globalization;
 
 namespace Ark.Tools.Nodatime.Json
 {
-    
+
     public class ZonedDateTimeRangeConverter : JsonConverter
     {
         private static readonly Type _type = typeof(ZonedDateTimeRange);
@@ -50,8 +52,8 @@ namespace Ark.Tools.Nodatime.Json
 
             var s = jo.ToObject<Surrogate>(serializer);
             if (s == null) return null;
-            
-            return new ZonedDateTimeRange(s.Start, s.End); 
+
+            return new ZonedDateTimeRange(s.Start, s.End);
         }
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
@@ -80,7 +82,8 @@ namespace Ark.Tools.Nodatime.Json
             if (r.HasValue)
             {
                 serializer.Serialize(writer, new Surrogate { Start = r.Value.Start, End = r.Value.End });
-            } else
+            }
+            else
             {
                 writer.WriteNull();
             }

@@ -1,13 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
-
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Builders;
 using Auth0.AuthenticationApi.Models;
@@ -22,6 +14,14 @@ using Polly;
 using Polly.Caching;
 using Polly.Caching.Memory;
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace Ark.Tools.Auth0
 {
     public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient, IDisposable
@@ -30,7 +30,7 @@ namespace Ark.Tools.Auth0
         private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
         private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
         private readonly MemoryCache _cache = new(new MemoryCacheOptions());
-        private readonly MemoryCacheProvider _memoryCacheProvider; 
+        private readonly MemoryCacheProvider _memoryCacheProvider;
         private readonly ConcurrentDictionary<string, Task> _pendingTasks = new(StringComparer.Ordinal);
 
 
@@ -48,7 +48,7 @@ namespace Ark.Tools.Auth0
                     Policy.CacheAsync(
                         _memoryCacheProvider.AsyncFor<UserInfo>(),
                         new ContextualTtl());
-                        
+
         }
 
         private static TimeSpan _expiresIn(AccessTokenResponse r)
@@ -127,7 +127,7 @@ namespace Ark.Tools.Auth0
 
         #region Caching
 
-        private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest:notnull
+        private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : notnull
         {
             var key = (string)_getKey((dynamic)request);
 
@@ -144,7 +144,7 @@ namespace Ark.Tools.Auth0
             _pendingTasks.TryRemove(key, out var _);
             return res;
         }
-        
+
         public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodeTokenRequest request, CancellationToken cancellationToken = default)
         {
             return _getToken(request, cancellationToken);
@@ -197,7 +197,7 @@ namespace Ark.Tools.Auth0
 
         public Task<UserInfo> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken = default)
         {
-            return _userInfoCachePolicy.ExecuteAsync((_,ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>(StringComparer.Ordinal)
+            return _userInfoCachePolicy.ExecuteAsync((_, ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { ContextualTtl.TimeSpanKey, _expiresIn(accessToken) }
             }), cancellationToken);

@@ -37,7 +37,7 @@ namespace Ark.Tools.Authorization.Requirement
             if (context.User != null)
             {
                 bool found = requirement.AllowedRoles.Any(r => context.User.IsInRole(r));
-                
+
                 if (found)
                 {
                     context.Succeed(requirement);

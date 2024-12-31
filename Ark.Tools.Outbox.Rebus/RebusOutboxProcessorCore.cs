@@ -14,36 +14,36 @@ namespace Ark.Tools.Outbox.Rebus
 {
     internal abstract class RebusOutboxProcessorCore : IRebusOutboxProcessor, IDisposable
     {
-		private readonly IBackoffStrategy _backoffStrategy;
+        private readonly IBackoffStrategy _backoffStrategy;
         private readonly int _topMessagesToRetrieve;
         private readonly ITransport _transport;
         private readonly CancellationTokenSource _busDisposalCancellationTokenSource = new();
-		private readonly ILog _log;
+        private readonly ILog _log;
         private Task _task = Task.CompletedTask;
         private bool _disposedValue;
 
         protected RebusOutboxProcessorCore(
-            int topMessagesToRetrieve, 
+            int topMessagesToRetrieve,
             ITransport transport,
             IBackoffStrategy backoffStrategy,
-			IRebusLoggerFactory rebusLoggerFactory)
-		{
-			_backoffStrategy = backoffStrategy;
+            IRebusLoggerFactory rebusLoggerFactory)
+        {
+            _backoffStrategy = backoffStrategy;
             _topMessagesToRetrieve = topMessagesToRetrieve;
             _transport = transport;
             _log = rebusLoggerFactory.GetLogger<RebusOutboxProcessorCore>();
-		}
+        }
 
         public void Start()
         {
-			_task = _processOutboxMessages(_busDisposalCancellationTokenSource.Token);
-		}
+            _task = _processOutboxMessages(_busDisposalCancellationTokenSource.Token);
+        }
 
         public void Stop()
         {
             _busDisposalCancellationTokenSource.Cancel();
-			_task.GetAwaiter().GetResult(); // wait for batch to complete
-		}
+            _task.GetAwaiter().GetResult(); // wait for batch to complete
+        }
 
         protected async Task<bool> _tryProcessMessages(IOutboxContextCore ctx, CancellationToken ctk)
         {
@@ -69,30 +69,31 @@ namespace Ark.Tools.Outbox.Rebus
         }
 
         private async Task _processOutboxMessages(CancellationToken ctk)
-		{
-			_log.Debug("Starting outbox messages processor");
+        {
+            _log.Debug("Starting outbox messages processor");
 
-			while (!ctk.IsCancellationRequested)
-			{
-				try
+            while (!ctk.IsCancellationRequested)
+            {
+                try
                 {
                     bool waitForMessages = await _loop(ctk).ConfigureAwait(false);
 
                     if (waitForMessages)
                     {
                         await _backoffStrategy.WaitNoMessageAsync(ctk).ConfigureAwait(false);
-                    } else
+                    }
+                    else
                     {
                         _backoffStrategy.Reset();
                     }
                 }
                 catch (OperationCanceledException) when (ctk.IsCancellationRequested)
-				{
-					// we're shutting down
-				}
-				catch (Exception exception)
-				{
-					_log.Error(exception, "Unhandled exception in outbox messages processor");
+                {
+                    // we're shutting down
+                }
+                catch (Exception exception)
+                {
+                    _log.Error(exception, "Unhandled exception in outbox messages processor");
                     try
                     {
                         await _backoffStrategy.WaitErrorAsync(ctk).ConfigureAwait(false);
@@ -102,10 +103,10 @@ namespace Ark.Tools.Outbox.Rebus
                         // we're shutting down
                     }
                 }
-			}
+            }
 
-			_log.Debug("Outbox messages processor stopped");
-		}
+            _log.Debug("Outbox messages processor stopped");
+        }
 
         protected abstract Task<bool> _loop(CancellationToken ctk);
 

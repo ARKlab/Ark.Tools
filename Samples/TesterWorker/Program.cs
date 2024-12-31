@@ -1,7 +1,9 @@
 using Ark.Tools.ApplicationInsights.HostedService;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using System.IO;
 
 namespace TesterWorker

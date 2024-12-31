@@ -1,10 +1,10 @@
-﻿using System;
-using System.Threading;
-
-using Rebus.Logging;
+﻿using Rebus.Logging;
 using Rebus.Retry;
 using Rebus.Retry.FailFast;
 using Rebus.Retry.Simple;
+
+using System;
+using System.Threading;
 
 namespace Ark.Tools.Rebus.Retry
 {

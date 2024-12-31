@@ -1,11 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Ark.Tools.Solid;
-using NLog;
-using System.Threading;
-using WebApplicationDemo.Api.Requests;
+﻿using Ark.Tools.Solid;
+
 using Asp.Versioning;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+using NLog;
+
+using System.Threading;
+using System.Threading.Tasks;
+
+using WebApplicationDemo.Api.Requests;
 
 namespace WebApplicationDemo.Controllers.V1
 {
@@ -14,7 +19,7 @@ namespace WebApplicationDemo.Controllers.V1
     [ApiController]
     public class FileImportsController : ControllerBase
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IQueryProcessor _queryProcessor;
         private readonly IRequestProcessor _requestProcessor;
 

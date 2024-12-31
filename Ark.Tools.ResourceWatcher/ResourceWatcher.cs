@@ -1,10 +1,15 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
+
 using EnsureThat;
+
 using Nito.AsyncEx;
+
 using NLog;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,10 +22,10 @@ namespace Ark.Tools.ResourceWatcher
 {
     public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IResourceWatcherConfig _config;
         private readonly IStateProvider _stateProvider;
-        private object _lock = new() { };
+        private readonly object _lock = new() { };
         private volatile bool _isStarted = false;
         private CancellationTokenSource? _cts;
         private Task? _task;
@@ -188,7 +193,9 @@ namespace Ark.Tools.ResourceWatcher
                 _diagnosticSource.CheckStateSuccessful(activityCheckState, evaluated);
 
                 return evaluated;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _diagnosticSource.CheckStateFailed(activityCheckState, ex);
                 throw;
             }
@@ -286,7 +293,8 @@ namespace Ark.Tools.ResourceWatcher
                 var res = await _retrievePayload(info, lastState, ctk).ConfigureAwait(false);
                 _diagnosticSource.FetchResourceSuccessful(activity, pc);
                 return res;
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _diagnosticSource.FetchResourceFailed(activity, pc, ex);
                 throw;
@@ -303,7 +311,7 @@ namespace Ark.Tools.ResourceWatcher
                 // when 'logging' these, 'info' is serialized as the actual implementation which may contain a lot of data. slice to 'log' only the Interface
                 new KeyValuePair<string, object?>("currentInfo", new { info.ResourceId, info.Modified, info.ModifiedSources, info.Extensions }),
                 new KeyValuePair<string, object?>("lastState", lastState)
-            ]); 
+            ]);
             try
             {
                 using var processActivity = _diagnosticSource.ProcessResourceStart(pc);
@@ -371,7 +379,7 @@ namespace Ark.Tools.ResourceWatcher
 
                     _diagnosticSource.ProcessResourceSuccessful(processActivity, pc);
 
-                    if(processActivity.Duration > _config.ResourceDurationNotificationLimit)
+                    if (processActivity.Duration > _config.ResourceDurationNotificationLimit)
                         _diagnosticSource.ProcessResourceTookTooLong(info.ResourceId, processActivity);
                 }
                 catch (Exception ex)

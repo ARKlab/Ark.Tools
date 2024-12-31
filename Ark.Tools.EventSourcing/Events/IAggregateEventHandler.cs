@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.EventSourcing.Aggregates;
+
 using System.Threading;
 using System.Threading.Tasks;
 

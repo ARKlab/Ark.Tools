@@ -1,7 +1,8 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System.Data.Common;
 using Microsoft.Data.SqlClient;
+
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,7 +22,8 @@ namespace Ark.Tools.Sql.SqlServer
             {
                 conn.Open();
                 return conn;
-            } catch
+            }
+            catch
             {
                 conn?.Dispose();
                 throw;

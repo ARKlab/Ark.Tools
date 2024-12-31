@@ -9,10 +9,10 @@ using NLog.Extensions.Logging;
 using System;
 using System.Reflection;
 
+using static Ark.Tools.NLog.NLogConfigurer;
+
 namespace Ark.Tools.NLog
 {
-    using static Ark.Tools.NLog.NLogConfigurer;
-
     public static class NLogConfigurerConfiguration
     {
         public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, bool async = true)
@@ -46,7 +46,7 @@ namespace Ark.Tools.NLog
             if (res != null) return res;
 
             res = cfg[key.Replace('.', '_')];
-            
+
             return res;
         }
 
@@ -82,11 +82,11 @@ namespace Ark.Tools.NLog
             return builder.ConfigureLogging((ctx, logging) =>
             {
                 var c = NLogConfigurer.For(appName)
-                   .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, appName, mailFrom, 
+                   .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, appName, mailFrom,
                         async: !ctx.HostingEnvironment.EnvironmentName.Contains("SpecFlow", StringComparison.OrdinalIgnoreCase))
                    ;
 
-                configure ?.Invoke(c);
+                configure?.Invoke(c);
 
                 c.Apply();
 

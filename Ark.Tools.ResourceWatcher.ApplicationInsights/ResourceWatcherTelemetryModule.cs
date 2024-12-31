@@ -1,4 +1,5 @@
 ﻿using Microsoft.ApplicationInsights.Extensibility;
+
 using System;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights

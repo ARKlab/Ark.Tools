@@ -8,11 +8,11 @@ namespace Ark.Tools.Core.BusinessRuleViolation
     {
         public BusinessRuleViolation(string title)
         {
-            Title = title;            
+            Title = title;
         }
 
         public int Status { get; set; } = 400;
-		public string Title { get; set; }
+        public string Title { get; set; }
         public string? Detail { get; set; }
     }
 }

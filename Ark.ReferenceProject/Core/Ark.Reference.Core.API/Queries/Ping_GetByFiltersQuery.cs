@@ -1,7 +1,6 @@
-﻿using Ark.Tools.Core;
+﻿using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.Core;
 using Ark.Tools.Solid;
-
-using Ark.Reference.Core.Common.Dto;
 
 namespace Ark.Reference.Core.API.Queries
 {

@@ -43,9 +43,9 @@ namespace Ark.Tools.AspNetCore.Startup
 
         public static IServiceCollection ArkConfigureAuth0(this IServiceCollection services, string domain, string audience, string swaggerClientId)
         {
-			var authScheme = "Auth0";
+            var authScheme = "Auth0";
 
-			var defaultPolicy = new AuthorizationPolicyBuilder()
+            var defaultPolicy = new AuthorizationPolicyBuilder()
                 .AddAuthenticationSchemes(authScheme)
                 .RequireAuthenticatedUser()
                 .Build();
@@ -56,14 +56,14 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.Filters.Add(new AuthorizeFilter(defaultPolicy));
                 });
 
-			services.AddAuthentication(options =>
-				{
-					options.DefaultAuthenticateScheme = authScheme;
-					options.DefaultChallengeScheme = authScheme;
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = authScheme;
+                    options.DefaultChallengeScheme = authScheme;
 
-				})
-				.AddJwtBearerArkDefault(authScheme, audience, domain)
-				;
+                })
+                .AddJwtBearerArkDefault(authScheme, audience, domain)
+                ;
 
             //.AddJwtBearer("Auth0", o =>
             //{
@@ -101,63 +101,63 @@ namespace Ark.Tools.AspNetCore.Startup
         }
 
 
-		public static AuthenticationBuilder AddJwtBearerArkDefault(
-						this AuthenticationBuilder builder
-					  , string authenticationScheme
-			          , string audience
-					  , string domain
-					  , Action<JwtBearerOptions>? configureOptions = null)
-		{
-			return  builder.AddJwtBearer(authenticationScheme, o =>
-			{
-				o.Audience = audience;
-				o.Authority = $"https://{domain}/";
-				o.TokenValidationParameters = new TokenValidationParameters
-				{
-					NameClaimTypeRetriever = (a, b) =>
-					{
-						if (a is JwtSecurityToken jwt)
-						{
-							if (jwt.Claims.Any(x => x.Type == "http://ark-energy.eu/claims/email"))
-							{
-								return "http://ark-energy.eu/claims/email";
-							}
-							else if (jwt.Claims.Any(x => x.Type == ClaimTypes.Email))
-							{
-								return ClaimTypes.Email;
-							}
-							else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.Where(w => w.Type == "appidacr").SingleOrDefault()?.Value == "1")
-							{
-								return "appid";
-							}
-						}
+        public static AuthenticationBuilder AddJwtBearerArkDefault(
+                        this AuthenticationBuilder builder
+                      , string authenticationScheme
+                      , string audience
+                      , string domain
+                      , Action<JwtBearerOptions>? configureOptions = null)
+        {
+            return builder.AddJwtBearer(authenticationScheme, o =>
+            {
+                o.Audience = audience;
+                o.Authority = $"https://{domain}/";
+                o.TokenValidationParameters = new TokenValidationParameters
+                {
+                    NameClaimTypeRetriever = (a, b) =>
+                    {
+                        if (a is JwtSecurityToken jwt)
+                        {
+                            if (jwt.Claims.Any(x => x.Type == "http://ark-energy.eu/claims/email"))
+                            {
+                                return "http://ark-energy.eu/claims/email";
+                            }
+                            else if (jwt.Claims.Any(x => x.Type == ClaimTypes.Email))
+                            {
+                                return ClaimTypes.Email;
+                            }
+                            else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.Where(w => w.Type == "appidacr").SingleOrDefault()?.Value == "1")
+                            {
+                                return "appid";
+                            }
+                        }
 
-						return ClaimTypes.NameIdentifier;
-					}
-				};
-				configureOptions?.Invoke(o);
-			});
-		}
+                        return ClaimTypes.NameIdentifier;
+                    }
+                };
+                configureOptions?.Invoke(o);
+            });
+        }
 
-		public static IServiceCollection ArkConfigureSwaggerAuth0(this IServiceCollection services, string domain, string audience, string clientId)
+        public static IServiceCollection ArkConfigureSwaggerAuth0(this IServiceCollection services, string domain, string audience, string clientId)
         {
             services.ConfigureSwaggerGen(c =>
             {
 
                 var oauthScheme = new OpenApiSecurityScheme
-				{
+                {
                     Type = SecuritySchemeType.OAuth2,
-					Flows = new OpenApiOAuthFlows() 
-					{ 
-						Implicit = new OpenApiOAuthFlow() 
-						{ 
-							AuthorizationUrl = new Uri($"https://{domain}/authorize"),
-							Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
+                    Flows = new OpenApiOAuthFlows()
+                    {
+                        Implicit = new OpenApiOAuthFlow()
+                        {
+                            AuthorizationUrl = new Uri($"https://{domain}/authorize"),
+                            Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
                             {
-								{ "openid", "Grant access to user" }
-							}
-						} 
-					},
+                                { "openid", "Grant access to user" }
+                            }
+                        }
+                    },
                     Reference = new OpenApiReference
                     {
                         Type = ReferenceType.SecurityScheme,
@@ -191,13 +191,13 @@ namespace Ark.Tools.AspNetCore.Startup
                 var oauthScheme = new OpenApiSecurityScheme
                 {
                     Type = SecuritySchemeType.OAuth2,
-                    
+
                     Flows = new OpenApiOAuthFlows()
                     {
                         AuthorizationCode = new OpenApiOAuthFlow()
                         {
                             AuthorizationUrl = new Uri($"{instance}/{domain}/{signUpSignIn}/oauth2/v2.0/authorize"),
-                            TokenUrl = new Uri($"{instance}/{domain}/{signUpSignIn}/oauth2/v2.0/token"),                            
+                            TokenUrl = new Uri($"{instance}/{domain}/{signUpSignIn}/oauth2/v2.0/token"),
                             Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
                             {
                                 { "openid", "Grant access to user" },

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IdentityModel.Tokens.Jwt;
-
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
@@ -17,58 +12,63 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
+
 using TestWithoutArkTools.Application.Host;
 
 namespace TestWithoutArkTools
 {
     public class Startup : ArkStartupWebApi
-	{
-		public Startup(IConfiguration configuration, IHostEnvironment env)
-			: base(configuration, env)
-		{
-		}
+    {
+        public Startup(IConfiguration configuration, IHostEnvironment env)
+            : base(configuration, env)
+        {
+        }
 
-		public override IEnumerable<ApiVersion> Versions => [new ApiVersion(1, 0)];
+        public override IEnumerable<ApiVersion> Versions => [new ApiVersion(1, 0)];
 
-		public override OpenApiInfo MakeInfo(ApiVersion version)
-			=> new()
+        public override OpenApiInfo MakeInfo(ApiVersion version)
+            => new()
             {
-				Title = "API",
-				Version = version.ToString("VVVV", CultureInfo.InvariantCulture),
-			};
+                Title = "API",
+                Version = version.ToString("VVVV", CultureInfo.InvariantCulture),
+            };
 
-		// This method gets called by the runtime. Use this method to add services to the container.
-		public override void ConfigureServices(IServiceCollection services)
-		{
-			base.ConfigureServices(services);
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public override void ConfigureServices(IServiceCollection services)
+        {
+            base.ConfigureServices(services);
 
-			var auth0Scheme = "Auth0";
-			var audience = "Audience";
-			var domain = "Domain";
-			var swaggerClientId = "SwaggerClientId";
+            var auth0Scheme = "Auth0";
+            var audience = "Audience";
+            var domain = "Domain";
+            var swaggerClientId = "SwaggerClientId";
 
-			var defaultPolicy = new AuthorizationPolicyBuilder()
-				.AddAuthenticationSchemes(auth0Scheme)
-				.RequireAuthenticatedUser()
-				.Build();
+            var defaultPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(auth0Scheme)
+                .RequireAuthenticatedUser()
+                .Build();
 
             var authBuilder = services.AddAuthentication(options =>
-			{
-				options.DefaultAuthenticateScheme = auth0Scheme;
-				options.DefaultChallengeScheme = auth0Scheme;
+            {
+                options.DefaultAuthenticateScheme = auth0Scheme;
+                options.DefaultChallengeScheme = auth0Scheme;
 
-			})
-			.AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
-			{
-				if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
-				{
-					o.TokenValidationParameters.ValidIssuer = o.Authority;
-					o.Authority = null;
-					//o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.ClientSecretSpecFlow));
-				}
-				o.TokenValidationParameters.RoleClaimType = "Role";
-			})
-			;
+            })
+            .AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
+            {
+                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
+                {
+                    o.TokenValidationParameters.ValidIssuer = o.Authority;
+                    o.Authority = null;
+                    //o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.ClientSecretSpecFlow));
+                }
+                o.TokenValidationParameters.RoleClaimType = "Role";
+            })
+            ;
 
             bool isAuth0 = String.IsNullOrWhiteSpace(Configuration["AzureAdB2C:Domain"]) ? true : false;
 
@@ -81,7 +81,8 @@ namespace TestWithoutArkTools
                     options.TokenValidationParameters.NameClaimType = "name";
                     (options.TokenHandlers[0] as JwtSecurityTokenHandler)?.InboundClaimTypeMap.Add("extension_Scope", "scope");
                 },
-                    options => {
+                    options =>
+                    {
                         Configuration.Bind("AzureAdB2C", options);
                     }, JwtBearerDefaults.AuthenticationScheme);
 
@@ -96,36 +97,36 @@ namespace TestWithoutArkTools
 
 
             services.ArkConfigureSwaggerUI(c =>
-			{
-			});
+            {
+            });
 
-			services.ConfigureSwaggerGen(c =>
-			{
-				var dict = new OpenApiSecurityRequirement
-				{
-					{ new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
-				};
+            services.ConfigureSwaggerGen(c =>
+            {
+                var dict = new OpenApiSecurityRequirement
+                {
+                    { new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
+                };
 
-				c.AddSecurityRequirement(dict);
-			});
-		}
+                c.AddSecurityRequirement(dict);
+            });
+        }
 
-		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-		public override void Configure(IApplicationBuilder app)
-		{
-			base.Configure(app);
-		}
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public override void Configure(IApplicationBuilder app)
+        {
+            base.Configure(app);
+        }
 
-		protected override void RegisterContainer(IServiceProvider services)
-		{
-			base.RegisterContainer(services);
+        protected override void RegisterContainer(IServiceProvider services)
+        {
+            base.RegisterContainer(services);
 
-			var cfg = new ApiConfig()
-			{
-			};
+            var cfg = new ApiConfig()
+            {
+            };
 
-			var apiHost = new ApiHost(cfg)
-				.WithContainer(Container);
-		}
-	}
+            var apiHost = new ApiHost(cfg)
+                .WithContainer(Container);
+        }
+    }
 }

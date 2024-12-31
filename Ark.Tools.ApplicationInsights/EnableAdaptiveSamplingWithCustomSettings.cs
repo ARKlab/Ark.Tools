@@ -8,7 +8,7 @@ namespace Ark.Tools.ApplicationInsights
 {
     public class EnableAdaptiveSamplingWithCustomSettings : IConfigureOptions<TelemetryConfiguration>
     {
-        private IOptions<SamplingPercentageEstimatorSettings> _settings;
+        private readonly IOptions<SamplingPercentageEstimatorSettings> _settings;
 
         public EnableAdaptiveSamplingWithCustomSettings(IOptions<SamplingPercentageEstimatorSettings> settings)
         {
@@ -17,13 +17,13 @@ namespace Ark.Tools.ApplicationInsights
 
         public void Configure(TelemetryConfiguration tc)
         {
-            AdaptiveSamplingPercentageEvaluatedCallback samplingCallback = (ratePerSecond, currentPercentage, newPercentage, isChanged, estimatorSettings) =>
+            void samplingCallback(double ratePerSecond, double currentPercentage, double newPercentage, bool isChanged, SamplingPercentageEstimatorSettings estimatorSettings)
             {
                 if (isChanged)
                 {
                     tc.SetLastObservedSamplingPercentage(SamplingTelemetryItemTypes.Request, newPercentage);
                 }
-            };
+            }
 
             tc.DefaultTelemetrySink.TelemetryProcessorChainBuilder
                 .UseAdaptiveSampling(_settings.Value, samplingCallback, excludedTypes: "Event")

@@ -1,10 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Ark.Tools.Authorization;
-using System.Threading;
+﻿using Ark.Tools.Authorization;
+
 using SimpleInjector;
+
+using System;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid.Authorization
 {
@@ -45,10 +47,10 @@ namespace Ark.Tools.Solid.Authorization
                         (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk).ConfigureAwait(false);
                         if (!authorized)
                             throw new UnauthorizedAccessException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
-                    }                            
+                    }
                 }
             }
-                
+
             return await _inner.ExecuteAsync(query, ctk).ConfigureAwait(false);
         }
     }

@@ -1,18 +1,23 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+﻿using Ark.Reference.Core.Application;
+using Ark.Reference.Core.Application.Host;
+
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+using NodaTime;
+
+using Rebus.Bus;
 using Rebus.Persistence.InMem;
 using Rebus.Transport.InMem;
+
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
+
 using System;
-using System.Threading.Tasks;
 using System.Threading;
-using Microsoft.ApplicationInsights;
-using Ark.Reference.Core.Application.Host;
-using Ark.Reference.Core.Application;
-using Rebus.Bus;
-using NodaTime;
+using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Utils
 {
@@ -37,7 +42,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
                     )
                 .WithRebusIdentity()
                 ;
-            
+
         }
 
         public void Dispose()

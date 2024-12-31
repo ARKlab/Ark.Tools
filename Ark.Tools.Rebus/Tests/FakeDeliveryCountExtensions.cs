@@ -52,7 +52,7 @@ namespace MET.International.Common.Rebus.Tests
             bool hasNext = true;
             int v = 1;
 
-            int next() 
+            int next()
             {
                 lock (gate)
                 {
@@ -100,7 +100,7 @@ namespace MET.International.Common.Rebus.Tests
             public async Task<TransportMessage?> Receive(ITransactionContext context, CancellationToken cancellationToken)
             {
                 var m = await _inner.Receive(context, cancellationToken).ConfigureAwait(false);
-                if (m!= null)
+                if (m != null)
                     m.Headers[Headers.DeferCount] = _count().ToString(CultureInfo.InvariantCulture);
                 return m;
             }

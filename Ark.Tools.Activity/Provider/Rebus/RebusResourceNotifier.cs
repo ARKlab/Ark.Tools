@@ -1,24 +1,30 @@
-﻿using Newtonsoft.Json;
-using NodaTime;
-using NodaTime.Serialization.JsonNet;
-using SimpleInjector;
-using System.Threading.Tasks;
-using Ark.Tools.Activity.Messages;
-using NLog;
-using Rebus.Bus;
-using Rebus.Config;
-using Rebus.Compression;
-using Rebus.Serialization.Json;
+﻿using Ark.Tools.Activity.Messages;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
+
+using Newtonsoft.Json;
+
+using NLog;
+
+using NodaTime;
+using NodaTime.Serialization.JsonNet;
+
+using Rebus.Bus;
+using Rebus.Compression;
+using Rebus.Config;
+using Rebus.Serialization.Json;
+
+using SimpleInjector;
+
 using System;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Activity.Provider
 {
     public class RebusResourceNotifier : IResourceNotifier, IDisposable
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private bool _disposedValue;
         private readonly string _providerName;
         private readonly Container _container = new();
@@ -34,8 +40,8 @@ namespace Ark.Tools.Activity.Provider
                     o.EnableCompression();
                     o.SetMaxParallelism(1);
                     o.SetNumberOfWorkers(1);
-					o.ArkRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
-				})
+                    o.ArkRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
+                })
                 .Serialization(s =>
                 {
                     var cfg = new JsonSerializerSettings();
@@ -59,7 +65,8 @@ namespace Ark.Tools.Activity.Provider
         {
             var resource = new Resource { Provider = _providerName, Id = resourceId };
             _logger.Trace(CultureInfo.InvariantCulture, "Notifing ready slice for {Resource}@{Slice}", resource, slice);
-            return _container.GetInstance<IBus>().Advanced.Topics.Publish(resource.ToString(), new ResourceSliceReady() {
+            return _container.GetInstance<IBus>().Advanced.Topics.Publish(resource.ToString(), new ResourceSliceReady()
+            {
                 Resource = resource,
                 Slice = slice
             });
@@ -76,7 +83,7 @@ namespace Ark.Tools.Activity.Provider
         {
             get
             {
-               return _providerName;
+                return _providerName;
             }
         }
 

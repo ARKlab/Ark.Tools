@@ -1,8 +1,11 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
+
 using ArxOne.Ftp;
+
 using Org.Mentalis.Network.ProxySocket;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,10 +24,10 @@ namespace Ark.Tools.FtpClient
         private readonly ISocksConfig? _socksConfig;
         private readonly Action<FtpClientParameters>? _configurer;
 
-        private bool _isDisposed  =  false;
+        private bool _isDisposed = false;
 
-        public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig) 
-            : base (ftpConfig, maxPoolSize)
+        public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig)
+            : base(ftpConfig, maxPoolSize)
         {
             _semaphore = new SemaphoreSlim(maxPoolSize, maxPoolSize);
             _client = _getClient();
@@ -51,13 +54,13 @@ namespace Ark.Tools.FtpClient
         private protected virtual ArxOne.Ftp.FtpClient _getClient()
         {
             var ftpClientParameters = new FtpClientParameters()
-            { 
+            {
                 ConnectTimeout = TimeSpan.FromSeconds(60),
                 ReadWriteTimeout = TimeSpan.FromMinutes(3),
                 Passive = true,
             };
-            
-            if (_socksConfig != null) 
+
+            if (_socksConfig != null)
             {
                 ftpClientParameters.ProxyConnect = e =>
                 {
@@ -188,7 +191,7 @@ namespace Ark.Tools.FtpClient
                 _semaphore.Release();
             }
         }
-        
+
         protected virtual void Dispose(bool disposing)
         {
             if (_isDisposed) return;

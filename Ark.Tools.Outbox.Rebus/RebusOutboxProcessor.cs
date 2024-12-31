@@ -12,7 +12,7 @@ namespace Ark.Tools.Outbox.Rebus
     {
         private readonly IOutboxContextFactory _outboxContextFactory;
 
-        public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory) 
+        public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory)
             : base(topMessagesToRetrieve, transport, backoffStrategy, rebusLoggerFactory)
         {
             _outboxContextFactory = outboxContextFactory;

@@ -1,9 +1,11 @@
 ﻿using Ark.Tools.EventSourcing.Aggregates;
 using Ark.Tools.EventSourcing.Store;
+
 using Raven.Client.Documents;
 using Raven.Client.Documents.Conventions;
 using Raven.Client.Documents.Operations.Revisions;
 using Raven.Client.ServerWide.Operations;
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -24,7 +26,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 {
                     return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
                 }
-                
+
                 return null;
             });
 
@@ -39,7 +41,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
             conventions.FindCollectionName = type =>
             {
                 return func?.Invoke(type)
-                    ?? current?.Invoke(type) 
+                    ?? current?.Invoke(type)
                     ?? DocumentConventions.DefaultGetCollectionName(type);
             };
 

@@ -263,7 +263,7 @@ namespace Ark.Tools.Core
             string genericTypeName = genericType._toCSReservatedWord(true);
             if (genericType.IsNested)
             {
-                var argumentsToPass = arguments.Take(genericType.DeclaringType?.GetGenericArguments().Count()??0).ToArray();//Only the innermost will return the actual object and only from the GetGenericArguments directly on the type, not on the on genericDfintion, and only when all parameters including of the innermost are set
+                var argumentsToPass = arguments.Take(genericType.DeclaringType?.GetGenericArguments().Count() ?? 0).ToArray();//Only the innermost will return the actual object and only from the GetGenericArguments directly on the type, not on the on genericDfintion, and only when all parameters including of the innermost are set
                 arguments = arguments.Skip(argumentsToPass.Count()).ToArray();
                 genericTypeName = genericType.DeclaringType?._toGenericTypeString(argumentsToPass) + "." + _toCSReservatedWord(genericType, false);//Recursive
             }
@@ -283,7 +283,7 @@ namespace Ark.Tools.Core
             {
                 genericTypeName += t.FullName.Replace(genericType._toCSReservatedWord(true), "").Replace('+', '.');
             }
-            if (genericTypeName.IndexOf('[') >= 0 && genericTypeName.IndexOf(']') != genericTypeName.IndexOf('[') + 1) 
+            if (genericTypeName.IndexOf('[') >= 0 && genericTypeName.IndexOf(']') != genericTypeName.IndexOf('[') + 1)
                 genericTypeName = genericTypeName.Substring(0, genericTypeName.IndexOf('['));//For a non generic class nested in a generic class we will still have the type parameters at the end 
             return genericTypeName;
         }

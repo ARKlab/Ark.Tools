@@ -1,10 +1,10 @@
-﻿using Ark.Tools.Solid;
-
-using Ark.Reference.Core.API.Queries;
+﻿using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.Solid;
 
 using EnsureThat;
+
 using System.Threading;
 using System.Threading.Tasks;
 

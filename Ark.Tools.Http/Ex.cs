@@ -1,9 +1,21 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.NewtonsoftJson;
+
 using Flurl.Http;
 using Flurl.Http.Configuration;
+
 using System;
+
+/* Unmerged change from project 'Ark.Tools.Http (netstandard2.1)'
+Before:
 using Ark.Tools.NewtonsoftJson;
+using System.Text.Json;
+After:
+using Ark.Tools.NewtonsoftJson;
+
+using System.Text.Json;
+*/
 using System.Text.Json;
 #if !NET5_0_OR_GREATER
 using System.Net;

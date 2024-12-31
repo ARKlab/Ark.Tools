@@ -1,10 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Ark.Tools.Authorization;
-using System.Threading;
+﻿using Ark.Tools.Authorization;
+
 using SimpleInjector;
+
+using System;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid.Authorization
 {

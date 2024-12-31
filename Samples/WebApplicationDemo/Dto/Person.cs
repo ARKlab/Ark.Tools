@@ -2,8 +2,9 @@
 
 namespace WebApplicationDemo.Dto
 {
-    public static class Person {
-        
+    public static class Person
+    {
+
         /// <summary>
         /// Represents a person.
         /// </summary>
@@ -39,7 +40,7 @@ namespace WebApplicationDemo.Dto
 
         }
 
-        
+
         /// <summary>
         /// Represents a person.
         /// </summary>

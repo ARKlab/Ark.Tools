@@ -1,5 +1,7 @@
 ﻿using Microsoft.OpenApi.Models;
+
 using Swashbuckle.AspNetCore.SwaggerGen;
+
 using System.Collections.Generic;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle

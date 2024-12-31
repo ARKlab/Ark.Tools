@@ -1,17 +1,19 @@
 ﻿using NodaTime;
 using NodaTime.Text;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+
 using TechTalk.SpecFlow.Assist;
 
 namespace Ark.Tools.SpecFlow
 {
     public class NodaTimeValueRetriverAndComparer : IValueRetriever, IValueComparer
     {
-        private Type[] _types = [typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime), typeof(ZonedDateTime)];
-        private Type[] _nullableTypes = [typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?), typeof(ZonedDateTime)];
+        private readonly Type[] _types = [typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime), typeof(ZonedDateTime)];
+        private readonly Type[] _nullableTypes = [typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?), typeof(ZonedDateTime)];
 
         public bool CanCompare(object actualValue)
         {
@@ -25,7 +27,7 @@ namespace Ark.Tools.SpecFlow
 
         public bool Compare(string expectedValue, object actualValue)
         {
-            
+
             switch (actualValue)
             {
                 case LocalDate ld:
@@ -74,7 +76,7 @@ namespace Ark.Tools.SpecFlow
                 case OffsetDateTime odt:
                     {
                         var res6 = OffsetDateTimePattern.ExtendedIso.Parse(expectedValue);
-                        if (res6.Success) return res6.Value == odt; 
+                        if (res6.Success) return res6.Value == odt;
 
                         if (DateTimeOffset.TryParse(expectedValue, CultureInfo.CurrentCulture, DateTimeStyles.None, out var o))
                         {

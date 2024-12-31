@@ -1,8 +1,11 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
+
 using EnsureThat;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -25,7 +28,7 @@ namespace Ark.Tools.Nodatime
         }
         public override readonly string ToString()
         {
-            return string.Format(CultureInfo.InvariantCulture, "Start:{0} | End:{1}", _start,_end);
+            return string.Format(CultureInfo.InvariantCulture, "Start:{0} | End:{1}", _start, _end);
         }
 
 

@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using NodaTime;
+
 using System;
 using System.Globalization;
 
@@ -79,7 +81,8 @@ namespace Ark.Tools.Nodatime.Json
             if (r.HasValue)
             {
                 serializer.Serialize(writer, new Surrogate { Start = r.Value.Start, End = r.Value.End });
-            } else
+            }
+            else
             {
                 writer.WriteNull();
             }

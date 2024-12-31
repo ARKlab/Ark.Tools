@@ -119,7 +119,7 @@ namespace Ark.Tools.Authorization
         {
             _requirements.Add(new RolesAuthorizationRequirement(roles));
             return this;
-        }        
+        }
 
         /// <summary>
         /// Adds a <see cref="DenyAnonymousAuthorizationRequirement"/> to the current instance.

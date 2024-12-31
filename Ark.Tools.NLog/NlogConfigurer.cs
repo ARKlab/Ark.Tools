@@ -1,22 +1,26 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using NLog;
-using NLog.Config;
-using NLog.Targets;
-using Microsoft.Data.SqlClient;
-using NLog.Targets.Wrappers;
-using System.Text;
-using System;
-using NLog.Common;
-using System.Diagnostics;
 using Ark.Tools.NLog.Slack;
+
 using Microsoft.ApplicationInsights.NLogTarget;
-using TargetPropertyWithContext = Microsoft.ApplicationInsights.NLogTarget.TargetPropertyWithContext;
+using Microsoft.Data.SqlClient;
+
+using NLog;
+using NLog.Common;
+using NLog.Config;
 using NLog.LayoutRenderers;
 using NLog.Layouts;
-using System.Text.Json;
-using System.Reflection;
+using NLog.Targets;
+using NLog.Targets.Wrappers;
+
+using System;
+using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+
+using TargetPropertyWithContext = Microsoft.ApplicationInsights.NLogTarget.TargetPropertyWithContext;
 
 namespace Ark.Tools.NLog
 {
@@ -31,7 +35,7 @@ namespace Ark.Tools.NLog
         public const string MailFromDefault = "noreply@ark-energy.eu";
 
         public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
-                                             
+
         static NLogConfigurer()
         {
             LogManager.Setup()
@@ -204,7 +208,7 @@ namespace Ark.Tools.NLog
                 GlobalDiagnosticsContext.Set("AppName", appName);
                 // exclude Microsoft and System logging when NLog.Extensions.Logging is in use
                 _config.AddRule(new LoggingRule()
-                {                    
+                {
                     LoggerNamePattern = "System.*",
                     FinalMinLevel = LogLevel.Warn,
                 });
@@ -225,7 +229,7 @@ namespace Ark.Tools.NLog
             {
                 _config.AddTarget("Debugger", new DebuggerTarget("Debugger")
                 {
-                    Layout= TextLineLayout
+                    Layout = TextLineLayout
                 });
                 return this;
             }
@@ -244,7 +248,7 @@ namespace Ark.Tools.NLog
                 {
                     WebHookUrl = slackwebhook,
                 };
-                _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) as Target : slackTarget);
+                _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) : slackTarget);
                 return this;
             }
             public Configurer WithApplicationInsightsTarget(string instrumentationKey, bool async = true)
@@ -263,7 +267,7 @@ namespace Ark.Tools.NLog
                         })
                     }
                 };
-                _config.AddTarget(ApplicationInsightsTarget, async ? _wrapWithAsyncTargetWrapper(target) as Target : target);
+                _config.AddTarget(ApplicationInsightsTarget, async ? _wrapWithAsyncTargetWrapper(target) : target);
                 return this;
             }
 
@@ -274,7 +278,7 @@ namespace Ark.Tools.NLog
                 consoleTarget.AutoFlush = !async;
                 consoleTarget.Layout = TextLineLayout;
 
-                _config.AddTarget(ConsoleTarget, async ? _wrapWithAsyncTargetWrapper(consoleTarget) as Target : consoleTarget);
+                _config.AddTarget(ConsoleTarget, async ? _wrapWithAsyncTargetWrapper(consoleTarget) : consoleTarget);
                 return this;
             }
 
@@ -292,19 +296,20 @@ namespace Ark.Tools.NLog
                 fileTarget.MaxArchiveFiles = 30;
                 fileTarget.ArchiveAboveSize = 10000000;
                 fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
-                _config.AddTarget(FileTarget, async ? _wrapWithAsyncTargetWrapper(fileTarget) as Target : fileTarget);
+                _config.AddTarget(FileTarget, async ? _wrapWithAsyncTargetWrapper(fileTarget) : fileTarget);
 
                 return this;
             }
 
             public Configurer WithDatabaseTarget(string logTableName, string connectionString, bool async = true)
             {
-                logTableName = logTableName.Replace("[", string.Empty).Replace("]", string.Empty).Replace('.','_');
+                logTableName = logTableName.Replace("[", string.Empty).Replace("]", string.Empty).Replace('.', '_');
 
                 try
                 {
                     _ensureTableIsCreated(connectionString, logTableName);
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     InternalLogger.Fatal(ex, "Failed to setup Ark Database Target. Database logging is disabled");
                     // continue setup the Target: it's not going to work but NLog handles it gracefully
@@ -358,19 +363,20 @@ VALUES
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", "${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("RequestID", @"${mdlc:item=RequestID}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ActivityId", "${activity:property=TraceId}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", new JsonLayout() {                     
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", new JsonLayout()
+                {
                     ExcludeEmptyProperties = true,
                     IncludeGdc = false, //false, due to NLog not respecting ExcludeProperties for GDC and we want to exclude AppName :(
                     IncludeScopeProperties = true,
                     RenderEmptyObject = true,
                     IncludeEventProperties = true,
-                    ExcludeProperties = { "Message", "Exception","AppName" }
+                    ExcludeProperties = { "Message", "Exception", "AppName" }
                 }));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=Type,Message}}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString}}"));
-                _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) as Target : databaseTarget);
+                _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) : databaseTarget);
 
                 return this;
             }
@@ -402,8 +408,8 @@ VALUES
 
                 target.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
                 target.UseSystemNetMailSettings = true;
-                
-                _config.AddTarget(MailTarget, async ? _wrapWithAsyncTargetWrapper(target) as Target : target);
+
+                _config.AddTarget(MailTarget, async ? _wrapWithAsyncTargetWrapper(target) : target);
 
                 return this;
             }
@@ -416,7 +422,7 @@ VALUES
             public Configurer WithMailTarget(string? from, string to, string? smtpServer, int? smtpPort, string? smtpUserName, string? smtpPassword, bool useSsl, bool async = true)
             {
                 var target = _getBasicMailTarget();
-                
+
                 target.From = from;
                 target.To = to;
 
@@ -429,7 +435,7 @@ VALUES
                 target.SmtpUserName = smtpUserName;
                 target.SmtpPassword = smtpPassword;
 
-                _config.AddTarget(MailTarget, async ? _wrapWithAsyncTargetWrapper(target) as Target : target);
+                _config.AddTarget(MailTarget, async ? _wrapWithAsyncTargetWrapper(target) : target);
 
                 return this;
             }
@@ -539,7 +545,7 @@ VALUES
             {
                 var target = _config.FindTargetByName(MailTarget);
                 _config.RemoveRuleByName(MailTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel,  target) { RuleName = MailTarget, Final = final });
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = MailTarget, Final = final });
 
                 return this;
             }

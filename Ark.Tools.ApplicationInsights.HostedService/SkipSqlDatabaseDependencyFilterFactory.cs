@@ -1,6 +1,7 @@
-﻿using Microsoft.ApplicationInsights.Extensibility;
+﻿using Ark.Tools.AspNetCore.ApplicationInsights;
+
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.WorkerService;
-using Ark.Tools.AspNetCore.ApplicationInsights;
 
 namespace Ark.Tools.ApplicationInsights.HostedService
 {

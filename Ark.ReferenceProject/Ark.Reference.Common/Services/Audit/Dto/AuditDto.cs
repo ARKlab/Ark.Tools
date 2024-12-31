@@ -1,4 +1,5 @@
 ﻿using NodaTime;
+
 using System;
 
 namespace Ark.Reference.Common.Services.Audit

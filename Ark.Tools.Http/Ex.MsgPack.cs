@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Flurl;
 using Flurl.Http;
+
 using MessagePack;
+
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;

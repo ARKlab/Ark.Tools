@@ -2,7 +2,7 @@
 
 namespace Ark.Reference.Core.Application.Config
 {
-    public interface IApiHostConfig 
+    public interface IApiHostConfig
         : IRebusBusConfig
         , ICoreDataContextConfig
         , ICoreConfig

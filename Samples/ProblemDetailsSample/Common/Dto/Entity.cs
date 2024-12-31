@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.Core.EntityTag;
+
 using System.ComponentModel.DataAnnotations;
 
 namespace ProblemDetailsSample.Common.Dto
@@ -11,7 +12,7 @@ namespace ProblemDetailsSample.Common.Dto
             {
                 public virtual string? _ETag { get; set; }
 
-				[Required]
+                [Required]
                 public string? EntityId { get; set; }
             }
 

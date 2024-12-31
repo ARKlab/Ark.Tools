@@ -3,6 +3,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
+
 using System;
 using System.Globalization;
 using System.Linq;
@@ -14,11 +15,11 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
         private readonly char _separator;
         private readonly string? _key;
 
-        public SeparatedPathValueProvider(char separator, RouteValueDictionary values) 
+        public SeparatedPathValueProvider(char separator, RouteValueDictionary values)
             : this(null, separator, values)
         { }
 
-        public SeparatedPathValueProvider(string? key, char separator, RouteValueDictionary values) 
+        public SeparatedPathValueProvider(string? key, char separator, RouteValueDictionary values)
             : base(BindingSource.Path, values, CultureInfo.InvariantCulture)
         {
             _separator = separator;

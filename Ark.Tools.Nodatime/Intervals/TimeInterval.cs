@@ -1,7 +1,9 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -9,7 +11,7 @@ using System.Runtime.InteropServices;
 namespace Ark.Tools.Nodatime.Intervals
 {
     [StructLayout(LayoutKind.Auto)]
-    public struct TimeInterval
+    public readonly struct TimeInterval
         : IComparable<TimeInterval>
         , IEquatable<TimeInterval>
     {
@@ -177,11 +179,11 @@ namespace Ark.Tools.Nodatime.Intervals
             switch (period)
             {
                 case TimePeriod.Hour:
-                    return Duration.FromHours(1*count);
+                    return Duration.FromHours(1 * count);
                 case TimePeriod.Minute:
-                    return Duration.FromMinutes(1*count);
+                    return Duration.FromMinutes(1 * count);
                 case TimePeriod.TenMinutes:
-                    return Duration.FromMinutes(10*count);
+                    return Duration.FromMinutes(10 * count);
                 case TimePeriod.QuarterHour:
                     return Duration.FromMinutes(15 * count);
                 case TimePeriod.HalfHour:

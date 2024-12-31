@@ -1,7 +1,9 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +14,7 @@ namespace Ark.Tools.Nodatime
 {
     [StructLayout(LayoutKind.Auto)]
     [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-    public struct ZonedDateTimeRange 
+    public readonly struct ZonedDateTimeRange
         : IEquatable<ZonedDateTimeRange>
     {
         private readonly ZonedDateTime _start, _end;
@@ -78,8 +80,8 @@ namespace Ark.Tools.Nodatime
         {
             Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
             return new ZonedDateTimeRange(
-                _start.ToInstant() < other._start.ToInstant() ? _start : other._start, 
-                _end.ToInstant()> other._end.ToInstant() ? _end : other._end
+                _start.ToInstant() < other._start.ToInstant() ? _start : other._start,
+                _end.ToInstant() > other._end.ToInstant() ? _end : other._end
                 );
         }
 

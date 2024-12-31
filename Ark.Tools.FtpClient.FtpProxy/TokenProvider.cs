@@ -61,7 +61,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                         Audience = _config.ApiIdentifier,
                         ClientId = _config.ClientID,
                         ClientSecret = _config.ClientKey
-                    }, ct),ctk)
+                    }, ct), ctk)
 .ConfigureAwait(false);
 
                 return result.AccessToken;

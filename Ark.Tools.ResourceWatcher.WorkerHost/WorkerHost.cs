@@ -31,7 +31,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
         public abstract void RunAndBlock(CancellationToken ctk = default);
     }
-    
+
     /// <summary>
     /// A host for a classic worker that poll resources from one provider, with state-tracking and "writer" (outputs)
     /// </summary>
@@ -106,7 +106,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         {
             deps?.Invoke(new Dependencies(this));
         }
-        
+
         /// <summary>
         /// Set the data provider implementation to use
         /// </summary>
@@ -137,7 +137,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 deps?.Invoke(d);
                 d.Container.Register<TFileProcessor>(lifeStyle ?? Lifestyle.Singleton);
                 d.Container.Collection.Append(typeof(IResourceProcessor<TResource, TMetadata>), typeof(TFileProcessor));
-            });                       
+            });
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             {
                 deps?.Invoke(d);
                 d.Container.RegisterSingleton<IStateProvider, TStateProvider>();
-            });            
+            });
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
             _configurers.Add(configurer);
         }
-        
+
         /// <summary>
         /// Exec a single run with additional configurer for the provider filter.
         /// </summary>
@@ -217,7 +217,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         protected virtual void _onInit()
         {
             if (_container.IsLocked) return;
-            
+
             _container.Collection.Register<Predicate<TMetadata>>(_predicates);
             _container.Collection.Register<Action<TQueryFilter>>(_configurers);
 
@@ -259,7 +259,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                   Container container
                 , IEnumerable<Action<TQueryFilter>> filterChainBuilder
                 , IEnumerable<Predicate<TMetadata>> metadataFilterChain
-                ) 
+                )
                 : base(container.GetInstance<IResourceWatcherConfig>(), container.GetInstance<IStateProvider>())
             {
                 _filterChainBuilder = filterChainBuilder;
@@ -324,17 +324,18 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 if (data != null)
                 {
                     _logger.Info(CultureInfo.InvariantCulture, "Retrived ResourceId={ResourceId} in {Elapsed}", context.Info.ResourceId, sw.Elapsed);
-                    
+
                     foreach (var w in _container.GetAllInstances<IResourceProcessor<TResource, TMetadata>>())
                     {
                         sw.Restart();
                         await w.Process(data, ctk).ConfigureAwait(false);
                         _logger.Info(CultureInfo.InvariantCulture, "Processed ResourceId={ResourceId} with {Name} in {Elapsed}", context.Info.ResourceId, w.GetType().Name, sw.Elapsed);
                     }
-                } else
+                }
+                else
                 {
                     _logger.Info(CultureInfo.InvariantCulture, "Retrived ResourceId={ResourceId} in {Elapsed} but is NULL, so nothing to do", context.Info.ResourceId, sw.Elapsed);
-                }               
+                }
             }
 
             protected override Task<TResource?> _retrievePayload(IResourceMetadata info, IResourceTrackedState? lastState, CancellationToken ctk = default)

@@ -31,50 +31,50 @@ namespace Ark.Tools.EventSourcing.RavenDb
         {
             session.Advanced.UseOptimisticConcurrency = false;
             _session = session;
-            
+
             _chexKey = $"{AggregateHelper<TAggregate>.Name}/{aggregateId}/version";
         }
 
 
-		public override async Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default)
-		{
-			var aggrname = AggregateHelper<TAggregate>.Name;
-			var envelopes = new List<AggregateEventStore>();
+        public override async Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default)
+        {
+            var aggrname = AggregateHelper<TAggregate>.Name;
+            var envelopes = new List<AggregateEventStore>();
 
-			_chex = await _session.Advanced.ClusterTransaction.GetCompareExchangeValueAsync<long>(_chexKey, ctk).ConfigureAwait(false);
+            _chex = await _session.Advanced.ClusterTransaction.GetCompareExchangeValueAsync<long>(_chexKey, ctk).ConfigureAwait(false);
 
-			if (_chex == null)
-			{
-				return Array.Empty<AggregateEventEnvelope<TAggregate>>();
-			}
+            if (_chex == null)
+            {
+                return Array.Empty<AggregateEventEnvelope<TAggregate>>();
+            }
 
-			maxVersion = Math.Min(_chex.Value, maxVersion);
+            maxVersion = Math.Min(_chex.Value, maxVersion);
 
-			string? lastId = null;
-			while (envelopes.Count != maxVersion)
-			{
-				var results = await _session.Advanced.StreamAsync<AggregateEventStore>(
-					$"{aggrname}/{Identifier}/",
-					startAfter: lastId,
-					pageSize: (int)maxVersion - envelopes.Count,
-					token: ctk).ConfigureAwait(false);
+            string? lastId = null;
+            while (envelopes.Count != maxVersion)
+            {
+                var results = await _session.Advanced.StreamAsync<AggregateEventStore>(
+                    $"{aggrname}/{Identifier}/",
+                    startAfter: lastId,
+                    pageSize: (int)maxVersion - envelopes.Count,
+                    token: ctk).ConfigureAwait(false);
 
-				while (envelopes.Count != maxVersion && await results.MoveNextAsync(ctk).ConfigureAwait(false))
-				{
-					var envelope = results.Current;
-					if (envelope.Document.AggregateVersion != envelopes.Count + 1)
-						break;
+                while (envelopes.Count != maxVersion && await results.MoveNextAsync(ctk).ConfigureAwait(false))
+                {
+                    var envelope = results.Current;
+                    if (envelope.Document.AggregateVersion != envelopes.Count + 1)
+                        break;
 
-					envelopes.Add(envelope.Document);
-					lastId = envelope.Id;
-				}
-			}
+                    envelopes.Add(envelope.Document);
+                    lastId = envelope.Id;
+                }
+            }
 
-			return envelopes.Select(x => x.FromStore<TAggregate>());
-		}
+            return envelopes.Select(x => x.FromStore<TAggregate>());
+        }
 
 
-		public override async Task SaveChangesAsync(CancellationToken ctk = default)
+        public override async Task SaveChangesAsync(CancellationToken ctk = default)
         {
             if (Aggregate.UncommittedAggregateEvents.Any())
             {

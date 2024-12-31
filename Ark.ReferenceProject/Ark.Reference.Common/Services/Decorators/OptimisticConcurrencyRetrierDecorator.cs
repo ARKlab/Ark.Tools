@@ -1,12 +1,14 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Ark.Tools.Solid;
+
 using Polly;
-using Ark.Tools.Solid;
+
+using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Reference.Common.Services.Decorators
 {
-    public sealed class OptimisticConcurrencyRetrierDecorator<TRequest,TResult> : IRequestHandler<TRequest,TResult>
+    public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResult> : IRequestHandler<TRequest, TResult>
         where TRequest : IRequest<TResult>
     {
         private readonly IRequestHandler<TRequest, TResult> _inner;
@@ -28,7 +30,7 @@ namespace Ark.Reference.Common.Services.Decorators
         {
             return await Policy.Handle<Exception>(ex => ex.IsOptimistic())
                 .RetryAsync(2)
-                .ExecuteAsync(ct => _inner.ExecuteAsync(Request, ct),ctk);
+                .ExecuteAsync(ct => _inner.ExecuteAsync(Request, ct), ctk);
         }
 
     }

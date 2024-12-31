@@ -29,7 +29,7 @@ namespace Ark.Tools.Nodatime.Dapper
         }
 
         public override Instant Parse(object? value)
-        {         
+        {
             if (value == null || value is DBNull) return default;
 
             if (value is long l)

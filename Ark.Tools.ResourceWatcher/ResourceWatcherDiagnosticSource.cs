@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NLog;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -237,7 +238,7 @@ namespace Ark.Tools.ResourceWatcher
         public void ProcessResourceFailed(Activity activity, ProcessContext pc, bool isBanned, Exception ex)
         {
             var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
-            _logger.Log(lvl, ex, CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} process Failed", pc.Index , pc.Total, pc.CurrentInfo.ResourceId);
+            _logger.Log(lvl, ex, CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} process Failed", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
 
             _stop(activity, () => new
             {
@@ -325,7 +326,7 @@ namespace Ark.Tools.ResourceWatcher
 
             _reportException("ThrowDuplicateResourceIdRetrived", ex);
 
-            throw ex;            
+            throw ex;
         }
 
         public void ReportRunConsecutiveFailureLimitReached(Exception ex, int count)

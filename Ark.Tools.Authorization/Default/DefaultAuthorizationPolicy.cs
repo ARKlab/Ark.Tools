@@ -18,6 +18,6 @@ namespace Ark.Tools.Authorization
 
         public IReadOnlyList<IAuthorizationRequirement> Requirements { get { return _inner.Requirements; } }
 
-        public string Name { get { return _inner.Name; }   }
+        public string Name { get { return _inner.Name; } }
     }
 }

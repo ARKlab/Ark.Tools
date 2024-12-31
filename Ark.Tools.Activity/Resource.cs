@@ -55,7 +55,7 @@ namespace Ark.Tools.Activity
 
         public override readonly string ToString()
         {
-            return string.Format(null,"{0}.{1}", Provider, Id);
+            return string.Format(null, "{0}.{1}", Provider, Id);
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Ark.Reference.Common.Services.Audit
     public record AuditedEntityDto<TEntity> : IAuditedEntityDto<TEntity>
         where TEntity : class, IAuditEntity
     {
-        public TEntity? Entity { get; set; } 
+        public TEntity? Entity { get; set; }
         public Instant SysStartTime { get; set; }
         public Instant SysEndTime { get; set; }
     }

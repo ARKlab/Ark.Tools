@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Ark.Tools.Core
 {
-    public abstract class ValueObject<T> 
+    public abstract class ValueObject<T>
         : IEquatable<T>, IEquatable<ValueObject<T>>
         where T : ValueObject<T>
     {

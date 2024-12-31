@@ -1,4 +1,5 @@
 ﻿using NLog;
+
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -13,7 +14,7 @@ namespace Ark.Tools.Authorization
     /// </summary>
     public class DefaultAuthorizationService : IAuthorizationService
     {
-        private static ILogger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
         private readonly IAuthorizationContextFactory _contextFactory;
         private readonly IAuthorizationPolicyProvider _policyProvider;

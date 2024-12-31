@@ -39,7 +39,8 @@ namespace Ark.Tools.Outbox.Rebus
                 }
 
                 return scope;
-            } catch
+            }
+            catch
             {
                 scope.Dispose();
                 throw;

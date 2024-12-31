@@ -15,7 +15,7 @@ namespace Ark.Tools.FtpClient.Core
 {
     public abstract class FtpClientWithConnectionBase : FtpClientBase
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         protected FtpClientWithConnectionBase(FtpConfig ftpConfig)
             : base(ftpConfig)
@@ -104,7 +104,8 @@ namespace Ark.Tools.FtpClient.Core
                     await ListFolderAsync(pendingFolders.Pop().FullPath, ctk).ConfigureAwait(false);
 
                 return files;
-            } finally
+            }
+            finally
             {
                 conn?.Dispose();
             }

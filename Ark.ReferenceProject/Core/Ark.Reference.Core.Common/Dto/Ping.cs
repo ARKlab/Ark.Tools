@@ -1,6 +1,5 @@
-﻿using Ark.Reference.Core.Common.Enum;
-
-using Ark.Reference.Common.Services.Audit;
+﻿using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Core.Common.Enum;
 
 using System;
 
@@ -10,7 +9,7 @@ namespace Ark.Reference.Core.Common.Dto
     {
         public static class V1
         {
-            public record Create 
+            public record Create
             {
                 public string? Name { get; init; }
                 public PingType? Type { get; init; }

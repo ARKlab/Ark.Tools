@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
-using Ark.Tools.AspNetCore.ProblemDetails;
+﻿using Ark.Tools.AspNetCore.ProblemDetails;
+
+using System.Collections.Generic;
 
 namespace WebApplicationDemo.Dto
 {
     public class OutOfCreditProblemDetails : ArkProblemDetails
     {
-        public OutOfCreditProblemDetails() 
-			: base("You do not have enough credit.")
+        public OutOfCreditProblemDetails()
+            : base("You do not have enough credit.")
         {
             Accounts = new List<string>();
         }

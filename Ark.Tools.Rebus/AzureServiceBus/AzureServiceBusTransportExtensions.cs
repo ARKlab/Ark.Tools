@@ -1,6 +1,7 @@
 ﻿
 using Rebus.Config;
 using Rebus.Transport;
+
 using System;
 
 namespace Ark.Tools.Rebus.AzureServiceBus
@@ -9,7 +10,7 @@ namespace Ark.Tools.Rebus.AzureServiceBus
     {
         [Obsolete("Rebus now support this natively. Use UseAzureServiceBus(...).UseNativeMessageDeliveryCount()", true)]
         public static void UseAzureServiceBusNativeDeliveryCount(this StandardConfigurer<ITransport> configurer)
-        {            
+        {
         }
     }
 }

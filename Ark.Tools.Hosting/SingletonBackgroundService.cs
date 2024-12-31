@@ -94,13 +94,13 @@ namespace Ark.Tools.Hosting
 
                         _logger.LogInformation("Service<{ServiceName}> has acquired Lock<{LockId}>: executing " + nameof(RunAsync), ServiceName, LockId);
 
-                        using var ct = CancellationTokenSource.CreateLinkedTokenSource(handle.HandleLostToken, cancellationToken);                    
+                        using var ct = CancellationTokenSource.CreateLinkedTokenSource(handle.HandleLostToken, cancellationToken);
                         try
                         {
                             await RunAsync(ct.Token).ConfigureAwait(false);
                         }
-                        catch (OperationCanceledException) when (ct.IsCancellationRequested) 
-                        {}
+                        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                        { }
                         catch (Exception e)
                         {
                             _logger.LogError(e, "Service<{ServiceName}>.RunAsync() exited with exception.", ServiceName);

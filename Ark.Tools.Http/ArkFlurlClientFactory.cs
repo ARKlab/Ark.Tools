@@ -28,7 +28,7 @@ namespace Ark.Tools.Http
 
             return builder.Build();
         }
-        
+
         public IFlurlClient Get(Uri baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoftJson = null) => Get(baseUrl.ToString(), settings, useNewtonsoftJson);
     }
 }

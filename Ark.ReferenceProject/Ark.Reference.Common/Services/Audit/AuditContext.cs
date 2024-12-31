@@ -74,7 +74,7 @@ namespace Ark.Reference.Common.Services.Audit
                     {(query.AuditKinds?.Length > 0 ? "AND [Kind] IN @AuditKinds" : "")}
                     {(query.FromDateTime != null ? "AND [SysStartTime] >= @FromDateTime" : "")}
                     {(query.ToDateTime != null ? "AND [SysStartTime] <= @ToDateTime" : "")}
-            ", 
+            ",
             parameters, transaction: _dbTransaction, cancellationToken: ctk);
             await using var q = await _dbConnection.QueryMultipleAsync(cmd);
 

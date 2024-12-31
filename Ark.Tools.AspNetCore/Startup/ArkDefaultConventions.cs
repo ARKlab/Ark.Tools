@@ -10,11 +10,11 @@ using System.Linq;
 namespace Ark.Tools.AspNetCore.Startup
 {
     internal sealed class ArkDefaultConventions : IActionModelConvention
-	{
-		private static HashSet<string> _consumeMethods = new(System.StringComparer.Ordinal) { "POST", "PUT", "PATCH" };
+    {
+        private static readonly HashSet<string> _consumeMethods = new(System.StringComparer.Ordinal) { "POST", "PUT", "PATCH" };
 
-		public void Apply(ActionModel action)
-		{
+        public void Apply(ActionModel action)
+        {
             var models = action.Selectors.OfType<SelectorModel>();
             var methods = models
                 .SelectMany(m => m.EndpointMetadata)
@@ -24,7 +24,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
             var isOData = models
                 .SelectMany(m => m.EndpointMetadata)
-                .OfType<Microsoft.AspNetCore.OData.Routing.ODataRoutingMetadata> ()
+                .OfType<Microsoft.AspNetCore.OData.Routing.ODataRoutingMetadata>()
                 .Any();
 
             if (isOData) return;
@@ -50,5 +50,5 @@ namespace Ark.Tools.AspNetCore.Startup
                 action.Filters.Add(new ProducesAttribute("application/json"));
 
         }
-	}
+    }
 }

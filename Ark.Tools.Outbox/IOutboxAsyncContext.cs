@@ -2,5 +2,5 @@
 
 namespace Ark.Tools.Outbox
 {
-    public interface IOutboxAsyncContext: IOutboxContextCore, IAsyncContext { }
+    public interface IOutboxAsyncContext : IOutboxContextCore, IAsyncContext { }
 }

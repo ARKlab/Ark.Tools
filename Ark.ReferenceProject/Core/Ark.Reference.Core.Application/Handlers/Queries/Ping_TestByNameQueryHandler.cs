@@ -1,7 +1,6 @@
-﻿using Ark.Tools.Solid;
-
-using Ark.Reference.Core.API.Queries;
+﻿using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.Solid;
 
 using EnsureThat;
 
@@ -14,7 +13,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
     {
 
         public Ping_TestByNameQueryHandler()
-        { 
+        {
 
         }
 

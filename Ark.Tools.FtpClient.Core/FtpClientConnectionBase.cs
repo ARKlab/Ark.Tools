@@ -1,8 +1,11 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NLog;
+
 using Polly;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,7 +18,7 @@ namespace Ark.Tools.FtpClient.Core
 {
     public abstract class FtpClientConnectionBase : IFtpClientConnection
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         public Uri Uri { get; }
         public NetworkCredential Credentials { get; }
@@ -30,13 +33,13 @@ namespace Ark.Tools.FtpClient.Core
 
             Uri = ftpConfig.Uri;
             Credentials = ftpConfig.Credentials;
-            
+
             FtpConfig = ftpConfig;
         }
 
         public abstract Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default);
         public abstract Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default);
-        public abstract Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default);        
+        public abstract Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default);
         public virtual async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
             _logger.Trace(CultureInfo.InvariantCulture, "List files starting from path: {Path}", startPath);

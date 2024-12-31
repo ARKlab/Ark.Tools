@@ -11,7 +11,7 @@ namespace LinuxWebJobHosting.Utils
 {
     public class HostedService : BackgroundService
     {
-        private Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly Random _random;
 
         public HostedService()

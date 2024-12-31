@@ -17,7 +17,7 @@ namespace WebApplicationDemo.Controllers.V2
     [ApiVersion(2.0)]
     public class PeopleController : ODataController
     {
-        private static List<Person.V2> _people = new()
+        private static readonly List<Person.V2> _people = new()
         {
             new()
             {

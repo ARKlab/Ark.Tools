@@ -1,7 +1,9 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NLog;
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +24,7 @@ namespace Ark.Tools.Solid.Decorators
         }
 
         public TResult Execute(TQuery query)
-        {            
+        {
             try
             {
                 return _decorated.Execute(query);
@@ -39,7 +41,8 @@ namespace Ark.Tools.Solid.Decorators
             try
             {
                 return await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.Error(ex, "Exception occured");
                 throw;

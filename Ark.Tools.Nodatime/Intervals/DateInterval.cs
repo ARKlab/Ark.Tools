@@ -1,7 +1,9 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -31,7 +33,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public static bool IsStartOfInterval(LocalDateTime time, DatePeriod period)
         {
-            return LocalTime.Midnight == time.TimeOfDay && IsStartOfInterval(time.Date,period);
+            return LocalTime.Midnight == time.TimeOfDay && IsStartOfInterval(time.Date, period);
         }
 
         public static bool IsStartOfInterval(LocalDate date, DatePeriod period)
@@ -62,7 +64,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public static LocalDate EndOfInterval(LocalDate date, DatePeriod period)
         {
-            return StartOfInterval(date,period) + GetIncrement(period);
+            return StartOfInterval(date, period) + GetIncrement(period);
         }
 
         public readonly LocalDate Date { get { return _start; } }
@@ -86,7 +88,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly DateInterval PreviousInterval(uint count)
         {
-            return new DateInterval(_start - GetIncrement(count) , _period);
+            return new DateInterval(_start - GetIncrement(count), _period);
         }
 
         public readonly bool CanSplitInto(DatePeriod period)

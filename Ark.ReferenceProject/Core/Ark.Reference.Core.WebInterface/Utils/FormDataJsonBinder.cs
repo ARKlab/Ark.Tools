@@ -82,7 +82,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
             // Do not use this provider if the binding target is not a property
             var propName = context.Metadata.PropertyName;
-            if (propName == null) 
+            if (propName == null)
                 return null;
 
             var propInfo = context.Metadata.ContainerType?.GetProperty(propName);

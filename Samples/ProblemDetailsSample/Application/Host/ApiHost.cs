@@ -1,13 +1,16 @@
-﻿using Ark.Tools.Solid;
+﻿using Ark.Tools.SimpleInjector;
+using Ark.Tools.Solid;
+using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql;
+using Ark.Tools.Sql.SqlServer;
+
 using FluentValidation;
+
 using SimpleInjector;
+
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using Ark.Tools.SimpleInjector;
-using Ark.Tools.Solid.SimpleInjector;
-using Ark.Tools.Sql.SqlServer;
 
 namespace ProblemDetailsSample.Application.Handlers.Host
 {

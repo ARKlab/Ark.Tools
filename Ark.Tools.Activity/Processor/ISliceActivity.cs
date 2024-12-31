@@ -18,7 +18,7 @@ namespace Ark.Tools.Activity.Processor
 
         Task Process(Slice activitySlice);
 
-		TimeSpan? CoolDown { get; }
-	}
+        TimeSpan? CoolDown { get; }
+    }
 
 }

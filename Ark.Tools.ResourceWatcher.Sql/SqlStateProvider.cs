@@ -3,10 +3,15 @@
 using Ark.Tools.Core;
 using Ark.Tools.NewtonsoftJson;
 using Ark.Tools.Sql;
+
 using Dapper;
+
 using EnsureThat;
+
 using Newtonsoft.Json;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +25,7 @@ namespace Ark.Tools.ResourceWatcher
     {
         string DbConnectionString { get; }
     }
-    
+
     public class SqlStateProvider : IStateProvider
     {
         private readonly ISqlStateProviderConfig _config;
@@ -93,7 +98,7 @@ namespace Ark.Tools.ResourceWatcher
         public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
         {
             var st = states.AsList();
-            foreach(var s in st)
+            foreach (var s in st)
             {
                 Ensure.String.HasLengthBetween(s.Tenant, 1, 128);
                 Ensure.String.HasLengthBetween(s.ResourceId, 1, 300);
@@ -125,19 +130,22 @@ WHEN MATCHED THEN
 ;
 ";
 
-                await c.ExecuteAsync(q, new { table = st.Select(x => new
+                await c.ExecuteAsync(q, new
                 {
-                    x.Tenant,
-                    x.ResourceId,
-                    Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
-                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings),
-                    LastEvent = x.LastEvent.ToDateTimeUtc(),
-                    RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
-                    x.RetryCount,
-                    x.CheckSum,
-                    ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
-                    Exception = x.LastException?.ToString()
-                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]") }).ConfigureAwait(false);
+                    table = st.Select(x => new
+                    {
+                        x.Tenant,
+                        x.ResourceId,
+                        Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
+                        ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings),
+                        LastEvent = x.LastEvent.ToDateTimeUtc(),
+                        RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
+                        x.RetryCount,
+                        x.CheckSum,
+                        ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
+                        Exception = x.LastException?.ToString()
+                    }).ToDataTable().AsTableValuedParameter("[udt_State_v2]")
+                }).ConfigureAwait(false);
             }
         }
 

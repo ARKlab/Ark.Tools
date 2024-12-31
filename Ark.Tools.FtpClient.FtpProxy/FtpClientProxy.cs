@@ -107,7 +107,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         {
             path ??= "./";
             var tok = await _getAccessToken(ctk).ConfigureAwait(false);
-            
+
             var res = await _client.Request("v2", "ListFolder")
                 .WithOAuthBearerToken(tok)
                 .PostJsonAsync(new ListingRequest
@@ -149,7 +149,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     }, cancellationToken: ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
 .ConfigureAwait(false);
-                
+
                 return res.Where(e => !e.IsDirectory);
             }
             else
@@ -188,7 +188,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                 }
 
                 return entries.SelectMany(x => x.Where(e => !e.IsDirectory));
-            }            
+            }
         }
 
         public Task DeleteFileAsync(string path, CancellationToken ctk = default)
@@ -210,7 +210,8 @@ namespace Ark.Tools.FtpClient.FtpProxy
         {
             var flurlClient = new FlurlClientBuilder(_config.FtpProxyWebInterfaceBaseUri.ToString())
                 .ConfigureArkDefaults()
-                .ConfigureInnerHandler(h => {
+                .ConfigureInnerHandler(h =>
+                {
 #pragma warning disable MA0039 // Do not write your own certificate validation method
                     h.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
 #pragma warning restore MA0039 // Do not write your own certificate validation method

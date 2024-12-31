@@ -1,7 +1,6 @@
-﻿using Ark.Tools.Core.EntityTag;
-
-using Ark.Reference.Core.Common;
+﻿using Ark.Reference.Core.Common;
 using Ark.Reference.Core.Tests.Auth;
+using Ark.Tools.Core.EntityTag;
 
 using FluentAssertions;
 using FluentAssertions.Execution;
@@ -11,12 +10,12 @@ using Flurl.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+using Reqnroll;
+
 using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
-
-using Reqnroll;
 
 namespace Ark.Reference.Core.Tests
 {

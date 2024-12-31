@@ -1,7 +1,7 @@
-﻿using System;
-using System.Globalization;
+﻿using Reqnroll.Assist;
 
-using Reqnroll.Assist;
+using System;
+using System.Globalization;
 
 namespace Ark.Tools.Reqnroll
 {

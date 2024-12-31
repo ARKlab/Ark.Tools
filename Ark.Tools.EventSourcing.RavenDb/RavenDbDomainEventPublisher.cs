@@ -13,11 +13,11 @@ namespace Ark.Tools.EventSourcing.RavenDb
     public sealed class RavenDbDomainEventPublisher : IDisposable
     {
         private readonly IDocumentStore _store;
-        private SubscriptionWorker<OutboxEvent> _worker;
+        private readonly SubscriptionWorker<OutboxEvent> _worker;
         private readonly IDomainEventPublisher _publisher;
         private Task? _subscriptionWorkerTask;
         private CancellationTokenSource? _tokenSource;
-        private object _gate = new();
+        private readonly object _gate = new();
 
         public RavenDbDomainEventPublisher(IDocumentStore store, IDomainEventPublisher publisher)
         {
@@ -32,12 +32,14 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
         public async Task StartAsync(CancellationToken ctk = default)
         {
-            try {
+            try
+            {
                 await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions<OutboxEvent>
                 {
                     Name = "OutboxEventPublisher",
                 }, token: ctk).ConfigureAwait(false);
-            } catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
+            }
+            catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
             {
             }
 
@@ -66,7 +68,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     await Task.Delay(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
                 }
             }
-            
+
         }
 
         private async Task _exec(SubscriptionBatch<OutboxEvent> batch)

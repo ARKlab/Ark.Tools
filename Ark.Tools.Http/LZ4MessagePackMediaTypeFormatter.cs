@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using MessagePack;
+
 using System;
 using System.IO;
 using System.Net;
@@ -13,7 +14,7 @@ namespace Ark.Tools.Http
 {
     public class LZ4MessagePackMediaTypeFormatter : MediaTypeFormatter
     {
-        private MessagePackSerializerOptions _options;
+        private readonly MessagePackSerializerOptions _options;
 
         public static MediaTypeHeaderValue DefaultMediaType { get; } = new MediaTypeHeaderValue("application/x.msgpacklz4");
 

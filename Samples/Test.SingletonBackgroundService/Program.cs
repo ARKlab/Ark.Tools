@@ -11,12 +11,12 @@ namespace Test.SingletonBackgroundService
     {
         static async Task Main(string[] args)
         {
-            var host = Host.CreateDefaultBuilder(args)                
-                .ConfigureServices((ctx,s) =>
+            var host = Host.CreateDefaultBuilder(args)
+                .ConfigureServices((ctx, s) =>
                 {
                     s.AddSingleton<IDistributedLockProvider>(
                         new AzureBlobLeaseDistributedSynchronizationProvider(
-                            new Azure.Storage.Blobs.BlobContainerClient(ctx.Configuration["ConnectionStrings:Storage"],"locks")));
+                            new Azure.Storage.Blobs.BlobContainerClient(ctx.Configuration["ConnectionStrings:Storage"], "locks")));
                     s.AddHostedService<RunEvery30Sec>();
                     s.AddHostedService<RunForeverThrowsRandomly>();
                 })
@@ -28,7 +28,7 @@ namespace Test.SingletonBackgroundService
 
     internal sealed class RunEvery30Sec : Ark.Tools.Hosting.SingletonBackgroundService
     {
-        public RunEvery30Sec(IDistributedLockProvider distributedLockProvider, ILogger<RunEvery30Sec> logger, string? serviceName = null) 
+        public RunEvery30Sec(IDistributedLockProvider distributedLockProvider, ILogger<RunEvery30Sec> logger, string? serviceName = null)
             : base(distributedLockProvider, logger, serviceName)
         {
             Cooldown = TimeSpan.FromSeconds(30);

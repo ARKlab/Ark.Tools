@@ -31,7 +31,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
             var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
 #pragma warning disable MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
 #pragma warning disable MA0040 // Forward the CancellationToken parameter to methods that take one
-            var r2 = lifetime.ApplicationStopping.Register(() 
+            var r2 = lifetime.ApplicationStopping.Register(()
                 => webHostBuilder.StopAsync().GetAwaiter().GetResult()
                 );
 #pragma warning restore MA0040 // Forward the CancellationToken parameter to methods that take one

@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.AspNetCore.NestedStartup;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,7 +12,7 @@ namespace Ark.Tools.AspNetCore.Startup
         : ArkStartupWebApiCommon where TArea : IArea
     {
 
-        protected ArkStartupNestedWebApi(IConfiguration configuration, IHostEnvironment environment) 
+        protected ArkStartupNestedWebApi(IConfiguration configuration, IHostEnvironment environment)
             : this(configuration, environment, true)
         {
         }

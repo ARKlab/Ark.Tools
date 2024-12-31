@@ -9,11 +9,11 @@ namespace Ark.Tools.Sql
 {
     public abstract class AbstractSqlContext<Tag> : ISqlContext<Tag>
     {
-        private DbConnection _connection;
+        private readonly DbConnection _connection;
         private DbTransaction? _transaction;
         private bool _disposed = false;
         private IsolationLevel _isolationLevel;
-        private object _lock = new();
+        private readonly object _lock = new();
 
         protected AbstractSqlContext(DbConnection connection, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
@@ -101,7 +101,7 @@ namespace Ark.Tools.Sql
         {
             if (_disposed)
                 return;
-            
+
             if (disposing)
             {
                 _transaction?.Dispose();

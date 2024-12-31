@@ -3,11 +3,11 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
 
+using Reqnroll;
+
 using System;
 using System.Data;
 using System.Linq;
-
-using Reqnroll;
 using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Tests.Init

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NodaTime;
 using NodaTime.Text;
+
 using System;
 using System.ComponentModel;
 using System.Globalization;
@@ -12,7 +13,7 @@ namespace Ark.Tools.Nodatime
     public class InstantConverter : TypeConverter
     {
         private readonly InstantPattern _pattern = InstantPattern.ExtendedIso;
-        private static Type[] _supportedFrom =
+        private static readonly Type[] _supportedFrom =
         [
             typeof(string),typeof(Instant)
         ];

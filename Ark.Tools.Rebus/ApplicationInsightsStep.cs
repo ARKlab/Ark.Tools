@@ -104,7 +104,7 @@ namespace Ark.Tools.Rebus
 
             return true;
         }
-        
+
         public Task Process(OutgoingStepContext context, Func<Task> next)
         {
             // Flowing the ActivityId isn't really required as most .net libraries (ie. Azure Service Bus) do inject and instrument it already.

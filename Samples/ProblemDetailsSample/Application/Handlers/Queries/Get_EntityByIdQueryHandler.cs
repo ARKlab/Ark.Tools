@@ -1,6 +1,9 @@
 ﻿using Ark.Tools.Solid;
+
 using EnsureThat;
+
 using ProblemDetailsSample.Common.Dto;
+
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,7 +20,7 @@ namespace ProblemDetailsSample.Api.Queries
         {
             EnsureArg.IsNotNull(query, nameof(query));
             EnsureArg.IsNot(query.EntityId, "ensure", System.StringComparison.Ordinal);
-            
+
             if (query.EntityId == "null") return null;
 
             var entity = new Entity.V1.Output()

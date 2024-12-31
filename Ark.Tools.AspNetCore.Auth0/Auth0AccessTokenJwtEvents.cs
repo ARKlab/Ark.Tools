@@ -2,11 +2,15 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+
 using Newtonsoft.Json;
+
 using Polly;
+
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,8 +19,8 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.Auth0
 {
@@ -54,12 +58,12 @@ namespace Ark.Tools.AspNetCore.Auth0
                 Audience = AuthorizationExtensionAudience,
                 ClientId = _clientId,
                 ClientSecret = _clientSecret
-            },ctk).ConfigureAwait(false);
+            }, ctk).ConfigureAwait(false);
 
             await cache.SetStringAsync(cacheKey, resp.AccessToken, new DistributedCacheEntryOptions
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(resp.ExpiresIn - 2*60)
-            },ctk).ConfigureAwait(false);
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(resp.ExpiresIn - 2 * 60)
+            }, ctk).ConfigureAwait(false);
 
             return resp.AccessToken;
         }

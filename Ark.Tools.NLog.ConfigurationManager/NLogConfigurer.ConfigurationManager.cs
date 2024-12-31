@@ -3,17 +3,17 @@
 using System.Configuration;
 using System.Globalization;
 
+using static Ark.Tools.NLog.NLogConfigurer;
+
 
 namespace Ark.Tools.NLog
 {
-    using static Ark.Tools.NLog.NLogConfigurer;
-
     public static class NLogConfigurerConfigurationManager
     {
 
         public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
         {
-            var smtp = ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SmtpConnStringName].ConnectionString 
+            var smtp = ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SmtpConnStringName].ConnectionString
                 ?? new SmtpConnectionBuilder()
                 {
                     Server = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpServer],
@@ -31,7 +31,7 @@ namespace Ark.Tools.NLog
                 MailTo = mailTo ?? ConfigurationManager.AppSettings[NLogDefaultConfigKeys.MailNotificationAddresses],
                 MailFrom = mailFrom,
                 SlackWebhook = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SlackWebHook],
-                ApplicationInsightsInstrumentationKey = ConfigurationManager.AppSettings["APPINSIGHTS_INSTRUMENTATIONKEY"] 
+                ApplicationInsightsInstrumentationKey = ConfigurationManager.AppSettings["APPINSIGHTS_INSTRUMENTATIONKEY"]
                     ?? ConfigurationManager.AppSettings["ApplicationInsights:InstrumentationKey"],
                 Async = async
             };

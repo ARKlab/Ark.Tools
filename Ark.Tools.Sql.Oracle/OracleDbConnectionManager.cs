@@ -49,7 +49,7 @@ namespace Ark.Tools.Sql.Oracle
         protected virtual OracleConnection Build(string connectionString)
         {
             var conn = new OracleConnection(connectionString);
-            
+
             conn.InfoMessage += new OracleInfoMessageEventHandler(OnInfoMessage);
 
             return conn;

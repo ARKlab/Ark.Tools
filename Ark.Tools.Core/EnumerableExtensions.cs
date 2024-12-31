@@ -114,7 +114,7 @@ namespace Ark.Tools.Core
                     .MakeGenericMethod(typeof(T), type)
                     ;
 
-                IQueryable<T> apply(IQueryable<T> collection) 
+                IQueryable<T> apply(IQueryable<T> collection)
                     => (IOrderedQueryable<T>)method.Invoke(null, [collection, lambda, comparer])!
                     ;
 

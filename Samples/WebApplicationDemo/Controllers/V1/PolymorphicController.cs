@@ -1,12 +1,12 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-
-using Ark.Tools.Solid;
+﻿using Ark.Tools.Solid;
 
 using Asp.Versioning;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
+using System.Threading;
+using System.Threading.Tasks;
 
 using WebApplicationDemo.Api.Queries;
 using WebApplicationDemo.Api.Requests;

@@ -1,11 +1,10 @@
-﻿using Ark.Tools.Core;
-using Ark.Tools.Solid;
-
-using Ark.Reference.Core.API.Queries;
+﻿using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.WebInterface.Utils;
+using Ark.Tools.Core;
+using Ark.Tools.Solid;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,8 +24,8 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             IRequestProcessor requestProcessor
             )
         {
-            _queryProcessor = queryProcessor;    
-            _requestProcessor = requestProcessor;    
+            _queryProcessor = queryProcessor;
+            _requestProcessor = requestProcessor;
         }
 
         /// <summary>
@@ -229,7 +228,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
                 Id = id
             }, ctk);
 
-            if (res) 
+            if (res)
                 return Ok(res);
 
             throw new EntityNotFoundException($"Ping with id '{id}' not found");

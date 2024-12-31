@@ -83,7 +83,8 @@ namespace Ark.Tools
             }
         }
 
-        public string ConnectionString {
+        public string ConnectionString
+        {
             get
             {
                 return $"Server={Server};Port={Port};Username={Username};Password={Password};UseSsl={UseSsl}" + (!string.IsNullOrWhiteSpace(From) ? $";From={From}" : string.Empty);

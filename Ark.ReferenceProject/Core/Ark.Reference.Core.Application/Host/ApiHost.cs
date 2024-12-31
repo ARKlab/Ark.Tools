@@ -1,4 +1,14 @@
-﻿using Ark.Tools.Authorization.Requirement;
+﻿using Ark.Reference.Common;
+using Ark.Reference.Common.Auth;
+using Ark.Reference.Common.Services.Auth;
+using Ark.Reference.Common.Services.Decorators;
+using Ark.Reference.Common.Services.FileStorageService;
+using Ark.Reference.Core.API.Messages;
+using Ark.Reference.Core.Application.Config;
+using Ark.Reference.Core.Application.DAL;
+using Ark.Reference.Core.Application.Handlers;
+using Ark.Reference.Core.Common.Auth;
+using Ark.Tools.Authorization.Requirement;
 using Ark.Tools.Outbox;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
@@ -11,18 +21,9 @@ using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 
 using Azure.Identity;
-using Ark.Reference.Core.Application.Config;
-using Ark.Reference.Core.Application.DAL;
-using Ark.Reference.Core.Application.Handlers;
-using Ark.Reference.Core.Common.Auth;
-
-using Ark.Reference.Common;
-using Ark.Reference.Common.Auth;
-using Ark.Reference.Common.Services.Auth;
-using Ark.Reference.Common.Services.Decorators;
-using Ark.Reference.Common.Services.FileStorageService;
 
 using FluentValidation;
+
 using NodaTime;
 
 using Rebus.Compression;
@@ -45,7 +46,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
-using Ark.Reference.Core.API.Messages;
 using System.Text.Json;
 
 namespace Ark.Reference.Core.Application.Host
@@ -131,7 +131,7 @@ namespace Ark.Reference.Core.Application.Host
 
         public ApiHost WithRebus(Queue queue = Queue.Core, InMemNetwork? inMemNetwork = null, InMemorySubscriberStore? inMemorySubscriberStore = null)
         {
-            var isInMemory = inMemNetwork != null && inMemorySubscriberStore != null;            
+            var isInMemory = inMemNetwork != null && inMemorySubscriberStore != null;
 
             if (queue != Queue.OneWay)
             {
@@ -209,7 +209,7 @@ namespace Ark.Reference.Core.Application.Host
                 {
                     r.TypeBased()
                         .MapAssemblyNamespaceOf<Ping_ProcessMessage.V1>(this.Config.RequestQueue);
-                    
+
                     //r.ForwardOnException<Exception>("error", LogLevel.Error, ex => _isContractException(ex));
                 })
                 .Options(o =>

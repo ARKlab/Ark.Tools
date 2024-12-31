@@ -78,7 +78,8 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                             var result = await Policy
                                 .Handle<Exception>()
                                 .RetryAsync(2)
-                                .ExecuteAsync(async ct => {
+                                .ExecuteAsync(async ct =>
+                                {
                                     using var res = await _client.PostAsync(url, content, context.RequestAborted).ConfigureAwait(false);
                                     res.EnsureSuccessStatusCode();
 

@@ -1,12 +1,14 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Ark.Tools.Authorization;
-using System.Threading;
-using SimpleInjector;
-using System.Security.Claims;
-using System.Collections.Generic;
+﻿using Ark.Tools.Authorization;
 using Ark.Tools.Solid;
+
+using SimpleInjector;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace Ark.Reference.Common.Services.Auth
@@ -47,14 +49,14 @@ namespace Ark.Reference.Common.Services.Auth
 
                     if (policy != null)
                     {
-                            (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk);
+                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk);
 
-                            if (authorized)
-                                return await _inner.ExecuteAsync(request, ctk);
-                            else
-                                policyFailed.Add(policy.Name, messages.ToList());
-                        }
+                        if (authorized)
+                            return await _inner.ExecuteAsync(request, ctk);
+                        else
+                            policyFailed.Add(policy.Name, messages.ToList());
                     }
+                }
 
                 if (policyFailed.Count > 0)
                 {

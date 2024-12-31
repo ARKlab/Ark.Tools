@@ -9,7 +9,7 @@ namespace Ark.Tools.Activity
         public Resource Resource { get; internal set; }
 
         internal Func<Slice, IEnumerable<Slice>> _getDependentSlice = s => Enumerable.Empty<Slice>();
-        
+
         public virtual IEnumerable<Slice> GetResourceSlices(Slice activitySlice)
         {
             return _getDependentSlice(activitySlice);
@@ -17,10 +17,11 @@ namespace Ark.Tools.Activity
 
         public static ResourceDependency OneSlice(Resource resource, Func<Slice, Slice> getDependentSourceSlice)
         {
-            return new ResourceDependency() {
+            return new ResourceDependency()
+            {
                 Resource = resource,
                 _getDependentSlice = s => [getDependentSourceSlice(s)]
-                };
+            };
         }
 
         public static ResourceDependency OneSlice(string provider, string resourceId, Func<Slice, Slice> getDependentSourceSlice)

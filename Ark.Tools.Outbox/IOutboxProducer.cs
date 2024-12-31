@@ -22,7 +22,7 @@ namespace Ark.Tools.Outbox
     public interface IOutboxConsumer
     {
         Task StartAsync(CancellationToken ctk = default);
-        Task StopAsync(CancellationToken ctk= default);
+        Task StopAsync(CancellationToken ctk = default);
 
         Task ClearAsync(CancellationToken ctk = default);
         Task<int> CountAsync(CancellationToken ctk = default);
@@ -47,7 +47,7 @@ namespace Ark.Tools.Outbox
         {
             using var ctx = _outboxContextFactory();
             await ctx.ClearAsync(ctk).ConfigureAwait(false);
-            ctx.Commit();           
+            ctx.Commit();
         }
 
         public async Task<int> CountAsync(CancellationToken ctk = default)
@@ -80,7 +80,7 @@ namespace Ark.Tools.Outbox
                     using var ctx = _outboxContextFactory();
                     var messages = await ctx.PeekLockMessagesAsync(BatchSize, ctk).ConfigureAwait(false);
                     await _processMessages(messages, ctk).ConfigureAwait(false);
-                    ctx.Commit();                    
+                    ctx.Commit();
                 }
                 catch (Exception e) when (!(e is TaskCanceledException))
                 {
@@ -102,7 +102,7 @@ namespace Ark.Tools.Outbox
         {
             _processorCT?.Dispose();
             if (_processorTask is not null)
-                await Task.WhenAny(_processorTask, Task.Delay(Timeout.Infinite, ctk)).ConfigureAwait(false);            
+                await Task.WhenAny(_processorTask, Task.Delay(Timeout.Infinite, ctk)).ConfigureAwait(false);
         }
 
         protected virtual void Dispose(bool disposing)

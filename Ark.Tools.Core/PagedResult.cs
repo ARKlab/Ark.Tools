@@ -3,8 +3,8 @@
 namespace Ark.Tools.Core
 {
     public record PagedResult<T> : ListResult<T>
-	{
-		public long Count { get; set; }
-		public bool IsCountPartial { get; set; }
-	}
+    {
+        public long Count { get; set; }
+        public bool IsCountPartial { get; set; }
+    }
 }

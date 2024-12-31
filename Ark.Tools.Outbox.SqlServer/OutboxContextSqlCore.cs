@@ -86,7 +86,7 @@ namespace Ark.Tools.Outbox.SqlServer
                         )
   
                     ";
-                
+
             }
 
             public string Insert { get; }

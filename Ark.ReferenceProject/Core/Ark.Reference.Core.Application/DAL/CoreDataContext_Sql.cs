@@ -1,9 +1,7 @@
-﻿using Ark.Tools.Outbox.SqlServer;
-using Ark.Tools.Solid;
-
+﻿using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Enum;
-
-using Ark.Reference.Common.Services.Audit;
+using Ark.Tools.Outbox.SqlServer;
+using Ark.Tools.Solid;
 
 using NLog;
 

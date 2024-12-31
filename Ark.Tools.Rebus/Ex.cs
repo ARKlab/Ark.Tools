@@ -73,7 +73,7 @@ namespace Ark.Tools.Rebus
                     new PipelineStepInjector(pipeline)
                         .OnSend(step, PipelineRelativePosition.Before, typeof(SerializeOutgoingMessageStep)))
                     .OnReceive(step, PipelineAbsolutePosition.Front)
-                    ;                
+                    ;
             });
         }
 

@@ -1,19 +1,19 @@
-﻿using Ark.Tools.Outbox.Rebus;
-using Ark.Tools.Solid;
-
-using Ark.Reference.Core.API.Messages;
+﻿using Ark.Reference.Core.API.Messages;
 using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Application.DAL;
+using Ark.Reference.Core.Application.Handlers.Messages;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Outbox.Rebus;
+using Ark.Tools.Solid;
 
 using EnsureThat;
 
 using Rebus.Bus;
+
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using Ark.Reference.Core.Application.Handlers.Messages;
 
 namespace Ark.Reference.Core.Application.Handlers.Requests
 {

@@ -1,18 +1,19 @@
 ﻿using Ark.Tools.EventSourcing.Aggregates;
 using Ark.Tools.EventSourcing.Events;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Ark.Tools.EventSourcing.Store
 {
-	public interface IAggregateEventStore
+    public interface IAggregateEventStore
     {
         string? Id { get; }
         long AggregateVersion { get; }
         string? EventName { get; }
         string? TypeName { get; }
-        
+
         Dictionary<string, string> Metadata { get; }
         void SetEvent(object @event);
     }
@@ -25,8 +26,8 @@ namespace Ark.Tools.EventSourcing.Store
         TEvent? Event { get; }
     }
 
-	public abstract class AggregateEventStore : IAggregateEventStore//, IAuditableEntity
-	{
+    public abstract class AggregateEventStore : IAggregateEventStore//, IAuditableEntity
+    {
         public string? Id { get; set; }
         public string? TypeName { get; set; }
         public Dictionary<string, string> Metadata { get; set; } = new(StringComparer.Ordinal);
@@ -36,11 +37,11 @@ namespace Ark.Tools.EventSourcing.Store
         public string? EventName { get; set; }
         public DateTimeOffset Timestamp { get; set; }
 
-		public abstract void SetEvent(object @event);
+        public abstract void SetEvent(object @event);
         public abstract object? GetEvent();
     }
 
-    public sealed class AggregateEventStore<TAggregate, TEvent> 
+    public sealed class AggregateEventStore<TAggregate, TEvent>
         : AggregateEventStore
         , IAggregateEventStore<TAggregate, TEvent>
         where TEvent : class, IAggregateEvent<TAggregate>
@@ -87,7 +88,7 @@ namespace Ark.Tools.EventSourcing.Store
             return new AggregateEventEnvelope<TAggregate>(
                 store.GetEvent() as IAggregateEvent<TAggregate> ?? throw new InvalidOperationException("Stored Event cannot be null")
                 , new Metadata(new MetadataContainer(store.Metadata)));
-            
+
         }
     }
 }

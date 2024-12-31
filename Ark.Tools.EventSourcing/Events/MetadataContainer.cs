@@ -49,7 +49,7 @@ namespace Ark.Tools.EventSourcing.Events
         }
 
         public T? GetMetadataValue<T>(string key, Func<string, T> converter, T? defaultValue = null)
-            where T: struct
+            where T : struct
         {
             if (!TryGetValue(key, out var value))
             {

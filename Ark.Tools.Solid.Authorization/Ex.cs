@@ -1,11 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
-using Ark.Tools.Authorization;
-using System.Security.Claims;
-using System.Collections.Generic;
+﻿using Ark.Tools.Authorization;
+
 using SimpleInjector;
+
+using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Security.Claims;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid.Authorization
 {
@@ -58,8 +60,8 @@ namespace Ark.Tools.Solid.Authorization
                 container.Collection.Append(typeof(IAuthorizationPolicy), policyType);
         }
 
-        public static async Task<object> GetResourceAsync<T,P>(Container c, T query, P policy, CancellationToken ctk = default) 
-            where T : notnull 
+        public static async Task<object> GetResourceAsync<T, P>(Container c, T query, P policy, CancellationToken ctk = default)
+            where T : notnull
             where P : notnull
         {
             var queryType = query.GetType();
@@ -75,8 +77,7 @@ namespace Ark.Tools.Solid.Authorization
             finally
             {
                 IDisposable? disp = handler as IDisposable;
-                if (disp != null)
-                    disp.Dispose();
+                disp?.Dispose();
             }
         }
 

@@ -25,7 +25,7 @@ namespace Ark.Tools.Outbox.Rebus
             {
                 waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
                 await ctx.CommitAsync(ctk).ConfigureAwait(false);
-            
+
                 return waitForMessages;
             }
         }

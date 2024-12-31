@@ -37,9 +37,9 @@ namespace Ark.Tools.SystemTextJson
             public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             {
                 var text = reader.GetString();
-                if (text == null) 
+                if (text == null)
                     return default;
-                else 
+                else
                     return (T?)_typeConverter.ConvertFromInvariantString(text);
             }
 

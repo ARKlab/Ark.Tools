@@ -1,9 +1,8 @@
-﻿using Ark.Tools.Core;
+﻿using Ark.Reference.Common.Auth;
+using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using Dapper;
-
-using Ark.Reference.Common.Auth;
 
 using FluentValidation;
 
@@ -140,7 +139,7 @@ namespace Ark.Reference.Common
         }
     }
 
-    
+
 
 
 }

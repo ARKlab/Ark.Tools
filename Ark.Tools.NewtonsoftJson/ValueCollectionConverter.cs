@@ -62,7 +62,8 @@ namespace Ark.Tools.NewtonsoftJson
                 if (value is null)
                 {
                     writer.WriteNull();
-                } else
+                }
+                else
                 {
                     writer.WriteStartArray();
                     foreach (var e in value)

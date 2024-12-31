@@ -1,6 +1,7 @@
-﻿using Ark.Reference.Core.Application.Host;
+﻿using Ark.Reference.Core.Application.Config;
+using Ark.Reference.Core.Application.Host;
+
 using Microsoft.Extensions.Configuration;
-using Ark.Reference.Core.Application.Config;
 
 
 namespace Ark.Reference.Core.Application

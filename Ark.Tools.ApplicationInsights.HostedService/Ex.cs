@@ -1,16 +1,18 @@
 ﻿using Ark.Tools.AspNetCore.ApplicationInsights;
+using Ark.Tools.NLog;
+
+using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
 using Microsoft.ApplicationInsights.WorkerService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
+using Microsoft.Extensions.Options;
+
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using Microsoft.Extensions.Options;
-using Microsoft.ApplicationInsights.DependencyCollector;
-using Ark.Tools.NLog;
 
 namespace Ark.Tools.ApplicationInsights.HostedService
 {
@@ -38,12 +40,12 @@ namespace Ark.Tools.ApplicationInsights.HostedService
                 });
 
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
-                {           
+                {
                     o.ApplicationVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
-                    o.ConnectionString = ctx.Configuration["ApplicationInsights:ConnectionString"] 
+                    o.ConnectionString = ctx.Configuration["ApplicationInsights:ConnectionString"]
                         ?? ctx.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
                         ?? $"InstrumentationKey=" + (
-                               ctx.Configuration["ApplicationInsights:InstrumentationKey"] 
+                               ctx.Configuration["ApplicationInsights:InstrumentationKey"]
                             ?? ctx.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]
                             )
                         ;
@@ -51,7 +53,7 @@ namespace Ark.Tools.ApplicationInsights.HostedService
                     o.EnableHeartbeat = true;
                     o.EnableDebugLogger = Debugger.IsAttached;
                     o.EnableDependencyTrackingTelemetryModule = true;
-                    
+
                 });
 
                 services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) => { module.EnableSqlCommandTextInstrumentation = true; });

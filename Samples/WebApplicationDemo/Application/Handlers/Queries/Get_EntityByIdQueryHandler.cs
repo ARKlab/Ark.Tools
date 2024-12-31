@@ -1,12 +1,17 @@
 ﻿using Ark.Tools.Solid;
+
 using EnsureThat;
-using WebApplicationDemo.Dto;
+
+using NLog;
+
+using NodaTime;
+
+using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using NLog;
-using System.Collections.Generic;
-using NodaTime;
-using System.Globalization;
+
+using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Api.Queries
 {
@@ -22,9 +27,9 @@ namespace WebApplicationDemo.Api.Queries
         public async Task<Entity.V1.Output?> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)
         {
             EnsureArg.IsNotNull(query, nameof(query));
-            
-            if (query.EntityId == "null") 
-				return null;
+
+            if (query.EntityId == "null")
+                return null;
 
             var entity = new Entity.V1.Output()
             {

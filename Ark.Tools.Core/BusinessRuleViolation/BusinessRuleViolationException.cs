@@ -8,13 +8,13 @@ namespace Ark.Tools.Core.BusinessRuleViolation
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "RCS1194:Implement exception constructors.", Justification = "Created from BusinessRuleViolation")]
     public sealed class BusinessRuleViolationException : Exception
     {
-        public BusinessRuleViolationException(BusinessRuleViolation br) 
+        public BusinessRuleViolationException(BusinessRuleViolation br)
             : base(br.Detail)
         {
             Data.Add("BusinessRuleViolation", br);
         }
 
-        public BusinessRuleViolationException(BusinessRuleViolation br, Exception innerException) 
+        public BusinessRuleViolationException(BusinessRuleViolation br, Exception innerException)
             : base(br.Detail, innerException)
         {
             Data.Add("BusinessRuleViolation", br);

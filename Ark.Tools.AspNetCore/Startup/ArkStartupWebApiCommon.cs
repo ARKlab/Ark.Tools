@@ -5,12 +5,17 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
 
+using Asp.Versioning;
+
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.OData.NewtonsoftJson;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,10 +34,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
-using Asp.Versioning;
-using Microsoft.AspNetCore.OData;
-using Microsoft.AspNetCore.OData.NewtonsoftJson;
-using Microsoft.AspNetCore.ResponseCompression;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
@@ -44,7 +45,8 @@ namespace Ark.Tools.AspNetCore.Startup
         public IHostEnvironment HostEnvironment { get; }
 
         protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
-            : this(configuration, hostEnvironment, false){
+            : this(configuration, hostEnvironment, false)
+        {
         }
 
         protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
@@ -68,9 +70,9 @@ namespace Ark.Tools.AspNetCore.Startup
 
             services.AddResponseCompression(options =>
             {
-                 options.EnableForHttps = true;
-                 options.Providers.Add<BrotliCompressionProvider>();
-                 options.Providers.Add<GzipCompressionProvider>();
+                options.EnableForHttps = true;
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
             });
 
             // Add minumum framework services.
@@ -175,7 +177,7 @@ namespace Ark.Tools.AspNetCore.Startup
                          .Where(subType => subType.IsSubclassOf(t) && !subType.IsGenericTypeDefinition);
                 });
                 c.SupportNonNullableReferenceTypes();
-                
+
                 c.EnableAnnotations();
             });
 

@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Hellang.Middleware.ProblemDetails;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,14 +24,14 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                     }
                 ).ToArray(), StringComparer.Ordinal) ?? new Dictionary<string, FluentValidationErrors[]>(StringComparer.Ordinal);
 
-			Detail = string.Join(Environment.NewLine, Errors.SelectMany(s => s.Value.Select(x => x.ErrorMessage)));
-		}
+            Detail = string.Join(Environment.NewLine, Errors.SelectMany(s => s.Value.Select(x => x.ErrorMessage)));
+        }
 
         public Dictionary<string, FluentValidationErrors[]> Errors { get; set; }
     }
 
     public record FluentValidationErrors
-    {        
+    {
         public string? ErrorMessage { get; init; }
         public object? AttemptedValue { get; init; }
         public object? CustomState { get; init; }

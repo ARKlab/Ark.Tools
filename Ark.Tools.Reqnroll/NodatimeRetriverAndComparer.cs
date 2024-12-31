@@ -1,19 +1,19 @@
 ﻿using NodaTime;
 using NodaTime.Text;
 
+using Reqnroll.Assist;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
-using Reqnroll.Assist;
-
 namespace Ark.Tools.Reqnroll
 {
     public class NodaTimeValueRetriverAndComparer : IValueRetriever, IValueComparer
     {
-        private Type[] _types = [typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime), typeof(ZonedDateTime)];
-        private Type[] _nullableTypes = [typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?), typeof(ZonedDateTime)];
+        private readonly Type[] _types = [typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime), typeof(ZonedDateTime)];
+        private readonly Type[] _nullableTypes = [typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?), typeof(ZonedDateTime)];
 
         public bool CanCompare(object actualValue)
         {

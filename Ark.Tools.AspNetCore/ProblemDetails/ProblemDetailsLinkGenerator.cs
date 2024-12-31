@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core.BusinessRuleViolation;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Http.Features;
@@ -10,7 +11,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     public class ProblemDetailsLinkGenerator : IProblemDetailsLinkGenerator
     {
-        private IProblemDetailsRouterProvider _provider;
+        private readonly IProblemDetailsRouterProvider _provider;
 
         public ProblemDetailsLinkGenerator(IProblemDetailsRouterProvider provider)
         {

@@ -1,8 +1,10 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System.Collections.Generic;
-using NodaTime;
 using EnsureThat;
+
+using NodaTime;
+
+using System.Collections.Generic;
 
 namespace Ark.Tools.Nodatime
 {
@@ -246,8 +248,8 @@ namespace Ark.Tools.Nodatime
         {
             Ensure.Bool.IsTrue(range.Start.Day == 1);
             Ensure.Bool.IsTrue(range.End.Day == 1);
-            Ensure.Bool.IsTrue(((range.Start.Month-1) % 3) == 0);
-            Ensure.Bool.IsTrue(((range.End.Month-1) % 3) == 0);
+            Ensure.Bool.IsTrue(((range.Start.Month - 1) % 3) == 0);
+            Ensure.Bool.IsTrue(((range.End.Month - 1) % 3) == 0);
 
             LocalDate c = range.Start;
             LocalDate e = range.End;

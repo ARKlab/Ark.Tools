@@ -6,7 +6,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 {
     public sealed class SFtpClientFactory : DefaultFtpClientFactory
     {
-        public SFtpClientFactory() 
+        public SFtpClientFactory()
             : base(new SFtpClientConnectionFactory())
         {
         }

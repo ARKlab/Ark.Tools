@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Mvc.Filters;
+
 using System;
 
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
@@ -14,7 +15,7 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
         {
         }
 
-        public SeparatedPathValueAttribute(char separator) 
+        public SeparatedPathValueAttribute(char separator)
             : this(null, separator)
         {
         }

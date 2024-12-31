@@ -46,7 +46,7 @@ namespace Ark.Tools.Outbox.Rebus
 
                     return messages;
                 });
-                
+
 
                 outgoingMessages.Enqueue(new OutboxMessage
                 {

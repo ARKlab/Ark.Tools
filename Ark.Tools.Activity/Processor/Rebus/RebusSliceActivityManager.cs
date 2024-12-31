@@ -1,20 +1,25 @@
-﻿using Ark.Tools.SimpleInjector;
+﻿using Ark.Tools.Activity.Messages;
+using Ark.Tools.Rebus;
+using Ark.Tools.Rebus.Retry;
+using Ark.Tools.SimpleInjector;
+
 using Newtonsoft.Json;
+
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
+
+using Rebus.Bus;
+using Rebus.Compression;
+using Rebus.Config;
+using Rebus.Handlers;
+using Rebus.Serialization.Json;
+
 using SimpleInjector;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Ark.Tools.Activity.Messages;
-using Rebus.Config;
-using Rebus.Compression;
-using Rebus.Handlers;
-using Rebus.Serialization.Json;
-using Ark.Tools.Rebus;
-using Ark.Tools.Rebus.Retry;
-using Rebus.Bus;
 
 namespace Ark.Tools.Activity.Processor
 {

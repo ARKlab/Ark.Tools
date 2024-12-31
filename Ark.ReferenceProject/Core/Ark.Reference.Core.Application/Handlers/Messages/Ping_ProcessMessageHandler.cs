@@ -1,17 +1,17 @@
-﻿using Ark.Tools.Solid;
-
+﻿using Ark.Reference.Core.API.Messages;
+using Ark.Reference.Core.Application.DAL;
+using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Solid;
 
 using EnsureThat;
+
 using Rebus.Retry.Simple;
 
 using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Ark.Reference.Core.API.Messages;
-using Ark.Reference.Core.Application.DAL;
-using Ark.Reference.Core.Common.Dto;
 
 namespace Ark.Reference.Core.Application.Handlers.Messages
 {

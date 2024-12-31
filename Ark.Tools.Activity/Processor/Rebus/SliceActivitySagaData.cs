@@ -11,7 +11,9 @@ namespace Ark.Tools.Activity.Processor
     {
         public Slice ActivitySlice { get; set; }
 
-        public string FormattedSliceStart { get
+        public string FormattedSliceStart
+        {
+            get
             {
                 return this.ActivitySlice.ToString();
             }
@@ -19,9 +21,9 @@ namespace Ark.Tools.Activity.Processor
 
         public List<SliceReady> MissingSlices { get; set; } = new List<SliceReady> { };
 
-		public DateTimeOffset? CoolDownTill { get; set; }
+        public DateTimeOffset? CoolDownTill { get; set; }
 
-		public bool IsScheduled { get; set; }
-		public bool IsCoolDown => CoolDownTill > DateTimeOffset.UtcNow;
-	}
+        public bool IsScheduled { get; set; }
+        public bool IsCoolDown => CoolDownTill > DateTimeOffset.UtcNow;
+    }
 }

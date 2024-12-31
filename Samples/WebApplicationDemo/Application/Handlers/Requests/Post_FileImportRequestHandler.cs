@@ -15,17 +15,17 @@ using WebApplicationDemo.Dto;
 namespace WebApplicationDemo.Application.Handlers.Requests
 {
     public class Post_FileImportRequestHandler : IRequestHandler<Post_FileImportRequest.V1, FileImport?>
-	{
-		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-		public FileImport? Execute(Post_FileImportRequest.V1 request)
-		{
-			return ExecuteAsync(request).GetAwaiter().GetResult();
-		}
+        public FileImport? Execute(Post_FileImportRequest.V1 request)
+        {
+            return ExecuteAsync(request).GetAwaiter().GetResult();
+        }
 
-		public async Task<FileImport?> ExecuteAsync(Post_FileImportRequest.V1 request, CancellationToken ctk = default)
-		{
-			EnsureArg.IsNotNull(request, nameof(request));
+        public async Task<FileImport?> ExecuteAsync(Post_FileImportRequest.V1 request, CancellationToken ctk = default)
+        {
+            EnsureArg.IsNotNull(request, nameof(request));
 
             using var buffer = new MemoryStream();
             // Copy source to destination.
@@ -43,5 +43,5 @@ namespace WebApplicationDemo.Application.Handlers.Requests
             return await Task.FromResult(f);
         }
 
-	}
+    }
 }

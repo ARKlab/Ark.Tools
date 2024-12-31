@@ -6,7 +6,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
     {
         protected ArkProblemDetails(string title)
         {
-            Title = title;            
+            Title = title;
         }
     }
 }
