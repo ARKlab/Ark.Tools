@@ -6,6 +6,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>
     <Nullable>enable</Nullable>
+
+	  <Features>strict</Features>
+	  <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
   </PropertyGroup>
 
     <PropertyGroup>
@@ -41,8 +44,6 @@
     <DebugType>portable</DebugType>
 	<DebugSymbols>true</DebugSymbols>
 
-
-	  <Features>strict</Features>
   </PropertyGroup>
 
 
@@ -55,8 +56,10 @@
 
 	<PropertyGroup>
 		<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
-	</PropertyGroup>	
-	
+		<Features>strict</Features>
+		<RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+		<Deterministic>true</Deterministic>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<None Include="..\ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
