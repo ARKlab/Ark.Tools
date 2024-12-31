@@ -23,4 +23,4 @@ jobs:
         # @source https://github.com/actions/dependency-review-action/issues/809#issuecomment-2285930024
         with:
           # Use comma-separated names to pass list arguments:
-          allow-licenses: Apache-2.0,BSD-3-Clause,BSD-2-Clause,MIT,Apache-2.0 AND MIT
+          allow-licenses: Apache-2.0,BSD-3-Clause,BSD-2-Clause,MIT,Apache-2.0 AND MIT,LicenseRef-scancode-generic-cla AND MIT
