@@ -2,8 +2,8 @@
 {
     public class ApplicationConstants
     {
-        public static readonly string[] Versions = {
+        public static readonly string[] Versions = [
              "1.0"
-        };
+        ];
     }
 }

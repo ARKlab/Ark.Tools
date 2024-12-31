@@ -29,9 +29,9 @@ namespace Ark.Tools.Auth0
         private readonly IAuthenticationApiClient _inner;
         private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
         private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
-        private readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+        private readonly MemoryCache _cache = new(new MemoryCacheOptions());
         private readonly MemoryCacheProvider _memoryCacheProvider; 
-        private readonly ConcurrentDictionary<string, Task> _pendingTasks = new ConcurrentDictionary<string, Task>(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, Task> _pendingTasks = new(StringComparer.Ordinal);
 
 
         public AuthenticationApiClientCachingDecorator(IAuthenticationApiClient inner)
@@ -139,7 +139,7 @@ namespace Ark.Tools.Auth0
                 )
             ) as Task<AccessTokenResponse>;
 
-            var res = await task!;
+            var res = await task!.ConfigureAwait(false);
 
             _pendingTasks.TryRemove(key, out var _);
             return res;

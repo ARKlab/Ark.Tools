@@ -72,7 +72,7 @@ If the maximum number of delivery attempts is reached, the message is passed to 
                     $"Received message with empty or absent '{Headers.MessageId}' header! All messages must carry" +
                     " an ID. If no ID is present, the message cannot be tracked" +
                     " between delivery attempts, and other stuff would also be much harder to" +
-                    " do - therefore, it is a requirement that messages carry an ID.")));
+                    " do - therefore, it is a requirement that messages carry an ID."))).ConfigureAwait(false);
 
                 transactionContext.SetResult(commit: false, ack: true);
 
@@ -91,7 +91,7 @@ If the maximum number of delivery attempts is reached, the message is passed to 
 
                 if (deliveryCount > maxDeliveryAttempts)
                 {
-                    var exceptions = await _errorTracker.GetExceptions(messageId);
+                    var exceptions = await _errorTracker.GetExceptions(messageId).ConfigureAwait(false);
                     var maxDescription = _retryStrategySettings.SecondLevelRetriesEnabled
                         ? $"which is {maxDeliveryAttempts}, i.e. 2 x {_retryStrategySettings.MaxDeliveryAttempts} because 2nd level retries are enabled"
                         : $"which is {maxDeliveryAttempts}";
@@ -101,8 +101,8 @@ If the maximum number of delivery attempts is reached, the message is passed to 
                         : $"Received message with native delivery count header value = {deliveryCount} thus exceeding MAX number of delivery attempts ({maxDescription}) – the error tracker did not provide additional information about the errors, which may/may not be because the errors happened on another Rebus instance.";
 
                     var exceptionInfo = _exceptionInfoFactory.CreateInfo(new RebusApplicationException(exceptionMessage));
-                    await _passToErrorHandler(context, _getAggregateException(new[] { exceptionInfo }.Concat(exceptions)));
-                    await _errorTracker.CleanUp(messageId);
+                    await _passToErrorHandler(context, _getAggregateException(new[] { exceptionInfo }.Concat(exceptions))).ConfigureAwait(false);
+                    await _errorTracker.CleanUp(messageId).ConfigureAwait(false);
                     transactionContext.SetResult(commit: false, ack: true);
 
                     return;
@@ -111,13 +111,13 @@ If the maximum number of delivery attempts is reached, the message is passed to 
 
             try
             {
-                await next();
-                await _handleManualDeadlettering(context);
+                await next().ConfigureAwait(false);
+                await _handleManualDeadlettering(context).ConfigureAwait(false);
                 transactionContext.SetResult(commit: true, ack: true);
 
                 if (transactionContext is ICanEagerCommit canEagerCommit)
                 {
-                    await canEagerCommit.CommitAsync();
+                    await canEagerCommit.CommitAsync().ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException) when (_cancellationToken.IsCancellationRequested)
@@ -127,7 +127,7 @@ If the maximum number of delivery attempts is reached, the message is passed to 
             }
             catch (Exception exception)
             {
-                await _handleException(exception, transactionContext, messageId, context, next, deliveryCountValue);
+                await _handleException(exception, transactionContext, messageId, context, next, deliveryCountValue).ConfigureAwait(false);
             }
         }
 
@@ -140,23 +140,23 @@ If the maximum number of delivery attempts is reached, the message is passed to 
                 // special case - it we're supposed to fail fast, AND 2nd level retries are enabled, AND this is the first delivery attempt, try to dispatch as 2nd level:
                 if (_retryStrategySettings.SecondLevelRetriesEnabled)
                 {
-                    await _errorTracker.MarkAsFinal(messageId);
-                    await _errorTracker.RegisterError(messageId, exception);
-                    await _dispatchSecondLevelRetry(transactionContext, messageId, context, next);
+                    await _errorTracker.MarkAsFinal(messageId).ConfigureAwait(false);
+                    await _errorTracker.RegisterError(messageId, exception).ConfigureAwait(false);
+                    await _dispatchSecondLevelRetry(transactionContext, messageId, context, next).ConfigureAwait(false);
                     return;
                 }
 
-                await _errorTracker.MarkAsFinal(messageId);
-                await _errorTracker.RegisterError(messageId, exception);
-                await _passToErrorHandler(context, _getAggregateException(new[] { _exceptionInfoFactory.CreateInfo(exception) }));
-                await _errorTracker.CleanUp(messageId);
+                await _errorTracker.MarkAsFinal(messageId).ConfigureAwait(false);
+                await _errorTracker.RegisterError(messageId, exception).ConfigureAwait(false);
+                await _passToErrorHandler(context, _getAggregateException([_exceptionInfoFactory.CreateInfo(exception)])).ConfigureAwait(false);
+                await _errorTracker.CleanUp(messageId).ConfigureAwait(false);
                 transactionContext.SetResult(commit: false, ack: true);
                 return;
             }
 
-            await _errorTracker.RegisterError(messageId, exception);
+            await _errorTracker.RegisterError(messageId, exception).ConfigureAwait(false);
 
-            if (!await _errorTracker.HasFailedTooManyTimes(messageId))
+            if (!await _errorTracker.HasFailedTooManyTimes(messageId).ConfigureAwait(false))
             {
                 transactionContext.SetResult(commit: false, ack: false);
                 return;
@@ -164,14 +164,15 @@ If the maximum number of delivery attempts is reached, the message is passed to 
 
             if (_retryStrategySettings.SecondLevelRetriesEnabled)
             {
-                await _dispatchSecondLevelRetry(transactionContext, messageId, context, next);
+                await _dispatchSecondLevelRetry(transactionContext, messageId, context, next).ConfigureAwait(false);
                 return;
             }
 
-            var aggregateException = _getAggregateException(await _errorTracker.GetExceptions(messageId));
+            var exceptions = await _errorTracker.GetExceptions(messageId).ConfigureAwait(false);
+            var aggregateException = _getAggregateException(exceptions);
 
-            await _passToErrorHandler(context, aggregateException);
-            await _errorTracker.CleanUp(messageId);
+            await _passToErrorHandler(context, aggregateException).ConfigureAwait(false);
+            await _errorTracker.CleanUp(messageId).ConfigureAwait(false);
             transactionContext.SetResult(commit: false, ack: true);
         }
 
@@ -179,10 +180,10 @@ If the maximum number of delivery attempts is reached, the message is passed to 
         {
             try
             {
-                await _dispatchSecondLevelRetry(transactionContext, context, next);
-                await _handleManualDeadlettering(context);
+                await _dispatchSecondLevelRetry(transactionContext, context, next).ConfigureAwait(false);
+                await _handleManualDeadlettering(context).ConfigureAwait(false);
                 transactionContext.SetResult(commit: true, ack: true);
-                await _errorTracker.CleanUp(messageId);
+                await _errorTracker.CleanUp(messageId).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (_cancellationToken.IsCancellationRequested)
             {
@@ -192,17 +193,17 @@ If the maximum number of delivery attempts is reached, the message is passed to 
             {
                 if (_failFastChecker.ShouldFailFast(messageId, secondLevelException))
                 {
-                    await _errorTracker.MarkAsFinal(messageId);
-                    await _errorTracker.RegisterError(messageId, secondLevelException);
-                    await _passToErrorHandler(context, _getAggregateException(new[] { _exceptionInfoFactory.CreateInfo(secondLevelException) }));
-                    await _errorTracker.CleanUp(messageId);
+                    await _errorTracker.MarkAsFinal(messageId).ConfigureAwait(false);
+                    await _errorTracker.RegisterError(messageId, secondLevelException).ConfigureAwait(false);
+                    await _passToErrorHandler(context, _getAggregateException([_exceptionInfoFactory.CreateInfo(secondLevelException)])).ConfigureAwait(false);
+                    await _errorTracker.CleanUp(messageId).ConfigureAwait(false);
                     transactionContext.SetResult(commit: false, ack: true);
                     return;
                 }
 
-                var exceptions = await _errorTracker.GetExceptions(messageId);
-                await _passToErrorHandler(context, _getAggregateException(exceptions.Concat(new[] { _exceptionInfoFactory.CreateInfo(secondLevelException), })));
-                await _errorTracker.CleanUp(messageId);
+                var exceptions = await _errorTracker.GetExceptions(messageId).ConfigureAwait(false);
+                await _passToErrorHandler(context, _getAggregateException(exceptions.Concat([_exceptionInfoFactory.CreateInfo(secondLevelException),]))).ConfigureAwait(false);
+                await _errorTracker.CleanUp(messageId).ConfigureAwait(false);
                 transactionContext.SetResult(commit: false, ack: true);
             }
         }
@@ -213,7 +214,7 @@ If the maximum number of delivery attempts is reached, the message is passed to 
 
             if (manualDeadletterCommand == null) return;
 
-            await _passToErrorHandler(context, ExceptionInfo.FromException(manualDeadletterCommand.Exception));
+            await _passToErrorHandler(context, ExceptionInfo.FromException(manualDeadletterCommand.Exception)).ConfigureAwait(false);
         }
 
         static async Task _dispatchSecondLevelRetry(ITransactionContext transactionContext, StepContext context, Func<Task> next)
@@ -226,7 +227,7 @@ If the maximum number of delivery attempts is reached, the message is passed to 
 
             context.Save(DispatchAsFailedMessageKey, true);
 
-            await next();
+            await next().ConfigureAwait(false);
         }
 
         async Task _passToErrorHandler(StepContext context, ExceptionInfo exception)
@@ -234,7 +235,7 @@ If the maximum number of delivery attempts is reached, the message is passed to 
             var transactionContext = context.Load<ITransactionContext>() ?? throw new RebusApplicationException("Could not find a transaction context in the current incoming step context");
             var transportMessage = context.Load<TransportMessage>() ?? throw new RebusApplicationException("Could not find a transport message in the current incoming step context");
 
-            await _errorHandler.HandlePoisonMessage(transportMessage, transactionContext, exception);
+            await _errorHandler.HandlePoisonMessage(transportMessage, transactionContext, exception).ConfigureAwait(false);
         }
 
         static ExceptionInfo _getAggregateException(IEnumerable<ExceptionInfo> exceptions)

@@ -72,11 +72,9 @@ namespace Processor.Service.WebInterface
                 _logger.Info(CultureInfo.InvariantCulture, "Starting program.");
                 InitStatic(args);
 
-                using (var h = GetHostBuilder(args)
-                    .Build())
-                {
-                    await h.RunAsync();
-                }
+                using var h = GetHostBuilder(args)
+                    .Build();
+                await h.RunAsync();
             }
             catch (Exception ex)
             {

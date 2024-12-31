@@ -89,7 +89,7 @@ namespace Ark.Tools.NLog.Slack
             var exception = info.LogEvent.Exception;
             if (exception != null)
             {
-                slack.AddAttachment(exception.Message, color, new[] { ($"Type: {exception.GetType()}", exception.StackTrace ?? "N/A") });
+                slack.AddAttachment(exception.Message, color, [($"Type: {exception.GetType()}", exception.StackTrace ?? "N/A")]);
             }
 
             slack.Send(_client ?? throw new InvalidOperationException("SlackClient is null"));
@@ -103,7 +103,7 @@ namespace Ark.Tools.NLog.Slack
                 return "#cccccc";
         }
 
-        private static readonly Dictionary<LogLevel, string> _logLevelSlackColorMap = new Dictionary<LogLevel, string>()
+        private static readonly Dictionary<LogLevel, string> _logLevelSlackColorMap = new()
         {
             { LogLevel.Warn, "warning" },
             { LogLevel.Error, "danger" },

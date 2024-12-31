@@ -62,14 +62,14 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 {
                     {RavenDbEventSourcingConstants.OutboxCollectionName, new RevisionsCollectionConfiguration {Disabled = true} },
                 }
-            }));
+            })).ConfigureAwait(false);
         }
 
         public static async Task EnsureNoRevisionForAggregateState<TAggregate>(this IDocumentStore store)
             where TAggregate : IAggregate
         {
             var collection = AggregateHelper<TAggregate>.Name;
-            var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database));
+            var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database)).ConfigureAwait(false);
             var revision = database.Revisions;
             if ((revision.Collections.ContainsKey(collection) && revision.Collections[collection].Disabled == true)
                 || revision.Default.Disabled)
@@ -80,7 +80,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 Disabled = true
             });
 
-            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision));
+            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision)).ConfigureAwait(false);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Ark.Tools.Outbox.SqlServer
         private readonly IOutboxContextSqlConfig _config;
         private readonly Statements _statements;
 
-        private static readonly HeaderSerializer _headerSerializer = new HeaderSerializer();
+        private static readonly HeaderSerializer _headerSerializer = new();
 
         protected OutboxContextSqlCore(IOutboxContextSqlConfig config)
         {
@@ -108,7 +108,7 @@ namespace Ark.Tools.Outbox.SqlServer
 
                 var cmd = new CommandDefinition(_statements.Insert, parameters, transaction: _transaction, cancellationToken: ctk);
 
-                _ = await _connection.ExecuteAsync(cmd);
+                _ = await _connection.ExecuteAsync(cmd).ConfigureAwait(false);
             }
         }
 
@@ -116,7 +116,7 @@ namespace Ark.Tools.Outbox.SqlServer
         {
             var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: _transaction, cancellationToken: ctk);
 
-            var res = await _connection.QueryAsync<(string Headers, byte[] Body)>(cmd);
+            var res = await _connection.QueryAsync<(string Headers, byte[] Body)>(cmd).ConfigureAwait(false);
 
             return res.Select(x => new OutboxMessage
             {

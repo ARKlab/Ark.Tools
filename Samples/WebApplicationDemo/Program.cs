@@ -80,12 +80,10 @@ namespace WebApplicationDemo
 			{
 				InitStatic(args);
 
-				using (var h = GetHostBuilder(args)
-					.Build())
-				{
-					await h.RunAsync();
-				}
-			}
+                using var h = GetHostBuilder(args)
+                    .Build();
+                await h.RunAsync();
+            }
 			catch (Exception ex)
 			{
 				NLog.LogManager.GetLogger("Main").Fatal(ex, $@"Unhandled Fatal Exception occurred: {ex.Message}");

@@ -40,7 +40,7 @@ namespace Ark.Tools.Rebus
 
             try
             {
-                await next();
+                await next().ConfigureAwait(false);
                 sw.Stop();
                 var now = _time.Now;
                 operationResult = "success";

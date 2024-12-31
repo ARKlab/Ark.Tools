@@ -11,7 +11,7 @@ namespace Ark.Tools.AspNetCore.Startup
 {
     internal sealed class ArkDefaultConventions : IActionModelConvention
 	{
-		private static HashSet<string> _consumeMethods = new HashSet<string>(System.StringComparer.Ordinal) { "POST", "PUT", "PATCH" };
+		private static HashSet<string> _consumeMethods = new(System.StringComparer.Ordinal) { "POST", "PUT", "PATCH" };
 
 		public void Apply(ActionModel action)
 		{

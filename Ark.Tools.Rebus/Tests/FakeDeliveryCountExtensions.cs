@@ -99,7 +99,7 @@ namespace MET.International.Common.Rebus.Tests
 
             public async Task<TransportMessage?> Receive(ITransactionContext context, CancellationToken cancellationToken)
             {
-                var m = await _inner.Receive(context, cancellationToken);
+                var m = await _inner.Receive(context, cancellationToken).ConfigureAwait(false);
                 if (m!= null)
                     m.Headers[Headers.DeferCount] = _count().ToString(CultureInfo.InvariantCulture);
                 return m;

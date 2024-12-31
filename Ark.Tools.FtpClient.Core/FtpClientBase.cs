@@ -53,26 +53,26 @@ namespace Ark.Tools.FtpClient.Core
             if (skipFolder == null)
                 skipFolder = x => false;
 
-            Stack<FtpEntry> pendingFolders = new Stack<FtpEntry>();
+            Stack<FtpEntry> pendingFolders = new();
             IEnumerable<FtpEntry> files = new List<FtpEntry>();
-            List<Task<IEnumerable<FtpEntry>>> running = new List<Task<IEnumerable<FtpEntry>>>();
+            List<Task<IEnumerable<FtpEntry>>> running = new();
 
             async Task<IEnumerable<FtpEntry>> listFolderAsync(string path, CancellationToken ct)
             {
                 var retrier = Policy
                     .Handle<Exception>()
-                    .WaitAndRetryAsync(new[]
-                    {
+                    .WaitAndRetryAsync(
+                    [
                         TimeSpan.FromSeconds(1),
-                    }, (ex, ts) =>
+                    ], (ex, ts) =>
                     {
                         _logger.Warn(ex, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
                     });
 
                 return await retrier.ExecuteAsync(async ct1 =>
                 {
-                    return await this.ListDirectoryAsync(path, ct1);
-                }, ct);
+                    return await ListDirectoryAsync(path, ct1).ConfigureAwait(false);
+                }, ct).ConfigureAwait(false);
 
                 
             }
@@ -88,9 +88,9 @@ namespace Ark.Tools.FtpClient.Core
             {
                 while (running.Count > 0)
                 {
-                    var t = await Task.WhenAny(running);
+                    var t = await Task.WhenAny(running).ConfigureAwait(false);
 
-                    var list = await t;
+                    var list = await t.ConfigureAwait(false);
                     running.Remove(t); // remove only if successful
 
                     foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
@@ -109,7 +109,7 @@ namespace Ark.Tools.FtpClient.Core
             }
             catch
             {
-                await Task.WhenAll(running); // this still contains the failed one 
+                await Task.WhenAll(running).ConfigureAwait(false); // this still contains the failed one 
                 throw;
             }
 

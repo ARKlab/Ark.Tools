@@ -20,7 +20,7 @@ namespace Ark.Tools.ResourceWatcher
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IResourceWatcherConfig _config;
         private readonly IStateProvider _stateProvider;
-        private object _lock = new object { };
+        private object _lock = new() { };
         private volatile bool _isStarted = false;
         private CancellationTokenSource? _cts;
         private Task? _task;
@@ -62,7 +62,7 @@ namespace Ark.Tools.ResourceWatcher
             {
                 try
                 {
-                    await _runAsync(_cts.Token);
+                    await _runAsync(_cts.Token).ConfigureAwait(false);
                 }
                 catch (TaskCanceledException)
                 {
@@ -87,7 +87,7 @@ namespace Ark.Tools.ResourceWatcher
 
             try
             {
-                await _runOnce(RunType.Once, ctk);
+                await _runOnce(RunType.Once, ctk).ConfigureAwait(false);
             }
             finally
             {
@@ -105,7 +105,7 @@ namespace Ark.Tools.ResourceWatcher
             {
                 try
                 {
-                    await _runOnce(RunType.Normal, ctk);
+                    await _runOnce(RunType.Normal, ctk).ConfigureAwait(false);
 
                     exConsecutiveCount = 0;
                 }
@@ -121,7 +121,7 @@ namespace Ark.Tools.ResourceWatcher
                 ctk.ThrowIfCancellationRequested();
 
                 _logger.Info(CultureInfo.InvariantCulture, "Going to sleep for {SleepSeconds}s", _config.SleepSeconds);
-                await Task.Delay(_config.SleepSeconds * 1000, ctk);
+                await Task.Delay(_config.SleepSeconds * 1000, ctk).ConfigureAwait(false);
             }
         }
 
@@ -134,10 +134,10 @@ namespace Ark.Tools.ResourceWatcher
             try
             {
                 //GetResources
-                var list = await _getResources(now, ctk);
+                var list = await _getResources(now, ctk).ConfigureAwait(false);
 
                 //Check State - check which entries are new or have been modified.
-                var evaluated = await _evaluateActions(list, ctk);
+                var evaluated = await _evaluateActions(list, ctk).ConfigureAwait(false);
 
                 //Process
                 var toProcess = evaluated.Where(x => !x.ResultType.HasValue).ToList();
@@ -157,7 +157,7 @@ namespace Ark.Tools.ResourceWatcher
                         x.Total = count;
                         x.Index = i + 1;
                         return _processEntry(x, ct);
-                    }, ctk);
+                    }, ctk).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -181,7 +181,7 @@ namespace Ark.Tools.ResourceWatcher
             using var activityCheckState = _diagnosticSource.CheckStateStart();
             try
             {
-                var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk);
+                var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
 
                 var evaluated = _createEvalueteList(list, states);
 
@@ -200,7 +200,7 @@ namespace Ark.Tools.ResourceWatcher
 
             try
             {
-                var infos = await _getResourcesInfo(ctk);
+                var infos = await _getResourcesInfo(ctk).ConfigureAwait(false);
 
                 var bad = infos.GroupBy(x => x.ResourceId, StringComparer.Ordinal).FirstOrDefault(x => x.Count() > 1);
                 if (bad != null)
@@ -283,7 +283,7 @@ namespace Ark.Tools.ResourceWatcher
 
             try
             {
-                var res = await _retrievePayload(info, lastState, ctk);
+                var res = await _retrievePayload(info, lastState, ctk).ConfigureAwait(false);
                 _diagnosticSource.FetchResourceSuccessful(activity, pc);
                 return res;
             } catch (Exception ex)
@@ -298,12 +298,12 @@ namespace Ark.Tools.ResourceWatcher
             var info = pc.CurrentInfo;
             var lastState = pc.LastState;
             var dataType = pc.ProcessType;
-            using var scope = ScopeContext.PushNestedStateProperties(info.ResourceId, new[]
-            {
+            using var scope = ScopeContext.PushNestedStateProperties(info.ResourceId,
+            [
                 // when 'logging' these, 'info' is serialized as the actual implementation which may contain a lot of data. slice to 'log' only the Interface
                 new KeyValuePair<string, object?>("currentInfo", new { info.ResourceId, info.Modified, info.ModifiedSources, info.Extensions }),
                 new KeyValuePair<string, object?>("lastState", lastState)
-            }); 
+            ]); 
             try
             {
                 using var processActivity = _diagnosticSource.ProcessResourceStart(pc);
@@ -328,7 +328,7 @@ namespace Ark.Tools.ResourceWatcher
                     pc.ResultType = ResultType.Normal;
                     IResourceState? newState = default;
 
-                    await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk);
+                    await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk).ConfigureAwait(false);
 
                     // if handlers retrived data, fetch the result to check the checksum
                     if (payload.IsStarted)
@@ -337,7 +337,7 @@ namespace Ark.Tools.ResourceWatcher
                         // here we care only if we have a payload to use
                         if (payload.Task.Status == TaskStatus.RanToCompletion)
                         {
-                            newState = await payload;
+                            newState = await payload.ConfigureAwait(false);
 
                             if (newState != null)
                             {
@@ -385,7 +385,7 @@ namespace Ark.Tools.ResourceWatcher
                     _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
                 }
 
-                await _stateProvider.SaveStateAsync(new[] { state }, ctk);
+                await _stateProvider.SaveStateAsync([state], ctk).ConfigureAwait(false);
 
             }
             catch (Exception ex)

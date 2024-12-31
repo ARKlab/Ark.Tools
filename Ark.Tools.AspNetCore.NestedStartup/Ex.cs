@@ -45,7 +45,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
 
                 using var nestedScope = nestedFactory.CreateScope();
                 ctx.RequestServices = new BranchedServiceProvider(ctx.RequestServices, nestedScope.ServiceProvider);
-                await server.Process(ctx);
+                await server.Process(ctx).ConfigureAwait(false);
             }
 
             webHostBuilder.Start();
@@ -55,7 +55,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
                 builder.Use(async (HttpContext context, RequestDelegate next) =>
                 {
                     var keepAlive = r2;
-                    await branchDelegate(context);
+                    await branchDelegate(context).ConfigureAwait(false);
                 });
             });
         }

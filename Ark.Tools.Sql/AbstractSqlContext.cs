@@ -13,7 +13,7 @@ namespace Ark.Tools.Sql
         private DbTransaction? _transaction;
         private bool _disposed = false;
         private IsolationLevel _isolationLevel;
-        private object _lock = new object();
+        private object _lock = new();
 
         protected AbstractSqlContext(DbConnection connection, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {

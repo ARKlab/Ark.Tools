@@ -37,19 +37,19 @@ namespace Ark.Tools.Solid.Authorization
             {
                 foreach (var p in _policies)
                 {
-                    var policy = await Ex.GetPolicyAsync(p, _authSvc.PolicyProvider, ctk);
-                    var resource = await Ex.GetResourceAsync(_container, query, policy, ctk);
+                    var policy = await Ex.GetPolicyAsync(p, _authSvc.PolicyProvider, ctk).ConfigureAwait(false);
+                    var resource = await Ex.GetResourceAsync(_container, query, policy, ctk).ConfigureAwait(false);
 
                     if (policy != null)
                     {
-                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk);
+                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk).ConfigureAwait(false);
                         if (!authorized)
                             throw new UnauthorizedAccessException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
                     }                            
                 }
             }
                 
-            return await _inner.ExecuteAsync(query, ctk);
+            return await _inner.ExecuteAsync(query, ctk).ConfigureAwait(false);
         }
     }
 }

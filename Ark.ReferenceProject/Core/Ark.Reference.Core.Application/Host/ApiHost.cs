@@ -55,9 +55,9 @@ namespace Ark.Reference.Core.Application.Host
         public ApiHost(IApiHostConfig config)
         {
             this.Config = config;
-            this._applicationAssemblies = new Assembly[] {
+            this._applicationAssemblies = [
                   typeof(ApiHost).Assembly
-            };
+            ];
             this.Container = new Container();
         }
 

@@ -72,10 +72,10 @@ namespace Ark.Tools.Reqnroll
                             BindingFlags.Public | BindingFlags.Static,
                             null,
                             CallingConventions.Any,
-                            new Type[] { typeof(Table) },
+                            [typeof(Table)],
                             null);
                     createInstance = createInstance?.MakeGenericMethod(prop.PropertyType);
-                    object? propValue = createInstance?.Invoke(null, new object[] { subTable });
+                    object? propValue = createInstance?.Invoke(null, [subTable]);
 
                     prop.SetValue(result, propValue);
                 }

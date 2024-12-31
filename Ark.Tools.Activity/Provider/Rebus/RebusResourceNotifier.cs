@@ -21,7 +21,7 @@ namespace Ark.Tools.Activity.Provider
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private bool _disposedValue;
         private readonly string _providerName;
-        private readonly Container _container = new Container();
+        private readonly Container _container = new();
 
         public RebusResourceNotifier(IRebusResourceNotifier_Config config)
         {

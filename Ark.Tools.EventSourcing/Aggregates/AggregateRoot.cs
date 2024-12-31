@@ -52,7 +52,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
 
         public async Task LoadAsync(long maxVersion, CancellationToken ctk = default)
         {
-            var events = await LoadHistory(maxVersion, ctk);
+            var events = await LoadHistory(maxVersion, ctk).ConfigureAwait(false);
             History = events;
 
             _createFromHistory(events);
@@ -83,8 +83,8 @@ namespace Ark.Tools.EventSourcing.Aggregates
         private static readonly IReadOnlyDictionary<Type, Action<TAggregateRoot, IAggregateEvent<TAggregate>, IMetadata>> _applyMethods;
         private static readonly string _aggregateName = AggregateHelper<TAggregate>.Name;
 
-        private readonly List<AggregateEventEnvelope<TAggregate>> _uncommittedAggregateEvents = new List<AggregateEventEnvelope<TAggregate>>();
-        private readonly List<DomainEventEnvelope> _uncommittedDomainEvents = new List<DomainEventEnvelope>();
+        private readonly List<AggregateEventEnvelope<TAggregate>> _uncommittedAggregateEvents = new();
+        private readonly List<DomainEventEnvelope> _uncommittedDomainEvents = new();
         private bool _applying;
 
         public TAggregateState? State { get; private set; }

@@ -27,9 +27,9 @@ namespace Ark.Tools.EventSourcing.RavenDb
 		private IAggregateEventHandlerActivator _handlerActivator;
 		private Task? _subscriptionWorkerTask;
 		private CancellationTokenSource? _tokenSource;
-		private object _gate = new object();
+		private object _gate = new();
 
-		readonly ConcurrentDictionary<Type, MethodInfo> _dispatchMethods = new ConcurrentDictionary<Type, MethodInfo>();
+		readonly ConcurrentDictionary<Type, MethodInfo> _dispatchMethods = new();
 
 		protected RavenDbAggregateEventProcessor(IDocumentStore store, IAggregateEventHandlerActivator handlerActivator)
 		{
@@ -56,7 +56,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 from {RavenDbEventSourcingConstants.AggregateEventsCollectionName} as e
 where startsWith(id(e), '{prefix}')
                 "
-				}, token:ctk);
+				}, token:ctk).ConfigureAwait(false);
 			}
 			catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
 			{
@@ -99,7 +99,7 @@ where startsWith(id(e), '{prefix}')
 					};
 
 					_logger.Info(CultureInfo.InvariantCulture, "Start processing {SubscriptionName}", SubscriptionName);
-					await subscriptionWorker.Run(_exec, ctk);
+					await subscriptionWorker.Run(_exec, ctk).ConfigureAwait(false);
 
 					// Run will complete normally if you have disposed the subscription
 					return;
@@ -126,7 +126,7 @@ where startsWith(id(e), '{prefix}')
 					// open strategy (discussed later)
 					if (e is SubscriptionInUseException)
 					{
-						await Task.Delay(TimeSpan.FromSeconds(30), ctk);
+						await Task.Delay(TimeSpan.FromSeconds(30), ctk).ConfigureAwait(false);
 						continue;
 					}
 
@@ -134,7 +134,7 @@ where startsWith(id(e), '{prefix}')
 				}
 				finally
 				{
-                    await subscriptionWorker.DisposeAsync();
+                    await subscriptionWorker.DisposeAsync().ConfigureAwait(false);
 				}
 			}
 
@@ -154,12 +154,12 @@ where startsWith(id(e), '{prefix}')
 						var methodToInvoke = _dispatchMethods
 							.GetOrAdd(evtType, type => _getDispatchMethod(evtType));
 
-						await (Task)methodToInvoke.Invoke(this, new object[] { envelope.Event, envelope.Metadata })!;
+						await ((Task)methodToInvoke.Invoke(this, [envelope.Event, envelope.Metadata])!).ConfigureAwait(false);
 					}
 				});
 
 
-			await Task.WhenAll(tasks);
+			await Task.WhenAll(tasks).ConfigureAwait(false);
 		}
 
 		Task _invokeHandler<TEvent>(TEvent evt, IMetadata metadata)
@@ -196,7 +196,7 @@ where startsWith(id(e), '{prefix}')
 			try
 			{
                 if (runtask is not null)
-				    await runtask;
+				    await runtask.ConfigureAwait(false);
 			}
 			catch (TaskCanceledException) { }
 		}

@@ -8,6 +8,6 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
     {
         public Predicate<string>? FolderFilter { get; set; }
         public Predicate<string>? FileFilter { get; set; }
-        public string[] FoldersToWatch { get; set; } = new[] { "./" }; 
+        public string[] FoldersToWatch { get; set; } = ["./"]; 
     }
 }

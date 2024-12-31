@@ -31,7 +31,7 @@ namespace Ark.Reference.Core.Tests.Auth
                                 ;
 
         private string _scopeClaim = AuthConstants.ScopePrefix;
-        private List<string> _scopes = new List<string>();
+        private List<string> _scopes = new();
 
         public AuthTestContext()
         {

@@ -62,7 +62,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                         ClientId = _config.ClientID,
                         ClientSecret = _config.ClientKey
                     }, ct),ctk)
-                    ;
+.ConfigureAwait(false);
 
                 return result.AccessToken;
             }
@@ -81,8 +81,8 @@ namespace Ark.Tools.FtpClient.FtpProxy
                 result = await Policy
                     .Handle<MsalException>(ex => ex.IsRetryable)
                     .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(3))
-                    .ExecuteAsync(c => adal.AcquireTokenForClient(new[] { _config.ApiIdentifier + "/.default" }).ExecuteAsync(c), ctk, false)
-                    ;
+                    .ExecuteAsync(c => adal.AcquireTokenForClient([_config.ApiIdentifier + "/.default"]).ExecuteAsync(c), ctk, false)
+.ConfigureAwait(false);
             }
             catch (Exception ex)
             {

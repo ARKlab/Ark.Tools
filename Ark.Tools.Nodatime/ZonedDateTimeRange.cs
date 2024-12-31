@@ -94,35 +94,35 @@ namespace Ark.Tools.Nodatime
             //  |----------------|
             //                      |----|
             else if (!Overlaps(other))
-                return new[] { this };
+                return [this];
             else if (Contains(other))
             {
                 //  |----------------|
                 //  |----|
                 if (_start == other._start)
-                    return new[] { new ZonedDateTimeRange(other._end, _end) };
+                    return [new ZonedDateTimeRange(other._end, _end)];
                 //  |----------------|
                 //              |----|
                 else if (_end == other._end)
-                    return new[] { new ZonedDateTimeRange(_start, other._start) };
+                    return [new ZonedDateTimeRange(_start, other._start)];
                 //  |----------------|
                 //        |----|
                 else
-                    return new[] {
+                    return [
                         new ZonedDateTimeRange(_start, other._start),
                         new ZonedDateTimeRange(other._end, _end)
-                    };
+                    ];
             }
             else
             {
                 //      |----------------|
                 //   |----|
                 if (other.Contains(_start))
-                    return new[] { new ZonedDateTimeRange(other._end, _end) };
+                    return [new ZonedDateTimeRange(other._end, _end)];
                 //  |----------------|
                 //                |----|
                 else
-                    return new[] { new ZonedDateTimeRange(_start, other._start) };
+                    return [new ZonedDateTimeRange(_start, other._start)];
             }
         }
 

@@ -29,25 +29,21 @@ namespace Ark.Tools.FtpClient.Core
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            using (var client = await GetConnection(ctk))
-            {
-                await client.ConnectAsync(ctk);
-                var ret = await client.DownloadFileAsync(path, ctk);
-                await client.DisconnectAsync(ctk);
-                return ret;
-            }
+            using var client = await GetConnection(ctk).ConfigureAwait(false);
+            await client.ConnectAsync(ctk).ConfigureAwait(false);
+            var ret = await client.DownloadFileAsync(path, ctk).ConfigureAwait(false);
+            await client.DisconnectAsync(ctk).ConfigureAwait(false);
+            return ret;
         }
 
         public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
             path ??= "./";
-            using (var client = await GetConnection(ctk))
-            {
-                await client.ConnectAsync(ctk);
-                var ret = await client.ListDirectoryAsync(path, ctk);
-                await client.DisconnectAsync(ctk);
-                return ret;
-            }
+            using var client = await GetConnection(ctk).ConfigureAwait(false);
+            await client.ConnectAsync(ctk).ConfigureAwait(false);
+            var ret = await client.ListDirectoryAsync(path, ctk).ConfigureAwait(false);
+            await client.DisconnectAsync(ctk).ConfigureAwait(false);
+            return ret;
         }
 
         public override async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
@@ -58,38 +54,38 @@ namespace Ark.Tools.FtpClient.Core
             {
                 _logger.Trace(CultureInfo.InvariantCulture, "List files starting from path: {Path}", startPath);
 
-                conn = await GetConnection(ctk);
-                await conn.ConnectAsync(ctk);
+                conn = await GetConnection(ctk).ConfigureAwait(false);
+                await conn.ConnectAsync(ctk).ConfigureAwait(false);
 
                 if (skipFolder == null)
                     skipFolder = x => false;
 
-                Stack<FtpEntry> pendingFolders = new Stack<FtpEntry>();
+                Stack<FtpEntry> pendingFolders = new();
                 IEnumerable<FtpEntry> files = new List<FtpEntry>();
 
                 async Task ListFolderAsync(string path, CancellationToken ct)
                 {
                     var retrier = Policy
                         .Handle<Exception>()
-                        .WaitAndRetryAsync(new[]
-                        {
+                        .WaitAndRetryAsync(
+                        [
                             TimeSpan.FromSeconds(1),
                             TimeSpan.FromSeconds(1),
-                        }, (ex, ts) =>
+                        ], (ex, ts) =>
                         {
                             _logger.Warn(ex, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
                         });
 
                     var list = await retrier.ExecuteAsync(async ct1 =>
                     {
-                        if (!await conn.IsConnectedAsync(ctk))
+                        if (!await conn.IsConnectedAsync(ctk).ConfigureAwait(false))
                         {
                             conn.Dispose();
-                            conn = await GetConnection(ctk);
-                            await conn.ConnectAsync(ctk);
+                            conn = await GetConnection(ctk).ConfigureAwait(false);
+                            await conn.ConnectAsync(ctk).ConfigureAwait(false);
                         }
-                        return await conn.ListDirectoryAsync(path, ct1);
-                    }, ct);
+                        return await conn.ListDirectoryAsync(path, ct1).ConfigureAwait(false);
+                    }, ct).ConfigureAwait(false);
 
                     foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                     {
@@ -102,10 +98,10 @@ namespace Ark.Tools.FtpClient.Core
                     files = files.Concat(list.Where(x => !x.IsDirectory).ToList());
                 }
 
-                await ListFolderAsync(startPath, ctk);
+                await ListFolderAsync(startPath, ctk).ConfigureAwait(false);
 
                 while (pendingFolders.Count > 0)
-                    await ListFolderAsync(pendingFolders.Pop().FullPath, ctk);
+                    await ListFolderAsync(pendingFolders.Pop().FullPath, ctk).ConfigureAwait(false);
 
                 return files;
             } finally
@@ -116,34 +112,28 @@ namespace Ark.Tools.FtpClient.Core
 
         public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            using (var client = await GetConnection(ctk))
-            {
-                await client.ConnectAsync(ctk);
-                await client.UploadFileAsync(path, content, ctk);
-                await client.DisconnectAsync(ctk);
-            }
+            using var client = await GetConnection(ctk).ConfigureAwait(false);
+            await client.ConnectAsync(ctk).ConfigureAwait(false);
+            await client.UploadFileAsync(path, content, ctk).ConfigureAwait(false);
+            await client.DisconnectAsync(ctk).ConfigureAwait(false);
         }
 
         protected abstract Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default);
 
         public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
         {
-            using (var client = await GetConnection(ctk))
-            {
-                await client.ConnectAsync(ctk);
-                await client.DeleteFileAsync(path, ctk);
-                await client.DisconnectAsync(ctk);
-            }
+            using var client = await GetConnection(ctk).ConfigureAwait(false);
+            await client.ConnectAsync(ctk).ConfigureAwait(false);
+            await client.DeleteFileAsync(path, ctk).ConfigureAwait(false);
+            await client.DisconnectAsync(ctk).ConfigureAwait(false);
         }
 
         public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
         {
-            using (var client = await GetConnection(ctk))
-            {
-                await client.ConnectAsync(ctk);
-                await client.DeleteDirectoryAsync(path, ctk);
-                await client.DisconnectAsync(ctk);
-            }
+            using var client = await GetConnection(ctk).ConfigureAwait(false);
+            await client.ConnectAsync(ctk).ConfigureAwait(false);
+            await client.DeleteDirectoryAsync(path, ctk).ConfigureAwait(false);
+            await client.DisconnectAsync(ctk).ConfigureAwait(false);
         }
     }
 }

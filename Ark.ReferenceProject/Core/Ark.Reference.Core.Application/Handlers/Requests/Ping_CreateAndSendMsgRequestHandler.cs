@@ -13,6 +13,7 @@ using Rebus.Bus;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Ark.Reference.Core.Application.Handlers.Messages;
 
 namespace Ark.Reference.Core.Application.Handlers.Requests
 {

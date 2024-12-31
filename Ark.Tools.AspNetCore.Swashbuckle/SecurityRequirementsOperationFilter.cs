@@ -18,9 +18,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
             operation.Security = new List<OpenApiSecurityRequirement>
                 {
-                    new OpenApiSecurityRequirement
-                    {
-                        [ oAuthScheme ] = new[] { "openid" }
+                    new() {
+                        [ oAuthScheme ] = ["openid"]
                     }
                 };
         }

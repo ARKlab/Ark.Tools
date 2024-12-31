@@ -17,10 +17,10 @@ namespace ProblemDetailsSample.Application.Handlers.Host
         {
             this.Config = config;
 
-            this._applicationAssemblies = new Assembly[] {
+            this._applicationAssemblies = [
                 typeof(ApiHost).Assembly,
                 //Assembly.Load("ProblemDetailsSample")
-            };
+            ];
         }
 
         public ApiHost WithContainer(Container container)

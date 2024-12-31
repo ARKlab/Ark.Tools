@@ -96,35 +96,35 @@ namespace Ark.Tools.Nodatime
             //  |----------------|
             //                      |----|
             else if (!Overlaps(other))
-                return new[] { this };
+                return [this];
             else if (Contains(other))
             {
                 //  |----------------|
                 //  |----|
                 if (_start == other._start)
-                    return new[] { new LocalDateRange(other._end, _end) };
+                    return [new LocalDateRange(other._end, _end)];
                 //  |----------------|
                 //              |----|
                 else if (_end == other._end)
-                    return new[] { new LocalDateRange(_start, other._start) };
+                    return [new LocalDateRange(_start, other._start)];
                 //  |----------------|
                 //        |----|
                 else
-                    return new[] {
+                    return [
                         new LocalDateRange(_start, other._start),
                         new LocalDateRange(other._end, _end)
-                    };
+                    ];
             }
             else
             {
                 //      |----------------|
                 //   |----|
                 if (other.Contains(_start))
-                    return new[] { new LocalDateRange(other._end, _end) };
+                    return [new LocalDateRange(other._end, _end)];
                 //  |----------------|
                 //                |----|
                 else
-                    return new[] { new LocalDateRange(_start, other._start) };
+                    return [new LocalDateRange(_start, other._start)];
             }
         }
 

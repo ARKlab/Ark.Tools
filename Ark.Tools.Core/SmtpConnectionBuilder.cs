@@ -28,7 +28,7 @@ namespace Ark.Tools
         private void _parse(string smtpConnectionString)
         {
             var split = smtpConnectionString
-                .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Split([';'], StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
                 .Select(x => x.Split('=')
                               .Select(y => y.Trim())

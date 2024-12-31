@@ -25,7 +25,7 @@ namespace Ark.Tools.Solid.Decorators
 
         public TResult Execute(TQuery query)
         {
-            Stopwatch stopWatch = new Stopwatch();
+            Stopwatch stopWatch = new();
             stopWatch.Start();
             var result = _decorated.Execute(query);
             stopWatch.Stop();
@@ -36,9 +36,9 @@ namespace Ark.Tools.Solid.Decorators
 
         public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
         {
-            Stopwatch stopWatch = new Stopwatch();
+            Stopwatch stopWatch = new();
             stopWatch.Start();
-            var result = await _decorated.ExecuteAsync(query, ctk);
+            var result = await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
             stopWatch.Stop();
             _logger.Trace(CultureInfo.InvariantCulture, "Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
 

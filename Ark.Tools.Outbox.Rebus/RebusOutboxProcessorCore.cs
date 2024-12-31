@@ -17,7 +17,7 @@ namespace Ark.Tools.Outbox.Rebus
 		private readonly IBackoffStrategy _backoffStrategy;
         private readonly int _topMessagesToRetrieve;
         private readonly ITransport _transport;
-        private readonly CancellationTokenSource _busDisposalCancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _busDisposalCancellationTokenSource = new();
 		private readonly ILog _log;
         private Task _task = Task.CompletedTask;
         private bool _disposedValue;
@@ -48,7 +48,7 @@ namespace Ark.Tools.Outbox.Rebus
         protected async Task<bool> _tryProcessMessages(IOutboxContextCore ctx, CancellationToken ctk)
         {
             bool waitForMessages = true;
-            var messages = await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk);
+            var messages = await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk).ConfigureAwait(false);
             if (messages.Any())
             {
                 using (var rebusTransactionScope = new RebusTransactionScope())
@@ -58,9 +58,9 @@ namespace Ark.Tools.Outbox.Rebus
                         var destinationAddress = message?.Headers?[OutboxTransportDecorator._outboxRecepientHeader];
                         message?.Headers?.Remove(OutboxTransportDecorator._outboxRecepientHeader);
                         await _transport.Send(destinationAddress!, new TransportMessage(message?.Headers, message?.Body),
-                            rebusTransactionScope.TransactionContext).WithCancellation(ctk);
+                            rebusTransactionScope.TransactionContext).WithCancellation(ctk).ConfigureAwait(false);
                     }
-                    await rebusTransactionScope.CompleteAsync().WithCancellation(ctk);
+                    await rebusTransactionScope.CompleteAsync().WithCancellation(ctk).ConfigureAwait(false);
                 }
                 waitForMessages = false;
             }
@@ -76,11 +76,11 @@ namespace Ark.Tools.Outbox.Rebus
 			{
 				try
                 {
-                    bool waitForMessages = await _loop(ctk);
+                    bool waitForMessages = await _loop(ctk).ConfigureAwait(false);
 
                     if (waitForMessages)
                     {
-                        await _backoffStrategy.WaitNoMessageAsync(ctk);
+                        await _backoffStrategy.WaitNoMessageAsync(ctk).ConfigureAwait(false);
                     } else
                     {
                         _backoffStrategy.Reset();
@@ -95,7 +95,7 @@ namespace Ark.Tools.Outbox.Rebus
 					_log.Error(exception, "Unhandled exception in outbox messages processor");
                     try
                     {
-                        await _backoffStrategy.WaitErrorAsync(ctk);
+                        await _backoffStrategy.WaitErrorAsync(ctk).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) when (ctk.IsCancellationRequested)
                     {

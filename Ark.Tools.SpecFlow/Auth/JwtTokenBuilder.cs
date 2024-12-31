@@ -13,7 +13,7 @@ namespace Ark.Tools.SpecFlow.Auth
         private string _subject = "";
         private string _issuer = "";
         private string _audience = "";
-        private readonly List<Claim> _claims = new List<Claim>();
+        private readonly List<Claim> _claims = new();
         private int _expiryInMinutes = 5;
 
         public JwtTokenBuilder AddSecurityKey(SecurityKey securityKey)
@@ -70,8 +70,8 @@ namespace Ark.Tools.SpecFlow.Auth
 
             var claims = new List<Claim>
             {
-              new Claim(JwtRegisteredClaimNames.Sub, this._subject),
-              new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+              new(JwtRegisteredClaimNames.Sub, this._subject),
+              new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             }
             .Union(this._claims);
 

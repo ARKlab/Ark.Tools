@@ -9,12 +9,12 @@ namespace WebApplicationDemo.Configuration
         public static readonly ApiVersion V2 = new(2, 0);
         public static readonly ApiVersion V3 = new(3, 0);
 
-        public static readonly ApiVersion[] All = new ApiVersion[]
-        {
+        public static readonly ApiVersion[] All =
+        [
             V0,
             V1,
             V2,
             V3
-        };
+        ];
     }
 }

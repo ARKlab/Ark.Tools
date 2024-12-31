@@ -8,7 +8,7 @@ using EnsureThat;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Core.Services.Application.Handlers.Queries
+namespace Ark.Reference.Core.Application.Handlers.Queries
 {
     public class Ping_GetIdHandler : IQueryHandler<Ping_GetByIdQuery.V1, Ping.V1.Output?>
     {

@@ -78,13 +78,13 @@ namespace Ark.Tools.Authorization.Requirement
             if (!context.Policy.Requirements.OfType<ApplicationUserAssertionRequirement<TUser>>().Any())
                 return;
 
-            var user = await _provider.GetProfile(context.User);
+            var user = await _provider.GetProfile(context.User).ConfigureAwait(false);
             if (user == null)
                 return;
 
             foreach (var req in context.Policy.Requirements.OfType<ApplicationUserAssertionRequirement<TUser>>())
             {
-                if (await req.HandleAsync(context, user, ctk))
+                if (await req.HandleAsync(context, user, ctk).ConfigureAwait(false))
                 {
                     context.Succeed(req);
                 }

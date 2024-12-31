@@ -22,7 +22,7 @@ namespace Ark.Tools.Activity.Processor
     public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager<TActivity>, IDisposable where TActivity : class, ISliceActivity
     {
 
-        private readonly Container _container = new Container();
+        private readonly Container _container = new();
         private readonly string _name;
         private readonly IEnumerable<Resource> _dependencies;
         private readonly Func<TActivity> _activityFactory;
@@ -82,7 +82,7 @@ namespace Ark.Tools.Activity.Processor
             var bus = _container.GetInstance<IBus>();
             foreach (var d in _dependencies)
             {
-                await bus.Advanced.Topics.Subscribe(d.ToString());
+                await bus.Advanced.Topics.Subscribe(d.ToString()).ConfigureAwait(false);
             }
         }
     }

@@ -48,9 +48,9 @@ namespace Ark.Tools.FtpClient.SftpClient
         public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
             path ??= "./";
-            await _ensureConnected(ctk);
+            await _ensureConnected(ctk).ConfigureAwait(false);
 
-            var rawLs = await _client.ListDirectoryAsync(path, ctk).ToListAsync(ctk);
+            var rawLs = await _client.ListDirectoryAsync(path, ctk).ToListAsync(ctk).ConfigureAwait(false);
             return _parse(rawLs);
 
         }
@@ -58,7 +58,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         private async Task _ensureConnected(CancellationToken ctk)
         {
             if (!_client.IsConnected)
-                await _client.ConnectAsync(ctk);
+                await _client.ConnectAsync(ctk).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -69,33 +69,29 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <returns></returns>
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            await _ensureConnected(ctk);
-            using (var ms = new MemoryStream(80 * 1024))
-            {
-                await _client.DownloadAsync(path, ms, u => { });
-                return ms.ToArray();
-            }
+            await _ensureConnected(ctk).ConfigureAwait(false);
+            using var ms = new MemoryStream(80 * 1024);
+            await _client.DownloadAsync(path, ms, u => { }).ConfigureAwait(false);
+            return ms.ToArray();
         }
 
         public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            await _ensureConnected(ctk);
-            using (var ms = new MemoryStream(content))
-            {
-                await _client.UploadAsync(ms, path);
-            }
+            await _ensureConnected(ctk).ConfigureAwait(false);
+            using var ms = new MemoryStream(content);
+            await _client.UploadAsync(ms, path).ConfigureAwait(false);
         }
 
         public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
         {
-            await _ensureConnected(ctk);
-            await _client.DeleteDirectoryAsync(path, ctk);
+            await _ensureConnected(ctk).ConfigureAwait(false);
+            await _client.DeleteDirectoryAsync(path, ctk).ConfigureAwait(false);
         }
 
         public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
         {
-            await _ensureConnected(ctk);
-            await _client.DeleteFileAsync(path, ctk);
+            await _ensureConnected(ctk).ConfigureAwait(false);
+            await _client.DeleteFileAsync(path, ctk).ConfigureAwait(false);
         }
 
         #region private helpers
@@ -228,7 +224,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (_client.IsConnected)
                 return;
 
-            await _client.ConnectAsync(ctk);
+            await _client.ConnectAsync(ctk).ConfigureAwait(false);
         }
 
         public override ValueTask<bool> IsConnectedAsync(CancellationToken ctk = default)
@@ -244,7 +240,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (!_client.IsConnected)
                 return;
 
-            await Task.Run(() => _client.Disconnect(), ctk);
+            await Task.Run(() => _client.Disconnect(), ctk).ConfigureAwait(false);
         }
 
         protected override void Dispose(bool disposing)

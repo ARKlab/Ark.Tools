@@ -18,7 +18,7 @@ namespace Ark.Tools.DomainEventPublisher.Rebus
 
         public async Task PublishAsync(OutboxEvent @event)
         {
-            await _bus.Publish(@event.GetEvent(), @event.Metadata);
+            await _bus.Publish(@event.GetEvent(), @event.Metadata).ConfigureAwait(false);
         }
     }
 }

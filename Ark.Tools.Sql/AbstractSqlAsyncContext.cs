@@ -46,29 +46,29 @@ namespace Ark.Tools.Sql
         {
             if (_transaction != null)
             {
-                await _transaction.CommitAsync(ctk);
-                await _transaction.DisposeAsync();
+                await _transaction.CommitAsync(ctk).ConfigureAwait(false);
+                await _transaction.DisposeAsync().ConfigureAwait(false);
             }
             _transaction = null;
 
             if (reuse)
             {
-                _transaction = await _connection!.BeginTransactionAsync(_isolationLevel, ctk);
+                _transaction = await _connection!.BeginTransactionAsync(_isolationLevel, ctk).ConfigureAwait(false);
             }
         }
 
         public virtual async Task ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk = default)
         {
             _isolationLevel = isolationLevel;
-            await RollbackAsync(ctk);
+            await RollbackAsync(ctk).ConfigureAwait(false);
         }
 
         public virtual async Task RollbackAsync(CancellationToken ctk = default)
         {
             if (_transaction != null)
             {
-                await _transaction.RollbackAsync(ctk);
-                await _transaction.DisposeAsync();
+                await _transaction.RollbackAsync(ctk).ConfigureAwait(false);
+                await _transaction.DisposeAsync().ConfigureAwait(false);
             }
 
             _transaction = null;

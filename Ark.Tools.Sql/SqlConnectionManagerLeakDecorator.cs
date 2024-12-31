@@ -43,7 +43,7 @@ namespace Ark.Tools.Sql
 
         public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
         {
-            var cnn = await _inner.GetAsync(connectionString, ctk);
+            var cnn = await _inner.GetAsync(connectionString, ctk).ConfigureAwait(false);
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new ConnectionLeakWatcher(cnn);
 #pragma warning restore CA2000 // Dispose objects before losing scope

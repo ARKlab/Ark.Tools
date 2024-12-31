@@ -14,7 +14,7 @@ namespace Ark.Tools.Rebus
     public class UserFlowStep : IOutgoingStep, IIncomingStep
     {
         private readonly Container _container;
-        private static readonly char[] _separator = new[] { ',' };
+        private static readonly char[] _separator = [','];
 
         public UserFlowStep(Container container)
         {
@@ -60,7 +60,7 @@ namespace Ark.Tools.Rebus
                 }
             }
 
-            await next();
+            await next().ConfigureAwait(false);
         }
 
         public async Task Process(IncomingStepContext context, Func<Task> next)
@@ -88,10 +88,10 @@ namespace Ark.Tools.Rebus
                         roles.Split(_separator, StringSplitOptions.RemoveEmptyEntries)
                             .Select(x => new Claim(ClaimTypes.Role, x)));
 
-                context.Save(new ClaimsPrincipal(new[] { identity }));
+                context.Save(new ClaimsPrincipal([identity]));
             }
 
-            await next();
+            await next().ConfigureAwait(false);
         }
     }
 }

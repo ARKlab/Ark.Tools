@@ -64,7 +64,7 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         public static DateTime GetFtpDate(this string date, DateTimeStyles style)
         {
-            string[] formats = new string[] {
+            string[] formats = [
                 "yyyyMMddHHmmss",
                 "yyyyMMddHHmmss.fff",
                 "MMM dd  yyyy",
@@ -73,7 +73,7 @@ namespace Ark.Tools.FtpClient.SftpClient
                 "MMM  d HH:mm",
                 "MM-dd-yy  hh:mmtt",
                 "MM-dd-yyyy  hh:mmtt"
-            };
+            ];
             DateTime parsed;
 
             if (DateTime.TryParseExact(date, formats, CultureInfo.InvariantCulture, style, out parsed))

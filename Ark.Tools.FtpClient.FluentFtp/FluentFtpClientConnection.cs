@@ -27,12 +27,12 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
         {
-            await _client.DeleteDirectory(path, ctk);
+            await _client.DeleteDirectory(path, ctk).ConfigureAwait(false);
         }
 
         public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
         {
-            await _client.DeleteFile(path, ctk);
+            await _client.DeleteFile(path, ctk).ConfigureAwait(false);
         }
 
         public override async ValueTask ConnectAsync(CancellationToken ctk)
@@ -40,7 +40,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
             if (_client.IsConnected)
                 return;
 
-            await _client.Connect(ctk);
+            await _client.Connect(ctk).ConfigureAwait(false);
         }
 
         public override async ValueTask DisconnectAsync(CancellationToken ctk = default)
@@ -48,12 +48,12 @@ namespace Ark.Tools.FtpClient.FluentFtp
             if (!_client.IsConnected)
                 return;
 
-            await _client.Disconnect(ctk);
+            await _client.Disconnect(ctk).ConfigureAwait(false);
         }
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            var res = await _client.DownloadBytes(path,token: ctk);
+            var res = await _client.DownloadBytes(path,token: ctk).ConfigureAwait(false);
             return res;
         }
 
@@ -65,7 +65,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
         public override async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
             path ??= "./";
-            var lst = await _client.GetListing(path, FtpListOption.Auto, ctk);
+            var lst = await _client.GetListing(path, FtpListOption.Auto, ctk).ConfigureAwait(false);
             var res = lst.Select(x => new FtpEntry()
             {
                 FullPath = x.FullName,
@@ -80,7 +80,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
 
         public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            await _client.UploadBytes(content, path, token:ctk);
+            await _client.UploadBytes(content, path, token:ctk).ConfigureAwait(false);
         }
 
         protected override void Dispose(bool disposing)

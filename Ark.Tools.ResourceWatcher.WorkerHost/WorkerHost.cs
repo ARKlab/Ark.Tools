@@ -59,8 +59,8 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         where TMetadata : class, IResourceMetadata
         where TQueryFilter : class, new()
     {
-        private readonly List<Predicate<TMetadata>> _predicates = new List<Predicate<TMetadata>> { };
-        private readonly List<Action<TQueryFilter>> _configurers = new List<Action<TQueryFilter>> { };
+        private readonly List<Predicate<TMetadata>> _predicates = new() { };
+        private readonly List<Action<TQueryFilter>> _configurers = new() { };
 
         private Container _container { get; } = new Container();
 
@@ -187,7 +187,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         {
             _onInit();
 
-            await _container.GetInstance<Watcher>().RunOnce(filterConfigurer, ctk);
+            await _container.GetInstance<Watcher>().RunOnce(filterConfigurer, ctk).ConfigureAwait(false);
         }
 
         public override void Start()
@@ -272,7 +272,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 _filter = filter;
                 try
                 {
-                    await base.RunOnce(ctk);
+                    await RunOnce(ctk).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -282,16 +282,17 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
             protected override async Task _runOnce(RunType runType, CancellationToken ctk = default)
             {
-                await using (var scope = AsyncScopedLifestyle.BeginScope(_container))
+                var scope = AsyncScopedLifestyle.BeginScope(_container);
+                await using (scope.ConfigureAwait(false))
                 {
-                    await base._runOnce(runType, ctk);
+                    await base._runOnce(runType, ctk).ConfigureAwait(false);
                 }
             }
 
             protected override async Task<IEnumerable<IResourceMetadata>> _getResourcesInfo(CancellationToken ctk = default)
             {
                 var filter = _buildFilter();
-                var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetMetadata(filter, ctk);
+                var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetMetadata(filter, ctk).ConfigureAwait(false);
 
                 if (meta.Where(x => x.Modified == default && (x.ModifiedSources == null || !x.ModifiedSources.Any())).Any())
                 {
@@ -318,7 +319,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             protected override async Task _processResource(ChangedStateContext<TResource> context, CancellationToken ctk = default)
             {
                 var sw = Stopwatch.StartNew();
-                var data = await context.Payload;
+                var data = await context.Payload.ConfigureAwait(false);
 
                 if (data != null)
                 {
@@ -327,7 +328,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                     foreach (var w in _container.GetAllInstances<IResourceProcessor<TResource, TMetadata>>())
                     {
                         sw.Restart();
-                        await w.Process(data, ctk);
+                        await w.Process(data, ctk).ConfigureAwait(false);
                         _logger.Info(CultureInfo.InvariantCulture, "Processed ResourceId={ResourceId} with {Name} in {Elapsed}", context.Info.ResourceId, w.GetType().Name, sw.Elapsed);
                     }
                 } else

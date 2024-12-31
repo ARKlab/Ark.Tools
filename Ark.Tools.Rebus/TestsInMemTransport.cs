@@ -37,7 +37,7 @@ namespace Ark.Tools.Rebus
         {
             var cnt = outgoingMessages.Where(x => x.DestinationAddress != "error").Count();
 
-            await base.SendOutgoingMessages(outgoingMessages, context);
+            await base.SendOutgoingMessages(outgoingMessages, context).ConfigureAwait(false);
 
             Interlocked.Add(ref InProcessMessageCount, cnt);
         }

@@ -35,7 +35,7 @@ namespace Ark.Reference.Core.WebInterface
         public override IEnumerable<ApiVersion> Versions => ApplicationConstants.Versions.Reverse().Select(x => ApiVersionParser.Default.Parse(x));
 
         public override OpenApiInfo MakeInfo(ApiVersion version)
-                => new OpenApiInfo
+                => new()
                 {
                     Title = "Core Service API",
                     Version = version.ToString("VVVV", CultureInfo.InvariantCulture),

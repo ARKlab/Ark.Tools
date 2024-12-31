@@ -14,7 +14,7 @@ namespace Ark.Tools.Core
     {
         private readonly List<IDisposable> _disposables;
         private const int DefaultCapacity = 16;
-        private readonly object _gate = new object();
+        private readonly object _gate = new();
         private bool _disposed;
 
         public DisposableContainer()

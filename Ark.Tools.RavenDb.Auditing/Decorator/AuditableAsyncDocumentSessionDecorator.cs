@@ -134,11 +134,11 @@ namespace Ark.Tools.RavenDb.Auditing
 			if (changes.Count > 0)
 			{
 				if (_ensureAndCreateAudit())
-					await _inner.StoreAsync(_audit, token);
+					await _inner.StoreAsync(_audit, token).ConfigureAwait(false);
 
 				foreach (var entityId in changes.Keys)
 				{
-					var entity = await _inner.LoadAsync<object>(entityId, token);
+					var entity = await _inner.LoadAsync<object>(entityId, token).ConfigureAwait(false);
 
 					if (entity is IAuditableEntity)
 					{
@@ -150,7 +150,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				}
 			}
 
-			await _inner.SaveChangesAsync(token);
+			await _inner.SaveChangesAsync(token).ConfigureAwait(false);
 			_audit = null;
 		}
 
@@ -161,17 +161,17 @@ namespace Ark.Tools.RavenDb.Auditing
 				_ensureEntityId(entity, token);
 
 				if (_ensureAndCreateAudit())
-					await _inner.StoreAsync(_audit, token);
+					await _inner.StoreAsync(_audit, token).ConfigureAwait(false);
 
 				_setAuditIdOnEntity(entity);
 
-				await _inner.StoreAsync(entity, token);
+				await _inner.StoreAsync(entity, token).ConfigureAwait(false);
 
 				var infos = _getEntityInfo(entity);
 				_fillAudit(_audit!, infos.entityId, infos.cv, infos.collectionName);
 			}
 			else
-				await _inner.StoreAsync(entity, token);
+				await _inner.StoreAsync(entity, token).ConfigureAwait(false);
 		}
 
 		public async Task StoreAsync(object entity, string changeVector, string id, CancellationToken token = default)
@@ -181,12 +181,12 @@ namespace Ark.Tools.RavenDb.Auditing
 				_checkEntityIdGeneration(id);
 
 				if (_ensureAndCreateAudit())
-					await _inner.StoreAsync(_audit, token);
+					await _inner.StoreAsync(_audit, token).ConfigureAwait(false);
 
 				if (entity is IAuditableEntity)
 					_setAuditIdOnEntity(entity);
 
-				await _inner.StoreAsync(entity, changeVector, id, token);
+				await _inner.StoreAsync(entity, changeVector, id, token).ConfigureAwait(false);
 
 				if (entity is IAuditableEntity)
 				{
@@ -195,7 +195,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				}
 			}
 			else
-				await _inner.StoreAsync(entity, changeVector, id, token);
+				await _inner.StoreAsync(entity, changeVector, id, token).ConfigureAwait(false);
 		}
 
 		public async Task StoreAsync(object entity, string id, CancellationToken token = default)
@@ -205,12 +205,12 @@ namespace Ark.Tools.RavenDb.Auditing
 				_checkEntityIdGeneration(id);
 
 				if (_ensureAndCreateAudit())
-					await _inner.StoreAsync(_audit, token);
+					await _inner.StoreAsync(_audit, token).ConfigureAwait(false);
 
 				if (entity is IAuditableEntity)
 					_setAuditIdOnEntity(entity);
 
-				await _inner.StoreAsync(entity, id, token);
+				await _inner.StoreAsync(entity, id, token).ConfigureAwait(false);
 
 				if (entity is IAuditableEntity)
 				{
@@ -219,7 +219,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				}
 			}
 			else
-				await _inner.StoreAsync(entity, id, token);
+				await _inner.StoreAsync(entity, id, token).ConfigureAwait(false);
 		}
 
 		private void _setAuditIdOnEntity(object entity)

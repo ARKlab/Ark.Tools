@@ -42,7 +42,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="SocketException">An operating system error occurs while accessing the Socket.</exception>
 		/// <exception cref="ObjectDisposedException">The Socket has been closed.</exception>
 		private void Authenticate() {
-			if (Server.Send(new byte [] {5, 2, 0, 2}) < 4)
+			if (Server.Send([5, 2, 0, 2]) < 4)
 				throw new SocketException(10054);
 			byte[] buffer = ReadBytes(2);
 			if (buffer[1] == 255)
@@ -203,7 +203,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 				return;
 			}
 			try {
-				Server.BeginSend(new byte [] {5, 2, 0, 2}, 0, 4, SocketFlags.None, new AsyncCallback(this.OnAuthSent), Server);
+				Server.BeginSend([5, 2, 0, 2], 0, 4, SocketFlags.None, new AsyncCallback(this.OnAuthSent), Server);
 			} catch (Exception e) {
 				ProtocolComplete?.Invoke(e);
 			}

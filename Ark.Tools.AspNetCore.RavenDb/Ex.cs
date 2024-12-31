@@ -34,7 +34,7 @@ namespace Ark.Tools.AspNetCore.RavenDb
 			query = (options.OrderBy?.ApplyTo(query, settings) as IRavenQueryable<T>) ?? query;
 			query = query.Skip(options.Skip?.Value ?? 0).Take(options.Top?.Value ?? defaultPageSize);
 
-			var data = await query.ToListAsync(ctk);
+			var data = await query.ToListAsync(ctk).ConfigureAwait(false);
 
 			return new PagedResult<T>
 			{

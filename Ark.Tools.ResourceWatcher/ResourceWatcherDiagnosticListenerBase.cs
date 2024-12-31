@@ -9,7 +9,7 @@ namespace Ark.Tools.ResourceWatcher
 { 
     public abstract class ResourceWatcherDiagnosticListenerBase : IObserver<DiagnosticListener>, IDisposable
     {
-        private readonly List<IDisposable> _subscription = new List<IDisposable>();
+        private readonly List<IDisposable> _subscription = new();
 
         protected ResourceWatcherDiagnosticListenerBase()
         {

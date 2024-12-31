@@ -87,38 +87,41 @@ namespace Ark.Tools.Hosting
                 try
                 {
                     _logger.LogDebug("Service<{ServiceName}> is trying to acquire Lock<{LockId}>", ServiceName, LockId);
-                    await using var handle = await _lock.AcquireAsync(cancellationToken: cancellationToken);
-                    _checkHandleLossSupport(handle);
-
-                    _logger.LogInformation("Service<{ServiceName}> has acquired Lock<{LockId}>: executing " + nameof(RunAsync), ServiceName, LockId);
-
-                    using var ct = CancellationTokenSource.CreateLinkedTokenSource(handle.HandleLostToken, cancellationToken);                    
-                    try
+                    var handle = await _lock.AcquireAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                    await using (handle.ConfigureAwait(false))
                     {
-                        await RunAsync(ct.Token);
-                    }
-                    catch (OperationCanceledException) when (ct.IsCancellationRequested) 
-                    {}
-                    catch (Exception e)
-                    {
-                        _logger.LogError(e, "Service<{ServiceName}>.RunAsync() exited with exception.", ServiceName);
-                    }
+                        _checkHandleLossSupport(handle);
 
-                    // we want to keep the lock, if we still have it, while cooling down in case of RunAsync returns or throws
-                    // this is required to ensure the cooldown is respected across all Instances as in "one Run every X minutes"
-                    // otherwise as soon as we release the Lock another instance would Run
-                    if (!ct.IsCancellationRequested)
-                    {
-                        _logger.LogDebug("Service<{ServiceName}> cooldown for {Cooldown}", ServiceName, Cooldown);
+                        _logger.LogInformation("Service<{ServiceName}> has acquired Lock<{LockId}>: executing " + nameof(RunAsync), ServiceName, LockId);
+
+                        using var ct = CancellationTokenSource.CreateLinkedTokenSource(handle.HandleLostToken, cancellationToken);                    
                         try
                         {
-                            await Task.Delay(Cooldown, ct.Token);
+                            await RunAsync(ct.Token).ConfigureAwait(false);
                         }
-                        catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                        { }
-                    }
+                        catch (OperationCanceledException) when (ct.IsCancellationRequested) 
+                        {}
+                        catch (Exception e)
+                        {
+                            _logger.LogError(e, "Service<{ServiceName}>.RunAsync() exited with exception.", ServiceName);
+                        }
 
-                    _logger.LogDebug("Service<{ServiceName}> releasing Lock<{LockId}>", ServiceName, LockId);
+                        // we want to keep the lock, if we still have it, while cooling down in case of RunAsync returns or throws
+                        // this is required to ensure the cooldown is respected across all Instances as in "one Run every X minutes"
+                        // otherwise as soon as we release the Lock another instance would Run
+                        if (!ct.IsCancellationRequested)
+                        {
+                            _logger.LogDebug("Service<{ServiceName}> cooldown for {Cooldown}", ServiceName, Cooldown);
+                            try
+                            {
+                                await Task.Delay(Cooldown, ct.Token).ConfigureAwait(false);
+                            }
+                            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                            { }
+                        }
+
+                        _logger.LogDebug("Service<{ServiceName}> releasing Lock<{LockId}>", ServiceName, LockId);
+                    }
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
                 catch (Exception e) // either the ExecuteAsync failed or the AcquireAsync failed or its disposal (strange)
@@ -132,7 +135,7 @@ namespace Ark.Tools.Hosting
                         _logger.LogDebug("Service<{ServiceName}> cooldown for {Cooldown}", ServiceName, Cooldown);
                         try
                         {
-                            await Task.Delay(Cooldown, cancellationToken);
+                            await Task.Delay(Cooldown, cancellationToken).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                         { }

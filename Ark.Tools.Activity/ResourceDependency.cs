@@ -19,7 +19,7 @@ namespace Ark.Tools.Activity
         {
             return new ResourceDependency() {
                 Resource = resource,
-                _getDependentSlice = s => new[] { getDependentSourceSlice(s) }
+                _getDependentSlice = s => [getDependentSourceSlice(s)]
                 };
         }
 

@@ -12,10 +12,10 @@ namespace Ark.Tools.Nodatime
     public class LocalDateTimeConverter : TypeConverter
     {
         private readonly LocalDateTimePattern _pattern = LocalDateTimePattern.ExtendedIso;
-        private static Type[] _supportedFrom = new[]
-        {
+        private static Type[] _supportedFrom =
+        [
             typeof(string),typeof(LocalDateTime),typeof(LocalDate),typeof(DateTime)
-        };
+        ];
 
         public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
         {

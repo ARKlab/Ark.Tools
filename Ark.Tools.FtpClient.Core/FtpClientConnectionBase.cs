@@ -45,25 +45,25 @@ namespace Ark.Tools.FtpClient.Core
             if (skipFolder == null)
                 skipFolder = x => false;
 
-            Stack<FtpEntry> pendingFolders = new Stack<FtpEntry>();
+            Stack<FtpEntry> pendingFolders = new();
             IEnumerable<FtpEntry> files = new List<FtpEntry>();
 
             async Task listFolderAsync(string path, CancellationToken ct)
             {
                 var retrier = Policy
                     .Handle<Exception>()
-                    .WaitAndRetryAsync(new[]
-                    {
+                    .WaitAndRetryAsync(
+                    [
                         TimeSpan.FromSeconds(1),
-                    }, (ex, ts) =>
+                    ], (ex, ts) =>
                     {
                         _logger.Warn(ex, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
                     });
 
                 var list = await retrier.ExecuteAsync(async ct1 =>
                 {
-                    return await this.ListDirectoryAsync(path, ct1);
-                }, ct);
+                    return await ListDirectoryAsync(path, ct1).ConfigureAwait(false);
+                }, ct).ConfigureAwait(false);
 
                 foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                 {
@@ -76,10 +76,10 @@ namespace Ark.Tools.FtpClient.Core
                 files = files.Concat(list.Where(x => !x.IsDirectory).ToList());
             }
 
-            await listFolderAsync(startPath, ctk);
+            await listFolderAsync(startPath, ctk).ConfigureAwait(false);
 
             while (pendingFolders.Count > 0)
-                await listFolderAsync(pendingFolders.Pop().FullPath, ctk);
+                await listFolderAsync(pendingFolders.Pop().FullPath, ctk).ConfigureAwait(false);
 
             return files;
         }

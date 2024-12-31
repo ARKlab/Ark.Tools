@@ -29,9 +29,9 @@ namespace TestReceiver
 		{
 			get
 			{
-				return new[] {
+				return [
 					ResourceDependency.OneSlice("test", "first", activitySlice => activitySlice),
-				};
+				];
 			}
 		}
 

@@ -41,7 +41,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 			var aggrname = AggregateHelper<TAggregate>.Name;
 			var envelopes = new List<AggregateEventStore>();
 
-			_chex = await _session.Advanced.ClusterTransaction.GetCompareExchangeValueAsync<long>(_chexKey, ctk);
+			_chex = await _session.Advanced.ClusterTransaction.GetCompareExchangeValueAsync<long>(_chexKey, ctk).ConfigureAwait(false);
 
 			if (_chex == null)
 			{
@@ -57,9 +57,9 @@ namespace Ark.Tools.EventSourcing.RavenDb
 					$"{aggrname}/{Identifier}/",
 					startAfter: lastId,
 					pageSize: (int)maxVersion - envelopes.Count,
-					token: ctk);
+					token: ctk).ConfigureAwait(false);
 
-				while (envelopes.Count != maxVersion && await results.MoveNextAsync(ctk))
+				while (envelopes.Count != maxVersion && await results.MoveNextAsync(ctk).ConfigureAwait(false))
 				{
 					var envelope = results.Current;
 					if (envelope.Document.AggregateVersion != envelopes.Count + 1)
@@ -94,17 +94,17 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
                     evt.SetEvent(e.Event);
 
-                    await _session.StoreAsync(evt, ctk);
+                    await _session.StoreAsync(evt, ctk).ConfigureAwait(false);
                 }
 
                 foreach (var e in Aggregate.UncommittedAggregateEvents)
                 {
-                    await _session.StoreAsync(e.ToStore(), ctk);
+                    await _session.StoreAsync(e.ToStore(), ctk).ConfigureAwait(false);
                 }
 
-                await _session.StoreAsync(Aggregate.State, AggregateHelper<TAggregate>.Name + "/" + Aggregate.Identifier, ctk);
+                await _session.StoreAsync(Aggregate.State, AggregateHelper<TAggregate>.Name + "/" + Aggregate.Identifier, ctk).ConfigureAwait(false);
 
-                await _session.SaveChangesAsync(ctk);
+                await _session.SaveChangesAsync(ctk).ConfigureAwait(false);
             }
 
             Aggregate.Commit();

@@ -15,7 +15,7 @@ namespace Ark.Tools.Core
         public static async Task<(IEnumerable<TResult>, long count)> ReadAllPagesAsync<TResult, TQuery>(this TQuery query, Func<TQuery, CancellationToken, Task<PagedResult<TResult>>> funcAsync, CancellationToken ctk = default)
         where TQuery : IQueryPaged
         {
-            var data = await QueryAllPagesAsync(query, funcAsync, ctk).ToListAsync(ctk);
+            var data = await QueryAllPagesAsync(query, funcAsync, ctk).ToListAsync(ctk).ConfigureAwait(false);
             return (data, data.Count + query.Skip);
         }
 
@@ -26,7 +26,7 @@ namespace Ark.Tools.Core
             where TQuery : IQueryPaged
         {
             var data = await QueryAllPagesAsync(query, async (q, ctk) => {
-                var res = await funcAsync(q, ctk);
+                var res = await funcAsync(q, ctk).ConfigureAwait(false);
 
                 return new PagedResult<TResult>
                 {
@@ -36,7 +36,7 @@ namespace Ark.Tools.Core
                     Limit = query.Limit,
                     Skip = query.Skip,
                 };
-            }, ctk).ToListAsync(ctk);
+            }, ctk).ToListAsync(ctk).ConfigureAwait(false);
 
             return (data, data.Count + query.Skip);
         }
@@ -49,7 +49,7 @@ namespace Ark.Tools.Core
             PagedResult<TResult> lastPage;
             do
             {
-                lastPage = await executor(query, ctk);
+                lastPage = await executor(query, ctk).ConfigureAwait(false);
                 foreach (var e in lastPage.Data)
                     yield return e;
                 query.Skip = lastPage.Skip + lastPage.Limit;

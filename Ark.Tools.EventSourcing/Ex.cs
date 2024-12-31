@@ -7,7 +7,7 @@ namespace Ark.Tools.EventSourcing
 {
 	public static class Ex
 	{
-		private static Dictionary<Type, string> _fullNameCache = new Dictionary<Type, string>();
+		private static Dictionary<Type, string> _fullNameCache = new();
 		/// <summary>
 		/// Gets the full name without version information.
 		/// </summary>

@@ -45,11 +45,11 @@ namespace Ark.Tools.Activity.Processor
             {
 				if (_activity.CoolDown == null || Data.IsCoolDown == false)
 				{
-					await _process();
+					await _process().ConfigureAwait(false);
 				}
 				else if (Data.IsCoolDown && !Data.IsScheduled)
 				{
-					await _schedule(message);
+					await _schedule(message).ConfigureAwait(false);
 				}
 				else
 				{
@@ -76,17 +76,17 @@ namespace Ark.Tools.Activity.Processor
 		public async Task Handle(CoolDownMessage message)
 		{
 			_activity.Logger.Info("Message Processed after CoolDown Time for Slice {ActivitySlice}", Data.ActivitySlice);
-			await _process();
+			await _process().ConfigureAwait(false);
 		}
 
 		private async Task _process()
 		{
-			await _activity.Process(Data.ActivitySlice);
+			await _activity.Process(Data.ActivitySlice).ConfigureAwait(false);
 			await _bus.Advanced.Topics.Publish(_activity.Resource.ToString(), new ResourceSliceReady()
 			{
 				Resource = _activity.Resource,
 				Slice = Data.ActivitySlice
-			});
+			}).ConfigureAwait(false);
 			_activity.Logger.Info("Completed materialization for slice {ActivitySlice}.", Data.ActivitySlice);
 
 			// Reset CD
@@ -110,7 +110,7 @@ namespace Ark.Tools.Activity.Processor
 					ActivitySlice = Slice.From(message.ActivitySlice.SliceStart),
 					Resource = Resource.Create(message.Resource.Provider, message.Resource.Id),
 					ResourceSlice = Slice.From(message.ResourceSlice.SliceStart)
-				});
+				}).ConfigureAwait(false);
 
 				Data.IsScheduled = true;
 			}

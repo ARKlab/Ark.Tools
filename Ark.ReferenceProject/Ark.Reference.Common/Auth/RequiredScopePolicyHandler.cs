@@ -10,7 +10,7 @@ namespace Ark.Reference.Common.Auth
     public abstract class RequiredScopePolicyHandler : AuthorizationHandler<RequiredScopePolicy>
     {
         private readonly string _serviceScope;
-        private static readonly char[] _separator = new[] { ' ' };
+        private static readonly char[] _separator = [' '];
 
         protected RequiredScopePolicyHandler(
             string serviceScope)

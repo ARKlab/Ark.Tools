@@ -16,8 +16,8 @@ namespace Ark.Tools.SystemTextJson
         {
             var typeConverter = TypeDescriptor.GetConverter(typeToConvert);
             var jsonConverter = (JsonConverter?)Activator.CreateInstance(typeof(TypeConverterJsonConverter<>).MakeGenericType(
-                    new Type[] { typeToConvert }),
-                new object[] { typeConverter, options });
+                    [typeToConvert]),
+                [typeConverter, options]);
             return jsonConverter;
         }
 

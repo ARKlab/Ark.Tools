@@ -25,7 +25,7 @@ namespace Ark.Tools.Solid.Decorators
 
         public TResponse Execute(TRequest request)
         {
-            Stopwatch stopWatch = new Stopwatch();
+            Stopwatch stopWatch = new();
             stopWatch.Start();
             var result = _decorated.Execute(request);
             stopWatch.Stop();
@@ -36,9 +36,9 @@ namespace Ark.Tools.Solid.Decorators
 
         public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
         {
-            Stopwatch stopWatch = new Stopwatch();
+            Stopwatch stopWatch = new();
             stopWatch.Start();
-            var result = await _decorated.ExecuteAsync(request, ctk);
+            var result = await _decorated.ExecuteAsync(request, ctk).ConfigureAwait(false);
             stopWatch.Stop();
             _logger.Trace(() => string.Format(CultureInfo.InvariantCulture, "Request<{Request}> executed in {Elapsed}ms", request.GetType(), stopWatch.ElapsedMilliseconds));
 

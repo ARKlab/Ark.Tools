@@ -82,14 +82,14 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// </returns>
         public async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            var tok = await _getAccessToken(ctk);
+            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
 
             var res = await _client.Request("v2", "DownloadFile")
                 .SetQueryParam("filePath", path)
                 .WithOAuthBearerToken(tok)
                 .PostJsonAsync(_connectionInfo, cancellationToken: ctk)
                 .ReceiveJson<DownloadFileResult>()
-                ;
+.ConfigureAwait(false);
 
             return res.Content ?? Array.Empty<byte>();
         }
@@ -106,18 +106,18 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
             path ??= "./";
-            var tok = await _getAccessToken(ctk);
+            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
             
             var res = await _client.Request("v2", "ListFolder")
                 .WithOAuthBearerToken(tok)
                 .PostJsonAsync(new ListingRequest
                 {
                     Info = _connectionInfo,
-                    Paths = new[] { path },
+                    Paths = [path],
                     Recursive = false,
                 }, cancellationToken: ctk)
                 .ReceiveJson<IEnumerable<FtpEntry>>()
-                ;
+.ConfigureAwait(false);
 
             return res;
         }
@@ -135,7 +135,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
             startPath ??= "./";
-            var tok = await _getAccessToken(ctk);
+            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
             if (skipFolder == null) // no folders to skip, just recurse overall
             {
                 var res = await _client.Request("v2", "ListFolder")
@@ -143,12 +143,12 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     .PostJsonAsync(new ListingRequest
                     {
                         Info = _connectionInfo,
-                        Paths = new[] { startPath },
+                        Paths = [startPath],
                         Recursive = true,
                         DegreeOfParallelism = _config.ListingDegreeOfParallelism
                     }, cancellationToken: ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
-                    ;
+.ConfigureAwait(false);
                 
                 return res.Where(e => !e.IsDirectory);
             }
@@ -161,11 +161,11 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     .PostJsonAsync(new ListingRequest
                     {
                         Info = _connectionInfo,
-                        Paths = new[] { startPath },
+                        Paths = [startPath],
                         Recursive = false,
                     }, cancellationToken: ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
-                    ;
+.ConfigureAwait(false);
 
                 entries.Add(res);
 
@@ -181,7 +181,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
                             Recursive = false,
                         }, cancellationToken: ctk)
                         .ReceiveJson<IEnumerable<FtpEntry>>()
-                        ;
+.ConfigureAwait(false);
 
                     entries.Add(r);
                     folders = r.Where(x => x.IsDirectory && !skipFolder(x)).ToArray();

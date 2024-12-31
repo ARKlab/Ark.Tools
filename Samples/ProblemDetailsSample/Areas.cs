@@ -8,17 +8,17 @@ namespace ProblemDetailsSample
 
     public static class ProblemDetailsSampleConstants
     {
-        public static readonly string[] PublicVersions = {
+        public static readonly string[] PublicVersions = [
              "1.0"
-        };
+        ];
 
-        public static readonly string[] PrivateVersions = {
+        public static readonly string[] PrivateVersions = [
              "1.0"
-        };
+        ];
 
-        public static readonly string[] PreviewVersions = {
+        public static readonly string[] PreviewVersions = [
              "1.0"
-        };
+        ];
 
         public static readonly string EnforceEmptyPayload = string.Empty;
     }

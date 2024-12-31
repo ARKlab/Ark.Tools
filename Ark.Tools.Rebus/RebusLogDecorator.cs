@@ -22,7 +22,7 @@ namespace Ark.Tools.Rebus
 			var sw = Stopwatch.StartNew();
 			try
 			{
-				await _inner.Handle(message);
+				await _inner.Handle(message).ConfigureAwait(false);
 				_logger.Debug("Processed message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
 			}
 			catch (Exception e)

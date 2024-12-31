@@ -27,23 +27,21 @@ namespace WebApplicationDemo.Application.Handlers.Requests
 		{
 			EnsureArg.IsNotNull(request, nameof(request));
 
-			using (var buffer = new MemoryStream())
-			{
-				// Copy source to destination.
-				request.File?.CopyToAsync(buffer, ctk);
-				buffer.Seek(0, SeekOrigin.Begin);
+            using var buffer = new MemoryStream();
+            // Copy source to destination.
+            request.File?.CopyToAsync(buffer, ctk);
+            buffer.Seek(0, SeekOrigin.Begin);
 
-				_logger.Info(CultureInfo.InvariantCulture, "FileImport_CreateRequestHandler - File Import created");
+            _logger.Info(CultureInfo.InvariantCulture, "FileImport_CreateRequestHandler - File Import created");
 
-				var f = new FileImport()
-				{
-					FileName = request.FileName,
-					ImportId = 10
-				};
+            var f = new FileImport()
+            {
+                FileName = request.FileName,
+                ImportId = 10
+            };
 
-				return await Task.FromResult(f);
-			}
-		}
+            return await Task.FromResult(f);
+        }
 
 	}
 }

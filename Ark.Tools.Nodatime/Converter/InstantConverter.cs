@@ -12,10 +12,10 @@ namespace Ark.Tools.Nodatime
     public class InstantConverter : TypeConverter
     {
         private readonly InstantPattern _pattern = InstantPattern.ExtendedIso;
-        private static Type[] _supportedFrom = new[]
-        {
+        private static Type[] _supportedFrom =
+        [
             typeof(string),typeof(Instant)
-        };
+        ];
 
         public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
         {

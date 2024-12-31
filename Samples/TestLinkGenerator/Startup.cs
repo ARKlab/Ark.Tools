@@ -28,11 +28,11 @@ namespace TestWithoutArkTools
 		{
 		}
 
-		public override IEnumerable<ApiVersion> Versions => new[] { new ApiVersion(1, 0) };
+		public override IEnumerable<ApiVersion> Versions => [new ApiVersion(1, 0)];
 
 		public override OpenApiInfo MakeInfo(ApiVersion version)
-			=> new OpenApiInfo
-			{
+			=> new()
+            {
 				Title = "API",
 				Version = version.ToString("VVVV", CultureInfo.InvariantCulture),
 			};

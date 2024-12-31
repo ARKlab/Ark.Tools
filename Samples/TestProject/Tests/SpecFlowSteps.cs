@@ -27,7 +27,7 @@ namespace TestProject
         [When(@"^I get Entity with id (.*)$")]
         public void WhenIGetEntityWithId(string id)
         {
-            _client.Get(new string[] { "entity", id });
+            _client.Get(["entity", id]);
         }
 
         [Then("^Content-Type is (.*)$")]

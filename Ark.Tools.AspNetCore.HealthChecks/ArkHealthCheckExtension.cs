@@ -143,7 +143,7 @@ namespace Ark.Tools.AspNetCore.HealthChecks
 
                 try
                 {
-                    await _action(_container.GetInstance<T>(), cancellationToken);
+                    await _action(_container.GetInstance<T>(), cancellationToken).ConfigureAwait(false);
                     return new HealthCheckResult(HealthStatus.Healthy);
                 }
                 catch (Exception ex)

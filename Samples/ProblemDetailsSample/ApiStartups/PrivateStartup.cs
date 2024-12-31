@@ -36,7 +36,8 @@ namespace ProblemDetailsSample
         public IServiceProvider ServiceProvider { get; }
 
         public override OpenApiInfo MakeInfo(ApiVersion version)
-            => new OpenApiInfo { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV", CultureInfo.InvariantCulture) };
+            => new()
+            { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV", CultureInfo.InvariantCulture) };
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public override void ConfigureServices(IServiceCollection services)

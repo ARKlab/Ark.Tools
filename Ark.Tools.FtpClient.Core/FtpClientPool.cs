@@ -29,12 +29,12 @@ namespace Ark.Tools.FtpClient.Core
         protected override async Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
         {
             IFtpClientConnection? result = null;
-            await _semaphore.WaitAsync(ctk);
+            await _semaphore.WaitAsync(ctk).ConfigureAwait(false);
             try
             {
                 while (_pool.TryPop(out var candidate))
                 {
-                    if (await candidate.IsConnectedAsync(ctk))
+                    if (await candidate.IsConnectedAsync(ctk).ConfigureAwait(false))
                     {
                         result = candidate;
                         break;
@@ -46,7 +46,7 @@ namespace Ark.Tools.FtpClient.Core
                 if (result == null)
                 {
                     result = _createNewConnection();
-                    await result.ConnectAsync(ctk);
+                    await result.ConnectAsync(ctk).ConfigureAwait(false);
                 }
 
                 var pooled = new PooledFtpConnection(result);

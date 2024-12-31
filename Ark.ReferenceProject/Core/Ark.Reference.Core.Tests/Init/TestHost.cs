@@ -52,7 +52,7 @@ namespace Ark.Reference.Core.Tests.Init
         public static ArkFlurlClientFactory Factory { get => _factory ?? throw new InvalidOperationException("_server is null"); set => _factory = value; }
 
         private static ArkFlurlClientFactory? _factory;
-        public static readonly TestEnv Env = new TestEnv();
+        public static readonly TestEnv Env = new();
 
         private static ScenarioContext? _scenarioContext;
         private static IHost? _server;
@@ -185,7 +185,7 @@ namespace Ark.Reference.Core.Tests.Init
 
             //ApplicationConstants.ComputeIdleDetectWindow = TimeSpan.FromSeconds(1);
 
-            var builder = Program.GetHostBuilder(Array.Empty<string>())
+            var builder = Program.GetHostBuilder([])
                 .ConfigureWebHost(wh =>
                 {
                     wh.UseTestServer()
@@ -274,9 +274,9 @@ namespace Ark.Reference.Core.Tests.Init
             TestDataFilePath = Path.GetDirectoryName(AppContext.BaseDirectory) + @"\TestData\";
         }
 
-        public ClaimsPrincipal TestPrincipal { get; } = new ClaimsPrincipal(new ClaimsIdentity(new[]{
+        public ClaimsPrincipal TestPrincipal { get; } = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, "Specflow")
-            }, "SYSTEM"));
+            ], "SYSTEM"));
 
         public InMemNetwork RebusNetwork { get; } = new InMemNetwork(true);
         public InMemorySubscriberStore RebusSubscriber { get; } = new InMemorySubscriberStore();

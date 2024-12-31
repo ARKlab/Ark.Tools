@@ -37,7 +37,7 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
             if (result != ValueProviderResult.None && result.Values.Any(x => x?.IndexOf(_separator) > 0))
             {
                 var splitValues = new StringValues(result.Values
-                    .SelectMany(x => x!.Split(new[] { _separator }, StringSplitOptions.None)).ToArray());
+                    .SelectMany(x => x!.Split([_separator], StringSplitOptions.None)).ToArray());
                 return new ValueProviderResult(splitValues, result.Culture);
             }
 

@@ -15,10 +15,10 @@ namespace Ark.Tools.RavenDb.Auditing
     public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 	{
 		private readonly IDocumentStore _store;
-		private readonly List<Task> _subscriptionWorkerTasks = new List<Task>();
+		private readonly List<Task> _subscriptionWorkerTasks = new();
 		private CancellationTokenSource? _tokenSource;
-		private readonly object _gate = new object();
-		private readonly HashSet<string> _names = new HashSet<string>(StringComparer.Ordinal);
+		private readonly object _gate = new();
+		private readonly HashSet<string> _names = new(StringComparer.Ordinal);
 		private const string _prefixName= "AuditProcessor";
 		
 		public RavenDbAuditProcessor(IDocumentStore store, IAuditableTypeProvider provider)
@@ -40,7 +40,7 @@ namespace Ark.Tools.RavenDb.Auditing
 					{
 						Name = _prefixName + name,
 						Query = $@"From {name}(Revisions = true)"
-					}, token:ctk);
+					}, token:ctk).ConfigureAwait(false);
 				}
 				catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
 				{
@@ -70,15 +70,15 @@ namespace Ark.Tools.RavenDb.Auditing
 				try
 				{
 					retryCount++;
-                    await using (var worker = _store.Subscriptions.GetSubscriptionWorker<Revision<dynamic>>(
+                    var worker = _store.Subscriptions.GetSubscriptionWorker<Revision<dynamic>>(
 					new SubscriptionWorkerOptions(_prefixName + name)
 					{
 						Strategy = SubscriptionOpeningStrategy.WaitForFree,
 						MaxDocsPerBatch = 10,
-					}))
+					});
+                    await using (worker.ConfigureAwait(false))
 					{
-
-						await worker.Run(_processAuditChange, ctk);
+						await worker.Run(_processAuditChange, ctk).ConfigureAwait(false);
 					}
 				}
 				catch (TaskCanceledException) { throw; }
@@ -95,27 +95,26 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		private async Task _processAuditChange(SubscriptionBatch<Revision<dynamic>> batch)
 		{
-			using (var session = _store.OpenAsyncSession())
-			{
-				foreach (var e in batch.Items)
-				{
-					if (e.Result?.Current?.AuditId != null) //Delete does not have an audit 
-					{
-						string? operation = default;
+            using var session = _store.OpenAsyncSession();
+            foreach (var e in batch.Items)
+            {
+                if (e.Result?.Current?.AuditId != null) //Delete does not have an audit 
+                {
+                    string? operation = default;
 
-						if (e.Result.Previous != null && e.Result.Current == null)
-							operation = Operations.Delete.ToString();
-						else if (e.Result.Previous != null && e.Result.Current != null)
-							operation = Operations.Update.ToString();
-						else if (e.Result.Previous == null && e.Result.Current != null)
-							operation = Operations.Insert.ToString();
+                    if (e.Result.Previous != null && e.Result.Current == null)
+                        operation = nameof(Operations.Delete);
+                    else if (e.Result.Previous != null && e.Result.Current != null)
+                        operation = nameof(Operations.Update);
+                    else if (e.Result.Previous == null && e.Result.Current != null)
+                        operation = nameof(Operations.Insert);
 
-						session.Advanced.Defer(new PatchCommandData(
-							id: (string?)e.Result?.Current?.AuditId,
-							changeVector: null,
-							patch: new PatchRequest
-							{
-								Script = @"this.EntityInfo
+                    session.Advanced.Defer(new PatchCommandData(
+                        id: (string?)e.Result?.Current?.AuditId,
+                        changeVector: null,
+                        patch: new PatchRequest
+                        {
+                            Script = @"this.EntityInfo
 											.forEach(eInfo => { 
 												if (eInfo.EntityId == args.Id)
 												{
@@ -125,33 +124,32 @@ namespace Ark.Tools.RavenDb.Auditing
 												}
 											});
 										 ",
-								Values =
-								{
-									{
-										"Cv", e.ChangeVector
-									},
-									{
-										"Id", e.Id
-									},
-									{
-										"LastMod", e.Metadata["@last-modified"]
-									},
-									{
-										"Operation",  operation
-									}
-								}
-							},
-							patchIfMissing: null));
-					}
-				}
+                            Values =
+                            {
+                                    {
+                                        "Cv", e.ChangeVector
+                                    },
+                                    {
+                                        "Id", e.Id
+                                    },
+                                    {
+                                        "LastMod", e.Metadata["@last-modified"]
+                                    },
+                                    {
+                                        "Operation",  operation
+                                    }
+                            }
+                        },
+                        patchIfMissing: null));
+                }
+            }
 
-				await session.SaveChangesAsync(CancellationToken.None);
-			}
-		}
+            await session.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+        }
 
 		public async Task StopAsync(CancellationToken ctk)
 		{
-			List<Task> runtask = new List<Task>();
+			List<Task> runtask = new();
 			lock (_gate)
 			{
 				_tokenSource?.Cancel();
@@ -162,7 +160,7 @@ namespace Ark.Tools.RavenDb.Auditing
 
 			try
 			{
-				await Task.WhenAll(runtask);
+				await Task.WhenAll(runtask).ConfigureAwait(false);
 			}
 			catch (TaskCanceledException) { }
 		}

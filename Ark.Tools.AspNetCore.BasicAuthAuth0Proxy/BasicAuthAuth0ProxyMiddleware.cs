@@ -73,10 +73,10 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                                         ClientSecret = _config.ProxySecret,
                                         Realm = _config.Realm,
                                         Scope = "openid profile email",
-                                    }, context.RequestAborted);
+                                    }, context.RequestAborted).ConfigureAwait(false);
 
                                     return result.AccessToken;
-                                }, context.RequestAborted, true);
+                                }, context.RequestAborted, true).ConfigureAwait(false);
 
                             context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
                         }
@@ -88,7 +88,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                 }
             }
 
-            await _next(context);
+            await _next(context).ConfigureAwait(false);
         }
     }
 }

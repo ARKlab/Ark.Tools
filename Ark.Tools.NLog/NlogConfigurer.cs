@@ -194,7 +194,7 @@ namespace Ark.Tools.NLog
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Targets are Disposed by NLog")]
         public class Configurer
         {
-            internal LoggingConfiguration _config = new LoggingConfiguration();
+            internal LoggingConfiguration _config = new();
 
             public string AppName { get; }
 

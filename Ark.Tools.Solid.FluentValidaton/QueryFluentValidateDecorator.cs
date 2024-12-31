@@ -30,8 +30,8 @@ namespace Ark.Tools.Solid
 
         public async Task<TResponse> ExecuteAsync(TQuery query, CancellationToken ctk = default)
         {
-            await _validator.ValidateAndThrowAsync(query, ctk);
-            return await _decorated.ExecuteAsync(query, ctk);
+            await _validator.ValidateAndThrowAsync(query, ctk).ConfigureAwait(false);
+            return await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
         }
     }
 }

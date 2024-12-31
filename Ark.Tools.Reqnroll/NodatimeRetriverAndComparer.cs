@@ -12,8 +12,8 @@ namespace Ark.Tools.Reqnroll
 {
     public class NodaTimeValueRetriverAndComparer : IValueRetriever, IValueComparer
     {
-        private Type[] _types = new[] { typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime), typeof(ZonedDateTime) };
-        private Type[] _nullableTypes = new[] { typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?), typeof(ZonedDateTime) };
+        private Type[] _types = [typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime), typeof(ZonedDateTime)];
+        private Type[] _nullableTypes = [typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?), typeof(ZonedDateTime)];
 
         public bool CanCompare(object actualValue)
         {
@@ -179,6 +179,6 @@ namespace Ark.Tools.Reqnroll
             throw new NotSupportedException();
         }
 
-        private static InvalidOperationException _getInvalidOperationException(string value) => new InvalidOperationException($"Cannot parse value {value} pattern");
+        private static InvalidOperationException _getInvalidOperationException(string value) => new($"Cannot parse value {value} pattern");
     }
 }

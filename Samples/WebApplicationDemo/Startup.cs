@@ -44,8 +44,8 @@ namespace WebApplicationDemo
         public override IEnumerable<ApiVersion> Versions => ApiVersions.All;
 
         public override OpenApiInfo MakeInfo(ApiVersion version)
-			=> new OpenApiInfo
-			{
+			=> new()
+            {
 				Title = "API",
 				Version = version.ToString("VVVV", CultureInfo.InvariantCulture),
 			};
@@ -83,20 +83,20 @@ namespace WebApplicationDemo
 			})
 			;
 
-            var resolver = CompositeResolver.Create(new[] {
+            var resolver = CompositeResolver.Create([
                 NodatimeResolver.Instance,
                 DynamicEnumAsStringResolver.Instance,
                 StandardResolver.Instance
-            });
+            ]);
 
             services.AddMessagePackFormatter(resolver);
 
             //HealthChecks
             services.AddHealthChecks()
 				//.AddCheck<ExampleHealthCheck>("Example Web App Demo Health Check", tags: new string[]{ "ArkTools", "WebDemo"})
-				.AddSimpleInjectorCheck<ExampleHealthCheck>(name: "Example SimpleInjector Check", failureStatus: HealthStatus.Unhealthy, tags: new string[] { "Example" })
-				.AddSimpleInjectorLambdaCheck<IExampleHealthCheckService>(name: "Example SimpleInjector Lamda Check", (adapter, ctk) => adapter.CheckHealthAsync(ctk), failureStatus: HealthStatus.Unhealthy, tags: new string[] { "Example" })
-				.AddSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Logs;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True", healthQuery: "SELECT 1;", name: "NLOG DB", tags: new string[] { "NLOG", "SQLServer" })
+				.AddSimpleInjectorCheck<ExampleHealthCheck>(name: "Example SimpleInjector Check", failureStatus: HealthStatus.Unhealthy, tags: ["Example"])
+				.AddSimpleInjectorLambdaCheck<IExampleHealthCheckService>(name: "Example SimpleInjector Lamda Check", (adapter, ctk) => adapter.CheckHealthAsync(ctk), failureStatus: HealthStatus.Unhealthy, tags: ["Example"])
+				.AddSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Logs;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True", healthQuery: "SELECT 1;", name: "NLOG DB", tags: ["NLOG", "SQLServer"])
 				;
 
 			services.AddArkHealthChecksUIOptions(setup =>

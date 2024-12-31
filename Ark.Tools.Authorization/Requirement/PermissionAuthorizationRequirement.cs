@@ -105,7 +105,7 @@ namespace Ark.Tools.Authorization.Requirement
             var requirements = context.Policy.Requirements.Where(t => permissionType.IsAssignableFrom(t.GetType())).Cast<PermissionAuthorizationRequirement<TPermissionEnum>>().ToArray();
             if (requirements.Length == 0) return;
 
-            var permissions = await _provider.GetPermissions(context);
+            var permissions = await _provider.GetPermissions(context).ConfigureAwait(false);
             if (permissions == null || !permissions.Any()) return;
 
             foreach (var req in requirements)

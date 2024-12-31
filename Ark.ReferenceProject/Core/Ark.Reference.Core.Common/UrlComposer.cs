@@ -11,7 +11,7 @@ namespace Ark.Reference.Core.Common
     public class UrlComposer
     {
         private readonly string _baseUrl = "";
-        private readonly List<(string key, string value)> _tuples = new List<(string key, string value)>();
+        private readonly List<(string key, string value)> _tuples = new();
         private static readonly LocalDatePattern _localDatePattern = LocalDatePattern.Iso;
         private static readonly LocalDateTimePattern _localDateTimePattern = LocalDateTimePattern.GeneralIso;
 

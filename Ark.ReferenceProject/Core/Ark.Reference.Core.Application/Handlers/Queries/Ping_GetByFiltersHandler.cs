@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 using Ark.Tools.Core;
 
-namespace Core.Services.Application.Handlers.Queries
+namespace Ark.Reference.Core.Application.Handlers.Queries
 {
     public class Ping_GetByFiltersHandler : IQueryHandler<Ping_GetByFiltersQuery.V1, PagedResult<Ping.V1.Output>>
     {

@@ -12,7 +12,7 @@ namespace Ark.Tools.Outbox.Rebus.Config
     {
         private StandardConfigurer<ITransport> _configurer;
 
-        private OutboxOptions _options = new OutboxOptions();
+        private OutboxOptions _options = new();
 
         public RebusOutboxProcessorConfigurer(StandardConfigurer<ITransport> configurer)
         {

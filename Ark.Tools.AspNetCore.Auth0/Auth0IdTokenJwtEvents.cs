@@ -57,7 +57,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                 if (!_isUnattendedClient(cid))
                 {
                     User? profile = null;
-                    var res = await cache.GetStringAsync(cacheKey, token: ctx.HttpContext.RequestAborted);
+                    var res = await cache.GetStringAsync(cacheKey, token: ctx.HttpContext.RequestAborted).ConfigureAwait(false);
                     if (res == null)
                     {
 
@@ -66,7 +66,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                         if (_isDelegation(jwt))
                         {
                             using var auth0 = new ManagementApiClient(token, _domain);
-                            profile = await auth0.Users.GetAsync(jwt.Subject, cancellationToken: ctx.HttpContext.RequestAborted);
+                            profile = await auth0.Users.GetAsync(jwt.Subject, cancellationToken: ctx.HttpContext.RequestAborted).ConfigureAwait(false);
                         }
                         else
                         {
@@ -83,7 +83,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                             await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(profile), new DistributedCacheEntryOptions
                             {
                                 AbsoluteExpiration = new DateTimeOffset(jwt.ValidTo, TimeSpan.Zero)
-                            }, token: ctx.HttpContext.RequestAborted);
+                            }, token: ctx.HttpContext.RequestAborted).ConfigureAwait(false);
                         }
                     }
                     else
@@ -108,7 +108,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                 if (ctx.Options.SaveToken && token != null)
                     cid.AddClaim(new Claim("id_token", token, ClaimValueTypes.String, "Auth0"));
             }
-            await base.TokenValidated(ctx);
+            await base.TokenValidated(ctx).ConfigureAwait(false);
         }
 
         void _convertUserToClaims(ClaimsIdentity identity, User profile)

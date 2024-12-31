@@ -23,7 +23,7 @@ namespace Ark.Tools.Outbox.Rebus
             bool waitForMessages = true;
             using (var ctx = _outboxContextFactory.Create())
             {
-                waitForMessages = await _tryProcessMessages(ctx, ctk);
+                waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
                 ctx.Commit();
             }
 

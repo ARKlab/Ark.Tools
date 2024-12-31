@@ -70,8 +70,8 @@ namespace Ark.Reference.Core.Tests.Auth
 
             var claims = new List<Claim>
             {
-              new Claim(JwtRegisteredClaimNames.Sub, this._subject),
-              new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+              new(JwtRegisteredClaimNames.Sub, this._subject),
+              new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             }
             .Union(this._claims);
 

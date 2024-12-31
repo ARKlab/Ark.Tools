@@ -36,7 +36,7 @@ namespace Ark.Tools.Sql.Oracle
             var conn = Build(connectionString);
             try
             {
-                await conn.OpenAsync(ctk);
+                await conn.OpenAsync(ctk).ConfigureAwait(false);
                 return conn;
             }
             catch

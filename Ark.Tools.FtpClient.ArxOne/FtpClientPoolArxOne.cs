@@ -93,13 +93,16 @@ namespace Ark.Tools.FtpClient
 
         public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            await _semaphore.WaitAsync(ctk);
+            await _semaphore.WaitAsync(ctk).ConfigureAwait(false);
             try
             {
-                await using var istrm = _client.Retr(path, FtpTransferMode.Binary);
-                using var ms = new MemoryStream(81920);
-                await istrm.CopyToAsync(ms, 81920, ctk);
-                return ms.ToArray();
+                var istrm = _client.Retr(path, FtpTransferMode.Binary);
+                await using (istrm.ConfigureAwait(false))
+                {
+                    using var ms = new MemoryStream(81920);
+                    await istrm.CopyToAsync(ms, 81920, ctk).ConfigureAwait(false);
+                    return ms.ToArray();
+                }
             }
             finally
             {
@@ -109,12 +112,15 @@ namespace Ark.Tools.FtpClient
 
         public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            await _semaphore.WaitAsync(ctk);
+            await _semaphore.WaitAsync(ctk).ConfigureAwait(false);
             try
             {
-                await using var ostrm = _client.Stor(path, FtpTransferMode.Binary);
-                await ostrm.WriteAsync(content, ctk);
-                await ostrm.FlushAsync(ctk);
+                var ostrm = _client.Stor(path, FtpTransferMode.Binary);
+                await using (ostrm.ConfigureAwait(false))
+                {
+                    await ostrm.WriteAsync(content, ctk).ConfigureAwait(false);
+                    await ostrm.FlushAsync(ctk).ConfigureAwait(false);
+                }
             }
             finally
             {
@@ -124,11 +130,10 @@ namespace Ark.Tools.FtpClient
 
         public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
         {
-            await _semaphore.WaitAsync(ctk);
+            await _semaphore.WaitAsync(ctk).ConfigureAwait(false);
             try
             {
                 _client.Delete(path, false);
-
             }
             finally
             {
@@ -138,7 +143,7 @@ namespace Ark.Tools.FtpClient
 
         public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
         {
-            await _semaphore.WaitAsync(ctk);
+            await _semaphore.WaitAsync(ctk).ConfigureAwait(false);
             try
             {
                 _client.Delete(path, true);
@@ -165,7 +170,7 @@ namespace Ark.Tools.FtpClient
         {
             path ??= "./";
 
-            await _semaphore.WaitAsync(ctk);
+            await _semaphore.WaitAsync(ctk).ConfigureAwait(false);
             try
             {
                 var list = _list(path);

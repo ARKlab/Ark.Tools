@@ -39,7 +39,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// </summary>
 		/// <returns>An array of bytes that has to be sent when the user wants to connect to a specific IPEndPoint.</returns>
 		private byte[] GetConnectBytes(string host, int port) {
-			StringBuilder sb = new StringBuilder();
+			StringBuilder sb = new();
 			sb.AppendFormat(CultureInfo.InvariantCulture, "CONNECT {0}:{1} HTTP/1.1", host, port).AppendLine();
 			sb.AppendFormat(CultureInfo.InvariantCulture, "Host: {0}:{1}", host, port).AppendLine();
 			if (!string.IsNullOrEmpty(Username)) {

@@ -30,10 +30,8 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <param name="port">The port to convert.</param>
 		/// <returns>An array of two bytes that represents the specified port.</returns>
 		protected byte[] PortToBytes(int port) {
-			byte[] ret = new byte[2];
-			ret[0] = (byte)(port / 256);
-			ret[1] = (byte)(port % 256);
-			return ret;
+			byte[] ret = [(byte)(port / 256), (byte)(port % 256)];
+            return ret;
 		}
 		/// <summary>
 		/// Converts an IP address to an array of bytes.
@@ -41,12 +39,14 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <param name="address">The IP address to convert.</param>
 		/// <returns>An array of four bytes that represents the specified IP address.</returns>
 		protected byte[] AddressToBytes(long address) {
-			byte[] ret = new byte[4];
-			ret[0] = (byte)(address % 256);
-			ret[1] = (byte)((address / 256) % 256);
-			ret[2] = (byte)((address / 65536) % 256);
-			ret[3] = (byte)(address / 16777216);
-			return ret;
+			byte[] ret =
+            [
+                (byte)(address % 256),
+                (byte)((address / 256) % 256),
+                (byte)((address / 65536) % 256),
+                (byte)(address / 16777216),
+            ];
+            return ret;
 		}
 		/// <summary>
 		/// Reads a specified number of bytes from the Server socket.

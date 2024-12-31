@@ -18,7 +18,7 @@ namespace Ark.Tools.ResourceWatcher
         private readonly string _tenant;
         private readonly Logger _logger;
 
-        private static readonly DiagnosticListener _source = new DiagnosticListener(DiagnosticListenerName);
+        private static readonly DiagnosticListener _source = new(DiagnosticListenerName);
 
         public ResourceWatcherDiagnosticSource(string tenant, Logger logger)
         {

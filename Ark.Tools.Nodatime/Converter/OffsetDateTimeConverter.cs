@@ -12,10 +12,10 @@ namespace Ark.Tools.Nodatime
     public class OffsetDateTimeConverter : TypeConverter
     {
 		private readonly OffsetDateTimePattern _pattern = OffsetDateTimePattern.ExtendedIso;
-		private static Type[] _supportedFrom = new[]
-		{
-			typeof(string),typeof(OffsetDateTime),typeof(DateTimeOffset)
-		};
+		private static Type[] _supportedFrom =
+        [
+            typeof(string),typeof(OffsetDateTime),typeof(DateTimeOffset)
+		];
 
 		public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
 		{

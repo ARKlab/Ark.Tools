@@ -40,7 +40,7 @@ namespace Ark.Tools.SimpleInjector
                 var castMethod = typeof(Enumerable).GetMethod("Cast")!
                     .MakeGenericMethod(serviceType);
 
-                var castedInstances = castMethod.Invoke(null, new[] { instances });
+                var castedInstances = castMethod.Invoke(null, [instances]);
 
                 e.Register(() => castedInstances!);
             }
@@ -119,7 +119,7 @@ namespace Ark.Tools.SimpleInjector
                 var castMethod = typeof(Enumerable).GetMethod("Cast")!
                     .MakeGenericMethod(serviceType);
 
-                var castedInstances = castMethod.Invoke(null, new[] { instances });
+                var castedInstances = castMethod.Invoke(null, [instances]);
 
                 e.Register(() => castedInstances!);
             }
@@ -252,7 +252,7 @@ namespace Ark.Tools.SimpleInjector
                 registration.BuildExpression());
 
             var lazyDelegate = Expression.Lambda(lazyType,
-                Expression.New(lazyType.GetConstructor(new[] { funcType })!, funcExpression)).Compile();
+                Expression.New(lazyType.GetConstructor([funcType])!, funcExpression)).Compile();
 
             e.Register(Expression.Constant(lazyDelegate));
         }

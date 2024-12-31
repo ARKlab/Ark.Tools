@@ -66,7 +66,7 @@ namespace TestProject
 
 		public void Get(string[] requestUriParts, EntityTagHeaderValue? e)
 		{
-			var req = _client.Request(new[] { _version });
+			var req = _client.Request([_version]);
 
 			foreach (var part in requestUriParts)
 				req.AppendPathSegment(part, true);

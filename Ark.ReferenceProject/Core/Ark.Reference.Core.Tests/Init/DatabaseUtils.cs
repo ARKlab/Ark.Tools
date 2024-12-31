@@ -20,28 +20,22 @@ namespace Ark.Reference.Core.Tests.Init
         [BeforeTestRun(Order = -1)]
         public static async Task CreateNLogDatabaseIfNotExists()
         {
-            await using (var conn = new SqlConnection(DatabaseConnectionString))
-            {
-                await conn.OpenAsync();
-                await using (var cmd = new SqlCommand($"IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn))
-                {
-                    await cmd.ExecuteNonQueryAsync();
-                }
-            }
+            await using var conn = new SqlConnection(DatabaseConnectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand($"IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         [BeforeTestRun(Order = -1)]
         public static void DeployDB()
         {
             var instance = new DacServices(DatabaseConnectionString);
-            using (var dacpac = DacPackage.Load("Ark.Reference.Core.Database.dacpac"))
+            using var dacpac = DacPackage.Load("Ark.Reference.Core.Database.dacpac");
+            instance.Deploy(dacpac, "Ark.Reference.Core.Database", true, new DacDeployOptions()
             {
-                instance.Deploy(dacpac, "Ark.Reference.Core.Database", true, new DacDeployOptions()
-                {
-                    CreateNewDatabase = true,
-                    AllowIncompatiblePlatform = true // needed since Database project is AzureV12 and under tests 2022 is used
-                });
-            }
+                CreateNewDatabase = true,
+                AllowIncompatiblePlatform = true // needed since Database project is AzureV12 and under tests 2022 is used
+            });
         }
 
         [BeforeScenario]
@@ -59,26 +53,22 @@ namespace Ark.Reference.Core.Tests.Init
 
         private async Task _cleanUpEntireDb(bool resetProfileCalendar = false)
         {
-            await using (var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString))
-            {
-                await ctx.OpenAsync();
-                await using (var tx = await ctx.BeginTransactionAsync())
+            await using var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString);
+            await ctx.OpenAsync();
+            await using var tx = await ctx.BeginTransactionAsync();
+
+            await ctx.ExecuteAsync(
+                @"[ops].[ResetFull_onlyForTesting]",
+                new
                 {
+                    areYouReallySure = true,
+                    resetConfig = true,
+                },
+                commandType: CommandType.StoredProcedure,
+                commandTimeout: 60,
+                transaction: tx);
 
-                    await ctx.ExecuteAsync(
-                        @"[ops].[ResetFull_onlyForTesting]",
-                        new
-                        {
-                            areYouReallySure = true,
-                            resetConfig = true,
-                        },
-                        commandType: CommandType.StoredProcedure,
-                        commandTimeout: 60,
-                        transaction: tx);
-
-                    await tx.CommitAsync();
-                }
-            }
+            await tx.CommitAsync();
         }
     }
 }

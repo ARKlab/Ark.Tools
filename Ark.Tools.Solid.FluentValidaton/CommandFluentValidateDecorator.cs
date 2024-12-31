@@ -31,8 +31,8 @@ namespace Ark.Tools.Solid
 
         public async Task ExecuteAsync(TCommand query, CancellationToken ctk = default)
         {
-            await _validator.ValidateAndThrowAsync(query, ctk);
-            await _decorated.ExecuteAsync(query, ctk);
+            await _validator.ValidateAndThrowAsync(query, ctk).ConfigureAwait(false);
+            await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
         }
     }
 }

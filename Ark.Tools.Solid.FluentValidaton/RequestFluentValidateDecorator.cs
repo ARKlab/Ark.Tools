@@ -26,8 +26,8 @@ namespace Ark.Tools.Solid
 
         public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
         {
-            await _validator.ValidateAndThrowAsync(request, ctk);
-            return await _decorated.ExecuteAsync(request, ctk);
+            await _validator.ValidateAndThrowAsync(request, ctk).ConfigureAwait(false);
+            return await _decorated.ExecuteAsync(request, ctk).ConfigureAwait(false);
         }
     }
 }

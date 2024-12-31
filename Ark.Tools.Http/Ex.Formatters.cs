@@ -16,10 +16,10 @@ namespace Ark.Tools.Http
     {
         public static async Task<T?> Receive<T>(this Task<IFlurlResponse> response, MediaTypeFormatterCollection formatterCollection, CancellationToken cancellationToken = default)
         {
-            var resp = await response;
+            var resp = await response.ConfigureAwait(false);
             if (resp == null) return default;
 
-            return await resp.ResponseMessage.Content.ReadAsAsync<T>(formatterCollection, cancellationToken);
+            return await resp.ResponseMessage.Content.ReadAsAsync<T>(formatterCollection, cancellationToken).ConfigureAwait(false);
         }
 
         public static Task<T?> GetAsync<T>(this IFlurlRequest request, MediaTypeFormatterCollection formatterCollection, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead, CancellationToken cancellationToken = default)

@@ -20,12 +20,14 @@ namespace Ark.Tools.Outbox.Rebus
         protected override async Task<bool> _loop(CancellationToken ctk)
         {
             bool waitForMessages = true;
-            await using var ctx = await _outboxAsyncContextFactory.CreateAsync(ctk);
+            var ctx = await _outboxAsyncContextFactory.CreateAsync(ctk).ConfigureAwait(false);
+            await using (ctx.ConfigureAwait(false))
+            {
+                waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
+                await ctx.CommitAsync(ctk).ConfigureAwait(false);
             
-            waitForMessages = await _tryProcessMessages(ctx, ctk);
-            await ctx.CommitAsync(ctk);
-            
-            return waitForMessages;
+                return waitForMessages;
+            }
         }
     }
 }

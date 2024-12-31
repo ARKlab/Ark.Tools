@@ -41,7 +41,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
             try
             {
-                await tx.LoadAsync(ctk);
+                await tx.LoadAsync(ctk).ConfigureAwait(false);
             } catch
             {
                 tx.Dispose();
@@ -53,15 +53,13 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
 		public async Task<TAggregateState> LoadCapturedState(string id, CancellationToken ctk = default)
 		{
-			using (var session = _sessionFactory.Create(new SessionOptions
-			{
-				//NoTracking = true,
-				TransactionMode = TransactionMode.SingleNode
-			}))
-			{
-				return await session.LoadAsync<TAggregateState>(AggregateHelper<TAggregate>.Name + "/" + id, ctk);
-			}
-		}
+            using var session = _sessionFactory.Create(new SessionOptions
+            {
+                //NoTracking = true,
+                TransactionMode = TransactionMode.SingleNode
+            });
+            return await session.LoadAsync<TAggregateState>(AggregateHelper<TAggregate>.Name + "/" + id, ctk).ConfigureAwait(false);
+        }
 	}
 
 	public interface IRavenDbSessionFactory

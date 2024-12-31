@@ -126,7 +126,7 @@ namespace Ark.Tools.Core
                 endOfPattern = false;
             int lastWildCard = -1;
             int patternIndex = 0;
-            List<char> set = new List<char>();
+            List<char> set = new();
             char p = '\0';
 
             for (int i = 0; i < str.Length; i++)

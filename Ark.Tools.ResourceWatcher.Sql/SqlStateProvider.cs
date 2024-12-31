@@ -67,28 +67,26 @@ namespace Ark.Tools.ResourceWatcher
                 return r;
             }
 
-            await using (var c = await _connManager.GetAsync(_config.DbConnectionString, ctk))
+            var c = await _connManager.GetAsync(_config.DbConnectionString, ctk).ConfigureAwait(false);
+            await using (c.ConfigureAwait(false))
             {
                 if (resourceIds == null)
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState
                         , map
                         , param: new { tenant = tenant }
-                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        ;
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
                 else if (resourceIds.Length == 0)
                     return Enumerable.Empty<ResourceState>(); //Empty array should just return empty result
                 else if (resourceIds.Length < 2000) //limit is 2100
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in @resources"
                         , map
                         , param: new { tenant = tenant, resources = resourceIds }
-                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        ;
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
                 else
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
                         , map
                         , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
-                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        ;
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
             }
         }
 
@@ -102,7 +100,8 @@ namespace Ark.Tools.ResourceWatcher
             }
 
 
-            await using (var c = await _connManager.GetAsync(_config.DbConnectionString, ctk))
+            var c = await _connManager.GetAsync(_config.DbConnectionString, ctk).ConfigureAwait(false);
+            await using (c.ConfigureAwait(false))
             {
                 var q = @"
 MERGE INTO [State] AS tgt
@@ -138,15 +137,14 @@ WHEN MATCHED THEN
                     x.CheckSum,
                     ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
                     Exception = x.LastException?.ToString()
-                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]") });
+                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]") }).ConfigureAwait(false);
             }
         }
 
         public void EnsureTableAreCreated()
         {
-            using (var c = _connManager.Get(_config.DbConnectionString))
-            {
-                var q = @"
+            using var c = _connManager.Get(_config.DbConnectionString);
+            var q = @"
 IF OBJECT_ID('State', 'U') IS NULL
 BEGIN
     CREATE TABLE [State](
@@ -298,8 +296,7 @@ BEGIN
 END 
 ";
 
-                c.Execute(q);
-            }
+            c.Execute(q);
         }
     }
 }

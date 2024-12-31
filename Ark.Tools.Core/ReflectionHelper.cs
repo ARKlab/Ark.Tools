@@ -198,7 +198,7 @@ namespace Ark.Tools.Core
             }
             else if (type.IsArray)
             {
-                List<string> arrayLength = new List<string>();
+                List<string> arrayLength = new();
                 for (int i = 0; i < type.GetArrayRank(); i++)
                 {
                     arrayLength.Add("[]");
