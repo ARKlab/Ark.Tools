@@ -40,7 +40,23 @@
     
     <DebugType>portable</DebugType>
 	<DebugSymbols>true</DebugSymbols>
+
+
+	  <Features>strict</Features>
   </PropertyGroup>
+
+
+	<PropertyGroup Label="NuGet Audit">
+		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
+		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
+		<NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
+		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
+	</PropertyGroup>	
+	
 
 	<ItemGroup>
 		<None Include="..\ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
