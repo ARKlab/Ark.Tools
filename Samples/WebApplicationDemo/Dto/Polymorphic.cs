@@ -48,7 +48,7 @@ namespace WebApplicationDemo.Dto
 		public int ValueFromB { get; set; }
 	}
 
-	class PolymorphicConverterSTJ : Ark.Tools.SystemTextJson.JsonPolymorphicConverter<Polymorphic, BaseKind>
+	sealed class PolymorphicConverterSTJ : Ark.Tools.SystemTextJson.JsonPolymorphicConverter<Polymorphic, BaseKind>
 	{
 		public PolymorphicConverterSTJ() 
 			: base(nameof(Polymorphic.Kind))
@@ -70,7 +70,7 @@ namespace WebApplicationDemo.Dto
 	}
 
 
-	class PolymorphicConverter : JsonPolymorphicConverter<Polymorphic>
+	sealed class PolymorphicConverter : JsonPolymorphicConverter<Polymorphic>
 	{
 		protected override Polymorphic Create(Type objectType, JObject jObject)
 		{

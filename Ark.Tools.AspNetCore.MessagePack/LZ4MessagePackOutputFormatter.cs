@@ -50,7 +50,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 var span = writer.GetSpan(1);
                 span[0] = MessagePackCode.Nil;
                 writer.Advance(1);
-                return writer.FlushAsync().AsTask();
+                return writer.FlushAsync(context.HttpContext.RequestAborted).AsTask();
             } 
             else
             {
@@ -63,7 +63,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
                 }
 
                 MessagePackSerializer.Serialize(objectType, writer, context.Object, _options, context.HttpContext.RequestAborted);
-                return writer.FlushAsync().AsTask();
+                return writer.FlushAsync(context.HttpContext.RequestAborted).AsTask();
             }
         }
     }

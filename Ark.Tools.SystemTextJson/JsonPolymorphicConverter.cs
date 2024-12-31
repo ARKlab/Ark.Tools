@@ -9,7 +9,7 @@ namespace Ark.Tools.SystemTextJson
     {
         private readonly string _discriminatorPropertyName;
 
-        public JsonPolymorphicConverter(string discriminatorPropertyName)
+        protected JsonPolymorphicConverter(string discriminatorPropertyName)
         {
             _discriminatorPropertyName = discriminatorPropertyName;
         }

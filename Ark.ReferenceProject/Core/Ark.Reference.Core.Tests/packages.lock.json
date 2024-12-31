@@ -17,6 +17,12 @@
           "ExcelDataReader": "3.7.0"
         }
       },
+      "Meziantou.Analyzer": {
+        "type": "Direct",
+        "requested": "[2.0.184, )",
+        "resolved": "2.0.184",
+        "contentHash": "+b96w2tVJNI9CR4naLcNFWfGDIwXheCO/3RsXkgq+hphqjIvLmXQM+5U4h7AZQbzTDFjXiulr4ws1L5/4xo0WQ=="
+      },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
         "requested": "[8.0.11, )",
@@ -1642,11 +1648,6 @@
         "type": "Transitive",
         "resolved": "7.20.0",
         "contentHash": "nJLDCOv3qemN0XI5kmUN9h38Qw+ZQBoYtWwSGhPkDEiiZSDcAwLMgqbGNKmK3myhVWASCqXtOqrj5jUnGZrH/Q=="
-      },
-      "Microsoft.SqlServer.Dacpacs.Master": {
-        "type": "Transitive",
-        "resolved": "160.0.0",
-        "contentHash": "bgiN77Hfpev7+LON0WOZbgz1VvL6abuUkw14ulLwAnAiuYCcav8HCAoGlgSXVhsLd8U5+jSgeX/ZrNBuPF24qA=="
       },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
@@ -3363,12 +3364,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Reference.Common": "[0.9.1, )"
-        }
-      },
-      "ark.reference.core.database": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.SqlServer.Dacpacs.Master": "[160.0.0, )"
         }
       },
       "ark.reference.core.webinterface": {

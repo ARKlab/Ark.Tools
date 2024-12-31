@@ -17,7 +17,7 @@ namespace Ark.Tools.ResourceWatcher
 
     public class InMemStateProvider : IStateProvider
     {
-        private ConcurrentDictionary<string, ResourceState> _store = new ConcurrentDictionary<string, ResourceState>();
+        private ConcurrentDictionary<string, ResourceState> _store = new ConcurrentDictionary<string, ResourceState>(System.StringComparer.Ordinal);
 
         public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
         {

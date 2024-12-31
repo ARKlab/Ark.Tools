@@ -11,12 +11,12 @@ namespace Ark.Tools.AspNetCore.Startup
     {
         private ArkStartupBase _anotherBase;
 
-        public ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment)
+        protected ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment)
             : this(configuration, environment, false)
         {
         }
 
-        public ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
+        protected ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
             : base(configuration, environment, useNewtonsoftJson)
         {
             _anotherBase = new ArkStartupBase(configuration);

@@ -29,7 +29,7 @@ namespace Ark.Tools.EventSourcing.Store
 	{
         public string? Id { get; set; }
         public string? TypeName { get; set; }
-        public Dictionary<string, string> Metadata { get; set; } = new();
+        public Dictionary<string, string> Metadata { get; set; } = new(StringComparer.Ordinal);
         public string? AggregateId { get; set; }
         public string? AggregateName { get; set; }
         public long AggregateVersion { get; set; }
@@ -74,7 +74,7 @@ namespace Ark.Tools.EventSourcing.Store
 
             evt.Timestamp = e.Metadata.Timestamp;
 
-            evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value);
+            evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
 
             evt.SetEvent(e.Event);
 

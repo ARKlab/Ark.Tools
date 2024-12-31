@@ -20,7 +20,7 @@ using Reqnroll.Assist;
 namespace Ark.Reference.Core.Tests.Features
 {
     [Binding]
-    internal class AuditSteps
+    internal sealed class AuditSteps
     {
         private readonly TestClient _client;
         private AuditDto<AuditKind>? _lastAudit;
@@ -85,7 +85,7 @@ namespace Ark.Reference.Core.Tests.Features
             );
         }
         
-        public class AuditRecordReturn<TAuditObject>
+        sealed class AuditRecordReturn<TAuditObject>
         {
             public IEnumerable<Changes<TAuditObject>.V1>? Changes { get; set; }
         }

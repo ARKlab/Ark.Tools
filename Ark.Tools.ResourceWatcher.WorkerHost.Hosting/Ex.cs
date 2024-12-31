@@ -40,7 +40,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Hosting
         }
     }
 
-    class HostServiceWrap<T> : IHostedService where T : WorkerHost
+    sealed class HostServiceWrap<T> : IHostedService where T : WorkerHost
     {
         private readonly T _host;
 

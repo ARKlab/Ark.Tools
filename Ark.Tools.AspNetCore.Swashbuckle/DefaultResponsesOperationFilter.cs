@@ -17,8 +17,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					new OpenApiResponse
 					{
 						Description = "Unauthorized",
-						Content = new Dictionary<string, OpenApiMediaType>
-						{
+						Content = new Dictionary<string, OpenApiMediaType>(System.StringComparer.Ordinal)
+                        {
 							["application/json"] = new OpenApiMediaType
 							{
 								Schema = context.SchemaGenerator.GenerateSchema(typeof(ProblemDetails), context.SchemaRepository)
@@ -33,8 +33,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					new OpenApiResponse
 					{
 						Description = "Not enough permissions",
-						Content = new Dictionary<string, OpenApiMediaType>
-						{
+						Content = new Dictionary<string, OpenApiMediaType>(System.StringComparer.Ordinal)
+                        {
 							["application/json"] = new OpenApiMediaType
 							{
 								Schema = context.SchemaGenerator.GenerateSchema(typeof(ProblemDetails), context.SchemaRepository)
@@ -49,8 +49,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					new OpenApiResponse
 					{
 						Description = "Invalid payload",
-						Content = new Dictionary<string, OpenApiMediaType>
-						{
+						Content = new Dictionary<string, OpenApiMediaType>(System.StringComparer.Ordinal)
+                        {
 							["application/json"] = new OpenApiMediaType
 							{
 								Schema = context.SchemaGenerator.GenerateSchema(typeof(ValidationProblemDetails), context.SchemaRepository)
@@ -65,8 +65,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 					new OpenApiResponse
 					{
 						Description = "Internal server error. Retry later or contact support.",
-						Content = new Dictionary<string, OpenApiMediaType>
-						{
+						Content = new Dictionary<string, OpenApiMediaType>(System.StringComparer.Ordinal)
+                        {
 							["application/json"] = new OpenApiMediaType
 							{
 								Schema = context.SchemaGenerator.GenerateSchema(typeof(ProblemDetails), context.SchemaRepository)

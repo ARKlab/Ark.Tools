@@ -39,7 +39,7 @@ namespace TestProject
 
 			var tags = sctx.ScenarioInfo.Tags.Concat(fctx.FeatureInfo.Tags);
 
-			_version = tags?.FirstOrDefault(x => x.StartsWith("Api:"))?.Substring("Api:".Length) ?? "v" + "1.0"/*CommonConstants.ApiVersions.Last()*/;
+			_version = tags?.FirstOrDefault(x => x.StartsWith("Api:", StringComparison.Ordinal))?.Substring("Api:".Length) ?? "v" + "1.0"/*CommonConstants.ApiVersions.Last()*/;
 		}
 
 		public HttpStatusCode GetLastStatusCode()

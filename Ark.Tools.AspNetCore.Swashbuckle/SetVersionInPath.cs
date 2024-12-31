@@ -14,9 +14,9 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 		{
 			var dict = swaggerDoc.Paths
 				.ToDictionary(
-					path => path.Key.Replace("v{api-version}", swaggerDoc.Info.Version),
-					path => path.Value
-				);
+					path => path.Key.Replace("v{api-version}", swaggerDoc.Info.Version, System.StringComparison.Ordinal),
+					path => path.Value, 
+                    System.StringComparer.Ordinal);
 
 
 			foreach (var item in dict)

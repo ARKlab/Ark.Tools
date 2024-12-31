@@ -19,7 +19,7 @@ namespace Ark.Tools.SystemTextJson
 
         protected abstract TC InstantiateCollection(IDictionary<TK, TV> workingCollection);
 
-        public AbstractDictionaryConverter(JsonSerializerOptions options)
+        protected AbstractDictionaryConverter(JsonSerializerOptions options)
         {
             _keyConverter = TypeDescriptor.GetConverter(typeof(TK));
             if (!(_keyConverter.CanConvertFrom(typeof(string)) && _keyConverter.CanConvertTo(typeof(string))))

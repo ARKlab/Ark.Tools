@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.Configuration;
+using System.Globalization;
 
 
 namespace Ark.Tools.NLog
@@ -16,7 +17,7 @@ namespace Ark.Tools.NLog
                 ?? new SmtpConnectionBuilder()
                 {
                     Server = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpServer],
-                    Port = int.TryParse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPort], out var p) ? p : null,
+                    Port = int.TryParse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPort], NumberStyles.None, CultureInfo.InvariantCulture, out var p) ? p : null,
                     Username = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUserName],
                     Password = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpPassword],
                     UseSsl = bool.TryParse(ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SmtpUseSsl], out var b) ? b : true

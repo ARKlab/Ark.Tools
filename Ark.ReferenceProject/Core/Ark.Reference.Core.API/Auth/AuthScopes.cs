@@ -7,7 +7,7 @@ namespace Ark.Reference.Core.API.Auth
         public const string AuditRead = "audit:read";
 
 
-        public static readonly IReadOnlyDictionary<string, string> Scopes = new Dictionary<string, string>()
+        public static readonly IReadOnlyDictionary<string, string> Scopes = new Dictionary<string, string>(System.StringComparer.Ordinal)
         {
             { AuthScopes.AuditRead, "Audit Read" },
         };

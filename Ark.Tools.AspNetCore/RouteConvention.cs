@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.OData.Routing.Controllers;
 
 namespace Ark.Tools.AspNetCore
 {
-    internal class RouteConvention : IApplicationModelConvention
+    internal sealed class RouteConvention : IApplicationModelConvention
     {
         private readonly AttributeRouteModel _centralPrefix;
 

@@ -16,7 +16,7 @@ namespace ProblemDetailsSample.Api.Queries
         public async Task<Entity.V1.Output?> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)
         {
             EnsureArg.IsNotNull(query, nameof(query));
-            EnsureArg.IsNot(query.EntityId, "ensure");
+            EnsureArg.IsNot(query.EntityId, "ensure", System.StringComparison.Ordinal);
             
             if (query.EntityId == "null") return null;
 

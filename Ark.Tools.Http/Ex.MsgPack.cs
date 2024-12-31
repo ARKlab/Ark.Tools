@@ -22,7 +22,7 @@ namespace Ark.Tools.Http
 
         public static async Task<T?> GetMsgPackAsync<T>(this IFlurlResponse response, IFormatterResolver formatterResolver)
         {
-            using (var stream = await response.ResponseMessage.Content.ReadAsStreamAsync())
+            await using (var stream = await response.ResponseMessage.Content.ReadAsStreamAsync())
             {
                 return await MessagePackSerializer.DeserializeAsync<T>(stream, MessagePackSerializerOptions.Standard.WithResolver(formatterResolver));
             }

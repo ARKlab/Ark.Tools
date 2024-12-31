@@ -98,7 +98,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
             await _next(context);
         }
 
-        class OAuthResult
+        record OAuthResult
         {
             public string? Token_Type { get; set; }
             public string? Scope { get; set; }

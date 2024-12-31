@@ -9,7 +9,7 @@ using NLog.Extensions.Logging;
 
 namespace TestWorker
 {
-    class Program
+    sealed class Program
     {
         static void Main(string[] args)
         {

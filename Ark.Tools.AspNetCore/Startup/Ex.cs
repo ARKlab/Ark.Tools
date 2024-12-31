@@ -15,6 +15,7 @@ using Microsoft.OpenApi.Models;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -28,13 +29,13 @@ namespace Ark.Tools.AspNetCore.Startup
             services.ConfigureSwaggerGen(c =>
             {
                 foreach (var v in versions)
-                    c.SwaggerDoc($"v{v.ToString("VVVV")}", infoBuilder(v));
+                    c.SwaggerDoc($"v{v.ToString("VVVV", CultureInfo.InvariantCulture)}", infoBuilder(v));
             });
 
             services.ArkConfigureSwaggerUI(c =>
             {
                 foreach (var v in versions)
-                    c.SwaggerEndpoint($@"docs/v{v.ToString("VVVV")}", $@"v{v.ToString("VVVV")} Docs");
+                    c.SwaggerEndpoint($@"docs/v{v.ToString("VVVV", CultureInfo.InvariantCulture)}", $@"v{v.ToString("VVVV", CultureInfo.InvariantCulture)} Docs");
             });
 
             return services;
@@ -151,8 +152,8 @@ namespace Ark.Tools.AspNetCore.Startup
 						Implicit = new OpenApiOAuthFlow() 
 						{ 
 							AuthorizationUrl = new Uri($"https://{domain}/authorize"),
-							Scopes = new Dictionary<string, string>
-							{
+							Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
+                            {
 								{ "openid", "Grant access to user" }
 							}
 						} 
@@ -174,7 +175,7 @@ namespace Ark.Tools.AspNetCore.Startup
             {
                 c.OAuthClientId(clientId);
                 c.OAuthAppName("WebApi");
-                c.OAuthAdditionalQueryStringParams(new Dictionary<string, string>()
+                c.OAuthAdditionalQueryStringParams(new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     { "audience", audience }
                 });
@@ -197,7 +198,7 @@ namespace Ark.Tools.AspNetCore.Startup
                         {
                             AuthorizationUrl = new Uri($"{instance}/{domain}/{signUpSignIn}/oauth2/v2.0/authorize"),
                             TokenUrl = new Uri($"{instance}/{domain}/{signUpSignIn}/oauth2/v2.0/token"),                            
-                            Scopes = new Dictionary<string, string>
+                            Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
                             {
                                 { "openid", "Grant access to user" },
                                 { $"https://{domain}/{apiId}/access_as_user", "Default scope to retrieve user permissions" }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -80,7 +81,7 @@ If the maximum number of delivery attempts is reached, the message is passed to 
 
             int? deliveryCountValue = null;
 
-            if (transportMessage.Headers.TryGetValue(Headers.DeliveryCount, out var value) && int.TryParse(value, out var deliveryCount))
+            if (transportMessage.Headers.TryGetValue(Headers.DeliveryCount, out var value) && int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var deliveryCount))
             {
                 deliveryCountValue = deliveryCount;
 

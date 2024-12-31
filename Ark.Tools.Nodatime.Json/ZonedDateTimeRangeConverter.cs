@@ -19,7 +19,7 @@ namespace Ark.Tools.Nodatime.Json
             return objectType == _type || objectType == _nullableType;
         }
 
-        private class Surrogate
+        private sealed class Surrogate
         {
             public ZonedDateTime Start { get; set; }
             public ZonedDateTime End { get; set; }
@@ -63,7 +63,7 @@ namespace Ark.Tools.Nodatime.Json
 
             if (!(value is ZonedDateTimeRange || value is Nullable<ZonedDateTimeRange>))
             {
-                throw new ArgumentException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(ZonedDateTimeRange).FullName, value.GetType().FullName));
+                throw new JsonWriterException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(ZonedDateTimeRange).FullName, value.GetType().FullName));
             }
 
             ZonedDateTimeRange? r = null;

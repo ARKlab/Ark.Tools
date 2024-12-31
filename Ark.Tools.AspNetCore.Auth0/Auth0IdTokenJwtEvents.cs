@@ -39,7 +39,7 @@ namespace Ark.Tools.AspNetCore.Auth0
 
         private bool _isUnattendedClient(ClaimsIdentity cid)
         {
-            var ni = cid.FindFirst(ClaimTypes.NameIdentifier)?.Value?.EndsWith("@clients");
+            var ni = cid.FindFirst(ClaimTypes.NameIdentifier)?.Value?.EndsWith("@clients", StringComparison.Ordinal);
             return ni == true;
         }
 
@@ -57,14 +57,16 @@ namespace Ark.Tools.AspNetCore.Auth0
                 if (!_isUnattendedClient(cid))
                 {
                     User? profile = null;
-                    var res = await cache.GetStringAsync(cacheKey);
+                    var res = await cache.GetStringAsync(cacheKey, token: ctx.HttpContext.RequestAborted);
                     if (res == null)
                     {
-                        // TODO extract domain from autority
+
+#pragma warning disable MA0026 // Fix TODO comment
+                              // TODO extract domain from autority
                         if (_isDelegation(jwt))
                         {
                             using var auth0 = new ManagementApiClient(token, _domain);
-                            profile = await auth0.Users.GetAsync(jwt.Subject);
+                            profile = await auth0.Users.GetAsync(jwt.Subject, cancellationToken: ctx.HttpContext.RequestAborted);
                         }
                         else
                         {
@@ -74,13 +76,14 @@ namespace Ark.Tools.AspNetCore.Auth0
                             //    id_token = token
                             //}, null, null, null, null, null);
                         }
+#pragma warning restore MA0026 // Fix TODO comment
 
                         if (profile != null)
                         {
                             await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(profile), new DistributedCacheEntryOptions
                             {
-                                AbsoluteExpiration = jwt.ValidTo
-                            });
+                                AbsoluteExpiration = new DateTimeOffset(jwt.ValidTo, TimeSpan.Zero)
+                            }, token: ctx.HttpContext.RequestAborted);
                         }
                     }
                     else
@@ -137,36 +140,41 @@ namespace Ark.Tools.AspNetCore.Auth0
             if (!string.IsNullOrWhiteSpace(id.Provider))
                 identity.AddClaim(new Claim("provider", id.Provider, ClaimValueTypes.String, id.Connection));
 
-            var roles = new HashSet<string>();
-            if (profile.AppMetadata?.authorization?.roles != null)
-                roles.UnionWith((profile.AppMetadata?.authorization?.roles as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            if (profile.ProviderAttributes.ContainsKey("authorization"))
-                roles.UnionWith((profile.ProviderAttributes["authorization"]["roles"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            if (profile.ProviderAttributes.ContainsKey("roles"))
-                roles.UnionWith((profile.ProviderAttributes["roles"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            roles.UnionWith(identity.FindAll("roles").Select(x => x.Value));
-            identity.AddClaims(roles.Select(r => new Claim(identity.RoleClaimType, r, ClaimValueTypes.String, "Auth0")));
+            var allRoles = new HashSet<string>(StringComparer.Ordinal);
+            {
+                if (profile.AppMetadata?.authorization?.roles != null)
+                    allRoles.UnionWith((profile.AppMetadata?.authorization?.roles as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                if (profile.ProviderAttributes.TryGetValue("authorization", out var authorization))
+                    allRoles.UnionWith((authorization["roles"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                if (profile.ProviderAttributes.TryGetValue("roles", out Newtonsoft.Json.Linq.JToken? roles))
+                    allRoles.UnionWith((roles as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                allRoles.UnionWith(identity.FindAll("roles").Select(x => x.Value));
+                identity.AddClaims(allRoles.Select(r => new Claim(identity.RoleClaimType, r, ClaimValueTypes.String, "Auth0")));
+            }
 
-            var groups = new HashSet<string>();
-            if (profile.AppMetadata?.authorization?.groups != null)
-                groups.UnionWith((profile.AppMetadata?.authorization?.groups as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            if (profile.ProviderAttributes.ContainsKey("authorization"))
-                groups.UnionWith((profile.ProviderAttributes["authorization"]["groups"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            if (profile.ProviderAttributes.ContainsKey("groups"))
-                groups.UnionWith((profile.ProviderAttributes["groups"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            groups.UnionWith(identity.FindAll("groups").Select(x => x.Value));
-            identity.AddClaims(groups.Select(r => new Claim(Auth0ClaimTypes.Group, r, ClaimValueTypes.String, "Auth0")));
+            var allGroups = new HashSet<string>(StringComparer.Ordinal);
+            {
+                if (profile.AppMetadata?.authorization?.groups != null)
+                    allGroups.UnionWith((profile.AppMetadata?.authorization?.groups as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                if (profile.ProviderAttributes.TryGetValue("authorization", out Newtonsoft.Json.Linq.JToken? authorization))
+                    allGroups.UnionWith((authorization["groups"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                if (profile.ProviderAttributes.TryGetValue("groups", out Newtonsoft.Json.Linq.JToken? groups))
+                    allGroups.UnionWith((groups as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                allGroups.UnionWith(identity.FindAll("groups").Select(x => x.Value));
+                identity.AddClaims(allGroups.Select(r => new Claim(Auth0ClaimTypes.Group, r, ClaimValueTypes.String, "Auth0")));
+            }
 
-            var permissions = new HashSet<string>();
-            if (profile.AppMetadata?.authorization?.permissions != null)
-                permissions.UnionWith((profile.AppMetadata?.authorization?.permissions as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            if (profile.ProviderAttributes.ContainsKey("authorization"))
-                permissions.UnionWith((profile.ProviderAttributes["authorization"]["permissions"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            if (profile.ProviderAttributes.ContainsKey("permissions"))
-                permissions.UnionWith((profile.ProviderAttributes["permissions"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
-            permissions.UnionWith(identity.FindAll("permissions").Select(x => x.Value));
-            identity.AddClaims(permissions.Select(r => new Claim(Auth0ClaimTypes.Permission, r, ClaimValueTypes.String, "Auth0")));
-
+            var allPermissions = new HashSet<string>(StringComparer.Ordinal);
+            {
+                if (profile.AppMetadata?.authorization?.permissions != null)
+                    allPermissions.UnionWith((profile.AppMetadata?.authorization?.permissions as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                if (profile.ProviderAttributes.TryGetValue("authorization", out Newtonsoft.Json.Linq.JToken? authorization))
+                    allPermissions.UnionWith((authorization["permissions"] as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                if (profile.ProviderAttributes.TryGetValue("permissions", out Newtonsoft.Json.Linq.JToken? permissions))
+                    allPermissions.UnionWith((permissions as IEnumerable<dynamic>)?.Select(r => (string)r.ToString()) ?? Enumerable.Empty<string>());
+                allPermissions.UnionWith(identity.FindAll("permissions").Select(x => x.Value));
+                identity.AddClaims(allPermissions.Select(r => new Claim(Auth0ClaimTypes.Permission, r, ClaimValueTypes.String, "Auth0")));
+            }
         }
     }
     

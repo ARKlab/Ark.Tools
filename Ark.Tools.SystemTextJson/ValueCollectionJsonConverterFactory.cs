@@ -30,7 +30,7 @@ namespace Ark.Tools.SystemTextJson
             return converter;
         }
 
-        private class Converter<T> : JsonConverter<ValueCollection<T>>
+        private sealed class Converter<T> : JsonConverter<ValueCollection<T>>
         {
             public override ValueCollection<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             {

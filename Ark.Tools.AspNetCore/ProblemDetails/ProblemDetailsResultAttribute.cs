@@ -45,7 +45,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         {
             var validationErrors = serializableError
                 .Where(x => x.Value is string[])
-                .ToDictionary(x => x.Key, x => (string[])x.Value);
+                .ToDictionary(x => x.Key, x => (string[])x.Value, StringComparer.Ordinal);
 
             return new ValidationProblemDetails(validationErrors);
         }

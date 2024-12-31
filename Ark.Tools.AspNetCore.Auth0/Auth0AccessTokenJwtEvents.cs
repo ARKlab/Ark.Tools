@@ -64,14 +64,14 @@ namespace Ark.Tools.AspNetCore.Auth0
             return resp.AccessToken;
         }
 
-        class PolicyResult
+        record PolicyResult
         {
             public IList<string> Groups { get; set; } = new List<string>();
             public IList<string> Roles { get; set; } = new List<string>();
             public IList<string> Permissions { get; set; } = new List<string>();
         }
 
-        class CacheEntry
+        record CacheEntry
         {
             public CacheEntry(UserInfo userInfo)
             {
@@ -83,7 +83,6 @@ namespace Ark.Tools.AspNetCore.Auth0
             public PolicyResult? Policy { get; set; }
         }
 
-        // TODO: the "Pending" is a poor way to limit the requests to Auth0 API. Very poor!
         public override async Task TokenValidated(TokenValidatedContext ctx)
         {
             var cache = ctx.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
@@ -101,6 +100,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                     var res = await cache.GetStringAsync(cacheKey, ctk);
                     if (res == null)
                     {
+                        // HACK:  "Pending" is a poor way to limit the requests to Auth0 API. But works for now.
                         var t1 = cache.SetStringAsync(cacheKey, "Pending", new DistributedCacheEntryOptions
                         {
                             AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5)
@@ -153,7 +153,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                         {
                             await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(cacheEntry), new DistributedCacheEntryOptions
                             {
-                                AbsoluteExpiration = jwt.ValidTo - TimeSpan.FromMinutes(2)
+                                AbsoluteExpiration = new DateTimeOffset(jwt.ValidTo - TimeSpan.FromMinutes(2), TimeSpan.Zero)
                             }, ctk);
                         }
                         else
@@ -162,7 +162,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                         }
 
                     }
-                    else if (res == "Pending")
+                    else if (res == "Pending") // wait for the cache to be populated
                     {
                         res = await Policy.HandleResult<string>(r => r == "Pending")
                             .WaitAndRetryForeverAsync(x => TimeSpan.FromMilliseconds(100)) // Actually cannot be greater than 5sec as key would expire returning null
@@ -207,7 +207,7 @@ namespace Ark.Tools.AspNetCore.Auth0
 
         private bool _isUnattendedClient(ClaimsIdentity cid)
         {
-            var ni = cid.FindFirst(ClaimTypes.NameIdentifier)?.Value?.EndsWith("@clients");
+            var ni = cid.FindFirst(ClaimTypes.NameIdentifier)?.Value?.EndsWith("@clients", StringComparison.Ordinal);
             return ni == true;
         }
 

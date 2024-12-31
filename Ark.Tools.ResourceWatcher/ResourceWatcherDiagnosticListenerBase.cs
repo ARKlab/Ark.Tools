@@ -11,7 +11,7 @@ namespace Ark.Tools.ResourceWatcher
     {
         private readonly List<IDisposable> _subscription = new List<IDisposable>();
 
-        public ResourceWatcherDiagnosticListenerBase()
+        protected ResourceWatcherDiagnosticListenerBase()
         {
             this._subscription.Add(DiagnosticListener.AllListeners.Subscribe(this));
         }

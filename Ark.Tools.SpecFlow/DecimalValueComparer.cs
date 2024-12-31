@@ -1,4 +1,6 @@
-﻿using TechTalk.SpecFlow.Assist;
+﻿using System.Globalization;
+
+using TechTalk.SpecFlow.Assist;
 
 namespace Ark.Tools.SpecFlow
 {
@@ -16,7 +18,7 @@ namespace Ark.Tools.SpecFlow
 
             if (actualValue == null) return false;
 
-            var parsed = decimal.Parse(expectedValue);
+            var parsed = decimal.Parse(expectedValue, CultureInfo.CurrentCulture);
 
             return (decimal)actualValue == parsed;
         }

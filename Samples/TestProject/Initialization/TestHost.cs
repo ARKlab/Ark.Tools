@@ -78,7 +78,7 @@ namespace TestProject
 
     }
 
-    class TestServerfactory : DefaultFlurlClientFactory
+    sealed class TestServerfactory : DefaultFlurlClientFactory
     {
         private readonly TestServer _server;
 

@@ -24,7 +24,7 @@ namespace Ark.Tools.SystemTextJson
         public override bool CanConvert(Type typeToConvert) =>
             typeToConvert.GetCustomAttribute<TypeConverterAttribute>() != null;
 
-        private class TypeConverterJsonConverter<T> : JsonConverter<T>
+        private sealed class TypeConverterJsonConverter<T> : JsonConverter<T>
         {
             private readonly TypeConverter _typeConverter;
 

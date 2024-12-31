@@ -55,7 +55,7 @@ namespace Rebus.Config
             return configurer;
         }
 
-        class LambdaOutboxContextFactory : IOutboxContextFactory
+        sealed class LambdaOutboxContextFactory : IOutboxContextFactory
         {
             private readonly Func<IOutboxContext> _factory;
 
@@ -68,7 +68,7 @@ namespace Rebus.Config
 				=> _factory();
         }
 
-        class LambdaOutboxAsyncContextFactory : IOutboxAsyncContextFactory
+        sealed class LambdaOutboxAsyncContextFactory : IOutboxAsyncContextFactory
         {
             private readonly Func<CancellationToken, Task<IOutboxAsyncContext>> _factory;
 

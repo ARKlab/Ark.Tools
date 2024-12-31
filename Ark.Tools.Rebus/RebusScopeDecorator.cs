@@ -21,7 +21,7 @@ namespace Ark.Tools.Rebus
 
 		public async Task Handle(T message)
 		{
-			using (AsyncScopedLifestyle.BeginScope(_container))
+            await using (AsyncScopedLifestyle.BeginScope(_container))
 			{
 				await _inner().Handle(message);
 			}

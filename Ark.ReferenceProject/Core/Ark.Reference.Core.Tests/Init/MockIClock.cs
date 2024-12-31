@@ -25,7 +25,7 @@ namespace Ark.Reference.Core.Tests.Init
             ScenarioContext.ScenarioContainer.RegisterInstanceAs<IClock>(FakeClock);
             GivenTheCurrentInstantIs(SystemClock.Instance.GetCurrentInstant().WithOffset(Offset.FromHours(2)));
 
-            // TODO:  this is needed for Rebus as sometime we need a normal Defer, sometime we need a 'Fake' defer.
+            //        this is needed for Rebus as sometime we need a normal Defer, sometime we need a 'Fake' defer.
             //        we should apply this fake-clock swapping 'only for rebus' and not for the entire applications
             if (sctx.ScenarioInfo.Tags.Concat(fctx.FeatureInfo.Tags).Any(x => x == "UseFakeClock"))
                 _swappableClock.Clock = _fakeClock;
@@ -58,7 +58,7 @@ namespace Ark.Reference.Core.Tests.Init
     }
 
 
-    class SwappableClock : IClock
+    sealed class SwappableClock : IClock
     {
         public IClock Clock { get; set; } = SystemClock.Instance;
 

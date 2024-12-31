@@ -3,6 +3,7 @@
 using EnsureThat;
 using NLog;
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,7 +29,7 @@ namespace Ark.Tools.Solid.Decorators
             stopWatch.Start();
             var result = _decorated.Execute(query);
             stopWatch.Stop();
-            _logger.Trace("Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
+            _logger.Trace(CultureInfo.InvariantCulture, "Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
 
             return result;
         }
@@ -39,7 +40,7 @@ namespace Ark.Tools.Solid.Decorators
             stopWatch.Start();
             var result = await _decorated.ExecuteAsync(query, ctk);
             stopWatch.Stop();
-            _logger.Trace("Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
+            _logger.Trace(CultureInfo.InvariantCulture, "Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
 
             return result;
         }

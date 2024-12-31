@@ -283,8 +283,8 @@ namespace Ark.Tools.Core
             {
                 genericTypeName += t.FullName.Replace(genericType._toCSReservatedWord(true), "").Replace('+', '.');
             }
-            if (genericTypeName.IndexOf("[") >= 0 && genericTypeName.IndexOf("]") != genericTypeName.IndexOf("[") + 1) 
-                genericTypeName = genericTypeName.Substring(0, genericTypeName.IndexOf("["));//For a non generic class nested in a generic class we will still have the type parameters at the end 
+            if (genericTypeName.IndexOf('[') >= 0 && genericTypeName.IndexOf(']') != genericTypeName.IndexOf('[') + 1) 
+                genericTypeName = genericTypeName.Substring(0, genericTypeName.IndexOf('['));//For a non generic class nested in a generic class we will still have the type parameters at the end 
             return genericTypeName;
         }
     }

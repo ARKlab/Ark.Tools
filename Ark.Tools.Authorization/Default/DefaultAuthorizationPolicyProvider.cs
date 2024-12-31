@@ -60,7 +60,7 @@ namespace Ark.Tools.Authorization
             // MVC caches policies specifically for this class, so this method MUST return the same policy per
             // policyName for every request or it could allow undesired access. It also must return synchronously.
             // A change to either of these behaviors would require shipping a patch of MVC as well.
-            return Task.FromResult(_policyMap.ContainsKey(policyName) ? _policyMap[policyName] : null);
+            return Task.FromResult(_policyMap.TryGetValue(policyName, out IAuthorizationPolicy? value) ? value : null);
         }
     }
 }

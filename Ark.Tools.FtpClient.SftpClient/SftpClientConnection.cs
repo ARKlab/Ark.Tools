@@ -58,7 +58,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         private async Task _ensureConnected(CancellationToken ctk)
         {
             if (!_client.IsConnected)
-                await Task.Run(() => _client.Connect(), ctk);
+                await _client.ConnectAsync(ctk);
         }
 
         /// <summary>
@@ -89,13 +89,13 @@ namespace Ark.Tools.FtpClient.SftpClient
         public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
         {
             await _ensureConnected(ctk);
-            _client.DeleteDirectory(path);
+            await _client.DeleteDirectoryAsync(path, ctk);
         }
 
         public override async Task DeleteFileAsync(string path, CancellationToken ctk = default)
         {
             await _ensureConnected(ctk);
-            _client.DeleteFile(path);
+            await _client.DeleteFileAsync(path, ctk);
         }
 
         #region private helpers
@@ -162,17 +162,17 @@ namespace Ark.Tools.FtpClient.SftpClient
             }
 
             if (isKeyNull)
-                throw new ArgumentNullException($"ClientCertificate has a null Key");
+                throw new InvalidOperationException($"ClientCertificate has a null Key");
 
 #if NET5_0_OR_GREATER
             var privateKeyPem = PemEncoding.Write($"{keyExchangeAlgorithm} PRIVATE KEY", privateKeyBytes);
             privateKeyPemString = new string(privateKeyPem);
 #else
             var builder = new StringBuilder();
-            builder.AppendLine($"-----BEGIN {keyExchangeAlgorithm} PRIVATE KEY-----");
+            builder.Append("-----BEGIN ").Append(keyExchangeAlgorithm).AppendLine(" PRIVATE KEY-----");
             builder.AppendLine(
                 Convert.ToBase64String(privateKeyBytes, Base64FormattingOptions.InsertLineBreaks));
-            builder.AppendLine($"-----END {keyExchangeAlgorithm} PRIVATE KEY-----");
+            builder.Append("-----END ").Append(keyExchangeAlgorithm).AppendLine(" PRIVATE KEY-----");
 
             privateKeyPemString = builder.ToString();    
 #endif
@@ -228,7 +228,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (_client.IsConnected)
                 return;
 
-            await Task.Run(() => _client.Connect(), ctk);
+            await _client.ConnectAsync(ctk);
         }
 
         public override ValueTask<bool> IsConnectedAsync(CancellationToken ctk = default)

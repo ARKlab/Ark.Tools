@@ -99,9 +99,6 @@ namespace Ark.Tools.FtpClient.Core
                     _semaphore?.Dispose();
                 }
 
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
                 _disposedValue = true;
             }
         }

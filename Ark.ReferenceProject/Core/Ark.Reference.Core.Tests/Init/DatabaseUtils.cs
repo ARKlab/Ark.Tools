@@ -8,23 +8,24 @@ using System.Data;
 using System.Linq;
 
 using Reqnroll;
+using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Tests.Init
 {
     [Binding]
-    class DatabaseUtils
+    sealed class DatabaseUtils
     {
         public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=SpecFlowLocalDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
 
         [BeforeTestRun(Order = -1)]
-        public static void CreateNLogDatabaseIfNotExists()
+        public static async Task CreateNLogDatabaseIfNotExists()
         {
-            using (var conn = new SqlConnection(DatabaseConnectionString))
+            await using (var conn = new SqlConnection(DatabaseConnectionString))
             {
-                conn.Open();
-                using (var cmd = new SqlCommand($"IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn))
+                await conn.OpenAsync();
+                await using (var cmd = new SqlCommand($"IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn))
                 {
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
@@ -44,27 +45,27 @@ namespace Ark.Reference.Core.Tests.Init
         }
 
         [BeforeScenario]
-        public void CleanUpEntireDbBeforeScenario(FeatureContext fctx, ScenarioContext sctx)
+        public async Task CleanUpEntireDbBeforeScenario(FeatureContext fctx, ScenarioContext sctx)
         {
-            if (fctx.FeatureInfo.Tags.Contains("CleanDbBeforeScenario") ||
-                sctx.ScenarioInfo.Tags.Contains("CleanDbBeforeScenario"))
+            if (fctx.FeatureInfo.Tags.Contains("CleanDbBeforeScenario", StringComparer.Ordinal) ||
+                sctx.ScenarioInfo.Tags.Contains("CleanDbBeforeScenario", StringComparer.Ordinal))
             {
-                if (fctx.FeatureInfo.Tags.Contains("CleanProfileCalendarBeforeScenario") || sctx.ScenarioInfo.Tags.Contains("CleanProfileCalendarBeforeScenario"))
-                    _cleanUpEntireDb(resetProfileCalendar: true);
+                if (fctx.FeatureInfo.Tags.Contains("CleanProfileCalendarBeforeScenario", StringComparer.Ordinal) || sctx.ScenarioInfo.Tags.Contains("CleanProfileCalendarBeforeScenario", StringComparer.Ordinal))
+                    await _cleanUpEntireDb(resetProfileCalendar: true);
                 else
-                    _cleanUpEntireDb();
+                    await _cleanUpEntireDb();
             }
         }
 
-        private void _cleanUpEntireDb(bool resetProfileCalendar = false)
+        private async Task _cleanUpEntireDb(bool resetProfileCalendar = false)
         {
-            using (var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString))
+            await using (var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString))
             {
-                ctx.Open();
-                using (SqlTransaction tx = ctx.BeginTransaction())
+                await ctx.OpenAsync();
+                await using (var tx = await ctx.BeginTransactionAsync())
                 {
 
-                    ctx.Execute(
+                    await ctx.ExecuteAsync(
                         @"[ops].[ResetFull_onlyForTesting]",
                         new
                         {
@@ -75,8 +76,7 @@ namespace Ark.Reference.Core.Tests.Init
                         commandTimeout: 60,
                         transaction: tx);
 
-                    tx.Commit();
-                    ctx.Close();
+                    await tx.CommitAsync();
                 }
             }
         }

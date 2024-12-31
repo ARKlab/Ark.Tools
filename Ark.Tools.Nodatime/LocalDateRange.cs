@@ -6,9 +6,11 @@ using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Ark.Tools.Nodatime
 {
+    [StructLayout(LayoutKind.Auto)]
     public struct LocalDateRange
         : IEquatable<LocalDateRange>
     {
@@ -21,7 +23,7 @@ namespace Ark.Tools.Nodatime
             _start = start;
             _end = end;
         }
-        public override string ToString()
+        public override readonly string ToString()
         {
             return string.Format(CultureInfo.InvariantCulture, "Start:{0} | End:{1}", _start,_end);
         }
@@ -29,7 +31,7 @@ namespace Ark.Tools.Nodatime
 
         public LocalDate Start
         {
-            get { return _start; }
+            readonly get { return _start; }
             set
             {
                 _start = value;
@@ -37,55 +39,55 @@ namespace Ark.Tools.Nodatime
         }
         public LocalDate End
         {
-            get { return _end; }
+            readonly get { return _end; }
             set
             {
                 _end = value;
             }
         }
 
-        public bool Contains(LocalDate ld)
+        public readonly bool Contains(LocalDate ld)
         {
             return ld >= _start && ld < _end;
         }
 
-        public bool Contains(LocalDateTime ldt)
+        public readonly bool Contains(LocalDateTime ldt)
         {
             return ldt.Date >= _start && ldt.Date < End;
         }
 
-        public bool Contains(LocalDateRange other)
+        public readonly bool Contains(LocalDateRange other)
         {
             return other._start >= _start && other._end <= _end;
         }
 
-        public bool Overlaps(LocalDateRange other)
+        public readonly bool Overlaps(LocalDateRange other)
         {
             return _start < other._end && _end > other._start;
         }
 
-        public bool OverlapsOrContiguous(LocalDateRange other)
+        public readonly bool OverlapsOrContiguous(LocalDateRange other)
         {
             return Overlaps(other) || IsContiguous(other);
         }
 
-        public bool IsContiguous(LocalDateRange other)
+        public readonly bool IsContiguous(LocalDateRange other)
         {
             return _start == other._end || _end == other._start;
         }
 
-        public LocalDateRange MergeOverlapsOrContiguous(LocalDateRange other)
+        public readonly LocalDateRange MergeOverlapsOrContiguous(LocalDateRange other)
         {
             Ensure.Bool.IsTrue(OverlapsOrContiguous(other));
             return new LocalDateRange(_start.MinWith(other._start), _end.MaxWith(other._end));
         }
 
-        public LocalDateRange Merge(LocalDateRange other)
+        public readonly LocalDateRange Merge(LocalDateRange other)
         {
             return new LocalDateRange(_start.MinWith(other._start), _end.MaxWith(other._end));
         }
 
-        public IEnumerable<LocalDateRange> Subtract(LocalDateRange other)
+        public readonly IEnumerable<LocalDateRange> Subtract(LocalDateRange other)
         {
             //      |------------|
             //  |--------------------|
@@ -126,38 +128,38 @@ namespace Ark.Tools.Nodatime
             }
         }
 
-        public LocalDateTimeRange ToLocalDateTimeRange()
+        public readonly LocalDateTimeRange ToLocalDateTimeRange()
         {
             return new LocalDateTimeRange(_start.AtMidnight(), _end.AtMidnight());
         }
 
-        public ZonedDateTimeRange ToZonedDateTimeRange(string timezone)
+        public readonly ZonedDateTimeRange ToZonedDateTimeRange(string timezone)
         {
             return ToLocalDateTimeRange().ToZonedDateTimeRange(timezone);
         }
 
-        public ZonedDateTimeRange ToZonedDateTimeRange(DateTimeZone dateTimeZone)
+        public readonly ZonedDateTimeRange ToZonedDateTimeRange(DateTimeZone dateTimeZone)
         {
             return ToLocalDateTimeRange().ToZonedDateTimeRange(dateTimeZone);
         }
 
-        public ZonedDateTimeRange InZone(string timezone)
+        public readonly ZonedDateTimeRange InZone(string timezone)
         {
             return ToZonedDateTimeRange(timezone);
         }
 
-        public ZonedDateTimeRange InZone(DateTimeZone dateTimeZone)
+        public readonly ZonedDateTimeRange InZone(DateTimeZone dateTimeZone)
         {
             return ToZonedDateTimeRange(dateTimeZone);
         }
 
-        public ZonedDateTimeRange InUtc()
+        public readonly ZonedDateTimeRange InUtc()
         {
             return ToZonedDateTimeRange(DateTimeZone.Utc);
         }
 
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
@@ -168,7 +170,7 @@ namespace Ark.Tools.Nodatime
             }
         }
 
-        public bool Equals(LocalDateRange other)
+        public readonly bool Equals(LocalDateRange other)
         {
             return Start == other._start && End == other._end;
         }
@@ -183,7 +185,7 @@ namespace Ark.Tools.Nodatime
             return !(x == y);
         }
 
-        public override bool Equals(object? obj)
+        public override readonly bool Equals(object? obj)
         {
             if (obj is not LocalDateRange)
                 return false;

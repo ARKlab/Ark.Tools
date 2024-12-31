@@ -4,6 +4,7 @@ using EnsureThat;
 
 using NLog;
 
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,10 +30,10 @@ namespace WebApplicationDemo.Application.Handlers.Requests
 			using (var buffer = new MemoryStream())
 			{
 				// Copy source to destination.
-				request.File?.CopyTo(buffer);
+				request.File?.CopyToAsync(buffer, ctk);
 				buffer.Seek(0, SeekOrigin.Begin);
 
-				_logger.Info("FileImport_CreateRequestHandler - File Import created");
+				_logger.Info(CultureInfo.InvariantCulture, "FileImport_CreateRequestHandler - File Import created");
 
 				var f = new FileImport()
 				{

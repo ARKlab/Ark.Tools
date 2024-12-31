@@ -54,7 +54,7 @@ namespace TestWorker.HostNs
 					deps.Container.RegisterSingleton<RebusResourceNotifier>();
 				});
 
-				//_logger.Info("Rebus notifier added to host");
+				//_logger.Info(CultureInfo.InvariantCulture, "Rebus notifier added to host");
 
 				return this;
 			}

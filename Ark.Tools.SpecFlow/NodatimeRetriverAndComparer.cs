@@ -36,7 +36,7 @@ namespace Ark.Tools.SpecFlow
                         var res4 = LocalDateTimePattern.ExtendedIso.Parse(expectedValue);
                         if (res4.Success && res4.Value.TimeOfDay == LocalTime.Midnight) return res4.Value.Date == ld;
 
-                        if (DateTime.TryParse(expectedValue, out var d) && d == d.Date)
+                        if (DateTime.TryParse(expectedValue, CultureInfo.CurrentCulture, DateTimeStyles.None, out var d) && d == d.Date)
                         {
                             return LocalDate.FromDateTime(d) == ld;
                         }
@@ -47,7 +47,7 @@ namespace Ark.Tools.SpecFlow
                         var res2 = LocalDateTimePattern.ExtendedIso.Parse(expectedValue);
                         if (res2.Success) return res2.Value == ldt;
 
-                        if (DateTime.TryParse(expectedValue, out var d))
+                        if (DateTime.TryParse(expectedValue, CultureInfo.CurrentCulture, DateTimeStyles.None, out var d))
                         {
                             return LocalDateTime.FromDateTime(d) == ldt;
                         }
@@ -76,7 +76,7 @@ namespace Ark.Tools.SpecFlow
                         var res6 = OffsetDateTimePattern.ExtendedIso.Parse(expectedValue);
                         if (res6.Success) return res6.Value == odt; 
 
-                        if (DateTimeOffset.TryParse(expectedValue, out var o))
+                        if (DateTimeOffset.TryParse(expectedValue, CultureInfo.CurrentCulture, DateTimeStyles.None, out var o))
                         {
                             return OffsetDateTime.FromDateTimeOffset(o) == odt;
                         }
@@ -113,7 +113,7 @@ namespace Ark.Tools.SpecFlow
                 if (res4.Success && res4.Value.TimeOfDay == LocalTime.Midnight) return res4.Value.Date;
 
 
-                if (DateTime.TryParse(keyValuePair.Value, out var d) && d == d.Date)
+                if (DateTime.TryParse(keyValuePair.Value, CultureInfo.CurrentCulture, DateTimeStyles.None, out var d) && d == d.Date)
                 {
                     return LocalDate.FromDateTime(d);
                 }
@@ -126,7 +126,7 @@ namespace Ark.Tools.SpecFlow
                 var res = LocalDateTimePattern.ExtendedIso.Parse(keyValuePair.Value);
                 if (res.Success) return res.Value;
 
-                if (DateTime.TryParse(keyValuePair.Value, out var d))
+                if (DateTime.TryParse(keyValuePair.Value, CultureInfo.CurrentCulture, DateTimeStyles.None, out var d))
                 {
                     return LocalDateTime.FromDateTime(d);
                 }
@@ -159,7 +159,7 @@ namespace Ark.Tools.SpecFlow
                 var res = OffsetDateTimePattern.ExtendedIso.Parse(keyValuePair.Value);
                 if (res.Success) return res.Value;
 
-                if (DateTimeOffset.TryParse(keyValuePair.Value, out var o))
+                if (DateTimeOffset.TryParse(keyValuePair.Value, CultureInfo.CurrentCulture, DateTimeStyles.None, out var o))
                 {
                     return OffsetDateTime.FromDateTimeOffset(o);
                 }
@@ -174,7 +174,7 @@ namespace Ark.Tools.SpecFlow
                 return res.Value;
             }
 
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         private static InvalidOperationException _getInvalidOperationException(string value) => new InvalidOperationException($"Cannot parse value {value} pattern");

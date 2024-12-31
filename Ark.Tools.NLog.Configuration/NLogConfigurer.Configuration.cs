@@ -46,7 +46,6 @@ namespace Ark.Tools.NLog
             if (res != null) return res;
 
             res = cfg[key.Replace('.', '_')];
-            if (res != null) return res;
             
             return res;
         }

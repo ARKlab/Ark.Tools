@@ -39,14 +39,14 @@ namespace Ark.Reference.Common.Services.FileStorageService
             _fileClient = client.GetBlobContainerClient(_config.StoragePrefix.ToLowerInvariant());
         }
 
-        public Task SaveFileAsync(Guid guid, string filename, Stream fileContent, CancellationToken ctk)
+        public Task SaveFileAsync(Guid guid, string filename, Stream fileContent, CancellationToken ctk = default)
         {
             var blob = _getBlobFor(guid, filename);
 
             return blob.UploadAsync(fileContent, ctk);
         }
 
-        public async Task GetFileAsync(Stream fileStream, Guid guid, string filename, CancellationToken ctk)
+        public async Task GetFileAsync(Stream fileStream, Guid guid, string filename, CancellationToken ctk = default)
         {
             var blob = _getBlobFor(guid, filename);
 

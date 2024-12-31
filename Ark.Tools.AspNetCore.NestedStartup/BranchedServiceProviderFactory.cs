@@ -5,7 +5,7 @@ using System;
 
 namespace Ark.Tools.AspNetCore.NestedStartup
 {
-    internal class BranchedServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
+    internal sealed class BranchedServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
     {
         private readonly IServiceProvider _parent;
 

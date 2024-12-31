@@ -6,6 +6,7 @@ using Microsoft.Extensions.DiagnosticAdapter;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
@@ -44,7 +45,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             // properly fill dependency telemetry operation context
             telemetry.Context.Operation.Id = activity.RootId;
             telemetry.Context.Operation.ParentId = activity.ParentId;
-            telemetry.Timestamp = activity.StartTimeUtc;
+            telemetry.Timestamp = new DateTimeOffset(activity.StartTimeUtc, TimeSpan.Zero);
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
@@ -65,7 +66,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             // properly fill dependency telemetry operation context
             telemetry.Context.Operation.Id = activity.RootId;
             telemetry.Context.Operation.ParentId = activity.ParentId;
-            telemetry.Timestamp = activity.StartTimeUtc;
+            telemetry.Timestamp = new DateTimeOffset(activity.StartTimeUtc, TimeSpan.Zero);
 
             //Properties and metrics
             telemetry.Properties.Add("Tenant", tenant);
@@ -160,7 +161,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 Duration = currentActivity.Duration,
                 Name = currentActivity.OperationName,
                 Success = exception == null ? true : false,
-                Timestamp = currentActivity.StartTimeUtc,
+                Timestamp = new DateTimeOffset(currentActivity.StartTimeUtc, TimeSpan.Zero),
             };
 
             //Telemetry operation context
@@ -218,7 +219,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 Duration = currentActivity.Duration,
                 Name = currentActivity.OperationName,
                 Success = exception == null ? true : false,
-                Timestamp = currentActivity.StartTimeUtc,
+                Timestamp = new DateTimeOffset(currentActivity.StartTimeUtc, TimeSpan.Zero),
                 Type = _type
             };
 
@@ -271,7 +272,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 Duration = currentActivity.Duration,
                 Name = currentActivity.OperationName,
                 Success = exception == null ? true : false,
-                Timestamp = currentActivity.StartTimeUtc,
+                Timestamp = new DateTimeOffset(currentActivity.StartTimeUtc, TimeSpan.Zero),
                 Type = _type
             };
 
@@ -332,7 +333,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 Duration = currentActivity.Duration,
                 Name = currentActivity.OperationName,
                 Success = exception == null ? true : false,
-                Timestamp = currentActivity.StartTimeUtc,
+                Timestamp = new DateTimeOffset(currentActivity.StartTimeUtc, TimeSpan.Zero),
             };
 
             //Telemetry operation context
@@ -381,7 +382,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 Duration = currentActivity.Duration,
                 Name = currentActivity.OperationName,
                 Success = exception == null ? true : false,
-                Timestamp = currentActivity.StartTimeUtc,
+                Timestamp = new DateTimeOffset(currentActivity.StartTimeUtc, TimeSpan.Zero),
                 Type = _type
             };
 
@@ -425,7 +426,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             data.Properties.Add("ProcessType", pc.ProcessType.ToString());
             data.Properties.Add("ResultType", pc.ResultType.ToString());
 
-            data.Properties.Add("Idx/Total", pc.Index.ToString() + "/" + pc.Total.ToString());
+            data.Properties.Add("Idx/Total", pc.Index?.ToString(CultureInfo.InvariantCulture) + "/" + pc.Total?.ToString(CultureInfo.InvariantCulture));
 
             if (pc.LastState != default)
             {
@@ -441,7 +442,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             }
             if (pc.NewState != default)
             {
-                data.Properties.Add("RetryCount", pc.NewState.RetryCount.ToString());
+                data.Properties.Add("RetryCount", pc.NewState.RetryCount.ToString(CultureInfo.InvariantCulture));
                 data.Properties.Add("RetrievedAt", pc.NewState.ToString());
                 data.Properties.Add("CheckSum", pc.NewState.CheckSum);
                 data.Properties.Add("Modified", pc.NewState.Modified.ToString());

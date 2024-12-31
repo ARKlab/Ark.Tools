@@ -59,7 +59,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 					pageSize: (int)maxVersion - envelopes.Count,
 					token: ctk);
 
-				while (envelopes.Count != maxVersion && await results.MoveNextAsync())
+				while (envelopes.Count != maxVersion && await results.MoveNextAsync(ctk))
 				{
 					var envelope = results.Current;
 					if (envelope.Document.AggregateVersion != envelopes.Count + 1)
@@ -91,7 +91,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     var evt = (OutboxEvent)(Activator.CreateInstance(outboxType) ?? throw new InvalidOperationException($"Failed to create instance for type {outboxType}"));
 
                     evt.Id = e.Metadata.EventId;
-                    evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value);
+                    evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
                     evt.SetEvent(e.Event);
 
                     await _session.StoreAsync(evt, ctk);

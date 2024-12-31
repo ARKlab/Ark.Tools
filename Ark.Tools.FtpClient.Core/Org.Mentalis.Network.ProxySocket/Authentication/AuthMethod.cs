@@ -14,7 +14,7 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication {
 		/// Initializes an AuthMethod instance.
 		/// </summary>
 		/// <param name="server">The socket connection with the proxy server.</param>
-		public AuthMethod(Socket server) {
+		protected AuthMethod(Socket server) {
 			m_Server = server;
             m_Buffer = Array.Empty<byte>();
 		}
@@ -45,7 +45,7 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication {
 			}
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 				m_Server = value;
 			}
 		}

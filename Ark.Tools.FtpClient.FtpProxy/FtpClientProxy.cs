@@ -52,19 +52,19 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public NetworkCredential? Credentials { get; private set; }
         public FtpConfig FtpConfig { get; private set; }
 
-        class DownloadFileResult
+        record DownloadFileResult
         {
             public byte[]? Content { get; set; }
         }
 
-        class ConnectionInfo
+        record ConnectionInfo
         {
             public Uri? Uri { get; set; }
             public string? Username { get; set; }
             public string? Password { get; set; }
         }
 
-        class ListingRequest
+        record ListingRequest
         {
             public ConnectionInfo? Info { get; set; }
             public int? DegreeOfParallelism { get; set; }
@@ -193,12 +193,12 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         public Task DeleteFileAsync(string path, CancellationToken ctk = default)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         private Task<string> _getAccessToken(CancellationToken ctk = default)
@@ -211,7 +211,9 @@ namespace Ark.Tools.FtpClient.FtpProxy
             var flurlClient = new FlurlClientBuilder(_config.FtpProxyWebInterfaceBaseUri.ToString())
                 .ConfigureArkDefaults()
                 .ConfigureInnerHandler(h => {
+#pragma warning disable MA0039 // Do not write your own certificate validation method
                     h.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
+#pragma warning restore MA0039 // Do not write your own certificate validation method
                 })
                 .WithHeader("Accept", "application/json, text/json")
                 .WithHeader("Accept-Encoding", "gzip, deflate")
@@ -234,7 +236,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         public Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public void Dispose()

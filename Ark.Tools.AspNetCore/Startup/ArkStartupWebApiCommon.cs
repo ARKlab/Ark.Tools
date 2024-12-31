@@ -43,12 +43,11 @@ namespace Ark.Tools.AspNetCore.Startup
         public Container Container { get; } = new Container();
         public IHostEnvironment HostEnvironment { get; }
 
-        public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
-            : this(configuration, hostEnvironment, false)
-        {
+        protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
+            : this(configuration, hostEnvironment, false){
         }
 
-        public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
+        protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
         {
             Configuration = configuration;
             UseNewtonsoftJson = useNewtonsoftJson;
@@ -83,7 +82,7 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
 
                     if (!HostEnvironment.IsProduction())
-                        opt.Filters.Add(new ArkDefaultExceptionFilter());
+                        opt.Filters.Add(new ArkDefaultExceptionFilterAttribute());
 
                     opt.Conventions.Add(new ArkDefaultConventions());
 
@@ -94,8 +93,8 @@ namespace Ark.Tools.AspNetCore.Startup
                         NoStore = false,
                         VaryByHeader = "Accept,Accept-Encoding,Accept-Language,Authorization"
                     });
-                    opt.Filters.Add(new ModelStateValidationFilter());
-                    opt.Filters.Add(new ETagHeaderBasicSupportFilter());
+                    opt.Filters.Add(new ModelStateValidationFilterAttribute());
+                    opt.Filters.Add(new ETagHeaderBasicSupportFilterAttribute());
                     opt.Filters.Add(new ApiControllerAttribute());
                     opt.ReturnHttpNotAcceptable = true;
                     opt.RespectBrowserAcceptHeader = true;
@@ -124,8 +123,9 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddApiVersioning(o =>
             {
                 o.ReportApiVersions = true;
-                o.AssumeDefaultVersionWhenUnspecified = true;
+                o.RouteConstraintName = "apiVersion";
                 o.DefaultApiVersion = Versions.Last();
+                o.AssumeDefaultVersionWhenUnspecified = true;
             })
             .AddMvc(o =>
             {
@@ -161,6 +161,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.UseAllOfToExtendReferenceSchemas();
 
                 c.CustomOperationIds(x => x.HttpMethod + " " + x.RelativePath);
+                c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
                 c.OperationFilter<DefaultResponsesOperationFilter>();
 

@@ -4,10 +4,14 @@ using EnsureThat;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Ark.Tools.Nodatime
 {
+    [StructLayout(LayoutKind.Auto)]
+    [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
     public struct ZonedDateTimeRange 
         : IEquatable<ZonedDateTimeRange>
     {
@@ -21,46 +25,46 @@ namespace Ark.Tools.Nodatime
             _start = start;
             _end = end;
         }
-        public override string ToString()
+        public override readonly string ToString()
         {
             return string.Format(CultureInfo.InvariantCulture, "Start:{0} | End:{1}", _start, _end);
         }
 
 
-        public ZonedDateTime Start { get { return _start; } }
-        public ZonedDateTime End { get { return _end; } }
-        public DateTimeZone Zone { get { return _start.Zone; } }
+        public readonly ZonedDateTime Start { get { return _start; } }
+        public readonly ZonedDateTime End { get { return _end; } }
+        public readonly DateTimeZone Zone { get { return _start.Zone; } }
 
-        public bool Contains(ZonedDateTime ldt)
+        public readonly bool Contains(ZonedDateTime ldt)
         {
             Ensure.Bool.IsTrue(ldt.Zone.Equals(Start.Zone));
             return ldt.ToInstant() >= _start.ToInstant() && ldt.ToInstant() < _end.ToInstant();
         }
 
-        public bool Contains(ZonedDateTimeRange other)
+        public readonly bool Contains(ZonedDateTimeRange other)
         {
             Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
             return other._start.ToInstant() >= _start.ToInstant() && other._end.ToInstant() <= _end.ToInstant();
         }
 
-        public bool Overlaps(ZonedDateTimeRange other)
+        public readonly bool Overlaps(ZonedDateTimeRange other)
         {
             Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
             return _start.ToInstant() < other._end.ToInstant() && _end.ToInstant() > other._start.ToInstant();
         }
 
-        public bool OverlapsOrContiguous(ZonedDateTimeRange other)
+        public readonly bool OverlapsOrContiguous(ZonedDateTimeRange other)
         {
             Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
             return Overlaps(other) || IsContiguous(other);
         }
 
-        public bool IsContiguous(ZonedDateTimeRange other)
+        public readonly bool IsContiguous(ZonedDateTimeRange other)
         {
             Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
             return _start == other._end || _end == other._start;
         }
-        public ZonedDateTimeRange MergeOverlapsOrContiguous(ZonedDateTimeRange other)
+        public readonly ZonedDateTimeRange MergeOverlapsOrContiguous(ZonedDateTimeRange other)
         {
             Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
             Ensure.Bool.IsTrue(OverlapsOrContiguous(other));
@@ -70,7 +74,7 @@ namespace Ark.Tools.Nodatime
                 );
         }
 
-        public ZonedDateTimeRange Merge(ZonedDateTimeRange other)
+        public readonly ZonedDateTimeRange Merge(ZonedDateTimeRange other)
         {
             Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
             return new ZonedDateTimeRange(
@@ -79,7 +83,7 @@ namespace Ark.Tools.Nodatime
                 );
         }
 
-        public IEnumerable<ZonedDateTimeRange> Subtract(ZonedDateTimeRange other)
+        public readonly IEnumerable<ZonedDateTimeRange> Subtract(ZonedDateTimeRange other)
         {
             Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
 
@@ -122,12 +126,12 @@ namespace Ark.Tools.Nodatime
             }
         }
 
-        public LocalDateRange ToLocalDateRangeLeniently()
+        public readonly LocalDateRange ToLocalDateRangeLeniently()
         {
             return new LocalDateRange(_start.Date, _end.TimeOfDay == LocalTime.Midnight ? _end.Date : _end.Date.PlusDays(1));
         }
 
-        public LocalDateRange ToLocalDateRangeStrict()
+        public readonly LocalDateRange ToLocalDateRangeStrict()
         {
             Ensure.Bool.IsTrue(Start.TimeOfDay == LocalTime.Midnight);
             Ensure.Bool.IsTrue(End.TimeOfDay == LocalTime.Midnight);
@@ -135,28 +139,28 @@ namespace Ark.Tools.Nodatime
             return new LocalDateRange(_start.Date, _end.Date);
         }
 
-        public LocalDateTimeRange ToLocalDateTimeRange()
+        public readonly LocalDateTimeRange ToLocalDateTimeRange()
         {
             return new LocalDateTimeRange(_start.LocalDateTime, _end.LocalDateTime);
         }
 
-        public ZonedDateTimeRange WithZone(string timezone)
+        public readonly ZonedDateTimeRange WithZone(string timezone)
         {
             var zone = DateTimeZoneProviders.Tzdb[timezone];
             return WithZone(zone);
         }
 
-        public ZonedDateTimeRange WithZone(DateTimeZone dateTimeZone)
+        public readonly ZonedDateTimeRange WithZone(DateTimeZone dateTimeZone)
         {
             return new ZonedDateTimeRange(_start.WithZone(dateTimeZone), _end.WithZone(dateTimeZone));
         }
 
-        public ZonedDateTimeRange InUtc()
+        public readonly ZonedDateTimeRange InUtc()
         {
             return WithZone(DateTimeZone.Utc);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
@@ -167,7 +171,7 @@ namespace Ark.Tools.Nodatime
             }
         }
 
-        public bool Equals(ZonedDateTimeRange other)
+        public readonly bool Equals(ZonedDateTimeRange other)
         {
             return _start == other._start && _end == other._end;
         }
@@ -182,12 +186,17 @@ namespace Ark.Tools.Nodatime
             return !x.Equals(y);
         }
 
-        public override bool Equals(object? obj)
+        public override readonly bool Equals(object? obj)
         {
             if (obj is not ZonedDateTimeRange)
                 return false;
 
             return Equals((ZonedDateTimeRange)obj);
+        }
+
+        private readonly string GetDebuggerDisplay()
+        {
+            return ToString();
         }
     }
 }

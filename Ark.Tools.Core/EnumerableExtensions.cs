@@ -9,6 +9,9 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+#if NET6_0_OR_GREATER
+using System.Runtime.CompilerServices;
+#endif
 
 namespace Ark.Tools.Core
 {
@@ -27,13 +30,25 @@ namespace Ark.Tools.Core
 
         static class QueryCompiler<T>
         {
-            private static readonly ConcurrentDictionary<string, Func<IQueryable<T>, IQueryable<T>>> _cache = new();
+            private static readonly ConcurrentDictionary<string, Func<IQueryable<T>, IQueryable<T>>> _cache = new(StringComparer.Ordinal);
 
-            public static IQueryable<T> ApplyOrderBy(IQueryable<T> collection, string orderBy)
+            public static IQueryable<T> ApplyOrderBy(IQueryable<T> collection, string orderBy
+#if NET6_0_OR_GREATER
+                , [CallerArgumentExpression(nameof(orderBy))] string? orderByParam = null
+#endif
+            )
             {
+#if NET6_0_OR_GREATER
+                var paramName = orderByParam;
+#else
+                var paramName = nameof(orderBy);
+#endif
+
                 var apply = _cache.GetOrAdd(orderBy, k =>
                 {
-                    var chain = _parseOrderBy(k).Select(_compileOrderBy).ToArray();
+
+                    var chain = _parseOrderBy(k, paramName)
+                        .Select(_compileOrderBy).ToArray();
 
                     IQueryable<T> apply(IQueryable<T> c)
                     {
@@ -106,7 +121,7 @@ namespace Ark.Tools.Core
                 return apply;
             }
 
-            private static IEnumerable<OrderByInfo> _parseOrderBy(string orderBy)
+            private static IEnumerable<OrderByInfo> _parseOrderBy(string orderBy, string? orderByParam)
             {
                 if (String.IsNullOrEmpty(orderBy))
                     yield break;
@@ -118,12 +133,12 @@ namespace Ark.Tools.Core
                     string[] pair = item.Trim().Split(' ');
 
                     if (pair.Length > 2)
-                        throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item));
+                        throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item), orderByParam);
 
                     string prop = pair[0].Trim();
 
                     if (String.IsNullOrEmpty(prop))
-                        throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC");
+                        throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
 
                     SortDirection dir = SortDirection.Ascending;
 

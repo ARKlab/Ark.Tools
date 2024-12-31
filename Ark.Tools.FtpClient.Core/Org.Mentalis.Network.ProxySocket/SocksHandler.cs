@@ -19,7 +19,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <param name="server">The socket connection with the proxy server.</param>
 		/// <param name="user">The username to use when authenticating with the server.</param>
 		/// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> is null.</exception>
-		public SocksHandler(Socket server, string user) {
+		protected SocksHandler(Socket server, string user) {
 			m_Server = server;
             m_Username = user ?? string.Empty;
             m_Buffer = Array.Empty<byte>();
@@ -58,7 +58,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ObjectDisposedException">The Socket has been closed.</exception>
 		protected byte[] ReadBytes(int count) {
 			if (count <= 0)
-				throw new ArgumentException();
+				throw new ArgumentException("count should be positive", nameof(count));
 			byte[] buffer = new byte[count];
 			int received = 0;
 			while (received != count) {
@@ -103,7 +103,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			}
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 				m_Server = value;
 			}
 		}
@@ -118,7 +118,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			}
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 				m_Username = value;
 			}
 		}

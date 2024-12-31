@@ -30,7 +30,7 @@ namespace WebApplicationDemo.Dto
                 public EntityTest? EntityTest { get; set; }
 
                 [MessagePack.Key(4)]
-                public ValueCollection<string> Strings { get; set; } = new ValueCollection<string>();
+                public ValueCollection<string> Strings { get; set; } = new ValueCollection<string>(StringComparer.Ordinal);
 
                 [MessagePack.Key(5)]
                 public IDictionary<LocalDate, double?> Ts { get; set; } = new Dictionary<LocalDate, double?>();

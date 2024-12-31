@@ -16,7 +16,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
 			var queryEnumParams = operation.Parameters.OfType<OpenApiParameter>()
 				.Where(param => param.In == ParameterLocation.Query)
-				.Join(context.ApiDescription.ParameterDescriptions, o => o.Name, i => i.Name, (o, i) => new { o, i })
+				.Join(context.ApiDescription.ParameterDescriptions, o => o.Name, i => i.Name, (o, i) => new { o, i }, StringComparer.Ordinal)
 				.Where(x =>
 				{
 					var t = x.i.Type;

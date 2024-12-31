@@ -17,7 +17,7 @@ namespace Ark.Tools.ApplicationInsights
         {
             if (item is RequestTelemetry r
                 && r.Success == true
-                && r.Name?.StartsWith("OPTIONS") == true)
+                && r.Name?.StartsWith("OPTIONS", System.StringComparison.OrdinalIgnoreCase) == true)
                 return;
 
             if (item is DependencyTelemetry d
@@ -25,7 +25,7 @@ namespace Ark.Tools.ApplicationInsights
             {
                 if (d.Name == "Receive" && d.Type == "Azure Service Bus")
                     return;
-                if (d.Name.StartsWith("ServiceBusReceiver.") && d.Type == "Azure Service Bus")
+                if (d.Name.StartsWith("ServiceBusReceiver.", System.StringComparison.OrdinalIgnoreCase) && d.Type == "Azure Service Bus")
                     return;
                 if (d.Type == "SQL" && d.Data == "Commit")
                     return;

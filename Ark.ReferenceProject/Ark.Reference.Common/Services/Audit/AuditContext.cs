@@ -5,6 +5,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ namespace Ark.Reference.Common.Services.Audit
                 , CancellationToken ctk = default
             )
         {
-            _logger.Trace("ReadAuditByFilterAsync called");
+            _logger.Trace(CultureInfo.InvariantCulture, "ReadAuditByFilterAsync called");
 
             var parameters = new
             {
@@ -75,20 +76,19 @@ namespace Ark.Reference.Common.Services.Audit
                     {(query.ToDateTime != null ? "AND [SysStartTime] <= @ToDateTime" : "")}
             ", 
             parameters, transaction: _dbTransaction, cancellationToken: ctk);
-
-            using var q = await _dbConnection.QueryMultipleAsync(cmd);
+            await using var q = await _dbConnection.QueryMultipleAsync(cmd);
 
             var retVal = await q.ReadAsync<AuditDto<TAuditKind>>();
             var count = await q.ReadFirstAsync<int>();
 
-            _logger.Trace("ReadAuditById ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "ReadAuditById ended");
             return (retVal, count);
         }
 
 
         public async Task<IEnumerable<string>> ReadAuditUsersAsync(CancellationToken ctk = default)
         {
-            _logger.Trace("ReadAuditUsersAsync called");
+            _logger.Trace(CultureInfo.InvariantCulture, "ReadAuditUsersAsync called");
 
             var parameters = new
             {
@@ -102,7 +102,7 @@ namespace Ark.Reference.Common.Services.Audit
 
             var retVal = await _dbConnection.QueryAsync<string>(cmd).ConfigureAwait(true);
 
-            _logger.Trace("ReadAuditUsersAsync ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "ReadAuditUsersAsync ended");
             return retVal;
         }
 
@@ -131,7 +131,7 @@ namespace Ark.Reference.Common.Services.Audit
 
         private Task _insertAudit(AuditDto<TAuditKind> dto, CancellationToken ctk = default)
         {
-            _logger.Trace("CreateAudit called");
+            _logger.Trace(CultureInfo.InvariantCulture, "CreateAudit called");
 
             var parameters = new
             {
@@ -158,7 +158,7 @@ namespace Ark.Reference.Common.Services.Audit
             )
             ", parameters, transaction: _dbTransaction, cancellationToken: ctk);
 
-            _logger.Trace("CreateAudit ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "CreateAudit ended");
             return _dbConnection.ExecuteAsync(cmd);
         }
     }

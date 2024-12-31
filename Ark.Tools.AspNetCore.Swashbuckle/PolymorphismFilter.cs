@@ -60,11 +60,10 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 				PropertyName = _discriminatorName
 			};
 
-			parentSchema.Required = parentSchema.Required ?? new HashSet<string>();
-			if (!parentSchema.Required.Contains(_discriminatorName))
-				parentSchema.Required.Add(_discriminatorName);
+			parentSchema.Required = parentSchema.Required ?? new HashSet<string>(StringComparer.Ordinal);
+            parentSchema.Required.Add(_discriminatorName);
 
-			if (!parentSchema.Properties.ContainsKey(_discriminatorName))
+            if (!parentSchema.Properties.ContainsKey(_discriminatorName))
 				parentSchema.Properties.Add(_discriminatorName, new OpenApiSchema { Type = "string" });
 
 			foreach (var item in _derivedTypes)

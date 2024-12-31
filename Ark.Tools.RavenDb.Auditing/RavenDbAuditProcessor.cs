@@ -18,7 +18,7 @@ namespace Ark.Tools.RavenDb.Auditing
 		private readonly List<Task> _subscriptionWorkerTasks = new List<Task>();
 		private CancellationTokenSource? _tokenSource;
 		private readonly object _gate = new object();
-		private readonly HashSet<string> _names = new HashSet<string>();
+		private readonly HashSet<string> _names = new HashSet<string>(StringComparer.Ordinal);
 		private const string _prefixName= "AuditProcessor";
 		
 		public RavenDbAuditProcessor(IDocumentStore store, IAuditableTypeProvider provider)
@@ -30,7 +30,7 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		}
 
-		public async Task StartAsync(CancellationToken ctk = default)
+		public async Task StartAsync(CancellationToken ctk)
 		{
 			foreach (var name in _names)
 			{
@@ -70,8 +70,7 @@ namespace Ark.Tools.RavenDb.Auditing
 				try
 				{
 					retryCount++;
-
-					using (var worker = _store.Subscriptions.GetSubscriptionWorker<Revision<dynamic>>(
+                    await using (var worker = _store.Subscriptions.GetSubscriptionWorker<Revision<dynamic>>(
 					new SubscriptionWorkerOptions(_prefixName + name)
 					{
 						Strategy = SubscriptionOpeningStrategy.WaitForFree,
@@ -146,11 +145,11 @@ namespace Ark.Tools.RavenDb.Auditing
 					}
 				}
 
-				await session.SaveChangesAsync();
+				await session.SaveChangesAsync(CancellationToken.None);
 			}
 		}
 
-		public async Task StopAsync(CancellationToken ctk = default)
+		public async Task StopAsync(CancellationToken ctk)
 		{
 			List<Task> runtask = new List<Task>();
 			lock (_gate)

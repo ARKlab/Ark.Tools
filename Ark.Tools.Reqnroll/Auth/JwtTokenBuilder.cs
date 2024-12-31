@@ -79,7 +79,7 @@ namespace Ark.Tools.Reqnroll.Auth
             {
                 Issuer = this._issuer,
                 Audience = this._audience,
-                Claims = claims.ToDictionary(x => x.Type, x => x.Value as object),
+                Claims = claims.ToDictionary(x => x.Type, x => x.Value as object, StringComparer.Ordinal),
                 NotBefore = DateTime.UtcNow,
                 IssuedAt = DateTime.UtcNow,
                 Expires = DateTime.UtcNow.AddMinutes(_expiryInMinutes),
@@ -92,6 +92,7 @@ namespace Ark.Tools.Reqnroll.Auth
 
         #region " private "
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Parameters are injected as Properties and validated after bindings")]
         private void _ensureArguments()
         {
             if (this._securityKey == null)

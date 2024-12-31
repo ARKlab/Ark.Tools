@@ -21,7 +21,7 @@ namespace Ark.Tools.Nodatime.SystemTextJson
                 options);
         }
 
-        private class Surrogate
+        private sealed class Surrogate
         {
             public LocalDate Start { get; set; }
             public LocalDate End { get; set; }

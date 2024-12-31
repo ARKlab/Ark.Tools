@@ -58,6 +58,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     MinimumRevisionAgeToKeep = null,
                 },
                 Collections = new Dictionary<string, RevisionsCollectionConfiguration>
+(StringComparer.Ordinal)
                 {
                     {RavenDbEventSourcingConstants.OutboxCollectionName, new RevisionsCollectionConfiguration {Disabled = true} },
                 }

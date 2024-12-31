@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading.Tasks;
 using NLog;
 using Rebus.Handlers;
@@ -26,7 +27,7 @@ namespace Ark.Tools.Rebus
 			}
 			catch (Exception e)
 			{
-				_logger.Warn(e, "Failed processing message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
+				_logger.Warn(e, CultureInfo.InvariantCulture, "Failed processing message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
 				throw;
 			}
 		}

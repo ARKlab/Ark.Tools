@@ -32,7 +32,6 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Security.Claims;
-using System.Threading;
 
 using Reqnroll;
 using System.Threading.Tasks;
@@ -106,7 +105,7 @@ namespace Ark.Reference.Core.Tests.Init
         {
             using var _ = new FluentAssertions.Execution.AssertionScope();
 
-            var ctx = Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>();;
+            var ctx = Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>();
 
             var (inqueue, inprocess, deferred, outbox, errorMessages) =
                 await Policy
@@ -166,7 +165,7 @@ namespace Ark.Reference.Core.Tests.Init
                 Env.RebusNetwork.Reset();
 
                 while (InProcessMessageInspectorStep.Count > 0)
-                    Thread.Sleep(100);
+                    await Task.Delay(100);
 
             } while (drainer.StillDraining);
 
@@ -252,7 +251,7 @@ namespace Ark.Reference.Core.Tests.Init
         }
     }
 
-    class TestServerfactory : DefaultFlurlClientFactory
+    sealed class TestServerfactory : DefaultFlurlClientFactory
     {
         private readonly TestServer _server;
 

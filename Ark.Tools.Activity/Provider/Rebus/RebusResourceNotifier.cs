@@ -12,6 +12,7 @@ using Rebus.Serialization.Json;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
 using System;
+using System.Globalization;
 
 namespace Ark.Tools.Activity.Provider
 {
@@ -24,7 +25,7 @@ namespace Ark.Tools.Activity.Provider
 
         public RebusResourceNotifier(IRebusResourceNotifier_Config config)
         {
-            _providerName = config.ProviderName ?? throw new ArgumentNullException(nameof(config.ProviderName));
+            _providerName = config.ProviderName ?? throw new ArgumentNullException(nameof(config), "ProviderName should not be null");
             _container.ConfigureRebus(c => c
                 .Logging(l => l.NLog())
                 .Transport(t => t.UseAzureServiceBusAsOneWayClient(config.AsbConnectionString).UseLegacyNaming())
@@ -57,7 +58,7 @@ namespace Ark.Tools.Activity.Provider
         protected Task _notify(string resourceId, Slice slice)
         {
             var resource = new Resource { Provider = _providerName, Id = resourceId };
-            _logger.Trace("Notifing ready slice for {Resource}@{Slice}", resource, slice);
+            _logger.Trace(CultureInfo.InvariantCulture, "Notifing ready slice for {Resource}@{Slice}", resource, slice);
             return _container.GetInstance<IBus>().Advanced.Topics.Publish(resource.ToString(), new ResourceSliceReady() {
                 Resource = resource,
                 Slice = slice

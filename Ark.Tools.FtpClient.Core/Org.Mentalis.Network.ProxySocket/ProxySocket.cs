@@ -19,11 +19,12 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <summary>A SOCKS5 proxy server.</summary>
 		Socks5
 	}
-	/// <summary>
-	/// Implements a Socket class that can connect trough a SOCKS proxy server.
-	/// </summary>
-	/// <remarks>This class implements SOCKS4[A] and SOCKS5.<br>It does not, however, implement the BIND commands, so you cannot .</br></remarks>
-	public class ProxySocket : Socket {
+    /// <summary>
+    /// Implements a Socket class that can connect trough a SOCKS proxy server.
+    /// </summary>
+    /// <remarks>This class implements SOCKS4[A] and SOCKS5.<br>It does not, however, implement the BIND commands, so you cannot .</br></remarks>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0049:Type name should not match containing namespace", Justification = "3rd party code")]
+    public class ProxySocket : Socket {
 		/// <summary>
 		/// Initializes a new instance of the ProxySocket class.
 		/// </summary>
@@ -67,7 +68,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ProxyException">An error occurred while talking to the proxy server.</exception>
 		public new void Connect(EndPoint remoteEP) {
 			if (remoteEP == null)
-				throw new ArgumentNullException("<remoteEP> cannot be null.");
+				throw new ArgumentNullException(nameof(remoteEP));
 			if (this.ProtocolType != ProtocolType.Tcp || ProxyType == ProxyTypes.None || ProxyEndPoint == null)
 				base.Connect(remoteEP);
 			else {
@@ -93,9 +94,9 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <remarks>If you use this method with a SOCKS4 server, it will let the server resolve the hostname. Not all SOCKS4 servers support this 'remote DNS' though.</remarks>
 		public new void Connect(string host, int port) {
 			if (host == null)
-				throw new ArgumentNullException("<host> cannot be null.");
+				throw new ArgumentNullException(nameof(host));
 			if (port <= 0 || port > 65535)
-				throw new ArgumentException("Invalid port.");
+				throw new ArgumentException("Invalid port.", nameof(port));
 			if (this.ProtocolType != ProtocolType.Tcp || ProxyType == ProxyTypes.None || ProxyEndPoint == null)
 				base.Connect(new IPEndPoint(Dns.GetHostEntry(host).AddressList[0], port));
 			else {
@@ -120,7 +121,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ObjectDisposedException">The Socket has been closed.</exception>
 		public new IAsyncResult? BeginConnect(EndPoint remoteEP, AsyncCallback callback, object state) {
 			if (remoteEP == null)
-				throw new ArgumentNullException();
+				throw new ArgumentNullException(nameof(remoteEP));
 			if (this.ProtocolType != ProtocolType.Tcp || ProxyType == ProxyTypes.None || ProxyEndPoint == null) {
 				return base.BeginConnect(remoteEP, callback, state);
 			} else {
@@ -152,9 +153,9 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ObjectDisposedException">The Socket has been closed.</exception>
 		public new IAsyncResult? BeginConnect(string host, int port, AsyncCallback callback, object state) {
 			if (host == null)
-				throw new ArgumentNullException();
+				throw new ArgumentNullException(nameof(host));
 			if (port <= 0 || port >  65535)
-				throw new ArgumentException();
+				throw new ArgumentException("Invalid port", nameof(port));
 			CallBack = callback;
 			if (this.ProtocolType != ProtocolType.Tcp || ProxyType == ProxyTypes.None || ProxyEndPoint == null) {
 				RemotePort = port;
@@ -186,7 +187,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ProxyException">The proxy server refused the connection.</exception>
 		public new void EndConnect(IAsyncResult asyncResult) {
 			if (asyncResult == null)
-				throw new ArgumentNullException();
+				throw new ArgumentNullException(nameof(asyncResult));
 			// In case we called Socket.BeginConnect() directly
 			if (!(asyncResult is IAsyncProxyResult)) {
 				base.EndConnect(asyncResult);
@@ -299,7 +300,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			}
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 				m_ProxyUser = value;
 			}
 		}
@@ -314,7 +315,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			}
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 				m_ProxyPass = value;
 			}
 		}

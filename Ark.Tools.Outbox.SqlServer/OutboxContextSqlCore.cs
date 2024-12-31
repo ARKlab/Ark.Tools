@@ -18,7 +18,7 @@ namespace Ark.Tools.Outbox.SqlServer
 
         private static readonly HeaderSerializer _headerSerializer = new HeaderSerializer();
 
-        public OutboxContextSqlCore(IOutboxContextSqlConfig config)
+        protected OutboxContextSqlCore(IOutboxContextSqlConfig config)
         {
             _config = config;
             _statements = new Statements(config);
@@ -27,7 +27,7 @@ namespace Ark.Tools.Outbox.SqlServer
         protected abstract IDbTransaction _transaction { get; }
         protected abstract IDbConnection _connection { get; }
 
-        class Statements
+        sealed class Statements
         {
             internal Statements(IOutboxContextSqlConfig config)
             {

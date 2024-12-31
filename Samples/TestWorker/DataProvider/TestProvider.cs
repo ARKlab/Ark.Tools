@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Globalization;
 
 namespace TestWorker.DataProvider
 {
@@ -50,7 +51,7 @@ namespace TestWorker.DataProvider
                     DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
                 };
 
-                _logger.Info("File {FileName} downloaded successfully", downloadedFile.Metadata.FileName);
+                _logger.Info(CultureInfo.InvariantCulture, "File {FileName} downloaded successfully", downloadedFile.Metadata.FileName);
 
                 return downloadedFile;
             });

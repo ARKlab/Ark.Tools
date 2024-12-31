@@ -7,6 +7,7 @@ using EnsureThat;
 
 using ResourceSliceReady = Ark.Tools.Activity.Messages.ResourceSliceReady;
 using SliceReady = Ark.Tools.Activity.Messages.SliceReady;
+using System.Globalization;
 
 namespace Ark.Tools.Activity.Processor
 {
@@ -45,7 +46,7 @@ namespace Ark.Tools.Activity.Processor
                     ));
             } else
             {
-                _logger.Warn("Received an ResourceSliceReady event for the resource {Resource} that is not a dependency. Removing subscription to the resource.", e.Resource);
+                _logger.Warn(CultureInfo.InvariantCulture, "Received an ResourceSliceReady event for the resource {Resource} that is not a dependency. Removing subscription to the resource.", e.Resource);
                 return _bus.Advanced.Topics.Unsubscribe(e.Resource.ToString());
             }
         }

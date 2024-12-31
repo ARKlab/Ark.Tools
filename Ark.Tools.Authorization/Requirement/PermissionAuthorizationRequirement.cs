@@ -19,7 +19,7 @@ namespace Ark.Tools.Authorization.Requirement
         {
             if (!typeof(TPermissionEnum).IsEnum)
             {
-                throw new ArgumentException("TPermissionEnum must be an enumerated type");
+                throw new InvalidOperationException("TPermissionEnum must be an enumerated type");
             }
         }
         /// <summary>
@@ -87,7 +87,7 @@ namespace Ark.Tools.Authorization.Requirement
         {
             if (!typeof(TPermissionEnum).IsEnum)
             {
-                throw new ArgumentException("TPermissionEnum must be an enumerated type");
+                throw new InvalidOperationException("TPermissionEnum must be an enumerated type");
             }
         }
 

@@ -14,7 +14,7 @@ namespace Ark.Reference.Common.Auth
 
         public static readonly string AdminGrant = "grant:admin";
 
-        public static readonly IReadOnlyDictionary<string, Permissions> PermissionsMap = new Dictionary<string, Permissions>()
+        public static readonly IReadOnlyDictionary<string, Permissions> PermissionsMap = new Dictionary<string, Permissions>(System.StringComparer.Ordinal)
         {
              { AdminGrant, Permissions.Admin }
         }.ToImmutableDictionary();

@@ -16,6 +16,7 @@ namespace Ark.Reference.Common.Services.Decorators
             _inner = inner;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync method")]
         public TResult Execute(TRequest Request)
         {
             return Policy.Handle<Exception>(ex => ex.IsOptimistic())

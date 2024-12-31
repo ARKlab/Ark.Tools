@@ -12,6 +12,7 @@ using ProblemDetailsSample.Application.Handlers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Asp.Versioning;
+using System.Globalization;
 
 namespace ProblemDetailsSample
 {
@@ -28,14 +29,14 @@ namespace ProblemDetailsSample
             .Reverse()
             .Select(x => 
             {
-                var split = x.Split('.').Select(v => int.Parse(v)).ToArray();
+                var split = x.Split('.').Select(v => int.Parse(v, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture)).ToArray();
                 return new ApiVersion(split[0], split[1]);
             });
 
         public IServiceProvider ServiceProvider { get; }
 
         public override OpenApiInfo MakeInfo(ApiVersion version)
-            => new OpenApiInfo { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV") };
+            => new OpenApiInfo { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV", CultureInfo.InvariantCulture) };
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public override void ConfigureServices(IServiceCollection services)

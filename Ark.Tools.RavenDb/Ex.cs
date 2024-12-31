@@ -59,7 +59,7 @@ namespace Ark.Tools.RavenDb
 			{
 				var operation = new GetDatabaseNamesOperation(0, 25);
 				databaseNames = store.Maintenance.Server.Send(operation);
-			} while (databaseNames.Contains(database));
+			} while (databaseNames.Contains(database, StringComparer.Ordinal));
 
 			return store;
 		}
@@ -90,7 +90,7 @@ namespace Ark.Tools.RavenDb
 					.Where(x => x.State != IndexState.Disabled);
 
 				if (indexes.All(x => x.IsStale == false
-					&& x.Name.StartsWith(Constants.Documents.Indexing.SideBySideIndexNamePrefix) == false))
+					&& x.Name.StartsWith(Constants.Documents.Indexing.SideBySideIndexNamePrefix, StringComparison.Ordinal) == false))
 					return;
 
 				if (databaseStatistics.Indexes.Any(x => x.State == IndexState.Error))

@@ -21,7 +21,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 });
         }
 
-        private class StartTelemetryHack : IHostedService
+        private sealed class StartTelemetryHack : IHostedService
         {
 #pragma warning disable IDE0052 // Remove unread private members
             private readonly TelemetryClient _client;

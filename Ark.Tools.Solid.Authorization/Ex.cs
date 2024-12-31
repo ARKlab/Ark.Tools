@@ -86,7 +86,7 @@ namespace Ark.Tools.Solid.Authorization
             if (retVal == null)
             {
                 if (string.IsNullOrWhiteSpace(p.PolicyName))
-                    throw new ArgumentNullException(nameof(p.PolicyName));
+                    throw new ArgumentNullException(nameof(p), "PolicyName should not be null");
 
                 retVal = await policyProvider.GetPolicyAsync(p.PolicyName!, ctk);
                 if (retVal == null) throw new InvalidOperationException($"No policy found: {p.PolicyName}.");

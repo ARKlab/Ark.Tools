@@ -64,13 +64,13 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
         [Obsolete("Use UseSwagger() without a setup action", true)]
         public static IApplicationBuilder ArkUseSwagger(this IApplicationBuilder app, Action<SwaggerOptions>? setup = null)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         [Obsolete("Use UseSwaggerUI() without a setup action", true)]
         public static IApplicationBuilder ArkUseSwaggerUI(this IApplicationBuilder app, Action<SwaggerUIOptions>? setup = null)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

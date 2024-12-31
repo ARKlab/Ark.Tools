@@ -585,6 +585,7 @@ VALUES
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync init method")]
         private static void _ensureTableIsCreated(string connString, string logTableName)
         {
             var creteLogTable = string.Format(@"
@@ -674,7 +675,7 @@ END
         }
 
 
-        internal class STJSerializer : IJsonConverter
+        internal sealed class STJSerializer : IJsonConverter
         {
 
             /// <summary>Serialization of an object into JSON format.</summary>

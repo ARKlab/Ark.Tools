@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Core
 {
+#pragma warning disable MA0134 // Observe result of async calls
+#pragma warning disable MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
     public static class TaskExtensions
     {
         public static Task IgnoreExceptions(this Task task)
@@ -64,4 +66,6 @@ namespace Ark.Tools.Core
                     TaskScheduler.Default);
         }
     }
+#pragma warning restore MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
+#pragma warning restore MA0134 // Observe result of async calls
 }

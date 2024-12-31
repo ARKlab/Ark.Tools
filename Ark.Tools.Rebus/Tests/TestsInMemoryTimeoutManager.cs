@@ -21,7 +21,7 @@ namespace Ark.Tools.Rebus.Tests
         , IEnumerable<TestsInMemoryTimeoutManager.DeferredMessage>
     {
         private readonly IRebusTime _rebusTime;
-        private readonly ConcurrentDictionary<string, DeferredMessage> _deferredMessages = new ConcurrentDictionary<string, DeferredMessage>();
+        private readonly ConcurrentDictionary<string, DeferredMessage> _deferredMessages = new ConcurrentDictionary<string, DeferredMessage>(StringComparer.Ordinal);
 
         private static int _dueCount = 0;
         private static readonly List<TestsInMemoryTimeoutManager> _instances = new List<TestsInMemoryTimeoutManager>();

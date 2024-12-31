@@ -11,12 +11,12 @@ namespace Ark.Tools.AspNetCore.Startup
         : ArkStartupWebApiCommon where TArea : IArea
     {
 
-        public ArkStartupNestedWebApi(IConfiguration configuration, IHostEnvironment environment) 
+        protected ArkStartupNestedWebApi(IConfiguration configuration, IHostEnvironment environment) 
             : this(configuration, environment, true)
         {
         }
 
-        public ArkStartupNestedWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
+        protected ArkStartupNestedWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
             : base(configuration, environment, useNewtonsoftJson)
         {
         }

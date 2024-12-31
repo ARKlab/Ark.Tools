@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using SimpleInjector;
 using Rebus.Extensions;
+using System.Globalization;
 
 namespace Ark.Tools.Rebus
 {
@@ -44,7 +45,7 @@ namespace Ark.Tools.Rebus
                 var now = _time.Now;
                 operationResult = "success";
 
-                var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime]);
+                var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime], CultureInfo.InvariantCulture);
                 var totalTime = now - enqueuedTime;
                 var timeInQueue = totalTime - TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
 
@@ -56,7 +57,7 @@ namespace Ark.Tools.Rebus
             }
 
         }
-        class Metrics
+        sealed class Metrics
         {
             private static readonly MetricConfigurationForMeasurement _defaultConfigForMeasurement = new(
                                                                     10000,

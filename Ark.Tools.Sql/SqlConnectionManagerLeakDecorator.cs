@@ -122,7 +122,9 @@ namespace Ark.Tools.Sql
                 GC.SuppressFinalize(this);
             }
 
+#pragma warning disable MA0055 // Do not use finalizer
             ~ConnectionLeakWatcher()
+#pragma warning restore MA0055 // Do not use finalizer
             {
                 Dispose();
             }

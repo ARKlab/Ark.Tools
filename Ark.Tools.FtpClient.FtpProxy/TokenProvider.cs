@@ -18,7 +18,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 {
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable
-    internal class TokenProvider
+    internal sealed class TokenProvider
 #pragma warning restore CA1001 // Types that own disposable fields should be disposable
     {
         private readonly IConfidentialClientApplication? _adal;

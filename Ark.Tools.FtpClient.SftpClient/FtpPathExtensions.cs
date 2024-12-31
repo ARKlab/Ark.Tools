@@ -14,7 +14,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (String.IsNullOrEmpty(path))
                 return "./";
 
-            path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/").TrimEnd('/');
+            path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
             if (path.Length == 0)
                 path = "./";
 
@@ -30,13 +30,13 @@ namespace Ark.Tools.FtpClient.SftpClient
             {
                 if (part != null)
                 {
-                    if (path.Length > 0 && !path.EndsWith("/"))
+                    if (path.Length > 0 && !path.EndsWith('/'))
                         path += "/";
-                    path += Regex.Replace(part.Replace('\\', '/'), "[/]+", "/").TrimEnd('/');
+                    path += Regex.Replace(part.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
                 }
             }
 
-            path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/").TrimEnd('/');
+            path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
             if (path.Length == 0)
                 path = "./";
 

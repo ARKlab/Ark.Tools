@@ -7,7 +7,7 @@ using Microsoft.Net.Http.Headers;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter
 {
-    internal class MessagePackFormatterSetup : IConfigureOptions<MvcOptions>
+    internal sealed class MessagePackFormatterSetup : IConfigureOptions<MvcOptions>
     {
         private readonly IFormatterResolver _resolver;
 

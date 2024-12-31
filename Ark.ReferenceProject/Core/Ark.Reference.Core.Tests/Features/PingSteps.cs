@@ -14,7 +14,7 @@ using Reqnroll.Assist;
 namespace Ark.Reference.Core.Tests.Features
 {
     [Binding]
-    class PingSteps
+    sealed class PingSteps
     {
         //** Common section **
         private readonly TestClient _client;
@@ -22,7 +22,7 @@ namespace Ark.Reference.Core.Tests.Features
 
         //** Entity related private section **
         private Ping.V1.Output? _output;
-        private readonly Dictionary<string, int> _entityNameId = new();
+        private readonly Dictionary<string, int> _entityNameId = new(System.StringComparer.Ordinal);
 
         public PingSteps(TestClient client)
         {

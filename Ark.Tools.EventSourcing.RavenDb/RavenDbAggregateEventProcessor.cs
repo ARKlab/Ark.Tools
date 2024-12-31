@@ -13,6 +13,7 @@ using NLog;
 using Raven.Client.Exceptions.Database;
 using Raven.Client.Exceptions.Documents.Subscriptions;
 using Raven.Client.Exceptions.Security;
+using System.Globalization;
 
 namespace Ark.Tools.EventSourcing.RavenDb
 {
@@ -30,7 +31,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
 		readonly ConcurrentDictionary<Type, MethodInfo> _dispatchMethods = new ConcurrentDictionary<Type, MethodInfo>();
 
-		public RavenDbAggregateEventProcessor(IDocumentStore store, IAggregateEventHandlerActivator handlerActivator)
+		protected RavenDbAggregateEventProcessor(IDocumentStore store, IAggregateEventHandlerActivator handlerActivator)
 		{
 			_store = store;
 			_handlerActivator = handlerActivator;
@@ -94,10 +95,10 @@ where startsWith(id(e), '{prefix}')
 					// here we are able to be informed of any exception that happens during processing                    
 					subscriptionWorker.OnSubscriptionConnectionRetry += ex =>
 					{
-						_logger.Error(ex, "Error during subscription processing: {SubscriptionName}", SubscriptionName);
+						_logger.Error(ex, CultureInfo.InvariantCulture, "Error during subscription processing: {SubscriptionName}", SubscriptionName);
 					};
 
-					_logger.Info("Start processing {SubscriptionName}", SubscriptionName);
+					_logger.Info(CultureInfo.InvariantCulture, "Start processing {SubscriptionName}", SubscriptionName);
 					await subscriptionWorker.Run(_exec, ctk);
 
 					// Run will complete normally if you have disposed the subscription
@@ -133,7 +134,7 @@ where startsWith(id(e), '{prefix}')
 				}
 				finally
 				{
-					subscriptionWorker.Dispose();
+                    await subscriptionWorker.DisposeAsync();
 				}
 			}
 
@@ -143,7 +144,7 @@ where startsWith(id(e), '{prefix}')
 		{
 			_logger.Trace($"Got a batch of {batch.NumberOfItemsInBatch} items");
 
-			var tasks = batch.Items.GroupBy(x => x.Result.AggregateId)
+			var tasks = batch.Items.GroupBy(x => x.Result.AggregateId, StringComparer.Ordinal)
 				.Select(async g =>
 				{
 					foreach (var e in g)
@@ -172,7 +173,7 @@ where startsWith(id(e), '{prefix}')
 				return Task.CompletedTask;
 		}
 
-		class FakeEvent : IAggregateEvent<TAggregate> { }
+		sealed class FakeEvent : IAggregateEvent<TAggregate> { }
 
 		MethodInfo _getDispatchMethod(Type eventType)
 		{

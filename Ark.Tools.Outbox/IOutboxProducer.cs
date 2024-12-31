@@ -38,7 +38,7 @@ namespace Ark.Tools.Outbox
         public TimeSpan SleepInterval { get; set; } = TimeSpan.FromSeconds(1);
         public int BatchSize { get; set; } = 1000;
 
-        public OutboxConsumerBase(Func<IOutboxContext> contextFactory)
+        protected OutboxConsumerBase(Func<IOutboxContext> contextFactory)
         {
             _outboxContextFactory = contextFactory;
         }
@@ -58,7 +58,7 @@ namespace Ark.Tools.Outbox
             return ret;
         }
 
-        public Task StartAsync(CancellationToken ctk)
+        public Task StartAsync(CancellationToken ctk = default)
         {
             if (_processorCT != null) throw new InvalidOperationException("Consumer is already Started");
 
@@ -85,7 +85,6 @@ namespace Ark.Tools.Outbox
                 catch (Exception e) when (!(e is TaskCanceledException))
                 {
                     // chomp exceptions and retry
-                    // TODO trace log
                 }
                 await Task.Delay(SleepInterval, ctk);
             }
@@ -99,7 +98,7 @@ namespace Ark.Tools.Outbox
 
         protected abstract Task _processMessage(OutboxMessage m, CancellationToken ctk);
 
-        public async Task StopAsync(CancellationToken ctk)
+        public async Task StopAsync(CancellationToken ctk = default)
         {
             _processorCT?.Dispose();
             if (_processorTask is not null)

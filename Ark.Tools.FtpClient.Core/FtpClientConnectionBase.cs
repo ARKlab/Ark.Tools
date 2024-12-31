@@ -5,6 +5,7 @@ using NLog;
 using Polly;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -38,7 +39,7 @@ namespace Ark.Tools.FtpClient.Core
         public abstract Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default);        
         public virtual async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
-            _logger.Trace("List files starting from path: {Path}", startPath);
+            _logger.Trace(CultureInfo.InvariantCulture, "List files starting from path: {Path}", startPath);
             startPath ??= "./";
 
             if (skipFolder == null)
@@ -47,7 +48,7 @@ namespace Ark.Tools.FtpClient.Core
             Stack<FtpEntry> pendingFolders = new Stack<FtpEntry>();
             IEnumerable<FtpEntry> files = new List<FtpEntry>();
 
-            Func<string, CancellationToken, Task> listFolderAsync = async (string path, CancellationToken ct) =>
+            async Task listFolderAsync(string path, CancellationToken ct)
             {
                 var retrier = Policy
                     .Handle<Exception>()
@@ -56,7 +57,7 @@ namespace Ark.Tools.FtpClient.Core
                         TimeSpan.FromSeconds(1),
                     }, (ex, ts) =>
                     {
-                        _logger.Warn(ex, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
+                        _logger.Warn(ex, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
                     });
 
                 var list = await retrier.ExecuteAsync(async ct1 =>
@@ -67,13 +68,13 @@ namespace Ark.Tools.FtpClient.Core
                 foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                 {
                     if (skipFolder.Invoke(d))
-                        _logger.Info("Skipping folder: {Path}", d.FullPath);
+                        _logger.Info(CultureInfo.InvariantCulture, "Skipping folder: {Path}", d.FullPath);
                     else
                         pendingFolders.Push(d);
                 }
 
                 files = files.Concat(list.Where(x => !x.IsDirectory).ToList());
-            };
+            }
 
             await listFolderAsync(startPath, ctk);
 

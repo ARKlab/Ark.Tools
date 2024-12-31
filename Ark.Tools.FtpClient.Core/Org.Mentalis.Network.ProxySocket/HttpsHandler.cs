@@ -40,11 +40,11 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <returns>An array of bytes that has to be sent when the user wants to connect to a specific IPEndPoint.</returns>
 		private byte[] GetConnectBytes(string host, int port) {
 			StringBuilder sb = new StringBuilder();
-			sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "CONNECT {0}:{1} HTTP/1.1", host, port));
-			sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "Host: {0}:{1}", host, port));
+			sb.AppendFormat(CultureInfo.InvariantCulture, "CONNECT {0}:{1} HTTP/1.1", host, port).AppendLine();
+			sb.AppendFormat(CultureInfo.InvariantCulture, "Host: {0}:{1}", host, port).AppendLine();
 			if (!string.IsNullOrEmpty(Username)) {
 				string auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(String.Format(CultureInfo.InvariantCulture, "{0}:{1}", Username, Password)));
-				sb.AppendLine(string.Format(CultureInfo.InvariantCulture, "Proxy-Authorization: Basic {0}", auth));
+				sb.AppendFormat(CultureInfo.InvariantCulture, "Proxy-Authorization: Basic {0}", auth).AppendLine();
 			}
 			sb.AppendLine();
 			byte[] buffer = Encoding.ASCII.GetBytes(sb.ToString());
@@ -58,7 +58,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		{
 			string header = Encoding.ASCII.GetString(buffer);
 			if ((!header.StartsWith("HTTP/1.1 ", StringComparison.OrdinalIgnoreCase) && 
-			     !header.StartsWith("HTTP/1.0 ", StringComparison.OrdinalIgnoreCase)) || !header.EndsWith(" "))
+			     !header.StartsWith("HTTP/1.0 ", StringComparison.OrdinalIgnoreCase)) || !header.EndsWith(' '))
 				throw new ProtocolViolationException();
 			string code = header.Substring(9, 3);
 			if (code != "200")
@@ -76,7 +76,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		public override void Negotiate(IPEndPoint remoteEP)
 		{
 			if (remoteEP == null)
-				throw new ArgumentNullException();
+				throw new ArgumentNullException(nameof(remoteEP));
 			Negotiate(remoteEP.Address.ToString(), remoteEP.Port);
 		}
 		/// <summary>
@@ -93,9 +93,9 @@ namespace Org.Mentalis.Network.ProxySocket {
 		public override void Negotiate(string host, int port)
 		{
 			if (host == null)
-				throw new ArgumentNullException();
+				throw new ArgumentNullException(nameof(host));
 			if (port <= 0 || port > 65535 || host.Length > 255)
-				throw new ArgumentException();
+				throw new ArgumentException("Invalid port", nameof(port));
 			byte[] buffer = GetConnectBytes(host, port);
 			if (Server.Send(buffer, 0, buffer.Length, SocketFlags.None) < buffer.Length) {
 				throw new SocketException(10054);
@@ -255,7 +255,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 			}
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 				m_Password = value;
 			}
 		}

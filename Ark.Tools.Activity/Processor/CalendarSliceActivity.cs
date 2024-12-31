@@ -11,7 +11,7 @@ namespace Ark.Tools.Activity.Processor
         private readonly IEnumerable<Slice> _calendar;
         private readonly Dictionary<Resource, Dictionary<Slice, List<Slice>>> _reverseMap;
 
-        public CalendarSliceActivity()
+        protected CalendarSliceActivity()
         {
             _calendar = _generateCalendar();
             _reverseMap = Dependencies

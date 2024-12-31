@@ -62,7 +62,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         /// A marker class used to determine if the required services were added
         /// to the <see cref="IServiceCollection"/> before the middleware is configured.
         /// </summary>
-        private class ArkProblemDetailsDescriptorMarkerService
+        private sealed class ArkProblemDetailsDescriptorMarkerService
         {
         }
 

@@ -30,13 +30,14 @@ namespace Ark.Tools.NLog.Slack
         [ArrayParameter(typeof(TargetPropertyWithContext), "field")]
         public IList<TargetPropertyWithContext> Fields => ContextProperties;
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Params are injected by NLog")]
         protected override void InitializeTarget()
         {
             if (String.IsNullOrWhiteSpace(this.WebHookUrl))
-                throw new ArgumentOutOfRangeException("WebHookUrl", "Webhook URL cannot be empty.");
+                throw new ArgumentOutOfRangeException(nameof(WebHookUrl), "Webhook URL cannot be empty.");
 
             if (!Uri.TryCreate(this.WebHookUrl, UriKind.Absolute, out var _))
-                throw new ArgumentOutOfRangeException("WebHookUrl", "Webhook URL is an invalid URL.");
+                throw new ArgumentOutOfRangeException(nameof(WebHookUrl), "Webhook URL is an invalid URL.");
 
             _client = new SlackClient(this.WebHookUrl);
 

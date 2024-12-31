@@ -79,7 +79,7 @@ namespace Ark.Tools.SpecFlow.Auth
             {
                 Issuer = this._issuer,
                 Audience = this._audience,
-                Claims = claims.ToDictionary(x => x.Type, x => x.Value as object),
+                Claims = claims.ToDictionary(x => x.Type, x => x.Value as object, StringComparer.Ordinal),
                 NotBefore = DateTime.UtcNow,
                 IssuedAt = DateTime.UtcNow,
                 Expires = DateTime.UtcNow.AddMinutes(_expiryInMinutes),
@@ -92,6 +92,7 @@ namespace Ark.Tools.SpecFlow.Auth
 
         #region " private "
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Validating injected Properties after bindings")]
         private void _ensureArguments()
         {
             if (this._securityKey == null)

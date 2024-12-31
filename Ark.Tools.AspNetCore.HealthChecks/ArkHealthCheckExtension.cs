@@ -103,7 +103,7 @@ namespace Ark.Tools.AspNetCore.HealthChecks
                 setup.LoginWith(c.Username, c.Password ?? string.Empty);
         }
 
-        private class SimpleInjectorCheck<T> : IHealthCheck where T : class, IHealthCheck
+        private sealed class SimpleInjectorCheck<T> : IHealthCheck where T : class, IHealthCheck
         {
             private readonly Container _container;
 
@@ -123,7 +123,7 @@ namespace Ark.Tools.AspNetCore.HealthChecks
             }
         }
 
-        private class LambdaCheck<T> : IHealthCheck where T : class
+        private sealed class LambdaCheck<T> : IHealthCheck where T : class
         {
             private readonly Container _container;
             private readonly Func<T, CancellationToken, Task> _action;

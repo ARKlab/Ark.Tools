@@ -9,7 +9,7 @@ using System.Reflection;
 namespace Ark.Tools.Core
 {    
     //http://msdn.microsoft.com/en-us/library/bb669096.aspx
-    internal class ShredObjectToDataTable<T>
+    internal sealed class ShredObjectToDataTable<T>
     {
         private System.Reflection.FieldInfo[] _fi;
         private System.Reflection.PropertyInfo[] _pi;
@@ -22,7 +22,7 @@ namespace Ark.Tools.Core
             _type = typeof(T);
             _fi = _type.GetFields();
             _pi = _type.GetProperties();
-            _ordinalMap = new Dictionary<string, int>();
+            _ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
         }
 
         /// <summary> 

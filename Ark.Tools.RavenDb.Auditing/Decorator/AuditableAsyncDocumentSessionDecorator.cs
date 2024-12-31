@@ -11,6 +11,7 @@ using Ark.Tools.Solid;
 using System.Security.Claims;
 using Ark.Tools.Core;
 using System.Linq;
+using System.Globalization;
 
 namespace Ark.Tools.RavenDb.Auditing
 {
@@ -41,7 +42,7 @@ namespace Ark.Tools.RavenDb.Auditing
 		public void Delete<T>(T entity) where T : notnull
 		{
 			if (_ensureAndCreateAudit())
-				_inner.StoreAsync(_audit);
+				_inner.StoreAsync(_audit).GetAwaiter().GetResult();
 
 			_setAuditIdOnEntity(entity);
 
@@ -247,7 +248,7 @@ namespace Ark.Tools.RavenDb.Auditing
 
 		private static void _checkEntityIdGeneration(string entityId)
 		{
-			if (entityId != null && (entityId == string.Empty || entityId.EndsWith("/") || entityId.EndsWith("|")))
+			if (entityId != null && (entityId == string.Empty || entityId.EndsWith('/') || entityId.EndsWith('|')))
 				throw new NotSupportedException("Entity Id generation incompatible with audit");
 		}
 
@@ -267,7 +268,7 @@ namespace Ark.Tools.RavenDb.Auditing
 					CollectionName = collectionName,
 					Operation = operation,
 					LastModified = operation == "Delete" 
-                        ? lastMod != null ? DateTime.Parse(lastMod)
+                        ? lastMod != null ? DateTime.Parse(lastMod, CultureInfo.InvariantCulture)
                             : default
                         : default
 				});

@@ -3,6 +3,7 @@
 using EnsureThat;
 using NLog;
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,7 +29,7 @@ namespace Ark.Tools.Solid.Decorators
             Stopwatch stopWatch = Stopwatch.StartNew();
             _decorated.Execute(command);
             stopWatch.Stop();
-            _logger.Trace("Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
+            _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
         }
 
         public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
@@ -36,7 +37,7 @@ namespace Ark.Tools.Solid.Decorators
             Stopwatch stopWatch = Stopwatch.StartNew();
             await _decorated.ExecuteAsync(command, ctk);
             stopWatch.Stop();
-            _logger.Trace("Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
+            _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
         }
     }
 }

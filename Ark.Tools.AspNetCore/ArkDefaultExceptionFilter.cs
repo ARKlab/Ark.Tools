@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using NLog;
 
 using System;
+using System.Globalization;
 
 namespace Ark.Tools.AspNetCore
 {
-    public class ArkDefaultExceptionFilter : ExceptionFilterAttribute
+    public class ArkDefaultExceptionFilterAttribute : ExceptionFilterAttribute
     {
         public override void OnException(ExceptionContext context)
         {
@@ -30,7 +31,7 @@ namespace Ark.Tools.AspNetCore
             Exception e = context.Exception;
             var requestUri = context.HttpContext?.Request?.Path ?? new PathString();
             var requestMethod = context.HttpContext?.Request?.Method ?? "METHOD_NOT_SET";
-            logger.Error(e, "Exception for {Method} - {Uri}: {Message}", requestMethod, requestUri, e.Message);
+            logger.Error(e, CultureInfo.InvariantCulture, "Exception for {Method} - {Uri}: {Message}", requestMethod, requestUri, e.Message);
         }
     }
 }

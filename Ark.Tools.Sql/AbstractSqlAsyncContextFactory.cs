@@ -14,7 +14,7 @@ namespace Ark.Tools.Sql
         private readonly IDbConnectionManager _connectionManager;
         private readonly ISqlContextConfig _config;
 
-        public AbstractSqlAsyncContextFactory(IDbConnectionManager connectionManager, ISqlContextConfig config)
+        protected AbstractSqlAsyncContextFactory(IDbConnectionManager connectionManager, ISqlContextConfig config)
         {
             _connectionManager = connectionManager;
             _config = config;

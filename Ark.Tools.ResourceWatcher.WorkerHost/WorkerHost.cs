@@ -14,6 +14,7 @@ using SimpleInjector.Lifestyles;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,6 +63,8 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         private readonly List<Action<TQueryFilter>> _configurers = new List<Action<TQueryFilter>> { };
 
         private Container _container { get; } = new Container();
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
         private event VoidEventHandler? _onBeforeStart;
 
         public class Dependencies
@@ -74,6 +77,8 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             }
 
             public Container Container => _host._container;
+
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
             public event VoidEventHandler OnBeforeStart { add { _host._onBeforeStart += value; } remove { _host._onBeforeStart -= value; } }
         }
 
@@ -221,7 +226,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             _onBeforeStart?.Invoke();
         }
 
-        class WatcherConfigProxy : IResourceWatcherConfig
+        sealed class WatcherConfigProxy : IResourceWatcherConfig
         {
             private readonly IHostConfig _config;
 
@@ -241,7 +246,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             public TimeSpan ResourceDurationNotificationLimit => _config.ResourceDurationNotificationLimit;
         }
 
-        class Watcher : ResourceWatcher<TResource>
+        sealed class Watcher : ResourceWatcher<TResource>
         {
             private readonly IEnumerable<Action<TQueryFilter>> _filterChainBuilder;
             private readonly IEnumerable<Predicate<TMetadata>> _metadataFilterChain;
@@ -277,7 +282,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
             protected override async Task _runOnce(RunType runType, CancellationToken ctk = default)
             {
-                using (var scope = AsyncScopedLifestyle.BeginScope(_container))
+                await using (var scope = AsyncScopedLifestyle.BeginScope(_container))
                 {
                     await base._runOnce(runType, ctk);
                 }
@@ -317,17 +322,17 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
                 if (data != null)
                 {
-                    _logger.Info("Retrived ResourceId={ResourceId} in {Elapsed}", context.Info.ResourceId, sw.Elapsed);
+                    _logger.Info(CultureInfo.InvariantCulture, "Retrived ResourceId={ResourceId} in {Elapsed}", context.Info.ResourceId, sw.Elapsed);
                     
                     foreach (var w in _container.GetAllInstances<IResourceProcessor<TResource, TMetadata>>())
                     {
                         sw.Restart();
                         await w.Process(data, ctk);
-                        _logger.Info("Processed ResourceId={ResourceId} with {Name} in {Elapsed}", context.Info.ResourceId, w.GetType().Name, sw.Elapsed);
+                        _logger.Info(CultureInfo.InvariantCulture, "Processed ResourceId={ResourceId} with {Name} in {Elapsed}", context.Info.ResourceId, w.GetType().Name, sw.Elapsed);
                     }
                 } else
                 {
-                    _logger.Info("Retrived ResourceId={ResourceId} in {Elapsed} but is NULL, so nothing to do", context.Info.ResourceId, sw.Elapsed);
+                    _logger.Info(CultureInfo.InvariantCulture, "Retrived ResourceId={ResourceId} in {Elapsed} but is NULL, so nothing to do", context.Info.ResourceId, sw.Elapsed);
                 }               
             }
 

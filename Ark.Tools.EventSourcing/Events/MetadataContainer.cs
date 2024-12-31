@@ -16,7 +16,7 @@ namespace Ark.Tools.EventSourcing.Events
         }
 
         public MetadataContainer(IEnumerable<KeyValuePair<string, string>> keyValuePairs)
-            : base(keyValuePairs.ToDictionary(kv => kv.Key, kv => kv.Value))
+            : base(keyValuePairs.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal))
         {
         }
 

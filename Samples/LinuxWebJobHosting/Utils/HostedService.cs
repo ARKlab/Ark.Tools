@@ -3,6 +3,7 @@
 using NLog;
 
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,7 +23,7 @@ namespace LinuxWebJobHosting.Utils
         protected override async Task ExecuteAsync(CancellationToken ctk)
         {
             using var hostName = ScopeContext.PushProperty("AppName", nameof(HostedService));
-            _logger.Info("WebJob: Start");
+            _logger.Info(CultureInfo.InvariantCulture, "WebJob: Start");
             while (!ctk.IsCancellationRequested)
             {
                 try
@@ -46,7 +47,7 @@ namespace LinuxWebJobHosting.Utils
 
         private async Task _do(CancellationToken cancellationToken)
         {
-            _logger.Info("I am alive");
+            _logger.Info(CultureInfo.InvariantCulture, "I am alive");
             await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
             if (_random.NextDouble() > 0.8)
                 throw new InvalidOperationException("Random crash");

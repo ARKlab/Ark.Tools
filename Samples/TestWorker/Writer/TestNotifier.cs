@@ -9,7 +9,7 @@ using TestWorker.Dto;
 
 namespace TestWorker.Writer
 {
-	class TestWriter_Notifier : IResourceProcessor<Test_File, Test_FileMetadataDto>
+	sealed class TestWriter_Notifier : IResourceProcessor<Test_File, Test_FileMetadataDto>
 	{
 		private readonly RebusResourceNotifier _notifier;
 

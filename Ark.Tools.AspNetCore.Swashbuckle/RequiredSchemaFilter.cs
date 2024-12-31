@@ -16,7 +16,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 				.Where(w => w.GetCustomAttributes(typeof(RequiredAttribute), true).Any())
 				.Select(s => Char.ToLowerInvariant(s.Name[0]) + s.Name.Substring(1));
 
-			schema.Required = requiredProperties.ToHashSet();
+			schema.Required = requiredProperties.ToHashSet(StringComparer.Ordinal);
 			if (schema.Required.Count == 0)
 				schema.Required = null;
 		}

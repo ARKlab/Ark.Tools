@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.Builder;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
+using System.Globalization;
 
 namespace Ark.Reference.Core.WebInterface
 {
@@ -37,7 +38,7 @@ namespace Ark.Reference.Core.WebInterface
                 => new OpenApiInfo
                 {
                     Title = "Core Service API",
-                    Version = version.ToString("VVVV"),
+                    Version = version.ToString("VVVV", CultureInfo.InvariantCulture),
                 };
 
         public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)

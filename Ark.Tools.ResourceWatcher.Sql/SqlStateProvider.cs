@@ -40,11 +40,11 @@ namespace Ark.Tools.ResourceWatcher
             _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.Instance;
         }
 
-        class EJ
+        sealed class EJ
         {
             public string? ExtensionsJson { get; set; }
         }
-        class MMJ
+        sealed class MMJ
         {
             public string? ModifiedSourcesJson { get; set; }
         }

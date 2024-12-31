@@ -2,10 +2,11 @@
 using SimpleInjector;
 using System.Threading;
 using System;
+using System.Threading.Tasks;
 
 namespace TestReceiver
 {
-    class Config : TestReceiver_Config, IRebusSliceActivityManagerConfig
+    sealed class Config : TestReceiver_Config, IRebusSliceActivityManagerConfig
 	{
 		public string? RebusConnstring { get; set; }
 		public string ActivitySqlConnectionString
@@ -22,16 +23,16 @@ namespace TestReceiver
 	}
 
 
-	class Program
+	sealed class Program
 	{
 
-		static void Main(string[] args)
+		static async Task Main(string[] args)
 		{
 			NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
 
 			try
 			{
-				using var container = new Container();
+                await using var container = new Container();
 
 				var cfg = new Config()
 				{
@@ -51,9 +52,8 @@ namespace TestReceiver
 
 
 
-				container.StartActivities().GetAwaiter().GetResult();
-
-				Thread.Sleep(Timeout.Infinite);
+                await container.StartActivities();
+                await Task.Delay(Timeout.Infinite);
 			}
 			catch (Exception ex)
 			{

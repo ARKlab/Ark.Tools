@@ -41,7 +41,7 @@ namespace Ark.Tools.Nodatime
                 if (r.Success)
                     return r.Value;
                 // little hack, not the finest, but should work
-                if (DateTime.TryParse(s, out var dt) && dt.Date == dt)
+                if (DateTime.TryParse(s, culture ?? CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) && dt.Date == dt)
                     return LocalDate.FromDateTime(dt);
             }
             

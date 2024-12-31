@@ -28,9 +28,9 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ArgumentException"><c>port</c> is invalid.</exception>
 		private byte[] GetHostPortBytes(string host, int port) {
 			if (host == null)
-				throw new ArgumentNullException();
+				throw new ArgumentNullException(nameof(host));
 			if (port <= 0 || port > 65535)
-				throw new ArgumentException();
+				throw new ArgumentException("Invalid port", nameof(port));
 			byte[] connect = new byte[10 + Username.Length + host.Length];
 			connect[0] = 4;
 			connect[1] = 1;
@@ -51,7 +51,7 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ArgumentNullException"><c>remoteEP</c> is null.</exception>
 		private byte[] GetEndPointBytes(IPEndPoint remoteEP) {
 			if (remoteEP == null)
-				throw new ArgumentNullException();
+				throw new ArgumentNullException(nameof(remoteEP));
 			byte[] connect = new byte[9 + Username.Length];
 			connect[0] = 4;
 			connect[1] = 1;
@@ -96,9 +96,9 @@ namespace Org.Mentalis.Network.ProxySocket {
 		/// <exception cref="ObjectDisposedException">The Socket has been closed.</exception>
 		private void Negotiate(byte[] connect) {
 			if (connect == null)
-				throw new ArgumentNullException();
+				throw new ArgumentNullException(nameof(connect));
 			if (connect.Length < 2)
-				throw new ArgumentException();
+				throw new ArgumentException("Expected at least 2 bytes, got less", nameof(connect));
 			if (Server.Send(connect) < connect.Length)
 				throw new SocketException(10054);
 			byte[] buffer = ReadBytes(8);

@@ -25,7 +25,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
         public IEnumerable<AggregateEventEnvelope<TAggregate>> History { get; private set; } = Enumerable.Empty<AggregateEventEnvelope<TAggregate>>();
 
 
-        public AggregateTransaction(string identifier, IAggregateRootFactory aggregateRootFactory)
+        protected AggregateTransaction(string identifier, IAggregateRootFactory aggregateRootFactory)
         {
             Identifier = identifier;
             Aggregate = aggregateRootFactory.Create<TAggregateRoot>();
@@ -227,7 +227,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
 
             if (!_applyMethods.TryGetValue(eventType, out var applyMethod))
             {
-                throw new NotImplementedException(
+                throw new InvalidOperationException(
                     $"Aggregate '{Name}' does have an 'Apply' method that takes aggregate event '{eventType}' as argument");
             }
 

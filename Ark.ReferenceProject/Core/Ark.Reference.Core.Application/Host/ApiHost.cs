@@ -209,7 +209,7 @@ namespace Ark.Reference.Core.Application.Host
                 {
                     r.TypeBased()
                         .MapAssemblyNamespaceOf<Ping_ProcessMessage.V1>(this.Config.RequestQueue);
-                    ;
+                    
                     //r.ForwardOnException<Exception>("error", LogLevel.Error, ex => _isContractException(ex));
                 })
                 .Options(o =>
@@ -335,12 +335,12 @@ namespace Ark.Reference.Core.Application.Host
 
         private readonly Assembly[] _applicationAssemblies;
 
-        private class NullValidator<T> : AbstractValidator<T>
+        private sealed class NullValidator<T> : AbstractValidator<T>
         {
         }
 
     }
-    class ExternalPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
+    sealed class ExternalPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
     {
         private readonly Func<ClaimsPrincipal> _getter;
 
@@ -352,7 +352,7 @@ namespace Ark.Reference.Core.Application.Host
         public ClaimsPrincipal Current => _getter();
     }
 
-    class RebusPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
+    sealed class RebusPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
     {
         private readonly IMessageContextProvider _messageContextProvider;
 
@@ -372,7 +372,7 @@ namespace Ark.Reference.Core.Application.Host
         Core,
     }
 
-    class CoreRequiredScopePolicyHandler : RequiredScopePolicyHandler
+    sealed class CoreRequiredScopePolicyHandler : RequiredScopePolicyHandler
     {
         public CoreRequiredScopePolicyHandler() : base(AuthConstants.ScopePrefix)
         {

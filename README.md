@@ -149,7 +149,7 @@ Additionally the variables are not captured and cannot be used for log analysis 
 _logger.Info($"Logon by {user} from {ip_address}");
 
 // GOOD
-_logger.Info("Logon by {user} from {ip_address}", user, ip_address); // ordered by position
+_logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", user, ip_address); // ordered by position
 ```
 
 ### NLog Slack (>=v4.4)

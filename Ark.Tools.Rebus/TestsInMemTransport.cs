@@ -14,6 +14,7 @@ namespace Ark.Tools.Rebus
 	public class TestsInMemTransport : InMemTransport
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible", Justification = "Testing Purpose")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0069:Non-constant static fields should not be visible", Justification = "Testing Purpose")]
         public static int InProcessMessageCount;
 
         public TestsInMemTransport(InMemNetwork network, string? inputQueueAddress)

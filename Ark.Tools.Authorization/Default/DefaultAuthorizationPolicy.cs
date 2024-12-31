@@ -7,7 +7,7 @@ namespace Ark.Tools.Authorization
     {
         private readonly IAuthorizationPolicy _inner;
 
-        public AuthorizationPolicy()
+        protected AuthorizationPolicy()
         {
             var builder = new AuthorizationPolicyBuilder(this.GetType().FullName ?? this.GetType().Name);
             Build(builder);

@@ -1,5 +1,7 @@
 ﻿using Reqnroll.Assist;
 
+using System.Globalization;
+
 namespace Ark.Tools.Reqnroll
 {
     public class DecimalValueComparer : IValueComparer
@@ -16,7 +18,7 @@ namespace Ark.Tools.Reqnroll
 
             if (actualValue == null) return false;
 
-            var parsed = decimal.Parse(expectedValue);
+            var parsed = decimal.Parse(expectedValue, CultureInfo.CurrentCulture);
 
             return (decimal)actualValue == parsed;
         }

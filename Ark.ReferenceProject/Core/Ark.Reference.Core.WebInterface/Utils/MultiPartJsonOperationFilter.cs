@@ -48,9 +48,9 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
                     // Group all exploded properties.
                     var groupedProperties = mediaType.Schema.Properties
-                        .GroupBy(pair => pair.Key.Split('.')[0]);
+                        .GroupBy(pair => pair.Key.Split('.')[0], StringComparer.Ordinal);
 
-                    var schemaProperties = new Dictionary<string, OpenApiSchema>();
+                    var schemaProperties = new Dictionary<string, OpenApiSchema>(StringComparer.Ordinal);
 
                     foreach (var property in groupedProperties)
                     {
@@ -99,8 +99,8 @@ namespace Ark.Reference.Core.WebInterface.Utils
         private static void _addEncoding(OpenApiMediaType mediaType, PropertyInfo propertyInfo)
         {
             mediaType.Encoding = mediaType.Encoding
-                .Where(pair => !pair.Key.ToLowerInvariant().Contains(propertyInfo.Name.ToLowerInvariant(), StringComparison.Ordinal))
-                .ToDictionary(pair => pair.Key, pair => pair.Value);
+                .Where(pair => !pair.Key.Contains(propertyInfo.Name, StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
             mediaType.Encoding.Add(propertyInfo.Name, new OpenApiEncoding()
             {
                 ContentType = "application/json",

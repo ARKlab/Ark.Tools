@@ -47,6 +47,7 @@ namespace Ark.Tools.FtpClient
             _client = _getClient();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Socket must be configured sync")]
         private protected virtual ArxOne.Ftp.FtpClient _getClient()
         {
             var ftpClientParameters = new FtpClientParameters()
@@ -95,7 +96,7 @@ namespace Ark.Tools.FtpClient
             await _semaphore.WaitAsync(ctk);
             try
             {
-                using var istrm = _client.Retr(path, FtpTransferMode.Binary);
+                await using var istrm = _client.Retr(path, FtpTransferMode.Binary);
                 using var ms = new MemoryStream(81920);
                 await istrm.CopyToAsync(ms, 81920, ctk);
                 return ms.ToArray();
@@ -111,7 +112,7 @@ namespace Ark.Tools.FtpClient
             await _semaphore.WaitAsync(ctk);
             try
             {
-                using var ostrm = _client.Stor(path, FtpTransferMode.Binary);
+                await using var ostrm = _client.Stor(path, FtpTransferMode.Binary);
                 await ostrm.WriteAsync(content, ctk);
                 await ostrm.FlushAsync(ctk);
             }

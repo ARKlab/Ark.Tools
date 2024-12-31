@@ -11,6 +11,7 @@ using LinuxWebJobHosting.Utils;
 using Ark.Tools.NLog;
 using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 using Ark.Tools.AspNetCore.ApplicationInsights;
+using System.Globalization;
 
 namespace Processor.Service.WebInterface
 {
@@ -28,7 +29,7 @@ namespace Processor.Service.WebInterface
 
         public static IHostBuilder Config(this IHostBuilder builder, string[] args)
         {
-            _logger.Info("Starting program");
+            _logger.Info(CultureInfo.InvariantCulture, "Starting program");
             return builder
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
@@ -68,7 +69,7 @@ namespace Processor.Service.WebInterface
         {
             try
             {
-                _logger.Info("Starting program.");
+                _logger.Info(CultureInfo.InvariantCulture, "Starting program.");
                 InitStatic(args);
 
                 using (var h = GetHostBuilder(args)
@@ -83,7 +84,7 @@ namespace Processor.Service.WebInterface
             }
             finally
             {
-                _logger.Info("Shutting down");
+                _logger.Info(CultureInfo.InvariantCulture, "Shutting down");
                 NLog.LogManager.Flush();
             }
         }

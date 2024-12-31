@@ -43,7 +43,7 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication
 		public override void Authenticate() {
 			if (Server.Send(GetAuthenticationBytes()) < GetAuthenticationLength()) {
 				throw new SocketException(10054);
-			};
+			}
 			byte[] buffer = new byte[2];
 			int received = 0;
 			while (received != 2) {
@@ -113,7 +113,7 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication
 			}
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 				m_Username = value;
 			}
 		}
@@ -128,7 +128,7 @@ namespace Org.Mentalis.Network.ProxySocket.Authentication
 			}
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException(nameof(value));
 				m_Password = value;
 			}
 		}

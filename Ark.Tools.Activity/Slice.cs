@@ -39,17 +39,17 @@ namespace Ark.Tools.Activity
         [JsonConverter(typeof(ZonedDateTimeTzdbConverter))]
         public ZonedDateTime SliceStart;
 
-        public Slice MoveDays(int days)
+        public readonly Slice MoveDays(int days)
         {
             return Slice.From(SliceStart.LocalDateTime.PlusDays(days).InZoneLeniently(SliceStart.Zone));
         }
 
-        public Slice MoveAtStartOfWeek(IsoDayOfWeek dayOfWeek = IsoDayOfWeek.Monday)
+        public readonly Slice MoveAtStartOfWeek(IsoDayOfWeek dayOfWeek = IsoDayOfWeek.Monday)
         {
             return Slice.From(SliceStart.LocalDateTime.Date.FirstDayOfTheWeek(dayOfWeek).AtMidnight().InZoneLeniently(SliceStart.Zone));
         }
 
-        public Slice MoveAtStartOfMonth()
+        public readonly Slice MoveAtStartOfMonth()
         {
             return Slice.From(SliceStart.LocalDateTime.Date.FirstDayOfTheMonth().AtMidnight().InZoneLeniently(SliceStart.Zone));
         }
@@ -64,7 +64,7 @@ namespace Ark.Tools.Activity
             return new Slice(start.AtMidnight().InZoneStrictly(DateTimeZoneProviders.Tzdb[timezone]));
         }
 
-        public bool Equals(Slice other)
+        public readonly bool Equals(Slice other)
         {
             return SliceStart == other.SliceStart;
         }
@@ -79,7 +79,7 @@ namespace Ark.Tools.Activity
             return !x.Equals(y);
         }
 
-        public override bool Equals(object? obj)
+        public override readonly bool Equals(object? obj)
         {
             if (!(obj is Slice))
                 return false;
@@ -87,12 +87,12 @@ namespace Ark.Tools.Activity
             return Equals((Slice)obj);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             return SliceStart.GetHashCode();
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return SliceStart.ToString("F", null);
         }

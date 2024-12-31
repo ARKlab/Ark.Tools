@@ -38,7 +38,7 @@ namespace Ark.Reference.Common.Services.Auth
         {
             if (_policies.Length != 0)
             {
-                var policyFailed = new Dictionary<string, List<string>>();
+                var policyFailed = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 
                 foreach (var p in _policies)
                 {

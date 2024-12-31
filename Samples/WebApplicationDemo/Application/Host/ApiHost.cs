@@ -96,7 +96,7 @@ namespace WebApplicationDemo.Application.Host
 
 		private readonly Assembly[] _applicationAssemblies;
 
-		private class NullValidator<T> : AbstractValidator<T>
+		private sealed class NullValidator<T> : AbstractValidator<T>
 		{
 		}
 	}

@@ -24,7 +24,7 @@ namespace Ark.Tools.Http
         {
             if (flurlClientFactory != null)
             {
-                if (_factoryField is null) throw new ArgumentException("private _factory not found. Check Flurl for changes");
+                if (_factoryField is null) throw new InvalidOperationException("private _factory not found. Check Flurl library source for changes");
                 _factoryField.SetValue(this, flurlClientFactory);
             }
         }

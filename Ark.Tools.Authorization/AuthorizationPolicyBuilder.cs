@@ -153,7 +153,7 @@ namespace Ark.Tools.Authorization
             return this;
         }
 
-        class AuthorizationPolicy : IAuthorizationPolicy
+        sealed class AuthorizationPolicy : IAuthorizationPolicy
         {
             public AuthorizationPolicy(string name, IEnumerable<IAuthorizationRequirement> requirements)
             {

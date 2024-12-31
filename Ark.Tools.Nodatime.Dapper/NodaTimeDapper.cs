@@ -31,7 +31,7 @@ namespace Ark.Tools.Nodatime.Dapper
                     break;
 
                 default:
-                    throw new NotImplementedException();
+                    throw new NotSupportedException();
             }
 
             SqlMapper.AddTypeHandler(LocalDateHandler.Instance);

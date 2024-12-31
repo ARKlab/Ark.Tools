@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 
 using Ark.Tools.AspNetCore.Startup;
@@ -33,7 +34,7 @@ namespace TestWithoutArkTools
 			=> new OpenApiInfo
 			{
 				Title = "API",
-				Version = version.ToString("VVVV"),
+				Version = version.ToString("VVVV", CultureInfo.InvariantCulture),
 			};
 
 		// This method gets called by the runtime. Use this method to add services to the container.

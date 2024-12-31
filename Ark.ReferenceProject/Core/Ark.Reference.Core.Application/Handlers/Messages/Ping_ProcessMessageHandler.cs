@@ -49,7 +49,7 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
             {
                 if (entity.Name.Contains("fast", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    throw new NotImplementedException($"FailFastEx_MsgCount_{currentMessageCount}");
+                    throw new NotSupportedException($"FailFastEx_MsgCount_{currentMessageCount}");
                 }
 
                 throw new InvalidOperationException($"NormalEx_MsgCount_{currentMessageCount}");

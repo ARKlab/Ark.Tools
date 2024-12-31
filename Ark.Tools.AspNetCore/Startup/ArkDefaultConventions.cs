@@ -9,9 +9,9 @@ using System.Linq;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
-    internal class ArkDefaultConventions : IActionModelConvention
+    internal sealed class ArkDefaultConventions : IActionModelConvention
 	{
-		private static HashSet<string> _consumeMethods = new HashSet<string> { "POST", "PUT", "PATCH" };
+		private static HashSet<string> _consumeMethods = new HashSet<string>(System.StringComparer.Ordinal) { "POST", "PUT", "PATCH" };
 
 		public void Apply(ActionModel action)
 		{
@@ -29,14 +29,14 @@ namespace Ark.Tools.AspNetCore.Startup
 
             if (isOData) return;
 
-            // TODO: this should be extended with support for
+            // This should be extended with support for
             //       1. ProblemDetails defaults (400, 401, 403, 500)
             //       2. Alter ProducesResponseType adding ContentTypes there (possible?)
             //       3. 'Remove' default xml, plain, etc Formatters which are registered by default by MVC
             // Long story short: content-negotiation is a mess.
 
             if (methods != null
-                && _consumeMethods.Intersect(methods).Any()
+                && _consumeMethods.Intersect(methods, System.StringComparer.Ordinal).Any()
                 && action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any())
                 && !action.Filters.OfType<ConsumesAttribute>().Any()
                 && !action.Controller.Filters.OfType<ConsumesAttribute>().Any())

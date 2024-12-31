@@ -31,7 +31,7 @@ namespace Ark.Tools.Auth0
         private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
         private readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
         private readonly MemoryCacheProvider _memoryCacheProvider; 
-        private readonly ConcurrentDictionary<string, Task> _pendingTasks = new ConcurrentDictionary<string, Task>();
+        private readonly ConcurrentDictionary<string, Task> _pendingTasks = new ConcurrentDictionary<string, Task>(StringComparer.Ordinal);
 
 
         public AuthenticationApiClientCachingDecorator(IAuthenticationApiClient inner)
@@ -197,7 +197,7 @@ namespace Ark.Tools.Auth0
 
         public Task<UserInfo> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken = default)
         {
-            return _userInfoCachePolicy.ExecuteAsync((_,ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>()
+            return _userInfoCachePolicy.ExecuteAsync((_,ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 { ContextualTtl.TimeSpanKey, _expiresIn(accessToken) }
             }), cancellationToken);

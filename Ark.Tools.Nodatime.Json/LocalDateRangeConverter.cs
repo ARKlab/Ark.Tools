@@ -18,7 +18,7 @@ namespace Ark.Tools.Nodatime.Json
             return objectType == _type || objectType == _nullableType;
         }
 
-        private class Surrogate
+        private sealed class Surrogate
         {
             public LocalDateTime Start { get; set; }
             public LocalDateTime End { get; set; }
@@ -62,7 +62,7 @@ namespace Ark.Tools.Nodatime.Json
 
             if (!(value is LocalDateTimeRange || value is Nullable<LocalDateTimeRange>))
             {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateTimeRange).FullName, value.GetType().FullName));
+                throw new JsonWriterException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateTimeRange).FullName, value.GetType().FullName));
             }
 
             LocalDateTimeRange? r = null;

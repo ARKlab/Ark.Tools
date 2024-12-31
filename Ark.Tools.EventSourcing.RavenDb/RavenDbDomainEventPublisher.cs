@@ -79,7 +79,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     session.Delete(e.Result);
                 }
 
-                await session.SaveChangesAsync();
+                await session.SaveChangesAsync(CancellationToken.None);
             }                
         }
 

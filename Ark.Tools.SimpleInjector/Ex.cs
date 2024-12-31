@@ -71,8 +71,7 @@ namespace Ark.Tools.SimpleInjector
                     lifestyle.CreateRegistration<TImpl>(container));
                 producer.Registration.SuppressDiagnosticWarning(DiagnosticType.DisposableTransientComponent, "Ignored during explicit Func Registration");
 
-                Func<TService> instanceCreator =
-                    () => (TService)producer.GetInstance();
+                TService instanceCreator() => (TService)producer.GetInstance();
 
                 //if (container.IsVerifying())
                 //{

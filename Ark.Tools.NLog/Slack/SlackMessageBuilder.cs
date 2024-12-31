@@ -8,7 +8,9 @@ namespace Ark.Tools.NLog.Slack
     public class SlackMessageBuilder
     {
         private readonly SlackMessage _slackMessage;
+#pragma warning disable MA0046 // Use EventHandler<T> to declare events
         private event Action<Exception>? Error;
+#pragma warning restore MA0046 // Use EventHandler<T> to declare events
         private bool _existError = false;
 
         public SlackMessageBuilder()

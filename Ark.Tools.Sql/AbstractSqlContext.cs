@@ -24,7 +24,7 @@ namespace Ark.Tools.Sql
         protected AbstractSqlContext(DbTransaction transaction)
         {
             _transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
-            _connection = transaction.Connection ?? throw new ArgumentNullException(nameof(transaction.Connection));
+            _connection = transaction.Connection ?? throw new ArgumentNullException(nameof(transaction), "null Connection");
             _isolationLevel = _transaction.IsolationLevel;
         }
 

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Test.SingletonBackgroundService
 {
-    internal class Program
+    internal sealed class Program
     {
         static async Task Main(string[] args)
         {
@@ -26,7 +26,7 @@ namespace Test.SingletonBackgroundService
         }
     }
 
-    internal class RunEvery30Sec : Ark.Tools.Hosting.SingletonBackgroundService
+    internal sealed class RunEvery30Sec : Ark.Tools.Hosting.SingletonBackgroundService
     {
         public RunEvery30Sec(IDistributedLockProvider distributedLockProvider, ILogger<RunEvery30Sec> logger, string? serviceName = null) 
             : base(distributedLockProvider, logger, serviceName)
@@ -41,7 +41,7 @@ namespace Test.SingletonBackgroundService
         }
     }
 
-    internal class RunForeverThrowsRandomly : Ark.Tools.Hosting.SingletonBackgroundService
+    internal sealed class RunForeverThrowsRandomly : Ark.Tools.Hosting.SingletonBackgroundService
     {
         private readonly Random _random;
 

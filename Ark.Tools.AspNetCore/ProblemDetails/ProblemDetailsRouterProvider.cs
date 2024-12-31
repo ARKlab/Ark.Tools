@@ -40,7 +40,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
                 }
                 context.Response.ContentType = "text/html";
                 return context.Response.WriteAsync(
-                        $"<html><body><span>{WebUtility.HtmlEncode(content)}</span></body></html>");
+                        $"<html><body><span>{WebUtility.HtmlEncode(content)}</span></body></html>", context.RequestAborted);
             });
 
             var routeBuilder = new RouteBuilder(app, pageRouteHandler);

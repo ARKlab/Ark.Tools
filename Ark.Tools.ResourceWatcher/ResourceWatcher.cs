@@ -8,6 +8,7 @@ using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace Ark.Tools.ResourceWatcher
         private Task? _task;
         private readonly ResourceWatcherDiagnosticSource _diagnosticSource;
 
-        public ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
+        protected ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
         {
             EnsureArg.IsNotNull(config);
             EnsureArg.IsNotNull(stateProvider);
@@ -119,7 +120,7 @@ namespace Ark.Tools.ResourceWatcher
 
                 ctk.ThrowIfCancellationRequested();
 
-                _logger.Info("Going to sleep for {SleepSeconds}s", _config.SleepSeconds);
+                _logger.Info(CultureInfo.InvariantCulture, "Going to sleep for {SleepSeconds}s", _config.SleepSeconds);
                 await Task.Delay(_config.SleepSeconds * 1000, ctk);
             }
         }
@@ -142,8 +143,8 @@ namespace Ark.Tools.ResourceWatcher
                 var toProcess = evaluated.Where(x => !x.ResultType.HasValue).ToList();
                 var skipped = evaluated.Count - toProcess.Count;
 
-                _logger.Info("Found {SkippedCount} resources to skip", skipped);
-                _logger.Info("Found {ToProcessCount} resources to process with parallelism {DegreeOfParallelism}", toProcess.Count, _config.DegreeOfParallelism);
+                _logger.Info(CultureInfo.InvariantCulture, "Found {SkippedCount} resources to skip", skipped);
+                _logger.Info(CultureInfo.InvariantCulture, "Found {ToProcessCount} resources to process with parallelism {DegreeOfParallelism}", toProcess.Count, _config.DegreeOfParallelism);
 
                 // Unlink the _processEntry Span from the parent run to avoid RootId being too big
                 // This is mainly an hack for Application Insights but in general we want to avoid too big RootId with 100s of 1000s Spans
@@ -201,7 +202,7 @@ namespace Ark.Tools.ResourceWatcher
             {
                 var infos = await _getResourcesInfo(ctk);
 
-                var bad = infos.GroupBy(x => x.ResourceId).FirstOrDefault(x => x.Count() > 1);
+                var bad = infos.GroupBy(x => x.ResourceId, StringComparer.Ordinal).FirstOrDefault(x => x.Count() > 1);
                 if (bad != null)
                     _diagnosticSource.ThrowDuplicateResourceIdRetrived(bad.Key);
 
@@ -264,7 +265,7 @@ namespace Ark.Tools.ResourceWatcher
                  }
 
                  return x;
-             }).ToList();
+             }, StringComparer.Ordinal).ToList();
 
             return ev;
         }
@@ -341,7 +342,7 @@ namespace Ark.Tools.ResourceWatcher
                             if (newState != null)
                             {
                                 if (!string.IsNullOrWhiteSpace(newState.CheckSum) && state.CheckSum != newState.CheckSum)
-                                    _logger.Info("Checksum changed on ResourceId={ResourceId} from {OldChecksum} to {NewChecksum}", state.ResourceId, state.CheckSum, newState.CheckSum);
+                                    _logger.Info(CultureInfo.InvariantCulture, "Checksum changed on ResourceId={ResourceId} from {OldChecksum} to {NewChecksum}", state.ResourceId, state.CheckSum, newState.CheckSum);
 
                                 state.CheckSum = newState.CheckSum;
                                 state.RetrievedAt = newState.RetrievedAt;
@@ -609,9 +610,6 @@ namespace Ark.Tools.ResourceWatcher
     {
         public ChangedStateContext(IResourceMetadata info, IResourceTrackedState? lastState, AsyncLazy<T?> payload)
         {
-            EnsureArg.IsNotNull(info);
-            EnsureArg.IsNotNull(payload);
-
             Info = info;
             Payload = payload;
             LastState = lastState;

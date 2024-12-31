@@ -8,7 +8,7 @@ namespace Org.Mentalis.Network.ProxySocket {
     /// A class that implements the IAsyncResult interface. Objects from this class are returned by the BeginConnect method of the ProxySocket class.
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "<Pending>")]
-    internal class IAsyncProxyResult : IAsyncResult {
+    internal sealed class IAsyncProxyResult : IAsyncResult {
 		/// <summary>Initializes the internal variables of this object</summary>
 		/// <param name="stateObject">An object that contains state information for this request.</param>
 		internal IAsyncProxyResult(object? stateObject = null) {

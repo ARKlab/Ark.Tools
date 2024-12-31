@@ -25,7 +25,7 @@ namespace Ark.Tools.Sql
         {
             get
             {
-                return _connection ?? throw new InvalidProgramException("There's no connection");
+                return _connection ?? throw new InvalidOperationException("There's no connection");
             }
         }
 
@@ -33,7 +33,7 @@ namespace Ark.Tools.Sql
         {
             get
             {
-                return _transaction ?? throw new InvalidProgramException("There's no transaction. Use CommitAsync(true,ctk) if you want to reuse a Context. Prefer to use a new instance.");
+                return _transaction ?? throw new InvalidOperationException("There's no transaction. Use CommitAsync(true,ctk) if you want to reuse a Context. Prefer to use a new instance.");
             }
         }
 
