@@ -1,11 +1,11 @@
-﻿using Ark.Tools.Solid;
-
-using Ark.Reference.Core.API.Requests;
+﻿using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Solid;
 
 using EnsureThat;
+
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;

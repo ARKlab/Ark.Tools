@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.EventSourcing.Events;
+
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.Store
 {
-	public interface IOperationContext
+    public interface IOperationContext
     {
         string OperationId { get; }
         ClaimsPrincipal ExecutingPrincipal { get; }
@@ -36,6 +37,6 @@ namespace Ark.Tools.EventSourcing.Store
     public interface IStoreTransaction : IDisposable
     {
         Task CommitAsync(IEnumerable<OutboxEvent> events, CancellationToken ctk = default);
-        
+
     }
 }

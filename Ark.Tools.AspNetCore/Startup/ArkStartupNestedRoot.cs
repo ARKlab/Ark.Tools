@@ -8,7 +8,7 @@ namespace Ark.Tools.AspNetCore.Startup
 {
     public class ArkStartupNestedRoot
     {
-        private ArkStartupBase _anotherBase;
+        private readonly ArkStartupBase _anotherBase;
 
         public ArkStartupNestedRoot(IConfiguration configuration)
         {

@@ -21,7 +21,7 @@ namespace Ark.Tools.Authorization
         {
             foreach (var req in context.Policy.Requirements.OfType<TRequirement>())
             {
-                await HandleRequirementAsync(context, req, ctk);
+                await HandleRequirementAsync(context, req, ctk).ConfigureAwait(false);
             }
         }
 
@@ -54,7 +54,7 @@ namespace Ark.Tools.Authorization
             {
                 foreach (var req in context.Policy.Requirements.OfType<TRequirement>())
                 {
-                    await HandleRequirementAsync(context, req, (TResource)context.Resource, ctk);
+                    await HandleRequirementAsync(context, req, (TResource)context.Resource, ctk).ConfigureAwait(false);
                 }
             }
         }

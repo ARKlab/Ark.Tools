@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.Solid;
+
 using System.Security.Claims;
 
 
@@ -12,9 +13,9 @@ namespace Ark.Tools.Rebus
         public RebusPrincipalContextWithFallbackProvider(IMessageContextProvider messageContextProvider)
         {
             _messageContextProvider = messageContextProvider;
-            _fallback = new ClaimsPrincipal(new ClaimsIdentity(new[]{
+            _fallback = new ClaimsPrincipal(new ClaimsIdentity([
                 new Claim(ClaimTypes.NameIdentifier, "SYSTEM")
-                }, "SYSTEM"));
+                ], "SYSTEM"));
         }
 
         public ClaimsPrincipal Current => _messageContextProvider.Current?.IncomingStepContext.Load<ClaimsPrincipal>() ?? _fallback;

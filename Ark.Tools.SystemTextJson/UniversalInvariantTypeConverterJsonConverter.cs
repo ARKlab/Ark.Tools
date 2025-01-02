@@ -16,15 +16,15 @@ namespace Ark.Tools.SystemTextJson
         {
             var typeConverter = TypeDescriptor.GetConverter(typeToConvert);
             var jsonConverter = (JsonConverter?)Activator.CreateInstance(typeof(TypeConverterJsonConverter<>).MakeGenericType(
-                    new Type[] { typeToConvert }),
-                new object[] { typeConverter, options });
+                    [typeToConvert]),
+                [typeConverter, options]);
             return jsonConverter;
         }
 
         public override bool CanConvert(Type typeToConvert) =>
             typeToConvert.GetCustomAttribute<TypeConverterAttribute>() != null;
 
-        private class TypeConverterJsonConverter<T> : JsonConverter<T>
+        private sealed class TypeConverterJsonConverter<T> : JsonConverter<T>
         {
             private readonly TypeConverter _typeConverter;
 
@@ -37,9 +37,9 @@ namespace Ark.Tools.SystemTextJson
             public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             {
                 var text = reader.GetString();
-                if (text == null) 
+                if (text == null)
                     return default;
-                else 
+                else
                     return (T?)_typeConverter.ConvertFromInvariantString(text);
             }
 

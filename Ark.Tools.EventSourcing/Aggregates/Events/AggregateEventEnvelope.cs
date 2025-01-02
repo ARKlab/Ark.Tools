@@ -3,7 +3,7 @@
 namespace Ark.Tools.EventSourcing.Aggregates
 {
 
-    public sealed class AggregateEventEnvelope<TAggregate> 
+    public sealed class AggregateEventEnvelope<TAggregate>
         : EventEnvelope<IAggregateEvent<TAggregate>>
         where TAggregate : IAggregate
     {

@@ -2,13 +2,15 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using NodaTime;
+
 using System;
 using System.Globalization;
 
 namespace Ark.Tools.Nodatime.Json
 {
-    
+
     public class ZonedDateTimeRangeConverter : JsonConverter
     {
         private static readonly Type _type = typeof(ZonedDateTimeRange);
@@ -19,7 +21,7 @@ namespace Ark.Tools.Nodatime.Json
             return objectType == _type || objectType == _nullableType;
         }
 
-        private class Surrogate
+        private sealed class Surrogate
         {
             public ZonedDateTime Start { get; set; }
             public ZonedDateTime End { get; set; }
@@ -50,8 +52,8 @@ namespace Ark.Tools.Nodatime.Json
 
             var s = jo.ToObject<Surrogate>(serializer);
             if (s == null) return null;
-            
-            return new ZonedDateTimeRange(s.Start, s.End); 
+
+            return new ZonedDateTimeRange(s.Start, s.End);
         }
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
@@ -63,7 +65,7 @@ namespace Ark.Tools.Nodatime.Json
 
             if (!(value is ZonedDateTimeRange || value is Nullable<ZonedDateTimeRange>))
             {
-                throw new ArgumentException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(ZonedDateTimeRange).FullName, value.GetType().FullName));
+                throw new JsonWriterException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(ZonedDateTimeRange).FullName, value.GetType().FullName));
             }
 
             ZonedDateTimeRange? r = null;
@@ -80,7 +82,8 @@ namespace Ark.Tools.Nodatime.Json
             if (r.HasValue)
             {
                 serializer.Serialize(writer, new Surrogate { Start = r.Value.Start, End = r.Value.End });
-            } else
+            }
+            else
             {
                 writer.WriteNull();
             }

@@ -1,10 +1,14 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Auth0;
+
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
+
 using Microsoft.AspNetCore.Http;
+
 using Polly;
+
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -73,10 +77,10 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                                         ClientSecret = _config.ProxySecret,
                                         Realm = _config.Realm,
                                         Scope = "openid profile email",
-                                    }, context.RequestAborted);
+                                    }, context.RequestAborted).ConfigureAwait(false);
 
                                     return result.AccessToken;
-                                }, context.RequestAborted, true);
+                                }, context.RequestAborted, true).ConfigureAwait(false);
 
                             context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
                         }
@@ -88,7 +92,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                 }
             }
 
-            await _next(context);
+            await _next(context).ConfigureAwait(false);
         }
     }
 }

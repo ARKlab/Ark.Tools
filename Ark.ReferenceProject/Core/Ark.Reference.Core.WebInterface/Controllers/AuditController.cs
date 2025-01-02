@@ -1,16 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Common.Services.Audit.Dto;
+using Ark.Reference.Core.API.Queries;
+using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
-using Ark.Reference.Common.Services.Audit.Dto;
-using Ark.Reference.Common.Services.Audit;
+
 using Microsoft.AspNetCore.Mvc;
 
 using NodaTime;
-using Ark.Reference.Core.Common.Enum;
-using Ark.Reference.Core.API.Queries;
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Controllers
 {

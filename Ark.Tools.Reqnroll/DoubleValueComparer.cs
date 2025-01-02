@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Reqnroll.Assist;
 
-using Reqnroll.Assist;
+using System;
+using System.Globalization;
 
 namespace Ark.Tools.Reqnroll
 {
@@ -18,7 +19,7 @@ namespace Ark.Tools.Reqnroll
 
             if (actualValue == null) return false;
 
-            var parsed = double.Parse(expectedValue);
+            var parsed = double.Parse(expectedValue, CultureInfo.CurrentCulture);
 
             return _aboutEqual((double)actualValue, parsed);
         }

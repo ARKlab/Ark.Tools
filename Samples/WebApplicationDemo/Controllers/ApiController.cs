@@ -2,7 +2,7 @@
 
 namespace WebApplicationDemo.Controllers
 {
-	[ApiController]
-	public abstract class ApiController : ControllerBase
-	{ }
+    [ApiController]
+    public abstract class ApiController : ControllerBase
+    { }
 }

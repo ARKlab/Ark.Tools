@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+
 using ProblemDetailsSample.Api.Requests;
 
 namespace ProblemDetailsSample.Application.Handlers.Vaildators

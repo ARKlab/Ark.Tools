@@ -1,11 +1,14 @@
 ﻿using Ark.Tools.Activity.Messages;
+
+using EnsureThat;
+
+using Rebus.Bus;
+using Rebus.Handlers;
+using Rebus.Sagas;
+
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Rebus.Sagas;
-using Rebus.Bus;
-using EnsureThat;
-using System;
-using Rebus.Handlers;
 
 namespace Ark.Tools.Activity.Processor
 {
@@ -14,9 +17,9 @@ namespace Ark.Tools.Activity.Processor
         : Saga<SliceActivitySagaData>
         , IAmInitiatedBy<SliceReady>
         , IAmInitiatedBy<Ark.Tasks.Messages.SliceReady>
-		, IHandleMessages<CoolDownMessage>
+        , IHandleMessages<CoolDownMessage>
 
-	{
+    {
         private readonly ISliceActivity _activity;
         private readonly IBus _bus;
 
@@ -28,9 +31,9 @@ namespace Ark.Tools.Activity.Processor
 
         public async Task Handle(SliceReady message)
         {
-			_activity.Logger.Info("Slice {ActivitySlice} received dependency for resource {Resource}@{ResourceSlice}", message.ActivitySlice, message.Resource, message.ResourceSlice);
+            _activity.Logger.Info("Slice {ActivitySlice} received dependency for resource {Resource}@{ResourceSlice}", message.ActivitySlice, message.Resource, message.ResourceSlice);
             var sourceDep = _activity.Dependencies.Single(x => x.Resource == message.Resource);
-            
+
             if (IsNew)
             {
                 Data.ActivitySlice = message.ActivitySlice;
@@ -40,22 +43,22 @@ namespace Ark.Tools.Activity.Processor
             Ensure.Bool.IsTrue(Data.ActivitySlice == message.ActivitySlice);
 
             Data.MissingSlices.Remove(message);
-            
+
             if (Data.MissingSlices.Count == 0)
             {
-				if (_activity.CoolDown == null || Data.IsCoolDown == false)
-				{
-					await _process();
-				}
-				else if (Data.IsCoolDown && !Data.IsScheduled)
-				{
-					await _schedule(message);
-				}
-				else
-				{
-					_activity.Logger.Info("Nothing to do for Slice {ActivitySlice}", Data.ActivitySlice);
-				}
-			}
+                if (_activity.CoolDown == null || Data.IsCoolDown == false)
+                {
+                    await _process().ConfigureAwait(false);
+                }
+                else if (Data.IsCoolDown && !Data.IsScheduled)
+                {
+                    await _schedule(message).ConfigureAwait(false);
+                }
+                else
+                {
+                    _activity.Logger.Info("Nothing to do for Slice {ActivitySlice}", Data.ActivitySlice);
+                }
+            }
             else
             {
                 _activity.Logger.Info("Skipped materialization for slice {ActivitySlice}. Missing {MissingSlices}", Data.ActivitySlice, string.Join(",", Data.MissingSlices.Select(m => string.Format("{0}@{1}", m.Resource, m.ResourceSlice))));
@@ -73,55 +76,55 @@ namespace Ark.Tools.Activity.Processor
         }
 
 
-		public async Task Handle(CoolDownMessage message)
-		{
-			_activity.Logger.Info("Message Processed after CoolDown Time for Slice {ActivitySlice}", Data.ActivitySlice);
-			await _process();
-		}
+        public async Task Handle(CoolDownMessage message)
+        {
+            _activity.Logger.Info("Message Processed after CoolDown Time for Slice {ActivitySlice}", Data.ActivitySlice);
+            await _process().ConfigureAwait(false);
+        }
 
-		private async Task _process()
-		{
-			await _activity.Process(Data.ActivitySlice);
-			await _bus.Advanced.Topics.Publish(_activity.Resource.ToString(), new ResourceSliceReady()
-			{
-				Resource = _activity.Resource,
-				Slice = Data.ActivitySlice
-			});
-			_activity.Logger.Info("Completed materialization for slice {ActivitySlice}.", Data.ActivitySlice);
+        private async Task _process()
+        {
+            await _activity.Process(Data.ActivitySlice).ConfigureAwait(false);
+            await _bus.Advanced.Topics.Publish(_activity.Resource.ToString(), new ResourceSliceReady()
+            {
+                Resource = _activity.Resource,
+                Slice = Data.ActivitySlice
+            }).ConfigureAwait(false);
+            _activity.Logger.Info("Completed materialization for slice {ActivitySlice}.", Data.ActivitySlice);
 
-			// Reset CD
-			Data.IsScheduled = false;
-			Data.CoolDownTill = null;
+            // Reset CD
+            Data.IsScheduled = false;
+            Data.CoolDownTill = null;
 
-			if (_activity.CoolDown != null)
-				Data.CoolDownTill = DateTimeOffset.UtcNow + _activity.CoolDown;
-		}
+            if (_activity.CoolDown != null)
+                Data.CoolDownTill = DateTimeOffset.UtcNow + _activity.CoolDown;
+        }
 
-		private async Task _schedule(SliceReady message)
-		{
-			var timeToWait = (Data.CoolDownTill - DateTimeOffset.UtcNow);
+        private async Task _schedule(SliceReady message)
+        {
+            var timeToWait = (Data.CoolDownTill - DateTimeOffset.UtcNow);
 
-			if (timeToWait != null && timeToWait.Value.TotalSeconds > 0)
-			{
-				_activity.Logger.Info("Message Deferred after {TimeToWait}s seconds for Slice {ActivitySlice}", timeToWait.Value.TotalSeconds, Data.ActivitySlice);
+            if (timeToWait != null && timeToWait.Value.TotalSeconds > 0)
+            {
+                _activity.Logger.Info("Message Deferred after {TimeToWait}s seconds for Slice {ActivitySlice}", timeToWait.Value.TotalSeconds, Data.ActivitySlice);
 
-				await _bus.DeferLocal(timeToWait.Value, new CoolDownMessage()
-				{
-					ActivitySlice = Slice.From(message.ActivitySlice.SliceStart),
-					Resource = Resource.Create(message.Resource.Provider, message.Resource.Id),
-					ResourceSlice = Slice.From(message.ResourceSlice.SliceStart)
-				});
+                await _bus.DeferLocal(timeToWait.Value, new CoolDownMessage()
+                {
+                    ActivitySlice = Slice.From(message.ActivitySlice.SliceStart),
+                    Resource = Resource.Create(message.Resource.Provider, message.Resource.Id),
+                    ResourceSlice = Slice.From(message.ResourceSlice.SliceStart)
+                }).ConfigureAwait(false);
 
-				Data.IsScheduled = true;
-			}
-		}
+                Data.IsScheduled = true;
+            }
+        }
 
-		protected override void CorrelateMessages(ICorrelationConfig<SliceActivitySagaData> config)
+        protected override void CorrelateMessages(ICorrelationConfig<SliceActivitySagaData> config)
         {
             config.Correlate<SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
             config.Correlate<Ark.Tasks.Messages.SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
-			config.Correlate<CoolDownMessage>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
-		}
-	}
+            config.Correlate<CoolDownMessage>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
+        }
+    }
 
 }

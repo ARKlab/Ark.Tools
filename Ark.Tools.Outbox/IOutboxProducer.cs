@@ -22,7 +22,7 @@ namespace Ark.Tools.Outbox
     public interface IOutboxConsumer
     {
         Task StartAsync(CancellationToken ctk = default);
-        Task StopAsync(CancellationToken ctk= default);
+        Task StopAsync(CancellationToken ctk = default);
 
         Task ClearAsync(CancellationToken ctk = default);
         Task<int> CountAsync(CancellationToken ctk = default);
@@ -38,7 +38,7 @@ namespace Ark.Tools.Outbox
         public TimeSpan SleepInterval { get; set; } = TimeSpan.FromSeconds(1);
         public int BatchSize { get; set; } = 1000;
 
-        public OutboxConsumerBase(Func<IOutboxContext> contextFactory)
+        protected OutboxConsumerBase(Func<IOutboxContext> contextFactory)
         {
             _outboxContextFactory = contextFactory;
         }
@@ -46,19 +46,19 @@ namespace Ark.Tools.Outbox
         public async Task ClearAsync(CancellationToken ctk = default)
         {
             using var ctx = _outboxContextFactory();
-            await ctx.ClearAsync(ctk);
-            ctx.Commit();           
+            await ctx.ClearAsync(ctk).ConfigureAwait(false);
+            ctx.Commit();
         }
 
         public async Task<int> CountAsync(CancellationToken ctk = default)
         {
             using var ctx = _outboxContextFactory();
-            var ret = await ctx.CountAsync(ctk);
+            var ret = await ctx.CountAsync(ctk).ConfigureAwait(false);
             ctx.Commit();
             return ret;
         }
 
-        public Task StartAsync(CancellationToken ctk)
+        public Task StartAsync(CancellationToken ctk = default)
         {
             if (_processorCT != null) throw new InvalidOperationException("Consumer is already Started");
 
@@ -78,32 +78,31 @@ namespace Ark.Tools.Outbox
                 try
                 {
                     using var ctx = _outboxContextFactory();
-                    var messages = await ctx.PeekLockMessagesAsync(BatchSize, ctk);
-                    await _processMessages(messages, ctk);
-                    ctx.Commit();                    
+                    var messages = await ctx.PeekLockMessagesAsync(BatchSize, ctk).ConfigureAwait(false);
+                    await _processMessages(messages, ctk).ConfigureAwait(false);
+                    ctx.Commit();
                 }
                 catch (Exception e) when (!(e is TaskCanceledException))
                 {
                     // chomp exceptions and retry
-                    // TODO trace log
                 }
-                await Task.Delay(SleepInterval, ctk);
+                await Task.Delay(SleepInterval, ctk).ConfigureAwait(false);
             }
         }
 
         protected virtual async Task _processMessages(IEnumerable<OutboxMessage> messages, CancellationToken ctk)
         {
             foreach (var m in messages)
-                await _processMessage(m, ctk);
+                await _processMessage(m, ctk).ConfigureAwait(false);
         }
 
         protected abstract Task _processMessage(OutboxMessage m, CancellationToken ctk);
 
-        public async Task StopAsync(CancellationToken ctk)
+        public async Task StopAsync(CancellationToken ctk = default)
         {
             _processorCT?.Dispose();
             if (_processorTask is not null)
-                await Task.WhenAny(_processorTask, Task.Delay(Timeout.Infinite, ctk));            
+                await Task.WhenAny(_processorTask, Task.Delay(Timeout.Infinite, ctk)).ConfigureAwait(false);
         }
 
         protected virtual void Dispose(bool disposing)

@@ -14,8 +14,9 @@ namespace Ark.Tools.Nodatime.Dapper
         {
         }
 
-        public static readonly LocalDateTimeHandler Instance = new LocalDateTimeHandler();
+        public static readonly LocalDateTimeHandler Instance = new();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical mistake - Public API - Next Major")]
         public event EventHandler<IDbDataParameter>? OnSetValue;
 
         public override void SetValue(IDbDataParameter parameter, LocalDateTime value)

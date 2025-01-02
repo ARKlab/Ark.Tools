@@ -25,7 +25,7 @@ namespace WebApplicationDemo.Controllers.V0
             DateTimeOffset offset = DateTimeOffset
                 .FromUnixTimeSeconds(1679353200);
 
-            for(int i = 0; i < 48 ; i++)
+            for (int i = 0; i < 48; i++)
             {
                 _values.Add(new MarketRecordV0
                 {

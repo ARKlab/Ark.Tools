@@ -12,7 +12,7 @@ namespace Ark.Tools.Outbox.SqlServer
     {
         private readonly OutboxContextSql<Tag> _outbox;
 
-        protected AbstractSqlContextWithOutbox(DbConnection connection, IOutboxContextSqlConfig config, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted) 
+        protected AbstractSqlContextWithOutbox(DbConnection connection, IOutboxContextSqlConfig config, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
             : base(connection, isolationLevel)
         {
             _outbox = new OutboxContextSql<Tag>(this, config);

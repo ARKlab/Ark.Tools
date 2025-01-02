@@ -37,7 +37,7 @@ namespace Ark.Tools.Rebus
             });
         }
 
-        class FakeMessageContext : IMessageContext
+        sealed class FakeMessageContext : IMessageContext
         {
             public ITransactionContext? TransactionContext { get; }
             public IncomingStepContext? IncomingStepContext { get; }
@@ -74,7 +74,6 @@ namespace Ark.Tools.Rebus
                         .OnSend(step, PipelineRelativePosition.Before, typeof(SerializeOutgoingMessageStep)))
                     .OnReceive(step, PipelineAbsolutePosition.Front)
                     ;
-                ;
             });
         }
 
@@ -96,7 +95,7 @@ namespace Ark.Tools.Rebus
             int cnt = 0;
             var currentContext = MessageContext.Current;
             if (!currentContext.Headers.TryGetValue(Headers.DeferCount, out var count)
-                || !int.TryParse(count, out cnt)
+                || !int.TryParse(count, NumberStyles.Integer, CultureInfo.InvariantCulture, out cnt)
                 || cnt < maxRetries)
                 return bus.Advanced.TransportMessage.Defer(delay);
             else

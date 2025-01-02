@@ -12,7 +12,7 @@ namespace WebApplicationDemo.Configuration
         public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string? routePrefix)
         {
             if (apiVersion == ApiVersions.V1)
-            { 
+            {
                 var recordv1 = builder.EntitySet<MarketRecordV1>("MarketRecordV1").EntityType;
 
                 recordv1.HasKey(p => new

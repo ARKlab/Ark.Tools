@@ -1,13 +1,16 @@
-﻿using Ark.Tools.Solid;
+﻿using Ark.Tools.SimpleInjector;
+using Ark.Tools.Solid;
+using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql;
+using Ark.Tools.Sql.SqlServer;
+
 using FluentValidation;
+
 using SimpleInjector;
+
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using Ark.Tools.SimpleInjector;
-using Ark.Tools.Solid.SimpleInjector;
-using Ark.Tools.Sql.SqlServer;
 
 namespace ProblemDetailsSample.Application.Handlers.Host
 {
@@ -17,10 +20,10 @@ namespace ProblemDetailsSample.Application.Handlers.Host
         {
             this.Config = config;
 
-            this._applicationAssemblies = new Assembly[] {
+            this._applicationAssemblies = [
                 typeof(ApiHost).Assembly,
                 //Assembly.Load("ProblemDetailsSample")
-            };
+            ];
         }
 
         public ApiHost WithContainer(Container container)
@@ -85,7 +88,7 @@ namespace ProblemDetailsSample.Application.Handlers.Host
 
         private readonly Assembly[] _applicationAssemblies;
 
-        private class NullValidator<T> : AbstractValidator<T>
+        private sealed class NullValidator<T> : AbstractValidator<T>
         {
         }
     }

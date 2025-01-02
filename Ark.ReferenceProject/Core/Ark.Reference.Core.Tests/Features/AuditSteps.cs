@@ -1,26 +1,24 @@
-﻿using Ark.Tools.Core;
-
+﻿using Ark.Reference.Common.Dto;
+using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Core;
 
 using FluentAssertions;
 
-using Ark.Reference.Common.Dto;
-using Ark.Reference.Common.Services.Audit;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+using Reqnroll;
+using Reqnroll.Assist;
 
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 
-using Reqnroll;
-using Reqnroll.Assist;
-
 namespace Ark.Reference.Core.Tests.Features
 {
     [Binding]
-    internal class AuditSteps
+    internal sealed class AuditSteps
     {
         private readonly TestClient _client;
         private AuditDto<AuditKind>? _lastAudit;
@@ -61,7 +59,7 @@ namespace Ark.Reference.Core.Tests.Features
             Assert.AreEqual(count, _changes?.Changes?.Count());
         }
 
-        
+
         [Then(@"^the (current|previous) Ping audit is$")]
         public void ThenTheCurrentContractAuditIs(string choice, Table table)
         {
@@ -84,8 +82,8 @@ namespace Ark.Reference.Core.Tests.Features
                 .Excluding(p => p.AuditId)
             );
         }
-        
-        public class AuditRecordReturn<TAuditObject>
+
+        sealed class AuditRecordReturn<TAuditObject>
         {
             public IEnumerable<Changes<TAuditObject>.V1>? Changes { get; set; }
         }

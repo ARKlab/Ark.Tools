@@ -1,16 +1,20 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Ark.Tools.AspNetCore.NestedStartup;
+﻿using Ark.Tools.AspNetCore.NestedStartup;
+using Ark.Tools.Core;
+using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Solid;
+
+using Asp.Versioning;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using ProblemDetailsSample.Api.Queries;
-using ProblemDetailsSample.Common.Dto;
 using ProblemDetailsSample.Api.Requests;
-using Ark.Tools.Core.EntityTag;
-using Ark.Tools.Core;
-using Asp.Versioning;
+using ProblemDetailsSample.Common.Dto;
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProblemDetailsSample.Controllers.Private
 {
@@ -129,7 +133,7 @@ namespace ProblemDetailsSample.Controllers.Private
         /// <returns></returns>
         [HttpPost(@"PostEntityOK")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Post_EntityOK([FromBody]Entity.V1.Input body)
+        public async Task<IActionResult> Post_EntityOK([FromBody] Entity.V1.Input body)
         {
             var request = new Post_EntityRequest.V1()
             {
@@ -148,7 +152,7 @@ namespace ProblemDetailsSample.Controllers.Private
         /// <returns></returns>
         [HttpPost(@"FluentValidationFails")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Post_ValidationFails([FromBody]Entity.V1.Input body)
+        public async Task<IActionResult> Post_ValidationFails([FromBody] Entity.V1.Input body)
         {
             var request = new Post_EntityRequest.V1()
             {
@@ -167,7 +171,7 @@ namespace ProblemDetailsSample.Controllers.Private
         /// <returns></returns>
         [HttpPost(@"FluentValidationFails2Errors")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Post_ValidationFails2Errors([FromBody]Entity.V1.Input body)
+        public async Task<IActionResult> Post_ValidationFails2Errors([FromBody] Entity.V1.Input body)
         {
             var request = new Post_EntityRequest.V1()
             {
@@ -186,7 +190,7 @@ namespace ProblemDetailsSample.Controllers.Private
         /// <returns></returns>
         [HttpPost(@"ArkProblemDetails")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Post_ArkProblemDetails([FromBody]Entity.V1.Input body)
+        public async Task<IActionResult> Post_ArkProblemDetails([FromBody] Entity.V1.Input body)
         {
             var request = new Post_EntityRequestProblemDetails.V1()
             {
@@ -205,7 +209,7 @@ namespace ProblemDetailsSample.Controllers.Private
         /// <returns></returns>
         [HttpPost(@"BusinessRuleViolation")]
         [ProducesResponseType(typeof(Entity.V1.Output), 200)]
-        public async Task<IActionResult> Post_BusinessRuleViolation([FromBody]Entity.V1.Input body)
+        public async Task<IActionResult> Post_BusinessRuleViolation([FromBody] Entity.V1.Input body)
         {
             var request = new Post_EntityRequestBusinessRuleViolation.V1()
             {

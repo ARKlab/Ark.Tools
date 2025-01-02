@@ -10,7 +10,7 @@ namespace Ark.Tools.Core
     {
         private readonly IEqualityComparer<TValue> _valueComparer;
 
-        public static readonly DictionaryEqualityComparer<TKey, TValue> Default = new DictionaryEqualityComparer<TKey, TValue>();
+        public static readonly DictionaryEqualityComparer<TKey, TValue> Default = new();
 
         public DictionaryEqualityComparer() : this(null) { }
         public DictionaryEqualityComparer(IEqualityComparer<TValue>? valueComparer)

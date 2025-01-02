@@ -1,16 +1,21 @@
-﻿using Dapper;
+﻿using Ark.Reference.Common;
+using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Core.Common.Dto;
+using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Sql.SqlServer;
+
+using Dapper;
+
+using NodaTime;
+
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Ark.Reference.Core.Common.Dto;
+
 using static Dapper.SqlMapper;
-using Ark.Reference.Common;
-using System.Collections.Generic;
-using System.Linq;
-using Ark.Reference.Core.Common.Enum;
-using System;
-using Ark.Reference.Common.Services.Audit;
-using NodaTime;
-using Ark.Tools.Sql.SqlServer;
 
 namespace Ark.Reference.Core.Application.DAL
 {
@@ -21,24 +26,25 @@ namespace Ark.Reference.Core.Application.DAL
 
         public async Task<Ping.V1.Output?> ReadPingByIdAsync(int id, CancellationToken ctk = default)
         {
-            _logger.Trace("ReadPingByIdAsync called");
+            _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByIdAsync called");
 
-            var (data, _) = await ReadPingByFiltersAsync(new PingSearchQueryDto.V1() 
-            { 
+            var (data, _) = await ReadPingByFiltersAsync(new PingSearchQueryDto.V1()
+            {
                 Id = [id],
                 Limit = 1
             }, ctk);
 
-            _logger.Trace("ReadPingByIdAsync ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByIdAsync ended");
 
             return data.SingleOrDefault();
         }
 
         public async Task<(IEnumerable<Ping.V1.Output> data, int count)> ReadPingByFiltersAsync(PingSearchQueryDto.V1 query, CancellationToken ctk = default)
         {
-            _logger.Trace("ReadPingByFiltersAsync called");
+            _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByFiltersAsync called");
 
             var sortFields = query.Sort.CompileSorts(new Dictionary<string, string>
+(StringComparer.Ordinal)
             {
                 {"id", "E.[Id]" },
             }, "E.[Id] DESC");
@@ -62,9 +68,9 @@ namespace Ark.Reference.Core.Application.DAL
                 FROM [{_schemaPing}].[{_tablePing}] E
 
                 WHERE 1 = 1
-                  {(query.Id?.Any()     ?? false ? "AND E.[Id]   IN @Id"    : "")}
-                  {(query.Name?.Any()   ?? false ? "AND E.[Name] IN @Name"  : "")}
-                  {(query.Type?.Any()   ?? false ? "AND E.[Type] IN @Type"  : "")}
+                  {(query.Id?.Any() ?? false ? "AND E.[Id]   IN @Id" : "")}
+                  {(query.Name?.Any() ?? false ? "AND E.[Name] IN @Name" : "")}
+                  {(query.Type?.Any() ?? false ? "AND E.[Type] IN @Type" : "")}
             "
             .AsSqlServerPagedQuery(sortFields);
 
@@ -74,14 +80,14 @@ namespace Ark.Reference.Core.Application.DAL
 
             var d = data.Select(s => s.ToOutput());
 
-            _logger.Trace("ReadPingByFiltersAsync ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByFiltersAsync ended");
 
             return (d, count);
         }
 
         public async Task<int> InsertPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
         {
-            _logger.Trace("InsertPingAsync called");
+            _logger.Trace(CultureInfo.InvariantCulture, "InsertPingAsync called");
 
             var parameters = new
             {
@@ -112,24 +118,25 @@ namespace Ark.Reference.Core.Application.DAL
             ";
 
             var cmd = new CommandDefinition(
-                cmdText, 
-                parameters, 
-                transaction: Transaction, 
+                cmdText,
+                parameters,
+                transaction: Transaction,
                 cancellationToken: ctk
             );
 
             var id = await Connection.QuerySingleAsync<int>(cmd);
 
-            _logger.Trace("InsertPingAsync ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "InsertPingAsync ended");
 
             return id;
         }
 
         public async Task PutPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
         {
-            _logger.Trace("PutPingAsync called");
+            _logger.Trace(CultureInfo.InvariantCulture, "PutPingAsync called");
 
-            var parameters = new {
+            var parameters = new
+            {
                 @Id = entity.Id,
                 @Name = entity.Name,
                 @Type = entity.Type.ToString(),
@@ -158,14 +165,14 @@ namespace Ark.Reference.Core.Application.DAL
 
             await Connection.ExecuteAsync(cmd);
 
-            _logger.Trace("PutPingAsync ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "PutPingAsync ended");
 
             return;
         }
 
         public async Task PatchPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
         {
-            _logger.Trace("PatchPingAsync called");
+            _logger.Trace(CultureInfo.InvariantCulture, "PatchPingAsync called");
 
             var parameters = new
             {
@@ -204,14 +211,14 @@ namespace Ark.Reference.Core.Application.DAL
 
             await Connection.ExecuteAsync(cmd);
 
-            _logger.Trace("PatchPingAsync ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "PatchPingAsync ended");
 
             return;
         }
 
         public async Task DeletePingAsync(int id, CancellationToken ctk = default)
         {
-            _logger.Trace("DeletePingAsync called");
+            _logger.Trace(CultureInfo.InvariantCulture, "DeletePingAsync called");
 
             var parameters = new
             {
@@ -225,15 +232,15 @@ namespace Ark.Reference.Core.Application.DAL
             ";
 
             var cmd = new CommandDefinition(
-                cmdText, 
-                parameters, 
-                transaction: Transaction, 
+                cmdText,
+                parameters,
+                transaction: Transaction,
                 cancellationToken: ctk
             );
 
             await Connection.ExecuteAsync(cmd);
 
-            _logger.Trace("DeletePingAsync ended");
+            _logger.Trace(CultureInfo.InvariantCulture, "DeletePingAsync ended");
 
             return;
         }
@@ -293,7 +300,7 @@ namespace Ark.Reference.Core.Application.DAL
 
 
         #region Private view
-        private class PingView
+        private record PingView
         {
             public int Id { get; set; }
             public string? Name { get; set; }

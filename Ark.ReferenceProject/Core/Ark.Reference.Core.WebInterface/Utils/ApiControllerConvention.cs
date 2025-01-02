@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Ark.Reference.Core.WebInterface.Utils
 {
-    internal class ApiControllerConvention : IControllerModelConvention
+    internal sealed class ApiControllerConvention : IControllerModelConvention
     {
         public void Apply(ControllerModel controller)
         {

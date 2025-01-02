@@ -52,19 +52,19 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public NetworkCredential? Credentials { get; private set; }
         public FtpConfig FtpConfig { get; private set; }
 
-        class DownloadFileResult
+        record DownloadFileResult
         {
             public byte[]? Content { get; set; }
         }
 
-        class ConnectionInfo
+        record ConnectionInfo
         {
             public Uri? Uri { get; set; }
             public string? Username { get; set; }
             public string? Password { get; set; }
         }
 
-        class ListingRequest
+        record ListingRequest
         {
             public ConnectionInfo? Info { get; set; }
             public int? DegreeOfParallelism { get; set; }
@@ -82,14 +82,14 @@ namespace Ark.Tools.FtpClient.FtpProxy
         /// </returns>
         public async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
         {
-            var tok = await _getAccessToken(ctk);
+            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
 
             var res = await _client.Request("v2", "DownloadFile")
                 .SetQueryParam("filePath", path)
                 .WithOAuthBearerToken(tok)
                 .PostJsonAsync(_connectionInfo, cancellationToken: ctk)
                 .ReceiveJson<DownloadFileResult>()
-                ;
+.ConfigureAwait(false);
 
             return res.Content ?? Array.Empty<byte>();
         }
@@ -106,18 +106,18 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public async Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default)
         {
             path ??= "./";
-            var tok = await _getAccessToken(ctk);
-            
+            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
+
             var res = await _client.Request("v2", "ListFolder")
                 .WithOAuthBearerToken(tok)
                 .PostJsonAsync(new ListingRequest
                 {
                     Info = _connectionInfo,
-                    Paths = new[] { path },
+                    Paths = [path],
                     Recursive = false,
                 }, cancellationToken: ctk)
                 .ReceiveJson<IEnumerable<FtpEntry>>()
-                ;
+.ConfigureAwait(false);
 
             return res;
         }
@@ -135,7 +135,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
             startPath ??= "./";
-            var tok = await _getAccessToken(ctk);
+            var tok = await _getAccessToken(ctk).ConfigureAwait(false);
             if (skipFolder == null) // no folders to skip, just recurse overall
             {
                 var res = await _client.Request("v2", "ListFolder")
@@ -143,13 +143,13 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     .PostJsonAsync(new ListingRequest
                     {
                         Info = _connectionInfo,
-                        Paths = new[] { startPath },
+                        Paths = [startPath],
                         Recursive = true,
                         DegreeOfParallelism = _config.ListingDegreeOfParallelism
                     }, cancellationToken: ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
-                    ;
-                
+.ConfigureAwait(false);
+
                 return res.Where(e => !e.IsDirectory);
             }
             else
@@ -161,11 +161,11 @@ namespace Ark.Tools.FtpClient.FtpProxy
                     .PostJsonAsync(new ListingRequest
                     {
                         Info = _connectionInfo,
-                        Paths = new[] { startPath },
+                        Paths = [startPath],
                         Recursive = false,
                     }, cancellationToken: ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
-                    ;
+.ConfigureAwait(false);
 
                 entries.Add(res);
 
@@ -181,24 +181,24 @@ namespace Ark.Tools.FtpClient.FtpProxy
                             Recursive = false,
                         }, cancellationToken: ctk)
                         .ReceiveJson<IEnumerable<FtpEntry>>()
-                        ;
+.ConfigureAwait(false);
 
                     entries.Add(r);
                     folders = r.Where(x => x.IsDirectory && !skipFolder(x)).ToArray();
                 }
 
                 return entries.SelectMany(x => x.Where(e => !e.IsDirectory));
-            }            
+            }
         }
 
         public Task DeleteFileAsync(string path, CancellationToken ctk = default)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         private Task<string> _getAccessToken(CancellationToken ctk = default)
@@ -210,8 +210,11 @@ namespace Ark.Tools.FtpClient.FtpProxy
         {
             var flurlClient = new FlurlClientBuilder(_config.FtpProxyWebInterfaceBaseUri.ToString())
                 .ConfigureArkDefaults()
-                .ConfigureInnerHandler(h => {
+                .ConfigureInnerHandler(h =>
+                {
+#pragma warning disable MA0039 // Do not write your own certificate validation method
                     h.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
+#pragma warning restore MA0039 // Do not write your own certificate validation method
                 })
                 .WithHeader("Accept", "application/json, text/json")
                 .WithHeader("Accept-Encoding", "gzip, deflate")
@@ -234,7 +237,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 
         public Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public void Dispose()

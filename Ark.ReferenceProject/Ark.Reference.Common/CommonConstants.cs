@@ -5,7 +5,7 @@ using NodaTime;
 namespace Ark.Reference.Common
 {
     public static class CommonConstants
-	{
+    {
         public const string TimeZone = "CET";
         public static readonly DateTimeZone Tz = DateTimeZoneProviders.Tzdb[TimeZone];
 

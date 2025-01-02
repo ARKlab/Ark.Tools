@@ -1,17 +1,18 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.Extensions.DiagnosticAdapter;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher
-{ 
+{
     public abstract class ResourceWatcherDiagnosticListenerBase : IObserver<DiagnosticListener>, IDisposable
     {
-        private readonly List<IDisposable> _subscription = new List<IDisposable>();
+        private readonly List<IDisposable> _subscription = new();
 
-        public ResourceWatcherDiagnosticListenerBase()
+        protected ResourceWatcherDiagnosticListenerBase()
         {
             this._subscription.Add(DiagnosticListener.AllListeners.Subscribe(this));
         }
@@ -84,7 +85,7 @@ namespace Ark.Tools.ResourceWatcher
         }
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
-        public virtual void OnRunStop(    int resourcesFound
+        public virtual void OnRunStop(int resourcesFound
                                         , int normal
                                         , int noPayload
                                         , int noAction
@@ -133,7 +134,7 @@ namespace Ark.Tools.ResourceWatcher
 
         }
         #endregion
-        
+
         #region FetchResource
 
         [DiagnosticName("Ark.Tools.ResourceWatcher.FetchResource.Start")]

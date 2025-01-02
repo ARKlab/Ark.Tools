@@ -1,6 +1,9 @@
 ﻿using Ark.Tools.SimpleInjector;
+
 using EnsureThat;
+
 using SimpleInjector;
+
 using System;
 
 using System.Linq;
@@ -11,7 +14,7 @@ namespace Ark.Tools.Activity.Processor
 {
     public static class SliceActivityManagerExtensions
     {
-        public static void RegisterActivities(this Container container, Type activityManagerType, params Assembly[] fromAssemblies) 
+        public static void RegisterActivities(this Container container, Type activityManagerType, params Assembly[] fromAssemblies)
         {
             EnsureArg.IsNotNull(container);
             EnsureArg.IsNotNull(activityManagerType);

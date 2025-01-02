@@ -1,14 +1,17 @@
-﻿using Microsoft.ApplicationInsights.Metrics;
-using Microsoft.ApplicationInsights;
+﻿using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Metrics;
+
+using Rebus.Extensions;
 using Rebus.Messages;
 using Rebus.Pipeline;
 using Rebus.Time;
 
+using SimpleInjector;
+
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading.Tasks;
-using SimpleInjector;
-using Rebus.Extensions;
 
 namespace Ark.Tools.Rebus
 {
@@ -39,12 +42,12 @@ namespace Ark.Tools.Rebus
 
             try
             {
-                await next();
+                await next().ConfigureAwait(false);
                 sw.Stop();
                 var now = _time.Now;
                 operationResult = "success";
 
-                var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime]);
+                var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime], CultureInfo.InvariantCulture);
                 var totalTime = now - enqueuedTime;
                 var timeInQueue = totalTime - TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
 
@@ -56,7 +59,7 @@ namespace Ark.Tools.Rebus
             }
 
         }
-        class Metrics
+        sealed class Metrics
         {
             private static readonly MetricConfigurationForMeasurement _defaultConfigForMeasurement = new(
                                                                     10000,

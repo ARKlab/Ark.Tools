@@ -1,5 +1,6 @@
-﻿using Asp.Versioning.OData;
-using Asp.Versioning;
+﻿using Asp.Versioning;
+using Asp.Versioning.OData;
+
 using Microsoft.OData.ModelBuilder;
 
 namespace Ark.Tools.AspNetCore.Startup

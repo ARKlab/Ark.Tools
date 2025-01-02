@@ -29,12 +29,12 @@ namespace Ark.Tools.FtpClient.Core
         protected override async Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
         {
             IFtpClientConnection? result = null;
-            await _semaphore.WaitAsync(ctk);
+            await _semaphore.WaitAsync(ctk).ConfigureAwait(false);
             try
             {
                 while (_pool.TryPop(out var candidate))
                 {
-                    if (await candidate.IsConnectedAsync(ctk))
+                    if (await candidate.IsConnectedAsync(ctk).ConfigureAwait(false))
                     {
                         result = candidate;
                         break;
@@ -46,13 +46,14 @@ namespace Ark.Tools.FtpClient.Core
                 if (result == null)
                 {
                     result = _createNewConnection();
-                    await result.ConnectAsync(ctk);
+                    await result.ConnectAsync(ctk).ConfigureAwait(false);
                 }
 
                 var pooled = new PooledFtpConnection(result);
                 pooled.Disposing += _pooled_Disposing;
                 return pooled;
-            } catch
+            }
+            catch
             {
                 result?.Dispose();
                 _semaphore.Release();
@@ -66,7 +67,7 @@ namespace Ark.Tools.FtpClient.Core
             if (pooled is null) return;
             try
             {
-                _pool.Push(pooled.Inner);                
+                _pool.Push(pooled.Inner);
             }
             catch
             {
@@ -98,9 +99,6 @@ namespace Ark.Tools.FtpClient.Core
 
                     _semaphore?.Dispose();
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
 
                 _disposedValue = true;
             }

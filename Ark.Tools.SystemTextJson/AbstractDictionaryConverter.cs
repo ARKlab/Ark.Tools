@@ -19,7 +19,7 @@ namespace Ark.Tools.SystemTextJson
 
         protected abstract TC InstantiateCollection(IDictionary<TK, TV> workingCollection);
 
-        public AbstractDictionaryConverter(JsonSerializerOptions options)
+        protected AbstractDictionaryConverter(JsonSerializerOptions options)
         {
             _keyConverter = TypeDescriptor.GetConverter(typeof(TK));
             if (!(_keyConverter.CanConvertFrom(typeof(string)) && _keyConverter.CanConvertTo(typeof(string))))
@@ -27,7 +27,7 @@ namespace Ark.Tools.SystemTextJson
 
             _valueConverter = (JsonConverter<TV>)options.GetConverter(typeof(TV));
         }
-        
+
         public override TC Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.Null)
@@ -81,12 +81,12 @@ namespace Ark.Tools.SystemTextJson
 
             foreach (KeyValuePair<TK, TV> kvp in value)
             {
-                 writer.WritePropertyName(_keyConverter.ConvertToInvariantString(kvp.Key) ?? throw new InvalidOperationException("Key cannot be converted to String"));
-             
+                writer.WritePropertyName(_keyConverter.ConvertToInvariantString(kvp.Key) ?? throw new InvalidOperationException("Key cannot be converted to String"));
+
                 _valueConverter.Write(writer, kvp.Value, options);
             }
 
-            writer.WriteEndObject();            
+            writer.WriteEndObject();
         }
     }
 }

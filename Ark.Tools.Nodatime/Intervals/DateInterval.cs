@@ -1,13 +1,17 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Ark.Tools.Nodatime.Intervals
 {
-    public struct DateInterval
+    [StructLayout(LayoutKind.Auto)]
+    public readonly struct DateInterval
         : IComparable<DateInterval>
         , IEquatable<DateInterval>
     {
@@ -29,7 +33,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public static bool IsStartOfInterval(LocalDateTime time, DatePeriod period)
         {
-            return LocalTime.Midnight == time.TimeOfDay && IsStartOfInterval(time.Date,period);
+            return LocalTime.Midnight == time.TimeOfDay && IsStartOfInterval(time.Date, period);
         }
 
         public static bool IsStartOfInterval(LocalDate date, DatePeriod period)
@@ -60,39 +64,39 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public static LocalDate EndOfInterval(LocalDate date, DatePeriod period)
         {
-            return StartOfInterval(date,period) + GetIncrement(period);
+            return StartOfInterval(date, period) + GetIncrement(period);
         }
 
-        public LocalDate Date { get { return _start; } }
-        public LocalDateRange Range { get { return AsRange(); } }
-        public DatePeriod Period { get { return _period; } }
+        public readonly LocalDate Date { get { return _start; } }
+        public readonly LocalDateRange Range { get { return AsRange(); } }
+        public readonly DatePeriod Period { get { return _period; } }
 
-        public DateInterval NextInterval()
+        public readonly DateInterval NextInterval()
         {
             return new DateInterval(_start + GetIncrement(), _period);
         }
 
-        public DateInterval PreviousInterval()
+        public readonly DateInterval PreviousInterval()
         {
             return new DateInterval(_start - GetIncrement(), _period);
         }
 
-        public DateInterval NextInterval(uint count)
+        public readonly DateInterval NextInterval(uint count)
         {
             return new DateInterval(_start + GetIncrement(count), _period);
         }
 
-        public DateInterval PreviousInterval(uint count)
+        public readonly DateInterval PreviousInterval(uint count)
         {
-            return new DateInterval(_start - GetIncrement(count) , _period);
+            return new DateInterval(_start - GetIncrement(count), _period);
         }
 
-        public bool CanSplitInto(DatePeriod period)
+        public readonly bool CanSplitInto(DatePeriod period)
         {
             return _isValidperiodSplit(_period, period);
         }
 
-        public DateInterval LastOf(DatePeriod period)
+        public readonly DateInterval LastOf(DatePeriod period)
         {
             Ensure.Bool.IsTrue(CanSplitInto(period));
 
@@ -101,12 +105,12 @@ namespace Ark.Tools.Nodatime.Intervals
             return changeperiod.PreviousInterval();
         }
 
-        public IEnumerable<TimeInterval> SplitInto(TimePeriod period, string timezone)
+        public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, string timezone)
         {
             return SplitInto(period, DateTimeZoneProviders.Tzdb[timezone]);
         }
 
-        public IEnumerable<TimeInterval> SplitInto(TimePeriod period, DateTimeZone timezone)
+        public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, DateTimeZone timezone)
         {
             EnsureArg.IsNotNull(timezone);
 
@@ -123,7 +127,7 @@ namespace Ark.Tools.Nodatime.Intervals
             }
         }
 
-        public IEnumerable<DateInterval> SplitInto(DatePeriod period)
+        public readonly IEnumerable<DateInterval> SplitInto(DatePeriod period)
         {
             Ensure.Bool.IsTrue(CanSplitInto(period));
 
@@ -141,22 +145,22 @@ namespace Ark.Tools.Nodatime.Intervals
             }
         }
 
-        public LocalDateRange AsRange()
+        public readonly LocalDateRange AsRange()
         {
             return new LocalDateRange(_start, _start + GetIncrement());
         }
 
-        public bool Contains(DateInterval period)
+        public readonly bool Contains(DateInterval period)
         {
             return this.Range.Contains(period.Range);
         }
 
-        public Period GetIncrement()
+        public readonly Period GetIncrement()
         {
             return DateInterval.GetIncrement(_period);
         }
 
-        public Period GetIncrement(uint count)
+        public readonly Period GetIncrement(uint count)
         {
             return DateInterval.GetIncrement(_period, count);
         }
@@ -194,7 +198,7 @@ namespace Ark.Tools.Nodatime.Intervals
             return target < source && target != DatePeriod.Week;
         }
 
-        public int CompareTo(DateInterval other)
+        public readonly int CompareTo(DateInterval other)
         {
             Ensure.Bool.IsTrue(Period == other.Period);
             return _start.CompareTo(other._start);
@@ -205,7 +209,7 @@ namespace Ark.Tools.Nodatime.Intervals
             return x.CompareTo(y);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
@@ -216,7 +220,7 @@ namespace Ark.Tools.Nodatime.Intervals
             }
         }
 
-        public bool Equals(DateInterval other)
+        public readonly bool Equals(DateInterval other)
         {
             return _start == other._start && _period == other._period;
         }
@@ -255,7 +259,7 @@ namespace Ark.Tools.Nodatime.Intervals
             return CompareTo(x, y) >= 0;
         }
 
-        public override bool Equals(object? obj)
+        public override readonly bool Equals(object? obj)
         {
             if (obj is not DateInterval)
                 return false;

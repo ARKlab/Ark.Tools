@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NodaTime;
 using NodaTime.Calendars;
 
@@ -28,7 +29,7 @@ namespace Ark.Tools.Nodatime
         public static LocalDate FirstDayOfTheQuarter(this LocalDate date)
         {
             Ensure.Bool.IsTrue(date.Calendar == CalendarSystem.Iso);
-            return new LocalDate(date.Year, (int)((date.Month - 1) / 3) * 3 + 1, 1, date.Calendar);
+            return new LocalDate(date.Year, (date.Month - 1) / 3 * 3 + 1, 1, date.Calendar);
         }
 
 
@@ -37,9 +38,9 @@ namespace Ark.Tools.Nodatime
             Ensure.Bool.IsTrue(date.Calendar == CalendarSystem.Iso);
             if (date.Month >= 10)
                 return new LocalDate(date.Year, 10, 1, date.Calendar);
-            else if(date.Month < 4)
-                return new LocalDate(date.Year-1, 10, 1, date.Calendar);
-            else 
+            else if (date.Month < 4)
+                return new LocalDate(date.Year - 1, 10, 1, date.Calendar);
+            else
                 return new LocalDate(date.Year, 4, 1, date.Calendar);
         }
 
@@ -75,7 +76,7 @@ namespace Ark.Tools.Nodatime
         {
             Ensure.Bool.IsTrue(date.Calendar == CalendarSystem.Iso);
             if (date.Month >= 10)
-                return new LocalDate(date.Year+1, 3, 31, date.Calendar);
+                return new LocalDate(date.Year + 1, 3, 31, date.Calendar);
             else if (date.Month < 4)
                 return new LocalDate(date.Year, 3, 31, date.Calendar);
             else

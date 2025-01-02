@@ -1,16 +1,20 @@
 ﻿// Copyright (c) 2018 Ark S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
-using System.Globalization;
-
 using Ark.Tools.Nodatime;
+
 using Newtonsoft.Json;
+
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
 using NodaTime.Text;
 
+using System;
+using System.Diagnostics;
+using System.Globalization;
+
 namespace Ark.Tasks
 {
+    [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
     public struct Resource : IEquatable<Resource>
     {
         public Resource(string provider, string id)
@@ -27,7 +31,7 @@ namespace Ark.Tasks
             return new Resource(provider, resourceId);
         }
 
-        public bool Equals(Resource other)
+        public readonly bool Equals(Resource other)
         {
             return string.Equals(Provider, other.Provider, StringComparison.InvariantCultureIgnoreCase)
                 && string.Equals(Id, other.Id, StringComparison.InvariantCultureIgnoreCase);
@@ -43,7 +47,7 @@ namespace Ark.Tasks
             return !x.Equals(y);
         }
 
-        public override bool Equals(object? obj)
+        public override readonly bool Equals(object? obj)
         {
             if (!(obj is Resource resource))
                 return false;
@@ -51,26 +55,31 @@ namespace Ark.Tasks
             return Equals(resource);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
                 int hash = 7243;
-                hash = hash * 92821 + Provider.ToLowerInvariant().GetHashCode();
-                hash = hash * 92821 + Id.ToLowerInvariant().GetHashCode();
+                hash = hash * 92821 + StringComparer.OrdinalIgnoreCase.GetHashCode(Provider);
+                hash = hash * 92821 + StringComparer.OrdinalIgnoreCase.GetHashCode(Id);
                 return hash;
             }
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return string.Format(CultureInfo.InvariantCulture, "{0}.{1}", Provider, Id);
+        }
+
+        private readonly string GetDebuggerDisplay()
+        {
+            return ToString();
         }
     }
 
     internal sealed class ZonedDateTimeTzdbConverter : JsonConverter
     {
-        private JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
+        private readonly JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
                 ZonedDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<G> z", DateTimeZoneProviders.Tzdb)
             , x =>
             {
@@ -101,17 +110,17 @@ namespace Ark.Tasks
         [JsonConverter(typeof(ZonedDateTimeTzdbConverter))]
         public ZonedDateTime SliceStart;
 
-        public Slice MoveDays(int days)
+        public readonly Slice MoveDays(int days)
         {
             return Slice.From(SliceStart.LocalDateTime.PlusDays(days).InZoneLeniently(SliceStart.Zone));
         }
 
-        public Slice MoveAtStartOfWeek(IsoDayOfWeek dayOfWeek = IsoDayOfWeek.Monday)
+        public readonly Slice MoveAtStartOfWeek(IsoDayOfWeek dayOfWeek = IsoDayOfWeek.Monday)
         {
             return Slice.From(SliceStart.LocalDateTime.Date.FirstDayOfTheWeek(dayOfWeek).AtMidnight().InZoneLeniently(SliceStart.Zone));
         }
 
-        public Slice MoveAtStartOfMonth()
+        public readonly Slice MoveAtStartOfMonth()
         {
             return Slice.From(SliceStart.LocalDateTime.Date.FirstDayOfTheMonth().AtMidnight().InZoneLeniently(SliceStart.Zone));
         }
@@ -126,7 +135,7 @@ namespace Ark.Tasks
             return new Slice(start.AtMidnight().InZoneStrictly(DateTimeZoneProviders.Tzdb[timezone]));
         }
 
-        public bool Equals(Slice other)
+        public readonly bool Equals(Slice other)
         {
             return SliceStart == other.SliceStart;
         }
@@ -141,7 +150,7 @@ namespace Ark.Tasks
             return !x.Equals(y);
         }
 
-        public override bool Equals(object? obj)
+        public override readonly bool Equals(object? obj)
         {
             if (!(obj is Slice))
                 return false;
@@ -149,12 +158,12 @@ namespace Ark.Tasks
             return Equals((Slice)obj);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             return SliceStart.GetHashCode();
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return SliceStart.ToString("F", null);
         }

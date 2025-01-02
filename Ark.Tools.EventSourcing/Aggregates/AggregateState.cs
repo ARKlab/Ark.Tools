@@ -10,10 +10,11 @@ namespace Ark.Tools.EventSourcing.Aggregates
         internal string _identifier = string.Empty;
         internal long _version;
 
-        public string Identifier 
+        public string Identifier
         {
             get { return _identifier; }
-            set {
+            set
+            {
                 if (_isRootManaged)
                     throw new InvalidOperationException($"Cannot set Identifier when AggregateState is managed by an AggregateRoot");
                 _identifier = value;

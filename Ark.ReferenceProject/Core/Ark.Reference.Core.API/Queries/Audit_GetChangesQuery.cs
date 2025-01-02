@@ -1,6 +1,6 @@
-﻿using Ark.Tools.Solid;
+﻿using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Common.Services.Audit.Dto;
-using Ark.Reference.Common.Services.Audit;
+using Ark.Tools.Solid;
 
 namespace Ark.Reference.Core.API.Queries
 {

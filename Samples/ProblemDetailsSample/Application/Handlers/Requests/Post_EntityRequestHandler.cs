@@ -1,7 +1,10 @@
 ﻿using Ark.Tools.Solid;
+
 using EnsureThat;
+
 using ProblemDetailsSample.Api.Requests;
 using ProblemDetailsSample.Common.Dto;
+
 using System.Threading;
 using System.Threading.Tasks;
 

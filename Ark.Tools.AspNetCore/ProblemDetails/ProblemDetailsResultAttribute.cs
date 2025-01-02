@@ -1,9 +1,10 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+
+using System;
+using System.Linq;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -33,7 +34,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
             if (badRequest.Value is Microsoft.AspNetCore.Mvc.ProblemDetails details)
             {
                 // keep consistent with asp.net core 2.2 conventions that adds a tracing value
-                ProblemDetailsHelper.SetTraceId(details, context.HttpContext); 
+                ProblemDetailsHelper.SetTraceId(details, context.HttpContext);
             }
         }
 
@@ -45,7 +46,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         {
             var validationErrors = serializableError
                 .Where(x => x.Value is string[])
-                .ToDictionary(x => x.Key, x => (string[])x.Value);
+                .ToDictionary(x => x.Key, x => (string[])x.Value, StringComparer.Ordinal);
 
             return new ValidationProblemDetails(validationErrors);
         }

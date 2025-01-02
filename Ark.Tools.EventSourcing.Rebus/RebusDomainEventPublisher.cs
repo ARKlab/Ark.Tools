@@ -1,9 +1,9 @@
-﻿using System.Threading.Tasks;
-
-using Ark.Tools.EventSourcing.DomainEventPublisher;
+﻿using Ark.Tools.EventSourcing.DomainEventPublisher;
 using Ark.Tools.EventSourcing.Store;
 
 using Rebus.Bus;
+
+using System.Threading.Tasks;
 
 namespace Ark.Tools.DomainEventPublisher.Rebus
 {
@@ -18,7 +18,7 @@ namespace Ark.Tools.DomainEventPublisher.Rebus
 
         public async Task PublishAsync(OutboxEvent @event)
         {
-            await _bus.Publish(@event.GetEvent(), @event.Metadata);
+            await _bus.Publish(@event.GetEvent(), @event.Metadata).ConfigureAwait(false);
         }
     }
 }

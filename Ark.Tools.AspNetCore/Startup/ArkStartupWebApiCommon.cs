@@ -5,12 +5,17 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
 
+using Asp.Versioning;
+
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.OData.NewtonsoftJson;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,10 +34,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
-using Asp.Versioning;
-using Microsoft.AspNetCore.OData;
-using Microsoft.AspNetCore.OData.NewtonsoftJson;
-using Microsoft.AspNetCore.ResponseCompression;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
@@ -43,12 +44,12 @@ namespace Ark.Tools.AspNetCore.Startup
         public Container Container { get; } = new Container();
         public IHostEnvironment HostEnvironment { get; }
 
-        public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
+        protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
             : this(configuration, hostEnvironment, false)
         {
         }
 
-        public ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
+        protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
         {
             Configuration = configuration;
             UseNewtonsoftJson = useNewtonsoftJson;
@@ -69,9 +70,9 @@ namespace Ark.Tools.AspNetCore.Startup
 
             services.AddResponseCompression(options =>
             {
-                 options.EnableForHttps = true;
-                 options.Providers.Add<BrotliCompressionProvider>();
-                 options.Providers.Add<GzipCompressionProvider>();
+                options.EnableForHttps = true;
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
             });
 
             // Add minumum framework services.
@@ -83,7 +84,7 @@ namespace Ark.Tools.AspNetCore.Startup
                     opt.UseCentralRoutePrefix(new RouteAttribute("v{api-version:apiVersion}"));
 
                     if (!HostEnvironment.IsProduction())
-                        opt.Filters.Add(new ArkDefaultExceptionFilter());
+                        opt.Filters.Add(new ArkDefaultExceptionFilterAttribute());
 
                     opt.Conventions.Add(new ArkDefaultConventions());
 
@@ -94,8 +95,8 @@ namespace Ark.Tools.AspNetCore.Startup
                         NoStore = false,
                         VaryByHeader = "Accept,Accept-Encoding,Accept-Language,Authorization"
                     });
-                    opt.Filters.Add(new ModelStateValidationFilter());
-                    opt.Filters.Add(new ETagHeaderBasicSupportFilter());
+                    opt.Filters.Add(new ModelStateValidationFilterAttribute());
+                    opt.Filters.Add(new ETagHeaderBasicSupportFilterAttribute());
                     opt.Filters.Add(new ApiControllerAttribute());
                     opt.ReturnHttpNotAcceptable = true;
                     opt.RespectBrowserAcceptHeader = true;
@@ -124,8 +125,9 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddApiVersioning(o =>
             {
                 o.ReportApiVersions = true;
-                o.AssumeDefaultVersionWhenUnspecified = true;
+                o.RouteConstraintName = "apiVersion";
                 o.DefaultApiVersion = Versions.Last();
+                o.AssumeDefaultVersionWhenUnspecified = true;
             })
             .AddMvc(o =>
             {
@@ -161,6 +163,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.UseAllOfToExtendReferenceSchemas();
 
                 c.CustomOperationIds(x => x.HttpMethod + " " + x.RelativePath);
+                c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
                 c.OperationFilter<DefaultResponsesOperationFilter>();
 
@@ -174,7 +177,7 @@ namespace Ark.Tools.AspNetCore.Startup
                          .Where(subType => subType.IsSubclassOf(t) && !subType.IsGenericTypeDefinition);
                 });
                 c.SupportNonNullableReferenceTypes();
-                
+
                 c.EnableAnnotations();
             });
 

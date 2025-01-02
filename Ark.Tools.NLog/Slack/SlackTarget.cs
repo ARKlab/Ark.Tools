@@ -30,13 +30,14 @@ namespace Ark.Tools.NLog.Slack
         [ArrayParameter(typeof(TargetPropertyWithContext), "field")]
         public IList<TargetPropertyWithContext> Fields => ContextProperties;
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Params are injected by NLog")]
         protected override void InitializeTarget()
         {
             if (String.IsNullOrWhiteSpace(this.WebHookUrl))
-                throw new ArgumentOutOfRangeException("WebHookUrl", "Webhook URL cannot be empty.");
+                throw new ArgumentOutOfRangeException(nameof(WebHookUrl), "Webhook URL cannot be empty.");
 
             if (!Uri.TryCreate(this.WebHookUrl, UriKind.Absolute, out var _))
-                throw new ArgumentOutOfRangeException("WebHookUrl", "Webhook URL is an invalid URL.");
+                throw new ArgumentOutOfRangeException(nameof(WebHookUrl), "Webhook URL is an invalid URL.");
 
             _client = new SlackClient(this.WebHookUrl);
 
@@ -88,7 +89,7 @@ namespace Ark.Tools.NLog.Slack
             var exception = info.LogEvent.Exception;
             if (exception != null)
             {
-                slack.AddAttachment(exception.Message, color, new[] { ($"Type: {exception.GetType()}", exception.StackTrace ?? "N/A") });
+                slack.AddAttachment(exception.Message, color, [($"Type: {exception.GetType()}", exception.StackTrace ?? "N/A")]);
             }
 
             slack.Send(_client ?? throw new InvalidOperationException("SlackClient is null"));
@@ -102,7 +103,7 @@ namespace Ark.Tools.NLog.Slack
                 return "#cccccc";
         }
 
-        private static readonly Dictionary<LogLevel, string> _logLevelSlackColorMap = new Dictionary<LogLevel, string>()
+        private static readonly Dictionary<LogLevel, string> _logLevelSlackColorMap = new()
         {
             { LogLevel.Warn, "warning" },
             { LogLevel.Error, "danger" },

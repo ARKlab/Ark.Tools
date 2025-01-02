@@ -1,9 +1,10 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using SimpleInjector;
-using System.Threading.Tasks;
+
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid.SimpleInjector
 {
@@ -28,7 +29,7 @@ namespace Ark.Tools.Solid.SimpleInjector
         public TResponse Execute<TResponse>(IRequest<TResponse> request)
         {
             dynamic requestHandler = _getHandlerInstance(request);
-            
+
             return requestHandler.Execute((dynamic)request);
         }
 

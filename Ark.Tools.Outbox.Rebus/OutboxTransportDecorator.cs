@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.Rebus
 {
-    internal class OutboxTransportDecorator : ITransport
+    internal sealed class OutboxTransportDecorator : ITransport
     {
         private readonly ITransport _inner;
         internal const string _outgoingMessagesItemsKey = "outbox-outgoing-messages";
@@ -46,14 +46,14 @@ namespace Ark.Tools.Outbox.Rebus
 
                     return messages;
                 });
-                
+
 
                 outgoingMessages.Enqueue(new OutboxMessage
                 {
                     Body = message.Body,
                     // in case of multiple subscribers and with distributed subscription store (InMemory and few other Transports)
                     // the same TransportMessage is Send() to different 'destinationAddresses' thus the need to clone the Headers
-                    Headers = new Dictionary<string, string>(message.Headers)
+                    Headers = new Dictionary<string, string>(message.Headers, System.StringComparer.Ordinal)
                     {
                         {_outboxRecepientHeader,destinationAddress  }
                     }

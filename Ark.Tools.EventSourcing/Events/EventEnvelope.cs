@@ -8,7 +8,7 @@ namespace Ark.Tools.EventSourcing.Events
         public T Event { get; }
         public IMetadata Metadata { get; }
 
-        public EventEnvelope(T @event, IMetadata metadata)
+        protected EventEnvelope(T @event, IMetadata metadata)
         {
             Ensure.Any.IsNotNull(@event);
             Event = @event;

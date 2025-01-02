@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Renci.SshNet;
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-using Renci.SshNet;
+using Client = Renci.SshNet.SftpClient;
 
 namespace Ark.Tools.FtpClient.SftpClient
 {
-    using Client = Renci.SshNet.SftpClient;
     public static class SftpClientAsyncExtensions
     {
         /// <summary>
@@ -134,7 +135,7 @@ namespace Ark.Tools.FtpClient.SftpClient
                 client.EndSynchronizeDirectories,
                 creationOptions, scheduler ?? factory.Scheduler ?? TaskScheduler.Current);
         }
-        
+
         /// <summary>
         /// Asynchronously run a command.
         /// </summary>

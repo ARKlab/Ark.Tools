@@ -23,7 +23,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            if (bindingContext == null) throw new ArgumentNullException(nameof(bindingContext));
+            ArgumentNullException.ThrowIfNull(bindingContext);
 
             string modelBindingKey;
             if (bindingContext.IsTopLevelObject)
@@ -74,7 +74,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
         public IModelBinder? GetBinder(ModelBinderProviderContext context)
         {
-            if (context == null) throw new ArgumentNullException(nameof(context));
+            ArgumentNullException.ThrowIfNull(context);
 
             // Do not use this provider for binding simple values
             if (!context.Metadata.IsComplexType)
@@ -82,7 +82,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
             // Do not use this provider if the binding target is not a property
             var propName = context.Metadata.PropertyName;
-            if (propName == null) 
+            if (propName == null)
                 return null;
 
             var propInfo = context.Metadata.ContainerType?.GetProperty(propName);

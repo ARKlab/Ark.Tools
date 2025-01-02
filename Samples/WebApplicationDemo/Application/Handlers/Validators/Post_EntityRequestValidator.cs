@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+
 using WebApplicationDemo.Api.Requests;
 
 namespace WebApplicationDemo.Application.Handlers.Vaildators

@@ -1,9 +1,10 @@
 ﻿using Ark.Tools.EventSourcing.Events;
+
 using System.Collections.Generic;
 
 namespace Ark.Tools.EventSourcing.Store
 {
-	public interface IOutboxEvent
+    public interface IOutboxEvent
     {
         string Id { get; }
         Dictionary<string, string> Metadata { get; }

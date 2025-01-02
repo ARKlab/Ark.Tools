@@ -1,8 +1,11 @@
 ﻿using Ark.Tools.Core;
 using Ark.Tools.Solid;
+
 using Rebus.Messages;
 using Rebus.Pipeline;
+
 using SimpleInjector;
+
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -10,11 +13,11 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus
 {
-	[StepDocumentation("Automatically flow UserId and UserEmail from context into a header if possible")]
+    [StepDocumentation("Automatically flow UserId and UserEmail from context into a header if possible")]
     public class UserFlowStep : IOutgoingStep, IIncomingStep
     {
         private readonly Container _container;
-        private static readonly char[] _separator = new[] { ',' };
+        private static readonly char[] _separator = [','];
 
         public UserFlowStep(Container container)
         {
@@ -60,7 +63,7 @@ namespace Ark.Tools.Rebus
                 }
             }
 
-            await next();
+            await next().ConfigureAwait(false);
         }
 
         public async Task Process(IncomingStepContext context, Func<Task> next)
@@ -88,10 +91,10 @@ namespace Ark.Tools.Rebus
                         roles.Split(_separator, StringSplitOptions.RemoveEmptyEntries)
                             .Select(x => new Claim(ClaimTypes.Role, x)));
 
-                context.Save(new ClaimsPrincipal(new[] { identity }));
+                context.Save(new ClaimsPrincipal([identity]));
             }
 
-            await next();
+            await next().ConfigureAwait(false);
         }
     }
 }

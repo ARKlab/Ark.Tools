@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using NodaTime;
+
 using System;
 using System.Globalization;
 
@@ -18,7 +20,7 @@ namespace Ark.Tools.Nodatime.Json
             return objectType == _type || objectType == _nullableType;
         }
 
-        private class Surrogate
+        private sealed class Surrogate
         {
             public LocalDate Start { get; set; }
             public LocalDate End { get; set; }
@@ -57,12 +59,12 @@ namespace Ark.Tools.Nodatime.Json
         {
             if (value == null)
             {
-                throw new ArgumentNullException(nameof(value));
+                throw new JsonWriterException(nameof(value));
             }
 
             if (!(value is LocalDateRange || value is Nullable<LocalDateRange>))
             {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateRange).FullName, value.GetType().FullName));
+                throw new JsonWriterException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateRange).FullName, value.GetType().FullName));
             }
 
             LocalDateRange? r = null;
@@ -79,7 +81,8 @@ namespace Ark.Tools.Nodatime.Json
             if (r.HasValue)
             {
                 serializer.Serialize(writer, new Surrogate { Start = r.Value.Start, End = r.Value.End });
-            } else
+            }
+            else
             {
                 writer.WriteNull();
             }

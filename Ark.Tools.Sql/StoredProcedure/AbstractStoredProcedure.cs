@@ -24,7 +24,7 @@ namespace Ark.Tools.Sql.StoredProcedure
 
         public async Task<TResult?> ExecuteAsync(TParameter param)
         {
-            LastResult = await ExecuteImplAsync(Transaction, param);
+            LastResult = await ExecuteImplAsync(Transaction, param).ConfigureAwait(false);
             return LastResult;
         }
 
@@ -50,7 +50,7 @@ namespace Ark.Tools.Sql.StoredProcedure
 
         public async Task<TResult?> ExecuteAsync()
         {
-            LastResult = await ExecuteImplAsync(Transaction);
+            LastResult = await ExecuteImplAsync(Transaction).ConfigureAwait(false);
             return LastResult;
         }
 

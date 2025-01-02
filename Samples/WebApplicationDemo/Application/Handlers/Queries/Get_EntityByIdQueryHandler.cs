@@ -1,11 +1,17 @@
 ﻿using Ark.Tools.Solid;
+
 using EnsureThat;
-using WebApplicationDemo.Dto;
+
+using NLog;
+
+using NodaTime;
+
+using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using NLog;
-using System.Collections.Generic;
-using NodaTime;
+
+using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Api.Queries
 {
@@ -21,9 +27,9 @@ namespace WebApplicationDemo.Api.Queries
         public async Task<Entity.V1.Output?> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)
         {
             EnsureArg.IsNotNull(query, nameof(query));
-            
-            if (query.EntityId == "null") 
-				return null;
+
+            if (query.EntityId == "null")
+                return null;
 
             var entity = new Entity.V1.Output()
             {
@@ -31,14 +37,14 @@ namespace WebApplicationDemo.Api.Queries
                 Date = NodaTime.SystemClock.Instance.GetCurrentInstant().InUtc().Date,
                 EntityResult = EntityResult.Success1 | EntityResult.Success2,
                 EntityTest = EntityTest.Prova1,
-                Strings = new Ark.Tools.Core.ValueCollection<string>() { "antani" },
+                Strings = new Ark.Tools.Core.ValueCollection<string>(System.StringComparer.Ordinal) { "antani" },
                 Ts = new Dictionary<LocalDate, double?>
                 {
                     { NodaTime.SystemClock.Instance.GetCurrentInstant().InUtc().Date, null }
                 }
             };
 
-            _logger.Info("Entity {EntityId} found!", entity.EntityId);
+            _logger.Info(CultureInfo.InvariantCulture, "Entity {EntityId} found!", entity.EntityId);
 
             return await Task.FromResult(entity);
         }

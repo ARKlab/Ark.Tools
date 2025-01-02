@@ -4,10 +4,10 @@ using System;
 
 namespace Ark.Tools.AspNetCore.NestedStartup
 {
-    internal class BranchedServiceProvider : IServiceProvider
+    internal sealed class BranchedServiceProvider : IServiceProvider
     {
-        private IServiceProvider _parentService;
-        private IServiceProvider _service;
+        private readonly IServiceProvider _parentService;
+        private readonly IServiceProvider _service;
 
         public BranchedServiceProvider(IServiceProvider parentService, IServiceProvider service)
         {

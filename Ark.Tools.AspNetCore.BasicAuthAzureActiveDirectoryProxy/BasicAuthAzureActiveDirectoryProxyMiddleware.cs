@@ -62,8 +62,8 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                             string username = parts[0];
                             string password = parts[1];
 
-                            using var content = new FormUrlEncodedContent(new[]
-                                {
+                            using var content = new FormUrlEncodedContent(
+                                [
                                     new KeyValuePair<string, string>("resource", _config.Resource ?? string.Empty),
                                     new KeyValuePair<string, string>("client_id", _config.ProxyClientId ?? string.Empty),
                                     new KeyValuePair<string, string>("grant_type", "password"),
@@ -71,20 +71,21 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                                     new KeyValuePair<string, string>("password", password),
                                     new KeyValuePair<string, string>("scope", "openid"),
                                     new KeyValuePair<string, string>("client_secret", _config.ProxyClientSecret ?? string.Empty),
-                                });
+                                ]);
 
                             var url = $"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token";
 
                             var result = await Policy
                                 .Handle<Exception>()
                                 .RetryAsync(2)
-                                .ExecuteAsync(async ct => {
-                                    using var res = await _client.PostAsync(url, content, context.RequestAborted);
+                                .ExecuteAsync(async ct =>
+                                {
+                                    using var res = await _client.PostAsync(url, content, context.RequestAborted).ConfigureAwait(false);
                                     res.EnsureSuccessStatusCode();
 
-                                    var payload = await res.Content.ReadAsStringAsync(context.RequestAborted);
+                                    var payload = await res.Content.ReadAsStringAsync(context.RequestAborted).ConfigureAwait(false);
                                     return JsonConvert.DeserializeObject<OAuthResult>(payload);
-                                }, context.RequestAborted, true);
+                                }, context.RequestAborted, true).ConfigureAwait(false);
 
                             context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";
                         }
@@ -95,10 +96,10 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
 
             }
 
-            await _next(context);
+            await _next(context).ConfigureAwait(false);
         }
 
-        class OAuthResult
+        record OAuthResult
         {
             public string? Token_Type { get; set; }
             public string? Scope { get; set; }

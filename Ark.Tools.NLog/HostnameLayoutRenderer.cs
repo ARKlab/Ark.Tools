@@ -40,7 +40,8 @@ namespace Ark.Tools.NLog
                     if (dns is not null)
                         this.HostName = dns + "@" + this.HostName;
 
-                } catch { /* if we cannot get hostname - ignore */ }
+                }
+                catch { /* if we cannot get hostname - ignore */ }
             }
             catch (Exception exception)
             {

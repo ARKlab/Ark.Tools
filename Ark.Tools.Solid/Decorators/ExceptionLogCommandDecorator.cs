@@ -1,7 +1,9 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NLog;
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,8 +40,9 @@ namespace Ark.Tools.Solid.Decorators
         {
             try
             {
-                await _decorated.ExecuteAsync(command, ctk);
-            } catch (Exception ex)
+                await _decorated.ExecuteAsync(command, ctk).ConfigureAwait(false);
+            }
+            catch (Exception ex)
             {
                 Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
                 logger.Error(ex, "Exception occured");

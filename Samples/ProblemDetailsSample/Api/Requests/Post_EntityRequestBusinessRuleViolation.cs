@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.Solid;
+
 using ProblemDetailsSample.Common.Dto;
 
 namespace ProblemDetailsSample.Api.Requests

@@ -3,21 +3,22 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
+
 using System;
 
 namespace Ark.Tools.AspNetCore
 {
     [System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-    public sealed class SkipModelStateValidationFilter : Attribute
+    public sealed class SkipModelStateValidationFilterAttribute : Attribute
     {
     }
 
-    public class ModelStateValidationFilter : ActionFilterAttribute
+    public class ModelStateValidationFilterAttribute : ActionFilterAttribute
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             if (context.ActionDescriptor is ControllerActionDescriptor cad &&
-                cad.MethodInfo.GetCustomAttributes(typeof(SkipModelStateValidationFilter), true).Length > 0)
+                cad.MethodInfo.GetCustomAttributes(typeof(SkipModelStateValidationFilterAttribute), true).Length > 0)
                 return;
 
             if (!context.ModelState.IsValid)

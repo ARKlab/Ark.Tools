@@ -1,16 +1,15 @@
-﻿using Ark.Tools.Solid;
-
-using Ark.Reference.Core.API.Queries;
+﻿using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.Core;
+using Ark.Tools.Solid;
 
 using EnsureThat;
+
 using System.Threading;
 using System.Threading.Tasks;
 
-using Ark.Tools.Core;
-
-namespace Core.Services.Application.Handlers.Queries
+namespace Ark.Reference.Core.Application.Handlers.Queries
 {
     public class Ping_GetByFiltersHandler : IQueryHandler<Ping_GetByFiltersQuery.V1, PagedResult<Ping.V1.Output>>
     {

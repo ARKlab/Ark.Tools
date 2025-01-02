@@ -1,12 +1,13 @@
 ﻿using Ark.Tools.EventSourcing.Events;
+
 using System.Collections.Generic;
 
 namespace Ark.Tools.EventSourcing.Store
 {
-	public abstract class OutboxEvent : IOutboxEvent
+    public abstract class OutboxEvent : IOutboxEvent
     {
         public string Id { get; set; } = string.Empty;
-        public Dictionary<string, string> Metadata { get; set; } = new();
+        public Dictionary<string, string> Metadata { get; set; } = new(System.StringComparer.Ordinal);
 
         public abstract void SetEvent(object @event);
         public abstract object GetEvent();

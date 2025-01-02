@@ -1,7 +1,6 @@
-﻿using Ark.Tools.Core.EntityTag;
-
-using Ark.Reference.Core.Common;
+﻿using Ark.Reference.Core.Common;
 using Ark.Reference.Core.Tests.Auth;
+using Ark.Tools.Core.EntityTag;
 
 using FluentAssertions;
 using FluentAssertions.Execution;
@@ -11,12 +10,12 @@ using Flurl.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+using Reqnroll;
+
 using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
-
-using Reqnroll;
 
 namespace Ark.Reference.Core.Tests
 {
@@ -75,7 +74,7 @@ namespace Ark.Reference.Core.Tests
 
         public void Get(string[] requestUriParts, EntityTagHeaderValue? e)
         {
-            var req = _client.Request(new[] { _version });
+            var req = _client.Request([_version]);
 
             foreach (var part in requestUriParts)
                 req.AppendPathSegment(part, true);

@@ -1,20 +1,19 @@
-﻿using Ark.Tools.Core;
-
-using Ark.Reference.Core.Common.Dto;
+﻿using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.Core;
 
 using FluentAssertions;
 
 using Flurl;
 
-using System.Collections.Generic;
-
 using Reqnroll;
 using Reqnroll.Assist;
+
+using System.Collections.Generic;
 
 namespace Ark.Reference.Core.Tests.Features
 {
     [Binding]
-    class PingSteps
+    sealed class PingSteps
     {
         //** Common section **
         private readonly TestClient _client;
@@ -22,7 +21,7 @@ namespace Ark.Reference.Core.Tests.Features
 
         //** Entity related private section **
         private Ping.V1.Output? _output;
-        private readonly Dictionary<string, int> _entityNameId = new();
+        private readonly Dictionary<string, int> _entityNameId = new(System.StringComparer.Ordinal);
 
         public PingSteps(TestClient client)
         {
@@ -41,7 +40,7 @@ namespace Ark.Reference.Core.Tests.Features
         {
             var res = _client.ReadAs<string>();
 
-            expected.Should().Be(res);  
+            expected.Should().Be(res);
         }
 
 

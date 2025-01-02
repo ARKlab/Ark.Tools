@@ -3,8 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Emit;
 using System.Reflection;
+using System.Reflection.Emit;
 
 namespace Ark.Tools.Core.Reflection
 {
@@ -101,7 +101,7 @@ namespace Ark.Tools.Core.Reflection
             propertyGetGenerator.Emit(OpCodes.Ret);
 
             // Define the 'set' accessor method.
-            MethodBuilder setMethodBuilder = typeBuilder.DefineMethod($"set_{propertyName}", getSetAttributes, null, new Type[] { propertyType });
+            MethodBuilder setMethodBuilder = typeBuilder.DefineMethod($"set_{propertyName}", getSetAttributes, null, [propertyType]);
             ILGenerator propertySetGenerator = setMethodBuilder.GetILGenerator();
             propertySetGenerator.Emit(OpCodes.Ldarg_0);
             propertySetGenerator.Emit(OpCodes.Ldarg_1);

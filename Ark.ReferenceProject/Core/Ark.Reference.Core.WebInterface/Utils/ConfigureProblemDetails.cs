@@ -1,4 +1,5 @@
 ﻿using Hellang.Middleware.ProblemDetails;
+
 using Microsoft.Extensions.Options;
 
 namespace Ark.Reference.Core.WebInterface.Utils

@@ -13,10 +13,10 @@ namespace Ark.Tools.EventSourcing.Aggregates
             where TEvent : IAggregateEvent<TAggregate>
         {
             public static string Name { get; } = _getName();
-            private static string _getName() 
+            private static string _getName()
                 => typeof(TEvent)
                 .GetTypeInfo()
-                .GetCustomAttributes<EventNameAttribute>().SingleOrDefault()?.Name 
+                .GetCustomAttributes<EventNameAttribute>().SingleOrDefault()?.Name
                 ?? typeof(TEvent).Name;
         }
 

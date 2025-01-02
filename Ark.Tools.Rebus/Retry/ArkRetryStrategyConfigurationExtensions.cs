@@ -1,8 +1,8 @@
 ﻿using Rebus.Config;
 using Rebus.Logging;
 using Rebus.Messages;
-using Rebus.Retry.FailFast;
 using Rebus.Retry;
+using Rebus.Retry.FailFast;
 using Rebus.Retry.Simple;
 
 using System.Threading;
@@ -34,11 +34,11 @@ namespace Ark.Tools.Rebus.Retry
         )
         {
             optionsConfigurer.RetryStrategy(
-                errorQueueName, 
-                maxDeliveryAttempts, 
-                secondLevelRetriesEnabled, 
-                errorDetailsHeaderMaxLength, 
-                errorTrackingMaxAgeMinutes, 
+                errorQueueName,
+                maxDeliveryAttempts,
+                secondLevelRetriesEnabled,
+                errorDetailsHeaderMaxLength,
+                errorTrackingMaxAgeMinutes,
                 errorQueueErrorCooldownTimeSeconds);
 
             //ArkDefault --> IRetryStrategy

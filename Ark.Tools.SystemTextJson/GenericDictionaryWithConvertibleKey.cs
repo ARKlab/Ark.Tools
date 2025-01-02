@@ -20,11 +20,11 @@ namespace Ark.Tools.SystemTextJson
             }
             else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IDictionary<,>))) != null)
             {
-                keyType = actualTypeToConvert.GetGenericArguments()[0];                
+                keyType = actualTypeToConvert.GetGenericArguments()[0];
             }
             else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IReadOnlyDictionary<,>))) != null)
             {
-                keyType = actualTypeToConvert.GetGenericArguments()[0];                
+                keyType = actualTypeToConvert.GetGenericArguments()[0];
             }
 
             if (keyType != null && keyType != typeof(string))
@@ -60,7 +60,7 @@ namespace Ark.Tools.SystemTextJson
                         .MakeGenericType(keyType, elementType);
                 else
                     converterType = typeof(IDictionaryBaseConverter<,,>)
-                        .MakeGenericType(typeToConvert, keyType, elementType);                
+                        .MakeGenericType(typeToConvert, keyType, elementType);
             }
             else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IReadOnlyDictionary<,>))) != null)
             {

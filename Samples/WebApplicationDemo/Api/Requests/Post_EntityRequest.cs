@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.Solid;
+
 using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Api.Requests
@@ -13,7 +14,7 @@ namespace WebApplicationDemo.Api.Requests
                 EntityId = input.EntityId;
                 _ETag = input._ETag;
                 Strings = input.Strings;
-                Ts= input.Ts;
+                Ts = input.Ts;
                 EntityResult = input.EntityResult;
                 EntityTest = input.EntityTest;
             }

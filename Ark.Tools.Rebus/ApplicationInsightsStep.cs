@@ -51,18 +51,16 @@ namespace Ark.Tools.Rebus
             activity.AddBaggage(Headers.MessageId, messageId);
             activity.AddBaggage(Headers.CorrelationId, correlationId);
 
-            using (var operation = client.StartOperation<RequestTelemetry>(activity))
+            using var operation = client.StartOperation<RequestTelemetry>(activity);
+            try
             {
-                try
-                {
-                    await next();
-                }
-                catch (Exception ex)
-                {
-                    operation.Telemetry.Success = false;
-                    client.TrackException(ex);
-                    throw;
-                }
+                await next().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                operation.Telemetry.Success = false;
+                client.TrackException(ex);
+                throw;
             }
         }
 
@@ -106,7 +104,7 @@ namespace Ark.Tools.Rebus
 
             return true;
         }
-        
+
         public Task Process(OutgoingStepContext context, Func<Task> next)
         {
             // Flowing the ActivityId isn't really required as most .net libraries (ie. Azure Service Bus) do inject and instrument it already.

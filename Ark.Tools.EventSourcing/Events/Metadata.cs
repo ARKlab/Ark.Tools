@@ -5,7 +5,7 @@ namespace Ark.Tools.EventSourcing.Events
 {
     public class Metadata : IMetadata
     {
-        private MetadataContainer _container;
+        private readonly MetadataContainer _container;
 
         public Metadata()
             : this(new MetadataContainer())

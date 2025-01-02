@@ -1,11 +1,13 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
 using Hellang.Middleware.ProblemDetails;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+
+using System;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
@@ -62,7 +64,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
         /// A marker class used to determine if the required services were added
         /// to the <see cref="IServiceCollection"/> before the middleware is configured.
         /// </summary>
-        private class ArkProblemDetailsDescriptorMarkerService
+        private sealed class ArkProblemDetailsDescriptorMarkerService
         {
         }
 

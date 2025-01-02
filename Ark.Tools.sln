@@ -92,6 +92,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tasks", "Ark.Tasks\Ark.Tasks.csproj", "{5BFAD7B8-CEC3-483D-869C-A1067B0582B9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{51BE8F4C-F38A-4C74-8D20-94E9E5D2F902}"
+	ProjectSection(SolutionItems) = preProject
+		Samples\.editorconfig = Samples\.editorconfig
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProblemDetailsSample", "Samples\ProblemDetailsSample\ProblemDetailsSample.csproj", "{52218CB0-2FE8-4CA2-9AA0-C81E5C5ADBA5}"
 EndProject

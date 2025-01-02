@@ -1,9 +1,8 @@
-﻿using Ark.Tools.Core;
+﻿using Ark.Reference.Common.Auth;
+using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using Dapper;
-
-using Ark.Reference.Common.Auth;
 
 using FluentValidation;
 
@@ -44,12 +43,12 @@ namespace Ark.Reference.Common
         public static string[] CompileSorts(this IEnumerable<string> sorts, Dictionary<string, string> validCols, string defaultValue)
         {
             return (sorts ?? Enumerable.Empty<string>())
-                .Select(s => Regex.Match(s, "^(\\S+)(\\s(asc|desc))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                .Select(s => Regex.Match(s, "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)))
                 .Where(s => s.Success)
                 .Join(validCols
-                    , s => s.Groups[1].Value.ToLowerInvariant()
+                    , s => s.Groups["col"].Value.ToLowerInvariant()
                     , d => d.Key.ToLowerInvariant()
-                    , (s, i) => i.Value + s.Groups[2].Value)
+                    , (s, i) => i.Value + s.Groups["dir"].Value, StringComparer.Ordinal)
                 .DefaultIfEmpty(defaultValue)
                 .ToArray();
         }
@@ -140,7 +139,7 @@ namespace Ark.Reference.Common
         }
     }
 
-    
+
 
 
 }

@@ -6,6 +6,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>
     <Nullable>enable</Nullable>
+
+	  <Features>strict</Features>
+	  <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
   </PropertyGroup>
 
     <PropertyGroup>
@@ -40,7 +43,23 @@
     
     <DebugType>portable</DebugType>
 	<DebugSymbols>true</DebugSymbols>
+
   </PropertyGroup>
+
+
+	<PropertyGroup Label="NuGet Audit">
+		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
+		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
+		<NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
+		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
+		<Features>strict</Features>
+		<RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+		<Deterministic>true</Deterministic>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<None Include="..\ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
@@ -61,6 +80,12 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
+
+		<PackageReference Include="Meziantou.Analyzer" Version="2.0.184">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+		
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">

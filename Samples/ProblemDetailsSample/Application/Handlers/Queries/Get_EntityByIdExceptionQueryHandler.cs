@@ -1,5 +1,7 @@
 ﻿using Ark.Tools.Solid;
+
 using ProblemDetailsSample.Common.Dto;
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +17,7 @@ namespace ProblemDetailsSample.Api.Queries
 
         public Task<Entity.V1.Output> ExecuteAsync(Get_EntityByIdExceptionQuery.V1 query, CancellationToken ctk = default)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

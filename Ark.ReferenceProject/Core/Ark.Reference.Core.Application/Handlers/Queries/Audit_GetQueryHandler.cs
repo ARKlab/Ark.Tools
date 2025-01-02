@@ -1,17 +1,16 @@
-﻿using Ark.Tools.Core;
-using Ark.Tools.Solid;
-
+﻿using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Core;
+using Ark.Tools.Solid;
 
-using Ark.Reference.Common.Services.Audit;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries
 {
-    internal class Audit_GetQueryHandler : IQueryHandler<Audit_GetQuery.V1, PagedResult<AuditDto<AuditKind>>>
+    internal sealed class Audit_GetQueryHandler : IQueryHandler<Audit_GetQuery.V1, PagedResult<AuditDto<AuditKind>>>
     {
         private readonly ICoreDataContextFactory _dataContext;
 

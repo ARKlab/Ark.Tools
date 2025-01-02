@@ -1,5 +1,6 @@
-﻿using System;
-using Dapper;
+﻿using Dapper;
+
+using System;
 
 namespace Ark.Tools.Nodatime.Dapper
 {
@@ -11,9 +12,9 @@ namespace Ark.Tools.Nodatime.Dapper
         public static void Setup(InstantHandlerType instantHandlerType)
         {
             NodeTimeConverter.Register();
-            
+
             switch (instantHandlerType)
-            {                
+            {
                 case InstantHandlerType.Int64Ticks:
                     SqlMapper.AddTypeHandler(InstantTickHandler.Instance);
                     break;
@@ -31,7 +32,7 @@ namespace Ark.Tools.Nodatime.Dapper
                     break;
 
                 default:
-                    throw new NotImplementedException();
+                    throw new NotSupportedException();
             }
 
             SqlMapper.AddTypeHandler(LocalDateHandler.Instance);

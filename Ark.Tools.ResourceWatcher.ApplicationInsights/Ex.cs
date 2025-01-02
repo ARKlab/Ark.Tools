@@ -1,10 +1,12 @@
-﻿using Microsoft.ApplicationInsights.Extensibility;
+﻿using Ark.Tools.ApplicationInsights.HostedService;
+
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Ark.Tools.ApplicationInsights.HostedService;
-using System.Threading.Tasks;
+
 using System.Threading;
-using Microsoft.ApplicationInsights;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 {
@@ -21,7 +23,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 });
         }
 
-        private class StartTelemetryHack : IHostedService
+        private sealed class StartTelemetryHack : IHostedService
         {
 #pragma warning disable IDE0052 // Remove unread private members
             private readonly TelemetryClient _client;

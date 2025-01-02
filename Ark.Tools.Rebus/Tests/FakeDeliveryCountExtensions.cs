@@ -4,6 +4,7 @@ using Rebus.Transport;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -51,7 +52,7 @@ namespace MET.International.Common.Rebus.Tests
             bool hasNext = true;
             int v = 1;
 
-            int next() 
+            int next()
             {
                 lock (gate)
                 {
@@ -73,12 +74,12 @@ namespace MET.International.Common.Rebus.Tests
 
                     return v;
                 }
-            };
+            }
 
             configurer.UseFakeDeliveryCount(next);
         }
 
-        private class FakeDeliveryCountDecorator : ITransport
+        private sealed class FakeDeliveryCountDecorator : ITransport
         {
             private readonly ITransport _inner;
             private readonly Func<int> _count;
@@ -98,9 +99,9 @@ namespace MET.International.Common.Rebus.Tests
 
             public async Task<TransportMessage?> Receive(ITransactionContext context, CancellationToken cancellationToken)
             {
-                var m = await _inner.Receive(context, cancellationToken);
-                if (m!= null)
-                    m.Headers["rbs-deliverycount"] = _count().ToString();
+                var m = await _inner.Receive(context, cancellationToken).ConfigureAwait(false);
+                if (m != null)
+                    m.Headers[Headers.DeferCount] = _count().ToString(CultureInfo.InvariantCulture);
                 return m;
             }
 

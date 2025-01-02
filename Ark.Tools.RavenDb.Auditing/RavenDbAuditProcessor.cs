@@ -13,110 +13,108 @@ using System.Threading.Tasks;
 namespace Ark.Tools.RavenDb.Auditing
 {
     public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
-	{
-		private readonly IDocumentStore _store;
-		private readonly List<Task> _subscriptionWorkerTasks = new List<Task>();
-		private CancellationTokenSource? _tokenSource;
-		private readonly object _gate = new object();
-		private readonly HashSet<string> _names = new HashSet<string>();
-		private const string _prefixName= "AuditProcessor";
-		
-		public RavenDbAuditProcessor(IDocumentStore store, IAuditableTypeProvider provider)
-		{
-			_store = store;
+    {
+        private readonly IDocumentStore _store;
+        private readonly List<Task> _subscriptionWorkerTasks = new();
+        private CancellationTokenSource? _tokenSource;
+        private readonly object _gate = new();
+        private readonly HashSet<string> _names = new(StringComparer.Ordinal);
+        private const string _prefixName = "AuditProcessor";
 
-			foreach (var t in provider.TypeList)
-				_names.Add(store.Conventions.GetCollectionName(t));
+        public RavenDbAuditProcessor(IDocumentStore store, IAuditableTypeProvider provider)
+        {
+            _store = store;
 
-		}
+            foreach (var t in provider.TypeList)
+                _names.Add(store.Conventions.GetCollectionName(t));
 
-		public async Task StartAsync(CancellationToken ctk = default)
-		{
-			foreach (var name in _names)
-			{
-				try
-				{
-					var localName = await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions()
-					{
-						Name = _prefixName + name,
-						Query = $@"From {name}(Revisions = true)"
-					}, token:ctk);
-				}
-				catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
-				{
-				}
-			}
+        }
 
-			lock (_gate)
-			{
-				if (_subscriptionWorkerTasks.Count > 0)
-					throw new InvalidOperationException("Already started");
+        public async Task StartAsync(CancellationToken ctk)
+        {
+            foreach (var name in _names)
+            {
+                try
+                {
+                    var localName = await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions()
+                    {
+                        Name = _prefixName + name,
+                        Query = $@"From {name}(Revisions = true)"
+                    }, token: ctk).ConfigureAwait(false);
+                }
+                catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
+                {
+                }
+            }
 
-				_tokenSource = new CancellationTokenSource();
+            lock (_gate)
+            {
+                if (_subscriptionWorkerTasks.Count > 0)
+                    throw new InvalidOperationException("Already started");
 
-				foreach (var name in _names)
-				{
-					_subscriptionWorkerTasks.Add(Task.Run(() => _run(name, _tokenSource.Token), ctk));
-				}
-			}
-		}
+                _tokenSource = new CancellationTokenSource();
 
-		private async Task _run(string name, CancellationToken ctk = default)
-		{
-			int retryCount = 0;
+                foreach (var name in _names)
+                {
+                    _subscriptionWorkerTasks.Add(Task.Run(() => _run(name, _tokenSource.Token), ctk));
+                }
+            }
+        }
 
-			while (!ctk.IsCancellationRequested)
-			{
-				try
-				{
-					retryCount++;
+        private async Task _run(string name, CancellationToken ctk = default)
+        {
+            int retryCount = 0;
 
-					using (var worker = _store.Subscriptions.GetSubscriptionWorker<Revision<dynamic>>(
-					new SubscriptionWorkerOptions(_prefixName + name)
-					{
-						Strategy = SubscriptionOpeningStrategy.WaitForFree,
-						MaxDocsPerBatch = 10,
-					}))
-					{
+            while (!ctk.IsCancellationRequested)
+            {
+                try
+                {
+                    retryCount++;
+                    var worker = _store.Subscriptions.GetSubscriptionWorker<Revision<dynamic>>(
+                    new SubscriptionWorkerOptions(_prefixName + name)
+                    {
+                        Strategy = SubscriptionOpeningStrategy.WaitForFree,
+                        MaxDocsPerBatch = 10,
+                    });
+                    await using (worker.ConfigureAwait(false))
+                    {
+                        await worker.Run(_processAuditChange, ctk).ConfigureAwait(false);
+                    }
+                }
+                catch (TaskCanceledException) { throw; }
+                catch (Exception)
+                {
+                    if (retryCount > 10)
+                        throw new InvalidOperationException($"Task Process for pachting records failed after {retryCount - 1} times");
 
-						await worker.Run(_processAuditChange, ctk);
-					}
-				}
-				catch (TaskCanceledException) { throw; }
-				catch (Exception)
-				{
-					if (retryCount > 10)
-						throw new InvalidOperationException($"Task Process for pachting records failed after {retryCount-1} times"); 
+                    // retry
+                }
+            }
 
-					// retry
-				}
-			}
+        }
 
-		}
+        private async Task _processAuditChange(SubscriptionBatch<Revision<dynamic>> batch)
+        {
+            using var session = _store.OpenAsyncSession();
+            foreach (var e in batch.Items)
+            {
+                if (e.Result?.Current?.AuditId != null) //Delete does not have an audit 
+                {
+                    string? operation = default;
 
-		private async Task _processAuditChange(SubscriptionBatch<Revision<dynamic>> batch)
-		{
-			using (var session = _store.OpenAsyncSession())
-			{
-				foreach (var e in batch.Items)
-				{
-					if (e.Result?.Current?.AuditId != null) //Delete does not have an audit 
-					{
-						string? operation = default;
+                    if (e.Result.Previous != null && e.Result.Current == null)
+                        operation = nameof(Operations.Delete);
+                    else if (e.Result.Previous != null && e.Result.Current != null)
+                        operation = nameof(Operations.Update);
+                    else if (e.Result.Previous == null && e.Result.Current != null)
+                        operation = nameof(Operations.Insert);
 
-						if (e.Result.Previous != null && e.Result.Current == null)
-							operation = Operations.Delete.ToString();
-						else if (e.Result.Previous != null && e.Result.Current != null)
-							operation = Operations.Update.ToString();
-						else if (e.Result.Previous == null && e.Result.Current != null)
-							operation = Operations.Insert.ToString();
-
-						session.Advanced.Defer(new PatchCommandData(
-							id: (string?)e.Result?.Current?.AuditId,
-							changeVector: null,
-							patch: new PatchRequest
-							{
-								Script = @"this.EntityInfo
+                    session.Advanced.Defer(new PatchCommandData(
+                        id: (string?)e.Result?.Current?.AuditId,
+                        changeVector: null,
+                        patch: new PatchRequest
+                        {
+                            Script = @"this.EntityInfo
 											.forEach(eInfo => { 
 												if (eInfo.EntityId == args.Id)
 												{
@@ -126,52 +124,51 @@ namespace Ark.Tools.RavenDb.Auditing
 												}
 											});
 										 ",
-								Values =
-								{
-									{
-										"Cv", e.ChangeVector
-									},
-									{
-										"Id", e.Id
-									},
-									{
-										"LastMod", e.Metadata["@last-modified"]
-									},
-									{
-										"Operation",  operation
-									}
-								}
-							},
-							patchIfMissing: null));
-					}
-				}
+                            Values =
+                            {
+                                    {
+                                        "Cv", e.ChangeVector
+                                    },
+                                    {
+                                        "Id", e.Id
+                                    },
+                                    {
+                                        "LastMod", e.Metadata["@last-modified"]
+                                    },
+                                    {
+                                        "Operation",  operation
+                                    }
+                            }
+                        },
+                        patchIfMissing: null));
+                }
+            }
 
-				await session.SaveChangesAsync();
-			}
-		}
+            await session.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
+        }
 
-		public async Task StopAsync(CancellationToken ctk = default)
-		{
-			List<Task> runtask = new List<Task>();
-			lock (_gate)
-			{
-				_tokenSource?.Cancel();
-				_tokenSource = null;
-				runtask.AddRange(_subscriptionWorkerTasks);
-				_subscriptionWorkerTasks.Clear();
-			}
+        public async Task StopAsync(CancellationToken ctk)
+        {
+            List<Task> runtask = new();
+            lock (_gate)
+            {
+                _tokenSource?.Cancel();
+                _tokenSource = null;
+                runtask.AddRange(_subscriptionWorkerTasks);
+                _subscriptionWorkerTasks.Clear();
+            }
 
-			try
-			{
-				await Task.WhenAll(runtask);
-			}
-			catch (TaskCanceledException) { }
-		}
+            try
+            {
+                await Task.WhenAll(runtask).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException) { }
+        }
 
-		public void Dispose()
-		{
-			_tokenSource?.Cancel();
-			_tokenSource?.Dispose();
-		}
-	}
+        public void Dispose()
+        {
+            _tokenSource?.Cancel();
+            _tokenSource?.Dispose();
+        }
+    }
 }

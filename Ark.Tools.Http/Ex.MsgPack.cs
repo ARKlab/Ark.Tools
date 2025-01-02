@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Flurl;
 using Flurl.Http;
+
 using MessagePack;
+
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,17 +16,18 @@ namespace Ark.Tools.Http
     {
         public static async Task<T?> ReceiveMsgPack<T>(this Task<IFlurlResponse> response, IFormatterResolver formatterResolver)
         {
-            var resp = await response;
+            var resp = await response.ConfigureAwait(false);
             if (resp == null) return default;
 
-            return await GetMsgPackAsync<T>(resp, formatterResolver);
+            return await GetMsgPackAsync<T>(resp, formatterResolver).ConfigureAwait(false);
         }
 
         public static async Task<T?> GetMsgPackAsync<T>(this IFlurlResponse response, IFormatterResolver formatterResolver)
         {
-            using (var stream = await response.ResponseMessage.Content.ReadAsStreamAsync())
+            var stream = await response.ResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            await using (stream.ConfigureAwait(false))
             {
-                return await MessagePackSerializer.DeserializeAsync<T>(stream, MessagePackSerializerOptions.Standard.WithResolver(formatterResolver));
+                return await MessagePackSerializer.DeserializeAsync<T>(stream, MessagePackSerializerOptions.Standard.WithResolver(formatterResolver)).ConfigureAwait(false);
             }
         }
 

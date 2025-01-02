@@ -1,14 +1,20 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using NLog;
-using System;
-using TechTalk.SpecFlow;
-using Ark.Tools.Http;
+﻿using Ark.Tools.Http;
+
 using Flurl.Http;
 using Flurl.Http.Configuration;
-using System.Net.Http;
-using WebApplicationDemo;
+
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
+
+using NLog;
+
+using System;
+using System.Net.Http;
+
+using TechTalk.SpecFlow;
+
+using WebApplicationDemo;
 
 namespace TestProject
 {
@@ -78,7 +84,7 @@ namespace TestProject
 
     }
 
-    class TestServerfactory : DefaultFlurlClientFactory
+    sealed class TestServerfactory : DefaultFlurlClientFactory
     {
         private readonly TestServer _server;
 

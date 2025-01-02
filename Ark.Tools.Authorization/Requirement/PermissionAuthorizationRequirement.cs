@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.Tools.Authorization.Requirement
 {
@@ -11,7 +11,7 @@ namespace Ark.Tools.Authorization.Requirement
     /// Use of this kind of requirement, require a paired implementation of <see cref="IUserPermissionsProvider{TPermissionEnum}"/>
     /// </summary>
     /// <typeparam name="TPermissionEnum">The enum of possible permissions.</typeparam>
-    public class PermissionAuthorizationRequirement<TPermissionEnum> 
+    public class PermissionAuthorizationRequirement<TPermissionEnum>
         : IAuthorizationRequirement
         where TPermissionEnum : System.Enum
     {
@@ -19,7 +19,7 @@ namespace Ark.Tools.Authorization.Requirement
         {
             if (!typeof(TPermissionEnum).IsEnum)
             {
-                throw new ArgumentException("TPermissionEnum must be an enumerated type");
+                throw new InvalidOperationException("TPermissionEnum must be an enumerated type");
             }
         }
         /// <summary>
@@ -87,7 +87,7 @@ namespace Ark.Tools.Authorization.Requirement
         {
             if (!typeof(TPermissionEnum).IsEnum)
             {
-                throw new ArgumentException("TPermissionEnum must be an enumerated type");
+                throw new InvalidOperationException("TPermissionEnum must be an enumerated type");
             }
         }
 
@@ -105,7 +105,7 @@ namespace Ark.Tools.Authorization.Requirement
             var requirements = context.Policy.Requirements.Where(t => permissionType.IsAssignableFrom(t.GetType())).Cast<PermissionAuthorizationRequirement<TPermissionEnum>>().ToArray();
             if (requirements.Length == 0) return;
 
-            var permissions = await _provider.GetPermissions(context);
+            var permissions = await _provider.GetPermissions(context).ConfigureAwait(false);
             if (permissions == null || !permissions.Any()) return;
 
             foreach (var req in requirements)

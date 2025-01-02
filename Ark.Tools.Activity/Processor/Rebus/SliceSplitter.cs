@@ -1,16 +1,20 @@
-﻿using System.Threading.Tasks;
-using Rebus.Handlers;
-using Rebus.Bus;
-using System.Linq;
+﻿using EnsureThat;
+
 using NLog;
-using EnsureThat;
+
+using Rebus.Bus;
+using Rebus.Handlers;
+
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 
 using ResourceSliceReady = Ark.Tools.Activity.Messages.ResourceSliceReady;
 using SliceReady = Ark.Tools.Activity.Messages.SliceReady;
 
 namespace Ark.Tools.Activity.Processor
 {
-    public class SliceSplitter 
+    public class SliceSplitter
         : IHandleMessages<ResourceSliceReady>
         , IHandleMessages<Ark.Tasks.Messages.ResourceSliceReady>
     {
@@ -43,9 +47,10 @@ namespace Ark.Tools.Activity.Processor
                             ResourceSlice = e.Slice
                         })
                     ));
-            } else
+            }
+            else
             {
-                _logger.Warn("Received an ResourceSliceReady event for the resource {Resource} that is not a dependency. Removing subscription to the resource.", e.Resource);
+                _logger.Warn(CultureInfo.InvariantCulture, "Received an ResourceSliceReady event for the resource {Resource} that is not a dependency. Removing subscription to the resource.", e.Resource);
                 return _bus.Advanced.Topics.Unsubscribe(e.Resource.ToString());
             }
         }

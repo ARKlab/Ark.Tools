@@ -14,7 +14,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
             if (telemetry is ExceptionTelemetry || (telemetry is DependencyTelemetry dp && dp.Success == false) || (telemetry is RequestTelemetry rq && rq.Success == false))
             {
                 if (telemetry is ISupportSampling s)
-                    s.SamplingPercentage = 100;            
+                    s.SamplingPercentage = 100;
             }
         }
     }

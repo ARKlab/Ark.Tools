@@ -12,7 +12,7 @@ namespace Ark.Tools.Outbox.Rebus
     {
         private readonly IOutboxContextFactory _outboxContextFactory;
 
-        public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory) 
+        public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory)
             : base(topMessagesToRetrieve, transport, backoffStrategy, rebusLoggerFactory)
         {
             _outboxContextFactory = outboxContextFactory;
@@ -23,7 +23,7 @@ namespace Ark.Tools.Outbox.Rebus
             bool waitForMessages = true;
             using (var ctx = _outboxContextFactory.Create())
             {
-                waitForMessages = await _tryProcessMessages(ctx, ctk);
+                waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
                 ctx.Commit();
             }
 

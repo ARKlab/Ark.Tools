@@ -1,14 +1,18 @@
-﻿using NodaTime;
+﻿using Ark.Tools.Activity.Provider;
+using Ark.Tools.ResourceWatcher.WorkerHost;
+
+using Microsoft.Extensions.Configuration;
+
+using NodaTime;
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using TestWorker.Dto;
-using Ark.Tools.ResourceWatcher.WorkerHost;
-using TestWorker.DataProvider;
+
 using TestWorker.Configs;
+using TestWorker.DataProvider;
+using TestWorker.Dto;
 using TestWorker.Writer;
-using Ark.Tools.Activity.Provider;
-using Microsoft.Extensions.Configuration;
 
 namespace TestWorker.HostNs
 {
@@ -46,20 +50,20 @@ namespace TestWorker.HostNs
             }
 
 
-			public Host WithNotifier(IRebusResourceNotifier_Config rebusCfg)
-			{
-				this.AppendFileProcessor<TestWriter_Notifier>(deps =>
-				{
-					deps.Container.RegisterInstance(rebusCfg);
-					deps.Container.RegisterSingleton<RebusResourceNotifier>();
-				});
+            public Host WithNotifier(IRebusResourceNotifier_Config rebusCfg)
+            {
+                this.AppendFileProcessor<TestWriter_Notifier>(deps =>
+                {
+                    deps.Container.RegisterInstance(rebusCfg);
+                    deps.Container.RegisterSingleton<RebusResourceNotifier>();
+                });
 
-				//_logger.Info("Rebus notifier added to host");
+                //_logger.Info(CultureInfo.InvariantCulture, "Rebus notifier added to host");
 
-				return this;
-			}
+                return this;
+            }
 
-		}
+        }
 
         public static Host Configure(IConfiguration configuration, Test_Recipe? recipe = null, Action<Test_Host_Config>? configurer = null)
         {

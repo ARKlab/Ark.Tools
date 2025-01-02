@@ -8,7 +8,7 @@ namespace Ark.Tools.Outbox
         /// <summary>
         /// Headers set by the Producer and used by the Consumer to propage the message to the Broker
         /// </summary>
-        public Dictionary<string,string>? Headers { get; init; }
+        public Dictionary<string, string>? Headers { get; init; }
         /// <summary>
         /// Body of the message
         /// </summary>

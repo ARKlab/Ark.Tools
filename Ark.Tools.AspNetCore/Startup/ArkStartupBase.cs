@@ -29,7 +29,7 @@ namespace Ark.Tools.AspNetCore.Startup
 
             services.ArkApplicationInsightsTelemetry(Configuration);
 
-            services.AddCors();    
+            services.AddCors();
         }
 
         public virtual void Configure(IApplicationBuilder app)
@@ -42,7 +42,7 @@ namespace Ark.Tools.AspNetCore.Startup
                     context.Request.PathBase = pathbase[0] ?? "" + context.Request.PathBase;
                 return next();
             });
-            
+
             app.UseSecurityHeaders(o => o.AddDefaultSecurityHeaders().RemoveServerHeader());
             app.UseHsts();
 

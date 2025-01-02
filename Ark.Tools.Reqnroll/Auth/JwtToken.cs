@@ -7,7 +7,7 @@ namespace Ark.Tools.Reqnroll.Auth
 {
     public sealed class JwtToken
     {
-        private SecurityTokenDescriptor _token;
+        private readonly SecurityTokenDescriptor _token;
 
         internal JwtToken(SecurityTokenDescriptor token)
         {
@@ -15,11 +15,15 @@ namespace Ark.Tools.Reqnroll.Auth
         }
 
         public DateTime ValidTo => _token.Expires ?? DateTime.MinValue;
-        public string Value { get {
+        public string Value
+        {
+            get
+            {
                 var handler = new JsonWebTokenHandler();
                 handler.SetDefaultTimesOnTokenCreation = false;
 
                 return handler.CreateToken(_token);
-            } }
+            }
+        }
     }
 }

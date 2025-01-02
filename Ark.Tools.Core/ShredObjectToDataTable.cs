@@ -1,20 +1,21 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 
 namespace Ark.Tools.Core
-{    
+{
     //http://msdn.microsoft.com/en-us/library/bb669096.aspx
-    internal class ShredObjectToDataTable<T>
+    internal sealed class ShredObjectToDataTable<T>
     {
-        private System.Reflection.FieldInfo[] _fi;
-        private System.Reflection.PropertyInfo[] _pi;
-        private System.Collections.Generic.Dictionary<string, int> _ordinalMap;
-        private System.Type _type;
+        private readonly System.Reflection.FieldInfo[] _fi;
+        private readonly System.Reflection.PropertyInfo[] _pi;
+        private readonly System.Collections.Generic.Dictionary<string, int> _ordinalMap;
+        private readonly System.Type _type;
 
         // ObjectShredder constructor. 
         public ShredObjectToDataTable()
@@ -22,7 +23,7 @@ namespace Ark.Tools.Core
             _type = typeof(T);
             _fi = _type.GetFields();
             _pi = _type.GetProperties();
-            _ordinalMap = new Dictionary<string, int>();
+            _ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
         }
 
         /// <summary> 
@@ -171,7 +172,7 @@ namespace Ark.Tools.Core
             }
 
             if (_datetimeTypes.Contains(elementType))
-                elementType = typeof(DateTime);        
+                elementType = typeof(DateTime);
 
             if (_datetimeOffsetTypes.Contains(elementType))
                 elementType = typeof(DateTimeOffset);
@@ -189,7 +190,7 @@ namespace Ark.Tools.Core
         {
             if (value == null) return value;
 
-            var elementType = value.GetType();            
+            var elementType = value.GetType();
 
             var nullableType = Nullable.GetUnderlyingType(elementType);
             if (nullableType != null)
@@ -200,7 +201,7 @@ namespace Ark.Tools.Core
             if (elementType.IsEnum)
                 return value.ToString();
 
-            switch(value)
+            switch (value)
             {
                 case LocalDate ld:
                     return ld.ToDateTimeUnspecified();
@@ -231,7 +232,7 @@ namespace Ark.Tools.Core
 
                     // Add the field as a column in the table if it doesn't exist 
                     // already.
-                    DataColumn dc = table.Columns.Contains(f.Name) 
+                    DataColumn dc = table.Columns.Contains(f.Name)
                         ? table.Columns[f.Name]!
                         : table.Columns.Add(f.Name, t);
 
@@ -247,7 +248,7 @@ namespace Ark.Tools.Core
 
                     // Add the property as a column in the table if it doesn't exist 
                     // already.
-                    DataColumn dc = table.Columns.Contains(p.Name) 
+                    DataColumn dc = table.Columns.Contains(p.Name)
                         ? table.Columns[p.Name]!
                         : table.Columns.Add(p.Name, t);
 

@@ -1,20 +1,20 @@
-﻿using Ark.Tools.AspNetCore.Swashbuckle;
+﻿using Ark.Reference.Core.Common.Auth;
+using Ark.Tools.AspNetCore.Swashbuckle;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Web;
-using System.Linq;
-using Ark.Reference.Core.Common.Auth;
 
 namespace Ark.Reference.Core.WebInterface.Utils
 {
@@ -46,7 +46,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
                     {
                         return "emails";
                     }
-                    else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.Where(w => w.Type == "appidacr").SingleOrDefault()?.Value == "1")
+                    else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.SingleOrDefault(w => w.Type == "appidacr")?.Value == "1")
                     {
                         return "appid";
                     }
@@ -147,7 +147,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
                         {
                             AuthorizationUrl = new Uri($"{instance}/{tenantId}/oauth2/v2.0/authorize"),
                             TokenUrl = new Uri($"{instance}/{tenantId}/oauth2/v2.0/token"),
-                            Scopes = new Dictionary<string, string>
+                            Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
                             {
                                 { "openid", "Grant access to user" },
                                 { $"api://{clientId}/access_as_user", "Default scope to retrieve user permissions" }
@@ -189,7 +189,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
                         Implicit = new OpenApiOAuthFlow()
                         {
                             AuthorizationUrl = new Uri($"https://{domain}/connect/authorize"),
-                            Scopes = new Dictionary<string, string>
+                            Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
                             {
                                 { swaggerscope, "Grant access to user" }
                             }
@@ -212,7 +212,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             {
                 c.OAuthClientId(clientId);
                 c.OAuthAppName("WebApi");
-                c.OAuthAdditionalQueryStringParams(new Dictionary<string, string>()
+                c.OAuthAdditionalQueryStringParams(new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                 });
             });

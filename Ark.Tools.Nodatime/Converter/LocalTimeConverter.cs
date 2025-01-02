@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NodaTime;
 using NodaTime.Text;
+
 using System;
 using System.ComponentModel;
 using System.Globalization;
@@ -38,7 +39,7 @@ namespace Ark.Tools.Nodatime
                 if (res.Success)
                     return res.Value;
                 // little hack, not the finest, but should work
-                if (DateTime.TryParse(s, out var d))
+                if (DateTime.TryParse(s, culture ?? CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
                     return LocalTime.FromTicksSinceMidnight((d - d.Date).Ticks);
             }
             if (value is DateTime dt)

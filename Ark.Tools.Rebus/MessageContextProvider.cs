@@ -2,7 +2,7 @@
 
 namespace Ark.Tools.Rebus
 {
-	public class MessageContextProvider : IMessageContextProvider
+    public class MessageContextProvider : IMessageContextProvider
     {
         public IMessageContext Current => MessageContext.Current;
     }

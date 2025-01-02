@@ -14,7 +14,7 @@ namespace Ark.Tools.Sql
         private readonly IDbConnectionManager _connectionManager;
         private readonly ISqlContextConfig _config;
 
-        public AbstractSqlAsyncContextFactory(IDbConnectionManager connectionManager, ISqlContextConfig config)
+        protected AbstractSqlAsyncContextFactory(IDbConnectionManager connectionManager, ISqlContextConfig config)
         {
             _connectionManager = connectionManager;
             _config = config;
@@ -28,15 +28,15 @@ namespace Ark.Tools.Sql
             try
             {
 
-                connection = await _connectionManager.GetAsync(_config.ConnectionString, ctk);
+                connection = await _connectionManager.GetAsync(_config.ConnectionString, ctk).ConfigureAwait(false);
 
                 if (connection.State == ConnectionState.Closed)
-                    await connection.OpenAsync(ctk);
+                    await connection.OpenAsync(ctk).ConfigureAwait(false);
 
                 if (il is not null)
-                    transaction = await connection.BeginTransactionAsync(il.Value, ctk);
+                    transaction = await connection.BeginTransactionAsync(il.Value, ctk).ConfigureAwait(false);
                 else
-                    transaction = await connection.BeginTransactionAsync(ctk);
+                    transaction = await connection.BeginTransactionAsync(ctk).ConfigureAwait(false);
 
                 return CreateContext(transaction);
             }
@@ -44,11 +44,11 @@ namespace Ark.Tools.Sql
             {
                 if (transaction != null)
                 {
-                    await transaction.DisposeAsync();
+                    await transaction.DisposeAsync().ConfigureAwait(false);
                 }
                 if (connection != null)
                 {
-                    await connection.DisposeAsync();
+                    await connection.DisposeAsync().ConfigureAwait(false);
                 }
                 throw;
             }

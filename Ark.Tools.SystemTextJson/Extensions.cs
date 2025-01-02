@@ -1,11 +1,11 @@
-﻿using Ark.Tools.SystemTextJson;
-using Ark.Tools.Nodatime.SystemTextJson;
+﻿using Ark.Tools.Nodatime.SystemTextJson;
+using Ark.Tools.SystemTextJson;
 
 using NodaTime;
-
-using System.Text.Json.Serialization;
 using NodaTime.Serialization.SystemTextJson;
+
 using System.IO;
+using System.Text.Json.Serialization;
 
 namespace System.Text.Json
 {
@@ -103,10 +103,8 @@ namespace System.Text.Json
             if (string.IsNullOrEmpty(jsonStringFilePath))
                 return default;
 
-            using (var fs = new FileStream(jsonStringFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return JsonSerializer.Deserialize<TOut>(fs, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
-            }
+            using var fs = new FileStream(jsonStringFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return JsonSerializer.Deserialize<TOut>(fs, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
         }
 
         public static string? Serialize(this object obj, JsonSerializerOptions? jsonSerializerOptions = null)

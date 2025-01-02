@@ -8,7 +8,7 @@ namespace Ark.Tools.SystemTextJson
         where TK : notnull
         where TC : Dictionary<TK, TV>, new()
     {
-        public DictionaryBaseConverter(JsonSerializerOptions options) 
+        public DictionaryBaseConverter(JsonSerializerOptions options)
             : base(options)
         {
         }

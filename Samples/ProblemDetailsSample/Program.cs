@@ -1,9 +1,11 @@
 ﻿using Ark.Tools.Nodatime;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 using System;
 using System.IO;
 using System.Net;
@@ -89,11 +91,9 @@ namespace ProblemDetailsSample
             {
                 InitStatic(args);
 
-                using (var h = GetHostBuilder(args)
-                    .Build())
-                {
-                    await h.RunAsync();
-                }
+                using var h = GetHostBuilder(args)
+                    .Build();
+                await h.RunAsync();
             }
             catch (Exception ex)
             {

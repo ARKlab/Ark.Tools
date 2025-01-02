@@ -1,5 +1,7 @@
 ﻿using Ark.Tools.Solid;
+
 using NodaTime;
+
 using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Api.Queries

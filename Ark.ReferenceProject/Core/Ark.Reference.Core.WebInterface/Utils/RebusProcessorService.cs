@@ -1,18 +1,23 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
+﻿using Ark.Reference.Core.Application;
+using Ark.Reference.Core.Application.Host;
+
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+using NodaTime;
+
+using Rebus.Bus;
 using Rebus.Persistence.InMem;
 using Rebus.Transport.InMem;
+
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
+
 using System;
-using System.Threading.Tasks;
 using System.Threading;
-using Microsoft.ApplicationInsights;
-using Ark.Reference.Core.Application.Host;
-using Ark.Reference.Core.Application;
-using Rebus.Bus;
-using NodaTime;
+using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Utils
 {
@@ -37,7 +42,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
                     )
                 .WithRebusIdentity()
                 ;
-            ;
+
         }
 
         public void Dispose()
@@ -45,7 +50,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
             _container?.Dispose();
         }
 
-        public Task StartAsync(CancellationToken ctk = default)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             var apiHost = _container.GetInstance<ApiHost>();
             apiHost.RunBusInBackground();
@@ -54,10 +59,10 @@ namespace Ark.Reference.Core.WebInterface.Utils
             return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken ctk = default)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
-            _container?.Dispose();
-            return Task.CompletedTask;
+            if (_container is not null)
+                await _container.DisposeAsync();
         }
     }
 }

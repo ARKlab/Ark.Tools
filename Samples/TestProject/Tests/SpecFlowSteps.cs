@@ -8,26 +8,26 @@ using WebApplicationDemo.Dto;
 namespace TestProject
 {
     [Binding]
-	public class SpecFlowSteps
-	{
-		private readonly TestClient _client;
+    public class SpecFlowSteps
+    {
+        private readonly TestClient _client;
 
-		public SpecFlowSteps(TestClient client)
-		{
-			_client = client;
-		}
+        public SpecFlowSteps(TestClient client)
+        {
+            _client = client;
+        }
 
-		[When(@"I get a wrong url")]
-		public void WhenIGetAWrongUrl()
-		{
-			var url = $@"entity/null";
-			_client.Get(url);
-		}
+        [When(@"I get a wrong url")]
+        public void WhenIGetAWrongUrl()
+        {
+            var url = $@"entity/null";
+            _client.Get(url);
+        }
 
         [When(@"^I get Entity with id (.*)$")]
         public void WhenIGetEntityWithId(string id)
         {
-            _client.Get(new string[] { "entity", id });
+            _client.Get(["entity", id]);
         }
 
         [Then("^Content-Type is (.*)$")]

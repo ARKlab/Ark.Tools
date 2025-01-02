@@ -17,7 +17,7 @@ namespace Ark.Reference.Common.Auth
         {
             if (!typeof(TPermissionEnum).IsEnum)
             {
-                throw new ArgumentException("TPermissionEnum must be an enumerated type");
+                throw new InvalidOperationException("TPermissionEnum must be an enumerated type");
             }
         }
 

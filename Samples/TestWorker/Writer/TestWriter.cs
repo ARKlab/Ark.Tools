@@ -3,6 +3,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+
 using TestWorker.Dto;
 
 namespace TestWorker.Writer

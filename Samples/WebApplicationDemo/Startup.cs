@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.Startup;
@@ -27,6 +23,11 @@ using Microsoft.OpenApi.Models;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+
 using WebApplicationDemo.Application.Host;
 using WebApplicationDemo.Configuration;
 using WebApplicationDemo.Dto;
@@ -34,78 +35,78 @@ using WebApplicationDemo.Dto;
 namespace WebApplicationDemo
 {
     public class Startup : ArkStartupWebApi
-	{
-		public Startup(IConfiguration configuration, IHostEnvironment env)
-			: base(configuration, env, false)
-		{
+    {
+        public Startup(IConfiguration configuration, IHostEnvironment env)
+            : base(configuration, env, false)
+        {
         }
 
         public override IEnumerable<ApiVersion> Versions => ApiVersions.All;
 
         public override OpenApiInfo MakeInfo(ApiVersion version)
-			=> new OpenApiInfo
-			{
-				Title = "API",
-				Version = version.ToString("VVVV"),
-			};
-		
-		// This method gets called by the runtime. Use this method to add services to the container.
-		public override void ConfigureServices(IServiceCollection services)
-		{
-			base.ConfigureServices(services);
+            => new()
+            {
+                Title = "API",
+                Version = version.ToString("VVVV", CultureInfo.InvariantCulture),
+            };
 
-			var auth0Scheme = "Auth0";
-			var audience = "Audience";
-			var domain = "Domain";
-			var swaggerClientId = "SwaggerClientId";
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public override void ConfigureServices(IServiceCollection services)
+        {
+            base.ConfigureServices(services);
 
-			var defaultPolicy = new AuthorizationPolicyBuilder()
-				.AddAuthenticationSchemes(auth0Scheme)
-				.RequireAuthenticatedUser()
-				.Build();
+            var auth0Scheme = "Auth0";
+            var audience = "Audience";
+            var domain = "Domain";
+            var swaggerClientId = "SwaggerClientId";
+
+            var defaultPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes(auth0Scheme)
+                .RequireAuthenticatedUser()
+                .Build();
 
             var authBuilder = services.AddAuthentication(options =>
-			{
-				options.DefaultAuthenticateScheme = auth0Scheme;
-				options.DefaultChallengeScheme = auth0Scheme;
+            {
+                options.DefaultAuthenticateScheme = auth0Scheme;
+                options.DefaultChallengeScheme = auth0Scheme;
 
-			})
-			.AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
-			{
-				if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
-				{
-					o.TokenValidationParameters.ValidIssuer = o.Authority;
-					o.Authority = null;
-					//o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.ClientSecretSpecFlow));
-				}
-				o.TokenValidationParameters.RoleClaimType = "Role";
-			})
-			;
+            })
+            .AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
+            {
+                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
+                {
+                    o.TokenValidationParameters.ValidIssuer = o.Authority;
+                    o.Authority = null;
+                    //o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.ClientSecretSpecFlow));
+                }
+                o.TokenValidationParameters.RoleClaimType = "Role";
+            })
+            ;
 
-            var resolver = CompositeResolver.Create(new[] {
+            var resolver = CompositeResolver.Create([
                 NodatimeResolver.Instance,
                 DynamicEnumAsStringResolver.Instance,
                 StandardResolver.Instance
-            });
+            ]);
 
             services.AddMessagePackFormatter(resolver);
 
             //HealthChecks
             services.AddHealthChecks()
-				//.AddCheck<ExampleHealthCheck>("Example Web App Demo Health Check", tags: new string[]{ "ArkTools", "WebDemo"})
-				.AddSimpleInjectorCheck<ExampleHealthCheck>(name: "Example SimpleInjector Check", failureStatus: HealthStatus.Unhealthy, tags: new string[] { "Example" })
-				.AddSimpleInjectorLambdaCheck<IExampleHealthCheckService>(name: "Example SimpleInjector Lamda Check", (adapter, ctk) => adapter.CheckHealthAsync(ctk), failureStatus: HealthStatus.Unhealthy, tags: new string[] { "Example" })
-				.AddSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Logs;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True", healthQuery: "SELECT 1;", name: "NLOG DB", tags: new string[] { "NLOG", "SQLServer" })
-				;
+                //.AddCheck<ExampleHealthCheck>("Example Web App Demo Health Check", tags: new string[]{ "ArkTools", "WebDemo"})
+                .AddSimpleInjectorCheck<ExampleHealthCheck>(name: "Example SimpleInjector Check", failureStatus: HealthStatus.Unhealthy, tags: ["Example"])
+                .AddSimpleInjectorLambdaCheck<IExampleHealthCheckService>(name: "Example SimpleInjector Lamda Check", (adapter, ctk) => adapter.CheckHealthAsync(ctk), failureStatus: HealthStatus.Unhealthy, tags: ["Example"])
+                .AddSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Logs;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True", healthQuery: "SELECT 1;", name: "NLOG DB", tags: ["NLOG", "SQLServer"])
+                ;
 
-			services.AddArkHealthChecksUIOptions(setup =>
-			{
+            services.AddArkHealthChecksUIOptions(setup =>
+            {
                 if (File.Exists(Path.Combine(Environment.CurrentDirectory, "UIHealthChecks.css")))
                     setup.AddCustomStylesheet("UIHealthChecks.css");
 
                 if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css")))
-					setup.AddCustomStylesheet((String)AppDomain.CurrentDomain.BaseDirectory + "UIHealthChecks.css");
-			});
+                    setup.AddCustomStylesheet(AppDomain.CurrentDomain.BaseDirectory + "UIHealthChecks.css");
+            });
 
             bool isAuth0 = string.IsNullOrWhiteSpace(Configuration["AzureAdB2C:Domain"]) ? true : false;
 
@@ -116,10 +117,11 @@ namespace WebApplicationDemo
                     Configuration.Bind("AzureAdB2C", options);
 
                     options.TokenValidationParameters.NameClaimType = "name";
-                    
+
                     (options.TokenHandlers[0] as JsonWebTokenHandler)?.InboundClaimTypeMap.Add("extension_Scope", "scope");
                 },
-                    options => {
+                    options =>
+                    {
                         Configuration.Bind("AzureAdB2C", options);
                     }, JwtBearerDefaults.AuthenticationScheme);
 
@@ -131,31 +133,31 @@ namespace WebApplicationDemo
             }
 
             services.ArkConfigureSwaggerUI(c =>
-			{
-				c.MaxDisplayedTags(10000);
-				c.DefaultModelRendering(ModelRendering.Model);
-				c.ShowExtensions();
-				//c.OAuthAppName("Public API");
-			});
+            {
+                c.MaxDisplayedTags(10000);
+                c.DefaultModelRendering(ModelRendering.Model);
+                c.ShowExtensions();
+                //c.OAuthAppName("Public API");
+            });
 
-			services.ConfigureSwaggerGen(c =>
-			{
-				var dict = new OpenApiSecurityRequirement
-				{
-					{ new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
-				};
+            services.ConfigureSwaggerGen(c =>
+            {
+                var dict = new OpenApiSecurityRequirement
+                {
+                    { new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
+                };
 
-				c.AddSecurityRequirement(dict);
+                c.AddSecurityRequirement(dict);
 
                 c.SelectDiscriminatorNameUsing(t => "kind");
                 c.SelectDiscriminatorValueUsing(t => t.Name);
 
-			});
+            });
 
             services.Configure<ODataOptions>(options =>
             {
                 // make the Odata independent from 'the hosting timezone'. Set this to the Timezone of 'DATA', if any, or UTC, so that is not dependant on the PC/Server Local timezone (reliable results ...)
-                options.TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time"); 
+                options.TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time");
             });
 
             //https://github.com/dotnet/aspnet-api-versioning/wiki/Controller-Conventions
@@ -164,26 +166,26 @@ namespace WebApplicationDemo
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public override void Configure(IApplicationBuilder app)
-		{
-			base.Configure(app);
-		}
+        {
+            base.Configure(app);
+        }
 
-		protected override void RegisterContainer(IServiceProvider services)
-		{
-			base.RegisterContainer(services);
+        protected override void RegisterContainer(IServiceProvider services)
+        {
+            base.RegisterContainer(services);
 
-			var ext = services.GetService<IExternalInjected>();
+            var ext = services.GetService<IExternalInjected>();
 
-			var cfg = new ApiConfig()
-			{
-			};
+            var cfg = new ApiConfig()
+            {
+            };
 
 
 
 
 
             var apiHost = new ApiHost(cfg)
-				.WithContainer(Container);
-		}
-	}
+                .WithContainer(Container);
+        }
+    }
 }

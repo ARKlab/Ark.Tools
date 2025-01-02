@@ -10,7 +10,7 @@ namespace Ark.Tools.Core
     {
         private readonly IEqualityComparer<T> _comparer;
 
-        public static readonly EnumerableEqualityComparer<T> Default = new EnumerableEqualityComparer<T>();
+        public static readonly EnumerableEqualityComparer<T> Default = new();
 
         public EnumerableEqualityComparer(IEqualityComparer<T>? comparer = null)
         {

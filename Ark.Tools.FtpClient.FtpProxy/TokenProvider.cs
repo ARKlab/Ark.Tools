@@ -18,7 +18,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
 {
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable
-    internal class TokenProvider
+    internal sealed class TokenProvider
 #pragma warning restore CA1001 // Types that own disposable fields should be disposable
     {
         private readonly IConfidentialClientApplication? _adal;
@@ -61,8 +61,8 @@ namespace Ark.Tools.FtpClient.FtpProxy
                         Audience = _config.ApiIdentifier,
                         ClientId = _config.ClientID,
                         ClientSecret = _config.ClientKey
-                    }, ct),ctk)
-                    ;
+                    }, ct), ctk)
+.ConfigureAwait(false);
 
                 return result.AccessToken;
             }
@@ -81,8 +81,8 @@ namespace Ark.Tools.FtpClient.FtpProxy
                 result = await Policy
                     .Handle<MsalException>(ex => ex.IsRetryable)
                     .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(3))
-                    .ExecuteAsync(c => adal.AcquireTokenForClient(new[] { _config.ApiIdentifier + "/.default" }).ExecuteAsync(c), ctk, false)
-                    ;
+                    .ExecuteAsync(c => adal.AcquireTokenForClient([_config.ApiIdentifier + "/.default"]).ExecuteAsync(c), ctk, false)
+.ConfigureAwait(false);
             }
             catch (Exception ex)
             {

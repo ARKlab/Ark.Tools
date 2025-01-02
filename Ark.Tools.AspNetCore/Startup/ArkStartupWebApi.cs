@@ -9,14 +9,14 @@ namespace Ark.Tools.AspNetCore.Startup
 {
     public abstract class ArkStartupWebApi : ArkStartupWebApiCommon
     {
-        private ArkStartupBase _anotherBase;
+        private readonly ArkStartupBase _anotherBase;
 
-        public ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment)
+        protected ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment)
             : this(configuration, environment, false)
         {
         }
 
-        public ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
+        protected ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
             : base(configuration, environment, useNewtonsoftJson)
         {
             _anotherBase = new ArkStartupBase(configuration);

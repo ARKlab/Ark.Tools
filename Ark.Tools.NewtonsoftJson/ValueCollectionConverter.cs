@@ -47,7 +47,7 @@ namespace Ark.Tools.NewtonsoftJson
             }
         }
 
-        private class Converter<T> : JsonConverter<ValueCollection<T>>
+        private sealed class Converter<T> : JsonConverter<ValueCollection<T>>
         {
             public override ValueCollection<T>? ReadJson(JsonReader reader, Type objectType, ValueCollection<T>? existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
@@ -62,7 +62,8 @@ namespace Ark.Tools.NewtonsoftJson
                 if (value is null)
                 {
                     writer.WriteNull();
-                } else
+                }
+                else
                 {
                     writer.WriteStartArray();
                     foreach (var e in value)

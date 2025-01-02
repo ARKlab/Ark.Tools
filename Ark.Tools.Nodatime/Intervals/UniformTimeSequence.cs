@@ -1,8 +1,11 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Nodatime.Intervals;
+
 using EnsureThat;
+
 using NodaTime;
+
 using System.Collections.Generic;
 
 namespace Ark.Tools.Nodatime.TimeSeries
@@ -10,7 +13,7 @@ namespace Ark.Tools.Nodatime.TimeSeries
     public class UniformTimeSequence
         : IEnumerable<TimeInterval>
     {
-        private ZonedDateTimeRange _range;
+        private readonly ZonedDateTimeRange _range;
         private TimePeriod _period;
 
         public UniformTimeSequence(ZonedDateTime start, ZonedDateTime end, TimePeriod period, bool exact = true)

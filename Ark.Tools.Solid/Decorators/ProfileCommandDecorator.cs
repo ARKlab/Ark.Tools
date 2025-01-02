@@ -1,8 +1,11 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NLog;
+
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,15 +31,15 @@ namespace Ark.Tools.Solid.Decorators
             Stopwatch stopWatch = Stopwatch.StartNew();
             _decorated.Execute(command);
             stopWatch.Stop();
-            _logger.Trace("Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
+            _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
         }
 
         public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
         {
             Stopwatch stopWatch = Stopwatch.StartNew();
-            await _decorated.ExecuteAsync(command, ctk);
+            await _decorated.ExecuteAsync(command, ctk).ConfigureAwait(false);
             stopWatch.Stop();
-            _logger.Trace("Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
+            _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
         }
     }
 }

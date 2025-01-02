@@ -16,7 +16,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
         private const string _sqlServerPrefix = "SQLCONNSTR_";
         private const string _customPrefix = "CUSTOMCONNSTR_";
 
-        private const string _connStrKeyFormat = _connStrKey+"{0}";
+        private const string _connStrKeyFormat = _connStrKey + "{0}";
         private const string _connStrKey = "ConnectionStrings:";
         private const string _providerKeyFormat = "ConnectionStrings:{0}_ProviderName";
 
@@ -52,7 +52,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
             var filteredEnvVariables = envVariables
                 .Cast<DictionaryEntry>()
                 .SelectMany(_azureEnvToAppEnv);
-                
+
             filteredEnvVariables = ArkEnvironmentVariablesConfigurationProvider._normalizeConnectionString(filteredEnvVariables)
                 .Where(entry => ((string)entry.Key).StartsWith(_prefix, StringComparison.OrdinalIgnoreCase));
 

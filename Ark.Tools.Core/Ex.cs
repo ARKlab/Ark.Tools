@@ -19,9 +19,9 @@ namespace Ark.Tools.Core
             {
                 string s = i.ToString("X2", CultureInfo.InvariantCulture);
                 if (BitConverter.IsLittleEndian)
-                    result[i] = ((uint)s[0]) + ((uint)s[1] << 16);
+                    result[i] = s[0] + ((uint)s[1] << 16);
                 else
-                    result[i] = ((uint)s[1]) + ((uint)s[0] << 16);
+                    result[i] = s[1] + ((uint)s[0] << 16);
             }
             return result;
         }
@@ -126,7 +126,7 @@ namespace Ark.Tools.Core
                 endOfPattern = false;
             int lastWildCard = -1;
             int patternIndex = 0;
-            List<char> set = new List<char>();
+            List<char> set = new();
             char p = '\0';
 
             for (int i = 0; i < str.Length; i++)

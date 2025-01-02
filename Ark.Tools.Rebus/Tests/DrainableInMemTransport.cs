@@ -55,7 +55,7 @@ namespace Ark.Tools.Rebus.Tests
             {
                 return;
             }
-            await base.SendOutgoingMessages(outgoingMessages, context);
+            await base.SendOutgoingMessages(outgoingMessages, context).ConfigureAwait(false);
         }
     }
 }

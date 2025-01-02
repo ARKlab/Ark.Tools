@@ -1,11 +1,15 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Nodatime.Json;
+
 using EnsureThat;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
+
 using System;
 using System.Collections.Generic;
 
@@ -30,7 +34,7 @@ namespace Ark.Tools.Nodatime
         public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
         {
             EnsureArg.IsNotNull(settings);
-            
+
 
             if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
                 throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
@@ -45,7 +49,7 @@ namespace Ark.Tools.Nodatime
         public static JsonSerializer ConfigureForNodaTimeRanges(this JsonSerializer serializer)
         {
             EnsureArg.IsNotNull(serializer);
-            
+
 
             if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
                 throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");

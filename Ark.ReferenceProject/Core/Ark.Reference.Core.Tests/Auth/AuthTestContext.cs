@@ -1,16 +1,15 @@
-﻿using Ark.Reference.Core.Common.Auth;
-
-using Ark.Reference.Common.Auth;
+﻿using Ark.Reference.Common.Auth;
+using Ark.Reference.Core.Common.Auth;
 
 using Flurl.Http;
 
 using Microsoft.IdentityModel.Tokens;
 
+using Reqnroll;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
-using Reqnroll;
 
 namespace Ark.Reference.Core.Tests.Auth
 {
@@ -30,8 +29,8 @@ namespace Ark.Reference.Core.Tests.Auth
                                 .AddExpiry(60)
                                 ;
 
-        private string _scopeClaim = AuthConstants.ScopePrefix;
-        private List<string> _scopes = new List<string>();
+        private readonly string _scopeClaim = AuthConstants.ScopePrefix;
+        private List<string> _scopes = new();
 
         public AuthTestContext()
         {

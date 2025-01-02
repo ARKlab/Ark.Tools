@@ -1,8 +1,11 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NLog;
+
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,22 +27,22 @@ namespace Ark.Tools.Solid.Decorators
 
         public TResult Execute(TQuery query)
         {
-            Stopwatch stopWatch = new Stopwatch();
+            Stopwatch stopWatch = new();
             stopWatch.Start();
             var result = _decorated.Execute(query);
             stopWatch.Stop();
-            _logger.Trace("Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
+            _logger.Trace(CultureInfo.InvariantCulture, "Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
 
             return result;
         }
 
         public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
         {
-            Stopwatch stopWatch = new Stopwatch();
+            Stopwatch stopWatch = new();
             stopWatch.Start();
-            var result = await _decorated.ExecuteAsync(query, ctk);
+            var result = await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
             stopWatch.Stop();
-            _logger.Trace("Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
+            _logger.Trace(CultureInfo.InvariantCulture, "Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
 
             return result;
         }

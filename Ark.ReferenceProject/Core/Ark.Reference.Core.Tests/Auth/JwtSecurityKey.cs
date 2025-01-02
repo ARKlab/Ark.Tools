@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+
 using System.Text;
 
 namespace Ark.Reference.Core.Tests.Auth

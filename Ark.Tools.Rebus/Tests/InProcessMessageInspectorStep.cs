@@ -15,7 +15,7 @@ namespace Ark.Tools.Rebus.Tests
         public async Task Process(IncomingStepContext context, Func<Task> next)
         {
             Interlocked.Increment(ref _count);
-            try { await next(); }
+            try { await next().ConfigureAwait(false); }
             finally { Interlocked.Decrement(ref _count); }
         }
     }

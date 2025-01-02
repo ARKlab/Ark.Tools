@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Ark.Tools.EventSourcing.Events
 {
-    public interface IMetadata 
+    public interface IMetadata
     {
         string EventId { get; }
         string EventName { get; }

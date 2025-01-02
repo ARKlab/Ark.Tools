@@ -1,14 +1,14 @@
-﻿using Ark.Tools.Solid;
-
-using Ark.Reference.Core.API.Queries;
+﻿using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Application.DAL;
+using Ark.Tools.Solid;
+
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries
 {
-    internal class Audit_GetUsersQueryHandler : IQueryHandler<Audit_GetUsersQuery.V1, IEnumerable<string>>
+    internal sealed class Audit_GetUsersQueryHandler : IQueryHandler<Audit_GetUsersQuery.V1, IEnumerable<string>>
     {
         private readonly ICoreDataContextFactory _dataContext;
 

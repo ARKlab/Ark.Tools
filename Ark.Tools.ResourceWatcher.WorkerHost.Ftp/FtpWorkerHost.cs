@@ -85,18 +85,16 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
             {
 
                 IEnumerable<FtpMetadata> res = Array.Empty<FtpMetadata>();
-                using (var cts1 = new CancellationTokenSource(_config.ListingTimeout))
-                using (var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ctk))
+                using var cts1 = new CancellationTokenSource(_config.ListingTimeout);
+                using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ctk);
+                foreach (var f in filter.FoldersToWatch)
                 {
-                    foreach (var f in filter.FoldersToWatch)
-                    {
-                        Predicate<FtpEntry> skipFolder = x => filter.FolderFilter?.Invoke(x.FullPath) == false;
+                    bool skipFolder(FtpEntry x) => filter.FolderFilter?.Invoke(x.FullPath) == false;
 
-                        var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token);
-                        res = res.Concat(list.Select(e => new FtpMetadata(e)));
-                    }
-                    return res.ToList();
+                    var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token).ConfigureAwait(false);
+                    res = res.Concat(list.Select(e => new FtpMetadata(e)));
                 }
+                return res.ToList();
             }
 
             public async Task<FtpFile<TPayload>?> GetResource(FtpMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
@@ -106,13 +104,10 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
                     .RetryAsync(3)
                     .ExecuteAsync(async ct =>
                     {
-                        using (var cts1 = new CancellationTokenSource(_config.DownloadTimeout))
-                        using (var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ct))
-                        {
-                            return await _ftpClient.DownloadFileAsync(metadata.Entry.FullPath, ctk: cts2.Token);
-
-                        }
-                    }, ctk);
+                        using var cts1 = new CancellationTokenSource(_config.DownloadTimeout);
+                        using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ct);
+                        return await _ftpClient.DownloadFileAsync(metadata.Entry.FullPath, ctk: cts2.Token).ConfigureAwait(false);
+                    }, ctk).ConfigureAwait(false);
 
                 var checksum = _computeChecksum(contents);
                 if (lastState?.CheckSum == checksum)
@@ -134,11 +129,9 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
 #if NET6_0_OR_GREATER
                 return MD5.HashData(contents).ToHexString();
 #else
-                using (var hash = MD5.Create())
-                {
-                    var h = hash.ComputeHash(contents);
-                    return h.ToHexString();
-                }
+                using var hash = MD5.Create();
+                var h = hash.ComputeHash(contents);
+                return h.ToHexString();
 #endif
             }
 

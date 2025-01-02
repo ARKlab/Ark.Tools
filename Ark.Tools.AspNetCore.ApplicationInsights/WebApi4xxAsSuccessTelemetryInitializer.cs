@@ -1,16 +1,16 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Microsoft.AspNetCore.Http;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.AspNetCore.TelemetryInitializers;
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.AspNetCore.Http;
 
 namespace Ark.Tools.AspNetCore.ApplicationInsights
 {
     public class WebApi4xxAsSuccessTelemetryInitializer : TelemetryInitializerBase
     {
         public WebApi4xxAsSuccessTelemetryInitializer(IHttpContextAccessor httpContextAccessor)
-            :base(httpContextAccessor)
+            : base(httpContextAccessor)
         {
         }
 

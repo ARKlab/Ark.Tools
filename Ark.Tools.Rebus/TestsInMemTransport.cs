@@ -11,9 +11,10 @@ using System.Threading.Tasks;
 namespace Ark.Tools.Rebus
 {
     [Obsolete("Use DrainableInMemTransport", true)]
-	public class TestsInMemTransport : InMemTransport
+    public class TestsInMemTransport : InMemTransport
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2211:Non-constant fields should not be visible", Justification = "Testing Purpose")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0069:Non-constant static fields should not be visible", Justification = "Testing Purpose")]
         public static int InProcessMessageCount;
 
         public TestsInMemTransport(InMemNetwork network, string? inputQueueAddress)
@@ -36,7 +37,7 @@ namespace Ark.Tools.Rebus
         {
             var cnt = outgoingMessages.Where(x => x.DestinationAddress != "error").Count();
 
-            await base.SendOutgoingMessages(outgoingMessages, context);
+            await base.SendOutgoingMessages(outgoingMessages, context).ConfigureAwait(false);
 
             Interlocked.Add(ref InProcessMessageCount, cnt);
         }

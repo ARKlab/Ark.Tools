@@ -2,13 +2,14 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+
 using System;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails
 {
     public class ProblemDetailsStartupFilter : IStartupFilter
     {
-        private IProblemDetailsRouterProvider _routeProvider;
+        private readonly IProblemDetailsRouterProvider _routeProvider;
 
         public ProblemDetailsStartupFilter(IProblemDetailsRouterProvider routeProvider)
         {

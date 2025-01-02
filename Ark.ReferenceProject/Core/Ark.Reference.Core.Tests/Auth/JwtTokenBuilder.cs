@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -70,8 +71,8 @@ namespace Ark.Reference.Core.Tests.Auth
 
             var claims = new List<Claim>
             {
-              new Claim(JwtRegisteredClaimNames.Sub, this._subject),
-              new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+              new(JwtRegisteredClaimNames.Sub, this._subject),
+              new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             }
             .Union(this._claims);
 
@@ -89,6 +90,7 @@ namespace Ark.Reference.Core.Tests.Auth
 
         #region " private "
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Params are binded to Properties")]
         private void _ensureArguments()
         {
             if (this._securityKey == null)

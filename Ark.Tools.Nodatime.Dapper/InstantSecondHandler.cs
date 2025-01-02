@@ -13,8 +13,9 @@ namespace Ark.Tools.Nodatime.Dapper
         {
         }
 
-        public static readonly InstantSecondHandler Instance = new InstantSecondHandler();
+        public static readonly InstantSecondHandler Instance = new();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical mistake - Public API - Next Major")]
         public event EventHandler<IDbDataParameter>? OnSetValue;
 
         public override void SetValue(IDbDataParameter parameter, Instant value)
@@ -28,7 +29,7 @@ namespace Ark.Tools.Nodatime.Dapper
         }
 
         public override Instant Parse(object? value)
-        {         
+        {
             if (value == null || value is DBNull) return default;
 
             if (value is long l)

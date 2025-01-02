@@ -1,5 +1,7 @@
 ﻿using Microsoft.OpenApi.Models;
+
 using Swashbuckle.AspNetCore.SwaggerGen;
+
 using System.Collections.Generic;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
@@ -12,7 +14,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
             var dict = new OpenApiSecurityRequirement();
             var openApiSecurityScheme = new OpenApiSecurityScheme() { Type = SecuritySchemeType.OAuth2 };
-            dict.Add(openApiSecurityScheme, new[] { "user_impersonation" });
+            dict.Add(openApiSecurityScheme, ["user_impersonation"]);
 
             swaggerDoc.SecurityRequirements.Add(dict);
         }

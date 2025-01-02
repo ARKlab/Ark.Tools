@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Reqnroll;
+using Reqnroll.Assist;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-
-using Reqnroll;
-using Reqnroll.Assist;
 
 namespace Ark.Tools.Reqnroll
 {
@@ -39,7 +39,7 @@ namespace Ark.Tools.Reqnroll
             // find sub-properties by looking for "."
             var propNames = tableRow
                 .Where(x => x.Key.Contains('.'))
-                .Select(x => Regex.Replace(x.Key, @"^(.+?)\..+$", "$1"));
+                .Select(x => Regex.Replace(x.Key, @"^(?<root>.+?)\..+$", "${root}", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)));
 
             foreach (var propName in propNames)
             {
@@ -72,10 +72,10 @@ namespace Ark.Tools.Reqnroll
                             BindingFlags.Public | BindingFlags.Static,
                             null,
                             CallingConventions.Any,
-                            new Type[] { typeof(Table) },
+                            [typeof(Table)],
                             null);
                     createInstance = createInstance?.MakeGenericMethod(prop.PropertyType);
-                    object? propValue = createInstance?.Invoke(null, new object[] { subTable });
+                    object? propValue = createInstance?.Invoke(null, [subTable]);
 
                     prop.SetValue(result, propValue);
                 }
@@ -106,12 +106,12 @@ namespace Ark.Tools.Reqnroll
             var headers = table.Header.Select(e => e.Split('.').First());
             var propertiesOnTargetType = typeof(T).GetProperties().Select(e => e.Name).ToList();
 
-            var missingProperties = headers.Where(e => !propertiesOnTargetType.Contains(e)).ToList();
+            var missingProperties = headers.Where(e => !propertiesOnTargetType.Contains(e, StringComparer.Ordinal)).ToList();
 
             if (missingProperties.Any())
             {
                 var message = $"Type {typeof(T).Name} is missing the following properties specifield in the table: {string.Join(", ", missingProperties)}.";
-                throw new ArgumentException(message);
+                throw new ArgumentException(message, nameof(table));
             }
         }
     }

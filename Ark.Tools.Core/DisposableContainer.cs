@@ -1,6 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,7 +15,7 @@ namespace Ark.Tools.Core
     {
         private readonly List<IDisposable> _disposables;
         private const int DefaultCapacity = 16;
-        private readonly object _gate = new object();
+        private readonly object _gate = new();
         private bool _disposed;
 
         public DisposableContainer()
@@ -31,7 +32,7 @@ namespace Ark.Tools.Core
             {
                 Ensure.Any.IsNotNull(d);
                 _disposables.Add(d);
-            }            
+            }
         }
 
         /// <summary>

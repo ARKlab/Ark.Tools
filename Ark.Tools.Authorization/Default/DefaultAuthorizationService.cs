@@ -1,4 +1,5 @@
 ﻿using NLog;
+
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -13,7 +14,7 @@ namespace Ark.Tools.Authorization
     /// </summary>
     public class DefaultAuthorizationService : IAuthorizationService
     {
-        private static ILogger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
         private readonly IAuthorizationContextFactory _contextFactory;
         private readonly IAuthorizationPolicyProvider _policyProvider;
@@ -102,10 +103,10 @@ namespace Ark.Tools.Authorization
                 throw new ArgumentNullException(nameof(policyName));
             }
 
-            var policy = await this.PolicyProvider.GetPolicyAsync(policyName, ctk);
+            var policy = await PolicyProvider.GetPolicyAsync(policyName, ctk).ConfigureAwait(false);
             if (policy == null) throw new InvalidOperationException($"No policy found: {policyName}.");
 
-            return await AuthorizeAsync(user, resource, policy, ctk);
+            return await AuthorizeAsync(user, resource, policy, ctk).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -134,7 +135,7 @@ namespace Ark.Tools.Authorization
             var authContext = _contextFactory.Create(policy, user, resource);
             foreach (var handler in _handlers)
             {
-                await handler.HandleAsync(authContext, ctk);
+                await handler.HandleAsync(authContext, ctk).ConfigureAwait(false);
             }
 
             (var authorized, var messages) = _evaluator.Evaluate(authContext);

@@ -1,6 +1,8 @@
-﻿using System;
+﻿using NodaTime;
+
 using Rebus.Time;
-using NodaTime;
+
+using System;
 
 namespace Ark.Tools.Rebus
 {

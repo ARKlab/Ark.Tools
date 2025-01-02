@@ -1,10 +1,10 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Dapper;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
-using Dapper;
-
 using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql.SqlServer
@@ -38,9 +38,14 @@ namespace Ark.Tools.Sql.SqlServer
 
         public static async Task<(IEnumerable<TReturn> data, int count)> ReadPagedAsync<TReturn>(this IDbConnection connection, CommandDefinition cmd)
         {
-            using var r = await connection.QueryMultipleAsync(cmd);
-            var retVal = await r.ReadAsync<TReturn>();
-            var count = await r.ReadFirstAsync<int>();
+#if NET6_0_OR_GREATER
+            var r = await connection.QueryMultipleAsync(cmd).ConfigureAwait(false);
+            await using var _ = r.ConfigureAwait(false);
+#else
+            using var r = await connection.QueryMultipleAsync(cmd).ConfigureAwait(false);
+#endif
+            var retVal = await r.ReadAsync<TReturn>().ConfigureAwait(false);
+            var count = await r.ReadFirstAsync<int>().ConfigureAwait(false);
 
             return (retVal, count);
         }

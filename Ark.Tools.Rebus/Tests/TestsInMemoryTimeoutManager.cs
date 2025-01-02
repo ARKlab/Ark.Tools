@@ -21,10 +21,10 @@ namespace Ark.Tools.Rebus.Tests
         , IEnumerable<TestsInMemoryTimeoutManager.DeferredMessage>
     {
         private readonly IRebusTime _rebusTime;
-        private readonly ConcurrentDictionary<string, DeferredMessage> _deferredMessages = new ConcurrentDictionary<string, DeferredMessage>();
+        private readonly ConcurrentDictionary<string, DeferredMessage> _deferredMessages = new(StringComparer.Ordinal);
 
         private static int _dueCount = 0;
-        private static readonly List<TestsInMemoryTimeoutManager> _instances = new List<TestsInMemoryTimeoutManager>();
+        private static readonly List<TestsInMemoryTimeoutManager> _instances = new();
 
         public static int DueCount { get => _dueCount; set => _dueCount = value; }
 

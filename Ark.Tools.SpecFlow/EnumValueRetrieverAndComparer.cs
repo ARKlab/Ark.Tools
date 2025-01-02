@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using TechTalk.SpecFlow.Assist;
 
 namespace Ark.Tools.SpecFlow
@@ -84,7 +85,7 @@ namespace Ark.Tools.SpecFlow
         {
             return enumType.IsGenericType == false;
         }
-        private static InvalidOperationException GetInvalidOperationException(string value) => new InvalidOperationException($"No enum with value {value} found");
+        private static InvalidOperationException GetInvalidOperationException(string value) => new($"No enum with value {value} found");
 
         public bool CanCompare(object actualValue)
         {

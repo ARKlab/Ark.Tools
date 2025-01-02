@@ -28,8 +28,14 @@ namespace Ark.Tools.AspNetCore.NestedStartup
                 .UseStartup<TStartup>()
                 .Build();
 
-            var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();            
-            var r2 = lifetime.ApplicationStopping.Register(() => webHostBuilder.StopAsync().GetAwaiter().GetResult());
+            var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
+#pragma warning disable MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
+#pragma warning disable MA0040 // Forward the CancellationToken parameter to methods that take one
+            var r2 = lifetime.ApplicationStopping.Register(()
+                => webHostBuilder.StopAsync().GetAwaiter().GetResult()
+                );
+#pragma warning restore MA0040 // Forward the CancellationToken parameter to methods that take one
+#pragma warning restore MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
 
             async Task branchDelegate(HttpContext ctx)
             {
@@ -39,7 +45,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
 
                 using var nestedScope = nestedFactory.CreateScope();
                 ctx.RequestServices = new BranchedServiceProvider(ctx.RequestServices, nestedScope.ServiceProvider);
-                await server.Process(ctx);
+                await server.Process(ctx).ConfigureAwait(false);
             }
 
             webHostBuilder.Start();
@@ -49,7 +55,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup
                 builder.Use(async (HttpContext context, RequestDelegate next) =>
                 {
                     var keepAlive = r2;
-                    await branchDelegate(context);
+                    await branchDelegate(context).ConfigureAwait(false);
                 });
             });
         }

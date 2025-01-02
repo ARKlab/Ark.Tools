@@ -1,11 +1,14 @@
-﻿using Flurl.Http;
+﻿using Ark.Tools.Http;
+
+using Flurl.Http;
+
+using System;
 using System.Collections.Generic;
-using WebApplicationDemo.Dto;
-using System.Threading.Tasks;
 using System.Text.Json;
 using System.Threading;
-using System;
-using Ark.Tools.Http;
+using System.Threading.Tasks;
+
+using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Services
 {
@@ -13,7 +16,7 @@ namespace WebApplicationDemo.Services
     {
         private readonly IFlurlClient _jsonPlaceHolderClient;
 
-        private string _url = "https://jsonplaceholder.typicode.com/";
+        private readonly string _url = "https://jsonplaceholder.typicode.com/";
 
         public PostService(IArkFlurlClientFactory factory)
         {

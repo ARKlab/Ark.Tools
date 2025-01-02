@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
+
 using System;
 using System.Data;
 
@@ -10,7 +11,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
     public static class Ex
     {
-        class SqlStateProviderConfig : ISqlStateProviderConfig
+        record SqlStateProviderConfig : ISqlStateProviderConfig
         {
             public string DbConnectionString { get; set; } = string.Empty;
         }

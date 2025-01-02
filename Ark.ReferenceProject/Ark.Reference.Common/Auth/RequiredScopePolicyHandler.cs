@@ -10,7 +10,7 @@ namespace Ark.Reference.Common.Auth
     public abstract class RequiredScopePolicyHandler : AuthorizationHandler<RequiredScopePolicy>
     {
         private readonly string _serviceScope;
-        private static readonly char[] _separator = new[] { ' ' };
+        private static readonly char[] _separator = [' '];
 
         protected RequiredScopePolicyHandler(
             string serviceScope)
@@ -27,7 +27,7 @@ namespace Ark.Reference.Common.Auth
 
             var requiredScope = requirement.Scope;
 
-            if (!scopes.Contains(requiredScope))
+            if (!scopes.Contains(requiredScope, StringComparer.Ordinal))
                 context.Fail(requirement, $"User does not possess the required scopes '{requiredScope}'");
             else
                 context.Succeed(requirement);

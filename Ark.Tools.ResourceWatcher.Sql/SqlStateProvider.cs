@@ -3,10 +3,15 @@
 using Ark.Tools.Core;
 using Ark.Tools.NewtonsoftJson;
 using Ark.Tools.Sql;
+
 using Dapper;
+
 using EnsureThat;
+
 using Newtonsoft.Json;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +25,7 @@ namespace Ark.Tools.ResourceWatcher
     {
         string DbConnectionString { get; }
     }
-    
+
     public class SqlStateProvider : IStateProvider
     {
         private readonly ISqlStateProviderConfig _config;
@@ -40,11 +45,11 @@ namespace Ark.Tools.ResourceWatcher
             _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.Instance;
         }
 
-        class EJ
+        sealed class EJ
         {
             public string? ExtensionsJson { get; set; }
         }
-        class MMJ
+        sealed class MMJ
         {
             public string? ModifiedSourcesJson { get; set; }
         }
@@ -67,42 +72,41 @@ namespace Ark.Tools.ResourceWatcher
                 return r;
             }
 
-            await using (var c = await _connManager.GetAsync(_config.DbConnectionString, ctk))
+            var c = await _connManager.GetAsync(_config.DbConnectionString, ctk).ConfigureAwait(false);
+            await using (c.ConfigureAwait(false))
             {
                 if (resourceIds == null)
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState
                         , map
                         , param: new { tenant = tenant }
-                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        ;
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
                 else if (resourceIds.Length == 0)
                     return Enumerable.Empty<ResourceState>(); //Empty array should just return empty result
                 else if (resourceIds.Length < 2000) //limit is 2100
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in @resources"
                         , map
                         , param: new { tenant = tenant, resources = resourceIds }
-                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        ;
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
                 else
                     return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
                         , map
                         , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
-                        , splitOn: "ExtensionsJson,ModifiedSourcesJson")
-                        ;
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
             }
         }
 
         public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
         {
             var st = states.AsList();
-            foreach(var s in st)
+            foreach (var s in st)
             {
                 Ensure.String.HasLengthBetween(s.Tenant, 1, 128);
                 Ensure.String.HasLengthBetween(s.ResourceId, 1, 300);
             }
 
 
-            await using (var c = await _connManager.GetAsync(_config.DbConnectionString, ctk))
+            var c = await _connManager.GetAsync(_config.DbConnectionString, ctk).ConfigureAwait(false);
+            await using (c.ConfigureAwait(false))
             {
                 var q = @"
 MERGE INTO [State] AS tgt
@@ -126,27 +130,29 @@ WHEN MATCHED THEN
 ;
 ";
 
-                await c.ExecuteAsync(q, new { table = st.Select(x => new
+                await c.ExecuteAsync(q, new
                 {
-                    x.Tenant,
-                    x.ResourceId,
-                    Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
-                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings),
-                    LastEvent = x.LastEvent.ToDateTimeUtc(),
-                    RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
-                    x.RetryCount,
-                    x.CheckSum,
-                    ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
-                    Exception = x.LastException?.ToString()
-                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]") });
+                    table = st.Select(x => new
+                    {
+                        x.Tenant,
+                        x.ResourceId,
+                        Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
+                        ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings),
+                        LastEvent = x.LastEvent.ToDateTimeUtc(),
+                        RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
+                        x.RetryCount,
+                        x.CheckSum,
+                        ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
+                        Exception = x.LastException?.ToString()
+                    }).ToDataTable().AsTableValuedParameter("[udt_State_v2]")
+                }).ConfigureAwait(false);
             }
         }
 
         public void EnsureTableAreCreated()
         {
-            using (var c = _connManager.Get(_config.DbConnectionString))
-            {
-                var q = @"
+            using var c = _connManager.Get(_config.DbConnectionString);
+            var q = @"
 IF OBJECT_ID('State', 'U') IS NULL
 BEGIN
     CREATE TABLE [State](
@@ -298,8 +304,7 @@ BEGIN
 END 
 ";
 
-                c.Execute(q);
-            }
+            c.Execute(q);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace Ark.Tools.Activity
             return new Resource(provider, resourceId);
         }
 
-        public bool Equals(Resource other)
+        public readonly bool Equals(Resource other)
         {
             return string.Equals(Provider, other.Provider, StringComparison.InvariantCultureIgnoreCase)
                 && string.Equals(Id, other.Id, StringComparison.InvariantCultureIgnoreCase);
@@ -34,7 +34,7 @@ namespace Ark.Tools.Activity
             return !x.Equals(y);
         }
 
-        public override bool Equals(object? obj)
+        public override readonly bool Equals(object? obj)
         {
             if (!(obj is Resource))
                 return false;
@@ -42,20 +42,20 @@ namespace Ark.Tools.Activity
             return Equals((Resource)obj);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
                 int hash = 7243;
-                hash = hash * 92821 + Provider.ToLowerInvariant().GetHashCode();
-                hash = hash * 92821 + Id.ToLowerInvariant().GetHashCode();
+                hash = hash * 92821 + Provider.GetHashCode(StringComparison.OrdinalIgnoreCase);
+                hash = hash * 92821 + Id.GetHashCode(StringComparison.OrdinalIgnoreCase);
                 return hash;
             }
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
-            return string.Format(null,"{0}.{1}", Provider, Id);
+            return string.Format(null, "{0}.{1}", Provider, Id);
         }
     }
 }

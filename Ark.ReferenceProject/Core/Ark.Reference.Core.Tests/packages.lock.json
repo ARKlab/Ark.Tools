@@ -17,6 +17,12 @@
           "ExcelDataReader": "3.7.0"
         }
       },
+      "Meziantou.Analyzer": {
+        "type": "Direct",
+        "requested": "[2.0.184, )",
+        "resolved": "2.0.184",
+        "contentHash": "+b96w2tVJNI9CR4naLcNFWfGDIwXheCO/3RsXkgq+hphqjIvLmXQM+5U4h7AZQbzTDFjXiulr4ws1L5/4xo0WQ=="
+      },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
         "requested": "[8.0.11, )",
@@ -1595,13 +1601,13 @@
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
-        "resolved": "1.1.0",
-        "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
+        "resolved": "1.1.1",
+        "contentHash": "TMBuzAHpTenGbGgk0SMTwyEkyijY/Eae4ZGsFNYJvAr/LDn1ku3Etp3FPxChmDp5HHF3kzJuoaa08N0xjqAJfQ=="
       },
       "Microsoft.NETCore.Targets": {
         "type": "Transitive",
-        "resolved": "1.1.0",
-        "contentHash": "aOZA3BWfz9RXjpzt0sRJJMjAscAUm3Hoa4UWAfceV9UTYxgwZ1lZt5nO2myFf+/jetYQo4uTP7zS8sJY67BBxg=="
+        "resolved": "1.1.3",
+        "contentHash": "3Wrmi0kJDzClwAC+iBdUBpEKmEle8FQNsCs77fkiOIw/9oYA07bL1EZNX0kQ2OMN3xpwvl0vAtOCYY3ndDNlhQ=="
       },
       "Microsoft.OData.Core": {
         "type": "Transitive",
@@ -1642,11 +1648,6 @@
         "type": "Transitive",
         "resolved": "7.20.0",
         "contentHash": "nJLDCOv3qemN0XI5kmUN9h38Qw+ZQBoYtWwSGhPkDEiiZSDcAwLMgqbGNKmK3myhVWASCqXtOqrj5jUnGZrH/Q=="
-      },
-      "Microsoft.SqlServer.Dacpacs.Master": {
-        "type": "Transitive",
-        "resolved": "160.0.0",
-        "contentHash": "bgiN77Hfpev7+LON0WOZbgz1VvL6abuUkw14ulLwAnAiuYCcav8HCAoGlgSXVhsLd8U5+jSgeX/ZrNBuPF24qA=="
       },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
@@ -2681,10 +2682,10 @@
       },
       "System.Net.Http": {
         "type": "Transitive",
-        "resolved": "4.3.0",
-        "contentHash": "sYg+FtILtRQuYWSIAuNOELwVuVsxVyJGWQyOnlAzhV4xvhyFnON1bAzYYC+jjRW8JREM45R0R5Dgi8MTC5sEwA==",
+        "resolved": "4.3.4",
+        "contentHash": "aOa2d51SEbmM+H+Csw7yJOuNZoHkrP2XnAurye5HWYgGVVU54YZDvsLUYRv6h18X3sPnjNCANmN7ZhIPiqMcjA==",
         "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
+          "Microsoft.NETCore.Platforms": "1.1.1",
           "System.Collections": "4.3.0",
           "System.Diagnostics.Debug": "4.3.0",
           "System.Diagnostics.DiagnosticSource": "4.3.0",
@@ -2709,7 +2710,7 @@
           "System.Threading.Tasks": "4.3.0",
           "runtime.native.System": "4.3.0",
           "runtime.native.System.Net.Http": "4.3.0",
-          "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.0"
+          "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2"
         }
       },
       "System.Net.Primitives": {
@@ -2860,11 +2861,11 @@
       },
       "System.Runtime": {
         "type": "Transitive",
-        "resolved": "4.3.0",
-        "contentHash": "JufQi0vPQ0xGnAczR13AUFglDyVYt4Kqnz1AZaiKZ5+GICq0/1MH/mO/eAJHt/mHW1zjKBJd7kV26SrxddAhiw==",
+        "resolved": "4.3.1",
+        "contentHash": "abhfv1dTK6NXOmu4bgHIONxHyEqFjW8HwXPmpY9gmll+ix9UNo4XDcmzJn6oLooftxNssVHdJC1pGT9jkSynQg==",
         "dependencies": {
-          "Microsoft.NETCore.Platforms": "1.1.0",
-          "Microsoft.NETCore.Targets": "1.1.0"
+          "Microsoft.NETCore.Platforms": "1.1.1",
+          "Microsoft.NETCore.Targets": "1.1.3"
         }
       },
       "System.Runtime.Caching": {
@@ -3192,10 +3193,10 @@
       },
       "System.Text.RegularExpressions": {
         "type": "Transitive",
-        "resolved": "4.3.0",
-        "contentHash": "RpT2DA+L660cBt1FssIE9CAGpLFdFPuheB7pLpKpn6ZXNby7jDERe8Ua/Ne2xGiwLVG2JOqziiaVCGDon5sKFA==",
+        "resolved": "4.3.1",
+        "contentHash": "N0kNRrWe4+nXOWlpLT4LAY5brb8caNFlUuIRpraCVMDLYutKkol1aV079rQjLuSxKMJT2SpBQsYX9xbcTMmzwg==",
         "dependencies": {
-          "System.Runtime": "4.3.0"
+          "System.Runtime": "4.3.1"
         }
       },
       "System.Threading": {
@@ -3365,12 +3366,6 @@
           "Ark.Reference.Common": "[0.9.1, )"
         }
       },
-      "ark.reference.core.database": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.SqlServer.Dacpacs.Master": "[160.0.0, )"
-        }
-      },
       "ark.reference.core.webinterface": {
         "type": "Project",
         "dependencies": {
@@ -3448,6 +3443,7 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "AspNetCore.HealthChecks.AzureServiceBus": "[8.0.1, 9.0.0)",
           "AspNetCore.HealthChecks.Network": "[8.0.1, 9.0.0)",
           "AspNetCore.HealthChecks.Oracle": "[8.0.1, 9.0.0)",
@@ -3456,6 +3452,7 @@
           "AspNetCore.HealthChecks.UI": "[8.0.2, )",
           "AspNetCore.HealthChecks.UI.Client": "[8.0.1, 9.0.0)",
           "AspNetCore.HealthChecks.UI.InMemory.Storage": "[8.0.1, 9.0.0)",
+          "Azure.Identity": "[1.13.1, )",
           "Azure.Messaging.ServiceBus": "[7.18.2, )",
           "Microsoft.ApplicationInsights": "[2.22.0, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[8.0.11, )"
@@ -3523,7 +3520,9 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.4.2, )"
+          "MessagePack.NodaTime": "[3.4.2, )",
+          "System.Net.Http": "[4.3.4, )",
+          "System.Text.RegularExpressions": "[4.3.1, )"
         }
       },
       "ark.tools.newtonsoftjson": {
@@ -3545,7 +3544,10 @@
           "NLog": "[5.3.4, )",
           "NLog.Database": "[5.3.4, )",
           "NLog.DiagnosticSource": "[5.2.1, )",
-          "Slack.Webhooks": "[1.1.5, )"
+          "Newtonsoft.Json": "[13.0.3, )",
+          "Slack.Webhooks": "[1.1.5, )",
+          "System.Net.Http": "[4.3.4, )",
+          "System.Text.RegularExpressions": "[4.3.1, )"
         }
       },
       "ark.tools.nlog.configuration": {
@@ -3583,7 +3585,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "NodaTime.Serialization.SystemTextJson": "[1.2.0, )"
+          "NodaTime.Serialization.SystemTextJson": "[1.2.0, )",
+          "System.Text.Json": "[8.0.5, )"
         }
       },
       "ark.tools.outbox": {

@@ -13,11 +13,11 @@ namespace Ark.Tools.EventSourcing.RavenDb
     public sealed class RavenDbDomainEventPublisher : IDisposable
     {
         private readonly IDocumentStore _store;
-        private SubscriptionWorker<OutboxEvent> _worker;
+        private readonly SubscriptionWorker<OutboxEvent> _worker;
         private readonly IDomainEventPublisher _publisher;
         private Task? _subscriptionWorkerTask;
         private CancellationTokenSource? _tokenSource;
-        private object _gate = new object();
+        private readonly object _gate = new();
 
         public RavenDbDomainEventPublisher(IDocumentStore store, IDomainEventPublisher publisher)
         {
@@ -32,12 +32,14 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
         public async Task StartAsync(CancellationToken ctk = default)
         {
-            try {
-                await _store.Subscriptions.CreateAsync<OutboxEvent>(new SubscriptionCreationOptions<OutboxEvent>
+            try
+            {
+                await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions<OutboxEvent>
                 {
                     Name = "OutboxEventPublisher",
-                }, token: ctk);
-            } catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
+                }, token: ctk).ConfigureAwait(false);
+            }
+            catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
             {
             }
 
@@ -58,29 +60,27 @@ namespace Ark.Tools.EventSourcing.RavenDb
             {
                 try
                 {
-                    await _worker.Run(_exec, ctk);
+                    await _worker.Run(_exec, ctk).ConfigureAwait(false);
                 }
                 catch (TaskCanceledException) { throw; }
                 catch (Exception)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), ctk);
+                    await Task.Delay(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
                 }
             }
-            
+
         }
 
         private async Task _exec(SubscriptionBatch<OutboxEvent> batch)
         {
-            using (var session = batch.OpenAsyncSession())
+            using var session = batch.OpenAsyncSession();
+            foreach (var e in batch.Items)
             {
-                foreach (var e in batch.Items)
-                {
-                    await _publisher.PublishAsync(e.Result);
-                    session.Delete(e.Result);
-                }
+                await _publisher.PublishAsync(e.Result).ConfigureAwait(false);
+                session.Delete(e.Result);
+            }
 
-                await session.SaveChangesAsync();
-            }                
+            await session.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
         public async Task StopAsync()
@@ -97,7 +97,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
             try
             {
                 if (runtask != null)
-                    await runtask;
+                    await runtask.ConfigureAwait(false);
             }
             catch (TaskCanceledException) { }
         }

@@ -3,12 +3,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Routing;
-using System.Linq;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
+
+using System.Linq;
 
 namespace Ark.Tools.AspNetCore
 {
-    internal class RouteConvention : IApplicationModelConvention
+    internal sealed class RouteConvention : IApplicationModelConvention
     {
         private readonly AttributeRouteModel _centralPrefix;
 

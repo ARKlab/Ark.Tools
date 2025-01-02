@@ -11,7 +11,7 @@ namespace Ark.Tools.Core
         {
             var cur = start;
             var next = nextGenerator(cur);
-            
+
             while (true)
             {
                 yield return cur;

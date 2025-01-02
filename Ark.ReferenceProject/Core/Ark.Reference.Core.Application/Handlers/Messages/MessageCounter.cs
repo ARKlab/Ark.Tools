@@ -1,4 +1,4 @@
-﻿namespace Ark.Reference.Core.Application
+﻿namespace Ark.Reference.Core.Application.Handlers.Messages
 {
     public static class MessageCounter
     {

@@ -1,10 +1,14 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using EnsureThat;
+
 using NLog;
+
 using Polly;
+
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -14,7 +18,7 @@ namespace Ark.Tools.FtpClient.Core
 {
     public abstract class FtpClientBase : IFtpClient
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         public Uri Uri { get; }
         public NetworkCredential Credentials { get; }
@@ -43,37 +47,37 @@ namespace Ark.Tools.FtpClient.Core
         public abstract Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default);
         public abstract Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default);
         public abstract Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default);
-        
+
         public virtual async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
         {
-            _logger.Trace("List files starting from path: {Path}", startPath);
+            _logger.Trace(CultureInfo.InvariantCulture, "List files starting from path: {Path}", startPath);
             startPath ??= "./";
 
             if (skipFolder == null)
                 skipFolder = x => false;
 
-            Stack<FtpEntry> pendingFolders = new Stack<FtpEntry>();
+            Stack<FtpEntry> pendingFolders = new();
             IEnumerable<FtpEntry> files = new List<FtpEntry>();
-            List<Task<IEnumerable<FtpEntry>>> running = new List<Task<IEnumerable<FtpEntry>>>();
+            List<Task<IEnumerable<FtpEntry>>> running = new();
 
             async Task<IEnumerable<FtpEntry>> listFolderAsync(string path, CancellationToken ct)
             {
                 var retrier = Policy
                     .Handle<Exception>()
-                    .WaitAndRetryAsync(new[]
-                    {
+                    .WaitAndRetryAsync(
+                    [
                         TimeSpan.FromSeconds(1),
-                    }, (ex, ts) =>
+                    ], (ex, ts) =>
                     {
-                        _logger.Warn(ex, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
+                        _logger.Warn(ex, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
                     });
 
                 return await retrier.ExecuteAsync(async ct1 =>
                 {
-                    return await this.ListDirectoryAsync(path, ct1);
-                }, ct);
+                    return await ListDirectoryAsync(path, ct1).ConfigureAwait(false);
+                }, ct).ConfigureAwait(false);
 
-                
+
             }
 
             void startListing(string path)
@@ -87,15 +91,15 @@ namespace Ark.Tools.FtpClient.Core
             {
                 while (running.Count > 0)
                 {
-                    var t = await Task.WhenAny(running);
+                    var t = await Task.WhenAny(running).ConfigureAwait(false);
 
-                    var list = await t;
+                    var list = await t.ConfigureAwait(false);
                     running.Remove(t); // remove only if successful
 
                     foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
                     {
                         if (skipFolder.Invoke(d))
-                            _logger.Info("Skipping folder: {Path}", d.FullPath);
+                            _logger.Info(CultureInfo.InvariantCulture, "Skipping folder: {Path}", d.FullPath);
                         else
                             pendingFolders.Push(d);
                     }
@@ -103,12 +107,12 @@ namespace Ark.Tools.FtpClient.Core
                     files = files.Concat(list.Where(x => !x.IsDirectory).ToList());
 
                     while (pendingFolders.Count > 0 && running.Count < this.MaxListingRecursiveParallelism)
-                        startListing(pendingFolders.Pop().FullPath);                
+                        startListing(pendingFolders.Pop().FullPath);
                 }
             }
             catch
             {
-                await Task.WhenAll(running); // this still contains the failed one 
+                await Task.WhenAll(running).ConfigureAwait(false); // this still contains the failed one 
                 throw;
             }
 

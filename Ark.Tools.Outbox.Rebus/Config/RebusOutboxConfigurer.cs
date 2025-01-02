@@ -10,9 +10,9 @@ namespace Ark.Tools.Outbox.Rebus.Config
 {
     public class RebusOutboxProcessorConfigurer
     {
-        private StandardConfigurer<ITransport> _configurer;
+        private readonly StandardConfigurer<ITransport> _configurer;
 
-        private OutboxOptions _options = new OutboxOptions();
+        private readonly OutboxOptions _options = new();
 
         public RebusOutboxProcessorConfigurer(StandardConfigurer<ITransport> configurer)
         {

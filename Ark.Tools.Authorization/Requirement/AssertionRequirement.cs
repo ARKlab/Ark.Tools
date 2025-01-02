@@ -40,7 +40,7 @@ namespace Ark.Tools.Authorization.Requirement
         /// <param name="ctk">CancellationToken</param>
         public async Task HandleAsync(AuthorizationContext context, CancellationToken ctk = default)
         {
-            if (await Handler(context))
+            if (await Handler(context).ConfigureAwait(false))
             {
                 context.Succeed(this);
             }

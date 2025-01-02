@@ -1,13 +1,19 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
+
 using EnsureThat;
+
 using Nito.AsyncEx;
+
 using NLog;
+
 using NodaTime;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,16 +22,16 @@ namespace Ark.Tools.ResourceWatcher
 {
     public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IResourceWatcherConfig _config;
         private readonly IStateProvider _stateProvider;
-        private object _lock = new object { };
+        private readonly object _lock = new() { };
         private volatile bool _isStarted = false;
         private CancellationTokenSource? _cts;
         private Task? _task;
         private readonly ResourceWatcherDiagnosticSource _diagnosticSource;
 
-        public ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
+        protected ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
         {
             EnsureArg.IsNotNull(config);
             EnsureArg.IsNotNull(stateProvider);
@@ -61,7 +67,7 @@ namespace Ark.Tools.ResourceWatcher
             {
                 try
                 {
-                    await _runAsync(_cts.Token);
+                    await _runAsync(_cts.Token).ConfigureAwait(false);
                 }
                 catch (TaskCanceledException)
                 {
@@ -86,7 +92,7 @@ namespace Ark.Tools.ResourceWatcher
 
             try
             {
-                await _runOnce(RunType.Once, ctk);
+                await _runOnce(RunType.Once, ctk).ConfigureAwait(false);
             }
             finally
             {
@@ -104,7 +110,7 @@ namespace Ark.Tools.ResourceWatcher
             {
                 try
                 {
-                    await _runOnce(RunType.Normal, ctk);
+                    await _runOnce(RunType.Normal, ctk).ConfigureAwait(false);
 
                     exConsecutiveCount = 0;
                 }
@@ -119,8 +125,8 @@ namespace Ark.Tools.ResourceWatcher
 
                 ctk.ThrowIfCancellationRequested();
 
-                _logger.Info("Going to sleep for {SleepSeconds}s", _config.SleepSeconds);
-                await Task.Delay(_config.SleepSeconds * 1000, ctk);
+                _logger.Info(CultureInfo.InvariantCulture, "Going to sleep for {SleepSeconds}s", _config.SleepSeconds);
+                await Task.Delay(_config.SleepSeconds * 1000, ctk).ConfigureAwait(false);
             }
         }
 
@@ -133,17 +139,17 @@ namespace Ark.Tools.ResourceWatcher
             try
             {
                 //GetResources
-                var list = await _getResources(now, ctk);
+                var list = await _getResources(now, ctk).ConfigureAwait(false);
 
                 //Check State - check which entries are new or have been modified.
-                var evaluated = await _evaluateActions(list, ctk);
+                var evaluated = await _evaluateActions(list, ctk).ConfigureAwait(false);
 
                 //Process
                 var toProcess = evaluated.Where(x => !x.ResultType.HasValue).ToList();
                 var skipped = evaluated.Count - toProcess.Count;
 
-                _logger.Info("Found {SkippedCount} resources to skip", skipped);
-                _logger.Info("Found {ToProcessCount} resources to process with parallelism {DegreeOfParallelism}", toProcess.Count, _config.DegreeOfParallelism);
+                _logger.Info(CultureInfo.InvariantCulture, "Found {SkippedCount} resources to skip", skipped);
+                _logger.Info(CultureInfo.InvariantCulture, "Found {ToProcessCount} resources to process with parallelism {DegreeOfParallelism}", toProcess.Count, _config.DegreeOfParallelism);
 
                 // Unlink the _processEntry Span from the parent run to avoid RootId being too big
                 // This is mainly an hack for Application Insights but in general we want to avoid too big RootId with 100s of 1000s Spans
@@ -156,7 +162,7 @@ namespace Ark.Tools.ResourceWatcher
                         x.Total = count;
                         x.Index = i + 1;
                         return _processEntry(x, ct);
-                    }, ctk);
+                    }, ctk).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -180,14 +186,16 @@ namespace Ark.Tools.ResourceWatcher
             using var activityCheckState = _diagnosticSource.CheckStateStart();
             try
             {
-                var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk);
+                var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
 
                 var evaluated = _createEvalueteList(list, states);
 
                 _diagnosticSource.CheckStateSuccessful(activityCheckState, evaluated);
 
                 return evaluated;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 _diagnosticSource.CheckStateFailed(activityCheckState, ex);
                 throw;
             }
@@ -199,9 +207,9 @@ namespace Ark.Tools.ResourceWatcher
 
             try
             {
-                var infos = await _getResourcesInfo(ctk);
+                var infos = await _getResourcesInfo(ctk).ConfigureAwait(false);
 
-                var bad = infos.GroupBy(x => x.ResourceId).FirstOrDefault(x => x.Count() > 1);
+                var bad = infos.GroupBy(x => x.ResourceId, StringComparer.Ordinal).FirstOrDefault(x => x.Count() > 1);
                 if (bad != null)
                     _diagnosticSource.ThrowDuplicateResourceIdRetrived(bad.Key);
 
@@ -264,7 +272,7 @@ namespace Ark.Tools.ResourceWatcher
                  }
 
                  return x;
-             }).ToList();
+             }, StringComparer.Ordinal).ToList();
 
             return ev;
         }
@@ -282,10 +290,11 @@ namespace Ark.Tools.ResourceWatcher
 
             try
             {
-                var res = await _retrievePayload(info, lastState, ctk);
+                var res = await _retrievePayload(info, lastState, ctk).ConfigureAwait(false);
                 _diagnosticSource.FetchResourceSuccessful(activity, pc);
                 return res;
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _diagnosticSource.FetchResourceFailed(activity, pc, ex);
                 throw;
@@ -297,12 +306,12 @@ namespace Ark.Tools.ResourceWatcher
             var info = pc.CurrentInfo;
             var lastState = pc.LastState;
             var dataType = pc.ProcessType;
-            using var scope = ScopeContext.PushNestedStateProperties(info.ResourceId, new[]
-            {
+            using var scope = ScopeContext.PushNestedStateProperties(info.ResourceId,
+            [
                 // when 'logging' these, 'info' is serialized as the actual implementation which may contain a lot of data. slice to 'log' only the Interface
                 new KeyValuePair<string, object?>("currentInfo", new { info.ResourceId, info.Modified, info.ModifiedSources, info.Extensions }),
                 new KeyValuePair<string, object?>("lastState", lastState)
-            }); 
+            ]);
             try
             {
                 using var processActivity = _diagnosticSource.ProcessResourceStart(pc);
@@ -327,7 +336,7 @@ namespace Ark.Tools.ResourceWatcher
                     pc.ResultType = ResultType.Normal;
                     IResourceState? newState = default;
 
-                    await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk);
+                    await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk).ConfigureAwait(false);
 
                     // if handlers retrived data, fetch the result to check the checksum
                     if (payload.IsStarted)
@@ -336,12 +345,12 @@ namespace Ark.Tools.ResourceWatcher
                         // here we care only if we have a payload to use
                         if (payload.Task.Status == TaskStatus.RanToCompletion)
                         {
-                            newState = await payload;
+                            newState = await payload.ConfigureAwait(false);
 
                             if (newState != null)
                             {
                                 if (!string.IsNullOrWhiteSpace(newState.CheckSum) && state.CheckSum != newState.CheckSum)
-                                    _logger.Info("Checksum changed on ResourceId={ResourceId} from {OldChecksum} to {NewChecksum}", state.ResourceId, state.CheckSum, newState.CheckSum);
+                                    _logger.Info(CultureInfo.InvariantCulture, "Checksum changed on ResourceId={ResourceId} from {OldChecksum} to {NewChecksum}", state.ResourceId, state.CheckSum, newState.CheckSum);
 
                                 state.CheckSum = newState.CheckSum;
                                 state.RetrievedAt = newState.RetrievedAt;
@@ -370,7 +379,7 @@ namespace Ark.Tools.ResourceWatcher
 
                     _diagnosticSource.ProcessResourceSuccessful(processActivity, pc);
 
-                    if(processActivity.Duration > _config.ResourceDurationNotificationLimit)
+                    if (processActivity.Duration > _config.ResourceDurationNotificationLimit)
                         _diagnosticSource.ProcessResourceTookTooLong(info.ResourceId, processActivity);
                 }
                 catch (Exception ex)
@@ -384,7 +393,7 @@ namespace Ark.Tools.ResourceWatcher
                     _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
                 }
 
-                await _stateProvider.SaveStateAsync(new[] { state }, ctk);
+                await _stateProvider.SaveStateAsync([state], ctk).ConfigureAwait(false);
 
             }
             catch (Exception ex)
@@ -609,9 +618,6 @@ namespace Ark.Tools.ResourceWatcher
     {
         public ChangedStateContext(IResourceMetadata info, IResourceTrackedState? lastState, AsyncLazy<T?> payload)
         {
-            EnsureArg.IsNotNull(info);
-            EnsureArg.IsNotNull(payload);
-
             Info = info;
             Payload = payload;
             LastState = lastState;

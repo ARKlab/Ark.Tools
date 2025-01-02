@@ -33,7 +33,7 @@ namespace Ark.Tools.Authorization
             _failedRequirements = new HashSet<IAuthorizationRequirement>();
             _succeededRequirements = new HashSet<IAuthorizationRequirement>();
 
-            Messages = new Dictionary<IAuthorizationRequirement,string>();
+            Messages = new Dictionary<IAuthorizationRequirement, string>();
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace Ark.Tools.Authorization
         /// </summary>
         public virtual void Fail(IAuthorizationRequirement requirement, string? message = null)
         {
-            if(!string.IsNullOrWhiteSpace(message))
+            if (!string.IsNullOrWhiteSpace(message))
                 Messages.Add(requirement, message!);
 
             _pendingRequirements.Remove(requirement);

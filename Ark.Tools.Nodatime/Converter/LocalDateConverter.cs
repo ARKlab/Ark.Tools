@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NodaTime;
 using NodaTime.Text;
+
 using System;
 using System.ComponentModel;
 using System.Globalization;
@@ -13,10 +14,10 @@ namespace Ark.Tools.Nodatime
     {
         private readonly LocalDatePattern _pattern = LocalDatePattern.Iso;
 
-        private static Type[] _supportedFrom = new[]
-        {
+        private static readonly Type[] _supportedFrom =
+        [
             typeof(string),typeof(LocalDate),typeof(DateTime)
-        };
+        ];
 
         public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
         {
@@ -41,10 +42,10 @@ namespace Ark.Tools.Nodatime
                 if (r.Success)
                     return r.Value;
                 // little hack, not the finest, but should work
-                if (DateTime.TryParse(s, out var dt) && dt.Date == dt)
+                if (DateTime.TryParse(s, culture ?? CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) && dt.Date == dt)
                     return LocalDate.FromDateTime(dt);
             }
-            
+
 
             return base.ConvertFrom(context, culture, value);
         }

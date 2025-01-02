@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.EventSourcing.Aggregates;
+
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +11,6 @@ namespace Ark.Tools.EventSourcing.Store
         where TAggregate : IAggregate
     {
         Task<IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>> StartTransactionAsync(string id, CancellationToken ctk = default);
-		Task<TAggregateState> LoadCapturedState(string id, CancellationToken ctk = default);
-	}
+        Task<TAggregateState> LoadCapturedState(string id, CancellationToken ctk = default);
+    }
 }

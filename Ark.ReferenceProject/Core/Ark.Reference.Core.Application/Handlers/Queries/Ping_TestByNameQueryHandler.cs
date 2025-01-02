@@ -1,7 +1,6 @@
-﻿using Ark.Tools.Solid;
-
-using Ark.Reference.Core.API.Queries;
+﻿using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.Solid;
 
 using EnsureThat;
 
@@ -10,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries
 {
-    internal class Ping_TestByNameQueryHandler : IQueryHandler<Ping_GetByNameQuery.V1, Ping.V1.Output>
+    internal sealed class Ping_TestByNameQueryHandler : IQueryHandler<Ping_GetByNameQuery.V1, Ping.V1.Output>
     {
 
         public Ping_TestByNameQueryHandler()
-        { 
+        {
 
         }
 

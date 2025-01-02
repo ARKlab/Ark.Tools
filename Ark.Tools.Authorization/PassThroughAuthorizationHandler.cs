@@ -19,7 +19,7 @@ namespace Ark.Tools.Authorization
         {
             foreach (var handler in context.Policy.Requirements.OfType<IAuthorizationHandler>())
             {
-                await handler.HandleAsync(context, ctk);
+                await handler.HandleAsync(context, ctk).ConfigureAwait(false);
             }
         }
     }

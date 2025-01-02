@@ -1,13 +1,18 @@
-﻿using NLog;
-using NodaTime;
-using System;
+﻿using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
-using TestWorker.Dto;
-using Ark.Tools.ResourceWatcher;
+
+using NLog;
+
+using NodaTime;
+
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
+
+using TestWorker.Dto;
 
 namespace TestWorker.DataProvider
 {
@@ -19,7 +24,7 @@ namespace TestWorker.DataProvider
 
     public class TestProvider : IResourceProvider<Test_FileMetadataDto, Test_File, Test_ProviderFilter>
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
         public TestProvider()
         {
@@ -29,7 +34,7 @@ namespace TestWorker.DataProvider
         {
             return Task.Run(() =>
             {
-                var metadataList = Enumerable.Range(1, filter.Count).Select(x =>                
+                var metadataList = Enumerable.Range(1, filter.Count).Select(x =>
                     new Test_FileMetadataDto
                     {
                         FileName = "TestFileName" + x,
@@ -50,7 +55,7 @@ namespace TestWorker.DataProvider
                     DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
                 };
 
-                _logger.Info("File {FileName} downloaded successfully", downloadedFile.Metadata.FileName);
+                _logger.Info(CultureInfo.InvariantCulture, "File {FileName} downloaded successfully", downloadedFile.Metadata.FileName);
 
                 return downloadedFile;
             });

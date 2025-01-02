@@ -1,9 +1,11 @@
 ﻿using Ark.Tools.EventSourcing.Aggregates;
 using Ark.Tools.EventSourcing.Store;
+
 using Raven.Client.Documents;
 using Raven.Client.Documents.Conventions;
 using Raven.Client.Documents.Operations.Revisions;
 using Raven.Client.ServerWide.Operations;
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -24,7 +26,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 {
                     return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
                 }
-                
+
                 return null;
             });
 
@@ -39,7 +41,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
             conventions.FindCollectionName = type =>
             {
                 return func?.Invoke(type)
-                    ?? current?.Invoke(type) 
+                    ?? current?.Invoke(type)
                     ?? DocumentConventions.DefaultGetCollectionName(type);
             };
 
@@ -58,17 +60,18 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     MinimumRevisionAgeToKeep = null,
                 },
                 Collections = new Dictionary<string, RevisionsCollectionConfiguration>
+(StringComparer.Ordinal)
                 {
                     {RavenDbEventSourcingConstants.OutboxCollectionName, new RevisionsCollectionConfiguration {Disabled = true} },
                 }
-            }));
+            })).ConfigureAwait(false);
         }
 
         public static async Task EnsureNoRevisionForAggregateState<TAggregate>(this IDocumentStore store)
             where TAggregate : IAggregate
         {
             var collection = AggregateHelper<TAggregate>.Name;
-            var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database));
+            var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database)).ConfigureAwait(false);
             var revision = database.Revisions;
             if ((revision.Collections.ContainsKey(collection) && revision.Collections[collection].Disabled == true)
                 || revision.Default.Disabled)
@@ -79,7 +82,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                 Disabled = true
             });
 
-            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision));
+            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision)).ConfigureAwait(false);
         }
     }
 }

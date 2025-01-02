@@ -1,20 +1,25 @@
-﻿using Ark.Tools.SimpleInjector;
+﻿using Ark.Tools.Activity.Messages;
+using Ark.Tools.Rebus;
+using Ark.Tools.Rebus.Retry;
+using Ark.Tools.SimpleInjector;
+
 using Newtonsoft.Json;
+
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
+
+using Rebus.Bus;
+using Rebus.Compression;
+using Rebus.Config;
+using Rebus.Handlers;
+using Rebus.Serialization.Json;
+
 using SimpleInjector;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Ark.Tools.Activity.Messages;
-using Rebus.Config;
-using Rebus.Compression;
-using Rebus.Handlers;
-using Rebus.Serialization.Json;
-using Ark.Tools.Rebus;
-using Ark.Tools.Rebus.Retry;
-using Rebus.Bus;
 
 namespace Ark.Tools.Activity.Processor
 {
@@ -22,7 +27,7 @@ namespace Ark.Tools.Activity.Processor
     public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager<TActivity>, IDisposable where TActivity : class, ISliceActivity
     {
 
-        private readonly Container _container = new Container();
+        private readonly Container _container = new();
         private readonly string _name;
         private readonly IEnumerable<Resource> _dependencies;
         private readonly Func<TActivity> _activityFactory;
@@ -82,7 +87,7 @@ namespace Ark.Tools.Activity.Processor
             var bus = _container.GetInstance<IBus>();
             foreach (var d in _dependencies)
             {
-                await bus.Advanced.Topics.Subscribe(d.ToString());
+                await bus.Advanced.Topics.Subscribe(d.ToString()).ConfigureAwait(false);
             }
         }
     }

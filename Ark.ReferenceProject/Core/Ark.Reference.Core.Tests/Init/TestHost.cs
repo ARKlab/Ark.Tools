@@ -1,15 +1,15 @@
-﻿using Ark.Tools.Http;
-using Ark.Tools.Outbox;
-using Ark.Tools.Rebus.Tests;
-
+﻿using Ark.Reference.Common;
 using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Application.Config;
 using Ark.Reference.Core.WebInterface;
+using Ark.Tools.Http;
+using Ark.Tools.Outbox;
+using Ark.Tools.Rebus.Tests;
 
 using FluentAssertions;
 
-
-using Ark.Reference.Common;
+using Flurl.Http;
+using Flurl.Http.Configuration;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -26,18 +26,15 @@ using Polly;
 using Rebus.Persistence.InMem;
 using Rebus.Transport.InMem;
 
+using Reqnroll;
+
 using SimpleInjector;
 
 using System;
 using System.IO;
 using System.Net.Http;
 using System.Security.Claims;
-using System.Threading;
-
-using Reqnroll;
 using System.Threading.Tasks;
-using Flurl.Http.Configuration;
-using Flurl.Http;
 
 namespace Ark.Reference.Core.Tests.Init
 {
@@ -53,7 +50,7 @@ namespace Ark.Reference.Core.Tests.Init
         public static ArkFlurlClientFactory Factory { get => _factory ?? throw new InvalidOperationException("_server is null"); set => _factory = value; }
 
         private static ArkFlurlClientFactory? _factory;
-        public static readonly TestEnv Env = new TestEnv();
+        public static readonly TestEnv Env = new();
 
         private static ScenarioContext? _scenarioContext;
         private static IHost? _server;
@@ -106,7 +103,7 @@ namespace Ark.Reference.Core.Tests.Init
         {
             using var _ = new FluentAssertions.Execution.AssertionScope();
 
-            var ctx = Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>();;
+            var ctx = Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>();
 
             var (inqueue, inprocess, deferred, outbox, errorMessages) =
                 await Policy
@@ -166,7 +163,7 @@ namespace Ark.Reference.Core.Tests.Init
                 Env.RebusNetwork.Reset();
 
                 while (InProcessMessageInspectorStep.Count > 0)
-                    Thread.Sleep(100);
+                    await Task.Delay(100);
 
             } while (drainer.StillDraining);
 
@@ -186,7 +183,7 @@ namespace Ark.Reference.Core.Tests.Init
 
             //ApplicationConstants.ComputeIdleDetectWindow = TimeSpan.FromSeconds(1);
 
-            var builder = Program.GetHostBuilder(Array.Empty<string>())
+            var builder = Program.GetHostBuilder([])
                 .ConfigureWebHost(wh =>
                 {
                     wh.UseTestServer()
@@ -252,7 +249,7 @@ namespace Ark.Reference.Core.Tests.Init
         }
     }
 
-    class TestServerfactory : DefaultFlurlClientFactory
+    sealed class TestServerfactory : DefaultFlurlClientFactory
     {
         private readonly TestServer _server;
 
@@ -275,9 +272,9 @@ namespace Ark.Reference.Core.Tests.Init
             TestDataFilePath = Path.GetDirectoryName(AppContext.BaseDirectory) + @"\TestData\";
         }
 
-        public ClaimsPrincipal TestPrincipal { get; } = new ClaimsPrincipal(new ClaimsIdentity(new[]{
+        public ClaimsPrincipal TestPrincipal { get; } = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, "Specflow")
-            }, "SYSTEM"));
+            ], "SYSTEM"));
 
         public InMemNetwork RebusNetwork { get; } = new InMemNetwork(true);
         public InMemorySubscriberStore RebusSubscriber { get; } = new InMemorySubscriberStore();
