@@ -1649,11 +1649,6 @@
         "resolved": "7.20.0",
         "contentHash": "nJLDCOv3qemN0XI5kmUN9h38Qw+ZQBoYtWwSGhPkDEiiZSDcAwLMgqbGNKmK3myhVWASCqXtOqrj5jUnGZrH/Q=="
       },
-      "Microsoft.SqlServer.Dacpacs.Master": {
-        "type": "Transitive",
-        "resolved": "160.0.0",
-        "contentHash": "bgiN77Hfpev7+LON0WOZbgz1VvL6abuUkw14ulLwAnAiuYCcav8HCAoGlgSXVhsLd8U5+jSgeX/ZrNBuPF24qA=="
-      },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
         "resolved": "1.0.0",
@@ -3369,12 +3364,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Reference.Common": "[0.9.1, )"
-        }
-      },
-      "ark.reference.core.database": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.SqlServer.Dacpacs.Master": "[160.0.0, )"
         }
       },
       "ark.reference.core.webinterface": {
