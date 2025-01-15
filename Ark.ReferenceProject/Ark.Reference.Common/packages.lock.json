@@ -25,9 +25,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.184, )",
-        "resolved": "2.0.184",
-        "contentHash": "+b96w2tVJNI9CR4naLcNFWfGDIwXheCO/3RsXkgq+hphqjIvLmXQM+5U4h7AZQbzTDFjXiulr4ws1L5/4xo0WQ=="
+        "requested": "[2.0.186, )",
+        "resolved": "2.0.186",
+        "contentHash": "PE8c9opHuUWLNqnZTN/KQC9oIfD/ZtsQ25sHF7/og4KfIRVnN4mgiyYw5NwCp8YPGapLoduIxuyQAcic6Eqcjg=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -37,11 +37,11 @@
       },
       "Polly": {
         "type": "Direct",
-        "requested": "[8.5.0, )",
-        "resolved": "8.5.0",
-        "contentHash": "GBNZPy7i7OpkaIruWPRJ0+AWzdGDQDnKY91b7Ic2aAch4lKhPjUc5KSffpH9krIWe0MoyghqaRxwRC0Uwz2PkA==",
+        "requested": "[8.5.1, )",
+        "resolved": "8.5.1",
+        "contentHash": "/kMFDkE3Tl6rKA1o+JJZ+r3ij8kHVRkIcHhx2fjvoTDl6risPH3KfCb0g9tfFni4qUbcPqkhDNcb0EvMPpyRKw==",
         "dependencies": {
-          "Polly.Core": "8.5.0"
+          "Polly.Core": "8.5.1"
         }
       },
       "Azure.Core": {
@@ -812,8 +812,8 @@
       },
       "Polly.Core": {
         "type": "Transitive",
-        "resolved": "8.5.0",
-        "contentHash": "VYYMZNitZ85UEhwOKkTQI63WEMvzUqwQc74I2mm8h/DBVAMcBBxqYPni4DmuRtbCwngmuONuK2yBJfWNRKzI+A=="
+        "resolved": "8.5.1",
+        "contentHash": "47BFjJJhlfSrwLgKoouCJYOYd+IRtFSrvaI9/QL3hbs6qGRtByw7D3QBVnGiDPNNSZ7oHfE7Fm/QIg/gd2ypWw=="
       },
       "Rebus": {
         "type": "Transitive",
