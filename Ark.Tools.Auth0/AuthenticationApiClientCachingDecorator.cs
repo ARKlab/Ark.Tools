@@ -3,6 +3,7 @@
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Builders;
 using Auth0.AuthenticationApi.Models;
+using Auth0.AuthenticationApi.Models.Ciba;
 
 using JWT.Algorithms;
 using JWT.Builder;
@@ -257,6 +258,16 @@ namespace Ark.Tools.Auth0
         public Task<PushedAuthorizationRequestResponse> PushedAuthorizationRequestAsync(PushedAuthorizationRequest request, CancellationToken cancellationToken = default)
         {
             return _inner.PushedAuthorizationRequestAsync(request, cancellationToken);
+        }
+
+        public Task<ClientInitiatedBackchannelAuthorizationResponse> ClientInitiatedBackchannelAuthorization(ClientInitiatedBackchannelAuthorizationRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.ClientInitiatedBackchannelAuthorization(request, cancellationToken);
+        }
+
+        public Task<ClientInitiatedBackchannelAuthorizationTokenResponse> GetTokenAsync(ClientInitiatedBackchannelAuthorizationTokenRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.GetTokenAsync(request, cancellationToken);
         }
         #endregion
     }
