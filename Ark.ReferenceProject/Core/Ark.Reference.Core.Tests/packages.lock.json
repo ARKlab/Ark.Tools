@@ -119,11 +119,11 @@
       },
       "NodaTime.Testing": {
         "type": "Direct",
-        "requested": "[3.2.0, )",
-        "resolved": "3.2.0",
-        "contentHash": "rrJjc3omfhJvL2Oyavitj9FD+1wDjbGIugx5vn4dZvNAKzs2Z8YUckU51CAbWZ00mXhpjJgVfb2RYw43hD8Ung==",
+        "requested": "[3.2.1, )",
+        "resolved": "3.2.1",
+        "contentHash": "5/3Knjh+U/lshyad4MS6SSO4VD18RT6wf0tFi0rp7wlG0Zxso247qt7RPAPArnsD/bBUqq0/36N8QIs9SzSoSA==",
         "dependencies": {
-          "NodaTime": "3.2.0"
+          "NodaTime": "3.2.1"
         }
       },
       "Reqnroll.MsTest": {
@@ -477,8 +477,8 @@
       },
       "FluentAssertions": {
         "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "mTLbcU991EQ1SEmNbVBaGGGJy0YFzvGd1sYJGNZ07nlPKuyHSn1I22aeKzqQXgEiaKyRO6MSCto9eN9VxMwBdA==",
+        "resolved": "7.1.0",
+        "contentHash": "98Dt8m2ZYAjxAzoVGnv+yYh441lhM/SLIxWXp9aZU1rF0mRtA8W49GzTPhwQcclqAiRnjeM0VydVkM1OwKF4NQ==",
         "dependencies": {
           "System.Configuration.ConfigurationManager": "6.0.0"
         }
@@ -1880,8 +1880,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.2.0",
-        "contentHash": "yoRA3jEJn8NM0/rQm78zuDNPA3DonNSZdsorMUj+dltc1D+/Lc5h9YXGqbEEZozMGr37lAoYkcSM/KjTVqD0ow=="
+        "resolved": "3.2.1",
+        "contentHash": "D1aHhUfPQUxU2nfDCVuSLahpp0xCYZTmj/KNH3mSK/tStJYcx9HO9aJ0qbOP3hzjGPV/DXOqY2AHe27Nt4xs4g=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "Transitive",
@@ -3365,6 +3365,9 @@
           "Ark.Reference.Common": "[0.9.1, )"
         }
       },
+      "ark.reference.core.database": {
+        "type": "Project"
+      },
       "ark.reference.core.webinterface": {
         "type": "Project",
         "dependencies": {
@@ -3492,7 +3495,7 @@
         "type": "Project",
         "dependencies": {
           "Ensure.That": "[10.1.0, )",
-          "NodaTime": "[3.2.0, )",
+          "NodaTime": "[3.2.1, )",
           "System.Linq.Async": "[6.0.1, )",
           "System.Reactive": "[6.0.1, )"
         }
@@ -3632,7 +3635,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Http": "[1.0.0, )",
-          "FluentAssertions": "[7.0.0, )",
+          "FluentAssertions": "[7.1.0, )",
           "FluentAssertions.Web": "[1.7.0, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.3.0, )",
           "Reqnroll": "[2.2.1, )"
