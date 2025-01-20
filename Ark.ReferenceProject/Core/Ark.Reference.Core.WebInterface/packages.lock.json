@@ -1568,8 +1568,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.2.0",
-        "contentHash": "yoRA3jEJn8NM0/rQm78zuDNPA3DonNSZdsorMUj+dltc1D+/Lc5h9YXGqbEEZozMGr37lAoYkcSM/KjTVqD0ow=="
+        "resolved": "3.2.1",
+        "contentHash": "D1aHhUfPQUxU2nfDCVuSLahpp0xCYZTmj/KNH3mSK/tStJYcx9HO9aJ0qbOP3hzjGPV/DXOqY2AHe27Nt4xs4g=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "Transitive",
@@ -3048,7 +3048,7 @@
         "type": "Project",
         "dependencies": {
           "Ensure.That": "[10.1.0, )",
-          "NodaTime": "[3.2.0, )",
+          "NodaTime": "[3.2.1, )",
           "System.Linq.Async": "[6.0.1, )",
           "System.Reactive": "[6.0.1, )"
         }
