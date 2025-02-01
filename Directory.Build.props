@@ -57,7 +57,8 @@
 	<PropertyGroup>
 		<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
 		<Features>strict</Features>
-		<RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+		<!-- static graph evaluation doesn't yield identical results between Win+VS vs Linux+dotnetcli. Renovate fails to run correctly. -->
+		<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
 		<Deterministic>true</Deterministic>
 	</PropertyGroup>
 
