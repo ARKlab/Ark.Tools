@@ -85,12 +85,12 @@
       },
       "Azure.Messaging.ServiceBus": {
         "type": "Transitive",
-        "resolved": "7.18.2",
-        "contentHash": "/vmMVM5REjasEnhlQVX0O9PTZXAGS4vflNtox4gx5ofpgQgX6rzG0PnlO0Zy8Jp7454C06QeyGbV3EjVliCzOQ==",
+        "resolved": "7.18.3",
+        "contentHash": "SpZt6R0voHdGqr4/0GUQiT3ySnv8KOU7ro+XHgzbMlEsBJvTVS02XAe55ZutRGq3qK3pTfNm2n1/hpUIbGdJiQ==",
         "dependencies": {
-          "Azure.Core": "1.44.0",
+          "Azure.Core": "1.44.1",
           "Azure.Core.Amqp": "1.3.1",
-          "Microsoft.Azure.Amqp": "2.6.7",
+          "Microsoft.Azure.Amqp": "2.6.9",
           "Microsoft.Bcl.AsyncInterfaces": "6.0.0",
           "System.Memory.Data": "6.0.0"
         }
@@ -261,8 +261,8 @@
       },
       "Microsoft.Azure.Amqp": {
         "type": "Transitive",
-        "resolved": "2.6.7",
-        "contentHash": "AR0zs1xlNvwN2nKdwPOFKJQpSTEOlxyGxUJtXyLOWTypP5XtTfShCfENkKwXZa+xIW6dzhY1t+zoI/PvMH1dxQ=="
+        "resolved": "2.6.9",
+        "contentHash": "5i9XzfqxK1H5IBl+OuOV1jwJdrOvi5RUwsZgVOryZm0GCzcM9NWPNRxzPAbsSeaR2T6+1gGvdT3vR+Vbha6KFQ=="
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
@@ -853,8 +853,8 @@
       },
       "Rebus.SqlServer": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "lkNGmXcqToyPv4w4kW/0jI/pBrjJlK7RpQVSfE29obGXA5RLkDa4A1QLso847NPCZNdbmJuB4RIaAADRLwZ9Ig==",
+        "resolved": "8.3.0",
+        "contentHash": "OswuRRcWYXbUVAMUTyP3j9O16UutQIALJ68LQ0jYIBmINUrTT2TIJuKZ73JyACJo1D3UBEQwnOZsUEFkPFxfUQ==",
         "dependencies": {
           "microsoft.data.sqlclient": "5.2.2",
           "rebus": "8.4.2"
@@ -1926,12 +1926,12 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "Azure.Messaging.ServiceBus": "[7.18.2, )",
+          "Azure.Messaging.ServiceBus": "[7.18.3, )",
           "Rebus": "[8.7.1, )",
           "Rebus.AzureBlobs": "[1.0.1, )",
           "Rebus.AzureServiceBus": "[10.2.0, )",
           "Rebus.NLog": "[6.0.0, )",
-          "Rebus.SqlServer": "[8.2.0, )"
+          "Rebus.SqlServer": "[8.3.0, )"
         }
       },
       "ark.tools.simpleinjector": {

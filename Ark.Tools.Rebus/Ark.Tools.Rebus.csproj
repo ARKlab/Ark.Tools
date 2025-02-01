@@ -25,9 +25,9 @@
 		<PackageReference Include="Rebus" Version="8.7.1" />
 		<PackageReference Include="Rebus.NLog" Version="6.0.0" />
 		<PackageReference Include="Rebus.AzureServiceBus" Version="10.2.0" />
-		<PackageReference Include="Rebus.SqlServer" Version="8.2.0" />
+		<PackageReference Include="Rebus.SqlServer" Version="8.3.0" />
 		<PackageReference Include="Rebus.AzureBlobs" Version="1.0.1" />
-		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.2" />
+		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.18.3" />
 	</ItemGroup>
 
 	<ItemGroup>
