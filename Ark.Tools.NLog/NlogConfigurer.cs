@@ -34,7 +34,7 @@ namespace Ark.Tools.NLog
         public const string MailTarget = "Ark.Mail";
         public const string MailFromDefault = "noreply@ark-energy.eu";
 
-        public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString}}";
+        public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString,Data}}";
 
         static NLogConfigurer()
         {
@@ -375,7 +375,7 @@ VALUES
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
                 databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=Type,Message}}"));
-                databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString}}"));
+                databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString,Data}}"));
                 _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) : databaseTarget);
 
                 return this;
