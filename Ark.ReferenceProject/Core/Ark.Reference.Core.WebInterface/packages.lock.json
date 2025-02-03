@@ -2976,7 +2976,8 @@
           "Microsoft.AspNetCore.OData": "[8.2.5, 9.0.0)",
           "Microsoft.AspNetCore.OData.NewtonsoftJson": "[8.2.0, 9.0.0)",
           "NetEscapades.AspNetCore.SecurityHeaders": "[0.24.0, )",
-          "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )"
+          "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )",
+          "System.Text.Json": "[8.0.5, )"
         }
       },
       "ark.tools.aspnetcore.applicationinsights": {
@@ -3018,7 +3019,8 @@
           "Azure.Identity": "[1.13.2, )",
           "Azure.Messaging.ServiceBus": "[7.18.3, )",
           "Microsoft.ApplicationInsights": "[2.22.0, )",
-          "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[8.0.12, )"
+          "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[8.0.12, )",
+          "System.Text.Json": "[8.0.5, )"
         }
       },
       "ark.tools.aspnetcore.messagepack": {
@@ -3148,8 +3150,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "NodaTime.Serialization.SystemTextJson": "[1.3.0, )",
-          "System.Text.Json": "[8.0.5, )"
+          "NodaTime.Serialization.SystemTextJson": "[1.3.0, )"
         }
       },
       "ark.tools.outbox": {
