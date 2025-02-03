@@ -1,7 +1,13 @@
 {
-  "version": 2,
+  "version": 1,
   "dependencies": {
     ".NETFramework,Version=v4.6": {
+      "Meziantou.Analyzer": {
+        "type": "Direct",
+        "requested": "[2.0.186, )",
+        "resolved": "2.0.186",
+        "contentHash": "PE8c9opHuUWLNqnZTN/KQC9oIfD/ZtsQ25sHF7/og4KfIRVnN4mgiyYw5NwCp8YPGapLoduIxuyQAcic6Eqcjg=="
+      },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
         "requested": "[8.0.0, )",
@@ -16,12 +22,6 @@
         "dependencies": {
           "Microsoft.NETFramework.ReferenceAssemblies.net46": "1.0.0"
         }
-      },
-      "Microsoft.SqlServer.Dacpacs.Master": {
-        "type": "Direct",
-        "requested": "[160.0.0, )",
-        "resolved": "160.0.0",
-        "contentHash": "bgiN77Hfpev7+LON0WOZbgz1VvL6abuUkw14ulLwAnAiuYCcav8HCAoGlgSXVhsLd8U5+jSgeX/ZrNBuPF24qA=="
       },
       "Microsoft.NETFramework.ReferenceAssemblies.net46": {
         "type": "Transitive",
