@@ -38,12 +38,9 @@ namespace Ark.Tools.Sql.SqlServer
 
         public static async Task<(IEnumerable<TReturn> data, int count)> ReadPagedAsync<TReturn>(this IDbConnection connection, CommandDefinition cmd)
         {
-#if NET6_0_OR_GREATER
             var r = await connection.QueryMultipleAsync(cmd).ConfigureAwait(false);
             await using var _ = r.ConfigureAwait(false);
-#else
-            using var r = await connection.QueryMultipleAsync(cmd).ConfigureAwait(false);
-#endif
+
             var retVal = await r.ReadAsync<TReturn>().ConfigureAwait(false);
             var count = await r.ReadFirstAsync<int>().ConfigureAwait(false);
 

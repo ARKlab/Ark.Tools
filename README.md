@@ -44,9 +44,9 @@ To migrate:
 
 .NET SDK has been updated to .NET 8. AspNetCore packages only target .NET8 (latest LTS).
 
-### Deprecated .NET Framework, NetStandard 2.0
+### Deprecated .NET Framework, NetStandard
 
-NetStandard 2.1 is the minimum version going forward.
+.NET8 is the minimum version going forward.
 
 ### Flurl v4 Migration Guide
 

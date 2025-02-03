@@ -52,11 +52,7 @@ namespace TesterWorker
                             d1.Telemetry.Success = false;
                         }
 
-                        var _ = await client.GetStringAsync("https://www.google.it"
-#if NET5_0_OR_GREATER
-                            , stoppingToken
-#endif
-                            );
+                        var _ = await client.GetStringAsync("https://www.google.it", stoppingToken);
 
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepException"))
                         {

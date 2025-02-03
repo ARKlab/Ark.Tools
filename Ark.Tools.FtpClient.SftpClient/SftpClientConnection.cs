@@ -162,18 +162,8 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (isKeyNull)
                 throw new InvalidOperationException($"ClientCertificate has a null Key");
 
-#if NET5_0_OR_GREATER
             var privateKeyPem = PemEncoding.Write($"{keyExchangeAlgorithm} PRIVATE KEY", privateKeyBytes);
             privateKeyPemString = new string(privateKeyPem);
-#else
-            var builder = new StringBuilder();
-            builder.Append("-----BEGIN ").Append(keyExchangeAlgorithm).AppendLine(" PRIVATE KEY-----");
-            builder.AppendLine(
-                Convert.ToBase64String(privateKeyBytes, Base64FormattingOptions.InsertLineBreaks));
-            builder.Append("-----END ").Append(keyExchangeAlgorithm).AppendLine(" PRIVATE KEY-----");
-
-            privateKeyPemString = builder.ToString();
-#endif
 
             var byteArray = Encoding.UTF8.GetBytes(privateKeyPemString);
 

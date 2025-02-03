@@ -7,19 +7,7 @@ using Flurl.Http.Configuration;
 
 using System;
 
-/* Unmerged change from project 'Ark.Tools.Http (netstandard2.1)'
-Before:
-using Ark.Tools.NewtonsoftJson;
 using System.Text.Json;
-After:
-using Ark.Tools.NewtonsoftJson;
-
-using System.Text.Json;
-*/
-using System.Text.Json;
-#if !NET5_0_OR_GREATER
-using System.Net;
-#endif
 
 namespace Ark.Tools.Http
 {
@@ -34,11 +22,7 @@ namespace Ark.Tools.Http
                 .ConfigureInnerHandler(h =>
                 {
                     if (h is null) return; // can be null when using TestServer.CreateHandler() as inner handler
-#if NET5_0_OR_GREATER
                     h.AutomaticDecompression = System.Net.DecompressionMethods.All;
-#else
-                    h.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-#endif
                 })
                 .BeforeCall(c => c.Request.WithCookies(j))
                 .WithAutoRedirect(true)

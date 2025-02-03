@@ -9,9 +9,7 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-#if NET6_0_OR_GREATER
 using System.Runtime.CompilerServices;
-#endif
 
 namespace Ark.Tools.Core
 {
@@ -33,16 +31,10 @@ namespace Ark.Tools.Core
             private static readonly ConcurrentDictionary<string, Func<IQueryable<T>, IQueryable<T>>> _cache = new(StringComparer.Ordinal);
 
             public static IQueryable<T> ApplyOrderBy(IQueryable<T> collection, string orderBy
-#if NET6_0_OR_GREATER
                 , [CallerArgumentExpression(nameof(orderBy))] string? orderByParam = null
-#endif
             )
             {
-#if NET6_0_OR_GREATER
                 var paramName = orderByParam;
-#else
-                var paramName = nameof(orderBy);
-#endif
 
                 var apply = _cache.GetOrAdd(orderBy, k =>
                 {

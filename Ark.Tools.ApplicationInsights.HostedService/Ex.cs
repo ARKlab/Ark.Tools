@@ -65,14 +65,6 @@ namespace Ark.Tools.ApplicationInsights.HostedService
                 if (!string.IsNullOrWhiteSpace(cs))
                     services.AddSingleton<ITelemetryProcessorFactory>(new SkipSqlDatabaseDependencyFilterFactory(cs!));
 
-#if NET5_0
-                services.Configure<SnapshotCollectorConfiguration>(o =>
-                {
-                });
-                services.Configure<SnapshotCollectorConfiguration>(ctx.Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
-                services.AddSnapshotCollector();
-#endif
-
             });
         }
     }

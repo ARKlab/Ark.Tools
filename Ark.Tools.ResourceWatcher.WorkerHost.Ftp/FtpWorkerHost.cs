@@ -126,13 +126,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "Used only for checksum")]
             private string _computeChecksum(byte[] contents)
             {
-#if NET6_0_OR_GREATER
                 return MD5.HashData(contents).ToHexString();
-#else
-                using var hash = MD5.Create();
-                var h = hash.ComputeHash(contents);
-                return h.ToHexString();
-#endif
             }
 
         }

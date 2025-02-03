@@ -11,9 +11,7 @@ namespace Ark.Tools.Outbox
     public interface IOutboxService
     {
         Task PublishAsync<T>(IOutboxContext ctx, T message, CancellationToken ctk = default) where T : class
-#if NETSTANDARD2_1
             => PublishAsync(ctx, message, null, ctk)
-#endif
             ;
 
         Task PublishAsync<T>(IOutboxContext ctx, T message, IDictionary<string, string>? optionalHeaders = null, CancellationToken ctk = default) where T : class;
