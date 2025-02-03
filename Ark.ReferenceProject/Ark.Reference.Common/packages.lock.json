@@ -759,15 +759,15 @@
       },
       "NLog": {
         "type": "Transitive",
-        "resolved": "5.3.4",
-        "contentHash": "gLy7+O1hEYJXIlcTr1/VWjGXrZTQFZzYNO18IWasD64pNwz0BreV+nHLxWKXWZzERRzoKnsk2XYtwLkTVk7J1A=="
+        "resolved": "5.4.0",
+        "contentHash": "LwMcGSW3soF3/SL68rlJN3Eh3ktrAPycC3zZR/07OYBPraZUu0bygEC7kIN10lUQgMXT4s84Fi1chglGdGrQEg=="
       },
       "NLog.Database": {
         "type": "Transitive",
-        "resolved": "5.3.4",
-        "contentHash": "E2NoFwU0yFoO7nYmg6AMih9yibHeLi4tsKTQA1PmQ8tIc3aWJhZa5AGrYNqE3ecZCEQSn+3Kwltz1S4hV11VmA==",
+        "resolved": "5.4.0",
+        "contentHash": "FuD6QwU+jxLMP0IPMBYtK5C+Euyd2JOa1sGYmQZC9AWdFk9nF7JuiO+j9a8lZW2hI9rgo1lyKAjE4Qp+dG0QUQ==",
         "dependencies": {
-          "NLog": "5.3.4"
+          "NLog": "5.4.0"
         }
       },
       "NLog.DiagnosticSource": {
@@ -780,12 +780,12 @@
       },
       "NLog.Extensions.Logging": {
         "type": "Transitive",
-        "resolved": "5.3.15",
-        "contentHash": "BSCkfWjaTesw4/k8Ujj3YdqtDzd2iCRYIOwoHume7aaJFz4/gLbemA5MLgkAwtCxcd8nGBGfaEkeIzQPGxArLg==",
+        "resolved": "5.4.0",
+        "contentHash": "5T19INfbzRywZpyBGoQChsB/R7eHW9hR4Ml9O22NRjJpfltGIJ+rsoCcjwr2/V/E6i3/eXLTQwRAeDMICjWpTA==",
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "8.0.0",
           "Microsoft.Extensions.Logging": "8.0.0",
-          "NLog": "5.3.4"
+          "NLog": "5.4.0"
         }
       },
       "NodaTime": {
@@ -1871,8 +1871,8 @@
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.22.0, )",
           "Microsoft.Data.SqlClient": "[5.2.2, )",
-          "NLog": "[5.3.4, )",
-          "NLog.Database": "[5.3.4, )",
+          "NLog": "[5.4.0, )",
+          "NLog.Database": "[5.4.0, )",
           "NLog.DiagnosticSource": "[5.2.1, )",
           "Newtonsoft.Json": "[13.0.3, )",
           "Slack.Webhooks": "[1.1.5, )",
@@ -1887,7 +1887,7 @@
           "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Hosting": "[8.0.1, )",
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.2, )",
-          "NLog.Extensions.Logging": "[5.3.15, )"
+          "NLog.Extensions.Logging": "[5.4.0, )"
         }
       },
       "ark.tools.nodatime": {
