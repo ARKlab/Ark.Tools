@@ -134,8 +134,8 @@
       },
       "Dapper": {
         "type": "Transitive",
-        "resolved": "2.1.35",
-        "contentHash": "YKRwjVfrG7GYOovlGyQoMvr1/IJdn+7QzNXJxyMh0YfFF5yvDmTYaJOVYWsckreNjGsGSEtrMTpnzxTUq/tZQw=="
+        "resolved": "2.1.66",
+        "contentHash": "/q77jUgDOS+bzkmk3Vy9SiWMaetTw+NOoPAV0xPBsGVAyljd5S6P+4RUW7R3ZUGGr9lDRyPKgAMj2UAOwvqZYw=="
       },
       "Ensure.That": {
         "type": "Transitive",
@@ -1935,7 +1935,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Dapper": "[2.1.35, )"
+          "Dapper": "[2.1.66, )"
         }
       },
       "ark.tools.nodatime.json": {
@@ -1973,7 +1973,7 @@
           "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Dapper": "[2.1.35, )",
+          "Dapper": "[2.1.66, )",
           "Polly": "[8.5.2, )",
           "morelinq": "[4.4.0, )"
         }
