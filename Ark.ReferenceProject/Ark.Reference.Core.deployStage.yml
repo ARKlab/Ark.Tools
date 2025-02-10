@@ -67,27 +67,47 @@ stages:
                 azureSubscription: '${{ variables.subscription }}'
                 Action: 'Stop Azure App Service'
                 WebAppName: '$(arm.${{ variables.appServiceArmName }})'
-            - task: SqlAzureDacpacDeployment@1
+            
+            - task: AzureCLI@2
+              displayName: 'Install SqlServer Module'
+              inputs:
+                azureSubscription: '${{ variables.subscription }}'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  Install-Module -Name SqlServer -Force -Scope CurrentUser
+
+            - task: AzureCLI@2
               displayName: 'Pre Migrations'
               inputs:
                 azureSubscription: '${{ variables.subscription }}'
-                ServerName: '$(arm.serverFQDN)'
-                DatabaseName: '$(arm.${{ variables.dbArmOutputName }})'
-                SqlUsername: '$(arm.adminUsername)'
-                SqlPassword: '$(arm.adminPassword)'
-                deployType: SqlTask
-                SqlFile: '$(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/RunMigration.PreDeployment.sql'
-                SqlAdditionalArguments: '-Variable "MyPath = $(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/" -QueryTimeout 360'
-            - task: SqlAzureDacpacDeployment@1
-              displayName: DacPac
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: >
+                    Invoke-Sqlcmd 
+                        -ServerInstance '$(arm.SQLServerFQDN)' 
+                        -Database '$(arm.ASTEDBName)' 
+                        -Username '$(arm.AdminLogin)' 
+                        -Password '$(arm.AdminPassword)' 
+                        -InputFile '$(Pipeline.Workspace)/drop/${{ variables.service }}/${{ variables.databaseProject }}/RunMigration.PreDeployment.sql'
+                        -Variable 'MyPath = $(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/'
+                        -QueryTimeout 360
+            
+            - task: AzureCLI@2
+              displayName: 'DacPac'
               inputs:
                 azureSubscription: '${{ variables.subscription }}'
-                ServerName: '$(arm.serverFQDN)'
-                DatabaseName: '$(arm.${{ variables.dbArmOutputName }})'
-                SqlUsername: '$(arm.adminUsername)'
-                SqlPassword: '$(arm.adminPassword)'
-                DacpacFile: '$(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/${{ variables.databaseProject }}.dacpac'
-                PublishProfile: '$(Pipeline.Workspace)/drop/${{ variables.serviceName }}/${{ variables.databaseProject }}/${{ variables.databaseProject }}.publish.xml'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: >
+                    sqlpackage /Action:Publish 
+                    /SourceFile:"$(Pipeline.Workspace)/drop/${{ variables.service }}/${{ variables.databaseProject }}/${{ variables.databaseProject }}.dacpac" 
+                    /TargetServerName:$(arm.SQLServerFQDN) 
+                    /TargetDatabaseName:$(arm.ASTEDBName) 
+                    /TargetUser:$(arm.AdminLogin) 
+                    /TargetPassword:$(arm.AdminPassword) 
+                    /Profile:"$(Pipeline.Workspace)/drop/${{ variables.service }}/${{ variables.databaseProject }}/${{ variables.databaseProject }}.publish.xml"
+
             - task: AzureRmWebAppDeployment@4
               displayName: 'Azure App Service Deploy: $(arm.${{ variables.appServiceArmName }})'
               inputs:
