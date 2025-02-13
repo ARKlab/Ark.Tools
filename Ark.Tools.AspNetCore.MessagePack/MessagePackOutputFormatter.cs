@@ -16,17 +16,20 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
         readonly MessagePackSerializerOptions _options;
 
         public MessagePackOutputFormatter()
-            : this(null)
+            : this(MessagePackSerializer.DefaultOptions)
         {
         }
-        public MessagePackOutputFormatter(IFormatterResolver? resolver)
+
+        public MessagePackOutputFormatter(IFormatterResolver resolver)
+            : this(MessagePackSerializer.DefaultOptions.WithResolver(resolver))
+        {
+        }
+
+        public MessagePackOutputFormatter(MessagePackSerializerOptions options)
         {
             SupportedMediaTypes.Add(_contentType);
 
-            if (resolver == null)
-                _options = MessagePackSerializer.DefaultOptions;
-            else
-                _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
+            _options = options;
         }
 
         protected override bool CanWriteType(Type? type)
