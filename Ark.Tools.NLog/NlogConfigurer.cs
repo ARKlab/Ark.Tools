@@ -451,16 +451,18 @@ VALUES
             public Configurer WithSlackRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(SlackTarget);
-                _config.RemoveRuleByName(SlackTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = SlackTarget, Final = final });
+                var ruleName = $"{SlackTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
             public Configurer WithSlackRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(SlackTarget);
-                _config.RemoveRuleByName(SlackTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = SlackTarget, Final = final });
+                var ruleName = $"{SlackTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
@@ -468,16 +470,18 @@ VALUES
             public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(ApplicationInsightsTarget);
-                _config.RemoveRuleByName(ApplicationInsightsTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ApplicationInsightsTarget, Final = final });
+                var ruleName = $"{ApplicationInsightsTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
             public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(ApplicationInsightsTarget);
-                _config.RemoveRuleByName(ApplicationInsightsTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ApplicationInsightsTarget, Final = final });
+                var ruleName = $"{ApplicationInsightsTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
@@ -485,16 +489,18 @@ VALUES
             public Configurer WithConsoleRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(ConsoleTarget);
-                _config.RemoveRuleByName(ConsoleTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ConsoleTarget, Final = final });
+                var ruleName = $"{ConsoleTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
             public Configurer WithConsoleRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(ConsoleTarget);
-                _config.RemoveRuleByName(ConsoleTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ConsoleTarget, Final = final });
+                var ruleName = $"{ConsoleTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
@@ -502,16 +508,18 @@ VALUES
             public Configurer WithDatabaseRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(DatabaseTarget);
-                _config.RemoveRuleByName(DatabaseTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = DatabaseTarget, Final = final });
+                var ruleName = $"{DatabaseTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
             public Configurer WithDatabaseRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(DatabaseTarget);
-                _config.RemoveRuleByName(DatabaseTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = DatabaseTarget, Final = final });
+                var ruleName = $"{DatabaseTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
@@ -519,16 +527,18 @@ VALUES
             public Configurer WithFileRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(FileTarget);
-                _config.RemoveRuleByName(FileTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = FileTarget, Final = final });
+                var ruleName = $"{FileTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
             public Configurer WithFileRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(FileTarget);
-                _config.RemoveRuleByName(FileTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = FileTarget, Final = final });
+                var ruleName = $"{FileTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
@@ -536,16 +546,18 @@ VALUES
             public Configurer WithMailRule(string loggerPattern, LogLevel level, bool final = false)
             {
                 var target = _config.FindTargetByName(MailTarget);
-                _config.RemoveRuleByName(MailTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = MailTarget, Final = final });
+                var ruleName = $"{MailTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }
             public Configurer WithMailRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
                 var target = _config.FindTargetByName(MailTarget);
-                _config.RemoveRuleByName(MailTarget);
-                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = MailTarget, Final = final });
+                var ruleName = $"{MailTarget}-{loggerPattern}";
+                _config.RemoveRuleByName(ruleName);
+                _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
 
                 return this;
             }

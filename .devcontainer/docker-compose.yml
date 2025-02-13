@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
     environment:
       ACCEPT_EULA: Y
-      MSSQL_SA_PASSWORD: ArkSpecFlow123Stella!
+      MSSQL_SA_PASSWORD: SpecFlowLocalDbPassword85! 
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
