@@ -4,9 +4,9 @@
     "net8.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.187, )",
-        "resolved": "2.0.187",
-        "contentHash": "s35YCC7rnWZnxtpdihrkdrGSAuzhdc+1kUMmO+UgVoogw3HAMmPO9BrSkxfU/KwhncK0Hr+nHFuAqOl+mGS01Q=="
+        "requested": "[2.0.188, )",
+        "resolved": "2.0.188",
+        "contentHash": "2S5o86NsBhGUWXIyxUfqfd0Eo7Tk+3d8bXm9qiaa/N53l9lkyIMiBINyz+MKW0Qrg1Psq7TW35J4PeK73OHYrA=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -205,18 +205,18 @@
       },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "3AOM9bZtku7RQwHyMEY3tQMrHIgjcfRDa6YQpd/QG2LDGvMydSlL9Di+8LLMt7J2RDdfJ7/2jdYv6yHcMJAnNw==",
+        "resolved": "2.23.0",
+        "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw==",
         "dependencies": {
           "System.Diagnostics.DiagnosticSource": "5.0.0"
         }
       },
       "Microsoft.ApplicationInsights.NLogTarget": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "RDMrIQXb3i7UW857tHbz/8tZ/Oacv3l7i2MFFS0oVwMNSq16rmLBhlc6AiszP70qu5XgygoDDLQV0eSEiQ4nJw==",
+        "resolved": "2.23.0",
+        "contentHash": "rjUqSw8SLCB7timNT/Brz92mumWv4audq2diIj67xKibdcK93kh+QaMj/G+OiNrsqfi2K+0CxmIZCALTi19Obg==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
           "NLog": "4.5.11"
         }
       },
@@ -232,10 +232,10 @@
       },
       "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "Blb6S8UJSJ/jo6mxeO38gKgui75D2brp5NpXJoZUhyJzfmYsfhn7a4t5f+CDfAKyvie7sQB2FIzeEDQSiRE5zw==",
+        "resolved": "2.23.0",
+        "contentHash": "798Dudr4tkujslk1w+XcXOcCErmVsk+nhp+QCHLa3lcgi25vkAxBmzPUeQlRJVCNL/1f4x/YF+vQZ8RSuTXWCw==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
           "System.IO.FileSystem.AccessControl": "4.7.0"
         }
       },
@@ -814,10 +814,10 @@
       },
       "Rebus": {
         "type": "Transitive",
-        "resolved": "8.7.1",
-        "contentHash": "HIxlzizlw46zjmy6ykOmbT0QMpxquLnVWc6xVOIZM1RjTTXAJm9AddFzlomqlq2UJl/OJFwoM5DwLmHFOdnO5w==",
+        "resolved": "8.8.0",
+        "contentHash": "bfnybaR2o1cJMoFKpVl4nPP+3H/Y51fTheNJgIzHXXUb24zjd8x7gDDozs1XpYMfpc9q56tKjV2umbWz9GdM9A==",
         "dependencies": {
-          "Newtonsoft.Json": "13.0.3"
+          "Newtonsoft.Json": "[13.0.1, 14.0.0)"
         }
       },
       "Rebus.AzureBlobs": {
@@ -1844,9 +1844,9 @@
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "[2.22.0, )",
+          "Microsoft.ApplicationInsights": "[2.23.0, )",
           "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.22.0, )",
+          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[5.2.2, )",
           "Microsoft.Extensions.Options": "[8.0.2, 9.0.0)"
         }
@@ -1893,7 +1893,7 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
-          "Microsoft.ApplicationInsights.NLogTarget": "[2.22.0, )",
+          "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[5.2.2, )",
           "NLog": "[5.4.0, )",
           "NLog.Database": "[5.4.0, )",
@@ -1950,7 +1950,7 @@
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Messaging.ServiceBus": "[7.18.4, )",
-          "Rebus": "[8.7.1, )",
+          "Rebus": "[8.8.0, )",
           "Rebus.AzureBlobs": "[1.0.1, )",
           "Rebus.AzureServiceBus": "[10.2.0, )",
           "Rebus.NLog": "[6.0.0, )",

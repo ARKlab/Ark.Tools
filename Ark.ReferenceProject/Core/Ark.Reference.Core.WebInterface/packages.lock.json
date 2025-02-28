@@ -451,62 +451,62 @@
       },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "3AOM9bZtku7RQwHyMEY3tQMrHIgjcfRDa6YQpd/QG2LDGvMydSlL9Di+8LLMt7J2RDdfJ7/2jdYv6yHcMJAnNw==",
+        "resolved": "2.23.0",
+        "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw==",
         "dependencies": {
           "System.Diagnostics.DiagnosticSource": "5.0.0"
         }
       },
       "Microsoft.ApplicationInsights.AspNetCore": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "OuiZgRDX0zm3a1DRk/GT54ZsyTg8a88n3cpkVEYFJoRhT5X84l2C68BuKrglE0sIj+C0+o2WTR8S21YBD/ZWgA==",
+        "resolved": "2.23.0",
+        "contentHash": "we/RsIn0Mwf/4ZNGXZixJ0lVD3pqjx2yVeKfqJybgYY/Lib8nnf+8YGJp+ULN3kOk39I0pI/7ZnF9LFy6hS3lw==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
-          "Microsoft.ApplicationInsights.DependencyCollector": "2.22.0",
-          "Microsoft.ApplicationInsights.EventCounterCollector": "2.22.0",
-          "Microsoft.ApplicationInsights.PerfCounterCollector": "2.22.0",
-          "Microsoft.ApplicationInsights.WindowsServer": "2.22.0",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
+          "Microsoft.ApplicationInsights.DependencyCollector": "2.23.0",
+          "Microsoft.ApplicationInsights.EventCounterCollector": "2.23.0",
+          "Microsoft.ApplicationInsights.PerfCounterCollector": "2.23.0",
+          "Microsoft.ApplicationInsights.WindowsServer": "2.23.0",
+          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
           "Microsoft.AspNetCore.Hosting": "2.1.1",
           "Microsoft.AspNetCore.Http": "2.1.22",
           "Microsoft.Extensions.Configuration.Json": "3.1.0",
-          "Microsoft.Extensions.Logging.ApplicationInsights": "2.22.0",
+          "Microsoft.Extensions.Logging.ApplicationInsights": "2.23.0",
           "System.Text.Encodings.Web": "4.7.2"
         }
       },
       "Microsoft.ApplicationInsights.DependencyCollector": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "gseSmuCshdZqcn5r6EW1Zx52e5/p2RpAsHSanlxs8pq+Pbg1RZP678tXtxfVuHC0fA3MVV852pnfFC7ZGB0jew==",
+        "resolved": "2.23.0",
+        "contentHash": "9YRdl9SNbTxd4AafJckyoJLr5gJdnvqFivjo+PY0lQTPEncPB+z3ZABG4iDfxN9HI1aLqyRINr1/7de9Wg8ZuQ==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
           "System.Diagnostics.DiagnosticSource": "5.0.0"
         }
       },
       "Microsoft.ApplicationInsights.EventCounterCollector": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "/fXUyZIMwaWfETgire4fygaBhY8J+hXvTVhSFXKV0JOFBenzzU4smGW8iRUFhE534a3QrczuFfmfCCkXRKbsNg==",
+        "resolved": "2.23.0",
+        "contentHash": "gGt0JPw2dcSeIAIefyORJBdeMz8KgAFIktu8HV/NwkiGmLyw+YtifLm6B5gvGxO15AeMsGPbmvWEIvLfq88XPw==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0"
+          "Microsoft.ApplicationInsights": "2.23.0"
         }
       },
       "Microsoft.ApplicationInsights.NLogTarget": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "RDMrIQXb3i7UW857tHbz/8tZ/Oacv3l7i2MFFS0oVwMNSq16rmLBhlc6AiszP70qu5XgygoDDLQV0eSEiQ4nJw==",
+        "resolved": "2.23.0",
+        "contentHash": "rjUqSw8SLCB7timNT/Brz92mumWv4audq2diIj67xKibdcK93kh+QaMj/G+OiNrsqfi2K+0CxmIZCALTi19Obg==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
           "NLog": "4.5.11"
         }
       },
       "Microsoft.ApplicationInsights.PerfCounterCollector": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "nExsJsbN7694ueUNNBms/UNgza9WH4W/I6i5CnF9ujJ1sp57EL5Uk0NP9MDwlLVtYaaiznKPatVSv3Nu8vAplw==",
+        "resolved": "2.23.0",
+        "contentHash": "q9ApjZfBS9O8m3aQM2oVjsGBmlE8BCFywT7UR+8aqdNuz7HpoIxw4jHy0XOBergiFX/olrJF4OyPkGxc3H5JHg==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
           "Microsoft.Extensions.Caching.Memory": "1.0.0",
           "System.Diagnostics.PerformanceCounter": "6.0.0"
         }
@@ -523,22 +523,22 @@
       },
       "Microsoft.ApplicationInsights.WindowsServer": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "9k1x1+Kq1fElvcv0o/w9w8tRWAa2Y0f4NPBeHF5b2xCety4GM1yv3K3Ra0lZwO3kW0SHlm9M8nrySuyKQlHyYA==",
+        "resolved": "2.23.0",
+        "contentHash": "2B8CGfnB/tribkQAqRBhMvJYJK5TkEPMG/BB0QrlxdwVGEufayNLMveXjkQCqld9arXd6wKR1ve2XmkA0+xXKQ==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
-          "Microsoft.ApplicationInsights.DependencyCollector": "2.22.0",
-          "Microsoft.ApplicationInsights.PerfCounterCollector": "2.22.0",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
+          "Microsoft.ApplicationInsights.DependencyCollector": "2.23.0",
+          "Microsoft.ApplicationInsights.PerfCounterCollector": "2.23.0",
+          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
           "System.Diagnostics.DiagnosticSource": "5.0.0"
         }
       },
       "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "Blb6S8UJSJ/jo6mxeO38gKgui75D2brp5NpXJoZUhyJzfmYsfhn7a4t5f+CDfAKyvie7sQB2FIzeEDQSiRE5zw==",
+        "resolved": "2.23.0",
+        "contentHash": "798Dudr4tkujslk1w+XcXOcCErmVsk+nhp+QCHLa3lcgi25vkAxBmzPUeQlRJVCNL/1f4x/YF+vQZ8RSuTXWCw==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
           "System.IO.FileSystem.AccessControl": "4.7.0"
         }
       },
@@ -1122,10 +1122,10 @@
       },
       "Microsoft.Extensions.Logging.ApplicationInsights": {
         "type": "Transitive",
-        "resolved": "2.22.0",
-        "contentHash": "5OmXub+9MyX8FbqgO+hBJRHk1iJ+UZUU20oIU3wo+RbmH6Jtsja79rriHLlzlrkMzWbpCkCzF6f4Yb6iGbsDag==",
+        "resolved": "2.23.0",
+        "contentHash": "JLEabPz445i1yRB0hKZVzJJE35QatRIzWlrMOiBQXr9kBJod0jkpkrBf94ln6kXu+jlEGohnXtuXacPPhybJDw==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.22.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
           "Microsoft.Extensions.Logging": "2.1.1"
         }
       },
@@ -1621,10 +1621,10 @@
       },
       "Rebus": {
         "type": "Transitive",
-        "resolved": "8.7.1",
-        "contentHash": "HIxlzizlw46zjmy6ykOmbT0QMpxquLnVWc6xVOIZM1RjTTXAJm9AddFzlomqlq2UJl/OJFwoM5DwLmHFOdnO5w==",
+        "resolved": "8.8.0",
+        "contentHash": "bfnybaR2o1cJMoFKpVl4nPP+3H/Y51fTheNJgIzHXXUb24zjd8x7gDDozs1XpYMfpc9q56tKjV2umbWz9GdM9A==",
         "dependencies": {
-          "Newtonsoft.Json": "13.0.3"
+          "Newtonsoft.Json": "[13.0.1, 14.0.0)"
         }
       },
       "Rebus.AzureBlobs": {
@@ -1854,10 +1854,10 @@
       },
       "Swashbuckle.AspNetCore.Annotations": {
         "type": "Transitive",
-        "resolved": "7.2.0",
-        "contentHash": "lWJ1+Pfks8T16dC2H1v41ZYPFs9iPZD/aRkpkPWoXjQ3zPaaEImdIUTdY5RRtoZJj6NeaL6mywMBIiJ5R0gH/g==",
+        "resolved": "7.3.1",
+        "contentHash": "DuH1WoZDFGhD0p9b9ru1kNlC/BBCQyArKUzDQJMt3bPfia/27Yi69IYYC3+QydZwm2qSXcaUy9Z5CFvXb/X9Tg==",
         "dependencies": {
-          "Swashbuckle.AspNetCore.SwaggerGen": "7.2.0"
+          "Swashbuckle.AspNetCore.SwaggerGen": "7.3.1"
         }
       },
       "Swashbuckle.AspNetCore.Filters": {
@@ -1879,33 +1879,33 @@
       },
       "Swashbuckle.AspNetCore.Newtonsoft": {
         "type": "Transitive",
-        "resolved": "7.2.0",
-        "contentHash": "otztl1SBfwu10iJx6lc3XG/dSqFXRtx8RQ0XrwrO/NYv0j6WhB+vaTJdfs4EPDh+0r7yORUPb7FQ6WgoApeDNg==",
+        "resolved": "7.3.1",
+        "contentHash": "I6GpY9cBQ0NdVcP0RqNjFdJ1MC037i0WqOE7Oyo75zPSgEusXo41bMxCTcl3MupszlMeQUWRLqmoyq/dVrcMBw==",
         "dependencies": {
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "8.0.0",
-          "Swashbuckle.AspNetCore.SwaggerGen": "7.2.0"
+          "Swashbuckle.AspNetCore.SwaggerGen": "7.3.1"
         }
       },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "Transitive",
-        "resolved": "7.2.0",
-        "contentHash": "y27fNDfIh1vGhJjXYynLcZjl7DLOW1bSO2MDsY9wB4Zm1fdxpPsuBSiR4U+0acWlAqLmnuOPKr/OeOgwRUkBlw==",
+        "resolved": "7.3.1",
+        "contentHash": "jQuJ8kVbq+YE8WsJE3RwWHlF1kasp0QkA9Gl6NeNLICrhcgN8IQIthMufYW6t/4hpcN5cBIdES5jCEV81WjHbA==",
         "dependencies": {
           "Microsoft.OpenApi": "1.6.22"
         }
       },
       "Swashbuckle.AspNetCore.SwaggerGen": {
         "type": "Transitive",
-        "resolved": "7.2.0",
-        "contentHash": "pMrTxGVuXM7t4wqft5CNNU8A0++Yw5kTLmYhB6tbEcyBfO8xEF/Y8pkJhO6BZ/2MYONrRYoQTfPFJqu8fOf5WQ==",
+        "resolved": "7.3.1",
+        "contentHash": "xs7Pznb3SSjZy7HpThE0ILqECfQFsGDHOrRoIYD/j67ktdRR1juDG4AMyidXXCOipgzHanZoF+nFrc+Nmjqjyw==",
         "dependencies": {
-          "Swashbuckle.AspNetCore.Swagger": "7.2.0"
+          "Swashbuckle.AspNetCore.Swagger": "7.3.1"
         }
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "Transitive",
-        "resolved": "7.2.0",
-        "contentHash": "hgrXeKzyp5OGN8qVvL7A+vhmU7mDJTfGpiMBRL66IcfLOyna8UTLtn3cC3CghamXpRDufcc9ciklTszUGEQK0w=="
+        "resolved": "7.3.1",
+        "contentHash": "hs6C+lmNEzipOA1WPQpIaGvvoXjUbnoevbv6l7o9ZQE8SNF8ggjOmK6NB6cYdMcEvk0uBeKl4Qq/BnRt5MFVqg=="
       },
       "System.AppContext": {
         "type": "Transitive",
@@ -2941,9 +2941,9 @@
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "[2.22.0, )",
+          "Microsoft.ApplicationInsights": "[2.23.0, )",
           "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.22.0, )",
+          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[5.2.2, )",
           "Microsoft.Extensions.Options": "[8.0.2, 9.0.0)"
         }
@@ -2986,7 +2986,7 @@
           "Ark.Tools.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
-          "Microsoft.ApplicationInsights.AspNetCore": "[2.22.0, )"
+          "Microsoft.ApplicationInsights.AspNetCore": "[2.23.0, )"
         }
       },
       "ark.tools.aspnetcore.auth0": {
@@ -3018,7 +3018,7 @@
           "AspNetCore.HealthChecks.UI.InMemory.Storage": "[8.0.1, 9.0.0)",
           "Azure.Identity": "[1.13.2, )",
           "Azure.Messaging.ServiceBus": "[7.18.4, )",
-          "Microsoft.ApplicationInsights": "[2.22.0, )",
+          "Microsoft.ApplicationInsights": "[2.23.0, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[8.0.13, )",
           "System.Text.Json": "[8.0.5, )"
         }
@@ -3040,12 +3040,12 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Asp.Versioning.OData.ApiExplorer": "[8.1.0, 9.0.0)",
           "Microsoft.AspNetCore.OData": "[8.2.5, 9.0.0)",
-          "Swashbuckle.AspNetCore.Annotations": "[7.2.0, )",
+          "Swashbuckle.AspNetCore.Annotations": "[7.3.1, )",
           "Swashbuckle.AspNetCore.Filters": "[8.0.2, )",
-          "Swashbuckle.AspNetCore.Newtonsoft": "[7.2.0, )",
-          "Swashbuckle.AspNetCore.Swagger": "[7.2.0, )",
-          "Swashbuckle.AspNetCore.SwaggerGen": "[7.2.0, )",
-          "Swashbuckle.AspNetCore.SwaggerUI": "[7.2.0, )"
+          "Swashbuckle.AspNetCore.Newtonsoft": "[7.3.1, )",
+          "Swashbuckle.AspNetCore.Swagger": "[7.3.1, )",
+          "Swashbuckle.AspNetCore.SwaggerGen": "[7.3.1, )",
+          "Swashbuckle.AspNetCore.SwaggerUI": "[7.3.1, )"
         }
       },
       "ark.tools.authorization": {
@@ -3104,7 +3104,7 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
-          "Microsoft.ApplicationInsights.NLogTarget": "[2.22.0, )",
+          "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[5.2.2, )",
           "NLog": "[5.4.0, )",
           "NLog.Database": "[5.4.0, )",
@@ -3186,7 +3186,7 @@
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Messaging.ServiceBus": "[7.18.4, )",
-          "Rebus": "[8.7.1, )",
+          "Rebus": "[8.8.0, )",
           "Rebus.AzureBlobs": "[1.0.1, )",
           "Rebus.AzureServiceBus": "[10.2.0, )",
           "Rebus.NLog": "[6.0.0, )",
