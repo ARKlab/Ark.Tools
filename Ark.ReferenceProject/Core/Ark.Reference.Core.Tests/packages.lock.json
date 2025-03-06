@@ -128,22 +128,22 @@
       },
       "Reqnroll.MsTest": {
         "type": "Direct",
-        "requested": "[2.3.0, )",
-        "resolved": "2.3.0",
-        "contentHash": "4GhnkgLNChH72awH+/oGDjPLgcdhd+kFpIoqxU4ABk7ky3qhUED5uCZs+aTMzSW1ZwOgzUaBZRRsZ2EMNIJ7Mw==",
+        "requested": "[2.4.0, )",
+        "resolved": "2.4.0",
+        "contentHash": "JYFsKheM011AWO/gVYq62BgoPfg5UvW4K/eHkj5hDZUz303b5QvhPpkBDnanC+EG6MrVsM5oD6SrLuUbzeDztQ==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "[2.3.0]",
-          "Reqnroll.Tools.MsBuild.Generation": "[2.3.0]"
+          "Reqnroll": "[2.4.0]",
+          "Reqnroll.Tools.MsBuild.Generation": "[2.4.0]"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[2.3.0, )",
-        "resolved": "2.3.0",
-        "contentHash": "55/Bznrpv+QGSFxmBDuD88d/+vnAHlSYgpTw/G5ip4eufcgt3b4JrOmCEbviyYnGb0JnxA4t262w5xd5HsBdeA==",
+        "requested": "[2.4.0, )",
+        "resolved": "2.4.0",
+        "contentHash": "/OZ7emUyrNsykdt5X0g6TWVa8EVxv6J1kM6E/Qe5auksnCKim+nYNJ+LWrQzHD/NvX/yS0Akub0zMTEnyzMQxQ==",
         "dependencies": {
-          "Reqnroll": "[2.3.0]"
+          "Reqnroll": "[2.4.0]"
         }
       },
       "Asp.Versioning.Abstractions": {
@@ -1958,12 +1958,12 @@
       },
       "Rebus.AzureServiceBus": {
         "type": "Transitive",
-        "resolved": "10.2.0",
-        "contentHash": "Yi2yNz9iXg7cvAGUeOjx1ODmGcyhq3SA6hZ9YS+7O6kbjJgvphatiQ1ddfWrpHqHOmh9IG0B/+pBliJ7/4Dm2w==",
+        "resolved": "10.3.0",
+        "contentHash": "tDELQtyFeE4PV31FotzCH01Do5zFvxOEybhfsXcgwTiE44XsCDi+vXrvQ6Cp+SLwSH7OLJM1h4/qrWQbJwiRBA==",
         "dependencies": {
-          "Azure.Messaging.ServiceBus": "7.17.5",
-          "Rebus": "8.4.2",
-          "azure.identity": "1.11.0"
+          "Azure.Messaging.ServiceBus": "7.18.4",
+          "Rebus": "8.8.0",
+          "azure.identity": "1.13.2"
         }
       },
       "Rebus.NLog": {
@@ -1986,8 +1986,8 @@
       },
       "Reqnroll": {
         "type": "Transitive",
-        "resolved": "2.3.0",
-        "contentHash": "1qkF+6/XT6Qx0aXeTkUJ9J5wXLsVqy4lRyqI48UMWf4scWSUHHa5zgQE4Nui1JTVaSqV5yN8+92WbvXbbZSTwg==",
+        "resolved": "2.4.0",
+        "contentHash": "JmeI9Idbiao5dPS4jeeof+esLBDjcx2BXjww4UW654IL6sDM/p7Rbkr2qWH+Ac8A3fC96rmO4w0x3TYYFzVuwQ==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Gherkin": "30.0.0",
@@ -3637,7 +3637,7 @@
           "Azure.Messaging.ServiceBus": "[7.18.4, )",
           "Rebus": "[8.8.0, )",
           "Rebus.AzureBlobs": "[1.0.1, )",
-          "Rebus.AzureServiceBus": "[10.2.0, )",
+          "Rebus.AzureServiceBus": "[10.3.0, )",
           "Rebus.NLog": "[6.0.0, )",
           "Rebus.SqlServer": "[8.3.0, )"
         }
@@ -3649,7 +3649,7 @@
           "FluentAssertions": "[7.2.0, )",
           "FluentAssertions.Web": "[1.8.0, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.6.0, )",
-          "Reqnroll": "[2.3.0, )"
+          "Reqnroll": "[2.4.0, )"
         }
       },
       "ark.tools.simpleinjector": {
