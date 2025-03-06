@@ -21,8 +21,8 @@
 		<PackageReference Include="MSTest.TestFramework" Version="3.8.2" />
 		<PackageReference Include="netDumbster" Version="3.1.1" />
 		<PackageReference Include="NodaTime.Testing" Version="3.2.1" />
-		<PackageReference Include="Reqnroll.MsTest" Version="2.3.0" />
-		<PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="2.3.0" />
+		<PackageReference Include="Reqnroll.MsTest" Version="2.4.0" />
+		<PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="2.4.0" />
 	</ItemGroup>
 	
   <ItemGroup>
