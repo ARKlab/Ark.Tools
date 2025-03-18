@@ -5,7 +5,7 @@
   ],
   
   "constraints": {
-    "dotnet": "8.0.406"
+    "dotnet": "8.0.407"
   },
 
   "customManagers": [
