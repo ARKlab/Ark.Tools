@@ -232,6 +232,16 @@ namespace Ark.Tools.AspNetCore.Startup
             services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
                 ?? throw new InvalidOperationException("Failed to obtain the RequestTelemetry from the current HttpContext. " +
                     "Make sure trying to access RequestTelemetry within a Request context, and not a BackgroundService."));
+
+            services.AddCors(c =>
+            {
+                c.AddDefaultPolicy(p => p
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()
+                    .WithExposedHeaders("*")
+                    .SetIsOriginAllowed(_ => true));
+            });
         }
 
         private void _integrateSimpleInjectorContainer(IServiceCollection services)
@@ -268,11 +278,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 SupportedCultures = CultureInfo.GetCultures(CultureTypes.InstalledWin32Cultures | CultureTypes.NeutralCultures | CultureTypes.SpecificCultures)
             });
 
-            app.UseCors(p => p
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()
-                .SetIsOriginAllowed(_ => true));
+            app.UseCors();
 
 
             if (HostEnvironment.IsDevelopment())
