@@ -16,6 +16,13 @@
       "depNameTemplate": "dotnet-sdk",
       "datasourceTemplate": "dotnet-version",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [".sqlproj$"],
+      "matchStrings": ["<Sdk\\s+Name=\"(?<depName>.*?)\"\\s+Version=\"(?<currentValue>.*?)\"\\s*/>"],
+      "datasourceTemplate": "nuget",
+      "versioningTemplate": "nuget"
     }
   ]
 }
