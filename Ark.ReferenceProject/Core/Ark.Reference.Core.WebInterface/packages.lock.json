@@ -435,11 +435,11 @@
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.4.2",
-        "contentHash": "ynVO9L2AOPsAw+u2JXt4Ywb+VXZtSFrTldVObX0I4ge3VBPBOS0NuFljuhZlAuK7fhQcq4BTgRKbfyDt8fYjag==",
+        "resolved": "3.4.3",
+        "contentHash": "AZ0yPyJxfMNGEKTlaAHUXpFqaHeSGjVsJc3lkKacEl+psMYSVWrSDqXTwViCgL9itNZrGCz2qR833ItoDNZ5GQ==",
         "dependencies": {
-          "MessagePack": "3.1.1",
-          "NodaTime": "3.2.0"
+          "MessagePack": "3.1.3",
+          "NodaTime": "3.2.2"
         }
       },
       "MessagePackAnalyzer": {
@@ -1579,8 +1579,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.2.1",
-        "contentHash": "D1aHhUfPQUxU2nfDCVuSLahpp0xCYZTmj/KNH3mSK/tStJYcx9HO9aJ0qbOP3hzjGPV/DXOqY2AHe27Nt4xs4g=="
+        "resolved": "3.2.2",
+        "contentHash": "dmju5W0UYC3QP/UJM0juKAZkH0HSDMp0gH91A0+mT9M0kgyM2Jm67hUZPl/WRQLq8Lijjqmdk8kyAViWFWM7dA=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "Transitive",
@@ -3050,7 +3050,7 @@
         "type": "Project",
         "dependencies": {
           "Ensure.That": "[10.1.0, )",
-          "NodaTime": "[3.2.1, )",
+          "NodaTime": "[3.2.2, )",
           "System.Linq.Async": "[6.0.1, )",
           "System.Reactive": "[6.0.1, )"
         }
@@ -3077,7 +3077,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.4.2, )",
+          "MessagePack.NodaTime": "[3.4.3, )",
           "System.Net.Http": "[4.3.4, )",
           "System.Text.RegularExpressions": "[4.3.1, )"
         }
