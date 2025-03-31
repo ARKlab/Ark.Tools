@@ -43,6 +43,12 @@
     
     <DebugType>portable</DebugType>
 	<DebugSymbols>true</DebugSymbols>
+	  
+	<!--
+      Other options are available. Read the documentation for more information:
+      https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
+    -->
+	<GenerateSBOM>true</GenerateSBOM>
 
   </PropertyGroup>
 
@@ -86,6 +92,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
+
+		<PackageReference Condition="$(IsPackable) != 'false'" Include="Microsoft.Sbom.Targets" Version="3.1.0" PrivateAssets="All" />
 		
 	</ItemGroup>
 
