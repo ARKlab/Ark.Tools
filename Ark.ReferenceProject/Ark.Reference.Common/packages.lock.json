@@ -24,9 +24,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.189, )",
-        "resolved": "2.0.189",
-        "contentHash": "/e+dh95vDdvCTbViV2cWpXJEXAj+VHq7FsBXCTTTsLcffV0bkgXDFAPY0zMpy+Vt91Cl2cBoSOfaAoSdtn796Q=="
+        "requested": "[2.0.194, )",
+        "resolved": "2.0.194",
+        "contentHash": "K5C9iByBkLSMng3HN+xPtol40kWRz5x0XH7G+QqNQLTR01FrJIPT5fKyxOazY/DYz2pI9WFtLTYJJU/wofE+OA=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -82,14 +82,12 @@
       },
       "Azure.Messaging.ServiceBus": {
         "type": "Transitive",
-        "resolved": "7.18.4",
-        "contentHash": "p407IN0ubqKMijByGYxNz3lnW7G8n2joZHQUfwzm5tu/Hrf8ys3SvKmU0cot00c9Y0jqxxg/le/qjoxltHF8gw==",
+        "resolved": "7.19.0",
+        "contentHash": "DoGfZpH6bwtsA6siIS5wv3SZZzOoNLnJi9N7OHhtBvE5Wlfn13jvwEe5z92HOddJVYEchdIZBK+jHBtPz1HFpg==",
         "dependencies": {
           "Azure.Core": "1.44.1",
           "Azure.Core.Amqp": "1.3.1",
-          "Microsoft.Azure.Amqp": "2.6.9",
-          "Microsoft.Bcl.AsyncInterfaces": "6.0.0",
-          "System.Memory.Data": "6.0.0"
+          "Microsoft.Azure.Amqp": "2.6.9"
         }
       },
       "Azure.Security.KeyVault.Secrets": {
@@ -1931,7 +1929,7 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "Azure.Messaging.ServiceBus": "[7.18.4, )",
+          "Azure.Messaging.ServiceBus": "[7.19.0, )",
           "Rebus": "[8.8.0, )",
           "Rebus.AzureBlobs": "[1.0.1, )",
           "Rebus.AzureServiceBus": "[10.3.0, )",
