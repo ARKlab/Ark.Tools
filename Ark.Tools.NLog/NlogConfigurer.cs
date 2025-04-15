@@ -15,7 +15,6 @@ using NLog.Targets;
 using NLog.Targets.Wrappers;
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
