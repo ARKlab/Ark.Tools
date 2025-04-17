@@ -19,9 +19,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.194, )",
-        "resolved": "2.0.194",
-        "contentHash": "K5C9iByBkLSMng3HN+xPtol40kWRz5x0XH7G+QqNQLTR01FrJIPT5fKyxOazY/DYz2pI9WFtLTYJJU/wofE+OA=="
+        "requested": "[2.0.197, )",
+        "resolved": "2.0.197",
+        "contentHash": "am2IRVMlKmfiehHIm4dpp6yoyFnSjHp0DXHCYiWjpe0TsuHkPT2PqYLG9+gpwvAZeoPpT/kDJj4pLTEOJ7Gqww=="
       },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
@@ -291,28 +291,28 @@
       },
       "Auth0.AuthenticationApi": {
         "type": "Transitive",
-        "resolved": "7.35.0",
-        "contentHash": "RJErAympXMiAWLTsifqhBOpTSOo329LriepasE0ROrKM4H98pauDQQDTZp4WISWRHs1y13JHZ+HOfuUL9HNM3w==",
+        "resolved": "7.36.0",
+        "contentHash": "IM7VBLBjRx5sQK/QnXXMmLVmaRPYUYvw//X1rEQro2dtgXBm3Hv063jfBhVHxhO1oDTx/mt3Jmsp/WTI0I1trg==",
         "dependencies": {
-          "Auth0.Core": "7.35.0",
+          "Auth0.Core": "7.36.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "6.5.0",
           "System.IdentityModel.Tokens.Jwt": "6.34.0"
         }
       },
       "Auth0.Core": {
         "type": "Transitive",
-        "resolved": "7.35.0",
-        "contentHash": "gIGjG8afdA1pYJziM4oFrGRtTkLytzE9TVycDJwOhYPjdqqmXuDKnEe/JLQ9TLFaj4SLuHEISPF1D6puvo8LiA==",
+        "resolved": "7.36.0",
+        "contentHash": "yiwHajWUuA/mUsYAU64GNbCDLHpjt1tjKZjI3iBZ83yJtrBCb4mL/EuCo713OIird871y6HSQQo+2ZVSRgw6HQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1"
         }
       },
       "Auth0.ManagementApi": {
         "type": "Transitive",
-        "resolved": "7.35.0",
-        "contentHash": "IoEhJeE8KfuJRuasI/YOnX7NGFoSOoMQSBKdqvYuUtPV8xlZKzef/x1XbSnV6c+c+ZbKcMiSJdiPZLMHtGgIgQ==",
+        "resolved": "7.36.0",
+        "contentHash": "otJ1+mgSLfUfuVVIxfF/xXLHYLcjfD5z865wxg2AIetZqUZbt+Qil3RV9PSvS7wYYj99i82Bk4OHxJF4Oax9ig==",
         "dependencies": {
-          "Auth0.Core": "7.35.0"
+          "Auth0.Core": "7.36.0"
         }
       },
       "Azure.Core": {
@@ -2186,10 +2186,10 @@
       },
       "Swashbuckle.AspNetCore.Annotations": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "8k3FzHKtyUaD6cA3H6i+SOq4ln1ne6Sv5Lr0KiXAnF7JALh2DSNCF9GZy4DeRHDEXkJy+sStVTqvIRYNhMBE3g==",
+        "resolved": "8.1.1",
+        "contentHash": "7HPeJGAs2VikmUOUHjmXo657FhUEuwajjgUmLTVrzGHo4tS1Io29cyMMfMDp4eAnXnY88jMa4MwG00xhWRgIDg==",
         "dependencies": {
-          "Swashbuckle.AspNetCore.SwaggerGen": "8.1.0"
+          "Swashbuckle.AspNetCore.SwaggerGen": "8.1.1"
         }
       },
       "Swashbuckle.AspNetCore.Filters": {
@@ -2211,33 +2211,33 @@
       },
       "Swashbuckle.AspNetCore.Newtonsoft": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "ixlWCQAMYMEnrctDDAVOPvQ7RPxZ68IqyjnO9kU391KZjsZopt1dpnajPxjchh6jNAzpbmlBsIdbyZ1PTFsHeA==",
+        "resolved": "8.1.1",
+        "contentHash": "l+JeVm5i6hrdwy8FNfCaa9oQGPVMtJ26wgEB4mLl9vdx6sXfnD6Vi0s481ojFF29Bc7hHFBDZFp5b7stiwki5g==",
         "dependencies": {
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "8.0.0",
-          "Swashbuckle.AspNetCore.SwaggerGen": "8.1.0"
+          "Swashbuckle.AspNetCore.SwaggerGen": "8.1.1"
         }
       },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "TRpBDdWh/6IzXHOLKVEuZSuhcdc8OIwhr8dyLnWvEh6FO4f0KiATAzr8yzHspcCFzCc/CONpvUCq4DzazpP6Og==",
+        "resolved": "8.1.1",
+        "contentHash": "h+8D5jQtnl6X4f2hJQwf0Khj0SnCQANzirCELjXJ6quJ4C1aNNCvJrAsQ+4fOKAMqJkvW48cKj79ftG+YoGcRg==",
         "dependencies": {
           "Microsoft.OpenApi": "1.6.23"
         }
       },
       "Swashbuckle.AspNetCore.SwaggerGen": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "sXAUNodmnzrJb1qmgdLY6HgTDsgagXCn6p+qygW2wP0BjcvdZZA6GdDgtuc8iQON9ekrp7m5G0Zc09lvuNhc/A==",
+        "resolved": "8.1.1",
+        "contentHash": "2EuPzXSNleOOzYvziERWRLnk1Oz9i0Z1PimaUFy1SasBqeV/rG+eMfwFAMtTaf4W6gvVOzRcUCNRHvpBIIzr+A==",
         "dependencies": {
-          "Swashbuckle.AspNetCore.Swagger": "8.1.0"
+          "Swashbuckle.AspNetCore.Swagger": "8.1.1"
         }
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "PYyTbYrEz1q8N8ZpCFzY5hOkvP5gv9oIml06wrrrjGRFvVXyCF/b58FRI/9mnRKRBAmWKZR5pqhmJBzvsVveSQ=="
+        "resolved": "8.1.1",
+        "contentHash": "GDLX/MpK4oa2nYC1N/zN2UidQTtVKLPF6gkdEmGb0RITEwpJG9Gu8olKqPYnKqVeFn44JZoCS0M2LGRKXP8B/A=="
       },
       "System.AppContext": {
         "type": "Transitive",
@@ -3439,8 +3439,8 @@
       "ark.tools.aspnetcore.auth0": {
         "type": "Project",
         "dependencies": {
-          "Auth0.AuthenticationApi": "[7.35.0, )",
-          "Auth0.ManagementApi": "[7.35.0, )",
+          "Auth0.AuthenticationApi": "[7.36.0, )",
+          "Auth0.ManagementApi": "[7.36.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[8.0.15, )",
           "Microsoft.Extensions.Caching.Abstractions": "[8.0.0, 9.0.0)",
           "Polly": "[8.5.2, )"
@@ -3487,12 +3487,12 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Asp.Versioning.OData.ApiExplorer": "[8.1.0, 9.0.0)",
           "Microsoft.AspNetCore.OData": "[8.2.5, 9.0.0)",
-          "Swashbuckle.AspNetCore.Annotations": "[8.1.0, )",
+          "Swashbuckle.AspNetCore.Annotations": "[8.1.1, )",
           "Swashbuckle.AspNetCore.Filters": "[8.0.2, )",
-          "Swashbuckle.AspNetCore.Newtonsoft": "[8.1.0, )",
-          "Swashbuckle.AspNetCore.Swagger": "[8.1.0, )",
-          "Swashbuckle.AspNetCore.SwaggerGen": "[8.1.0, )",
-          "Swashbuckle.AspNetCore.SwaggerUI": "[8.1.0, )"
+          "Swashbuckle.AspNetCore.Newtonsoft": "[8.1.1, )",
+          "Swashbuckle.AspNetCore.Swagger": "[8.1.1, )",
+          "Swashbuckle.AspNetCore.SwaggerGen": "[8.1.1, )",
+          "Swashbuckle.AspNetCore.SwaggerUI": "[8.1.1, )"
         }
       },
       "ark.tools.authorization": {
