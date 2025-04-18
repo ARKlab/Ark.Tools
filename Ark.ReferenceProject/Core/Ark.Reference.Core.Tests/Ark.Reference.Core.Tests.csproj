@@ -15,7 +15,7 @@
 		<PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
 		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.15" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-		<PackageReference Include="Microsoft.SqlServer.DacFx" Version="162.5.57" />
+		<PackageReference Include="Microsoft.SqlServer.DacFx" Version="170.0.94" />
 		<PackageReference Include="Moq" Version="4.20.72" />
 		<PackageReference Include="MSTest.TestAdapter" Version="3.8.3" />
 		<PackageReference Include="MSTest.TestFramework" Version="3.8.3" />

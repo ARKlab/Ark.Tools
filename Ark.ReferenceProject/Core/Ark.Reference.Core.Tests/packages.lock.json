@@ -50,34 +50,23 @@
       },
       "Microsoft.SqlServer.DacFx": {
         "type": "Direct",
-        "requested": "[162.5.57, )",
-        "resolved": "162.5.57",
-        "contentHash": "Y+2wuqLkIk3/j9s5dIRLN/P6aS6Bu0FWncFqFnBlKdVBYGGXedltoEJWAkGH/s4b9W7cLy6QHN8g6BAcwyiVmQ==",
+        "requested": "[170.0.94, )",
+        "resolved": "170.0.94",
+        "contentHash": "HDTX5qdA9YGP5Yghhhz1LZ4V85QdhyEKuoVppHOH3XFB+8CuWTLyDIzU3gDEWsehx7lac1ZbD3+aIMFvB9YoiQ==",
         "dependencies": {
           "Azure.Core": "1.41.0",
-          "Azure.Identity": "1.11.4",
           "Azure.Storage.Blobs": "12.18.0",
           "Microsoft.ApplicationInsights": "2.21.0",
           "Microsoft.Build": "15.9.20",
           "Microsoft.Build.Framework": "15.9.20",
           "Microsoft.Build.Utilities.Core": "15.9.20",
           "Microsoft.Data.SqlClient": "5.1.6",
-          "Microsoft.Identity.Client": "4.61.3",
-          "Microsoft.SqlServer.TransactSql.ScriptDom": "161.9142.1",
+          "Microsoft.SqlServer.TransactSql.ScriptDom": "170.18.0",
           "Microsoft.SqlServer.Types": "160.1000.6",
-          "System.ComponentModel.Annotations": "5.0.0",
           "System.ComponentModel.Composition": "8.0.0",
-          "System.IO.FileSystem": "4.3.0",
-          "System.IO.FileSystem.Primitives": "4.3.0",
           "System.IO.Packaging": "8.0.1",
-          "System.Net.Primitives": "4.3.0",
-          "System.Resources.Extensions": "4.7.1",
           "System.Runtime.Caching": "8.0.1",
-          "System.Security.Cryptography.Algorithms": "4.3.1",
-          "System.Security.Permissions": "8.0.0",
-          "System.Security.Principal": "4.3.0",
-          "System.Text.Encoding.Extensions": "4.3.0",
-          "System.Threading.ThreadPool": "4.3.0"
+          "System.Security.Permissions": "8.0.0"
         }
       },
       "Moq": {
@@ -1673,8 +1662,8 @@
       },
       "Microsoft.SqlServer.TransactSql.ScriptDom": {
         "type": "Transitive",
-        "resolved": "161.9142.1",
-        "contentHash": "SXKtFoDyDJSHiX7xpQMPGfjiLgMFidONN3heG5NWdHYNlklSxAXTdh06dN6GMdzkx1pxPFVIJpdDKh07oM29tw=="
+        "resolved": "170.18.0",
+        "contentHash": "pvyghHLtDChU5WHfmyQx0Qm+vMwLovexsrsVrhlU7zpb6QQJxthP71x5Q/yMkN63g5q8bAyXzGoaeOT2SquZ6Q=="
       },
       "Microsoft.SqlServer.Types": {
         "type": "Transitive",
@@ -2040,10 +2029,10 @@
       },
       "runtime.native.System.Security.Cryptography.Apple": {
         "type": "Transitive",
-        "resolved": "4.3.1",
-        "contentHash": "UPrVPlqPRSVZaB4ADmbsQ77KXn9ORiWXyA1RP2W2+byCh3bhgT1bQz0jbeOoog9/2oTQ5wWZSDSMeb74MjezcA==",
+        "resolved": "4.3.0",
+        "contentHash": "DloMk88juo0OuOWr56QG7MNchmafTLYWvABy36izkrLI5VledI0rq28KGs1i9wbpeT9NPQrx/wTf8U2vazqQ3Q==",
         "dependencies": {
-          "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple": "4.3.1"
+          "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple": "4.3.0"
         }
       },
       "runtime.native.System.Security.Cryptography.OpenSsl": {
@@ -2075,8 +2064,8 @@
       },
       "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple": {
         "type": "Transitive",
-        "resolved": "4.3.1",
-        "contentHash": "t15yGf5r6vMV1rB5O6TgfXKChtCaN3niwFw44M2ImX3eZ8yzueplqMqXPCbWzoBDHJVz9fE+9LFUGCsUmS2Jgg=="
+        "resolved": "4.3.0",
+        "contentHash": "kVXCuMTrTlxq4XOOMAysuNwsXWpYeboGddNGpIgNSZmv1b6r/s/DPk0fYMB7Q5Qo4bY68o48jt4T4y5BVecbCQ=="
       },
       "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
         "type": "Transitive",
@@ -2311,8 +2300,8 @@
       },
       "System.ComponentModel.Annotations": {
         "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "dMkqfy2el8A8/I76n2Hi1oBFEbG1SfxD2l5nhwXV3XjlnOmwxJlQbYpJH4W51odnU9sARCSAgv7S3CyAFMkpYg=="
+        "resolved": "4.6.0",
+        "contentHash": "pOd+UhZ3X8xfwKDlgAzowUJNjp8VYVmOHZm++vCd0kq1HZ0zK3mNo2yRXjYgv7Ik/Xi43fmJfND2PLEsQSALCg=="
       },
       "System.ComponentModel.Composition": {
         "type": "Transitive",
@@ -2852,11 +2841,6 @@
           "System.Runtime": "4.3.0"
         }
       },
-      "System.Resources.Extensions": {
-        "type": "Transitive",
-        "resolved": "4.7.1",
-        "contentHash": "cuRdQps4IdpvMzgRrtKpXLckKXvc6XzgmTNQ75wf9snAITrfDK759ucS+US0gt1vmspTjCHKSCXgvp0ysfrjkA=="
-      },
       "System.Resources.ResourceManager": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -2975,8 +2959,8 @@
       },
       "System.Security.Cryptography.Algorithms": {
         "type": "Transitive",
-        "resolved": "4.3.1",
-        "contentHash": "DVUblnRfnarrI5olEC2B/OCsJQd0anjVaObQMndHSc43efbc88/RMOlDyg/EyY0ix5ecyZMXS8zMksb5ukebZA==",
+        "resolved": "4.3.0",
+        "contentHash": "W1kd2Y8mYSCgc3ULTAZ0hOP2dSdG5YauTb1089T0/kRcN2MpSAW1izOFROrJgxSlMn3ArsgHXagigyi+ibhevg==",
         "dependencies": {
           "Microsoft.NETCore.Platforms": "1.1.0",
           "System.Collections": "4.3.0",
@@ -2990,8 +2974,8 @@
           "System.Security.Cryptography.Encoding": "4.3.0",
           "System.Security.Cryptography.Primitives": "4.3.0",
           "System.Text.Encoding": "4.3.0",
-          "runtime.native.System.Security.Cryptography.Apple": "4.3.1",
-          "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2"
+          "runtime.native.System.Security.Cryptography.Apple": "4.3.0",
+          "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.0"
         }
       },
       "System.Security.Cryptography.Cng": {
@@ -3143,14 +3127,6 @@
           "System.Windows.Extensions": "8.0.0"
         }
       },
-      "System.Security.Principal": {
-        "type": "Transitive",
-        "resolved": "4.3.0",
-        "contentHash": "I1tkfQlAoMM2URscUtpcRo/hX0jinXx6a/KUtEQoz3owaYwl3qwsO8cbzYVVnjxrzxjHo3nJC+62uolgeGIS9A==",
-        "dependencies": {
-          "System.Runtime": "4.3.0"
-        }
-      },
       "System.Security.Principal.Windows": {
         "type": "Transitive",
         "resolved": "4.7.0",
@@ -3259,15 +3235,6 @@
         "contentHash": "gIdJqDXlOr5W9zeqFErLw3dsOsiShSCYtF9SEHitACycmvNvY8odf9kiKvp6V7aibc8C4HzzNBkWXjyfn7plbQ==",
         "dependencies": {
           "System.Runtime": "4.1.0"
-        }
-      },
-      "System.Threading.ThreadPool": {
-        "type": "Transitive",
-        "resolved": "4.3.0",
-        "contentHash": "k/+g4b7vjdd4aix83sTgC9VG6oXYKAktSfNIJUNGxPEj7ryEOfzHHhfnmsZvjxawwcD9HyWXKCXmPjX8U4zeSw==",
-        "dependencies": {
-          "System.Runtime": "4.3.0",
-          "System.Runtime.Handles": "4.3.0"
         }
       },
       "System.Threading.Timer": {
