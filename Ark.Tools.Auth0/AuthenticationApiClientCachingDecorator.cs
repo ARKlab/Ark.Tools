@@ -4,6 +4,7 @@ using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Builders;
 using Auth0.AuthenticationApi.Models;
 using Auth0.AuthenticationApi.Models.Ciba;
+using Auth0.AuthenticationApi.Models.Mfa;
 
 using JWT.Algorithms;
 using JWT.Builder;
@@ -268,6 +269,41 @@ namespace Ark.Tools.Auth0
         public Task<ClientInitiatedBackchannelAuthorizationTokenResponse> GetTokenAsync(ClientInitiatedBackchannelAuthorizationTokenRequest request, CancellationToken cancellationToken = default)
         {
             return _inner.GetTokenAsync(request, cancellationToken);
+        }
+
+        public Task<AssociateMfaAuthenticatorResponse> AssociateMfaAuthenticatorAsync(AssociateMfaAuthenticatorRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.AssociateMfaAuthenticatorAsync(request, cancellationToken);
+        }
+
+        public Task<IList<Authenticator>> ListMfaAuthenticatorsAsync(string accessToken, CancellationToken cancellationToken = default)
+        {
+            return _inner.ListMfaAuthenticatorsAsync(accessToken, cancellationToken);
+        }
+
+        public Task DeleteMfaAuthenticatorAsync(DeleteMfaAuthenticatorRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.DeleteMfaAuthenticatorAsync(request, cancellationToken);
+        }
+
+        public Task<MfaOobTokenResponse> GetTokenAsync(MfaOobTokenRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.GetTokenAsync(request, cancellationToken);
+        }
+
+        public Task<MfaOtpTokenResponse> GetTokenAsync(MfaOtpTokenRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.GetTokenAsync(request, cancellationToken);
+        }
+
+        public Task<MfaRecoveryCodeResponse> GetTokenAsync(MfaRecoveryCodeRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.GetTokenAsync(request, cancellationToken);
+        }
+
+        public Task<MfaChallengeResponse> MfaChallenge(MfaChallengeRequest request, CancellationToken cancellationToken = default)
+        {
+            return _inner.MfaChallenge(request, cancellationToken);
         }
         #endregion
     }
