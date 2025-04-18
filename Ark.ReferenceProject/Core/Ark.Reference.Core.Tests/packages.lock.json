@@ -1786,8 +1786,8 @@
       },
       "NetEscapades.AspNetCore.SecurityHeaders": {
         "type": "Transitive",
-        "resolved": "0.24.0",
-        "contentHash": "QXoO4rqhkiLPQus1hXNtoBYMKXZpTKQg2UahHbebOTaPqJzt432ggfuceHR77AgyY5B+fC6CdgLCwCummWp8tQ=="
+        "resolved": "1.0.0",
+        "contentHash": "dZtPGIt7b2PfdQL/E62daQ9jlHaGGVOvVFt4Xe3oqcETL/GwCGGE1BSOc2V32BLz1/qyU68ZIDYR9B7WSn3oxA=="
       },
       "NETStandard.Library": {
         "type": "Transitive",
@@ -3389,7 +3389,7 @@
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "[8.0.15, )",
           "Microsoft.AspNetCore.OData": "[8.2.5, 9.0.0)",
           "Microsoft.AspNetCore.OData.NewtonsoftJson": "[8.2.0, 9.0.0)",
-          "NetEscapades.AspNetCore.SecurityHeaders": "[0.24.0, )",
+          "NetEscapades.AspNetCore.SecurityHeaders": "[1.0.0, )",
           "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )",
           "System.Text.Json": "[8.0.5, )"
         }
