@@ -471,22 +471,12 @@
       },
       "FluentAssertions.Web": {
         "type": "Transitive",
-        "resolved": "1.8.0",
-        "contentHash": "64aNZ0d0yGh19EWWKz9Mc/M2aXFOwvlFK7GTk+DrazuTW0OwhVTewl/c9ZUKJV4TIV586I+DziJU+9ijZyIY6A==",
+        "resolved": "1.9.5",
+        "contentHash": "obMVx6Tw+GI8cR/EiikF+KB+psMOdew1ItnjOf7+c2fclPhLK5OPfYEBCDr6xI7CmA0ZHkqsREgY+g491mDFuA==",
         "dependencies": {
           "FluentAssertions": "[6.5.1, 8.0.0)",
-          "FluentAssertions.Web.Types": "1.8.0",
           "Microsoft.AspNet.WebApi.Client": "6.0.0",
-          "Newtonsoft.Json": "13.0.3",
-          "System.Text.Json": "8.0.5"
-        }
-      },
-      "FluentAssertions.Web.Types": {
-        "type": "Transitive",
-        "resolved": "1.8.0",
-        "contentHash": "/0O/F7d2UPLQqarDxQSmsk3T6kh8LdY8RKHPM85Epu+cjfyh3HJ99VM/BaRJp+SHu9WJZFjJbOVKfZxyPbR5cQ==",
-        "dependencies": {
-          "System.Text.Json": "8.0.5"
+          "Newtonsoft.Json": "13.0.3"
         }
       },
       "FluentValidation": {
@@ -3610,7 +3600,7 @@
         "dependencies": {
           "Ark.Tools.Http": "[1.0.0, )",
           "FluentAssertions": "[7.2.0, )",
-          "FluentAssertions.Web": "[1.8.0, )",
+          "FluentAssertions.Web": "[1.9.5, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.9.0, )",
           "Reqnroll": "[2.4.0, )"
         }
