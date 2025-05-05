@@ -4,9 +4,9 @@
     "net8.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.197, )",
-        "resolved": "2.0.197",
-        "contentHash": "am2IRVMlKmfiehHIm4dpp6yoyFnSjHp0DXHCYiWjpe0TsuHkPT2PqYLG9+gpwvAZeoPpT/kDJj4pLTEOJ7Gqww=="
+        "requested": "[2.0.198, )",
+        "resolved": "2.0.198",
+        "contentHash": "kUpKQmEVUjzPWoYZFEpg7hr+MAK+jjJn1IRYu9kfbv2m4tjHfDF8GLpvk6T8KT/J+fMUS6/uHKc0mVWtIALayQ=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -139,8 +139,8 @@
       },
       "FluentValidation": {
         "type": "Transitive",
-        "resolved": "11.11.0",
-        "contentHash": "cyIVdQBwSipxWG8MA3Rqox7iNbUNUTK5bfJi9tIdm4CAfH71Oo5ABLP4/QyrUwuakqpUEPGtE43BDddvEehuYw=="
+        "resolved": "12.0.0",
+        "contentHash": "8NVLxtMUXynRHJIX3Hn1ACovaqZIJASufXIIFkD0EUbcd5PmMsL1xUD5h548gCezJ5BzlITaR9CAMrGe29aWpA=="
       },
       "Flurl": {
         "type": "Transitive",
@@ -1981,7 +1981,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Solid": "[1.0.0, )",
-          "FluentValidation": "[11.11.0, )"
+          "FluentValidation": "[12.0.0, )"
         }
       },
       "ark.tools.solid.simpleinjector": {
