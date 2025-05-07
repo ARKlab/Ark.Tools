@@ -3,24 +3,30 @@
   "extends": [
     "local>ARKlab/renovate-config"
   ],
-  
   "constraints": {
     "dotnet": "8.0.408"
   },
-
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^renovate.json$"],
-      "matchStrings": ["\"dotnet\":\\s*\"(?<currentValue>.*?)\""],
+      "managerFilePatterns": [
+        "/^renovate.json$/"
+      ],
+      "matchStrings": [
+        "\"dotnet\":\\s*\"(?<currentValue>.*?)\""
+      ],
       "depNameTemplate": "dotnet-sdk",
       "datasourceTemplate": "dotnet-version",
       "versioningTemplate": "semver"
     },
     {
       "customType": "regex",
-      "fileMatch": [".sqlproj$"],
-      "matchStrings": ["<Sdk\\s+Name=\"(?<depName>.*?)\"\\s+Version=\"(?<currentValue>.*?)\"\\s*/>"],
+      "managerFilePatterns": [
+        "/.sqlproj$/"
+      ],
+      "matchStrings": [
+        "<Sdk\\s+Name=\"(?<depName>.*?)\"\\s+Version=\"(?<currentValue>.*?)\"\\s*/>"
+      ],
       "datasourceTemplate": "nuget",
       "versioningTemplate": "nuget"
     }
