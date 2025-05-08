@@ -4,9 +4,9 @@
     "net8.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.198, )",
-        "resolved": "2.0.198",
-        "contentHash": "kUpKQmEVUjzPWoYZFEpg7hr+MAK+jjJn1IRYu9kfbv2m4tjHfDF8GLpvk6T8KT/J+fMUS6/uHKc0mVWtIALayQ=="
+        "requested": "[2.0.201, )",
+        "resolved": "2.0.201",
+        "contentHash": "ehMMCZcz1jFsMlxf62K4LBp9t+dF1spSwr4vjWRAiMvc8lVKw27dNpKH7bnrropwdWTSWDim9arCvyNyfPTEnA=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -260,8 +260,8 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "v7HxnYYXGGCJilxeQ4Pdks+popVuGajBpHmau0RU4ACIcbfs5qCNUnCogGpZ+CJ//8Qafhxq7vc5a8L9d6O8Eg==",
+        "resolved": "6.0.2",
+        "contentHash": "RDqwzNu5slSqGy0eSgnN4fuLdGI1w9ZHBRNALrbUsykOIbXtGCpyotG0r5zz+HHtzxbe6LtcAyWcOiu0a+Fx/A==",
         "dependencies": {
           "Azure.Identity": "1.11.4",
           "Microsoft.Bcl.Cryptography": "8.0.0",
@@ -1858,7 +1858,7 @@
           "Microsoft.ApplicationInsights": "[2.23.0, )",
           "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
           "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[6.0.1, )",
+          "Microsoft.Data.SqlClient": "[6.0.2, )",
           "Microsoft.Extensions.Options": "[8.0.2, 9.0.0)"
         }
       },
@@ -1905,7 +1905,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[6.0.1, )",
+          "Microsoft.Data.SqlClient": "[6.0.2, )",
           "NLog": "[5.4.0, )",
           "NLog.Database": "[5.4.0, )",
           "NLog.DiagnosticSource": "[5.2.1, )",
@@ -2039,7 +2039,7 @@
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.Nodatime.Dapper": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
-          "Microsoft.Data.SqlClient": "[6.0.1, )"
+          "Microsoft.Data.SqlClient": "[6.0.2, )"
         }
       },
       "ark.tools.systemtextjson": {
