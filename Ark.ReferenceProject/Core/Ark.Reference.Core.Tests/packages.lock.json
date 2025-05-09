@@ -117,22 +117,22 @@
       },
       "Reqnroll.MsTest": {
         "type": "Direct",
-        "requested": "[2.4.0, )",
-        "resolved": "2.4.0",
-        "contentHash": "JYFsKheM011AWO/gVYq62BgoPfg5UvW4K/eHkj5hDZUz303b5QvhPpkBDnanC+EG6MrVsM5oD6SrLuUbzeDztQ==",
+        "requested": "[2.4.1, )",
+        "resolved": "2.4.1",
+        "contentHash": "hQKTSXKWaY5m6Aid1+v45rO1OIR2BWZNrO5oyovY0t7JHsmSar0sGTZX+BJ7RVNiJ6QiABPyUR1fOKLYEelUdg==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "[2.4.0]",
-          "Reqnroll.Tools.MsBuild.Generation": "[2.4.0]"
+          "Reqnroll": "[2.4.1]",
+          "Reqnroll.Tools.MsBuild.Generation": "[2.4.1]"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[2.4.0, )",
-        "resolved": "2.4.0",
-        "contentHash": "/OZ7emUyrNsykdt5X0g6TWVa8EVxv6J1kM6E/Qe5auksnCKim+nYNJ+LWrQzHD/NvX/yS0Akub0zMTEnyzMQxQ==",
+        "requested": "[2.4.1, )",
+        "resolved": "2.4.1",
+        "contentHash": "+Up0eUWnKRKPdRIttE52DYzwayUd4bGMyRytYeeCwtqwZA4tLhK2NspOZJ8axPcmATOM9QSTCUHUlyp9pgcfQg==",
         "dependencies": {
-          "Reqnroll": "[2.4.0]"
+          "Reqnroll": "[2.4.1]"
         }
       },
       "Asp.Versioning.Abstractions": {
@@ -1974,8 +1974,8 @@
       },
       "Reqnroll": {
         "type": "Transitive",
-        "resolved": "2.4.0",
-        "contentHash": "JmeI9Idbiao5dPS4jeeof+esLBDjcx2BXjww4UW654IL6sDM/p7Rbkr2qWH+Ac8A3fC96rmO4w0x3TYYFzVuwQ==",
+        "resolved": "2.4.1",
+        "contentHash": "Ui229q21Kmkrv3L89THgsxGMXooJGK5OrFPLvYDXfE2nO/u4tqYsbmMRddyEE3fsR40IDP++HsRrDxlkR6reVw==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Gherkin": "30.0.0",
@@ -3338,6 +3338,9 @@
           "Ark.Reference.Common": "[0.9.1, )"
         }
       },
+      "ark.reference.core.database": {
+        "type": "Project"
+      },
       "ark.reference.core.webinterface": {
         "type": "Project",
         "dependencies": {
@@ -3609,7 +3612,7 @@
           "FluentAssertions": "[7.2.0, )",
           "FluentAssertions.Web": "[1.8.0, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.9.0, )",
-          "Reqnroll": "[2.4.0, )"
+          "Reqnroll": "[2.4.1, )"
         }
       },
       "ark.tools.simpleinjector": {
