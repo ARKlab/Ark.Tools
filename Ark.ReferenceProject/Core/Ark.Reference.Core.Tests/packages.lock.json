@@ -3328,9 +3328,6 @@
           "Ark.Reference.Common": "[0.9.1, )"
         }
       },
-      "ark.reference.core.database": {
-        "type": "Project"
-      },
       "ark.reference.core.webinterface": {
         "type": "Project",
         "dependencies": {
