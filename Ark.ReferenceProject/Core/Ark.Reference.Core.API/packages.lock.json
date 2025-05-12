@@ -821,8 +821,8 @@
       },
       "Rebus.AzureServiceBus": {
         "type": "Transitive",
-        "resolved": "10.3.0",
-        "contentHash": "tDELQtyFeE4PV31FotzCH01Do5zFvxOEybhfsXcgwTiE44XsCDi+vXrvQ6Cp+SLwSH7OLJM1h4/qrWQbJwiRBA==",
+        "resolved": "10.4.0",
+        "contentHash": "nJ8vJ0jJiLdIAiC6qZ5tMSVd3ztKNDpvDsRtkRlGIFm62JznztLwncImcGKSi0EOdUAD7yalFts3l1LGalopUg==",
         "dependencies": {
           "Azure.Messaging.ServiceBus": "7.18.4",
           "Rebus": "8.8.0",
@@ -1952,7 +1952,7 @@
           "Azure.Messaging.ServiceBus": "[7.19.0, )",
           "Rebus": "[8.8.0, )",
           "Rebus.AzureBlobs": "[1.0.1, )",
-          "Rebus.AzureServiceBus": "[10.3.0, )",
+          "Rebus.AzureServiceBus": "[10.4.0, )",
           "Rebus.NLog": "[6.0.0, )",
           "Rebus.SqlServer": "[8.3.0, )"
         }
