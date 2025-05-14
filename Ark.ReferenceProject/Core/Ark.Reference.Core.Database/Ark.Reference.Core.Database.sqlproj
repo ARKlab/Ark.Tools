@@ -3,6 +3,8 @@
   <Sdk Name="Microsoft.Build.Sql" Version="1.0.0" />
   <PropertyGroup>
     <Name>Ark.Reference.Core.Database</Name>
+  </PropertyGroup>
+  <PropertyGroup>
     <ProjectGuid>{bee200d4-b2fc-4384-bda2-5ccab62c1597}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
@@ -23,17 +25,27 @@
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
     <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
     <IsPackable>false</IsPackable>
-	<QueryStoreDesiredState>ReadWrite</QueryStoreDesiredState>
+    <QueryStoreDesiredState>ReadWrite</QueryStoreDesiredState>
     <QueryStoreMaxStorageSize>1000</QueryStoreMaxStorageSize>
     <AutoCreateStatisticsIncremental>True</AutoCreateStatisticsIncremental>
+    <!--
+      The property EnableDefaultSqlItems is necessary because while DotNET automatically includes all files in project,
+      VS's build process requires explicit inclusion. Without this element, the DotNET build fails.
+    -->
+    <EnableDefaultSqlItems>false</EnableDefaultSqlItems>
   </PropertyGroup>
   <ItemGroup>
+    <!-- VS's build process requires explicit inclusion. -->
+    <Build Include="**/*.sql" />
     <Build Remove="bin/**/*.sql" />
     <Build Remove="obj/**/*.sql" />
     <Build Remove="_Migrations/**/*.sql" />
+    <None Include="_Migrations/*.sql" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Ark.Reference.Core.Database.publish.xml" />
+    <None Include="*.publish.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment.sql">
@@ -47,11 +59,8 @@
     <Folder Include="Security\" />
     <Folder Include="_Migrations\" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="_Migrations/*.sql" />
-  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent Condition="'$(IsWindows)' == 'true'">copy /y "$(MSBuildThisFileDirectory)bin\$(Configuration)\*.dacpac" "$(MSBuildThisFileDirectory)..\Ark.Reference.Core.Tests\"</PostBuildEvent>
-    <PostBuildEvent Condition="'$(IsLinux)' == 'true'">cp -f   "$(MSBuildThisFileDirectory)bin/$(Configuration)/Ark.Reference.Core.Database.dacpac" "$(MSBuildThisFileDirectory)../Ark.Reference.Core.Tests/"</PostBuildEvent>
+    <PostBuildEvent Condition="'$(IsLinux)' == 'true'">cp -f   "$(MSBuildThisFileDirectory)bin/$(Configuration)/$(Name).dacpac" "$(MSBuildThisFileDirectory)../Ark.Reference.Core.Tests/"</PostBuildEvent>
   </PropertyGroup>
 </Project>
