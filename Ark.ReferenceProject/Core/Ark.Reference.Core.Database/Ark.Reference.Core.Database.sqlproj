@@ -40,7 +40,7 @@
     <Build Remove="bin/**/*.sql" />
     <Build Remove="obj/**/*.sql" />
     <Build Remove="_Migrations/**/*.sql" />
-    <None Include="_Migrations/*.sql" />
+    <None Include="_Migrations/**/*.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="*.publish.xml">
