@@ -93,7 +93,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 
-		<PackageReference Condition="$(IsPackable) != 'false'" Include="Microsoft.Sbom.Targets" Version="4.0.2" PrivateAssets="All" />
+		<PackageReference Condition="$(IsPackable) != 'false'" Include="Microsoft.Sbom.Targets" Version="4.0.3" PrivateAssets="All" />
 		
 	</ItemGroup>
 
