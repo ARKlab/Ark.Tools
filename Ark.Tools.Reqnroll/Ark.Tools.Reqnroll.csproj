@@ -21,7 +21,7 @@
     <PackageReference Include="FluentAssertions" Version="7.2.0" />
     <PackageReference Include="FluentAssertions.Web" Version="1.9.5" />
     <PackageReference Include="Reqnroll" Version="2.4.1" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.10.0" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.11.0" />
   </ItemGroup>
 
   <ItemGroup>
