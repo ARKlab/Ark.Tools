@@ -4,7 +4,7 @@
     "local>ARKlab/renovate-config"
   ],
   "constraints": {
-    "dotnet": "8.0.410"
+    "dotnet": "8.0.411"
   },
   "customManagers": [
     {
