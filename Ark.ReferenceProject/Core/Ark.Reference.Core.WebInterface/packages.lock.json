@@ -1849,20 +1849,18 @@
       },
       "Swashbuckle.AspNetCore.Filters": {
         "type": "Transitive",
-        "resolved": "8.0.3",
-        "contentHash": "h9ySy48pYYk6YkEaVaE4rQOUGjPflc99eGYPpHUCyEEW45N1yFkrR0sHHgAnwjoM06RsmmeC3Vsb4ZnvO4jxlg==",
+        "resolved": "9.0.0",
+        "contentHash": "fa5Qf428JK1YsMv4WDSpB/JL17Ehb3bGomZjtjx8QamLtNh+9GYARxJEvMXoV9POlteE1Px3sczS4a3lEgckCw==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection": "2.1.0",
-          "Microsoft.OpenApi": "1.3.1",
           "Scrutor": "3.3.0",
-          "Swashbuckle.AspNetCore.Filters.Abstractions": "8.0.3",
-          "Swashbuckle.AspNetCore.SwaggerGen": "5.0.0"
+          "Swashbuckle.AspNetCore.Filters.Abstractions": "9.0.0",
+          "Swashbuckle.AspNetCore.SwaggerGen": "8.0.0"
         }
       },
       "Swashbuckle.AspNetCore.Filters.Abstractions": {
         "type": "Transitive",
-        "resolved": "8.0.3",
-        "contentHash": "rYO99WK7WphgsQp+ChtSDIfrAanaxDfccgNCTkICa0rOP7mPij4n+7L+ENEq89Ar696gzSjr4bBnqusT6rqFWQ=="
+        "resolved": "9.0.0",
+        "contentHash": "ViWDoSdM8R5oN/fQMIqXFwJgleuVLrr+/Qm228n8f3bviWbo0EZe0z/+2oLkYurwFmSVc0fNKNAUXj4j6sXQIQ=="
       },
       "Swashbuckle.AspNetCore.Newtonsoft": {
         "type": "Transitive",
@@ -3009,7 +3007,7 @@
           "Asp.Versioning.OData.ApiExplorer": "[8.1.0, 9.0.0)",
           "Microsoft.AspNetCore.OData": "[8.2.5, 9.0.0)",
           "Swashbuckle.AspNetCore.Annotations": "[9.0.0, )",
-          "Swashbuckle.AspNetCore.Filters": "[8.0.3, )",
+          "Swashbuckle.AspNetCore.Filters": "[9.0.0, )",
           "Swashbuckle.AspNetCore.Newtonsoft": "[9.0.0, )",
           "Swashbuckle.AspNetCore.Swagger": "[9.0.0, )",
           "Swashbuckle.AspNetCore.SwaggerGen": "[9.0.0, )",
