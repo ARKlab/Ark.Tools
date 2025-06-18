@@ -1,0 +1,18 @@
+allow_licenses:
+  - MIT
+  - Apache-2.0
+  - BSD-3-Clause
+  - CC0-1.0
+  - BSD-2-Clause
+  - ISC
+  - Python-2.0
+  - MPL-2.0
+  - 0BSD
+  - Unlicense
+  - CC-BY-3.0
+  - CC-BY-4.0
+  - BSD-3-Clause-Clear
+  - OFL-1.1
+  - Zlib
+  - LGPL-2.1-or-later
+  - LicenseRef-scancode-generic-cla

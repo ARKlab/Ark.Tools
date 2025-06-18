@@ -10,18 +10,7 @@ jobs:
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
-      - name: 'Dependency Review'        
-        uses: actions/dependency-review-action@72eb03d02c7872a771aacd928f3123ac62ad6d3a # Version 4.3.3 # https://github.com/actions/dependency-review-action/releases/tag/v4.3.3
-        # Version 4.3.4 does not work with invalid license names in the config and since that version,
-        # SPDX expression licenses are considered invalid (see: https://github.com/actions/dependency-review-action/issues/792).
-        # In short, remove all SPDX expressions from the config!
-        #
-        # Note that if you have packages that use SPDX expressions, this will report them as invalid,
-        # as support is not yet implemented (see: https://github.com/actions/dependency-review-action/issues/263).
-        #
-        # In that case you need to downgrade to version 4.3.3 where SPDX expressions are handled as exact strings !!
-        # @source https://github.com/actions/dependency-review-action/issues/809#issuecomment-2285930024
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v4.7.1
         with:
-          # Use comma-separated names to pass list arguments:
-          allow-licenses: Apache-2.0,BSD-3-Clause,BSD-2-Clause,MIT,Apache-2.0 AND MIT,LicenseRef-scancode-generic-cla AND MIT
-          allow-dependencies-licenses: pkg:nuget/System.Net.Http@4.3.4, pkg:nuget/System.Text.RegularExpressions@4.3.1
+          config-file: "./.github/dependency-review-config.yml"
