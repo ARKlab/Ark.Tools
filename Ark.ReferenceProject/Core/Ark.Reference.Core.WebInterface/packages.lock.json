@@ -426,10 +426,10 @@
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.4.3",
-        "contentHash": "AZ0yPyJxfMNGEKTlaAHUXpFqaHeSGjVsJc3lkKacEl+psMYSVWrSDqXTwViCgL9itNZrGCz2qR833ItoDNZ5GQ==",
+        "resolved": "3.4.4",
+        "contentHash": "afqL/D/t7Nsr0qCwEA3XT72ZfWMhO/fq728TPTnloQrFTd5U8xRDDd7mj8wd7NZaojjFpZy1bc6LkfM9mRNATA==",
         "dependencies": {
-          "MessagePack": "3.1.3",
+          "MessagePack": "3.1.4",
           "NodaTime": "3.2.2"
         }
       },
@@ -3048,7 +3048,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.4.3, )",
+          "MessagePack.NodaTime": "[3.4.4, )",
           "System.Net.Http": "[4.3.4, )",
           "System.Text.RegularExpressions": "[4.3.1, )"
         }
