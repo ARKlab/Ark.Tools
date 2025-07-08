@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
 {
-    public class FtpMetadata : IResourceMetadata
+    public sealed class FtpMetadata : IResourceMetadata
     {
         internal FtpMetadata(FtpEntry entry)
         {

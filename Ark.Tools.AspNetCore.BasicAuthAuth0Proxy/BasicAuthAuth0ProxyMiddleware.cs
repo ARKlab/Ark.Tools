@@ -75,7 +75,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                                         Username = userName,
                                         Password = password,
                                         ClientSecret = _config.ProxySecret,
-                                        Realm = _config.Realm,
+                                        Realm = _config.Realm!,
                                         Scope = "openid profile email",
                                     }, context.RequestAborted).ConfigureAwait(false);
 

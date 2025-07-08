@@ -127,7 +127,7 @@ namespace Ark.Tools.Rebus.Tests
         /// <summary>
         /// Represents a message whose delivery has been deferred into the future
         /// </summary>
-        public class DeferredMessage
+        public sealed class DeferredMessage
         {
             /// <summary>
             /// Gets the time of when delivery of this message is due
