@@ -13,7 +13,7 @@ using System.Security.Claims;
 namespace Ark.Reference.Core.Application.DAL
 {
 
-    public partial class CoreDataContext_Sql : AbstractSqlAsyncContextWithOutbox<CoreDataSql>, ICoreDataContext
+    public sealed partial class CoreDataContext_Sql : AbstractSqlAsyncContextWithOutbox<CoreDataSql>, ICoreDataContext
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IClock _clock;

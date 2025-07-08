@@ -67,7 +67,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
         private event VoidEventHandler? _onBeforeStart;
 
-        public class Dependencies
+        public sealed class Dependencies
         {
             private readonly WorkerHost<TResource, TMetadata, TQueryFilter> _host;
 

@@ -55,7 +55,7 @@ namespace Ark.Tools.AspNetCore.Auth0
             var cacheKey = $"auth0:userInfo:{token}";
             var cid = ctx.Principal?.Identity as ClaimsIdentity;
 
-            if (cid != null && jwt != null)
+            if (cid != null && jwt != null && token != null)
             {
                 if (!_isUnattendedClient(cid))
                 {
