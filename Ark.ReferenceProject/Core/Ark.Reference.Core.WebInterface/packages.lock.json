@@ -1569,10 +1569,10 @@
       },
       "NLog.DiagnosticSource": {
         "type": "Transitive",
-        "resolved": "5.2.3",
-        "contentHash": "z0NmMrqQdCc9enfaZ7JIiNGbalCtazAdlo14Za8dLjuPw2weE40J3rAKxhfg0e4wT/loDPNUFxUPuywHboxMoA==",
+        "resolved": "6.0.1",
+        "contentHash": "lfrOC3d7P8sZBsIq0MWjOV6zNpR2izkouzDLO5pivW4eJxCNTO+GL8EKWPoD5opzZfcOCD+Xp5EmGZaieRDevg==",
         "dependencies": {
-          "NLog": "5.2.2"
+          "NLog": "6.0.1"
         }
       },
       "NLog.Extensions.Logging": {
@@ -3104,7 +3104,7 @@
           "Microsoft.Data.SqlClient": "[6.0.2, )",
           "NLog": "[6.0.1, )",
           "NLog.Database": "[6.0.1, )",
-          "NLog.DiagnosticSource": "[5.2.3, )",
+          "NLog.DiagnosticSource": "[6.0.1, )",
           "NLog.MailKit": "[6.0.0, )",
           "Newtonsoft.Json": "[13.0.3, )",
           "Slack.Webhooks": "[1.1.5, )",
