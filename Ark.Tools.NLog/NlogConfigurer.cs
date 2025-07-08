@@ -10,6 +10,7 @@ using NLog.Common;
 using NLog.Config;
 using NLog.LayoutRenderers;
 using NLog.Layouts;
+using NLog.MailKit;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
 
@@ -274,7 +275,7 @@ namespace Ark.Tools.NLog
             public Configurer WithConsoleTarget(bool async = true)
             {
                 var consoleTarget = new ConsoleTarget();
-                consoleTarget.WriteBuffer = async;
+                consoleTarget.ForceWriteLine = async;
                 consoleTarget.AutoFlush = !async;
                 consoleTarget.Layout = TextLineLayout;
 
@@ -289,13 +290,10 @@ namespace Ark.Tools.NLog
                 fileTarget.Layout = TextLineLayout;
                 fileTarget.FileName = @"${basedir}\Logs\Trace.log";
                 fileTarget.KeepFileOpen = true;
-                fileTarget.ConcurrentWrites = false;
                 fileTarget.ArchiveFileName = @"${basedir}\Logs\Trace_{#}.log";
-                fileTarget.ArchiveNumbering = ArchiveNumberingMode.DateAndSequence;
                 fileTarget.ArchiveEvery = FileArchivePeriod.Day;
                 fileTarget.MaxArchiveFiles = 30;
                 fileTarget.ArchiveAboveSize = 10000000;
-                fileTarget.ArchiveDateFormat = "yyyy-MM-dd";
                 _config.AddTarget(FileTarget, async ? _wrapWithAsyncTargetWrapper(fileTarget) : fileTarget);
 
                 return this;
@@ -406,9 +404,6 @@ VALUES
                 target.From = from ?? NLogConfigurer.MailFromDefault;
                 target.To = to;
 
-                target.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
-                target.UseSystemNetMailSettings = true;
-
                 _config.AddTarget(MailTarget, async ? _wrapWithAsyncTargetWrapper(target) : target);
 
                 return this;
@@ -421,36 +416,36 @@ VALUES
 
             public Configurer WithMailTarget(string? from, string to, string? smtpServer, int? smtpPort, string? smtpUserName, string? smtpPassword, bool useSsl, bool async = true)
             {
-                var target = _getBasicMailTarget();
+                if (smtpServer is not null && smtpPort is not null && smtpUserName is not null && smtpPassword is not null)
+                {
+                    var target = _getBasicMailTarget();
 
-                target.From = from;
-                target.To = to;
+                    target.From = from ?? NLogConfigurer.MailFromDefault;
+                    target.To = to;
 
-                target.UseSystemNetMailSettings = false;
-                target.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
-                target.EnableSsl = useSsl;
-                target.SmtpAuthentication = SmtpAuthenticationMode.Basic;
-                target.SmtpServer = smtpServer;
-                target.SmtpPort = smtpPort;
-                target.SmtpUserName = smtpUserName;
-                target.SmtpPassword = smtpPassword;
+                    target.EnableSsl = useSsl;                    
+                    target.SmtpAuthentication = SmtpAuthenticationMode.Basic;
+                    target.SmtpServer = smtpServer;
+                    target.SmtpPort = smtpPort;
+                    target.SmtpUserName = smtpUserName;
+                    target.SmtpPassword = smtpPassword;
 
-                _config.AddTarget(MailTarget, async ? _wrapWithAsyncTargetWrapper(target) : target);
-
+                    _config.AddTarget(MailTarget, async ? _wrapWithAsyncTargetWrapper(target) : target);
+                }
                 return this;
             }
 
             public Configurer WithMailTarget(string? from, string to, string smtpConnectionString, bool async = true)
             {
                 var cs = new SmtpConnectionBuilder(smtpConnectionString);
-                return this.WithMailTarget(from ?? cs.From ?? NLogConfigurer.MailFromDefault, to, cs.Server, cs.Port, cs.Username, cs.Password, cs.UseSsl, async);
+                return this.WithMailTarget(from ?? cs.From, to, cs.Server, cs.Port, cs.Username, cs.Password, cs.UseSsl, async);
             }
 
             #endregion targets
             #region rules
             public Configurer WithSlackRule(string loggerPattern, LogLevel level, bool final = false)
             {
-                var target = _config.FindTargetByName(SlackTarget);
+                var target = _config.FindTargetByName(SlackTarget) ?? throw new InvalidOperationException($"Target '{SlackTarget}' not found. Please add it first using {nameof(WithSlackTarget)} method.");
                 var ruleName = $"{SlackTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
@@ -459,7 +454,7 @@ VALUES
             }
             public Configurer WithSlackRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
-                var target = _config.FindTargetByName(SlackTarget);
+                var target = _config.FindTargetByName(SlackTarget) ?? throw new InvalidOperationException($"Target '{SlackTarget}' not found. Please add it first using {nameof(WithSlackTarget)} method.");
                 var ruleName = $"{SlackTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
@@ -469,7 +464,7 @@ VALUES
 
             public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel level, bool final = false)
             {
-                var target = _config.FindTargetByName(ApplicationInsightsTarget);
+                var target = _config.FindTargetByName(ApplicationInsightsTarget) ?? throw new InvalidOperationException($"Target '{ApplicationInsightsTarget}' not found. Please add it first using {nameof(WithApplicationInsightsTarget)} method.");
                 var ruleName = $"{ApplicationInsightsTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
@@ -478,7 +473,7 @@ VALUES
             }
             public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
-                var target = _config.FindTargetByName(ApplicationInsightsTarget);
+                var target = _config.FindTargetByName(ApplicationInsightsTarget) ?? throw new InvalidOperationException($"Target '{ApplicationInsightsTarget}' not found. Please add it first using {nameof(WithApplicationInsightsTarget)} method.");
                 var ruleName = $"{ApplicationInsightsTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
@@ -488,7 +483,7 @@ VALUES
 
             public Configurer WithConsoleRule(string loggerPattern, LogLevel level, bool final = false)
             {
-                var target = _config.FindTargetByName(ConsoleTarget);
+                var target = _config.FindTargetByName(ConsoleTarget) ?? throw new InvalidOperationException($"Target '{ConsoleTarget}' not found. Please add it first using {nameof(WithConsoleTarget)} method.");
                 var ruleName = $"{ConsoleTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
@@ -497,7 +492,7 @@ VALUES
             }
             public Configurer WithConsoleRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
-                var target = _config.FindTargetByName(ConsoleTarget);
+                var target = _config.FindTargetByName(ConsoleTarget) ?? throw new InvalidOperationException($"Target '{ConsoleTarget}' not found. Please add it first using {nameof(WithConsoleTarget)} method.");
                 var ruleName = $"{ConsoleTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
@@ -507,7 +502,7 @@ VALUES
 
             public Configurer WithDatabaseRule(string loggerPattern, LogLevel level, bool final = false)
             {
-                var target = _config.FindTargetByName(DatabaseTarget);
+                var target = _config.FindTargetByName(DatabaseTarget) ?? throw new InvalidOperationException($"Target '{DatabaseTarget}' not found. Please add it first using {nameof(WithDatabaseTarget)} method.");
                 var ruleName = $"{DatabaseTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
@@ -516,7 +511,7 @@ VALUES
             }
             public Configurer WithDatabaseRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
-                var target = _config.FindTargetByName(DatabaseTarget);
+                var target = _config.FindTargetByName(DatabaseTarget) ?? throw new InvalidOperationException($"Target '{DatabaseTarget}' not found. Please add it first using {nameof(WithDatabaseTarget)} method.");
                 var ruleName = $"{DatabaseTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
@@ -526,7 +521,7 @@ VALUES
 
             public Configurer WithFileRule(string loggerPattern, LogLevel level, bool final = false)
             {
-                var target = _config.FindTargetByName(FileTarget);
+                var target = _config.FindTargetByName(FileTarget) ?? throw new InvalidOperationException($"Target '{FileTarget}' not found. Please add it first using {nameof(WithFileTarget)} method.");
                 var ruleName = $"{FileTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
@@ -535,7 +530,7 @@ VALUES
             }
             public Configurer WithFileRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
-                var target = _config.FindTargetByName(FileTarget);
+                var target = _config.FindTargetByName(FileTarget) ?? throw new InvalidOperationException($"Target '{FileTarget}' not found. Please add it first using {nameof(WithFileTarget)} method.");
                 var ruleName = $"{FileTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
@@ -545,7 +540,7 @@ VALUES
 
             public Configurer WithMailRule(string loggerPattern, LogLevel level, bool final = false)
             {
-                var target = _config.FindTargetByName(MailTarget);
+                var target = _config.FindTargetByName(MailTarget) ?? throw new InvalidOperationException($"Target '{MailTarget}' not found. Please add it first using {nameof(WithMailTarget)} method.");
                 var ruleName = $"{MailTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
@@ -554,7 +549,7 @@ VALUES
             }
             public Configurer WithMailRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
             {
-                var target = _config.FindTargetByName(MailTarget);
+                var target = _config.FindTargetByName(MailTarget) ?? throw new InvalidOperationException($"Target '{MailTarget}' not found. Please add it first using {nameof(WithMailTarget)} method.");
                 var ruleName = $"{MailTarget}-{loggerPattern}";
                 _config.RemoveRuleByName(ruleName);
                 _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
@@ -700,7 +695,7 @@ END
             /// <param name="value">The object to serialize to JSON.</param>
             /// <param name="builder">Output destination.</param>
             /// <returns>Serialize succeeded (true/false)</returns>
-            public bool SerializeObject(object value, StringBuilder builder)
+            public bool SerializeObject(object? value, StringBuilder builder)
             {
                 try
                 {

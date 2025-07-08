@@ -14,7 +14,6 @@ namespace Ark.Tools.NLog.Slack
     [Target(NLogConfigurer.SlackTarget)]
     public class SlackTarget : TargetWithContext
     {
-        [RequiredParameter]
         public string? WebHookUrl { get; set; }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "CloseTarget() is called during Dispose() by NLog")]
