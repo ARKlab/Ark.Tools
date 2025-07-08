@@ -275,7 +275,7 @@ namespace Ark.Tools.NLog
             public Configurer WithConsoleTarget(bool async = true)
             {
                 var consoleTarget = new ConsoleTarget();
-                consoleTarget.ForceWriteLine = async;
+                consoleTarget.ForceWriteLine = !async;
                 consoleTarget.AutoFlush = !async;
                 consoleTarget.Layout = TextLineLayout;
 
