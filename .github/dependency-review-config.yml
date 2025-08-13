@@ -16,3 +16,4 @@ allow_licenses:
   - Zlib
   - LGPL-2.1-or-later
   - LicenseRef-scancode-generic-cla
+  - LicenseRef-scancode-oracle-free-2018
