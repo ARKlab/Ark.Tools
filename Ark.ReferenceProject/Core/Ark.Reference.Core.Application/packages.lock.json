@@ -4,9 +4,9 @@
     "net8.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.205, )",
-        "resolved": "2.0.205",
-        "contentHash": "adw/4fuYeVyu92yHtoKpjtaBe4VVEjc1nMO/Wy2rZ3ZtOGcNvN6SXwJYAxPDUgDPWwAvfoPYE/jO++1sCs3V8w=="
+        "requested": "[2.0.212, )",
+        "resolved": "2.0.212",
+        "contentHash": "U91ktjjTRTccUs3Lk+hrLD9vW+2+lhnsOf4G1GpRSJi1pLn3uK5CU6wGP9Bmz1KlJs6Oz1GGoMhxQBoqQsmAuQ=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -79,19 +79,19 @@
       },
       "Azure.Storage.Blobs": {
         "type": "Transitive",
-        "resolved": "12.24.1",
-        "contentHash": "479Z9ps9yl9XyhU45bbU2CU4e2B23S6FJiSiL9LpfZHU6eNXXD9Jb6rYdwY+qqmm852RhqICXBpX3Sql4DLBew==",
+        "resolved": "12.25.0",
+        "contentHash": "+5rQj7vQ2NsVxEzFeGxRGP44P9GhJcJMEZTaG/w96z/c8mEO6OoawBAr8tJ/0vH1QSVkjfr+IY3GmGpT507I0w==",
         "dependencies": {
-          "Azure.Storage.Common": "12.23.0"
+          "Azure.Storage.Common": "12.24.0"
         }
       },
       "Azure.Storage.Common": {
         "type": "Transitive",
-        "resolved": "12.23.0",
-        "contentHash": "X/pe1LS3lC6s6MSL7A6FzRfnB6P72rNBt5oSuyan6Q4Jxr+KiN9Ufwqo32YLHOVfPcB8ESZZ4rBDketn+J37Rw==",
+        "resolved": "12.24.0",
+        "contentHash": "JOmmSgNvH/zRWRihT6PZapEdTNESP4YtGS5OjbkUAg6EFiM6Ite7hDkqzJrA7QKmi1SRwZ40vpHi1McVpQuhgw==",
         "dependencies": {
           "Azure.Core": "1.44.1",
-          "System.IO.Hashing": "6.0.0"
+          "System.IO.Hashing": "8.0.0"
         }
       },
       "Ben.Demystifier": {
@@ -762,42 +762,42 @@
       },
       "NLog": {
         "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "qDWiqy8/xdpZKtHna/645KbalwP86N2NFJEzfqhcv+Si4V2iNaEfR/dCneuF/4+Dcwl3f7jHMXj3ndWYftV3Ug=="
+        "resolved": "6.0.3",
+        "contentHash": "5RMrpvadysflvDOi5ozD7aK1P+YL2DyZbQSxzE8qBKkw2pxPNOQA6vJtumcT6SuzE9qxhwGkQwMkLLaKnALwiw=="
       },
       "NLog.Database": {
         "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "Z6xKlszd53T+bjgi/DujbZdVBx3bz9BQTGWseybfHnE328FZ1hC575cnWHrifXGoHUHTd+xBPqFsqsdVfi77nQ==",
+        "resolved": "6.0.3",
+        "contentHash": "uMzSeSQbjHjAG+zF6E7DudXyLhyxNObBtHkyQE+IoLudqadKR1xojGsk9z02fWNlcyvCb3odkPh7Cf71eBi0/Q==",
         "dependencies": {
-          "NLog": "6.0.1"
+          "NLog": "6.0.3"
         }
       },
       "NLog.DiagnosticSource": {
         "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "lfrOC3d7P8sZBsIq0MWjOV6zNpR2izkouzDLO5pivW4eJxCNTO+GL8EKWPoD5opzZfcOCD+Xp5EmGZaieRDevg==",
+        "resolved": "6.0.2",
+        "contentHash": "LflXPN8Jg2MXvpYdxnNz1SaeWqMdwMeGtSfqx6GSYo41moSERTg0pGzvcnjHlQF5iWgRijp9baKzCGRkT/iAkA==",
         "dependencies": {
-          "NLog": "6.0.1"
+          "NLog": "6.0.2"
         }
       },
       "NLog.Extensions.Logging": {
         "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "nrzqXA7TndN2sMQ0wecyNyyL0PnEO/ArOVYWeYcBlf0H3TvZYNGq0/jjOmudh7T5ZFZyVzErQ2lPaP5ueEH+OQ==",
+        "resolved": "6.0.3",
+        "contentHash": "xQFejXRQG4l2ByhbnphDphHvf4wiOTUN7XGEB36/VpcB+HsTtB3KnWKaIgBBWjxM32bsDyyQqryh7y3KsOew4Q==",
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "8.0.0",
           "Microsoft.Extensions.Logging": "8.0.0",
-          "NLog": "6.0.1"
+          "NLog": "6.0.3"
         }
       },
       "NLog.MailKit": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "4nu8JiwwnNIlw/YCL3jTNkzove42SDZ7xZtKciNyxSUdN5oqjZFMN2iICGY+EWFrD6AA6S2aMwV6hXzSkJFfgA==",
+        "resolved": "6.0.3",
+        "contentHash": "HPr4XuixEDkbuukhOBr74MbXsf9EyCNtUXq0V3PX/d6+w3a65HYaCgysVRv3Km8HKFrzp9RKuuyHE/V4WRD1Cw==",
         "dependencies": {
           "MailKit": "4.7.1.1",
-          "NLog": "6.0.1"
+          "NLog": "6.0.2"
         }
       },
       "NodaTime": {
@@ -1264,8 +1264,8 @@
       },
       "System.IO.Hashing": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "Rfm2jYCaUeGysFEZjDe7j1R4x6Z6BzumS/vUT5a1AA/AWJuGX71PoGB0RmpyX3VmrGqVnAwtfMn39OHR8Y/5+g=="
+        "resolved": "8.0.0",
+        "contentHash": "ne1843evDugl0md7Fjzy6QjJrzsjh46ZKbhf8GwBXb5f/gw97J4bxMs0NQKifDuThh/f0bZ0e62NPl1jzTuRqA=="
       },
       "System.Linq": {
         "type": "Transitive",
@@ -1846,7 +1846,7 @@
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.4.0, )",
-          "Azure.Storage.Blobs": "[12.24.1, )",
+          "Azure.Storage.Blobs": "[12.25.0, )",
           "Polly": "[8.6.2, )"
         }
       },
@@ -1916,10 +1916,10 @@
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[6.0.2, )",
-          "NLog": "[6.0.1, )",
-          "NLog.Database": "[6.0.1, )",
-          "NLog.DiagnosticSource": "[6.0.1, )",
-          "NLog.MailKit": "[6.0.0, )",
+          "NLog": "[6.0.3, )",
+          "NLog.Database": "[6.0.3, )",
+          "NLog.DiagnosticSource": "[6.0.2, )",
+          "NLog.MailKit": "[6.0.3, )",
           "Newtonsoft.Json": "[13.0.3, )",
           "Slack.Webhooks": "[1.1.5, )",
           "System.Net.Http": "[4.3.4, )",
@@ -1933,7 +1933,7 @@
           "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Hosting": "[8.0.1, )",
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.3, )",
-          "NLog.Extensions.Logging": "[6.0.1, )"
+          "NLog.Extensions.Logging": "[6.0.3, )"
         }
       },
       "ark.tools.nodatime": {
