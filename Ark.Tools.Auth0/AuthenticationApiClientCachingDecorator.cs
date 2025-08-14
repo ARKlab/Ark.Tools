@@ -105,6 +105,7 @@ namespace Ark.Tools.Auth0
             return _inner.ChangePasswordAsync(request, cancellationToken);
         }
 
+        [Obsolete("GetImpersonationUrlAsync is deprecated")]
         public Task<Uri> GetImpersonationUrlAsync(ImpersonationRequest request, CancellationToken cancellationToken = default)
         {
             return _inner.GetImpersonationUrlAsync(request, cancellationToken);
