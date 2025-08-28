@@ -117,22 +117,22 @@
       },
       "Reqnroll.MsTest": {
         "type": "Direct",
-        "requested": "[2.4.1, )",
-        "resolved": "2.4.1",
-        "contentHash": "hQKTSXKWaY5m6Aid1+v45rO1OIR2BWZNrO5oyovY0t7JHsmSar0sGTZX+BJ7RVNiJ6QiABPyUR1fOKLYEelUdg==",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "VizqTNPVzSUZrYZpxofzPRecs76xmyN5ly7nm1c/o6xeopv7pTWqfPpA5pcwbuKOAR5dx+aHjkiR2F5t1+RLcQ==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "[2.4.1]",
-          "Reqnroll.Tools.MsBuild.Generation": "[2.4.1]"
+          "Reqnroll": "[3.0.0]",
+          "Reqnroll.Tools.MsBuild.Generation": "[3.0.0]"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[2.4.1, )",
-        "resolved": "2.4.1",
-        "contentHash": "+Up0eUWnKRKPdRIttE52DYzwayUd4bGMyRytYeeCwtqwZA4tLhK2NspOZJ8axPcmATOM9QSTCUHUlyp9pgcfQg==",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "Rqizgmw+N584EheE10HhIAglEofvyb2EbiblTHD6k5BuAm7NoYX7xPmoGy4QiJs09WYnq1R9noEibeZ/JsTqpQ==",
         "dependencies": {
-          "Reqnroll": "[2.4.1]"
+          "Reqnroll": "[3.0.0]"
         }
       },
       "Asp.Versioning.Abstractions": {
@@ -439,6 +439,19 @@
         "resolved": "17.1.0",
         "contentHash": "IZFDLLwrUCKuGDXQzmAWZa+kQFpVmVwWD8wEl0UWGOR83UQfzqg8hZeSSNUOXlW0Kh3vMO6kEm3FpNC4amKMaw=="
       },
+      "Cucumber.HtmlFormatter": {
+        "type": "Transitive",
+        "resolved": "21.14.0",
+        "contentHash": "pkGsMqbLoLXk6nTYQqFqtWRov8bkVpQKwZRj31Q1xd9m+1ClyHA2rZtVMh4ecakujU62ksTh48qCbw9xi1E+Wg==",
+        "dependencies": {
+          "Cucumber.Messages": "[27.0.0, 29.0.0)"
+        }
+      },
+      "Cucumber.Messages": {
+        "type": "Transitive",
+        "resolved": "28.0.0",
+        "contentHash": "Kthb+tAd8sKlbBrtxMRI6j8lU8cn/MzbDAPfXuHFTfK2dc6z7777SZV7rnEUrXHisw3l3U5gXRB3BG24B6lwKw=="
+      },
       "Dapper": {
         "type": "Transitive",
         "resolved": "2.1.66",
@@ -506,8 +519,11 @@
       },
       "Gherkin": {
         "type": "Transitive",
-        "resolved": "30.0.0",
-        "contentHash": "jZM9zm9eg62vRSAOtYvcmQh4w0oYqjP6myKxMaJAlQq9VCKm4wnTfHhS5QRnLhx/sH3R5jTaoQAKLs5hhjuq7g=="
+        "resolved": "34.0.0",
+        "contentHash": "C7S8aXKI65TfDpwVBkQlRbrqjj4Bv/Qf5CdZPrSJnfdUU9CZZtpLrovuR31iVMR8Oe2XEkdhacHnDUMBNipu/w==",
+        "dependencies": {
+          "Cucumber.Messages": "[28.0.0, 29.0.0)"
+        }
       },
       "Hellang.Middleware.ProblemDetails": {
         "type": "Transitive",
@@ -868,8 +884,8 @@
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "3WA9q9yVqJp222P3x1wYIGDAkpjAku0TMUaaQV22g6L67AI0LdOIrVS7Ht2vJfLHGSPVuqN94vIr15qn+HEkHw=="
+        "resolved": "9.0.6",
+        "contentHash": "82rLw487j5jBXEi2r3WvA/cagOhcRREVRtet6izzjDMY+i392W5oNSN2KCtuIvlTpyMONEUD0MIlGAgDdsvQ/w=="
       },
       "Microsoft.Bcl.Cryptography": {
         "type": "Transitive",
@@ -1977,13 +1993,17 @@
       },
       "Reqnroll": {
         "type": "Transitive",
-        "resolved": "2.4.1",
-        "contentHash": "Ui229q21Kmkrv3L89THgsxGMXooJGK5OrFPLvYDXfE2nO/u4tqYsbmMRddyEE3fsR40IDP++HsRrDxlkR6reVw==",
+        "resolved": "3.0.0",
+        "contentHash": "b2f0QERw3sdHjh3gRVxHp32sa3Sm816Wv6G+o7W8q2PnjMkylEaqUYF/kQnaQJ98omqqfCmD/JSFDrrFM/IYpg==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
-          "Gherkin": "30.0.0",
+          "Cucumber.HtmlFormatter": "21.14.0",
+          "Cucumber.Messages": "28.0.0",
+          "Gherkin": "34.0.0",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.6",
           "Microsoft.Extensions.DependencyModel": "8.0.2",
-          "System.Text.Json": "8.0.5"
+          "System.Text.Json": "8.0.5",
+          "System.Threading.Channels": "9.0.6"
         }
       },
       "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": {
@@ -3175,8 +3195,8 @@
       },
       "System.Threading.Channels": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "TY8/9+tI0mNaUMgntOxxaq2ndTkdXqLSxvPmas7XEqOlv9lQtB7wLjYGd756lOaO7Dvb5r/WXhluM+0Xe87v5Q=="
+        "resolved": "9.0.6",
+        "contentHash": "2MaNJVkG2yJiXQbZrrcYoJ55ehV+aX0zqR6rWJkO/Qj7jTsArWthrQ7iWywUf/sE5ylJWX/iLH2kKfwSRdkWsA=="
       },
       "System.Threading.Tasks": {
         "type": "Transitive",
@@ -3597,7 +3617,7 @@
           "FluentAssertions": "[7.2.0, )",
           "FluentAssertions.Web": "[1.9.5, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.14.0, )",
-          "Reqnroll": "[2.4.1, )"
+          "Reqnroll": "[3.0.0, )"
         }
       },
       "ark.tools.simpleinjector": {
