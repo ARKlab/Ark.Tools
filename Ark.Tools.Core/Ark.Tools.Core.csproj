@@ -25,7 +25,7 @@
 		<PackageReference Include="Ensure.That" Version="10.1.0" />
 		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
 		<PackageReference Include="NodaTime" Version="3.2.2" />
-		<PackageReference Include="System.Reactive" Version="6.0.1" />
+		<PackageReference Include="System.Reactive" Version="6.0.2" />
 	</ItemGroup>
 
 
