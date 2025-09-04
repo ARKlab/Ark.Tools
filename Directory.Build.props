@@ -88,12 +88,12 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 
-		<PackageReference Include="Meziantou.Analyzer" Version="2.0.213">
+		<PackageReference Include="Meziantou.Analyzer" Version="2.0.215">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 
-		<PackageReference Condition="$(IsPackable) != 'false'" Include="Microsoft.Sbom.Targets" Version="4.1.1" PrivateAssets="All" />
+		<PackageReference Condition="$(IsPackable) != 'false'" Include="Microsoft.Sbom.Targets" Version="4.1.2" PrivateAssets="All" />
 		
 	</ItemGroup>
 
