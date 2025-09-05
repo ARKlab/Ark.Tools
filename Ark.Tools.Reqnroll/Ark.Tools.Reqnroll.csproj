@@ -20,7 +20,7 @@
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="7.2.0" />
     <PackageReference Include="FluentAssertions.Web" Version="1.9.5" />
-    <PackageReference Include="Reqnroll" Version="3.0.0" />
+    <PackageReference Include="Reqnroll" Version="3.0.1" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
   </ItemGroup>
 

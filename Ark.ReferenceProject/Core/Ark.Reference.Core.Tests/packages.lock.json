@@ -19,9 +19,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.213, )",
-        "resolved": "2.0.213",
-        "contentHash": "LHnFGBqhlBjbf8Uo4OIzGM0llRxFrIMuo/hP9oHq+aldS+28G4LqG12LK0co9b+S0yj1Vbf0rclDHN0Ji2DTkA=="
+        "requested": "[2.0.215, )",
+        "resolved": "2.0.215",
+        "contentHash": "tdRL3M9G795HPw9oolB9pdoLsuXQi9akf5UhwctTkacfKblRU/olydUH0GHm/yzLSw9anoLbAlMjvKdt1wSQEg=="
       },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
@@ -117,22 +117,22 @@
       },
       "Reqnroll.MsTest": {
         "type": "Direct",
-        "requested": "[3.0.0, )",
-        "resolved": "3.0.0",
-        "contentHash": "VizqTNPVzSUZrYZpxofzPRecs76xmyN5ly7nm1c/o6xeopv7pTWqfPpA5pcwbuKOAR5dx+aHjkiR2F5t1+RLcQ==",
+        "requested": "[3.0.1, )",
+        "resolved": "3.0.1",
+        "contentHash": "65lmyjGfRHifCXbN6jxpgGbWPx5PJnJp39OUWba/mECuHGaTI93+x2pH3P7OSPT/QJ5Hefw+iJRQNnmI1my+6g==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "[3.0.0]",
-          "Reqnroll.Tools.MsBuild.Generation": "[3.0.0]"
+          "Reqnroll": "[3.0.1]",
+          "Reqnroll.Tools.MsBuild.Generation": "[3.0.1]"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[3.0.0, )",
-        "resolved": "3.0.0",
-        "contentHash": "Rqizgmw+N584EheE10HhIAglEofvyb2EbiblTHD6k5BuAm7NoYX7xPmoGy4QiJs09WYnq1R9noEibeZ/JsTqpQ==",
+        "requested": "[3.0.1, )",
+        "resolved": "3.0.1",
+        "contentHash": "ERAUI0MScPS7rxtNWxtL7HaUBozj8UJTy4j3g+tYM+jiv7QDYgHf7Dxp/N5Qs890JIkbh1aiALlJqpw3lK6bwQ==",
         "dependencies": {
-          "Reqnroll": "[3.0.0]"
+          "Reqnroll": "[3.0.1]"
         }
       },
       "Asp.Versioning.Abstractions": {
@@ -1993,8 +1993,8 @@
       },
       "Reqnroll": {
         "type": "Transitive",
-        "resolved": "3.0.0",
-        "contentHash": "b2f0QERw3sdHjh3gRVxHp32sa3Sm816Wv6G+o7W8q2PnjMkylEaqUYF/kQnaQJ98omqqfCmD/JSFDrrFM/IYpg==",
+        "resolved": "3.0.1",
+        "contentHash": "iFdDUSRJxkB/uFHu9PVj0mVwbHIjnDP/JrkCvh02jLeXsWfsOa9l+xEn7EykFkezP5M4yV+weg257ifeTCz+sw==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "21.14.0",
@@ -3617,7 +3617,7 @@
           "FluentAssertions": "[7.2.0, )",
           "FluentAssertions.Web": "[1.9.5, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.14.0, )",
-          "Reqnroll": "[3.0.0, )"
+          "Reqnroll": "[3.0.1, )"
         }
       },
       "ark.tools.simpleinjector": {
