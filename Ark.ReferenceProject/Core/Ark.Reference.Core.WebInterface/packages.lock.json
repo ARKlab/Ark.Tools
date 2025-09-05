@@ -15,9 +15,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.213, )",
-        "resolved": "2.0.213",
-        "contentHash": "LHnFGBqhlBjbf8Uo4OIzGM0llRxFrIMuo/hP9oHq+aldS+28G4LqG12LK0co9b+S0yj1Vbf0rclDHN0Ji2DTkA=="
+        "requested": "[2.0.215, )",
+        "resolved": "2.0.215",
+        "contentHash": "tdRL3M9G795HPw9oolB9pdoLsuXQi9akf5UhwctTkacfKblRU/olydUH0GHm/yzLSw9anoLbAlMjvKdt1wSQEg=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -2970,7 +2970,7 @@
           "FluentValidation": "[12.0.0, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "[8.0.19, )",
-          "Microsoft.AspNetCore.OData": "[8.2.5, 9.0.0)",
+          "Microsoft.AspNetCore.OData": "[8.2.5, 9.4.0]",
           "Microsoft.AspNetCore.OData.NewtonsoftJson": "[8.2.0, 9.0.0)",
           "NetEscapades.AspNetCore.SecurityHeaders": "[1.1.0, )",
           "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )",
@@ -3036,7 +3036,7 @@
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Asp.Versioning.OData.ApiExplorer": "[8.1.0, 9.0.0)",
-          "Microsoft.AspNetCore.OData": "[8.2.5, 9.0.0)",
+          "Microsoft.AspNetCore.OData": "[8.2.5, 9.4.0]",
           "Swashbuckle.AspNetCore.Annotations": "[9.0.4, )",
           "Swashbuckle.AspNetCore.Filters": "[9.0.0, )",
           "Swashbuckle.AspNetCore.Newtonsoft": "[9.0.4, )",
