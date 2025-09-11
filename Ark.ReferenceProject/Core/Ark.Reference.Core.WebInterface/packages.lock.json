@@ -1557,8 +1557,8 @@
       },
       "NLog": {
         "type": "Transitive",
-        "resolved": "6.0.3",
-        "contentHash": "5RMrpvadysflvDOi5ozD7aK1P+YL2DyZbQSxzE8qBKkw2pxPNOQA6vJtumcT6SuzE9qxhwGkQwMkLLaKnALwiw=="
+        "resolved": "6.0.4",
+        "contentHash": "Xr+lIk1ZlTTFXEqnxQVLxrDqZlt2tm5X+/AhJbaY2emb/dVtGDiU5QuEtj3gHtwV/SWlP/rJ922I/BPuOJXlRw=="
       },
       "NLog.Database": {
         "type": "Transitive",
@@ -1578,12 +1578,12 @@
       },
       "NLog.Extensions.Logging": {
         "type": "Transitive",
-        "resolved": "6.0.3",
-        "contentHash": "xQFejXRQG4l2ByhbnphDphHvf4wiOTUN7XGEB36/VpcB+HsTtB3KnWKaIgBBWjxM32bsDyyQqryh7y3KsOew4Q==",
+        "resolved": "6.0.4",
+        "contentHash": "8lQ44ZFdJwOJNH61HySZiNUWHjWfT3GYRT3gcTrnlf4mDHWMRKhWvNmr1P0VznT/0sNqpnga+Zy4CECX1SJiDQ==",
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "8.0.0",
           "Microsoft.Extensions.Logging": "8.0.0",
-          "NLog": "6.0.3"
+          "NLog": "6.0.4"
         }
       },
       "NLog.MailKit": {
@@ -3103,7 +3103,7 @@
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[6.1.1, )",
-          "NLog": "[6.0.3, )",
+          "NLog": "[6.0.4, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.2, )",
           "NLog.MailKit": "[6.0.3, )",
@@ -3120,7 +3120,7 @@
           "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Hosting": "[8.0.1, )",
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.3, )",
-          "NLog.Extensions.Logging": "[6.0.3, )"
+          "NLog.Extensions.Logging": "[6.0.4, )"
         }
       },
       "ark.tools.nodatime": {
