@@ -4,9 +4,9 @@
     "net8.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.212, )",
-        "resolved": "2.0.212",
-        "contentHash": "U91ktjjTRTccUs3Lk+hrLD9vW+2+lhnsOf4G1GpRSJi1pLn3uK5CU6wGP9Bmz1KlJs6Oz1GGoMhxQBoqQsmAuQ=="
+        "requested": "[2.0.218, )",
+        "resolved": "2.0.218",
+        "contentHash": "GGWyhbYpaaNTjsKBzWQf13AZsa78CZP/CIas+IcVvRXqKy9x5DFl5hHUMH5gxPcZpesQmUy0e1KXAZhY2bc82g=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -758,8 +758,8 @@
       },
       "NLog": {
         "type": "Transitive",
-        "resolved": "6.0.3",
-        "contentHash": "5RMrpvadysflvDOi5ozD7aK1P+YL2DyZbQSxzE8qBKkw2pxPNOQA6vJtumcT6SuzE9qxhwGkQwMkLLaKnALwiw=="
+        "resolved": "6.0.4",
+        "contentHash": "Xr+lIk1ZlTTFXEqnxQVLxrDqZlt2tm5X+/AhJbaY2emb/dVtGDiU5QuEtj3gHtwV/SWlP/rJ922I/BPuOJXlRw=="
       },
       "NLog.Database": {
         "type": "Transitive",
@@ -779,12 +779,12 @@
       },
       "NLog.Extensions.Logging": {
         "type": "Transitive",
-        "resolved": "6.0.3",
-        "contentHash": "xQFejXRQG4l2ByhbnphDphHvf4wiOTUN7XGEB36/VpcB+HsTtB3KnWKaIgBBWjxM32bsDyyQqryh7y3KsOew4Q==",
+        "resolved": "6.0.4",
+        "contentHash": "8lQ44ZFdJwOJNH61HySZiNUWHjWfT3GYRT3gcTrnlf4mDHWMRKhWvNmr1P0VznT/0sNqpnga+Zy4CECX1SJiDQ==",
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "8.0.0",
           "Microsoft.Extensions.Logging": "8.0.0",
-          "NLog": "6.0.3"
+          "NLog": "6.0.4"
         }
       },
       "NLog.MailKit": {
@@ -1385,8 +1385,8 @@
       },
       "System.Reactive": {
         "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "rHaWtKDwCi9qJ3ObKo8LHPMuuwv33YbmQi7TcUK1C264V3MFnOr5Im7QgCTdLniztP3GJyeiSg5x8NqYJFqRmg=="
+        "resolved": "6.0.2",
+        "contentHash": "jEK6E66wojW/dPPnLyOHuAQwa7WKvXwPd5vXcMNNi1igvFyzHQVRNlpmnBb3I1URBsK5PGJcJYRykERZJr0l4g=="
       },
       "System.Reflection": {
         "type": "Transitive",
@@ -1868,7 +1868,7 @@
           "Ensure.That": "[10.1.0, )",
           "NodaTime": "[3.2.2, )",
           "System.Linq.Async": "[6.0.3, )",
-          "System.Reactive": "[6.0.1, )"
+          "System.Reactive": "[6.0.2, )"
         }
       },
       "ark.tools.http": {
@@ -1900,7 +1900,7 @@
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[6.1.1, )",
-          "NLog": "[6.0.3, )",
+          "NLog": "[6.0.4, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.2, )",
           "NLog.MailKit": "[6.0.3, )",
@@ -1917,7 +1917,7 @@
           "Microsoft.Extensions.Configuration.Abstractions": "[8.0.0, 9.0.0)",
           "Microsoft.Extensions.Hosting": "[8.0.1, )",
           "Microsoft.Extensions.Logging.Abstractions": "[8.0.3, )",
-          "NLog.Extensions.Logging": "[6.0.3, )"
+          "NLog.Extensions.Logging": "[6.0.4, )"
         }
       },
       "ark.tools.nodatime": {
