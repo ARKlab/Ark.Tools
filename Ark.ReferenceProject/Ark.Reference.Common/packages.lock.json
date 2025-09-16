@@ -24,9 +24,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.218, )",
-        "resolved": "2.0.218",
-        "contentHash": "GGWyhbYpaaNTjsKBzWQf13AZsa78CZP/CIas+IcVvRXqKy9x5DFl5hHUMH5gxPcZpesQmUy0e1KXAZhY2bc82g=="
+        "requested": "[2.0.219, )",
+        "resolved": "2.0.219",
+        "contentHash": "vknqxTO59DkRmsuyA3GoQ8zLODHTVrt2enVozcRLY22D3LRJm3qRNYIkpFl1lfejOsahrMwObtYzKLmWf7/XTQ=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -755,8 +755,8 @@
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
-        "resolved": "13.0.3",
-        "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
       },
       "Newtonsoft.Json.Bson": {
         "type": "Transitive",
@@ -1874,7 +1874,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime.Json": "[1.0.0, )",
-          "Newtonsoft.Json": "[13.0.3, )"
+          "Newtonsoft.Json": "[13.0.4, )"
         }
       },
       "ark.tools.nlog": {
@@ -1890,7 +1890,7 @@
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.2, )",
           "NLog.MailKit": "[6.0.3, )",
-          "Newtonsoft.Json": "[13.0.3, )",
+          "Newtonsoft.Json": "[13.0.4, )",
           "Slack.Webhooks": "[1.1.5, )",
           "System.Net.Http": "[4.3.4, )",
           "System.Text.RegularExpressions": "[4.3.1, )"
@@ -1923,7 +1923,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Newtonsoft.Json": "[13.0.3, )",
+          "Newtonsoft.Json": "[13.0.4, )",
           "NodaTime.Serialization.JsonNet": "[3.2.0, )"
         }
       },
