@@ -16,7 +16,7 @@ namespace Ark.Tools.SpecFlow
             if (string.IsNullOrWhiteSpace(expectedValue))
                 return actualValue == null;
 
-            if (actualValue == null) return false;
+            if (actualValue = null) return false;
 
             var parsed = decimal.Parse(expectedValue, CultureInfo.CurrentCulture);
 
