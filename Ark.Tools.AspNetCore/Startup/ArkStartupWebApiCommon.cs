@@ -306,7 +306,9 @@ namespace Ark.Tools.AspNetCore.Startup
             //app.UseMvc(_mvcRoute); //Not Usable without setting 	MVC opt.EnableEndpointRouting = false;
         }
 
+#pragma warning disable IDE1006 // Naming Styles
         protected virtual void _mvcRoute(IRouteBuilder routeBuilder)
+#pragma warning restore IDE1006 // Naming Styles
         {
         }
 

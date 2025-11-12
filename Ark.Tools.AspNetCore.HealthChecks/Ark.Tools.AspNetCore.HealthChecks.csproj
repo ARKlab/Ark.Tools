@@ -5,6 +5,7 @@
 	<!--===================Configuration for Nuget Package=========================-->
 	<PropertyGroup>
 
+		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 		<TargetFrameworks>net8.0</TargetFrameworks>
 
 		<Description>Extensions of AspNetCore HealthChecks</Description>

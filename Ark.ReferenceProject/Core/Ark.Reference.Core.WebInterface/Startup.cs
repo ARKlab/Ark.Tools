@@ -4,19 +4,19 @@ using Ark.Reference.Core.Common.Auth;
 using Ark.Reference.Core.WebInterface.Utils;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Ark.Tools.Core;
 
 using Asp.Versioning;
+using Asp.Versioning.Conventions;
 
 using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -80,21 +80,38 @@ namespace Ark.Reference.Core.WebInterface
             }
             else
             {
-                schemes.Add(JwtBearerDefaults.AuthenticationScheme);
-                authBuilder.AddMicrosoftIdentityWebApi(Configuration.GetRequiredSection(AuthConstants.EntraIdSchema));
+                schemes.Add("smart");
+                services.ConfigureAuthentication(Configuration);
 
-                services.ArkConfigureSwaggerEntraId(Configuration.GetRequiredValue<string>("EntraId:Instance")
-                        , Configuration.GetRequiredValue<string>("EntraId:Domain")
-                        , Configuration.GetRequiredValue<string>("EntraId:ClientId")
-                        , Configuration.GetRequiredValue<string>("EntraId:TenantId"));
+                services.ArkConfigureSwaggerAzureB2C(
+                          Configuration["AzureAdB2C:Instance"]
+                        , Configuration["AzureAdB2C:Domain"]
+                        , Configuration["AzureAdB2C:ClientId"]
+                        , Configuration["AzureAdB2C:SignUpSignInPolicyId"]
+                        , Configuration["AzureAdB2C:ApiId"]
+                );
 
                 services.ConfigureSwaggerGen(c =>
                 {
+                    var dict = new OpenApiSecurityRequirement
+                    {
+                        { new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
+                    };
+                    c.AddSecurityRequirement(dict);
+                    c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type));
                     c.IncludeXmlCommentsForAssembly<Startup>();
                     c.SchemaFilter<MatrixSchemaFilter>();
                     c.DocumentFilter<AddUserImpersonationScope>();
 
                     c.OperationFilter<MultiPartJsonOperationFilter>();
+                    c.SelectSubTypesUsing(t =>
+                    {
+                        if (t.IsGenericTypeDefinition) return Enumerable.Empty<Type>();
+                        return t.Assembly.GetExportedTypes()
+                             .Where(subType => subType.IsSubclassOf(t) && !subType.IsGenericTypeDefinition);
+                    });
+
+                    c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
                 });
 
                 services.ArkConfigureSwaggerUI(c =>
@@ -109,9 +126,18 @@ namespace Ark.Reference.Core.WebInterface
                 });
             }
 
+            services.Configure<AuthenticationOptions>(o =>
+            {
+                o.DefaultAuthenticateScheme = schemes.First();
+                o.DefaultChallengeScheme = schemes.First();
+            });
+
+            var claimValues = new List<string> { "mdmadmin:arktest", "admin" };
+
             var defaultPolicy = new AuthorizationPolicyBuilder()
                 .AddAuthenticationSchemes(schemes.ToArray())
                 .RequireAuthenticatedUser()
+                .RequireClaim("arkive_permissions", claimValues.ToArray())
                 .Build();
 
 
@@ -130,6 +156,8 @@ namespace Ark.Reference.Core.WebInterface
             {
                 o.IsLowPrioritySnapshotUploader = false;
             });
+
+            services.AddTransient(s => ControllerNameConvention.Original);
         }
 
         protected override void RegisterContainer(IServiceProvider services)

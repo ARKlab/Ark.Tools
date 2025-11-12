@@ -61,7 +61,9 @@ namespace Ark.Tools.Activity.Provider
             _logger.Debug("Bus started");
         }
 
+#pragma warning disable IDE1006 // Naming Styles
         protected Task _notify(string resourceId, Slice slice)
+#pragma warning restore IDE1006 // Naming Styles
         {
             var resource = new Resource { Provider = _providerName, Id = resourceId };
             _logger.Trace(CultureInfo.InvariantCulture, "Notifing ready slice for {Resource}@{Slice}", resource, slice);

@@ -5,6 +5,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
+	  <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <TargetFrameworks>net8.0</TargetFrameworks>
 
     <Description>Tools and base classes for AspNetCore as in Ark-way of using it</Description>
