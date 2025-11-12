@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="KubernetesClient" Version="18.0.5" />
     <PackageReference Include="Microsoft.Identity.Web" Version="3.8.4" />
   </ItemGroup>
 
