@@ -22,10 +22,10 @@
 	<!--===============================================================================-->
 
 	<ItemGroup>
-		<PackageReference Include="Rebus" Version="8.8.0" />
+		<PackageReference Include="Rebus" Version="8.9.0" />
 		<PackageReference Include="Rebus.NLog" Version="6.0.0" />
-		<PackageReference Include="Rebus.AzureServiceBus" Version="10.4.1" />
-		<PackageReference Include="Rebus.SqlServer" Version="8.3.0" />
+		<PackageReference Include="Rebus.AzureServiceBus" Version="10.5.1" />
+		<PackageReference Include="Rebus.SqlServer" Version="8.4.0" />
 		<PackageReference Include="Rebus.AzureBlobs" Version="1.1.0" />
 		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
 	</ItemGroup>

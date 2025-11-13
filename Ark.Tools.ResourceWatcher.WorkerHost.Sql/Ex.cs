@@ -11,7 +11,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
 
     public static class Ex
     {
-        record SqlStateProviderConfig : ISqlStateProviderConfig
+        sealed record SqlStateProviderConfig : ISqlStateProviderConfig
         {
             public string DbConnectionString { get; set; } = string.Empty;
         }

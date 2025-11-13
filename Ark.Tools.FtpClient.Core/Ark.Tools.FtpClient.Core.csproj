@@ -18,8 +18,8 @@
   <!--===============================================================================-->
 
 	<ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.20" />
-		<PackageReference Include="Polly" Version="8.6.3" />
+        <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.22" />
+		<PackageReference Include="Polly" Version="8.6.4" />
 	</ItemGroup>
 	
   <ItemGroup>    

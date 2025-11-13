@@ -17,3 +17,6 @@ allow_licenses:
   - LGPL-2.1-or-later
   - LicenseRef-scancode-generic-cla
   - LicenseRef-scancode-oracle-free-2018
+  - LicenseRef-scancode-ms-azure-spatialanchors-2.9.0
+  - LicenseRef-scancode-ms-python-vscode-pylance-2021
+  - LicenseRef-scancode-unknown-license-reference

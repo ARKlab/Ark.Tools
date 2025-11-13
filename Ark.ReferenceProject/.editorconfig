@@ -295,6 +295,9 @@ dotnet_diagnostic.MA0007.severity = silent
 dotnet_diagnostic.IDE0290.severity = none
 dotnet_diagnostic.MA0003.severity = none
 
+# MA0015: Specify the parameter name in ArgumentException
+dotnet_diagnostic.MA0015.severity = suggestion
+
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 tab_width = 4

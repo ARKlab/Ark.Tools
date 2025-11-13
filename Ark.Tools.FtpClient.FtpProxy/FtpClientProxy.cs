@@ -52,19 +52,19 @@ namespace Ark.Tools.FtpClient.FtpProxy
         public NetworkCredential? Credentials { get; private set; }
         public FtpConfig FtpConfig { get; private set; }
 
-        record DownloadFileResult
+        sealed record DownloadFileResult
         {
             public byte[]? Content { get; set; }
         }
 
-        record ConnectionInfo
+        sealed record ConnectionInfo
         {
             public Uri? Uri { get; set; }
             public string? Username { get; set; }
             public string? Password { get; set; }
         }
 
-        record ListingRequest
+        sealed record ListingRequest
         {
             public ConnectionInfo? Info { get; set; }
             public int? DegreeOfParallelism { get; set; }

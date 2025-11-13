@@ -143,7 +143,7 @@ namespace Ark.Tools.Core
                 }
             }
 
-            public record OrderByInfo
+            public sealed record OrderByInfo
             {
                 public OrderByInfo(string propertyName, SortDirection direction, bool initial)
                 {

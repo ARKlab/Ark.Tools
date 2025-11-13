@@ -309,7 +309,7 @@ namespace Ark.Tools.Auth0
         #endregion
     }
 
-    record Token
+    sealed record Token
     {
         [JsonPropertyName("exp")]
         public long Exp { get; set; }
