@@ -7,6 +7,8 @@ using Microsoft.Extensions.DiagnosticAdapter;
 
 using Newtonsoft.Json;
 
+using NodaTime.Text;
+
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -434,12 +436,12 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             if (pc.LastState != default)
             {
                 data.Properties.Add("CheckSum_Old", pc.LastState.CheckSum);
-                data.Properties.Add("Modified_Old", pc.LastState.Modified.ToString());
+                data.Properties.Add("Modified_Old", LocalDateTimePattern.ExtendedIso.Format(pc.LastState.Modified) );
                 if (pc.LastState.ModifiedSources != null && pc.LastState.ModifiedSources.Any())
                 {
                     foreach (var modified in pc.LastState.ModifiedSources)
                     {
-                        data.Properties.Add("Modified" + modified.Key + "_Old", modified.Value.ToString());
+                        data.Properties.Add("Modified" + modified.Key + "_Old", LocalDateTimePattern.ExtendedIso.Format(modified.Value));
                     }
                 }
             }
@@ -448,13 +450,13 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 data.Properties.Add("RetryCount", pc.NewState.RetryCount.ToString(CultureInfo.InvariantCulture));
                 data.Properties.Add("RetrievedAt", pc.NewState.ToString());
                 data.Properties.Add("CheckSum", pc.NewState.CheckSum);
-                data.Properties.Add("Modified", pc.NewState.Modified.ToString());
+                data.Properties.Add("Modified", LocalDateTimePattern.ExtendedIso.Format(pc.NewState.Modified));
 
                 if (pc.NewState.ModifiedSources != null && pc.NewState.ModifiedSources.Any())
                 {
                     foreach (var modified in pc.NewState.ModifiedSources)
                     {
-                        data.Properties.Add("Modified" + modified.Key, modified.Value.ToString());
+                        data.Properties.Add("Modified" + modified.Key, LocalDateTimePattern.ExtendedIso.Format(modified.Value));
                     }
                 }
 

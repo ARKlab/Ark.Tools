@@ -300,7 +300,7 @@ namespace Ark.Reference.Core.Application.DAL
 
 
         #region Private view
-        private record PingView
+        private sealed record PingView
         {
             public int Id { get; set; }
             public string? Name { get; set; }

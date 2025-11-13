@@ -17,8 +17,8 @@ namespace Ark.Reference.Common.Services.FileStorageService
 
         public FileStorageService(IFileStorageServiceConfig config)
         {
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StoragePrefix);
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StorageAccount);
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StoragePrefix, nameof(config.StoragePrefix));
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StorageAccount, nameof(config.StorageAccount));
 
             _config = config;
 

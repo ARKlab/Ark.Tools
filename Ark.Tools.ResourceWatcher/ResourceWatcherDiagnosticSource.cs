@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NLog;
 
+using NodaTime.Text;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -220,8 +222,8 @@ namespace Ark.Tools.ResourceWatcher
                     , processContext.Total
                     , processContext.CurrentInfo.ResourceId
                     , infos.source ?? string.Empty
-                    , infos.current?.ToString()
-                    , infos.last?.ToString()
+                    , infos.current != null ? LocalDateTimePattern.ExtendedIso.Format(infos.current.Value) : "null"
+                    , infos.last != null ? LocalDateTimePattern.ExtendedIso.Format(infos.last.Value) : "null"
                     , processContext.LastState?.RetryCount
                 );
             }

@@ -68,14 +68,14 @@ namespace Ark.Tools.AspNetCore.Auth0
             return resp.AccessToken;
         }
 
-        record PolicyResult
+        sealed record PolicyResult
         {
             public IList<string> Groups { get; set; } = new List<string>();
             public IList<string> Roles { get; set; } = new List<string>();
             public IList<string> Permissions { get; set; } = new List<string>();
         }
 
-        record CacheEntry
+        sealed record CacheEntry
         {
             public CacheEntry(UserInfo userInfo)
             {

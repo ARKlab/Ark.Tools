@@ -99,7 +99,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
             await _next(context).ConfigureAwait(false);
         }
 
-        record OAuthResult
+        sealed record OAuthResult
         {
             public string? Token_Type { get; set; }
             public string? Scope { get; set; }
