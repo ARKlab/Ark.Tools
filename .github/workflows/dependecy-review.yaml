@@ -11,6 +11,6 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v5
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v4.7.3
+        uses: actions/dependency-review-action@v4.8.2
         with:
           config-file: "./.github/dependency-review-config.yml"
