@@ -19,7 +19,8 @@ services:
     restart: unless-stopped
     environment:
       ACCEPT_EULA: Y
-      MSSQL_SA_PASSWORD: SpecFlowLocalDbPassword85! 
+      MSSQL_SA_PASSWORD: SpecFlowLocalDbPassword85!
+      MSSQL_COLLATION: Latin1_General_CI_AS_KS
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest

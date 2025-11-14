@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
 
-using TechTalk.SpecFlow;
-using TechTalk.SpecFlow.Assist;
+using Reqnroll;
 
 using WebApplicationDemo.Dto;
 

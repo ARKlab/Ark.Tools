@@ -12,9 +12,11 @@ using NLog;
 using System;
 using System.Net.Http;
 
-using TechTalk.SpecFlow;
+using Reqnroll;
 
 using WebApplicationDemo;
+
+[assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
 
 namespace TestProject
 {
