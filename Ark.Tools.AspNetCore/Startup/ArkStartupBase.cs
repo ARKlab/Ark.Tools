@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using System.Linq;
+
 namespace Ark.Tools.AspNetCore.Startup
 {
     internal class ArkStartupBase
@@ -19,7 +21,6 @@ namespace Ark.Tools.AspNetCore.Startup
         {
             Configuration = configuration;
         }
-
         public virtual void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpContextAccessor();
@@ -29,7 +30,25 @@ namespace Ark.Tools.AspNetCore.Startup
 
             services.ArkApplicationInsightsTelemetry(Configuration);
 
-            services.AddCors();
+            services.AddSecurityHeaderPolicies()
+                .SetDefaultPolicy(p => p.AddDefaultApiSecurityHeaders().RemoveServerHeader())
+                .AddPolicy("Swagger", p => {
+                    p.AddDefaultSecurityHeaders().RemoveServerHeader();
+                    p.Remove("Cross-Origin-Opener-Policy");
+                    p.AddCrossOriginOpenerPolicy(x => x.UnsafeNone());
+                })
+                .SetPolicySelector(ctx =>
+                {
+                    // yes, contains is a bit dirty but it works for both /swagger and /swagger/index.html even when the path base is not root
+                    var isSwagger = new[] { "/swagger/index.html", "/swagger/oauth2-redirect.html" }
+                        .Any(x => ctx.HttpContext.Request.Path.Value?.EndsWith(x, System.StringComparison.OrdinalIgnoreCase) == true);
+
+                    if (isSwagger)
+                        return ctx.ConfiguredPolicies["Swagger"];
+
+                    return ctx.DefaultPolicy;
+                })
+                ;
         }
 
         public virtual void Configure(IApplicationBuilder app)
@@ -43,12 +62,13 @@ namespace Ark.Tools.AspNetCore.Startup
                 return next();
             });
 
-            app.UseSecurityHeaders(o => o.AddDefaultSecurityHeaders().RemoveServerHeader());
+            app.UseSecurityHeaders();
             app.UseHsts();
 
             app.UseStaticFiles();
 
         }
+
     }
 
 }
