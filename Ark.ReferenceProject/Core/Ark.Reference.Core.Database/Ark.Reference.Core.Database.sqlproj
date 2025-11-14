@@ -14,7 +14,7 @@
     <SqlServerVerification>False</SqlServerVerification>
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
     <TargetDatabaseSet>True</TargetDatabaseSet>
-    <DefaultCollation>SQL_Latin1_General_CP1_CI_AS</DefaultCollation>
+    <DefaultCollation>Latin1_General_CI_AS_KS</DefaultCollation>
     <CompatibilityMode>160</CompatibilityMode>
     <AutoShrink>True</AutoShrink>
     <DbScopedConfigOptimizerHotfixes>On</DbScopedConfigOptimizerHotfixes>

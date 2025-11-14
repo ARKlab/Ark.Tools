@@ -36,6 +36,8 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
+[assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
+
 namespace Ark.Reference.Core.Tests.Init
 {
     [Binding]
