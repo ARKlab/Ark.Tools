@@ -1,10 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build">
-  <Sdk Name="Microsoft.Build.Sql" Version="1.0.0" />
+  <Sdk Name="Microsoft.Build.Sql" Version="2.0.0" />
   <PropertyGroup>
     <Name>Ark.Reference.Core.Database</Name>
   </PropertyGroup>
   <PropertyGroup>
+	  <TargetFramework>net10.0</TargetFramework>
     <ProjectGuid>{bee200d4-b2fc-4384-bda2-5ccab62c1597}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>

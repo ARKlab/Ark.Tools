@@ -32,7 +32,9 @@
     <ProjectReference Include="..\Ark.Reference.Core.API\Ark.Reference.Core.API.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.Application\Ark.Reference.Core.Application.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj" />
-    <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj" />
+	  <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
+		  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+	  </ProjectReference>
     <ProjectReference Include="..\Ark.Reference.Core.WebInterface\Ark.Reference.Core.WebInterface.csproj" />
   </ItemGroup>
 

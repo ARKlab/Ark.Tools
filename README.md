@@ -23,6 +23,35 @@ The main library used by Ark in its stack are
 If you want to learn more about each project, look the respective Readme when present or directly at code.
 Documentation improvements are up-for-grabs ;)
 
+## Migration to Ark.Tools v6
+
+### SDK-based SQL Projects
+
+If you are using SDK-based SQL projects in VS 2026 you need to add 
+the following to your csprojs that depends on the SQL Projects (generally Tests projects) to avoid build errors:
+
+```xml
+	  <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
+		  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+	  </ProjectReference>
+```
+
+### OpenApi 3.1
+
+Refer to [Swashbuckle](https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/docs/migrating-to-v10.md) for issues related to OpenApi.
+
+The most likely change is from
+```cs
+                c.OperationFilter<SecurityRequirementsOperationFilter>();
+```
+to
+```cs
+                c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+                {
+                    [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
+                });
+```
+
 ## Migrate from Specflow to Reqnroll (v5.1)
 
 **Support for Speflow is no longer mainteined and will be removed in next Major.**
@@ -37,6 +66,7 @@ To migrate:
 1. Replace `Specflow.*` to `Reqnroll.*` in `PackageReference`
 1. Add [`reqnroll.json`](./ArkReferenceProject/Core/Tests/reqnroll.json) to test projects
 1. Fix Verbs: Reqnroll default to Gherking style parameters instead of Regex style thus it might be required to update verbs as described [here](https://docs.reqnroll.net/latest/guides/migrating-from-specflow.html#cucumber-expressions-support-compatibility-of-existing-expressions), specifying the regex start/end markers (^/$).
+
 
 ## Ark.Tools v5 Breaking Changes
 
