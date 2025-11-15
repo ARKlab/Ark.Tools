@@ -303,6 +303,22 @@
           "Auth0.Core": "7.42.0"
         }
       },
+      "AwesomeAssertions": {
+        "type": "Transitive",
+        "resolved": "9.0.0",
+        "contentHash": "7HpVy5wMgzBX9vmelhDdM6EshiaGuz8apnhPcWGAkrbc7rlgmtzEDNcUiTNIicTkurBY37JZYdDiNMWrnKdADA=="
+      },
+      "AwesomeAssertions.Web": {
+        "type": "Transitive",
+        "resolved": "1.9.6",
+        "contentHash": "ZutEz9HYFa1Bv8e/RBi44qmzCBRI5chNZ3oyj1KqM8D9AN7PkXXzyFkckL4K6X6WYRBAHeQYmAzXBCbHGtuqZg==",
+        "dependencies": {
+          "AwesomeAssertions": "9.0.0",
+          "Microsoft.AspNet.WebApi.Client": "6.0.0",
+          "Newtonsoft.Json": "13.0.3",
+          "System.Text.Json": "8.0.5"
+        }
+      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.49.0",
@@ -473,16 +489,6 @@
         "contentHash": "k94gV49Otru4e9nKtj36KpA9UkjuAGKPmhfM0oqyI+rrtxhSrgaeEhILR0AbJ9iNaoagAeQtawPz6njQOC6WQA==",
         "dependencies": {
           "System.Configuration.ConfigurationManager": "6.0.0"
-        }
-      },
-      "FluentAssertions.Web": {
-        "type": "Transitive",
-        "resolved": "1.9.5",
-        "contentHash": "obMVx6Tw+GI8cR/EiikF+KB+psMOdew1ItnjOf7+c2fclPhLK5OPfYEBCDr6xI7CmA0ZHkqsREgY+g491mDFuA==",
-        "dependencies": {
-          "FluentAssertions": "[6.5.1, 8.0.0)",
-          "Microsoft.AspNet.WebApi.Client": "6.0.0",
-          "Newtonsoft.Json": "13.0.3"
         }
       },
       "FluentValidation": {
@@ -3601,8 +3607,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Http": "[1.0.0, )",
+          "AwesomeAssertions.Web": "[1.9.6, )",
           "FluentAssertions": "[7.2.0, )",
-          "FluentAssertions.Web": "[1.9.5, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.14.0, )",
           "Reqnroll": "[3.2.1, )"
         }
