@@ -5,7 +5,7 @@
   <!-- ===================Configuration for Nuget Package========================= -->
   <PropertyGroup>
 
-    <TargetFrameworks>net8.0</TargetFrameworks>
+	  <TargetFrameworks>net10.0</TargetFrameworks>
     
     <Description>Extensions of AspNetCore for supporting nested Startups, with separate Services</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mvc;AspNetCore;RavenDb</PackageTags>

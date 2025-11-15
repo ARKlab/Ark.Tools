@@ -23,10 +23,12 @@
 
 	<ItemGroup>
 		<PackageReference Include="Ensure.That" Version="10.1.0" />
-		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
 		<PackageReference Include="NodaTime" Version="3.2.2" />
 		<PackageReference Include="System.Reactive" Version="6.1.0" />
 	</ItemGroup>
 
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
+		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
+	</ItemGroup>
 
-</Project>
+	</Project>

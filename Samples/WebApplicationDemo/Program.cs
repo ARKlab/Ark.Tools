@@ -7,11 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using NLog.Extensions.Logging;
-
 using System;
 using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace WebApplicationDemo
@@ -65,12 +62,6 @@ namespace WebApplicationDemo
 
             NodaTimeDapper.Setup();
             NodeTimeConverter.Register();
-            ServicePointManager.UseNagleAlgorithm = true;
-            ServicePointManager.Expect100Continue = false;
-            ServicePointManager.CheckCertificateRevocationList = true;
-            ServicePointManager.DefaultConnectionLimit = 250;
-            ServicePointManager.EnableDnsRoundRobin = true;
-            ServicePointManager.DnsRefreshTimeout = 4 * 60 * 1000;
 
         }
 
