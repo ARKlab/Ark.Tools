@@ -1,7 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -13,6 +13,11 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
+            if (operation.Responses == null)
+            {
+                operation.Responses = new OpenApiResponses();
+            }
+
             if (!operation.Responses.ContainsKey("401"))
             {
                 operation.Responses.Add("401",

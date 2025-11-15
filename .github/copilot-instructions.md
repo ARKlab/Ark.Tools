@@ -2,12 +2,12 @@
 
 ## About This Repository
 
-Ark.Tools is a set of core libraries developed and maintained by Ark as helper libraries and extensions for their LOB (Line of Business) applications. The libraries are distributed via NuGet and support .NET 8.0 LTS.
+Ark.Tools is a set of core libraries developed and maintained by Ark as helper libraries and extensions for their LOB (Line of Business) applications. The libraries are distributed via NuGet and support .NET 8.0 LTS and .NET 10.0.
 
 ## Build & Test Commands
 
 ### Prerequisites
-- .NET SDK 8.0.416 (specified in `global.json`)
+- .NET SDK 10.0.100 (specified in `global.json`)
 - Docker (for running integration tests that require SQL Server and Azurite services)
 
 ### Basic Commands
@@ -41,7 +41,7 @@ dotnet build --no-restore --configuration Release
 ## Coding Standards & Conventions
 
 ### Language & Framework
-- Target Framework: .NET 8.0
+- Target Frameworks: .NET 8.0 and .NET 10.0 (multi-targeting enabled in Directory.Build.props)
 - C# Language Version: 12.0
 - Nullable Reference Types: Enabled across all projects
 - Treat Warnings as Errors: True (strict compilation)
@@ -72,6 +72,8 @@ _logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", 
   - AspNetCore
   - Rebus v8 (messaging)
   - Flurl v4 (HTTP client)
+  - Swashbuckle v10 (OpenAPI 3.1 support)
+  - AwesomeAssertions (test assertions, replacing FluentAssertions)
 
 ### NuGet Packaging
 - All packages use MIT license
@@ -80,12 +82,58 @@ _logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", 
 - SBOM (Software Bill of Materials) generation enabled
 - Symbol packages (snupkg) are generated
 
+## Git Commit Guidelines
+
+### Conventional Commits
+All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Commit Types
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing tests or correcting existing tests
+- **build**: Changes that affect the build system or external dependencies
+- **ci**: Changes to CI configuration files and scripts
+- **chore**: Other changes that don't modify src or test files
+- **revert**: Reverts a previous commit
+
+### Examples
+```
+feat(AspNetCore): add support for custom error handling middleware
+fix(Flurl): resolve memory leak in client disposal
+docs(README): update migration guide for v6
+refactor(Core): simplify error handling logic
+test(ReferenceProject): add integration tests for authentication
+build(deps): upgrade Swashbuckle to v10
+ci(workflows): update CodeQL configuration
+```
+
+### Guidelines
+- Use the imperative, present tense: "change" not "changed" nor "changes"
+- Don't capitalize the first letter of the description
+- No period (.) at the end of the description
+- Keep the description concise (50 characters or less when possible)
+- Use the body to explain what and why vs. how (when necessary)
+- Reference issues and pull requests in the footer (e.g., `Closes #123`)
+
 ## Testing Guidelines
 
 ### Test Framework
 - Migrated from SpecFlow to Reqnroll (BDD framework)
 - Use `reqnroll.json` configuration in test projects
 - Integration tests are in `Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/`
+- Use AwesomeAssertions for test assertions (FluentAssertions is deprecated)
 
 ### Test Patterns
 - Follow existing patterns in the ReferenceProject
@@ -94,13 +142,40 @@ _logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", 
 
 ## Migration Notes
 
-### Current Version: v5.x
+### Current Version: v6.x
+- Target Frameworks: .NET 8.0 and .NET 10.0 (multi-targeting)
+- .NET SDK: 10.0.100
+- Swashbuckle upgraded to v10 - OpenAPI 3.1 support
+- FluentAssertions replaced with AwesomeAssertions
+- SpecFlow support removed (use Reqnroll instead)
+
+### v6 Breaking Changes
+- **Swashbuckle 10.x / OpenAPI 3.1**: Replace `SecurityRequirementsOperationFilter` with `AddSecurityRequirement` method
+  ```csharp
+  // Old (v5)
+  c.OperationFilter<SecurityRequirementsOperationFilter>();
+  
+  // New (v6)
+  c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+  {
+      [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
+  });
+  ```
+- **AwesomeAssertions**: Replace FluentAssertions references
+  - `PackageReference` from `FluentAssertions` to `AwesomeAssertions >= 9.0.0`
+  - `PackageReference` from `FluentAssertions.Web` to `AwesomeAssertions.Web`
+  - `HaveStatusCode(...)` => `HaveHttpStatusCode`
+  - `using FluentAssertions` => `using AwesomeAssertions`
+- **SpecFlow removed**: Use Reqnroll instead (see v5 migration notes below)
+- **SDK-based SQL Projects**: Add `<ReferenceOutputAssembly>false</ReferenceOutputAssembly>` to project references in VS 2025+
+
+### v5.x Breaking Changes
 - Minimum version: .NET 8.0
 - Deprecated: .NET Framework, .NET Standard
 - Flurl upgraded to v4 - clients must be manually disposed
 - Rebus upgraded to v8 - breaking changes in SecondLevelRetries
 
-### Important Breaking Changes
+### Important v5 Breaking Changes
 - `IFlurlClient` now requires `IArkFlurlClientFactory`
 - Flurl clients must implement IDisposable
 - Default JSON serializer: System.Text.Json (use `useNewtonsoftJson: true` for Newtonsoft.Json)

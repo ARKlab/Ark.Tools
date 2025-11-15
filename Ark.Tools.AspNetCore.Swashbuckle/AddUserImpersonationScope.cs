@@ -1,22 +1,17 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-using System.Collections.Generic;
+using System;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
+    [Obsolete("Use Swashbuckle configuration extensions", true, UrlFormat = "https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/v10.0.0/docs/configure-and-customize-swaggergen.md#add-security-definitions-and-requirements")]
     public class AddUserImpersonationScope : IDocumentFilter
     {
         public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
         {
-            swaggerDoc.SecurityRequirements = new List<OpenApiSecurityRequirement>();
-
-            var dict = new OpenApiSecurityRequirement();
-            var openApiSecurityScheme = new OpenApiSecurityScheme() { Type = SecuritySchemeType.OAuth2 };
-            dict.Add(openApiSecurityScheme, ["user_impersonation"]);
-
-            swaggerDoc.SecurityRequirements.Add(dict);
+            
         }
     }
 }

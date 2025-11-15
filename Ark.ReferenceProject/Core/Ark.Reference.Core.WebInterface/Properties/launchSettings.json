@@ -7,7 +7,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "LOCAL_DEBUG": "True"
       },
-      "applicationUrl": "https://localhost:51041;http://localhost:51042"
+      "applicationUrl": "https://localhost:44303"
     }
   }
 }

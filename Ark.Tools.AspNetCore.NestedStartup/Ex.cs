@@ -20,13 +20,14 @@ namespace Ark.Tools.AspNetCore.NestedStartup
         {
             var feature = app.ServerFeatures;
 
-            var webHostBuilder = new WebHostBuilder()
+            var webHostBuilder = new HostBuilder().ConfigureWebHost(wh => wh
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseConfiguration(configuration)
                 .UseParentServiceProvider(app.ApplicationServices, configuration)
                 .UseFakeServer(feature)
                 .UseStartup<TStartup>()
-                .Build();
+            )
+            .Build();
 
             var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
 #pragma warning disable MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
