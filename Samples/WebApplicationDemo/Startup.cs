@@ -19,7 +19,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
@@ -142,12 +142,10 @@ namespace WebApplicationDemo
 
             services.ConfigureSwaggerGen(c =>
             {
-                var dict = new OpenApiSecurityRequirement
+                c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
                 {
-                    { new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
-                };
-
-                c.AddSecurityRequirement(dict);
+                    [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
+                });
 
                 c.SelectDiscriminatorNameUsing(t => "kind");
                 c.SelectDiscriminatorValueUsing(t => t.Name);

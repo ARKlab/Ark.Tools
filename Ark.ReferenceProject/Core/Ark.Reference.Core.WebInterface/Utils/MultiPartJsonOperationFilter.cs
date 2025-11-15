@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -42,32 +41,37 @@ namespace Ark.Reference.Core.WebInterface.Utils
                 // Get property with [FromJson]
                 var propertyInfo = _getPropertyInfo(descriptor);
 
-                if (propertyInfo != null)
+                if (propertyInfo != null && operation.RequestBody is not null && operation.RequestBody.Content is not null && operation.RequestBody.Content.Any())
                 {
                     var mediaType = operation.RequestBody.Content.First().Value;
 
-                    // Group all exploded properties.
-                    var groupedProperties = mediaType.Schema.Properties
-                        .GroupBy(pair => pair.Key.Split('.')[0], StringComparer.Ordinal);
-
-                    var schemaProperties = new Dictionary<string, OpenApiSchema>(StringComparer.Ordinal);
-
-                    foreach (var property in groupedProperties)
+                    if (mediaType?.Schema is OpenApiSchema s && s.Properties is not null)
                     {
-                        if (property.Key == propertyInfo.Name)
-                        {
-                            _addEncoding(mediaType, propertyInfo);
+                        // Group all exploded properties.
+                        var groupedProperties = s.Properties
+                            .GroupBy(pair => pair.Key.Split('.')[0], StringComparer.Ordinal);
 
-                            var openApiSchema = _getSchema(context, propertyInfo);
-                            schemaProperties.Add(property.Key, openApiSchema);
-                        }
-                        else
+                        var schemaProperties = new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal);
+
+                        foreach (var property in groupedProperties)
                         {
-                            schemaProperties.Add(property.Key, property.First().Value);
+                            if (property.Key == propertyInfo.Name)
+                            {
+                                _addEncoding(mediaType, propertyInfo);
+
+                                var openApiSchema = _getSchema(context, propertyInfo);
+                                if (openApiSchema is null)
+                                    continue;
+                                schemaProperties.Add(property.Key, openApiSchema);
+                            }
+                            else
+                            {
+                                schemaProperties.Add(property.Key, property.First().Value);
+                            }
                         }
+                        // Override schema properties
+                        s.Properties = schemaProperties;
                     }
-                    // Override schema properties
-                    mediaType.Schema.Properties = schemaProperties;
                 }
             }
         }
@@ -76,31 +80,39 @@ namespace Ark.Reference.Core.WebInterface.Utils
         /// Generate schema for propertyInfo
         /// </summary>
         /// <returns></returns>
-        private OpenApiSchema _getSchema(OperationFilterContext context, PropertyInfo propertyInfo)
+        private IOpenApiSchema _getSchema(OperationFilterContext context, PropertyInfo propertyInfo)
         {
-            bool present = context.SchemaRepository.TryLookupByType(propertyInfo.PropertyType, out var schema);
-
-            if (!present)
+            if (context.SchemaRepository.TryLookupByType(propertyInfo.PropertyType, out var schema))
             {
-                _ = context.SchemaGenerator.GenerateSchema(propertyInfo.PropertyType, context.SchemaRepository);
-                _ = context.SchemaRepository.TryLookupByType(propertyInfo.PropertyType, out schema);
-
-                _addDescription(schema, schema.Title);
-                _addExample(propertyInfo, schema);
+                return schema;
             }
-            return schema;
+
+            _ = context.SchemaGenerator.GenerateSchema(propertyInfo.PropertyType, context.SchemaRepository);
+            _ = context.SchemaRepository.TryLookupByType(propertyInfo.PropertyType, out schema);
+
+            var s = schema.Target as OpenApiSchema;
+            if (s is null) return schema;
+
+            _addDescription(s, s.Title);
+            _addExample(propertyInfo, s);
+
+            return s;
         }
 
-        private static void _addDescription(OpenApiSchema openApiSchema, string SchemaDisplayName)
+        private static void _addDescription(OpenApiSchema openApiSchema, string? SchemaDisplayName)
         {
             openApiSchema.Description += $"\n See {SchemaDisplayName} model.";
         }
 
         private static void _addEncoding(OpenApiMediaType mediaType, PropertyInfo propertyInfo)
         {
+            if (mediaType.Encoding == null)
+                mediaType.Encoding = new Dictionary<string, OpenApiEncoding>(StringComparer.Ordinal);
+
             mediaType.Encoding = mediaType.Encoding
                 .Where(pair => !pair.Key.Contains(propertyInfo.Name, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+
             mediaType.Encoding.Add(propertyInfo.Name, new OpenApiEncoding()
             {
                 ContentType = "application/json",
@@ -116,8 +128,8 @@ namespace Ark.Reference.Core.WebInterface.Utils
             if (example == null)
                 return;
 
-            var json = JsonSerializer.Serialize(example, _jsonOptions.Value.JsonSerializerOptions);
-            openApiSchema.Example = new OpenApiString(json);
+            var json = JsonSerializer.SerializeToNode(example, _jsonOptions.Value.JsonSerializerOptions);
+            openApiSchema.Example = json;
         }
 
         private object? _getExampleFor(Type parameterType)

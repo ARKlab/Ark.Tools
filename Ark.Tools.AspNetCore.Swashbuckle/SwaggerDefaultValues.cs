@@ -1,7 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -34,8 +34,12 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
             {
                 // REF: https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/b7cf75e7905050305b115dd96640ddd6e74c7ac9/src/Swashbuckle.AspNetCore.SwaggerGen/SwaggerGenerator/SwaggerGenerator.cs#L383-L387
                 var responseKey = responseType.IsDefaultResponse ? "default" : responseType.StatusCode.ToString(CultureInfo.InvariantCulture);
-                var response = operation.Responses[responseKey];
+                var response = operation.Responses?[responseKey];
 
+                if (response is null || response.Content is null)
+                {
+                    continue;
+                }
                 foreach (var contentType in response.Content.Keys)
                 {
                     if (!responseType.ApiResponseFormats.Any(x => x.MediaType == contentType))
@@ -52,17 +56,18 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
 
             // REF: https://github.com/domaindrivendev/Swashbuckle.AspNetCore/issues/412
             // REF: https://github.com/domaindrivendev/Swashbuckle.AspNetCore/pull/413
-            foreach (var parameter in operation.Parameters)
+            foreach (var parameter in operation.Parameters.OfType<OpenApiParameter>())
             {
                 var description = apiDescription.ParameterDescriptions.First(p => p.Name == parameter.Name);
 
                 parameter.Description ??= description.ModelMetadata?.Description;
 
-                if (parameter.Schema.Default == null && description.DefaultValue != null && description.ModelMetadata != null)
+                if (parameter.Schema is OpenApiSchema s && s.Default == null && description.DefaultValue != null && description.ModelMetadata != null)
                 {
                     // REF: https://github.com/Microsoft/aspnet-api-versioning/issues/429#issuecomment-605402330
-                    var json = JsonSerializer.Serialize(description.DefaultValue, description.ModelMetadata.ModelType, ArkSerializerOptions.JsonOptions);
-                    parameter.Schema.Default = OpenApiAnyFactory.CreateFromJson(json);
+                    var json = JsonSerializer.SerializeToNode(description.DefaultValue, description.ModelMetadata.ModelType, ArkSerializerOptions.JsonOptions);
+
+                    s.Default = json;
                 }
 
                 parameter.Required |= description.IsRequired;
