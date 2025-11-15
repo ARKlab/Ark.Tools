@@ -28,8 +28,8 @@
   <ItemGroup>    
     <PackageReference Include="Auth0.AuthenticationApi" Version="7.42.0" />
     <PackageReference Include="Auth0.ManagementApi" Version="7.42.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.22" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="[8.0.0,9)" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="[8.0.0,10.0.0]" />
     <PackageReference Include="Polly" Version="8.6.4" />
   </ItemGroup>
   
