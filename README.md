@@ -52,6 +52,15 @@ to
                 });
 ```
 
+### Replace FluentAssertions with AwesomeAssertions
+
+Replace the following:
+
+- `PackageReference` from `FluentAssertions` to `AwesomeAssertions >= 9.0.0`
+- `PackageReference` from `FluentAssertions.Web` to `AwesomeAssertions.Web`
+- `HaveStatusCode(...)` =>  `HaveHttpStatusCode`
+- `using FluentAssertions` => `using AwesomeAssertions`
+
 ## Migrate from Specflow to Reqnroll (v5.1)
 
 **Support for Speflow is no longer mainteined and will be removed in next Major.**

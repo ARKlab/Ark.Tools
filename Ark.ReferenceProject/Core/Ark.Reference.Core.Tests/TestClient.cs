@@ -2,8 +2,8 @@
 using Ark.Reference.Core.Tests.Auth;
 using Ark.Tools.Core.EntityTag;
 
-using FluentAssertions;
-using FluentAssertions.Execution;
+using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 
 using Flurl.Http;
 
@@ -258,7 +258,7 @@ namespace Ark.Reference.Core.Tests
             {
                 using var s = new AssertionScope();
                 var contents = LastResponse.GetStringAsync().GetAwaiter().GetResult();
-                LastResponse.ResponseMessage.Should().BeSuccessful();
+                LastResponse.ResponseMessage.Should().Be2XXSuccessful();
                 contents.Should().Be(String.Empty); //hack to have error contents in test failure
             }
         }
@@ -267,7 +267,7 @@ namespace Ark.Reference.Core.Tests
         [Then(@"the request fails with (.*)")]
         public void ThenTheRequestFailsWith(HttpStatusCode code)
         {
-            LastResponse.ResponseMessage.Should().HaveStatusCode(code);
+            LastResponse.ResponseMessage.Should().HaveHttpStatusCode(code);
         }
 
         [Then(@"the problem detail type contains (.*)")]

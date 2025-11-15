@@ -4,7 +4,7 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Core;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

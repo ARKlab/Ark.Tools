@@ -1,7 +1,7 @@
 ﻿using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Http;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Flurl.Http;
 
@@ -179,7 +179,7 @@ namespace TestProject
         [Then("The request succeded")]
         public void ThenTheRequestSucceded()
         {
-            _lastResponse.ResponseMessage.Should().BeSuccessful();
+            _lastResponse.ResponseMessage.Should().Be2XXSuccessful();
         }
 
         [Then(@"The request fails with (.*)")]
@@ -198,7 +198,7 @@ namespace TestProject
         [Then(@"The request returns (.*)")]
         public void ThenTheRequestReturns(HttpStatusCode code)
         {
-            _lastResponse.ResponseMessage.Should().HaveStatusCode(code);
+            _lastResponse.ResponseMessage.Should().HaveHttpStatusCode(code);
         }
 
         public void Dispose()

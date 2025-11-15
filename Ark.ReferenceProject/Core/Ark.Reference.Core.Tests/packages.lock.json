@@ -284,6 +284,21 @@
           "Auth0.Core": "7.42.0"
         }
       },
+      "AwesomeAssertions": {
+        "type": "Transitive",
+        "resolved": "9.3.0",
+        "contentHash": "8lGLYap2ec2gNLgjf2xKZaKLpQ7j36oJvrYzBVVpNAumqnxRdevqqhEF66qxE92f8y2+zsbQ061DeHG61ZhzaQ=="
+      },
+      "AwesomeAssertions.Web": {
+        "type": "Transitive",
+        "resolved": "1.9.6",
+        "contentHash": "ZutEz9HYFa1Bv8e/RBi44qmzCBRI5chNZ3oyj1KqM8D9AN7PkXXzyFkckL4K6X6WYRBAHeQYmAzXBCbHGtuqZg==",
+        "dependencies": {
+          "AwesomeAssertions": "9.0.0",
+          "Microsoft.AspNet.WebApi.Client": "6.0.0",
+          "Newtonsoft.Json": "13.0.3"
+        }
+      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.49.0",
@@ -432,24 +447,6 @@
         "type": "Transitive",
         "resolved": "10.1.0",
         "contentHash": "rzTMSs0lQnu0WsesvTjs/zDzqiZXb9r5dv+wFQcPg/iIZqXb5BzwpIWEwi8Q3HA0TS4ytRcY129aSek6IzuOmA=="
-      },
-      "FluentAssertions": {
-        "type": "Transitive",
-        "resolved": "7.2.0",
-        "contentHash": "k94gV49Otru4e9nKtj36KpA9UkjuAGKPmhfM0oqyI+rrtxhSrgaeEhILR0AbJ9iNaoagAeQtawPz6njQOC6WQA==",
-        "dependencies": {
-          "System.Configuration.ConfigurationManager": "6.0.0"
-        }
-      },
-      "FluentAssertions.Web": {
-        "type": "Transitive",
-        "resolved": "1.9.5",
-        "contentHash": "obMVx6Tw+GI8cR/EiikF+KB+psMOdew1ItnjOf7+c2fclPhLK5OPfYEBCDr6xI7CmA0ZHkqsREgY+g491mDFuA==",
-        "dependencies": {
-          "FluentAssertions": "[6.5.1, 8.0.0)",
-          "Microsoft.AspNet.WebApi.Client": "6.0.0",
-          "Newtonsoft.Json": "13.0.3"
-        }
       },
       "FluentValidation": {
         "type": "Transitive",
@@ -1224,11 +1221,11 @@
       },
       "NLog.MailKit": {
         "type": "Transitive",
-        "resolved": "6.0.3",
-        "contentHash": "HPr4XuixEDkbuukhOBr74MbXsf9EyCNtUXq0V3PX/d6+w3a65HYaCgysVRv3Km8HKFrzp9RKuuyHE/V4WRD1Cw==",
+        "resolved": "6.0.5",
+        "contentHash": "SMWDBIVKBR6uA5KdxWPPUWbg4lKQ+KeuAWaTvyg7FWTCH0LHvSMGQ4hVtXGYQMRxclUQOi5wlATJDoBW/xtECA==",
         "dependencies": {
           "MailKit": "4.7.1.1",
-          "NLog": "6.0.2"
+          "NLog": "6.0.5"
         }
       },
       "NodaTime": {
@@ -1840,7 +1837,7 @@
           "NLog": "[6.0.6, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.3, )",
-          "NLog.MailKit": "[6.0.3, )",
+          "NLog.MailKit": "[6.0.5, )",
           "Newtonsoft.Json": "[13.0.4, )",
           "Slack.Webhooks": "[1.1.5, )"
         }
@@ -1924,8 +1921,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Http": "[1.0.0, )",
-          "FluentAssertions": "[7.2.0, )",
-          "FluentAssertions.Web": "[1.9.5, )",
+          "AwesomeAssertions": "[9.3.0, )",
+          "AwesomeAssertions.Web": "[1.9.6, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.14.0, )",
           "Reqnroll": "[3.2.1, )"
         }
