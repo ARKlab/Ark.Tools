@@ -39,8 +39,8 @@
 		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
 		<PackageReference Include="Azure.Identity" Version="1.17.0" />
 		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.22" />
-		<PackageReference Include="System.Text.Json" Version="8.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
+		<PackageReference Include="System.Text.Json" Version="10.0.0" />
 		<!-- Needed due to vulnerabilities from dependency AspNetCore.HealthChecks.UI that is not updated  -->
 		<PackageReference Include="KubernetesClient" Version="18.0.5" />
 	</ItemGroup>

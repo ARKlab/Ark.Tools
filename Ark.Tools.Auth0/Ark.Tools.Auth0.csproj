@@ -23,6 +23,6 @@
     <PackageReference Include="Polly.Caching.Memory" Version="3.0.2" />
 
 
-	  <PackageReference Include="System.Text.Json" Version="8.0.6" />
+	  <PackageReference Include="System.Text.Json" Version="10.0.0" />
   </ItemGroup>
 </Project>
