@@ -82,6 +82,51 @@ _logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", 
 - SBOM (Software Bill of Materials) generation enabled
 - Symbol packages (snupkg) are generated
 
+## Git Commit Guidelines
+
+### Conventional Commits
+All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Commit Types
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing tests or correcting existing tests
+- **build**: Changes that affect the build system or external dependencies
+- **ci**: Changes to CI configuration files and scripts
+- **chore**: Other changes that don't modify src or test files
+- **revert**: Reverts a previous commit
+
+### Examples
+```
+feat(AspNetCore): add support for custom error handling middleware
+fix(Flurl): resolve memory leak in client disposal
+docs(README): update migration guide for v6
+refactor(Core): simplify error handling logic
+test(ReferenceProject): add integration tests for authentication
+build(deps): upgrade Swashbuckle to v10
+ci(workflows): update CodeQL configuration
+```
+
+### Guidelines
+- Use the imperative, present tense: "change" not "changed" nor "changes"
+- Don't capitalize the first letter of the description
+- No period (.) at the end of the description
+- Keep the description concise (50 characters or less when possible)
+- Use the body to explain what and why vs. how (when necessary)
+- Reference issues and pull requests in the footer (e.g., `Closes #123`)
+
 ## Testing Guidelines
 
 ### Test Framework
