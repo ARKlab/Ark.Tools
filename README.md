@@ -232,8 +232,8 @@ Please avoid adding more dependencies to 3rd party libraries.
 
 ## Links
 
-* [Nuget](https://www.nuget.org/packages/MessagePack.NodaTime/)
-* [Github](https://github.com/ARKlab/MessagePack)
+* [Nuget](https://www.nuget.org/packages/Ark.Tools.Core)
+* [Github](https://github.com/ARKlab/Ark.Tools)
 * [Ark Energy](http://www.ark-energy.eu/)
 
 ## License
