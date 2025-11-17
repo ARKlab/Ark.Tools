@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 
 using System;
 using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace ProblemDetailsSample
@@ -68,12 +67,6 @@ namespace ProblemDetailsSample
 
             //DapperNodaTimeSetup.Register();
             NodeTimeConverter.Register();
-            ServicePointManager.UseNagleAlgorithm = true;
-            ServicePointManager.Expect100Continue = false;
-            ServicePointManager.CheckCertificateRevocationList = true;
-            ServicePointManager.DefaultConnectionLimit = 250;
-            ServicePointManager.EnableDnsRoundRobin = true;
-            ServicePointManager.DnsRefreshTimeout = 4 * 60 * 1000;
 
             var cfg = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())

@@ -18,7 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using NodaTime;
 
@@ -92,7 +92,6 @@ namespace Ark.Reference.Core.WebInterface
                 {
                     c.IncludeXmlCommentsForAssembly<Startup>();
                     c.SchemaFilter<MatrixSchemaFilter>();
-                    c.DocumentFilter<AddUserImpersonationScope>();
 
                     c.OperationFilter<MultiPartJsonOperationFilter>();
                 });

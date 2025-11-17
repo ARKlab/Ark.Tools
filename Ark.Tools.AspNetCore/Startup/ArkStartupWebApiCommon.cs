@@ -21,7 +21,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Newtonsoft.Json;
 
@@ -156,7 +156,6 @@ namespace Ark.Tools.AspNetCore.Startup
                 c.OperationFilter<FixODataMediaTypeOnNonOData>();
                 c.OperationFilter<PrettifyOperationIdOperationFilter>();
 
-                c.SchemaFilter<RequiredSchemaFilter>();
 
                 c.UseOneOfForPolymorphism();
                 c.UseAllOfForInheritance();
@@ -178,7 +177,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 });
                 c.SupportNonNullableReferenceTypes();
 
-                c.EnableAnnotations();
+                c.EnableAnnotations();                
             });
 
             services.ArkConfigureSwaggerVersions(Versions, MakeInfo);
@@ -286,7 +285,11 @@ namespace Ark.Tools.AspNetCore.Startup
                 app.UseODataRouteDebug();
             }
 
-            app.UseSwagger();
+            app.UseSwagger(options =>
+            {
+                options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
+            });
+
             app.UseSwaggerUI();
 
             app.UseAuthentication();

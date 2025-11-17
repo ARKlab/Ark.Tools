@@ -20,3 +20,5 @@ allow_licenses:
   - LicenseRef-scancode-ms-azure-spatialanchors-2.9.0
   - LicenseRef-scancode-ms-python-vscode-pylance-2021
   - LicenseRef-scancode-unknown-license-reference
+  - CC0-1.0
+  - LicenseRef-scancode-public-domain

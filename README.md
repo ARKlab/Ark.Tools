@@ -23,6 +23,44 @@ The main library used by Ark in its stack are
 If you want to learn more about each project, look the respective Readme when present or directly at code.
 Documentation improvements are up-for-grabs ;)
 
+## Migration to Ark.Tools v6
+
+### SDK-based SQL Projects
+
+If you are using SDK-based SQL projects in VS 2026 you need to add 
+the following to your csprojs that depends on the SQL Projects (generally Tests projects) to avoid build errors:
+
+```xml
+	  <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
+		  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+	  </ProjectReference>
+```
+
+### OpenApi 3.1
+
+Refer to [Swashbuckle](https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/docs/migrating-to-v10.md) for issues related to OpenApi.
+
+The most likely change is from
+```cs
+                c.OperationFilter<SecurityRequirementsOperationFilter>();
+```
+to
+```cs
+                c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+                {
+                    [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
+                });
+```
+
+### Replace FluentAssertions with AwesomeAssertions
+
+Replace the following:
+
+- `PackageReference` from `FluentAssertions` to `AwesomeAssertions >= 9.0.0`
+- `PackageReference` from `FluentAssertions.Web` to `AwesomeAssertions.Web`
+- `HaveStatusCode(...)` =>  `HaveHttpStatusCode`
+- `using FluentAssertions` => `using AwesomeAssertions`
+
 ## Migrate from Specflow to Reqnroll (v5.1)
 
 **Support for Speflow is no longer mainteined and will be removed in next Major.**
@@ -35,8 +73,11 @@ To migrate:
 1. Replace `Techtalk.Specflow` to `Reqnroll` in `using`
 1. Replace `Ark.Tools.Specflow` to `Ark.Tools.Reqnroll` in both `using` and `PackageReference`
 1. Replace `Specflow.*` to `Reqnroll.*` in `PackageReference`
+1. Replate `Table` with `DataTable` and `TableRow` with `DataTableRow`
 1. Add [`reqnroll.json`](./ArkReferenceProject/Core/Tests/reqnroll.json) to test projects
 1. Fix Verbs: Reqnroll default to Gherking style parameters instead of Regex style thus it might be required to update verbs as described [here](https://docs.reqnroll.net/latest/guides/migrating-from-specflow.html#cucumber-expressions-support-compatibility-of-existing-expressions), specifying the regex start/end markers (^/$).
+
+If you have more issues, please refer to the official [migration guide](https://docs.reqnroll.net/latest/guides/migrating-from-specflow.html)
 
 ## Ark.Tools v5 Breaking Changes
 
@@ -193,8 +234,8 @@ Please avoid adding more dependencies to 3rd party libraries.
 
 ## Links
 
-* [Nuget](https://www.nuget.org/packages/MessagePack.NodaTime/)
-* [Github](https://github.com/ARKlab/MessagePack)
+* [Nuget](https://www.nuget.org/packages/Ark.Tools.Core)
+* [Github](https://github.com/ARKlab/Ark.Tools)
 * [Ark Energy](http://www.ark-energy.eu/)
 
 ## License
