@@ -73,9 +73,11 @@ To migrate:
 1. Replace `Techtalk.Specflow` to `Reqnroll` in `using`
 1. Replace `Ark.Tools.Specflow` to `Ark.Tools.Reqnroll` in both `using` and `PackageReference`
 1. Replace `Specflow.*` to `Reqnroll.*` in `PackageReference`
+1. Replate `Table` with `DataTable` and `TableRow` with `DataTableRow`
 1. Add [`reqnroll.json`](./ArkReferenceProject/Core/Tests/reqnroll.json) to test projects
 1. Fix Verbs: Reqnroll default to Gherking style parameters instead of Regex style thus it might be required to update verbs as described [here](https://docs.reqnroll.net/latest/guides/migrating-from-specflow.html#cucumber-expressions-support-compatibility-of-existing-expressions), specifying the regex start/end markers (^/$).
 
+If you have more issues, please refer to the official [migration guide](https://docs.reqnroll.net/latest/guides/migrating-from-specflow.html)
 
 ## Ark.Tools v5 Breaking Changes
 
