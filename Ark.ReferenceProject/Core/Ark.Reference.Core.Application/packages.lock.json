@@ -4,9 +4,9 @@
     "net8.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.253, )",
-        "resolved": "2.0.253",
-        "contentHash": "YweEHdTOi+l8DMBui+66qkRlS8IVIbD1PJUgXrWpBSrNt6mf8BU6WM1dlAVCwufPohk4/7l+GJ+ekBgPlDIxMw=="
+        "requested": "[2.0.256, )",
+        "resolved": "2.0.256",
+        "contentHash": "G1X+rRfimtT/icOaFM/AeJk6Z2pc4N5dpPHXFAK/cmpFVi7I1a7QFe05mlN9nofER007pu+QYgN6o+heGIF+Vg=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -194,8 +194,8 @@
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.4.4",
-        "contentHash": "afqL/D/t7Nsr0qCwEA3XT72ZfWMhO/fq728TPTnloQrFTd5U8xRDDd7mj8wd7NZaojjFpZy1bc6LkfM9mRNATA==",
+        "resolved": "3.5.0",
+        "contentHash": "QJAVsC6bJGxTN5O5BF5oFS8lgDsSqe3ols+M9n7jOOEw2nUIEL3SQn+z7gb/e8/b++/3yq3E7W/nwAI+Ujcu/w==",
         "dependencies": {
           "MessagePack": "3.1.4",
           "NodaTime": "3.2.2"
@@ -794,11 +794,11 @@
       },
       "NLog.MailKit": {
         "type": "Transitive",
-        "resolved": "6.0.3",
-        "contentHash": "HPr4XuixEDkbuukhOBr74MbXsf9EyCNtUXq0V3PX/d6+w3a65HYaCgysVRv3Km8HKFrzp9RKuuyHE/V4WRD1Cw==",
+        "resolved": "6.0.5",
+        "contentHash": "SMWDBIVKBR6uA5KdxWPPUWbg4lKQ+KeuAWaTvyg7FWTCH0LHvSMGQ4hVtXGYQMRxclUQOi5wlATJDoBW/xtECA==",
         "dependencies": {
           "MailKit": "4.7.1.1",
-          "NLog": "6.0.2"
+          "NLog": "6.0.5"
         }
       },
       "NodaTime": {
@@ -1896,7 +1896,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.4.4, )",
+          "MessagePack.NodaTime": "[3.5.0, )",
           "System.Net.Http": "[4.3.4, )",
           "System.Text.RegularExpressions": "[4.3.1, )"
         }
@@ -1920,7 +1920,7 @@
           "NLog": "[6.0.6, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.3, )",
-          "NLog.MailKit": "[6.0.3, )",
+          "NLog.MailKit": "[6.0.5, )",
           "Newtonsoft.Json": "[13.0.4, )",
           "Slack.Webhooks": "[1.1.5, )",
           "System.Net.Http": "[4.3.4, )",
