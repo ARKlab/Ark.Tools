@@ -37,7 +37,7 @@
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
 		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
-		<PackageReference Include="Azure.Identity" Version="1.17.0" />
+		<PackageReference Include="Azure.Identity" Version="1.17.1" />
 		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
 		<!-- Needed due to vulnerabilities from dependency AspNetCore.HealthChecks.UI that is not updated  -->
 		<PackageReference Include="KubernetesClient" Version="18.0.5" />

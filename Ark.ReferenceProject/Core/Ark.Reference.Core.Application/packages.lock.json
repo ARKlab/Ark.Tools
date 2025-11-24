@@ -4,9 +4,9 @@
     "net10.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.253, )",
-        "resolved": "2.0.253",
-        "contentHash": "YweEHdTOi+l8DMBui+66qkRlS8IVIbD1PJUgXrWpBSrNt6mf8BU6WM1dlAVCwufPohk4/7l+GJ+ekBgPlDIxMw=="
+        "requested": "[2.0.256, )",
+        "resolved": "2.0.256",
+        "contentHash": "G1X+rRfimtT/icOaFM/AeJk6Z2pc4N5dpPHXFAK/cmpFVi7I1a7QFe05mlN9nofER007pu+QYgN6o+heGIF+Vg=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -186,8 +186,8 @@
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.4.4",
-        "contentHash": "afqL/D/t7Nsr0qCwEA3XT72ZfWMhO/fq728TPTnloQrFTd5U8xRDDd7mj8wd7NZaojjFpZy1bc6LkfM9mRNATA==",
+        "resolved": "3.5.0",
+        "contentHash": "QJAVsC6bJGxTN5O5BF5oFS8lgDsSqe3ols+M9n7jOOEw2nUIEL3SQn+z7gb/e8/b++/3yq3E7W/nwAI+Ujcu/w==",
         "dependencies": {
           "MessagePack": "3.1.4",
           "NodaTime": "3.2.2"
@@ -754,16 +754,16 @@
       },
       "Polly": {
         "type": "Transitive",
-        "resolved": "8.6.4",
-        "contentHash": "uuBsDoBw0oYrMe3uTWRjkT2sIkKh+ZZnnDrLb4Z+QANfeA4+7FJacx6E8CY5GAxXRoSgFrvUADEAQ7DPF6fGiw==",
+        "resolved": "8.6.5",
+        "contentHash": "VqtW2ZE/ALvQMAH1cQY3qZ2cF2OXa3oe/HKMdOv6Q02HCoEW0rsFNfcBONXlHBe1TnjWW1vdRxBEkPeq0/2FHA==",
         "dependencies": {
-          "Polly.Core": "8.6.4"
+          "Polly.Core": "8.6.5"
         }
       },
       "Polly.Core": {
         "type": "Transitive",
-        "resolved": "8.6.4",
-        "contentHash": "4AWqYnQ2TME0E+Mzovt1Uu+VyvpR84ymUldMcPw7Mbj799Phaag14CKrMtlJGx5jsvYP+S3oR1QmysgmXoD5cw=="
+        "resolved": "8.6.5",
+        "contentHash": "t+sUVrIwvo7UmsgHGgOG9F0GDZSRIm47u2ylH17Gvcv1q5hNEwgD5GoBlFyc0kh/pebmPyrAgvGsR/65ZBaXlg=="
       },
       "Rebus": {
         "type": "Transitive",
@@ -900,7 +900,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.4.0, )",
           "Azure.Storage.Blobs": "[12.26.0, )",
-          "Polly": "[8.6.4, )"
+          "Polly": "[8.6.5, )"
         }
       },
       "ark.reference.core.api": {
@@ -947,7 +947,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.4.4, )"
+          "MessagePack.NodaTime": "[3.5.0, )"
         }
       },
       "ark.tools.newtonsoftjson": {
@@ -1033,7 +1033,7 @@
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Dapper": "[2.1.66, )",
-          "Polly": "[8.6.4, )",
+          "Polly": "[8.6.5, )",
           "morelinq": "[4.4.0, )"
         }
       },
