@@ -25,10 +25,10 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.79.1" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.79.1" />
+    <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.79.2" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.79.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Polly" Version="8.6.4" />
+    <PackageReference Include="Polly" Version="8.6.5" />
   </ItemGroup>
     
 
