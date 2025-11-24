@@ -6,7 +6,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
 
     <Description>Extensions of ApplicationInsights for AspNetCore</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;ApplicationInsights</PackageTags>

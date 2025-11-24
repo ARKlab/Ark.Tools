@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Core", "Ark.Tools.Core\Ark.Tools.Core.csproj", "{4A1CC7FA-F4D9-45E4-894D-3B758A7284EE}"
 EndProject
@@ -84,8 +84,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Http", "Ark.Tools.Http\Ark.Tools.Http.csproj", "{112606E3-BD24-40B7-B13A-C070EFF5B15E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Auth0", "Ark.Tools.Auth0\Ark.Tools.Auth0.csproj", "{94A058C8-178D-4425-BF60-99E4A1659EF9}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.SpecFlow", "Ark.Tools.SpecFlow\Ark.Tools.SpecFlow.csproj", "{15B13245-D437-4C49-9D0C-13FA96E0018F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ark.Tools.Activity", "Ark.Tools.Activity\Ark.Tools.Activity.csproj", "{98FF5909-1985-450F-B43F-12A230E3F593}"
 EndProject
@@ -339,10 +337,6 @@ Global
 		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94A058C8-178D-4425-BF60-99E4A1659EF9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{15B13245-D437-4C49-9D0C-13FA96E0018F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{15B13245-D437-4C49-9D0C-13FA96E0018F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{15B13245-D437-4C49-9D0C-13FA96E0018F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{15B13245-D437-4C49-9D0C-13FA96E0018F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{98FF5909-1985-450F-B43F-12A230E3F593}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{98FF5909-1985-450F-B43F-12A230E3F593}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98FF5909-1985-450F-B43F-12A230E3F593}.Release|Any CPU.ActiveCfg = Release|Any CPU

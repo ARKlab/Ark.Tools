@@ -1,6 +1,6 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -36,7 +36,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
             foreach (var param in queryEnumParams)
             {
                 var s = param.Schema;
-                param.Schema = new OpenApiSchema { Type = "array", Items = s };
+                param.Schema = new OpenApiSchema { Type = JsonSchemaType.Array, Items = s };
                 param.Style = ParameterStyle.Simple;
                 param.Explode = false;
             }

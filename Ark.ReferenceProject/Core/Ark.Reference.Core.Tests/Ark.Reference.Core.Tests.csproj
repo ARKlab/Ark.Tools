@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFramework>net8.0</TargetFramework>
-    <IsPackable>false</IsPackable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
@@ -13,7 +11,7 @@
 	<ItemGroup>
 		<PackageReference Include="ExcelDataReader" Version="3.8.0" />
 		<PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
-		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.22" />
+		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.0" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
 		<PackageReference Include="Microsoft.SqlServer.DacFx" Version="170.2.70" />
 		<PackageReference Include="Moq" Version="4.20.72" />
@@ -34,7 +32,9 @@
     <ProjectReference Include="..\Ark.Reference.Core.API\Ark.Reference.Core.API.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.Application\Ark.Reference.Core.Application.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj" />
-    <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj" />
+	  <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
+		  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+	  </ProjectReference>
     <ProjectReference Include="..\Ark.Reference.Core.WebInterface\Ark.Reference.Core.WebInterface.csproj" />
   </ItemGroup>
 

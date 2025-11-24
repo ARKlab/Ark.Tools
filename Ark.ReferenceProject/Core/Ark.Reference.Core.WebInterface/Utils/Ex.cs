@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using System;
 using System.Collections.Generic;
@@ -154,16 +154,13 @@ namespace Ark.Reference.Core.WebInterface.Utils
                             }
                         }
                     },
-
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "oauth2"
-                    },
                     Scheme = "oauth2"
                 };
                 c.AddSecurityDefinition("oauth2", oauthScheme);
-                c.OperationFilter<SecurityRequirementsOperationFilter>();
+                c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+                {
+                    [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
+                });
             });
 
             services.ArkConfigureSwaggerUI(c =>
@@ -195,17 +192,15 @@ namespace Ark.Reference.Core.WebInterface.Utils
                             }
                         }
                     },
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "oauth2"
-                    },
                     Scheme = "oauth2"
                 };
 
                 c.AddSecurityDefinition("oauth2", oauthScheme);
 
-                c.OperationFilter<SecurityRequirementsOperationFilter>();
+                c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+                {
+                    [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
+                });
             });
 
             services.ArkConfigureSwaggerUI(c =>

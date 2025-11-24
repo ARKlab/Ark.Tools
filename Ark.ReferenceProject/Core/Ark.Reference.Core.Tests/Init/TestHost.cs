@@ -6,7 +6,7 @@ using Ark.Tools.Http;
 using Ark.Tools.Outbox;
 using Ark.Tools.Rebus.Tests;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Flurl.Http;
 using Flurl.Http.Configuration;
@@ -56,7 +56,7 @@ namespace Ark.Reference.Core.Tests.Init
 
         private static ScenarioContext? _scenarioContext;
         private static IHost? _server;
-        private FluentAssertions.Execution.AssertionScope? _afterScenarioAssertionScope;
+        private AwesomeAssertions.Execution.AssertionScope? _afterScenarioAssertionScope;
 
         [BeforeScenario(Order = 0)]
         public void Set(ScenarioContext ctx)
@@ -70,7 +70,7 @@ namespace Ark.Reference.Core.Tests.Init
             // SPECFLOW: If a hook throws an unhandled exception, subsequent hooks of the same type are not executed.
             // SPECFLOW: If you want to ensure that all hooks of the same types are executed, you need to handle your exceptions manually.
             // Thus we use FluentAssertion scope
-            _afterScenarioAssertionScope = new FluentAssertions.Execution.AssertionScope();
+            _afterScenarioAssertionScope = new AwesomeAssertions.Execution.AssertionScope();
         }
 
         [AfterScenario(Order = int.MaxValue)]
@@ -103,7 +103,7 @@ namespace Ark.Reference.Core.Tests.Init
 
         private async Task _backgroundBus(bool ignoreDeferred)
         {
-            using var _ = new FluentAssertions.Execution.AssertionScope();
+            using var _ = new AwesomeAssertions.Execution.AssertionScope();
 
             var ctx = Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>();
 

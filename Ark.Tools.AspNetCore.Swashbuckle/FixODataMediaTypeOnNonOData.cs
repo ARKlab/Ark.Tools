@@ -1,7 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -29,32 +29,38 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
             if (context.ApiDescription.ActionDescriptor is ControllerActionDescriptor cad
                 && !Attribute.IsDefined(cad.ControllerTypeInfo, typeof(Microsoft.AspNetCore.OData.Routing.Attributes.ODataAttributeRoutingAttribute)))
             {
-                foreach (var response in operation.Responses.Values)
-                {
-                    // not OData (missing IsODataLike())
-                    foreach (var contentType in response.Content.Keys)
+                if (operation.Responses is not null)
+                    foreach (var response in operation.Responses.Values)
                     {
-                        if (contentType.Contains("odata", StringComparison.OrdinalIgnoreCase))
-                            response.Content.Remove(contentType);
+                        if (response.Content is null)
+                            continue;
+                        // not OData (missing IsODataLike())
+                        foreach (var contentType in response.Content.Keys)
+                        {
+                            if (contentType.Contains("odata", StringComparison.OrdinalIgnoreCase))
+                                response.Content.Remove(contentType);
+                        }
                     }
-                }
+                if (operation.Parameters is not null)
+                    foreach (var parameter in operation.Parameters)
+                    {
+                        if (parameter.Content is null) continue;
+                        // not OData (missing IsODataLike())
+                        foreach (var contentType in parameter.Content.Keys)
+                        {
+                            if (contentType.Contains("odata", StringComparison.OrdinalIgnoreCase))
+                                parameter.Content.Remove(contentType);
+                        }
+                    }
 
-                foreach (var parameter in operation.Parameters)
-                {
-                    // not OData (missing IsODataLike())
-                    foreach (var contentType in parameter.Content.Keys)
-                    {
-                        if (contentType.Contains("odata", StringComparison.OrdinalIgnoreCase))
-                            parameter.Content.Remove(contentType);
-                    }
-                }
                 if (operation.RequestBody is not null)
                 {
-                    foreach (var contentType in operation.RequestBody.Content.Keys)
-                    {
-                        if (contentType.Contains("odata", StringComparison.OrdinalIgnoreCase))
-                            operation.RequestBody.Content.Remove(contentType);
-                    }
+                    if (operation.RequestBody.Content is not null)
+                        foreach (var contentType in operation.RequestBody.Content.Keys)
+                        {
+                            if (contentType.Contains("odata", StringComparison.OrdinalIgnoreCase))
+                                operation.RequestBody.Content.Remove(contentType);
+                        }
                 }
             }
         }

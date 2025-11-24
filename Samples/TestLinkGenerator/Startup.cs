@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using System;
 using System.Collections.Generic;
@@ -102,12 +102,10 @@ namespace TestWithoutArkTools
 
             services.ConfigureSwaggerGen(c =>
             {
-                var dict = new OpenApiSecurityRequirement
+                c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
                 {
-                    { new OpenApiSecurityScheme { Type = SecuritySchemeType.OAuth2 }, new[] { "openid" } }
-                };
-
-                c.AddSecurityRequirement(dict);
+                    [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
+                });
             });
         }
 

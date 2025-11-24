@@ -1,26 +1,17 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
+    [Obsolete("Supported by Swashbuckle", true, UrlFormat = "https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/v10.0.0/docs/configure-and-customize-swaggergen.md#flag-required-parameters-and-schema-properties")]
     public class RequiredSchemaFilter : ISchemaFilter
     {
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            var requiredProperties = context.Type.GetProperties()
-                .Where(w => w.GetCustomAttributes(typeof(RequiredAttribute), true).Any())
-                .Select(s => Char.ToLowerInvariant(s.Name[0]) + s.Name.Substring(1));
-
-            schema.Required = requiredProperties.ToHashSet(StringComparer.Ordinal);
-            if (schema.Required.Count == 0)
-                schema.Required = null;
         }
     }
 }

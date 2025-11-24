@@ -5,7 +5,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <TargetFrameworks>net8.0</TargetFrameworks>
+	  <TargetFrameworks>net10.0</TargetFrameworks>
 
     <Description>A middleware for converting basic-auth to bearer tokens using Resource Owner flow for Azure Active Directory</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;AzureAd;AzureActiveDirectory</PackageTags>

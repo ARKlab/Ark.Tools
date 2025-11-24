@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net8.0": {
+    "net10.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
         "requested": "[2.0.253, )",
@@ -10,23 +10,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[8.0.0, )",
-        "resolved": "8.0.0",
-        "contentHash": "DxiTgkCl3CGq1rYmBX2wjY7XGbxiBdL4J+/AJIAFLKy5z70NxhnVRnPghnicXZ8oF6JKVXlW3xwznRbI3ioEKg=="
-      },
-      "Microsoft.NETFramework.ReferenceAssemblies": {
-        "type": "Direct",
-        "requested": "[1.0.3, )",
-        "resolved": "1.0.3",
-        "contentHash": "vUc9Npcs14QsyOD01tnv/m8sQUnGTGOw1BCmKcv77LBJY7OxhJ+zJF7UD/sCL3lYNFuqmQEVlkfS4Quif6FyYg==",
-        "dependencies": {
-          "Microsoft.NETFramework.ReferenceAssemblies.net20": "1.0.3"
-        }
-      },
-      "Microsoft.NETFramework.ReferenceAssemblies.net20": {
-        "type": "Transitive",
-        "resolved": "1.0.3",
-        "contentHash": "mvyTeaG1dVyCx24hjVnqk1YvR4fwS1fHxt1tdnzWMGCHc09mvNVGF+8VAobWSDi+iDz6fgJ7jE5d/mWap4PYoA=="
+        "requested": "[10.0.100, )",
+        "resolved": "10.0.100",
+        "contentHash": "uj9VuyvqylnNueJfU7u2PkI/hEMpZl8Wg9BXyI0eatNEldU5jDYPdwsM8aDL18+1oLovju25MiqOPaGRBnG72A=="
       }
     }
   }
