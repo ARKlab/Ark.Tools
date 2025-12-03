@@ -312,8 +312,8 @@
       },
       "FluentValidation": {
         "type": "Transitive",
-        "resolved": "12.1.0",
-        "contentHash": "FqWEn8BdbbFEHGanj9K8SVo+LyBeFWy2rolaE+e1TNUbifr8M7Iss+I1AqTSc8kjKtvjl/WN4XIHiRpslh42bA=="
+        "resolved": "12.1.1",
+        "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
       },
       "Flurl": {
         "type": "Transitive",
@@ -1421,7 +1421,7 @@
           "Asp.Versioning.Http": "[8.1.0, 9.0.0)",
           "Asp.Versioning.Mvc.ApiExplorer": "[8.1.0, 9.0.0)",
           "Asp.Versioning.OData.ApiExplorer": "[8.2.0, 9.0.0)",
-          "FluentValidation": "[12.1.0, )",
+          "FluentValidation": "[12.1.1, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "[10.0.0, 11.0.0)",
           "Microsoft.AspNetCore.OData": "[9.4.1, 10.0.0)",
@@ -1652,7 +1652,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Solid": "[1.0.0, )",
-          "FluentValidation": "[12.1.0, )"
+          "FluentValidation": "[12.1.1, )"
         }
       },
       "ark.tools.solid.simpleinjector": {
