@@ -19,9 +19,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.256, )",
-        "resolved": "2.0.256",
-        "contentHash": "G1X+rRfimtT/icOaFM/AeJk6Z2pc4N5dpPHXFAK/cmpFVi7I1a7QFe05mlN9nofER007pu+QYgN6o+heGIF+Vg=="
+        "requested": "[2.0.257, )",
+        "resolved": "2.0.257",
+        "contentHash": "HADbzZ4rto3boQpWyXIFFc9bxDPviscCXiSQWOTICKD1OJ4gwa9aMfANoQngOk/2en3I9YAHwQ0WXxVMzCTJ+A=="
       },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
@@ -500,8 +500,8 @@
       },
       "KubernetesClient": {
         "type": "Transitive",
-        "resolved": "18.0.5",
-        "contentHash": "xkttIbnGNibYwAyZ0sqeQle2w90bfaJrkF8BaURWHfSMKPbHwys9t/wq1XmT64eA4WRVXLENYlXtqmWlEstG6A==",
+        "resolved": "18.0.13",
+        "contentHash": "X5IuxmydftB148XeULtc7rD5/RvqLuW5SzkIjFovPgJpvV4RAoRqNPruVB7GEFu1Xg+zHVIk88WqdV8JjbgHbA==",
         "dependencies": {
           "Fractions": "7.3.0",
           "YamlDotNet": "16.3.0"
@@ -1756,7 +1756,7 @@
           "AspNetCore.HealthChecks.UI.InMemory.Storage": "[9.0.0, )",
           "Azure.Identity": "[1.17.1, )",
           "Azure.Messaging.ServiceBus": "[7.20.1, )",
-          "KubernetesClient": "[18.0.5, )",
+          "KubernetesClient": "[18.0.13, )",
           "Microsoft.ApplicationInsights": "[2.23.0, )"
         }
       },

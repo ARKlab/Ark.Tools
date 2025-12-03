@@ -40,7 +40,7 @@
 		<PackageReference Include="Azure.Identity" Version="1.17.1" />
 		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
 		<!-- Needed due to vulnerabilities from dependency AspNetCore.HealthChecks.UI that is not updated  -->
-		<PackageReference Include="KubernetesClient" Version="18.0.5" />
+		<PackageReference Include="KubernetesClient" Version="18.0.13" />
 	</ItemGroup>
 
 	<ItemGroup>
