@@ -178,12 +178,14 @@ namespace Ark.Reference.Core.WebInterface.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Partially update a Ping by Id
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="update"></param>
-        /// <param name="ctk"></param>
-        /// <returns></returns>
+        /// <param name="id">Id of the Ping to update</param>
+        /// <param name="update">The partial update information for the ping</param>
+        /// <param name="ctk">Cancellation token</param>
+        /// <returns>The updated Ping entity</returns>
+        /// <response code="200">Success</response>
+        /// <response code="404">Ping with supplied Id does not exist</response>
         [HttpPatch]
         [Route("{id}")]
         public async Task<IActionResult> Patch_Ping(
