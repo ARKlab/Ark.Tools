@@ -59,7 +59,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             if (lastslash >= tpath.Length)
                 return tpath;
 
-            return tpath.Substring(lastslash, tpath.Length - lastslash);
+            return tpath[lastslash..];
         }
 
         public static DateTime GetFtpDate(this string date, DateTimeStyles style)

@@ -23,7 +23,7 @@ namespace Ark.Tools.Core
             _type = typeof(T);
             _fi = _type.GetFields();
             _pi = _type.GetProperties();
-            _ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
+            _ordinalMap = new(StringComparer.Ordinal);
         }
 
         /// <summary> 

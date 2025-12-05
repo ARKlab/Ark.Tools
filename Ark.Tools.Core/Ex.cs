@@ -60,7 +60,7 @@ namespace Ark.Tools.Core
             else if (sValue.Length > iMaxLength)
             {
                 //Make the string no longer than the max length
-                sValue = sValue.Substring(0, iMaxLength);
+                sValue = sValue[..iMaxLength];
             }
 
             //Return the string
@@ -78,7 +78,7 @@ namespace Ark.Tools.Core
             else if (sValue.Length > iMaxLength)
             {
                 //Make the string no longer than the max length
-                sValue = sValue.Substring(sValue.Length - iMaxLength, iMaxLength);
+                sValue = sValue[^iMaxLength..];
             }
 
             //Return the string

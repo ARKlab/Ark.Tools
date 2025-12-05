@@ -58,7 +58,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
             foreach (var envVariable in filteredEnvVariables)
             {
-                var key = ((string)envVariable.Key).Substring(_prefix.Length);
+                var key = ((string)envVariable.Key)[_prefix.Length..];
                 data[key] = (string?)envVariable.Value;
             }
 
@@ -77,7 +77,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
         private static IEnumerable<DictionaryEntry> _normalizeConnectionString(IEnumerable<DictionaryEntry> filteredEnvVariables)
         {
-            var newFilteredEnvVariables = new List<DictionaryEntry>();
+            List<DictionaryEntry> newFilteredEnvVariables = new();
 
             foreach (var entry in filteredEnvVariables)
             {
@@ -129,14 +129,14 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
             // Return the key-value pair for connection string
             yield return new DictionaryEntry(
-                string.Format(CultureInfo.InvariantCulture, _connStrKeyFormat, _normalizeConnectionStringKey(key.Substring(prefix.Length))),
+                string.Format(CultureInfo.InvariantCulture, _connStrKeyFormat, _normalizeConnectionStringKey(key[prefix.Length..])),
                 entry.Value);
 
             if (!string.IsNullOrEmpty(provider))
             {
                 // Return the key-value pair for provider name
                 yield return new DictionaryEntry(
-                    string.Format(CultureInfo.InvariantCulture, _providerKeyFormat, _normalizeConnectionStringKey(key.Substring(prefix.Length))),
+                    string.Format(CultureInfo.InvariantCulture, _providerKeyFormat, _normalizeConnectionStringKey(key[prefix.Length..])),
                     provider);
             }
         }
