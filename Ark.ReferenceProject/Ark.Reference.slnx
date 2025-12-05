@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/Core/">
+    <Project Path="Core/Ark.Reference.Core.API/Ark.Reference.Core.API.csproj" />
+    <Project Path="Core/Ark.Reference.Core.Application/Ark.Reference.Core.Application.csproj" />
+    <Project Path="Core/Ark.Reference.Core.Common/Ark.Reference.Core.Common.csproj" />
+    <Project Path="Core/Ark.Reference.Core.Database/Ark.Reference.Core.Database.sqlproj">
+      <Build />
+      <Deploy />
+    </Project>
+    <Project Path="Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj" />
+    <Project Path="Core/Ark.Reference.Core.WebInterface/Ark.Reference.Core.WebInterface.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Ark.Reference.Core.buildStage.yml" />
+    <File Path="Ark.Reference.Core.deployStage.yml" />
+    <File Path="Ark.Reference.Core.yml" />
+    <File Path="CodeCoverage.runsettings" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Ark.Reference.Common/Ark.Reference.Common.csproj" />
+</Solution>

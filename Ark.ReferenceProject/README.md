@@ -1,8 +1,10 @@
-# Ark.Reference.Core
+# Ark.Reference
 
 ## Introduction
 
-The Ark.Reference.Core project is a reference implementation demonstrating the use of Ark.Tools libraries to build a modern .NET web API. This project showcases best practices for building production-ready LOB (Line of Business) applications using Ark.Tools.
+The Ark.Reference project is a **monorepo** containing reference implementations demonstrating the use of Ark.Tools libraries to build modern .NET web APIs. This project showcases best practices for building production-ready LOB (Line of Business) applications using Ark.Tools.
+
+**Ark.Reference.Core** is the main/default service in this monorepo, serving as the primary reference implementation. Additional services may be added to demonstrate different architectural patterns or use cases.
 
 ### Key Features
 
@@ -15,27 +17,84 @@ The Ark.Reference.Core project is a reference implementation demonstrating the u
 - **Testing**: Comprehensive BDD tests using Reqnroll
 - **API Documentation**: Swagger/OpenAPI integration with authentication flows
 
-## Project Structure
+## Monorepo Structure
+
+This repository follows a **monorepo** pattern, allowing multiple services to coexist and share common libraries:
 
 ```
 Ark.ReferenceProject/
-├── Core/
+├── Core/                                # Main/default service (Ark.Reference.Core)
 │   ├── Ark.Reference.Core.API/          # API contracts (Queries, Requests, Messages)
 │   ├── Ark.Reference.Core.Application/  # Business logic and handlers
 │   ├── Ark.Reference.Core.Common/       # Shared DTOs, enums, and constants
 │   ├── Ark.Reference.Core.Database/     # SQL Server database project
 │   ├── Ark.Reference.Core.Tests/        # Integration tests (Reqnroll)
 │   └── Ark.Reference.Core.WebInterface/ # Web API controllers and startup
-└── Ark.Reference.Common/                # Shared services (Audit, etc.)
+├── Ark.Reference.Common/                # Shared services across all services (Audit, etc.)
+└── [Future services can be added here]  # Additional services following same structure
 ```
+
+Each service in the monorepo follows the same clean architecture pattern with API, Application, Common, Database, Tests, and WebInterface layers.
 
 ## Getting Started
 
 ### Prerequisites
 
 - [.NET SDK 10.0.100](https://dotnet.microsoft.com/download/dotnet/10.0) (as specified in `global.json`)
-- SQL Server (LocalDB, Express, or full instance) for local development
-- Docker (optional, for running integration tests with containerized dependencies)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) for local development dependencies
+
+### Local Development Environment
+
+For a consistent development environment that matches the CI pipeline, use Docker containers for dependencies:
+
+1. **SQL Server** (via Docker):
+   ```bash
+   docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=YourStrong@Password" \
+     -p 1433:1433 --name sqlserver --hostname sqlserver \
+     -d mcr.microsoft.com/mssql/server:2022-latest
+   ```
+
+2. **Azurite** (Azure Storage Emulator via Docker):
+   ```bash
+   docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 \
+     --name azurite \
+     -d mcr.microsoft.com/azure-storage/azurite
+   ```
+
+Alternatively, use Docker Compose to start all dependencies:
+
+```bash
+# Create a docker-compose.yml in the ReferenceProject directory
+docker-compose up -d
+```
+
+Example `docker-compose.yml`:
+```yaml
+version: '3.8'
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Password
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azurite-data:/data
+
+volumes:
+  sqlserver-data:
+  azurite-data:
+```
 
 ### Installation
 
@@ -45,21 +104,26 @@ Ark.ReferenceProject/
    cd Ark.Tools/Ark.ReferenceProject
    ```
 
-2. Restore NuGet packages:
+2. Start local dependencies with Docker:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. Restore NuGet packages:
    ```bash
    dotnet restore
    ```
 
-3. Update connection strings in `appsettings.json` or use environment variables:
+4. Update connection strings in `appsettings.json` or use environment variables:
    ```json
    {
      "ConnectionStrings": {
-       "Core": "Server=(localdb)\\mssqllocaldb;Database=ArkReferenceCore;Trusted_Connection=True;"
+       "Core": "Server=localhost,1433;Database=ArkReferenceCore;User Id=sa;Password=YourStrong@Password;TrustServerCertificate=True;"
      }
    }
    ```
 
-4. Deploy the database schema:
+5. Deploy the database schema:
    ```bash
    # The database project will be deployed automatically during the build process
    dotnet build
@@ -90,9 +154,14 @@ dotnet build --configuration Release
 
 ### Running Tests
 
-The integration tests require SQL Server and use Reqnroll for BDD-style testing.
+The integration tests use Reqnroll for BDD-style testing and require the same Docker-based dependencies as the application.
+
+**Prerequisites**: Ensure Docker containers are running (SQL Server and Azurite)
 
 ```bash
+# Start dependencies if not already running
+docker-compose up -d
+
 # Run all tests
 dotnet test --configuration Debug
 
@@ -100,11 +169,11 @@ dotnet test --configuration Debug
 dotnet test --collect:"XPlat Code Coverage"
 ```
 
-**Note**: Integration tests require:
-- SQL Server instance (configured in `appsettings.SpecFlow.json`)
-- Azure Storage Emulator or Azurite (for blob storage tests)
+**Test Dependencies**:
+- SQL Server (via Docker container, configured in `appsettings.SpecFlow.json`)
+- Azurite (Azure Storage Emulator via Docker container for blob storage tests)
 
-For CI/CD environments, use Docker containers to provide these dependencies (see `.github/workflows/ci.yml` in the main repository).
+The test environment mirrors the CI pipeline environment, ensuring consistency between local development and automated builds.
 
 ## Configuration
 
