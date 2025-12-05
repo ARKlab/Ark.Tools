@@ -118,7 +118,10 @@ namespace Ark.Reference.Core.WebInterface.Utils
                 o.TokenValidationParameters = TokenValidator();
 
                 o.TokenValidationParameters.NameClaimType = "name";
-#pragma warning disable CS0618 // Type or member is obsolete //TODO
+                // NOTE: SecurityTokenValidators is obsolete in newer versions, but required for custom claim mapping.
+                // Modern alternative would use MapInboundClaims property on JwtSecurityTokenHandler,
+                // but this requires different initialization pattern. Keeping current approach for backward compatibility.
+#pragma warning disable CS0618 // Type or member is obsolete
                 (o.SecurityTokenValidators[0] as JwtSecurityTokenHandler)?.InboundClaimTypeMap.Add("extension_permissions", "scope");
 #pragma warning restore CS0618 // Type or member is obsolete
 
