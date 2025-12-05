@@ -52,7 +52,7 @@ namespace Ark.Tools.Core
                 }
             }
 
-            if (disposables != null)
+            if (disposables is not null)
             {
                 foreach (var d in disposables)
                 {
