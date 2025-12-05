@@ -334,8 +334,9 @@ namespace Ark.Tools.FtpClient.FtpRequest
 
         public static DateTime GetFtpDate(this string date, DateTimeStyles style)
         {
-            string[] formats = new string[] { 
-                "yyyyMMddHHmmss", 
+            string[] formats =
+            [
+                "yyyyMMddHHmmss",
                 "yyyyMMddHHmmss.fff",
                 "MMM dd  yyyy",
                 "MMM  d  yyyy",
@@ -343,7 +344,7 @@ namespace Ark.Tools.FtpClient.FtpRequest
                 "MMM  d HH:mm",
                 "MM-dd-yy  hh:mmtt",
                 "MM-dd-yyyy  hh:mmtt"
-            };
+            ];
             DateTime parsed;
 
             if (DateTime.TryParseExact(date, formats, CultureInfo.InvariantCulture, style, out parsed))

@@ -64,7 +64,8 @@ namespace Ark.Tools.FtpClient.SftpClient
 
         public static DateTime GetFtpDate(this string date, DateTimeStyles style)
         {
-            string[] formats = [
+            string[] formats =
+            [
                 "yyyyMMddHHmmss",
                 "yyyyMMddHHmmss.fff",
                 "MMM dd  yyyy",

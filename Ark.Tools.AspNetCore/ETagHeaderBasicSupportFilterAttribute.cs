@@ -18,7 +18,8 @@ namespace Ark.Tools.AspNetCore
         {
             var reqHeader = context.HttpContext.Request.GetTypedHeaders();
 
-            if (new[] { HttpMethods.Put, HttpMethods.Post, HttpMethods.Patch }.Contains(context.HttpContext.Request.Method, StringComparer.Ordinal)
+            string[] methods = [HttpMethods.Put, HttpMethods.Post, HttpMethods.Patch];
+            if (methods.Contains(context.HttpContext.Request.Method, StringComparer.Ordinal)
                 && context.ActionArguments.Values.OfType<IEntityWithETag>().Count() == 1
                 )
             {
@@ -42,7 +43,8 @@ namespace Ark.Tools.AspNetCore
                 && result.Value is IEntityWithETag etag)
             {
                 // if is a GET with If-None-Match and there is a match return 304
-                if (new[] { HttpMethods.Get, HttpMethods.Head }.Contains(context.HttpContext.Request.Method, StringComparer.Ordinal)
+                string[] getMethods = [HttpMethods.Get, HttpMethods.Head];
+                if (getMethods.Contains(context.HttpContext.Request.Method, StringComparer.Ordinal)
                     && reqHeader.IfNoneMatch?.Contains(new EntityTagHeaderValue($"\"{etag._ETag}\"")) == true)
                     context.Result = new StatusCodeResult(304);
 
