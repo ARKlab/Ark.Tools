@@ -20,14 +20,14 @@ namespace Ark.Tools.Core
 
         public DisposableContainer()
         {
-            _disposables = new List<IDisposable>(DefaultCapacity);
+            _disposables = new(DefaultCapacity);
         }
 
         public DisposableContainer(params IDisposable[] disposables)
         {
             Ensure.Any.IsNotNull(disposables);
 
-            _disposables = new List<IDisposable>(disposables.Length);
+            _disposables = new(disposables.Length);
             foreach (var d in disposables)
             {
                 Ensure.Any.IsNotNull(d);
@@ -52,7 +52,7 @@ namespace Ark.Tools.Core
                 }
             }
 
-            if (disposables != null)
+            if (disposables is not null)
             {
                 foreach (var d in disposables)
                 {

@@ -65,7 +65,7 @@ namespace Org.Mentalis.Network.ProxySocket
             if ((!header.StartsWith("HTTP/1.1 ", StringComparison.OrdinalIgnoreCase) &&
                  !header.StartsWith("HTTP/1.0 ", StringComparison.OrdinalIgnoreCase)) || !header.EndsWith(' '))
                 throw new ProtocolViolationException();
-            string code = header.Substring(9, 3);
+            string code = header[9..12];
             if (code != "200")
                 throw new ProxyException("Invalid HTTP status. Code: " + code);
         }

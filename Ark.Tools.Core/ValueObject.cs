@@ -55,7 +55,7 @@ namespace Ark.Tools.Core
                     return false;
                 }
 
-                if (thisValues.Current != null &&
+                if (thisValues.Current is not null &&
                     !thisValues.Current.Equals(otherValues.Current))
                 {
                     return false;

@@ -273,7 +273,7 @@ namespace Ark.Tools.Core
             }
             if (genericTypeName.IndexOf('`') >= 0)
             {
-                genericTypeName = genericTypeName.Substring(0, genericTypeName.IndexOf('`'));
+                genericTypeName = genericTypeName[..genericTypeName.IndexOf('`')];
                 string genericArgs = string.Join(", ", arguments.Select(a => a._toGenericTypeString()).ToArray());
                 //Recursive
                 genericTypeName = genericTypeName + "<" + genericArgs + ">";
@@ -284,7 +284,7 @@ namespace Ark.Tools.Core
                 genericTypeName += t.FullName.Replace(genericType._toCSReservatedWord(true), "").Replace('+', '.');
             }
             if (genericTypeName.IndexOf('[') >= 0 && genericTypeName.IndexOf(']') != genericTypeName.IndexOf('[') + 1)
-                genericTypeName = genericTypeName.Substring(0, genericTypeName.IndexOf('['));//For a non generic class nested in a generic class we will still have the type parameters at the end 
+                genericTypeName = genericTypeName[..genericTypeName.IndexOf('[')];//For a non generic class nested in a generic class we will still have the type parameters at the end
             return genericTypeName;
         }
     }

@@ -34,7 +34,7 @@ namespace Ark.Tools.Core
         {
             HashCode hash = new();
 
-            if (enumerable != null)
+            if (enumerable is not null)
                 foreach (var e in enumerable)
                     hash.Add(e, _comparer);
 

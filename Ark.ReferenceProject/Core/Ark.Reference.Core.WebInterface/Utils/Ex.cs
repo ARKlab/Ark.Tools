@@ -74,7 +74,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
                     if (!authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                         return null;
 
-                    var token = authorization.Substring("Bearer ".Length).Trim();
+                    var token = authorization["Bearer ".Length..].Trim();
                     if (string.IsNullOrEmpty(token))
                         return null;
 

@@ -9,7 +9,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
 
         public AggregateNameAttribute(string name)
         {
-            if (string.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
+            ArgumentException.ThrowIfNullOrEmpty(name);
 
             Name = name;
         }
@@ -22,7 +22,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
 
         public EventNameAttribute(string name)
         {
-            if (string.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
+            ArgumentException.ThrowIfNullOrEmpty(name);
 
             Name = name;
         }

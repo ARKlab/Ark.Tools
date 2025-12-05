@@ -23,7 +23,7 @@ namespace Ark.Tools.Core
             _type = typeof(T);
             _fi = _type.GetFields();
             _pi = _type.GetProperties();
-            _ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
+            _ordinalMap = new(StringComparer.Ordinal);
         }
 
         /// <summary> 
@@ -59,7 +59,7 @@ namespace Ark.Tools.Core
             {
                 while (e.MoveNext())
                 {
-                    if (options != null)
+                    if (options is not null)
                     {
                         table.LoadDataRow(ShredObject(table, e.Current), options.Value);
                     }
@@ -97,7 +97,7 @@ namespace Ark.Tools.Core
                 {
                     values[table.Columns["Value"]!.Ordinal] = e.Current;
 
-                    if (options != null)
+                    if (options is not null)
                     {
                         table.LoadDataRow(values, (LoadOption)options);
                     }
@@ -166,7 +166,7 @@ namespace Ark.Tools.Core
         private Type _deriveColumnType(Type elementType)
         {
             var nullableType = Nullable.GetUnderlyingType(elementType);
-            if (nullableType != null)
+            if (nullableType is not null)
             {
                 elementType = nullableType;
             }
@@ -193,7 +193,7 @@ namespace Ark.Tools.Core
             var elementType = value.GetType();
 
             var nullableType = Nullable.GetUnderlyingType(elementType);
-            if (nullableType != null)
+            if (nullableType is not null)
             {
                 elementType = nullableType;
             }
