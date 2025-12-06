@@ -11,11 +11,19 @@ using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Requests
 {
+    /// <summary>
+    /// Handler for deleting a Ping entity
+    /// </summary>
     public class Ping_DeleteRequestHandler : IRequestHandler<Ping_DeleteRequest.V1, bool>
     {
         private readonly ICoreDataContextFactory _coreDataContext;
         private readonly IContextProvider<ClaimsPrincipal> _userContext;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Ping_DeleteRequestHandler"/> class
+        /// </summary>
+        /// <param name="coreDataContext">The data context factory</param>
+        /// <param name="userContext">The user context provider</param>
         public Ping_DeleteRequestHandler(
               ICoreDataContextFactory coreDataContext
               , IContextProvider<ClaimsPrincipal> userContext
@@ -28,11 +36,13 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
             _userContext = userContext;
         }
 
+        /// <inheritdoc/>
         public bool Execute(Ping_DeleteRequest.V1 request)
         {
             return ExecuteAsync(request).GetAwaiter().GetResult();
         }
 
+        /// <inheritdoc/>
         public async Task<bool> ExecuteAsync(Ping_DeleteRequest.V1 request, CancellationToken ctk = default)
         {
             await using var ctx = await _coreDataContext.CreateAsync(ctk);

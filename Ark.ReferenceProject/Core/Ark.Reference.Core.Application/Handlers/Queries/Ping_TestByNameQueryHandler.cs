@@ -9,19 +9,18 @@ using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries
 {
+    /// <summary>
+    /// Handler for testing Ping retrieval by name (demonstration/test handler)
+    /// </summary>
     internal sealed class Ping_TestByNameQueryHandler : IQueryHandler<Ping_GetByNameQuery.V1, Ping.V1.Output>
     {
-
-        public Ping_TestByNameQueryHandler()
-        {
-
-        }
-
+        /// <inheritdoc/>
         public Ping.V1.Output Execute(Ping_GetByNameQuery.V1 query)
         {
             return ExecuteAsync(query).GetAwaiter().GetResult();
         }
 
+        /// <inheritdoc/>
         public async Task<Ping.V1.Output> ExecuteAsync(Ping_GetByNameQuery.V1 query, CancellationToken ctk = default)
         {
             EnsureArg.IsNotNull(query, nameof(query));

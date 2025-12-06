@@ -26,7 +26,7 @@ stages:
     variables:
       serviceName: ${{ parameters.serviceName }}
       projectName: ${{ parameters.projectName }}
-      solutionPath: '${{ parameters.workingDirectory }}/${{ parameters.projectName }}.sln'
+      solutionPath: '${{ parameters.workingDirectory }}/${{ parameters.projectName }}.slnx'
       servicePath: '${{ parameters.workingDirectory }}/${{ parameters.serviceName }}'
       webInterfaceProject: '${{ parameters.projectName }}.${{ parameters.serviceName }}.WebInterface'
       databaseProject: '${{ parameters.projectName }}.${{ parameters.serviceName }}.Database'

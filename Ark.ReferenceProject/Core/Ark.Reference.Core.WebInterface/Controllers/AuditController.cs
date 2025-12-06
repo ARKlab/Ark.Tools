@@ -32,7 +32,15 @@ namespace Ark.Reference.Core.WebInterface.Controllers
         /// <summary>
         /// Retrieves the audits by filters
         /// </summary>
-        /// <remarks></remarks>
+        /// <param name="auditIds">Filter by audit IDs</param>
+        /// <param name="users">Filter by user names</param>
+        /// <param name="fromDateTime">Filter audits from this date/time</param>
+        /// <param name="toDateTime">Filter audits to this date/time</param>
+        /// <param name="auditKinds">Filter by audit kinds</param>
+        /// <param name="skip">Number of records to skip</param>
+        /// <param name="limit">Maximum number of records to return</param>
+        /// <param name="ctk">Cancellation token</param>
+        /// <returns>A paged result of audit records</returns>
         /// <response code="200">The audit array</response>
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<AuditDto<AuditKind>>), 200)]
@@ -46,35 +54,29 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             , [FromQuery] int limit
             , CancellationToken ctk = default)
         {
-            try
+            var query = new Audit_GetQuery.V1()
             {
-                var query = new Audit_GetQuery.V1()
-                {
-                    AuditIds = auditIds,
-                    Users = users,
-                    FromDateTime = fromDateTime,
-                    ToDateTime = toDateTime,
-                    AuditKinds = auditKinds,
-                    Skip = skip,
-                    Limit = limit
-                };
+                AuditIds = auditIds,
+                Users = users,
+                FromDateTime = fromDateTime,
+                ToDateTime = toDateTime,
+                AuditKinds = auditKinds,
+                Skip = skip,
+                Limit = limit
+            };
 
-                var res = await _queryProcessor.ExecuteAsync(query, ctk: ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk: ctk);
 
-                return this.Ok(res);
-            }
-            catch (Exception ex)
-            {
-                _ = ex.Message;
-                throw;
-            }
+            return this.Ok(res);
         }
 
         /// <summary>
-        /// Retrieves the audits by filters
+        /// Retrieves the changes for a specific audit record
         /// </summary>
-        /// <remarks></remarks>
-        /// <response code="200">The audit array</response>
+        /// <param name="auditId">The audit ID to retrieve changes for</param>
+        /// <param name="ctk">Cancellation token</param>
+        /// <returns>The audit changes showing previous and current values</returns>
+        /// <response code="200">The audit changes</response>
         [HttpGet("{auditID:guid}/changes")]
         [ProducesResponseType(typeof(AuditRecordReturn.V1<IAuditEntity>), 200)]
         public async Task<IActionResult> GetAuditChangesQuery([FromRoute] Guid auditId, CancellationToken ctk = default)
@@ -90,8 +92,9 @@ namespace Ark.Reference.Core.WebInterface.Controllers
         /// <summary>
         /// Retrieves list of audit users
         /// </summary>
-        /// <remarks></remarks>
-        /// <response code="200"></response>
+        /// <param name="ctk">Cancellation token</param>
+        /// <returns>A list of unique user names that have audit records</returns>
+        /// <response code="200">List of user names</response>
         [HttpGet("users")]
         [ProducesResponseType(typeof(IEnumerable<string>), 200)]
         public async Task<IActionResult> GetAuditUsersQuery(CancellationToken ctk = default)

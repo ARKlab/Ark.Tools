@@ -11,10 +11,17 @@ using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries
 {
+    /// <summary>
+    /// Handler for retrieving Ping entities using filters with pagination
+    /// </summary>
     public class Ping_GetByFiltersHandler : IQueryHandler<Ping_GetByFiltersQuery.V1, PagedResult<Ping.V1.Output>>
     {
         private readonly ICoreDataContextFactory _coreDataContext;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Ping_GetByFiltersHandler"/> class
+        /// </summary>
+        /// <param name="coreDataContext">The data context factory</param>
         public Ping_GetByFiltersHandler(ICoreDataContextFactory coreDataContext)
         {
             EnsureArg.IsNotNull(coreDataContext, nameof(coreDataContext));
@@ -22,11 +29,13 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
             _coreDataContext = coreDataContext;
         }
 
+        /// <inheritdoc/>
         public PagedResult<Ping.V1.Output> Execute(Ping_GetByFiltersQuery.V1 query)
         {
             return ExecuteAsync(query).GetAwaiter().GetResult();
         }
 
+        /// <inheritdoc/>
         public async Task<PagedResult<Ping.V1.Output>> ExecuteAsync(Ping_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
         {
             EnsureArg.IsNotNull(query, nameof(query));
