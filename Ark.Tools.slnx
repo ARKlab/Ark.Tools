@@ -1,0 +1,110 @@
+<Solution>
+  <Folder Name="/ArkReferenceProject/">
+    <File Path="Ark.ReferenceProject/.editorconfig" />
+    <File Path="Ark.ReferenceProject/Ark.Reference.Core.buildStage.yml" />
+    <File Path="Ark.ReferenceProject/Ark.Reference.Core.deployStage.yml" />
+    <File Path="Ark.ReferenceProject/Ark.Reference.Core.yml" />
+    <File Path="Ark.ReferenceProject/CodeCoverage.runsettings" />
+    <File Path="Ark.ReferenceProject/Directory.Build.props" />
+    <File Path="Ark.ReferenceProject/Directory.Build.targets" />
+    <File Path="Ark.ReferenceProject/global.json" />
+    <Project Path="Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
+  </Folder>
+  <Folder Name="/ArkReferenceProject/Core/">
+    <Project Path="Ark.ReferenceProject/Core/Ark.Reference.Core.API/Ark.Reference.Core.API.csproj" />
+    <Project Path="Ark.ReferenceProject/Core/Ark.Reference.Core.Application/Ark.Reference.Core.Application.csproj" />
+    <Project Path="Ark.ReferenceProject/Core/Ark.Reference.Core.Common/Ark.Reference.Core.Common.csproj" />
+    <Project Path="Ark.ReferenceProject/Core/Ark.Reference.Core.Database/Ark.Reference.Core.Database.sqlproj">
+      <Build />
+      <Deploy />
+    </Project>
+    <Project Path="Ark.ReferenceProject/Core/Ark.Reference.Core.WebInterface/Ark.Reference.Core.WebInterface.csproj" />
+  </Folder>
+  <Folder Name="/ArkReferenceProject/Core/Tests/">
+    <Project Path="Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Samples/">
+    <File Path="Samples/.editorconfig" />
+    <Project Path="Samples/LinuxWebJobHosting/LinuxWebJobHosting.csproj" />
+    <Project Path="Samples/ProblemDetailsSample/ProblemDetailsSample.csproj" />
+    <Project Path="Samples/Test.SingletonBackgroundService/Test.SingletonBackgroundService.csproj">
+      <BuildDependency Project="Ark.Tools.Hosting/Ark.Tools.Hosting.csproj" />
+    </Project>
+    <Project Path="Samples/TesterWorker/TesterWorker.csproj" />
+    <Project Path="Samples/TestLinkGenerator/TestLinkGenerator.csproj" />
+    <Project Path="Samples/TestProject/TestProject.csproj" />
+    <Project Path="Samples/TestReceiver/TestReceiver.csproj" />
+    <Project Path="Samples/TestWorker/TestWorker.csproj" />
+    <Project Path="Samples/WebApplicationDemo/WebApplicationDemo.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".devcontainer/docker-compose.yml" />
+    <File Path=".editorconfig" />
+    <File Path="Ark.Tools.sln.licenseheader" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props.disable" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Ark.Tasks/Ark.Tasks.csproj" />
+  <Project Path="Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
+  <Project Path="Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
+  <Project Path="Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.Auth0/Ark.Tools.AspNetCore.Auth0.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.BasicAuthAuth0Proxy/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy/Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.CommaSeparatedParameters/Ark.Tools.AspNetCore.CommaSeparatedParameters.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.HealthChecks/Ark.Tools.AspNetCore.HealthChecks.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.MessagePack/Ark.Tools.AspNetCore.MessagePack.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.NestedStartup/Ark.Tools.AspNetCore.NestedStartup.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.RavenDb/Ark.Tools.AspNetCore.RavenDb.csproj" />
+  <Project Path="Ark.Tools.AspNetCore.Swashbuckle/Ark.Tools.AspNetCore.Swashbuckle.csproj" />
+  <Project Path="Ark.Tools.AspNetCore/Ark.Tools.AspNetCore.csproj" />
+  <Project Path="Ark.Tools.Auth0/Ark.Tools.Auth0.csproj" />
+  <Project Path="Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
+  <Project Path="Ark.Tools.Core/Ark.Tools.Core.csproj" />
+  <Project Path="Ark.Tools.EventSourcing.RavenDb/Ark.Tools.EventSourcing.RavenDb.csproj" />
+  <Project Path="Ark.Tools.EventSourcing.Rebus/Ark.Tools.EventSourcing.Rebus.csproj" />
+  <Project Path="Ark.Tools.EventSourcing.SimpleInjector/Ark.Tools.EventSourcing.SimpleInjector.csproj" />
+  <Project Path="Ark.Tools.EventSourcing/Ark.Tools.EventSourcing.csproj" />
+  <Project Path="Ark.Tools.FtpClient.ArxOne/Ark.Tools.FtpClient.ArxOne.csproj" />
+  <Project Path="Ark.Tools.FtpClient.Core/Ark.Tools.FtpClient.Core.csproj" />
+  <Project Path="Ark.Tools.FtpClient.FluentFtp/Ark.Tools.FtpClient.FluentFtp.csproj" />
+  <Project Path="Ark.Tools.FtpClient.FtpProxy/Ark.Tools.FtpClient.FtpProxy.csproj" />
+  <Project Path="Ark.Tools.FtpClient.SftpClient/Ark.Tools.FtpClient.SftpClient.csproj" />
+  <Project Path="Ark.Tools.Hosting/Ark.Tools.Hosting.csproj" />
+  <Project Path="Ark.Tools.Http/Ark.Tools.Http.csproj" />
+  <Project Path="Ark.Tools.NewtonsoftJson/Ark.Tools.NewtonsoftJson.csproj" />
+  <Project Path="Ark.Tools.NLog.Configuration/Ark.Tools.NLog.Configuration.csproj" />
+  <Project Path="Ark.Tools.NLog.ConfigurationManager/Ark.Tools.NLog.ConfigurationManager.csproj" />
+  <Project Path="Ark.Tools.NLog/Ark.Tools.NLog.csproj" />
+  <Project Path="Ark.Tools.Nodatime.Dapper/Ark.Tools.Nodatime.Dapper.csproj" />
+  <Project Path="Ark.Tools.Nodatime.Json/Ark.Tools.Nodatime.Json.csproj" />
+  <Project Path="Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj" />
+  <Project Path="Ark.Tools.Nodatime/Ark.Tools.Nodatime.csproj" />
+  <Project Path="Ark.Tools.Outbox.Rebus/Ark.Tools.Outbox.Rebus.csproj" />
+  <Project Path="Ark.Tools.Outbox.SqlServer/Ark.Tools.Outbox.SqlServer.csproj" />
+  <Project Path="Ark.Tools.Outbox/Ark.Tools.Outbox.csproj" />
+  <Project Path="Ark.Tools.RavenDb.Auditing/Ark.Tools.RavenDb.Auditing.csproj" />
+  <Project Path="Ark.Tools.RavenDb/Ark.Tools.RavenDb.csproj" />
+  <Project Path="Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
+  <Project Path="Ark.Tools.Reqnroll/Ark.Tools.Reqnroll.csproj" />
+  <Project Path="Ark.Tools.ResourceWatcher.ApplicationInsights/Ark.Tools.ResourceWatcher.ApplicationInsights.csproj" />
+  <Project Path="Ark.Tools.ResourceWatcher.Sql/Ark.Tools.ResourceWatcher.Sql.csproj" />
+  <Project Path="Ark.Tools.ResourceWatcher.WorkerHost.Ftp/Ark.Tools.ResourceWatcher.WorkerHost.Ftp.csproj" />
+  <Project Path="Ark.Tools.ResourceWatcher.WorkerHost.Hosting/Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />
+  <Project Path="Ark.Tools.ResourceWatcher.WorkerHost.Sql/Ark.Tools.ResourceWatcher.WorkerHost.Sql.csproj" />
+  <Project Path="Ark.Tools.ResourceWatcher.WorkerHost/Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
+  <Project Path="Ark.Tools.ResourceWatcher/Ark.Tools.ResourceWatcher.csproj" />
+  <Project Path="Ark.Tools.SimpleInjector/Ark.Tools.SimpleInjector.csproj" />
+  <Project Path="Ark.Tools.Solid.Authorization/Ark.Tools.Solid.Authorization.csproj" />
+  <Project Path="Ark.Tools.Solid.FluentValidaton/Ark.Tools.Solid.FluentValidaton.csproj" />
+  <Project Path="Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
+  <Project Path="Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
+  <Project Path="Ark.Tools.Sql.Oracle/Ark.Tools.Sql.Oracle.csproj" />
+  <Project Path="Ark.Tools.Sql.SqlServer/Ark.Tools.Sql.SqlServer.csproj" />
+  <Project Path="Ark.Tools.Sql/Ark.Tools.Sql.csproj" />
+  <Project Path="Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
+</Solution>
