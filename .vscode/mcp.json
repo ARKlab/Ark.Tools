@@ -1,17 +1,44 @@
 {
+  "inputs": [
+	{
+	  "id": "ado_org",
+	  "type": "promptString",
+	  "description": "Azure DevOps organization name  (e.g. 'contoso')"
+	}
+  ],
 	"servers": {
 		"microsoftdocs/mcp": {
 			"type": "http",
-			"url": "https://learn.microsoft.com/api/mcp",
-			"gallery": "https://api.mcp.github.com",
-			"version": "1.0.0"
+			"url": "https://learn.microsoft.com/api/mcp"
 		},
-		"github/github-mcp-server": {
-			"type": "http",
-			"url": "https://api.githubcopilot.com/mcp/",
-			"gallery": "https://api.mcp.github.com",
-			"version": "0.13.0"
-		}
-	},
-	"inputs": []
+	    "github": {
+	      "url": "https://api.githubcopilot.com/mcp/"
+	    },
+		"NuGet.Mcp.Server": {
+	      "type": "stdio",
+	      "command": "dnx",
+	      "args": ["NuGet.Mcp.Server", "--yes"]
+	    },
+		"awesome-copilot": {
+	      "type": "stdio",
+	      "command": "docker",
+	      "args": [
+	        "run",
+	        "-i",
+	        "--rm",
+	        "ghcr.io/microsoft/mcp-dotnet-samples/awesome-copilot:latest"
+	      ]
+	    },
+	    "playwright": {
+	      "command": "npx",
+	      "args": [
+	        "@playwright/mcp@latest"
+	      ]
+	    },
+	    "ado": {
+	      "type": "stdio",
+	      "command": "npx",
+	      "args": ["-y", "@azure-devops/mcp", "${input:ado_org}"]
+	    }
+	}
 }
