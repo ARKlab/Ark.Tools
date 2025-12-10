@@ -10,9 +10,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.100, )",
-        "resolved": "10.0.100",
-        "contentHash": "uj9VuyvqylnNueJfU7u2PkI/hEMpZl8Wg9BXyI0eatNEldU5jDYPdwsM8aDL18+1oLovju25MiqOPaGRBnG72A=="
+        "requested": "[10.0.101, )",
+        "resolved": "10.0.101",
+        "contentHash": "nbq9XaN1hXbeaAAaI2Cv9su+TSs8n8iu9VmltGXDmQSTKDXh02AKykGYdHiVeaQaVvwxGJRwjsaTPSPYiD/RNQ=="
       }
     }
   }
