@@ -8,6 +8,7 @@ using Microsoft.Data.SqlClient;
 using NLog;
 using NLog.Common;
 using NLog.Config;
+using NLog.Filters;
 using NLog.LayoutRenderers;
 using NLog.Layouts;
 using NLog.MailKit;
@@ -15,6 +16,7 @@ using NLog.Targets;
 using NLog.Targets.Wrappers;
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
@@ -557,6 +559,44 @@ VALUES
                 return this;
             }
 
+            #endregion
+
+            #region Filters
+            public Configurer WithDatabaseFilters(string loggerPattern, IList<ConditionBasedFilter> filters, LogLevel level, bool final = false)
+            {
+                var target = _config.FindTargetByName(DatabaseTarget);
+                var ruleName = $"{DatabaseTarget}-{loggerPattern}-filters";
+                _config.RemoveRuleByName(ruleName);
+
+                var rule = new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final };
+
+                foreach (var filter in filters) 
+                {
+                    rule.Filters.Add(filter);
+                }
+
+                _config.AddRule(rule);
+
+                return this;
+            }
+
+            public Configurer WithDatabaseFilters(string loggerPattern, IList<ConditionBasedFilter> filters, LogLevel minLevel, LogLevel maxLevel, bool final = false)
+            {
+                var target = _config.FindTargetByName(DatabaseTarget);
+                var ruleName = $"{DatabaseTarget}-{loggerPattern}-filters";
+                _config.RemoveRuleByName(ruleName);
+
+                var rule = new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final };
+
+                foreach (var filter in filters)
+                {
+                    rule.Filters.Add(filter);
+                }
+
+                _config.AddRule(rule);
+
+                return this;
+            }
             #endregion
 
             public Configurer DisableMailRuleWhenInVisualStudio()
