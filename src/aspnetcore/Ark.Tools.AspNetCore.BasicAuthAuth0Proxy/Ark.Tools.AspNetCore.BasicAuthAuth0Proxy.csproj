@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+
+  <!-- the other props are defined in Directory.Build.props -->
+
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <TargetFrameworks>net10.0</TargetFrameworks>
+
+    <Description>A middleware for converting basic-auth to bearer tokens using Resource Owner flow for Auth0</Description>
+    <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Auth0</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(AspNetCoreGroupVersion)</Version>
+    <VersionSuffix>$(AspNetCoreGroupVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\Ark.Tools.Auth0\Ark.Tools.Auth0.csproj" />
+  </ItemGroup>
+  
+</Project>

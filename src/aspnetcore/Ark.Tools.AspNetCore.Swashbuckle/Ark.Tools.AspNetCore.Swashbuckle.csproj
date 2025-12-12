@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+	  <TargetFrameworks>net10.0</TargetFrameworks>
+    
+    <Description>Extensions of Swashbuckle.AspNetCore</Description>
+    <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Swashbuckle;Swagger</PackageTags>
+
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(AspNetCoreGroupVersion)</Version>
+    <VersionSuffix>$(AspNetCoreGroupVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+      
+  <ItemGroup>
+	  <PackageReference Include="Asp.Versioning.OData.ApiExplorer" Version="[8.2.0,9)" />
+	  <PackageReference Include="Microsoft.AspNetCore.OData" Version="[9.4.1,10)" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.0.1" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.0.1" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.0.1" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.0.1" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.0.1" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="10.0.1" />
+  </ItemGroup>
+      
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
+  </ItemGroup>
+      
+</Project>

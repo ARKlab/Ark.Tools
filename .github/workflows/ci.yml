@@ -42,7 +42,7 @@ jobs:
       run: dotnet build --no-restore --configuration Debug
 
     - name: Test
-      run: dotnet test --no-restore --configuration Debug --logger "trx;LogFileName=test-results.trx" --blame --blame-crash --blame-hang --blame-hang-timeout 10m --settings "./Ark.ReferenceProject/CodeCoverage.runsettings" --collect "Code Coverage;Format=cobertura"
+      run: dotnet test --no-restore --configuration Debug --logger "trx;LogFileName=test-results.trx" --blame --blame-crash --blame-hang --blame-hang-timeout 10m --settings "./samples/Ark.ReferenceProject/CodeCoverage.runsettings" --collect "Code Coverage"
       
     # see https://github.com/dorny/test-reporter?tab=readme-ov-file#recommended-setup-for-public-repositories
     - uses: actions/upload-artifact@v5  # upload test results
@@ -51,10 +51,16 @@ jobs:
         name: test-results
         path: "**/test-results.trx"
 
+    - name: Install dotnet-coverage
+      run: dotnet tool install -g dotnet-coverage
+
+    - name: Convert coverage to cobertura
+      run: dotnet-coverage merge **/*.coverage -f cobertura -o coverage.cobertura.xml
+
     - name: Create code coverage report
       run: |
         dotnet tool install -g dotnet-reportgenerator-globaltool
-        reportgenerator -reports:**/*.cobertura.xml -targetdir:CodeCoverage -reporttypes:'MarkdownSummaryGithub;Cobertura'
+        reportgenerator -reports:coverage.cobertura.xml -targetdir:CodeCoverage -reporttypes:'MarkdownSummaryGithub;Cobertura'
 
     - name: Write to Job Summary
       run: cat CodeCoverage/SummaryGithub.md >> $GITHUB_STEP_SUMMARY

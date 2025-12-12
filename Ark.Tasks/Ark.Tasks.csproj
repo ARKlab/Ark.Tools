@@ -2,7 +2,7 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
+    <ProjectReference Include="..\src\common\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
   </ItemGroup>
 
 </Project>

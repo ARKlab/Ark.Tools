@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>Extension of WorkerHost for a Ftp Watcher</Description>
+    <PackageTags>Ark;C#;.NET;Framework;ResourceWatcher;ETL;Poller;WorkerHost;Ftp;FtpWatcher;</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(ResourceWatcherGroupVersion)</Version>
+    <VersionSuffix>$(ResourceWatcherGroupVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\Ark.Tools.FtpClient.Core\Ark.Tools.FtpClient.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
+  </ItemGroup>
+
+  
+</Project>

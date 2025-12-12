@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>Watcher over listable resources with support for change detection, retry limit and state.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;ResourceWatcher;ETL;Poller</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(ResourceWatcherGroupVersion)</Version>
+    <VersionSuffix>$(ResourceWatcherGroupVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.1" />
+	</ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\Ark.Tools.ApplicationInsights.HostedService\Ark.Tools.ApplicationInsights.HostedService.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" />
+    <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
+  </ItemGroup>
+
+  
+</Project>

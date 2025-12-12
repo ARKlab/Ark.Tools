@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+
+	<ItemGroup>
+		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
+		<PackageReference Include="Polly" Version="8.6.5" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="../../../src/common/Ark.Tools.NLog.Configuration/Ark.Tools.NLog.Configuration.csproj" />
+		<ProjectReference Include="../../../src/common/Ark.Tools.Nodatime/Ark.Tools.Nodatime.csproj" />
+		<ProjectReference Include="../../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
+		<ProjectReference Include="../../../src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
+		<ProjectReference Include="../../../src/common/Ark.Tools.Http/Ark.Tools.Http.csproj" />
+		<ProjectReference Include="../../../src/common/Ark.Tools.Sql.SqlServer/Ark.Tools.Sql.SqlServer.csproj" />
+		<ProjectReference Include="../../../src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
+		<ProjectReference Include="../../../src/common/Ark.Tools.Solid.Authorization/Ark.Tools.Solid.Authorization.csproj" />
+		<ProjectReference Include="../../../src/common/Ark.Tools.Solid.FluentValidaton/Ark.Tools.Solid.FluentValidaton.csproj" />
+	</ItemGroup>
+
+
+</Project>
