@@ -13,7 +13,7 @@ To migrate:
 1. Replace `Ark.Tools.Specflow` to `Ark.Tools.Reqnroll` in both `using` and `PackageReference`
 1. Replace `Specflow.*` to `Reqnroll.*` in `PackageReference`
 1. Replace `Table` with `DataTable` and `TableRow` with `DataTableRow`
-1. Add [`reqnroll.json`](../samples/Core/Ark.Reference.Core.Tests/reqnroll.json) to test projects
+1. Add [`reqnroll.json`](../samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/reqnroll.json) to test projects
 1. Fix Verbs: Reqnroll defaults to Gherkin style parameters instead of Regex style thus it might be required to update verbs as described [here](https://docs.reqnroll.net/latest/guides/migrating-from-specflow.html#cucumber-expressions-support-compatibility-of-existing-expressions), specifying the regex start/end markers (^/$).
 
 If you have more issues, please refer to the official [migration guide](https://docs.reqnroll.net/latest/guides/migrating-from-specflow.html)
