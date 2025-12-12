@@ -22,6 +22,26 @@ All libraries are provided via NuGet.
 - .NET 8.0 LTS
 - .NET 10.0
 
+### Sample Applications
+
+To see the libraries in action, check out the sample applications in the `samples/` folder:
+
+- **[Ark.ReferenceProject](samples/Ark.ReferenceProject/)** - A complete ASP.NET Core API example demonstrating:
+  - RESTful API implementation with Swashbuckle/OpenAPI
+  - Authentication and authorization patterns
+  - Database integration with SQL Server
+  - NLog structured logging
+  - Reqnroll BDD tests
+  - SimpleInjector dependency injection
+
+- **[TestWorker](samples/TestWorker/)** - A Resource Watcher implementation example showing:
+  - Background worker service patterns
+  - Resource monitoring and processing
+  - File system watching capabilities
+  - Integration with Ark.Tools.ResourceWatcher packages
+
+Both samples include full working code that you can use as a reference for your own projects.
+
 ## Quick Start
 
 The main libraries used by Ark in its stack are:
