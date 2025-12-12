@@ -30,12 +30,17 @@ dotnet build --no-restore --configuration Release
 - CI uses Docker containers for these services (see `.github/workflows/ci.yml`)
 - Local development: ensure services are available before running tests
 - The ReferenceProject contains integration tests using Reqnroll (BDD framework)
+- Integration tests are in `samples/Core/Ark.Reference.Core.Tests/`
 
 ## Project Structure
 
-- **Core Libraries**: Located in `Ark.Tools.*` directories (e.g., `Ark.Tools.Core`, `Ark.Tools.AspNetCore`)
-- **Reference Project**: `Ark.ReferenceProject/` - example implementation and integration tests
-- **Samples**: `Samples/` - sample applications demonstrating library usage
+- **Core Libraries**: Located in `src/` organized into subfolders:
+  - `src/common/` - Core common packages (Ark.Tools.Core, Ark.Tools.NLog, Ark.Tools.Sql, etc.)
+  - `src/aspnetcore/` - ASP.NET Core packages (Ark.Tools.AspNetCore.*)
+  - `src/resourcewatcher/` - Resource Watcher packages (Ark.Tools.ResourceWatcher.*)
+- **Reference Project**: `samples/` - example implementation and integration tests (Ark.ReferenceProject)
+- **Samples**: `samples/` - sample applications demonstrating library usage
+- **Tests**: `test/` - unit and integration tests for individual packages (currently empty, reserved for future use)
 - **Build Configuration**: `Directory.Build.props` - shared MSBuild properties for all projects
 
 ## Coding Standards & Conventions
@@ -132,7 +137,7 @@ ci(workflows): update CodeQL configuration
 ### Test Framework
 - Migrated from SpecFlow to Reqnroll (BDD framework)
 - Use `reqnroll.json` configuration in test projects
-- Integration tests are in `Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/`
+- Integration tests are in `samples/Core/Ark.Reference.Core.Tests/`
 - Use AwesomeAssertions for test assertions (FluentAssertions is deprecated)
 
 ### Test Patterns
@@ -202,7 +207,8 @@ Host.CreateDefaultBuilder(args)
 
 ## File Organization
 
-- Solution file: `Ark.Tools.sln`
+- Solution file: `Ark.Tools.slnx`
+- Reference project solution: `samples/Ark.Reference.slnx`
 - Shared build props: `Directory.Build.props`
 - License header template: `Ark.Tools.sln.licenseheader`
 - Editor config: `.editorconfig`

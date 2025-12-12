@@ -1,0 +1,52 @@
+name: $(SourceBranchName)_$(date:yyyyMMdd)$(rev:.r)
+trigger:
+  branches:
+    include:
+    - develop
+    - master
+pr:
+  branches:
+    include:
+    - develop
+    - master
+
+variables:
+  workingDirectory: '$(Build.SourcesDirectory)/samples'
+  vmImageName: 'ubuntu-22.04'
+  ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/master') ) }}:
+    BuildConfiguration: 'Release'
+  ${{ else }}:
+    BuildConfiguration: 'Debug'
+  BuildPlatform: 'any cpu'
+  projectName: 'Ark.Reference'
+  serviceName: 'Core'
+
+stages:
+  - template: Ark.Reference.Core.buildStage.yml
+    parameters:
+      name: Build_Stage
+      projectName: ${{ variables.projectName }}
+      serviceName: ${{ variables.serviceName }}
+      vmImageName: ${{ variables.vmImageName }}
+      BuildConfiguration: ${{ variables.BuildConfiguration }}
+      workingDirectory: '${{ variables.workingDirectory }}'
+
+  - ${{ if false }}:
+#  - ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature')) }}:
+    - template: Ark.Reference.Core.deployStage.yml
+      parameters:
+        name: DevEnv_Stage
+        dependsOn: Build_Stage
+        projectName: ${{ variables.projectName }}
+        serviceName: ${{ variables.serviceName }}
+        vmImageName: ${{ variables.vmImageName }}
+        environmentName: Ark-Reference-Dev
+        deploymentNamePrefix: 'Ark-Reference'
+        resourceGroup: Ark-Reference-Shared
+        subscription: 'Ark'
+        appServiceArmOutputVariable: 'coreService'
+        dbArmOutputVariable: 'coredb'
+  # Add other environements as needed
+  #- template: Ark.Reference.Core.deploy.yml
+  #  parameters:
+  #    ...  

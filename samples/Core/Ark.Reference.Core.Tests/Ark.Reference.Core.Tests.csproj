@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ExcelDataReader" Version="3.8.0" />
+		<PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
+		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.1" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+		<PackageReference Include="Microsoft.SqlServer.DacFx" Version="170.2.70" />
+		<PackageReference Include="Moq" Version="4.20.72" />
+		<PackageReference Include="MSTest.TestAdapter" Version="4.0.2" />
+		<PackageReference Include="MSTest.TestFramework" Version="4.0.2" />
+		<PackageReference Include="netDumbster" Version="3.1.1" />
+		<PackageReference Include="NodaTime.Testing" Version="3.2.3" />
+		<PackageReference Include="Reqnroll.MsTest" Version="3.2.1" />
+		<PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="3.2.1" />
+	</ItemGroup>
+	
+  <ItemGroup>
+    <ProjectReference Include="../../../src/common/Ark.Tools.Reqnroll/Ark.Tools.Reqnroll.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj" />
+    <ProjectReference Include="..\Ark.Reference.Core.API\Ark.Reference.Core.API.csproj" />
+    <ProjectReference Include="..\Ark.Reference.Core.Application\Ark.Reference.Core.Application.csproj" />
+    <ProjectReference Include="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj" />
+	  <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
+		  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+	  </ProjectReference>
+    <ProjectReference Include="..\Ark.Reference.Core.WebInterface\Ark.Reference.Core.WebInterface.csproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.SpecFlow.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Ark.Reference.Core.Database.dacpac">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <PropertyGroup>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
+
+</Project>

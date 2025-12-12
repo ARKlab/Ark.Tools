@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+	 <ProjectReference Include="../../../src/common/Ark.Tools.Outbox.Rebus/Ark.Tools.Outbox.Rebus.csproj" />
+	 <ProjectReference Include="../../../src/common/Ark.Tools.Outbox.SqlServer/Ark.Tools.Outbox.SqlServer.csproj" />
+	 <ProjectReference Include="../../../src/common/Ark.Tools.Outbox/Ark.Tools.Outbox.csproj" />
+	 <ProjectReference Include="../../../src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
+	 <ProjectReference Include="../../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
+	 <ProjectReference Include="../../../src/common/Ark.Tools.Sql/Ark.Tools.Sql.csproj" />
+	 <ProjectReference Include="../../../src/common/Ark.Tools.Sql.SqlServer/Ark.Tools.Sql.SqlServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Reference.Core.API\Ark.Reference.Core.API.csproj" />
+  </ItemGroup>
+
+</Project>
