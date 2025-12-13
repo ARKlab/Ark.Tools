@@ -1,8 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-
-  <ItemGroup>
-    <ProjectReference Include="..\src\common\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
-  </ItemGroup>
-
-</Project>

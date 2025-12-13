@@ -36,3 +36,7 @@ Replace the following:
 - `PackageReference` from `FluentAssertions.Web` to `AwesomeAssertions.Web`
 - `HaveStatusCode(...)` => `HaveHttpStatusCode`
 - `using FluentAssertions` => `using AwesomeAssertions`
+
+## Specflow removal
+
+Follow the instructions in the [v5 migration](migration-v5.md) to replace Specflow with Reqnroll in your projects
