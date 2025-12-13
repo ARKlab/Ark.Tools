@@ -1,0 +1,17 @@
+name: Copilot Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        
+      - name: Install dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
