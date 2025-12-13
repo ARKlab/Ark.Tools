@@ -37,6 +37,7 @@
     <Project Path="src/common/Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />
     <Project Path="src/common/Ark.Tools.Auth0/Ark.Tools.Auth0.csproj" />
     <Project Path="src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
+    <Project Path="src/common/Ark.Tasks/Ark.Tasks.csproj" />
     <Project Path="src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.RavenDb/Ark.Tools.EventSourcing.RavenDb.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.Rebus/Ark.Tools.EventSourcing.Rebus.csproj" />
@@ -102,5 +103,4 @@
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="Ark.Tasks/Ark.Tasks.csproj" />
 </Solution>

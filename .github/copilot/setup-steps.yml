@@ -1,0 +1,5 @@
+steps:
+  - name: 'Install dotnet'
+    uses: actions/setup-dotnet@v5
+    with:
+      global-json-file: global.json

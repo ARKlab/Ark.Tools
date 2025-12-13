@@ -10,7 +10,7 @@
   <!--===============================================================================-->
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\..\Ark.Tasks\Ark.Tasks.csproj" PrivateAssets="All" />
+		<ProjectReference Include="..\Ark.Tasks\Ark.Tasks.csproj" PrivateAssets="All" />
 		<ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
 		<ProjectReference Include="..\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
 		<ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
