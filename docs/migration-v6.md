@@ -60,8 +60,6 @@ Update `<test_project>.csproj` with these new sections.
     
     <OutputType>Exe</OutputType>
 
-	<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
-	<TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
     <EnableMSTestRunner>true</EnableMSTestRunner>
 
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>

@@ -6,8 +6,6 @@
     
     <OutputType>Exe</OutputType>
 
-		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
-		<TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
     <EnableMSTestRunner>true</EnableMSTestRunner>
 
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
