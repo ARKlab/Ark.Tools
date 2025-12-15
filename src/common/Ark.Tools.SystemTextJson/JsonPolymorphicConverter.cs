@@ -14,6 +14,7 @@ namespace Ark.Tools.SystemTextJson
             _discriminatorPropertyName = discriminatorPropertyName;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1721:Property names should not match get methods", Justification = "Historical naming")]
         protected abstract Type GetType(TDiscriminatorEnum discriminatorValue);
 
         public override TBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

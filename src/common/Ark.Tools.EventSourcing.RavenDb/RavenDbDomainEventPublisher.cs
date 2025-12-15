@@ -17,7 +17,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
         private readonly IDomainEventPublisher _publisher;
         private Task? _subscriptionWorkerTask;
         private CancellationTokenSource? _tokenSource;
-        private readonly object _gate = new();
+        private readonly Lock _gate = new();
 
         public RavenDbDomainEventPublisher(IDocumentStore store, IDomainEventPublisher publisher)
         {
@@ -39,7 +39,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
                     Name = "OutboxEventPublisher",
                 }, token: ctk).ConfigureAwait(false);
             }
-            catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
+            catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id", StringComparison.Ordinal))
             {
             }
 
@@ -86,9 +86,10 @@ namespace Ark.Tools.EventSourcing.RavenDb
         public async Task StopAsync()
         {
             Task? runtask;
+            CancellationTokenSource? tokenSource;
             lock (_gate)
             {
-                _tokenSource?.Cancel();
+                tokenSource = _tokenSource;
                 _tokenSource = null;
                 runtask = _subscriptionWorkerTask;
                 _subscriptionWorkerTask = null;
@@ -96,6 +97,11 @@ namespace Ark.Tools.EventSourcing.RavenDb
 
             try
             {
+                if (tokenSource is not null)
+                {
+                    await tokenSource.CancelAsync().ConfigureAwait(false);
+                    tokenSource.Dispose();
+                }
                 if (runtask != null)
                     await runtask.ConfigureAwait(false);
             }

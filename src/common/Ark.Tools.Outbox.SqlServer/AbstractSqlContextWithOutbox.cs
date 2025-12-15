@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    public abstract class AbstractSqlContextWithOutbox<Tag> : AbstractSqlContext<Tag>, IOutboxContext
+    public abstract class AbstractSqlContextWithOutbox<TTag> : AbstractSqlContext<TTag>, IOutboxContext
     {
-        private readonly OutboxContextSql<Tag> _outbox;
+        private readonly OutboxContextSql<TTag> _outbox;
 
         protected AbstractSqlContextWithOutbox(DbConnection connection, IOutboxContextSqlConfig config, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
             : base(connection, isolationLevel)
         {
-            _outbox = new OutboxContextSql<Tag>(this, config);
+            _outbox = new OutboxContextSql<TTag>(this, config);
         }
 
         public Task ClearAsync(CancellationToken ctk = default)

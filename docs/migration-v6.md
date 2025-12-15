@@ -2,7 +2,7 @@
 
 ## SDK-based SQL Projects
 
-If you are using SDK-based SQL projects in VS 2025+ you need to add 
+If you are using SDK-based SQL projects in VS 2025+ you need to add
 the following to your csprojs that depends on the SQL Projects (generally Tests projects) to avoid build errors:
 
 ```xml
@@ -37,6 +37,72 @@ Replace the following:
 - `HaveStatusCode(...)` => `HaveHttpStatusCode`
 - `using FluentAssertions` => `using AwesomeAssertions`
 
-## Specflow removal
+## Specflow removal - Migrate to Reqnroll
 
 Follow the instructions in the [v5 migration](migration-v5.md) to replace Specflow with Reqnroll in your projects
+
+## Migrate to MTPv2
+
+Update `global.json` with
+
+```json
+    "test": {
+        "runner": "Microsoft.Testing.Platform"
+    }
+```
+
+Update `<test_project>.csproj` with these new sections.
+
+```xml
+
+  <PropertyGroup Label="Test Settings">
+    <IsTestProject>true</IsTestProject>
+    
+    <OutputType>Exe</OutputType>
+
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+
+  </PropertyGroup>
+
+  <ItemGroup Label="Testing Platform Settings">
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.1.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
+  </ItemGroup>
+
+
+```
+
+Update the CI pipeline to use dotnet test
+
+```yaml
+      - task: DotNetCoreCLI@2
+        displayName: 'Run tests'
+        inputs:
+          command: 'test'
+          projects: ${{ variables.solutionPath }}
+          arguments: '--configuration $(BuildConfiguration) --no-build --no-restore --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1'
+          publishTestResults: true
+```
+
+Refer to Ark.Reference project or to [official documentation](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-intro?tabs=dotnetcli).
+
+## Migrate from SLN to SLNX
+
+Use `dotnet sln migrate` to migrate it.
+
+Update the CI Pipelines to reference the new SLNX file.
+
+More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/#getting-started)
+
+## Update .editorconfig and Directory.Build.* (recomended) 
+
+Copy `.editorconfig` and `Directory.Build.props` and `Directory.Build.targets` from `samples/Ark.Reference` project into your solution folder.

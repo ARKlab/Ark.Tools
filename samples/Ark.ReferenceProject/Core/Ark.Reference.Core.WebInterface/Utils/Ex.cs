@@ -97,8 +97,10 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
                 if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
                 {
+#pragma warning disable CA5404 // Do not disable token validation checks
                     o.TokenValidationParameters.ValidateAudience = false;
                     o.TokenValidationParameters.ValidateIssuer = false;
+#pragma warning restore CA5404 // Do not disable token validation checks
                     o.TokenValidationParameters.ValidateIssuerSigningKey = false;
                     o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.SpecFlowEncryptionKey));
                 }

@@ -22,7 +22,7 @@ namespace Ark.Tools.Core
             if (first == null)
                 return second == null;
             if (second == null)
-                return first == null;
+                return false;
 
             if (ReferenceEquals(first, second))
                 return true;

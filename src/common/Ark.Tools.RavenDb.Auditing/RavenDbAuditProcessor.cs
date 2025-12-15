@@ -17,7 +17,7 @@ namespace Ark.Tools.RavenDb.Auditing
         private readonly IDocumentStore _store;
         private readonly List<Task> _subscriptionWorkerTasks = new();
         private CancellationTokenSource? _tokenSource;
-        private readonly object _gate = new();
+        private readonly Lock _gate = new();
         private readonly HashSet<string> _names = new(StringComparer.Ordinal);
         private const string _prefixName = "AuditProcessor";
 
@@ -30,7 +30,7 @@ namespace Ark.Tools.RavenDb.Auditing
 
         }
 
-        public async Task StartAsync(CancellationToken ctk)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             foreach (var name in _names)
             {
@@ -40,9 +40,9 @@ namespace Ark.Tools.RavenDb.Auditing
                     {
                         Name = _prefixName + name,
                         Query = $@"From {name}(Revisions = true)"
-                    }, token: ctk).ConfigureAwait(false);
+                    }, token: cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
+                catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id", StringComparison.Ordinal))
                 {
                 }
             }
@@ -56,7 +56,7 @@ namespace Ark.Tools.RavenDb.Auditing
 
                 foreach (var name in _names)
                 {
-                    _subscriptionWorkerTasks.Add(Task.Run(() => _run(name, _tokenSource.Token), ctk));
+                    _subscriptionWorkerTasks.Add(Task.Run(() => _run(name, _tokenSource.Token), cancellationToken));
                 }
             }
         }
@@ -147,19 +147,24 @@ namespace Ark.Tools.RavenDb.Auditing
             await session.SaveChangesAsync(CancellationToken.None).ConfigureAwait(false);
         }
 
-        public async Task StopAsync(CancellationToken ctk)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             List<Task> runtask = new();
+            CancellationTokenSource? tokenSource = null;
             lock (_gate)
-            {
-                _tokenSource?.Cancel();
-                _tokenSource = null;
+            {                
                 runtask.AddRange(_subscriptionWorkerTasks);
                 _subscriptionWorkerTasks.Clear();
+                tokenSource = _tokenSource;
+                _tokenSource = null;
             }
 
             try
             {
+                if (tokenSource is not null)
+                {
+                    await tokenSource.CancelAsync().ConfigureAwait(false);
+                }
                 await Task.WhenAll(runtask).ConfigureAwait(false);
             }
             catch (TaskCanceledException) { }

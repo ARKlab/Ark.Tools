@@ -20,17 +20,17 @@ namespace LinuxWebJobHosting.Utils
             _random = new Random();
         }
 
-        protected override async Task ExecuteAsync(CancellationToken ctk)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             using var hostName = ScopeContext.PushProperty("AppName", nameof(HostedService));
             _logger.Info(CultureInfo.InvariantCulture, "WebJob: Start");
-            while (!ctk.IsCancellationRequested)
+            while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    await _do(ctk);
+                    await _do(stoppingToken);
                 }
-                catch (OperationCanceledException) when (ctk.IsCancellationRequested) { }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
                 catch (Exception e)
                 {
                     _logger.Error(e, "Run failed");
@@ -38,9 +38,9 @@ namespace LinuxWebJobHosting.Utils
 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(10), ctk);
+                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
                 }
-                catch (OperationCanceledException) when (ctk.IsCancellationRequested) { }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
             }
 
         }
@@ -49,8 +49,10 @@ namespace LinuxWebJobHosting.Utils
         {
             _logger.Info(CultureInfo.InvariantCulture, "I am alive");
             await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+#pragma warning disable CA5394 // Do not use insecure randomness
             if (_random.NextDouble() > 0.8)
                 throw new InvalidOperationException("Random crash");
+#pragma warning restore CA5394 // Do not use insecure randomness
         }
 
     }

@@ -1,6 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
-using System;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
 
@@ -8,8 +7,6 @@ namespace Ark.Tools.Core
 {
     public static partial class EmailValidator
     {
-        [Obsolete("IsValid() now uses MailAddress.TryCreate which is more performant. This property is going to be removed in next major")]
-        public static Regex Regex { get; } = _validEmailAddressRegEx();
 
         public static bool IsValid(string emailAddress)
         {

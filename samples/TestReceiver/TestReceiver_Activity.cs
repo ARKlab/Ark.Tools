@@ -9,17 +9,17 @@ using System.Threading.Tasks;
 
 namespace TestReceiver
 {
-    public interface TestReceiver_Config
+    internal interface ITestReceiver_Config
     {
         string ActivitySqlConnectionString { get; }
     }
 
-    public class TestReceiver_Activity : CalendarSliceActivity
+    internal sealed class TestReceiver_Activity : CalendarSliceActivity
     {
         private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
-        private readonly TestReceiver_Config _config;
+        private readonly ITestReceiver_Config _config;
 
-        public TestReceiver_Activity(TestReceiver_Config config)
+        public TestReceiver_Activity(ITestReceiver_Config config)
         {
             _config = config;
             Console.WriteLine($"********** Now {DateTimeOffset.UtcNow} ********");

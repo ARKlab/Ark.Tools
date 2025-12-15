@@ -23,7 +23,7 @@ namespace Ark.Tools.FtpClient.FtpProxy
         private readonly ConnectionInfo _connectionInfo;
 
         private readonly IFlurlClient _client;
-        private bool _isDisposed = false;
+        private bool _isDisposed;
 
         public FtpClientProxy(IFtpClientProxyConfig config, FtpConfig ftpConfig)
             : this(config, new TokenProvider(config), ftpConfig)

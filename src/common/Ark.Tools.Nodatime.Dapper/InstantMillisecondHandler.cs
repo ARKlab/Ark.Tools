@@ -16,6 +16,7 @@ namespace Ark.Tools.Nodatime.Dapper
         public static readonly InstantMillisecondHandler Instance = new();
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical mistake - Public API - Next Major")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1003:Use generic event handler instances", Justification = "Historical mistake - Public API - Next Major")]
         public event EventHandler<IDbDataParameter>? OnSetValue;
 
         public override void SetValue(IDbDataParameter parameter, Instant value)

@@ -14,9 +14,9 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
             this._sqlConnection = sqlConnection;
         }
 
-        public ITelemetryProcessor Create(ITelemetryProcessor next)
+        public ITelemetryProcessor Create(ITelemetryProcessor nextProcessor)
         {
-            return new SkipSqlDatabaseDependencyFilter(next, _sqlConnection);
+            return new SkipSqlDatabaseDependencyFilter(nextProcessor, _sqlConnection);
         }
     }
 }

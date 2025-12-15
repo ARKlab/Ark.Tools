@@ -4,6 +4,7 @@ using Ark.Tools.Nodatime;
 using NodaTime;
 using NodaTime.Text;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -90,35 +91,21 @@ namespace Ark.Reference.Core.Common
         {
             return $"{_baseUrl}{_queryParams(_tuples)}";
         }
+        public Uri ToUri()
+        {
+            return new Uri($"{_baseUrl}{_queryParams(_tuples)}");
+        }
 
         public static implicit operator string(UrlComposer url) { return url.ToString(); }
+        public static implicit operator Uri(UrlComposer url) { return url.ToUri(); }
 
         private static string _queryParams(List<(string key, string value)> query)
         {
-            if (query.Any())
+            if (query.Count != 0)
                 return $"?{string.Join("&", query.Select(v => $"{v.key}={WebUtility.UrlEncode(v.value)}"))}";
             return "";
         }
 
-        public static string ToUrlParam(LocalDateRange range)
-        {
-            return $"{_localDatePattern.Format(range.Start)}/{_localDatePattern.Format(range.End)}";
-        }
-
-        public static string ToUrlParam(LocalDate date)
-        {
-            return _localDatePattern.Format(date);
-        }
-
-        public static string ToUrlParam(LocalDateTimeRange range)
-        {
-            return $"{_localDateTimePattern.Format(range.Start)}/{_localDateTimePattern.Format(range.End)}";
-        }
-
-        public static string ToUrlParam(LocalDateTime dateTime)
-        {
-            return _localDateTimePattern.Format(dateTime);
-        }
     }
 }
 

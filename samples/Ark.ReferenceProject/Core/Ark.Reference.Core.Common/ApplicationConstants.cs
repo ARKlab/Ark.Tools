@@ -3,7 +3,7 @@
     /// <summary>
     /// Defines application-wide constants
     /// </summary>
-    public class ApplicationConstants
+    public static class ApplicationConstants
     {
         /// <summary>
         /// Gets the supported API versions

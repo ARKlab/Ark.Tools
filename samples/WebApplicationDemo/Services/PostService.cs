@@ -16,7 +16,7 @@ namespace WebApplicationDemo.Services
     {
         private readonly IFlurlClient _jsonPlaceHolderClient;
 
-        private readonly string _url = "https://jsonplaceholder.typicode.com/";
+        private readonly Uri _url = new( "https://jsonplaceholder.typicode.com/" );
 
         public PostService(IArkFlurlClientFactory factory)
         {

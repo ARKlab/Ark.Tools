@@ -22,7 +22,7 @@ namespace Ark.Tools.Activity.Processor
             // Contract.Assume(activityManagerType.GetInterfaces().Where(x => x.IsGenericType).Select(x => x.GetGenericTypeDefinition()).Contains(typeof(ISliceActivityManager<>)));
 
             container.AllowResolvingFuncFactories();
-            var activities = container.GetTypesToRegister(typeof(ISliceActivity), fromAssemblies);
+            var activities = container.GetTypesToRegister<ISliceActivity>(fromAssemblies);
 
             foreach (var a in activities)
             {

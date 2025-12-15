@@ -10,10 +10,10 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
     {
         public virtual string WorkerName { get; set; } = "Worker";
         public virtual uint DegreeOfParallelism { get; set; } = (uint)Environment.ProcessorCount;
-        public virtual bool IgnoreState { get; set; } = false;
+        public virtual bool IgnoreState { get; set; }
         public virtual TimeSpan Sleep { get; set; } = TimeSpan.FromMinutes(5);
         public virtual uint MaxRetries { get; set; } = 5;
-        public virtual uint? SkipResourcesOlderThanDays { get; set; } = null;
+        public virtual uint? SkipResourcesOlderThanDays { get; set; }
         public virtual Duration BanDuration { get; set; } = Duration.FromHours(24);
         public TimeSpan RunDurationNotificationLimit { get; set; } = TimeSpan.FromMinutes(60);
         public TimeSpan ResourceDurationNotificationLimit { get; set; } = TimeSpan.FromMinutes(10);

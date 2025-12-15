@@ -6,7 +6,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
         where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
         where TAggregate : IAggregate
     {
-        internal bool _isRootManaged = false;
+        internal bool _isRootManaged;
         internal string _identifier = string.Empty;
         internal long _version;
 

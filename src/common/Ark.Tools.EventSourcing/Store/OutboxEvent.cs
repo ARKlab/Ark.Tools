@@ -16,7 +16,9 @@ namespace Ark.Tools.EventSourcing.Store
     public sealed class OutboxEvent<TEvent> : OutboxEvent, IOutboxEvent<TEvent>
         where TEvent : class, IDomainEvent
     {
+#pragma warning disable CA1721 // Property names should not match get methods
         public TEvent? Event { get; set; }
+#pragma warning restore CA1721 // Property names should not match get methods
 
         public override void SetEvent(object @event)
             => Event = @event as TEvent;

@@ -53,6 +53,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                 if ("Basic".Equals(authHeader.Scheme,
                                      StringComparison.OrdinalIgnoreCase))
                 {
+#pragma warning disable CA1031 // Do not catch general exception types
                     try
                     {
                         string parameter = Encoding.UTF8.GetString(
@@ -89,6 +90,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
                     {
 
                     }
+#pragma warning restore CA1031 // Do not catch general exception types
                 }
             }
 

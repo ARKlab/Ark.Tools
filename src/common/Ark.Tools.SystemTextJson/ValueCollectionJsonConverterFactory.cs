@@ -1,6 +1,7 @@
 ﻿using Ark.Tools.Core;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -30,6 +31,7 @@ namespace Ark.Tools.SystemTextJson
             return converter;
         }
 
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "CA1812", Justification = "Instantiated via reflection in CreateConverter method")]
         private sealed class Converter<T> : JsonConverter<ValueCollection<T>>
         {
             public override ValueCollection<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

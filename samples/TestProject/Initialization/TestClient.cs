@@ -54,9 +54,9 @@ namespace TestProject
             return (HttpStatusCode)_lastResponse.StatusCode;
         }
 
-        public void Get(string requestUri, IEntityWithETag e)
+        public void Get(string requestUri, IEntityWithETag? e)
         {
-            Get(requestUri, e != null ? new EntityTagHeaderValue($"\"{e?._ETag}\"") : null);
+            Get(requestUri, e != null ? new EntityTagHeaderValue($"\"{e._ETag}\"") : null);
         }
 
         public void Get(string requestUri, EntityTagHeaderValue? e)

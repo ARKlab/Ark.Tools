@@ -28,5 +28,12 @@ namespace Ark.Tools.Core.EntityTag
         {
         }
 
+        public EntityTagMismatchException()
+        {
+        }
+
+        public EntityTagMismatchException(string message, Exception innerException) : this(innerException, message)
+        {
+        }
     }
 }

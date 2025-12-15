@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.FtpClient
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2214:Do not call overridable methods in constructors", Justification = "Designed to be overridden")]
     public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
     {
         private readonly ArxOne.Ftp.FtpClient _client;
@@ -24,7 +25,7 @@ namespace Ark.Tools.FtpClient
         private readonly ISocksConfig? _socksConfig;
         private readonly Action<FtpClientParameters>? _configurer;
 
-        private bool _isDisposed = false;
+        private bool _isDisposed;
 
         public FtpClientPoolArxOne(int maxPoolSize, FtpConfig ftpConfig)
             : base(ftpConfig, maxPoolSize)

@@ -9,7 +9,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle
 {
-    public static class SupportNodaTimeEx
+    public static class SupportNodaTimeExtensions
     {
         /// <summary>
         /// Register support for NodaTime types. For Json 

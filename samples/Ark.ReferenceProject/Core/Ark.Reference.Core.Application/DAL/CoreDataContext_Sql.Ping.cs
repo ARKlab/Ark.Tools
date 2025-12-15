@@ -68,9 +68,9 @@ namespace Ark.Reference.Core.Application.DAL
                 FROM [{_schemaPing}].[{_tablePing}] E
 
                 WHERE 1 = 1
-                  {(query.Id?.Any() ?? false ? "AND E.[Id]   IN @Id" : "")}
-                  {(query.Name?.Any() ?? false ? "AND E.[Name] IN @Name" : "")}
-                  {(query.Type?.Any() ?? false ? "AND E.[Type] IN @Type" : "")}
+                  {(query.Id?.Length > 0 ? "AND E.[Id]   IN @Id" : "")}
+                  {(query.Name?.Length > 0 ? "AND E.[Name] IN @Name" : "")}
+                  {(query.Type?.Length > 0 ? "AND E.[Type] IN @Type" : "")}
             "
             .AsSqlServerPagedQuery(sortFields);
 

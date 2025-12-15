@@ -42,39 +42,39 @@ namespace Ark.Tools
 
             foreach (var pair in split)
             {
-                switch (pair[0].ToLowerInvariant())
+                switch (pair[0].ToUpperInvariant())
                 {
-                    case "server":
+                    case "SERVER":
                         {
                             this.Server = pair[1];
                             break;
                         }
 
-                    case "port":
+                    case "PORT":
                         {
                             this.Port = Int32.Parse(pair[1], CultureInfo.InvariantCulture);
                             break;
                         }
 
-                    case "username":
+                    case "USERNAME":
                         {
                             this.Username = pair[1];
                             break;
                         }
 
-                    case "password":
+                    case "PASSWORD":
                         {
                             this.Password = pair[1];
                             break;
                         }
 
-                    case "usessl":
+                    case "USESSL":
                         {
                             this.UseSsl = bool.Parse(pair[1]);
                             break;
                         }
 
-                    case "from":
+                    case "FROM":
                         {
                             this.From = pair[1];
                             break;

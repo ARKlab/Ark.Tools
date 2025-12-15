@@ -1,24 +1,6 @@
 <Solution>
   <Folder Name="/samples/">
     <File Path="samples/.editorconfig" />
-    <File Path="samples/Ark.ReferenceProject/.editorconfig" />
-    <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.buildStage.yml" />
-    <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.deployStage.yml" />
-    <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.yml" />
-    <File Path="samples/Ark.ReferenceProject/CodeCoverage.runsettings" />
-    <File Path="samples/Ark.ReferenceProject/Directory.Build.props" />
-    <File Path="samples/Ark.ReferenceProject/Directory.Build.targets" />
-    <File Path="samples/Ark.ReferenceProject/global.json" />
-    <Project Path="samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
-    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.API/Ark.Reference.Core.API.csproj" />
-    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Application/Ark.Reference.Core.Application.csproj" />
-    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Common/Ark.Reference.Core.Common.csproj" />
-    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Database/Ark.Reference.Core.Database.sqlproj">
-      <Build />
-      <Deploy />
-    </Project>
-    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.WebInterface/Ark.Reference.Core.WebInterface.csproj" />
-    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj" />
     <Project Path="samples/LinuxWebJobHosting/LinuxWebJobHosting.csproj" />
     <Project Path="samples/ProblemDetailsSample/ProblemDetailsSample.csproj" />
     <Project Path="samples/Test.SingletonBackgroundService/Test.SingletonBackgroundService.csproj">
@@ -92,6 +74,27 @@
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Sql/Ark.Tools.ResourceWatcher.WorkerHost.Sql.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost/Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher/Ark.Tools.ResourceWatcher.csproj" />
+  </Folder>
+  <Folder Name="/samples/Ark.Reference/">
+    <Project Path="samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
+    <File Path="samples/Ark.ReferenceProject/.editorconfig" />
+    <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.buildStage.yml" />
+    <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.deployStage.yml" />
+    <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.yml" />
+    <File Path="samples/Ark.ReferenceProject/Directory.Build.props" />
+    <File Path="samples/Ark.ReferenceProject/Directory.Build.targets" />
+    <File Path="samples/Ark.ReferenceProject/global.json" />
+  </Folder>
+  <Folder Name="/samples/Ark.Reference/Core/">
+    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.API/Ark.Reference.Core.API.csproj" />
+    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Application/Ark.Reference.Core.Application.csproj" />
+    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Common/Ark.Reference.Core.Common.csproj" />
+    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Database/Ark.Reference.Core.Database.sqlproj" Id="bee200d4-b2fc-4384-bda2-5ccab62c1597">
+      <Build />
+      <Deploy />
+    </Project>
+    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.WebInterface/Ark.Reference.Core.WebInterface.csproj" />
+    <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".devcontainer/docker-compose.yml" />

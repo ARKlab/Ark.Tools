@@ -8,7 +8,7 @@ namespace Microsoft.Extensions.Configuration
 {
     public static class KeyVaultConfigurationExtensions
     {
-        public class ArkKeyVaultSecretManager : KeyVaultSecretManager
+        private sealed class ArkKeyVaultSecretManager : KeyVaultSecretManager
         {
             public override string GetKey(KeyVaultSecret secret)
             {

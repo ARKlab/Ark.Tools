@@ -26,7 +26,7 @@ namespace Ark.Tools.AspNetCore
                     continue;
 
                 var matchedSelectors = controller.Selectors.Where(x => x.AttributeRouteModel != null).ToList();
-                if (matchedSelectors.Any())
+                if (matchedSelectors.Count != 0)
                 {
                     foreach (var selectorModel in matchedSelectors.Where(x => x.AttributeRouteModel?.IsAbsoluteTemplate == false))
                     {
@@ -36,7 +36,7 @@ namespace Ark.Tools.AspNetCore
                 }
 
                 var unmatchedSelectors = controller.Selectors.Where(x => x.AttributeRouteModel == null).ToList();
-                if (unmatchedSelectors.Any())
+                if (unmatchedSelectors.Count != 0)
                 {
                     foreach (var selectorModel in unmatchedSelectors)
                     {

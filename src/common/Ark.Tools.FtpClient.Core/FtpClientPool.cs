@@ -85,7 +85,7 @@ namespace Ark.Tools.FtpClient.Core
         }
 
         #region IDisposable Support
-        private bool _disposedValue = false; // To detect redundant calls
+        private bool _disposedValue; // To detect redundant calls
 
         private void _dispose(bool disposing)
         {
@@ -112,7 +112,7 @@ namespace Ark.Tools.FtpClient.Core
 
         private sealed class PooledFtpConnection : IFtpClientConnection
         {
-            private bool _disposedValue = false; // To detect redundant calls
+            private bool _disposedValue; // To detect redundant calls
             public IFtpClientConnection Inner { get; }
             public event EventHandler? Disposing;
 

@@ -28,7 +28,9 @@ namespace Ark.Tools.ResourceWatcher
 
         }
 
+#pragma warning disable CA1033 // Interface methods should be callable by child types
         void IObserver<DiagnosticListener>.OnNext(DiagnosticListener value)
+#pragma warning restore CA1033 // Interface methods should be callable by child types
         {
             if (value.Name == "Ark.Tools.ResourceWatcher")
             {
@@ -168,7 +170,7 @@ namespace Ark.Tools.ResourceWatcher
         #endregion
 
         #region IDisposable Support
-        private bool _disposedValue = false; // To detect redundant calls
+        private bool _disposedValue; // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
         {

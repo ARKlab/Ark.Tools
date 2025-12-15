@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Utils
 {
-    public class FormDataJsonBinder : IModelBinder
+    internal sealed class FormDataJsonBinder : IModelBinder
     {
         private readonly JsonSerializerOptions _options;
 
@@ -63,7 +63,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
         }
     }
 
-    public class FormDataJsonBinderProvider : IModelBinderProvider
+    internal sealed class FormDataJsonBinderProvider : IModelBinderProvider
     {
         private readonly FormatterCollection<IInputFormatter> _inputFormatters;
 
@@ -94,7 +94,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
                 return null;
 
             // Do not use this provider if this property does not have the FromForm attribute
-            if (!propInfo.GetCustomAttributes(typeof(FromFormAttribute), false).Any())
+            if (propInfo.GetCustomAttributes(typeof(FromFormAttribute), false).Length == 0)
                 return null;
 
             // All criteria met; use the FormDataJsonBinder

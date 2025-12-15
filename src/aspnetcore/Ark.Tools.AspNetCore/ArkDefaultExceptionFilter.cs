@@ -10,7 +10,7 @@ using System.Globalization;
 
 namespace Ark.Tools.AspNetCore
 {
-    public class ArkDefaultExceptionFilterAttribute : ExceptionFilterAttribute
+    public sealed class ArkDefaultExceptionFilterAttribute : ExceptionFilterAttribute
     {
         public override void OnException(ExceptionContext context)
         {
@@ -19,7 +19,7 @@ namespace Ark.Tools.AspNetCore
             base.OnException(context);
         }
 
-        private void _log(ExceptionContext context)
+        private static void _log(ExceptionContext context)
         {
             Logger logger;
 

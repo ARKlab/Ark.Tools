@@ -36,7 +36,9 @@ namespace Ark.Tools.Sql
         {
             var cnn = _inner.Get(connectionString);
 #pragma warning disable CA2000 // Dispose objects before losing scope
+#pragma warning disable CA1806 // Do not ignore method results
             new ConnectionLeakWatcher(cnn);
+#pragma warning restore CA1806 // Do not ignore method results
 #pragma warning restore CA2000 // Dispose objects before losing scope
             return cnn;
         }
@@ -45,7 +47,9 @@ namespace Ark.Tools.Sql
         {
             var cnn = await _inner.GetAsync(connectionString, ctk).ConfigureAwait(false);
 #pragma warning disable CA2000 // Dispose objects before losing scope
+#pragma warning disable CA1806 // Do not ignore method results
             new ConnectionLeakWatcher(cnn);
+#pragma warning restore CA1806 // Do not ignore method results
 #pragma warning restore CA2000 // Dispose objects before losing scope
             return cnn;
         }
@@ -65,13 +69,13 @@ namespace Ark.Tools.Sql
         /// </summary>
         public sealed class ConnectionLeakWatcher : IDisposable
         {
-            private readonly Timer? _timer = null;
+            private readonly Timer? _timer;
 
             //Store reference to connection so we can unsubscribe from state change events
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "Only used to track leakage. The StateChange is used to trick GC and track proper dispose.")]
             private DbConnection? _connection = null;
 
-            private static int _idCounter = 0;
+            private static int _idCounter;
             private readonly int _connectionId = ++_idCounter;
 
             public ConnectionLeakWatcher(DbConnection connection)
@@ -104,7 +108,7 @@ namespace Ark.Tools.Sql
             public string StackTrace { get; set; }
 
             #region Dispose
-            private bool _isDisposed = false;
+            private bool _isDisposed;
 
             public void Dispose()
             {

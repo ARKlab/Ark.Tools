@@ -10,7 +10,9 @@ namespace Ark.Tools.Authorization
         protected AuthorizationPolicy()
         {
             var builder = new AuthorizationPolicyBuilder(this.GetType().FullName ?? this.GetType().Name);
+#pragma warning disable CA2214 // Do not call overridable methods in constructors
             Build(builder);
+#pragma warning restore CA2214 // Do not call overridable methods in constructors
             _inner = builder.Build();
         }
 

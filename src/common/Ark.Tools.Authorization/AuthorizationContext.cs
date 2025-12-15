@@ -83,7 +83,7 @@ namespace Ark.Tools.Authorization
         {
             get
             {
-                return !_failCalled && !PendingRequirements.Any() && !_failedRequirements.Any();
+                return !_failCalled && !PendingRequirements.Any() && _failedRequirements.Count == 0;
             }
         }
 

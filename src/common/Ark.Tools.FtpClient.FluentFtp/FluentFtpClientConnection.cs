@@ -18,7 +18,7 @@ namespace Ark.Tools.FtpClient.FluentFtp
     {
         private readonly FluentFTP.IAsyncFtpClient _client;
 
-        private bool _isDisposed = false;
+        private bool _isDisposed;
 
         public FluentFtpClientConnection(FtpConfig ftpConfig)
             : base(ftpConfig)

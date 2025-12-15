@@ -4,6 +4,7 @@ namespace Ark.Tools.Core.EntityTag
 {
     public interface IEntityWithETag
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification = "By design")]
         string? _ETag { get; set; }
     }
 }

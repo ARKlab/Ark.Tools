@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ProblemDetailsSample.Api.Queries
 {
-    public class Get_EntityByIdQueryHandlerException : IQueryHandler<Get_EntityByIdExceptionQuery.V1, Entity.V1.Output>
+    public class Get_EntityByIdExceptionQueryHandler : IQueryHandler<Get_EntityByIdExceptionQuery.V1, Entity.V1.Output>
     {
         public Entity.V1.Output Execute(Get_EntityByIdExceptionQuery.V1 query)
         {

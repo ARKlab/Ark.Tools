@@ -11,7 +11,7 @@ namespace Ark.Tools.NLog.Slack
 #pragma warning disable MA0046 // Use EventHandler<T> to declare events
         private event Action<Exception>? Error;
 #pragma warning restore MA0046 // Use EventHandler<T> to declare events
-        private bool _existError = false;
+        private bool _existError;
 
         public SlackMessageBuilder()
         {

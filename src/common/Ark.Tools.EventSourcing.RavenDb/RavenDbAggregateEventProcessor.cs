@@ -30,7 +30,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
         private readonly IAggregateEventHandlerActivator _handlerActivator;
         private Task? _subscriptionWorkerTask;
         private CancellationTokenSource? _tokenSource;
-        private readonly object _gate = new();
+        private readonly Lock _gate = new();
 
         readonly ConcurrentDictionary<Type, MethodInfo> _dispatchMethods = new();
 
@@ -61,7 +61,7 @@ where startsWith(id(e), '{prefix}')
                 "
                 }, token: ctk).ConfigureAwait(false);
             }
-            catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id"))
+            catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id", StringComparison.Ordinal))
             {
             }
 
@@ -188,9 +188,10 @@ where startsWith(id(e), '{prefix}')
         public async Task StopAsync()
         {
             Task? runtask;
+            CancellationTokenSource? tokenSource;
             lock (_gate)
             {
-                _tokenSource?.Cancel();
+                tokenSource = _tokenSource;
                 _tokenSource = null;
                 runtask = _subscriptionWorkerTask;
                 _subscriptionWorkerTask = null;
@@ -198,6 +199,11 @@ where startsWith(id(e), '{prefix}')
 
             try
             {
+                if (tokenSource is not null)
+                {
+                    await tokenSource.CancelAsync().ConfigureAwait(false);
+                    tokenSource.Dispose();
+                }
                 if (runtask is not null)
                     await runtask.ConfigureAwait(false);
             }

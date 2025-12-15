@@ -1,6 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 using Swashbuckle.AspNetCore.Swagger;
@@ -34,18 +33,6 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
         public static IServiceCollection ArkConfigureSwaggerUI(this IServiceCollection services, Action<SwaggerUIOptions> setup)
         {
             return services.Configure(setup);
-        }
-
-        [Obsolete("Use UseSwagger() without a setup action", true)]
-        public static IApplicationBuilder ArkUseSwagger(this IApplicationBuilder app, Action<SwaggerOptions>? setup = null)
-        {
-            throw new NotSupportedException();
-        }
-
-        [Obsolete("Use UseSwaggerUI() without a setup action", true)]
-        public static IApplicationBuilder ArkUseSwaggerUI(this IApplicationBuilder app, Action<SwaggerUIOptions>? setup = null)
-        {
-            throw new NotSupportedException();
         }
     }
 }

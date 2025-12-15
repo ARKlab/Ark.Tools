@@ -54,6 +54,7 @@ namespace Ark.Tools.EventSourcing
             return result;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Historical naming")]
         public static bool IsAssignableFromEx(this Type baseType, Type extendType)
         {
             if (baseType.IsInterface)

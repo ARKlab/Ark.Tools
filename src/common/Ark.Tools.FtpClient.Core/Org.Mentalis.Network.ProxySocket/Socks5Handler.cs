@@ -74,7 +74,7 @@ namespace Org.Mentalis.Network.ProxySocket
         /// <returns>An array of bytes that has to be sent when the user wants to connect to a specific host/port combination.</returns>
         /// <exception cref="ArgumentNullException"><c>host</c> is null.</exception>
         /// <exception cref="ArgumentException"><c>port</c> or <c>host</c> is invalid.</exception>
-        private byte[] GetHostPortBytes(string host, int port)
+        private static byte[] _getHostPortBytes(string host, int port)
         {
             if (host == null)
                 throw new ArgumentNullException(nameof(host));
@@ -96,7 +96,7 @@ namespace Org.Mentalis.Network.ProxySocket
         /// <param name="remoteEP">The IPEndPoint to connect to.</param>
         /// <returns>An array of bytes that has to be sent when the user wants to connect to a specific IPEndPoint.</returns>
         /// <exception cref="ArgumentNullException"><c>remoteEP</c> is null.</exception>
-        private byte[] GetEndPointBytes(IPEndPoint remoteEP)
+        private static byte[] _getEndPointBytes(IPEndPoint remoteEP)
         {
             if (remoteEP == null)
                 throw new ArgumentNullException(nameof(remoteEP));
@@ -122,7 +122,7 @@ namespace Org.Mentalis.Network.ProxySocket
         /// <exception cref="ProtocolViolationException">The proxy server uses an invalid protocol.</exception>
         public override void Negotiate(string host, int port)
         {
-            Negotiate(GetHostPortBytes(host, port));
+            Negotiate(Socks5Handler._getHostPortBytes(host, port));
         }
         /// <summary>
         /// Starts negotiating with the SOCKS server.
@@ -135,7 +135,7 @@ namespace Org.Mentalis.Network.ProxySocket
         /// <exception cref="ProtocolViolationException">The proxy server uses an invalid protocol.</exception>
         public override void Negotiate(IPEndPoint remoteEP)
         {
-            Negotiate(GetEndPointBytes(remoteEP));
+            Negotiate(Socks5Handler._getEndPointBytes(remoteEP));
         }
         /// <summary>
         /// Starts negotiating with the SOCKS server.
@@ -186,7 +186,7 @@ namespace Org.Mentalis.Network.ProxySocket
         public override IAsyncProxyResult BeginNegotiate(string host, int port, HandShakeComplete callback, IPEndPoint proxyEndPoint)
         {
             ProtocolComplete = callback;
-            HandShake = GetHostPortBytes(host, port);
+            HandShake = Socks5Handler._getHostPortBytes(host, port);
             Server.BeginConnect(proxyEndPoint, new AsyncCallback(this.OnConnect), Server);
             AsyncResult = new IAsyncProxyResult();
             return AsyncResult;
@@ -201,7 +201,7 @@ namespace Org.Mentalis.Network.ProxySocket
         public override IAsyncProxyResult BeginNegotiate(IPEndPoint remoteEP, HandShakeComplete callback, IPEndPoint proxyEndPoint)
         {
             ProtocolComplete = callback;
-            HandShake = GetEndPointBytes(remoteEP);
+            HandShake = Socks5Handler._getEndPointBytes(remoteEP);
             Server.BeginConnect(proxyEndPoint, new AsyncCallback(this.OnConnect), Server);
             AsyncResult = new IAsyncProxyResult();
             return AsyncResult;

@@ -6,7 +6,7 @@ namespace Ark.Tools.Authorization
     /// Specifies that the class or method that this attribute is applied to requires the specified authorization.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
-    public class PolicyAuthorizeAttribute : Attribute
+    public sealed class PolicyAuthorizeAttribute : Attribute
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyAuthorizeAttribute"/> class. 

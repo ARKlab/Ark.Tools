@@ -21,7 +21,7 @@ using TestWithoutArkTools.Application.Host;
 
 namespace TestWithoutArkTools
 {
-    public class Startup : ArkStartupWebApi
+    internal sealed class Startup : ArkStartupWebApi
     {
         public Startup(IConfiguration configuration, IHostEnvironment env)
             : base(configuration, env)

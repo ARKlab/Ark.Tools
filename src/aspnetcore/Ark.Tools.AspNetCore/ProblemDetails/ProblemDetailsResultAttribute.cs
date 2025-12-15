@@ -13,7 +13,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails
     ///     has the same shape as automatic HTTP 400 responses produced by the framework
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
-    public class ProblemDetailsResultAttribute : Attribute, IAlwaysRunResultFilter
+    public sealed class ProblemDetailsResultAttribute : Attribute, IAlwaysRunResultFilter
     {
         public void OnResultExecuting(ResultExecutingContext context)
         {

@@ -11,6 +11,32 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Hosting
 {
+    internal static partial class LogMessages
+    {
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Service<{ServiceName}> is trying to acquire Lock<{LockId}>")]
+        public static partial void TryingToAcquireLock(this ILogger logger, string serviceName, Guid lockId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Service<{ServiceName}> has acquired Lock<{LockId}>: executing RunAsync")]
+        public static partial void AcquiredLock(this ILogger logger, string serviceName, Guid lockId);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Service<{ServiceName}>.RunAsync() exited with exception.")]
+        public static partial void RunAsyncExited(this ILogger logger, Exception exception, string serviceName);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Service<{ServiceName}> cooldown for {Cooldown}")]
+        public static partial void Cooldown(this ILogger logger, string serviceName, TimeSpan cooldown);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Service<{ServiceName}> releasing Lock<{LockId}>")]
+        public static partial void ReleasingLock(this ILogger logger, string serviceName, Guid lockId);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Service<{ServiceName}> failed while Acquiring or Disposing Lock<{LockId}>.")]
+        public static partial void FailedAcquiringOrDisposing(this ILogger logger, Exception exception, string serviceName, Guid lockId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Service<{ServiceName}> stopped.")]
+        public static partial void Stopped(this ILogger logger, string serviceName);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Service<{ServiceName}> does not support Lock loss detection. This means Singleton behaviour cannot be guaranteed. Please use a IDistributedLock implementation that support HandleLost detection.")]
+        public static partial void NoHandleLossSupport(this ILogger logger, string serviceName);
+    }
     /// <summary>
     /// Base class for implementing a long running <see cref="IHostedService"/> which is Singleton via DistributedLock.
     /// </summary>
@@ -19,7 +45,9 @@ namespace Ark.Tools.Hosting
         private readonly IDistributedLock _lock;
         private bool _hasWarnedForHandleLoss;
 #pragma warning disable IDE1006 // Naming Styles
+#pragma warning disable CA1707 // Identifiers should not contain underscores
         protected ILogger<SingletonBackgroundService> _logger { get; private set; }
+#pragma warning restore CA1707 // Identifiers should not contain underscores
 #pragma warning restore IDE1006 // Naming Styles
 
         /// <summary>
@@ -74,21 +102,21 @@ namespace Ark.Tools.Hosting
         /// </remarks>
         protected abstract Task RunAsync(CancellationToken stoppingToken);
 
-        protected override sealed async Task ExecuteAsync(CancellationToken cancellationToken)
+        protected override sealed async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    _logger.LogDebug("Service<{ServiceName}> is trying to acquire Lock<{LockId}>", ServiceName, LockId);
-                    var handle = await _lock.AcquireAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                    _logger.TryingToAcquireLock(ServiceName, LockId);
+                    var handle = await _lock.AcquireAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
                     await using (handle.ConfigureAwait(false))
                     {
                         _checkHandleLossSupport(handle);
 
-                        _logger.LogInformation("Service<{ServiceName}> has acquired Lock<{LockId}>: executing " + nameof(RunAsync), ServiceName, LockId);
+                        _logger.AcquiredLock(ServiceName, LockId);
 
-                        using var ct = CancellationTokenSource.CreateLinkedTokenSource(handle.HandleLostToken, cancellationToken);
+                        using var ct = CancellationTokenSource.CreateLinkedTokenSource(handle.HandleLostToken, stoppingToken);
                         try
                         {
                             await RunAsync(ct.Token).ConfigureAwait(false);
@@ -97,7 +125,7 @@ namespace Ark.Tools.Hosting
                         { }
                         catch (Exception e)
                         {
-                            _logger.LogError(e, "Service<{ServiceName}>.RunAsync() exited with exception.", ServiceName);
+                            _logger.RunAsyncExited(e, ServiceName);
                         }
 
                         // we want to keep the lock, if we still have it, while cooling down in case of RunAsync returns or throws
@@ -105,7 +133,7 @@ namespace Ark.Tools.Hosting
                         // otherwise as soon as we release the Lock another instance would Run
                         if (!ct.IsCancellationRequested)
                         {
-                            _logger.LogDebug("Service<{ServiceName}> cooldown for {Cooldown}", ServiceName, Cooldown);
+                            _logger.Cooldown(ServiceName, Cooldown);
                             try
                             {
                                 await Task.Delay(Cooldown, ct.Token).ConfigureAwait(false);
@@ -114,37 +142,37 @@ namespace Ark.Tools.Hosting
                             { }
                         }
 
-                        _logger.LogDebug("Service<{ServiceName}> releasing Lock<{LockId}>", ServiceName, LockId);
+                        _logger.ReleasingLock(ServiceName, LockId);
                     }
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
                 catch (Exception e) // either the ExecuteAsync failed or the AcquireAsync failed or its disposal (strange)
                 {
                     // We want to try as much as possible to keep this Service running on an instance.
                     // Log error, sleep a bit, and restart.
-                    _logger.LogError(e, "Service<{ServiceName}> failed while Acquiring or Disposing Lock<{LockId}>.", ServiceName, LockId);
+                    _logger.FailedAcquiringOrDisposing(e, ServiceName, LockId);
 
-                    if (!cancellationToken.IsCancellationRequested)
+                    if (!stoppingToken.IsCancellationRequested)
                     {
-                        _logger.LogDebug("Service<{ServiceName}> cooldown for {Cooldown}", ServiceName, Cooldown);
+                        _logger.Cooldown(ServiceName, Cooldown);
                         try
                         {
-                            await Task.Delay(Cooldown, cancellationToken).ConfigureAwait(false);
+                            await Task.Delay(Cooldown, stoppingToken).ConfigureAwait(false);
                         }
-                        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                         { }
                     }
                 }
             }
 
-            _logger.LogDebug("Service<{ServiceName}> stopped.", ServiceName);
+            _logger.Stopped(ServiceName);
         }
 
         private void _checkHandleLossSupport(IDistributedSynchronizationHandle handle)
         {
             if (!handle.HandleLostToken.CanBeCanceled && !_hasWarnedForHandleLoss)
             {
-                _logger.LogWarning("Service<{ServiceName}> does not support Lock loss detection. This means Singleton behaviour cannot be guaranteed. Please use a IDistributedLock implementation that support HandleLost detection.", ServiceName);
+                _logger.NoHandleLossSupport(ServiceName);
                 _hasWarnedForHandleLoss = true;
             }
         }

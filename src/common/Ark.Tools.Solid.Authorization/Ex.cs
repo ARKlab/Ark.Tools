@@ -47,22 +47,22 @@ namespace Ark.Tools.Solid.Authorization
 
         public static void RegisterAuthorizationPolicy<TPolicy>(this Container container) where TPolicy : class, IAuthorizationPolicy
         {
-            container.Collection.Append(typeof(IAuthorizationPolicy), typeof(TPolicy));
+            container.Collection.Append<IAuthorizationPolicy, TPolicy>();
         }
         public static void RegisterAuthorizationHandler<TPolicyHandler>(this Container container) where TPolicyHandler : class, IAuthorizationHandler
         {
-            container.Collection.Append(typeof(IAuthorizationHandler), typeof(TPolicyHandler));
+            container.Collection.Append<IAuthorizationHandler, TPolicyHandler>();
         }
 
         public static void RegisterAuthorizationPolicy(this Container container, params Assembly[] assemblies)
         {
-            foreach (var policyType in container.GetTypesToRegister(typeof(IAuthorizationPolicy), assemblies))
+            foreach (var policyType in container.GetTypesToRegister<IAuthorizationPolicy>(assemblies))
                 container.Collection.Append(typeof(IAuthorizationPolicy), policyType);
         }
 
-        public static async Task<object> GetResourceAsync<T, P>(Container c, T query, P policy, CancellationToken ctk = default)
-            where T : notnull
-            where P : notnull
+        public static async Task<object> GetResourceAsync<TQuery, TPolicy>(Container c, TQuery query, TPolicy policy, CancellationToken ctk = default)
+            where TQuery : notnull
+            where TPolicy : notnull
         {
             var queryType = query.GetType();
             var policyType = policy.GetType();

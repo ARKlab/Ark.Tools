@@ -149,7 +149,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
         [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
         public override void OnRunStop(int resourcesFound
                                         , int normal
-                                        , int noNewData
+                                        , int noPayload
                                         , int noAction
                                         , int error
                                         , int skipped
@@ -177,7 +177,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             telemetry.Properties.Add("Tenant", tenant);
             telemetry.Metrics.Add("ResourcesFound", resourcesFound);
             telemetry.Metrics.Add("Result_Normal", normal);
-            telemetry.Metrics.Add("Result_NoNewData", noNewData);
+            telemetry.Metrics.Add("Result_NoNewData", noPayload);
             telemetry.Metrics.Add("Result_NoAction", noAction);
             telemetry.Metrics.Add("Result_Error", error);
             telemetry.Metrics.Add("Result_Skipped", skipped);
@@ -199,7 +199,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 telemetryException.Properties.Add("Tenant", tenant);
                 telemetryException.Metrics.Add("ResourcesFound", resourcesFound);
                 telemetryException.Metrics.Add("Result_Normal", normal);
-                telemetryException.Metrics.Add("Result_NoNewData", noNewData);
+                telemetryException.Metrics.Add("Result_NoNewData", noPayload);
                 telemetryException.Metrics.Add("Result_NoAction", noAction);
                 telemetryException.Metrics.Add("Result_Error", error);
                 telemetryException.Metrics.Add("Result_Skipped", skipped);
@@ -425,7 +425,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 
 
 
-        private void _propertiesProcessContext(ISupportProperties data, ProcessContext pc)
+        private static void _propertiesProcessContext(ISupportProperties data, ProcessContext pc)
         {
             data.Properties.Add("ResourceId", pc.CurrentInfo.ResourceId);
             data.Properties.Add("ProcessType", pc.ProcessType.ToString());
@@ -437,7 +437,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             {
                 data.Properties.Add("CheckSum_Old", pc.LastState.CheckSum);
                 data.Properties.Add("Modified_Old", LocalDateTimePattern.ExtendedIso.Format(pc.LastState.Modified) );
-                if (pc.LastState.ModifiedSources != null && pc.LastState.ModifiedSources.Any())
+                if (pc.LastState.ModifiedSources != null && pc.LastState.ModifiedSources.Count != 0)
                 {
                     foreach (var modified in pc.LastState.ModifiedSources)
                     {
@@ -452,7 +452,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
                 data.Properties.Add("CheckSum", pc.NewState.CheckSum);
                 data.Properties.Add("Modified", LocalDateTimePattern.ExtendedIso.Format(pc.NewState.Modified));
 
-                if (pc.NewState.ModifiedSources != null && pc.NewState.ModifiedSources.Any())
+                if (pc.NewState.ModifiedSources != null && pc.NewState.ModifiedSources.Count != 0)
                 {
                     foreach (var modified in pc.NewState.ModifiedSources)
                     {

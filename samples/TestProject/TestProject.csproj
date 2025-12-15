@@ -2,13 +2,30 @@
 
   <PropertyGroup>
     <TargetFrameworks>net10.0</TargetFrameworks>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-	<IsPackable>false</IsPackable>
+	  <IsPackable>false</IsPackable>
+
   </PropertyGroup>
 
-  <ItemGroup>
-    <SpecFlowObsoleteCodeBehindFiles Remove="Tests\SpecFlowTest - Copy.feature.cs" />
+  <PropertyGroup Label="Test Settings">
+    <IsTestProject>true</IsTestProject>
+    
+    <OutputType>Exe</OutputType>
+
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+
+  </PropertyGroup>
+
+  <ItemGroup Label="Testing Platform Settings">
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.1.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
   </ItemGroup>
 
 
@@ -30,6 +47,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+
+
     <PackageReference Include="MSTest.TestAdapter" Version="4.0.2" />
     <PackageReference Include="MSTest.TestFramework" Version="4.0.2" />
 		<PackageReference Include="Reqnroll.MsTest" Version="3.2.1" />
@@ -41,19 +60,5 @@
     <ProjectReference Include="../../src/common/Ark.Tools.Reqnroll/Ark.Tools.Reqnroll.csproj" />
     <ProjectReference Include="..\WebApplicationDemo\WebApplicationDemo.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Tests\MsgPack.feature.cs">
-      <DependentUpon>MsgPack.feature</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <SpecFlowFeatureFiles Update="Tests\MsgPack.feature">
-      <Visible>$(UsingMicrosoftNETSdk)</Visible>
-      <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
-    </SpecFlowFeatureFiles>
-  </ItemGroup>
-
 
 </Project>

@@ -23,7 +23,7 @@ namespace TestProject
     [Binding]
     public static class TestHost
     {
-        private const string _baseUri = "https://localhost:5001";
+        private static readonly Uri _baseUri = new( "https://localhost:5001" );
         private static IHost? _server;
         private static ArkFlurlClientFactory? _factory;
 

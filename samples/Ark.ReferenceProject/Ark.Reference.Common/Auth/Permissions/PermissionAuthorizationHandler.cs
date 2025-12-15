@@ -13,14 +13,6 @@ namespace Ark.Reference.Common.Auth
     {
         private readonly IUserPermissionsProvider<TPermissionEnum> _provider;
 
-        static PermissionAuthorizationHandler()
-        {
-            if (!typeof(TPermissionEnum).IsEnum)
-            {
-                throw new InvalidOperationException("TPermissionEnum must be an enumerated type");
-            }
-        }
-
         public PermissionAuthorizationHandler(IUserPermissionsProvider<TPermissionEnum> provider)
         {
             _provider = provider;

@@ -15,13 +15,6 @@ namespace Ark.Tools.Authorization.Requirement
         : IAuthorizationRequirement
         where TPermissionEnum : System.Enum
     {
-        static PermissionAuthorizationRequirement()
-        {
-            if (!typeof(TPermissionEnum).IsEnum)
-            {
-                throw new InvalidOperationException("TPermissionEnum must be an enumerated type");
-            }
-        }
         /// <summary>
         /// Creates a new instance of <see cref="PermissionAuthorizationRequirement{TPermissionEnum}"/>.
         /// </summary>
@@ -82,14 +75,6 @@ namespace Ark.Tools.Authorization.Requirement
         where TPermissionEnum : System.Enum
     {
         private readonly IUserPermissionsProvider<TPermissionEnum> _provider;
-
-        static PermissionAuthorizationHandler()
-        {
-            if (!typeof(TPermissionEnum).IsEnum)
-            {
-                throw new InvalidOperationException("TPermissionEnum must be an enumerated type");
-            }
-        }
 
         public PermissionAuthorizationHandler(IUserPermissionsProvider<TPermissionEnum> provider)
         {

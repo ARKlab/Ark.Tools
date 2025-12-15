@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.SqlServer
 {
-    public abstract class AbstractSqlAsyncContextWithOutbox<Tag> : AbstractSqlAsyncContext<Tag>, IOutboxAsyncContext
+    public abstract class AbstractSqlAsyncContextWithOutbox<TTag> : AbstractSqlAsyncContext<TTag>, IOutboxAsyncContext
     {
-        private readonly OutboxAsyncContextSql<Tag> _outbox;
+        private readonly OutboxAsyncContextSql<TTag> _outbox;
 
         protected AbstractSqlAsyncContextWithOutbox(DbTransaction transaction, IOutboxContextSqlConfig config)
             : base(transaction)
         {
-            _outbox = new OutboxAsyncContextSql<Tag>(this, config);
+            _outbox = new OutboxAsyncContextSql<TTag>(this, config);
         }
 
         public Task ClearAsync(CancellationToken ctk = default)

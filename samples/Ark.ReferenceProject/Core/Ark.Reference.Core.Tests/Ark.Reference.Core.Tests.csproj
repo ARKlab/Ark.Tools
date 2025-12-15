@@ -1,11 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
+
+  <PropertyGroup Label="Test Settings">
+    <IsTestProject>true</IsTestProject>
+    
+    <OutputType>Exe</OutputType>
+
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+
   </PropertyGroup>
 
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  <ItemGroup Label="Testing Platform Settings">
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.1.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
   </ItemGroup>
 
 	<ItemGroup>
@@ -50,6 +65,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  
   <PropertyGroup>
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>

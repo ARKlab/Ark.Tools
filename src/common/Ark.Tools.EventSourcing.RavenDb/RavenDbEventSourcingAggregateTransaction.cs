@@ -117,7 +117,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
         }
 
         #region IDisposable Support
-        private bool _disposedValue = false; // To detect redundant calls
+        private bool _disposedValue; // To detect redundant calls
 
         protected override void Dispose(bool disposing)
         {

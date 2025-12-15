@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Activity.Processor
 {
+    
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2214:Do not call overridable methods in constructors", Justification = "Designed to be overridden")]
     public abstract class CalendarSliceActivity : ISliceActivity
     {
         private readonly IEnumerable<Slice> _calendar;
@@ -37,9 +39,9 @@ namespace Ark.Tools.Activity.Processor
 
         public abstract TimeSpan? CoolDown { get; }
 
-        public virtual IEnumerable<Slice> ImpactedSlices(Resource source, Slice sourceSlice)
+        public virtual IEnumerable<Slice> ImpactedSlices(Resource resource, Slice slice)
         {
-            return _reverseMap[source][sourceSlice];
+            return _reverseMap[resource][slice];
         }
 
         public abstract Task Process(Slice activitySlice);

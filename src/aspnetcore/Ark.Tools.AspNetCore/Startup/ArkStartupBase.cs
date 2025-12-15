@@ -13,15 +13,17 @@ using System.Linq;
 
 namespace Ark.Tools.AspNetCore.Startup
 {
-    internal class ArkStartupBase
+    internal sealed class ArkStartupBase
     {
         public IConfiguration Configuration { get; }
+
+        internal static readonly string[] _sourceArray = new[] { "/swagger/index.html", "/swagger/oauth2-redirect.html" };
 
         public ArkStartupBase(IConfiguration configuration)
         {
             Configuration = configuration;
         }
-        public virtual void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpContextAccessor();
 
@@ -40,8 +42,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 .SetPolicySelector(ctx =>
                 {
                     // yes, contains is a bit dirty but it works for both /swagger and /swagger/index.html even when the path base is not root
-                    var isSwagger = new[] { "/swagger/index.html", "/swagger/oauth2-redirect.html" }
-                        .Any(x => ctx.HttpContext.Request.Path.Value?.EndsWith(x, System.StringComparison.OrdinalIgnoreCase) == true);
+                    var isSwagger = _sourceArray.Any(x => ctx.HttpContext.Request.Path.Value?.EndsWith(x, System.StringComparison.OrdinalIgnoreCase) == true);
 
                     if (isSwagger)
                         return ctx.ConfiguredPolicies["Swagger"];
@@ -51,7 +52,8 @@ namespace Ark.Tools.AspNetCore.Startup
                 ;
         }
 
-        public virtual void Configure(IApplicationBuilder app)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Pattern")]
+        public void Configure(IApplicationBuilder app)
         {
             var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
 

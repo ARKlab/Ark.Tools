@@ -76,6 +76,7 @@ namespace Ark.Tools.NLog
             return @this.WithApplicationInsightsRule("*", LogLevel.Error);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
         public record Config(
             string? SQLConnectionString = null,
             string? SQLTableName = null,
@@ -147,20 +148,6 @@ namespace Ark.Tools.NLog
             return @this;
         }
 
-        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]
-        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo, bool async = true)
-        {
-            return @this;
-        }
-
-        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]
-        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailTo,
-            string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl,
-            bool async = true)
-        {
-            return @this;
-        }
-
         private static bool _isProduction()
         {
             return _getEnvironment().Equals("Production", StringComparison.OrdinalIgnoreCase);
@@ -173,30 +160,8 @@ namespace Ark.Tools.NLog
                 ?? "Production";
         }
 
-        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]
-        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo, bool async = true)
-        {
-            return @this;
-        }
-
-        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration. Beware to use connectionString:NLog.Smtp", true)]
-        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo,
-            string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl,
-            bool async = true)
-        {
-            return @this;
-        }
-
-        [Obsolete("Use .WithDefaultTargetsAndRulesFromConfiguration() from Ark.Tools.NLog.Configuration or .WithArkDefaultTargetsAndRules(). Beware to use connectionString:NLog.Smtp", true)]
-        public static Configurer WithDefaultTargetsAndRules(this Configurer @this, string logTableName, string connectionString, string mailFrom, string mailTo,
-            string smtpConnectionString,
-            bool async = true)
-        {
-
-            return @this;
-        }
-
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Targets are Disposed by NLog")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
         public sealed class Configurer
         {
             internal LoggingConfiguration _config = new();
@@ -301,8 +266,9 @@ namespace Ark.Tools.NLog
 
             public Configurer WithDatabaseTarget(string logTableName, string connectionString, bool async = true)
             {
-                logTableName = logTableName.Replace("[", string.Empty).Replace("]", string.Empty).Replace('.', '_');
+                logTableName = logTableName.Replace("[", string.Empty, StringComparison.Ordinal).Replace("]", string.Empty, StringComparison.Ordinal).Replace('.', '_');
 
+#pragma warning disable CA1031 // Do not catch general exception types
                 try
                 {
                     _ensureTableIsCreated(connectionString, logTableName);
@@ -312,6 +278,7 @@ namespace Ark.Tools.NLog
                     InternalLogger.Fatal(ex, "Failed to setup Ark Database Target. Database logging is disabled");
                     // continue setup the Target: it's not going to work but NLog handles it gracefully
                 }
+#pragma warning restore CA1031 // Do not catch general exception types
 
 
                 var databaseTarget = new DatabaseTarget();
@@ -379,7 +346,7 @@ VALUES
                 return this;
             }
 
-            private MailTarget _getBasicMailTarget()
+            private static MailTarget _getBasicMailTarget()
             {
                 var target = new MailTarget();
                 target.AddNewLines = true;
@@ -568,7 +535,7 @@ VALUES
                 return this;
             }
 
-            private bool _isVisualStudioAttached()
+            private static bool _isVisualStudioAttached()
             {
                 return !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("VisualStudioVersion")) || Debugger.IsAttached;
             }
@@ -682,7 +649,9 @@ END
             using var conn = new SqlConnection(connString);
             conn.Open();
             using var cmd = conn.CreateCommand();
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
             cmd.CommandText = creteLogTable;
+#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
             cmd.CommandTimeout = 180;
             cmd.ExecuteNonQuery();
         }
@@ -697,6 +666,7 @@ END
             /// <returns>Serialize succeeded (true/false)</returns>
             public bool SerializeObject(object? value, StringBuilder builder)
             {
+#pragma warning disable CA1031 // Do not catch general exception types
                 try
                 {
                     builder.Append(JsonSerializer.Serialize(value, ArkSerializerOptions.JsonOptions));
@@ -707,6 +677,7 @@ END
                     InternalLogger.Error(e, "Error when serializing type '{type}' '{string}' as json.", value?.GetType(), value?.ToString());
                     return false;
                 }
+#pragma warning restore CA1031 // Do not catch general exception types
             }
         }
     }

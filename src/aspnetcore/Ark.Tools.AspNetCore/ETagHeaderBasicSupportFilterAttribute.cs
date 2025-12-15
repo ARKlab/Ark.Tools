@@ -12,7 +12,7 @@ using System.Linq;
 
 namespace Ark.Tools.AspNetCore
 {
-    public class ETagHeaderBasicSupportFilterAttribute : ActionFilterAttribute
+    public sealed class ETagHeaderBasicSupportFilterAttribute : ActionFilterAttribute
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {
@@ -52,7 +52,7 @@ namespace Ark.Tools.AspNetCore
                 if (etag._ETag != null)
                 {
                     //If is whitespace or empty I throw exception
-                    if (etag._ETag.All(char.IsWhiteSpace) || etag._ETag == string.Empty)
+                    if (etag._ETag.All(char.IsWhiteSpace) || string.IsNullOrEmpty(etag._ETag))
                         throw new InvalidOperationException("ETag value is empty or consists only of white-space characters");
 
                     resHeader.ETag = new EntityTagHeaderValue($"\"{etag._ETag}\"");
