@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TestWorker": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

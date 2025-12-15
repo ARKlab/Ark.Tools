@@ -15,18 +15,13 @@ namespace Ark.Tools.Core.DataKey
     }
 
 
-    public class DataKeyPrinter<T>
+    public static class DataKeyPrinter<T>
         where T : class
     {
-        private static readonly PropertyInfo[] _keyProperties;
-
-        static DataKeyPrinter()
-        {
-            _keyProperties = typeof(T).GetProperties()
-                .Where(prop => prop.GetCustomAttributes(typeof(DataKeyAttribute), false).Any())
+        private static readonly PropertyInfo[] _keyProperties = typeof(T).GetProperties()
+                .Where(prop => prop.GetCustomAttributes(typeof(DataKeyAttribute), false).Length != 0)
                 .ToArray()
                 ;
-        }
 
         public static string? Print(T? obj)
         {

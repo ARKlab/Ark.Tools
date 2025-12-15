@@ -9,15 +9,10 @@ namespace Ark.Tools.Core.DataKey
     public class DataKeyComparer<T> : IEqualityComparer<T>
         where T : class
     {
-        private static readonly PropertyInfo[] _keyProperties;
-
-        static DataKeyComparer()
-        {
-            _keyProperties = typeof(T).GetProperties()
-                .Where(prop => prop.GetCustomAttributes(typeof(DataKeyAttribute), false).Any())
+        private static readonly PropertyInfo[] _keyProperties = typeof(T).GetProperties()
+                .Where(prop => prop.GetCustomAttributes(typeof(DataKeyAttribute), false).Length != 0)
                 .ToArray()
                 ;
-        }
 
         public bool Equals(T? x, T? y)
         {

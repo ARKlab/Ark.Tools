@@ -12,7 +12,7 @@ namespace Ark.Tools.Core.EntityTag
                 else return;
 
             if (!string.IsNullOrEmpty(newEntity?._ETag))
-                if (existingEntity?._ETag != newEntity?._ETag)
+                if (existingEntity._ETag != newEntity?._ETag)
                     throw new EntityTagMismatchException("Entity tags mismatch.");
         }
     }

@@ -47,7 +47,7 @@ namespace MET.International.Common.Rebus.Tests
         /// <param name="count">Count sequence</param>
         public static void UseFakeDeliveryCount(this StandardConfigurer<ITransport> configurer, IEnumerable<int> count)
         {
-            var gate = new object();
+            var gate = new Lock();
             var e = count.GetEnumerator();
             bool hasNext = true;
             int v = 1;

@@ -250,30 +250,30 @@ namespace Ark.Tools.Core
         private static string _toGenericTypeString(this Type t, params Type[] arg)
         {
             if (t.IsGenericParameter || t.FullName == null) return t.Name; //Generic argument stub
-            bool isGeneric = t.IsGenericType || t.FullName.IndexOf('`') >= 0;//an array of generic types is not considered a generic type although it still have the genetic notation
-            bool isArray = !t.IsGenericType && t.FullName.IndexOf('`') >= 0;
+            bool isGeneric = t.IsGenericType || t.FullName.Contains('`', StringComparison.Ordinal);//an array of generic types is not considered a generic type although it still have the genetic notation
+            bool isArray = !t.IsGenericType && t.FullName.Contains('`', StringComparison.Ordinal);
             Type genericType = t;
-            while (genericType.IsNested && genericType.DeclaringType?.GetGenericArguments().Count() == t.GetGenericArguments().Count())//Non generic class in a generic class is also considered in Type as being generic
+            while (genericType.IsNested && genericType.DeclaringType?.GetGenericArguments().Length == t.GetGenericArguments().Length)//Non generic class in a generic class is also considered in Type as being generic
             {
                 genericType = genericType.DeclaringType;
             }
             if (!isGeneric) return _toCSReservatedWord(t, true).Replace('+', '.');
 
-            var arguments = arg.Any() ? arg : t.GetGenericArguments();//if arg has any then we are in the recursive part, note that we always must take arguments from t, since only t (the last one) will actually have the constructed type arguments and all others will just contain the generic parameters
+            var arguments = arg.Length != 0 ? arg : t.GetGenericArguments();//if arg has any then we are in the recursive part, note that we always must take arguments from t, since only t (the last one) will actually have the constructed type arguments and all others will just contain the generic parameters
             string genericTypeName = genericType._toCSReservatedWord(true);
             if (genericType.IsNested)
             {
-                var argumentsToPass = arguments.Take(genericType.DeclaringType?.GetGenericArguments().Count() ?? 0).ToArray();//Only the innermost will return the actual object and only from the GetGenericArguments directly on the type, not on the on genericDfintion, and only when all parameters including of the innermost are set
-                arguments = arguments.Skip(argumentsToPass.Count()).ToArray();
+                var argumentsToPass = arguments.Take(genericType.DeclaringType?.GetGenericArguments().Length ?? 0).ToArray();//Only the innermost will return the actual object and only from the GetGenericArguments directly on the type, not on the on genericDfintion, and only when all parameters including of the innermost are set
+                arguments = arguments.Skip(argumentsToPass.Length).ToArray();
                 genericTypeName = genericType.DeclaringType?._toGenericTypeString(argumentsToPass) + "." + _toCSReservatedWord(genericType, false);//Recursive
             }
             if (isArray)
             {
                 genericTypeName = t.GetElementType()?._toGenericTypeString() + "[]";//this should work even for multidimensional arrays
             }
-            if (genericTypeName.IndexOf('`') >= 0)
+            if (genericTypeName.Contains('`', StringComparison.Ordinal))
             {
-                genericTypeName = genericTypeName[..genericTypeName.IndexOf('`')];
+                genericTypeName = genericTypeName[..genericTypeName.IndexOf('`', StringComparison.Ordinal)];
                 string genericArgs = string.Join(", ", arguments.Select(a => a._toGenericTypeString()).ToArray());
                 //Recursive
                 genericTypeName = genericTypeName + "<" + genericArgs + ">";
@@ -281,10 +281,10 @@ namespace Ark.Tools.Core
             }
             if (t != genericType)
             {
-                genericTypeName += t.FullName.Replace(genericType._toCSReservatedWord(true), "").Replace('+', '.');
+                genericTypeName += t.FullName.Replace(genericType._toCSReservatedWord(true), "", StringComparison.Ordinal).Replace('+', '.');
             }
-            if (genericTypeName.IndexOf('[') >= 0 && genericTypeName.IndexOf(']') != genericTypeName.IndexOf('[') + 1)
-                genericTypeName = genericTypeName[..genericTypeName.IndexOf('[')];//For a non generic class nested in a generic class we will still have the type parameters at the end
+            if (genericTypeName.Contains('[', StringComparison.Ordinal) && genericTypeName.IndexOf(']', StringComparison.Ordinal) != genericTypeName.IndexOf('[', StringComparison.Ordinal) + 1)
+                genericTypeName = genericTypeName[..genericTypeName.IndexOf('[', StringComparison.Ordinal)];//For a non generic class nested in a generic class we will still have the type parameters at the end
             return genericTypeName;
         }
     }

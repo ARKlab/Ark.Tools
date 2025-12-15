@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql
 {
-    public abstract class AbstractSqlAsyncContextFactory<TContext, Tag> : IAsyncContextFactory<TContext> where TContext : ISqlAsyncContext<Tag>
+    public abstract class AbstractSqlAsyncContextFactory<TContext, TTag> : IAsyncContextFactory<TContext> where TContext : ISqlAsyncContext<TTag>
     {
         private readonly IDbConnectionManager _connectionManager;
         private readonly ISqlContextConfig _config;

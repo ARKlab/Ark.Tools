@@ -154,7 +154,7 @@ namespace Ark.Reference.Core.Application.Host
                     {
                         if (!isInMemory)
                         {
-                            if (this.Config.AsbConnectionString?.Contains("SharedAccess") == true)
+                            if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.InvariantCultureIgnoreCase) == true)
                                 t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString);
                             else
                                 t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString, new DefaultAzureCredential());
@@ -171,7 +171,7 @@ namespace Ark.Reference.Core.Application.Host
                         };
                         if (!isInMemory)
                         {
-                            if (this.Config.AsbConnectionString?.Contains("SharedAccess") == true)
+                            if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.InvariantCultureIgnoreCase) == true)
                                 t.UseAzureServiceBus(this.Config.AsbConnectionString, listeningQueue)
                                       .EnablePartitioning()
                                       .AutomaticallyRenewPeekLock()
@@ -366,6 +366,7 @@ namespace Ark.Reference.Core.Application.Host
                         "This is usually caused by trying to access the 'Current Request User' outside a Message context");
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
     public enum Queue
     {
         OneWay,

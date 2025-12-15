@@ -96,7 +96,7 @@ namespace Ark.Tools.FtpClient.Core
                     var list = await t.ConfigureAwait(false);
                     running.Remove(t); // remove only if successful
 
-                    foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
+                    foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".", StringComparison.Ordinal) && !x.Name.Equals("..", StringComparison.Ordinal)))
                     {
                         if (skipFolder.Invoke(d))
                             _logger.Info(CultureInfo.InvariantCulture, "Skipping folder: {Path}", d.FullPath);

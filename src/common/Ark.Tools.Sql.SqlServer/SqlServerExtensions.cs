@@ -23,19 +23,6 @@ namespace Ark.Tools.Sql.SqlServer
                 SELECT COUNT(*) FROM({query}) a";
         }
 
-        [Obsolete("Use AsSqlServerPagedQuery()", true)]
-        public static string ConvertToPaged(this string query, string[] sortFields)
-        {
-            return $@"
-                {query}
-
-                ORDER BY {String.Join(", ", sortFields)}
-                OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY
-
-                SELECT COUNT(*) FROM({query}) a";
-        }
-
-
         public static async Task<(IEnumerable<TReturn> data, int count)> ReadPagedAsync<TReturn>(this IDbConnection connection, CommandDefinition cmd)
         {
             var r = await connection.QueryMultipleAsync(cmd).ConfigureAwait(false);

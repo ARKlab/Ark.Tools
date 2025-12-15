@@ -20,6 +20,9 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
         private const string _connStrKey = "ConnectionStrings:";
         private const string _providerKeyFormat = "ConnectionStrings:{0}_ProviderName";
 
+        private static readonly System.Text.CompositeFormat _connStrKeyCompositeFormat = System.Text.CompositeFormat.Parse(_connStrKeyFormat);
+        private static readonly System.Text.CompositeFormat _providerKeyCompositeFormat = System.Text.CompositeFormat.Parse(_providerKeyFormat);
+
         private readonly string _prefix;
 
         /// <summary>
@@ -67,12 +70,12 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
         private static string _normalizeConnectionStringKey(string key)
         {
-            return key.Replace("__", ConfigurationPath.KeyDelimiter);
+            return key.Replace("__", ConfigurationPath.KeyDelimiter, StringComparison.Ordinal);
         }
 
         private static string _normalizeAppSettingsKey(string key)
         {
-            return _normalizeConnectionStringKey(key).Replace(".", ConfigurationPath.KeyDelimiter);
+            return _normalizeConnectionStringKey(key).Replace(".", ConfigurationPath.KeyDelimiter, StringComparison.Ordinal);
         }
 
         private static IEnumerable<DictionaryEntry> _normalizeConnectionString(IEnumerable<DictionaryEntry> filteredEnvVariables)
@@ -85,7 +88,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
                 if (key.StartsWith(_connStrKey, StringComparison.OrdinalIgnoreCase))
                 {
-                    var newEntry = new DictionaryEntry(key.Replace("_", "."), entry.Value);
+                    var newEntry = new DictionaryEntry(key.Replace("_", ".", StringComparison.Ordinal), entry.Value);
                     newFilteredEnvVariables.Add(newEntry);
                 }
                 else
@@ -129,14 +132,14 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables
 
             // Return the key-value pair for connection string
             yield return new DictionaryEntry(
-                string.Format(CultureInfo.InvariantCulture, _connStrKeyFormat, _normalizeConnectionStringKey(key[prefix.Length..])),
+                string.Format(CultureInfo.InvariantCulture, _connStrKeyCompositeFormat, _normalizeConnectionStringKey(key[prefix.Length..])),
                 entry.Value);
 
             if (!string.IsNullOrEmpty(provider))
             {
                 // Return the key-value pair for provider name
                 yield return new DictionaryEntry(
-                    string.Format(CultureInfo.InvariantCulture, _providerKeyFormat, _normalizeConnectionStringKey(key[prefix.Length..])),
+                    string.Format(CultureInfo.InvariantCulture, _providerKeyCompositeFormat, _normalizeConnectionStringKey(key[prefix.Length..])),
                     provider);
             }
         }

@@ -30,10 +30,12 @@ namespace TestWithoutArkTools.Controllers
         public async Task<IActionResult> GetOperationById([FromRoute] string operationId, CancellationToken ctk = default)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            var res = "Prova";
+            string? res = null;// "Prova";
 
+#pragma warning disable CA1508 // Avoid dead conditional code
             if (res != null)
                 return this.Ok(res);
+#pragma warning restore CA1508 // Avoid dead conditional code
 
             return this.NotFound();
         }

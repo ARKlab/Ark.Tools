@@ -75,7 +75,9 @@ namespace Ark.Tools.Core
             return table;
         }
 
+#pragma warning disable CA1822 // Mark members as static
         public DataTable ShredPrimitive(IEnumerable<T> source, DataTable? table, LoadOption? options)
+#pragma warning restore CA1822 // Mark members as static
         {
             // Create a new table if the input table is null. 
             if (table == null)
@@ -144,26 +146,26 @@ namespace Ark.Tools.Core
             return values;
         }
 
-        private static readonly ISet<Type> _datetimeTypes = new HashSet<Type>()
+        private static readonly HashSet<Type> _datetimeTypes = new HashSet<Type>()
         {
             typeof(LocalDate),
             typeof(LocalDateTime),
             typeof(Instant),
         };
 
-        private static readonly ISet<Type> _datetimeOffsetTypes = new HashSet<Type>()
+        private static readonly HashSet<Type> _datetimeOffsetTypes = new HashSet<Type>()
         {
             typeof(OffsetDateTime),
             typeof(OffsetDate)
         };
 
 
-        private static readonly ISet<Type> _timeTypes = new HashSet<Type>()
+        private static readonly HashSet<Type> _timeTypes = new HashSet<Type>()
         {
             typeof(LocalTime)
         };
 
-        private Type _deriveColumnType(Type elementType)
+        private static Type _deriveColumnType(Type elementType)
         {
             var nullableType = Nullable.GetUnderlyingType(elementType);
             if (nullableType is not null)
@@ -186,7 +188,7 @@ namespace Ark.Tools.Core
             return elementType;
         }
 
-        private object? _convertColumnValue(object? value)
+        private static object? _convertColumnValue(object? value)
         {
             if (value == null) return value;
 

@@ -7,7 +7,7 @@ using System.Data.Common;
 
 namespace Ark.Tools.Sql
 {
-    public interface ISqlContext<Tag> : IContext
+    public interface ISqlContext<TTag> : IContext
     {
         DbConnection Connection { get; }
         DbTransaction Transaction { get; }

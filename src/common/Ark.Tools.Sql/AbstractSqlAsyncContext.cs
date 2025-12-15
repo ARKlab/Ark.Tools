@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql
 {
-    public abstract class AbstractSqlAsyncContext<Tag> : ISqlAsyncContext<Tag>, IDisposable
+    public abstract class AbstractSqlAsyncContext<TTag> : ISqlAsyncContext<TTag>, IDisposable
     {
         private DbConnection? _connection;
         private DbTransaction? _transaction;

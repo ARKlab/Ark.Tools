@@ -249,7 +249,7 @@ namespace Ark.Tools.Auth0
         public void Dispose()
         {
             ((IDisposable)_cache).Dispose();
-            if (_inner is IDisposable disposable) disposable?.Dispose();
+            if (_inner is IDisposable disposable) disposable.Dispose();
         }
 
         public Task RevokeRefreshTokenAsync(RevokeRefreshTokenRequest request, CancellationToken cancellationToken = default)
@@ -309,6 +309,7 @@ namespace Ark.Tools.Auth0
         #endregion
     }
 
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
     sealed record Token
     {
         [JsonPropertyName("exp")]

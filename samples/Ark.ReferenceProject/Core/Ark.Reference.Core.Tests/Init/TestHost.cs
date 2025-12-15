@@ -43,7 +43,7 @@ namespace Ark.Reference.Core.Tests.Init
     [Binding]
     public sealed class TestHost : IDisposable
     {
-        private const string _baseUri = "https://localhost:5001";
+        private static readonly Uri _baseUri = new ("https://localhost:5001");
 
         public static ApiHostConfig? TestConfig { get; private set; }
         public static ICoreDataContextConfig DBConfig => TestConfig ?? throw new InvalidOperationException("TestConfig is null");
@@ -101,7 +101,7 @@ namespace Ark.Reference.Core.Tests.Init
             return _backgroundBus(true);
         }
 
-        private async Task _backgroundBus(bool ignoreDeferred)
+        private static async Task _backgroundBus(bool ignoreDeferred)
         {
             using var _ = new AwesomeAssertions.Execution.AssertionScope();
 

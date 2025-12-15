@@ -26,5 +26,12 @@ namespace Ark.Reference.Common.Exceptions
         {
         }
 
+        public ExternalServiceException()
+        {
+        }
+
+        public ExternalServiceException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 }

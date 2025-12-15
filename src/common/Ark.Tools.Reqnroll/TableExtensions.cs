@@ -38,7 +38,7 @@ namespace Ark.Tools.Reqnroll
 
             // find sub-properties by looking for "."
             var propNames = tableRow
-                .Where(x => x.Key.Contains('.'))
+                .Where(x => x.Key.Contains('.', StringComparison.Ordinal))
                 .Select(x => Regex.Replace(x.Key, @"^(?<root>.+?)\..+$", "${root}", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)));
 
             foreach (var propName in propNames)
@@ -108,7 +108,7 @@ namespace Ark.Tools.Reqnroll
 
             var missingProperties = headers.Where(e => !propertiesOnTargetType.Contains(e, StringComparer.Ordinal)).ToList();
 
-            if (missingProperties.Any())
+            if (missingProperties.Count != 0)
             {
                 var message = $"Type {typeof(T).Name} is missing the following properties specifield in the table: {string.Join(", ", missingProperties)}.";
                 throw new ArgumentException(message, nameof(table));

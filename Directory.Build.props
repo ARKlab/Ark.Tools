@@ -2,26 +2,89 @@
   
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-    <LangVersion>12.0</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>
     <Nullable>enable</Nullable>
 
-	  <Features>strict</Features>
-	  <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
   </PropertyGroup>
 
-    <PropertyGroup>
-	    <!-- https://developercommunity.visualstudio.com/t/application-insight-doesnt-show-logs-from-local-de/1240506 -->
-	    <!-- https://stackoverflow.com/a/64877356 -->
-	    <ApplicationInsightsResourceId>/subscriptions/dummy</ApplicationInsightsResourceId>
-    </PropertyGroup>
 
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+
+	<!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+    
+    <DebugType>portable</DebugType>
+	<DebugSymbols>true</DebugSymbols>
+
+	<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
+	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+	<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+	  
+
+	<!--
+      Disabling static graph restore due to a bug related to NuGetAuditSuppress.
+      See: https://github.com/NuGet/Home/issues/14300
+    -->
+	<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
+    <RestoreSerializeGlobalProperties>true</RestoreSerializeGlobalProperties>
+
+	<Deterministic>true</Deterministic>
+	
+	<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
+	<Features>strict</Features>
+
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <LangVersion>latest</LangVersion>
+
+	<!--
+      Other options are available. Read the documentation for more information:
+      https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
+    -->
+	<GenerateSBOM>true</GenerateSBOM>
+
+	<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
+
+  </PropertyGroup>
+
+	<PropertyGroup Label="NuGet Audit">
+		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
+		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
+		<NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
+		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.101">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+
+		<PackageReference Include="Meziantou.Analyzer" Version="2.0.260">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+
+		<PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+
+		<PackageReference Include="Polyfill" Version="9.3.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+  <PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
+
+	<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
 
     <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -32,70 +95,34 @@
 
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-  </PropertyGroup>
 
-  <PropertyGroup>
-	  <!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
-	  <PublishRepositoryUrl>true</PublishRepositoryUrl>
-
-	  <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
-	  <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    
-    <DebugType>portable</DebugType>
-	<DebugSymbols>true</DebugSymbols>
-	  
-	<!--
-      Other options are available. Read the documentation for more information:
-      https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
-    -->
-	<GenerateSBOM>true</GenerateSBOM>
+    <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">true</EnablePackageValidation>
 
   </PropertyGroup>
-
-
-	<PropertyGroup Label="NuGet Audit">
-		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
-		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
-		<NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
-		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
-		<Features>strict</Features>
-		<!-- static graph evaluation doesn't yield identical results between Win+VS vs Linux+dotnetcli. Renovate fails to run correctly. -->
-		<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
-		<Deterministic>true</Deterministic>
-	</PropertyGroup>
-
-	<ItemGroup>
+  
+	<ItemGroup Condition="$(IsPackable) != 'false'">
 		<None Include="..\ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
 	</ItemGroup>
 	
-	<ItemGroup>
-		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.101" >
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
-		
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
+	<PropertyGroup Label="Continuous Integration Build Detection">
+		<!-- Azure Pipelines / DevOpsServer -->
+		<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
 
-		<PackageReference Include="ReferenceTrimmer" Version="3.3.12" Condition="'true' == 'false'">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
+		<!-- GitHub Actions -->
+		<_IsGitHubActions Condition="'$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>
+		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
 
-		<PackageReference Include="Meziantou.Analyzer" Version="2.0.260">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
+		<!-- Set by many build agents -->
+		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+	</PropertyGroup>
 
-		<PackageReference Condition="$(IsPackable) != 'false'" Include="Microsoft.Sbom.Targets" Version="4.1.4" PrivateAssets="All" />
-		
-	</ItemGroup>
+
+    <PropertyGroup>
+	    <!-- https://developercommunity.visualstudio.com/t/application-insight-doesnt-show-logs-from-local-de/1240506 -->
+	    <!-- https://stackoverflow.com/a/64877356 -->
+	    <ApplicationInsightsResourceId>/subscriptions/dummy</ApplicationInsightsResourceId>
+    </PropertyGroup>
 
 	<Target Name="_ExactProjectReferencesVersion" AfterTargets="_GetProjectReferenceVersions">
 		<ItemGroup>

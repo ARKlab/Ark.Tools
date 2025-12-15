@@ -1,5 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using System.Diagnostics.CodeAnalysis;
+
 using MessagePack;
 
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +10,7 @@ using Microsoft.Net.Http.Headers;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter
 {
+    [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
     internal sealed class MessagePackFormatterSetup : IConfigureOptions<MvcOptions>
     {
         private readonly IFormatterResolver _resolver;

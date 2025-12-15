@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -24,6 +25,7 @@ namespace Ark.Tools.SystemTextJson
         public override bool CanConvert(Type typeToConvert) =>
             typeToConvert.GetCustomAttribute<TypeConverterAttribute>() != null;
 
+        [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via reflection in CreateConverter method")]
         private sealed class TypeConverterJsonConverter<T> : JsonConverter<T>
         {
             private readonly TypeConverter _typeConverter;

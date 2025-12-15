@@ -25,8 +25,8 @@ namespace Ark.Tools.ResourceWatcher
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IResourceWatcherConfig _config;
         private readonly IStateProvider _stateProvider;
-        private readonly object _lock = new() { };
-        private volatile bool _isStarted = false;
+        private readonly Lock _lock = new() { };
+        private volatile bool _isStarted;
         private CancellationTokenSource? _cts;
         private Task? _task;
         private readonly ResourceWatcherDiagnosticSource _diagnosticSource;
@@ -404,9 +404,9 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        private LocalDateTime _getEarliestModified(IResourceMetadata info)
+        private static LocalDateTime _getEarliestModified(IResourceMetadata info)
         {
-            if (info.ModifiedSources != null && info.ModifiedSources.Any())
+            if (info.ModifiedSources != null && info.ModifiedSources.Count != 0)
             {
                 return info.ModifiedSources.Max(x => x.Value);
             }
@@ -486,9 +486,9 @@ namespace Ark.Tools.ResourceWatcher
 
         public bool IsResourceUpdated(out (string? source, LocalDateTime? current, LocalDateTime? last) changed)
         {
-            if (CurrentInfo.ModifiedSources != null && CurrentInfo.ModifiedSources.Any())
+            if (CurrentInfo.ModifiedSources != null && CurrentInfo.ModifiedSources.Count != 0)
             {
-                if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Any())
+                if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Count != 0)
                 {
                     if (CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).Any())
                     {
@@ -556,7 +556,7 @@ namespace Ark.Tools.ResourceWatcher
             }
             else if (CurrentInfo.Modified != default)
             {
-                if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Any())
+                if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Count != 0)
                 {
                     if (LastState.ModifiedSources.Where(x => x.Value < CurrentInfo.Modified).Any())
                     {

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace TestReceiver
 {
-    sealed class Config : TestReceiver_Config, IRebusSliceActivityManagerConfig
+    sealed class Config : ITestReceiver_Config, IRebusSliceActivityManagerConfig
     {
         public string? RebusConnstring { get; set; }
         public string ActivitySqlConnectionString
@@ -42,12 +42,12 @@ namespace TestReceiver
                 };
 
 
-                var reg = Lifestyle.Singleton.CreateRegistration(typeof(Config), container);
+                var reg = Lifestyle.Singleton.CreateRegistration<Config>(container);
 
 
                 container.RegisterInstance(cfg);
-                container.AddRegistration(typeof(TestReceiver_Config), reg);
-                container.AddRegistration(typeof(IRebusSliceActivityManagerConfig), reg);
+                container.AddRegistration<ITestReceiver_Config>(reg);
+                container.AddRegistration<IRebusSliceActivityManagerConfig>(reg);
 
                 //container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
                 container.RegisterActivities(typeof(RebusSliceActivityManager<>), typeof(TestReceiver_Activity));

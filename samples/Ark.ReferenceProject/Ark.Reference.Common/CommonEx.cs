@@ -2,7 +2,7 @@
 
 namespace Ark.Reference.Common
 {
-    public static class CommonEx
+    public static class CommonExtensions
     {
         public static IChanges<TObject> ToChanges<TObject>(this (TObject? pre, TObject? cur) input)
         {

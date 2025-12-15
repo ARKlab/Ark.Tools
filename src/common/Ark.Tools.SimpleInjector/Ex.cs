@@ -34,7 +34,7 @@ namespace Ark.Tools.SimpleInjector
                 select r)
                 .ToArray();
 
-            if (registrations.Any())
+            if (registrations.Length != 0)
             {
                 var instances = registrations.Select(r => r.GetInstance());
 
@@ -113,7 +113,7 @@ namespace Ark.Tools.SimpleInjector
                 select r)
                 .ToArray();
 
-            if (registrations.Any())
+            if (registrations.Length != 0)
             {
                 var instances = registrations.Select(r => r.GetInstance());
 
@@ -158,7 +158,7 @@ namespace Ark.Tools.SimpleInjector
                 select r)
                 .ToArray();
 
-            if (!registrations.Any())
+            if (registrations.Length == 0)
             {
                 // No registration found. We're done.
             }
@@ -290,13 +290,6 @@ namespace Ark.Tools.SimpleInjector
         {
             if (!container.HasService<TService>())
                 container.RegisterSingleton<TService, TImplementation>();
-        }
-
-        [Obsolete("Use RegisterInstance")]
-        public static void RequireSingleton<TService>(this Container container, TService instance) where TService : class
-        {
-            if (!container.HasService<TService>())
-                container.RegisterSingleton<TService>(instance);
         }
 
         public static void RequireInstance<TService>(this Container container, TService instance) where TService : class

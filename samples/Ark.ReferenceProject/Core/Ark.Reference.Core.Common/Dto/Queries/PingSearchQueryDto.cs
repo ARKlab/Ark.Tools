@@ -15,7 +15,7 @@ namespace Ark.Reference.Core.Common.Dto
 
             public IEnumerable<string> Sort { get; set; } = [];
             public int Limit { get; init; } = 10;
-            public int Skip { get; set; } = 0;
+            public int Skip { get; set; }
         }
     }
 }

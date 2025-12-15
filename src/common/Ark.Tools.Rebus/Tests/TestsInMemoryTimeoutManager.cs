@@ -23,7 +23,7 @@ namespace Ark.Tools.Rebus.Tests
         private readonly IRebusTime _rebusTime;
         private readonly ConcurrentDictionary<string, DeferredMessage> _deferredMessages = new(StringComparer.Ordinal);
 
-        private static int _dueCount = 0;
+        private static int _dueCount;
         private static readonly List<TestsInMemoryTimeoutManager> _instances = new();
 
         public static int DueCount { get => _dueCount; set => _dueCount = value; }

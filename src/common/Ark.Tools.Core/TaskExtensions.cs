@@ -13,16 +13,20 @@ namespace Ark.Tools.Core
         public static Task IgnoreExceptions(this Task task)
         {
             task.ContinueWith(c => { var ignored = c.Exception; },
+                CancellationToken.None,
                 TaskContinuationOptions.OnlyOnFaulted |
-                TaskContinuationOptions.ExecuteSynchronously);
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
             return task;
         }
 
         public static Task FailFastOnException(this Task task)
         {
             task.ContinueWith(c => Environment.FailFast("Task faulted", c.Exception),
+                CancellationToken.None,
                 TaskContinuationOptions.OnlyOnFaulted |
-                TaskContinuationOptions.ExecuteSynchronously);
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
             return task;
         }
 

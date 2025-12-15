@@ -35,7 +35,7 @@ namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
 
             var result = base.GetValue(key);
 
-            if (result != ValueProviderResult.None && result.Values.Any(x => x?.IndexOf(_separator) > 0))
+            if (result != ValueProviderResult.None && result.Values.Any(x => x?.IndexOf(_separator, StringComparison.Ordinal) > 0))
             {
                 var splitValues = new StringValues(result.Values
                     .SelectMany(x => x!.Split([_separator], StringSplitOptions.None)).ToArray());

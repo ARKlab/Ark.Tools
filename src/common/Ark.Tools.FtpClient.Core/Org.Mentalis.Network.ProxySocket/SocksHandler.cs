@@ -23,16 +23,16 @@ namespace Org.Mentalis.Network.ProxySocket
         /// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> is null.</exception>
         protected SocksHandler(Socket server, string user)
         {
-            m_Server = server;
-            m_Username = user ?? string.Empty;
-            m_Buffer = Array.Empty<byte>();
+            _server = server;
+            _username = user ?? string.Empty;
+            _buffer = Array.Empty<byte>();
         }
         /// <summary>
         /// Converts a port number to an array of bytes.
         /// </summary>
         /// <param name="port">The port to convert.</param>
         /// <returns>An array of two bytes that represents the specified port.</returns>
-        protected byte[] PortToBytes(int port)
+        protected static byte[] PortToBytes(int port)
         {
             byte[] ret = [(byte)(port / 256), (byte)(port % 256)];
             return ret;
@@ -42,7 +42,7 @@ namespace Org.Mentalis.Network.ProxySocket
         /// </summary>
         /// <param name="address">The IP address to convert.</param>
         /// <returns>An array of four bytes that represents the specified IP address.</returns>
-        protected byte[] AddressToBytes(long address)
+        protected static byte[] AddressToBytes(long address)
         {
             byte[] ret =
             [
@@ -110,13 +110,13 @@ namespace Org.Mentalis.Network.ProxySocket
         {
             get
             {
-                return m_Server;
+                return _server;
             }
             set
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                m_Server = value;
+                _server = value;
             }
         }
         /// <summary>
@@ -128,13 +128,13 @@ namespace Org.Mentalis.Network.ProxySocket
         {
             get
             {
-                return m_Username;
+                return _username;
             }
             set
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                m_Username = value;
+                _username = value;
             }
         }
         /// <summary>
@@ -145,11 +145,11 @@ namespace Org.Mentalis.Network.ProxySocket
         {
             get
             {
-                return m_AsyncResult;
+                return _asyncResult;
             }
             set
             {
-                m_AsyncResult = value;
+                _asyncResult = value;
             }
         }
         /// <summary>
@@ -160,11 +160,11 @@ namespace Org.Mentalis.Network.ProxySocket
         {
             get
             {
-                return m_Buffer;
+                return _buffer;
             }
             set
             {
-                m_Buffer = value;
+                _buffer = value;
             }
         }
         /// <summary>
@@ -175,24 +175,24 @@ namespace Org.Mentalis.Network.ProxySocket
         {
             get
             {
-                return m_Received;
+                return _received;
             }
             set
             {
-                m_Received = value;
+                _received = value;
             }
         }
         // private variables
         /// <summary>Holds the value of the Server property.</summary>
-        private Socket m_Server;
+        private Socket _server;
         /// <summary>Holds the value of the Username property.</summary>
-        private string m_Username;
+        private string _username;
         /// <summary>Holds the value of the AsyncResult property.</summary>
-        private IAsyncProxyResult? m_AsyncResult;
+        private IAsyncProxyResult? _asyncResult;
         /// <summary>Holds the value of the Buffer property.</summary>
-        private byte[] m_Buffer;
+        private byte[] _buffer;
         /// <summary>Holds the value of the Received property.</summary>
-        private int m_Received;
+        private int _received;
         /// <summary>Holds the address of the method to call when the SOCKS protocol has been completed.</summary>
         protected HandShakeComplete? ProtocolComplete;
         /// <summary>

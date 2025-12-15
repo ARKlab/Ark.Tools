@@ -10,11 +10,11 @@ namespace Ark.Tools.NewtonsoftJson
 {
     public sealed class ValueCollectionConverter : JsonConverter
     {
-        public override bool CanConvert(Type typeToConvert)
-            => typeToConvert.IsGenericType
-            && typeToConvert.GetGenericTypeDefinition() == typeof(ValueCollection<>);
+        public override bool CanConvert(Type objectType)
+            => objectType.IsGenericType
+            && objectType.GetGenericTypeDefinition() == typeof(ValueCollection<>);
 
-        private JsonConverter _getConverter(Type typeToConvert)
+        private static JsonConverter _getConverter(Type typeToConvert)
         {
             var elementType = typeToConvert.GetGenericArguments()[0];
 
@@ -47,6 +47,7 @@ namespace Ark.Tools.NewtonsoftJson
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via reflection in _getConverter method")]
         private sealed class Converter<T> : JsonConverter<ValueCollection<T>>
         {
             public override ValueCollection<T>? ReadJson(JsonReader reader, Type objectType, ValueCollection<T>? existingValue, bool hasExistingValue, JsonSerializer serializer)

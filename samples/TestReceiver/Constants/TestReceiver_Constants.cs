@@ -1,6 +1,6 @@
 ﻿namespace TestWorker.Constants
 {
-    public static class Test_Constants
+    internal static class Test_Constants
     {
         //public const int WorkerSleepDefault = 5;
         //public static int ThreadCountDefault = Environment.ProcessorCount;

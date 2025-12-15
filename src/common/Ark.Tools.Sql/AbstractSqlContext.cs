@@ -4,16 +4,17 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace Ark.Tools.Sql
 {
-    public abstract class AbstractSqlContext<Tag> : ISqlContext<Tag>
+    public abstract class AbstractSqlContext<TTag> : ISqlContext<TTag>
     {
         private readonly DbConnection _connection;
         private DbTransaction? _transaction;
-        private bool _disposed = false;
+        private bool _disposed;
         private IsolationLevel _isolationLevel;
-        private readonly object _lock = new();
+        private readonly Lock _lock = new();
 
         protected AbstractSqlContext(DbConnection connection, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {

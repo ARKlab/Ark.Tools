@@ -87,7 +87,7 @@ namespace Ark.Tools.FtpClient.Core
                         return await conn.ListDirectoryAsync(path, ct1).ConfigureAwait(false);
                     }, ct).ConfigureAwait(false);
 
-                    foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".") && !x.Name.Equals("..")))
+                    foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".", StringComparison.Ordinal) && !x.Name.Equals("..", StringComparison.Ordinal)))
                     {
                         if (skipFolder.Invoke(d))
                             _logger.Info(CultureInfo.InvariantCulture, "Skipping folder: {Path}", d.FullPath);

@@ -67,7 +67,8 @@ namespace Ark.Tools.AspNetCore.Auth0
 
             return resp.AccessToken;
         }
-
+        
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
         sealed record PolicyResult
         {
             public IList<string> Groups { get; set; } = new List<string>();
@@ -87,13 +88,13 @@ namespace Ark.Tools.AspNetCore.Auth0
             public PolicyResult? Policy { get; set; }
         }
 
-        public override async Task TokenValidated(TokenValidatedContext ctx)
+        public override async Task TokenValidated(TokenValidatedContext context)
         {
-            var cache = ctx.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
-            var ctk = ctx.HttpContext.RequestAborted;
+            var cache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
+            var ctk = context.HttpContext.RequestAborted;
 
-            var jwt = (ctx.SecurityToken as JwtSecurityToken);
-            var cid = ctx.Principal?.Identity as ClaimsIdentity;
+            var jwt = (context.SecurityToken as JwtSecurityToken);
+            var cid = context.Principal?.Identity as ClaimsIdentity;
             if (cid != null && jwt != null)
             {
                 var token = jwt.RawData;
@@ -194,7 +195,7 @@ namespace Ark.Tools.AspNetCore.Auth0
                 //if (ctx.Options.SaveToken)
                 //    cid.AddClaim(new Claim("id_token", token, ClaimValueTypes.String, "Auth0"));
             }
-            await base.TokenValidated(ctx).ConfigureAwait(false);
+            await base.TokenValidated(context).ConfigureAwait(false);
         }
 
         private bool _shouldGetRoles()
@@ -202,12 +203,12 @@ namespace Ark.Tools.AspNetCore.Auth0
             return !string.IsNullOrWhiteSpace(_clientId);
         }
 
-        private bool _isDelegation(JwtSecurityToken jwt)
+        private static bool _isDelegation(JwtSecurityToken jwt)
         {
             return jwt.Claims.Any(x => x.Type == "azp");
         }
 
-        private bool _isUnattendedClient(ClaimsIdentity cid)
+        private static bool _isUnattendedClient(ClaimsIdentity cid)
         {
             var ni = cid.FindFirst(ClaimTypes.NameIdentifier)?.Value?.EndsWith("@clients", StringComparison.Ordinal);
             return ni == true;

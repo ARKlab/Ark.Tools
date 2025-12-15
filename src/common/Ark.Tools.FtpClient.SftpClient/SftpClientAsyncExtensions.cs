@@ -19,7 +19,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <param name="output">Data output stream.</param>
         /// <param name="factory">The <see cref="System.Threading.Tasks.TaskFactory">TaskFactory</see> used to create the Task</param>
         /// <param name="creationOptions">The TaskCreationOptions value that controls the behavior of the
-        /// created <see cref="T:System.Threading.Tasks.Task">Task</see>.</param>
+        /// created <see cref="System.Threading.Tasks.Task">Task</see>.</param>
         /// <param name="scheduler">The <see cref="System.Threading.Tasks.TaskScheduler">TaskScheduler</see>
         /// that is used to schedule the task that executes the end method.</param>
         /// <returns></returns>
@@ -44,7 +44,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <param name="downloadCallback">The download callback.</param>
         /// <param name="factory">The <see cref="System.Threading.Tasks.TaskFactory">TaskFactory</see> used to create the Task</param>
         /// <param name="creationOptions">The TaskCreationOptions value that controls the behavior of the
-        /// created <see cref="T:System.Threading.Tasks.Task">Task</see>.</param>
+        /// created <see cref="System.Threading.Tasks.Task">Task</see>.</param>
         /// <param name="scheduler">The <see cref="System.Threading.Tasks.TaskScheduler">TaskScheduler</see>
         /// that is used to schedule the task that executes the end method.</param>
         /// <returns></returns>
@@ -69,7 +69,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <param name="uploadCallback">The upload callback.</param>
         /// <param name="factory">The <see cref="System.Threading.Tasks.TaskFactory">TaskFactory</see> used to create the Task</param>
         /// <param name="creationOptions">The TaskCreationOptions value that controls the behavior of the
-        /// created <see cref="T:System.Threading.Tasks.Task">Task</see>.</param>
+        /// created <see cref="System.Threading.Tasks.Task">Task</see>.</param>
         /// <param name="scheduler">The <see cref="System.Threading.Tasks.TaskScheduler">TaskScheduler</see>
         /// that is used to schedule the task that executes the end method.</param>
         /// <returns></returns>
@@ -95,7 +95,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <param name="uploadCallback">The upload callback.</param>
         /// <param name="factory">The <see cref="System.Threading.Tasks.TaskFactory">TaskFactory</see> used to create the Task</param>
         /// <param name="creationOptions">The TaskCreationOptions value that controls the behavior of the
-        /// created <see cref="T:System.Threading.Tasks.Task">Task</see>.</param>
+        /// created <see cref="System.Threading.Tasks.Task">Task</see>.</param>
         /// <param name="scheduler">The <see cref="System.Threading.Tasks.TaskScheduler">TaskScheduler</see>
         /// that is used to schedule the task that executes the end method.</param>
         /// <returns></returns>
@@ -120,7 +120,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <param name="searchPattern">The search pattern.</param>
         /// <param name="factory">The <see cref="System.Threading.Tasks.TaskFactory">TaskFactory</see> used to create the Task</param>
         /// <param name="creationOptions">The TaskCreationOptions value that controls the behavior of the
-        /// created <see cref="T:System.Threading.Tasks.Task">Task</see>.</param>
+        /// created <see cref="System.Threading.Tasks.Task">Task</see>.</param>
         /// <param name="scheduler">The <see cref="System.Threading.Tasks.TaskScheduler">TaskScheduler</see>
         /// that is used to schedule the task that executes the end method.</param>
         /// <returns>List of uploaded files.</returns>
@@ -142,7 +142,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <param name="command">The <see cref="SshCommand"/> instance</param>
         /// <param name="factory">The <see cref="System.Threading.Tasks.TaskFactory">TaskFactory</see> used to create the Task</param>
         /// <param name="creationOptions">The TaskCreationOptions value that controls the behavior of the
-        /// created <see cref="T:System.Threading.Tasks.Task">Task</see>.</param>
+        /// created <see cref="System.Threading.Tasks.Task">Task</see>.</param>
         /// <param name="scheduler">The <see cref="System.Threading.Tasks.TaskScheduler">TaskScheduler</see>
         /// that is used to schedule the task that executes the end method.</param>
         /// <returns>Command execution result.</returns>
@@ -164,7 +164,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         /// <param name="commandText">The command text to execute</param>
         /// <param name="factory">The <see cref="System.Threading.Tasks.TaskFactory">TaskFactory</see> used to create the Task</param>
         /// <param name="creationOptions">The TaskCreationOptions value that controls the behavior of the
-        /// created <see cref="T:System.Threading.Tasks.Task">Task</see>.</param>
+        /// created <see cref="System.Threading.Tasks.Task">Task</see>.</param>
         /// <param name="scheduler">The <see cref="System.Threading.Tasks.TaskScheduler">TaskScheduler</see>
         /// that is used to schedule the task that executes the end method.</param>
         /// <returns>Command execution result.</returns>

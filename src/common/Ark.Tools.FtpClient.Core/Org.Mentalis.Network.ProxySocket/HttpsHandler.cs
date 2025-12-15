@@ -35,13 +35,13 @@ namespace Org.Mentalis.Network.ProxySocket
         /// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> -or- <c>pass</c> is null.</exception>
         public HttpsHandler(Socket server, string user, string pass) : base(server, user)
         {
-            m_Password = pass;
+            _password = pass;
         }
         /// <summary>
         /// Creates an array of bytes that has to be sent when the user wants to connect to a specific IPEndPoint.
         /// </summary>
         /// <returns>An array of bytes that has to be sent when the user wants to connect to a specific IPEndPoint.</returns>
-        private byte[] GetConnectBytes(string host, int port)
+        private byte[] _getConnectBytes(string host, int port)
         {
             StringBuilder sb = new();
             sb.AppendFormat(CultureInfo.InvariantCulture, "CONNECT {0}:{1} HTTP/1.1", host, port).AppendLine();
@@ -59,7 +59,7 @@ namespace Org.Mentalis.Network.ProxySocket
         /// Verifies that proxy server successfully connected to requested host
         /// </summary>
         /// <param name="buffer">Input data array</param>
-        private void VerifyConnectHeader(byte[] buffer)
+        private static void _verifyConnectHeader(byte[] buffer)
         {
             string header = Encoding.ASCII.GetString(buffer);
             if ((!header.StartsWith("HTTP/1.1 ", StringComparison.OrdinalIgnoreCase) &&
@@ -101,13 +101,13 @@ namespace Org.Mentalis.Network.ProxySocket
                 throw new ArgumentNullException(nameof(host));
             if (port <= 0 || port > 65535 || host.Length > 255)
                 throw new ArgumentException("Invalid port", nameof(port));
-            byte[] buffer = GetConnectBytes(host, port);
+            byte[] buffer = _getConnectBytes(host, port);
             if (Server.Send(buffer, 0, buffer.Length, SocketFlags.None) < buffer.Length)
             {
                 throw new SocketException(10054);
             }
             buffer = ReadBytes(13);
-            VerifyConnectHeader(buffer);
+            _verifyConnectHeader(buffer);
 
             // Read bytes 1 by 1 until we reach "\r\n\r\n"
             int receivedNewlineChars = 0;
@@ -148,8 +148,8 @@ namespace Org.Mentalis.Network.ProxySocket
         public override IAsyncProxyResult BeginNegotiate(string host, int port, HandShakeComplete callback, IPEndPoint proxyEndPoint)
         {
             ProtocolComplete = callback;
-            Buffer = GetConnectBytes(host, port);
-            Server.BeginConnect(proxyEndPoint, new AsyncCallback(this.OnConnect), Server);
+            Buffer = _getConnectBytes(host, port);
+            Server.BeginConnect(proxyEndPoint, new AsyncCallback(this._onConnect), Server);
             AsyncResult = new IAsyncProxyResult();
             return AsyncResult;
         }
@@ -157,7 +157,7 @@ namespace Org.Mentalis.Network.ProxySocket
         /// Called when the socket is connected to the remote server.
         /// </summary>
         /// <param name="ar">Stores state information for this asynchronous operation as well as any user-defined data.</param>
-        private void OnConnect(IAsyncResult ar)
+        private void _onConnect(IAsyncResult ar)
         {
             try
             {
@@ -170,7 +170,7 @@ namespace Org.Mentalis.Network.ProxySocket
             }
             try
             {
-                Server.BeginSend(Buffer, 0, Buffer.Length, SocketFlags.None, new AsyncCallback(this.OnConnectSent), null);
+                Server.BeginSend(Buffer, 0, Buffer.Length, SocketFlags.None, new AsyncCallback(this._onConnectSent), null);
             }
             catch (Exception e)
             {
@@ -181,14 +181,14 @@ namespace Org.Mentalis.Network.ProxySocket
         /// Called when the connect request bytes have been sent.
         /// </summary>
         /// <param name="ar">Stores state information for this asynchronous operation as well as any user-defined data.</param>
-        private void OnConnectSent(IAsyncResult ar)
+        private void _onConnectSent(IAsyncResult ar)
         {
             try
             {
                 HandleEndSend(ar, Buffer.Length);
                 Buffer = new byte[13];
                 Received = 0;
-                Server.BeginReceive(Buffer, 0, 13, SocketFlags.None, new AsyncCallback(this.OnConnectReceive), Server);
+                Server.BeginReceive(Buffer, 0, 13, SocketFlags.None, new AsyncCallback(this._onConnectReceive), Server);
             }
             catch (Exception e)
             {
@@ -199,7 +199,7 @@ namespace Org.Mentalis.Network.ProxySocket
         /// Called when an connect reply has been received.
         /// </summary>
         /// <param name="ar">Stores state information for this asynchronous operation as well as any user-defined data.</param>
-        private void OnConnectReceive(IAsyncResult ar)
+        private void _onConnectReceive(IAsyncResult ar)
         {
             try
             {
@@ -214,12 +214,12 @@ namespace Org.Mentalis.Network.ProxySocket
             {
                 if (Received < 13)
                 {
-                    Server.BeginReceive(Buffer, Received, 13 - Received, SocketFlags.None, new AsyncCallback(this.OnConnectReceive), Server);
+                    Server.BeginReceive(Buffer, Received, 13 - Received, SocketFlags.None, new AsyncCallback(this._onConnectReceive), Server);
                 }
                 else
                 {
-                    VerifyConnectHeader(Buffer);
-                    ReadUntilHeadersEnd(true);
+                    _verifyConnectHeader(Buffer);
+                    _readUntilHeadersEnd(true);
                 }
             }
             catch (Exception e)
@@ -231,9 +231,9 @@ namespace Org.Mentalis.Network.ProxySocket
         /// Reads socket buffer byte by byte until we reach "\r\n\r\n". 
         /// </summary>
         /// <param name="readFirstByte"></param>
-        private void ReadUntilHeadersEnd(bool readFirstByte)
+        private void _readUntilHeadersEnd(bool readFirstByte)
         {
-            while (Server.Available > 0 && m_receivedNewlineChars < 4)
+            while (Server.Available > 0 && _receivedNewlineChars < 4)
             {
                 if (!readFirstByte)
                     readFirstByte = false;
@@ -243,18 +243,18 @@ namespace Org.Mentalis.Network.ProxySocket
                     if (recv == 0)
                         throw new SocketException(10054);
                 }
-                if (Buffer[0] == (m_receivedNewlineChars % 2 == 0 ? '\r' : '\n'))
-                    m_receivedNewlineChars++;
+                if (Buffer[0] == (_receivedNewlineChars % 2 == 0 ? '\r' : '\n'))
+                    _receivedNewlineChars++;
                 else
-                    m_receivedNewlineChars = Buffer[0] == '\r' ? 1 : 0;
+                    _receivedNewlineChars = Buffer[0] == '\r' ? 1 : 0;
             }
-            if (m_receivedNewlineChars == 4)
+            if (_receivedNewlineChars == 4)
             {
                 ProtocolComplete?.Invoke(null);
             }
             else
             {
-                Server.BeginReceive(Buffer, 0, 1, SocketFlags.None, new AsyncCallback(this.OnEndHeadersReceive), Server);
+                Server.BeginReceive(Buffer, 0, 1, SocketFlags.None, new AsyncCallback(this._onEndHeadersReceive), Server);
             }
         }
         // I think we should never reach this function in practice
@@ -263,12 +263,12 @@ namespace Org.Mentalis.Network.ProxySocket
         /// Called when additional headers have been received.
         /// </summary>
         /// <param name="ar">Stores state information for this asynchronous operation as well as any user-defined data.</param>
-        private void OnEndHeadersReceive(IAsyncResult ar)
+        private void _onEndHeadersReceive(IAsyncResult ar)
         {
             try
             {
                 HandleEndReceive(ar);
-                ReadUntilHeadersEnd(false);
+                _readUntilHeadersEnd(false);
             }
             catch (Exception e)
             {
@@ -283,19 +283,19 @@ namespace Org.Mentalis.Network.ProxySocket
         {
             get
             {
-                return m_Password;
+                return _password;
             }
             set
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
-                m_Password = value;
+                _password = value;
             }
         }
         // private variables
         /// <summary>Holds the value of the Password property.</summary>
-        private string m_Password;
+        private string _password;
         /// <summary>Holds the count of newline characters received.</summary>
-        private int m_receivedNewlineChars;
+        private int _receivedNewlineChars;
     }
 }

@@ -35,7 +35,7 @@ namespace Ark.Tools.Solid.Authorization
 
         public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
         {
-            if (_policies.Any())
+            if (_policies.Length != 0)
             {
                 foreach (var p in _policies)
                 {

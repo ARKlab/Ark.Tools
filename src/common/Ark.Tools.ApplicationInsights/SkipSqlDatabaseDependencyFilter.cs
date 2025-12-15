@@ -32,7 +32,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
         // Example: replace with your own criteria.
         private bool _oktoSend(ITelemetry item)
         {
-            if (item is DependencyTelemetry d && d.Name.Contains(_sqlConnection.DataSource) && d.Name.Contains(_sqlConnection.InitialCatalog))
+            if (item is DependencyTelemetry d && d.Name.Contains(_sqlConnection.DataSource, System.StringComparison.Ordinal) && d.Name.Contains(_sqlConnection.InitialCatalog, System.StringComparison.Ordinal))
                 return false;
 
             return true;

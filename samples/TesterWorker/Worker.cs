@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace TesterWorker
 {
-    public class Worker : BackgroundService
+    internal sealed class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
         private readonly TelemetryClient _telemetryClient;
@@ -34,7 +34,6 @@ namespace TesterWorker
                 using (var op = _telemetryClient.StartOperation<RequestTelemetry>("Run"))
                 {
 
-                    Console.WriteLine(@$"TW");
                     using var client = new HttpClient();
 
                     try
@@ -52,7 +51,7 @@ namespace TesterWorker
                             d1.Telemetry.Success = false;
                         }
 
-                        var _ = await client.GetStringAsync("https://www.google.it", stoppingToken);
+                        var _ = await client.GetStringAsync(new Uri("https://www.google.it"), stoppingToken);
 
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepException"))
                         {

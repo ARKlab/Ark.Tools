@@ -27,7 +27,8 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
 #pragma warning disable CA2000 // Dispose objects before losing scope
             _client = new HttpClient(new HttpClientHandler()
             {
-                AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip
+                AutomaticDecompression = System.Net.DecompressionMethods.All,
+                CheckCertificateRevocationList = true,
             });
 #pragma warning restore CA2000 // Dispose objects before losing scope
         }
@@ -49,6 +50,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
 
                 if ("Basic".Equals(authHeader.Scheme, StringComparison.OrdinalIgnoreCase))
                 {
+#pragma warning disable CA1031 // Do not catch general exception types
                     try
                     {
                         string parameter = Encoding.UTF8.GetString(
@@ -73,7 +75,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                                     new KeyValuePair<string, string>("client_secret", _config.ProxyClientSecret ?? string.Empty),
                                 ]);
 
-                            var url = $"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token";
+                            var url = new Uri($"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token");
 
                             var result = await Policy
                                 .Handle<Exception>()
@@ -92,6 +94,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
                     }
                     catch (Exception)
                     { }
+#pragma warning restore CA1031 // Do not catch general exception types
                 }
 
             }
@@ -99,6 +102,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
             await _next(context).ConfigureAwait(false);
         }
 
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
         sealed record OAuthResult
         {
             public string? Token_Type { get; set; }

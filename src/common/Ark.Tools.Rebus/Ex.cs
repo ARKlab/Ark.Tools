@@ -7,7 +7,6 @@ using Rebus.Pipeline.Receive;
 using Rebus.Pipeline.Send;
 using Rebus.Time;
 using Rebus.Transport;
-using Rebus.Transport.InMem;
 
 using SimpleInjector;
 
@@ -103,33 +102,6 @@ namespace Ark.Tools.Rebus
                 onRetryFailure?.Invoke();
                 return bus.Advanced.TransportMessage.Deadletter("RetryDeferred reached maxRetries=" + maxRetries);
             }
-        }
-
-        [Obsolete("Use UseDrainableInMemoryTransport", true)]
-        public static void UseTestsInMemoryTransport(this StandardConfigurer<ITransport> configurer, InMemNetwork network, string inputQueueName)
-        {
-            if (configurer == null) throw new ArgumentNullException(nameof(configurer));
-            if (network == null) throw new ArgumentNullException(nameof(network));
-            if (inputQueueName == null) throw new ArgumentNullException(nameof(inputQueueName));
-
-            configurer.OtherService<TestsInMemTransport>()
-                .Register(context => new TestsInMemTransport(network, inputQueueName));
-
-            configurer.OtherService<ITransportInspector>()
-                .Register(context => context.Get<TestsInMemTransport>());
-
-            configurer.Register(context => context.Get<TestsInMemTransport>());
-        }
-
-        [Obsolete("Use UseDrainableInMemoryTransportAsOneWay", true)]
-        public static void UseTestsInMemoryTransportAsOneWayClient(this StandardConfigurer<ITransport> configurer, InMemNetwork network)
-        {
-            if (configurer == null) throw new ArgumentNullException(nameof(configurer));
-            if (network == null) throw new ArgumentNullException(nameof(network));
-
-            configurer.Register(c => new TestsInMemTransport(network, null));
-
-            OneWayClientBackdoor.ConfigureOneWayClient(configurer);
         }
 
     }

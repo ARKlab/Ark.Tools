@@ -7,16 +7,16 @@ namespace Ark.Tools.Reqnroll
 {
     public class EnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
     {
-        public object? GetValue(string value, Type enumType)
+        private static object? _getValue(string value, Type enumType)
         {
-            CheckThatTheValueIsAnEnum(value, enumType);
+            EnumValueRetrieverAndComparer._checkThatTheValueIsAnEnum(value, enumType);
 
-            return ConvertTheStringToAnEnum(value, enumType);
+            return _convertTheStringToAnEnum(value, enumType);
         }
 
         public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
         {
-            return GetValue(keyValuePair.Value, propertyType);
+            return _getValue(keyValuePair.Value, propertyType);
         }
 
         public bool CanRetrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
@@ -24,16 +24,16 @@ namespace Ark.Tools.Reqnroll
             return _isEnum(propertyType);
         }
 
-        private bool _isEnum(Type t)
+        private static bool _isEnum(Type t)
         {
             if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
                 return t.GetGenericArguments()[0].IsEnum;
             return t.IsEnum;
         }
 
-        private static object? ConvertTheStringToAnEnum(string value, Type enumType)
+        private static object? _convertTheStringToAnEnum(string value, Type enumType)
         {
-            if (!ThisIsNotANullableEnum(enumType) && string.IsNullOrWhiteSpace(value))
+            if (!_thisIsNotANullableEnum(enumType) && string.IsNullOrWhiteSpace(value))
                 return null;
             var underlyingType = Nullable.GetUnderlyingType(enumType);
             if (underlyingType != null)
@@ -50,42 +50,42 @@ namespace Ark.Tools.Reqnroll
             }
 
             if (res != null) return res;
-            throw GetInvalidOperationException(value);
+            throw _getInvalidOperationException(value);
         }
 
-        private static Type GetTheEnumType(Type enumType)
+        private static Type _getTheEnumType(Type enumType)
         {
-            return ThisIsNotANullableEnum(enumType) ? enumType : enumType.GetGenericArguments()[0];
+            return _thisIsNotANullableEnum(enumType) ? enumType : enumType.GetGenericArguments()[0];
         }
 
-        private void CheckThatTheValueIsAnEnum(string value, Type enumType)
+        private static void _checkThatTheValueIsAnEnum(string value, Type enumType)
         {
-            if (ThisIsNotANullableEnum(enumType))
-                CheckThatThisNotAnObviouslyIncorrectNonNullableValue(value);
+            if (_thisIsNotANullableEnum(enumType))
+                _checkThatThisNotAnObviouslyIncorrectNonNullableValue(value);
 
             try
             {
-                ConvertTheStringToAnEnum(value, enumType);
+                _convertTheStringToAnEnum(value, enumType);
             }
             catch
             {
                 throw new InvalidOperationException($"No enum with value {value} found");
             }
         }
-        private void CheckThatThisNotAnObviouslyIncorrectNonNullableValue(string value)
+        private static void _checkThatThisNotAnObviouslyIncorrectNonNullableValue(string value)
         {
             if (value == null)
-                throw GetInvalidOperationException("{null}");
-            if (value == string.Empty)
-                throw GetInvalidOperationException("{empty}");
+                throw _getInvalidOperationException("{null}");
+            if (string.IsNullOrEmpty(value))
+                throw _getInvalidOperationException("{empty}");
             if (string.IsNullOrWhiteSpace(value))
-                throw GetInvalidOperationException("{whitespace}");
+                throw _getInvalidOperationException("{whitespace}");
         }
-        private static bool ThisIsNotANullableEnum(Type enumType)
+        private static bool _thisIsNotANullableEnum(Type enumType)
         {
             return enumType.IsGenericType == false;
         }
-        private static InvalidOperationException GetInvalidOperationException(string value) => new($"No enum with value {value} found");
+        private static InvalidOperationException _getInvalidOperationException(string value) => new($"No enum with value {value} found");
 
         public bool CanCompare(object actualValue)
         {
@@ -99,7 +99,7 @@ namespace Ark.Tools.Reqnroll
         {
             if (string.IsNullOrWhiteSpace(expectedValue) && actualValue == null)
                 return true;
-            var e = ConvertTheStringToAnEnum(expectedValue, actualValue.GetType());
+            var e = _convertTheStringToAnEnum(expectedValue, actualValue.GetType());
             return e?.Equals(actualValue) == true;
         }
     }

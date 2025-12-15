@@ -293,12 +293,12 @@ namespace Ark.Tools.RavenDb.Auditing
             _inner.IgnoreChangesFor(entity);
         }
 
-        public void Increment<T, U>(T entity, Expression<Func<T, U>> path, U valToAdd)
+        public void Increment<T, TTarget>(T entity, Expression<Func<T, TTarget>> path, TTarget valToAdd)
         {
             _inner.Increment(entity, path, valToAdd);
         }
 
-        public void Increment<T, U>(string id, Expression<Func<T, U>> path, U valToAdd)
+        public void Increment<T, TTarget>(string id, Expression<Func<T, TTarget>> path, TTarget valToAdd)
         {
             _inner.Increment(id, path, valToAdd);
         }
@@ -323,25 +323,25 @@ namespace Ark.Tools.RavenDb.Auditing
             return _inner.LoadStartingWithIntoStreamAsync(idPrefix, output, matches, start, pageSize, exclude, startAfter, token);
         }
 
-        public void Patch<T, U>(string id, Expression<Func<T, U>> path, U value)
+        public void Patch<T, TTarget>(string id, Expression<Func<T, TTarget>> path, TTarget value)
         {
             throw new NotSupportedException("Patch is not supported with Audit");
             //_inner.Patch(id, path, value);
         }
 
-        public void Patch<T, U>(T entity, Expression<Func<T, U>> path, U value)
+        public void Patch<T, TTarget>(T entity, Expression<Func<T, TTarget>> path, TTarget value)
         {
             throw new NotSupportedException("Patch is not supported with Audit");
             //_inner.Patch(entity, path, value);
         }
 
-        public void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder)
+        public void Patch<T, TTarget>(T entity, Expression<Func<T, IEnumerable<TTarget>>> path, Expression<Func<JavaScriptArray<TTarget>, object>> arrayAdder)
         {
             throw new NotSupportedException("Patch is not supported with Audit");
             //_inner.Patch(entity, path, arrayAdder);
         }
 
-        public void Patch<T, U>(string id, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder)
+        public void Patch<T, TTarget>(string id, Expression<Func<T, IEnumerable<TTarget>>> path, Expression<Func<JavaScriptArray<TTarget>, object>> arrayAdder)
         {
             throw new NotSupportedException("Patch is not supported with Audit");
             //_inner.Patch(id, path, arrayAdder);

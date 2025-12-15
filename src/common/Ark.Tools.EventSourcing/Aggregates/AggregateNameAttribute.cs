@@ -3,7 +3,7 @@
 namespace Ark.Tools.EventSourcing.Aggregates
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class AggregateNameAttribute : Attribute
+    public sealed class AggregateNameAttribute : Attribute
     {
         public string Name { get; }
 
@@ -16,7 +16,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
     }
 
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class EventNameAttribute : Attribute
+    public sealed class EventNameAttribute : Attribute
     {
         public string Name { get; }
 
@@ -29,7 +29,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
     }
 
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class EventVersionAttribute : Attribute
+    public sealed class EventVersionAttribute : Attribute
     {
         public int Version { get; }
 

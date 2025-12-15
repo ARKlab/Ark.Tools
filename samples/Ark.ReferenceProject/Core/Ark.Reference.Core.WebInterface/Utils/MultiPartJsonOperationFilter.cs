@@ -153,5 +153,5 @@ namespace Ark.Reference.Core.WebInterface.Utils
     /// <summary>
     /// Suggest that this form file should be deserialized from JSON.
     /// </summary>
-    public class FromJsonAttribute : FromFormAttribute { }
+    public sealed class FromJsonAttribute : FromFormAttribute { }
 }

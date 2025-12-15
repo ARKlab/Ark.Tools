@@ -30,16 +30,18 @@ namespace Ark.Tools.ResourceWatcher
         }
 
         #region Event
+#pragma warning disable CA1822 // Mark members as static
         public void HostStartEvent()
+#pragma warning restore CA1822 // Mark members as static
         {
-            _reportEvent("HostStartEvent", () => new { });
+            ResourceWatcherDiagnosticSource._reportEvent("HostStartEvent", () => new { });
         }
 
         public void RunTookTooLong(Activity activity)
         {
             _logger.Fatal($"Check for tenant {_tenant} took too much:{activity.Duration}");
 
-            _reportEvent("RunTookTooLong",
+            ResourceWatcherDiagnosticSource._reportEvent("RunTookTooLong",
                 () => new
                 {
                     Activity = activity,
@@ -51,7 +53,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             _logger.Fatal($"Processing of ResourceId={resourceId} took too much: {activity.Duration}");
 
-            _reportEvent("ProcessResourceTookTooLong",
+            ResourceWatcherDiagnosticSource._reportEvent("ProcessResourceTookTooLong",
                 () => new
                 {
                     ResourceId = resourceId,
@@ -66,7 +68,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             _logger.Info(CultureInfo.InvariantCulture, "Check started for tenant {Tenant} at {Now}", _tenant, now);
 
-            Activity activity = _start("Run", () => new
+            Activity activity = ResourceWatcherDiagnosticSource._start("Run", () => new
             {
                 Type = type,
                 Now = now,
@@ -79,7 +81,7 @@ namespace Ark.Tools.ResourceWatcher
 
         public void RunFailed(Activity activity, Exception ex)
         {
-            _stop(activity, () => new
+            ResourceWatcherDiagnosticSource._stop(activity, () => new
             {
                 Exception = ex,
                 Elapsed = activity.Duration,
@@ -92,13 +94,13 @@ namespace Ark.Tools.ResourceWatcher
 
         public void RunSuccessful(Activity activity, IList<ProcessContext> evaluated)
         {
-            _stop(activity, () =>
+            ResourceWatcherDiagnosticSource._stop(activity, () =>
             {
                 var total = 0;
                 var counts = evaluated
                     .GroupBy(x => x.ResultType ?? throw new InvalidOperationException("ResultType is null"))
                     .ToDictionary(x => x.Key, x => x.Count());
-                foreach (var k in Enum.GetValues(typeof(ResultType)).Cast<ResultType>())
+                foreach (var k in Enum.GetValues<ResultType>().Cast<ResultType>())
                 {
                     if (!counts.ContainsKey(k))
                         counts[k] = 0;
@@ -124,9 +126,11 @@ namespace Ark.Tools.ResourceWatcher
         #endregion
 
         #region GetResources
+#pragma warning disable CA1822 // Mark members as static
         public Activity GetResourcesStart()
+#pragma warning restore CA1822 // Mark members as static
         {
-            Activity activity = _start("GetResources", () => new
+            Activity activity = ResourceWatcherDiagnosticSource._start("GetResources", () => new
             {
             }
             );
@@ -136,7 +140,7 @@ namespace Ark.Tools.ResourceWatcher
 
         public void GetResourcesFailed(Activity activity, Exception ex)
         {
-            _stop(activity, () => new
+            ResourceWatcherDiagnosticSource._stop(activity, () => new
             {
                 Exception = ex,
                 Tenant = _tenant,
@@ -146,7 +150,7 @@ namespace Ark.Tools.ResourceWatcher
 
         public void GetResourcesSuccessful(Activity activity, int count)
         {
-            _stop(activity, () => new
+            ResourceWatcherDiagnosticSource._stop(activity, () => new
             {
                 ResourcesFound = count,
                 Elapsed = activity.Duration,
@@ -159,9 +163,11 @@ namespace Ark.Tools.ResourceWatcher
         #endregion
 
         #region CheckState
+#pragma warning disable CA1822 // Mark members as static
         public Activity CheckStateStart()
+#pragma warning restore CA1822 // Mark members as static
         {
-            Activity activity = _start("CheckState", () => new
+            Activity activity = ResourceWatcherDiagnosticSource._start("CheckState", () => new
             {
             }
             );
@@ -171,10 +177,10 @@ namespace Ark.Tools.ResourceWatcher
 
         public void CheckStateSuccessful(Activity activity, IEnumerable<ProcessContext> evaluated)
         {
-            _stop(activity, () =>
+            ResourceWatcherDiagnosticSource._stop(activity, () =>
             {
                 var counts = evaluated.GroupBy(x => x.ProcessType).ToDictionary(x => x.Key, x => x.Count());
-                foreach (var k in Enum.GetValues(typeof(ProcessType)).Cast<ProcessType>())
+                foreach (var k in Enum.GetValues<ProcessType>().Cast<ProcessType>())
                     if (!counts.ContainsKey(k))
                         counts[k] = 0;
 
@@ -195,7 +201,7 @@ namespace Ark.Tools.ResourceWatcher
 
         public void CheckStateFailed(Activity activity, Exception ex)
         {
-            _stop(activity, () => new
+            ResourceWatcherDiagnosticSource._stop(activity, () => new
             {
                 Exception = ex,
                 Tenant = _tenant,
@@ -228,7 +234,7 @@ namespace Ark.Tools.ResourceWatcher
                 );
             }
 
-            Activity activity = _start("ProcessResource", () => new
+            Activity activity = ResourceWatcherDiagnosticSource._start("ProcessResource", () => new
             {
                 ProcessContext = processContext,
                 Tenant = _tenant,
@@ -242,7 +248,7 @@ namespace Ark.Tools.ResourceWatcher
             var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
             _logger.Log(lvl, ex, CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} process Failed", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
 
-            _stop(activity, () => new
+            ResourceWatcherDiagnosticSource._stop(activity, () => new
             {
                 ProcessContext = pc,
                 Exception = ex,
@@ -252,7 +258,7 @@ namespace Ark.Tools.ResourceWatcher
 
         public void ProcessResourceSuccessful(Activity activity, ProcessContext pc)
         {
-            _stop(activity, () => new
+            ResourceWatcherDiagnosticSource._stop(activity, () => new
             {
                 ProcessContext = pc,
                 Tenant = _tenant,
@@ -279,7 +285,7 @@ namespace Ark.Tools.ResourceWatcher
         #region FetchResource
         public Activity FetchResourceStart(ProcessContext pc)
         {
-            Activity activity = _start("FetchResource", () => new
+            Activity activity = ResourceWatcherDiagnosticSource._start("FetchResource", () => new
             {
                 ProcessContext = pc,
                 Tenant = _tenant,
@@ -291,7 +297,7 @@ namespace Ark.Tools.ResourceWatcher
 
         public void FetchResourceFailed(Activity activity, ProcessContext pc, Exception ex)
         {
-            _stop(activity, () => new
+            ResourceWatcherDiagnosticSource._stop(activity, () => new
             {
                 ProcessContext = pc,
                 Exception = ex,
@@ -304,7 +310,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             //_setTags(activity, processType.ToString(), processType.ToString());
 
-            _stop(activity, () => new
+            ResourceWatcherDiagnosticSource._stop(activity, () => new
             {
                 ProcessContext = pc,
                 Tenant = _tenant,
@@ -319,14 +325,14 @@ namespace Ark.Tools.ResourceWatcher
         {
             _logger.Error(ex, $"Saving of ResourceId={resourceId} failed");
 
-            _reportException("ProcessResourceSaveFailed", ex);
+            _reportException("ProcessResourceSaveFailed", ex, _tenant);
         }
 
         public void ThrowDuplicateResourceIdRetrived(string duplicateId)
         {
             var ex = new InvalidOperationException($"Found multiple entries for ResouceId: {duplicateId}");
 
-            _reportException("ThrowDuplicateResourceIdRetrived", ex);
+            _reportException("ThrowDuplicateResourceIdRetrived", ex, _tenant);
 
             throw ex;
         }
@@ -335,11 +341,11 @@ namespace Ark.Tools.ResourceWatcher
         {
             _logger.Fatal($"Failed {count} times consecutively");
 
-            _reportException("ReportRunConsecutiveFailureLimitReached", ex);
+            _reportException("ReportRunConsecutiveFailureLimitReached", ex, _tenant);
         }
         #endregion
 
-        private Activity _start(string operationName, Func<object> getPayload, bool unlinkFromParent = false)
+        private static Activity _start(string operationName, Func<object> getPayload, bool unlinkFromParent = false)
         {
             string activityName = BaseActivityName + "." + operationName;
 
@@ -357,7 +363,7 @@ namespace Ark.Tools.ResourceWatcher
             return activity;
         }
 
-        private void _stop(Activity activity, Func<object> getPayload)
+        private static void _stop(Activity activity, Func<object> getPayload)
         {
             if (activity != null)
             {
@@ -365,7 +371,7 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        private void _reportEvent(string eventName, Func<object> getPayload)
+        private static void _reportEvent(string eventName, Func<object> getPayload)
         {
             var name = BaseActivityName + "." + eventName;
 
@@ -375,7 +381,7 @@ namespace Ark.Tools.ResourceWatcher
             }
         }
 
-        private void _reportException(string exceptionName, Exception ex)
+        private static void _reportException(string exceptionName, Exception ex, string tenant)
         {
             var name = BaseActivityName + "." + exceptionName;
 
@@ -385,7 +391,7 @@ namespace Ark.Tools.ResourceWatcher
                     new
                     {
                         Exception = ex,
-                        Tenant = _tenant
+                        Tenant = tenant
                     });
             }
         }

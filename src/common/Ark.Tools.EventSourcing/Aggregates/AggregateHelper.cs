@@ -9,6 +9,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
     {
         public static string Name { get; } = _getName();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "<Pending>")]
         public static class EventHelper<TEvent>
             where TEvent : IAggregateEvent<TAggregate>
         {

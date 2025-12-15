@@ -15,7 +15,7 @@ namespace Ark.Tools.Rebus
         public SimpleInjectorHandlerActivator(Container container) { _container = container; }
 
         public Task<IEnumerable<IHandleMessages<TMessage>>> GetHandlers<TMessage>(
-            TMessage m, ITransactionContext c) =>
+            TMessage m, ITransactionContext transactionContext) =>
             Task.FromResult(_container.GetAllInstances<IHandleMessages<TMessage>>());
     }
 }

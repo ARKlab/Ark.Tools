@@ -48,7 +48,7 @@ jobs:
       run: dotnet build --configuration Debug
       
     - name: Test
-      run: dotnet test --configuration Debug --logger "trx;LogFileName=test-results.trx"
+      run: dotnet test --no-build --no-restore --configuration Debug --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1
 
     - name: 'Pack project'
       run: dotnet pack --configuration Release --include-symbols -p:Version=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}

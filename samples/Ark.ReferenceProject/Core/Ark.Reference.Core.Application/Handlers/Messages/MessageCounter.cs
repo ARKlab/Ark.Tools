@@ -2,7 +2,7 @@
 {
     public static class MessageCounter
     {
-        private static int _messageCount = 0;
+        private static int _messageCount;
 
         public static int Increment()
         {

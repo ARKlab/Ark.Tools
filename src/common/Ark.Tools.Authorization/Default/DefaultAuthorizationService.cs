@@ -54,7 +54,7 @@ namespace Ark.Tools.Authorization
         }
 
 
-        private string _getUserNameForLogging(ClaimsPrincipal user)
+        private static string _getUserNameForLogging(ClaimsPrincipal user)
         {
             var identity = user?.Identity;
             if (identity != null)

@@ -18,7 +18,6 @@ namespace Ark.Tools.Nodatime.SystemTextJson
         {
             JsonSerializer.Serialize(writer,
                 new Surrogate { Start = value.Start, End = value.End },
-                typeof(Surrogate),
                 options);
         }
 

@@ -6,7 +6,7 @@
         T? Cur { get; }
     }
 
-    public class Changes<TObject>
+    public static class Changes<TObject>
     {
         public class V1 : IChanges<TObject>
         {

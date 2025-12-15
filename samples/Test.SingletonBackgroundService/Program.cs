@@ -26,7 +26,7 @@ namespace Test.SingletonBackgroundService
         }
     }
 
-    internal sealed class RunEvery30Sec : Ark.Tools.Hosting.SingletonBackgroundService
+    internal sealed partial class RunEvery30Sec : Ark.Tools.Hosting.SingletonBackgroundService
     {
         public RunEvery30Sec(IDistributedLockProvider distributedLockProvider, ILogger<RunEvery30Sec> logger, string? serviceName = null)
             : base(distributedLockProvider, logger, serviceName)
@@ -36,12 +36,15 @@ namespace Test.SingletonBackgroundService
 
         protected override async Task RunAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation(nameof(RunEvery30Sec));
+            LogRunEvery30Sec(_logger);
             await Task.Delay(2000, stoppingToken);
         }
+
+        [LoggerMessage(Level = LogLevel.Information, Message = nameof(RunEvery30Sec))]
+        private static partial void LogRunEvery30Sec(ILogger logger);
     }
 
-    internal sealed class RunForeverThrowsRandomly : Ark.Tools.Hosting.SingletonBackgroundService
+    internal sealed partial class RunForeverThrowsRandomly : Ark.Tools.Hosting.SingletonBackgroundService
     {
         private readonly Random _random;
 
@@ -51,16 +54,20 @@ namespace Test.SingletonBackgroundService
             _random = new Random();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5394:Do not use insecure randomness", Justification = "Test code")]
         protected override async Task RunAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogInformation(nameof(RunForeverThrowsRandomly));
+                LogRunForeverThrowsRandomly(_logger);
 
                 if (_random.NextDouble() > 0.8) throw new InvalidOperationException("Random crash");
 
                 await Task.Delay(3000, stoppingToken);
             }
         }
+
+        [LoggerMessage(Level = LogLevel.Information, Message = nameof(RunForeverThrowsRandomly))]
+        private static partial void LogRunForeverThrowsRandomly(ILogger logger);
     }
 }

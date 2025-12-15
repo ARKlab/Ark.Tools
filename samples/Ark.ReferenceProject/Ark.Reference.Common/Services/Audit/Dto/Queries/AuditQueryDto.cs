@@ -17,7 +17,7 @@ namespace Ark.Reference.Common.Services.Audit
             public LocalDateTime? FromDateTime { get; init; }
             public LocalDateTime? ToDateTime { get; init; }
             public TAuditKind[] AuditKinds { get; init; } = [];
-            public int Skip { get; set; } = 0;
+            public int Skip { get; set; }
             public int Limit { get; init; } = 10;
             public IEnumerable<string> Sort { get; init; } = [];
         }

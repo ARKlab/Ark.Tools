@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 namespace Ark.Tools.ResourceWatcher.WorkerHost
 {
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
     public delegate void VoidEventHandler();
 
     public abstract class WorkerHost
@@ -79,6 +80,8 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             public Container Container => _host._container;
 
             [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1003:Use generic event handler instances", Justification = "Historical - Public API - Next Major")]
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1030:Use events where appropriate", Justification = "<Pending>")]
             public event VoidEventHandler OnBeforeStart { add { _host._onBeforeStart += value; } remove { _host._onBeforeStart -= value; } }
         }
 
@@ -136,7 +139,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             {
                 deps?.Invoke(d);
                 d.Container.Register<TFileProcessor>(lifeStyle ?? Lifestyle.Singleton);
-                d.Container.Collection.Append(typeof(IResourceProcessor<TResource, TMetadata>), typeof(TFileProcessor));
+                d.Container.Collection.Append<IResourceProcessor<TResource, TMetadata>, TFileProcessor>();
             });
         }
 
@@ -251,7 +254,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
             private readonly IEnumerable<Action<TQueryFilter>> _filterChainBuilder;
             private readonly IEnumerable<Predicate<TMetadata>> _metadataFilterChain;
             private readonly Container _container;
-            private Action<TQueryFilter>? _filter = null;
+            private Action<TQueryFilter>? _filter;
 
             private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
@@ -294,7 +297,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 var filter = _buildFilter();
                 var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetMetadata(filter, ctk).ConfigureAwait(false);
 
-                if (meta.Where(x => x.Modified == default && (x.ModifiedSources == null || !x.ModifiedSources.Any())).Any())
+                if (meta.Where(x => x.Modified == default && (x.ModifiedSources == null || x.ModifiedSources.Count == 0)).Any())
                 {
                     throw new InvalidOperationException("At least one field between Modified and ModifiedSources must be populated");
                 }

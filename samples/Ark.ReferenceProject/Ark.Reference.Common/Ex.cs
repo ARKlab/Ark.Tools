@@ -30,7 +30,7 @@ namespace Ark.Reference.Common
                 user.FindAll(x => x.Type == PermissionsConstants.PermissionKey).Select(x => x.Value)
                 ?? Enumerable.Empty<string>();
 
-            if (permissionClaim.Any(a => a.Contains(PermissionsConstants.AdminGrant)))
+            if (permissionClaim.Any(a => a.Contains(PermissionsConstants.AdminGrant, StringComparison.Ordinal)))
                 return PermissionsConstants.PermissionsMap.Values;
             else
                 return permissionClaim.Select(x => PermissionsConstants.PermissionsMap[x]);
@@ -46,8 +46,8 @@ namespace Ark.Reference.Common
                 .Select(s => Regex.Match(s, "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)))
                 .Where(s => s.Success)
                 .Join(validCols
-                    , s => s.Groups["col"].Value.ToLowerInvariant()
-                    , d => d.Key.ToLowerInvariant()
+                    , s => s.Groups["col"].Value.ToUpperInvariant()
+                    , d => d.Key.ToUpperInvariant()
                     , (s, i) => i.Value + s.Groups["dir"].Value, StringComparer.Ordinal)
                 .DefaultIfEmpty(defaultValue)
                 .ToArray();

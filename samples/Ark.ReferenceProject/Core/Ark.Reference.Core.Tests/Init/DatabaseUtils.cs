@@ -39,6 +39,7 @@ namespace Ark.Reference.Core.Tests.Init
         }
 
         [BeforeScenario]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Reqnroll requires instance methods for BeforeScenario")]
         public async Task CleanUpEntireDbBeforeScenario(FeatureContext fctx, ScenarioContext sctx)
         {
             if (fctx.FeatureInfo.Tags.Contains("CleanDbBeforeScenario", StringComparer.Ordinal) ||
@@ -51,7 +52,7 @@ namespace Ark.Reference.Core.Tests.Init
             }
         }
 
-        private async Task _cleanUpEntireDb(bool resetProfileCalendar = false)
+        private static async Task _cleanUpEntireDb(bool resetProfileCalendar = false)
         {
             await using var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString);
             await ctx.OpenAsync();

@@ -6,6 +6,7 @@ using System.Globalization;
 namespace Ark.Tools.Core
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0013:Types should not extend System.ApplicationException", Justification = "Historical mistake - public interface - Next Major")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1058:Types should not extend certain base types", Justification = "Historical mistake - public interface - Next Major")]
     public class OperationException : ApplicationException
     {
         public OperationException(string message)
@@ -29,5 +30,12 @@ namespace Ark.Tools.Core
         {
         }
 
+        public OperationException()
+        {
+        }
+
+        public OperationException(string message, Exception innerException) : this(innerException, message)
+        {
+        }
     }
 }

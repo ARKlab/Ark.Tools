@@ -79,7 +79,7 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
             await _updateEntityAndCommit(ctx, invoiceRun, $"HandleFailed_{e ?? "<unknown>"}_MsgCount_{currentMessageCount}");
         }
 
-        private async Task _updateEntityAndCommit(ICoreDataContext ctx, Ping.V1.Output entity, string code)
+        private static async Task _updateEntityAndCommit(ICoreDataContext ctx, Ping.V1.Output entity, string code)
         {
             entity = entity with { Code = code };
 

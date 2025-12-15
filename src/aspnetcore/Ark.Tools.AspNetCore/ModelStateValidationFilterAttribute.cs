@@ -13,7 +13,7 @@ namespace Ark.Tools.AspNetCore
     {
     }
 
-    public class ModelStateValidationFilterAttribute : ActionFilterAttribute
+    public sealed class ModelStateValidationFilterAttribute : ActionFilterAttribute
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {

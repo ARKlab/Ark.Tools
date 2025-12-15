@@ -5,12 +5,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using System.IO;
+using System.Threading.Tasks;
 
 namespace TesterWorker
 {
-    public static class Program
+    internal static class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -24,8 +25,9 @@ namespace TesterWorker
             ;
 
 
-            CreateHostBuilder(args, configuration)
-            .Build().Run();
+            await CreateHostBuilder(args, configuration)
+                .Build()
+                .RunAsync();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args, IConfiguration config) =>

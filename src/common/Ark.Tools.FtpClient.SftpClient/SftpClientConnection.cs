@@ -25,7 +25,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(1);
         private readonly TimeSpan _operationTimeout = TimeSpan.FromMinutes(5);
 
-        private bool _isDisposed = false;
+        private bool _isDisposed;
 
         private const string _rsa = "1.2.840.113549.1.1.1";
         private const string _dsa = "1.2.840.10040.4.1";
@@ -53,7 +53,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             await _ensureConnected(ctk).ConfigureAwait(false);
 
             var rawLs = await _client.ListDirectoryAsync(path, ctk).ToListAsync(ctk).ConfigureAwait(false);
-            return _parse(rawLs);
+            return SftpClientConnection._parse(rawLs);
 
         }
 
@@ -192,7 +192,7 @@ namespace Ark.Tools.FtpClient.SftpClient
             }
         }
 
-        private List<FtpEntry> _parse(IEnumerable<ISftpFile> files)
+        private static List<FtpEntry> _parse(IEnumerable<ISftpFile> files)
         {
             var result = new List<FtpEntry>();
 

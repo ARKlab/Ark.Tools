@@ -38,7 +38,7 @@ namespace Ark.Tools.Core
             return (int)hashCode; //safe conversion thanks to the above %
         }
 
-        private bool _bothHaveTheSameNumberOfItems(IReadOnlyDictionary<TKey, TValue> x, IReadOnlyDictionary<TKey, TValue> y)
+        private static bool _bothHaveTheSameNumberOfItems(IReadOnlyDictionary<TKey, TValue> x, IReadOnlyDictionary<TKey, TValue> y)
         {
             Debug.Assert(x != null);
             Debug.Assert(y != null);

@@ -14,6 +14,7 @@ namespace Ark.Tools.NLog.Slack
     [Target(NLogConfigurer.SlackTarget)]
     public class SlackTarget : TargetWithContext
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1056:URI-like properties should not be strings", Justification = "NLog configuration limitation")]
         public string? WebHookUrl { get; set; }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "CloseTarget() is called during Dispose() by NLog")]
@@ -52,16 +53,16 @@ namespace Ark.Tools.NLog.Slack
             base.InitializeTarget();
         }
 
-        protected override void Write(AsyncLogEventInfo info)
+        protected override void Write(AsyncLogEventInfo logEvent)
         {
             try
             {
-                this._sendToSlack(info);
-                info.Continuation(null);
+                this._sendToSlack(logEvent);
+                logEvent.Continuation(null);
             }
             catch (Exception e)
             {
-                info.Continuation(e);
+                logEvent.Continuation(e);
             }
         }
 
@@ -74,7 +75,7 @@ namespace Ark.Tools.NLog.Slack
                 .OnError(e => info.Continuation(e))
                 .WithMessage(message);
 
-            var color = this._getSlackColorFromLogLevel(info.LogEvent.Level);
+            var color = _getSlackColorFromLogLevel(info.LogEvent.Level);
 
             if (this.ShouldIncludeProperties(info.LogEvent) || this.ContextProperties.Count > 0)
             {
@@ -94,7 +95,7 @@ namespace Ark.Tools.NLog.Slack
             slack.Send(_client ?? throw new InvalidOperationException("SlackClient is null"));
         }
 
-        private string _getSlackColorFromLogLevel(LogLevel level)
+        private static string _getSlackColorFromLogLevel(LogLevel level)
         {
             if (_logLevelSlackColorMap.TryGetValue(level, out var color))
                 return color;
