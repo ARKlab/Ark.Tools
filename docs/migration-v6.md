@@ -65,6 +65,7 @@ Update `<test_project>.csproj` with these new sections.
     <EnableMSTestRunner>true</EnableMSTestRunner>
 
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
 
   </PropertyGroup>
 

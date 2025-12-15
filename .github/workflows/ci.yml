@@ -41,6 +41,9 @@ jobs:
     - name: 'Build project'
       run: dotnet build --no-restore --configuration Debug
 
+    - name: 'Build project (dacpac copy issue)'
+      run: dotnet build --no-restore --configuration Debug
+
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1
       

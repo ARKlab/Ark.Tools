@@ -4,7 +4,6 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
 	  <IsPackable>false</IsPackable>
 
-    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <PropertyGroup Label="Test Settings">
