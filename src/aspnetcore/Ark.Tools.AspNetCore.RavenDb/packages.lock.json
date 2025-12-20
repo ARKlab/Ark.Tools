@@ -4,9 +4,9 @@
     "net10.0": {
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.263, )",
-        "resolved": "2.0.263",
-        "contentHash": "Pbx5I+Djo0vWp0ykEZLVuHVaNVmyEzoOe50IpSqN0P+BRFx0lULhiHMaEWym5MOwoRluv/mTWi4e+BPBraLdIA=="
+        "requested": "[2.0.264, )",
+        "resolved": "2.0.264",
+        "contentHash": "zRG13RDG446rZNdd/YjKRd4utpbjleRDUqNQSrX0etMnH8Rz9NBlXUpS5aR2ExoOokhNfkdOW8HpLzjLj5x0hQ=="
       },
       "Microsoft.AspNetCore.OData": {
         "type": "Direct",
@@ -44,9 +44,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.3.4, )",
-        "resolved": "9.3.4",
-        "contentHash": "zFuYW+R1FOUBqhe+Nipfj0RyJWSkCGJb1QMpZm6ucr7R1kTl5+d25D/1E3xdlz7PLFkgMFmOYahUhZvcgxjCcA=="
+        "requested": "[9.4.1, )",
+        "resolved": "9.4.1",
+        "contentHash": "em6ZjwXM4HZcClYpSkmSnkE/nZ0Uy7ftLfO84t6nPVs2VXi8l8Bu0GUYXruahngt3zYtcuoBOtTNZMVBdBFjlw=="
       },
       "Azure.Core": {
         "type": "Transitive",
