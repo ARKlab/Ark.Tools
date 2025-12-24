@@ -62,9 +62,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.4.1, )",
-        "resolved": "9.4.1",
-        "contentHash": "em6ZjwXM4HZcClYpSkmSnkE/nZ0Uy7ftLfO84t6nPVs2VXi8l8Bu0GUYXruahngt3zYtcuoBOtTNZMVBdBFjlw=="
+        "requested": "[9.5.0, )",
+        "resolved": "9.5.0",
+        "contentHash": "T3E8+K+W0u78495PwSSJOzT6QUbnZSdkDK4B3nfvxUo9nctDr6ChSDLV4l/RD2ZmA5oHM2YbLvyp+a2uE0ftOQ=="
       },
       "SimpleInjector": {
         "type": "Direct",
@@ -160,8 +160,8 @@
       },
       "Microsoft.AspNetCore.JsonPatch": {
         "type": "Transitive",
-        "resolved": "8.0.21",
-        "contentHash": "OCky+q8QKEHnaslT4kMHohziP2hSw2IP8/LTK9F0xpC9ORmauzVAWPZf6jWCj8LGA4TBUvOXZF+OxkYQLuteFA==",
+        "resolved": "8.0.22",
+        "contentHash": "gquk+JFVSXMJSHP/wWBgF6gYrwk616T6uJPaXvdXxBTRe43KTzuW0M+eMVlJsDH/lHGvItdjv47Y6uJ7WQVoSg==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3"
         }
@@ -650,11 +650,11 @@
       },
       "RavenDB.Client": {
         "type": "Transitive",
-        "resolved": "7.1.4",
-        "contentHash": "XDuIwpZxB3ntEZrjVha9US7l0KExpt2+l+2TG8ociGyDqKU1yMbyHzC+k4Jfji9YmtOgnVdlUBsgqejKZDBdmg==",
+        "resolved": "7.1.5",
+        "contentHash": "ElApA3mHSKpvqd57hqMXtZlLbf3+EFYm+RRAtP9OK5mtnXaChh3EZhu+71q4Y1fOkVOGA+SOwoz0oKKDGTBfig==",
         "dependencies": {
           "Lambda2Js.Signed": "3.1.4",
-          "Microsoft.AspNetCore.JsonPatch": "8.0.21",
+          "Microsoft.AspNetCore.JsonPatch": "8.0.22",
           "Microsoft.IO.RecyclableMemoryStream": "3.0.1",
           "Newtonsoft.Json": "13.0.3",
           "Nito.AsyncEx.Coordination": "5.1.2"
@@ -779,7 +779,7 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "RavenDB.Client": "[7.1.4, )"
+          "RavenDB.Client": "[7.1.5, )"
         }
       },
       "ark.tools.solid": {
@@ -859,9 +859,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.4.1, )",
-        "resolved": "9.4.1",
-        "contentHash": "em6ZjwXM4HZcClYpSkmSnkE/nZ0Uy7ftLfO84t6nPVs2VXi8l8Bu0GUYXruahngt3zYtcuoBOtTNZMVBdBFjlw=="
+        "requested": "[9.5.0, )",
+        "resolved": "9.5.0",
+        "contentHash": "T3E8+K+W0u78495PwSSJOzT6QUbnZSdkDK4B3nfvxUo9nctDr6ChSDLV4l/RD2ZmA5oHM2YbLvyp+a2uE0ftOQ=="
       },
       "SimpleInjector": {
         "type": "Direct",
@@ -955,8 +955,8 @@
       },
       "Microsoft.AspNetCore.JsonPatch": {
         "type": "Transitive",
-        "resolved": "8.0.21",
-        "contentHash": "OCky+q8QKEHnaslT4kMHohziP2hSw2IP8/LTK9F0xpC9ORmauzVAWPZf6jWCj8LGA4TBUvOXZF+OxkYQLuteFA==",
+        "resolved": "8.0.22",
+        "contentHash": "gquk+JFVSXMJSHP/wWBgF6gYrwk616T6uJPaXvdXxBTRe43KTzuW0M+eMVlJsDH/lHGvItdjv47Y6uJ7WQVoSg==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3"
         }
@@ -1450,15 +1450,15 @@
       },
       "RavenDB.Client": {
         "type": "Transitive",
-        "resolved": "7.1.4",
-        "contentHash": "XDuIwpZxB3ntEZrjVha9US7l0KExpt2+l+2TG8ociGyDqKU1yMbyHzC+k4Jfji9YmtOgnVdlUBsgqejKZDBdmg==",
+        "resolved": "7.1.5",
+        "contentHash": "ElApA3mHSKpvqd57hqMXtZlLbf3+EFYm+RRAtP9OK5mtnXaChh3EZhu+71q4Y1fOkVOGA+SOwoz0oKKDGTBfig==",
         "dependencies": {
           "Lambda2Js.Signed": "3.1.4",
-          "Microsoft.AspNetCore.JsonPatch": "8.0.21",
+          "Microsoft.AspNetCore.JsonPatch": "8.0.22",
           "Microsoft.IO.RecyclableMemoryStream": "3.0.1",
           "Newtonsoft.Json": "13.0.3",
           "Nito.AsyncEx.Coordination": "5.1.2",
-          "System.Collections.Immutable": "9.0.10"
+          "System.Collections.Immutable": "10.0.0"
         }
       },
       "Slack.Webhooks": {
@@ -1481,8 +1481,8 @@
       },
       "System.Collections.Immutable": {
         "type": "Transitive",
-        "resolved": "9.0.10",
-        "contentHash": "2FkVxKnJVqFtv5zGKSEu2FPqbOScpxw+CvgV0C2MYtXPrT1ZcylAdYlTj3S64iRDV7HGykvagoadUUhZN1/eQg=="
+        "resolved": "10.0.0",
+        "contentHash": "BHo23kBFvTFQa0tuDFXcb3Q8QInjm1Xrq+If/xuV8iMlxOOsylsa6sgRK25n5dlcMk8G2f0O/t5AdjZrdVBOXA=="
       },
       "System.Configuration.ConfigurationManager": {
         "type": "Transitive",
@@ -1627,7 +1627,7 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "RavenDB.Client": "[7.1.4, )"
+          "RavenDB.Client": "[7.1.5, )"
         }
       },
       "ark.tools.solid": {
