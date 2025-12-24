@@ -36,12 +36,12 @@ namespace Ark.Reference.Core.Application.DAL
 
         async Task<ICoreDataContext> IAsyncContextFactory<ICoreDataContext>.CreateAsync(CancellationToken ctk)
         {
-            return await base.CreateAsync(ctk);
+            return await CreateAsync(ctk).ConfigureAwait(false);
         }
 
         async Task<IOutboxAsyncContext> IOutboxAsyncContextFactory.CreateAsync(CancellationToken ctk)
         {
-            return await base.CreateAsync(ctk);
+            return await CreateAsync(ctk).ConfigureAwait(false);
         }
     }
 

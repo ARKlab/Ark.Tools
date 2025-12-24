@@ -28,7 +28,7 @@ namespace WebApplicationDemo.Services
 
         public async Task<List<Post>> GetPosts(CancellationToken ctk)
         {
-            var response = await _jsonPlaceHolderClient.Request("posts").GetStringAsync(cancellationToken: ctk);
+            var response = await _jsonPlaceHolderClient.Request("posts").GetStringAsync(cancellationToken: ctk).ConfigureAwait(false);
 
             var data = JsonSerializer.Deserialize<List<Post>>(response);
 

@@ -86,7 +86,7 @@ namespace ProblemDetailsSample
 
                 using var h = GetHostBuilder(args)
                     .Build();
-                await h.RunAsync();
+                await h.RunAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {

@@ -54,8 +54,8 @@ namespace TestReceiver
 
 
 
-                await container.StartActivities();
-                await Task.Delay(Timeout.Infinite);
+                await container.StartActivities().ConfigureAwait(false);
+                await Task.Delay(Timeout.Infinite).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

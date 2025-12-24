@@ -40,7 +40,7 @@ namespace WebApplicationDemo.Application.Handlers.Requests
                 ImportId = 10
             };
 
-            return await Task.FromResult(f);
+            return await Task.FromResult(f).ConfigureAwait(false);
         }
 
     }

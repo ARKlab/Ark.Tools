@@ -24,8 +24,8 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 
         public async Task<IEnumerable<string>> ExecuteAsync(Audit_GetUsersQuery.V1 query, CancellationToken ctk = default)
         {
-            await using var ctx = await _dataContext.CreateAsync(ctk);
-            return await ctx.ReadAuditUsersAsync(ctk: ctk);
+            await using var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);
+            return await ctx.ReadAuditUsersAsync(ctk: ctk).ConfigureAwait(false);
         }
     }
 }

@@ -55,7 +55,7 @@ namespace Ark.Reference.Common
 
         public static async Task<IEnumerable<TReturn>> QueryAsync<TRead, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TRead, TReturn> func)
         {
-            return (await cnn.QueryAsync<TRead>(command))
+            return (await cnn.QueryAsync<TRead>(command).ConfigureAwait(false))
                 .Select(s => func(s))
                 .ToArray();
         }

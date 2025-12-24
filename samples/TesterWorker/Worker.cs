@@ -40,22 +40,22 @@ namespace TesterWorker
                     {
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("Dep1"))
                         {
-                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
+                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken).ConfigureAwait(false);
                         }
 
 
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepFail"))
                         {
 
-                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
+                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken).ConfigureAwait(false);
                             d1.Telemetry.Success = false;
                         }
 
-                        var _ = await client.GetStringAsync(new Uri("https://www.google.it"), stoppingToken);
+                        var _ = await client.GetStringAsync(new Uri("https://www.google.it"), stoppingToken).ConfigureAwait(false);
 
                         using (var d1 = _telemetryClient.StartOperation<DependencyTelemetry>("DepException"))
                         {
-                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken);
+                            await Task.Delay(TimeSpan.FromMilliseconds(100), stoppingToken).ConfigureAwait(false);
                             throw new InvalidOperationException();
                         }
 
@@ -66,7 +66,7 @@ namespace TesterWorker
                     }
                 }
 
-                await Task.Delay(1000, stoppingToken);
+                await Task.Delay(1000, stoppingToken).ConfigureAwait(false);
             }
         }
     }

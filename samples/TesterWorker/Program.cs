@@ -27,7 +27,7 @@ namespace TesterWorker
 
             await CreateHostBuilder(args, configuration)
                 .Build()
-                .RunAsync();
+                .RunAsync().ConfigureAwait(false);
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args, IConfiguration config) =>

@@ -48,7 +48,7 @@ namespace ProblemDetailsSample.Controllers.Private
                 EntityId = entityId
             };
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk).ConfigureAwait(false);
 
             if (res == null)
                 return this.NotFound();
@@ -67,7 +67,7 @@ namespace ProblemDetailsSample.Controllers.Private
         {
             var query = new Get_EntityByIdNotFoundQuery.V1();
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -83,7 +83,7 @@ namespace ProblemDetailsSample.Controllers.Private
         {
             var query = new Get_EntityByIdExceptionQuery.V1();
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -140,7 +140,7 @@ namespace ProblemDetailsSample.Controllers.Private
                 EntityId = body.EntityId
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -159,7 +159,7 @@ namespace ProblemDetailsSample.Controllers.Private
                 EntityId = "StringLongerThan10"
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -178,7 +178,7 @@ namespace ProblemDetailsSample.Controllers.Private
                 EntityId = "StringLongerLongerThan20"
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -197,7 +197,7 @@ namespace ProblemDetailsSample.Controllers.Private
                 EntityId = body.EntityId
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -216,7 +216,7 @@ namespace ProblemDetailsSample.Controllers.Private
                 EntityId = body.EntityId
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return this.Ok(res);
         }

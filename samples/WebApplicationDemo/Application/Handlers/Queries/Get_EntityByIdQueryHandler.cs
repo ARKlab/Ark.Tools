@@ -46,7 +46,7 @@ namespace WebApplicationDemo.Api.Queries
 
             _logger.Info(CultureInfo.InvariantCulture, "Entity {EntityId} found!", entity.EntityId);
 
-            return await Task.FromResult(entity);
+            return await Task.FromResult(entity).ConfigureAwait(false);
         }
     }
 }

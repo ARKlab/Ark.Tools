@@ -22,7 +22,7 @@ namespace Test.SingletonBackgroundService
                 })
                 .Build();
 
-            await host.RunAsync();
+            await host.RunAsync().ConfigureAwait(false);
         }
     }
 
@@ -37,7 +37,7 @@ namespace Test.SingletonBackgroundService
         protected override async Task RunAsync(CancellationToken stoppingToken)
         {
             LogRunEvery30Sec(_logger);
-            await Task.Delay(2000, stoppingToken);
+            await Task.Delay(2000, stoppingToken).ConfigureAwait(false);
         }
 
         [LoggerMessage(Level = LogLevel.Information, Message = nameof(RunEvery30Sec))]
@@ -63,7 +63,7 @@ namespace Test.SingletonBackgroundService
 
                 if (_random.NextDouble() > 0.8) throw new InvalidOperationException("Random crash");
 
-                await Task.Delay(3000, stoppingToken);
+                await Task.Delay(3000, stoppingToken).ConfigureAwait(false);
             }
         }
 

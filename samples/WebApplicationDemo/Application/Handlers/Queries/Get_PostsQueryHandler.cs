@@ -26,7 +26,7 @@ namespace WebApplicationDemo.Application.Handlers.Queries
 
         public async Task<List<Post>> ExecuteAsync(Get_PostsQuery.V1 query, CancellationToken ctk = default)
         {
-            return await _postService.GetPosts(ctk);
+            return await _postService.GetPosts(ctk).ConfigureAwait(false);
         }
     }
 }

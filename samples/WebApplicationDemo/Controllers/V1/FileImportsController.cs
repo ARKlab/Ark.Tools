@@ -49,7 +49,7 @@ namespace WebApplicationDemo.Controllers.V1
                     File = file.OpenReadStream(),
                 };
 
-                var res = await _requestProcessor.ExecuteAsync(request, ctk);
+                var res = await _requestProcessor.ExecuteAsync(request, ctk).ConfigureAwait(false);
                 return Ok(res);
             }
             else

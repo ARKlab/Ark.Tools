@@ -258,7 +258,7 @@ namespace Ark.Reference.Core.Application.Host
         {
             Container.StartBus();
 
-            await this.Container.GetInstance<IFileStorageService>().InitAsync();
+            await Container.GetInstance<IFileStorageService>().InitAsync().ConfigureAwait(false);
         }
 
 

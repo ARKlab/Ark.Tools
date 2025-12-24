@@ -28,7 +28,7 @@ namespace LinuxWebJobHosting.Utils
             {
                 try
                 {
-                    await _do(stoppingToken);
+                    await _do(stoppingToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
                 catch (Exception e)
@@ -38,7 +38,7 @@ namespace LinuxWebJobHosting.Utils
 
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
             }
@@ -48,7 +48,7 @@ namespace LinuxWebJobHosting.Utils
         private async Task _do(CancellationToken cancellationToken)
         {
             _logger.Info(CultureInfo.InvariantCulture, "I am alive");
-            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false);
 #pragma warning disable CA5394 // Do not use insecure randomness
             if (_random.NextDouble() > 0.8)
                 throw new InvalidOperationException("Random crash");

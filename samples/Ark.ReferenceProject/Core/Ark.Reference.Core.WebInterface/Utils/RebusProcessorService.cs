@@ -62,7 +62,7 @@ namespace Ark.Reference.Core.WebInterface.Utils
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             if (_container is not null)
-                await _container.DisposeAsync();
+                await _container.DisposeAsync().ConfigureAwait(false);
         }
     }
 }

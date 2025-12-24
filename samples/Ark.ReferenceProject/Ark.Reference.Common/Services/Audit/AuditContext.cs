@@ -76,10 +76,12 @@ namespace Ark.Reference.Common.Services.Audit
                     {(query.ToDateTime != null ? "AND [SysStartTime] <= @ToDateTime" : "")}
             ",
             parameters, transaction: _dbTransaction, cancellationToken: ctk);
-            await using var q = await _dbConnection.QueryMultipleAsync(cmd);
+#pragma warning disable MA0004 // Use Task.ConfigureAwait
+            await using var q = await _dbConnection.QueryMultipleAsync(cmd).ConfigureAwait(false);
+#pragma warning restore MA0004 // Use Task.ConfigureAwait
 
-            var retVal = await q.ReadAsync<AuditDto<TAuditKind>>();
-            var count = await q.ReadFirstAsync<int>();
+            var retVal = await q.ReadAsync<AuditDto<TAuditKind>>().ConfigureAwait(false);
+            var count = await q.ReadFirstAsync<int>().ConfigureAwait(false);
 
             _logger.Trace(CultureInfo.InvariantCulture, "ReadAuditById ended");
             return (retVal, count);
@@ -119,7 +121,7 @@ namespace Ark.Reference.Common.Services.Audit
                     Info = infoMessage
                 };
 
-                await _insertAudit(CurrentAudit, ctk);
+                await _insertAudit(CurrentAudit, ctk).ConfigureAwait(false);
             }
             else if (userId != CurrentAudit.UserId)
             {

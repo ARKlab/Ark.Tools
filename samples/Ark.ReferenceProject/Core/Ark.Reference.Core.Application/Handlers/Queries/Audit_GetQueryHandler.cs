@@ -26,9 +26,9 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 
         public async Task<PagedResult<AuditDto<AuditKind>>> ExecuteAsync(Audit_GetQuery.V1 query, CancellationToken ctk = default)
         {
-            await using var ctx = await _dataContext.CreateAsync(ctk);
+            await using var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);
 
-            var (records, count) = await ctx.ReadAuditByFilterAsync(query, ctk: ctk);
+            var (records, count) = await ctx.ReadAuditByFilterAsync(query, ctk: ctk).ConfigureAwait(false);
 
             return new PagedResult<AuditDto<AuditKind>>()
             {

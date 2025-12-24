@@ -43,7 +43,7 @@ namespace WebApplicationDemo.Controllers.V1
                 EntityId = id,
             };
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk).ConfigureAwait(false);
 
             if (res == null)
                 return NotFound();
@@ -61,7 +61,7 @@ namespace WebApplicationDemo.Controllers.V1
                 Entity = entity,
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, ctk);
+            var res = await _requestProcessor.ExecuteAsync(request, ctk).ConfigureAwait(false);
 
             return Ok(res);
         }

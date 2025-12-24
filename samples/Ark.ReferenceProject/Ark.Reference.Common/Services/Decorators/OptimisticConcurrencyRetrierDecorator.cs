@@ -30,7 +30,7 @@ namespace Ark.Reference.Common.Services.Decorators
         {
             return await Policy.Handle<Exception>(ex => ex.IsOptimistic())
                 .RetryAsync(2)
-                .ExecuteAsync(ct => _inner.ExecuteAsync(Request, ct), ctk);
+                .ExecuteAsync(ct => _inner.ExecuteAsync(Request, ct), ctk).ConfigureAwait(false);
         }
 
     }

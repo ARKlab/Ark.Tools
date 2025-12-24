@@ -44,15 +44,15 @@ namespace Ark.Reference.Common.Services.Auth
 
                 foreach (var p in _policies)
                 {
-                    var policy = await Ark.Tools.Solid.Authorization.Ex.GetPolicyAsync(p, _authSvc.PolicyProvider, ctk);
-                    var resource = await Ark.Tools.Solid.Authorization.Ex.GetResourceAsync(_container, request, policy, ctk);
+                    var policy = await Tools.Solid.Authorization.Ex.GetPolicyAsync(p, _authSvc.PolicyProvider, ctk).ConfigureAwait(false);
+                    var resource = await Tools.Solid.Authorization.Ex.GetResourceAsync(_container, request, policy, ctk).ConfigureAwait(false);
 
                     if (policy != null)
                     {
-                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk);
+                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk).ConfigureAwait(false);
 
                         if (authorized)
-                            return await _inner.ExecuteAsync(request, ctk);
+                            return await _inner.ExecuteAsync(request, ctk).ConfigureAwait(false);
                         else
                             policyFailed.Add(policy.Name, messages.ToList());
                     }
@@ -68,7 +68,7 @@ namespace Ark.Reference.Common.Services.Auth
                 }
             }
 
-            return await _inner.ExecuteAsync(request, ctk);
+            return await _inner.ExecuteAsync(request, ctk).ConfigureAwait(false);
         }
     }
 }

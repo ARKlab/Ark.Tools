@@ -32,9 +32,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.4.1, )",
-        "resolved": "9.4.1",
-        "contentHash": "em6ZjwXM4HZcClYpSkmSnkE/nZ0Uy7ftLfO84t6nPVs2VXi8l8Bu0GUYXruahngt3zYtcuoBOtTNZMVBdBFjlw=="
+        "requested": "[9.5.0, )",
+        "resolved": "9.5.0",
+        "contentHash": "T3E8+K+W0u78495PwSSJOzT6QUbnZSdkDK4B3nfvxUo9nctDr6ChSDLV4l/RD2ZmA5oHM2YbLvyp+a2uE0ftOQ=="
       },
       "SSH.NET": {
         "type": "Direct",
@@ -535,9 +535,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.4.1, )",
-        "resolved": "9.4.1",
-        "contentHash": "em6ZjwXM4HZcClYpSkmSnkE/nZ0Uy7ftLfO84t6nPVs2VXi8l8Bu0GUYXruahngt3zYtcuoBOtTNZMVBdBFjlw=="
+        "requested": "[9.5.0, )",
+        "resolved": "9.5.0",
+        "contentHash": "T3E8+K+W0u78495PwSSJOzT6QUbnZSdkDK4B3nfvxUo9nctDr6ChSDLV4l/RD2ZmA5oHM2YbLvyp+a2uE0ftOQ=="
       },
       "SSH.NET": {
         "type": "Direct",

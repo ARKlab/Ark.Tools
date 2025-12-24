@@ -39,9 +39,9 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
         {
             EnsureArg.IsNotNull(query, nameof(query));
 
-            await using var ctx = await _coreDataContext.CreateAsync(ctk);
+            await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
 
-            var entity = await ctx.ReadPingByIdAsync(query.Id, ctk);
+            var entity = await ctx.ReadPingByIdAsync(query.Id, ctk).ConfigureAwait(false);
 
             return entity;
         }

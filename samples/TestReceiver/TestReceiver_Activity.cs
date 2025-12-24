@@ -59,7 +59,7 @@ namespace TestReceiver
 
         public override async Task Process(Ark.Tools.Activity.Slice activitySlice)
         {
-            await Task.Delay(new TimeSpan(0, 0, 5));
+            await Task.Delay(new TimeSpan(0, 0, 5)).ConfigureAwait(false);
 
             Console.WriteLine($"** Process Started Now {DateTimeOffset.UtcNow}**");
             throw new TimeoutException("Exception!");

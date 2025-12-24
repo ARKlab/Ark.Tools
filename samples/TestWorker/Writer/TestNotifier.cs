@@ -27,7 +27,7 @@ namespace TestWorker.Writer
             var notifymessage = "first";
 
 
-            await _notifier.Notify(notifymessage, Slice.From(zonedNow));
+            await _notifier.Notify(notifymessage, Slice.From(zonedNow)).ConfigureAwait(false);
         }
     }
 }

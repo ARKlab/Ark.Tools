@@ -56,7 +56,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             var res = await _queryProcessor.ExecuteAsync(new Ping_GetByNameQuery.V1()
             {
                 Name = name
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -76,7 +76,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             var res = await _requestProcessor.ExecuteAsync(new Ping_CreateRequest.V1()
             {
                 Data = create
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             return Ok(res);
         }
@@ -98,7 +98,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             var res = await _queryProcessor.ExecuteAsync(new Ping_GetByIdQuery.V1()
             {
                 Id = id
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             if (res == null)
                 throw new EntityNotFoundException($"Ping with id '{id}' not found");
@@ -138,7 +138,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
                 Sort = sort,
                 Limit = limit,
                 Skip = skip,
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             return Ok(res);
         }
@@ -169,7 +169,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             {
                 Id = id,
                 Data = update
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             if (res == null)
                 throw new EntityNotFoundException($"Ping with id '{id}' not found");
@@ -203,7 +203,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             {
                 Id = id,
                 Data = update
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             if (res == null)
                 throw new EntityNotFoundException($"Ping with id '{id}' not found");
@@ -228,7 +228,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             var res = await _requestProcessor.ExecuteAsync(new Ping_DeleteRequest.V1()
             {
                 Id = id
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             if (res)
                 return Ok(res);
@@ -251,7 +251,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             var res = await _requestProcessor.ExecuteAsync(new Ping_CreateAndSendMsgRequest.V1()
             {
                 Data = create
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             return Ok(res);
         }

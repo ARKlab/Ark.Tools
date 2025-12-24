@@ -17,8 +17,10 @@ namespace Ark.Reference.Common.Services.FileStorageService
 
         public FileStorageService(IFileStorageServiceConfig config)
         {
+#pragma warning disable MA0015 // Specify the parameter name in ArgumentException
             ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StoragePrefix, nameof(config.StoragePrefix));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StorageAccount, nameof(config.StorageAccount));
+#pragma warning restore MA0015 // Specify the parameter name in ArgumentException
 
             _config = config;
 
@@ -50,7 +52,7 @@ namespace Ark.Reference.Common.Services.FileStorageService
         {
             var blob = _getBlobFor(guid, filename);
 
-            await blob.DownloadToAsync(fileStream, cancellationToken: ctk);
+            await blob.DownloadToAsync(fileStream, cancellationToken: ctk).ConfigureAwait(false);
 
             fileStream.Seek(0, SeekOrigin.Begin);
         }
@@ -64,7 +66,7 @@ namespace Ark.Reference.Common.Services.FileStorageService
 
         public async Task InitAsync()
         {
-            await _fileClient.CreateIfNotExistsAsync();
+            await _fileClient.CreateIfNotExistsAsync().ConfigureAwait(false);
         }
     }
 }

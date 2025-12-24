@@ -37,12 +37,12 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
         public async Task Handle(Ping_ProcessMessage.V1 message)
         {
             int currentMessageCount = MessageCounter.Increment();
-            await using var ctx = await _coreDataContext.CreateAsync();
+            await using var ctx = await _coreDataContext.CreateAsync().ConfigureAwait(false);
 
-            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async");
+            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async").ConfigureAwait(false);
 
             //** Check if exists InvoiceRun 
-            var entity = await ctx.ReadPingByIdAsync(message.Id);
+            var entity = await ctx.ReadPingByIdAsync(message.Id).ConfigureAwait(false);
             if (entity == null) return; // nothing to do ... been deleted?
 
             if (entity.Name?.Contains("fails", StringComparison.InvariantCultureIgnoreCase) == true)
@@ -55,37 +55,37 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
                 throw new InvalidOperationException($"NormalEx_MsgCount_{currentMessageCount}");
             }
 
-            await _updateEntityAndCommit(ctx, entity, $"HandleOk_MsgCount_{currentMessageCount}");
+            await _updateEntityAndCommit(ctx, entity, $"HandleOk_MsgCount_{currentMessageCount}").ConfigureAwait(false);
         }
 
         public async Task Handle(IFailed<Ping_ProcessMessage.V1> message)
         {
             var ex = message.Exceptions?.FirstOrDefault();
 
-            await _fail(message.Message, ex);
+            await _fail(message.Message, ex).ConfigureAwait(false);
         }
 
         private async Task _fail(Ping_ProcessMessage.V1 message, Rebus.Retry.ExceptionInfo? ex)
         {
             int currentMessageCount = MessageCounter.GetCount();
 
-            await using var ctx = await _coreDataContext.CreateAsync();
-            var invoiceRun = await ctx.ReadPingByIdAsync(message.Id);
+            await using var ctx = await _coreDataContext.CreateAsync().ConfigureAwait(false);
+            var invoiceRun = await ctx.ReadPingByIdAsync(message.Id).ConfigureAwait(false);
             if (invoiceRun == null) return;
 
-            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async");
+            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async").ConfigureAwait(false);
             var e = ex?.Message;
 
-            await _updateEntityAndCommit(ctx, invoiceRun, $"HandleFailed_{e ?? "<unknown>"}_MsgCount_{currentMessageCount}");
+            await _updateEntityAndCommit(ctx, invoiceRun, $"HandleFailed_{e ?? "<unknown>"}_MsgCount_{currentMessageCount}").ConfigureAwait(false);
         }
 
         private static async Task _updateEntityAndCommit(ICoreDataContext ctx, Ping.V1.Output entity, string code)
         {
             entity = entity with { Code = code };
 
-            await ctx.PatchPingAsync(entity);
+            await ctx.PatchPingAsync(entity).ConfigureAwait(false);
 
-            await ctx.CommitAsync();
+            await ctx.CommitAsync().ConfigureAwait(false);
         }
     }
 }

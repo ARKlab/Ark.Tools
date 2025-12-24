@@ -21,9 +21,9 @@ namespace Ark.Reference.Core.Tests.Init
         public static async Task CreateNLogDatabaseIfNotExists()
         {
             await using var conn = new SqlConnection(DatabaseConnectionString);
-            await conn.OpenAsync();
+            await conn.OpenAsync().ConfigureAwait(false);
             await using var cmd = new SqlCommand($"IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn);
-            await cmd.ExecuteNonQueryAsync();
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
 
         [BeforeTestRun(Order = -1)]
@@ -46,17 +46,17 @@ namespace Ark.Reference.Core.Tests.Init
                 sctx.ScenarioInfo.Tags.Contains("CleanDbBeforeScenario", StringComparer.Ordinal))
             {
                 if (fctx.FeatureInfo.Tags.Contains("CleanProfileCalendarBeforeScenario", StringComparer.Ordinal) || sctx.ScenarioInfo.Tags.Contains("CleanProfileCalendarBeforeScenario", StringComparer.Ordinal))
-                    await _cleanUpEntireDb(resetProfileCalendar: true);
+                    await _cleanUpEntireDb(resetProfileCalendar: true).ConfigureAwait(false);
                 else
-                    await _cleanUpEntireDb();
+                    await _cleanUpEntireDb().ConfigureAwait(false);
             }
         }
 
         private static async Task _cleanUpEntireDb(bool resetProfileCalendar = false)
         {
             await using var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString);
-            await ctx.OpenAsync();
-            await using var tx = await ctx.BeginTransactionAsync();
+            await ctx.OpenAsync().ConfigureAwait(false);
+            await using var tx = await ctx.BeginTransactionAsync().ConfigureAwait(false);
 
             await ctx.ExecuteAsync(
                 @"[ops].[ResetFull_onlyForTesting]",
@@ -67,9 +67,9 @@ namespace Ark.Reference.Core.Tests.Init
                 },
                 commandType: CommandType.StoredProcedure,
                 commandTimeout: 60,
-                transaction: tx);
+                transaction: tx).ConfigureAwait(false);
 
-            await tx.CommitAsync();
+            await tx.CommitAsync().ConfigureAwait(false);
         }
     }
 }

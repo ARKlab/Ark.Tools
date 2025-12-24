@@ -31,7 +31,7 @@ namespace WebApplicationDemo.Controllers
             {
             };
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk).ConfigureAwait(false);
 
             return Ok(res);
         }

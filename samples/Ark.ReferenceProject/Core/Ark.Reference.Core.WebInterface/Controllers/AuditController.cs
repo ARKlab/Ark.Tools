@@ -65,7 +65,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
                 Limit = limit
             };
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk: ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk: ctk).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -84,7 +84,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
             var res = await _queryProcessor.ExecuteAsync(new Audit_GetChangesQuery.V1()
             {
                 AuditId = auditId
-            }, ctk: ctk);
+            }, ctk: ctk).ConfigureAwait(false);
 
             return this.Ok(res);
         }
@@ -101,7 +101,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers
         {
             var query = new Audit_GetUsersQuery.V1();
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk: ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk: ctk).ConfigureAwait(false);
 
             return this.Ok(res);
         }

@@ -28,7 +28,7 @@ namespace ProblemDetailsSample.Api.Queries
                 EntityId = query.EntityId
             };
 
-            return await Task.FromResult(entity);
+            return await Task.FromResult(entity).ConfigureAwait(false);
         }
     }
 }

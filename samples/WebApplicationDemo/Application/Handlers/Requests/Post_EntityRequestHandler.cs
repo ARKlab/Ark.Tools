@@ -29,7 +29,7 @@ namespace WebApplicationDemo.Application.Handlers.Requests
                 Date = LocalDate.MinIsoValue,
             };
 
-            return await Task.FromResult(entity);
+            return await Task.FromResult(entity).ConfigureAwait(false);
         }
     }
 }

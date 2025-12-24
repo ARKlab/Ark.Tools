@@ -32,7 +32,7 @@ namespace Ark.Reference.Core.Application.DAL
             {
                 Id = [id],
                 Limit = 1
-            }, ctk);
+            }, ctk).ConfigureAwait(false);
 
             _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByIdAsync ended");
 
@@ -76,7 +76,7 @@ namespace Ark.Reference.Core.Application.DAL
 
             var cmd = new CommandDefinition(cmdText, parameters, transaction: Transaction, cancellationToken: ctk);
 
-            var (data, count) = await Connection.ReadPagedAsync<PingView>(cmd);
+            var (data, count) = await Connection.ReadPagedAsync<PingView>(cmd).ConfigureAwait(false);
 
             var d = data.Select(s => s.ToOutput());
 
@@ -124,7 +124,7 @@ namespace Ark.Reference.Core.Application.DAL
                 cancellationToken: ctk
             );
 
-            var id = await Connection.QuerySingleAsync<int>(cmd);
+            var id = await Connection.QuerySingleAsync<int>(cmd).ConfigureAwait(false);
 
             _logger.Trace(CultureInfo.InvariantCulture, "InsertPingAsync ended");
 
@@ -163,7 +163,7 @@ namespace Ark.Reference.Core.Application.DAL
                 transaction: Transaction
             );
 
-            await Connection.ExecuteAsync(cmd);
+            await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
 
             _logger.Trace(CultureInfo.InvariantCulture, "PutPingAsync ended");
 
@@ -209,7 +209,7 @@ namespace Ark.Reference.Core.Application.DAL
                 transaction: Transaction
             );
 
-            await Connection.ExecuteAsync(cmd);
+            await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
 
             _logger.Trace(CultureInfo.InvariantCulture, "PatchPingAsync ended");
 
@@ -238,7 +238,7 @@ namespace Ark.Reference.Core.Application.DAL
                 cancellationToken: ctk
             );
 
-            await Connection.ExecuteAsync(cmd);
+            await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
 
             _logger.Trace(CultureInfo.InvariantCulture, "DeletePingAsync ended");
 
@@ -280,7 +280,7 @@ namespace Ark.Reference.Core.Application.DAL
                 param, transaction: Transaction, cancellationToken: ctk
              );
 
-            var data = await Connection.QueryAsync<PingView>(cmd);
+            var data = await Connection.QueryAsync<PingView>(cmd).ConfigureAwait(false);
 
             var resTable = data
                 .Select(s => new AuditedEntityDto<Ping.V1.Output>()

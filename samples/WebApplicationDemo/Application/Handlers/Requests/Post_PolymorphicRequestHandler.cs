@@ -21,7 +21,7 @@ namespace WebApplicationDemo.Application.Handlers.Requests
         {
             EnsureArg.IsNotNull(request, nameof(request));
 
-            return await Task.FromResult(request.Entity);
+            return await Task.FromResult(request.Entity).ConfigureAwait(false);
         }
     }
 }

@@ -30,9 +30,9 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 
         public async Task<IAuditRecordReturn<IAuditEntity>> ExecuteAsync(Audit_GetChangesQuery.V1 query, CancellationToken ctk = default)
         {
-            await using var ctx = await _dataContext.CreateAsync(ctk);
+            await using var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);
 
-            var (records, count) = await ctx.ReadAuditByFilterAsync(new Audit_GetQuery.V1 { AuditIds = [query.AuditId] }, ctk);
+            var (records, count) = await ctx.ReadAuditByFilterAsync(new Audit_GetQuery.V1 { AuditIds = [query.AuditId] }, ctk).ConfigureAwait(false);
 
             if (count == 0)
                 throw new EntityNotFoundException($"Audit with AuditId {query.AuditId} not found");
@@ -45,7 +45,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
 
                 case AuditKind.Ping:
                     return AuditRecordReturn.V1<Ping.V1.Output>.From(
-                        (await ctx.ReadPingAuditAsync(query.AuditId, ctk))!
+                        (await ctx.ReadPingAuditAsync(query.AuditId, ctk).ConfigureAwait(false))!
                     );
 
                 default:

@@ -201,7 +201,7 @@ dotnet_naming_symbols.private_property.applicable_accessibilities = private
 dotnet_naming_symbols.private_property.required_modifiers =
 
 dotnet_naming_symbols.private_or_internal_field.applicable_kinds = field
-dotnet_naming_symbols.private_or_internal_field.applicable_accessibilities = internal, private
+dotnet_naming_symbols.private_or_internal_field.applicable_accessibilities = internal, private, protected, protected_internal
 dotnet_naming_symbols.private_or_internal_field.required_modifiers =
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
@@ -273,7 +273,7 @@ dotnet_diagnostic.MA0160.severity = warning
 dotnet_diagnostic.CA2020.severity = warning
 dotnet_diagnostic.MA0032.severity = none
 dotnet_diagnostic.MA0040.severity = error
-dotnet_diagnostic.MA0004.severity = none
+dotnet_diagnostic.MA0004.severity = suggestion
 dotnet_diagnostic.MA0043.severity = warning
 dotnet_diagnostic.MA0079.severity = error
 dotnet_diagnostic.MA0080.severity = warning
@@ -290,13 +290,6 @@ dotnet_diagnostic.VSTHRD200.severity = silent
 dotnet_diagnostic.MA0056.severity = silent
 dotnet_diagnostic.MA0049.severity = none
 dotnet_diagnostic.MA0007.severity = silent
-
-# IDE0290: Use primary constructor
-dotnet_diagnostic.IDE0290.severity = none
-dotnet_diagnostic.MA0003.severity = none
-
-# MA0015: Specify the parameter name in ArgumentException
-dotnet_diagnostic.MA0015.severity = suggestion
 
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
@@ -373,7 +366,6 @@ dotnet_diagnostic.CA1040.severity = suggestion
 dotnet_diagnostic.CA1031.severity = none
 dotnet_diagnostic.CA1033.severity = none
 dotnet_diagnostic.CA1034.severity = none
-dotnet_diagnostic.CA1851.severity = none
 dotnet_diagnostic.CA1054.severity = suggestion
 dotnet_diagnostic.CA1056.severity = suggestion
 dotnet_diagnostic.CA1062.severity = suggestion
@@ -389,6 +381,7 @@ dotnet_diagnostic.CA1819.severity = suggestion
 dotnet_diagnostic.CA1834.severity = warning
 dotnet_diagnostic.CA1835.severity = warning
 dotnet_diagnostic.CA1846.severity = warning
+dotnet_diagnostic.CA1851.severity = none
 dotnet_diagnostic.CA5360.severity = warning
 dotnet_diagnostic.CA5363.severity = warning
 dotnet_diagnostic.CA2250.severity = warning
@@ -406,7 +399,6 @@ dotnet_diagnostic.CA5365.severity = warning
 dotnet_diagnostic.CA5364.severity = warning
 
 dotnet_code_quality.CA1822.api_surface = private, internal
-
 
 [*.vb]
 dotnet_diagnostic.CA1047.severity = warning

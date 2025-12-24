@@ -45,18 +45,18 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
         /// <inheritdoc/>
         public async Task<bool> ExecuteAsync(Ping_DeleteRequest.V1 request, CancellationToken ctk = default)
         {
-            await using var ctx = await _coreDataContext.CreateAsync(ctk);
+            await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
 
-            var entity = await ctx.ReadPingByIdAsync(request.Id, ctk);
+            var entity = await ctx.ReadPingByIdAsync(request.Id, ctk).ConfigureAwait(false);
 
             if (entity == null)
                 return false;
 
-            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Delete existing Ping", ctk);
+            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Delete existing Ping", ctk).ConfigureAwait(false);
 
-            await ctx.DeletePingAsync(request.Id, ctk);
+            await ctx.DeletePingAsync(request.Id, ctk).ConfigureAwait(false);
 
-            await ctx.CommitAsync(ctk);
+            await ctx.CommitAsync(ctk).ConfigureAwait(false);
 
             return true;
         }

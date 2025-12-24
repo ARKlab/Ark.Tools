@@ -136,12 +136,12 @@ namespace Ark.Reference.Core.Tests.Init
                         var due = ignoreDeferred ? 0 : TestsInMemoryTimeoutManager.DueCount;
 
 
-                        await using var outbox = await ctx.CreateAsync();
-                        var outboxCount = await outbox.CountAsync();
-                        await outbox.CommitAsync();
+                        await using var outbox = await ctx.CreateAsync().ConfigureAwait(false);
+                        var outboxCount = await outbox.CountAsync().ConfigureAwait(false);
+                        await outbox.CommitAsync().ConfigureAwait(false);
 
                         return (inqueue, inprocess, due, outboxCount, errorMessages);
-                    });
+                    }).ConfigureAwait(false);
 
             errorMessages.Should().Be(0);
             inqueue.Should().Be(0);
@@ -157,15 +157,15 @@ namespace Ark.Reference.Core.Tests.Init
             do
             {
                 {
-                    await using var outbox = await Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>().CreateAsync();
-                    await outbox.ClearAsync();
-                    await outbox.CommitAsync();
+                    await using var outbox = await Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>().CreateAsync().ConfigureAwait(false);
+                    await outbox.ClearAsync().ConfigureAwait(false);
+                    await outbox.CommitAsync().ConfigureAwait(false);
                 }
                 TestsInMemoryTimeoutManager.ClearPendingDue();
                 Env.RebusNetwork.Reset();
 
                 while (InProcessMessageInspectorStep.Count > 0)
-                    await Task.Delay(100);
+                    await Task.Delay(100).ConfigureAwait(false);
 
             } while (drainer.StillDraining);
 

@@ -48,7 +48,7 @@ namespace WebApplicationDemo.Controllers.V1
                 EntityId = entityId,
             };
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk);
+            var res = await _queryProcessor.ExecuteAsync(query, ctk).ConfigureAwait(false);
 
             if (res == null)
                 return NotFound();
@@ -70,7 +70,7 @@ namespace WebApplicationDemo.Controllers.V1
                 EntityId = body.EntityId
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return Ok(res);
         }
@@ -90,7 +90,7 @@ namespace WebApplicationDemo.Controllers.V1
                 EntityId = body.EntityId
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return Ok(res);
         }
@@ -134,7 +134,7 @@ namespace WebApplicationDemo.Controllers.V1
             {
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return Ok(res);
         }
@@ -153,7 +153,7 @@ namespace WebApplicationDemo.Controllers.V1
                 EntityId = "StringLongerThan10"
             };
 
-            var res = await _requestProcessor.ExecuteAsync(request, default);
+            var res = await _requestProcessor.ExecuteAsync(request, default).ConfigureAwait(false);
 
             return Ok(res);
         }
