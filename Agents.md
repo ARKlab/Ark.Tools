@@ -7,10 +7,12 @@ Ark.Tools is a set of core libraries developed and maintained by Ark as helper l
 ## Build & Test Commands
 
 ### Prerequisites
+
 - .NET SDK 10.0.100 (specified in `global.json`)
 - Docker (for running integration tests that require SQL Server and Azurite services)
 
 ### Basic Commands
+
 ```bash
 # Restore NuGet packages
 dotnet restore
@@ -26,6 +28,7 @@ dotnet build --no-restore --configuration Release
 ```
 
 ### Running Tests
+
 - Tests require SQL Server and Azurite services running
 - CI uses Docker containers for these services (see `.github/workflows/ci.yml`)
 - Local development: ensure services are available before running tests
@@ -38,7 +41,7 @@ dotnet build --no-restore --configuration Release
   - `src/common/` - Core common packages (Ark.Tools.Core, Ark.Tools.NLog, Ark.Tools.Sql, etc.)
   - `src/aspnetcore/` - ASP.NET Core packages (Ark.Tools.AspNetCore.*)
   - `src/resourcewatcher/` - Resource Watcher packages (Ark.Tools.ResourceWatcher.*)
-- **Reference Project**: `samples/Ark.ReferenceProject/` - example implementation and integration tests
+- **Reference Project**: `samples/Ark.ReferenceProject/` - example implementation. serve also as integration tests
 - **Samples**: `samples/` - sample applications demonstrating library usage
 - **Tests**: `test/` - unit and integration tests for individual packages (currently empty, reserved for future use)
 - **Build Configuration**: `Directory.Build.props` - shared MSBuild properties for all projects
@@ -46,12 +49,13 @@ dotnet build --no-restore --configuration Release
 ## Coding Standards & Conventions
 
 ### Language & Framework
+
 - Target Frameworks: .NET 8.0 and .NET 10.0 (multi-targeting enabled in Directory.Build.props)
-- C# Language Version: 12.0
 - Nullable Reference Types: Enabled across all projects
 - Treat Warnings as Errors: True (strict compilation)
 
 ### Code Quality
+
 - Code analysis is enforced via:
   - `Microsoft.CodeAnalysis.NetAnalyzers`
   - `Meziantou.Analyzer`
@@ -59,6 +63,7 @@ dotnet build --no-restore --configuration Release
 - Use structured logging with NLog - **NEVER use string interpolation** in log messages
 
 ### Logging Best Practices
+
 ```csharp
 // ❌ BAD - Don't use string interpolation
 _logger.Info($"Logon by {user} from {ip_address}");
@@ -68,6 +73,7 @@ _logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", 
 ```
 
 ### Dependencies
+
 - Minimize adding new 3rd party dependencies (per contributing guidelines)
 - Key libraries in use:
   - NodaTime (date/time handling)
@@ -75,12 +81,13 @@ _logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", 
   - Polly (resilience and transient fault handling)
   - Dapper (data access)
   - AspNetCore
-  - Rebus v8 (messaging)
-  - Flurl v4 (HTTP client)
-  - Swashbuckle v10 (OpenAPI 3.1 support)
+  - Rebus (messaging)
+  - Flurl (HTTP client)
+  - Swashbuckle (OpenAPI 3.1 support)
   - AwesomeAssertions (test assertions, replacing FluentAssertions)
 
 ### NuGet Packaging
+
 - All packages use MIT license
 - Package icon: `ark-dark.png`
 - Source Link enabled for debugging
@@ -90,6 +97,7 @@ _logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", 
 ## Git Commit Guidelines
 
 ### Conventional Commits
+
 All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
 ```
@@ -101,6 +109,7 @@ All commit messages must follow the [Conventional Commits](https://www.conventio
 ```
 
 ### Commit Types
+
 - **feat**: A new feature
 - **fix**: A bug fix
 - **docs**: Documentation only changes
@@ -114,6 +123,7 @@ All commit messages must follow the [Conventional Commits](https://www.conventio
 - **revert**: Reverts a previous commit
 
 ### Examples
+
 ```
 feat(AspNetCore): add support for custom error handling middleware
 fix(Flurl): resolve memory leak in client disposal
@@ -125,6 +135,7 @@ ci(workflows): update CodeQL configuration
 ```
 
 ### Guidelines
+
 - Use the imperative, present tense: "change" not "changed" nor "changes"
 - Don't capitalize the first letter of the description
 - No period (.) at the end of the description
@@ -135,60 +146,24 @@ ci(workflows): update CodeQL configuration
 ## Testing Guidelines
 
 ### Test Framework
-- Migrated from SpecFlow to Reqnroll (BDD framework)
-- Use `reqnroll.json` configuration in test projects
+
+- Use Reqnroll BDD tests using Gherkin features files
+- Prefer Integration tests mocking **only external** services
+- Use Emulated/Docker for local testing owned infrastructures (MessageBus, Databases, BlobStorage, etc.) which are dedicated to the project
+- Prefer E2E integration tests over UnitTests for all CRUD / Workflows
+- Use UnitTesting only for Business Logic service classes mocking in-mem DataAccess layer
 - Integration tests are in `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/`
 - Use AwesomeAssertions for test assertions (FluentAssertions is deprecated)
 
 ### Test Patterns
+
 - Follow existing patterns in the ReferenceProject
 - Tests may require external services (SQL Server, Azurite)
-- Code coverage is collected using Cobertura format
-
-## Migration Notes
-
-### Current Version: v6.x
-- Target Frameworks: .NET 8.0 and .NET 10.0 (multi-targeting)
-- .NET SDK: 10.0.100
-- Swashbuckle upgraded to v10 - OpenAPI 3.1 support
-- FluentAssertions replaced with AwesomeAssertions
-- SpecFlow support removed (use Reqnroll instead)
-
-### v6 Breaking Changes
-- **Swashbuckle 10.x / OpenAPI 3.1**: Replace `SecurityRequirementsOperationFilter` with `AddSecurityRequirement` method
-  ```csharp
-  // Old (v5)
-  c.OperationFilter<SecurityRequirementsOperationFilter>();
-  
-  // New (v6)
-  c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
-  {
-      [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
-  });
-  ```
-- **AwesomeAssertions**: Replace FluentAssertions references
-  - `PackageReference` from `FluentAssertions` to `AwesomeAssertions >= 9.0.0`
-  - `PackageReference` from `FluentAssertions.Web` to `AwesomeAssertions.Web`
-  - `HaveStatusCode(...)` => `HaveHttpStatusCode`
-  - `using FluentAssertions` => `using AwesomeAssertions`
-- **SpecFlow removed**: Use Reqnroll instead (see v5 migration notes below)
-- **SDK-based SQL Projects**: Add `<ReferenceOutputAssembly>false</ReferenceOutputAssembly>` to project references in VS 2025+
-
-### v5.x Breaking Changes
-- Minimum version: .NET 8.0
-- Deprecated: .NET Framework, .NET Standard
-- Flurl upgraded to v4 - clients must be manually disposed
-- Rebus upgraded to v8 - breaking changes in SecondLevelRetries
-
-### Important v5 Breaking Changes
-- `IFlurlClient` now requires `IArkFlurlClientFactory`
-- Flurl clients must implement IDisposable
-- Default JSON serializer: System.Text.Json (use `useNewtonsoftJson: true` for Newtonsoft.Json)
-- Rebus `IFailed<T>` no longer has Exception object, use `ExceptionInfo.ToException()`
 
 ## Common Patterns
 
 ### NLog Configuration
+
 ```csharp
 Host.CreateDefaultBuilder(args)
     .ConfigureNLog()
@@ -196,11 +171,13 @@ Host.CreateDefaultBuilder(args)
 ```
 
 ### Flurl Usage (v4+)
+
 - Use `IArkFlurlClientFactory` instead of `IFlurlClientFactory`
 - Always dispose Flurl clients after use
 - For Newtonsoft.Json: `factory.Get(url, useNewtonsoftJson: true)`
 
 ### AspNetCore Startups
+
 - Default: System.Text.Json
 - For Newtonsoft.Json: use `useNewtonsoftJson: true` in base constructor
 - Use `Ark.Tools.SystemTextJson.JsonPolymorphicConverter` for polymorphic serialization
@@ -218,7 +195,7 @@ Host.CreateDefaultBuilder(args)
 
 - Send PRs for improvements
 - Avoid adding unnecessary 3rd party dependencies
-- Documentation improvements are welcome
+- Documentation improvements are **required** - keep documentation up to date
 - Maintain backward compatibility where possible
 - Follow the existing code style and patterns
 

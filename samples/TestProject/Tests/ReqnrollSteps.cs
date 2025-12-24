@@ -7,11 +7,11 @@ using WebApplicationDemo.Dto;
 namespace TestProject
 {
     [Binding]
-    public class SpecFlowSteps
+    public class ReqnrollSteps
     {
         private readonly TestClient _client;
 
-        public SpecFlowSteps(TestClient client)
+        public ReqnrollSteps(TestClient client)
         {
             _client = client;
         }

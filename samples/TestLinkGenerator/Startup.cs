@@ -60,11 +60,11 @@ namespace TestWithoutArkTools
             })
             .AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
             {
-                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
+                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
                 {
                     o.TokenValidationParameters.ValidIssuer = o.Authority;
                     o.Authority = null;
-                    //o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.ClientSecretSpecFlow));
+                    //o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.ClientSecretIntegrationTests));
                 }
                 o.TokenValidationParameters.RoleClaimType = "Role";
             })

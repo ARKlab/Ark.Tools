@@ -15,7 +15,7 @@ namespace Ark.Reference.Core.Tests.Init
     [Binding]
     sealed class DatabaseUtils
     {
-        public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=SpecFlowLocalDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
+        public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=IntegrationTestsDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
 
         [BeforeTestRun(Order = -1)]
         public static async Task CreateNLogDatabaseIfNotExists()

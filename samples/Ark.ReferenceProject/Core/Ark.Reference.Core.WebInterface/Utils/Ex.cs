@@ -95,14 +95,14 @@ namespace Ark.Reference.Core.WebInterface.Utils
 
                 o.TokenValidationParameters = TokenValidator();
 
-                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow")
+                if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
                 {
 #pragma warning disable CA5404 // Do not disable token validation checks
                     o.TokenValidationParameters.ValidateAudience = false;
                     o.TokenValidationParameters.ValidateIssuer = false;
 #pragma warning restore CA5404 // Do not disable token validation checks
                     o.TokenValidationParameters.ValidateIssuerSigningKey = false;
-                    o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.SpecFlowEncryptionKey));
+                    o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.IntegrationTestsEncryptionKey));
                 }
                 else
                 {

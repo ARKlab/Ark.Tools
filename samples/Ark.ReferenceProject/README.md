@@ -23,6 +23,7 @@ This repository follows a **monorepo** pattern, allowing multiple services to co
 
 ```
 Ark.ReferenceProject/
+├── Ark.Reference.Common/                # Shared services across all services (Audit, etc.)
 ├── Core/                                # Main/default service (Ark.Reference.Core)
 │   ├── Ark.Reference.Core.API/          # API contracts (Queries, Requests, Messages)
 │   ├── Ark.Reference.Core.Application/  # Business logic and handlers
@@ -30,8 +31,7 @@ Ark.ReferenceProject/
 │   ├── Ark.Reference.Core.Database/     # SQL Server database project
 │   ├── Ark.Reference.Core.Tests/        # Integration tests (Reqnroll)
 │   └── Ark.Reference.Core.WebInterface/ # Web API controllers and startup
-├── Ark.Reference.Common/                # Shared services across all services (Audit, etc.)
-└── [Future services can be added here]  # Additional services following same structure
+|── [Future services can be added here]  # Additional services following same structure
 ```
 
 Each service in the monorepo follows the same clean architecture pattern with API, Application, Common, Database, Tests, and WebInterface layers.
@@ -64,36 +64,8 @@ For a consistent development environment that matches the CI pipeline, use Docke
 Alternatively, use Docker Compose to start all dependencies:
 
 ```bash
-# Create a docker-compose.yml in the ReferenceProject directory
+# Use the docker-compose.yml in the ReferenceProject directory
 docker-compose up -d
-```
-
-Example `docker-compose.yml`:
-```yaml
-version: '3.8'
-services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=YourStrong@Password
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlserver-data:/var/opt/mssql
-
-  azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
-    ports:
-      - "10000:10000"
-      - "10001:10001"
-      - "10002:10002"
-    volumes:
-      - azurite-data:/data
-
-volumes:
-  sqlserver-data:
-  azurite-data:
 ```
 
 ### Installation
@@ -114,18 +86,8 @@ volumes:
    dotnet restore
    ```
 
-4. Update connection strings in `appsettings.json` or use environment variables:
-   ```json
-   {
-     "ConnectionStrings": {
-       "Core": "Server=localhost,1433;Database=ArkReferenceCore;User Id=sa;Password=YourStrong@Password;TrustServerCertificate=True;"
-     }
-   }
-   ```
-
-5. Deploy the database schema:
+4. Build:
    ```bash
-   # The database project will be deployed automatically during the build process
    dotnet build
    ```
 
@@ -166,11 +128,11 @@ docker-compose up -d
 dotnet test --configuration Debug
 
 # Run with code coverage
-dotnet test --collect:"XPlat Code Coverage"
+dotnet test
 ```
 
 **Test Dependencies**:
-- SQL Server (via Docker container, configured in `appsettings.SpecFlow.json`)
+- SQL Server (via Docker container, configured in `appsettings.IntegrationTests.json`)
 - Azurite (Azure Storage Emulator via Docker container for blob storage tests)
 
 The test environment mirrors the CI pipeline environment, ensuring consistency between local development and automated builds.
@@ -191,7 +153,7 @@ The project supports multiple authentication schemes:
    }
    ```
 
-2. **SpecFlow Mode**: For integration testing (automatically enabled when `ASPNETCORE_ENVIRONMENT=SpecFlow`)
+2. **IntegrationTests Mode**: For integration testing (automatically enabled when `ASPNETCORE_ENVIRONMENT=IntegrationTests`)
 
 ### Logging
 
@@ -203,7 +165,7 @@ The project uses NLog for structured logging. Configure logging in `nlog.config`
 
 - **API Layer** (`Ark.Reference.Core.API`): Defines contracts (DTOs, queries, requests, messages)
 - **Application Layer** (`Ark.Reference.Core.Application`): Contains business logic, handlers, validators, and data access
-- **Common Layer** (`Ark.Reference.Core.Common`): Shared DTOs, enums, and interfaces
+- **Common Layer** (`Ark.Reference.Core.Common`): Cross-service DTOs, enums and interfaces
 - **WebInterface Layer** (`Ark.Reference.Core.WebInterface`): ASP.NET Core controllers, middleware, and startup configuration
 
 ### Patterns
@@ -263,7 +225,3 @@ Contributions to improve the reference implementation are welcome:
 - [SimpleInjector Documentation](https://simpleinjector.org/)
 - [Rebus Documentation](https://github.com/rebus-org/Rebus)
 - [FluentValidation Documentation](https://docs.fluentvalidation.net/)
-
-## License
-
-This project is part of Ark.Tools and is licensed under the MIT License.

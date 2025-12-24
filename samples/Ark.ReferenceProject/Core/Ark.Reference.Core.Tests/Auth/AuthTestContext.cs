@@ -22,10 +22,10 @@ namespace Ark.Reference.Core.Tests.Auth
         public string? ApiKey { get; private set; }
 
         private readonly JwtTokenBuilder _builder = new JwtTokenBuilder()
-                                .AddSecurityKey(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.SpecFlowEncryptionKey)))
+                                .AddSecurityKey(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.IntegrationTestsEncryptionKey)))
                                 .AddSubject("TestSubject")
-                                .AddAudience(AuthConstants.SpecflowAudience)
-                                .AddIssuer($"https://{AuthConstants.SpecflowDomain}/")
+                                .AddAudience(AuthConstants.IntegrationTestsAudience)
+                                .AddIssuer($"https://{AuthConstants.IntegrationTestsDomain}/")
                                 .AddExpiry(60)
                                 ;
 

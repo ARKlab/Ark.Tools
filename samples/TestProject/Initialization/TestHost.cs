@@ -33,7 +33,7 @@ namespace TestProject
         [BeforeTestRun]
         public static void BeforeTests()
         {
-            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "SpecFlow");
+            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
             Program.InitStatic(Array.Empty<string>());
 
             //_smtp = SimpleSmtpServer.Start();

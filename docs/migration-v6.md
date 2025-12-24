@@ -41,6 +41,18 @@ Replace the following:
 
 Follow the instructions in the [v5 migration](migration-v5.md) to replace Specflow with Reqnroll in your projects
 
+### Optional: Rename SpecFlow references to IntegrationTests
+
+If you were using `SpecFlow` in environment names, configuration files, or test passwords, consider renaming them to more generic terms to align with the Reference project:
+
+1. **Environment variable**: Change `ASPNETCORE_ENVIRONMENT` from `SpecFlow` to `IntegrationTests`
+2. **Configuration file**: Rename `appsettings.SpecFlow.json` to `appsettings.IntegrationTests.json`
+3. **Test database password**: Update passwords from `SpecFlowLocalDbPassword85!` to `IntegrationTestsDbPassword85!` in:
+   - Docker Compose files
+   - CI/CD workflows
+   - Test configuration files
+   - Database connection strings in code
+
 ## Migrate to MTPv2
 
 Update `global.json` with

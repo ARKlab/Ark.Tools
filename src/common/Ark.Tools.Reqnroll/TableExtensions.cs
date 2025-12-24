@@ -17,7 +17,7 @@ namespace Ark.Tools.Reqnroll
             return s.Single();
         }
         /// <summary>
-        /// Converts a specflow table to an instance. But includes complex objects as well (ParentProperty.ChildProperty is the convention)
+        /// Converts a Reqnroll table to an instance. But includes complex objects as well (ParentProperty.ChildProperty is the convention)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="table"></param>

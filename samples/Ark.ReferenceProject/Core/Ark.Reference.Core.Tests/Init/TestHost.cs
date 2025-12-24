@@ -67,8 +67,8 @@ namespace Ark.Reference.Core.Tests.Init
         [AfterScenario(Order = int.MinValue)]
         public void EnsureAllHooksRun()
         {
-            // SPECFLOW: If a hook throws an unhandled exception, subsequent hooks of the same type are not executed.
-            // SPECFLOW: If you want to ensure that all hooks of the same types are executed, you need to handle your exceptions manually.
+            // Reqnroll: If a hook throws an unhandled exception, subsequent hooks of the same type are not executed.
+            // Reqnroll: If you want to ensure that all hooks of the same types are executed, you need to handle your exceptions manually.
             // Thus we use FluentAssertion scope
             _afterScenarioAssertionScope = new AwesomeAssertions.Execution.AssertionScope();
         }
@@ -174,7 +174,7 @@ namespace Ark.Reference.Core.Tests.Init
         [BeforeTestRun(Order = 0)]
         public static void BeforeTests0()
         {
-            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "SpecFlow");
+            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
             GlobalInit.InitStatics();
         }
 
@@ -275,7 +275,7 @@ namespace Ark.Reference.Core.Tests.Init
         }
 
         public ClaimsPrincipal TestPrincipal { get; } = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(ClaimTypes.NameIdentifier, "Specflow")
+            new Claim(ClaimTypes.NameIdentifier, "IntegrationTests")
             ], "SYSTEM"));
 
         public InMemNetwork RebusNetwork { get; } = new InMemNetwork(true);

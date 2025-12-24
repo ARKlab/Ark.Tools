@@ -35,7 +35,7 @@ jobs:
           - 1433:1433
         env:
           ACCEPT_EULA: 'Y'
-          MSSQL_SA_PASSWORD: 'SpecFlowLocalDbPassword85!'
+          MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
 
     # You can define any steps you want, and they will run before the agent starts.

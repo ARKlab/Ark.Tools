@@ -6,9 +6,9 @@
         //public const string ClaimScope = "scope";
         public const string ClaimRole = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
-        public const string SpecflowAudience = "API";
-        public const string SpecflowDomain = "local.dev";
-        public const string SpecFlowEncryptionKey = "SpecFlowTestSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLongVeryLong";
+        public const string IntegrationTestsAudience = "API";
+        public const string IntegrationTestsDomain = "local.dev";
+        public const string IntegrationTestsEncryptionKey = "IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLongVeryLong";
 
         public const string ScopePrefix = "extension_Scope";
 

@@ -1,8 +1,8 @@
-﻿Feature: SpecFlowTest
-	Test to see if specflow still working
+﻿Feature: ReqnrollTest
+	Test to see if Reqnroll still working
 
 
-Scenario: SpecFlow stil working
+Scenario: Reqnroll stil working
 	When I get a wrong url
 	Then The request fails with 404
 	

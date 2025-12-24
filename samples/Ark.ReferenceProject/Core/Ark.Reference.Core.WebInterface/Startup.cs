@@ -56,8 +56,8 @@ namespace Ark.Reference.Core.WebInterface
         {
             base.ConfigureServices(services);
 
-            var specflowScheme = "SpecFlow";
-            var isSpecflow = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "SpecFlow";
+            var integrationTestsScheme = "IntegrationTests";
+            var isIntegrationTests = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests";
 
             var schemes = new List<string>();
 
@@ -65,18 +65,18 @@ namespace Ark.Reference.Core.WebInterface
 
             services.AddScoped<IClaimsTransformation, TransformEmailClaim>();
 
-            if (isSpecflow)
+            if (isIntegrationTests)
             {
-                schemes.Add(specflowScheme);
-                authBuilder.AddJwtBearerArkDefault(specflowScheme, AuthConstants.SpecflowAudience, AuthConstants.SpecflowDomain, o =>
+                schemes.Add(integrationTestsScheme);
+                authBuilder.AddJwtBearerArkDefault(integrationTestsScheme, AuthConstants.IntegrationTestsAudience, AuthConstants.IntegrationTestsDomain, o =>
                 {
                     o.TokenValidationParameters.ValidIssuer = o.Authority;
                     o.Authority = null;
-                    o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.SpecFlowEncryptionKey));
+                    o.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.IntegrationTestsEncryptionKey));
                     o.TokenValidationParameters.RoleClaimType = AuthConstants.ClaimRole;
                 });
 
-                services.ArkConfigureSwaggerIdentityServer(AuthConstants.SpecflowDomain, AuthConstants.SpecflowAudience, "notneededundertest");
+                services.ArkConfigureSwaggerIdentityServer(AuthConstants.IntegrationTestsDomain, AuthConstants.IntegrationTestsAudience, "notneededundertest");
             }
             else
             {
