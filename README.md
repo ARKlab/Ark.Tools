@@ -67,6 +67,11 @@ Upgrading from an older version? Check out our migration guides:
 ## Building & Testing
 
 ```bash
+# Start test dependencies (SQL Server + Azurite)
+cd samples/Ark.ReferenceProject
+docker-compose up -d
+cd ../..
+
 # Restore packages
 dotnet restore
 

@@ -1,4 +1,23 @@
-# Copilot Instructions for Ark.Tools
+# AI Agent Instructions for Ark.Tools
+
+## Critical Rules
+
+**MUST:**
+- Use structured logging with NLog - NEVER use string interpolation in log messages
+- Follow Conventional Commits for all commit messages
+- Add XML documentation for all public APIs
+- Use `CultureInfo.InvariantCulture` when formatting strings for logging
+- Use `IArkFlurlClientFactory` instead of `IFlurlClientFactory`
+- Run `dotnet build` after making changes to verify compilation
+- Follow existing patterns in the codebase - check similar files first
+
+**MUST NOT:**
+- Add new 3rd party dependencies without explicit approval
+- Use `FluentAssertions` (deprecated) - use `AwesomeAssertions` instead
+- Use `IFlurlClientFactory` directly - use `IArkFlurlClientFactory`
+- Use string interpolation in NLog calls (e.g., `_logger.Info($"...")`)
+- Skip XML documentation on public members
+- Ignore compiler warnings (TreatWarningsAsErrors is enabled)
 
 ## About This Repository
 
@@ -21,7 +40,7 @@ dotnet restore
 dotnet build --no-restore --configuration Debug
 
 # Run all tests
-dotnet test --no-restore --configuration Debug --logger "trx;LogFileName=test-results.trx" --settings "./Ark.ReferenceProject/CodeCoverage.runsettings" --collect "Code Coverage;Format=cobertura"
+dotnet test
 
 # Build in Release mode (for NuGet packaging)
 dotnet build --no-restore --configuration Release
@@ -34,6 +53,12 @@ dotnet build --no-restore --configuration Release
 - Local development: ensure services are available before running tests
 - The ReferenceProject contains integration tests using Reqnroll (BDD framework)
 - Integration tests are in `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/`
+
+**Start test dependencies:**
+```bash
+cd samples/Ark.ReferenceProject
+docker-compose up -d
+```
 
 ## Project Structure
 
@@ -68,8 +93,22 @@ dotnet build --no-restore --configuration Release
 // ❌ BAD - Don't use string interpolation
 _logger.Info($"Logon by {user} from {ip_address}");
 
-// ✅ GOOD - Use structured logging
+// ❌ BAD - Missing CultureInfo
+_logger.Info("Logon by {user} from {ip_address}", user, ip_address);
+
+// ✅ GOOD - Use structured logging with CultureInfo
 _logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", user, ip_address);
+```
+
+### Error Handling
+
+```csharp
+// ❌ BAD - Throwing generic exceptions
+throw new Exception("Something went wrong");
+
+// ✅ GOOD - Use specific exception types
+throw new InvalidOperationException("Entity not found");
+throw new ArgumentNullException(nameof(parameter));
 ```
 
 ### Dependencies
@@ -159,6 +198,15 @@ ci(workflows): update CodeQL configuration
 
 - Follow existing patterns in the ReferenceProject
 - Tests may require external services (SQL Server, Azurite)
+
+### Where to Find Examples
+
+- **BDD Test Features**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Features/`
+- **Step Definitions**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Steps/`
+- **Test Host Setup**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Init/TestHost.cs`
+- **API Controllers**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.WebInterface/Controllers/`
+- **Query/Request Handlers**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Application/Handlers/`
+- **Database Tables**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Database/dbo/Tables`
 
 ## Common Patterns
 
