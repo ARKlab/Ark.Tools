@@ -58,7 +58,8 @@ namespace Ark.Reference.Core.WebInterface
             base.ConfigureServices(services);
 
             // Configure System.Text.Json source generation with Ark defaults
-            // Using new CoreApiJsonSerializerContext(options) pattern to ensure ArkDefaults are applied
+            // Using chained resolver to combine source generation with reflection fallback
+            // This avoids naming collisions for auto-generated nested types like IEnumerable<T>
             // See: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation
             var jsonOptions = new System.Text.Json.JsonSerializerOptions();
             System.Text.Json.Extensions.ConfigureArkDefaults(jsonOptions);
@@ -67,12 +68,14 @@ namespace Ark.Reference.Core.WebInterface
 
             services.ConfigureHttpJsonOptions(options =>
             {
-                options.SerializerOptions.TypeInfoResolver = jsonContext;
+                options.SerializerOptions.TypeInfoResolverChain.Insert(0, jsonContext);
+                options.SerializerOptions.TypeInfoResolverChain.Add(new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
             });
 
             services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
-                options.JsonSerializerOptions.TypeInfoResolver = jsonContext;
+                options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, jsonContext);
+                options.JsonSerializerOptions.TypeInfoResolverChain.Add(new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
             });
 
             var integrationTestsScheme = "IntegrationTests";
