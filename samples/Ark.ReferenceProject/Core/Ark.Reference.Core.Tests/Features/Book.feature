@@ -105,5 +105,5 @@ Then the request fails with 400
 Scenario: Validator_ Book_ Create fails for author too long
 When I create a single Book with
 | Title  | Author                                                                                              | Genre      | ISBN |
-| Title1 | AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | Technology | 1234 |
+| Title1 | AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | Technology | 1234 |
 Then the request fails with 400

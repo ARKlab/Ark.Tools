@@ -2,6 +2,7 @@ using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Common.Services.Audit.Dto;
 using Ark.Reference.Core.API.Messages;
 using Ark.Reference.Core.Common.Dto;
+using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Core;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -29,6 +30,10 @@ namespace Ark.Reference.Core.WebInterface.JsonContext;
 [JsonSerializable(typeof(IEnumerable<AuditDto<Common.Enum.AuditKind>>), TypeInfoPropertyName = "IEnumerableAuditDto")]
 [JsonSerializable(typeof(PagedResult<AuditDto<Common.Enum.AuditKind>>), TypeInfoPropertyName = "PagedResultAuditDto")]
 [JsonSerializable(typeof(IAuditRecordReturn<IAuditEntity>), TypeInfoPropertyName = "AuditRecordReturn")]
+[JsonSerializable(typeof(FluentValidationProblemDetails), TypeInfoPropertyName = "FluentValidationProblemDetails")]
+[JsonSerializable(typeof(FluentValidationErrors), TypeInfoPropertyName = "FluentValidationErrors")]
+[JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), TypeInfoPropertyName = "ProblemDetails")]
+[JsonSerializable(typeof(Dictionary<string, FluentValidationErrors[]>), TypeInfoPropertyName = "DictionaryStringFluentValidationErrors")]
 public sealed partial class CoreApiJsonSerializerContext : JsonSerializerContext
 {
 }
