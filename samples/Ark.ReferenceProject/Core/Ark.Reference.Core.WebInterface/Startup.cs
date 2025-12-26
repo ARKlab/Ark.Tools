@@ -1,6 +1,7 @@
 using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Common;
 using Ark.Reference.Core.Common.Auth;
+using Ark.Reference.Core.Common.JsonContext;
 using Ark.Reference.Core.WebInterface.Utils;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
@@ -32,6 +33,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Reference.Core.WebInterface
 {
@@ -55,6 +57,17 @@ namespace Ark.Reference.Core.WebInterface
         public override void ConfigureServices(IServiceCollection services)
         {
             base.ConfigureServices(services);
+
+            // Configure System.Text.Json source generation
+            services.ConfigureHttpJsonOptions(options =>
+            {
+                options.SerializerOptions.TypeInfoResolverChain.Insert(0, CoreApiJsonSerializerContext.Default);
+            });
+
+            services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+            {
+                options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, CoreApiJsonSerializerContext.Default);
+            });
 
             var integrationTestsScheme = "IntegrationTests";
             var isIntegrationTests = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests";
