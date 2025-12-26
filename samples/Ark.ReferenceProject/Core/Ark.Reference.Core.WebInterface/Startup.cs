@@ -58,7 +58,7 @@ namespace Ark.Reference.Core.WebInterface
             base.ConfigureServices(services);
 
             // Configure System.Text.Json source generation with Ark defaults
-            // Using source-generated types only (no reflection fallback)
+            // Using source-generated types with reflection fallback for ProblemDetails middleware extensions
             // See: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation
             var jsonOptions = new System.Text.Json.JsonSerializerOptions();
             System.Text.Json.Extensions.ConfigureArkDefaults(jsonOptions);
@@ -67,12 +67,16 @@ namespace Ark.Reference.Core.WebInterface
 
             services.ConfigureHttpJsonOptions(options =>
             {
-                options.SerializerOptions.TypeInfoResolver = jsonContext;
+                // Combine source generation with reflection fallback for ProblemDetails middleware
+                options.SerializerOptions.TypeInfoResolverChain.Insert(0, jsonContext);
+                options.SerializerOptions.TypeInfoResolverChain.Add(new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
             });
 
             services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
-                options.JsonSerializerOptions.TypeInfoResolver = jsonContext;
+                // Combine source generation with reflection fallback for ProblemDetails middleware
+                options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, jsonContext);
+                options.JsonSerializerOptions.TypeInfoResolverChain.Add(new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
             });
 
             var integrationTestsScheme = "IntegrationTests";
