@@ -1,7 +1,7 @@
 using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Common;
 using Ark.Reference.Core.Common.Auth;
-using Ark.Reference.Core.Common.JsonContext;
+using Ark.Reference.Core.WebInterface.JsonContext;
 using Ark.Reference.Core.WebInterface.Utils;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
@@ -33,7 +33,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Reference.Core.WebInterface
 {
@@ -58,15 +57,22 @@ namespace Ark.Reference.Core.WebInterface
         {
             base.ConfigureServices(services);
 
-            // Configure System.Text.Json source generation
+            // Configure System.Text.Json source generation with Ark defaults
+            // Using new CoreApiJsonSerializerContext(options) pattern to ensure ArkDefaults are applied
+            // See: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation
+            var jsonOptions = new System.Text.Json.JsonSerializerOptions();
+            System.Text.Json.Extensions.ConfigureArkDefaults(jsonOptions);
+            
+            var jsonContext = new CoreApiJsonSerializerContext(jsonOptions);
+
             services.ConfigureHttpJsonOptions(options =>
             {
-                options.SerializerOptions.TypeInfoResolverChain.Insert(0, CoreApiJsonSerializerContext.Default);
+                options.SerializerOptions.TypeInfoResolver = jsonContext;
             });
 
             services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
-                options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, CoreApiJsonSerializerContext.Default);
+                options.JsonSerializerOptions.TypeInfoResolver = jsonContext;
             });
 
             var integrationTestsScheme = "IntegrationTests";

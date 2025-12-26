@@ -13,6 +13,9 @@
 - Follow existing patterns - check `Ping` entity implementation as reference
 - Place DTOs in `*.API` project, handlers in `*.Application` project
 - Add Reqnroll BDD tests for new features
+- Use a single `JsonSerializerContext` for all types serialized by the application (Requests, Queries, Messages)
+- Configure `JsonSerializerContext` with Ark defaults via constructor: `new CoreApiJsonSerializerContext(arkOptions)` instead of using `JsonSourceGenerationOptions` attributes
+- Register `JsonSerializerContext` using `TypeInfoResolver` pattern, not `TypeInfoResolverChain`
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval
@@ -21,6 +24,8 @@
 - Use string interpolation in NLog calls (e.g., `_logger.Info($"...")`)
 - Put business logic in Controllers - controllers only call handlers
 - Skip validation - all Requests/Queries need FluentValidation validators
+- Create separate `JsonSerializerContext` for different layers (API, Messages, etc.) - use one unified context
+- Use `JsonSourceGenerationOptions` attributes - configure options via constructor instead
 
 ## About This Project
 
