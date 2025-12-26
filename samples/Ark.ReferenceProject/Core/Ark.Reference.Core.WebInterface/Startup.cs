@@ -58,25 +58,33 @@ namespace Ark.Reference.Core.WebInterface
             base.ConfigureServices(services);
 
             // Configure System.Text.Json source generation with Ark defaults
-            // Using source-generated types with reflection fallback for ProblemDetails middleware extensions
+            // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts
+            // with a reflection fallback for dynamic middleware types (e.g., DeveloperProblemDetailsExtensions)
             // See: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation
             var jsonOptions = new System.Text.Json.JsonSerializerOptions();
             System.Text.Json.Extensions.ConfigureArkDefaults(jsonOptions);
             
-            var jsonContext = new CoreApiJsonSerializerContext(jsonOptions);
+            var coreApiContext = new CoreApiJsonSerializerContext(jsonOptions);
+            
+            // Create separate options instance for ProblemDetails context
+            var problemDetailsOptions = new System.Text.Json.JsonSerializerOptions();
+            System.Text.Json.Extensions.ConfigureArkDefaults(problemDetailsOptions);
+            var problemDetailsContext = new Ark.Tools.AspNetCore.JsonContext.ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
+            
+            // Combine source-generated contexts with reflection fallback for middleware dynamic types
+            var combinedResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
+                coreApiContext, 
+                problemDetailsContext,
+                new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
 
             services.ConfigureHttpJsonOptions(options =>
             {
-                // Combine source generation with reflection fallback for ProblemDetails middleware
-                options.SerializerOptions.TypeInfoResolverChain.Insert(0, jsonContext);
-                options.SerializerOptions.TypeInfoResolverChain.Add(new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
+                options.SerializerOptions.TypeInfoResolver = combinedResolver;
             });
 
             services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
-                // Combine source generation with reflection fallback for ProblemDetails middleware
-                options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, jsonContext);
-                options.JsonSerializerOptions.TypeInfoResolverChain.Add(new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
+                options.JsonSerializerOptions.TypeInfoResolver = combinedResolver;
             });
 
             var integrationTestsScheme = "IntegrationTests";
