@@ -1,3 +1,4 @@
+using Ark.Reference.Core.Application.Handlers;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Core;
 
@@ -24,6 +25,12 @@ namespace Ark.Reference.Core.Tests.Features
         public BookSteps(TestClient client)
         {
             _client = client;
+        }
+
+        [BeforeScenario("CleanDbBeforeScenario", Order = 100)]
+        public static void ClearBookStore()
+        {
+            InMemoryBookStore.Clear();
         }
 
         //** CREATE ********************************************************************

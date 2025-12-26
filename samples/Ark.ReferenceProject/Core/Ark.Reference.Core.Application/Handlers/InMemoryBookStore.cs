@@ -8,7 +8,7 @@ namespace Ark.Reference.Core.Application.Handlers
     /// <summary>
     /// Simple in-memory store for Book entities (for demonstration purposes)
     /// </summary>
-    internal static class InMemoryBookStore
+    public static class InMemoryBookStore
     {
         private static readonly Dictionary<int, Book.V1.Output> _books = new();
         private static int _nextId = 1;
@@ -100,6 +100,15 @@ namespace Ark.Reference.Core.Application.Handlers
             lock (_lock)
             {
                 return _books.Remove(id);
+            }
+        }
+
+        public static void Clear()
+        {
+            lock (_lock)
+            {
+                _books.Clear();
+                _nextId = 1;
             }
         }
     }
