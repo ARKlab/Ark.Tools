@@ -2,7 +2,6 @@ using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Common.Services.Audit.Dto;
 using Ark.Reference.Core.API.Messages;
 using Ark.Reference.Core.Common.Dto;
-using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Core;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -19,7 +18,11 @@ namespace Ark.Reference.Core.WebInterface.JsonContext;
 /// </summary>
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(bool))]
+[JsonSerializable(typeof(Ping.V1.Create), TypeInfoPropertyName = "PingV1Create")]
+[JsonSerializable(typeof(Ping.V1.Update), TypeInfoPropertyName = "PingV1Update")]
 [JsonSerializable(typeof(Ping.V1.Output), TypeInfoPropertyName = "PingV1Output")]
+[JsonSerializable(typeof(Book.V1.Create), TypeInfoPropertyName = "BookV1Create")]
+[JsonSerializable(typeof(Book.V1.Update), TypeInfoPropertyName = "BookV1Update")]
 [JsonSerializable(typeof(Book.V1.Output), TypeInfoPropertyName = "BookV1Output")]
 [JsonSerializable(typeof(IEnumerable<Ping.V1.Output>), TypeInfoPropertyName = "IEnumerablePingV1Output")]
 [JsonSerializable(typeof(IEnumerable<Book.V1.Output>), TypeInfoPropertyName = "IEnumerableBookV1Output")]
@@ -30,10 +33,7 @@ namespace Ark.Reference.Core.WebInterface.JsonContext;
 [JsonSerializable(typeof(IEnumerable<AuditDto<Common.Enum.AuditKind>>), TypeInfoPropertyName = "IEnumerableAuditDto")]
 [JsonSerializable(typeof(PagedResult<AuditDto<Common.Enum.AuditKind>>), TypeInfoPropertyName = "PagedResultAuditDto")]
 [JsonSerializable(typeof(IAuditRecordReturn<IAuditEntity>), TypeInfoPropertyName = "AuditRecordReturn")]
-[JsonSerializable(typeof(FluentValidationProblemDetails), TypeInfoPropertyName = "FluentValidationProblemDetails")]
-[JsonSerializable(typeof(FluentValidationErrors), TypeInfoPropertyName = "FluentValidationErrors")]
-[JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), TypeInfoPropertyName = "ProblemDetails")]
-[JsonSerializable(typeof(Dictionary<string, FluentValidationErrors[]>), TypeInfoPropertyName = "DictionaryStringFluentValidationErrors")]
+[JsonSerializable(typeof(AuditRecordReturn.V1<Ping.V1.Output>), TypeInfoPropertyName = "AuditRecordReturnV1PingV1Output")]
 public sealed partial class CoreApiJsonSerializerContext : JsonSerializerContext
 {
 }
