@@ -4,8 +4,7 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Solid;
 
-using EnsureThat;
-
+using System;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,8 +23,8 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
             ICoreDataContextFactory coreDataContext,
             IContextProvider<ClaimsPrincipal> userContext)
         {
-            EnsureArg.IsNotNull(coreDataContext, nameof(coreDataContext));
-            EnsureArg.IsNotNull(userContext, nameof(userContext));
+            ArgumentNullException.ThrowIfNull(coreDataContext);
+            ArgumentNullException.ThrowIfNull(userContext);
 
             _coreDataContext = coreDataContext;
             _userContext = userContext;
@@ -40,7 +39,7 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
         /// <inheritdoc/>
         public async Task<Book.V1.Output?> ExecuteAsync(Book_UpdateRequest.V1 request, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(request.Data, nameof(request.Data));
+            ArgumentNullException.ThrowIfNull(request.Data);
 
             await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
 

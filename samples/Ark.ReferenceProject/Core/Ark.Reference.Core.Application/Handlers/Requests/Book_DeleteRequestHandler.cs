@@ -2,8 +2,7 @@ using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Tools.Solid;
 
-using EnsureThat;
-
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,7 +17,7 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
 
         public Book_DeleteRequestHandler(ICoreDataContextFactory coreDataContext)
         {
-            EnsureArg.IsNotNull(coreDataContext, nameof(coreDataContext));
+            ArgumentNullException.ThrowIfNull(coreDataContext);
             _coreDataContext = coreDataContext;
         }
 
