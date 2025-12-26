@@ -9,5 +9,10 @@
         /// Ping entity audit
         /// </summary>
         Ping,
+
+        /// <summary>
+        /// Book entity audit
+        /// </summary>
+        Book,
     }
 }

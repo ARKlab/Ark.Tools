@@ -49,5 +49,37 @@ namespace Ark.Reference.Core.Application.DAL
             CancellationToken ctk = default
         );
         #endregion
+
+        #region Book
+        Task<Book.V1.Output?> ReadBookByIdAsync(
+              int id
+            , CancellationToken ctk = default
+        );
+
+        Task<(IEnumerable<Book.V1.Output> data, int count)> ReadBookByFiltersAsync(
+              BookSearchQueryDto.V1 query
+            , CancellationToken ctk = default
+        );
+
+        Task<int> InsertBookAsync(
+              Book.V1.Output entity
+            , CancellationToken ctk = default
+        );
+
+        Task PutBookAsync(
+            Book.V1.Output entity
+            , CancellationToken ctk = default
+        );
+
+        Task DeleteBookAsync(
+            int id
+            , CancellationToken ctk = default
+        );
+
+        Task<(AuditedEntityDto<Book.V1.Output>? pre, AuditedEntityDto<Book.V1.Output>? cur)> ReadBookAuditAsync(
+            Guid auditId,
+            CancellationToken ctk = default
+        );
+        #endregion
     }
 }
