@@ -246,6 +246,7 @@ csharp_style_prefer_utf8_string_literals = true:suggestion
 dotnet_code_quality.ca1051.exclude_structs = true
 csharp_style_prefer_primary_constructors = true:suggestion
 csharp_prefer_system_threading_lock = true:suggestion
+dotnet_diagnostic.MA0015.severity = none
 dotnet_diagnostic.MA0042.severity = error
 dotnet_diagnostic.MA0045.severity = error
 dotnet_diagnostic.MA0050.severity = warning
