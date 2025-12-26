@@ -10,6 +10,7 @@ The Ark.Reference project is a **monorepo** containing reference implementations
 
 - **Clean Architecture**: Separation of concerns with API, Application, Common, and WebInterface layers
 - **CQRS Pattern**: Query and Request processors for command/query separation
+- **System.Text.Json Source Generation**: High-performance JSON serialization with compile-time source generation for controllers and Rebus messages
 - **Authentication & Authorization**: Support for Auth0, Azure AD, and Azure AD B2C
 - **Validation**: FluentValidation integration for request/query validation
 - **Messaging**: Rebus integration for message-based communication with Outbox pattern
@@ -177,9 +178,29 @@ The project uses NLog for structured logging. Configure logging in `nlog.config`
 - **Messaging**: Rebus for asynchronous message processing
 - **Outbox Pattern**: Ensures reliable message delivery
 
+### JSON Serialization
+
+The project uses **System.Text.Json with Source Generation** for high-performance JSON serialization:
+
+- **CoreApiJsonSerializerContext** (`Ark.Reference.Core.Common.JsonContext`): Contains source-generated serialization metadata for all API DTOs (Ping, Book, PagedResult, etc.)
+- **RebusMessagesJsonSerializerContext** (`Ark.Reference.Core.API.JsonContext`): Contains source-generated serialization metadata for Rebus messages
+- **Configuration**: Registered in `Startup.cs` via `TypeInfoResolverChain` to enable AOT-friendly JSON serialization
+- **Benefits**:
+  - Compile-time code generation eliminates runtime reflection
+  - Faster startup time and lower memory usage
+  - Full trimming and AOT compilation support
+  - Better performance for serialization/deserialization
+
+To add new types to source generation:
+1. Add a `[JsonSerializable]` attribute to the appropriate context class
+2. Specify a unique `TypeInfoPropertyName` to avoid collisions
+3. The source generator will automatically create the serialization code at compile time
+
 ## API Endpoints
 
 Example endpoints (from `PingController`):
+
+### Ping Endpoints
 
 - `GET /ping/test` - Health check endpoint (returns "pong")
 - `POST /ping` - Create a new Ping entity
@@ -189,6 +210,16 @@ Example endpoints (from `PingController`):
 - `PATCH /ping/{id}` - Update Ping (partial update)
 - `DELETE /ping/{id}` - Delete Ping
 - `POST /ping/message` - Create Ping and send message
+
+### Book Endpoints
+
+- `POST /book` - Create a new Book entity
+- `GET /book/{id}` - Get Book by ID
+- `GET /book?title=...&author=...&genre=...` - Query Books with filters (supports paging with skip/limit)
+- `PUT /book/{id}` - Update Book (full replacement)
+- `DELETE /book/{id}` - Delete Book
+
+The Book controller demonstrates System.Text.Json source generation with comprehensive CRUD operations and validation.
 
 ## Testing
 
