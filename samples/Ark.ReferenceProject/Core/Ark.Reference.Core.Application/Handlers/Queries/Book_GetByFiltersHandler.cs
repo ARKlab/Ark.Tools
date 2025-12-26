@@ -1,4 +1,5 @@
 using Ark.Reference.Core.API.Queries;
+using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
@@ -14,6 +15,13 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
     /// </summary>
     public class Book_GetByFiltersHandler : IQueryHandler<Book_GetByFiltersQuery.V1, PagedResult<Book.V1.Output>>
     {
+        private readonly ICoreDataContextFactory _coreDataContext;
+
+        public Book_GetByFiltersHandler(ICoreDataContextFactory coreDataContext)
+        {
+            _coreDataContext = coreDataContext;
+        }
+
         /// <inheritdoc/>
         public PagedResult<Book.V1.Output> Execute(Book_GetByFiltersQuery.V1 query)
         {
@@ -21,24 +29,31 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
         }
 
         /// <inheritdoc/>
-        public Task<PagedResult<Book.V1.Output>> ExecuteAsync(Book_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
+        public async Task<PagedResult<Book.V1.Output>> ExecuteAsync(Book_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
         {
-            var (data, count) = InMemoryBookStore.GetByFilters(
-                query.Id,
-                query.Title,
-                query.Author,
-                query.Genre,
-                query.Skip,
-                query.Limit);
+            await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
 
-            return Task.FromResult(new PagedResult<Book.V1.Output>
+            var searchQuery = new BookSearchQueryDto.V1
+            {
+                Id = query.Id ?? [],
+                Title = query.Title ?? [],
+                Author = query.Author ?? [],
+                Genre = query.Genre ?? [],
+                Sort = query.Sort ?? [],
+                Skip = query.Skip,
+                Limit = query.Limit
+            };
+
+            var (data, count) = await ctx.ReadBookByFiltersAsync(searchQuery, ctk).ConfigureAwait(false);
+
+            return new PagedResult<Book.V1.Output>
             {
                 Count = count,
                 Data = data.ToList(),
                 Limit = query.Limit,
                 Skip = query.Skip,
                 IsCountPartial = false
-            });
+            };
         }
     }
 }
