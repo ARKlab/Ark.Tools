@@ -60,15 +60,10 @@ namespace Ark.Reference.Core.WebInterface
             // Configure System.Text.Json source generation with Ark defaults
             // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts
             // See: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation
-            var jsonOptions = new System.Text.Json.JsonSerializerOptions();
-            System.Text.Json.Extensions.ConfigureArkDefaults(jsonOptions);
             
-            var coreApiContext = new CoreApiJsonSerializerContext(jsonOptions);
-            
-            // Create separate options instance for ProblemDetails context
-            var problemDetailsOptions = new System.Text.Json.JsonSerializerOptions();
-            System.Text.Json.Extensions.ConfigureArkDefaults(problemDetailsOptions);
-            var problemDetailsContext = new Ark.Tools.AspNetCore.JsonContext.ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
+            // Create contexts using the Default instances (parameterless constructor pattern)
+            var coreApiContext = CoreApiJsonSerializerContext.Default;
+            var problemDetailsContext = Ark.Tools.AspNetCore.JsonContext.ArkProblemDetailsJsonSerializerContext.Default;
             
             // Combine source-generated contexts with minimal reflection fallback
             // The fallback is required only for Hellang.Middleware.ProblemDetails internal types
@@ -83,11 +78,17 @@ namespace Ark.Reference.Core.WebInterface
 
             services.ConfigureHttpJsonOptions(options =>
             {
+                // Configure Ark defaults and set the combined resolver
+                // This ensures all JsonSerializerOptions use consistent Ark configuration
+                System.Text.Json.Extensions.ConfigureArkDefaults(options.SerializerOptions);
                 options.SerializerOptions.TypeInfoResolver = combinedResolver;
             });
 
             services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
+                // Configure Ark defaults and set the combined resolver
+                // Reusing the same configuration pattern as HttpJsonOptions
+                System.Text.Json.Extensions.ConfigureArkDefaults(options.JsonSerializerOptions);
                 options.JsonSerializerOptions.TypeInfoResolver = combinedResolver;
             });
 
