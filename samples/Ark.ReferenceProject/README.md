@@ -214,6 +214,63 @@ var combinedResolver = JsonTypeInfoResolver.Combine(
     new DefaultJsonTypeInfoResolver()); // Reflection fallback (Priority 3)
 ```
 
+### Error Handling & Business Rules
+
+The project uses specialized exception types for domain-specific business rule violations:
+
+- **BusinessRuleViolation**: Base class from `Ark.Tools.Core.BusinessRuleViolation` for representing business rule violations
+- **Specialized Violations**: Create domain-specific subclasses with relevant properties (e.g., `BookPrintingProcessAlreadyRunningViolation` with `BookId` property)
+- **Class Name as Error Code**: The fully qualified class name serves as the error code, making violations self-documenting
+- **AspNetCore-Agnostic**: BusinessRuleViolation classes don't depend on AspNetCore, allowing reuse across different hosting environments
+- **Automatic HTTP 400**: BusinessRuleViolationException is automatically converted to HTTP 400 Bad Request by middleware
+
+Example:
+```csharp
+public class BookPrintingProcessAlreadyRunningViolation : BusinessRuleViolation
+{
+    public BookPrintingProcessAlreadyRunningViolation(int bookId)
+        : base($"A print process is already running or pending for this book")
+    {
+        BookId = bookId;
+        Detail = $"Cannot start a new print process for book ID {bookId}...";
+    }
+    
+    public int BookId { get; }
+}
+
+// Usage in handler
+throw new BusinessRuleViolationException(
+    new BookPrintingProcessAlreadyRunningViolation(bookId));
+```
+
+See `samples/WebApplicationDemo/Dto/CustomBusinessRuleViolation.cs` for more examples.
+
+### Controller Routing
+
+Controllers follow explicit routing conventions:
+
+- **Explicit Routes**: Use `[Route("bookPrintProcess")]` at the controller class level (camelCase)
+- **API Versioning**: Add `[ApiVersion("1.0")]` or appropriate version attribute
+- **Action Routes**: Use sub-routes on HTTP method attributes (e.g., `[HttpPost]`, `[HttpGet("{id}")]`)
+- **Never use `[controller]`**: Implicit routes make refactoring difficult and obscure the API surface
+
+Example:
+```csharp
+[ApiVersion("1.0")]
+[Route("bookPrintProcess")]
+[ApiController]
+public class BookPrintProcessController : ControllerBase
+{
+    [HttpPost]
+    public async Task<IActionResult> Post([FromBody] Request request) { ... }
+    
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get([FromRoute] int id) { ... }
+}
+```
+
+See `samples/WebApplicationDemo/Controllers/V1/EntityController.cs` for comprehensive examples.
+
 ## API Endpoints
 
 Example endpoints (from `PingController`):

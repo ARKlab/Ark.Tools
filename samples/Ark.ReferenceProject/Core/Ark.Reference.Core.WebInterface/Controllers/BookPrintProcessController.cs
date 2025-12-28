@@ -3,6 +3,8 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Solid;
 
+using Asp.Versioning;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +17,8 @@ namespace Ark.Reference.Core.WebInterface.Controllers
     /// <summary>
     /// Controller for managing book print processes
     /// </summary>
-    [Route("api/v1/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("bookPrintProcess")]
     [ApiController]
     public class BookPrintProcessController : ControllerBase
     {

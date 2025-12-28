@@ -33,7 +33,7 @@ namespace Ark.Reference.Core.API.JsonContext;
 [JsonSerializable(typeof(PagedResult<Book.V1.Output>), TypeInfoPropertyName = "PagedResultBookV1Output")]
 [JsonSerializable(typeof(Ping_ProcessMessage.V1), TypeInfoPropertyName = "PingProcessMessageV1")]
 [JsonSerializable(typeof(BookPrintProcess_StartMessage.V1), TypeInfoPropertyName = "BookPrintProcessStartMessageV1")]
-[JsonSerializable(typeof(BusinessRuleViolation), TypeInfoPropertyName = "BusinessRuleViolation")]
+[JsonSerializable(typeof(BookPrintingProcessAlreadyRunningViolation), TypeInfoPropertyName = "BookPrintingProcessAlreadyRunningViolation")]
 [JsonSerializable(typeof(IEnumerable<string>), TypeInfoPropertyName = "IEnumerableString")]
 [JsonSerializable(typeof(IEnumerable<AuditDto<Common.Enum.AuditKind>>), TypeInfoPropertyName = "IEnumerableAuditDto")]
 [JsonSerializable(typeof(PagedResult<AuditDto<Common.Enum.AuditKind>>), TypeInfoPropertyName = "PagedResultAuditDto")]

@@ -17,6 +17,8 @@
 - Configure `JsonSerializerContext` with Ark defaults using a helper method in the Application layer (e.g., `Ex.CreateCoreApiJsonSerializerOptions()`) instead of creating options inline
 - Register `JsonSerializerContext` using `TypeInfoResolver` pattern, not `TypeInfoResolverChain`
 - Note: `JsonSerializerOptions` get locked when passed to a `JsonSerializerContext` constructor, preventing reuse for multiple contexts - create separate instances for each context
+- **BusinessRuleViolations**: Derive from `Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation`, specialize with domain-specific properties (e.g., `BookPrintingProcessAlreadyRunningViolation` with `BookId` property). The class name itself serves as the error code. See `samples/WebApplicationDemo/Dto/CustomBusinessRuleViolation.cs` as an example
+- **Controller Routing**: Always use explicit routes at the controller class level (e.g., `[Route("bookPrintProcess")]` in camelCase). Never use `[controller]` or other implicit routes. Add `[ApiVersion("1.0")]` or appropriate version on the controller. Use sub-routes on action methods (e.g., `[HttpGet("{id}")]`). See `samples/WebApplicationDemo/Controllers/V1/EntityController.cs` for examples
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval
@@ -27,6 +29,8 @@
 - Skip validation - all Requests/Queries need FluentValidation validators
 - Create separate `JsonSerializerContext` for different layers (API, Messages, etc.) - use one unified context
 - Use `JsonSourceGenerationOptions` attributes - configure options via helper method instead
+- Use generic `BusinessRuleViolationException` with just a code string - create specialized `BusinessRuleViolation` classes instead
+- Use implicit controller routes like `[controller]` - always use explicit routes
 
 ## About This Project
 

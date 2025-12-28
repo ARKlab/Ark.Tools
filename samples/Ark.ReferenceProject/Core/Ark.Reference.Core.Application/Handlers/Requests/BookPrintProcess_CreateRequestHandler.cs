@@ -4,6 +4,8 @@ using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.Common.Exceptions;
+using Ark.Tools.Core;
+using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Outbox.Rebus;
 using Ark.Tools.Solid;
 
@@ -54,18 +56,14 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
             var existingProcess = await ctx.ReadRunningPrintProcessForBookAsync(request.Data.BookId, ctk).ConfigureAwait(false);
             if (existingProcess != null)
             {
-                throw new BusinessRuleViolationException(
-                    "PRINT_ALREADY_RUNNING",
-                    $"A print process is already running or pending for book ID {request.Data.BookId}");
+                throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.Data.BookId));
             }
 
             // Check if the book exists
             var book = await ctx.ReadBookByIdAsync(request.Data.BookId, ctk).ConfigureAwait(false);
             if (book == null)
             {
-                throw new BusinessRuleViolationException(
-                    "BOOK_NOT_FOUND",
-                    $"Book with ID {request.Data.BookId} not found");
+                throw new EntityNotFoundException($"Book with ID {request.Data.BookId} not found");
             }
 
             await ctx.EnsureAudit(AuditKind.BookPrintProcess, _userContext.GetUserId(), "Create BookPrintProcess", ctk).ConfigureAwait(false);

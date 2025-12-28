@@ -1,28 +1,25 @@
 namespace Ark.Reference.Core.Common.Exceptions
 {
     /// <summary>
-    /// Represents a business rule violation (AspNetCore-agnostic)
+    /// Business rule violation indicating that a book print process is already running for a given book.
+    /// The class name itself serves as the error code for this specific violation.
     /// </summary>
-    public record BusinessRuleViolation
+    public class BookPrintingProcessAlreadyRunningViolation : Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation
     {
         /// <summary>
-        /// Gets or initializes the type of violation
+        /// Initializes a new instance of the <see cref="BookPrintingProcessAlreadyRunningViolation"/> class
         /// </summary>
-        public string? Type { get; init; }
+        /// <param name="bookId">The ID of the book that already has a running print process</param>
+        public BookPrintingProcessAlreadyRunningViolation(int bookId)
+            : base($"A print process is already running or pending for this book")
+        {
+            BookId = bookId;
+            Detail = $"Cannot start a new print process for book ID {bookId} because another print process is already running or pending for this book.";
+        }
 
         /// <summary>
-        /// Gets or initializes the title of the violation
+        /// Gets the ID of the book that already has a running print process
         /// </summary>
-        public string? Title { get; init; }
-
-        /// <summary>
-        /// Gets or initializes the detailed description of the violation
-        /// </summary>
-        public string? Detail { get; init; }
-
-        /// <summary>
-        /// Gets or initializes the business rule code
-        /// </summary>
-        public string? RuleCode { get; init; }
+        public int BookId { get; }
     }
 }
