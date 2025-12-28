@@ -1,17 +1,17 @@
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Reference.Core.Tests.Init;
 using Ark.Tools.Core;
 
 using AwesomeAssertions;
 
 using Flurl;
-using Flurl.Http;
+
+using Polly;
 
 using Reqnroll;
 
 using System;
-using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Tests.Features
@@ -20,16 +20,17 @@ namespace Ark.Reference.Core.Tests.Features
     public sealed class BookPrintProcessSteps
     {
         private readonly TestClient _client;
+        private readonly TestHost _testHost;
         private readonly string _controllerName = "bookprintprocess";
         private int? _currentBookId;
         private int? _currentPrintProcessId;
-        private HttpStatusCode? _lastStatusCode;
         private string? _lastErrorContent;
         private BookPrintProcess.V1.Output? _currentPrintProcess;
 
-        public BookPrintProcessSteps(TestClient client)
+        public BookPrintProcessSteps(TestClient client, TestHost testHost)
         {
             _client = client;
+            _testHost = testHost;
         }
 
         [Given(@"I have created a book with title ""(.*)"" and author ""(.*)""")]
@@ -60,26 +61,16 @@ namespace Ark.Reference.Core.Tests.Features
                 ShouldFail = false
             };
 
-            try
-            {
-                _client.PostAsJson(_controllerName, request);
+            _client.PostAsJson(_controllerName, request);
                 
-                if (_client.LastStatusCodeIsSuccess())
-                {
-                    _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
-                    _currentPrintProcessId = _currentPrintProcess!.BookPrintProcessId;
-                    _lastStatusCode = _client.GetLastStatusCode();
-                }
-                else
-                {
-                    _lastStatusCode = _client.GetLastStatusCode();
-                    _lastErrorContent = _client.ReadAsString();
-                }
-            }
-            catch (FlurlHttpException ex)
+            if (_client.LastStatusCodeIsSuccess())
             {
-                _lastStatusCode = (HttpStatusCode?)(ex.StatusCode ?? 0);
-                _lastErrorContent = ex.GetResponseStringAsync().GetAwaiter().GetResult();
+                _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
+                _currentPrintProcessId = _currentPrintProcess!.BookPrintProcessId;
+            }
+            else
+            {
+                _lastErrorContent = _client.ReadAsString();
             }
         }
 
@@ -108,41 +99,58 @@ namespace Ark.Reference.Core.Tests.Features
                 ShouldFail = false
             };
 
-            try
-            {
-                _client.PostAsJson(_controllerName, request);
-                _lastStatusCode = _client.GetLastStatusCode();
+            _client.PostAsJson(_controllerName, request);
                 
-                if (!_client.LastStatusCodeIsSuccess())
-                {
-                    _lastErrorContent = _client.ReadAsString();
-                }
-            }
-            catch (FlurlHttpException ex)
+            if (!_client.LastStatusCodeIsSuccess())
             {
-                _lastStatusCode = (HttpStatusCode?)(ex.StatusCode ?? 0);
-                _lastErrorContent = ex.GetResponseStringAsync().GetAwaiter().GetResult();
+                _lastErrorContent = _client.ReadAsString();
             }
         }
 
         [When(@"I wait for the print process to complete")]
         public async Task WhenIWaitForThePrintProcessToComplete()
         {
-            // Simplified: just wait for outbox and bus to be idle
-            await Task.Delay(TimeSpan.FromSeconds(35)).ConfigureAwait(false);
+            // Wait for bus/outbox to be idle
+            await _testHost.ThenIWaitBackgroundBusToIdleAndOutboxToBeEmpty().ConfigureAwait(false);
+
+            // Poll the GET endpoint until completion using Polly
+            var policy = Policy
+                .HandleResult<BookPrintProcess.V1.Output?>(r => r?.Progress < 1.0 && r?.Status != BookPrintProcessStatus.Error)
+                .WaitAndRetry(30, _ => TimeSpan.FromSeconds(1));
+
+            _currentPrintProcess = policy.Execute(() =>
+            {
+                _client.Get($"{_controllerName}/{_currentPrintProcessId}");
+                return _client.LastStatusCodeIsSuccess()
+                    ? _client.ReadAs<BookPrintProcess.V1.Output?>()
+                    : null;
+            });
         }
 
         [When(@"I wait for the print process to fail")]
         public async Task WhenIWaitForThePrintProcessToFail()
         {
-            // Simplified: just wait for outbox and bus to be idle
-            await Task.Delay(TimeSpan.FromSeconds(15)).ConfigureAwait(false);
+            // Wait for bus/outbox to be idle
+            await _testHost.ThenIWaitBackgroundBusToIdleAndOutboxToBeEmpty().ConfigureAwait(false);
+
+            // Poll the GET endpoint until error status using Polly
+            var policy = Policy
+                .HandleResult<BookPrintProcess.V1.Output?>(r => r?.Status != BookPrintProcessStatus.Error)
+                .WaitAndRetry(30, _ => TimeSpan.FromSeconds(1));
+
+            _currentPrintProcess = policy.Execute(() =>
+            {
+                _client.Get($"{_controllerName}/{_currentPrintProcessId}");
+                return _client.LastStatusCodeIsSuccess()
+                    ? _client.ReadAs<BookPrintProcess.V1.Output?>()
+                    : null;
+            });
         }
 
         [When(@"I wait for the IFailed handler to process the error")]
         public async Task WhenIWaitForTheIFailedHandlerToProcessTheError()
         {
-            // Same as waiting for failure
+            // Same pattern as waiting for failure
             await WhenIWaitForThePrintProcessToFail().ConfigureAwait(false);
         }
 
@@ -171,8 +179,7 @@ namespace Ark.Reference.Core.Tests.Features
         [Then(@"I should get a (.*) Bad Request response")]
         public void ThenIShouldGetABadRequestResponse(int statusCode)
         {
-            _lastStatusCode.Should().NotBeNull();
-            ((int)_lastStatusCode!.Value).Should().Be(statusCode);
+            _client.ThenTheRequestFailsWith((System.Net.HttpStatusCode)statusCode);
         }
 
         [Then(@"the error should indicate ""(.*)""")]

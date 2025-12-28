@@ -199,6 +199,10 @@ All commit messages must follow the [Conventional Commits](https://www.conventio
 - Tests require Docker services: SQL Server and Azurite
 - Test configuration is in `appsettings.IntegrationTests.json`
 - Environment variable: `ASPNETCORE_ENVIRONMENT=IntegrationTests`
+- **Never use arbitrary sleeps (`Task.Delay`) in tests**
+  - For bus operations: use `When("I wait background bus to idle and outbox to be empty")` step
+  - For polling endpoints: use Polly retry policies with maximum retry limits
+  - Example: `Policy.HandleResult<T>(condition).WaitAndRetry(30, _ => TimeSpan.FromSeconds(1))`
 
 ### Where to Find Examples
 
