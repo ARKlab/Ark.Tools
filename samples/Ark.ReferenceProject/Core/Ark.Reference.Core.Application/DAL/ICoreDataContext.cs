@@ -81,5 +81,27 @@ namespace Ark.Reference.Core.Application.DAL
             CancellationToken ctk = default
         );
         #endregion
+
+        #region BookPrintProcess
+        Task<BookPrintProcess.V1.Output?> ReadBookPrintProcessByIdAsync(
+            int bookPrintProcessId
+            , CancellationToken ctk = default
+        );
+
+        Task<BookPrintProcess.V1.Output?> ReadRunningPrintProcessForBookAsync(
+            int bookId
+            , CancellationToken ctk = default
+        );
+
+        Task<int> PostBookPrintProcessAsync(
+            BookPrintProcess.V1.Output entity
+            , CancellationToken ctk = default
+        );
+
+        Task PutBookPrintProcessAsync(
+            BookPrintProcess.V1.Output entity
+            , CancellationToken ctk = default
+        );
+        #endregion
     }
 }

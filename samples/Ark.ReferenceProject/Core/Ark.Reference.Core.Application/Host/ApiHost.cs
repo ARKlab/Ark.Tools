@@ -3,6 +3,7 @@ using Ark.Reference.Common.Auth;
 using Ark.Reference.Common.Services.Auth;
 using Ark.Reference.Common.Services.Decorators;
 using Ark.Reference.Common.Services.FileStorageService;
+using Ark.Reference.Core.API.JsonContext;
 using Ark.Reference.Core.API.Messages;
 using Ark.Reference.Core.Application.Config;
 using Ark.Reference.Core.Application.DAL;
@@ -240,7 +241,10 @@ namespace Ark.Reference.Core.Application.Host
                 })
                 .Serialization(s =>
                 {
-                    var cfg = new JsonSerializerOptions().ConfigureArkDefaults();
+                    // Configure Rebus to use source-generated JSON serialization (API types only, no ProblemDetails)
+                    var cfg = Ex.CreateCoreApiJsonSerializerOptions();
+                    var jsonContext = new CoreApiJsonSerializerContext(cfg);
+                    cfg.TypeInfoResolver = jsonContext;
                     s.UseSystemTextJson(cfg);
                 })
                 .Timeouts(t =>

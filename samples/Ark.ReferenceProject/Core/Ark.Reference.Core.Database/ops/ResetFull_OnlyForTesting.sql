@@ -12,6 +12,12 @@ AS
 
 		BEGIN TRANSACTION
 		
+	    -- BookPrintProcess (must be before Book due to FK)
+		ALTER TABLE [dbo].[BookPrintProcess] SET (SYSTEM_VERSIONING = OFF)
+		TRUNCATE TABLE [dbo].[BookPrintProcess]
+		TRUNCATE TABLE [dbo].[BookPrintProcessHistory]
+		ALTER TABLE [dbo].[BookPrintProcess] SET  ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[BookPrintProcessHistory], DATA_CONSISTENCY_CHECK = OFF ) )
+
 	    -- Ping
 		ALTER TABLE [dbo].[Ping] SET (SYSTEM_VERSIONING = OFF)
 		TRUNCATE TABLE [dbo].[Ping]

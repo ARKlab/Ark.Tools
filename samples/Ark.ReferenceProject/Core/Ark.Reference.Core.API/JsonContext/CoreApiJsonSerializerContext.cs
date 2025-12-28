@@ -2,12 +2,13 @@ using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Common.Services.Audit.Dto;
 using Ark.Reference.Core.API.Messages;
 using Ark.Reference.Core.Common.Dto;
+using Ark.Reference.Core.Common.Exceptions;
 using Ark.Tools.Core;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Ark.Reference.Core.WebInterface.JsonContext;
+namespace Ark.Reference.Core.API.JsonContext;
 
 /// <summary>
 /// JSON serialization source generation context for Core API.
@@ -24,11 +25,15 @@ namespace Ark.Reference.Core.WebInterface.JsonContext;
 [JsonSerializable(typeof(Book.V1.Create), TypeInfoPropertyName = "BookV1Create")]
 [JsonSerializable(typeof(Book.V1.Update), TypeInfoPropertyName = "BookV1Update")]
 [JsonSerializable(typeof(Book.V1.Output), TypeInfoPropertyName = "BookV1Output")]
+[JsonSerializable(typeof(BookPrintProcess.V1.Create), TypeInfoPropertyName = "BookPrintProcessV1Create")]
+[JsonSerializable(typeof(BookPrintProcess.V1.Output), TypeInfoPropertyName = "BookPrintProcessV1Output")]
 [JsonSerializable(typeof(IEnumerable<Ping.V1.Output>), TypeInfoPropertyName = "IEnumerablePingV1Output")]
 [JsonSerializable(typeof(IEnumerable<Book.V1.Output>), TypeInfoPropertyName = "IEnumerableBookV1Output")]
 [JsonSerializable(typeof(PagedResult<Ping.V1.Output>), TypeInfoPropertyName = "PagedResultPingV1Output")]
 [JsonSerializable(typeof(PagedResult<Book.V1.Output>), TypeInfoPropertyName = "PagedResultBookV1Output")]
 [JsonSerializable(typeof(Ping_ProcessMessage.V1), TypeInfoPropertyName = "PingProcessMessageV1")]
+[JsonSerializable(typeof(BookPrintProcess_StartMessage.V1), TypeInfoPropertyName = "BookPrintProcessStartMessageV1")]
+[JsonSerializable(typeof(BusinessRuleViolation), TypeInfoPropertyName = "BusinessRuleViolation")]
 [JsonSerializable(typeof(IEnumerable<string>), TypeInfoPropertyName = "IEnumerableString")]
 [JsonSerializable(typeof(IEnumerable<AuditDto<Common.Enum.AuditKind>>), TypeInfoPropertyName = "IEnumerableAuditDto")]
 [JsonSerializable(typeof(PagedResult<AuditDto<Common.Enum.AuditKind>>), TypeInfoPropertyName = "PagedResultAuditDto")]
