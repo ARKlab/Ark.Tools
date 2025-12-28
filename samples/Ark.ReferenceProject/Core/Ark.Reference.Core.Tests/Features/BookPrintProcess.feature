@@ -21,6 +21,7 @@ Scenario: Print process completes successfully in background
     Given I have created a book with title "Test Book" and author "Test Author"
     And I have created a book print process for that book with ShouldFail false
     When I wait for the print process to complete
+    And I retrieve the print process status
     Then the print process status should be "Completed"
     And the print process progress should be 1.0
 
@@ -29,6 +30,7 @@ Scenario: Print process fails at 30% progress when ShouldFail is true
     Given I have created a book with title "Test Book" and author "Test Author"
     And I have created a book print process for that book with ShouldFail true
     When I wait for the print process to fail
+    And I retrieve the print process status
     Then the print process status should be "Error"
     And the print process progress should be 0.3
     And the error message should contain "Simulated print process failure"
@@ -38,5 +40,6 @@ Scenario: IFailed handler sets error status correctly
     Given I have created a book with title "Test Book" and author "Test Author"
     And I have created a book print process for that book with ShouldFail true
     When I wait for the IFailed handler to process the error
+    And I retrieve the print process status
     Then the print process status should be "Error"
     And the error message should not be empty
