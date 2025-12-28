@@ -182,9 +182,11 @@ The project uses NLog for structured logging. Configure logging in `nlog.config`
 
 The project uses **System.Text.Json with Source Generation** for high-performance JSON serialization:
 
-- **CoreApiJsonSerializerContext** (`Ark.Reference.Core.Common.JsonContext`): Contains source-generated serialization metadata for all API DTOs (Ping, Book, PagedResult, etc.)
-- **RebusMessagesJsonSerializerContext** (`Ark.Reference.Core.API.JsonContext`): Contains source-generated serialization metadata for Rebus messages
-- **Configuration**: Registered in `Startup.cs` via `TypeInfoResolverChain` to enable AOT-friendly JSON serialization
+- **CoreApiJsonSerializerContext** (`Ark.Reference.Core.WebInterface.JsonContext`): Contains source-generated serialization metadata for all API types (DTOs, Queries, Requests, Messages)
+- **ArkProblemDetailsJsonSerializerContext** (`Ark.Tools.AspNetCore.JsonContext`): Contains source-generated serialization metadata for ProblemDetails error responses (shared across all Ark applications)
+- **Configuration**: Registered in `Startup.cs` via `JsonTypeInfoResolver.Combine` with minimal reflection fallback
+- **Helper Method**: `Ex.CreateCoreApiJsonSerializerOptions()` in the Application layer creates JsonSerializerOptions configured with Ark defaults (NodaTime, converters, naming policies)
+- **Important**: JsonSerializerOptions get locked when passed to a JsonSerializerContext constructor, so separate instances must be created for each context
 - **Benefits**:
   - Compile-time code generation eliminates runtime reflection
   - Faster startup time and lower memory usage
@@ -193,8 +195,24 @@ The project uses **System.Text.Json with Source Generation** for high-performanc
 
 To add new types to source generation:
 1. Add a `[JsonSerializable]` attribute to the appropriate context class
-2. Specify a unique `TypeInfoPropertyName` to avoid collisions
+2. Specify a unique `TypeInfoPropertyName` to avoid collisions (e.g., `TypeInfoPropertyName = "BookV1Output"`)
 3. The source generator will automatically create the serialization code at compile time
+
+Example configuration pattern:
+```csharp
+// Create contexts with Ark-configured options (separate instances due to locking)
+var coreApiOptions = Ex.CreateCoreApiJsonSerializerOptions();
+var coreApiContext = new CoreApiJsonSerializerContext(coreApiOptions);
+
+var problemDetailsOptions = Ex.CreateCoreApiJsonSerializerOptions();
+var problemDetailsContext = new ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
+
+// Combine contexts with prioritized resolution
+var combinedResolver = JsonTypeInfoResolver.Combine(
+    coreApiContext,           // Application types (Priority 1)
+    problemDetailsContext,    // Error types (Priority 2)
+    new DefaultJsonTypeInfoResolver()); // Reflection fallback (Priority 3)
+```
 
 ## API Endpoints
 

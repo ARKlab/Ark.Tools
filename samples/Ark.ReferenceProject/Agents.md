@@ -14,8 +14,9 @@
 - Place DTOs in `*.API` project, handlers in `*.Application` project
 - Add Reqnroll BDD tests for new features
 - Use a single `JsonSerializerContext` for all types serialized by the application (Requests, Queries, Messages)
-- Configure `JsonSerializerContext` with Ark defaults via constructor: `new CoreApiJsonSerializerContext(arkOptions)` instead of using `JsonSourceGenerationOptions` attributes
+- Configure `JsonSerializerContext` with Ark defaults using a helper method in the Application layer (e.g., `Ex.CreateCoreApiJsonSerializerOptions()`) instead of creating options inline
 - Register `JsonSerializerContext` using `TypeInfoResolver` pattern, not `TypeInfoResolverChain`
+- Note: `JsonSerializerOptions` get locked when passed to a `JsonSerializerContext` constructor, preventing reuse for multiple contexts - create separate instances for each context
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval
@@ -25,7 +26,7 @@
 - Put business logic in Controllers - controllers only call handlers
 - Skip validation - all Requests/Queries need FluentValidation validators
 - Create separate `JsonSerializerContext` for different layers (API, Messages, etc.) - use one unified context
-- Use `JsonSourceGenerationOptions` attributes - configure options via constructor instead
+- Use `JsonSourceGenerationOptions` attributes - configure options via helper method instead
 
 ## About This Project
 
