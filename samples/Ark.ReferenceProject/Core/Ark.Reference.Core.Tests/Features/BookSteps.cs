@@ -21,12 +21,27 @@ namespace Ark.Reference.Core.Tests.Features
         private Book.V1.Output? _output;
         private readonly Dictionary<string, int> _entityNameId = new(System.StringComparer.Ordinal);
 
+        public Book.V1.Output? Current { get; private set; }
+
         public BookSteps(TestClient client)
         {
             _client = client;
         }
 
         //** CREATE ********************************************************************
+        [Given("I create a book with")]
+        public void GivenICreateABookWith(Table table)
+        {
+            var body = table.CreateInstance<Book.V1.Create>();
+            _client.PostAsJson($"{_controllerName}/", body);
+            _client.ThenTheRequestSucceded();
+
+            Current = _client.ReadAs<Book.V1.Output?>();
+            _output = Current;
+            if (Current?.Title != null)
+                _entityNameId.TryAdd(Current.Title, Current.Id);
+        }
+
         [When("I create a single Book with")]
         public void WhenICreateASingleBookWith(Table table)
         {
@@ -37,6 +52,7 @@ namespace Ark.Reference.Core.Tests.Features
             {
                 var c = _client.ReadAs<Book.V1.Output?>();
                 _output = c;
+                Current = c;
                 if (c?.Title != null)
                     _entityNameId.TryAdd(c.Title, c.Id);
             }

@@ -305,8 +305,14 @@ Host.CreateDefaultBuilder(args)
 
 ### MUST Rules
 
-- **File-scoped namespaces**: Always use file-scoped namespace declarations (C# 10+) - `namespace X;` instead of `namespace X { }`
+- **Traditional namespace blocks**: Always use traditional namespace blocks with braces - `namespace X { }` instead of file-scoped `namespace X;`
 - **Research with MS Docs MCP**: When uncertain about C# patterns, libraries, or best practices, use the Microsoft Docs MCP tool to research current documentation and recommendations
+- **Builder pattern for test entities**: Use the Current property pattern with table-driven steps
+  - Add `public EntityType? Current { get; private set; }` to step definition classes
+  - Use `[Given("I create a {entity} with")]` with Table parameter
+  - Create instance with `table.CreateInstance<TDto>()` (see https://docs.reqnroll.net/latest/automation/datatable-helpers.html)
+  - POST to API, assert success, then set `Current = _client.ReadAs<TOutput>()`
+  - Reference related entities via injected step classes: `_otherSteps.Current!.Id`
 
 ## Contributing
 
