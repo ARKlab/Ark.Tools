@@ -17,7 +17,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 
-namespace Ark.Reference.Core.Tests
+namespace Ark.Reference.Core.Tests.Init
 {
     [Binding]
     public sealed class TestClient
@@ -275,7 +275,6 @@ namespace Ark.Reference.Core.Tests
         {
             var problemDetail = LastResponse.GetJsonAsync<ProblemDetails>().GetAwaiter().GetResult();
             problemDetail.Type.Should().Contain(expectedProblemDetailType);
-
         }
 
         [Given("I am an anonymous user")]

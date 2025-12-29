@@ -24,7 +24,6 @@ namespace Ark.Reference.Core.Tests.Features
         private readonly TestHost _testHost;
         private readonly BookSteps _bookSteps;
         private readonly string _controllerName = "bookprintprocess";
-        private int? _currentPrintProcessId;
 
         public BookPrintProcess.V1.Output? Current { get; private set; }
 
@@ -38,17 +37,7 @@ namespace Ark.Reference.Core.Tests.Features
         [Given(@"I have created a book print process for that book")]
         public void GivenIHaveCreatedABookPrintProcessForThatBook()
         {
-            var request = new BookPrintProcess.V1.Create
-            {
-                BookId = _bookSteps.Current!.Id,
-                ShouldFail = false
-            };
-
-            _client.PostAsJson(_controllerName, request);
-            _client.ThenTheRequestSucceded();
-                
-            Current = _client.ReadAs<BookPrintProcess.V1.Output>();
-            _currentPrintProcessId = Current.BookPrintProcessId;
+            GivenIHaveCreatedABookPrintProcessWithShouldFail(false);
         }
 
         [Given(@"I have created a book print process for that book with ShouldFail (.*)")]
@@ -64,11 +53,10 @@ namespace Ark.Reference.Core.Tests.Features
             _client.ThenTheRequestSucceded();
                 
             Current = _client.ReadAs<BookPrintProcess.V1.Output>();
-            _currentPrintProcessId = Current.BookPrintProcessId;
         }
 
-        [When(@"I try to create another book print process for that book")]
-        public void WhenITryToCreateAnotherBookPrintProcessForThatBook()
+        [When(@"I create a book print process for that book")]
+        public void WhenICreateABookPrintProcessForThatBook()
         {
             var request = new BookPrintProcess.V1.Create
             {
@@ -77,20 +65,49 @@ namespace Ark.Reference.Core.Tests.Features
             };
 
             _client.PostAsJson(_controllerName, request);
+            
+            // Capture result if successful for subsequent steps
+            if (_client.LastStatusCodeIsSuccess())
+            {
+                Current = _client.ReadAs<BookPrintProcess.V1.Output>();
+            }
+        }
+
+        [When(@"I try to create another book print process for that book")]
+        public void WhenITryToCreateAnotherBookPrintProcessForThatBook()
+        {
+            WhenICreateABookPrintProcessForThatBookWithShouldFail(false);
+        }
+
+        [Given(@"I create a book print process for that book")]
+        public void GivenICreateABookPrintProcessForThatBook()
+        {
+            WhenICreateABookPrintProcessForThatBook();
+            _client.ThenTheRequestSucceded();
+        }
+
+        [When(@"I create a book print process for that book with ShouldFail (.*)")]
+        public void WhenICreateABookPrintProcessForThatBookWithShouldFail(bool shouldFail)
+        {
+            var request = new BookPrintProcess.V1.Create
+            {
+                BookId = _bookSteps.Current!.Id,
+                ShouldFail = shouldFail
+            };
+
+            _client.PostAsJson(_controllerName, request);
+
+            // Capture result if successful for subsequent steps
+            if (_client.LastStatusCodeIsSuccess())
+            {
+                Current = _client.ReadAs<BookPrintProcess.V1.Output>();
+            }
         }
 
         [When(@"I retrieve the print process status")]
         public void WhenIRetrieveThePrintProcessStatus()
         {
-            _client.Get($"{_controllerName}/{_currentPrintProcessId}");
-        }
-
-        [Then(@"the business rule violation code is ""(.*)""")]
-        public void ThenTheBusinessRuleViolationCodeIs(string expectedCode)
-        {
-            var problemDetails = _client.ReadAs<ProblemDetails>();
-            problemDetails.Should().NotBeNull();
-            problemDetails.Title.Should().Contain(expectedCode);
+            _client.Get($"{_controllerName}/{Current!.BookPrintProcessId}");
         }
 
         [Then(@"the print process is")]
@@ -113,5 +130,6 @@ namespace Ark.Reference.Core.Tests.Features
             Current.Progress.Should().BeLessThan(1.0);
             Current.ErrorMessage.Should().NotBeNullOrEmpty();
         }
+
     }
 }

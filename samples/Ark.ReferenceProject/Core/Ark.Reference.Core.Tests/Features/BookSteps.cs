@@ -1,4 +1,5 @@
 using Ark.Reference.Core.Common.Dto;
+using Ark.Reference.Core.Tests.Init;
 using Ark.Tools.Core;
 
 using AwesomeAssertions;
@@ -28,8 +29,29 @@ namespace Ark.Reference.Core.Tests.Features
             _client = client;
         }
 
-        //** CREATE ********************************************************************
-        [Given("I create a book with")]
+        //** SETUP ********************************************************************
+        [Given(@"I have created the test books for filter testing")]
+        public void GivenIHaveCreatedTheTestBooksForFilterTesting()
+        {
+            var testBooks = new[]
+            {
+                new Book.V1.Create { Title = "Clean Code", Author = "Martin", Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0132350884" },
+                new Book.V1.Create { Title = "Design Patterns", Author = "GoF", Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0201633610" },
+                new Book.V1.Create { Title = "The Hobbit", Author = "Tolkien", Genre = Common.Enum.BookGenre.Fiction, ISBN = "978-0345339683" }
+            };
+
+            foreach (var book in testBooks)
+            {
+                _client.PostAsJson($"{_controllerName}", book);
+                _client.ThenTheRequestSucceded();
+
+                var res = _client.ReadAs<Book.V1.Output?>();
+                if (res?.Title != null)
+                    _entityNameId.TryAdd(res.Title, res.Id);
+            }
+        }
+
+        [Given("I have created a book with")]
         public void GivenICreateABookWith(Table table)
         {
             var body = table.CreateInstance<Book.V1.Create>();

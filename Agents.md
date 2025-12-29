@@ -199,6 +199,15 @@ ci(workflows): update CodeQL configuration
 - Follow existing patterns in the ReferenceProject
 - Tests may require external services (SQL Server, Azurite)
 
+### Database Test Cleanup
+
+- **CRITICAL**: When writing stored procedures to clean up test data, use `DELETE FROM` instead of `TRUNCATE TABLE` if the table has foreign key constraints
+- `TRUNCATE TABLE` cannot be used on tables referenced by foreign key constraints, even if child tables are truncated first
+- `DELETE FROM` works with foreign key constraints and is the only reliable option for test cleanup procedures
+- **History tables** (temporal tables) can be truncated as they have no FK constraints - they are only managed by system versioning
+- **Pattern**: Turn off system versioning → DELETE main tables with FK constraints → TRUNCATE history tables → Turn system versioning back on
+- Example: See `[ops].[ResetFull_OnlyForTesting]` stored procedure in the ReferenceProject database
+
 ### Where to Find Examples
 
 - **BDD Test Features**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Features/`

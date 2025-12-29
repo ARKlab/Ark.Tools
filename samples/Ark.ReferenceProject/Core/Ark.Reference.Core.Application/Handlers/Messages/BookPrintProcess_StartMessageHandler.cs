@@ -52,11 +52,12 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
                 await ctx.CommitAsync().ConfigureAwait(false);
             }
 
-            // Simulate progressive printing: 10% every 3 seconds
+            // Simulate progressive printing: 10% each step
+            // Note: Using short delays for integration test compatibility
             for (int i = 1; i <= 10; i++)
             {
-                // Simulate work
-                await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+                // Simulate work (short delay for test performance)
+                await Task.Delay(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
 
                 var newProgress = i * 0.1;
 

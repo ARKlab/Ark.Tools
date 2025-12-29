@@ -88,6 +88,11 @@ namespace Ark.Reference.Core.Application.DAL
             , CancellationToken ctk = default
         );
 
+        Task<(IEnumerable<BookPrintProcess.V1.Output> data, int count)> ReadBookPrintProcessByFiltersAsync(
+            BookPrintProcessSearchQueryDto.V1 query
+            , CancellationToken ctk = default
+        );
+
         Task<BookPrintProcess.V1.Output?> ReadRunningPrintProcessForBookAsync(
             int bookId
             , CancellationToken ctk = default

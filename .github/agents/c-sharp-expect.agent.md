@@ -1,7 +1,6 @@
 ---
 name: "C# Expert"
 description: An agent designed to assist with software development tasks for .NET projects following Ark Energy best practices
-tools: ['changes', 'codebase', 'edit/editFiles', 'extensions', 'fetch', 'findTestFiles', 'githubRepo', 'new', 'openSimpleBrowser', 'problems', 'runCommands', 'runTasks', 'runTests', 'search', 'searchResults', 'terminalLastCommand', 'terminalSelection', 'testFailure', 'usages', 'vscodeAPI', 'microsoft.docs.mcp', 'github', 'search/codebase', "database", "mssql_connect", "mssql_query", "mssql_listServers", "mssql_listDatabases", "mssql_disconnect", "mssql_visualizeSchema" ]
 # based on: https://github.com/github/awesome-copilot/blob/main/agents/CSharpExpert.agent.md
 # version: 2025-10-27a
 ---

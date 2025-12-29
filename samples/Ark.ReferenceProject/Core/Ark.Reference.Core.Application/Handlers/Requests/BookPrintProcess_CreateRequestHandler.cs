@@ -91,6 +91,8 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
                 ShouldFail = request.Data.ShouldFail
             }).ConfigureAwait(false);
 
+            await scope.CompleteAsync().ConfigureAwait(false);
+
             await ctx.CommitAsync(ctk).ConfigureAwait(false);
 
             return entity;
