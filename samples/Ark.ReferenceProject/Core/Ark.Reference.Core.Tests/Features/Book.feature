@@ -1,7 +1,9 @@
 @CleanDbBeforeScenario
 Feature: Book
+    CRUD operations for Book management
 
-## Endpoint ##################################################################################################
+Rule: Book CRUD operations must succeed with valid data
+
 Scenario: Endpoint_ Book_ Create and Get
 When I create a single Book with
 | Title                    | Author          | Genre      | ISBN          |
@@ -76,8 +78,8 @@ Scenario: Endpoint_ Book_ Delete
     When I request the Book 'BookA' by id
     Then the request fails with 404
 
+Rule: Book creation must fail with invalid data
 
-## Validator ##################################################################################################
 Scenario: Validator_ Book_ Create fails for no title provided
 When I create a single Book with
 | Title | Author  | Genre      | ISBN |

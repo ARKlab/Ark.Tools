@@ -2,6 +2,8 @@
 Feature: BookPrintProcess
     Background processing of book printing with Rebus messaging
 
+Rule: Book print process creation must follow business rules
+
 Scenario: Create a book print process successfully
     Given I have created a book with title "Test Book" and author "Test Author"
     When I create a book print process for that book
@@ -14,6 +16,8 @@ Scenario: Cannot create print process when one is already running
     When I try to create another book print process for that book
     Then the request fails with 400
     And the business rule violation code is "BookPrintingProcessAlreadyRunningViolation"
+
+Rule: Background processing must update print process status correctly
 
 Scenario: Print process completes successfully in background
     Given I have created a book with title "Test Book" and author "Test Author"
