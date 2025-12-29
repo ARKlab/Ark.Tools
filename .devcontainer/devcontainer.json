@@ -2,7 +2,20 @@
     "name": ".NET 8",
     "customizations": {
       "vscode": {
-        "extensions": ["ms-dotnettools.csdevkit"]
+        "extensions": [
+          "ms-dotnettools.csdevkit",
+          "ms-mssql.sql-database-projects-vscode",
+          "ms-mssql.mssql",
+          "ms-dotnettools.csharp",
+          "editorconfig.editorconfig", 
+          "ms-azuretools.vscode-docker", 
+          "ms-vscode-remote.remote-containers", 
+          "github.vscode-github-actions", 
+          "yzhang.markdown-all-in-one", 
+          "bierner.markdown-mermaid", 
+          "davidanson.vscode-markdownlint", 
+          "bpruitt-goddard.mermaid-markdown-syntax-highlighting" 
+        ]
       }
     },
     "dockerComposeFile": "docker-compose.yml",
