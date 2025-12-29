@@ -13,7 +13,7 @@ using System.Collections.Generic;
 namespace Ark.Reference.Core.Tests.Features
 {
     [Binding]
-    sealed class BookSteps
+    public sealed class BookSteps
     {
         private readonly TestClient _client;
         private readonly string _controllerName = "book";
