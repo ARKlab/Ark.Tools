@@ -4,7 +4,7 @@ using Reqnroll;
 
 using WebApplicationDemo.Dto;
 
-namespace TestProject
+namespace WebApplicationDemo.Tests
 {
     [Binding]
     public class ReqnrollSteps

@@ -58,7 +58,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/common/Ark.Tools.Http/Ark.Tools.Http.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Reqnroll/Ark.Tools.Reqnroll.csproj" />
-    <ProjectReference Include="..\WebApplicationDemo\WebApplicationDemo.csproj" />
+    <ProjectReference Include="../../samples/WebApplicationDemo/WebApplicationDemo.csproj" />
   </ItemGroup>
 
 </Project>
