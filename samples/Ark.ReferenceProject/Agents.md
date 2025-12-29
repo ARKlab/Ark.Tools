@@ -17,8 +17,8 @@
 - Configure `JsonSerializerContext` with Ark defaults using a helper method in the Application layer (e.g., `Ex.CreateCoreApiJsonSerializerOptions()`) instead of creating options inline
 - Register `JsonSerializerContext` using `TypeInfoResolver` pattern, not `TypeInfoResolverChain`
 - Note: `JsonSerializerOptions` get locked when passed to a `JsonSerializerContext` constructor, preventing reuse for multiple contexts - create separate instances for each context
-- **BusinessRuleViolations**: Derive from `Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation`, specialize with domain-specific properties (e.g., `BookPrintingProcessAlreadyRunningViolation` with `BookId` property). The class name itself serves as the error code. See `samples/WebApplicationDemo/Dto/CustomBusinessRuleViolation.cs` as an example
-- **Controller Routing**: Always use explicit routes at the controller class level (e.g., `[Route("bookPrintProcess")]` in camelCase). Never use `[controller]` or other implicit routes. Add `[ApiVersion("1.0")]` or appropriate version on the controller. Use sub-routes on action methods (e.g., `[HttpGet("{id}")]`). See `samples/WebApplicationDemo/Controllers/V1/EntityController.cs` for examples
+- **BusinessRuleViolations**: Derive from `Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation`, specialize with domain-specific properties (e.g., `BookPrintingProcessAlreadyRunningViolation` with `BookId` property). The class name itself serves as the error code
+- **Controller Routing**: Always use explicit routes at the controller class level (e.g., `[Route("bookPrintProcess")]` in camelCase). Never use `[controller]` or other implicit routes. Add `[ApiVersion("1.0")]` or appropriate version on the controller. Use sub-routes on action methods (e.g., `[HttpGet("{id}")]`)
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval
@@ -202,7 +202,8 @@ All commit messages must follow the [Conventional Commits](https://www.conventio
 - **Never use arbitrary sleeps (`Task.Delay`) in tests**
   - For bus operations: use `When("I wait background bus to idle and outbox to be empty")` step
   - For polling endpoints: use Polly retry policies with maximum retry limits
-  - Example: `Policy.HandleResult<T>(condition).WaitAndRetry(30, _ => TimeSpan.FromSeconds(1))`
+  - Example: `Policy.HandleResult<T>(condition).WaitAndRetry(30, _ => TimeSpan.FromMilliseconds(100))`
+  - Note: Polling is an alternative to bus idling wait. Always prefer waiting for idle then asserting rather than polling
 
 ### Where to Find Examples
 

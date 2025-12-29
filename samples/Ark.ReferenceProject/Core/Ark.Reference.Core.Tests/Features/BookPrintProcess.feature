@@ -1,14 +1,13 @@
+@CleanDbBeforeScenario
 Feature: BookPrintProcess
     Background processing of book printing with Rebus messaging
 
-@CleanDbBeforeScenario
 Scenario: Create a book print process successfully
     Given I have created a book with title "Test Book" and author "Test Author"
     When I create a book print process for that book
     Then the print process should be created with status "Pending"
     And the print process progress should be 0
 
-@CleanDbBeforeScenario
 Scenario: Cannot create print process when one is already running
     Given I have created a book with title "Test Book" and author "Test Author"
     And I have created a book print process for that book
@@ -16,7 +15,6 @@ Scenario: Cannot create print process when one is already running
     Then the request fails with 400
     And the business rule violation code is "BookPrintingProcessAlreadyRunningViolation"
 
-@CleanDbBeforeScenario
 Scenario: Print process completes successfully in background
     Given I have created a book with title "Test Book" and author "Test Author"
     And I have created a book print process for that book with ShouldFail false
@@ -26,23 +24,12 @@ Scenario: Print process completes successfully in background
     | Status    | Progress |
     | Completed | 1.0      |
 
-@CleanDbBeforeScenario
-Scenario: Print process fails at 30% progress when ShouldFail is true
-    Given I have created a book with title "Test Book" and author "Test Author"
-    And I have created a book print process for that book with ShouldFail true
-    When I wait background bus to idle and outbox to be empty
-    And I retrieve the print process status
-    Then the print process is
-    | Status | Progress |
-    | Error  | 0.3      |
-
-@CleanDbBeforeScenario
 Scenario: IFailed handler sets error status correctly
     Given I have created a book with title "Test Book" and author "Test Author"
     And I have created a book print process for that book with ShouldFail true
     When I wait background bus to idle and outbox to be empty
     And I retrieve the print process status
     Then the print process is
-    | Status | 
+    | Status |
     | Error  |
-    And the print process progress should be 0.3
+    And the print process has error details

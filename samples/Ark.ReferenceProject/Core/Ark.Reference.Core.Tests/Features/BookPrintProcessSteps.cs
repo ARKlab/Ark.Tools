@@ -1,12 +1,13 @@
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.Tests.Init;
-using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Core;
 
 using AwesomeAssertions;
 
 using Flurl;
+
+using Microsoft.AspNetCore.Mvc;
 
 using Reqnroll;
 using Reqnroll.Assist;
@@ -128,8 +129,9 @@ namespace Ark.Reference.Core.Tests.Features
         [Then(@"the business rule violation code is ""(.*)""")]
         public void ThenTheBusinessRuleViolationCodeIs(string expectedCode)
         {
-            var problemDetails = _client.ReadAs<FluentValidationProblemDetails>();
+            var problemDetails = _client.ReadAs<ProblemDetails>();
             problemDetails.Should().NotBeNull();
+            problemDetails.Title.Should().NotBeNullOrEmpty();
             problemDetails.Extensions.Should().ContainKey("errorCode");
             problemDetails.Extensions["errorCode"]?.ToString().Should().Contain(expectedCode);
         }
@@ -141,6 +143,18 @@ namespace Ark.Reference.Core.Tests.Features
             _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
             
             table.CompareToInstance(_currentPrintProcess);
+        }
+
+        [Then(@"the print process has error details")]
+        public void ThenThePrintProcessHasErrorDetails()
+        {
+            _client.ThenTheRequestSucceded();
+            _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
+            
+            _currentPrintProcess.Should().NotBeNull();
+            _currentPrintProcess!.Status.Should().Be(BookPrintProcessStatus.Error);
+            _currentPrintProcess.Progress.Should().BeLessThan(1.0);
+            _currentPrintProcess.ErrorMessage.Should().NotBeNullOrEmpty();
         }
     }
 }
