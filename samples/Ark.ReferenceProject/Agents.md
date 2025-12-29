@@ -193,8 +193,11 @@ All commit messages must follow the [Conventional Commits](https://www.conventio
 - Use UnitTesting only for Business Logic service classes mocking in-mem DataAccess layer
 - Use AwesomeAssertions for test assertions
 
-### Test Patterns
+### Test Patterns (MUST)
 
+- **Always review feature files when updating Steps files**: When modifying step definitions, review all affected feature files to ensure they still match
+- **Always run tests after code changes**: Verify changes by running tests, especially when updating test projects
+- **Use Gherkin `Rule` for grouping scenarios**: Group related scenarios that refer to a single business rule using the `Rule` keyword (see [Cucumber Gherkin Reference](https://cucumber.io/docs/gherkin/reference#rule))
 - Follow existing patterns in `Core/Ark.Reference.Core.Tests/`
 - Tests require Docker services: SQL Server and Azurite
 - Test configuration is in `appsettings.IntegrationTests.json`
