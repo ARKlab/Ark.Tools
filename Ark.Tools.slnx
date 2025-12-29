@@ -8,10 +8,12 @@
     </Project>
     <Project Path="samples/TesterWorker/TesterWorker.csproj" />
     <Project Path="samples/TestLinkGenerator/TestLinkGenerator.csproj" />
-    <Project Path="samples/TestProject/TestProject.csproj" />
     <Project Path="samples/TestReceiver/TestReceiver.csproj" />
     <Project Path="samples/TestWorker/TestWorker.csproj" />
     <Project Path="samples/WebApplicationDemo/WebApplicationDemo.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WebApplicationDemo.Tests/WebApplicationDemo.Tests.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />

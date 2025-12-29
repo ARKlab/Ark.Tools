@@ -16,7 +16,7 @@ using System.Net.Http.Headers;
 
 using Reqnroll;
 
-namespace TestProject
+namespace WebApplicationDemo.Tests
 {
     [Binding]
     public sealed class TestClient : IDisposable

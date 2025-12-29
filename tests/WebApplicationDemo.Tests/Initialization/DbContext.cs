@@ -1,5 +1,5 @@
 ﻿//using Microsoft.SqlServer.Dac;
-namespace TestProject
+namespace WebApplicationDemo.Tests
 {
     //[Binding]
     //public class TestDbContextSQL

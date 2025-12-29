@@ -18,7 +18,7 @@ using WebApplicationDemo;
 
 [assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
 
-namespace TestProject
+namespace WebApplicationDemo.Tests
 {
     [Binding]
     public static class TestHost
