@@ -26,8 +26,8 @@
   
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Http" Version="[8.1.0,9)" />
-    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="[8.1.0,9)" />
-    <PackageReference Include="Asp.Versioning.OData.ApiExplorer" Version="[8.2.0,9)" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="[8.1.1, 9.0.0)" />
+    <PackageReference Include="Asp.Versioning.OData.ApiExplorer" Version="[8.2.1, 9.0.0)" />
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.1" />
