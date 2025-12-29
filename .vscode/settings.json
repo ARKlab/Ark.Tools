@@ -13,5 +13,6 @@
   ],
   "cucumber.features": [ // sets the location of the feature files
     "**/*.feature",
-  ]
+  ],
+  "terminal.integrated.shellIntegration.enabled": true
 }

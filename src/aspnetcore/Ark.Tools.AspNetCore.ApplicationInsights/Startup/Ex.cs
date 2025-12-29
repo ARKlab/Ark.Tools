@@ -39,21 +39,36 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
                 configuration.GetSection("ApplicationInsights:EstimatorSettings").Bind(o);
             });
 
+            // Resolve connection string from configuration
+            var connectionString = configuration["ApplicationInsights:ConnectionString"]
+                ?? configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+            var instrumentationKey = configuration["ApplicationInsights:InstrumentationKey"]
+                ?? configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
+
+            // Check if we have a valid connection string or instrumentation key
+            var hasValidConnectionString = !string.IsNullOrWhiteSpace(connectionString) || !string.IsNullOrWhiteSpace(instrumentationKey);
+
             services.AddApplicationInsightsTelemetry(o =>
             {
-                o.ConnectionString = configuration["ApplicationInsights:ConnectionString"]
-                    ?? configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
-                    ?? $"InstrumentationKey=" + (
-                           configuration["ApplicationInsights:InstrumentationKey"]
-                        ?? configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]
-                        )
-                    ;
+                if (hasValidConnectionString)
+                {
+                    o.ConnectionString = connectionString ?? $"InstrumentationKey={instrumentationKey}";
+                }
+                else
+                {
+                    // When no connection string is provided (e.g., in tests or local development),
+                    // use a dummy connection string and enable DeveloperMode to prevent SDK errors
+                    o.ConnectionString = "InstrumentationKey=00000000-0000-0000-0000-000000000000";
+                    o.DeveloperMode = true;
+                }
+
                 o.EnableAdaptiveSampling = false; // enabled below by EnableAdaptiveSamplingWithCustomSettings
                 o.EnableHeartbeat = true;
                 o.AddAutoCollectedMetricExtractor = true;
                 o.RequestCollectionOptions.InjectResponseHeaders = true;
                 o.RequestCollectionOptions.TrackExceptions = true;
-                o.DeveloperMode = Debugger.IsAttached;
+                o.DeveloperMode ??= Debugger.IsAttached;
+                o.EnableDebugLogger = Debugger.IsAttached || !hasValidConnectionString;
                 o.ApplicationVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
             });
 

@@ -39,21 +39,36 @@ namespace Ark.Tools.ApplicationInsights.HostedService
                     ctx.Configuration.GetSection("ApplicationInsights").GetSection("EstimatorSettings").Bind(o);
                 });
 
+                // Resolve connection string from configuration
+                var connectionString = ctx.Configuration["ApplicationInsights:ConnectionString"]
+                    ?? ctx.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+                var instrumentationKey = ctx.Configuration["ApplicationInsights:InstrumentationKey"]
+                    ?? ctx.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"];
+
+                // Check if we have a valid connection string or instrumentation key
+                var hasValidConnectionString = !string.IsNullOrWhiteSpace(connectionString) || !string.IsNullOrWhiteSpace(instrumentationKey);
+
                 services.AddApplicationInsightsTelemetryWorkerService(o =>
                 {
                     o.ApplicationVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
-                    o.ConnectionString = ctx.Configuration["ApplicationInsights:ConnectionString"]
-                        ?? ctx.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
-                        ?? $"InstrumentationKey=" + (
-                               ctx.Configuration["ApplicationInsights:InstrumentationKey"]
-                            ?? ctx.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]
-                            )
-                        ;
+
+                    if (hasValidConnectionString)
+                    {
+                        o.ConnectionString = connectionString ?? $"InstrumentationKey={instrumentationKey}";
+                    }
+                    else
+                    {
+                        // When no connection string is provided (e.g., in tests or local development),
+                        // use a dummy connection string to prevent SDK errors
+                        o.ConnectionString = "InstrumentationKey=00000000-0000-0000-0000-000000000000";
+                        o.DeveloperMode = true;
+                    }
+
                     o.EnableAdaptiveSampling = false; // ENABLED BELOW by ConfigureTelemetryOptions with custom settings
                     o.EnableHeartbeat = true;
-                    o.EnableDebugLogger = Debugger.IsAttached;
+                    o.EnableDebugLogger = Debugger.IsAttached || !hasValidConnectionString;
+                    o.DeveloperMode ??= Debugger.IsAttached;
                     o.EnableDependencyTrackingTelemetryModule = true;
-
                 });
 
                 services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) => { module.EnableSqlCommandTextInstrumentation = true; });
