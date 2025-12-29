@@ -1,15 +1,15 @@
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.Tests.Init;
+using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Core;
 
 using AwesomeAssertions;
 
 using Flurl;
 
-using Polly;
-
 using Reqnroll;
+using Reqnroll.Assist;
 
 using System;
 using System.Threading.Tasks;
@@ -24,7 +24,6 @@ namespace Ark.Reference.Core.Tests.Features
         private readonly string _controllerName = "bookprintprocess";
         private int? _currentBookId;
         private int? _currentPrintProcessId;
-        private string? _lastErrorContent;
         private BookPrintProcess.V1.Output? _currentPrintProcess;
 
         public BookPrintProcessSteps(TestClient client, TestHost testHost)
@@ -62,16 +61,6 @@ namespace Ark.Reference.Core.Tests.Features
             };
 
             _client.PostAsJson(_controllerName, request);
-                
-            if (_client.LastStatusCodeIsSuccess())
-            {
-                _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
-                _currentPrintProcessId = _currentPrintProcess!.BookPrintProcessId;
-            }
-            else
-            {
-                _lastErrorContent = _client.ReadAsString();
-            }
         }
 
         [Given(@"I have created a book print process for that book with ShouldFail (.*)")]
@@ -86,8 +75,8 @@ namespace Ark.Reference.Core.Tests.Features
             _client.PostAsJson(_controllerName, request);
             _client.ThenTheRequestSucceded();
                 
-            _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
-            _currentPrintProcessId = _currentPrintProcess!.BookPrintProcessId;
+            var response = _client.ReadAs<BookPrintProcess.V1.Output>();
+            _currentPrintProcessId = response.BookPrintProcessId;
         }
 
         [When(@"I try to create another book print process for that book")]
@@ -100,115 +89,58 @@ namespace Ark.Reference.Core.Tests.Features
             };
 
             _client.PostAsJson(_controllerName, request);
-                
-            if (!_client.LastStatusCodeIsSuccess())
-            {
-                _lastErrorContent = _client.ReadAsString();
-            }
-        }
-
-        [When(@"I wait for the print process to complete")]
-        public async Task WhenIWaitForThePrintProcessToComplete()
-        {
-            // Wait for bus/outbox to be idle
-            await _testHost.ThenIWaitBackgroundBusToIdleAndOutboxToBeEmpty().ConfigureAwait(false);
-
-            // Poll the GET endpoint until completion using Polly
-            var policy = Policy
-                .HandleResult<BookPrintProcess.V1.Output?>(r => r?.Progress < 1.0 && r?.Status != BookPrintProcessStatus.Error)
-                .WaitAndRetry(30, _ => TimeSpan.FromSeconds(1));
-
-            _currentPrintProcess = policy.Execute(() =>
-            {
-                _client.Get($"{_controllerName}/{_currentPrintProcessId}");
-                return _client.LastStatusCodeIsSuccess()
-                    ? _client.ReadAs<BookPrintProcess.V1.Output?>()
-                    : null;
-            });
-        }
-
-        [When(@"I wait for the print process to fail")]
-        public async Task WhenIWaitForThePrintProcessToFail()
-        {
-            // Wait for bus/outbox to be idle
-            await _testHost.ThenIWaitBackgroundBusToIdleAndOutboxToBeEmpty().ConfigureAwait(false);
-
-            // Poll the GET endpoint until error status using Polly
-            var policy = Policy
-                .HandleResult<BookPrintProcess.V1.Output?>(r => r?.Status != BookPrintProcessStatus.Error)
-                .WaitAndRetry(30, _ => TimeSpan.FromSeconds(1));
-
-            _currentPrintProcess = policy.Execute(() =>
-            {
-                _client.Get($"{_controllerName}/{_currentPrintProcessId}");
-                return _client.LastStatusCodeIsSuccess()
-                    ? _client.ReadAs<BookPrintProcess.V1.Output?>()
-                    : null;
-            });
-        }
-
-        [When(@"I wait for the IFailed handler to process the error")]
-        public async Task WhenIWaitForTheIFailedHandlerToProcessTheError()
-        {
-            // Same pattern as waiting for failure
-            await WhenIWaitForThePrintProcessToFail().ConfigureAwait(false);
         }
 
         [When(@"I retrieve the print process status")]
         public void WhenIRetrieveThePrintProcessStatus()
         {
             _client.Get($"{_controllerName}/{_currentPrintProcessId}");
-            _client.ThenTheRequestSucceded();
-            _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
+        }
+
+        [When(@"I wait background bus to idle and outbox to be empty")]
+        public async Task WhenIWaitBackgroundBusToIdleAndOutboxToBeEmpty()
+        {
+            await _testHost.ThenIWaitBackgroundBusToIdleAndOutboxToBeEmpty().ConfigureAwait(false);
         }
 
         [Then(@"the print process should be created with status ""(.*)""")]
         public void ThenThePrintProcessShouldBeCreatedWithStatus(string status)
         {
-            _currentPrintProcess.Should().NotBeNull();
-            _currentPrintProcess!.Status.ToString().Should().Be(status);
+            _client.ThenTheRequestSucceded();
+            _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
+            _currentPrintProcessId = _currentPrintProcess.BookPrintProcessId;
+            
+            _currentPrintProcess.Status.ToString().Should().Be(status);
         }
 
         [Then(@"the print process progress should be (.*)")]
         public void ThenThePrintProcessProgressShouldBe(double expectedProgress)
         {
+            if (_currentPrintProcess == null && _client.LastStatusCodeIsSuccess())
+            {
+                _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
+            }
+            
             _currentPrintProcess.Should().NotBeNull();
             _currentPrintProcess!.Progress.Should().BeApproximately(expectedProgress, 0.01);
         }
 
-        [Then(@"I should get a (.*) Bad Request response")]
-        public void ThenIShouldGetABadRequestResponse(int statusCode)
+        [Then(@"the business rule violation code is ""(.*)""")]
+        public void ThenTheBusinessRuleViolationCodeIs(string expectedCode)
         {
-            _client.ThenTheRequestFailsWith((System.Net.HttpStatusCode)statusCode);
+            var problemDetails = _client.ReadAs<FluentValidationProblemDetails>();
+            problemDetails.Should().NotBeNull();
+            problemDetails.Extensions.Should().ContainKey("errorCode");
+            problemDetails.Extensions["errorCode"]?.ToString().Should().Contain(expectedCode);
         }
 
-        [Then(@"the error should indicate ""(.*)""")]
-        public void ThenTheErrorShouldIndicate(string ruleCode)
+        [Then(@"the print process is")]
+        public void ThenTheBookPrintProcessIs(Table table)
         {
-            _lastErrorContent.Should().NotBeNullOrEmpty();
-            _lastErrorContent.Should().Contain(ruleCode);
-        }
-
-        [Then(@"the print process status should be ""(.*)""")]
-        public void ThenThePrintProcessStatusShouldBe(string status)
-        {
-            _currentPrintProcess.Should().NotBeNull();
-            _currentPrintProcess!.Status.ToString().Should().Be(status);
-        }
-
-        [Then(@"the error message should contain ""(.*)""")]
-        public void ThenTheErrorMessageShouldContain(string expectedText)
-        {
-            _currentPrintProcess.Should().NotBeNull();
-            _currentPrintProcess!.ErrorMessage.Should().NotBeNullOrEmpty();
-            _currentPrintProcess!.ErrorMessage.Should().Contain(expectedText);
-        }
-
-        [Then(@"the error message should not be empty")]
-        public void ThenTheErrorMessageShouldNotBeEmpty()
-        {
-            _currentPrintProcess.Should().NotBeNull();
-            _currentPrintProcess!.ErrorMessage.Should().NotBeNullOrEmpty();
+            _client.ThenTheRequestSucceded();
+            _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
+            
+            table.CompareToInstance(_currentPrintProcess);
         }
     }
 }
