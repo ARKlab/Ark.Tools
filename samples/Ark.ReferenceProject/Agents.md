@@ -13,6 +13,12 @@
 - Follow existing patterns - check `Ping` entity implementation as reference
 - Place DTOs in `*.API` project, handlers in `*.Application` project
 - Add Reqnroll BDD tests for new features
+- Use a single `JsonSerializerContext` for all types serialized by the application (Requests, Queries, Messages)
+- Configure `JsonSerializerContext` with Ark defaults using a helper method in the Application layer (e.g., `Ex.CreateCoreApiJsonSerializerOptions()`) instead of creating options inline
+- Register `JsonSerializerContext` using `TypeInfoResolver` pattern, not `TypeInfoResolverChain`
+- Note: `JsonSerializerOptions` get locked when passed to a `JsonSerializerContext` constructor, preventing reuse for multiple contexts - create separate instances for each context
+- **BusinessRuleViolations**: Derive from `Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation`, specialize with domain-specific properties (e.g., `BookPrintingProcessAlreadyRunningViolation` with `BookId` property). The class name itself serves as the error code
+- **Controller Routing**: Always use explicit routes at the controller class level (e.g., `[Route("bookPrintProcess")]` in camelCase). Never use `[controller]` or other implicit routes. Add `[ApiVersion("1.0")]` or appropriate version on the controller. Use sub-routes on action methods (e.g., `[HttpGet("{id}")]`)
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval
@@ -21,6 +27,10 @@
 - Use string interpolation in NLog calls (e.g., `_logger.Info($"...")`)
 - Put business logic in Controllers - controllers only call handlers
 - Skip validation - all Requests/Queries need FluentValidation validators
+- Create separate `JsonSerializerContext` for different layers (API, Messages, etc.) - use one unified context
+- Use `JsonSourceGenerationOptions` attributes - configure options via helper method instead
+- Use generic `BusinessRuleViolationException` with just a code string - create specialized `BusinessRuleViolation` classes instead
+- Use implicit controller routes like `[controller]` - always use explicit routes
 
 ## About This Project
 
@@ -183,12 +193,20 @@ All commit messages must follow the [Conventional Commits](https://www.conventio
 - Use UnitTesting only for Business Logic service classes mocking in-mem DataAccess layer
 - Use AwesomeAssertions for test assertions
 
-### Test Patterns
+### Test Patterns (MUST)
 
+- **Always review feature files when updating Steps files**: When modifying step definitions, review all affected feature files to ensure they still match
+- **Always run tests after code changes**: Verify changes by running tests, especially when updating test projects
+- **Use Gherkin `Rule` for grouping scenarios**: Group related scenarios that refer to a single business rule using the `Rule` keyword (see [Cucumber Gherkin Reference](https://cucumber.io/docs/gherkin/reference#rule))
 - Follow existing patterns in `Core/Ark.Reference.Core.Tests/`
 - Tests require Docker services: SQL Server and Azurite
 - Test configuration is in `appsettings.IntegrationTests.json`
 - Environment variable: `ASPNETCORE_ENVIRONMENT=IntegrationTests`
+- **Never use arbitrary sleeps (`Task.Delay`) in tests**
+  - For bus operations: use `When("I wait background bus to idle and outbox to be empty")` step
+  - For polling endpoints: use Polly retry policies with maximum retry limits
+  - Example: `Policy.HandleResult<T>(condition).WaitAndRetry(30, _ => TimeSpan.FromMilliseconds(100))`
+  - Note: Polling is an alternative to bus idling wait. Always prefer waiting for idle then asserting rather than polling
 
 ### Where to Find Examples
 
@@ -285,6 +303,19 @@ Host.CreateDefaultBuilder(args)
 - Shared build targets: `Directory.Build.targets`
 - Editor config: `.editorconfig`
 - Docker compose for integration testing and local debug: `docker-compose.yml`
+
+## Code Style Requirements
+
+### MUST Rules
+
+- **Traditional namespace blocks**: Always use traditional namespace blocks with braces - `namespace X { }` instead of file-scoped `namespace X;`
+- **Research with MS Docs MCP**: When uncertain about C# patterns, libraries, or best practices, use the Microsoft Docs MCP tool to research current documentation and recommendations
+- **Builder pattern for test entities**: Use the Current property pattern with table-driven steps
+  - Add `public EntityType? Current { get; private set; }` to step definition classes
+  - Use `[Given("I create a {entity} with")]` with Table parameter
+  - Create instance with `table.CreateInstance<TDto>()` (see https://docs.reqnroll.net/latest/automation/datatable-helpers.html)
+  - POST to API, assert success, then set `Current = _client.ReadAs<TOutput>()`
+  - Reference related entities via injected step classes: `_otherSteps.Current!.Id`
 
 ## Contributing
 

@@ -1,4 +1,5 @@
 ﻿using Ark.Reference.Core.Common.Dto;
+using Ark.Reference.Core.Tests.Init;
 using Ark.Tools.Core;
 
 using AwesomeAssertions;

@@ -10,6 +10,7 @@ The Ark.Reference project is a **monorepo** containing reference implementations
 
 - **Clean Architecture**: Separation of concerns with API, Application, Common, and WebInterface layers
 - **CQRS Pattern**: Query and Request processors for command/query separation
+- **System.Text.Json Source Generation**: High-performance JSON serialization with compile-time source generation for controllers and Rebus messages
 - **Authentication & Authorization**: Support for Auth0, Azure AD, and Azure AD B2C
 - **Validation**: FluentValidation integration for request/query validation
 - **Messaging**: Rebus integration for message-based communication with Outbox pattern
@@ -177,9 +178,104 @@ The project uses NLog for structured logging. Configure logging in `nlog.config`
 - **Messaging**: Rebus for asynchronous message processing
 - **Outbox Pattern**: Ensures reliable message delivery
 
+### JSON Serialization
+
+The project uses **System.Text.Json with Source Generation** for high-performance JSON serialization:
+
+- **CoreApiJsonSerializerContext** (`Ark.Reference.Core.WebInterface.JsonContext`): Contains source-generated serialization metadata for all API types (DTOs, Queries, Requests, Messages)
+- **ArkProblemDetailsJsonSerializerContext** (`Ark.Tools.AspNetCore.JsonContext`): Contains source-generated serialization metadata for ProblemDetails error responses (shared across all Ark applications)
+- **Configuration**: Registered in `Startup.cs` via `JsonTypeInfoResolver.Combine` with minimal reflection fallback
+- **Helper Method**: `Ex.CreateCoreApiJsonSerializerOptions()` in the Application layer creates JsonSerializerOptions configured with Ark defaults (NodaTime, converters, naming policies)
+- **Important**: JsonSerializerOptions get locked when passed to a JsonSerializerContext constructor, so separate instances must be created for each context
+- **Benefits**:
+  - Compile-time code generation eliminates runtime reflection
+  - Faster startup time and lower memory usage
+  - Full trimming and AOT compilation support
+  - Better performance for serialization/deserialization
+
+To add new types to source generation:
+1. Add a `[JsonSerializable]` attribute to the appropriate context class
+2. Specify a unique `TypeInfoPropertyName` to avoid collisions (e.g., `TypeInfoPropertyName = "BookV1Output"`)
+3. The source generator will automatically create the serialization code at compile time
+
+Example configuration pattern:
+```csharp
+// Create contexts with Ark-configured options (separate instances due to locking)
+var coreApiOptions = Ex.CreateCoreApiJsonSerializerOptions();
+var coreApiContext = new CoreApiJsonSerializerContext(coreApiOptions);
+
+var problemDetailsOptions = Ex.CreateCoreApiJsonSerializerOptions();
+var problemDetailsContext = new ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
+
+// Combine contexts with prioritized resolution
+var combinedResolver = JsonTypeInfoResolver.Combine(
+    coreApiContext,           // Application types (Priority 1)
+    problemDetailsContext,    // Error types (Priority 2)
+    new DefaultJsonTypeInfoResolver()); // Reflection fallback (Priority 3)
+```
+
+### Error Handling & Business Rules
+
+The project uses specialized exception types for domain-specific business rule violations:
+
+- **BusinessRuleViolation**: Base class from `Ark.Tools.Core.BusinessRuleViolation` for representing business rule violations
+- **Specialized Violations**: Create domain-specific subclasses with relevant properties (e.g., `BookPrintingProcessAlreadyRunningViolation` with `BookId` property)
+- **Class Name as Error Code**: The fully qualified class name serves as the error code, making violations self-documenting
+- **AspNetCore-Agnostic**: BusinessRuleViolation classes don't depend on AspNetCore, allowing reuse across different hosting environments
+- **Automatic HTTP 400**: BusinessRuleViolationException is automatically converted to HTTP 400 Bad Request by middleware
+
+Example:
+```csharp
+public class BookPrintingProcessAlreadyRunningViolation : BusinessRuleViolation
+{
+    public BookPrintingProcessAlreadyRunningViolation(int bookId)
+        : base($"A print process is already running or pending for this book")
+    {
+        BookId = bookId;
+        Detail = $"Cannot start a new print process for book ID {bookId}...";
+    }
+    
+    public int BookId { get; }
+}
+
+// Usage in handler
+throw new BusinessRuleViolationException(
+    new BookPrintingProcessAlreadyRunningViolation(bookId));
+```
+
+See `samples/WebApplicationDemo/Dto/CustomBusinessRuleViolation.cs` for more examples.
+
+### Controller Routing
+
+Controllers follow explicit routing conventions:
+
+- **Explicit Routes**: Use `[Route("bookPrintProcess")]` at the controller class level (camelCase)
+- **API Versioning**: Add `[ApiVersion("1.0")]` or appropriate version attribute
+- **Action Routes**: Use sub-routes on HTTP method attributes (e.g., `[HttpPost]`, `[HttpGet("{id}")]`)
+- **Never use `[controller]`**: Implicit routes make refactoring difficult and obscure the API surface
+
+Example:
+```csharp
+[ApiVersion("1.0")]
+[Route("bookPrintProcess")]
+[ApiController]
+public class BookPrintProcessController : ControllerBase
+{
+    [HttpPost]
+    public async Task<IActionResult> Post([FromBody] Request request) { ... }
+    
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get([FromRoute] int id) { ... }
+}
+```
+
+See `samples/WebApplicationDemo/Controllers/V1/EntityController.cs` for comprehensive examples.
+
 ## API Endpoints
 
 Example endpoints (from `PingController`):
+
+### Ping Endpoints
 
 - `GET /ping/test` - Health check endpoint (returns "pong")
 - `POST /ping` - Create a new Ping entity
@@ -189,6 +285,16 @@ Example endpoints (from `PingController`):
 - `PATCH /ping/{id}` - Update Ping (partial update)
 - `DELETE /ping/{id}` - Delete Ping
 - `POST /ping/message` - Create Ping and send message
+
+### Book Endpoints
+
+- `POST /book` - Create a new Book entity
+- `GET /book/{id}` - Get Book by ID
+- `GET /book?title=...&author=...&genre=...` - Query Books with filters (supports paging with skip/limit)
+- `PUT /book/{id}` - Update Book (full replacement)
+- `DELETE /book/{id}` - Delete Book
+
+The Book controller demonstrates System.Text.Json source generation with comprehensive CRUD operations and validation.
 
 ## Testing
 

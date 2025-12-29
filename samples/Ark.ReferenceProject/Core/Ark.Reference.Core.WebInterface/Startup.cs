@@ -1,3 +1,4 @@
+using Ark.Reference.Core.API.JsonContext;
 using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Common;
 using Ark.Reference.Core.Common.Auth;
@@ -55,6 +56,40 @@ namespace Ark.Reference.Core.WebInterface
         public override void ConfigureServices(IServiceCollection services)
         {
             base.ConfigureServices(services);
+
+            // Configure System.Text.Json source generation with Ark defaults
+            // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts
+            // See: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation
+            
+            // Note: JsonSerializerOptions get locked when passed to a JsonSerializerContext constructor,
+            // preventing the same instance from being used for multiple contexts.
+            // Therefore, we create separate options instances for each context.
+            var coreApiOptions = Application.Ex.CreateCoreApiJsonSerializerOptions();
+            var coreApiContext = new CoreApiJsonSerializerContext(coreApiOptions);
+            
+            var problemDetailsOptions = Application.Ex.CreateCoreApiJsonSerializerOptions();
+            var problemDetailsContext = new Ark.Tools.AspNetCore.JsonContext.ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
+            
+            // Combine source-generated contexts with minimal reflection fallback
+            // The fallback is required only for Hellang.Middleware.ProblemDetails internal types
+            // (DeveloperProblemDetailsExtensions.ErrorDetails) when IncludeExceptionDetails is enabled.
+            // This type is internal to the library and cannot be referenced in source generation.
+            // In production, exception details are typically disabled, so reflection is rarely used.
+            // The source-generated contexts handle 99%+ of serialization for optimal performance.
+            var combinedResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
+                coreApiContext,                              // Application types - source generated (Priority 1)
+                problemDetailsContext,                        // Error types - source generated (Priority 2)
+                new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()); // Fallback for middleware internals (Priority 3)
+
+            services.ConfigureHttpJsonOptions(options =>
+            {
+                options.SerializerOptions.TypeInfoResolver = combinedResolver;
+            });
+
+            services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+            {
+                options.JsonSerializerOptions.TypeInfoResolver = combinedResolver;
+            });
 
             var integrationTestsScheme = "IntegrationTests";
             var isIntegrationTests = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests";
