@@ -14,7 +14,8 @@
           "yzhang.markdown-all-in-one", 
           "bierner.markdown-mermaid", 
           "davidanson.vscode-markdownlint", 
-          "bpruitt-goddard.mermaid-markdown-syntax-highlighting" 
+          "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+          "CucumberOpen.cucumber-official"
         ]
       }
     },

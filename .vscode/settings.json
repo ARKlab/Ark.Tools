@@ -1,0 +1,17 @@
+{  
+  "git.fetchOnPull": true,
+    
+  "files.autoSaveWhenNoErrors": true,
+  "files.autoSave": "onWindowChange",
+
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {  // shows *.feature.cs files as nested items
+    "*.feature": "${capture}.feature.cs"
+  },
+  "cucumber.glue": [ // sets the location of the step definition classes
+    "**/*.Tests/**/*.cs",
+  ],
+  "cucumber.features": [ // sets the location of the feature files
+    "**/*.feature",
+  ]
+}

@@ -49,6 +49,7 @@
 	<GenerateSBOM>true</GenerateSBOM>
 
 	<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 
   </PropertyGroup>
 

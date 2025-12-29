@@ -56,6 +56,8 @@
 		https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
 		-->
 		<GenerateSBOM>true</GenerateSBOM>
+		
+    	<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 
 	</PropertyGroup>
 
