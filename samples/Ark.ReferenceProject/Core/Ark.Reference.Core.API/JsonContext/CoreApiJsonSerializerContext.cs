@@ -15,8 +15,12 @@ namespace Ark.Reference.Core.API.JsonContext;
 /// Includes all root-level types serialized by the application from handler definitions (Requests, Queries, Messages).
 /// TypeInfoPropertyName is required to avoid naming collisions when multiple types have the same simple name
 /// (e.g., Ping.V1.Output and Book.V1.Output both have "Output" as the type name).
-/// Configured with Ark default settings via constructor.
+/// Configured with Ark default settings at compile-time via JsonSourceGenerationOptions attribute.
 /// </summary>
+[JsonSourceGenerationOptions(
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    WriteIndented = false)]
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(bool))]
 [JsonSerializable(typeof(Ping.V1.Create), TypeInfoPropertyName = "PingV1Create")]

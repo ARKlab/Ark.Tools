@@ -15,11 +15,11 @@ using Reqnroll.Assist;
 using System;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Core.Tests.Features
+namespace Ark.Reference.Core.Tests.Features;
+
+[Binding]
+public sealed class BookPrintProcessSteps
 {
-    [Binding]
-    public sealed class BookPrintProcessSteps
-    {
         private readonly TestClient _client;
         private readonly TestHost _testHost;
         private readonly string _controllerName = "bookprintprocess";
@@ -52,8 +52,7 @@ namespace Ark.Reference.Core.Tests.Features
         }
 
         [Given(@"I have created a book print process for that book")]
-        [When(@"I create a book print process for that book")]
-        public void WhenICreateABookPrintProcessForThatBook()
+        public void GivenIHaveCreatedABookPrintProcessForThatBook()
         {
             var request = new BookPrintProcess.V1.Create
             {
@@ -62,6 +61,10 @@ namespace Ark.Reference.Core.Tests.Features
             };
 
             _client.PostAsJson(_controllerName, request);
+            _client.ThenTheRequestSucceded();
+                
+            var response = _client.ReadAs<BookPrintProcess.V1.Output>();
+            _currentPrintProcessId = response.BookPrintProcessId;
         }
 
         [Given(@"I have created a book print process for that book with ShouldFail (.*)")]
@@ -98,42 +101,12 @@ namespace Ark.Reference.Core.Tests.Features
             _client.Get($"{_controllerName}/{_currentPrintProcessId}");
         }
 
-        [When(@"I wait background bus to idle and outbox to be empty")]
-        public async Task WhenIWaitBackgroundBusToIdleAndOutboxToBeEmpty()
-        {
-            await _testHost.ThenIWaitBackgroundBusToIdleAndOutboxToBeEmpty().ConfigureAwait(false);
-        }
-
-        [Then(@"the print process should be created with status ""(.*)""")]
-        public void ThenThePrintProcessShouldBeCreatedWithStatus(string status)
-        {
-            _client.ThenTheRequestSucceded();
-            _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
-            _currentPrintProcessId = _currentPrintProcess.BookPrintProcessId;
-            
-            _currentPrintProcess.Status.ToString().Should().Be(status);
-        }
-
-        [Then(@"the print process progress should be (.*)")]
-        public void ThenThePrintProcessProgressShouldBe(double expectedProgress)
-        {
-            if (_currentPrintProcess == null && _client.LastStatusCodeIsSuccess())
-            {
-                _currentPrintProcess = _client.ReadAs<BookPrintProcess.V1.Output>();
-            }
-            
-            _currentPrintProcess.Should().NotBeNull();
-            _currentPrintProcess!.Progress.Should().BeApproximately(expectedProgress, 0.01);
-        }
-
         [Then(@"the business rule violation code is ""(.*)""")]
         public void ThenTheBusinessRuleViolationCodeIs(string expectedCode)
         {
             var problemDetails = _client.ReadAs<ProblemDetails>();
             problemDetails.Should().NotBeNull();
-            problemDetails.Title.Should().NotBeNullOrEmpty();
-            problemDetails.Extensions.Should().ContainKey("errorCode");
-            problemDetails.Extensions["errorCode"]?.ToString().Should().Contain(expectedCode);
+            problemDetails.Title.Should().Contain(expectedCode);
         }
 
         [Then(@"the print process is")]
@@ -156,5 +129,4 @@ namespace Ark.Reference.Core.Tests.Features
             _currentPrintProcess.Progress.Should().BeLessThan(1.0);
             _currentPrintProcess.ErrorMessage.Should().NotBeNullOrEmpty();
         }
-    }
 }

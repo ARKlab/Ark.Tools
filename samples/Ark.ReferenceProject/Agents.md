@@ -301,6 +301,13 @@ Host.CreateDefaultBuilder(args)
 - Editor config: `.editorconfig`
 - Docker compose for integration testing and local debug: `docker-compose.yml`
 
+## Code Style Requirements
+
+### MUST Rules
+
+- **File-scoped namespaces**: Always use file-scoped namespace declarations (C# 10+) - `namespace X;` instead of `namespace X { }`
+- **Research with MS Docs MCP**: When uncertain about C# patterns, libraries, or best practices, use the Microsoft Docs MCP tool to research current documentation and recommendations
+
 ## Contributing
 
 - Follow the existing code style and patterns
