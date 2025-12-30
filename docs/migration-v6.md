@@ -1,6 +1,15 @@
 # Migration to Ark.Tools v6
 
-## SDK-based SQL Projects
+* [Migrate SQL Projects to SDK-based](#migrate-sql-projects-to-sdk-based)
+* [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbukle-10.x)
+* [Replace FluentAssertions with AwesomeAssertions](#replace-fluntasserion-with-awesomeassertion)
+* [Replace Specflow with Reqnroll](#replace-specflow-with-reqnroll)
+  * [(Optional) Rename "SpecFlow" to "IntegrationTests"](#optional-rename-specflow-to-integrationtests)
+* [Migrate tests to MTPv2](#migrate-tests-to-mtpv2)
+* [Migrate SLN to SLNX](#migrate-sln-to-slnx)
+* [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
+
+## Migrate SQL Projects to SDK-based
 
 If you are using SDK-based SQL projects in VS 2025+ you need to add
 the following to your csprojs that depends on the SQL Projects (generally Tests projects) to avoid build errors:
@@ -11,7 +20,7 @@ the following to your csprojs that depends on the SQL Projects (generally Tests 
 </ProjectReference>
 ```
 
-## OpenAPI 3.1 / Swashbuckle 10.x
+## Upgrade to Swashbuckle 10.x
 
 Refer to [Swashbuckle](https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/docs/migrating-to-v10.md) for issues related to OpenApi.
 
@@ -37,11 +46,11 @@ Replace the following:
 - `HaveStatusCode(...)` => `HaveHttpStatusCode`
 - `using FluentAssertions` => `using AwesomeAssertions`
 
-## Specflow removal - Migrate to Reqnroll
+## Replace Specflow with Reqnroll
 
 Follow the instructions in the [v5 migration](migration-v5.md) to replace Specflow with Reqnroll in your projects
 
-### Optional: Rename SpecFlow references to IntegrationTests
+### (Optional) Rename "SpecFlow" to "IntegrationTests"
 
 If you were using `SpecFlow` in environment names, configuration files, or test passwords, consider renaming them to more generic terms to align with the Reference project:
 
@@ -53,7 +62,9 @@ If you were using `SpecFlow` in environment names, configuration files, or test 
    - Test configuration files
    - Database connection strings in code
 
-## Migrate to MTPv2
+## Migrate tests to MTPv2
+
+Refer to Ark.Reference project or to [official documentation](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-intro?tabs=dotnetcli).
 
 Update `global.json` with
 
@@ -63,7 +74,7 @@ Update `global.json` with
     }
 ```
 
-Update `<test_project>.csproj` with these new sections.
+Update `<test_project>.csproj` adding these new sections.
 
 ```xml
 
@@ -93,7 +104,7 @@ Update `<test_project>.csproj` with these new sections.
 
 ```
 
-Update the CI pipeline to use dotnet test
+Update the CI pipeline to use dotnet test instead of VSTest
 
 ```yaml
       - task: DotNetCoreCLI@2
@@ -105,8 +116,6 @@ Update the CI pipeline to use dotnet test
           publishTestResults: true
 ```
 
-Refer to Ark.Reference project or to [official documentation](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-intro?tabs=dotnetcli).
-
 ## Migrate from SLN to SLNX
 
 Use `dotnet sln migrate` to migrate it.
@@ -115,6 +124,16 @@ Update the CI Pipelines to reference the new SLNX file.
 
 More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/#getting-started)
 
-## Update .editorconfig and Directory.Build.* (recomended) 
+## Update editorconfig and DirectoryBuild 
 
 Copy `.editorconfig` and `Directory.Build.props` and `Directory.Build.targets` from `samples/Ark.Reference` project into your solution folder.
+
+That ensures code quality:
+
+- Nullable
+- Deterministic builds
+- DotNet Analyzers 
+- SBOM
+- Latest language version
+- Nuget Audit
+
