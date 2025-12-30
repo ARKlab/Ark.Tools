@@ -1,0 +1,10 @@
+{
+  "sourceId": "test-source",
+  "records": [
+    {
+      "id": "1",
+      "name": "Precision Test",
+      "value": 123.456789
+    }
+  ]
+}

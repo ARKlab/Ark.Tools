@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+
+  <PropertyGroup Label="Test Settings">
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    
+    <OutputType>Exe</OutputType>
+
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+
+    <!-- 
+      IMPORTANT: SqlStateProvider integration tests require sequential framework execution.
+      The EnsureTableAreCreated() method drops/recreates UDT types, causing conflicts 
+      when net8.0 and net10.0 run in parallel against the same database.
+      
+      Run tests with: dotnet test -framework net8.0 && dotnet test -framework net10.0
+      Or use the test.ps1 script in this folder.
+    -->
+    <TestingPlatformDisableParallel>true</TestingPlatformDisableParallel>
+
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+
+  </PropertyGroup>
+
+  <ItemGroup Label="Testing Platform Settings">
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.1.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AwesomeAssertions" Version="9.3.0" />    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.0.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.0.2" />
+    <PackageReference Include="NodaTime.Testing" Version="3.2.3" />
+    <PackageReference Include="Reqnroll.MsTest" Version="3.3.0" />
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\common\Ark.Tools.Nodatime.Dapper\Ark.Tools.Nodatime.Dapper.csproj" />
+    <ProjectReference Include="..\..\src\common\Ark.Tools.Reqnroll\Ark.Tools.Reqnroll.csproj" />
+    <ProjectReference Include="..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
+    <ProjectReference Include="..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
+    <ProjectReference Include="..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.Sql\Ark.Tools.ResourceWatcher.Sql.csproj" />
+    <ProjectReference Include="..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.WorkerHost.Sql\Ark.Tools.ResourceWatcher.WorkerHost.Sql.csproj" />
+    <ProjectReference Include="..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.Testing\Ark.Tools.ResourceWatcher.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+
+    <None Update="appsettings.IntegrationTests.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    
+    <None Update="reqnroll.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+
+  </ItemGroup>
+
+</Project>

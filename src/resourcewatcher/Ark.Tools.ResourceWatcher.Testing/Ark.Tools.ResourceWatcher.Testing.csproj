@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>Testing utilities for Ark.Tools.ResourceWatcher including TestableStateProvider, TestingDiagnosticListener, and test host infrastructure.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;ResourceWatcher;Testing;ETL</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(ResourceWatcherGroupVersion)</Version>
+    <VersionSuffix>$(ResourceWatcherGroupVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
+  </ItemGroup>
+
+</Project>
