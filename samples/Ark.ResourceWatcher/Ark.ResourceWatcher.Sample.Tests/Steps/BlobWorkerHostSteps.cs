@@ -1,12 +1,26 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
+using Ark.ResourceWatcher.Sample.Config;
+using Ark.ResourceWatcher.Sample.Dto;
+using Ark.ResourceWatcher.Sample.Provider;
 using Ark.ResourceWatcher.Sample.Tests.Hooks;
-using Ark.ResourceWatcher.Sample.Tests.Mocks;
+using Ark.ResourceWatcher.Sample.Transform;
 using Ark.Tools.ResourceWatcher;
+using Ark.Tools.ResourceWatcher.Testing;
+using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using AwesomeAssertions;
 
 using NodaTime;
+
+using Reqnroll;
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ark.ResourceWatcher.Sample.Tests.Steps;
 
@@ -14,11 +28,10 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps;
 /// Step definitions for BlobWorkerHost feature.
 /// </summary>
 [Binding]
+[SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "Test code")]
 public sealed class BlobWorkerHostSteps
 {
     private readonly BlobTestContext _context;
-    private readonly MockBlobStorageApi _blobApi;
-    private readonly MockSinkApi _sinkApi;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BlobWorkerHostSteps"/> class.
@@ -27,22 +40,18 @@ public sealed class BlobWorkerHostSteps
     public BlobWorkerHostSteps(BlobTestContext context)
     {
         _context = context;
-        _blobApi = context.BlobStorageApi;
-        _sinkApi = context.SinkApi;
     }
 
     [Given(@"a mock blob storage API is configured")]
     public void GivenAMockBlobStorageApiIsConfigured()
     {
-        // Mock API is already configured in TestContext
-        _blobApi.Reset();
+        _context.BlobStorageApi.Reset();
     }
 
     [Given(@"a mock sink API is configured")]
     public void GivenAMockSinkApiIsConfigured()
     {
-        // Mock API is already configured in TestContext
-        _sinkApi.Reset();
+        _context.SinkApi.Reset();
     }
 
     [Given(@"a blob ""(.*)"" exists with checksum ""(.*)"" and content:")]
@@ -51,88 +60,50 @@ public sealed class BlobWorkerHostSteps
         var now = _context.Clock.GetCurrentInstant()
             .InUtc()
             .LocalDateTime;
-        _blobApi.AddBlob(blobId, content, checksum, now);
+        _context.BlobStorageApi.AddBlob(blobId, content, checksum, now);
     }
 
     [When(@"the worker runs one cycle")]
-    public void WhenTheWorkerRunsOneCycle()
+    public async Task WhenTheWorkerRunsOneCycle()
     {
-        // Get all blobs from mock API
-        var blobs = _blobApi.ListBlobs().ToList();
-
-        // For each blob, simulate processing
-        foreach (var metadata in blobs)
+        // Create a WorkerHost with mock provider and processor
+        var workerHost = new WorkerHost<BlobResource, BlobMetadata, BlobQueryFilter>(_context.Config);
+        
+        // Configure mock provider
+        workerHost.UseDataProvider<MockBlobResourceProvider>(d =>
         {
-            var resource = _blobApi.GetBlob(metadata.ResourceId);
-            if (resource == null)
-            {
-                continue;
-            }
+            d.Container.RegisterInstance(_context.BlobStorageApi);
+        });
 
-            // Check if already processed with same checksum
-            var existingState = _context.StateProvider.GetResourceState("default", metadata.ResourceId);
-            if (existingState != null && existingState.CheckSum == resource.CheckSum)
-            {
-                // Nothing to do
-                _context.DiagnosticListener.SimulateProcessed(metadata.ResourceId, ProcessType.NothingToDo, ResultType.Normal);
-                continue;
-            }
+        // Configure mock processor
+        workerHost.AppendFileProcessor<MockBlobResourceProcessor>(d =>
+        {
+            d.Container.RegisterInstance(_context.SinkApi);
+        });
 
-            // Parse CSV content and send to sink
-            var lines = System.Text.Encoding.UTF8.GetString(resource.Data)
-                .Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        // Configure state provider
+        workerHost.UseStateProvider<TestableStateProvider>(d =>
+        {
+            d.Container.RegisterInstance(_context.StateProvider);
+        });
 
-            var records = lines
-                .Skip(1) // Skip header
-                .Select(line => line.Split(','))
-                .Where(parts => parts.Length >= 3)
-                .Select(parts => new Sample.Dto.SinkRecord
-                {
-                    Id = parts[0].Trim(),
-                    Name = parts[1].Trim(),
-                    Value = decimal.TryParse(parts[2].Trim(), System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0
-                })
-                .ToList();
+        // Subscribe to diagnostics
+        System.Diagnostics.DiagnosticListener.AllListeners.Subscribe(_context.DiagnosticListener);
 
-            var payload = new Sample.Dto.SinkDto
-            {
-                SourceId = metadata.ResourceId,
-                Records = records
-            };
-
-            var success = _sinkApi.Receive(payload);
-
-            if (success)
-            {
-                // Update state
-                _context.StateProvider.SetResourceState("default", new ResourceState
-                {
-                    Tenant = "default",
-                    ResourceId = metadata.ResourceId,
-                    CheckSum = resource.CheckSum,
-                    Modified = metadata.Modified,
-                    RetryCount = 0
-                });
-
-                _context.DiagnosticListener.SimulateProcessed(metadata.ResourceId, ProcessType.New, ResultType.Normal);
-            }
-            else
-            {
-                _context.DiagnosticListener.SimulateProcessed(metadata.ResourceId, ProcessType.New, ResultType.Error);
-            }
-        }
+        // Run one cycle
+        await workerHost.RunOnceAsync(ctk: default);
     }
 
     [Then(@"the blob ""(.*)"" should be processed")]
     public void ThenTheBlobShouldBeProcessed(string blobId)
     {
-        _blobApi.FetchCalls.Should().Contain(blobId);
+        _context.BlobStorageApi.FetchCalls.Should().Contain(blobId);
     }
 
     [Then(@"the sink API should receive (\d+) records")]
     public void ThenTheSinkApiShouldReceiveRecords(int expectedCount)
     {
-        _sinkApi.TotalRecordsReceived.Should().Be(expectedCount);
+        _context.SinkApi.TotalRecordsReceived.Should().Be(expectedCount);
     }
 
     [Then(@"the resource ""(.*)"" state should be ""(.*)""")]
@@ -148,6 +119,58 @@ public sealed class BlobWorkerHostSteps
         else if (expectedState == "NothingToDo")
         {
             result!.ProcessType.Should().Be(ProcessType.NothingToDo);
+        }
+    }
+
+    /// <summary>
+    /// Mock provider that uses the test MockBlobStorageApi.
+    /// </summary>
+    private sealed class MockBlobResourceProvider : IResourceProvider<BlobMetadata, BlobResource, BlobQueryFilter>
+    {
+        private readonly Mocks.MockBlobStorageApi _mockApi;
+
+        public MockBlobResourceProvider(Mocks.MockBlobStorageApi mockApi)
+        {
+            _mockApi = mockApi;
+        }
+
+        public Task<IEnumerable<BlobMetadata>> GetMetadata(BlobQueryFilter filter, CancellationToken ctk = default)
+        {
+            return Task.FromResult(_mockApi.ListBlobs());
+        }
+
+        public Task<BlobResource?> GetResource(BlobMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+        {
+            return Task.FromResult(_mockApi.GetBlob(metadata.ResourceId));
+        }
+    }
+
+    /// <summary>
+    /// Mock processor that uses the test MockSinkApi.
+    /// </summary>
+    private sealed class MockBlobResourceProcessor : IResourceProcessor<BlobResource, BlobMetadata>
+    {
+        private readonly Mocks.MockSinkApi _mockSinkApi;
+
+        public MockBlobResourceProcessor(Mocks.MockSinkApi mockSinkApi)
+        {
+            _mockSinkApi = mockSinkApi;
+        }
+
+        public Task Process(BlobResource file, CancellationToken ctk = default)
+        {
+            // Use CsvTransformService to parse CSV content
+            var transformer = new CsvTransformService(file.Metadata.ResourceId);
+            var payload = transformer.Transform(file.Data);
+
+            var success = _mockSinkApi.Receive(payload);
+
+            if (!success)
+            {
+                throw new InvalidOperationException("Sink API rejected the payload");
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

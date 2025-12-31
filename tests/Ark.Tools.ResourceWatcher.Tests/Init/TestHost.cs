@@ -1,9 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.ResourceWatcher.Testing;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using NodaTime;
 
@@ -13,23 +13,23 @@ using System;
 using System.Globalization;
 using System.IO;
 
-[assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
+// Scenarios can run in parallel, but SQL integration tests must run sequentially
+[assembly: Parallelize(Scope = ExecutionScope.ClassLevel)]
 
 namespace Ark.Tools.ResourceWatcher.Tests.Init
 {
     /// <summary>
     /// Test host infrastructure for ResourceWatcher tests.
-    /// Provides access to state provider, diagnostic listener, and worker host configuration.
+    /// Provides shared configuration across test scenarios.
+    /// Each scenario creates its own WorkerHost instance with dedicated state provider and diagnostic listener.
     /// </summary>
     [Binding]
-    public sealed class TestHost : IDisposable
+    public sealed class TestHost
     {
         private static IConfiguration? _configuration;
 
         public static IConfiguration Configuration => _configuration ?? throw new InvalidOperationException("Configuration not initialized");
 
-        public static TestableStateProvider StateProvider { get; } = new();
-        public static TestingDiagnosticListener DiagnosticListener { get; } = new();
         public static TestHostConfig WorkerConfig { get; private set; } = new();
 
         [BeforeTestRun]
@@ -50,19 +50,6 @@ namespace Ark.Tools.ResourceWatcher.Tests.Init
                 DegreeOfParallelism = uint.Parse(_configuration["Worker:DegreeOfParallelism"] ?? "1", CultureInfo.InvariantCulture),
                 BanDuration = Duration.FromHours(int.Parse(_configuration["Worker:BanDurationHours"] ?? "24", CultureInfo.InvariantCulture))
             };
-        }
-
-        [BeforeScenario(Order = 0)]
-        public void BeforeScenario()
-        {
-            // Clear state and diagnostics before each scenario
-            StateProvider.ClearAll();
-            DiagnosticListener.Clear();
-        }
-
-        public void Dispose()
-        {
-            DiagnosticListener.Dispose();
         }
     }
 

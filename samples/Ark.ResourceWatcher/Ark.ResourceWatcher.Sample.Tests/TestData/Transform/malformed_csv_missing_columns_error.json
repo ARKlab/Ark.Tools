@@ -1,4 +1,4 @@
 {
   "exceptionType": "TransformException",
-  "messageContains": "Invalid CSV format at line 2"
+  "messageContains": "Field at index '2' does not exist"
 }

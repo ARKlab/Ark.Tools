@@ -376,6 +376,11 @@
           "NodaTime": "[3.0.0, 4.0.0)"
         }
       },
+      "SimpleInjector": {
+        "type": "Transitive",
+        "resolved": "5.5.0",
+        "contentHash": "ybPs0RE2x3mmBdXD/ZsPUwKGNSa8bZnI2HWeO2irwVHvzBkvYb+KQRaK2dIcKIWPD8cBgxekZdIi3YhRLfq8Xw=="
+      },
       "Slack.Webhooks": {
         "type": "Transitive",
         "resolved": "1.1.5",
@@ -497,6 +502,19 @@
           "Ark.Tools.NLog": "[1.0.0, )",
           "Microsoft.Extensions.DiagnosticAdapter": "[3.1.32, )",
           "Nito.AsyncEx.Coordination": "[5.1.2, )"
+        }
+      },
+      "ark.tools.resourcewatcher.workerhost": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
+          "Ark.Tools.SimpleInjector": "[1.0.0, )"
+        }
+      },
+      "ark.tools.simpleinjector": {
+        "type": "Project",
+        "dependencies": {
+          "SimpleInjector": "[5.5.0, )"
         }
       },
       "ark.tools.systemtextjson": {
@@ -881,6 +899,11 @@
           "NodaTime": "[3.0.0, 4.0.0)"
         }
       },
+      "SimpleInjector": {
+        "type": "Transitive",
+        "resolved": "5.5.0",
+        "contentHash": "ybPs0RE2x3mmBdXD/ZsPUwKGNSa8bZnI2HWeO2irwVHvzBkvYb+KQRaK2dIcKIWPD8cBgxekZdIi3YhRLfq8Xw=="
+      },
       "Slack.Webhooks": {
         "type": "Transitive",
         "resolved": "1.1.5",
@@ -1020,6 +1043,19 @@
           "Ark.Tools.NLog": "[1.0.0, )",
           "Microsoft.Extensions.DiagnosticAdapter": "[3.1.32, )",
           "Nito.AsyncEx.Coordination": "[5.1.2, )"
+        }
+      },
+      "ark.tools.resourcewatcher.workerhost": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
+          "Ark.Tools.SimpleInjector": "[1.0.0, )"
+        }
+      },
+      "ark.tools.simpleinjector": {
+        "type": "Project",
+        "dependencies": {
+          "SimpleInjector": "[5.5.0, )"
         }
       },
       "ark.tools.systemtextjson": {

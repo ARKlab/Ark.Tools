@@ -106,12 +106,13 @@ dotnet test --project tests/Ark.Tools.ResourceWatcher.Tests --filter "Category=n
 ```
 Ark.Tools.ResourceWatcher.Tests/
 ├── Features/
-│   └── StateTransitions.feature    # BDD scenarios
+│   ├── StateTransitions.feature    # BDD scenarios for state transitions
+│   └── SqlStateProvider.feature    # Integration tests for SQL state provider
 ├── Init/
-│   ├── StubImplementations.cs      # Stub resource provider/processor
 │   └── TestHost.cs                 # Test host configuration
 ├── Steps/
-│   └── StateTransitionsSteps.cs    # Step definitions
+│   ├── StateTransitionsSteps.cs    # Step definitions for state transitions
+│   └── SqlStateProviderSteps.cs    # Step definitions for SQL provider
 ├── docker-compose.yml              # Test dependencies
 ├── reqnroll.json                   # Reqnroll configuration
 └── README.md                       # This file
@@ -163,6 +164,18 @@ var checkState = listener.LatestCheckStateResult;
 Assert.Equal(0, checkState.ResourcesBanned);
 ```
 
+### Stub Implementations
+
+The Testing package also includes stub implementations for testing:
+
+- **StubResourceMetadata**: Stub metadata with helper methods for time manipulation
+- **StubResource**: Stub resource with data payload
+- **StubQueryFilter**: Query filter for stub resources
+- **StubResourceProvider**: Configurable provider that can simulate failures
+- **StubResourceProcessor**: Configurable processor that can simulate failures
+
+These stubs allow you to test ResourceWatcher behavior without needing real data sources.
+
 ## Writing New Tests
 
 1. Add scenarios to `Features/StateTransitions.feature` using Gherkin syntax
@@ -195,4 +208,4 @@ Scenario: Custom resource processing behavior
 - `Ark.Tools.ResourceWatcher` - Core polling engine
 - `Ark.Tools.ResourceWatcher.WorkerHost` - SimpleInjector-based worker host
 - `Ark.Tools.ResourceWatcher.Sql` - SQL Server state provider
-- `Ark.Tools.ResourceWatcher.Testing` - Testing utilities
+- `Ark.Tools.ResourceWatcher.Testing` - Testing utilities (TestableStateProvider, TestingDiagnosticListener, Stub implementations)

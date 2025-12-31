@@ -1,4 +1,4 @@
 {
-  "exceptionType": "FormatException",
-  "messageContains": "was not in a correct format"
+  "exceptionType": "TransformException",
+  "messageContains": "CSV parsing error"
 }

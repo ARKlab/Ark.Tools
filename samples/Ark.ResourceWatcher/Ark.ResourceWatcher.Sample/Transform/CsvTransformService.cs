@@ -5,12 +5,15 @@ using System.Text;
 
 using Ark.ResourceWatcher.Sample.Dto;
 
+using CsvHelper;
+using CsvHelper.Configuration;
+
 namespace Ark.ResourceWatcher.Sample.Transform;
 
 /// <summary>
 /// Transforms CSV byte content to SinkDto.
 /// </summary>
-public sealed class CsvTransformService : ITransformService<byte[], SinkDto>
+public sealed class CsvTransformService
 {
     private readonly string _sourceId;
 
@@ -23,15 +26,19 @@ public sealed class CsvTransformService : ITransformService<byte[], SinkDto>
         _sourceId = sourceId;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Transforms CSV byte content to SinkDto.
+    /// </summary>
+    /// <param name="input">The CSV data as a byte array.</param>
+    /// <returns>The transformed SinkDto.</returns>
     public SinkDto Transform(byte[] input)
     {
         ArgumentNullException.ThrowIfNull(input);
 
         var content = Encoding.UTF8.GetString(input);
-        var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (lines.Length == 0)
+        
+        // Handle empty input
+        if (string.IsNullOrWhiteSpace(content))
         {
             return new SinkDto
             {
@@ -39,38 +46,44 @@ public sealed class CsvTransformService : ITransformService<byte[], SinkDto>
                 Records = []
             };
         }
-
-        // First line is header
-        var headers = lines[0].Split(',').Select(h => h.Trim()).ToArray();
-        var records = new List<SinkRecord>();
-
-        for (int i = 1; i < lines.Length; i++)
+        
+        using var reader = new StringReader(content);
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            var values = lines[i].Split(',');
-            if (values.Length < 3)
-            {
-                throw new TransformException($"Invalid CSV format at line {i + 1}: expected at least 3 columns");
-            }
+            HasHeaderRecord = true,
+            TrimOptions = TrimOptions.Trim,
+            HeaderValidated = null, // Don't validate headers - allow extra columns
+            PrepareHeaderForMatch = args => args.Header.ToLowerInvariant() // Case-insensitive matching
+        };
+        
+        using var csv = new CsvReader(reader, config);
 
-            var record = new SinkRecord
-            {
-                Id = values[0].Trim(),
-                Name = values[1].Trim(),
-                Value = decimal.Parse(values[2].Trim(), CultureInfo.InvariantCulture)
-            };
+        csv.Context.RegisterClassMap<SinkRecordMap>();
 
-            // Add additional columns as properties
-            if (values.Length > 3)
-            {
-                var properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                for (int j = 3; j < values.Length && j < headers.Length; j++)
-                {
-                    properties[headers[j]] = values[j].Trim();
-                }
-                record = record with { Properties = properties };
-            }
-
-            records.Add(record);
+        List<SinkRecord> records;
+        try
+        {
+            records = csv.GetRecords<SinkRecord>().ToList();
+        }
+        catch (CsvHelper.CsvHelperException ex) when (ex.InnerException is FormatException formatEx)
+        {
+            // Unwrap FormatException from CsvHelperException for invalid data types
+            throw formatEx;
+        }
+        catch (CsvHelper.CsvHelperException ex) when (ex.InnerException?.InnerException is FormatException formatEx2)
+        {
+            // Unwrap FormatException that's nested deeper (e.g., through TypeConverterException)
+            throw formatEx2;
+        }
+        catch (CsvHelper.CsvHelperException ex) when (ex.InnerException is CsvHelper.MissingFieldException)
+        {
+            // Handle missing required fields with a clear error message
+            var row = ex.Context?.Parser?.Row ?? 0;
+            throw new TransformException($"Invalid CSV format at line {row}: expected at least 3 columns", ex);
+        }
+        catch (CsvHelper.CsvHelperException ex)
+        {
+            throw new TransformException($"CSV parsing error: {ex.Message}", ex);
         }
 
         return new SinkDto
@@ -78,6 +91,45 @@ public sealed class CsvTransformService : ITransformService<byte[], SinkDto>
             SourceId = _sourceId,
             Records = records
         };
+    }
+
+    /// <summary>
+    /// CsvHelper ClassMap for mapping CSV columns to SinkRecord properties.
+    /// Maps required columns by name/index and collects additional columns into Properties.
+    /// </summary>
+    private sealed class SinkRecordMap : ClassMap<SinkRecord>
+    {
+        public SinkRecordMap()
+        {
+            // Map required columns by name (case-insensitive due to PrepareHeaderForMatch)
+            Map(m => m.Id).Name("id").Index(0);
+            Map(m => m.Name).Name("name").Index(1);
+            Map(m => m.Value).Name("value").Index(2);
+            
+            // Map additional columns to Properties dictionary
+            // This allows the CSV to have extra columns without breaking
+            Map(m => m.Properties).Convert(args =>
+            {
+                var properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                
+                // Get all headers
+                var headerRecord = args.Row.HeaderRecord;
+                if (headerRecord == null) return null;
+                
+                // Skip the first 3 columns (id, name, value) and collect the rest
+                for (int i = 3; i < headerRecord.Length; i++)
+                {
+                    var header = headerRecord[i];
+                    var value = args.Row.GetField(i);
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        properties[header] = value;
+                    }
+                }
+                
+                return properties.Count > 0 ? properties : null;
+            });
+        }
     }
 }
 
