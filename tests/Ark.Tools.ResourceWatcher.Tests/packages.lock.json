@@ -1007,7 +1007,8 @@
       "ark.tools.resourcewatcher.testing": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ResourceWatcher": "[1.0.0, )"
+          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher.WorkerHost": "[1.0.0, )"
         }
       },
       "ark.tools.resourcewatcher.workerhost": {
@@ -2102,7 +2103,8 @@
       "ark.tools.resourcewatcher.testing": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ResourceWatcher": "[1.0.0, )"
+          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher.WorkerHost": "[1.0.0, )"
         }
       },
       "ark.tools.resourcewatcher.workerhost": {
