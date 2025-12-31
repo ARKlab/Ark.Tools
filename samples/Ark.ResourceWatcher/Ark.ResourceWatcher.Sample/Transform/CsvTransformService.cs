@@ -37,13 +37,26 @@ public sealed class CsvTransformService
 
         var content = Encoding.UTF8.GetString(input);
         
+        // Handle empty input
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return new SinkDto
+            {
+                SourceId = _sourceId,
+                Records = []
+            };
+        }
+        
         using var reader = new StringReader(content);
-        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             HasHeaderRecord = true,
             TrimOptions = TrimOptions.Trim,
-            MissingFieldFound = null
-        });
+            HeaderValidated = null, // Don't validate headers - allow extra columns
+            PrepareHeaderForMatch = args => args.Header.ToLowerInvariant() // Case-insensitive matching
+        };
+        
+        using var csv = new CsvReader(reader, config);
 
         csv.Context.RegisterClassMap<SinkRecordMap>();
 
@@ -52,13 +65,25 @@ public sealed class CsvTransformService
         {
             records = csv.GetRecords<SinkRecord>().ToList();
         }
+        catch (CsvHelper.CsvHelperException ex) when (ex.InnerException is FormatException formatEx)
+        {
+            // Unwrap FormatException from CsvHelperException for invalid data types
+            throw formatEx;
+        }
+        catch (CsvHelper.CsvHelperException ex) when (ex.InnerException?.InnerException is FormatException formatEx2)
+        {
+            // Unwrap FormatException that's nested deeper (e.g., through TypeConverterException)
+            throw formatEx2;
+        }
+        catch (CsvHelper.CsvHelperException ex) when (ex.InnerException is CsvHelper.MissingFieldException)
+        {
+            // Handle missing required fields with a clear error message
+            var row = ex.Context?.Parser?.Row ?? 0;
+            throw new TransformException($"Invalid CSV format at line {row}: expected at least 3 columns", ex);
+        }
         catch (CsvHelper.CsvHelperException ex)
         {
             throw new TransformException($"CSV parsing error: {ex.Message}", ex);
-        }
-        catch (FormatException ex)
-        {
-            throw new TransformException($"Invalid data format: {ex.Message}", ex);
         }
 
         return new SinkDto
@@ -70,15 +95,40 @@ public sealed class CsvTransformService
 
     /// <summary>
     /// CsvHelper ClassMap for mapping CSV columns to SinkRecord properties.
+    /// Maps required columns by name/index and collects additional columns into Properties.
     /// </summary>
     private sealed class SinkRecordMap : ClassMap<SinkRecord>
     {
         public SinkRecordMap()
         {
-            Map(m => m.Id).Index(0).Name("Id");
-            Map(m => m.Name).Index(1).Name("Name");
-            Map(m => m.Value).Index(2).Name("Value");
-            // Properties field is not mapped from CSV, handled separately if needed
+            // Map required columns by name (case-insensitive due to PrepareHeaderForMatch)
+            Map(m => m.Id).Name("id").Index(0);
+            Map(m => m.Name).Name("name").Index(1);
+            Map(m => m.Value).Name("value").Index(2);
+            
+            // Map additional columns to Properties dictionary
+            // This allows the CSV to have extra columns without breaking
+            Map(m => m.Properties).Convert(args =>
+            {
+                var properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                
+                // Get all headers
+                var headerRecord = args.Row.HeaderRecord;
+                if (headerRecord == null) return null;
+                
+                // Skip the first 3 columns (id, name, value) and collect the rest
+                for (int i = 3; i < headerRecord.Length; i++)
+                {
+                    var header = headerRecord[i];
+                    var value = args.Row.GetField(i);
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        properties[header] = value;
+                    }
+                }
+                
+                return properties.Count > 0 ? properties : null;
+            });
         }
     }
 }
