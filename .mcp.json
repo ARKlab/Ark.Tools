@@ -39,6 +39,9 @@
 	      "type": "stdio",
 	      "command": "npx",
 	      "args": ["-y", "@azure-devops/mcp", "${input:ado_org}"]
-	    }
+	    },
+		"gh_grep": {
+			"url": "https://grep.mcp.vercel.app"
+		}
 	}
 }
