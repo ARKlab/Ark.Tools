@@ -133,12 +133,6 @@
           "MSTest.Analyzers": "4.0.2"
         }
       },
-      "Polyfill": {
-        "type": "Direct",
-        "requested": "[9.5.0, )",
-        "resolved": "9.5.0",
-        "contentHash": "T3E8+K+W0u78495PwSSJOzT6QUbnZSdkDK4B3nfvxUo9nctDr6ChSDLV4l/RD2ZmA5oHM2YbLvyp+a2uE0ftOQ=="
-      },
       "Reqnroll.MSTest": {
         "type": "Direct",
         "requested": "[3.3.0, )",
@@ -1495,12 +1489,6 @@
         "dependencies": {
           "MSTest.Analyzers": "4.0.2"
         }
-      },
-      "Polyfill": {
-        "type": "Direct",
-        "requested": "[9.5.0, )",
-        "resolved": "9.5.0",
-        "contentHash": "T3E8+K+W0u78495PwSSJOzT6QUbnZSdkDK4B3nfvxUo9nctDr6ChSDLV4l/RD2ZmA5oHM2YbLvyp+a2uE0ftOQ=="
       },
       "Reqnroll.MSTest": {
         "type": "Direct",
