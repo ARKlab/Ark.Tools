@@ -16,13 +16,13 @@ namespace Ark.ResourceWatcher.Sample.Host
     /// <summary>
     /// Worker host for processing blobs from external storage.
     /// </summary>
-    public sealed class BlobWorkerHost : WorkerHost<BlobResource, BlobMetadata, BlobQueryFilter>
+    public sealed class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="BlobWorkerHost"/> class.
+        /// Initializes a new instance of the <see cref="MyWorkerHost"/> class.
         /// </summary>
         /// <param name="config">The worker host configuration.</param>
-        public BlobWorkerHost(BlobWorkerHostConfig config)
+        public MyWorkerHost(MyWorkerHostConfig config)
             : base(config)
         {
             Use(d =>
@@ -32,14 +32,14 @@ namespace Ark.ResourceWatcher.Sample.Host
                 d.Container.RegisterInstance<IClock>(SystemClock.Instance);
             });
 
-            UseDataProvider<BlobStorageResourceProvider>(d =>
+            UseDataProvider<MyStorageResourceProvider>(d =>
             {
-                d.Container.RegisterInstance<IBlobStorageResourceProviderConfig>(config);
+                d.Container.RegisterInstance<IMyStorageResourceProviderConfig>(config);
             });
 
-            AppendFileProcessor<BlobResourceProcessor>(d =>
+            AppendFileProcessor<MyResourceProcessor>(d =>
             {
-                d.Container.RegisterInstance<IBlobResourceProcessorConfig>(config);
+                d.Container.RegisterInstance<IMyResourceProcessorConfig>(config);
             });
 
             UseStateProvider<InMemStateProvider>();

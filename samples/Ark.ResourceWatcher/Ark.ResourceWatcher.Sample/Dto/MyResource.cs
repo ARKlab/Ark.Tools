@@ -9,12 +9,12 @@ namespace Ark.ResourceWatcher.Sample.Dto
     /// <summary>
     /// Represents a fetched blob resource with its content.
     /// </summary>
-    public sealed class BlobResource : IResource<BlobMetadata>
+    public sealed class MyResource : IResource<MyMetadata>
     {
         /// <summary>
         /// Gets the metadata for this blob.
         /// </summary>
-        public required BlobMetadata Metadata { get; init; }
+        public required MyMetadata Metadata { get; init; }
 
         /// <summary>
         /// Gets the binary content of the blob.

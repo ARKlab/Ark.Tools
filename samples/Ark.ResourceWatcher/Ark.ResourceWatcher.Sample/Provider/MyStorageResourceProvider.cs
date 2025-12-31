@@ -32,25 +32,25 @@ namespace Ark.ResourceWatcher.Sample.Provider
     /// <summary>
     /// Resource provider that lists and fetches blobs from an external blob storage API.
     /// </summary>
-    public sealed class BlobStorageResourceProvider : IResourceProvider<BlobMetadata, BlobResource, BlobQueryFilter>
+    public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, MyResource, BlobQueryFilter>
     {
         private readonly IFlurlClient _client;
         private readonly IClock _clock;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BlobStorageResourceProvider"/> class.
+        /// Initializes a new instance of the <see cref="MyStorageResourceProvider"/> class.
         /// </summary>
         /// <param name="clientFactory">The Flurl client factory.</param>
         /// <param name="config"></param>
         /// <param name="clock">The clock for timestamps.</param>
-        public BlobStorageResourceProvider(IArkFlurlClientFactory clientFactory, IBlobStorageResourceProviderConfig config, IClock clock)
+        public MyStorageResourceProvider(IArkFlurlClientFactory clientFactory, IMyStorageResourceProviderConfig config, IClock clock)
         {
-            _client = clientFactory.Get(config.BlobStorageUrl);
+            _client = clientFactory.Get(config.ProviderUrl);
             _clock = clock;
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<BlobMetadata>> GetMetadata(BlobQueryFilter filter, CancellationToken ctk = default)
+        public async Task<IEnumerable<MyMetadata>> GetMetadata(BlobQueryFilter filter, CancellationToken ctk = default)
         {
             var request = _client.Request("blobs");
 
@@ -64,9 +64,9 @@ namespace Ark.ResourceWatcher.Sample.Provider
                 request = request.SetQueryParam("maxResults", filter.MaxResults.Value);
             }
 
-            var response = await request.GetJsonAsync<BlobListResponse>(cancellationToken: ctk);
+            var response = await request.GetJsonAsync<MyListResponse>(cancellationToken: ctk);
 
-            return response.Blobs.Select(b => new BlobMetadata
+            return response.Blobs.Select(b => new MyMetadata
             {
                 ResourceId = b.Path,
                 Modified = LocalDateTime.FromDateTime(b.LastModified),
@@ -76,7 +76,7 @@ namespace Ark.ResourceWatcher.Sample.Provider
         }
 
         /// <inheritdoc/>
-        public async Task<BlobResource?> GetResource(BlobMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+        public async Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
         {
             var response = await _client
                 .Request("blobs", metadata.ResourceId)
@@ -87,7 +87,7 @@ namespace Ark.ResourceWatcher.Sample.Provider
             // Compute checksum for change detection
             var checksum = Convert.ToHexString(SHA256.HashData(data));
 
-            return new BlobResource
+            return new MyResource
             {
                 Metadata = metadata,
                 Data = data,
@@ -97,26 +97,26 @@ namespace Ark.ResourceWatcher.Sample.Provider
         }
     }
 
-    public interface IBlobStorageResourceProviderConfig
+    public interface IMyStorageResourceProviderConfig
     {
-        Uri BlobStorageUrl { get; }
+        Uri ProviderUrl { get; }
     }
 
     /// <summary>
     /// Response from blob listing API.
     /// </summary>
-    internal sealed record BlobListResponse
+    internal sealed record MyListResponse
     {
         /// <summary>
         /// Gets or sets the list of blobs.
         /// </summary>
-        public required IReadOnlyList<BlobInfo> Blobs { get; init; }
+        public required IReadOnlyList<MyResourceInfo> Blobs { get; init; }
     }
 
     /// <summary>
     /// Information about a single blob.
     /// </summary>
-    internal sealed record BlobInfo
+    internal sealed record MyResourceInfo
     {
         /// <summary>
         /// Gets or sets the blob path.

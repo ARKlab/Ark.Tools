@@ -16,30 +16,30 @@ namespace Ark.ResourceWatcher.Sample.Processor
     /// <summary>
     /// Processor that transforms blob content and sends it to a sink API.
     /// </summary>
-    public sealed class BlobResourceProcessor : IResourceProcessor<BlobResource, BlobMetadata>
+    public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetadata>
     {
         private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
         private readonly IFlurlClient _client;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BlobResourceProcessor"/> class.
+        /// Initializes a new instance of the <see cref="MyResourceProcessor"/> class.
         /// </summary>
         /// <param name="clientFactory">The Flurl client factory.</param>
         /// <param name="config"></param>
-        public BlobResourceProcessor(IArkFlurlClientFactory clientFactory, IBlobResourceProcessorConfig config)
+        public MyResourceProcessor(IArkFlurlClientFactory clientFactory, IMyResourceProcessorConfig config)
         {
             _client = clientFactory.Get(config.SinkUrl);
         }
 
         /// <inheritdoc/>
-        public async Task Process(BlobResource file, CancellationToken ctk = default)
+        public async Task Process(MyResource file, CancellationToken ctk = default)
         {
             _logger.Info(CultureInfo.InvariantCulture, "Processing blob {ResourceId} ({Size} bytes)",
                 file.Metadata.ResourceId, file.Data.Length);
 
             // Transform the CSV content
-            var transformer = new CsvTransformService(file.Metadata.ResourceId);
+            var transformer = new MyTransformService(file.Metadata.ResourceId);
             var sinkData = transformer.Transform(file.Data);
 
             _logger.Debug(CultureInfo.InvariantCulture, "Transformed {RecordCount} records from {ResourceId}",
@@ -55,7 +55,7 @@ namespace Ark.ResourceWatcher.Sample.Processor
         }
     }
 
-    public interface IBlobResourceProcessorConfig
+    public interface IMyResourceProcessorConfig
     {
         Uri SinkUrl { get; }
     }

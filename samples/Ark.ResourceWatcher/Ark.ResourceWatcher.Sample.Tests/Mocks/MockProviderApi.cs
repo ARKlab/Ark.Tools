@@ -13,7 +13,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Mocks
     /// <summary>
     /// Mock blob storage API responses for testing.
     /// </summary>
-    public sealed class MockBlobStorageApi
+    public sealed class MockProviderApi
     {
         private readonly Dictionary<string, MockBlob> _blobs = new(StringComparer.OrdinalIgnoreCase);
         private readonly List<string> _listCalls = [];
@@ -66,10 +66,10 @@ namespace Ark.ResourceWatcher.Sample.Tests.Mocks
         /// Gets the metadata for all blobs.
         /// </summary>
         /// <returns>List of blob metadata.</returns>
-        public IEnumerable<BlobMetadata> ListBlobs()
+        public IEnumerable<MyMetadata> ListBlobs()
         {
             _listCalls.Add(DateTimeOffset.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
-            return _blobs.Values.Select(b => new BlobMetadata
+            return _blobs.Values.Select(b => new MyMetadata
             {
                 ResourceId = b.ResourceId,
                 Modified = b.Modified,
@@ -82,7 +82,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Mocks
         /// </summary>
         /// <param name="resourceId">The blob resource identifier.</param>
         /// <returns>The blob resource.</returns>
-        public BlobResource? GetBlob(string resourceId)
+        public MyResource? GetBlob(string resourceId)
         {
             _fetchCalls.Add(resourceId);
             if (!_blobs.TryGetValue(resourceId, out var blob))
@@ -90,9 +90,9 @@ namespace Ark.ResourceWatcher.Sample.Tests.Mocks
                 return null;
             }
 
-            return new BlobResource
+            return new MyResource
             {
-                Metadata = new BlobMetadata
+                Metadata = new MyMetadata
                 {
                     ResourceId = blob.ResourceId,
                     Modified = blob.Modified,

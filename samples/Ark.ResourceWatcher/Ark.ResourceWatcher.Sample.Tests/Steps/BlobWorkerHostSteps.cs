@@ -41,7 +41,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps
         [Given(@"a mock blob storage API is configured")]
         public void GivenAMockBlobStorageApiIsConfigured()
         {
-            _context.BlobStorageApi.Reset();
+            _context.ProviderApi.Reset();
         }
 
         [Given(@"a mock sink API is configured")]
@@ -56,19 +56,19 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps
             var now = _context.Clock.GetCurrentInstant()
                 .InUtc()
                 .LocalDateTime;
-            _context.BlobStorageApi.AddBlob(blobId, content, checksum, now);
+            _context.ProviderApi.AddBlob(blobId, content, checksum, now);
         }
 
         [When(@"the worker runs one cycle")]
         public async Task WhenTheWorkerRunsOneCycle()
         {
             // Create a WorkerHost with mock provider and processor
-            var workerHost = new WorkerHost<BlobResource, BlobMetadata, BlobQueryFilter>(_context.Config);
+            var workerHost = new WorkerHost<MyResource, MyMetadata, BlobQueryFilter>(_context.Config);
         
             // Configure mock provider
             workerHost.UseDataProvider<MockBlobResourceProvider>(d =>
             {
-                d.Container.RegisterInstance(_context.BlobStorageApi);
+                d.Container.RegisterInstance(_context.ProviderApi);
             });
 
             // Configure mock processor
@@ -93,7 +93,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps
         [Then(@"the blob ""(.*)"" should be processed")]
         public void ThenTheBlobShouldBeProcessed(string blobId)
         {
-            _context.BlobStorageApi.FetchCalls.Should().Contain(blobId);
+            _context.ProviderApi.FetchCalls.Should().Contain(blobId);
         }
 
         [Then(@"the sink API should receive (\d+) records")]
@@ -121,21 +121,21 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps
         /// <summary>
         /// Mock provider that uses the test MockBlobStorageApi.
         /// </summary>
-        private sealed class MockBlobResourceProvider : IResourceProvider<BlobMetadata, BlobResource, BlobQueryFilter>
+        private sealed class MockBlobResourceProvider : IResourceProvider<MyMetadata, MyResource, BlobQueryFilter>
         {
-            private readonly Mocks.MockBlobStorageApi _mockApi;
+            private readonly Mocks.MockProviderApi _mockApi;
 
-            public MockBlobResourceProvider(Mocks.MockBlobStorageApi mockApi)
+            public MockBlobResourceProvider(Mocks.MockProviderApi mockApi)
             {
                 _mockApi = mockApi;
             }
 
-            public Task<IEnumerable<BlobMetadata>> GetMetadata(BlobQueryFilter filter, CancellationToken ctk = default)
+            public Task<IEnumerable<MyMetadata>> GetMetadata(BlobQueryFilter filter, CancellationToken ctk = default)
             {
                 return Task.FromResult(_mockApi.ListBlobs());
             }
 
-            public Task<BlobResource?> GetResource(BlobMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+            public Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
             {
                 return Task.FromResult(_mockApi.GetBlob(metadata.ResourceId));
             }
@@ -144,7 +144,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps
         /// <summary>
         /// Mock processor that uses the test MockSinkApi.
         /// </summary>
-        private sealed class MockBlobResourceProcessor : IResourceProcessor<BlobResource, BlobMetadata>
+        private sealed class MockBlobResourceProcessor : IResourceProcessor<MyResource, MyMetadata>
         {
             private readonly Mocks.MockSinkApi _mockSinkApi;
 
@@ -153,10 +153,10 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps
                 _mockSinkApi = mockSinkApi;
             }
 
-            public Task Process(BlobResource file, CancellationToken ctk = default)
+            public Task Process(MyResource file, CancellationToken ctk = default)
             {
                 // Use CsvTransformService to parse CSV content
-                var transformer = new CsvTransformService(file.Metadata.ResourceId);
+                var transformer = new MyTransformService(file.Metadata.ResourceId);
                 var payload = transformer.Transform(file.Data);
 
                 var success = _mockSinkApi.Receive(payload);

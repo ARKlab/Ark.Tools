@@ -23,17 +23,17 @@ namespace Ark.ResourceWatcher.Sample
                 {
                     var cfg = sp.GetRequiredService<IConfiguration>();
 
-                    var config = new BlobWorkerHostConfig
+                    var config = new MyWorkerHostConfig
                     {
                         WorkerName = "BlobWorkerSample",
                         Sleep = TimeSpan.FromMinutes(1),
                         MaxRetries = 3,
                         DegreeOfParallelism = 2,
-                        BlobStorageUrl = new Uri(cfg["BlobStorage:BaseUrl"] ?? "http://localhost:10000"),
+                        ProviderUrl = new Uri(cfg["Provider:BaseUrl"] ?? "http://localhost:10000"),
                         SinkUrl = new Uri(cfg["Sink:BaseUrl"] ?? "https://statuscodes.io/200")
                     };
 
-                    return new BlobWorkerHost(config);
+                    return new MyWorkerHost(config);
                 })
                 .UseConsoleLifetime();
 

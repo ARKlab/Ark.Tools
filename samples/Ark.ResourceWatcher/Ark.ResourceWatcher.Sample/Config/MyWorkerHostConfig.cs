@@ -11,7 +11,7 @@ namespace Ark.ResourceWatcher.Sample.Config
     /// <summary>
     /// Configuration for the Blob Worker Host.
     /// </summary>
-    public sealed class BlobWorkerHostConfig : IHostConfig, IBlobResourceProcessorConfig, IBlobStorageResourceProviderConfig
+    public sealed class MyWorkerHostConfig : IHostConfig, IMyResourceProcessorConfig, IMyStorageResourceProviderConfig
     {
         /// <summary>
         /// Gets the worker name used to identify this worker in state tracking.
@@ -57,7 +57,7 @@ namespace Ark.ResourceWatcher.Sample.Config
         /// Gets the notification limit for resource processing duration.
         /// </summary>
         public TimeSpan ResourceDurationNotificationLimit { get; init; } = TimeSpan.FromMinutes(5);
-        public required Uri BlobStorageUrl { get; init; }
+        public required Uri ProviderUrl { get; init; }
         public required Uri SinkUrl { get; init; }
     }
 }

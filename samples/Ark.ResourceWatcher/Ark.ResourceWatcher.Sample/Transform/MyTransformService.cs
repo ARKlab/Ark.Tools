@@ -13,15 +13,15 @@ namespace Ark.ResourceWatcher.Sample.Transform
     /// <summary>
     /// Transforms CSV byte content to SinkDto.
     /// </summary>
-    public sealed class CsvTransformService
+    public sealed class MyTransformService
     {
         private readonly string _sourceId;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CsvTransformService"/> class.
+        /// Initializes a new instance of the <see cref="MyTransformService"/> class.
         /// </summary>
         /// <param name="sourceId">The source identifier for the output.</param>
-        public CsvTransformService(string sourceId)
+        public MyTransformService(string sourceId)
         {
             _sourceId = sourceId;
         }

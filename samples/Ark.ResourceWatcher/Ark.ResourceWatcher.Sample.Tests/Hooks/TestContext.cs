@@ -24,7 +24,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Hooks
         /// <summary>
         /// Gets or sets the mock blob storage API.
         /// </summary>
-        public MockBlobStorageApi BlobStorageApi { get; } = new();
+        public MockProviderApi ProviderApi { get; } = new();
 
         /// <summary>
         /// Gets or sets the mock sink API.
@@ -44,7 +44,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Hooks
         /// <summary>
         /// Gets or sets the worker configuration.
         /// </summary>
-        public BlobWorkerHostConfig Config { get; set; } = new()
+        public MyWorkerHostConfig Config { get; set; } = new()
         {
             WorkerName = "TestBlobWorker",
             DegreeOfParallelism = 1,
@@ -52,7 +52,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Hooks
             MaxRetries = 3,
             BanDuration = Duration.FromMinutes(10),
             IgnoreState = false,
-            BlobStorageUrl = new Uri("http://localhost:10000"),
+            ProviderUrl = new Uri("http://localhost:10000"),
             SinkUrl = new Uri("http://localhost:20000")
         };
 
@@ -71,7 +71,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Hooks
         /// </summary>
         public void Dispose()
         {
-            BlobStorageApi.Reset();
+            ProviderApi.Reset();
             SinkApi.Reset();
             StateProvider.ClearAll();
             DiagnosticListener.Clear();

@@ -30,7 +30,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Transform
     /// The test will automatically pick up new files without code changes.
     /// </remarks>
     [TestClass]
-    public sealed class CsvTransformServiceTests
+    public sealed class MyTransformServiceTests
     {
         private const string _testSourceId = "test-source";
 
@@ -100,7 +100,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Transform
         public void Transform_DataDrivenCase(string caseName, string inputPath, string expectedPath, bool isErrorCase)
         {
             // Arrange
-            var service = new CsvTransformService(_testSourceId);
+            var service = new MyTransformService(_testSourceId);
             var input = File.ReadAllBytes(inputPath);
             var expectedJson = File.ReadAllText(expectedPath);
 
@@ -141,7 +141,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Transform
         public void Transform_NullInput_ThrowsArgumentNullException()
         {
             // Arrange
-            var service = new CsvTransformService(_testSourceId);
+            var service = new MyTransformService(_testSourceId);
 
             // Act
             var act = () => service.Transform(null!);
@@ -159,7 +159,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Transform
         {
             // Arrange
             var customSourceId = "custom-blob-id-12345";
-            var service = new CsvTransformService(customSourceId);
+            var service = new MyTransformService(customSourceId);
             var input = "id,name,value\n1,Test,10.0"u8.ToArray();
 
             // Act

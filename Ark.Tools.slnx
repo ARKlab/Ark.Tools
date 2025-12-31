@@ -12,6 +12,7 @@
     <Project Path="samples/WebApplicationDemo/WebApplicationDemo.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Ark.Tools.ResourceWatcher.Tests/Ark.Tools.ResourceWatcher.Tests.csproj" />
     <Project Path="tests/WebApplicationDemo.Tests/WebApplicationDemo.Tests.csproj" />
   </Folder>
   <Folder Name="/src/">
@@ -74,6 +75,7 @@
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Hosting/Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Sql/Ark.Tools.ResourceWatcher.WorkerHost.Sql.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost/Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
+    <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.Testing/Ark.Tools.ResourceWatcher.Testing.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher/Ark.Tools.ResourceWatcher.csproj" />
   </Folder>
   <Folder Name="/samples/Ark.Reference/">
