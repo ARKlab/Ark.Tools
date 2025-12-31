@@ -2,8 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.ResourceWatcher.Sample.Config;
 using Ark.ResourceWatcher.Sample.Dto;
+using Ark.ResourceWatcher.Sample.Provider;
 using Ark.ResourceWatcher.Sample.Tests.Hooks;
+using Ark.ResourceWatcher.Sample.Transform;
 using Ark.Tools.ResourceWatcher;
+using Ark.Tools.ResourceWatcher.Testing;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using AwesomeAssertions;
@@ -16,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -80,13 +82,16 @@ public sealed class BlobWorkerHostSteps
         });
 
         // Configure state provider
-        workerHost.UseStateProvider(_context.StateProvider);
+        workerHost.UseStateProvider<TestableStateProvider>(d =>
+        {
+            d.Container.RegisterInstance(_context.StateProvider);
+        });
 
         // Subscribe to diagnostics
         System.Diagnostics.DiagnosticListener.AllListeners.Subscribe(_context.DiagnosticListener);
 
         // Run one cycle
-        await workerHost.RunOnce(default);
+        await workerHost.RunOnceAsync(ctk: default);
     }
 
     [Then(@"the blob ""(.*)"" should be processed")]
@@ -154,27 +159,9 @@ public sealed class BlobWorkerHostSteps
 
         public Task Process(BlobResource file, CancellationToken ctk = default)
         {
-            // Parse CSV content and send to sink
-            var content = Encoding.UTF8.GetString(file.Data);
-            var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-            var records = lines
-                .Skip(1) // Skip header
-                .Select(line => line.Split(','))
-                .Where(parts => parts.Length >= 3)
-                .Select(parts => new SinkRecord
-                {
-                    Id = parts[0].Trim(),
-                    Name = parts[1].Trim(),
-                    Value = decimal.TryParse(parts[2].Trim(), System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0
-                })
-                .ToList();
-
-            var payload = new SinkDto
-            {
-                SourceId = file.Metadata.ResourceId,
-                Records = records
-            };
+            // Use CsvTransformService to parse CSV content
+            var transformer = new CsvTransformService(file.Metadata.ResourceId);
+            var payload = transformer.Transform(file.Data);
 
             var success = _mockSinkApi.Receive(payload);
 
