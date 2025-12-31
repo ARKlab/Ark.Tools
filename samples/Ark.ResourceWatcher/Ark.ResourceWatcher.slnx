@@ -1,0 +1,9 @@
+<Solution>
+    <Project Path="Ark.ResourceWatcher.Sample/Ark.ResourceWatcher.Sample.csproj" />
+    <Project Path="Ark.ResourceWatcher.Sample.Tests/Ark.ResourceWatcher.Sample.Tests.csproj" />
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="global.json" />
+</Solution>
