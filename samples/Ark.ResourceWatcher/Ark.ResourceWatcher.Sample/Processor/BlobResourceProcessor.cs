@@ -43,7 +43,7 @@ public sealed class BlobResourceProcessor : IResourceProcessor<BlobResource, Blo
         var sinkData = transformer.Transform(file.Data);
 
         _logger.Debug(CultureInfo.InvariantCulture, "Transformed {RecordCount} records from {ResourceId}",
-            sinkData.TotalCount, file.Metadata.ResourceId);
+            sinkData.Records.Count, file.Metadata.ResourceId);
 
         // Send to sink API
         await _client

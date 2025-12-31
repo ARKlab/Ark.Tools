@@ -125,40 +125,13 @@ public sealed class CsvTransformServiceTests
             var result = service.Transform(input);
 
             // Assert - Compare JSON serialization for flexible comparison
-            var expected = JsonSerializer.Deserialize<ExpectedSinkDto>(expectedJson, s_jsonOptions);
+            var expected = JsonSerializer.Deserialize<SinkDto>(expectedJson, s_jsonOptions);
             expected.Should().NotBeNull($"Failed to deserialize expected output for case '{caseName}'");
 
-            result.SourceId.Should().Be(expected!.SourceId, $"SourceId mismatch for case '{caseName}'");
-            result.Records.Should().HaveCount(expected.Records?.Count ?? 0, $"Record count mismatch for case '{caseName}'");
-
-            for (int i = 0; i < result.Records.Count; i++)
-            {
-                var actual = result.Records[i];
-                var expectedRecord = expected.Records![i];
-
-                actual.Id.Should().Be(expectedRecord.Id, $"Record[{i}].Id mismatch for case '{caseName}'");
-                actual.Name.Should().Be(expectedRecord.Name, $"Record[{i}].Name mismatch for case '{caseName}'");
-                actual.Value.Should().Be(expectedRecord.Value, $"Record[{i}].Value mismatch for case '{caseName}'");
-
-                if (expectedRecord.Properties != null && expectedRecord.Properties.Count > 0)
-                {
-                    actual.Properties.Should().NotBeNull($"Record[{i}].Properties should not be null for case '{caseName}'");
-                    actual.Properties.Should().HaveCount(expectedRecord.Properties.Count,
-                        $"Record[{i}].Properties count mismatch for case '{caseName}'");
-
-                    foreach (var kvp in expectedRecord.Properties)
-                    {
-                        actual.Properties.Should().ContainKey(kvp.Key,
-                            $"Record[{i}].Properties should contain key '{kvp.Key}' for case '{caseName}'");
-
-                        // Handle JsonElement from deserialization - compare as strings
-                        var expectedValue = kvp.Value is JsonElement je ? je.GetString() : kvp.Value?.ToString();
-                        var actualValue = actual.Properties![kvp.Key]?.ToString();
-                        actualValue.Should().Be(expectedValue,
-                            $"Record[{i}].Properties['{kvp.Key}'] mismatch for case '{caseName}'");
-                    }
-                }
-            }
+            result.Should().BeEquivalentTo(expected, options => options
+                .ComparingByMembers<SinkDto>()
+                .ComparingByMembers<SinkRecord>(),
+                because: $"Full object equivalence for case '{caseName}'");
         }
     }
 
@@ -204,45 +177,3 @@ public sealed class CsvTransformServiceTests
 /// <param name="ExceptionType">The expected exception type name (e.g., "TransformException").</param>
 /// <param name="MessageContains">A substring that should be contained in the exception message.</param>
 public sealed record ExpectedError(string ExceptionType, string MessageContains);
-
-/// <summary>
-/// Expected output schema for comparison (mirrors SinkDto structure).
-/// </summary>
-public sealed class ExpectedSinkDto
-{
-    /// <summary>
-    /// Gets or sets the source identifier.
-    /// </summary>
-    public string? SourceId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the expected records.
-    /// </summary>
-    public List<ExpectedSinkRecord>? Records { get; set; }
-}
-
-/// <summary>
-/// Expected record schema for comparison.
-/// </summary>
-public sealed class ExpectedSinkRecord
-{
-    /// <summary>
-    /// Gets or sets the record identifier.
-    /// </summary>
-    public string? Id { get; set; }
-
-    /// <summary>
-    /// Gets or sets the record name.
-    /// </summary>
-    public string? Name { get; set; }
-
-    /// <summary>
-    /// Gets or sets the record value.
-    /// </summary>
-    public decimal Value { get; set; }
-
-    /// <summary>
-    /// Gets or sets additional properties.
-    /// </summary>
-    public Dictionary<string, object>? Properties { get; set; }
-}

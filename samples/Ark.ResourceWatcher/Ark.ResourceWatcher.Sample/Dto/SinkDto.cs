@@ -5,7 +5,7 @@ namespace Ark.ResourceWatcher.Sample.Dto;
 /// <summary>
 /// Data transfer object for sending processed data to a sink API.
 /// </summary>
-public sealed class SinkDto
+public sealed record SinkDto
 {
     /// <summary>
     /// Gets or sets the source blob identifier.
@@ -16,16 +16,6 @@ public sealed class SinkDto
     /// Gets or sets the processed records.
     /// </summary>
     public required IReadOnlyList<SinkRecord> Records { get; init; }
-
-    /// <summary>
-    /// Gets or sets the total count of records.
-    /// </summary>
-    public int TotalCount => Records.Count;
-
-    /// <summary>
-    /// Gets or sets the processing timestamp.
-    /// </summary>
-    public DateTimeOffset ProcessedAt { get; init; } = DateTimeOffset.UtcNow;
 }
 
 /// <summary>
@@ -47,9 +37,4 @@ public sealed record SinkRecord
     /// Gets or sets the record value.
     /// </summary>
     public decimal Value { get; init; }
-
-    /// <summary>
-    /// Gets or sets additional properties.
-    /// </summary>
-    public Dictionary<string, object>? Properties { get; init; }
 }

@@ -105,30 +105,6 @@ public sealed class CsvTransformService
             Map(m => m.Id).Name("id").Index(0);
             Map(m => m.Name).Name("name").Index(1);
             Map(m => m.Value).Name("value").Index(2);
-            
-            // Map additional columns to Properties dictionary
-            // This allows the CSV to have extra columns without breaking
-            Map(m => m.Properties).Convert(args =>
-            {
-                var properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                
-                // Get all headers
-                var headerRecord = args.Row.HeaderRecord;
-                if (headerRecord == null) return null;
-                
-                // Skip the first 3 columns (id, name, value) and collect the rest
-                for (int i = 3; i < headerRecord.Length; i++)
-                {
-                    var header = headerRecord[i];
-                    var value = args.Row.GetField(i);
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        properties[header] = value;
-                    }
-                }
-                
-                return properties.Count > 0 ? properties : null;
-            });
         }
     }
 }
