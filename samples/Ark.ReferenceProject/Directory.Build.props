@@ -23,43 +23,49 @@
 	</PropertyGroup>
 
 
-	<PropertyGroup>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  <PropertyGroup Label="Common Build Settings">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
 
-		<!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
-		<EmbedUntrackedSources>true</EmbedUntrackedSources>
-		
-		<DebugType>portable</DebugType>
-		<DebugSymbols>true</DebugSymbols>
+	<!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+    
+    <DebugType>portable</DebugType>
+	<DebugSymbols>true</DebugSymbols>
 
-		<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
-		
-		<!-- static graph evaluation doesn't yield identical results between Win+VS vs Linux+dotnetcli. Renovate fails to run correctly. -->
-		<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
-		<Deterministic>true</Deterministic>
-		
-		<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
-		
-		<Features>strict</Features>
+	<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
+	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+	<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+	  
 
-		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<AnalysisLevel>latest-all</AnalysisLevel>
-		<LangVersion>latest</LangVersion>
+	<!--
+      Disabling static graph restore due to a bug related to NuGetAuditSuppress.
+      See: https://github.com/NuGet/Home/issues/14300
+    -->
+	<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
+    <RestoreSerializeGlobalProperties>true</RestoreSerializeGlobalProperties>
 
-		<!--
-		Other options are available. Read the documentation for more information:
-		https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
-		-->
-		<GenerateSBOM>true</GenerateSBOM>
-		
-    	<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+	<Deterministic>true</Deterministic>
+	
+	<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
+	<Features>strict</Features>
 
-	</PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <LangVersion>latest</LangVersion>
+
+	<!--
+      Other options are available. Read the documentation for more information:
+      https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
+    -->
+	<GenerateSBOM>true</GenerateSBOM>
+
+	<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+
+  </PropertyGroup>
 
 	<PropertyGroup Label="NuGet Audit">
 		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>

@@ -9,7 +9,19 @@
   </PropertyGroup>
 
 
-  <PropertyGroup>
+	<PropertyGroup Label="Continuous Integration Build Detection">
+		<!-- Azure Pipelines / DevOpsServer -->
+		<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
+
+		<!-- GitHub Actions -->
+		<_IsGitHubActions Condition="'$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>
+		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+
+		<!-- Set by many build agents -->
+		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+	</PropertyGroup>
+
+  <PropertyGroup Label="Common Build Settings">
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
@@ -106,19 +118,6 @@
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
 	</ItemGroup>
 	
-	<PropertyGroup Label="Continuous Integration Build Detection">
-		<!-- Azure Pipelines / DevOpsServer -->
-		<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
-
-		<!-- GitHub Actions -->
-		<_IsGitHubActions Condition="'$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>
-		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-
-		<!-- Set by many build agents -->
-		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
-	</PropertyGroup>
-
-
     <PropertyGroup>
 	    <!-- https://developercommunity.visualstudio.com/t/application-insight-doesnt-show-logs-from-local-de/1240506 -->
 	    <!-- https://stackoverflow.com/a/64877356 -->
