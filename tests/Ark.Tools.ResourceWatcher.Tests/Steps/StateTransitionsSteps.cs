@@ -20,7 +20,12 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher.Tests.Steps
 {
+    /// <summary>
+    /// Step definitions for state transition tests.
+    /// These bindings are scoped to the @resourcewatcher tag to avoid conflicts with SqlStateProviderSteps.
+    /// </summary>
     [Binding]
+    [Scope(Tag = "resourcewatcher")]
     public sealed class StateTransitionsSteps : IDisposable
     {
         private readonly ScenarioContext _scenarioContext;
@@ -68,15 +73,14 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the current time is ""(.*)""")]
         public void GivenTheCurrentTimeIs(string timeString)
         {
-            var localDateTime = LocalDateTimePattern.ExtendedIso.Parse(timeString).Value;
-            var instant = localDateTime.InUtc().ToInstant();
+            var instant = CommonStepHelpers.ParseInstant(timeString);
             _clock = new FakeClock(instant);
         }
 
         [Given(@"^a resource ""(.*)"" with Modified ""([^""]*)""$")]
         public void GivenAResourceWithModified(string resourceId, string modifiedString)
         {
-            var modified = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
+            var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var metadata = new StubResourceMetadata
             {
                 ResourceId = resourceId,
@@ -96,7 +100,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"^a resource ""(.*)"" with Modified ""([^""]*)"" and checksum ""([^""]*)""$")]
         public void GivenAResourceWithModifiedAndChecksum(string resourceId, string modifiedString, string checksum)
         {
-            var modified = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
+            var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var metadata = new StubResourceMetadata
             {
                 ResourceId = resourceId,
@@ -116,10 +120,15 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the resource has ModifiedSource ""(.*)"" at ""(.*)""")]
         public void GivenTheResourceHasModifiedSourceAt(string sourceName, string modifiedString)
         {
-            var modified = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
+            SetModifiedSource(sourceName, modifiedString);
+        }
+
+        private void SetModifiedSource(string sourceName, string modifiedString)
+        {
+            var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var lastMetadata = _metadata.Last();
-            var sources = lastMetadata.ModifiedSources ?? new Dictionary<string, LocalDateTime>(StringComparer.OrdinalIgnoreCase);
-            sources[sourceName.ToLowerInvariant()] = modified;
+            var sources = lastMetadata.ModifiedSources ?? CommonStepHelpers.CreateModifiedSourcesDictionary();
+            sources[CommonStepHelpers.NormalizeSourceName(sourceName)] = modified;
             var updatedMetadata = new StubResourceMetadata
             {
                 ResourceId = lastMetadata.ResourceId,
@@ -158,7 +167,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the resource was previously processed with Modified ""(.*)""")]
         public void GivenTheResourceWasPreviouslyProcessedWithModified(string modifiedString)
         {
-            var modified = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
+            var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var lastMetadata = _metadata.Last();
             _stateProvider.SetState(_config.WorkerName, lastMetadata.ResourceId, modified, null, null, 0, _clock.GetCurrentInstant());
         }
@@ -166,7 +175,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"""(.*)"" was previously processed with Modified ""(.*)""")]
         public void GivenResourceWasPreviouslyProcessedWithModified(string resourceId, string modifiedString)
         {
-            var modified = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
+            var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             _stateProvider.SetState(_config.WorkerName, resourceId, modified, null, null, 0, _clock.GetCurrentInstant());
         }
 
@@ -184,15 +193,15 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the previous state had ModifiedSource ""(.*)"" at ""(.*)""")]
         public void GivenThePreviousStateHadModifiedSourceAt(string sourceName, string modifiedString)
         {
-            var modified = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
+            var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var lastMetadata = _metadata.Last();
             var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
             if (state != null)
             {
                 var sources = state.ModifiedSources != null
                     ? new Dictionary<string, LocalDateTime>(state.ModifiedSources, StringComparer.OrdinalIgnoreCase)
-                    : new Dictionary<string, LocalDateTime>(StringComparer.OrdinalIgnoreCase);
-                sources[sourceName.ToLowerInvariant()] = modified;
+                    : CommonStepHelpers.CreateModifiedSourcesDictionary();
+                sources[CommonStepHelpers.NormalizeSourceName(sourceName)] = modified;
                 _stateProvider.SetState(_config.WorkerName, lastMetadata.ResourceId, state.Modified, sources, state.CheckSum, state.RetryCount, state.LastEvent);
             }
         }
@@ -211,8 +220,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the previous state has RetryCount of (.*) and LastEvent ""(.*)""")]
         public void GivenThePreviousStateHasRetryCountOfAndLastEvent(int retryCount, string lastEventString)
         {
-            var lastEvent = LocalDateTimePattern.ExtendedIso.Parse(lastEventString).Value;
-            var instant = lastEvent.InUtc().ToInstant();
+            var instant = CommonStepHelpers.ParseInstant(lastEventString);
             var lastMetadata = _metadata.Last();
             var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
             if (state != null)
@@ -244,8 +252,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the ban was applied at ""(.*)""")]
         public void GivenTheBanWasAppliedAt(string banTimeString)
         {
-            var banTime = LocalDateTimePattern.ExtendedIso.Parse(banTimeString).Value;
-            var instant = banTime.InUtc().ToInstant();
+            var instant = CommonStepHelpers.ParseInstant(banTimeString);
             var lastMetadata = _metadata.Last();
             var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
             if (state != null)
@@ -275,8 +282,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [When(@"the ResourceWatcher runs at ""(.*)""")]
         public async Task WhenTheResourceWatcherRunsAt(string timeString)
         {
-            var localDateTime = LocalDateTimePattern.ExtendedIso.Parse(timeString).Value;
-            var instant = localDateTime.InUtc().ToInstant();
+            var instant = CommonStepHelpers.ParseInstant(timeString);
             _clock = new FakeClock(instant);
             await RunWatcherAsync();
         }

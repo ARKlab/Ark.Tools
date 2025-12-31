@@ -6,7 +6,6 @@
     <Project Path="samples/Test.SingletonBackgroundService/Test.SingletonBackgroundService.csproj">
       <BuildDependency Project="src/common/Ark.Tools.Hosting/Ark.Tools.Hosting.csproj" />
     </Project>
-    <Project Path="samples/TesterWorker/TesterWorker.csproj" />
     <Project Path="samples/TestLinkGenerator/TestLinkGenerator.csproj" />
     <Project Path="samples/TestReceiver/TestReceiver.csproj" />
     <Project Path="samples/TestWorker/TestWorker.csproj" />

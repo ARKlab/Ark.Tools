@@ -9,6 +9,7 @@
     <OutputType>Exe</OutputType>
     <EnableMSTestRunner>true</EnableMSTestRunner>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TestTfmsInParallel>false</TestTfmsInParallel>
   </PropertyGroup>
 
   <ItemGroup Label="Testing Platform Settings">
