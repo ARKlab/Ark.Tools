@@ -5,12 +5,15 @@ using System.Text;
 
 using Ark.ResourceWatcher.Sample.Dto;
 
+using CsvHelper;
+using CsvHelper.Configuration;
+
 namespace Ark.ResourceWatcher.Sample.Transform;
 
 /// <summary>
 /// Transforms CSV byte content to SinkDto.
 /// </summary>
-public sealed class CsvTransformService : ITransformService<byte[], SinkDto>
+public sealed class CsvTransformService
 {
     private readonly string _sourceId;
 
@@ -23,54 +26,39 @@ public sealed class CsvTransformService : ITransformService<byte[], SinkDto>
         _sourceId = sourceId;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Transforms CSV byte content to SinkDto.
+    /// </summary>
+    /// <param name="input">The CSV data as a byte array.</param>
+    /// <returns>The transformed SinkDto.</returns>
     public SinkDto Transform(byte[] input)
     {
         ArgumentNullException.ThrowIfNull(input);
 
         var content = Encoding.UTF8.GetString(input);
-        var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (lines.Length == 0)
+        
+        using var reader = new StringReader(content);
+        using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            return new SinkDto
-            {
-                SourceId = _sourceId,
-                Records = []
-            };
+            HasHeaderRecord = true,
+            TrimOptions = TrimOptions.Trim,
+            MissingFieldFound = null
+        });
+
+        csv.Context.RegisterClassMap<SinkRecordMap>();
+
+        List<SinkRecord> records;
+        try
+        {
+            records = csv.GetRecords<SinkRecord>().ToList();
         }
-
-        // First line is header
-        var headers = lines[0].Split(',').Select(h => h.Trim()).ToArray();
-        var records = new List<SinkRecord>();
-
-        for (int i = 1; i < lines.Length; i++)
+        catch (CsvHelper.CsvHelperException ex)
         {
-            var values = lines[i].Split(',');
-            if (values.Length < 3)
-            {
-                throw new TransformException($"Invalid CSV format at line {i + 1}: expected at least 3 columns");
-            }
-
-            var record = new SinkRecord
-            {
-                Id = values[0].Trim(),
-                Name = values[1].Trim(),
-                Value = decimal.Parse(values[2].Trim(), CultureInfo.InvariantCulture)
-            };
-
-            // Add additional columns as properties
-            if (values.Length > 3)
-            {
-                var properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                for (int j = 3; j < values.Length && j < headers.Length; j++)
-                {
-                    properties[headers[j]] = values[j].Trim();
-                }
-                record = record with { Properties = properties };
-            }
-
-            records.Add(record);
+            throw new TransformException($"CSV parsing error: {ex.Message}", ex);
+        }
+        catch (FormatException ex)
+        {
+            throw new TransformException($"Invalid data format: {ex.Message}", ex);
         }
 
         return new SinkDto
@@ -78,6 +66,20 @@ public sealed class CsvTransformService : ITransformService<byte[], SinkDto>
             SourceId = _sourceId,
             Records = records
         };
+    }
+
+    /// <summary>
+    /// CsvHelper ClassMap for mapping CSV columns to SinkRecord properties.
+    /// </summary>
+    private sealed class SinkRecordMap : ClassMap<SinkRecord>
+    {
+        public SinkRecordMap()
+        {
+            Map(m => m.Id).Index(0).Name("Id");
+            Map(m => m.Name).Index(1).Name("Name");
+            Map(m => m.Value).Index(2).Name("Value");
+            // Properties field is not mapped from CSV, handled separately if needed
+        }
     }
 }
 

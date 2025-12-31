@@ -290,7 +290,8 @@ host.UseDataProvider<MyProvider>(d =>
 
 host.AppendFileProcessor<MyProcessor>(d =>
 {
-    // Scoped - new instance per resource
+    // Scoped - new instance per Run(), shared across all resources in the same Run()
+    // Use this to share 'session' objects (e.g., connection to SFTP/DB) during a Run()
     d.Container.Register<ITransformService, TransformService>(Lifestyle.Scoped);
 });
 ```
@@ -359,9 +360,9 @@ result.ResultType.Should().Be(ResultType.Normal);
 
 ## Best Practices
 
-1. **Use meaningful ResourceIds**: Include enough context to identify the resource uniquely
-2. **Set appropriate BanDuration**: Long enough to avoid hammering failed resources, short enough to retry after fixes
+1. **ResourceIds MUST be unique**: ResourceId MUST uniquely identify a specific resource - include enough context to ensure uniqueness
+2. **Use default BanDuration unless needed**: The default BanDuration is typically sufficient; only customize if you have specific requirements
 3. **Implement idempotent processors**: Resources may be reprocessed on failures
-4. **Use checksums for unreliable timestamps**: Some sources don't update Modified reliably
+4. **Checksums are optional**: Use checksums for unreliable timestamps when sources don't update Modified reliably, but they are not required
 5. **Store incremental state in Extensions**: For append-only or cursor-based loading
 6. **Configure parallelism carefully**: Balance throughput vs. API rate limits

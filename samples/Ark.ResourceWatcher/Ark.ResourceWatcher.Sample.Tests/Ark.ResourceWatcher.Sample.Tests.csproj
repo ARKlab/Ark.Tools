@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -45,10 +44,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Ark.ResourceWatcher.Sample\Ark.ResourceWatcher.Sample.csproj" />
     <ProjectReference Include="..\..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.Testing\Ark.Tools.ResourceWatcher.Testing.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Reqnroll" />
+    <ProjectReference Include="..\..\..\src\common\Ark.Tools.Reqnroll\Ark.Tools.Reqnroll.csproj" />
   </ItemGroup>
 
 </Project>
