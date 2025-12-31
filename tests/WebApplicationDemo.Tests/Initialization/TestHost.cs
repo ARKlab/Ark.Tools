@@ -14,8 +14,6 @@ using System.Net.Http;
 
 using Reqnroll;
 
-using WebApplicationDemo;
-
 [assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
 
 namespace WebApplicationDemo.Tests

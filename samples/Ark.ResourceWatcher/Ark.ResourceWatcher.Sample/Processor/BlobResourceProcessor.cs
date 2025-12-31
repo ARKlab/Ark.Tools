@@ -11,46 +11,52 @@ using Flurl.Http;
 
 using NLog;
 
-namespace Ark.ResourceWatcher.Sample.Processor;
-
-/// <summary>
-/// Processor that transforms blob content and sends it to a sink API.
-/// </summary>
-public sealed class BlobResourceProcessor : IResourceProcessor<BlobResource, BlobMetadata>
+namespace Ark.ResourceWatcher.Sample.Processor
 {
-    private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-
-    private readonly IFlurlClient _client;
-
     /// <summary>
-    /// Initializes a new instance of the <see cref="BlobResourceProcessor"/> class.
+    /// Processor that transforms blob content and sends it to a sink API.
     /// </summary>
-    /// <param name="clientFactory">The Flurl client factory.</param>
-    /// <param name="sinkUrl">The sink API URL.</param>
-    public BlobResourceProcessor(IArkFlurlClientFactory clientFactory, Uri sinkUrl)
+    public sealed class BlobResourceProcessor : IResourceProcessor<BlobResource, BlobMetadata>
     {
-        _client = clientFactory.Get(sinkUrl);
+        private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
+
+        private readonly IFlurlClient _client;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BlobResourceProcessor"/> class.
+        /// </summary>
+        /// <param name="clientFactory">The Flurl client factory.</param>
+        /// <param name="config"></param>
+        public BlobResourceProcessor(IArkFlurlClientFactory clientFactory, IBlobResourceProcessorConfig config)
+        {
+            _client = clientFactory.Get(config.SinkUrl);
+        }
+
+        /// <inheritdoc/>
+        public async Task Process(BlobResource file, CancellationToken ctk = default)
+        {
+            _logger.Info(CultureInfo.InvariantCulture, "Processing blob {ResourceId} ({Size} bytes)",
+                file.Metadata.ResourceId, file.Data.Length);
+
+            // Transform the CSV content
+            var transformer = new CsvTransformService(file.Metadata.ResourceId);
+            var sinkData = transformer.Transform(file.Data);
+
+            _logger.Debug(CultureInfo.InvariantCulture, "Transformed {RecordCount} records from {ResourceId}",
+                sinkData.Records.Count, file.Metadata.ResourceId);
+
+            // Send to sink API
+            await _client
+                .Request("data")
+                .PostJsonAsync(sinkData, cancellationToken: ctk);
+
+            _logger.Info(CultureInfo.InvariantCulture, "Successfully processed blob {ResourceId}",
+                file.Metadata.ResourceId);
+        }
     }
 
-    /// <inheritdoc/>
-    public async Task Process(BlobResource file, CancellationToken ctk = default)
+    public interface IBlobResourceProcessorConfig
     {
-        _logger.Info(CultureInfo.InvariantCulture, "Processing blob {ResourceId} ({Size} bytes)",
-            file.Metadata.ResourceId, file.Data.Length);
-
-        // Transform the CSV content
-        var transformer = new CsvTransformService(file.Metadata.ResourceId);
-        var sinkData = transformer.Transform(file.Data);
-
-        _logger.Debug(CultureInfo.InvariantCulture, "Transformed {RecordCount} records from {ResourceId}",
-            sinkData.Records.Count, file.Metadata.ResourceId);
-
-        // Send to sink API
-        await _client
-            .Request("data")
-            .PostJsonAsync(sinkData, cancellationToken: ctk);
-
-        _logger.Info(CultureInfo.InvariantCulture, "Successfully processed blob {ResourceId}",
-            file.Metadata.ResourceId);
+        Uri SinkUrl { get; }
     }
 }

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 using Ark.ResourceWatcher.Sample.Config;
 using Ark.ResourceWatcher.Sample.Tests.Mocks;
-using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.Testing;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -15,64 +14,67 @@ using NodaTime;
 // Disable parallel test execution for BDD scenarios
 [assembly: Parallelize(Scope = ExecutionScope.ClassLevel, Workers = 1)]
 
-namespace Ark.ResourceWatcher.Sample.Tests.Hooks;
-
-/// <summary>
-/// Shared test context for BlobWorkerHost tests.
-/// </summary>
-public sealed class BlobTestContext : IDisposable
+namespace Ark.ResourceWatcher.Sample.Tests.Hooks
 {
     /// <summary>
-    /// Gets or sets the mock blob storage API.
+    /// Shared test context for BlobWorkerHost tests.
     /// </summary>
-    public MockBlobStorageApi BlobStorageApi { get; } = new();
-
-    /// <summary>
-    /// Gets or sets the mock sink API.
-    /// </summary>
-    public MockSinkApi SinkApi { get; } = new();
-
-    /// <summary>
-    /// Gets or sets the testable state provider.
-    /// </summary>
-    public TestableStateProvider StateProvider { get; } = new();
-
-    /// <summary>
-    /// Gets or sets the testing diagnostic listener.
-    /// </summary>
-    public TestingDiagnosticListener DiagnosticListener { get; } = new();
-
-    /// <summary>
-    /// Gets or sets the worker configuration.
-    /// </summary>
-    public BlobWorkerHostConfig Config { get; set; } = new()
+    public sealed class BlobTestContext : IDisposable
     {
-        WorkerName = "TestBlobWorker",
-        DegreeOfParallelism = 1,
-        Sleep = TimeSpan.FromSeconds(1),
-        MaxRetries = 3,
-        BanDuration = Duration.FromMinutes(10),
-        IgnoreState = false
-    };
+        /// <summary>
+        /// Gets or sets the mock blob storage API.
+        /// </summary>
+        public MockBlobStorageApi BlobStorageApi { get; } = new();
 
-    /// <summary>
-    /// Gets the clock for testing.
-    /// </summary>
-    public IClock Clock { get; } = SystemClock.Instance;
+        /// <summary>
+        /// Gets or sets the mock sink API.
+        /// </summary>
+        public MockSinkApi SinkApi { get; } = new();
 
-    /// <summary>
-    /// Gets the last processing results.
-    /// </summary>
-    public IReadOnlyDictionary<string, ResourceProcessingResult> LastResults => DiagnosticListener.Results;
+        /// <summary>
+        /// Gets or sets the testable state provider.
+        /// </summary>
+        public TestableStateProvider StateProvider { get; } = new();
 
-    /// <summary>
-    /// Disposes the test context.
-    /// </summary>
-    public void Dispose()
-    {
-        BlobStorageApi.Reset();
-        SinkApi.Reset();
-        StateProvider.ClearAll();
-        DiagnosticListener.Clear();
+        /// <summary>
+        /// Gets or sets the testing diagnostic listener.
+        /// </summary>
+        public TestingDiagnosticListener DiagnosticListener { get; } = new();
+
+        /// <summary>
+        /// Gets or sets the worker configuration.
+        /// </summary>
+        public BlobWorkerHostConfig Config { get; set; } = new()
+        {
+            WorkerName = "TestBlobWorker",
+            DegreeOfParallelism = 1,
+            Sleep = TimeSpan.FromSeconds(1),
+            MaxRetries = 3,
+            BanDuration = Duration.FromMinutes(10),
+            IgnoreState = false,
+            BlobStorageUrl = new Uri("http://localhost:10000"),
+            SinkUrl = new Uri("http://localhost:20000")
+        };
+
+        /// <summary>
+        /// Gets the clock for testing.
+        /// </summary>
+        public IClock Clock { get; } = SystemClock.Instance;
+
+        /// <summary>
+        /// Gets the last processing results.
+        /// </summary>
+        public IReadOnlyDictionary<string, ResourceProcessingResult> LastResults => DiagnosticListener.Results;
+
+        /// <summary>
+        /// Disposes the test context.
+        /// </summary>
+        public void Dispose()
+        {
+            BlobStorageApi.Reset();
+            SinkApi.Reset();
+            StateProvider.ClearAll();
+            DiagnosticListener.Clear();
+        }
     }
 }

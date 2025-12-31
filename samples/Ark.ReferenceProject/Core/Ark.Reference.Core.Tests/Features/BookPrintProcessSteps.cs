@@ -1,19 +1,10 @@
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.Tests.Init;
-using Ark.Tools.Core;
 
 using AwesomeAssertions;
 
-using Flurl;
-
-using Microsoft.AspNetCore.Mvc;
-
 using Reqnroll;
-using Reqnroll.Assist;
-
-using System;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Tests.Features
 {

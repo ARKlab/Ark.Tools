@@ -86,6 +86,10 @@
     <File Path="samples/Ark.ReferenceProject/Directory.Build.targets" />
     <File Path="samples/Ark.ReferenceProject/global.json" />
   </Folder>
+  <Folder Name="/samples/Ark.ResourceWatcher/">
+    <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample/Ark.ResourceWatcher.Sample.csproj" />
+    <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample.Tests/Ark.ResourceWatcher.Sample.Tests.csproj" />
+  </Folder>
   <Folder Name="/samples/Ark.Reference/Core/">
     <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.API/Ark.Reference.Core.API.csproj" />
     <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Application/Ark.Reference.Core.Application.csproj" />

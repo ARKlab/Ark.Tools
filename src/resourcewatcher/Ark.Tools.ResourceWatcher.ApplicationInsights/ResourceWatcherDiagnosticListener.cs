@@ -12,7 +12,6 @@ using NodaTime.Text;
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights
 {

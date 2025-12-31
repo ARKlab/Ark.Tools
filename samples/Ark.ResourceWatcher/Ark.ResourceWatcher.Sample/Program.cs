@@ -10,34 +10,34 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Ark.ResourceWatcher.Sample;
-
-sealed class Program
+namespace Ark.ResourceWatcher.Sample
 {
-    static void Main(string[] args)
+    sealed class Program
     {
-        var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
-            .AddWorkerHostInfrastracture()
-            .ConfigureNLog("BlobWorkerSample")
-            .AddWorkerHost(sp =>
-            {
-                var cfg = sp.GetRequiredService<IConfiguration>();
-
-                var config = new BlobWorkerHostConfig
+        static void Main(string[] args)
+        {
+            var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
+                .AddWorkerHostInfrastracture()
+                .ConfigureNLog("BlobWorkerSample")
+                .AddWorkerHost(sp =>
                 {
-                    WorkerName = "BlobWorkerSample",
-                    Sleep = TimeSpan.FromMinutes(1),
-                    MaxRetries = 3,
-                    DegreeOfParallelism = 2
-                };
+                    var cfg = sp.GetRequiredService<IConfiguration>();
 
-                var blobStorageUrl = new Uri(cfg["BlobStorage:BaseUrl"] ?? "http://localhost:5000");
-                var sinkUrl = new Uri(cfg["Sink:BaseUrl"] ?? "http://localhost:5001");
+                    var config = new BlobWorkerHostConfig
+                    {
+                        WorkerName = "BlobWorkerSample",
+                        Sleep = TimeSpan.FromMinutes(1),
+                        MaxRetries = 3,
+                        DegreeOfParallelism = 2,
+                        BlobStorageUrl = new Uri(cfg["BlobStorage:BaseUrl"] ?? "http://localhost:10000"),
+                        SinkUrl = new Uri(cfg["Sink:BaseUrl"] ?? "https://statuscodes.io/200")
+                    };
 
-                return new BlobWorkerHost(config, blobStorageUrl, sinkUrl);
-            })
-            .UseConsoleLifetime();
+                    return new BlobWorkerHost(config);
+                })
+                .UseConsoleLifetime();
 
-        hostBuilder.StartAndWaitForShutdown();
+            hostBuilder.StartAndWaitForShutdown();
+        }
     }
 }
