@@ -168,7 +168,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
                 switch (field)
                 {
                     case "Modified" when !string.IsNullOrEmpty(value):
-                        state.Modified = LocalDateTimePattern.ExtendedIso.Parse(value).Value;
+                        state.Modified = CommonStepHelpers.ParseLocalDateTime(value);
                         break;
                     case "RetryCount":
                         state.RetryCount = int.Parse(value, CultureInfo.InvariantCulture);
@@ -186,8 +186,13 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the resource has ModifiedSource ""(.*)"" at ""(.*)""")]
         public void GivenTheResourceHasModifiedSourceAt(string sourceName, string modifiedString)
         {
-            var modified = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
-            _currentState!.ModifiedSources ??= new Dictionary<string, LocalDateTime>(StringComparer.OrdinalIgnoreCase);
+            SetModifiedSource(sourceName, modifiedString);
+        }
+
+        private void SetModifiedSource(string sourceName, string modifiedString)
+        {
+            var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
+            _currentState!.ModifiedSources ??= CommonStepHelpers.CreateModifiedSourcesDictionary();
             _currentState.ModifiedSources[sourceName] = modified;
             // Clear Modified if using ModifiedSources
             _currentState.Modified = default;
@@ -257,7 +262,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
                 switch (field)
                 {
                     case "Modified" when !string.IsNullOrEmpty(value):
-                        _currentState.Modified = LocalDateTimePattern.ExtendedIso.Parse(value).Value;
+                        _currentState.Modified = CommonStepHelpers.ParseLocalDateTime(value);
                         break;
                     case "RetryCount":
                         _currentState.RetryCount = int.Parse(value, CultureInfo.InvariantCulture);
@@ -334,7 +339,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Then(@"resource ""(.*)"" should have Modified ""(.*)""")]
         public void ThenResourceShouldHaveModified(string resourceId, string modifiedString)
         {
-            var expected = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
+            var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var state = _loadedStates!.First(s => s.ResourceId == resourceId);
             state.Modified.Should().Be(expected);
         }
@@ -356,7 +361,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Then(@"resource ""(.*)"" should have ModifiedSource ""(.*)"" at ""(.*)""")]
         public void ThenResourceShouldHaveModifiedSourceAt(string resourceId, string sourceName, string modifiedString)
         {
-            var expected = LocalDateTimePattern.ExtendedIso.Parse(modifiedString).Value;
+            var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var state = _loadedStates!.First(s => s.ResourceId == resourceId);
             state.ModifiedSources.Should().NotBeNull();
             state.ModifiedSources.Should().ContainKey(sourceName);

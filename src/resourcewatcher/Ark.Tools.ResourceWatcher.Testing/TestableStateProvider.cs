@@ -24,22 +24,20 @@ namespace Ark.Tools.ResourceWatcher.Testing
         /// </summary>
         public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
         {
-            var res = new List<ResourceState>();
+            IEnumerable<ResourceState> res;
 
             if (resourceIds == null)
             {
-                res.AddRange(_store.Values.Where(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal)));
+                res = _store.Values.Where(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal));
             }
             else
             {
-                foreach (var r in resourceIds)
-                {
-                    if (_store.TryGetValue((tenant, r), out var s))
-                        res.Add(s);
-                }
+                res = resourceIds
+                    .Where(r => _store.ContainsKey((tenant, r)))
+                    .Select(r => _store[(tenant, r)]);
             }
 
-            return Task.FromResult(res.AsEnumerable());
+            return Task.FromResult(res);
         }
 
         /// <summary>

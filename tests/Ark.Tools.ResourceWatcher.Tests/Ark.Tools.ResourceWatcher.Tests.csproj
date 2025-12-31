@@ -13,10 +13,8 @@
       IMPORTANT: SqlStateProvider integration tests require sequential framework execution.
       The EnsureTableAreCreated() method drops/recreates UDT types, causing conflicts 
       when net8.0 and net10.0 run in parallel against the same database.
-      
-      Run tests with: dotnet test -framework net8.0 && dotnet test -framework net10.0
-      Or use the test.ps1 script in this folder.
     -->
+    <TestTfmsInParallel>false</TestTfmsInParallel>
     <TestingPlatformDisableParallel>true</TestingPlatformDisableParallel>
 
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>

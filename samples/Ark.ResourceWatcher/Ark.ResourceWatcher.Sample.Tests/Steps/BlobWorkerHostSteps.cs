@@ -82,20 +82,17 @@ public sealed class BlobWorkerHostSteps
             var lines = System.Text.Encoding.UTF8.GetString(resource.Data)
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-            var records = new List<Sample.Dto.SinkRecord>();
-            foreach (var line in lines.Skip(1)) // Skip header
-            {
-                var parts = line.Split(',');
-                if (parts.Length >= 3)
+            var records = lines
+                .Skip(1) // Skip header
+                .Select(line => line.Split(','))
+                .Where(parts => parts.Length >= 3)
+                .Select(parts => new Sample.Dto.SinkRecord
                 {
-                    records.Add(new Sample.Dto.SinkRecord
-                    {
-                        Id = parts[0].Trim(),
-                        Name = parts[1].Trim(),
-                        Value = decimal.TryParse(parts[2].Trim(), System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0
-                    });
-                }
-            }
+                    Id = parts[0].Trim(),
+                    Name = parts[1].Trim(),
+                    Value = decimal.TryParse(parts[2].Trim(), System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0
+                })
+                .ToList();
 
             var payload = new Sample.Dto.SinkDto
             {
