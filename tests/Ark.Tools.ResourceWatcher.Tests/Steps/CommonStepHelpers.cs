@@ -1,9 +1,16 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using AwesomeAssertions;
+
 using NodaTime;
 using NodaTime.Text;
+
+using Reqnroll;
+
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace Ark.Tools.ResourceWatcher.Tests.Steps;
 
@@ -60,5 +67,47 @@ internal static class CommonStepHelpers
     public static string NormalizeSourceName(string sourceName)
     {
         return sourceName.ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Populates a ResourceState from a Reqnroll DataTable with Field and Value columns.
+    /// </summary>
+    /// <param name="state">The ResourceState to populate.</param>
+    /// <param name="table">DataTable with Field and Value columns.</param>
+    public static void PopulateResourceStateFromTable(ResourceState state, DataTable table)
+    {
+        foreach (var row in table.Rows)
+        {
+            var field = row["Field"];
+            var value = row["Value"];
+
+            switch (field)
+            {
+                case "Modified" when !string.IsNullOrEmpty(value):
+                    state.Modified = ParseLocalDateTime(value);
+                    break;
+                case "RetryCount":
+                    state.RetryCount = int.Parse(value, CultureInfo.InvariantCulture);
+                    break;
+                case "CheckSum":
+                    state.CheckSum = value;
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the first item matching a predicate with a helpful assertion message.
+    /// </summary>
+    /// <typeparam name="T">The type of items in the collection.</typeparam>
+    /// <param name="source">The source collection.</param>
+    /// <param name="predicate">The predicate to match.</param>
+    /// <param name="itemDescription">Description for the assertion message.</param>
+    /// <returns>The first matching item.</returns>
+    public static T GetFirst<T>(this IEnumerable<T> source, Func<T, bool> predicate, string itemDescription)
+    {
+        var item = source.FirstOrDefault(predicate);
+        item.Should().NotBeNull($"{itemDescription} should exist");
+        return item!;
     }
 }

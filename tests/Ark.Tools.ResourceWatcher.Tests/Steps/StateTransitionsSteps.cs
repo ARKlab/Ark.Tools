@@ -80,21 +80,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"^a resource ""(.*)"" with Modified ""([^""]*)""$")]
         public void GivenAResourceWithModified(string resourceId, string modifiedString)
         {
-            var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-            var metadata = new StubResourceMetadata
-            {
-                ResourceId = resourceId,
-                Modified = modified,
-                ModifiedSources = null
-            };
-            _metadata.Add(metadata);
-            _resources[resourceId] = new StubResource
-            {
-                Metadata = metadata,
-                Data = $"Data for {resourceId}",
-                CheckSum = $"checksum-{resourceId}",
-                RetrievedAt = _clock.GetCurrentInstant()
-            };
+            GivenAResourceWithModifiedAndChecksum(resourceId, modifiedString, $"checksum-{resourceId}");
         }
 
         [Given(@"^a resource ""(.*)"" with Modified ""([^""]*)"" and checksum ""([^""]*)""$")]
@@ -150,18 +136,36 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         public void GivenTheResourceHasNotBeenSeenBefore()
         {
             // No state to set - resource is new
+            // This step exists for Gherkin readability and documentation
         }
 
         [Given(@"""(.*)"" has not been seen before")]
         public void GivenResourceHasNotBeenSeenBefore(string resourceId)
         {
             // No state to set - resource is new
+            // This step exists for Gherkin readability and documentation
         }
 
         [Given(@"none of the resources have been seen before")]
         public void GivenNoneOfTheResourcesHaveBeenSeenBefore()
         {
             // No state to set - all resources are new
+            // This step exists for Gherkin readability and documentation
+        }
+
+        /// <summary>
+        /// Helper method to update an existing state by applying a modifier action.
+        /// </summary>
+        private void UpdateExistingState(string resourceId, Action<ResourceState> modifier)
+        {
+            var state = _stateProvider.GetState(_config.WorkerName, resourceId);
+            if (state != null)
+            {
+                modifier(state);
+                _stateProvider.SetState(_config.WorkerName, resourceId, 
+                    state.Modified, state.ModifiedSources, state.CheckSum, 
+                    state.RetryCount, state.LastEvent);
+            }
         }
 
         [Given(@"the resource was previously processed with Modified ""(.*)""")]
@@ -183,11 +187,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         public void GivenThePreviousChecksumWas(string checksum)
         {
             var lastMetadata = _metadata.Last();
-            var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
-            if (state != null)
-            {
-                _stateProvider.SetState(_config.WorkerName, lastMetadata.ResourceId, state.Modified, state.ModifiedSources, checksum, state.RetryCount, state.LastEvent);
-            }
+            UpdateExistingState(lastMetadata.ResourceId, state => state.CheckSum = checksum);
         }
 
         [Given(@"the previous state had ModifiedSource ""(.*)"" at ""(.*)""")]
@@ -195,26 +195,21 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var lastMetadata = _metadata.Last();
-            var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
-            if (state != null)
+            UpdateExistingState(lastMetadata.ResourceId, state =>
             {
                 var sources = state.ModifiedSources != null
                     ? new Dictionary<string, LocalDateTime>(state.ModifiedSources, StringComparer.OrdinalIgnoreCase)
                     : CommonStepHelpers.CreateModifiedSourcesDictionary();
                 sources[CommonStepHelpers.NormalizeSourceName(sourceName)] = modified;
-                _stateProvider.SetState(_config.WorkerName, lastMetadata.ResourceId, state.Modified, sources, state.CheckSum, state.RetryCount, state.LastEvent);
-            }
+                state.ModifiedSources = sources;
+            });
         }
 
         [Given(@"the previous state has RetryCount of (.*)")]
         public void GivenThePreviousStateHasRetryCountOf(int retryCount)
         {
             var lastMetadata = _metadata.Last();
-            var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
-            if (state != null)
-            {
-                _stateProvider.SetState(_config.WorkerName, lastMetadata.ResourceId, state.Modified, state.ModifiedSources, state.CheckSum, retryCount, state.LastEvent);
-            }
+            UpdateExistingState(lastMetadata.ResourceId, state => state.RetryCount = retryCount);
         }
 
         [Given(@"the previous state has RetryCount of (.*) and LastEvent ""(.*)""")]
@@ -222,11 +217,11 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var instant = CommonStepHelpers.ParseInstant(lastEventString);
             var lastMetadata = _metadata.Last();
-            var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
-            if (state != null)
+            UpdateExistingState(lastMetadata.ResourceId, state =>
             {
-                _stateProvider.SetState(_config.WorkerName, lastMetadata.ResourceId, state.Modified, state.ModifiedSources, state.CheckSum, retryCount, instant);
-            }
+                state.RetryCount = retryCount;
+                state.LastEvent = instant;
+            });
         }
 
         [Given(@"the previous state has RetryCount of (.*) and LastEvent now")]
@@ -234,11 +229,11 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var instant = SystemClock.Instance.GetCurrentInstant();
             var lastMetadata = _metadata.Last();
-            var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
-            if (state != null)
+            UpdateExistingState(lastMetadata.ResourceId, state =>
             {
-                _stateProvider.SetState(_config.WorkerName, lastMetadata.ResourceId, state.Modified, state.ModifiedSources, state.CheckSum, retryCount, instant);
-            }
+                state.RetryCount = retryCount;
+                state.LastEvent = instant;
+            });
         }
 
         [Given(@"the resource is currently banned")]
@@ -254,11 +249,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var instant = CommonStepHelpers.ParseInstant(banTimeString);
             var lastMetadata = _metadata.Last();
-            var state = _stateProvider.GetState(_config.WorkerName, lastMetadata.ResourceId);
-            if (state != null)
-            {
-                _stateProvider.SetState(_config.WorkerName, lastMetadata.ResourceId, state.Modified, state.ModifiedSources, state.CheckSum, state.RetryCount, instant);
-            }
+            UpdateExistingState(lastMetadata.ResourceId, state => state.LastEvent = instant);
         }
 
         [Given(@"the processor is configured to fail for ""(.*)""")]

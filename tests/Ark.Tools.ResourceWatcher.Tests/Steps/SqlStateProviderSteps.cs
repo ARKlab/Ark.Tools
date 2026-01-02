@@ -160,24 +160,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
                 LastEvent = _now
             };
 
-            foreach (var row in table.Rows)
-            {
-                var field = row["Field"];
-                var value = row["Value"];
-
-                switch (field)
-                {
-                    case "Modified" when !string.IsNullOrEmpty(value):
-                        state.Modified = CommonStepHelpers.ParseLocalDateTime(value);
-                        break;
-                    case "RetryCount":
-                        state.RetryCount = int.Parse(value, CultureInfo.InvariantCulture);
-                        break;
-                    case "CheckSum":
-                        state.CheckSum = value;
-                        break;
-                }
-            }
+            CommonStepHelpers.PopulateResourceStateFromTable(state, table);
 
             _currentState = state;
             _statesToSave.Add(state);
@@ -249,57 +232,32 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
             await _stateProvider!.SaveStateAsync(_statesToSave);
         }
 
-        [When(@"I update resource ""(.*)"" with")]
-        public void WhenIUpdateResourceWith(string resourceId, DataTable table)
+        /// <summary>
+        /// Helper method to load state for a tenant with optional resource ID filtering.
+        /// </summary>
+        private async Task LoadStateForTenantAsync(string tenant, string[]? resourceIds = null)
         {
-            _currentState = _statesToSave.First(s => s.ResourceId == resourceId);
-
-            foreach (var row in table.Rows)
-            {
-                var field = row["Field"];
-                var value = row["Value"];
-
-                switch (field)
-                {
-                    case "Modified" when !string.IsNullOrEmpty(value):
-                        _currentState.Modified = CommonStepHelpers.ParseLocalDateTime(value);
-                        break;
-                    case "RetryCount":
-                        _currentState.RetryCount = int.Parse(value, CultureInfo.InvariantCulture);
-                        break;
-                    case "CheckSum":
-                        _currentState.CheckSum = value;
-                        break;
-                }
-            }
-
-            _currentState.LastEvent = _now;
+            var uniqueTenant = GetUniqueTenant(tenant);
+            _currentTenant = uniqueTenant;
+            _loadedStates = resourceIds == null
+                ? await _stateProvider!.LoadStateAsync(uniqueTenant)
+                : await _stateProvider!.LoadStateAsync(uniqueTenant, resourceIds);
         }
 
         [When(@"^I load state for tenant ""([^""]*)""$")]
         public async Task WhenILoadStateForTenant(string tenant)
-        {
-            var uniqueTenant = GetUniqueTenant(tenant);
-            _currentTenant = uniqueTenant;
-            _loadedStates = await _stateProvider!.LoadStateAsync(uniqueTenant);
-        }
+            => await LoadStateForTenantAsync(tenant);
 
         [When(@"^I load state for tenant ""([^""]*)"" with resource IDs ""([^""]*)""$")]
         public async Task WhenILoadStateForTenantWithResourceIDs(string tenant, string resourceIdsCsv)
         {
             var resourceIds = resourceIdsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var uniqueTenant = GetUniqueTenant(tenant);
-            _currentTenant = uniqueTenant;
-            _loadedStates = await _stateProvider!.LoadStateAsync(uniqueTenant, resourceIds);
+            await LoadStateForTenantAsync(tenant, resourceIds);
         }
 
         [When(@"^I load state for tenant ""([^""]*)"" with empty resource IDs$")]
         public async Task WhenILoadStateForTenantWithEmptyResourceIDs(string tenant)
-        {
-            var uniqueTenant = GetUniqueTenant(tenant);
-            _currentTenant = uniqueTenant;
-            _loadedStates = await _stateProvider!.LoadStateAsync(uniqueTenant, []);
-        }
+            => await LoadStateForTenantAsync(tenant, []);
 
         [When(@"^I load state for tenant ""([^""]*)"" with all (\d+) resource IDs$")]
         public async Task WhenILoadStateForTenantWithAllResourceIDs(string tenant, int count)
@@ -307,9 +265,15 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
             var resourceIds = Enumerable.Range(0, count)
                 .Select(i => string.Create(CultureInfo.InvariantCulture, $"batch-resource-{i:D5}"))
                 .ToArray();
-            var uniqueTenant = GetUniqueTenant(tenant);
-            _currentTenant = uniqueTenant;
-            _loadedStates = await _stateProvider!.LoadStateAsync(uniqueTenant, resourceIds);
+            await LoadStateForTenantAsync(tenant, resourceIds);
+        }
+
+        [When(@"I update resource ""(.*)"" with")]
+        public void WhenIUpdateResourceWith(string resourceId, DataTable table)
+        {
+            _currentState = _statesToSave.First(s => s.ResourceId == resourceId);
+            CommonStepHelpers.PopulateResourceStateFromTable(_currentState, table);
+            _currentState.LastEvent = _now;
         }
 
         [Then(@"the loaded state should contain resource ""(.*)""")]
@@ -336,33 +300,40 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
             _loadedStates.Should().BeEmpty();
         }
 
+        /// <summary>
+        /// Gets a loaded resource by ID with a helpful assertion message.
+        /// </summary>
+        private ResourceState GetLoadedResource(string resourceId)
+        {
+            return _loadedStates!.GetFirst(
+                s => s.ResourceId == resourceId,
+                $"Resource '{resourceId}' in loaded states");
+        }
+
         [Then(@"resource ""(.*)"" should have Modified ""(.*)""")]
         public void ThenResourceShouldHaveModified(string resourceId, string modifiedString)
         {
             var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-            var state = _loadedStates!.First(s => s.ResourceId == resourceId);
-            state.Modified.Should().Be(expected);
+            GetLoadedResource(resourceId).Modified.Should().Be(expected);
         }
 
         [Then(@"resource ""(.*)"" should have CheckSum ""(.*)""")]
         public void ThenResourceShouldHaveCheckSum(string resourceId, string checksum)
         {
-            var state = _loadedStates!.First(s => s.ResourceId == resourceId);
-            state.CheckSum.Should().Be(checksum);
+            GetLoadedResource(resourceId).CheckSum.Should().Be(checksum);
         }
 
         [Then(@"resource ""(.*)"" should have RetryCount (.*)")]
         public void ThenResourceShouldHaveRetryCount(string resourceId, int retryCount)
         {
-            var state = _loadedStates!.First(s => s.ResourceId == resourceId);
-            state.RetryCount.Should().Be(retryCount);
+            GetLoadedResource(resourceId).RetryCount.Should().Be(retryCount);
         }
 
         [Then(@"resource ""(.*)"" should have ModifiedSource ""(.*)"" at ""(.*)""")]
         public void ThenResourceShouldHaveModifiedSourceAt(string resourceId, string sourceName, string modifiedString)
         {
             var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-            var state = _loadedStates!.First(s => s.ResourceId == resourceId);
+            var state = GetLoadedResource(resourceId);
             state.ModifiedSources.Should().NotBeNull();
             state.ModifiedSources.Should().ContainKey(sourceName);
             state.ModifiedSources![sourceName].Should().Be(expected);
@@ -371,7 +342,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Then(@"resource ""(.*)"" should have extension ""(.*)"" with value ""(.*)""")]
         public void ThenResourceShouldHaveExtensionWithValue(string resourceId, string key, string expectedValue)
         {
-            var state = _loadedStates!.First(s => s.ResourceId == resourceId);
+            var state = GetLoadedResource(resourceId);
             state.Extensions.Should().NotBeNull();
 
             // Extensions come back as dynamic from JSON deserialization
