@@ -49,6 +49,14 @@ Since `TreatWarningsAsErrors` is set to `true` in `Directory.Build.props`, this 
 
 ### Affected Files and Specific Issues
 
+#### Quick Reference Table
+
+| File | Line | Unnecessary Using | Recommendation |
+|------|------|------------------|----------------|
+| `src/resourcewatcher/Ark.Tools.ResourceWatcher.ApplicationInsights/ResourceWatcherDiagnosticListener.cs` | 15 | `using System.Linq;` | Remove (LINQ is implicit in net8.0+) |
+| `src/aspnetcore/Ark.Tools.AspNetCore/JsonContext/ArkProblemDetailsJsonSerializerContext.cs` | 5 | `using System.Text.Json;` | Remove (only uses System.Text.Json.Serialization) |
+| `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Common/UrlComposer.cs` | 2 | `using Ark.Tools.Nodatime;` | Remove (not referenced in file) |
+
 #### 1. ResourceWatcherDiagnosticListener.cs
 **File:** `/home/runner/work/Ark.Tools/Ark.Tools/src/resourcewatcher/Ark.Tools.ResourceWatcher.ApplicationInsights/ResourceWatcherDiagnosticListener.cs`
 
