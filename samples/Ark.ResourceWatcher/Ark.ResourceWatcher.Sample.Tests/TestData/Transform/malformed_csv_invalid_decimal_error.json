@@ -1,0 +1,4 @@
+{
+  "exceptionType": "TransformException",
+  "messageContains": "CSV parsing error"
+}

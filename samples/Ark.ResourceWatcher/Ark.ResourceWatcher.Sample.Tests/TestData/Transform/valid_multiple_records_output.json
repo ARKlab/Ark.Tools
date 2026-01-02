@@ -1,0 +1,32 @@
+{
+  "sourceId": "test-source",
+  "records": [
+    {
+      "id": "001",
+      "name": "Widget A",
+      "value": 250.00,
+      "properties": {
+        "category": "Electronics",
+        "region": "North"
+      }
+    },
+    {
+      "id": "002",
+      "name": "Widget B",
+      "value": 175.50,
+      "properties": {
+        "category": "Home",
+        "region": "South"
+      }
+    },
+    {
+      "id": "003",
+      "name": "Widget C",
+      "value": 99.99,
+      "properties": {
+        "category": "Garden",
+        "region": "East"
+      }
+    }
+  ]
+}

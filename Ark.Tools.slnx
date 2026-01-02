@@ -1,21 +1,5 @@
 <Solution>
-  <Folder Name="/samples/">
-    <File Path="samples/.editorconfig" />
-    <Project Path="samples/LinuxWebJobHosting/LinuxWebJobHosting.csproj" />
-    <Project Path="samples/ProblemDetailsSample/ProblemDetailsSample.csproj" />
-    <Project Path="samples/Test.SingletonBackgroundService/Test.SingletonBackgroundService.csproj">
-      <BuildDependency Project="src/common/Ark.Tools.Hosting/Ark.Tools.Hosting.csproj" />
-    </Project>
-    <Project Path="samples/TesterWorker/TesterWorker.csproj" />
-    <Project Path="samples/TestLinkGenerator/TestLinkGenerator.csproj" />
-    <Project Path="samples/TestReceiver/TestReceiver.csproj" />
-    <Project Path="samples/TestWorker/TestWorker.csproj" />
-    <Project Path="samples/WebApplicationDemo/WebApplicationDemo.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/WebApplicationDemo.Tests/WebApplicationDemo.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/">
+  <Folder Name="/src/common/">
     <Project Path="src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />
@@ -58,6 +42,8 @@
     <Project Path="src/common/Ark.Tools.Sql.SqlServer/Ark.Tools.Sql.SqlServer.csproj" />
     <Project Path="src/common/Ark.Tools.Sql/Ark.Tools.Sql.csproj" />
     <Project Path="src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
+  </Folder>
+  <Folder Name="/src/aspnetcore/">
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.Auth0/Ark.Tools.AspNetCore.Auth0.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj" />
@@ -69,13 +55,28 @@
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.RavenDb/Ark.Tools.AspNetCore.RavenDb.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.Swashbuckle/Ark.Tools.AspNetCore.Swashbuckle.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore/Ark.Tools.AspNetCore.csproj" />
+  </Folder>
+  <Folder Name="/src/resourcewatcher/">
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.ApplicationInsights/Ark.Tools.ResourceWatcher.ApplicationInsights.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.Sql/Ark.Tools.ResourceWatcher.Sql.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Ftp/Ark.Tools.ResourceWatcher.WorkerHost.Ftp.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Hosting/Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Sql/Ark.Tools.ResourceWatcher.WorkerHost.Sql.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost/Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
+    <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.Testing/Ark.Tools.ResourceWatcher.Testing.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher/Ark.Tools.ResourceWatcher.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <File Path="samples/.editorconfig" />
+    <Project Path="samples/LinuxWebJobHosting/LinuxWebJobHosting.csproj" />
+    <Project Path="samples/ProblemDetailsSample/ProblemDetailsSample.csproj" />
+    <Project Path="samples/Test.SingletonBackgroundService/Test.SingletonBackgroundService.csproj">
+      <BuildDependency Project="src/common/Ark.Tools.Hosting/Ark.Tools.Hosting.csproj" />
+    </Project>
+    <Project Path="samples/TestLinkGenerator/TestLinkGenerator.csproj" />
+    <Project Path="samples/TestReceiver/TestReceiver.csproj" />
+    <Project Path="samples/TestWorker/TestWorker.csproj" />
+    <Project Path="samples/WebApplicationDemo/WebApplicationDemo.csproj" />
   </Folder>
   <Folder Name="/samples/Ark.Reference/">
     <Project Path="samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
@@ -97,6 +98,14 @@
     </Project>
     <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.WebInterface/Ark.Reference.Core.WebInterface.csproj" />
     <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/samples/Ark.ResourceWatcher/">
+    <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample/Ark.ResourceWatcher.Sample.csproj" />
+    <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample.Tests/Ark.ResourceWatcher.Sample.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ark.Tools.ResourceWatcher.Tests/Ark.Tools.ResourceWatcher.Tests.csproj" />
+    <Project Path="tests/WebApplicationDemo.Tests/WebApplicationDemo.Tests.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".devcontainer/docker-compose.yml" />

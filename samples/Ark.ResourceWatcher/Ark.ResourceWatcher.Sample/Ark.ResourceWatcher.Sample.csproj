@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="33.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.WorkerHost.Hosting\Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />
+    <ProjectReference Include="..\..\..\src\common\Ark.Tools.Http\Ark.Tools.Http.csproj" />
+    <ProjectReference Include="..\..\..\src\common\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,10 @@
+{
+  "sourceId": "test-source",
+  "records": [
+    {
+      "id": "001",
+      "name": "Widget With Spaces",
+      "value": 50.00
+    }
+  ]
+}

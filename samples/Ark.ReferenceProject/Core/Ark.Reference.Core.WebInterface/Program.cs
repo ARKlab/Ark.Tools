@@ -7,8 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using NLog.Extensions.Logging;
-
 using Rebus.Persistence.InMem;
 using Rebus.Transport.InMem;
 

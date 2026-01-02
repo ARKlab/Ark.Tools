@@ -1,0 +1,84 @@
+<Project>
+	<PropertyGroup>	
+		<TargetFramework>net10.0</TargetFramework>
+		<IsPackable>false</IsPackable>
+		<Nullable>enable</Nullable>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
+
+		<Version>0.9.1</Version>
+    
+	</PropertyGroup>
+
+	<PropertyGroup Label="Continuous Integration Build Detection">
+		<!-- Azure Pipelines / DevOpsServer -->
+		<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
+
+		<!-- GitHub Actions -->
+		<_IsGitHubActions Condition="'$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>
+		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+
+		<!-- Set by many build agents -->
+		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+	</PropertyGroup>
+
+
+  <PropertyGroup Label="Common Build Settings">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+
+	<!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+    
+    <DebugType>portable</DebugType>
+	<DebugSymbols>true</DebugSymbols>
+
+	<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
+	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+	<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+	  
+
+	<!--
+      Disabling static graph restore due to a bug related to NuGetAuditSuppress.
+      See: https://github.com/NuGet/Home/issues/14300
+    -->
+	<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
+    <RestoreSerializeGlobalProperties>true</RestoreSerializeGlobalProperties>
+
+	<Deterministic>true</Deterministic>
+	
+	<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
+	<Features>strict</Features>
+
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <LangVersion>latest</LangVersion>
+
+	<!--
+      Other options are available. Read the documentation for more information:
+      https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
+    -->
+	<GenerateSBOM>true</GenerateSBOM>
+
+	<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+
+  </PropertyGroup>
+
+	<PropertyGroup Label="NuGet Audit">
+		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
+		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
+		<NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
+		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
+	</PropertyGroup>
+
+	
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.101"  PrivateAssets="All" />
+		<PackageReference Include="Meziantou.Analyzer" Version="2.0.266" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.5" PrivateAssets="All" />
+	</ItemGroup>
+	
+</Project>

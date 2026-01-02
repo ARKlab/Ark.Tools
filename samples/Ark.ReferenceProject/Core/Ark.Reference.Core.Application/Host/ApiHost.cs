@@ -47,7 +47,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace Ark.Reference.Core.Application.Host
 {
