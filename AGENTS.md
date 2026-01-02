@@ -12,6 +12,7 @@
 - Run `dotnet test` after making changes to ensure tests pass
 - Work in small, tested increments - make one logical change at a time, build and test before proceeding
 - Follow existing patterns in the codebase - check similar files first
+- Follow SOLID and KISS principles
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval
