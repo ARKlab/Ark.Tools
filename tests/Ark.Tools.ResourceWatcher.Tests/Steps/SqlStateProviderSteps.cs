@@ -44,9 +44,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         private string _currentTenant = "test-tenant";
         private readonly Instant _now = SystemClock.Instance.GetCurrentInstant();
         private readonly string _testRunId = Guid.NewGuid().ToString("N")[..8];
-#pragma warning disable MA0158 // Use System.Threading.Lock - not available in .NET 8
-        private static readonly object _dbSetupLock = new();
-#pragma warning restore MA0158
+        private static readonly Lock _dbSetupLock = new();
 
         public SqlStateProviderSteps(ScenarioContext scenarioContext)
         {
@@ -56,7 +54,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         /// <summary>
         /// Gets a unique tenant name for this test run to avoid parallel test conflicts.
         /// </summary>
-        private string GetUniqueTenant(string baseTenant)
+        private string _getUniqueTenant(string baseTenant)
         {
             return string.Create(CultureInfo.InvariantCulture, $"{baseTenant}-{_testRunId}");
         }
@@ -152,7 +150,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"a new resource state for tenant ""(.*)"" and resource ""(.*)""")]
         public void GivenANewResourceStateForTenantAndResource(string tenant, string resourceId, DataTable table)
         {
-            var uniqueTenant = GetUniqueTenant(tenant);
+            var uniqueTenant = _getUniqueTenant(tenant);
             _currentTenant = uniqueTenant;
             
             // Create ResourceState from table using Reqnroll's table mapping (supports NodaTime via TableMappingConfiguration)
@@ -168,7 +166,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"a basic resource state for tenant ""(.*)"" and resource ""(.*)""")]
         public void GivenABasicResourceStateForTenantAndResource(string tenant, string resourceId)
         {
-            var uniqueTenant = GetUniqueTenant(tenant);
+            var uniqueTenant = _getUniqueTenant(tenant);
             _currentTenant = uniqueTenant;
             
             var state = new ResourceState
@@ -185,10 +183,10 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the resource has ModifiedSource ""(.*)"" at ""(.*)""")]
         public void GivenTheResourceHasModifiedSourceAt(string sourceName, string modifiedString)
         {
-            SetModifiedSource(sourceName, modifiedString);
+            _setModifiedSource(sourceName, modifiedString);
         }
 
-        private void SetModifiedSource(string sourceName, string modifiedString)
+        private void _setModifiedSource(string sourceName, string modifiedString)
         {
             var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             _currentState!.ModifiedSources ??= CommonStepHelpers.CreateModifiedSourcesDictionary();
@@ -220,7 +218,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"(.*) resource states for tenant ""(.*)""")]
         public void GivenResourceStatesForTenant(int count, string tenant)
         {
-            var uniqueTenant = GetUniqueTenant(tenant);
+            var uniqueTenant = _getUniqueTenant(tenant);
             _currentTenant = uniqueTenant;
             for (int i = 0; i < count; i++)
             {
@@ -251,9 +249,9 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         /// <summary>
         /// Helper method to load state for a tenant with optional resource ID filtering.
         /// </summary>
-        private async Task LoadStateForTenantAsync(string tenant, string[]? resourceIds = null)
+        private async Task _loadStateForTenantAsync(string tenant, string[]? resourceIds = null)
         {
-            var uniqueTenant = GetUniqueTenant(tenant);
+            var uniqueTenant = _getUniqueTenant(tenant);
             _currentTenant = uniqueTenant;
             _loadedStates = resourceIds == null
                 ? await _stateProvider!.LoadStateAsync(uniqueTenant)
@@ -262,18 +260,18 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
 
         [When(@"^I load state for tenant ""([^""]*)""$")]
         public async Task WhenILoadStateForTenant(string tenant)
-            => await LoadStateForTenantAsync(tenant);
+            => await _loadStateForTenantAsync(tenant);
 
         [When(@"^I load state for tenant ""([^""]*)"" with resource IDs ""([^""]*)""$")]
         public async Task WhenILoadStateForTenantWithResourceIDs(string tenant, string resourceIdsCsv)
         {
             var resourceIds = resourceIdsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            await LoadStateForTenantAsync(tenant, resourceIds);
+            await _loadStateForTenantAsync(tenant, resourceIds);
         }
 
         [When(@"^I load state for tenant ""([^""]*)"" with empty resource IDs$")]
         public async Task WhenILoadStateForTenantWithEmptyResourceIDs(string tenant)
-            => await LoadStateForTenantAsync(tenant, []);
+            => await _loadStateForTenantAsync(tenant, []);
 
         [When(@"^I load state for tenant ""([^""]*)"" with all (\d+) resource IDs$")]
         public async Task WhenILoadStateForTenantWithAllResourceIDs(string tenant, int count)
@@ -281,7 +279,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
             var resourceIds = Enumerable.Range(0, count)
                 .Select(i => string.Create(CultureInfo.InvariantCulture, $"batch-resource-{i:D5}"))
                 .ToArray();
-            await LoadStateForTenantAsync(tenant, resourceIds);
+            await _loadStateForTenantAsync(tenant, resourceIds);
         }
 
         [When(@"I update resource ""(.*)"" with")]
@@ -321,7 +319,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         /// <summary>
         /// Gets a loaded resource by ID with a helpful assertion message.
         /// </summary>
-        private ResourceState GetLoadedResource(string resourceId)
+        private ResourceState _getLoadedResource(string resourceId)
         {
             return _loadedStates!.GetFirst(
                 s => s.ResourceId == resourceId,
@@ -332,26 +330,26 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         public void ThenResourceShouldHaveModified(string resourceId, string modifiedString)
         {
             var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-            GetLoadedResource(resourceId).Modified.Should().Be(expected);
+            _getLoadedResource(resourceId).Modified.Should().Be(expected);
         }
 
         [Then(@"resource ""(.*)"" should have CheckSum ""(.*)""")]
         public void ThenResourceShouldHaveCheckSum(string resourceId, string checksum)
         {
-            GetLoadedResource(resourceId).CheckSum.Should().Be(checksum);
+            _getLoadedResource(resourceId).CheckSum.Should().Be(checksum);
         }
 
         [Then(@"resource ""(.*)"" should have RetryCount (.*)")]
         public void ThenResourceShouldHaveRetryCount(string resourceId, int retryCount)
         {
-            GetLoadedResource(resourceId).RetryCount.Should().Be(retryCount);
+            _getLoadedResource(resourceId).RetryCount.Should().Be(retryCount);
         }
 
         [Then(@"resource ""(.*)"" should have ModifiedSource ""(.*)"" at ""(.*)""")]
         public void ThenResourceShouldHaveModifiedSourceAt(string resourceId, string sourceName, string modifiedString)
         {
             var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-            var state = GetLoadedResource(resourceId);
+            var state = _getLoadedResource(resourceId);
             state.ModifiedSources.Should().NotBeNull();
             state.ModifiedSources.Should().ContainKey(sourceName);
             state.ModifiedSources![sourceName].Should().Be(expected);
@@ -360,7 +358,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Then(@"resource ""(.*)"" should have extension ""(.*)"" with value ""(.*)""")]
         public void ThenResourceShouldHaveExtensionWithValue(string resourceId, string key, string expectedValue)
         {
-            var state = GetLoadedResource(resourceId);
+            var state = _getLoadedResource(resourceId);
             state.Extensions.Should().NotBeNull();
 
             // Extensions come back as dynamic from JSON deserialization
