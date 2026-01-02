@@ -9,6 +9,8 @@
 - Use `CultureInfo.InvariantCulture` when formatting strings for logging
 - Use `IArkFlurlClientFactory` instead of `IFlurlClientFactory`
 - Run `dotnet build` after making changes to verify compilation
+- Run `dotnet test` after making changes to ensure tests pass
+- Work in small, tested increments - make one logical change at a time, build and test before proceeding
 - Follow existing patterns in the codebase - check similar files first
 
 **MUST NOT:**
@@ -18,209 +20,209 @@
 - Use string interpolation in NLog calls (e.g., `_logger.Info($"...")`)
 - Skip XML documentation on public members
 - Ignore compiler warnings (TreatWarningsAsErrors is enabled)
+- Apply too many changes at once - break work into small, testable increments
 
 ## About This Repository
 
-Ark.Tools is a set of core libraries developed and maintained by Ark as helper libraries and extensions for their LOB (Line of Business) applications. The libraries are distributed via NuGet and support .NET 8.0 LTS and .NET 10.0.
+Ark.Tools is a set of core libraries for LOB applications. Distributed via NuGet, supports .NET 8.0 LTS and .NET 10.0.
 
 ## Build & Test Commands
 
 ### Prerequisites
-
 - .NET SDK 10.0.100 (specified in `global.json`)
-- Docker (for running integration tests that require SQL Server and Azurite services)
+- Docker (for integration tests requiring SQL Server and Azurite)
 
 ### Basic Commands
-
 ```bash
-# Restore NuGet packages
+# Restore and build
 dotnet restore
-
-# Build the solution
-dotnet build --no-restore --configuration Debug
+dotnet build --no-restore
 
 # Run all tests
 dotnet test
 
-# Build in Release mode (for NuGet packaging)
-dotnet build --no-restore --configuration Release
+# Run tests without rebuilding
+dotnet test --no-build
 ```
 
-### Running Tests
+### Running Single Tests
+```bash
+# Run specific test by name (supports wildcards)
+dotnet test --filter "DisplayName~SaveAndLoad"
 
-- Tests require SQL Server and Azurite services running
-- CI uses Docker containers for these services (see `.github/workflows/ci.yml`)
-- Local development: ensure services are available before running tests
-- The ReferenceProject contains integration tests using Reqnroll (BDD framework)
-- Integration tests are in `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/`
+# Run tests with specific Reqnroll tag
+dotnet test --filter "TestCategory=crud"
+dotnet test --filter "TestCategory=integration"
 
-**Start test dependencies:**
+# Run specific test project only
+dotnet test tests/Ark.Tools.ResourceWatcher.Tests/
+
+# Combine filters with AND
+dotnet test --filter "TestCategory=sqlstateprovider&DisplayName~Update"
+```
+
+### Start Test Dependencies
 ```bash
 cd samples/Ark.ReferenceProject
 docker-compose up -d
 ```
 
-## Project Structure
+## Code Style & Conventions
 
-- **Core Libraries**: Located in `src/` organized into subfolders:
-  - `src/common/` - Core common packages (Ark.Tools.Core, Ark.Tools.NLog, Ark.Tools.Sql, etc.)
-  - `src/aspnetcore/` - ASP.NET Core packages (Ark.Tools.AspNetCore.*)
-  - `src/resourcewatcher/` - Resource Watcher packages (Ark.Tools.ResourceWatcher.*)
-- **Reference Project**: `samples/Ark.ReferenceProject/` - example implementation. serve also as integration tests
-- **Samples**: `samples/` - sample applications demonstrating library usage
-- **Tests**: `test/` - unit and integration tests for individual packages (currently empty, reserved for future use)
-- **Build Configuration**: `Directory.Build.props` - shared MSBuild properties for all projects
-
-## Coding Standards & Conventions
-
-### Language & Framework
-
-- Target Frameworks: .NET 8.0 and .NET 10.0 (multi-targeting enabled in Directory.Build.props)
-- Nullable Reference Types: Enabled across all projects
-- Treat Warnings as Errors: True (strict compilation)
-
-### Code Quality
-
-- Code analysis is enforced via:
-  - `Microsoft.CodeAnalysis.NetAnalyzers`
-  - `Meziantou.Analyzer`
-- All public APIs must have XML documentation (`GenerateDocumentationFile: true`)
-- Use structured logging with NLog - **NEVER use string interpolation** in log messages
-
-### Logging Best Practices
+### var Usage
+- **Prefer `var`** for all local variables
+- Use explicit types for method return types, properties, fields, and parameters
 
 ```csharp
-// ❌ BAD - Don't use string interpolation
-_logger.Info($"Logon by {user} from {ip_address}");
+// ✅ GOOD - Use var for local variables
+var list = new List<string>();
+var user = GetCurrentUser();
+var count = items.Count();
+
+// ✅ GOOD - Explicit types for method signatures
+public User GetCurrentUser() { ... }
+private readonly ILogger _logger;
+```
+
+### Naming Conventions
+- **Private fields**: `_camelCase` with underscore prefix
+- **Public/Protected members**: `PascalCase`
+- **Interfaces**: `IPascalCase`
+- **Constants**: `PascalCase`
+- **Local variables**: `camelCase`
+
+```csharp
+private readonly ILogger _logger;
+private string _currentTenant;
+public string ResourceId { get; set; }
+protected virtual void ProcessItem() { }
+public interface IStateProvider { }
+const int MaxRetryCount = 3;
+```
+
+### File Headers
+All source files must include the standard copyright header:
+```csharp
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+```
+
+### Formatting Rules
+- **Indentation**: 4 spaces (no tabs)
+- **Braces**: Allman style (new line before opening brace)
+- **Line endings**: CRLF
+- **Using directives**: Place outside namespace
+- **Expression-bodied members**: Use for properties/accessors, avoid for methods/constructors
+
+```csharp
+// ✅ GOOD - Allman braces
+public void ProcessData()
+{
+    if (condition)
+    {
+        DoWork();
+    }
+}
+
+// ✅ GOOD - Expression-bodied properties
+public string FullName => $"{FirstName} {LastName}";
+public int Count { get; set; }
+
+// ✅ GOOD - Regular methods (not expression-bodied)
+public User GetUser(string id)
+{
+    return _repository.Find(id);
+}
+```
+
+### Logging Best Practices
+```csharp
+// ❌ BAD - String interpolation
+_logger.Info($"Logon by {user} from {ip}");
 
 // ❌ BAD - Missing CultureInfo
-_logger.Info("Logon by {user} from {ip_address}", user, ip_address);
+_logger.Info("Logon by {user} from {ip}", user, ip);
 
-// ✅ GOOD - Use structured logging with CultureInfo
-_logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip_address}", user, ip_address);
+// ✅ GOOD - Structured logging with CultureInfo
+_logger.Info(CultureInfo.InvariantCulture, "Logon by {user} from {ip}", user, ip);
 ```
 
 ### Error Handling
-
 ```csharp
-// ❌ BAD - Throwing generic exceptions
+// ❌ BAD - Generic exceptions
 throw new Exception("Something went wrong");
 
-// ✅ GOOD - Use specific exception types
+// ✅ GOOD - Specific exception types
 throw new InvalidOperationException("Entity not found");
 throw new ArgumentNullException(nameof(parameter));
 ```
 
-### Dependencies
+### Language Features
+- Target Frameworks: .NET 8.0 and .NET 10.0 (multi-targeting)
+- Nullable Reference Types: Enabled (use `?` for nullable reference types)
+- Latest C# language version
+- Code analysis enforced: `Microsoft.CodeAnalysis.NetAnalyzers`, `Meziantou.Analyzer`
+- NuGet Audit enabled (warnings for vulnerabilities)
+- Deterministic builds enabled
 
-- Minimize adding new 3rd party dependencies (per contributing guidelines)
-- Key libraries in use:
-  - NodaTime (date/time handling)
-  - SimpleInjector (dependency injection)
-  - Polly (resilience and transient fault handling)
-  - Dapper (data access)
-  - AspNetCore
-  - Rebus (messaging)
-  - Flurl (HTTP client)
-  - Swashbuckle (OpenAPI 3.1 support)
-  - AwesomeAssertions (test assertions, replacing FluentAssertions)
+## Testing Guidelines
 
-### NuGet Packaging
+### Reqnroll BDD Testing
+- Use Reqnroll with Gherkin feature files for integration tests
+- Configure `TableMappingConfiguration` for custom types (see `tests/Ark.Tools.ResourceWatcher.Tests/Init/TableMappingConfiguration.cs`)
+- Use horizontal table format (property names as column headers) in feature files
+- Use `AwesomeAssertions` for test assertions (FluentAssertions is deprecated)
 
-- All packages use MIT license
-- Package icon: `ark-dark.png`
-- Source Link enabled for debugging
-- SBOM (Software Bill of Materials) generation enabled
-- Symbol packages (snupkg) are generated
+### Test Strategy
+- Prefer Integration tests mocking **only external** services
+- Use Docker/Emulated services for owned infrastructure (DB, MessageBus, BlobStorage)
+- Prefer E2E integration tests over unit tests for CRUD/Workflows
+- Unit tests only for business logic with mocked data access layer
+- Integration tests location: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/`
+
+### Database Test Cleanup
+- **CRITICAL**: Use `DELETE FROM` instead of `TRUNCATE TABLE` for tables with FK constraints
+- `TRUNCATE TABLE` fails on tables referenced by foreign keys
+- History tables (temporal) can be truncated (no FK constraints)
+- **Pattern**: Turn off system versioning → DELETE main tables → TRUNCATE history tables → Turn on system versioning
+- Example: `[ops].[ResetFull_OnlyForTesting]` in ReferenceProject database
+
+### Example Locations
+- BDD Features: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Features/`
+- Step Definitions: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Steps/`
+- Test Host: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Init/TestHost.cs`
 
 ## Git Commit Guidelines
 
-### Conventional Commits
-
-All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>[optional scope]: <description>
 
 [optional body]
-
 [optional footer(s)]
 ```
 
 ### Commit Types
-
-- **feat**: A new feature
-- **fix**: A bug fix
-- **docs**: Documentation only changes
-- **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
-- **refactor**: A code change that neither fixes a bug nor adds a feature
-- **perf**: A code change that improves performance
-- **test**: Adding missing tests or correcting existing tests
-- **build**: Changes that affect the build system or external dependencies
-- **ci**: Changes to CI configuration files and scripts
-- **chore**: Other changes that don't modify src or test files
-- **revert**: Reverts a previous commit
+**feat**, **fix**, **docs**, **style**, **refactor**, **perf**, **test**, **build**, **ci**, **chore**, **revert**
 
 ### Examples
-
 ```
-feat(AspNetCore): add support for custom error handling middleware
+feat(AspNetCore): add custom error handling middleware
 fix(Flurl): resolve memory leak in client disposal
-docs(README): update migration guide for v6
 refactor(Core): simplify error handling logic
-test(ReferenceProject): add integration tests for authentication
-build(deps): upgrade Swashbuckle to v10
-ci(workflows): update CodeQL configuration
 ```
 
 ### Guidelines
-
-- Use the imperative, present tense: "change" not "changed" nor "changes"
-- Don't capitalize the first letter of the description
-- No period (.) at the end of the description
-- Keep the description concise (50 characters or less when possible)
-- Use the body to explain what and why vs. how (when necessary)
-- Reference issues and pull requests in the footer (e.g., `Closes #123`)
-
-## Testing Guidelines
-
-### Test Framework
-
-- Use Reqnroll BDD tests using Gherkin features files
-- Prefer Integration tests mocking **only external** services
-- Use Emulated/Docker for local testing owned infrastructures (MessageBus, Databases, BlobStorage, etc.) which are dedicated to the project
-- Prefer E2E integration tests over UnitTests for all CRUD / Workflows
-- Use UnitTesting only for Business Logic service classes mocking in-mem DataAccess layer
-- Integration tests are in `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/`
-- Use AwesomeAssertions for test assertions (FluentAssertions is deprecated)
-
-### Test Patterns
-
-- Follow existing patterns in the ReferenceProject
-- Tests may require external services (SQL Server, Azurite)
-
-### Database Test Cleanup
-
-- **CRITICAL**: When writing stored procedures to clean up test data, use `DELETE FROM` instead of `TRUNCATE TABLE` if the table has foreign key constraints
-- `TRUNCATE TABLE` cannot be used on tables referenced by foreign key constraints, even if child tables are truncated first
-- `DELETE FROM` works with foreign key constraints and is the only reliable option for test cleanup procedures
-- **History tables** (temporal tables) can be truncated as they have no FK constraints - they are only managed by system versioning
-- **Pattern**: Turn off system versioning → DELETE main tables with FK constraints → TRUNCATE history tables → Turn system versioning back on
-- Example: See `[ops].[ResetFull_OnlyForTesting]` stored procedure in the ReferenceProject database
-
-### Where to Find Examples
-
-- **BDD Test Features**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Features/`
-- **Step Definitions**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Steps/`
-- **Test Host Setup**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Init/TestHost.cs`
-- **API Controllers**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.WebInterface/Controllers/`
-- **Query/Request Handlers**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Application/Handlers/`
-- **Database Tables**: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Database/dbo/Tables`
+- Use imperative, present tense: "change" not "changed"
+- Don't capitalize first letter
+- No period at end
+- Keep description under 50 characters
+- Use the body to explain why vs. what/how (when necessary)
 
 ## Common Patterns
 
 ### NLog Configuration
-
 ```csharp
 Host.CreateDefaultBuilder(args)
     .ConfigureNLog()
@@ -228,45 +230,37 @@ Host.CreateDefaultBuilder(args)
 ```
 
 ### Flurl Usage (v4+)
-
 - Use `IArkFlurlClientFactory` instead of `IFlurlClientFactory`
-- Always dispose Flurl clients after use
+- Always dispose Flurl clients
 - For Newtonsoft.Json: `factory.Get(url, useNewtonsoftJson: true)`
 
 ### AspNetCore Startups
-
 - Default: System.Text.Json
 - For Newtonsoft.Json: use `useNewtonsoftJson: true` in base constructor
 - Use `Ark.Tools.SystemTextJson.JsonPolymorphicConverter` for polymorphic serialization
 
-## File Organization
+## Project Structure
 
-- Solution file: `Ark.Tools.slnx`
-- Reference project solution: `samples/Ark.Reference.slnx`
-- Shared build props: `Directory.Build.props`
-- License header template: `Ark.Tools.sln.licenseheader`
-- Editor config: `.editorconfig`
-- Git ignore: `.gitignore`
+- `src/common/` - Core packages (Ark.Tools.Core, Ark.Tools.NLog, Ark.Tools.Sql, etc.)
+- `src/aspnetcore/` - ASP.NET Core packages (Ark.Tools.AspNetCore.*)
+- `src/resourcewatcher/` - Resource Watcher packages
+- `samples/Ark.ReferenceProject/` - Example implementation and integration tests
+
+## Key Dependencies
+
+- **NodaTime** - Date/time handling
+- **SimpleInjector** - Dependency injection
+- **Polly** - Resilience and transient fault handling
+- **Dapper** - Data access
+- **Rebus** - Messaging
+- **Flurl** - HTTP client
+- **Swashbuckle** - OpenAPI 3.1 support
+- **AwesomeAssertions** - Test assertions (replaces FluentAssertions)
 
 ## Contributing
 
 - Send PRs for improvements
-- Avoid adding unnecessary 3rd party dependencies
-- Documentation improvements are **required** - keep documentation up to date
+- Avoid unnecessary 3rd party dependencies
+- Documentation improvements are **required**
 - Maintain backward compatibility where possible
-- Follow the existing code style and patterns
-
-## CI/CD
-
-- GitHub Actions workflows in `.github/workflows/`
-- Main CI: `.github/workflows/ci.yml`
-- CodeQL scanning enabled
-- Dependency review configured
-- NuGet publishing workflow available
-
-## Security & Compliance
-
-- NuGet Audit enabled (mode: all, level: low)
-- Deterministic builds enabled
-- Code coverage reporting to GitHub Step Summary
-- Blame tracking for hanging tests (10 minute timeout)
+- Follow existing code style and patterns
