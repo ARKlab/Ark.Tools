@@ -176,8 +176,9 @@ dotnet_diagnostic.IDE0005.severity = suggestion
 ## References
 
 - [Microsoft Learn - IDE0005](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/ide0005)
+- [Code analysis in .NET - Microsoft Learn](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/overview)
+- [MSBuild properties for Microsoft.NET.Sdk - .NET](https://learn.microsoft.com/dotnet/core/project-sdk/msbuild-props)
 - [Code-style language and unnecessary code rules - .NET](https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/language-rules)
-- [EnforceCodeStyleInBuild Best Practices](https://blog.ndepend.com/directory-build-props/)
 - [Directory.Build.props Documentation](https://learn.microsoft.com/visualstudio/msbuild/customize-by-directory)
 
 ## Summary Statistics
