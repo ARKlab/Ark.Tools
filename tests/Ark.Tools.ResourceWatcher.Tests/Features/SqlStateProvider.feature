@@ -20,10 +20,8 @@ Feature: SqlStateProvider Integration Tests
     @crud
     Scenario: Save and load a single resource state
         Given a new resource state for tenant "test-tenant" and resource "res-001"
-            | Field        | Value                  |
-            | Modified     | 2024-06-15T10:30:00    |
-            | RetryCount   | 0                      |
-            | CheckSum     | abc123                 |
+            | Modified            | RetryCount | CheckSum |
+            | 2024-06-15T10:30:00 | 0          | abc123   |
         When I save the resource state
         And I load state for tenant "test-tenant"
         Then the loaded state should contain resource "res-001"
@@ -34,17 +32,14 @@ Feature: SqlStateProvider Integration Tests
     @crud
     Scenario: Save and load multiple resource states
         Given a new resource state for tenant "test-tenant" and resource "res-A"
-            | Field        | Value                  |
-            | Modified     | 2024-06-15T10:00:00    |
-            | CheckSum     | checksum-A             |
+            | Modified            | CheckSum   |
+            | 2024-06-15T10:00:00 | checksum-A |
         And a new resource state for tenant "test-tenant" and resource "res-B"
-            | Field        | Value                  |
-            | Modified     | 2024-06-15T11:00:00    |
-            | CheckSum     | checksum-B             |
+            | Modified            | CheckSum   |
+            | 2024-06-15T11:00:00 | checksum-B |
         And a new resource state for tenant "test-tenant" and resource "res-C"
-            | Field        | Value                  |
-            | Modified     | 2024-06-15T12:00:00    |
-            | CheckSum     | checksum-C             |
+            | Modified            | CheckSum   |
+            | 2024-06-15T12:00:00 | checksum-C |
         When I save all resource states
         And I load state for tenant "test-tenant"
         Then the loaded state should contain 3 resources
@@ -55,14 +50,14 @@ Feature: SqlStateProvider Integration Tests
     @crud
     Scenario: Load specific resources by ID
         Given a new resource state for tenant "test-tenant" and resource "res-1"
-            | Field    | Value               |
-            | Modified | 2024-06-15T10:00:00 |
+            | Modified            |
+            | 2024-06-15T10:00:00 |
         And a new resource state for tenant "test-tenant" and resource "res-2"
-            | Field    | Value               |
-            | Modified | 2024-06-15T11:00:00 |
+            | Modified            |
+            | 2024-06-15T11:00:00 |
         And a new resource state for tenant "test-tenant" and resource "res-3"
-            | Field    | Value               |
-            | Modified | 2024-06-15T12:00:00 |
+            | Modified            |
+            | 2024-06-15T12:00:00 |
         When I save all resource states
         And I load state for tenant "test-tenant" with resource IDs "res-1,res-3"
         Then the loaded state should contain 2 resources
@@ -74,16 +69,12 @@ Feature: SqlStateProvider Integration Tests
     @update
     Scenario: Update existing resource state
         Given a new resource state for tenant "test-tenant" and resource "res-upd"
-            | Field        | Value               |
-            | Modified     | 2024-06-15T10:00:00 |
-            | RetryCount   | 0                   |
-            | CheckSum     | original-checksum   |
+            | Modified            | RetryCount | CheckSum          |
+            | 2024-06-15T10:00:00 | 0          | original-checksum |
         When I save the resource state
         And I update resource "res-upd" with
-            | Field        | Value               |
-            | Modified     | 2024-06-15T14:00:00 |
-            | RetryCount   | 2                   |
-            | CheckSum     | updated-checksum    |
+            | Modified            | RetryCount | CheckSum         |
+            | 2024-06-15T14:00:00 | 2          | updated-checksum |
         And I save the resource state
         And I load state for tenant "test-tenant"
         Then resource "res-upd" should have Modified "2024-06-15T14:00:00"
@@ -94,13 +85,11 @@ Feature: SqlStateProvider Integration Tests
     @isolation
     Scenario: States are isolated by tenant
         Given a new resource state for tenant "tenant-A" and resource "shared-res"
-            | Field    | Value               |
-            | Modified | 2024-06-15T10:00:00 |
-            | CheckSum | tenant-a-checksum   |
+            | Modified            | CheckSum          |
+            | 2024-06-15T10:00:00 | tenant-a-checksum |
         And a new resource state for tenant "tenant-B" and resource "shared-res"
-            | Field    | Value               |
-            | Modified | 2024-06-15T11:00:00 |
-            | CheckSum | tenant-b-checksum   |
+            | Modified            | CheckSum          |
+            | 2024-06-15T11:00:00 | tenant-b-checksum |
         When I save all resource states
         And I load state for tenant "tenant-A"
         Then the loaded state should contain 1 resources
@@ -112,9 +101,7 @@ Feature: SqlStateProvider Integration Tests
     # ===== MODIFIED SOURCES =====
     @modified-sources
     Scenario: Save and load state with ModifiedSources
-        Given a new resource state for tenant "test-tenant" and resource "multi-source"
-            | Field    | Value               |
-            | Modified |                     |
+        Given a basic resource state for tenant "test-tenant" and resource "multi-source"
         And the resource has ModifiedSource "source-api" at "2024-06-15T09:00:00"
         And the resource has ModifiedSource "source-file" at "2024-06-15T10:00:00"
         When I save the resource state
@@ -126,8 +113,8 @@ Feature: SqlStateProvider Integration Tests
     @extensions
     Scenario: Save and load state with Extensions
         Given a new resource state for tenant "test-tenant" and resource "res-ext"
-            | Field        | Value               |
-            | Modified     | 2024-06-15T10:00:00 |
+            | Modified            |
+            | 2024-06-15T10:00:00 |
         And the resource has extension "lastOffset" with value "12345"
         And the resource has extension "cursor" with value "abc-cursor"
         When I save the resource state
@@ -139,9 +126,8 @@ Feature: SqlStateProvider Integration Tests
     @retry
     Scenario: Save and load retry state with exception
         Given a new resource state for tenant "test-tenant" and resource "res-fail"
-            | Field        | Value                  |
-            | Modified     | 2024-06-15T10:00:00    |
-            | RetryCount   | 3                      |
+            | Modified            | RetryCount |
+            | 2024-06-15T10:00:00 | 3          |
         And the resource has last exception "Test error message"
         When I save the resource state
         And I load state for tenant "test-tenant"
@@ -156,8 +142,8 @@ Feature: SqlStateProvider Integration Tests
     @edge-case
     Scenario: Load state with empty resource IDs returns empty
         Given a new resource state for tenant "test-tenant" and resource "res-001"
-            | Field    | Value               |
-            | Modified | 2024-06-15T10:00:00 |
+            | Modified            |
+            | 2024-06-15T10:00:00 |
         When I save the resource state
         And I load state for tenant "test-tenant" with empty resource IDs
         Then the loaded state should be empty

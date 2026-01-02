@@ -13,6 +13,7 @@ using NodaTime;
 using NodaTime.Text;
 
 using Reqnroll;
+using Reqnroll.Assist;
 
 using System;
 using System.Collections.Generic;
@@ -153,14 +154,29 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var uniqueTenant = GetUniqueTenant(tenant);
             _currentTenant = uniqueTenant;
+            
+            // Create ResourceState from table using Reqnroll's table mapping (supports NodaTime via TableMappingConfiguration)
+            var state = table.CreateInstance<ResourceState>();
+            state.Tenant = uniqueTenant;
+            state.ResourceId = resourceId;
+            state.LastEvent = _now;
+
+            _currentState = state;
+            _statesToSave.Add(state);
+        }
+
+        [Given(@"a basic resource state for tenant ""(.*)"" and resource ""(.*)""")]
+        public void GivenABasicResourceStateForTenantAndResource(string tenant, string resourceId)
+        {
+            var uniqueTenant = GetUniqueTenant(tenant);
+            _currentTenant = uniqueTenant;
+            
             var state = new ResourceState
             {
                 Tenant = uniqueTenant,
                 ResourceId = resourceId,
                 LastEvent = _now
             };
-
-            CommonStepHelpers.PopulateResourceStateFromTable(state, table);
 
             _currentState = state;
             _statesToSave.Add(state);
@@ -272,7 +288,9 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         public void WhenIUpdateResourceWith(string resourceId, DataTable table)
         {
             _currentState = _statesToSave.First(s => s.ResourceId == resourceId);
-            CommonStepHelpers.PopulateResourceStateFromTable(_currentState, table);
+            
+            // Merge table properties into existing state using Reqnroll's table mapping
+            table.FillInstance(_currentState);
             _currentState.LastEvent = _now;
         }
 
