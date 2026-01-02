@@ -85,8 +85,8 @@ private readonly ILogger _logger;
 ```
 
 ### Naming Conventions
-- **Private fields**: `_camelCase` with underscore prefix
-- **Public/Protected members**: `PascalCase`
+- **Private/Protected fields**: `_camelCase` with underscore prefix
+- **Public members**: `PascalCase`
 - **Interfaces**: `IPascalCase`
 - **Constants**: `PascalCase`
 - **Local variables**: `camelCase`
