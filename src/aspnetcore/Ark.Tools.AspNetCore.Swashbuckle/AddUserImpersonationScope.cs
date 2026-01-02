@@ -11,7 +11,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle
     {
         public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
         {
-            
+
         }
     }
 }

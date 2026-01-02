@@ -60,16 +60,16 @@ namespace Ark.Reference.Core.WebInterface
             // Configure System.Text.Json source generation with Ark defaults
             // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts
             // See: https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation
-            
+
             // Note: JsonSerializerOptions get locked when passed to a JsonSerializerContext constructor,
             // preventing the same instance from being used for multiple contexts.
             // Therefore, we create separate options instances for each context.
             var coreApiOptions = Application.Ex.CreateCoreApiJsonSerializerOptions();
             var coreApiContext = new CoreApiJsonSerializerContext(coreApiOptions);
-            
+
             var problemDetailsOptions = Application.Ex.CreateCoreApiJsonSerializerOptions();
             var problemDetailsContext = new Ark.Tools.AspNetCore.JsonContext.ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
-            
+
             // Combine source-generated contexts with minimal reflection fallback
             // The fallback is required only for Hellang.Middleware.ProblemDetails internal types
             // (DeveloperProblemDetailsExtensions.ErrorDetails) when IncludeExceptionDetails is enabled.

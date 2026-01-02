@@ -42,7 +42,7 @@ namespace Ark.Reference.Core.Tests.Features
 
             _client.PostAsJson(_controllerName, request);
             _client.ThenTheRequestSucceded();
-                
+
             Current = _client.ReadAs<BookPrintProcess.V1.Output>();
         }
 
@@ -56,7 +56,7 @@ namespace Ark.Reference.Core.Tests.Features
             };
 
             _client.PostAsJson(_controllerName, request);
-            
+
             // Capture result if successful for subsequent steps
             if (_client.LastStatusCodeIsSuccess())
             {
@@ -106,7 +106,7 @@ namespace Ark.Reference.Core.Tests.Features
         {
             _client.ThenTheRequestSucceded();
             Current = _client.ReadAs<BookPrintProcess.V1.Output>();
-            
+
             table.CompareToInstance(Current);
         }
 
@@ -115,7 +115,7 @@ namespace Ark.Reference.Core.Tests.Features
         {
             _client.ThenTheRequestSucceded();
             Current = _client.ReadAs<BookPrintProcess.V1.Output>();
-            
+
             Current.Should().NotBeNull();
             Current!.Status.Should().Be(BookPrintProcessStatus.Error);
             Current.Progress.Should().BeLessThan(1.0);

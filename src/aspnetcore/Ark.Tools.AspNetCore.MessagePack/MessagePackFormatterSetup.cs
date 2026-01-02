@@ -1,12 +1,12 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System.Diagnostics.CodeAnalysis;
-
 using MessagePack;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
+
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter
 {

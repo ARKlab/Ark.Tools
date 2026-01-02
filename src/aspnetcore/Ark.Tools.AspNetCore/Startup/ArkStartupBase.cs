@@ -34,7 +34,8 @@ namespace Ark.Tools.AspNetCore.Startup
 
             services.AddSecurityHeaderPolicies()
                 .SetDefaultPolicy(p => p.AddDefaultApiSecurityHeaders().RemoveServerHeader())
-                .AddPolicy("Swagger", p => {
+                .AddPolicy("Swagger", p =>
+                {
                     p.AddDefaultSecurityHeaders().RemoveServerHeader();
                     p.Remove("Cross-Origin-Opener-Policy");
                     p.AddCrossOriginOpenerPolicy(x => x.UnsafeNone());

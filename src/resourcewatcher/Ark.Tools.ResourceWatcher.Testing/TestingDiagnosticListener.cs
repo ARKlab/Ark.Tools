@@ -5,7 +5,6 @@ using Microsoft.Extensions.DiagnosticAdapter;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Ark.Tools.ResourceWatcher.Testing
@@ -23,7 +22,7 @@ namespace Ark.Tools.ResourceWatcher.Testing
         /// <summary>
         /// Gets all captured processing results by resource ID.
         /// </summary>
-        public IReadOnlyDictionary<string, ResourceProcessingResult> Results => _results;
+        public System.Collections.Generic.IReadOnlyDictionary<string, ResourceProcessingResult> Results => _results;
 
         /// <summary>
         /// Gets all captured run results.

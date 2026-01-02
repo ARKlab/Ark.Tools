@@ -64,7 +64,7 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps
         {
             // Create a WorkerHost with mock provider and processor
             var workerHost = new WorkerHost<MyResource, MyMetadata, BlobQueryFilter>(_context.Config);
-        
+
             // Configure mock provider
             workerHost.UseDataProvider<MockBlobResourceProvider>(d =>
             {

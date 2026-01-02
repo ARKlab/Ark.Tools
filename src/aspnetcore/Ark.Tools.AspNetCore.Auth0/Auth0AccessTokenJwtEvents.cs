@@ -67,7 +67,7 @@ namespace Ark.Tools.AspNetCore.Auth0
 
             return resp.AccessToken;
         }
-        
+
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
         sealed record PolicyResult
         {

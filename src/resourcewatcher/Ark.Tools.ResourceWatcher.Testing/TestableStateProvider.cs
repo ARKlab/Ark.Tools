@@ -111,12 +111,12 @@ namespace Ark.Tools.ResourceWatcher.Testing
         /// Sets state directly for testing purposes using individual parameters.
         /// </summary>
         public void SetState(
-            string tenant, 
-            string resourceId, 
-            LocalDateTime modified, 
-            Dictionary<string, LocalDateTime>? modifiedSources, 
-            string? checkSum, 
-            int retryCount, 
+            string tenant,
+            string resourceId,
+            LocalDateTime modified,
+            Dictionary<string, LocalDateTime>? modifiedSources,
+            string? checkSum,
+            int retryCount,
             Instant lastEvent,
             Instant? retrievedAt = null)
         {

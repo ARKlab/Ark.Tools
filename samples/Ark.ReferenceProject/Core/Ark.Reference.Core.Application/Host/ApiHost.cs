@@ -245,11 +245,11 @@ namespace Ark.Reference.Core.Application.Host
                     // so we must create the context first, then create NEW options for Rebus that use this context
                     var contextOptions = Ex.CreateCoreApiJsonSerializerOptions();
                     var jsonContext = new CoreApiJsonSerializerContext(contextOptions);
-                    
+
                     // Create separate options for Rebus that reference the context
                     var rebusOptions = Ex.CreateCoreApiJsonSerializerOptions();
                     rebusOptions.TypeInfoResolver = jsonContext;
-                    
+
                     s.UseSystemTextJson(rebusOptions);
                 })
                 .Timeouts(t =>

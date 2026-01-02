@@ -435,7 +435,7 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights
             if (pc.LastState != default)
             {
                 data.Properties.Add("CheckSum_Old", pc.LastState.CheckSum);
-                data.Properties.Add("Modified_Old", LocalDateTimePattern.ExtendedIso.Format(pc.LastState.Modified) );
+                data.Properties.Add("Modified_Old", LocalDateTimePattern.ExtendedIso.Format(pc.LastState.Modified));
                 if (pc.LastState.ModifiedSources != null && pc.LastState.ModifiedSources.Count != 0)
                 {
                     foreach (var modified in pc.LastState.ModifiedSources)

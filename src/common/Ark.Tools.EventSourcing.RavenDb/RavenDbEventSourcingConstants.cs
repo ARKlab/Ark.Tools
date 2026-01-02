@@ -7,4 +7,3 @@ namespace Ark.Tools.EventSourcing.RavenDb
         public const string AggregateEventsCollectionName = "@ArkAggregateEvents";
     }
 }
-

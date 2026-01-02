@@ -9,12 +9,12 @@ using MessagePack;
 
 using Microsoft.AspNetCore.Mvc;
 
+using Reqnroll;
+
 using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
-
-using Reqnroll;
 
 namespace WebApplicationDemo.Tests
 {

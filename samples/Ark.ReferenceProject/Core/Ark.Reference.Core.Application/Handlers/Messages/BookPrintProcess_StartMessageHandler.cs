@@ -42,8 +42,8 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
             // Update status to Running if it's Pending
             if (process.Status == BookPrintProcessStatus.Pending)
             {
-                process = process with 
-                { 
+                process = process with
+                {
                     Status = BookPrintProcessStatus.Running,
                     AuditId = ctx.CurrentAudit?.AuditId ?? Guid.Empty
                 };
@@ -73,8 +73,8 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
 
                 await updateCtx.EnsureAudit(AuditKind.BookPrintProcess, _userContext.GetUserId(), "Update BookPrintProcess Progress").ConfigureAwait(false);
 
-                currentProcess = currentProcess with 
-                { 
+                currentProcess = currentProcess with
+                {
                     Progress = newProgress,
                     Status = newProgress >= 1.0 ? BookPrintProcessStatus.Completed : BookPrintProcessStatus.Running,
                     AuditId = updateCtx.CurrentAudit?.AuditId ?? Guid.Empty

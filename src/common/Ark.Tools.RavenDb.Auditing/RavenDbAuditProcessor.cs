@@ -152,7 +152,7 @@ namespace Ark.Tools.RavenDb.Auditing
             List<Task> runtask = new();
             CancellationTokenSource? tokenSource = null;
             lock (_gate)
-            {                
+            {
                 runtask.AddRange(_subscriptionWorkerTasks);
                 _subscriptionWorkerTasks.Clear();
                 tokenSource = _tokenSource;

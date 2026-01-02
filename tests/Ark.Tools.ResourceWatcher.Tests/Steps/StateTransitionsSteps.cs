@@ -8,7 +8,6 @@ using AwesomeAssertions;
 
 using NodaTime;
 using NodaTime.Testing;
-using NodaTime.Text;
 
 using Reqnroll;
 
@@ -106,10 +105,10 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [Given(@"the resource has ModifiedSource ""(.*)"" at ""(.*)""")]
         public void GivenTheResourceHasModifiedSourceAt(string sourceName, string modifiedString)
         {
-            SetModifiedSource(sourceName, modifiedString);
+            _setModifiedSource(sourceName, modifiedString);
         }
 
-        private void SetModifiedSource(string sourceName, string modifiedString)
+        private void _setModifiedSource(string sourceName, string modifiedString)
         {
             var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var lastMetadata = _metadata.Last();
@@ -156,14 +155,14 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         /// <summary>
         /// Helper method to update an existing state by applying a modifier action.
         /// </summary>
-        private void UpdateExistingState(string resourceId, Action<ResourceState> modifier)
+        private void _updateExistingState(string resourceId, Action<ResourceState> modifier)
         {
             var state = _stateProvider.GetState(_config.WorkerName, resourceId);
             if (state != null)
             {
                 modifier(state);
-                _stateProvider.SetState(_config.WorkerName, resourceId, 
-                    state.Modified, state.ModifiedSources, state.CheckSum, 
+                _stateProvider.SetState(_config.WorkerName, resourceId,
+                    state.Modified, state.ModifiedSources, state.CheckSum,
                     state.RetryCount, state.LastEvent);
             }
         }
@@ -187,7 +186,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         public void GivenThePreviousChecksumWas(string checksum)
         {
             var lastMetadata = _metadata.Last();
-            UpdateExistingState(lastMetadata.ResourceId, state => state.CheckSum = checksum);
+            _updateExistingState(lastMetadata.ResourceId, state => state.CheckSum = checksum);
         }
 
         [Given(@"the previous state had ModifiedSource ""(.*)"" at ""(.*)""")]
@@ -195,7 +194,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
             var lastMetadata = _metadata.Last();
-            UpdateExistingState(lastMetadata.ResourceId, state =>
+            _updateExistingState(lastMetadata.ResourceId, state =>
             {
                 var sources = state.ModifiedSources != null
                     ? new Dictionary<string, LocalDateTime>(state.ModifiedSources, StringComparer.OrdinalIgnoreCase)
@@ -209,7 +208,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         public void GivenThePreviousStateHasRetryCountOf(int retryCount)
         {
             var lastMetadata = _metadata.Last();
-            UpdateExistingState(lastMetadata.ResourceId, state => state.RetryCount = retryCount);
+            _updateExistingState(lastMetadata.ResourceId, state => state.RetryCount = retryCount);
         }
 
         [Given(@"the previous state has RetryCount of (.*) and LastEvent ""(.*)""")]
@@ -217,7 +216,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var instant = CommonStepHelpers.ParseInstant(lastEventString);
             var lastMetadata = _metadata.Last();
-            UpdateExistingState(lastMetadata.ResourceId, state =>
+            _updateExistingState(lastMetadata.ResourceId, state =>
             {
                 state.RetryCount = retryCount;
                 state.LastEvent = instant;
@@ -229,7 +228,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var instant = SystemClock.Instance.GetCurrentInstant();
             var lastMetadata = _metadata.Last();
-            UpdateExistingState(lastMetadata.ResourceId, state =>
+            _updateExistingState(lastMetadata.ResourceId, state =>
             {
                 state.RetryCount = retryCount;
                 state.LastEvent = instant;
@@ -249,7 +248,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var instant = CommonStepHelpers.ParseInstant(banTimeString);
             var lastMetadata = _metadata.Last();
-            UpdateExistingState(lastMetadata.ResourceId, state => state.LastEvent = instant);
+            _updateExistingState(lastMetadata.ResourceId, state => state.LastEvent = instant);
         }
 
         [Given(@"the processor is configured to fail for ""(.*)""")]
@@ -267,7 +266,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         [When(@"the ResourceWatcher runs")]
         public async Task WhenTheResourceWatcherRuns()
         {
-            await RunWatcherAsync();
+            await _runWatcherAsync();
         }
 
         [When(@"the ResourceWatcher runs at ""(.*)""")]
@@ -275,10 +274,10 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var instant = CommonStepHelpers.ParseInstant(timeString);
             _clock = new FakeClock(instant);
-            await RunWatcherAsync();
+            await _runWatcherAsync();
         }
 
-        private async Task RunWatcherAsync()
+        private async Task _runWatcherAsync()
         {
             _provider.SetMetadata(_metadata);
             _provider.SetResources(_resources.Values);
@@ -359,7 +358,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         public void ThenTheDiagnosticShouldShowFor(string processTypeName, string resourceId)
         {
             var expectedProcessType = Enum.Parse<ProcessType>(processTypeName);
-            
+
             // For NothingToDo and Banned, resources don't go through ProcessResource,
             // so we check the aggregate counts from CheckState instead
             if (expectedProcessType == ProcessType.NothingToDo)

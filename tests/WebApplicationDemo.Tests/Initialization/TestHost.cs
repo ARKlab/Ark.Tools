@@ -9,10 +9,10 @@ using Microsoft.Extensions.Hosting;
 
 using NLog;
 
+using Reqnroll;
+
 using System;
 using System.Net.Http;
-
-using Reqnroll;
 
 [assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
 
@@ -21,7 +21,7 @@ namespace WebApplicationDemo.Tests
     [Binding]
     public static class TestHost
     {
-        private static readonly Uri _baseUri = new( "https://localhost:5001" );
+        private static readonly Uri _baseUri = new("https://localhost:5001");
         private static IHost? _server;
         private static ArkFlurlClientFactory? _factory;
 

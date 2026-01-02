@@ -151,7 +151,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var uniqueTenant = _getUniqueTenant(tenant);
             _currentTenant = uniqueTenant;
-            
+
             // Create ResourceState from table using Reqnroll's table mapping (supports NodaTime via TableMappingConfiguration)
             var state = table.CreateInstance<ResourceState>();
             state.Tenant = uniqueTenant;
@@ -167,7 +167,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         {
             var uniqueTenant = _getUniqueTenant(tenant);
             _currentTenant = uniqueTenant;
-            
+
             var state = new ResourceState
             {
                 Tenant = uniqueTenant,
@@ -285,7 +285,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
         public void WhenIUpdateResourceWith(string resourceId, DataTable table)
         {
             _currentState = _statesToSave.First(s => s.ResourceId == resourceId);
-            
+
             // Merge table properties into existing state using Reqnroll's table mapping
             table.FillInstance(_currentState);
             _currentState.LastEvent = _now;

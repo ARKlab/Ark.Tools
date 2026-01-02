@@ -390,7 +390,7 @@ VALUES
                     target.From = from ?? NLogConfigurer.MailFromDefault;
                     target.To = to;
 
-                    target.EnableSsl = useSsl;                    
+                    target.EnableSsl = useSsl;
                     target.SmtpAuthentication = SmtpAuthenticationMode.Basic;
                     target.SmtpServer = smtpServer;
                     target.SmtpPort = smtpPort;

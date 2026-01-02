@@ -115,8 +115,8 @@ namespace Ark.Reference.Core.Application.DAL
                 ORDER BY E.[BookPrintProcessId] DESC
             ";
 
-            var result = await Connection.QueryAsync<_BookPrintProcessDto>(cmdText, new 
-            { 
+            var result = await Connection.QueryAsync<_BookPrintProcessDto>(cmdText, new
+            {
                 BookId = bookId,
                 Pending = BookPrintProcessStatus.Pending.ToString(),
                 Running = BookPrintProcessStatus.Running.ToString()

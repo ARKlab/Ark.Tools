@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Activity.Processor
 {
-    
+
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2214:Do not call overridable methods in constructors", Justification = "Designed to be overridden")]
     public abstract class CalendarSliceActivity : ISliceActivity
     {

@@ -177,7 +177,7 @@ namespace Ark.Tools.AspNetCore.Startup
                 });
                 c.SupportNonNullableReferenceTypes();
 
-                c.EnableAnnotations();                
+                c.EnableAnnotations();
             });
 
             services.ArkConfigureSwaggerVersions(Versions, MakeInfo);

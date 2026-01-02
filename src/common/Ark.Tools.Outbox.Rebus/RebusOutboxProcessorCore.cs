@@ -132,4 +132,3 @@ namespace Ark.Tools.Outbox.Rebus
         }
     }
 }
-

@@ -1,12 +1,12 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
-using System.Globalization;
-using System.Text;
-
 using Ark.ResourceWatcher.Sample.Dto;
 
 using CsvHelper;
 using CsvHelper.Configuration;
+
+using System.Globalization;
+using System.Text;
 
 namespace Ark.ResourceWatcher.Sample.Transform
 {
@@ -36,7 +36,7 @@ namespace Ark.ResourceWatcher.Sample.Transform
             ArgumentNullException.ThrowIfNull(input);
 
             var content = Encoding.UTF8.GetString(input);
-        
+
             // Handle empty input
             if (string.IsNullOrWhiteSpace(content))
             {
@@ -46,7 +46,7 @@ namespace Ark.ResourceWatcher.Sample.Transform
                     Records = []
                 };
             }
-        
+
             using var reader = new StringReader(content);
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -55,7 +55,7 @@ namespace Ark.ResourceWatcher.Sample.Transform
                 HeaderValidated = null, // Don't validate headers - allow extra columns
                 PrepareHeaderForMatch = args => args.Header.ToLowerInvariant() // Case-insensitive matching
             };
-        
+
             using var csv = new CsvReader(reader, config);
 
             csv.Context.RegisterClassMap<SinkRecordMap>();

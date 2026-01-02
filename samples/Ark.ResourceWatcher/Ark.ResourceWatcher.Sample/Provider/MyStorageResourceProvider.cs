@@ -1,7 +1,5 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
-using System.Security.Cryptography;
-
 using Ark.ResourceWatcher.Sample.Dto;
 using Ark.Tools.Http;
 using Ark.Tools.ResourceWatcher;
@@ -10,6 +8,8 @@ using Ark.Tools.ResourceWatcher.WorkerHost;
 using Flurl.Http;
 
 using NodaTime;
+
+using System.Security.Cryptography;
 
 namespace Ark.ResourceWatcher.Sample.Provider
 {

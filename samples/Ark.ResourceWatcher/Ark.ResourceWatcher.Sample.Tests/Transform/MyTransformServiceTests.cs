@@ -1,18 +1,18 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 using Ark.ResourceWatcher.Sample.Dto;
 using Ark.ResourceWatcher.Sample.Transform;
 
 using AwesomeAssertions;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ark.ResourceWatcher.Sample.Tests.Transform
 {
