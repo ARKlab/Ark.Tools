@@ -7,12 +7,7 @@ using Ark.ResourceWatcher.Sample.Config;
 using Ark.ResourceWatcher.Sample.Tests.Mocks;
 using Ark.Tools.ResourceWatcher.Testing;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 using NodaTime;
-
-// Disable parallel test execution for BDD scenarios
-[assembly: Parallelize(Scope = ExecutionScope.ClassLevel, Workers = 1)]
 
 namespace Ark.ResourceWatcher.Sample.Tests.Hooks
 {

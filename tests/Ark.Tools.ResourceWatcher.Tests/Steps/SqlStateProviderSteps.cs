@@ -10,7 +10,6 @@ using AwesomeAssertions;
 using Dapper;
 
 using NodaTime;
-using NodaTime.Text;
 
 using Reqnroll;
 using Reqnroll.Assist;
