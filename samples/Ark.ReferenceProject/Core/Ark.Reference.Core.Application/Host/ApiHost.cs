@@ -43,10 +43,13 @@ using SimpleInjector.Lifestyles;
 
 using System;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
+
+#if DEBUG
+using System.Diagnostics;
+#endif
 
 namespace Ark.Reference.Core.Application.Host
 {
