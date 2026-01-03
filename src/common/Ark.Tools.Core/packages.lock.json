@@ -38,9 +38,9 @@
       },
       "NodaTime": {
         "type": "Direct",
-        "requested": "[3.2.3, )",
-        "resolved": "3.2.3",
-        "contentHash": "FNRoHeMMeF2BcFY95EnbB4BuPnG38Eb01+8j1l4atN0qdkxoGQtZMRqImd2YyUvjAoR82wp1H3cWFea4mpP1Hg=="
+        "requested": "[3.3.0, )",
+        "resolved": "3.3.0",
+        "contentHash": "zmUEQPp9yXyGAqWSBhxfwdDhRh4EV04lvYn4P5bUb6dTz1m5AXTYaeSLQ447YLPI2Ge5VGFj20G2DWg5gtiXZg=="
       },
       "Polyfill": {
         "type": "Direct",
@@ -102,9 +102,9 @@
       },
       "NodaTime": {
         "type": "Direct",
-        "requested": "[3.2.3, )",
-        "resolved": "3.2.3",
-        "contentHash": "FNRoHeMMeF2BcFY95EnbB4BuPnG38Eb01+8j1l4atN0qdkxoGQtZMRqImd2YyUvjAoR82wp1H3cWFea4mpP1Hg=="
+        "requested": "[3.3.0, )",
+        "resolved": "3.3.0",
+        "contentHash": "zmUEQPp9yXyGAqWSBhxfwdDhRh4EV04lvYn4P5bUb6dTz1m5AXTYaeSLQ447YLPI2Ge5VGFj20G2DWg5gtiXZg=="
       },
       "Polyfill": {
         "type": "Direct",

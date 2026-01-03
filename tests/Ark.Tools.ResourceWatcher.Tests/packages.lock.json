@@ -167,11 +167,11 @@
       },
       "NodaTime.Testing": {
         "type": "Direct",
-        "requested": "[3.2.3, )",
-        "resolved": "3.2.3",
-        "contentHash": "2UStnv7PXAPQvqsGnZYSyLr22UuyQVxAO1SxcUOu9Ln1NLZwf6eCcII6R65xl5YnQ+IwVdUQyWtJ2/ezOCDSsw==",
+        "requested": "[3.3.0, )",
+        "resolved": "3.3.0",
+        "contentHash": "lpF55aoG/ahPms00JFSxZSQA9mjiwjpDfFuYP6LJiUVSm7JJ0yyfsZG19Yi6BpA3DIoF9H1ACpIPonX4EgEOvg==",
         "dependencies": {
-          "NodaTime": "3.2.3"
+          "NodaTime": "3.3.0"
         }
       },
       "Polyfill": {
@@ -791,8 +791,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.2.3",
-        "contentHash": "FNRoHeMMeF2BcFY95EnbB4BuPnG38Eb01+8j1l4atN0qdkxoGQtZMRqImd2YyUvjAoR82wp1H3cWFea4mpP1Hg=="
+        "resolved": "3.3.0",
+        "contentHash": "zmUEQPp9yXyGAqWSBhxfwdDhRh4EV04lvYn4P5bUb6dTz1m5AXTYaeSLQ447YLPI2Ge5VGFj20G2DWg5gtiXZg=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "Transitive",
@@ -909,7 +909,7 @@
         "type": "Project",
         "dependencies": {
           "Ensure.That": "[10.1.0, )",
-          "NodaTime": "[3.2.3, )",
+          "NodaTime": "[3.3.0, )",
           "System.Reactive": "[6.1.0, )"
         }
       },
@@ -1222,11 +1222,11 @@
       },
       "NodaTime.Testing": {
         "type": "Direct",
-        "requested": "[3.2.3, )",
-        "resolved": "3.2.3",
-        "contentHash": "2UStnv7PXAPQvqsGnZYSyLr22UuyQVxAO1SxcUOu9Ln1NLZwf6eCcII6R65xl5YnQ+IwVdUQyWtJ2/ezOCDSsw==",
+        "requested": "[3.3.0, )",
+        "resolved": "3.3.0",
+        "contentHash": "lpF55aoG/ahPms00JFSxZSQA9mjiwjpDfFuYP6LJiUVSm7JJ0yyfsZG19Yi6BpA3DIoF9H1ACpIPonX4EgEOvg==",
         "dependencies": {
-          "NodaTime": "3.2.3"
+          "NodaTime": "3.3.0"
         }
       },
       "Polyfill": {
@@ -1844,8 +1844,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.2.3",
-        "contentHash": "FNRoHeMMeF2BcFY95EnbB4BuPnG38Eb01+8j1l4atN0qdkxoGQtZMRqImd2YyUvjAoR82wp1H3cWFea4mpP1Hg=="
+        "resolved": "3.3.0",
+        "contentHash": "zmUEQPp9yXyGAqWSBhxfwdDhRh4EV04lvYn4P5bUb6dTz1m5AXTYaeSLQ447YLPI2Ge5VGFj20G2DWg5gtiXZg=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "Transitive",
@@ -2004,7 +2004,7 @@
         "type": "Project",
         "dependencies": {
           "Ensure.That": "[10.1.0, )",
-          "NodaTime": "[3.2.3, )",
+          "NodaTime": "[3.3.0, )",
           "System.Linq.Async": "[7.0.0, )",
           "System.Reactive": "[6.1.0, )"
         }

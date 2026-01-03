@@ -33,7 +33,7 @@
 		<PackageReference Include="MSTest.TestAdapter" Version="4.0.2" />
 		<PackageReference Include="MSTest.TestFramework" Version="4.0.2" />
 		<PackageReference Include="netDumbster" Version="3.1.1" />
-		<PackageReference Include="NodaTime.Testing" Version="3.2.3" />
+		<PackageReference Include="NodaTime.Testing" Version="3.3.0" />
 		<PackageReference Include="Reqnroll.MsTest" Version="3.3.0" />
 		<PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.0" />
 	</ItemGroup>
