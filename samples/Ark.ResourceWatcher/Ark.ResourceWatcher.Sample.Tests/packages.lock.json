@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.266, )",
-        "resolved": "2.0.266",
-        "contentHash": "wsD1DX2Fo4G8l9lbktn/+u3SeplHzJ6EGZX6X+Mw8S3LEz4vaS2/LNpGgVRvXrE+4fSMowjcaLx91NO46j869w=="
+        "requested": "[2.0.267, )",
+        "resolved": "2.0.267",
+        "contentHash": "pi5P3z7xa87qI/QfyJcc4EA/jf1BHCuJsdkzLUuCEtcSfHckQGx8NamuPot8hS5K1exfJ384NoJpbggXhDvybA=="
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
@@ -238,8 +238,8 @@
       },
       "CsvHelper": {
         "type": "Transitive",
-        "resolved": "33.0.1",
-        "contentHash": "fev4lynklAU2A9GVMLtwarkwaanjSYB4wUqO2nOJX5hnzObORzUqVLe+bDYCUyIIRQM4o5Bsq3CcyJR89iMmEQ=="
+        "resolved": "33.1.0",
+        "contentHash": "kqfTOZGrn7NarNeXgjh86JcpTHUoeQDMB8t9NVa/ZtlSYiV1rxfRnQ49WaJsob4AiGrbK0XDzpyKkBwai4F8eg=="
       },
       "Cucumber.CucumberExpressions": {
         "type": "Transitive",
@@ -1177,7 +1177,7 @@
           "Ark.Tools.Http": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher.WorkerHost.Hosting": "[1.0.0, )",
-          "CsvHelper": "[33.0.1, )"
+          "CsvHelper": "[33.1.0, )"
         }
       },
       "ark.tools.applicationinsights": {

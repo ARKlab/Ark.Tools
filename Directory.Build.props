@@ -89,7 +89,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 
-		<PackageReference Include="Polyfill" Version="9.5.0">
+		<PackageReference Include="Polyfill" Version="9.6.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
