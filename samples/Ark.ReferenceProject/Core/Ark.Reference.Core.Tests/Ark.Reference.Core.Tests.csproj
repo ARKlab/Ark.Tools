@@ -15,7 +15,7 @@
   <ItemGroup Label="Testing Platform Settings">
     <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
     <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.1.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.1" />
     <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
     <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
     <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
