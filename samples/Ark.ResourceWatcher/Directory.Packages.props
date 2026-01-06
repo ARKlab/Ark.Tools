@@ -1,0 +1,34 @@
+﻿<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <!-- ResourceWatcher sample specific packages -->
+    <PackageVersion Include="CsvHelper" Version="33.1.0" />
+    
+    <!-- Testing packages -->
+    <PackageVersion Include="AwesomeAssertions" Version="9.3.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.0.2" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.0.2" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="Reqnroll.MsTest" Version="3.3.0" />
+    <PackageVersion Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.0" />
+    
+    <!-- Build tools -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.101" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="2.0.267" />
+    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
+  </ItemGroup>
+
+</Project>

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
@@ -18,8 +18,8 @@
   <!--===============================================================================-->
 
 	<ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.1" />
-		<PackageReference Include="Polly" Version="8.6.5" />
+        <PackageReference Include="Microsoft.Extensions.ObjectPool" />
+		<PackageReference Include="Polly" />
 	</ItemGroup>
 	
   <ItemGroup>    

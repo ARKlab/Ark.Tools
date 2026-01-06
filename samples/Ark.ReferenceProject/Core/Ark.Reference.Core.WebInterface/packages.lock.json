@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "dependencies": {
     "net10.0": {
       "Azure.Extensions.AspNetCore.Configuration.Secrets": {
@@ -52,44 +52,44 @@
       },
       "Asp.Versioning.Http": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "Xu4xF62Cu9JqYi/CTa2TiK5kyHoa4EluPynj/bPFWDmlTIPzuJQbBI5RgFYVRFHjFVvWMoA77acRaFu7i7Wzqg==",
+        "resolved": "8.1.1",
+        "contentHash": "1D/Mzq1MSUSQe1eCY6GeEsu+tIlpzoWZxZkhlcw/uvtVoTrwO+BMl0fSj/XX8oZN1DutWTZqHDHgyDRq+IeSdQ==",
         "dependencies": {
           "Asp.Versioning.Abstractions": "8.1.0"
         }
       },
       "Asp.Versioning.Mvc": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "BMAJM2sGsTUw5FQ9upKQt6GFoldWksePgGpYjl56WSRvIuE3UxKZh0gAL+wDTIfLshUZm97VCVxlOGyrcjWz9Q==",
+        "resolved": "8.1.1",
+        "contentHash": "mkJv6eAdlbHbqTdrUcfEYFoZuGL6HoR7O+Lfsvivixp7N5BNhfCFPPOwsBzdIiH1qzdJXyJf+C+DZ08j27PMPg==",
         "dependencies": {
-          "Asp.Versioning.Http": "8.1.0"
+          "Asp.Versioning.Http": "8.1.1"
         }
       },
       "Asp.Versioning.Mvc.ApiExplorer": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "a90gW/4TF/14Bjiwg9LqNtdKGC4G3gu02+uynq3bCISfQm48km5chny4Yg5J4hixQPJUwwJJ9Do1G+jM8L9h3g==",
+        "resolved": "8.1.1",
+        "contentHash": "u8PrP6CjmurgIh0EDfg8Gc/GdpDHgkbv8OLKdxQcWb5W4sp0i9BcdbQlLvRcATjNIJUyr7ZmqXjmdsFfqnuy0g==",
         "dependencies": {
-          "Asp.Versioning.Mvc": "8.1.0"
+          "Asp.Versioning.Mvc": "8.1.1"
         }
       },
       "Asp.Versioning.OData": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "PfP+KYdUnfeP5GXsZAUzoWFGhghCse8GDs6iyvjewRm8kd2OdMplf0keZAXHEHVkRwa4KsiTYB5t482jTCeOrg==",
+        "resolved": "8.2.1",
+        "contentHash": "XLr3WZN+m8HLLu7jCWpqhfBSTjMXZ2PwIp4snBbwXKEIz47VebLwk4luImsZuIHKU6gbpQ5COSsD9YlnN3WJVQ==",
         "dependencies": {
-          "Asp.Versioning.Mvc": "8.1.0",
+          "Asp.Versioning.Mvc": "8.1.1",
           "Microsoft.AspNetCore.OData": "[8.0.2, 10.0.0)"
         }
       },
       "Asp.Versioning.OData.ApiExplorer": {
         "type": "Transitive",
-        "resolved": "8.2.0",
-        "contentHash": "R1mFPkRQ/7ETJ/2DuKk+5wM/608uaZmw4HaUycB5u+bCMpAUgwpAmanJYwy8POZ/NYLYyrVX6G8Xa59FcSjUmg==",
+        "resolved": "8.2.1",
+        "contentHash": "KeDgcYHWq7xkL+Fn8FBKIU0MrJ+UiaeYUZEIBqF7vJ3g0fCsnNjVm58ex6mxgSf0UZt6WyzJgEHxbRwV9jM1Hw==",
         "dependencies": {
-          "Asp.Versioning.Mvc.ApiExplorer": "8.1.0",
-          "Asp.Versioning.OData": "8.2.0"
+          "Asp.Versioning.Mvc.ApiExplorer": "8.1.1",
+          "Asp.Versioning.OData": "8.2.1"
         }
       },
       "AspNetCore.HealthChecks.AzureServiceBus": {
@@ -252,15 +252,6 @@
         "contentHash": "vwPceoznuT6glvirZcXlaCQrh1uzTSxpZUi2hRFNumHiS3hVyqIXI5fgWiLtlBzwqPJMTr0flUoSvGKjXXQlfg==",
         "dependencies": {
           "Azure.Core": "1.37.0"
-        }
-      },
-      "Azure.Storage.Blobs": {
-        "type": "Transitive",
-        "resolved": "12.26.0",
-        "contentHash": "EBRSHmI0eNzdufcIS1Rf7Ez9M8V1Jl7pMV4UWDERDMCv513KtAVsgz2ez2FQP9Qnwg7uEQrP+Uc7vBtumlr7sQ==",
-        "dependencies": {
-          "Azure.Core": "1.47.3",
-          "Azure.Storage.Common": "12.25.0"
         }
       },
       "Azure.Storage.Common": {
@@ -1006,14 +997,6 @@
           "System.DirectoryServices.Protocols": "6.0.2"
         }
       },
-      "Polly": {
-        "type": "Transitive",
-        "resolved": "8.6.5",
-        "contentHash": "VqtW2ZE/ALvQMAH1cQY3qZ2cF2OXa3oe/HKMdOv6Q02HCoEW0rsFNfcBONXlHBe1TnjWW1vdRxBEkPeq0/2FHA==",
-        "dependencies": {
-          "Polly.Core": "8.6.5"
-        }
-      },
       "Polly.Core": {
         "type": "Transitive",
         "resolved": "8.6.5",
@@ -1424,14 +1407,14 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Asp.Versioning.Http": "[8.1.0, 9.0.0)",
-          "Asp.Versioning.Mvc.ApiExplorer": "[8.1.0, 9.0.0)",
-          "Asp.Versioning.OData.ApiExplorer": "[8.2.0, 9.0.0)",
+          "Asp.Versioning.Http": "[8.1.1, )",
+          "Asp.Versioning.Mvc.ApiExplorer": "[8.1.1, )",
+          "Asp.Versioning.OData.ApiExplorer": "[8.2.1, )",
           "FluentValidation": "[12.1.1, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "[10.0.1, )",
-          "Microsoft.AspNetCore.OData": "[9.4.1, 10.0.0)",
-          "Microsoft.AspNetCore.OData.NewtonsoftJson": "[8.2.0, 10.0.0)",
+          "Microsoft.AspNetCore.OData": "[9.4.1, )",
+          "Microsoft.AspNetCore.OData.NewtonsoftJson": "[8.2.0, )",
           "NetEscapades.AspNetCore.SecurityHeaders": "[1.3.1, )",
           "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )"
         }
@@ -1492,8 +1475,8 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Asp.Versioning.OData.ApiExplorer": "[8.2.0, 9.0.0)",
-          "Microsoft.AspNetCore.OData": "[9.4.1, 10.0.0)",
+          "Asp.Versioning.OData.ApiExplorer": "[8.2.1, )",
+          "Microsoft.AspNetCore.OData": "[9.4.1, )",
           "Swashbuckle.AspNetCore.Annotations": "[10.1.0, )",
           "Swashbuckle.AspNetCore.Filters": "[10.0.1, )",
           "Swashbuckle.AspNetCore.Newtonsoft": "[10.1.0, )",
@@ -1689,6 +1672,25 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"
+        }
+      },
+      "Azure.Storage.Blobs": {
+        "type": "CentralTransitive",
+        "requested": "[12.26.0, )",
+        "resolved": "12.26.0",
+        "contentHash": "EBRSHmI0eNzdufcIS1Rf7Ez9M8V1Jl7pMV4UWDERDMCv513KtAVsgz2ez2FQP9Qnwg7uEQrP+Uc7vBtumlr7sQ==",
+        "dependencies": {
+          "Azure.Core": "1.47.3",
+          "Azure.Storage.Common": "12.25.0"
+        }
+      },
+      "Polly": {
+        "type": "CentralTransitive",
+        "requested": "[8.6.5, )",
+        "resolved": "8.6.5",
+        "contentHash": "VqtW2ZE/ALvQMAH1cQY3qZ2cF2OXa3oe/HKMdOv6Q02HCoEW0rsFNfcBONXlHBe1TnjWW1vdRxBEkPeq0/2FHA==",
+        "dependencies": {
+          "Polly.Core": "8.6.5"
         }
       }
     }

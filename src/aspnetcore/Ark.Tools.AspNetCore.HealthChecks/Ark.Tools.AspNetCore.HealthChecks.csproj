@@ -28,19 +28,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" Version="9.0.0" />
-		<PackageReference Include="AspNetCore.HealthChecks.Network" Version="9.0.0" />
-		<PackageReference Include="AspNetCore.HealthChecks.Oracle" Version="9.0.0" />
-		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" Version="9.0.0" />
-		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
-		<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
-		<PackageReference Include="Azure.Identity" Version="1.17.1" />
-		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
+		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" />
+		<PackageReference Include="AspNetCore.HealthChecks.Network" />
+		<PackageReference Include="AspNetCore.HealthChecks.Oracle" />
+		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" />
+		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
+		<PackageReference Include="Azure.Messaging.ServiceBus" />
+		<PackageReference Include="Azure.Identity" />
+		<PackageReference Include="Microsoft.ApplicationInsights" />
 		<!-- Needed due to vulnerabilities from dependency AspNetCore.HealthChecks.UI that is not updated  -->
-		<PackageReference Include="KubernetesClient" Version="18.0.13" />
+		<PackageReference Include="KubernetesClient" />
 	</ItemGroup>
 
 	<ItemGroup>

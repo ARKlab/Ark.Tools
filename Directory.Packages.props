@@ -1,0 +1,158 @@
+﻿<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+	  <!-- COMMON -->
+	  <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Logging.AzureAppServices" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.1" />
+	  <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
+	  
+	  <PackageVersion Include="System.Diagnostics.Tracing" Version="4.3.0" />
+	  <PackageVersion Include="DistributedLock.Core" Version="1.0.8" />
+	  <PackageVersion Include="DistributedLock.Azure" Version="1.0.2" />
+	  <PackageVersion Include="Polly" Version="8.6.5" />
+	  <PackageVersion Include="Polly.Caching.Memory" Version="3.0.2" />
+	  <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+	  <PackageVersion Include="MessagePack" Version="3.1.4" />
+	  <PackageVersion Include="morelinq" Version="4.4.0" />
+	  <PackageVersion Include="System.Linq.Async" Version="7.0.0" />
+	  <PackageVersion Include="NodaTime" Version="3.3.0" />
+	  <PackageVersion Include="NodaTime.Serialization.JsonNet" Version="3.2.0" />
+	  <PackageVersion Include="NodaTime.Serialization.SystemTextJson" Version="1.3.0" />
+	  <PackageVersion Include="NodaTime.Testing" Version="3.3.0" />
+	  <PackageVersion Include="System.Reactive" Version="6.1.0" />
+	  <PackageVersion Include="SSH.NET" Version="2025.1.0" />
+	  <PackageVersion Include="SimpleInjector" Version="5.5.0" />
+	  <PackageVersion Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
+
+	  <PackageVersion Include="ArxOne.Ftp" Version="1.41.4" />
+	  <PackageVersion Include="FluentFTP" Version="53.0.2" />
+
+	  <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
+	  <PackageVersion Include="Flurl.Http" Version="4.0.2" />
+	  <PackageVersion Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
+	  <PackageVersion Include="MessagePack.NodaTime" Version="3.5.1" />
+	  <PackageVersion Include="Macross.Json.Extensions" Version="3.0.0" />
+	  
+	  <!-- TO REMOVE -->
+	  <PackageVersion Include="Ensure.That" Version="10.1.0" />
+	  <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.1" />
+
+	  <!-- TESTING -->
+	  <PackageVersion Include="AwesomeAssertions" Version="9.3.0" />
+	  <PackageVersion Include="AwesomeAssertions.Web" Version="1.9.6" />
+	  <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+	  <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.1" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
+	  <PackageVersion Include="MSTest.TestAdapter" Version="4.0.2" />
+	  <PackageVersion Include="MSTest.TestFramework" Version="4.0.2" />
+	  <PackageVersion Include="Moq" Version="4.20.72" />
+	  <PackageVersion Include="Reqnroll" Version="3.3.0" />
+	  <PackageVersion Include="Reqnroll.MsTest" Version="3.3.0" />
+	  <PackageVersion Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.0" />
+	  <PackageVersion Include="FluentValidation" Version="12.1.1" />
+
+	  <!-- MONITORING & LOGGING -->
+	  <PackageVersion Include="Microsoft.ApplicationInsights" Version="2.23.0" />
+	  <PackageVersion Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.23.0" />
+	  <PackageVersion Include="Microsoft.ApplicationInsights.SnapshotCollector" Version="1.4.6" />
+	  <PackageVersion Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
+	  <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
+	  <PackageVersion Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.23.0" />
+	  <PackageVersion Include="Ben.Demystifier" Version="0.4.1" />
+	  <PackageVersion Include="NLog" Version="6.0.7" />
+	  <PackageVersion Include="NLog.Database" Version="6.0.3" />
+	  <PackageVersion Include="NLog.DiagnosticSource" Version="6.0.3" />
+	  <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.0" />
+	  <PackageVersion Include="NLog.MailKit" Version="6.0.5" />
+	  <PackageVersion Include="Slack.Webhooks" Version="1.1.5" />
+
+	  <!-- ASPNETCORE -->
+	  <PackageVersion Include="Asp.Versioning.Http" Version="8.1.1" />
+	  <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1" />
+	  <PackageVersion Include="Asp.Versioning.OData.ApiExplorer" Version="8.2.1" />
+	  <PackageVersion Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
+	  <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.1" />
+	  <PackageVersion Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
+	  <PackageVersion Include="Microsoft.AspNetCore.OData.NewtonsoftJson" Version="8.2.0" />
+	  <PackageVersion Include="NetEscapades.AspNetCore.SecurityHeaders" Version="1.3.1" />
+	  <PackageVersion Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="5.5.0" />
+	  <PackageVersion Include="Microsoft.Identity.Web" Version="4.2.0" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.0" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.0" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.0" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.0" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.0" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="10.0.1" />
+
+	  <!-- ASPNETCORE HEALTHCHECKS -->
+	  <PackageVersion Include="AspNetCore.HealthChecks.AzureServiceBus" Version="9.0.0" />
+	  <PackageVersion Include="AspNetCore.HealthChecks.Network" Version="9.0.0" />
+	  <PackageVersion Include="AspNetCore.HealthChecks.Oracle" Version="9.0.0" />
+	  <PackageVersion Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" Version="9.0.0" />
+	  <PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
+	  <PackageVersion Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
+	  <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+	  <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
+	  <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.1" />
+	  <PackageVersion Include="KubernetesClient" Version="18.0.13" />
+	  
+	  <!-- SQL -->
+	  <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.3" />
+	  <PackageVersion Include="Dapper" Version="2.1.66" />
+	  <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.0" />
+
+	  <!-- AUTH -->
+	  <PackageVersion Include="Auth0.AuthenticationApi" Version="7.43.0" />
+	  <PackageVersion Include="Auth0.ManagementApi" Version="7.43.0" />
+	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.80.0" />
+	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.80.0" />
+	  <PackageVersion Include="JWT" Version="11.0.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
+	  <PackageVersion Include="Azure.Identity" Version="1.17.1" />
+	  
+	  <!-- REBUS -->
+	  <PackageVersion Include="Rebus" Version="8.9.0" />
+	  <PackageVersion Include="Rebus.NLog" Version="6.0.0" />
+	  <PackageVersion Include="Rebus.AzureServiceBus" Version="10.5.1" />
+	  <PackageVersion Include="Rebus.SqlServer" Version="8.4.0" />
+	  <PackageVersion Include="Rebus.AzureBlobs" Version="1.1.0" />
+	  <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
+	  
+	  <!-- RAVENDB - TOREMOVE -->
+	  <PackageVersion Include="RavenDB.Client" Version="7.1.5" />
+	  <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
+
+	  <!-- BUILD TOOLS -->
+	  <PackageVersion Include="Polyfill" Version="9.6.0" />
+	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.101" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="2.0.267" />
+	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
+	  <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+
+  </ItemGroup>
+
+</Project>

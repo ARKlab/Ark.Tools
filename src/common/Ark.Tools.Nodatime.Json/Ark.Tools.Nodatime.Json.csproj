@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 
   <!-- the other props are defined in Directory.Build.props -->
@@ -19,8 +19,8 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-	  <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-	  <PackageReference Include="NodaTime.Serialization.JsonNet" Version="3.2.0" />
+	  <PackageReference Include="Newtonsoft.Json" />
+	  <PackageReference Include="NodaTime.Serialization.JsonNet" />
   </ItemGroup>
 
   <ItemGroup>

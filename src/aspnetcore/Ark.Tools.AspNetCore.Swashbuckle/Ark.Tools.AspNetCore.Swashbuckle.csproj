@@ -26,14 +26,14 @@
   </ItemGroup>
       
   <ItemGroup>
-	  <PackageReference Include="Asp.Versioning.OData.ApiExplorer" Version="[8.2.0,9)" />
-	  <PackageReference Include="Microsoft.AspNetCore.OData" Version="[9.4.1,10)" />
-	  <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.0" />
-	  <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="10.0.1" />
+	  <PackageReference Include="Asp.Versioning.OData.ApiExplorer" />
+	  <PackageReference Include="Microsoft.AspNetCore.OData" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
   </ItemGroup>
       
   <ItemGroup>

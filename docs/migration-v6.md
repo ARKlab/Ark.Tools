@@ -8,6 +8,7 @@
 * [Migrate tests to MTPv2](#migrate-tests-to-mtpv2)
 * [Migrate SLN to SLNX](#migrate-sln-to-slnx)
 * [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
+* [Adopt Central Package Management](#adopt-central-package-management)
 
 ## Migrate SQL Projects to SDK-based
 
@@ -123,6 +124,12 @@ Use `dotnet sln migrate` to migrate it.
 Update the CI Pipelines to reference the new SLNX file.
 
 More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/#getting-started)
+
+## Adopt Central Package Management
+
+CPM helps ensuring dependencies are aligned across the solution and helps Bots (e.g. Renovate) to manage dependencies.
+
+Ask Copilot Agent to "modernize codebase: migrate to CPM" or refer to [MS guide](https://learn.microsoft.com/en-us/dotnet/azure/migration/appmod/quickstart)
 
 ## Update editorconfig and DirectoryBuild 
 

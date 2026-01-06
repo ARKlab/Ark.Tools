@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "dependencies": {
     "net10.0": {
       "Meziantou.Analyzer": {
@@ -36,38 +36,12 @@
         "resolved": "9.6.0",
         "contentHash": "2Uivtqpr/Kh/deBCs+8AIaULeuwI2vC4VPG8Gap+b+oHONfgNK5nngkriOtHIKOlkzvU62lckRpWL/eOVuVqBw=="
       },
-      "Auth0.AuthenticationApi": {
-        "type": "Transitive",
-        "resolved": "7.43.0",
-        "contentHash": "i7Mp7q58kA+/f2EEbbsVCFyBRATKBNM/oF7GPhfRPBAcKN1O8kvL2bhNeNUDJiuuENsOzfVkeN41lxEVbGL3qA==",
-        "dependencies": {
-          "Auth0.Core": "7.43.0",
-          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.15.0",
-          "System.IdentityModel.Tokens.Jwt": "8.15.0"
-        }
-      },
       "Auth0.Core": {
         "type": "Transitive",
         "resolved": "7.43.0",
         "contentHash": "1IzTrS5jNA87Bp+PVI44ZaZ+YTkC5NDZr9GYrKA/DLt2Bkqb2oAW6fwxuiajXwNfIDbkJIpIFTTYjSnmIZMBeQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
-        }
-      },
-      "Auth0.ManagementApi": {
-        "type": "Transitive",
-        "resolved": "7.43.0",
-        "contentHash": "AYzV82i7RpPAHVGe7GaW4McYgk03AbZ0+RPMcMoV9VU4l7oZ/88G20NYkWZEH4DbTQsD5RXdGFN4flw95pIi5w==",
-        "dependencies": {
-          "Auth0.Core": "7.43.0"
-        }
-      },
-      "JWT": {
-        "type": "Transitive",
-        "resolved": "11.0.0",
-        "contentHash": "jOT1PA95jgf78CqWsKt8hz9Uzv4J39vukzf5nYtfky9N6wl1W4vIXT1CdkQI7zG20HnApEMtmpC/pMtCKr4rvw==",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.3"
         }
       },
       "Microsoft.Build.Tasks.Git": {
@@ -79,14 +53,6 @@
         "type": "Transitive",
         "resolved": "8.15.0",
         "contentHash": "e/DApa1GfxUqHSBHcpiQg8yaghKAvFVBQFcWh25jNoRobDZbduTUACY8bZ54eeGWXvimGmEDdF0zkS5Dq16XPQ=="
-      },
-      "Microsoft.IdentityModel.JsonWebTokens": {
-        "type": "Transitive",
-        "resolved": "8.15.0",
-        "contentHash": "3513f5VzvOZy3ELd42wGnh1Q3e83tlGAuXFSNbENpgWYoAhLLzgFtd5PiaOPGAU0gqKhYGVzKavghLUGfX3HQg==",
-        "dependencies": {
-          "Microsoft.IdentityModel.Tokens": "8.15.0"
-        }
       },
       "Microsoft.IdentityModel.Logging": {
         "type": "Transitive",
@@ -126,27 +92,6 @@
         "resolved": "8.0.0",
         "contentHash": "dk9JPxTCIevS75HyEQ0E4OVAFhB2N+V9ShCXf8Q6FkUQZDkgLI12y679Nym1YqsiSysuQskT7Z+6nUf3yab6Vw=="
       },
-      "Newtonsoft.Json": {
-        "type": "Transitive",
-        "resolved": "13.0.4",
-        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
-      },
-      "Polly": {
-        "type": "Transitive",
-        "resolved": "8.6.5",
-        "contentHash": "VqtW2ZE/ALvQMAH1cQY3qZ2cF2OXa3oe/HKMdOv6Q02HCoEW0rsFNfcBONXlHBe1TnjWW1vdRxBEkPeq0/2FHA==",
-        "dependencies": {
-          "Polly.Core": "8.6.5"
-        }
-      },
-      "Polly.Caching.Memory": {
-        "type": "Transitive",
-        "resolved": "3.0.2",
-        "contentHash": "kHMfuF+pnEBGIdge8A7NBmLkDqsTdEWjpd3mgxpe31sHxOH6x25nRnXDg2HeSDX/VTWv/QbFFpFMfpP+tQCw5w==",
-        "dependencies": {
-          "Polly": "7.1.1"
-        }
-      },
       "Polly.Core": {
         "type": "Transitive",
         "resolved": "8.6.5",
@@ -169,6 +114,68 @@
           "JWT": "[11.0.0, )",
           "Polly": "[8.6.5, )",
           "Polly.Caching.Memory": "[3.0.2, )"
+        }
+      },
+      "Auth0.AuthenticationApi": {
+        "type": "CentralTransitive",
+        "requested": "[7.43.0, )",
+        "resolved": "7.43.0",
+        "contentHash": "i7Mp7q58kA+/f2EEbbsVCFyBRATKBNM/oF7GPhfRPBAcKN1O8kvL2bhNeNUDJiuuENsOzfVkeN41lxEVbGL3qA==",
+        "dependencies": {
+          "Auth0.Core": "7.43.0",
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.15.0",
+          "System.IdentityModel.Tokens.Jwt": "8.15.0"
+        }
+      },
+      "Auth0.ManagementApi": {
+        "type": "CentralTransitive",
+        "requested": "[7.43.0, )",
+        "resolved": "7.43.0",
+        "contentHash": "AYzV82i7RpPAHVGe7GaW4McYgk03AbZ0+RPMcMoV9VU4l7oZ/88G20NYkWZEH4DbTQsD5RXdGFN4flw95pIi5w==",
+        "dependencies": {
+          "Auth0.Core": "7.43.0"
+        }
+      },
+      "JWT": {
+        "type": "CentralTransitive",
+        "requested": "[11.0.0, )",
+        "resolved": "11.0.0",
+        "contentHash": "jOT1PA95jgf78CqWsKt8hz9Uzv4J39vukzf5nYtfky9N6wl1W4vIXT1CdkQI7zG20HnApEMtmpC/pMtCKr4rvw==",
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.3"
+        }
+      },
+      "Microsoft.IdentityModel.JsonWebTokens": {
+        "type": "CentralTransitive",
+        "requested": "[8.15.0, )",
+        "resolved": "8.15.0",
+        "contentHash": "3513f5VzvOZy3ELd42wGnh1Q3e83tlGAuXFSNbENpgWYoAhLLzgFtd5PiaOPGAU0gqKhYGVzKavghLUGfX3HQg==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Tokens": "8.15.0"
+        }
+      },
+      "Newtonsoft.Json": {
+        "type": "CentralTransitive",
+        "requested": "[13.0.4, )",
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
+      },
+      "Polly": {
+        "type": "CentralTransitive",
+        "requested": "[8.6.5, )",
+        "resolved": "8.6.5",
+        "contentHash": "VqtW2ZE/ALvQMAH1cQY3qZ2cF2OXa3oe/HKMdOv6Q02HCoEW0rsFNfcBONXlHBe1TnjWW1vdRxBEkPeq0/2FHA==",
+        "dependencies": {
+          "Polly.Core": "8.6.5"
+        }
+      },
+      "Polly.Caching.Memory": {
+        "type": "CentralTransitive",
+        "requested": "[3.0.2, )",
+        "resolved": "3.0.2",
+        "contentHash": "kHMfuF+pnEBGIdge8A7NBmLkDqsTdEWjpd3mgxpe31sHxOH6x25nRnXDg2HeSDX/VTWv/QbFFpFMfpP+tQCw5w==",
+        "dependencies": {
+          "Polly": "7.1.1"
         }
       }
     }

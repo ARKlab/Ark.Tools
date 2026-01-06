@@ -18,7 +18,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Macross.Json.Extensions" Version="3.0.0" />
+    <PackageReference Include="Macross.Json.Extensions" />
   </ItemGroup>
 
   <ItemGroup>
