@@ -66,6 +66,13 @@
 
   </PropertyGroup>
 
+	<ItemGroup Label="EditorConfig Files">
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory).editorconfig" Link=".editorconfig" />
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory).editorconfig-style.ini" Link=".editorconfig-style.ini" />
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory).editorconfig-netanalyzers.ini" Link=".editorconfig-netanalyzers.ini" />
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory).editorconfig-meziantou.ini" Link=".editorconfig-meziantou.ini" />
+	</ItemGroup>
+
 	<PropertyGroup Label="NuGet Audit">
 		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
 		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>

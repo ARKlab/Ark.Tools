@@ -558,6 +558,9 @@ dotnet_diagnostic.MA0006.severity = silent
 # MA0007: Add a comma after the last value
 dotnet_diagnostic.MA0007.severity = silent
 
+# MA0015: Specify the parameter name in ArgumentException
+dotnet_diagnostic.MA0015.severity = none
+
 # MA0016: Prefer using collection abstraction instead of implementation
 dotnet_diagnostic.MA0016.severity = suggestion
 
