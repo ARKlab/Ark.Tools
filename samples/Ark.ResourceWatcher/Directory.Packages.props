@@ -1,9 +1,16 @@
 ﻿<Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
-    <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
-  </PropertyGroup>
+  <!-- Import root Directory.Packages.props for shared 3rd party package versions -->
+  <Import Project="../../Directory.Packages.props" />
+
+  <ItemGroup>
+    <!-- Ark.Tools packages - using local development version 999.9.9 -->
+    <!-- When ejecting this sample to a new project, change these versions to the actual Ark.Tools version from nuget.org -->
+    <PackageVersion Include="Ark.Tools.Http" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.NLog" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Reqnroll" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.ResourceWatcher.Testing" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.ResourceWatcher.WorkerHost.Hosting" Version="999.9.9" />
+  </ItemGroup>
   
   <ItemGroup>
     <!-- ResourceWatcher sample specific packages -->

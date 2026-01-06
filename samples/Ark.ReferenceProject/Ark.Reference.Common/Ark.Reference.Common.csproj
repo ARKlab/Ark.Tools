@@ -8,15 +8,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="../../../src/common/Ark.Tools.NLog.Configuration/Ark.Tools.NLog.Configuration.csproj" />
-		<ProjectReference Include="../../../src/common/Ark.Tools.Nodatime/Ark.Tools.Nodatime.csproj" />
-		<ProjectReference Include="../../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
-		<ProjectReference Include="../../../src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
-		<ProjectReference Include="../../../src/common/Ark.Tools.Http/Ark.Tools.Http.csproj" />
-		<ProjectReference Include="../../../src/common/Ark.Tools.Sql.SqlServer/Ark.Tools.Sql.SqlServer.csproj" />
-		<ProjectReference Include="../../../src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
-		<ProjectReference Include="../../../src/common/Ark.Tools.Solid.Authorization/Ark.Tools.Solid.Authorization.csproj" />
-		<ProjectReference Include="../../../src/common/Ark.Tools.Solid.FluentValidaton/Ark.Tools.Solid.FluentValidaton.csproj" />
+		<PackageReference Include="Ark.Tools.NLog.Configuration" />
+		<PackageReference Include="Ark.Tools.Nodatime" />
+		<PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
+		<PackageReference Include="Ark.Tools.Rebus" />
+		<PackageReference Include="Ark.Tools.Http" />
+		<PackageReference Include="Ark.Tools.Sql.SqlServer" />
+		<PackageReference Include="Ark.Tools.SystemTextJson" />
+		<PackageReference Include="Ark.Tools.Solid.Authorization" />
+		<PackageReference Include="Ark.Tools.Solid.FluentValidaton" />
 	</ItemGroup>
 
 

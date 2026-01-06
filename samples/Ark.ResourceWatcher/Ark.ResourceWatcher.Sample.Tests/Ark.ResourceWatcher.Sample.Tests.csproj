@@ -39,8 +39,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.ResourceWatcher.Sample\Ark.ResourceWatcher.Sample.csproj" />
-    <ProjectReference Include="..\..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.Testing\Ark.Tools.ResourceWatcher.Testing.csproj" />
-    <ProjectReference Include="..\..\..\src\common\Ark.Tools.Reqnroll\Ark.Tools.Reqnroll.csproj" />
+    <PackageReference Include="Ark.Tools.ResourceWatcher.Testing" />
+    <PackageReference Include="Ark.Tools.Reqnroll" />
   </ItemGroup>
 
 </Project>

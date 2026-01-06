@@ -39,7 +39,7 @@
 	</ItemGroup>
 	
   <ItemGroup>
-    <ProjectReference Include="../../../../src/common/Ark.Tools.Reqnroll/Ark.Tools.Reqnroll.csproj" />
+    <PackageReference Include="Ark.Tools.Reqnroll" />
   </ItemGroup>
 
   <ItemGroup>
