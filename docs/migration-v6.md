@@ -133,13 +133,19 @@ Ask Copilot Agent to "modernize codebase: migrate to CPM" or refer to [MS guide]
 
 ## Update editorconfig and DirectoryBuild 
 
-Copy `.editorconfig` and `Directory.Build.props` and `Directory.Build.targets` from `samples/Ark.Reference` project into your solution folder.
+Copy the following files from `samples/Ark.ReferenceProject` into your solution folder:
+
+- `.editorconfig` - Code style and formatting rules
+- `.netanalyzers.globalconfig` - Microsoft .NET analyzer diagnostics (CA* rules)
+- `.meziantou.globalconfig` - Third-party analyzer diagnostics (MA* rules)
+- `Directory.Build.props`
+- `Directory.Build.targets`
 
 That ensures code quality:
 
 - Nullable
 - Deterministic builds
-- DotNet Analyzers 
+- DotNet Analyzers (via global analyzer config files)
 - SBOM
 - Latest language version
 - Nuget Audit
