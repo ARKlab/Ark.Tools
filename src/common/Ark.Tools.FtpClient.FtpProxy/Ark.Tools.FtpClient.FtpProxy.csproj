@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Auth0.AuthenticationApi" Version="7.43.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.79.2" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.80.0" />
     <PackageReference Include="Polly.Caching.Memory" Version="3.0.2" />
   </ItemGroup>
 
