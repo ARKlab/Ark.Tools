@@ -124,6 +124,12 @@ Update the CI Pipelines to reference the new SLNX file.
 
 More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/#getting-started)
 
+## Adopt Central Package Management
+
+CPM helps ensuring dependencies are aligned across the solution and helps Bots (e.g. Renovate) to manage dependencies.
+
+Ask Copilot Agent to "modernize codebase: migrate to CPM" or refer to [MS guide](https://learn.microsoft.com/en-us/dotnet/azure/migration/appmod/quickstart)
+
 ## Update editorconfig and DirectoryBuild 
 
 Copy `.editorconfig` and `Directory.Build.props` and `Directory.Build.targets` from `samples/Ark.Reference` project into your solution folder.
