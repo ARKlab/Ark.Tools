@@ -83,11 +83,10 @@
 	</ItemGroup>
 
 	<ItemGroup Label="Global Analyzer Config Files">
-		<!-- Shared analyzer configs from repository root -->
+		<!-- Shared analyzer configs (explicitly loaded first) -->
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
-		<!-- Local overrides (higher priority - listed last) -->
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).globalconfig.local" />
+		<!-- Note: .globalconfig is automatically discovered and has higher precedence -->
 	</ItemGroup>
 	
 </Project>
