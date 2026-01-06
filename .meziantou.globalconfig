@@ -1,4 +1,7 @@
+is_global = true
+
 #### Meziantou.Analyzer Rules (MA*) and Visual Studio Threading Analyzers (VSTHRD*) ####
+
 
 # MA0004: Use Task.ConfigureAwait
 dotnet_diagnostic.MA0004.severity = suggestion

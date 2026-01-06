@@ -2,51 +2,38 @@
 
 ## Overview
 
-The `.editorconfig` file has been reorganized into a more maintainable structure with separate documentation files for different rule categories.
+The configuration files have been reorganized to follow Microsoft's recommended best practices by separating EditorConfig style rules from analyzer diagnostics using Global Analyzer Config files.
 
 ## Files Created
 
 ### 1. `.editorconfig` (Main File)
-- **Purpose**: The main configuration file used by editors and build tools
-- **Content**: All settings combined in a single file (EditorConfig doesn't support file includes)
-- **Size**: ~25KB
+- **Purpose**: EditorConfig file for code style and formatting
+- **Content**: Core options, .NET/C# conventions, formatting rules, naming styles, code quality configuration
+- **Size**: ~13KB (reduced from 25KB by removing analyzer diagnostics)
 
-### 2. `.editorconfig-style.ini` (Style and Formatting Rules)
-- **Purpose**: Documentation and reference for style-related settings
-- **Content**:
-  - Core EditorConfig options (indentation, spacing, line endings)
-  - .NET coding conventions (dotnet_* style rules)
-  - C# coding conventions (csharp_* style rules)  
-  - C# formatting rules
-  - Naming styles
-  - Code quality configuration
-- **Size**: ~11KB
-
-### 3. `.editorconfig-netanalyzers.ini` (Microsoft Analyzers)
-- **Purpose**: Documentation for Microsoft .NET Code Analysis rules
+### 2. `.netanalyzers.globalconfig` (Microsoft Analyzers)
+- **Purpose**: Global analyzer configuration for Microsoft .NET analyzers
 - **Content**:
   - 87 CA* rules (Code Analysis)
   - 1 IDE* rule (IDE0005)
   - All rules sorted numerically (CA1000, CA1001, CA1002, etc.)
   - Each rule documented with official description
-- **Size**: ~9.4KB
+- **Size**: ~9.5KB
+- **Format**: Global analyzer config file with `is_global = true`
 
-### 4. `.editorconfig-meziantou.ini` (Third-party Analyzers)
-- **Purpose**: Documentation for third-party analyzer rules
+### 3. `.meziantou.globalconfig` (Third-party Analyzers)
+- **Purpose**: Global analyzer configuration for third-party analyzers
 - **Content**:
   - 40 MA* rules (Meziantou.Analyzer)
   - 1 VSTHRD* rule (VSTHRD200)
   - All rules sorted numerically
   - Each rule documented with official description
-- **Size**: ~3.3KB
+- **Size**: ~3.4KB
+- **Format**: Global analyzer config file with `is_global = true`
 
-### 5. `.editorconfig-README.md` (Documentation)
+### 4. `.editorconfig-README.md` (Documentation)
 - **Purpose**: Explains the file structure and how to maintain it
 - **Content**: Usage instructions, maintenance guidelines, and references
-
-### 6. `.editorconfig.backup` (Backup)
-- **Purpose**: Backup of the original .editorconfig file
-- **Note**: Can be removed after verification
 
 ## What Changed
 
@@ -55,73 +42,73 @@ The `.editorconfig` file has been reorganized into a more maintainable structure
 - All style and formatting rules
 - All naming conventions
 - All code quality configuration
-- File structure ([*.cs] and [*.{cs,vb}] sections)
 
 ### ✨ Improvements
-- Added official descriptions for all 129 diagnostic rules
-- Sorted all diagnostic rules numerically (CA1000, CA1001, CA1002...)
-- Organized rules into logical categories
-- Created separate documentation files for easier maintenance
-- Added comprehensive README documentation
+- **Separated concerns**: Style rules in .editorconfig, analyzer diagnostics in .globalconfig files
+- **Better performance**: Global analyzer configs are more efficient for build-time analysis
+- **Standards-compliant**: Follows Microsoft's recommended configuration approach
+- **Maintained documentation**: All 129 diagnostic rules still have official descriptions
+- **Better organization**: Rules sorted numerically within each file
+
+### 🔧 Technical Changes
+- Moved all `dotnet_diagnostic.*` rules from .editorconfig to .globalconfig files
+- Updated `Directory.Build.props` to use `GlobalAnalyzerConfigFiles` instead of `AdditionalFiles`
+- Removed `.editorconfig-style.ini`, `.editorconfig-netanalyzers.ini`, `.editorconfig-meziantou.ini` (no longer needed)
+- Applied changes to sample projects (Ark.ReferenceProject, Ark.ResourceWatcher)
 
 ## Rule Categories
 
 ### CA* Rules (87 total)
 - Code Analysis rules from Microsoft.CodeAnalysis.NetAnalyzers
 - Categories: Design, Performance, Security, Maintainability, Usage
+- Now in: `.netanalyzers.globalconfig`
 - Documentation: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/
 
 ### IDE* Rules (1 total)
 - IDE0005: Remove unnecessary import
+- Now in: `.netanalyzers.globalconfig`
 - Documentation: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/
 
 ### MA* Rules (40 total)
 - Meziantou.Analyzer rules
 - Categories: Design, Performance, Security, Usage, Style
+- Now in: `.meziantou.globalconfig`
 - Documentation: https://github.com/meziantou/Meziantou.Analyzer
 
 ### VSTHRD* Rules (1 total)
 - VSTHRD200: Use "Async" suffix for async methods
+- Now in: `.meziantou.globalconfig`
 - Documentation: https://github.com/microsoft/vs-threading
 
 ## Verification
 
-The reorganized .editorconfig has been tested:
-- ✅ dotnet restore completed successfully
-- ✅ dotnet build completed with no errors
+The reorganized configuration has been tested:
 - ✅ All 129 diagnostic rules preserved with correct severity levels
 - ✅ All style and formatting rules preserved
-- ✅ No warnings or errors introduced
+- ✅ Global analyzer configs properly referenced in Directory.Build.props
+- ✅ Changes applied to all sample projects
 
-## Next Steps
+## For Developers
 
-### For Developers
-1. The new `.editorconfig` is ready to use immediately
+1. The new configuration is ready to use immediately
 2. No changes required to your workflow
 3. All existing settings are preserved
+4. Analyzer diagnostics now use global analyzer config files (more efficient)
 
-### For Maintainers
+## For Maintainers
+
 When updating rules:
-1. Update the corresponding `.ini` file (style, netanalyzers, or meziantou)
-2. Copy changes to the main `.editorconfig` file
-3. Keep files in sync
+1. **Style/formatting**: Edit `.editorconfig`
+2. **CA*/IDE* rules**: Edit `.netanalyzers.globalconfig`
+3. **MA*/VSTHRD* rules**: Edit `.meziantou.globalconfig`
 
-### Optional Cleanup
-After verifying everything works:
-```bash
-# Remove the backup file
-rm .editorconfig.backup
-```
+All files are automatically applied during build.
 
 ## Resources
 
 ### Official Documentation
+- **Global Analyzer Config**: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-files
 - **CA* rules**: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/
 - **IDE* rules**: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/
 - **MA* rules**: https://github.com/meziantou/Meziantou.Analyzer/tree/main/docs/Rules
 - **VSTHRD* rules**: https://github.com/microsoft/vs-threading/tree/main/doc/analyzers
-
-### Tools Used
-- Web search for official rule descriptions
-- Microsoft Learn documentation
-- GitHub documentation for third-party analyzers
