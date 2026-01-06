@@ -70,8 +70,8 @@ stages:
         displayName: 'Pack Ark.Tools packages for local development'
         inputs:
           command: 'pack'
-          packagesToPack: '../../src/**/*.csproj'
-          configuration: 'Debug'
+          packagesToPack: '$(Build.SourcesDirectory)/src/**/*.csproj'
+          configuration: '$(BuildConfiguration)'
           packDirectory: '$(Build.SourcesDirectory)/packages'
           nobuild: false
           versioningScheme: 'byEnvVar'
