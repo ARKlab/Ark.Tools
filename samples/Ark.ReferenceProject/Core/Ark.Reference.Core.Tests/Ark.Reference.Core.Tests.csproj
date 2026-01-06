@@ -14,28 +14,28 @@
 
   <ItemGroup Label="Testing Platform Settings">
     <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.1" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
   </ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ExcelDataReader" Version="3.8.0" />
-		<PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
-		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.1" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
-		<PackageReference Include="Microsoft.SqlServer.DacFx" Version="170.2.70" />
-		<PackageReference Include="Moq" Version="4.20.72" />
-		<PackageReference Include="MSTest.TestAdapter" Version="4.0.2" />
-		<PackageReference Include="MSTest.TestFramework" Version="4.0.2" />
-		<PackageReference Include="netDumbster" Version="3.1.1" />
-		<PackageReference Include="NodaTime.Testing" Version="3.3.0" />
-		<PackageReference Include="Reqnroll.MsTest" Version="3.3.0" />
-		<PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.0" />
+		<PackageReference Include="ExcelDataReader" />
+		<PackageReference Include="ExcelDataReader.DataSet" />
+		<PackageReference Include="Microsoft.AspNetCore.TestHost" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="Microsoft.SqlServer.DacFx" />
+		<PackageReference Include="Moq" />
+		<PackageReference Include="MSTest.TestAdapter" />
+		<PackageReference Include="MSTest.TestFramework" />
+		<PackageReference Include="netDumbster" />
+		<PackageReference Include="NodaTime.Testing" />
+		<PackageReference Include="Reqnroll.MsTest" />
+		<PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
 	</ItemGroup>
 	
   <ItemGroup>

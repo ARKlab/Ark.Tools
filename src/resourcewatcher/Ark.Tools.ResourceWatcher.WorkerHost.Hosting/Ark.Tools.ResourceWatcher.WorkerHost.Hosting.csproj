@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
@@ -18,11 +18,11 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
   </ItemGroup>
   
   <ItemGroup>
