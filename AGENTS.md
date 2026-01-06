@@ -33,16 +33,33 @@ Ark.Tools is a set of core libraries for LOB applications. Distributed via NuGet
 - .NET SDK 10.0.100 (specified in `global.json`)
 - Docker (for integration tests requiring SQL Server and Azurite)
 
-### Basic Commands
+### Build Sequence
+
+**Important:** The samples now use PackageReference to Ark.Tools libraries. You must pack the Ark.Tools libraries first to create local packages before building or testing samples.
+
 ```bash
-# Restore and build
+# 1. Pack Ark.Tools libraries to local packages (required for samples)
+dotnet pack --configuration Debug --output ./packages -p:Version=999.9.9
+
+# 2. Restore packages (samples will use local packages from ./packages)
+dotnet restore
+
+# 3. Build the solution
+dotnet build --no-restore
+
+# 4. Run all tests
+dotnet test --no-build
+```
+
+### Alternative: Build src/ only (without samples)
+If you only need to build the Ark.Tools libraries without the samples, you can skip the pack step:
+
+```bash
+# Restore and build src/ projects only
 dotnet restore
 dotnet build --no-restore
 
-# Run all tests
-dotnet test
-
-# Run tests without rebuilding
+# Run tests (excludes sample tests)
 dotnet test --no-build
 ```
 
