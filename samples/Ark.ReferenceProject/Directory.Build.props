@@ -1,4 +1,9 @@
 <Project>
+	<!-- Prevent inheriting from parent Directory.Build.props -->
+	<PropertyGroup>
+		<ImportDirectoryBuildProps>false</ImportDirectoryBuildProps>
+	</PropertyGroup>
+
 	<PropertyGroup>	
 		<TargetFramework>net10.0</TargetFramework>
 		<IsPackable>false</IsPackable>
