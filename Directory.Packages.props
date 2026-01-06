@@ -155,9 +155,4 @@
 
   </ItemGroup>
 
-  <ItemGroup>
-	  <GlobalPackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
-	  <GlobalPackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0" />
-  </ItemGroup>
-
 </Project>

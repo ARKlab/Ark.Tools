@@ -18,7 +18,6 @@
   </PropertyGroup>
 
   <ItemGroup Label="Testing Platform Settings">
-    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
     <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
     <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
