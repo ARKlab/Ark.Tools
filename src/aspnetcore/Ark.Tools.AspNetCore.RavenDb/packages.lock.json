@@ -10,7 +10,7 @@
       },
       "Microsoft.AspNetCore.OData": {
         "type": "Direct",
-        "requested": "[9.4.1, 10.0.0)",
+        "requested": "[9.4.1, )",
         "resolved": "9.4.1",
         "contentHash": "PXyuPnC7p3ic5sgO9ydNqpKd+hXRMErGXfBPeptTWjXfdBWec97cv1fDFLiCKR1Wm4LeG4Yjcap+xk7XNdfsNw==",
         "dependencies": {
