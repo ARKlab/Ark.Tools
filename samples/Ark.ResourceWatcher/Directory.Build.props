@@ -81,5 +81,12 @@
 		<PackageReference Include="Meziantou.Analyzer" PrivateAssets="All" />
 		<PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
 	</ItemGroup>
+
+	<ItemGroup Label="Global Analyzer Config Files">
+		<!-- Shared analyzer configs (explicitly loaded first) -->
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
+		<!-- Note: .globalconfig is automatically discovered and has higher precedence -->
+	</ItemGroup>
 	
 </Project>

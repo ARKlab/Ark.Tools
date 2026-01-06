@@ -66,6 +66,11 @@
 
   </PropertyGroup>
 
+	<ItemGroup Label="Global Analyzer Config Files">
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
+	</ItemGroup>
+
 	<PropertyGroup Label="NuGet Audit">
 		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
 		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
