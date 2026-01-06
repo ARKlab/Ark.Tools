@@ -8,6 +8,7 @@
 * [Migrate tests to MTPv2](#migrate-tests-to-mtpv2)
 * [Migrate SLN to SLNX](#migrate-sln-to-slnx)
 * [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
+* [Adopt Central Package Management](#adopt-central-package-management)
 
 ## Migrate SQL Projects to SDK-based
 
