@@ -37,6 +37,77 @@ Ark.ReferenceProject/
 
 Each service in the monorepo follows the same clean architecture pattern with API, Application, Common, Database, Tests, and WebInterface layers.
 
+## Using as a Template (Ejection Process)
+
+This sample is designed to be used as a template for new projects. Follow these steps to "eject" it from the Ark.Tools repository and use it as the foundation for your own project:
+
+### Step 1: Copy the Sample
+
+```bash
+cp -r samples/Ark.ReferenceProject /path/to/your/new/project
+cd /path/to/your/new/project
+```
+
+### Step 2: Update Ark.Tools Package Versions
+
+Open `Directory.Packages.props` and change all Ark.Tools package versions from `999.9.9` to the actual version you want to use:
+
+```xml
+<!-- Before (development version) -->
+<PackageVersion Include="Ark.Tools.AspNetCore" Version="999.9.9" />
+
+<!-- After (release version) -->
+<PackageVersion Include="Ark.Tools.AspNetCore" Version="6.0.0" />
+```
+
+Check [NuGet.org](https://www.nuget.org/packages?q=Ark.Tools) for the latest stable version of Ark.Tools packages.
+
+### Step 3: Remove or Update NuGet.config
+
+The `NuGet.config` file references a local package source (`../../packages`) used during development in the Ark.Tools repository. After ejection, this path won't exist:
+
+**Option A**: Delete the file to use default NuGet sources:
+```bash
+rm NuGet.config
+```
+
+**Option B**: Edit it to remove the LocalPackages source while keeping any custom sources you need.
+
+### Step 4: Handle Directory.Build.props (Optional)
+
+The sample imports from `../../Directory.Build.props` which contains Ark.Tools repository-wide build settings. After ejection, this import will fail, but MSBuild will continue using its defaults. You have two options:
+
+**Option A**: Remove the import and create your own `Directory.Build.props` with project-specific settings.
+
+**Option B**: Leave it as-is and let MSBuild use defaults (the import will be ignored if the file doesn't exist).
+
+### Step 5: Customize for Your Project
+
+- Rename projects/namespaces from `Ark.Reference` to your project name
+- Update assembly names and root namespaces
+- Modify domain models and business logic to match your requirements
+- Update API controllers and endpoints
+- Customize database schema
+
+### Step 6: Initialize Your Repository
+
+```bash
+git init
+git add .
+git commit -m "feat: initial commit from Ark.ReferenceProject template"
+```
+
+### Step 7: Build and Test
+
+```bash
+dotnet restore
+dotnet build
+docker-compose up -d  # Start dependencies
+dotnet test
+```
+
+That's it! You now have a fully functional project based on Ark.Tools best practices, completely independent from the Ark.Tools repository.
+
 ## Getting Started
 
 ### Prerequisites
