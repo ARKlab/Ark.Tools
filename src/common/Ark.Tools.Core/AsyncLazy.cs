@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.ResourceWatcher
+namespace Ark.Tools.Core
 {
     /// <summary>
     /// Provides support for asynchronous lazy initialization. This type is fully threadsafe.

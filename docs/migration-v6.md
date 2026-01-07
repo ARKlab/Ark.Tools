@@ -125,18 +125,18 @@ These extension members use `CallerArgumentExpression` to automatically capture 
 
 ## Remove Nito.AsyncEx.Coordination Dependency
 
-The `Nito.AsyncEx.Coordination` library has been removed from Ark.Tools as it is unmaintained (last update 5+ years ago). Ark.Tools v6 now includes a lightweight, built-in `AsyncLazy<T>` implementation that provides the same functionality.
+The `Nito.AsyncEx.Coordination` library has been removed from Ark.Tools as it is unmaintained (last update 5+ years ago). Ark.Tools v6 now includes a lightweight, built-in `AsyncLazy<T>` implementation in `Ark.Tools.Core` that provides the same functionality.
 
 ### What Changed
 
-**For library consumers**: No changes required! The `AsyncLazy<T>` class in `Ark.Tools.ResourceWatcher` is API-compatible with the previous version. All existing code will continue to work without modification.
+**For library consumers**: No changes required! The `AsyncLazy<T>` class is now available in `Ark.Tools.Core` and is API-compatible with the previous version. All existing code will continue to work without modification.
 
-**For direct users of Nito.AsyncEx.Coordination**: If your project directly referenced `Nito.AsyncEx.Coordination` for `AsyncLazy<T>`, you have two options:
+**For direct users of Nito.AsyncEx.Coordination**: If your project directly referenced `Nito.AsyncEx.Coordination` for `AsyncLazy<T>`, you have several options:
 
-1. **Use Ark.Tools.ResourceWatcher's AsyncLazy** (recommended for simple scenarios):
+1. **Use Ark.Tools.Core's AsyncLazy** (recommended for simple scenarios):
    ```csharp
-   // Add reference to Ark.Tools.ResourceWatcher
-   using Ark.Tools.ResourceWatcher;
+   // Add reference to Ark.Tools.Core
+   using Ark.Tools.Core;
    
    var lazy = new AsyncLazy<string>(() => FetchDataAsync());
    
@@ -183,6 +183,7 @@ The `Nito.AsyncEx.Coordination` library has been removed from Ark.Tools as it is
 - **No unmaintained dependencies**: The library hasn't been updated in over 5 years
 - **Lighter footprint**: One less external dependency to manage
 - **Modern .NET**: Implementation uses current best practices (System.Threading.Lock for .NET 9+)
+- **Available in Core library**: `AsyncLazy<T>` is now available in `Ark.Tools.Core` for use across all Ark.Tools projects
 - **API compatibility**: Existing `Ark.Tools.ResourceWatcher` users see no breaking changes
 - **Simple implementation**: Easy to understand and maintain
 - **Flexible alternatives**: Choose DotNext.Threading for more advanced scenarios or implement your own for zero dependencies
