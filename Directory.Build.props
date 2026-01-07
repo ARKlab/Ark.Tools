@@ -66,7 +66,7 @@
 
   </PropertyGroup>
 
-	<ItemGroup Label="Global Analyzer Config Files">
+	<ItemGroup Label="Global Analyzer Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
 	</ItemGroup>
@@ -78,7 +78,7 @@
 		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
 	</PropertyGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>

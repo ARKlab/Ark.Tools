@@ -76,13 +76,13 @@
 	</PropertyGroup>
 
 	
-	<ItemGroup>
+	<ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
 		<PackageReference Include="Meziantou.Analyzer" PrivateAssets="All" />
 		<PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
 	</ItemGroup>
 
-	<ItemGroup Label="Global Analyzer Config Files">
+	<ItemGroup Label="Global Analyzer Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<!-- Shared analyzer configs (explicitly loaded first) -->
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
