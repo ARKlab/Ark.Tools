@@ -38,7 +38,7 @@
     
     <!-- Build tools -->
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.101" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="2.0.267" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="2.0.270" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
   </ItemGroup>
 
