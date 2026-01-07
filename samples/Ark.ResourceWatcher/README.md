@@ -43,9 +43,8 @@ This sample is designed to be used as a template for new resource watcher projec
    # or edit it to remove the LocalPackages source
    ```
 
-4. **Create your own Directory.Build.props** (optional):
-   - The sample currently imports from `../../Directory.Build.props` which won't exist after ejection
-   - You can create your own with project-specific settings, or remove the import if you want to use MSBuild defaults
+4. **Remove the import from Directory.Build.targets**:
+   - In `Directory.Build.targets`, remove the import statement that references the parent directory
 
 5. **Customize for your use case**:
    - Update the worker logic in `Ark.ResourceWatcher.Sample` to match your resource monitoring needs

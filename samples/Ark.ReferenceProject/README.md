@@ -73,23 +73,16 @@ rm NuGet.config
 
 **Option B**: Edit it to remove the LocalPackages source while keeping any custom sources you need.
 
-### Step 4: Update Azure Pipeline (If Using)
+### Step 4: Update Directory.Build.targets
 
-If you're using the included Azure DevOps pipeline (`Ark.Reference.Core.buildStage.yml`), you need to remove the pack step that builds Ark.Tools packages:
+In `Directory.Build.targets`, remove the import statement that references the parent directory:
 
-1. Open `Ark.Reference.Core.buildStage.yml`
-2. Remove the entire task titled **"Pack Ark.Tools packages for local development"** (including the comment)
-3. This step is only needed when building within the Ark.Tools repository and is not required for your standalone project
+```xml
+<!-- Remove this on eject -->
+<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
+```
 
-### Step 5: Handle Directory.Build.props (Optional)
-
-The sample imports from `../../Directory.Build.props` which contains Ark.Tools repository-wide build settings. After ejection, this import will fail, but MSBuild will continue using its defaults. You have two options:
-
-**Option A**: Remove the import and create your own `Directory.Build.props` with project-specific settings.
-
-**Option B**: Leave it as-is and let MSBuild use defaults (the import will be ignored if the file doesn't exist).
-
-### Step 6: Customize for Your Project
+### Step 5: Customize for Your Project
 
 - Rename projects/namespaces from `Ark.Reference` to your project name
 - Update assembly names and root namespaces
@@ -97,7 +90,7 @@ The sample imports from `../../Directory.Build.props` which contains Ark.Tools r
 - Update API controllers and endpoints
 - Customize database schema
 
-### Step 7: Initialize Your Repository
+### Step 6: Initialize Your Repository
 
 ```bash
 git init
@@ -105,7 +98,7 @@ git add .
 git commit -m "feat: initial commit from Ark.ReferenceProject template"
 ```
 
-### Step 8: Build and Test
+### Step 7: Build and Test
 
 ```bash
 dotnet restore

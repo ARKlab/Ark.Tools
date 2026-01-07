@@ -44,9 +44,6 @@ jobs:
       id: version
       uses: battila7/get-version-action@v2
 
-    - name: 'Pack Ark.Tools packages for local development'
-      run: dotnet pack --configuration Debug --output ./packages -p:Version=999.9.9
-
     - name: Build
       run: dotnet build --configuration Debug
 

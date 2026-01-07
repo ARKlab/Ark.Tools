@@ -34,9 +34,6 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         global-json-file: global.json
-    
-    - name: 'Pack Ark.Tools packages for local development'
-      run: dotnet pack --configuration Debug --output ./packages -p:Version=999.9.9
       
     - name: 'Restore packages'
       run: dotnet restore

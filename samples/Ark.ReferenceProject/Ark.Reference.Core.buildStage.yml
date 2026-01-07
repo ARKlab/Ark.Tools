@@ -65,20 +65,6 @@ stages:
         inputs:
           useGlobalJson: true
 
-      # Pack Ark.Tools libraries for local development (remove this step when ejecting the sample)
-      - task: DotNetCoreCLI@2
-        displayName: 'Pack Ark.Tools packages for local development'
-        inputs:
-          command: 'pack'
-          packagesToPack: '$(Build.SourcesDirectory)/src/**/*.csproj'
-          configuration: '$(BuildConfiguration)'
-          packDirectory: '$(Build.SourcesDirectory)/packages'
-          nobuild: false
-          versioningScheme: 'byEnvVar'
-          versionEnvVar: 'PackageVersion'
-        env:
-          PackageVersion: '999.9.9'
-
       - task: DotNetCoreCLI@2
         displayName: 'dotnet restore'
         inputs:

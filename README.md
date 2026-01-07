@@ -66,25 +66,20 @@ Upgrading from an older version? Check out our migration guides:
 
 ## Building & Testing
 
-**Note:** The samples now use PackageReference to Ark.Tools libraries. Before building/testing the samples, you must first pack the Ark.Tools libraries to create local packages:
-
 ```bash
 # Start test dependencies (SQL Server + Azurite)
 cd samples/Ark.ReferenceProject
 docker-compose up -d
 cd ../..
 
-# Pack Ark.Tools libraries to local packages (required for samples)
-dotnet pack --configuration Debug --output ./packages -p:Version=999.9.9
-
-# Restore packages (samples will use local packages from ./packages)
+# Restore packages
 dotnet restore
 
 # Build the solution
-dotnet build --configuration Debug --no-restore
+dotnet build --configuration Debug
 
 # Run tests
-dotnet test --configuration Debug --no-build
+dotnet test --configuration Debug
 ```
 
 For more details, see the [Copilot Instructions](.github/copilot-instructions.md).
