@@ -16,7 +16,6 @@ namespace Ark.Tools.ResourceWatcher
     public sealed class AsyncLazy<T>
     {
         private readonly Lock _mutex = new();
-        private readonly Func<Task<T>> _factory;
         private Lazy<Task<T>> _instance;
 
         /// <summary>
@@ -26,8 +25,7 @@ namespace Ark.Tools.ResourceWatcher
         public AsyncLazy(Func<Task<T>> factory)
         {
             ArgumentNullException.ThrowIfNull(factory);
-            _factory = () => System.Threading.Tasks.Task.Run(factory);
-            _instance = new Lazy<Task<T>>(_factory);
+            _instance = new Lazy<Task<T>>(() => System.Threading.Tasks.Task.Run(factory));
         }
 
         /// <summary>
