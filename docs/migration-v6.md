@@ -1,6 +1,7 @@
 # Migration to Ark.Tools v6
 
 * [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
+* [Remove Nito.AsyncEx.Coordination Dependency](#remove-nitoasyncexcoordination-dependency)
 * [Migrate SQL Projects to SDK-based](#migrate-sql-projects-to-sdk-based)
 * [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbukle-10.x)
 * [Replace FluentAssertions with AwesomeAssertions](#replace-fluntasserion-with-awesomeassertion)
@@ -121,6 +122,74 @@ ArgumentException.ThrowUnless(
 ```
 
 These extension members use `CallerArgumentExpression` to automatically capture the condition expression, providing meaningful error messages without manual string formatting.
+
+## Remove Nito.AsyncEx.Coordination Dependency
+
+The `Nito.AsyncEx.Coordination` library has been removed from Ark.Tools as it is unmaintained (last update 5+ years ago). Ark.Tools v6 now includes a lightweight, built-in `AsyncLazy<T>` implementation that provides the same functionality.
+
+### What Changed
+
+**For library consumers**: No changes required! The `AsyncLazy<T>` class in `Ark.Tools.ResourceWatcher` is API-compatible with the previous version. All existing code will continue to work without modification.
+
+**For direct users of Nito.AsyncEx.Coordination**: If your project directly referenced `Nito.AsyncEx.Coordination` for `AsyncLazy<T>`, you have two options:
+
+1. **Use Ark.Tools.ResourceWatcher's AsyncLazy** (recommended for simple scenarios):
+   ```csharp
+   // Add reference to Ark.Tools.ResourceWatcher
+   using Ark.Tools.ResourceWatcher;
+   
+   var lazy = new AsyncLazy<string>(() => FetchDataAsync());
+   
+   // Check if started
+   if (lazy.IsStarted)
+   {
+       var result = await lazy;
+   }
+   ```
+
+2. **Switch to DotNext.Threading** (recommended for advanced scenarios):
+   ```csharp
+   // Install: dotnet add package DotNext.Threading
+   using DotNext.Threading;
+   
+   var lazy = new AsyncLazy<string>(FetchDataAsync);
+   var result = await lazy;
+   
+   // DotNext.Threading offers additional features like:
+   // - Cancellation token support
+   // - Reset capability
+   // - More configuration options
+   ```
+
+3. **Implement your own** (for minimal dependencies):
+   ```csharp
+   public class AsyncLazy<T>
+   {
+       private readonly Lazy<Task<T>> _instance;
+       
+       public AsyncLazy(Func<Task<T>> factory)
+       {
+           _instance = new Lazy<Task<T>>(() => Task.Run(factory));
+       }
+       
+       public bool IsStarted => _instance.IsValueCreated;
+       public Task<T> Task => _instance.Value;
+       public TaskAwaiter<T> GetAwaiter() => Task.GetAwaiter();
+   }
+   ```
+
+### Benefits
+
+- **No unmaintained dependencies**: The library hasn't been updated in over 5 years
+- **Lighter footprint**: One less external dependency to manage
+- **Modern .NET**: Implementation uses current best practices (System.Threading.Lock for .NET 9+)
+- **API compatibility**: Existing `Ark.Tools.ResourceWatcher` users see no breaking changes
+- **Simple implementation**: Easy to understand and maintain
+- **Flexible alternatives**: Choose DotNext.Threading for more advanced scenarios or implement your own for zero dependencies
+
+### Migration Timeline
+
+This change is transparent for existing users of `Ark.Tools.ResourceWatcher`. No action is required unless you were directly using `Nito.AsyncEx.Coordination` in your own code.
 
 ## Migrate SQL Projects to SDK-based
 
