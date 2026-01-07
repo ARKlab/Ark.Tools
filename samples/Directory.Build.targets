@@ -41,7 +41,7 @@
          <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')" />
       </ItemGroup>
 
-      <Message Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
+      <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
   </Target>
 
 </Project>
