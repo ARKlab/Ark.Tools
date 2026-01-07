@@ -105,6 +105,10 @@
 	<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
 	<PublishRepositoryUrl>true</PublishRepositoryUrl>
 
+	<!-- Default version for local development - allows samples to use locally built packages -->
+	<!-- Override with -p:Version=x.y.z during release builds -->
+	<Version Condition="'$(Version)' == ''">999.9.9</Version>
+
     <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>ark-dark.png</PackageIcon>
@@ -120,7 +124,7 @@
   </PropertyGroup>
   
 	<ItemGroup Condition="$(IsPackable) != 'false'">
-		<None Include="..\ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
+		<None Include="$(MSBuildThisFileDirectory)ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
 	</ItemGroup>
 	

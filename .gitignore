@@ -440,3 +440,6 @@ $RECYCLE.BIN/
 #remove feature files
 *.feature.cs
 /Core/Core.Service.Tests/Core.Service.Database.dacpac
+
+# Local NuGet packages for sample projects
+/packages/

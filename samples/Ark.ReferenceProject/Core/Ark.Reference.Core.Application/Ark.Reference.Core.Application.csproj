@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-	 <ProjectReference Include="../../../../src/common/Ark.Tools.Outbox.Rebus/Ark.Tools.Outbox.Rebus.csproj" />
-	 <ProjectReference Include="../../../../src/common/Ark.Tools.Outbox.SqlServer/Ark.Tools.Outbox.SqlServer.csproj" />
-	 <ProjectReference Include="../../../../src/common/Ark.Tools.Outbox/Ark.Tools.Outbox.csproj" />
-	 <ProjectReference Include="../../../../src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
-	 <ProjectReference Include="../../../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
-	 <ProjectReference Include="../../../../src/common/Ark.Tools.Sql/Ark.Tools.Sql.csproj" />
-	 <ProjectReference Include="../../../../src/common/Ark.Tools.Sql.SqlServer/Ark.Tools.Sql.SqlServer.csproj" />
+	 <PackageReference Include="Ark.Tools.Outbox.Rebus" />
+	 <PackageReference Include="Ark.Tools.Outbox.SqlServer" />
+	 <PackageReference Include="Ark.Tools.Outbox" />
+	 <PackageReference Include="Ark.Tools.Rebus" />
+	 <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
+	 <PackageReference Include="Ark.Tools.Sql" />
+	 <PackageReference Include="Ark.Tools.Sql.SqlServer" />
   </ItemGroup>
 
   <ItemGroup>

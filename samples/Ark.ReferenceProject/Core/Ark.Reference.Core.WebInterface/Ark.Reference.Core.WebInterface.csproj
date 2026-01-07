@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-	  <ProjectReference Include="../../../../src/aspnetcore/Ark.Tools.AspNetCore/Ark.Tools.AspNetCore.csproj" />
+	  <PackageReference Include="Ark.Tools.AspNetCore" />
 	  <ProjectReference Include="..\Ark.Reference.Core.Application\Ark.Reference.Core.Application.csproj" />
   </ItemGroup>
 

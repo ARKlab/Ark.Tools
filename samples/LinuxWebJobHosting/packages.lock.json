@@ -495,7 +495,7 @@
       "testworker": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Activity": "[1.0.0, )",
+          "Ark.Tools.Activity": "[999.9.9, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher.ApplicationInsights": "[1.0.0, )",

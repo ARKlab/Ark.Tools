@@ -11,9 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.WorkerHost.Hosting\Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />
-    <ProjectReference Include="..\..\..\src\common\Ark.Tools.Http\Ark.Tools.Http.csproj" />
-    <ProjectReference Include="..\..\..\src\common\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+    <PackageReference Include="Ark.Tools.ResourceWatcher.WorkerHost.Hosting" />
+    <PackageReference Include="Ark.Tools.Http" />
+    <PackageReference Include="Ark.Tools.NLog" />
   </ItemGroup>
 
 </Project>

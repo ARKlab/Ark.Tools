@@ -4,14 +4,25 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
     <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Ark.Tools packages - using local development version 999.9.9 -->
+    <!-- When ejecting this sample to a new project, change these versions to the actual Ark.Tools version from nuget.org -->
+    <PackageVersion Include="Ark.Tools.Http" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.NLog" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Reqnroll" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.ResourceWatcher.Testing" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.ResourceWatcher.WorkerHost.Hosting" Version="999.9.9" />
+  </ItemGroup>
   
   <ItemGroup>
-    <!-- ResourceWatcher sample specific packages -->
+    <!-- 3rd party packages used by this sample -->
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
     
     <!-- Testing packages -->
     <PackageVersion Include="AwesomeAssertions" Version="9.3.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />

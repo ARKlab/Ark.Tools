@@ -1,0 +1,36 @@
+<Project InitialTargets="_ReplaceArkToolsReferences">
+  <PropertyGroup>
+    <!-- Define root relative to this file (samples/) -->
+    <ArkToolsSourceRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\src\'))</ArkToolsSourceRoot>
+  </PropertyGroup>
+
+  <Target Name="_ReplaceArkToolsReferences">
+      <ItemGroup>
+         <_ArkToolsCandidates Include="@(PackageReference)" Condition="$([System.String]::Copy('%(Identity)').StartsWith('Ark.Tools'))">
+            <CommonPath>$(ArkToolsSourceRoot)common\%(Identity)\%(Identity).csproj</CommonPath>
+            <AspNetCorePath>$(ArkToolsSourceRoot)aspnetcore\%(Identity)\%(Identity).csproj</AspNetCorePath>
+            <ResourceWatcherPath>$(ArkToolsSourceRoot)resourcewatcher\%(Identity)\%(Identity).csproj</ResourceWatcherPath>
+         </_ArkToolsCandidates>
+      </ItemGroup>
+      
+      <ItemGroup>
+         <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(CommonPath)')">
+            <ProjectPath>%(CommonPath)</ProjectPath>
+         </_ArkToolsToReplace>
+         <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(AspNetCorePath)')">
+            <ProjectPath>%(AspNetCorePath)</ProjectPath>
+         </_ArkToolsToReplace>
+         <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(ResourceWatcherPath)')">
+            <ProjectPath>%(ResourceWatcherPath)</ProjectPath>
+         </_ArkToolsToReplace>
+      </ItemGroup>
+
+      <ItemGroup>
+        <PackageReference Remove="@(_ArkToolsToReplace)" />
+        <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')" />
+      </ItemGroup>
+
+      <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
+  </Target>
+
+</Project>
