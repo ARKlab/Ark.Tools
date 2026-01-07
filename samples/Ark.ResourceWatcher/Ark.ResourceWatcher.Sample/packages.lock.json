@@ -99,11 +99,6 @@
         "resolved": "1.0.8",
         "contentHash": "LAOsY8WxX8JU/n3lfXFz+f2pfnv0+4bHkCrOO3bwa28u9HrS3DlxSG6jf+u76SqesKs+KehZi0CndkfaUXBKvg=="
       },
-      "Ensure.That": {
-        "type": "Transitive",
-        "resolved": "10.1.0",
-        "contentHash": "rzTMSs0lQnu0WsesvTjs/zDzqiZXb9r5dv+wFQcPg/iIZqXb5BzwpIWEwi8Q3HA0TS4ytRcY129aSek6IzuOmA=="
-      },
       "Flurl": {
         "type": "Transitive",
         "resolved": "4.0.0",
@@ -919,7 +914,6 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "Ensure.That": "[10.1.0, )",
           "NodaTime": "[3.3.0, )",
           "System.Reactive": "[6.1.0, )"
         }

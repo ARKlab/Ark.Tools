@@ -114,17 +114,25 @@ namespace Ark.Tools.Nodatime.Intervals
         public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, DateTimeZone timezone)
         {
             ArgumentNullException.ThrowIfNull(timezone);
+            
+            var start = _start;
+            var increment = GetIncrement();
+            
+            return SplitIntoIterator(period, timezone, start, increment);
 
-            var s = timezone.AtStartOfDay(_start);
-            var n = timezone.AtStartOfDay(_start + GetIncrement());
-
-            var c = new TimeInterval(s, period);
-            var e = new TimeInterval(n, period);
-
-            while (c < e)
+            static IEnumerable<TimeInterval> SplitIntoIterator(TimePeriod period, DateTimeZone timezone, LocalDate start, Period increment)
             {
-                yield return c;
-                c = c.NextInterval();
+                var s = timezone.AtStartOfDay(start);
+                var n = timezone.AtStartOfDay(start + increment);
+
+                var c = new TimeInterval(s, period);
+                var e = new TimeInterval(n, period);
+
+                while (c < e)
+                {
+                    yield return c;
+                    c = c.NextInterval();
+                }
             }
         }
 
