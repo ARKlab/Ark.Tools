@@ -1,13 +1,10 @@
-<Project>
+<Project InitialTargets="_ReplaceArkToolsReferences">
   <PropertyGroup>
-    <!-- Default to true to improve inner-loop dev experience -->
-    <UseLocalArkToolsSources Condition="'$(UseLocalArkToolsSources)' == ''">true</UseLocalArkToolsSources>
     <!-- Define root relative to this file (samples/) -->
     <ArkToolsSourceRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\src\'))</ArkToolsSourceRoot>
   </PropertyGroup>
 
-  <!-- Use a Target to avoid MSB4191 (custom metadata in Condition in top-level ItemGroup) -->
-  <Target Name="_ReplaceArkToolsReferences" BeforeTargets="CollectPackageReferences" Condition="'$(UseLocalArkToolsSources)' == 'true'">
+  <Target Name="_ReplaceArkToolsReferences">
       <ItemGroup>
          <_ArkToolsCandidates Include="@(PackageReference)" Condition="$([System.String]::Copy('%(Identity)').StartsWith('Ark.Tools'))">
             <CommonPath>$(ArkToolsSourceRoot)common\%(Identity)\%(Identity).csproj</CommonPath>
@@ -29,8 +26,8 @@
       </ItemGroup>
 
       <ItemGroup>
-         <PackageReference Remove="@(_ArkToolsToReplace)" />
-         <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')" />
+        <PackageReference Remove="@(_ArkToolsToReplace)" />
+        <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')" />
       </ItemGroup>
 
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
