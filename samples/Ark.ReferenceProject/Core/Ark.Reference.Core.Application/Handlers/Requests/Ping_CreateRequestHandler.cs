@@ -1,4 +1,5 @@
 ﻿using Ark.Reference.Core.API.Requests;
+using System;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;

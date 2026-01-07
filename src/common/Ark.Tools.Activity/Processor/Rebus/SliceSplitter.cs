@@ -1,5 +1,6 @@
 
 using NLog;
+using System;
 
 using Rebus.Bus;
 using Rebus.Handlers;

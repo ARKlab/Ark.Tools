@@ -1,4 +1,5 @@
 ﻿using Ark.Reference.Core.API.Queries;
+using System;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Core;

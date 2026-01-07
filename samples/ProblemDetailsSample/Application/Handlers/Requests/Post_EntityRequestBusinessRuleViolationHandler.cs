@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.Core.BusinessRuleViolation;
+using System;
 using Ark.Tools.Solid;
 
 
