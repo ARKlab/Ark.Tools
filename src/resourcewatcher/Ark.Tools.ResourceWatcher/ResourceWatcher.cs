@@ -55,8 +55,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             lock (_lock)
             {
-                if (_isStarted == true)
-                    throw new InvalidOperationException("Watcher is already started");
+                InvalidOperationException.ThrowIf(_isStarted == true, "Watcher is already started");
                 _onBeforeStart();
                 _isStarted = true;
             }
@@ -83,8 +82,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             lock (_lock)
             {
-                if (_isStarted)
-                    throw new InvalidOperationException("Invalid use of RunOnce: the watcher has been started and is working in background or another RunOnce is running.");
+                InvalidOperationException.ThrowIf(_isStarted, "Invalid use of RunOnce: the watcher has been started and is working in background or another RunOnce is running.");
                 _onBeforeStart();
                 _isStarted = true;
             }

@@ -1,5 +1,6 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Core;
 using Ark.Tools.SimpleInjector;
 
 
@@ -296,10 +297,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost
                 var filter = _buildFilter();
                 var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetMetadata(filter, ctk).ConfigureAwait(false);
 
-                if (meta.Where(x => x.Modified == default && (x.ModifiedSources == null || x.ModifiedSources.Count == 0)).Any())
-                {
-                    throw new InvalidOperationException("At least one field between Modified and ModifiedSources must be populated");
-                }
+                InvalidOperationException.ThrowIf(meta.Where(x => x.Modified == default && (x.ModifiedSources == null || x.ModifiedSources.Count == 0)).Any(), "At least one field between Modified and ModifiedSources must be populated");
 
                 foreach (var p in _metadataFilterChain)
                     meta = meta.Where(m => p(m));

@@ -17,7 +17,7 @@ namespace Ark.Tools.Activity
     {
         private readonly JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
                 ZonedDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<G> z", DateTimeZoneProviders.Tzdb)
-            , x => { if (x.Calendar != CalendarSystem.Iso) { throw new InvalidOperationException("Only ISO calendar system is supported"); } }
+            , x => InvalidOperationException.ThrowIf(x.Calendar != CalendarSystem.Iso, "Only ISO calendar system is supported")
             );
 
         public override bool CanRead => _converter.CanRead;

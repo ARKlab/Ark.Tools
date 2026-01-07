@@ -83,10 +83,7 @@ namespace Ark.Tools.Nodatime
 
         public readonly LocalDateTimeRange MergeOverlapsOrContiguous(LocalDateTimeRange other)
         {
-            if (!OverlapsOrContiguous(other))
-            {
-                throw new InvalidOperationException("Ranges must overlap or be contiguous to merge.");
-            }
+            InvalidOperationException.ThrowUnless(OverlapsOrContiguous(other), "Ranges must overlap or be contiguous to merge.");
             return new LocalDateTimeRange(_start.MinWith(other._start), _end.MaxWith(other._end));
         }
 
@@ -143,14 +140,8 @@ namespace Ark.Tools.Nodatime
 
         public readonly LocalDateRange ToLocalDateRangeStrict()
         {
-            if (Start.TimeOfDay != LocalTime.Midnight)
-            {
-                throw new InvalidOperationException("Start time must be midnight.");
-            }
-            if (End.TimeOfDay != LocalTime.Midnight)
-            {
-                throw new InvalidOperationException("End time must be midnight.");
-            }
+            InvalidOperationException.ThrowUnless(Start.TimeOfDay == LocalTime.Midnight, "Start time must be midnight.");
+            InvalidOperationException.ThrowUnless(End.TimeOfDay == LocalTime.Midnight, "End time must be midnight.");
 
             return new LocalDateRange(_start.Date, _end.Date);
         }

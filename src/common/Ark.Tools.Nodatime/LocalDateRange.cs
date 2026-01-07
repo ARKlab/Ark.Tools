@@ -79,10 +79,7 @@ namespace Ark.Tools.Nodatime
 
         public readonly LocalDateRange MergeOverlapsOrContiguous(LocalDateRange other)
         {
-            if (!OverlapsOrContiguous(other))
-            {
-                throw new InvalidOperationException("Ranges must overlap or be contiguous to merge.");
-            }
+            InvalidOperationException.ThrowUnless(OverlapsOrContiguous(other), "Ranges must overlap or be contiguous to merge.");
             return new LocalDateRange(_start.MinWith(other._start), _end.MaxWith(other._end));
         }
 

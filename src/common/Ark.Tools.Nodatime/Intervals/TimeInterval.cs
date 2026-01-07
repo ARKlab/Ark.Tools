@@ -21,10 +21,10 @@ namespace Ark.Tools.Nodatime.Intervals
         public TimeInterval(ZonedDateTime point, TimePeriod period)
         {
             var expectedStart = TimeInterval.StartOfInterval(point, period);
-            if (point.ToInstant() != expectedStart.ToInstant())
-            {
-                throw new ArgumentException($"Point must be the start of the interval for the given period. Expected: {expectedStart}, Actual: {point}", nameof(point));
-            }
+            ArgumentException.ThrowUnless(
+                point.ToInstant() == expectedStart.ToInstant(),
+                $"Point must be the start of the interval for the given period. Expected: {expectedStart}, Actual: {point}",
+                nameof(point));
 
             _period = period;
             _start = point;
