@@ -19,7 +19,7 @@ namespace ProblemDetailsSample.Api.Queries
         public async Task<Entity.V1.Output?> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(query);
-            if (query.EntityId == "ensure")
+            if (string.Equals(query.EntityId, "ensure", StringComparison.Ordinal))
             {
                 throw new ArgumentException("EntityId cannot be 'ensure'", nameof(query));
             }
