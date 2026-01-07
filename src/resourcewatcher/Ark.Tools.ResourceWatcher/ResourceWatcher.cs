@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
 
-using EnsureThat;
 
 using Nito.AsyncEx;
 
@@ -33,8 +32,8 @@ namespace Ark.Tools.ResourceWatcher
 
         protected ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
         {
-            EnsureArg.IsNotNull(config);
-            EnsureArg.IsNotNull(stateProvider);
+            ArgumentNullException.ThrowIfNull(config);
+            ArgumentNullException.ThrowIfNull(stateProvider);
 
             _config = config;
             _stateProvider = stateProvider;

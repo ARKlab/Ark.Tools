@@ -6,7 +6,6 @@ using Ark.Tools.Sql;
 
 using Dapper;
 
-using EnsureThat;
 
 using Newtonsoft.Json;
 
@@ -36,9 +35,9 @@ namespace Ark.Tools.ResourceWatcher
 
         public SqlStateProvider(ISqlStateProviderConfig config, IDbConnectionManager connManager)
         {
-            EnsureArg.IsNotNull(config);
-            EnsureArg.IsNotNull(connManager);
-            EnsureArg.IsNotNullOrWhiteSpace(config.DbConnectionString);
+            ArgumentNullException.ThrowIfNull(config);
+            ArgumentNullException.ThrowIfNull(connManager);
+            ArgumentException.ThrowIfNullOrWhiteSpace(config.DbConnectionString);
 
             _connManager = connManager;
             _config = config;
@@ -56,10 +55,17 @@ namespace Ark.Tools.ResourceWatcher
 
         public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
         {
-            Ensure.String.HasLengthBetween(tenant, 1, 128);
+            ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(tenant.Length, 128, nameof(tenant));
+            
             if (resourceIds != null)
+            {
                 foreach (var r in resourceIds)
-                    Ensure.String.HasLengthBetween(r, 1, 300);
+                {
+                    ArgumentException.ThrowIfNullOrWhiteSpace(r);
+                    ArgumentOutOfRangeException.ThrowIfGreaterThan(r.Length, 300, nameof(r));
+                }
+            }
 
             ResourceState map(ResourceState r, EJ e, MMJ m)
             {
@@ -100,8 +106,10 @@ namespace Ark.Tools.ResourceWatcher
             var st = states.AsList();
             foreach (var s in st)
             {
-                Ensure.String.HasLengthBetween(s.Tenant, 1, 128);
-                Ensure.String.HasLengthBetween(s.ResourceId, 1, 300);
+                ArgumentException.ThrowIfNullOrWhiteSpace(s.Tenant);
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(s.Tenant.Length, 128, nameof(s.Tenant));
+                ArgumentException.ThrowIfNullOrWhiteSpace(s.ResourceId);
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(s.ResourceId.Length, 300, nameof(s.ResourceId));
             }
 
 

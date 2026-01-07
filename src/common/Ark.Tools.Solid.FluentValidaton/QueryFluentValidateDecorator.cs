@@ -1,6 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
 
 using FluentValidation;
 
@@ -17,8 +16,8 @@ namespace Ark.Tools.Solid
 
         public QueryFluentValidateDecorator(IQueryHandler<TQuery, TResponse> decorated, IValidator<TQuery> validator)
         {
-            Ensure.Any.IsNotNull(decorated, nameof(decorated));
-            Ensure.Any.IsNotNull(validator, nameof(validator));
+            ArgumentNullException.ThrowIfNull(decorated);
+            ArgumentNullException.ThrowIfNull(validator);
 
             _decorated = decorated;
             _validator = validator;

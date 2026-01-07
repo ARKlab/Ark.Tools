@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Nodatime.Intervals;
 
-using EnsureThat;
 
 using NodaTime;
 
@@ -18,10 +17,10 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformTimeSequence(ZonedDateTime start, ZonedDateTime end, TimePeriod period, bool exact = true)
         {
-            Ensure.Bool.IsTrue(start.Zone.Equals(end.Zone));
-            Ensure.Bool.IsTrue(ZonedDateTime.Comparer.Instant.Compare(start, end) < 0);
-            Ensure.Bool.IsTrue(exact == true ? TimeInterval.StartOfInterval(start, period) == start : true);
-            Ensure.Bool.IsTrue(exact == true ? TimeInterval.StartOfInterval(end, period) == end : true);
+            if (!(start.Zone.Equals(end.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            if (!(ZonedDateTime.Comparer.Instant.Compare(start, end) < 0)) { throw new InvalidOperationException("Condition failed"); }
+            if (!(exact == true ? TimeInterval.StartOfInterval(start, period) == start : true)) { throw new InvalidOperationException("Condition failed"); }
+            if (!(exact == true ? TimeInterval.StartOfInterval(end, period) == end : true)) { throw new InvalidOperationException("Condition failed"); }
 
             _range = new ZonedDateTimeRange(
                 TimeInterval.StartOfInterval(start, period),
@@ -31,8 +30,8 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformTimeSequence(ZonedDateTimeRange range, TimePeriod period, bool exact = true)
         {
-            Ensure.Bool.IsTrue(exact == true ? TimeInterval.StartOfInterval(range.Start, period) == range.Start : true);
-            Ensure.Bool.IsTrue(exact == true ? TimeInterval.StartOfInterval(range.End, period) == range.End : true);
+            if (!(exact == true ? TimeInterval.StartOfInterval(range.Start, period) == range.Start : true)) { throw new InvalidOperationException("Condition failed"); }
+            if (!(exact == true ? TimeInterval.StartOfInterval(range.End, period) == range.End : true)) { throw new InvalidOperationException("Condition failed"); }
 
             _range = new ZonedDateTimeRange(
                 TimeInterval.StartOfInterval(range.Start, period),
@@ -42,8 +41,8 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformTimeSequence(LocalDateTimeRange range, TimePeriod period, bool exact = true)
         {
-            Ensure.Bool.IsTrue(exact == true ? TimeInterval.StartOfInterval(range.Start, period) == range.Start : true);
-            Ensure.Bool.IsTrue(exact == true ? TimeInterval.StartOfInterval(range.End, period) == range.End : true);
+            if (!(exact == true ? TimeInterval.StartOfInterval(range.Start, period) == range.Start : true)) { throw new InvalidOperationException("Condition failed"); }
+            if (!(exact == true ? TimeInterval.StartOfInterval(range.End, period) == range.End : true)) { throw new InvalidOperationException("Condition failed"); }
 
             _range = new ZonedDateTimeRange(
                 TimeInterval.StartOfInterval(range.Start.InUtc(), period),
@@ -53,9 +52,9 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformTimeSequence(LocalDateTime start, LocalDateTime end, TimePeriod period, bool exact = true)
         {
-            Ensure.Bool.IsTrue(start < end);
-            Ensure.Bool.IsTrue(exact == true ? TimeInterval.StartOfInterval(start, period) == start : true);
-            Ensure.Bool.IsTrue(exact == true ? TimeInterval.StartOfInterval(end, period) == end : true);
+            if (!(start < end)) { throw new InvalidOperationException("Condition failed: start < end"); }
+            if (!(exact == true ? TimeInterval.StartOfInterval(start, period) == start : true)) { throw new InvalidOperationException("Condition failed"); }
+            if (!(exact == true ? TimeInterval.StartOfInterval(end, period) == end : true)) { throw new InvalidOperationException("Condition failed"); }
 
             _range = new ZonedDateTimeRange(
                 TimeInterval.StartOfInterval(start.InUtc(), period),

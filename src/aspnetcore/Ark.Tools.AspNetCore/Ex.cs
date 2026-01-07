@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -30,7 +29,7 @@ namespace Ark.Tools.AspNetCore
         /// </returns>
         public static bool HasService<TService>(this IServiceCollection services) where TService : class
         {
-            Ensure.Any.IsNotNull(services, nameof(services));
+            ArgumentNullException.ThrowIfNull(services);
 
             return services.Any(sd => sd.ServiceType == typeof(TService));
         }

@@ -1,6 +1,5 @@
 ﻿using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +18,7 @@ namespace WebApplicationDemo.Application.Handlers.Requests
 
         public async Task<Polymorphic?> ExecuteAsync(Post_PolymorphicRequest.V1 request, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(request, nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             return await Task.FromResult(request.Entity).ConfigureAwait(false);
         }

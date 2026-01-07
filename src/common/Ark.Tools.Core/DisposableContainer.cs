@@ -1,7 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
-
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -25,12 +23,12 @@ namespace Ark.Tools.Core
 
         public DisposableContainer(params IDisposable[] disposables)
         {
-            Ensure.Any.IsNotNull(disposables);
+            ArgumentNullException.ThrowIfNull(disposables);
 
             _disposables = new(disposables.Length);
             foreach (var d in disposables)
             {
-                Ensure.Any.IsNotNull(d);
+                ArgumentNullException.ThrowIfNull(d);
                 _disposables.Add(d);
             }
         }
@@ -66,7 +64,7 @@ namespace Ark.Tools.Core
         /// </summary>
         public void Add(IDisposable item)
         {
-            EnsureArg.IsNotNull(item);
+            ArgumentNullException.ThrowIfNull(item);
 
             lock (_gate)
             {

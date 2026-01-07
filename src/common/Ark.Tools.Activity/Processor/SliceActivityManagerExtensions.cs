@@ -1,6 +1,5 @@
 ﻿using Ark.Tools.SimpleInjector;
 
-using EnsureThat;
 
 using SimpleInjector;
 
@@ -16,8 +15,8 @@ namespace Ark.Tools.Activity.Processor
     {
         public static void RegisterActivities(this Container container, Type activityManagerType, params Assembly[] fromAssemblies)
         {
-            EnsureArg.IsNotNull(container);
-            EnsureArg.IsNotNull(activityManagerType);
+            ArgumentNullException.ThrowIfNull(container);
+            ArgumentNullException.ThrowIfNull(activityManagerType);
             // Contract.Assume(activityManagerType.IsGenericTypeDefinition);
             // Contract.Assume(activityManagerType.GetInterfaces().Where(x => x.IsGenericType).Select(x => x.GetGenericTypeDefinition()).Contains(typeof(ISliceActivityManager<>)));
 
@@ -33,8 +32,8 @@ namespace Ark.Tools.Activity.Processor
 
         public static void RegisterActivities(this Container container, Type activityManagerType, params Type[] activityTypes)
         {
-            EnsureArg.IsNotNull(container);
-            EnsureArg.IsNotNull(activityManagerType);
+            ArgumentNullException.ThrowIfNull(container);
+            ArgumentNullException.ThrowIfNull(activityManagerType);
             // Contract.Requires(Contract.ForAll(activityTypes, a => typeof(ISliceActivity).IsAssignableFrom(a)));
             // Contract.Assume(activityManagerType.IsGenericTypeDefinition);
             // Contract.Assume(activityManagerType.GetInterfaces().Where(x => x.IsGenericType).Select(x => x.GetGenericTypeDefinition()).Contains(typeof(ISliceActivityManager<>)));
@@ -51,7 +50,7 @@ namespace Ark.Tools.Activity.Processor
 
         public static Task StartActivities(this Container container)
         {
-            EnsureArg.IsNotNull(container);
+            ArgumentNullException.ThrowIfNull(container);
 
             var managers = (from r in container.GetCurrentRegistrations()
                             where typeof(ISliceActivityManager).IsAssignableFrom(r.ServiceType)

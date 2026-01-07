@@ -1,6 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
 
 using NodaTime;
 
@@ -20,7 +19,11 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public TimeInterval(ZonedDateTime point, TimePeriod period)
         {
-            Ensure.Comparable.Is(point.ToInstant(), TimeInterval.StartOfInterval(point, period).ToInstant(), nameof(point));
+            var expectedStart = TimeInterval.StartOfInterval(point, period);
+            if (point.ToInstant() != expectedStart.ToInstant())
+            {
+                throw new ArgumentException($"Point must be the start of the interval for the given period. Expected: {expectedStart}, Actual: {point}", nameof(point));
+            }
 
             _period = period;
             _start = point;
@@ -126,7 +129,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly TimeInterval LastOf(TimePeriod period)
         {
-            Ensure.Bool.IsTrue(CanSplitInto(period));
+            if (!(CanSplitInto(period))) { throw new InvalidOperationException("Condition failed"); }
 
             var next = NextInterval();
             var changeperiod = new TimeInterval(next._start, period);
@@ -135,7 +138,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period)
         {
-            Ensure.Bool.IsTrue(CanSplitInto(period));
+            if (!(CanSplitInto(period))) { throw new InvalidOperationException("Condition failed"); }
 
             var s = _start;
             var n = NextInterval()._start;
@@ -219,7 +222,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly int CompareTo(TimeInterval other)
         {
-            Ensure.Bool.IsTrue(Period == other.Period);
+            if (!(Period == other.Period)) { throw new InvalidOperationException("Condition failed: Period == other.Period"); }
             return ZonedDateTime.Comparer.Instant.Compare(_start, other._start);
         }
 

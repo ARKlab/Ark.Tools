@@ -1,7 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
-
 using NodaTime;
 
 using System;
@@ -20,7 +18,10 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public DateInterval(LocalDate point, DatePeriod period)
         {
-            Ensure.Comparable.Is(point, StartOfInterval(point, period), nameof(point));
+            if (point != StartOfInterval(point, period))
+            {
+                throw new ArgumentException($"Point must be the start of the interval for the given period. Expected: {StartOfInterval(point, period)}, Actual: {point}", nameof(point));
+            }
 
             _period = period;
             _start = point;
@@ -98,7 +99,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly DateInterval LastOf(DatePeriod period)
         {
-            Ensure.Bool.IsTrue(CanSplitInto(period));
+            if (!(CanSplitInto(period))) { throw new InvalidOperationException("Condition failed"); }
 
             var next = NextInterval();
             var changeperiod = new DateInterval(next._start, period);
@@ -112,7 +113,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, DateTimeZone timezone)
         {
-            EnsureArg.IsNotNull(timezone);
+            ArgumentNullException.ThrowIfNull(timezone);
 
             var s = timezone.AtStartOfDay(_start);
             var n = timezone.AtStartOfDay(_start + GetIncrement());
@@ -129,7 +130,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly IEnumerable<DateInterval> SplitInto(DatePeriod period)
         {
-            Ensure.Bool.IsTrue(CanSplitInto(period));
+            if (!(CanSplitInto(period))) { throw new InvalidOperationException("Condition failed"); }
 
 
             var s = _start;
@@ -200,7 +201,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly int CompareTo(DateInterval other)
         {
-            Ensure.Bool.IsTrue(Period == other.Period);
+            if (!(Period == other.Period)) { throw new InvalidOperationException("Condition failed: Period == other.Period"); }
             return _start.CompareTo(other._start);
         }
 

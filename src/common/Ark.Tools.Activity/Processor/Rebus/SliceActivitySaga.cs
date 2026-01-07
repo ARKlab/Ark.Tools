@@ -1,6 +1,5 @@
 ﻿using Ark.Tools.Activity.Messages;
 
-using EnsureThat;
 
 using Rebus.Bus;
 using Rebus.Handlers;
@@ -40,7 +39,7 @@ namespace Ark.Tools.Activity.Processor
                 Data.MissingSlices = _activity.Dependencies.SelectMany(d => d.GetResourceSlices(Data.ActivitySlice).Select(x => new SliceReady() { ActivitySlice = Data.ActivitySlice, Resource = d.Resource, ResourceSlice = x })).ToList();
             }
 
-            Ensure.Bool.IsTrue(Data.ActivitySlice == message.ActivitySlice);
+            if (!(Data.ActivitySlice == message.ActivitySlice)) { throw new InvalidOperationException("Condition failed: Data.ActivitySlice == message.ActivitySlice"); }
 
             Data.MissingSlices.Remove(message);
 

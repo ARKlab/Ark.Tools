@@ -1,4 +1,3 @@
-﻿using EnsureThat;
 
 namespace Ark.Tools.EventSourcing.Events
 {
@@ -10,7 +9,7 @@ namespace Ark.Tools.EventSourcing.Events
 
         protected EventEnvelope(T @event, IMetadata metadata)
         {
-            Ensure.Any.IsNotNull(@event);
+            ArgumentNullException.ThrowIfNull(@event);
             Event = @event;
             Metadata = metadata;
         }

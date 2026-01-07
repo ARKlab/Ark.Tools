@@ -1,6 +1,5 @@
 ﻿using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using NLog;
 
@@ -25,7 +24,7 @@ namespace WebApplicationDemo.Application.Handlers.Requests
 
         public async Task<FileImport?> ExecuteAsync(Post_FileImportRequest.V1 request, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(request, nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             using var buffer = new MemoryStream();
             // Copy source to destination.

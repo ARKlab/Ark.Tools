@@ -1,7 +1,6 @@
 ﻿using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using Microsoft.AspNetCore.Http;
 
@@ -23,7 +22,7 @@ namespace ProblemDetailsSample.Api.Queries
 
         public Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequestBusinessRuleViolation.V1 request, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(request, nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             var problem = new CustomBusinessRuleViolation()
             {

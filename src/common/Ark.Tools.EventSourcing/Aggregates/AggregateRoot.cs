@@ -1,7 +1,6 @@
 ﻿using Ark.Tools.EventSourcing.Events;
 using Ark.Tools.EventSourcing.Store;
 
-using EnsureThat;
 
 using System;
 using System.Collections.Generic;
@@ -159,7 +158,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
         protected virtual void Emit<TEvent>(TEvent aggregateEvent, IDictionary<string, string>? metadata = null)
             where TEvent : class, IAggregateEvent<TAggregate>
         {
-            Ensure.Any.IsNotNull(aggregateEvent, nameof(aggregateEvent));
+            ArgumentNullException.ThrowIfNull(aggregateEvent);
 
             if (_applying)
                 throw new InvalidOperationException("Emit shall not be called during Apply phase. Do it before or after Emitting an event");
@@ -195,7 +194,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
         protected virtual void Publish<TEvent>(TEvent domainEvent, IMetadata? metadata = null)
             where TEvent : class, IDomainEvent
         {
-            Ensure.Any.IsNotNull(domainEvent, nameof(domainEvent));
+            ArgumentNullException.ThrowIfNull(domainEvent);
 
             if (_applying)
                 throw new InvalidOperationException("Publish shall not be called during Apply phase. Do it before or after Emitting an event");

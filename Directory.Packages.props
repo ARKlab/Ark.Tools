@@ -49,8 +49,6 @@
 	  <PackageVersion Include="MessagePack.NodaTime" Version="3.5.1" />
 	  <PackageVersion Include="Macross.Json.Extensions" Version="3.0.0" />
 	  
-	  <!-- TO REMOVE -->
-	  <PackageVersion Include="Ensure.That" Version="10.1.0" />
 	  <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.1" />
 
 	  <!-- TESTING -->

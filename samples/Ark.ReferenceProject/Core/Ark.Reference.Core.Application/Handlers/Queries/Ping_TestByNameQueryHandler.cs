@@ -2,7 +2,6 @@
 using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +22,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
         /// <inheritdoc/>
         public async Task<Ping.V1.Output> ExecuteAsync(Ping_GetByNameQuery.V1 query, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(query, nameof(query));
+            ArgumentNullException.ThrowIfNull(query);
 
             return new Ping.V1.Output()
             {

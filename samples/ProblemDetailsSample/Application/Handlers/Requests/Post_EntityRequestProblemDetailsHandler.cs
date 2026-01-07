@@ -1,6 +1,5 @@
 ﻿using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using Hellang.Middleware.ProblemDetails;
 
@@ -24,7 +23,7 @@ namespace ProblemDetailsSample.Api.Queries
 
         public Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequestProblemDetails.V1 request, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(request, nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             var problem = new OutOfCreditProblemDetails()
             {

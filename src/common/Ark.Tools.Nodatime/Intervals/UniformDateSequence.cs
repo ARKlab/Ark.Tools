@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Nodatime.Intervals;
 
-using EnsureThat;
 
 using NodaTime;
 
@@ -18,9 +17,9 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformDateSequence(LocalDate start, LocalDate end, DatePeriod period, bool exact = true)
         {
-            Ensure.Bool.IsTrue(start < end);
-            Ensure.Bool.IsTrue(exact == true ? Intervals.DateInterval.StartOfInterval(start, period) == start : true);
-            Ensure.Bool.IsTrue(exact == true ? Intervals.DateInterval.StartOfInterval(end, period) == end : true);
+            if (!(start < end)) { throw new InvalidOperationException("Condition failed: start < end"); }
+            if (!(exact == true ? Intervals.DateInterval.StartOfInterval(start, period) == start : true)) { throw new InvalidOperationException("Condition failed"); }
+            if (!(exact == true ? Intervals.DateInterval.StartOfInterval(end, period) == end : true)) { throw new InvalidOperationException("Condition failed"); }
 
             var startOfEnd = Intervals.DateInterval.StartOfInterval(end, period);
             if (exact == false && startOfEnd < end)
@@ -34,8 +33,8 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformDateSequence(LocalDateRange range, DatePeriod period, bool exact = true)
         {
-            Ensure.Bool.IsTrue(exact == true ? Intervals.DateInterval.StartOfInterval(range.Start, period) == range.Start : true);
-            Ensure.Bool.IsTrue(exact == true ? Intervals.DateInterval.StartOfInterval(range.End, period) == range.End : true);
+            if (!(exact == true ? Intervals.DateInterval.StartOfInterval(range.Start, period) == range.Start : true)) { throw new InvalidOperationException("Condition failed"); }
+            if (!(exact == true ? Intervals.DateInterval.StartOfInterval(range.End, period) == range.End : true)) { throw new InvalidOperationException("Condition failed"); }
 
             var startOfEnd = Intervals.DateInterval.StartOfInterval(range.End, period);
             if (exact == false && startOfEnd < range.End)

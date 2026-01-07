@@ -1,6 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
 
 using NodaTime;
 
@@ -21,8 +20,8 @@ namespace Ark.Tools.Nodatime
 
         public ZonedDateTimeRange(ZonedDateTime start, ZonedDateTime end)
         {
-            Ensure.Bool.IsTrue(ZonedDateTime.Comparer.Instant.Compare(start, end) < 0);
-            Ensure.Bool.IsTrue(start.Zone.Equals(end.Zone));
+            if (!(ZonedDateTime.Comparer.Instant.Compare(start, end) < 0)) { throw new InvalidOperationException("Condition failed"); }
+            if (!(start.Zone.Equals(end.Zone))) { throw new InvalidOperationException("Condition failed"); }
 
             _start = start;
             _end = end;
@@ -39,37 +38,37 @@ namespace Ark.Tools.Nodatime
 
         public readonly bool Contains(ZonedDateTime ldt)
         {
-            Ensure.Bool.IsTrue(ldt.Zone.Equals(Start.Zone));
+            if (!(ldt.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
             return ldt.ToInstant() >= _start.ToInstant() && ldt.ToInstant() < _end.ToInstant();
         }
 
         public readonly bool Contains(ZonedDateTimeRange other)
         {
-            Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
+            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
             return other._start.ToInstant() >= _start.ToInstant() && other._end.ToInstant() <= _end.ToInstant();
         }
 
         public readonly bool Overlaps(ZonedDateTimeRange other)
         {
-            Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
+            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
             return _start.ToInstant() < other._end.ToInstant() && _end.ToInstant() > other._start.ToInstant();
         }
 
         public readonly bool OverlapsOrContiguous(ZonedDateTimeRange other)
         {
-            Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
+            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
             return Overlaps(other) || IsContiguous(other);
         }
 
         public readonly bool IsContiguous(ZonedDateTimeRange other)
         {
-            Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
+            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
             return _start == other._end || _end == other._start;
         }
         public readonly ZonedDateTimeRange MergeOverlapsOrContiguous(ZonedDateTimeRange other)
         {
-            Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
-            Ensure.Bool.IsTrue(OverlapsOrContiguous(other));
+            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            if (!(OverlapsOrContiguous(other))) { throw new InvalidOperationException("Condition failed"); }
             return new ZonedDateTimeRange(
                   _start.ToInstant() < other._start.ToInstant() ? _start : other._start
                 , _end.ToInstant() > other._end.ToInstant() ? _end : other._end
@@ -78,7 +77,7 @@ namespace Ark.Tools.Nodatime
 
         public readonly ZonedDateTimeRange Merge(ZonedDateTimeRange other)
         {
-            Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
+            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
             return new ZonedDateTimeRange(
                 _start.ToInstant() < other._start.ToInstant() ? _start : other._start,
                 _end.ToInstant() > other._end.ToInstant() ? _end : other._end
@@ -87,7 +86,7 @@ namespace Ark.Tools.Nodatime
 
         public readonly IEnumerable<ZonedDateTimeRange> Subtract(ZonedDateTimeRange other)
         {
-            Ensure.Bool.IsTrue(other.Zone.Equals(Start.Zone));
+            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
 
             //      |------------|
             //  |--------------------|
@@ -135,8 +134,8 @@ namespace Ark.Tools.Nodatime
 
         public readonly LocalDateRange ToLocalDateRangeStrict()
         {
-            Ensure.Bool.IsTrue(Start.TimeOfDay == LocalTime.Midnight);
-            Ensure.Bool.IsTrue(End.TimeOfDay == LocalTime.Midnight);
+            if (!(Start.TimeOfDay == LocalTime.Midnight)) { throw new InvalidOperationException("Condition failed: Start.TimeOfDay == LocalTime.Midnight"); }
+            if (!(End.TimeOfDay == LocalTime.Midnight)) { throw new InvalidOperationException("Condition failed: End.TimeOfDay == LocalTime.Midnight"); }
 
             return new LocalDateRange(_start.Date, _end.Date);
         }

@@ -4,7 +4,6 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using System.Security.Claims;
 using System.Threading;
@@ -30,8 +29,8 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
               , IContextProvider<ClaimsPrincipal> userContext
             )
         {
-            EnsureArg.IsNotNull(coreDataContext, nameof(coreDataContext));
-            EnsureArg.IsNotNull(userContext, nameof(userContext));
+            ArgumentNullException.ThrowIfNull(coreDataContext);
+            ArgumentNullException.ThrowIfNull(userContext);
 
             _coreDataContext = coreDataContext;
             _userContext = userContext;

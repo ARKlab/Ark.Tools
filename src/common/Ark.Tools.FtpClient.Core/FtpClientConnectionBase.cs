@@ -1,7 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
-
 using NLog;
 
 using Polly;
@@ -27,9 +25,9 @@ namespace Ark.Tools.FtpClient.Core
 
         protected FtpClientConnectionBase(FtpConfig ftpConfig)
         {
-            EnsureArg.IsNotNull(ftpConfig);
-            EnsureArg.IsNotNull(ftpConfig.Uri);
-            EnsureArg.IsNotNull(ftpConfig.Credentials);
+            ArgumentNullException.ThrowIfNull(ftpConfig);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
 
             Uri = ftpConfig.Uri;
             Credentials = ftpConfig.Credentials;

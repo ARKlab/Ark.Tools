@@ -7,7 +7,6 @@ using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Outbox.Rebus;
 using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using Rebus.Bus;
 
@@ -29,8 +28,8 @@ namespace Ark.Reference.Core.Application.Handlers.Requests
               , IBus bus
 )
         {
-            EnsureArg.IsNotNull(coreDataContext, nameof(coreDataContext));
-            EnsureArg.IsNotNull(userContext, nameof(userContext));
+            ArgumentNullException.ThrowIfNull(coreDataContext);
+            ArgumentNullException.ThrowIfNull(userContext);
 
             _coreDataContext = coreDataContext;
             _userContext = userContext;

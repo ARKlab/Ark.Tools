@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
 
-using EnsureThat;
-
 using NodaTime;
 
 using System;
@@ -21,7 +19,7 @@ namespace Ark.Tools.Nodatime
 
         public LocalDateTimeRange(LocalDateTime start, LocalDateTime end)
         {
-            Ensure.Comparable.IsLt(start, end, nameof(start));
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, end, nameof(start));
 
             _start = start;
             _end = end;
@@ -29,7 +27,7 @@ namespace Ark.Tools.Nodatime
 
         public LocalDateTimeRange(DateTime start, DateTime end)
         {
-            Ensure.Comparable.IsLt(start, end, nameof(start));
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, end, nameof(start));
 
             _start = LocalDateTime.FromDateTime(start);
             _end = LocalDateTime.FromDateTime(end);
@@ -85,7 +83,10 @@ namespace Ark.Tools.Nodatime
 
         public readonly LocalDateTimeRange MergeOverlapsOrContiguous(LocalDateTimeRange other)
         {
-            Ensure.Bool.IsTrue(OverlapsOrContiguous(other));
+            if (!OverlapsOrContiguous(other))
+            {
+                throw new InvalidOperationException("Ranges must overlap or be contiguous to merge.");
+            }
             return new LocalDateTimeRange(_start.MinWith(other._start), _end.MaxWith(other._end));
         }
 
@@ -142,8 +143,14 @@ namespace Ark.Tools.Nodatime
 
         public readonly LocalDateRange ToLocalDateRangeStrict()
         {
-            Ensure.Bool.IsTrue(Start.TimeOfDay == LocalTime.Midnight);
-            Ensure.Bool.IsTrue(End.TimeOfDay == LocalTime.Midnight);
+            if (Start.TimeOfDay != LocalTime.Midnight)
+            {
+                throw new InvalidOperationException("Start time must be midnight.");
+            }
+            if (End.TimeOfDay != LocalTime.Midnight)
+            {
+                throw new InvalidOperationException("End time must be midnight.");
+            }
 
             return new LocalDateRange(_start.Date, _end.Date);
         }
