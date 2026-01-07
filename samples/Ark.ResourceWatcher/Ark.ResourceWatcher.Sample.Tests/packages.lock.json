@@ -2,72 +2,6 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
-      "Ark.Tools.Reqnroll": {
-        "type": "Direct",
-        "requested": "[999.9.9, )",
-        "resolved": "999.9.9",
-        "contentHash": "bvGBMc2VW9j9UthnsYAFSOE8s4GXUaMWjSIpmKl0jLxPtFSDgrtiJ+spGjEYjFEglwtkGnLh8PrfwDpv2E07tA==",
-        "dependencies": {
-          "Ark.Tools.Http": "[999.9.9]",
-          "AwesomeAssertions": "9.3.0",
-          "AwesomeAssertions.Web": "1.9.6",
-          "CacheCow.Client": "2.13.1",
-          "Ensure.That": "10.1.0",
-          "Flurl.Http": "4.0.2",
-          "Flurl.Http.Newtonsoft": "0.9.1",
-          "Macross.Json.Extensions": "3.0.0",
-          "MessagePack": "3.1.4",
-          "MessagePack.NodaTime": "3.5.1",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.JsonNet": "3.2.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "Reqnroll": "3.3.0",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.ResourceWatcher.Testing": {
-        "type": "Direct",
-        "requested": "[999.9.9, )",
-        "resolved": "999.9.9",
-        "contentHash": "yQoWN9Znwch5cwyP3vmzdJoaMVdyCBt3yQjJFAAjA+64FdOO51B9GHDhu5pPB+u34CmRXzoh5tid4SLEtFw3Pg==",
-        "dependencies": {
-          "Ark.Tools.ResourceWatcher": "[999.9.9]",
-          "Ark.Tools.ResourceWatcher.WorkerHost": "[999.9.9]",
-          "Azure.Identity": "1.17.1",
-          "Ben.Demystifier": "0.4.1",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.NLogTarget": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.DiagnosticAdapter": "3.1.32",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "NLog": "6.0.7",
-          "NLog.Database": "6.0.3",
-          "NLog.DiagnosticSource": "6.0.3",
-          "NLog.MailKit": "6.0.5",
-          "Newtonsoft.Json": "13.0.4",
-          "Nito.AsyncEx.Coordination": "5.1.2",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "SimpleInjector": "5.5.0",
-          "Slack.Webhooks": "1.1.5",
-          "System.Configuration.ConfigurationManager": "10.0.1",
-          "System.Reactive": "6.1.0"
-        }
-      },
       "AwesomeAssertions": {
         "type": "Direct",
         "requested": "[9.3.0, )",
@@ -215,345 +149,6 @@
         "requested": "[3.3.0, )",
         "resolved": "3.3.0",
         "contentHash": "5y0emmHLEonzXt9QuUV8dcMhYpylruVR8kxFYOQKwXQtpVbaBYOnRrnxRw5+4nj+CvJMKiIY/X6IkIi/UQvH1A=="
-      },
-      "Ark.Tools.ApplicationInsights": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "VlfaoyJEc2z41xF/1QwNTitN/t7fxow/NznCvwxmyUqTLCBIFnIMQDw/4MZkJPd5bMYU/eagri00yl61tHctBg==",
-        "dependencies": {
-          "Azure.Identity": "1.17.1",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "System.Configuration.ConfigurationManager": "10.0.1"
-        }
-      },
-      "Ark.Tools.ApplicationInsights.HostedService": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "WOQbok/spLWVGhsICno9dxFuROjUCD2FcUD54opTkOYFL0lNEGdO/udlu1bFbFmg0GkVVo8qLBddO1tAkCQevA==",
-        "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[999.9.9]",
-          "Ark.Tools.Hosting": "[999.9.9]",
-          "Ark.Tools.NLog": "[999.9.9]",
-          "Ark.Tools.NLog.Configuration": "[999.9.9]",
-          "Azure.Extensions.AspNetCore.Configuration.Secrets": "1.4.0",
-          "Azure.Identity": "1.17.1",
-          "Ben.Demystifier": "0.4.1",
-          "DistributedLock.Core": "1.0.8",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.NLogTarget": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.ApplicationInsights.WorkerService": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration": "10.0.1",
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration.CommandLine": "10.0.1",
-          "Microsoft.Extensions.Configuration.EnvironmentVariables": "10.0.1",
-          "Microsoft.Extensions.Configuration.Json": "10.0.1",
-          "Microsoft.Extensions.Hosting": "10.0.1",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Console": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "NLog": "6.0.7",
-          "NLog.Database": "6.0.3",
-          "NLog.DiagnosticSource": "6.0.3",
-          "NLog.Extensions.Logging": "6.1.0",
-          "NLog.MailKit": "6.0.5",
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "Slack.Webhooks": "1.1.5",
-          "System.Configuration.ConfigurationManager": "10.0.1",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.Core": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "uO+vnIKNrEYQv4h71S1fjfn3suaBvVYFLnOBLgotpDKErY5AtrGPInYO38ysmeeo3zx7k/eL1dyokgG8vP035w==",
-        "dependencies": {
-          "Ensure.That": "10.1.0",
-          "NodaTime": "3.3.0",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.Hosting": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "GuTvUrutfX1t48mAgFV0IgICLAJhnGLY11LiCUaJpR0k/3iWuZ/AQbfOyumRAhe+NFNO7J72fLOqwemoyuCppA==",
-        "dependencies": {
-          "Azure.Extensions.AspNetCore.Configuration.Secrets": "1.4.0",
-          "Azure.Identity": "1.17.1",
-          "DistributedLock.Core": "1.0.8",
-          "Microsoft.Extensions.Configuration": "10.0.1",
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration.CommandLine": "10.0.1",
-          "Microsoft.Extensions.Configuration.EnvironmentVariables": "10.0.1",
-          "Microsoft.Extensions.Configuration.Json": "10.0.1",
-          "Microsoft.Extensions.Hosting": "10.0.1",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Console": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0"
-        }
-      },
-      "Ark.Tools.NewtonsoftJson": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "OtlwXZrJTxcug768xHi097TKHrEr22qDbzWJmgS8COUitpe/4lVCIX1mUMFIrMgN+mfx18SgMNf3SDEy8Ne24Q==",
-        "dependencies": {
-          "Ark.Tools.Nodatime.Json": "[999.9.9]",
-          "Ensure.That": "10.1.0",
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.JsonNet": "3.2.0",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.NLog.Configuration": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "RL0ija/afivaXCrzq6CQjWhJOyvwhUf2nm0zbwiCdVcZhpGI0apJrouK5Oa7XEHp1eO9gFkNOso6OvCpVx2P6w==",
-        "dependencies": {
-          "Ark.Tools.NLog": "[999.9.9]",
-          "Azure.Identity": "1.17.1",
-          "Ben.Demystifier": "0.4.1",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.NLogTarget": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration": "10.0.1",
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration.CommandLine": "10.0.1",
-          "Microsoft.Extensions.Configuration.EnvironmentVariables": "10.0.1",
-          "Microsoft.Extensions.Configuration.Json": "10.0.1",
-          "Microsoft.Extensions.Hosting": "10.0.1",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Console": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "NLog": "6.0.7",
-          "NLog.Database": "6.0.3",
-          "NLog.DiagnosticSource": "6.0.3",
-          "NLog.Extensions.Logging": "6.1.0",
-          "NLog.MailKit": "6.0.5",
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "Slack.Webhooks": "1.1.5",
-          "System.Configuration.ConfigurationManager": "10.0.1",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.Nodatime": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "yLA9cNmO1fWdufanRZM9alFDML2xuOfU0b4K9TklrN/FZf4iPKddiDgA8JLIZPTb5kGmdHgexXaA0l5AFDG/vQ==",
-        "dependencies": {
-          "Ark.Tools.Core": "[999.9.9]",
-          "Ensure.That": "10.1.0",
-          "NodaTime": "3.3.0",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.Nodatime.Json": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "rW2pSRyYXKpU54R43RGOELZlLN3lP/80o3dYF0EoAEghA0HbM5axtOu8jaKlnGYgeuiimoN9ihMFybrYebzWLQ==",
-        "dependencies": {
-          "Ark.Tools.Nodatime": "[999.9.9]",
-          "Ensure.That": "10.1.0",
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.JsonNet": "3.2.0",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.Nodatime.SystemTextJson": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "RyFpK47ubbqH8/HsIpyFM7wzuHcFah8yWxISlZBHx0e9lylaKEvhURxSv94/qUmCqO6RLpwJhUK76z6SjTL4Mw==",
-        "dependencies": {
-          "Ark.Tools.Nodatime": "[999.9.9]",
-          "Ensure.That": "10.1.0",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.ResourceWatcher": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "ypvQ24KD58l3bCqOGCJyqGVXlqtgtJFQqQiKmVBWaIkWhC7L89ElYJXoE83siTXhocNUnzz97nmg19KozzXWfg==",
-        "dependencies": {
-          "Ark.Tools.Core": "[999.9.9]",
-          "Ark.Tools.NLog": "[999.9.9]",
-          "Azure.Identity": "1.17.1",
-          "Ben.Demystifier": "0.4.1",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.NLogTarget": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.DiagnosticAdapter": "3.1.32",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "NLog": "6.0.7",
-          "NLog.Database": "6.0.3",
-          "NLog.DiagnosticSource": "6.0.3",
-          "NLog.MailKit": "6.0.5",
-          "Newtonsoft.Json": "13.0.4",
-          "Nito.AsyncEx.Coordination": "5.1.2",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "Slack.Webhooks": "1.1.5",
-          "System.Configuration.ConfigurationManager": "10.0.1",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.ResourceWatcher.ApplicationInsights": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "GF3DxRmwznfpCBl/rmxcxXbIxrAVMT2lSej9E16Mjbizer4zgRfVEeshAJEh0Nl7/EfQoQelGb2T1zoh7scaMA==",
-        "dependencies": {
-          "Ark.Tools.ApplicationInsights.HostedService": "[999.9.9]",
-          "Ark.Tools.NewtonsoftJson": "[999.9.9]",
-          "Ark.Tools.ResourceWatcher": "[999.9.9]",
-          "Azure.Extensions.AspNetCore.Configuration.Secrets": "1.4.0",
-          "Azure.Identity": "1.17.1",
-          "Ben.Demystifier": "0.4.1",
-          "DistributedLock.Core": "1.0.8",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.NLogTarget": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.ApplicationInsights.WorkerService": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration": "10.0.1",
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration.CommandLine": "10.0.1",
-          "Microsoft.Extensions.Configuration.EnvironmentVariables": "10.0.1",
-          "Microsoft.Extensions.Configuration.Json": "10.0.1",
-          "Microsoft.Extensions.DiagnosticAdapter": "3.1.32",
-          "Microsoft.Extensions.Hosting": "10.0.1",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Console": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "NLog": "6.0.7",
-          "NLog.Database": "6.0.3",
-          "NLog.DiagnosticSource": "6.0.3",
-          "NLog.Extensions.Logging": "6.1.0",
-          "NLog.MailKit": "6.0.5",
-          "Newtonsoft.Json": "13.0.4",
-          "Nito.AsyncEx.Coordination": "5.1.2",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.JsonNet": "3.2.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "Slack.Webhooks": "1.1.5",
-          "System.Configuration.ConfigurationManager": "10.0.1",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.ResourceWatcher.WorkerHost": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "sW6ydKAZU1iKKMtoWUUxLXOZ0xk/0RJBUeWkJS+q1t5j+T3FQfIgEtiDK+4U6knPuGCnxDgV6mhBfVXDkCiI4w==",
-        "dependencies": {
-          "Ark.Tools.ResourceWatcher": "[999.9.9]",
-          "Ark.Tools.SimpleInjector": "[999.9.9]",
-          "Azure.Identity": "1.17.1",
-          "Ben.Demystifier": "0.4.1",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.NLogTarget": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.DiagnosticAdapter": "3.1.32",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "NLog": "6.0.7",
-          "NLog.Database": "6.0.3",
-          "NLog.DiagnosticSource": "6.0.3",
-          "NLog.MailKit": "6.0.5",
-          "Newtonsoft.Json": "13.0.4",
-          "Nito.AsyncEx.Coordination": "5.1.2",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "SimpleInjector": "5.5.0",
-          "Slack.Webhooks": "1.1.5",
-          "System.Configuration.ConfigurationManager": "10.0.1",
-          "System.Reactive": "6.1.0"
-        }
-      },
-      "Ark.Tools.SimpleInjector": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "1Sq4CXSDhdqUkgeHziuo36xQD4DC8H5MrzOLCDUMkucdpSRiUIzX+ZHEmAz2QqacaCUfc2+7PwrjWoHsyxk32Q==",
-        "dependencies": {
-          "SimpleInjector": "5.5.0"
-        }
-      },
-      "Ark.Tools.SystemTextJson": {
-        "type": "Transitive",
-        "resolved": "999.9.9",
-        "contentHash": "g6WAhnQzEpXVOKEHPciWw88Iz6I80fqgEJvXuBZx3TLKSKuYz0L+6f2Cei4fEPda153m7a6mpybNkIddx5ApjQ==",
-        "dependencies": {
-          "Ark.Tools.Core": "[999.9.9]",
-          "Ark.Tools.Nodatime.SystemTextJson": "[999.9.9]",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "System.Reactive": "6.1.0"
-        }
       },
       "AwesomeAssertions.Web": {
         "type": "Transitive",
@@ -887,10 +482,10 @@
       },
       "Microsoft.Extensions.Caching.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.1",
-        "contentHash": "Vb1vVAQDxHpXVdL9fpOX2BzeV7bbhzG4pAcIKRauRl0/VfkE8mq0f+fYC+gWICh3dlzTZInJ/cTeBS2MgU/XvQ==",
+        "resolved": "9.0.4",
+        "contentHash": "imcZ5BGhBw5mNsWLepBbqqumWaFe0GtvyCvne2/2wsDIBRa2+Lhx4cU/pKt/4BwOizzUEOls2k1eOJQXHGMalg==",
         "dependencies": {
-          "Microsoft.Extensions.Primitives": "10.0.1"
+          "Microsoft.Extensions.Primitives": "9.0.4"
         }
       },
       "Microsoft.Extensions.Caching.Memory": {
@@ -1217,18 +812,18 @@
       },
       "Microsoft.Identity.Client": {
         "type": "Transitive",
-        "resolved": "4.80.0",
-        "contentHash": "nmg+q17mKdNafWvaX7Of5Xh8sxc4acsD6xOOczp7kgjAzR7bpseYGZzg38XPoS/vW7k92sGKCWgHSogB0K62KQ==",
+        "resolved": "4.78.0",
+        "contentHash": "vZ50HE9INSN+Ew8pCgTm0t7wzxQTqozF9L4MAsl64etXz0Teo0dbUvjpVzqDHRs6m1Vn8mHF04fGaxXrIvGpsg==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "8.14.0"
         }
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "Transitive",
-        "resolved": "4.80.0",
-        "contentHash": "cPXcfsyYNwDPP1DHW0TAdfu2d+VrWmRc75s1vdA0N0z8osK4LHRhjFUDEK/xBBA2DOyhbk+SpWpyhBR3Fi5LAA==",
+        "resolved": "4.78.0",
+        "contentHash": "DYU9o+DrDQuyZxeq91GBA9eNqBvA3ZMkLzQpF7L9dTk6FcIBM1y1IHXWqiKXTvptPF7CZE59upbyUoa+FJ5eiA==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.80.0",
+          "Microsoft.Identity.Client": "4.78.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
       },
@@ -1512,11 +1107,11 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "Transitive",
-        "resolved": "10.0.1",
-        "contentHash": "HfOAIlSA8OuaxBZD6xjsUWhtB0KdKSWEfRId8gSGveLUjuP6G8IxfiFgJNxaiRIEC1kx4pSvz3Em5xW/J6LLxA==",
+        "resolved": "9.0.4",
+        "contentHash": "dvjqKp+2LpGid6phzrdrS/2mmEPxFl3jE1+L7614q4ZChKbLJCpHXg6sBILlCCED1t//EE+un/UdAetzIMpqnw==",
         "dependencies": {
-          "System.Diagnostics.EventLog": "10.0.1",
-          "System.Security.Cryptography.ProtectedData": "10.0.1"
+          "System.Diagnostics.EventLog": "9.0.4",
+          "System.Security.Cryptography.ProtectedData": "9.0.4"
         }
       },
       "System.Diagnostics.EventLog": {
@@ -1563,131 +1158,193 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "10.0.1",
-        "contentHash": "9SqHNq+lAjZeyPcm69FTQEjr+wsRYvkS3aW8yxoEndVYwDRkCrsP/44QPqpWHwzevoX26rkOoQ6kr7GZWngw2A=="
+        "resolved": "9.0.4",
+        "contentHash": "o94k2RKuAce3GeDMlUvIXlhVa1kWpJw95E6C9LwW0KlG0nj5+SgCiIxJ2Eroqb9sLtG1mEMbFttZIBZ13EJPvQ=="
       },
       "ark.resourcewatcher.sample": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Http": "[999.9.9, )",
-          "Ark.Tools.NLog": "[999.9.9, )",
-          "Ark.Tools.ResourceWatcher.WorkerHost.Hosting": "[999.9.9, )",
+          "Ark.Tools.Http": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher.WorkerHost.Hosting": "[1.0.0, )",
           "CsvHelper": "[33.1.0, )"
         }
       },
-      "Ark.Tools.Http": {
-        "type": "CentralTransitive",
-        "requested": "[999.9.9, )",
-        "resolved": "999.9.9",
-        "contentHash": "0a0L3nKMbbAMiu4f00C5qkZHQksxFJi4F/LBkxBCor3H/GpaRc8PaL9yHtPd5HXaBPZbDEnz7YrSn8GWA0aoPg==",
+      "ark.tools.applicationinsights": {
+        "type": "Project",
         "dependencies": {
-          "Ark.Tools.NewtonsoftJson": "[999.9.9]",
-          "Ark.Tools.SystemTextJson": "[999.9.9]",
-          "CacheCow.Client": "2.13.1",
-          "Ensure.That": "10.1.0",
-          "Flurl.Http": "4.0.2",
-          "Flurl.Http.Newtonsoft": "0.9.1",
-          "Macross.Json.Extensions": "3.0.0",
-          "MessagePack": "3.1.4",
-          "MessagePack.NodaTime": "3.5.1",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.JsonNet": "3.2.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "System.Reactive": "6.1.0"
+          "Microsoft.ApplicationInsights": "[2.23.0, )",
+          "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
+          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
+          "Microsoft.Data.SqlClient": "[6.1.3, )",
+          "Microsoft.Extensions.Options": "[10.0.1, )"
         }
       },
-      "Ark.Tools.NLog": {
-        "type": "CentralTransitive",
-        "requested": "[999.9.9, )",
-        "resolved": "999.9.9",
-        "contentHash": "bcOUPvpLmdyt/QEqvxUpqqnrbZjDzw2Ren2zJXQZEjvvOI9R1F62jGeZlgzgI1qvsFFuk2HDbdhLY7BOmfzeZg==",
+      "ark.tools.applicationinsights.hostedservice": {
+        "type": "Project",
         "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[999.9.9]",
-          "Ark.Tools.Core": "[999.9.9]",
-          "Ark.Tools.SystemTextJson": "[999.9.9]",
-          "Azure.Identity": "1.17.1",
-          "Ben.Demystifier": "0.4.1",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.NLogTarget": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "NLog": "6.0.7",
-          "NLog.Database": "6.0.3",
-          "NLog.DiagnosticSource": "6.0.3",
-          "NLog.MailKit": "6.0.5",
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "Slack.Webhooks": "1.1.5",
-          "System.Configuration.ConfigurationManager": "10.0.1",
-          "System.Reactive": "6.1.0"
+          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
+          "Ark.Tools.Hosting": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )",
+          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
+          "Microsoft.ApplicationInsights.WorkerService": "[2.23.0, )"
         }
       },
-      "Ark.Tools.ResourceWatcher.WorkerHost.Hosting": {
-        "type": "CentralTransitive",
-        "requested": "[999.9.9, )",
-        "resolved": "999.9.9",
-        "contentHash": "pZ69sfUEfJ1Thow0ZElkgIkvyUI+YQhAlLaj1hHFzwMH+uwfbVQFizFRyNm4nwh+bf95Ab089g2e6K+XgbHE3Q==",
+      "ark.tools.core": {
+        "type": "Project",
         "dependencies": {
-          "Ark.Tools.Hosting": "[999.9.9]",
-          "Ark.Tools.ResourceWatcher.ApplicationInsights": "[999.9.9]",
-          "Ark.Tools.ResourceWatcher.WorkerHost": "[999.9.9]",
-          "Azure.Extensions.AspNetCore.Configuration.Secrets": "1.4.0",
-          "Azure.Identity": "1.17.1",
-          "Ben.Demystifier": "0.4.1",
-          "DistributedLock.Core": "1.0.8",
-          "Ensure.That": "10.1.0",
-          "Macross.Json.Extensions": "3.0.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.NLogTarget": "2.23.0",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "1.4.6",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.ApplicationInsights.WorkerService": "2.23.0",
-          "Microsoft.Data.SqlClient": "6.1.3",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration": "10.0.1",
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Configuration.CommandLine": "10.0.1",
-          "Microsoft.Extensions.Configuration.EnvironmentVariables": "10.0.1",
-          "Microsoft.Extensions.Configuration.Json": "10.0.1",
-          "Microsoft.Extensions.DiagnosticAdapter": "3.1.32",
-          "Microsoft.Extensions.Hosting": "10.0.1",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.1",
-          "Microsoft.Extensions.Logging.AzureAppServices": "10.0.1",
-          "Microsoft.Extensions.Logging.Console": "10.0.1",
-          "Microsoft.Extensions.Options": "10.0.1",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.1",
-          "Microsoft.Identity.Client": "4.80.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.80.0",
-          "Microsoft.IdentityModel.JsonWebTokens": "8.15.0",
-          "NLog": "6.0.7",
-          "NLog.Database": "6.0.3",
-          "NLog.DiagnosticSource": "6.0.3",
-          "NLog.Extensions.Logging": "6.1.0",
-          "NLog.MailKit": "6.0.5",
-          "Newtonsoft.Json": "13.0.4",
-          "Nito.AsyncEx.Coordination": "5.1.2",
-          "NodaTime": "3.3.0",
-          "NodaTime.Serialization.JsonNet": "3.2.0",
-          "NodaTime.Serialization.SystemTextJson": "1.3.0",
-          "SimpleInjector": "5.5.0",
-          "Slack.Webhooks": "1.1.5",
-          "System.Configuration.ConfigurationManager": "10.0.1",
-          "System.Reactive": "6.1.0"
+          "Ensure.That": "[10.1.0, )",
+          "NodaTime": "[3.3.0, )",
+          "System.Reactive": "[6.1.0, )"
+        }
+      },
+      "ark.tools.hosting": {
+        "type": "Project",
+        "dependencies": {
+          "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.4.0, )",
+          "Azure.Identity": "[1.17.1, )",
+          "DistributedLock.Core": "[1.0.8, )",
+          "Microsoft.Extensions.Configuration": "[10.0.1, )",
+          "Microsoft.Extensions.Hosting": "[10.0.1, )",
+          "Microsoft.Extensions.Hosting.Abstractions": "[10.0.1, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.1, )",
+          "Microsoft.Extensions.Options": "[10.0.1, )",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.1, )"
+        }
+      },
+      "ark.tools.http": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "CacheCow.Client": "[2.13.1, )",
+          "Flurl.Http": "[4.0.2, )",
+          "Flurl.Http.Newtonsoft": "[0.9.1, )",
+          "MessagePack.NodaTime": "[3.5.1, )"
+        }
+      },
+      "ark.tools.newtonsoftjson": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Nodatime.Json": "[1.0.0, )",
+          "Newtonsoft.Json": "[13.0.4, )"
+        }
+      },
+      "ark.tools.nlog": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "Ben.Demystifier": "[0.4.1, )",
+          "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
+          "Microsoft.Data.SqlClient": "[6.1.3, )",
+          "NLog": "[6.0.7, )",
+          "NLog.Database": "[6.0.3, )",
+          "NLog.DiagnosticSource": "[6.0.3, )",
+          "NLog.MailKit": "[6.0.5, )",
+          "Newtonsoft.Json": "[13.0.4, )",
+          "Slack.Webhooks": "[1.1.5, )"
+        }
+      },
+      "ark.tools.nlog.configuration": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.NLog": "[1.0.0, )",
+          "Microsoft.Extensions.Configuration.Abstractions": "[10.0.1, )",
+          "Microsoft.Extensions.Hosting": "[10.0.1, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.1, )",
+          "NLog.Extensions.Logging": "[6.1.0, )"
+        }
+      },
+      "ark.tools.nodatime": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )"
+        }
+      },
+      "ark.tools.nodatime.json": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Nodatime": "[1.0.0, )",
+          "Newtonsoft.Json": "[13.0.4, )",
+          "NodaTime.Serialization.JsonNet": "[3.2.0, )"
+        }
+      },
+      "ark.tools.nodatime.systemtextjson": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Nodatime": "[1.0.0, )",
+          "NodaTime.Serialization.SystemTextJson": "[1.3.0, )"
+        }
+      },
+      "ark.tools.reqnroll": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Http": "[1.0.0, )",
+          "AwesomeAssertions": "[9.3.0, )",
+          "AwesomeAssertions.Web": "[1.9.6, )",
+          "Microsoft.IdentityModel.JsonWebTokens": "[8.15.0, )",
+          "Reqnroll": "[3.3.0, )"
+        }
+      },
+      "ark.tools.resourcewatcher": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )",
+          "Microsoft.Extensions.DiagnosticAdapter": "[3.1.32, )",
+          "Nito.AsyncEx.Coordination": "[5.1.2, )"
+        }
+      },
+      "ark.tools.resourcewatcher.applicationinsights": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.ApplicationInsights.HostedService": "[1.0.0, )",
+          "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
+          "Microsoft.Extensions.Hosting.Abstractions": "[10.0.1, )"
+        }
+      },
+      "ark.tools.resourcewatcher.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher.WorkerHost": "[1.0.0, )"
+        }
+      },
+      "ark.tools.resourcewatcher.workerhost": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
+          "Ark.Tools.SimpleInjector": "[1.0.0, )"
+        }
+      },
+      "ark.tools.resourcewatcher.workerhost.hosting": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Hosting": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher.ApplicationInsights": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher.WorkerHost": "[1.0.0, )",
+          "Microsoft.Extensions.Configuration.CommandLine": "[10.0.1, )",
+          "Microsoft.Extensions.Configuration.EnvironmentVariables": "[10.0.1, )",
+          "Microsoft.Extensions.Configuration.Json": "[10.0.1, )",
+          "Microsoft.Extensions.Logging.AzureAppServices": "[10.0.1, )",
+          "Microsoft.Extensions.Logging.Console": "[10.0.1, )"
+        }
+      },
+      "ark.tools.simpleinjector": {
+        "type": "Project",
+        "dependencies": {
+          "SimpleInjector": "[5.5.0, )"
+        }
+      },
+      "ark.tools.systemtextjson": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
+          "Macross.Json.Extensions": "[3.0.0, )"
         }
       },
       "CsvHelper": {

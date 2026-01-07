@@ -6,14 +6,6 @@
     <ArkToolsSourceRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\src\'))</ArkToolsSourceRoot>
   </PropertyGroup>
 
-  <!-- When using local sources, we must disable lock file restore because the dependencies change -->
-  <!-- We redirect the lock file to the intermediate folder to avoid the error NU1005 (lock file exists but usage disabled) -->
-  <PropertyGroup Condition="'$(UseLocalArkToolsSources)' == 'true'">
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <RestoreLockedMode>false</RestoreLockedMode>
-    <NuGetLockFilePath>$(BaseIntermediateOutputPath)packages.lock.json</NuGetLockFilePath>
-  </PropertyGroup>
-
   <!-- Use a Target to avoid MSB4191 (custom metadata in Condition in top-level ItemGroup) -->
   <Target Name="_ReplaceArkToolsReferences" BeforeTargets="CollectPackageReferences" Condition="'$(UseLocalArkToolsSources)' == 'true'">
       <ItemGroup>
