@@ -53,11 +53,13 @@ ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, end, nameof(start))
 // Before
 Ensure.Bool.IsTrue(condition);
 
-// After
-if (!condition)
-{
-    throw new InvalidOperationException("Condition failed");
-}
+// After - Using C# 14 extension members
+InvalidOperationException.ThrowUnless(condition);
+// The condition expression is automatically captured and included in the error message
+
+// Example with custom message
+InvalidOperationException.ThrowUnless(user.IsActive, "User must be active");
+// Throws: "User must be active (condition: user.IsActive)"
 ```
 
 **String length validation:**
@@ -75,8 +77,32 @@ ArgumentOutOfRangeException.ThrowIfGreaterThan(str.Length, 128, nameof(str));
 - **No external dependencies**: Uses built-in .NET framework features
 - **Better performance**: Native .NET guards are optimized by the runtime
 - **Modern C# features**: Leverages `CallerArgumentExpression` for better error messages
+- **C# 14 extension members**: `InvalidOperationException.ThrowIf/ThrowUnless` provides clean syntax
+- **Automatic condition capture**: Error messages automatically include the failing condition expression
 - **Improved maintainability**: Standard patterns recognized by all .NET developers
 - **Future-proof**: Built-in guards are updated with the framework
+
+### New Extension Members
+
+Ark.Tools v6 introduces `InvalidOperationException.ThrowIf` and `InvalidOperationException.ThrowUnless` using C# 14 extension members:
+
+```csharp
+// ThrowUnless - throws if condition is FALSE
+InvalidOperationException.ThrowUnless(user.IsValid);
+// Error message: "Condition failed: user.IsValid"
+
+// ThrowIf - throws if condition is TRUE  
+InvalidOperationException.ThrowIf(cache.IsStale);
+// Error message: "Condition failed: cache.IsStale"
+
+// With custom message - condition is always appended
+InvalidOperationException.ThrowUnless(
+    order.Status == OrderStatus.Pending,
+    "Order must be in pending status");
+// Error message: "Order must be in pending status (condition: order.Status == OrderStatus.Pending)"
+```
+
+These extension members use `CallerArgumentExpression` to automatically capture the condition expression, providing meaningful error messages without manual string formatting.
 
 ## Migrate SQL Projects to SDK-based
 

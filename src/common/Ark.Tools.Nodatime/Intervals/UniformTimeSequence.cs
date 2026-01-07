@@ -7,6 +7,7 @@ using Ark.Tools.Nodatime.Intervals;
 using NodaTime;
 
 using System.Collections.Generic;
+using Ark.Tools.Core;
 
 namespace Ark.Tools.Nodatime.TimeSeries
 {
@@ -18,10 +19,10 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformTimeSequence(ZonedDateTime start, ZonedDateTime end, TimePeriod period, bool exact = true)
         {
-            if (!(start.Zone.Equals(end.Zone))) { throw new InvalidOperationException("Condition failed"); }
-            if (!(ZonedDateTime.Comparer.Instant.Compare(start, end) < 0)) { throw new InvalidOperationException("Condition failed"); }
-            if (!(exact == true ? TimeInterval.StartOfInterval(start, period) == start : true)) { throw new InvalidOperationException("Condition failed"); }
-            if (!(exact == true ? TimeInterval.StartOfInterval(end, period) == end : true)) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(start.Zone.Equals(end.Zone));
+            InvalidOperationException.ThrowUnless(ZonedDateTime.Comparer.Instant.Compare(start, end) < 0);
+            InvalidOperationException.ThrowUnless(exact == true ? TimeInterval.StartOfInterval(start, period) == start : true);
+            InvalidOperationException.ThrowUnless(exact == true ? TimeInterval.StartOfInterval(end, period) == end : true);
 
             _range = new ZonedDateTimeRange(
                 TimeInterval.StartOfInterval(start, period),
@@ -31,8 +32,8 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformTimeSequence(ZonedDateTimeRange range, TimePeriod period, bool exact = true)
         {
-            if (!(exact == true ? TimeInterval.StartOfInterval(range.Start, period) == range.Start : true)) { throw new InvalidOperationException("Condition failed"); }
-            if (!(exact == true ? TimeInterval.StartOfInterval(range.End, period) == range.End : true)) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(exact == true ? TimeInterval.StartOfInterval(range.Start, period) == range.Start : true);
+            InvalidOperationException.ThrowUnless(exact == true ? TimeInterval.StartOfInterval(range.End, period) == range.End : true);
 
             _range = new ZonedDateTimeRange(
                 TimeInterval.StartOfInterval(range.Start, period),
@@ -42,8 +43,8 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformTimeSequence(LocalDateTimeRange range, TimePeriod period, bool exact = true)
         {
-            if (!(exact == true ? TimeInterval.StartOfInterval(range.Start, period) == range.Start : true)) { throw new InvalidOperationException("Condition failed"); }
-            if (!(exact == true ? TimeInterval.StartOfInterval(range.End, period) == range.End : true)) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(exact == true ? TimeInterval.StartOfInterval(range.Start, period) == range.Start : true);
+            InvalidOperationException.ThrowUnless(exact == true ? TimeInterval.StartOfInterval(range.End, period) == range.End : true);
 
             _range = new ZonedDateTimeRange(
                 TimeInterval.StartOfInterval(range.Start.InUtc(), period),
@@ -53,9 +54,9 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformTimeSequence(LocalDateTime start, LocalDateTime end, TimePeriod period, bool exact = true)
         {
-            if (!(start < end)) { throw new InvalidOperationException("Condition failed: start < end"); }
-            if (!(exact == true ? TimeInterval.StartOfInterval(start, period) == start : true)) { throw new InvalidOperationException("Condition failed"); }
-            if (!(exact == true ? TimeInterval.StartOfInterval(end, period) == end : true)) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(start < end);
+            InvalidOperationException.ThrowUnless(exact == true ? TimeInterval.StartOfInterval(start, period) == start : true);
+            InvalidOperationException.ThrowUnless(exact == true ? TimeInterval.StartOfInterval(end, period) == end : true);
 
             _range = new ZonedDateTimeRange(
                 TimeInterval.StartOfInterval(start.InUtc(), period),

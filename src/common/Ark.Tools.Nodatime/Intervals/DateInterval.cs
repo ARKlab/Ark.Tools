@@ -5,6 +5,7 @@ using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Ark.Tools.Core;
 
 namespace Ark.Tools.Nodatime.Intervals
 {
@@ -99,7 +100,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly DateInterval LastOf(DatePeriod period)
         {
-            if (!(CanSplitInto(period))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(CanSplitInto(period));
 
             var next = NextInterval();
             var changeperiod = new DateInterval(next._start, period);
@@ -138,7 +139,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly IEnumerable<DateInterval> SplitInto(DatePeriod period)
         {
-            if (!(CanSplitInto(period))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(CanSplitInto(period));
 
 
             var s = _start;
@@ -209,7 +210,7 @@ namespace Ark.Tools.Nodatime.Intervals
 
         public readonly int CompareTo(DateInterval other)
         {
-            if (!(Period == other.Period)) { throw new InvalidOperationException("Condition failed: Period == other.Period"); }
+            InvalidOperationException.ThrowUnless(Period == other.Period);
             return _start.CompareTo(other._start);
         }
 

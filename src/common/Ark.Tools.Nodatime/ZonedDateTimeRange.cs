@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Ark.Tools.Core;
 
 namespace Ark.Tools.Nodatime
 {
@@ -20,8 +21,8 @@ namespace Ark.Tools.Nodatime
 
         public ZonedDateTimeRange(ZonedDateTime start, ZonedDateTime end)
         {
-            if (!(ZonedDateTime.Comparer.Instant.Compare(start, end) < 0)) { throw new InvalidOperationException("Condition failed"); }
-            if (!(start.Zone.Equals(end.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(ZonedDateTime.Comparer.Instant.Compare(start, end) < 0);
+            InvalidOperationException.ThrowUnless(start.Zone.Equals(end.Zone));
 
             _start = start;
             _end = end;
@@ -38,37 +39,37 @@ namespace Ark.Tools.Nodatime
 
         public readonly bool Contains(ZonedDateTime ldt)
         {
-            if (!(ldt.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(ldt.Zone.Equals(Start.Zone));
             return ldt.ToInstant() >= _start.ToInstant() && ldt.ToInstant() < _end.ToInstant();
         }
 
         public readonly bool Contains(ZonedDateTimeRange other)
         {
-            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(other.Zone.Equals(Start.Zone));
             return other._start.ToInstant() >= _start.ToInstant() && other._end.ToInstant() <= _end.ToInstant();
         }
 
         public readonly bool Overlaps(ZonedDateTimeRange other)
         {
-            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(other.Zone.Equals(Start.Zone));
             return _start.ToInstant() < other._end.ToInstant() && _end.ToInstant() > other._start.ToInstant();
         }
 
         public readonly bool OverlapsOrContiguous(ZonedDateTimeRange other)
         {
-            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(other.Zone.Equals(Start.Zone));
             return Overlaps(other) || IsContiguous(other);
         }
 
         public readonly bool IsContiguous(ZonedDateTimeRange other)
         {
-            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(other.Zone.Equals(Start.Zone));
             return _start == other._end || _end == other._start;
         }
         public readonly ZonedDateTimeRange MergeOverlapsOrContiguous(ZonedDateTimeRange other)
         {
-            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
-            if (!(OverlapsOrContiguous(other))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(other.Zone.Equals(Start.Zone));
+            InvalidOperationException.ThrowUnless(OverlapsOrContiguous(other));
             return new ZonedDateTimeRange(
                   _start.ToInstant() < other._start.ToInstant() ? _start : other._start
                 , _end.ToInstant() > other._end.ToInstant() ? _end : other._end
@@ -77,7 +78,7 @@ namespace Ark.Tools.Nodatime
 
         public readonly ZonedDateTimeRange Merge(ZonedDateTimeRange other)
         {
-            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(other.Zone.Equals(Start.Zone));
             return new ZonedDateTimeRange(
                 _start.ToInstant() < other._start.ToInstant() ? _start : other._start,
                 _end.ToInstant() > other._end.ToInstant() ? _end : other._end
@@ -86,7 +87,7 @@ namespace Ark.Tools.Nodatime
 
         public readonly IEnumerable<ZonedDateTimeRange> Subtract(ZonedDateTimeRange other)
         {
-            if (!(other.Zone.Equals(Start.Zone))) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(other.Zone.Equals(Start.Zone));
 
             //      |------------|
             //  |--------------------|
@@ -134,8 +135,8 @@ namespace Ark.Tools.Nodatime
 
         public readonly LocalDateRange ToLocalDateRangeStrict()
         {
-            if (!(Start.TimeOfDay == LocalTime.Midnight)) { throw new InvalidOperationException("Condition failed: Start.TimeOfDay == LocalTime.Midnight"); }
-            if (!(End.TimeOfDay == LocalTime.Midnight)) { throw new InvalidOperationException("Condition failed: End.TimeOfDay == LocalTime.Midnight"); }
+            InvalidOperationException.ThrowUnless(Start.TimeOfDay == LocalTime.Midnight);
+            InvalidOperationException.ThrowUnless(End.TimeOfDay == LocalTime.Midnight);
 
             return new LocalDateRange(_start.Date, _end.Date);
         }

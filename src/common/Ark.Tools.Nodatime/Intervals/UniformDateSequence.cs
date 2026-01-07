@@ -7,6 +7,7 @@ using Ark.Tools.Nodatime.Intervals;
 using NodaTime;
 
 using System.Collections.Generic;
+using Ark.Tools.Core;
 
 namespace Ark.Tools.Nodatime.TimeSeries
 {
@@ -18,9 +19,9 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformDateSequence(LocalDate start, LocalDate end, DatePeriod period, bool exact = true)
         {
-            if (!(start < end)) { throw new InvalidOperationException("Condition failed: start < end"); }
-            if (!(exact == true ? Intervals.DateInterval.StartOfInterval(start, period) == start : true)) { throw new InvalidOperationException("Condition failed"); }
-            if (!(exact == true ? Intervals.DateInterval.StartOfInterval(end, period) == end : true)) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(start < end);
+            InvalidOperationException.ThrowUnless(exact == true ? Intervals.DateInterval.StartOfInterval(start, period) == start : true);
+            InvalidOperationException.ThrowUnless(exact == true ? Intervals.DateInterval.StartOfInterval(end, period) == end : true);
 
             var startOfEnd = Intervals.DateInterval.StartOfInterval(end, period);
             if (exact == false && startOfEnd < end)
@@ -34,8 +35,8 @@ namespace Ark.Tools.Nodatime.TimeSeries
 
         public UniformDateSequence(LocalDateRange range, DatePeriod period, bool exact = true)
         {
-            if (!(exact == true ? Intervals.DateInterval.StartOfInterval(range.Start, period) == range.Start : true)) { throw new InvalidOperationException("Condition failed"); }
-            if (!(exact == true ? Intervals.DateInterval.StartOfInterval(range.End, period) == range.End : true)) { throw new InvalidOperationException("Condition failed"); }
+            InvalidOperationException.ThrowUnless(exact == true ? Intervals.DateInterval.StartOfInterval(range.Start, period) == range.Start : true);
+            InvalidOperationException.ThrowUnless(exact == true ? Intervals.DateInterval.StartOfInterval(range.End, period) == range.End : true);
 
             var startOfEnd = Intervals.DateInterval.StartOfInterval(range.End, period);
             if (exact == false && startOfEnd < range.End)

@@ -8,6 +8,7 @@ using Rebus.Sagas;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Ark.Tools.Core;
 
 namespace Ark.Tools.Activity.Processor
 {
@@ -39,7 +40,7 @@ namespace Ark.Tools.Activity.Processor
                 Data.MissingSlices = _activity.Dependencies.SelectMany(d => d.GetResourceSlices(Data.ActivitySlice).Select(x => new SliceReady() { ActivitySlice = Data.ActivitySlice, Resource = d.Resource, ResourceSlice = x })).ToList();
             }
 
-            if (!(Data.ActivitySlice == message.ActivitySlice)) { throw new InvalidOperationException("Condition failed: Data.ActivitySlice == message.ActivitySlice"); }
+            InvalidOperationException.ThrowUnless(Data.ActivitySlice == message.ActivitySlice);
 
             Data.MissingSlices.Remove(message);
 
