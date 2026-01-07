@@ -38,7 +38,6 @@
 	  <PackageVersion Include="System.Reactive" Version="6.1.0" />
 	  <PackageVersion Include="SSH.NET" Version="2025.1.0" />
 	  <PackageVersion Include="SimpleInjector" Version="5.5.0" />
-	  <PackageVersion Include="Nito.AsyncEx.Coordination" Version="5.1.2" />
 
 	  <PackageVersion Include="ArxOne.Ftp" Version="1.41.4" />
 	  <PackageVersion Include="FluentFTP" Version="53.0.2" />
