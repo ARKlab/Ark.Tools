@@ -1,6 +1,6 @@
 ﻿using Ark.Tools.Solid;
+using System;
 
-using EnsureThat;
 
 using NLog;
 
@@ -26,7 +26,7 @@ namespace WebApplicationDemo.Api.Queries
 
         public async Task<Entity.V1.Output?> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(query, nameof(query));
+            ArgumentNullException.ThrowIfNull(query);
 
             if (query.EntityId == "null")
                 return null;

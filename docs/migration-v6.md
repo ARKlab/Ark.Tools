@@ -1,5 +1,6 @@
 # Migration to Ark.Tools v6
 
+* [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
 * [Migrate SQL Projects to SDK-based](#migrate-sql-projects-to-sdk-based)
 * [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbukle-10.x)
 * [Replace FluentAssertions with AwesomeAssertions](#replace-fluntasserion-with-awesomeassertion)
@@ -8,7 +9,118 @@
 * [Migrate tests to MTPv2](#migrate-tests-to-mtpv2)
 * [Migrate SLN to SLNX](#migrate-sln-to-slnx)
 * [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
-* [Adopt Central Package Management](#adopt-central-package-management)
+* [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
+
+## Remove Ensure.That Dependency
+
+The `Ensure.That` library has been removed from Ark.Tools as it is outdated and no longer maintained. Ark.Tools v6 uses built-in .NET guard clauses and standard exception throwing patterns instead.
+
+### Migration Guide
+
+Replace `Ensure.That` usage with built-in .NET guards:
+
+**ArgumentNullException.ThrowIfNull:**
+```csharp
+// Before (Ensure.That v5)
+EnsureArg.IsNotNull(parameter);
+EnsureArg.IsNotNull(parameter, nameof(parameter));
+Ensure.Any.IsNotNull(parameter);
+
+// After (Ark.Tools v6)
+ArgumentNullException.ThrowIfNull(parameter);
+```
+
+**ArgumentException.ThrowIfNullOrWhiteSpace:**
+```csharp
+// Before
+EnsureArg.IsNotNullOrWhiteSpace(str);
+
+// After
+ArgumentException.ThrowIfNullOrWhiteSpace(str);
+```
+
+**ArgumentOutOfRangeException guards:**
+```csharp
+// Before
+Ensure.Comparable.IsLt(start, end, nameof(start));
+
+// After
+ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, end, nameof(start));
+```
+
+**InvalidOperationException for business rules:**
+```csharp
+// Before
+Ensure.Bool.IsTrue(condition);
+
+// After - Using C# 14 extension members (requires using Ark.Tools.Core;)
+InvalidOperationException.ThrowUnless(condition);
+// The condition expression is automatically captured and included in the error message
+
+// Example with custom message
+InvalidOperationException.ThrowUnless(user.IsActive, "User must be active");
+// Throws: "User must be active (condition: user.IsActive)"
+```
+
+**String length validation:**
+```csharp
+// Before
+Ensure.String.HasLengthBetween(str, 1, 128);
+
+// After
+ArgumentException.ThrowIfNullOrWhiteSpace(str);
+ArgumentOutOfRangeException.ThrowIfGreaterThan(str.Length, 128, nameof(str));
+```
+
+### Benefits
+
+- **No external dependencies**: Uses built-in .NET framework features
+- **Better performance**: Native .NET guards are optimized by the runtime
+- **Modern C# features**: Leverages `CallerArgumentExpression` for better error messages
+- **C# 14 extension members**: `InvalidOperationException.ThrowIf/ThrowUnless` and `ArgumentException.ThrowIf/ThrowUnless` provide clean syntax
+- **Automatic condition capture**: Error messages automatically include the failing condition expression
+- **Improved maintainability**: Standard patterns recognized by all .NET developers
+- **Future-proof**: Built-in guards are updated with the framework
+
+### New Extension Members
+
+Ark.Tools v6 introduces extension members using C# 14 for `InvalidOperationException` and `ArgumentException`:
+
+**InvalidOperationException.ThrowIf/ThrowUnless:**
+```csharp
+// ThrowUnless - throws if condition is FALSE
+InvalidOperationException.ThrowUnless(user.IsValid);
+// Error message: "Condition failed: user.IsValid"
+
+// ThrowIf - throws if condition is TRUE  
+InvalidOperationException.ThrowIf(cache.IsStale);
+// Error message: "Condition failed: cache.IsStale"
+
+// With custom message - condition is always appended
+InvalidOperationException.ThrowUnless(
+    order.Status == OrderStatus.Pending,
+    "Order must be in pending status");
+// Error message: "Order must be in pending status (condition: order.Status == OrderStatus.Pending)"
+```
+
+**ArgumentException.ThrowIf/ThrowUnless:**
+```csharp
+// ThrowIf - throws if condition is TRUE
+ArgumentException.ThrowIf(
+    string.Equals(value, "invalid", StringComparison.Ordinal),
+    "Value cannot be 'invalid'",
+    nameof(value));
+// Error message: "Value cannot be 'invalid' (condition: string.Equals(value, "invalid", StringComparison.Ordinal))"
+
+// ThrowUnless - throws if condition is FALSE
+ArgumentException.ThrowUnless(
+    value.Length <= 100,
+    "Value exceeds maximum length",
+    nameof(value));
+// Error message: "Value exceeds maximum length (condition: value.Length <= 100)"
+```
+
+These extension members use `CallerArgumentExpression` to automatically capture the condition expression, providing meaningful error messages without manual string formatting.
 
 ## Migrate SQL Projects to SDK-based
 

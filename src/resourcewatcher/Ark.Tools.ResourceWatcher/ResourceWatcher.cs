@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
 
-using EnsureThat;
 
 using Nito.AsyncEx;
 
@@ -33,8 +32,8 @@ namespace Ark.Tools.ResourceWatcher
 
         protected ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
         {
-            EnsureArg.IsNotNull(config);
-            EnsureArg.IsNotNull(stateProvider);
+            ArgumentNullException.ThrowIfNull(config);
+            ArgumentNullException.ThrowIfNull(stateProvider);
 
             _config = config;
             _stateProvider = stateProvider;
@@ -56,8 +55,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             lock (_lock)
             {
-                if (_isStarted == true)
-                    throw new InvalidOperationException("Watcher is already started");
+                InvalidOperationException.ThrowIf(_isStarted == true, "Watcher is already started");
                 _onBeforeStart();
                 _isStarted = true;
             }
@@ -84,8 +82,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             lock (_lock)
             {
-                if (_isStarted)
-                    throw new InvalidOperationException("Invalid use of RunOnce: the watcher has been started and is working in background or another RunOnce is running.");
+                InvalidOperationException.ThrowIf(_isStarted, "Invalid use of RunOnce: the watcher has been started and is working in background or another RunOnce is running.");
                 _onBeforeStart();
                 _isStarted = true;
             }

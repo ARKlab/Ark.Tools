@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
 
-using EnsureThat;
-
 using NodaTime;
 
 using System;
@@ -21,7 +19,7 @@ namespace Ark.Tools.Nodatime
 
         public LocalDateRange(LocalDate start, LocalDate end)
         {
-            Ensure.Comparable.IsLt(start, end, nameof(start));
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, end, nameof(start));
 
             _start = start;
             _end = end;
@@ -81,7 +79,7 @@ namespace Ark.Tools.Nodatime
 
         public readonly LocalDateRange MergeOverlapsOrContiguous(LocalDateRange other)
         {
-            Ensure.Bool.IsTrue(OverlapsOrContiguous(other));
+            InvalidOperationException.ThrowUnless(OverlapsOrContiguous(other), "Ranges must overlap or be contiguous to merge.");
             return new LocalDateRange(_start.MinWith(other._start), _end.MaxWith(other._end));
         }
 

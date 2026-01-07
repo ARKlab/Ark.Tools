@@ -1,6 +1,6 @@
 ﻿using Ark.Tools.Solid;
+using System;
 
-using EnsureThat;
 
 using ProblemDetailsSample.Api.Requests;
 using ProblemDetailsSample.Common.Dto;
@@ -19,7 +19,7 @@ namespace ProblemDetailsSample.Api.Queries
 
         public async Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequest.V1 request, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(request, nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             var entity = new Entity.V1.Output()
             {

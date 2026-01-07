@@ -1,10 +1,11 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
+using System;
 
 using NodaTime;
 
 using System.Collections.Generic;
+using Ark.Tools.Core;
 
 namespace Ark.Tools.Nodatime
 {
@@ -13,14 +14,14 @@ namespace Ark.Tools.Nodatime
         #region HourlyLocal
         public static IEnumerable<LocalDateTime> HourlyLocal(LocalDate start, LocalDate end)
         {
-            Ensure.Bool.IsTrue(start < end);
+            InvalidOperationException.ThrowUnless(start < end);
 
             return HourlyLocal(new LocalDateRange(start, end));
         }
 
         public static IEnumerable<LocalDateTime> HourlyLocal(LocalDateTime start, LocalDateTime end)
         {
-            Ensure.Bool.IsTrue(start < end);
+            InvalidOperationException.ThrowUnless(start < end);
 
             return HourlyLocal(new LocalDateTimeRange(start, end));
         }
@@ -46,14 +47,14 @@ namespace Ark.Tools.Nodatime
 
         public static IEnumerable<Instant> HourlyUtc(LocalDate start, LocalDate end, string timezone)
         {
-            Ensure.Bool.IsTrue(start <= end);
+            InvalidOperationException.ThrowUnless(start <= end);
 
             return HourlyUtc((new LocalDateRange(start, end)).InZone(timezone));
         }
 
         public static IEnumerable<Instant> HourlyUtc(LocalDateTime start, LocalDateTime end, string timezone)
         {
-            Ensure.Bool.IsTrue(start <= end);
+            InvalidOperationException.ThrowUnless(start <= end);
 
             return HourlyUtc((new LocalDateTimeRange(start, end)).InZone(timezone));
         }
@@ -102,7 +103,7 @@ namespace Ark.Tools.Nodatime
 
         public static IEnumerable<ZonedDateTime> FromDuration(ZonedDateTime start, ZonedDateTime end, Duration duration)
         {
-            Ensure.Bool.IsTrue(start.ToInstant() < end.ToInstant());
+            InvalidOperationException.ThrowUnless(start.ToInstant() < end.ToInstant());
 
             var range = new ZonedDateTimeRange(start, end);
             return FromDuration(range, duration);
@@ -123,7 +124,7 @@ namespace Ark.Tools.Nodatime
 
         public static IEnumerable<LocalDate> FromPeriod(LocalDate start, LocalDate end, Period period)
         {
-            Ensure.Bool.IsTrue(start < end);
+            InvalidOperationException.ThrowUnless(start < end);
 
             var range = new LocalDateRange(start, end);
             return FromPeriod(range, period);
@@ -133,7 +134,7 @@ namespace Ark.Tools.Nodatime
         #region Daily
         public static IEnumerable<LocalDate> Daily(LocalDate start, LocalDate end)
         {
-            Ensure.Bool.IsTrue(start < end);
+            InvalidOperationException.ThrowUnless(start < end);
 
             return Daily(new LocalDateRange(start, end));
         }
@@ -154,8 +155,8 @@ namespace Ark.Tools.Nodatime
         #region Weekly
         public static IEnumerable<LocalDate> Weekly(LocalDate start, LocalDate end)
         {
-            Ensure.Bool.IsTrue(start < end);
-            Ensure.Bool.IsTrue(start.DayOfWeek == end.DayOfWeek);
+            InvalidOperationException.ThrowUnless(start < end);
+            InvalidOperationException.ThrowUnless(start.DayOfWeek == end.DayOfWeek);
 
 
             return Weekly(new LocalDateRange(start, end));
@@ -163,7 +164,7 @@ namespace Ark.Tools.Nodatime
 
         public static IEnumerable<LocalDate> Weekly(LocalDateRange range)
         {
-            Ensure.Bool.IsTrue(range.Start.DayOfWeek == range.End.DayOfWeek);
+            InvalidOperationException.ThrowUnless(range.Start.DayOfWeek == range.End.DayOfWeek);
 
             LocalDate c = range.Start;
             LocalDate e = range.End;
@@ -179,9 +180,9 @@ namespace Ark.Tools.Nodatime
         #region Monthly
         public static IEnumerable<LocalDate> Monthly(LocalDate start, LocalDate end)
         {
-            Ensure.Bool.IsTrue(start < end);
-            Ensure.Bool.IsTrue(start.Day == 1);
-            Ensure.Bool.IsTrue(end.Day == 1);
+            InvalidOperationException.ThrowUnless(start < end);
+            InvalidOperationException.ThrowUnless(start.Day == 1);
+            InvalidOperationException.ThrowUnless(end.Day == 1);
 
             // we generate a next till we reach end (included)
             return Monthly(new LocalDateRange(start, end));
@@ -189,8 +190,8 @@ namespace Ark.Tools.Nodatime
 
         public static IEnumerable<LocalDate> Monthly(LocalDateRange range)
         {
-            Ensure.Bool.IsTrue(range.Start.Day == 1);
-            Ensure.Bool.IsTrue(range.End.Day == 1);
+            InvalidOperationException.ThrowUnless(range.Start.Day == 1);
+            InvalidOperationException.ThrowUnless(range.End.Day == 1);
 
             LocalDate c = range.Start;
             LocalDate e = range.End;
@@ -206,21 +207,21 @@ namespace Ark.Tools.Nodatime
         #region Bimestral
         public static IEnumerable<LocalDate> Bimestraly(LocalDate start, LocalDate end)
         {
-            Ensure.Bool.IsTrue(start < end);
-            Ensure.Bool.IsTrue(start.Day == 1);
-            Ensure.Bool.IsTrue(end.Day == 1);
-            Ensure.Bool.IsTrue(((start.Month - 1) % 2) == 0);
-            Ensure.Bool.IsTrue(((end.Month - 1) % 2) == 0);
+            InvalidOperationException.ThrowUnless(start < end);
+            InvalidOperationException.ThrowUnless(start.Day == 1);
+            InvalidOperationException.ThrowUnless(end.Day == 1);
+            InvalidOperationException.ThrowUnless(((start.Month - 1) % 2) == 0);
+            InvalidOperationException.ThrowUnless(((end.Month - 1) % 2) == 0);
 
             return Bimestraly(new LocalDateRange(start, end));
         }
 
         public static IEnumerable<LocalDate> Bimestraly(LocalDateRange range)
         {
-            Ensure.Bool.IsTrue(range.Start.Day == 1);
-            Ensure.Bool.IsTrue(range.End.Day == 1);
-            Ensure.Bool.IsTrue(((range.Start.Month - 1) % 2) == 0);
-            Ensure.Bool.IsTrue(((range.End.Month - 1) % 2) == 0);
+            InvalidOperationException.ThrowUnless(range.Start.Day == 1);
+            InvalidOperationException.ThrowUnless(range.End.Day == 1);
+            InvalidOperationException.ThrowUnless(((range.Start.Month - 1) % 2) == 0);
+            InvalidOperationException.ThrowUnless(((range.End.Month - 1) % 2) == 0);
 
             LocalDate c = range.Start;
             LocalDate e = range.End;
@@ -235,21 +236,21 @@ namespace Ark.Tools.Nodatime
         #region Trimestral
         public static IEnumerable<LocalDate> Trimestraly(LocalDate start, LocalDate end)
         {
-            Ensure.Bool.IsTrue(start < end);
-            Ensure.Bool.IsTrue(start.Day == 1);
-            Ensure.Bool.IsTrue(end.Day == 1);
-            Ensure.Bool.IsTrue(((start.Month - 1) % 3) == 0);
-            Ensure.Bool.IsTrue(((end.Month - 1) % 3) == 0);
+            InvalidOperationException.ThrowUnless(start < end);
+            InvalidOperationException.ThrowUnless(start.Day == 1);
+            InvalidOperationException.ThrowUnless(end.Day == 1);
+            InvalidOperationException.ThrowUnless(((start.Month - 1) % 3) == 0);
+            InvalidOperationException.ThrowUnless(((end.Month - 1) % 3) == 0);
 
             return Trimestraly(new LocalDateRange(start, end));
         }
 
         public static IEnumerable<LocalDate> Trimestraly(LocalDateRange range)
         {
-            Ensure.Bool.IsTrue(range.Start.Day == 1);
-            Ensure.Bool.IsTrue(range.End.Day == 1);
-            Ensure.Bool.IsTrue(((range.Start.Month - 1) % 3) == 0);
-            Ensure.Bool.IsTrue(((range.End.Month - 1) % 3) == 0);
+            InvalidOperationException.ThrowUnless(range.Start.Day == 1);
+            InvalidOperationException.ThrowUnless(range.End.Day == 1);
+            InvalidOperationException.ThrowUnless(((range.Start.Month - 1) % 3) == 0);
+            InvalidOperationException.ThrowUnless(((range.End.Month - 1) % 3) == 0);
 
             LocalDate c = range.Start;
             LocalDate e = range.End;
@@ -264,21 +265,21 @@ namespace Ark.Tools.Nodatime
         #region Yearly
         public static IEnumerable<LocalDate> Yearly(LocalDate start, LocalDate end)
         {
-            Ensure.Bool.IsTrue(start < end);
-            Ensure.Bool.IsTrue(start.Day == 1);
-            Ensure.Bool.IsTrue(end.Day == 1);
-            Ensure.Bool.IsTrue(start.Month == 1);
-            Ensure.Bool.IsTrue(end.Month == 1);
+            InvalidOperationException.ThrowUnless(start < end);
+            InvalidOperationException.ThrowUnless(start.Day == 1);
+            InvalidOperationException.ThrowUnless(end.Day == 1);
+            InvalidOperationException.ThrowUnless(start.Month == 1);
+            InvalidOperationException.ThrowUnless(end.Month == 1);
 
             return Yearly(new LocalDateRange(start, end));
         }
 
         public static IEnumerable<LocalDate> Yearly(LocalDateRange range)
         {
-            Ensure.Bool.IsTrue(range.Start.Day == 1);
-            Ensure.Bool.IsTrue(range.End.Day == 1);
-            Ensure.Bool.IsTrue(range.Start.Month == 1);
-            Ensure.Bool.IsTrue(range.End.Month == 1);
+            InvalidOperationException.ThrowUnless(range.Start.Day == 1);
+            InvalidOperationException.ThrowUnless(range.End.Day == 1);
+            InvalidOperationException.ThrowUnless(range.Start.Month == 1);
+            InvalidOperationException.ThrowUnless(range.End.Month == 1);
 
             LocalDate c = range.Start;
             LocalDate e = range.End;

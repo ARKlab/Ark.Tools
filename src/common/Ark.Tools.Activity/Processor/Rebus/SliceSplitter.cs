@@ -1,6 +1,6 @@
-﻿using EnsureThat;
 
 using NLog;
+using System;
 
 using Rebus.Bus;
 using Rebus.Handlers;
@@ -24,8 +24,8 @@ namespace Ark.Tools.Activity.Processor
 
         public SliceSplitter(ISliceActivity activity, IBus bus)
         {
-            EnsureArg.IsNotNull(activity);
-            EnsureArg.IsNotNull(bus);
+            ArgumentNullException.ThrowIfNull(activity);
+            ArgumentNullException.ThrowIfNull(bus);
 
             _activity = activity;
             _bus = bus;

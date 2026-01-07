@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Nodatime.Json;
 
-using EnsureThat;
 
 using Newtonsoft.Json;
 
@@ -12,6 +11,7 @@ using System;
 using System.Collections.Generic;
 
 using System.Linq;
+using Ark.Tools.Core;
 
 namespace Ark.Tools.Nodatime
 {
@@ -20,7 +20,7 @@ namespace Ark.Tools.Nodatime
 
         public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
         {
-            EnsureArg.IsNotNull(settings);
+            ArgumentNullException.ThrowIfNull(settings);
 
 
             if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
@@ -35,7 +35,7 @@ namespace Ark.Tools.Nodatime
 
         public static JsonSerializer ConfigureForNodaTimeRanges(this JsonSerializer serializer)
         {
-            EnsureArg.IsNotNull(serializer);
+            ArgumentNullException.ThrowIfNull(serializer);
 
 
             if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
@@ -50,7 +50,7 @@ namespace Ark.Tools.Nodatime
 
         private static void _addDefaultConverters(IList<JsonConverter> converters)
         {
-            EnsureArg.IsNotNull(converters);
+            ArgumentNullException.ThrowIfNull(converters);
 
             converters.Add(new LocalDateRangeConverter());
             converters.Add(new LocalDateTimeRangeConverter());

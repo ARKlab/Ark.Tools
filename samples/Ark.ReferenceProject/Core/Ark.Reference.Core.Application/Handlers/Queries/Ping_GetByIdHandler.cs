@@ -1,9 +1,9 @@
 ﻿using Ark.Reference.Core.API.Queries;
+using System;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Solid;
 
-using EnsureThat;
 
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +23,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
         /// <param name="coreDataContext">The data context factory</param>
         public Ping_GetIdHandler(ICoreDataContextFactory coreDataContext)
         {
-            EnsureArg.IsNotNull(coreDataContext, nameof(coreDataContext));
+            ArgumentNullException.ThrowIfNull(coreDataContext);
 
             _coreDataContext = coreDataContext;
         }
@@ -37,7 +37,7 @@ namespace Ark.Reference.Core.Application.Handlers.Queries
         /// <inheritdoc/>
         public async Task<Ping.V1.Output?> ExecuteAsync(Ping_GetByIdQuery.V1 query, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(query, nameof(query));
+            ArgumentNullException.ThrowIfNull(query);
 
             await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
 

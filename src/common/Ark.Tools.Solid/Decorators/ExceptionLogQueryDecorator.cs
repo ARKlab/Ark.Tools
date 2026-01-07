@@ -1,6 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
 
 using NLog;
 
@@ -17,7 +16,7 @@ namespace Ark.Tools.Solid.Decorators
 
         public ExceptionLogQueryDecorator(IQueryHandler<TQuery, TResult> decorated)
         {
-            Ensure.Any.IsNotNull(decorated, nameof(decorated));
+            ArgumentNullException.ThrowIfNull(decorated);
 
             _decorated = decorated;
             _logger = LogManager.GetLogger(_decorated.GetType().ToString());

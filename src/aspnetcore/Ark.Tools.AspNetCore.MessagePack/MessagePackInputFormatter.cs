@@ -1,6 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
 
 using MessagePack;
 
@@ -41,7 +40,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter
 
         public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)
         {
-            EnsureArg.IsNotNull(context);
+            ArgumentNullException.ThrowIfNull(context);
 
             var request = context.HttpContext.Request;
             var ctk = context.HttpContext.RequestAborted;

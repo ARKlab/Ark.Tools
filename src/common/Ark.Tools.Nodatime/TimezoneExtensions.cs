@@ -1,7 +1,5 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using EnsureThat;
-
 using NodaTime;
 
 using System;
@@ -18,7 +16,7 @@ namespace Ark.Tools.Nodatime
         }
         public static int NumberOfHoursInDay(this LocalDate date, DateTimeZone timezone)
         {
-            EnsureArg.IsNotNull(timezone);
+            ArgumentNullException.ThrowIfNull(timezone);
             return (int)(date.PlusDays(1).AtMidnight().InZoneStrictly(timezone).ToInstant() - date.AtMidnight().InZoneStrictly(timezone).ToInstant()).ToTimeSpan().TotalHours;
         }
 
@@ -30,7 +28,7 @@ namespace Ark.Tools.Nodatime
 
         public static ZonedDateTime FromInstantToTimezone(this Instant instant, DateTimeZone timezone)
         {
-            EnsureArg.IsNotNull(timezone);
+            ArgumentNullException.ThrowIfNull(timezone);
 
             return instant.InZone(timezone);
         }
@@ -55,7 +53,7 @@ namespace Ark.Tools.Nodatime
 
         public static IEnumerable<ZonedDateTime> InZoneAllOrNone(this LocalDateTime dateTime, DateTimeZone timezone)
         {
-            EnsureArg.IsNotNull(timezone);
+            ArgumentNullException.ThrowIfNull(timezone);
 
             var map = timezone.MapLocal(dateTime);
             var res = new ZonedDateTime[map.Count];
@@ -80,7 +78,7 @@ namespace Ark.Tools.Nodatime
 
         public static ZonedDateTime FromUtcToTimezone(this LocalDateTime localUtc, DateTimeZone timezone)
         {
-            EnsureArg.IsNotNull(timezone);
+            ArgumentNullException.ThrowIfNull(timezone);
             return localUtc.InUtc().WithZone(timezone);
         }
 
@@ -92,7 +90,7 @@ namespace Ark.Tools.Nodatime
 
         public static DateTime FromUtcToTimezone(this DateTime dateTime, DateTimeZone timezone)
         {
-            EnsureArg.IsNotNull(timezone);
+            ArgumentNullException.ThrowIfNull(timezone);
 
             if (dateTime.Kind != DateTimeKind.Utc)
                 dateTime = new DateTime(dateTime.Ticks, DateTimeKind.Utc);
@@ -110,7 +108,7 @@ namespace Ark.Tools.Nodatime
 
         public static DateTime FromTimezoneToUtc(this DateTime dateTime, DateTimeZone timezone)
         {
-            EnsureArg.IsNotNull(timezone);
+            ArgumentNullException.ThrowIfNull(timezone);
 
             LocalDateTime localDateTime = LocalDateTime.FromDateTime(dateTime);
 

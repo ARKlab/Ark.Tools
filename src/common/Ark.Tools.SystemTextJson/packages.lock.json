@@ -55,7 +55,6 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "Ensure.That": "[10.1.0, )",
           "NodaTime": "[3.3.0, )",
           "System.Reactive": "[6.1.0, )"
         }
@@ -72,12 +71,6 @@
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.3.0, )"
         }
-      },
-      "Ensure.That": {
-        "type": "CentralTransitive",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "rzTMSs0lQnu0WsesvTjs/zDzqiZXb9r5dv+wFQcPg/iIZqXb5BzwpIWEwi8Q3HA0TS4ytRcY129aSek6IzuOmA=="
       },
       "NodaTime": {
         "type": "CentralTransitive",
@@ -168,7 +161,6 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "Ensure.That": "[10.1.0, )",
           "NodaTime": "[3.3.0, )",
           "System.Linq.Async": "[7.0.0, )",
           "System.Reactive": "[6.1.0, )"
@@ -186,12 +178,6 @@
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.3.0, )"
         }
-      },
-      "Ensure.That": {
-        "type": "CentralTransitive",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "rzTMSs0lQnu0WsesvTjs/zDzqiZXb9r5dv+wFQcPg/iIZqXb5BzwpIWEwi8Q3HA0TS4ytRcY129aSek6IzuOmA=="
       },
       "NodaTime": {
         "type": "CentralTransitive",

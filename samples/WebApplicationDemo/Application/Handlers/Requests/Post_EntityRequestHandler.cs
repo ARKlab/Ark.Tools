@@ -1,6 +1,6 @@
 ﻿using Ark.Tools.Solid;
+using System;
 
-using EnsureThat;
 
 using NodaTime;
 
@@ -21,7 +21,7 @@ namespace WebApplicationDemo.Application.Handlers.Requests
 
         public async Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequest.V1 request, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(request, nameof(request));
+            ArgumentNullException.ThrowIfNull(request);
 
             var entity = new Entity.V1.Output(request)
             {

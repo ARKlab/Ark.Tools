@@ -1,6 +1,7 @@
-﻿using Ark.Tools.Solid;
+﻿using Ark.Tools.Core;
+using Ark.Tools.Solid;
+using System;
 
-using EnsureThat;
 
 using ProblemDetailsSample.Common.Dto;
 
@@ -18,8 +19,8 @@ namespace ProblemDetailsSample.Api.Queries
 
         public async Task<Entity.V1.Output?> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)
         {
-            EnsureArg.IsNotNull(query, nameof(query));
-            EnsureArg.IsNot(query.EntityId, "ensure", System.StringComparison.Ordinal);
+            ArgumentNullException.ThrowIfNull(query);
+            ArgumentException.ThrowIf(string.Equals(query.EntityId, "ensure", StringComparison.Ordinal), "EntityId cannot be 'ensure'", nameof(query));
 
             if (query.EntityId == "null") return null;
 
