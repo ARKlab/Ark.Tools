@@ -62,18 +62,7 @@ Open `Directory.Packages.props` and change all Ark.Tools package versions from `
 
 Check [NuGet.org](https://www.nuget.org/packages?q=Ark.Tools) for the latest stable version of Ark.Tools packages.
 
-### Step 3: Remove or Update NuGet.config
-
-The `NuGet.config` file references a local package source (`../../packages`) used during development in the Ark.Tools repository. After ejection, this path won't exist:
-
-**Option A**: Delete the file to use default NuGet sources:
-```bash
-rm NuGet.config
-```
-
-**Option B**: Edit it to remove the LocalPackages source while keeping any custom sources you need.
-
-### Step 4: Update Directory.Build.targets
+### Step 3: Update Directory.Build.targets
 
 In `Directory.Build.targets`, remove the import statement that references the parent directory:
 
@@ -82,7 +71,7 @@ In `Directory.Build.targets`, remove the import statement that references the pa
 <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
 ```
 
-### Step 5: Customize for Your Project
+### Step 4: Customize for Your Project
 
 - Rename projects/namespaces from `Ark.Reference` to your project name
 - Update assembly names and root namespaces
@@ -90,7 +79,7 @@ In `Directory.Build.targets`, remove the import statement that references the pa
 - Update API controllers and endpoints
 - Customize database schema
 
-### Step 6: Initialize Your Repository
+### Step 5: Initialize Your Repository
 
 ```bash
 git init
@@ -98,7 +87,7 @@ git add .
 git commit -m "feat: initial commit from Ark.ReferenceProject template"
 ```
 
-### Step 7: Build and Test
+### Step 6: Build and Test
 
 ```bash
 dotnet restore

@@ -34,31 +34,23 @@ This sample is designed to be used as a template for new resource watcher projec
    <!-- After -->
    <PackageVersion Include="Ark.Tools.ResourceWatcher.WorkerHost.Hosting" Version="6.0.0" />
    ```
-
-3. **Remove the NuGet.config** or update it:
-   - The `NuGet.config` file references a local package source (`../../packages`) that won't exist in your new repository
-   - Either delete the file to use the global NuGet sources, or update it to remove the local source:
-   ```bash
-   rm NuGet.config
-   # or edit it to remove the LocalPackages source
-   ```
-
-4. **Remove the import from Directory.Build.targets**:
+   
+3. **Remove the import from Directory.Build.targets**:
    - In `Directory.Build.targets`, remove the import statement that references the parent directory
 
-5. **Customize for your use case**:
+4. **Customize for your use case**:
    - Update the worker logic in `Ark.ResourceWatcher.Sample` to match your resource monitoring needs
    - Modify the CSV processing or add new resource types (HTTP, FTP, SQL, etc.)
    - Update tests in `Ark.ResourceWatcher.Sample.Tests` to match your scenarios
 
-6. **Initialize git and commit**:
+5. **Initialize git and commit**:
    ```bash
    git init
    git add .
    git commit -m "Initial commit from Ark.ResourceWatcher template"
    ```
 
-7. **Restore and build**:
+6. **Restore and build**:
    ```bash
    dotnet restore
    dotnet build
