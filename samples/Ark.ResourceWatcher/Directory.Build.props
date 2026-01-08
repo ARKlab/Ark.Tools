@@ -88,5 +88,9 @@
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
 		<!-- Note: .globalconfig is automatically discovered and has higher precedence -->
 	</ItemGroup>
+
+	<ItemGroup Label="Banned API Analyzer">
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+	</ItemGroup>
 	
 </Project>

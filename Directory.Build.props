@@ -71,6 +71,10 @@
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
 	</ItemGroup>
 
+	<ItemGroup Label="Banned API Analyzer" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+	</ItemGroup>
+
 	<PropertyGroup Label="NuGet Audit">
 		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
 		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
