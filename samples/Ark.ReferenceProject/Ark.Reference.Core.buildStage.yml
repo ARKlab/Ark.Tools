@@ -70,6 +70,7 @@ stages:
         inputs:
           command: 'restore'
           projects: ${{ variables.solutionPath }}
+          arguments: '--configuration $(BuildConfiguration)'
 
       - task: DotNetCoreCLI@2
         displayName: 'Build solution'

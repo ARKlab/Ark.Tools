@@ -236,26 +236,6 @@ namespace Ark.Reference.Core.Tests.Init
         [AfterTestRun]
         public static void AfterTests()
         {
-            // Flush Application Insights telemetry before disposing to avoid exceptions during cleanup
-            // See: https://github.com/microsoft/ApplicationInsights-dotnet/issues/2322
-            if (_server != null)
-            {
-                try
-                {
-                    var telemetryClient = _server.Services.GetService(typeof(Microsoft.ApplicationInsights.TelemetryClient)) as Microsoft.ApplicationInsights.TelemetryClient;
-                    if (telemetryClient != null)
-                    {
-                        telemetryClient.FlushAsync(System.Threading.CancellationToken.None).GetAwaiter().GetResult();
-                        // Give Application Insights enough time to finish sending telemetry to avoid race conditions
-                        System.Threading.Tasks.Task.Delay(10000).GetAwaiter().GetResult();
-                    }
-                }
-                catch
-                {
-                    // Ignore flush errors - this is a known issue with Application Insights shutdown
-                }
-            }
-
             _server?.Dispose();
         }
 

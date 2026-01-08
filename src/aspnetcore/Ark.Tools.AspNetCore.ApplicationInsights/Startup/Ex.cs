@@ -47,6 +47,11 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
 
             // Check if we have a valid connection string or instrumentation key
             var hasValidConnectionString = !string.IsNullOrWhiteSpace(connectionString) || !string.IsNullOrWhiteSpace(instrumentationKey);
+            
+            // Check if we're in a test/development environment
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var isTestOrDevelopment = string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(environment, "IntegrationTests", StringComparison.OrdinalIgnoreCase);
 
             services.AddApplicationInsightsTelemetry(o =>
             {
@@ -57,19 +62,28 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
                 else
                 {
                     // When no connection string is provided (e.g., in tests or local development),
-                    // use a dummy connection string and enable DeveloperMode to prevent SDK errors
+                    // use a dummy connection string
                     o.ConnectionString = "InstrumentationKey=00000000-0000-0000-0000-000000000000";
-                    o.DeveloperMode = true;
                 }
 
                 o.EnableAdaptiveSampling = false; // enabled below by EnableAdaptiveSamplingWithCustomSettings
-                o.EnableHeartbeat = true;
+                o.EnableHeartbeat = !isTestOrDevelopment; // Disable heartbeat in tests to prevent background tasks
                 o.AddAutoCollectedMetricExtractor = true;
                 o.RequestCollectionOptions.InjectResponseHeaders = true;
                 o.RequestCollectionOptions.TrackExceptions = true;
                 o.DeveloperMode ??= Debugger.IsAttached;
                 o.EnableDebugLogger = Debugger.IsAttached || !hasValidConnectionString;
                 o.ApplicationVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
+            });
+            
+            // Configure telemetry to be disabled in test/development environments
+            // This prevents shutdown crashes - See: https://github.com/microsoft/ApplicationInsights-dotnet/issues/2322
+            services.Configure<TelemetryConfiguration>(telemetryConfig =>
+            {
+                if (isTestOrDevelopment || !hasValidConnectionString)
+                {
+                    telemetryConfig.DisableTelemetry = true;
+                }
             });
 
             services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) => { module.EnableSqlCommandTextInstrumentation = true; });
