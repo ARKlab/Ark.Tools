@@ -81,7 +81,7 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
                 o.AddAutoCollectedMetricExtractor = true;
                 o.RequestCollectionOptions.InjectResponseHeaders = true;
                 o.RequestCollectionOptions.TrackExceptions = true;
-                o.DeveloperMode ??= Debugger.IsAttached;
+                o.DeveloperMode ??= isIntegrationTests || Debugger.IsAttached;
                 o.EnableDebugLogger = Debugger.IsAttached || !hasValidConnectionString;
                 o.ApplicationVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
             });
