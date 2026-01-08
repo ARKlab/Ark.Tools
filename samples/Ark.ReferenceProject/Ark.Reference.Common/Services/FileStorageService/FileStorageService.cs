@@ -31,7 +31,7 @@ namespace Ark.Reference.Common.Services.FileStorageService
             if (client.Uri.Scheme == "http")
             { }
             // in case credentials are supplied
-            else if (_config.StorageAccount.Contains("AccountKey", StringComparison.InvariantCultureIgnoreCase) || _config.StorageAccount.Contains("SharedAccessSignature", StringComparison.InvariantCultureIgnoreCase))
+            else if (_config.StorageAccount.Contains("AccountKey", StringComparison.OrdinalIgnoreCase) || _config.StorageAccount.Contains("SharedAccessSignature", StringComparison.OrdinalIgnoreCase))
             { }
             else // anon, assume MSI
             {

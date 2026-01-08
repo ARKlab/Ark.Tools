@@ -18,7 +18,9 @@ namespace TestWorker.DataProvider
 {
     public class Test_ProviderFilter
     {
+#pragma warning disable RS0030 // Sample/test code - intentionally using local time for demo
         public LocalDate Date { get; set; } = LocalDate.FromDateTime(DateTime.Now);
+#pragma warning restore RS0030
         public int Count { get; set; } = 10;
     }
 

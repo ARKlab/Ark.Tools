@@ -79,7 +79,9 @@ namespace TestWithoutArkTools.Application.Host
         public void RunAndBlock()
         {
             this.RunInBackground();
+#pragma warning disable RS0030 // Legitimate use: keeping application running indefinitely
             Thread.Sleep(Timeout.Infinite);
+#pragma warning restore RS0030
         }
 
         public Container? Container { get; private set; }

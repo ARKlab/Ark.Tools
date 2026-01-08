@@ -44,9 +44,9 @@ namespace Ark.Reference.Core.Application.Handlers.Messages
             var entity = await ctx.ReadPingByIdAsync(message.Id).ConfigureAwait(false);
             if (entity == null) return; // nothing to do ... been deleted?
 
-            if (entity.Name?.Contains("fails", StringComparison.InvariantCultureIgnoreCase) == true)
+            if (entity.Name?.Contains("fails", StringComparison.OrdinalIgnoreCase) == true)
             {
-                if (entity.Name.Contains("fast", StringComparison.InvariantCultureIgnoreCase))
+                if (entity.Name.Contains("fast", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new NotSupportedException($"FailFastEx_MsgCount_{currentMessageCount}");
                 }

@@ -245,7 +245,7 @@ If the maximum number of delivery attempts is reached, the message is passed to 
             return new(typeof(AggregateException).GetSimpleAssemblyQualifiedName(),
                 $"{list.Count} unhandled exceptions",
                 string.Join(Environment.NewLine + Environment.NewLine, list.Select(e => e.GetFullErrorDescription())),
-                DateTimeOffset.Now
+                DateTimeOffset.UtcNow
             );
         }
     }

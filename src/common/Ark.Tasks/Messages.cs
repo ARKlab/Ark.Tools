@@ -33,8 +33,8 @@ namespace Ark.Tasks
 
         public readonly bool Equals(Resource other)
         {
-            return string.Equals(Provider, other.Provider, StringComparison.InvariantCultureIgnoreCase)
-                && string.Equals(Id, other.Id, StringComparison.InvariantCultureIgnoreCase);
+            return string.Equals(Provider, other.Provider, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(Id, other.Id, StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool operator ==(Resource x, Resource y)

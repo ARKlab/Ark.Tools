@@ -22,7 +22,9 @@ namespace TestReceiver
         public TestReceiver_Activity(ITestReceiver_Config config)
         {
             _config = config;
+#pragma warning disable RS0030 // Sample/test code - console output for demonstration
             Console.WriteLine($"********** Now {DateTimeOffset.UtcNow} ********");
+#pragma warning restore RS0030
         }
 
         public override Ark.Tools.Activity.ResourceDependency[] Dependencies
@@ -61,7 +63,9 @@ namespace TestReceiver
         {
             await Task.Delay(new TimeSpan(0, 0, 5)).ConfigureAwait(false);
 
+#pragma warning disable RS0030 // Sample/test code - console output for demonstration
             Console.WriteLine($"** Process Started Now {DateTimeOffset.UtcNow}**");
+#pragma warning restore RS0030
             throw new TimeoutException("Exception!");
 
             //await Task.FromResult(true);
