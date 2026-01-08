@@ -1,0 +1,7 @@
+{
+  "codeCoverage": {
+    "Configuration": {
+      "IncludeTestAssembly": false
+    }
+  }
+}
