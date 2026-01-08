@@ -48,17 +48,19 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
             // Check if we have a valid connection string or instrumentation key
             var hasValidConnectionString = !string.IsNullOrWhiteSpace(connectionString) || !string.IsNullOrWhiteSpace(instrumentationKey);
             
-            // Check if we're in a test/development environment
+            // Check if we're in a test environment or debugger is attached
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            var isTestOrDevelopment = string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(environment, "IntegrationTests", StringComparison.OrdinalIgnoreCase);
+            var isIntegrationTests = string.Equals(environment, "IntegrationTests", StringComparison.OrdinalIgnoreCase);
+            var useInMemoryChannel = isIntegrationTests || Debugger.IsAttached;
 
             // In test environments, use InMemoryChannel to prevent telemetry transmission crashes
             // See: https://github.com/microsoft/ApplicationInsights-dotnet/issues/2322
-            if (isTestOrDevelopment || !hasValidConnectionString)
+            if (useInMemoryChannel || !hasValidConnectionString)
             {
+#pragma warning disable CA2000 // Dispose objects before losing scope - DI container manages lifetime
                 services.AddSingleton<Microsoft.ApplicationInsights.Channel.ITelemetryChannel>(
                     new Microsoft.ApplicationInsights.Channel.InMemoryChannel { DeveloperMode = true });
+#pragma warning restore CA2000
             }
 
             services.AddApplicationInsightsTelemetry(o =>
@@ -75,11 +77,11 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
                 }
 
                 o.EnableAdaptiveSampling = false; // enabled below by EnableAdaptiveSamplingWithCustomSettings
-                o.EnableHeartbeat = !isTestOrDevelopment; // Disable heartbeat in tests to prevent background tasks
+                o.EnableHeartbeat = !useInMemoryChannel; // Disable heartbeat in tests to prevent background tasks
                 o.AddAutoCollectedMetricExtractor = true;
                 o.RequestCollectionOptions.InjectResponseHeaders = true;
                 o.RequestCollectionOptions.TrackExceptions = true;
-                o.DeveloperMode ??= isTestOrDevelopment || Debugger.IsAttached;
+                o.DeveloperMode ??= Debugger.IsAttached;
                 o.EnableDebugLogger = Debugger.IsAttached || !hasValidConnectionString;
                 o.ApplicationVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
             });
