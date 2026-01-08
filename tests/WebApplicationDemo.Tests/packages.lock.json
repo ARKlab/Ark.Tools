@@ -138,20 +138,20 @@
       },
       "Reqnroll.MSTest": {
         "type": "Direct",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "JNLuTEhtHVjzRN4xjDFIpu2gqtKDSOuHRgiCqBKv46/3Xm7JN6VxswVQ+zcgY+r3NEdCf6C5As83HvxRC/5rAA==",
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "w6PY5oYU1MXHOnHjsykrUEjggBTeVFOYAyrBqPernHgdQX1h4HdLvRuVF+/9kRo6NbA6sXzqTD8Rkwx81IUIkQ==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "3.3.0",
-          "Reqnroll.Tools.MsBuild.Generation": "3.3.0"
+          "Reqnroll": "3.3.1",
+          "Reqnroll.Tools.MsBuild.Generation": "3.3.1"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "5y0emmHLEonzXt9QuUV8dcMhYpylruVR8kxFYOQKwXQtpVbaBYOnRrnxRw5+4nj+CvJMKiIY/X6IkIi/UQvH1A=="
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "Z3t0AYoK9YRqB+PIMCeFZESRleagben7vsOETIFlzATpi+u91woOBQx4Vv9sMNBBvq0iTZOTb4zDBuHO7MZSmA=="
       },
       "Asp.Versioning.Abstractions": {
         "type": "Transitive",
@@ -1123,7 +1123,7 @@
           "AwesomeAssertions": "[9.3.0, )",
           "AwesomeAssertions.Web": "[1.9.6, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.15.0, )",
-          "Reqnroll": "[3.3.0, )"
+          "Reqnroll": "[3.3.1, )"
         }
       },
       "ark.tools.simpleinjector": {
@@ -1721,9 +1721,9 @@
       },
       "Reqnroll": {
         "type": "CentralTransitive",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "9J+lJEABNaAIQpQbEjdulPbqMmWMURvKZVsItKgfvM14MuTRfrvemGGYyrqkafK+IT3lQXOggq0CltmrLYhurg==",
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "MgjPaf12sWZKzW0XfqBsZ6EnM9Sf2rIpTWDiFhf1KzxXBKuh542WjfDCjgJYCwjMciVqM2IgW/eHUrJc4l3tGg==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "22.2.0",
