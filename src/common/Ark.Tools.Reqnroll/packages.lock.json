@@ -70,9 +70,9 @@
       },
       "Reqnroll": {
         "type": "Direct",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "9J+lJEABNaAIQpQbEjdulPbqMmWMURvKZVsItKgfvM14MuTRfrvemGGYyrqkafK+IT3lQXOggq0CltmrLYhurg==",
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "MgjPaf12sWZKzW0XfqBsZ6EnM9Sf2rIpTWDiFhf1KzxXBKuh542WjfDCjgJYCwjMciVqM2IgW/eHUrJc4l3tGg==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "22.2.0",
@@ -465,9 +465,9 @@
       },
       "Reqnroll": {
         "type": "Direct",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "9J+lJEABNaAIQpQbEjdulPbqMmWMURvKZVsItKgfvM14MuTRfrvemGGYyrqkafK+IT3lQXOggq0CltmrLYhurg==",
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "MgjPaf12sWZKzW0XfqBsZ6EnM9Sf2rIpTWDiFhf1KzxXBKuh542WjfDCjgJYCwjMciVqM2IgW/eHUrJc4l3tGg==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "22.2.0",
