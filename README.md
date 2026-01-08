@@ -64,6 +64,13 @@ Upgrading from an older version? Check out our migration guides:
 - [Migration to v4.5](docs/migration-v4.md) - NLog v5, Structured Logging, Slack integration
 - [Migration from v2 to v3](docs/migration-v3.md) - AspNetCore v5, Microsoft.Data.SqlClient, Flurl v3
 
+## Modernization Guides
+
+Looking to optimize your Ark.Tools implementation for .NET 10?
+
+- [.NET 10 Modernization Plan](docs/modernization-plan-net10.md) - Comprehensive analysis and performance optimization guide
+- [Quick Reference Summary](docs/modernization-summary.md) - Top 10 quick wins and implementation checklist
+
 ## Building & Testing
 
 ```bash
