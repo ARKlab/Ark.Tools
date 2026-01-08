@@ -79,13 +79,13 @@ namespace Ark.Reference.Common
 
         public static decimal Round(this decimal value, int roundDecimals)
         {
-            return Math.Round(value, roundDecimals);
+            return Math.Round(value, roundDecimals, MidpointRounding.AwayFromZero);
         }
 
         public static decimal? Round(this decimal? value, int roundDecimals)
         {
             if (value.HasValue)
-                return Math.Round(value.Value, roundDecimals);
+                return Math.Round(value.Value, roundDecimals, MidpointRounding.AwayFromZero);
             else
                 return null;
         }

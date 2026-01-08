@@ -104,7 +104,9 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps
                 catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 3732) // Cannot drop type - in use
                 {
                     // Type is in use by another process, wait and retry
+#pragma warning disable RS0030 // Test infrastructure: retry on SQL conflict
                     Thread.Sleep(100);
+#pragma warning restore RS0030
                     _stateProvider.EnsureTableAreCreated();
                 }
             }

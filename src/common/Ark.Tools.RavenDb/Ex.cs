@@ -99,7 +99,9 @@ namespace Ark.Tools.RavenDb
                     break;
                 }
 
+#pragma warning disable RS0030 // Legitimate use: polling loop in test/development helper
                 Thread.Sleep(100);
+#pragma warning restore RS0030
             }
 
             var errors = admin.Send(new GetIndexErrorsOperation());

@@ -157,7 +157,7 @@ namespace Ark.Reference.Core.Application.Host
                     {
                         if (!isInMemory)
                         {
-                            if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.InvariantCultureIgnoreCase) == true)
+                            if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.OrdinalIgnoreCase) == true)
                                 t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString);
                             else
                                 t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString, new DefaultAzureCredential());
@@ -174,7 +174,7 @@ namespace Ark.Reference.Core.Application.Host
                         };
                         if (!isInMemory)
                         {
-                            if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.InvariantCultureIgnoreCase) == true)
+                            if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.OrdinalIgnoreCase) == true)
                                 t.UseAzureServiceBus(this.Config.AsbConnectionString, listeningQueue)
                                       .EnablePartitioning()
                                       .AutomaticallyRenewPeekLock()

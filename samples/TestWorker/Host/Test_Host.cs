@@ -36,7 +36,9 @@ namespace TestWorker.HostNs
 
             public Task RunOnceAsync(LocalDate date, CancellationToken ctk = default)
             {
+#pragma warning disable RS0030 // Sample/test code - intentionally using local time for demo
                 return base.RunOnceAsync(f => f.Date = LocalDate.FromDateTime(DateTime.Today), ctk);
+#pragma warning restore RS0030
             }
 
             public Host WithTestWriter()
@@ -71,7 +73,9 @@ namespace TestWorker.HostNs
 
             Test_Recipe r = default;
 
+#pragma warning disable RS0030 // Sample/test code - enum parsing demonstration
             if (recipe.HasValue || Enum.TryParse<Test_Recipe>(localRecipe, out r))
+#pragma warning restore RS0030
             {
                 if (recipe.HasValue)
                     r = recipe.Value;

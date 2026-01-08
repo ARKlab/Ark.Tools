@@ -165,7 +165,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
 
             var aggregateSequenceNumber = Version + 1;
             var eventId = $"{Name}/{Identifier}/{aggregateSequenceNumber:D20}";
-            var now = DateTimeOffset.Now;
+            var now = DateTimeOffset.UtcNow;
 
             IMetadata eventMetadata = new Metadata
             {
@@ -199,7 +199,7 @@ namespace Ark.Tools.EventSourcing.Aggregates
             if (_applying)
                 throw new InvalidOperationException("Publish shall not be called during Apply phase. Do it before or after Emitting an event");
 
-            var now = DateTimeOffset.Now;
+            var now = DateTimeOffset.UtcNow;
             var eventMetadata = new Metadata
             {
                 Timestamp = now,

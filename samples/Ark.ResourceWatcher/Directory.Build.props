@@ -78,6 +78,7 @@
 	
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="All" />
 		<PackageReference Include="Meziantou.Analyzer" PrivateAssets="All" />
 		<PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
 	</ItemGroup>
@@ -87,6 +88,10 @@
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
 		<!-- Note: .globalconfig is automatically discovered and has higher precedence -->
+	</ItemGroup>
+
+	<ItemGroup Label="Banned API Analyzer">
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
 	</ItemGroup>
 	
 </Project>

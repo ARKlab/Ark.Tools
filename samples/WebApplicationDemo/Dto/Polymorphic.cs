@@ -74,7 +74,7 @@ namespace WebApplicationDemo.Dto
     {
         protected override Polymorphic Create(Type objectType, JObject jObject)
         {
-            if (jObject.TryGetValue(nameof(Polymorphic.Kind), StringComparison.InvariantCultureIgnoreCase, out var token))
+            if (jObject.TryGetValue(nameof(Polymorphic.Kind), StringComparison.OrdinalIgnoreCase, out var token))
             {
                 var kind = token.ToObject<BaseKind>();
                 switch (kind)

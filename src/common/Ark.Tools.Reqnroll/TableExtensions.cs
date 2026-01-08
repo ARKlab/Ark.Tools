@@ -55,9 +55,9 @@ namespace Ark.Tools.Reqnroll
 
                     foreach (var item in tableRow)
                     {
-                        if (item.Key.StartsWith($"{propName}.", StringComparison.InvariantCultureIgnoreCase))
+                        if (item.Key.StartsWith($"{propName}.", StringComparison.OrdinalIgnoreCase))
                         {
-                            headers.Add(item.Key.Replace($"{propName}.", "", StringComparison.InvariantCultureIgnoreCase));
+                            headers.Add(item.Key.Replace($"{propName}.", "", StringComparison.OrdinalIgnoreCase));
                             values.Add(item.Value);
                         }
                     }
