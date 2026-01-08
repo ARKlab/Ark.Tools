@@ -53,6 +53,14 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
             var isTestOrDevelopment = string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(environment, "IntegrationTests", StringComparison.OrdinalIgnoreCase);
 
+            // In test environments, use InMemoryChannel to prevent telemetry transmission crashes
+            // See: https://github.com/microsoft/ApplicationInsights-dotnet/issues/2322
+            if (isTestOrDevelopment || !hasValidConnectionString)
+            {
+                services.AddSingleton<Microsoft.ApplicationInsights.Channel.ITelemetryChannel>(
+                    new Microsoft.ApplicationInsights.Channel.InMemoryChannel { DeveloperMode = true });
+            }
+
             services.AddApplicationInsightsTelemetry(o =>
             {
                 if (hasValidConnectionString)
@@ -71,19 +79,9 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup
                 o.AddAutoCollectedMetricExtractor = true;
                 o.RequestCollectionOptions.InjectResponseHeaders = true;
                 o.RequestCollectionOptions.TrackExceptions = true;
-                o.DeveloperMode ??= Debugger.IsAttached;
+                o.DeveloperMode ??= isTestOrDevelopment || Debugger.IsAttached;
                 o.EnableDebugLogger = Debugger.IsAttached || !hasValidConnectionString;
                 o.ApplicationVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
-            });
-            
-            // Configure telemetry to be disabled in test/development environments
-            // This prevents shutdown crashes - See: https://github.com/microsoft/ApplicationInsights-dotnet/issues/2322
-            services.Configure<TelemetryConfiguration>(telemetryConfig =>
-            {
-                if (isTestOrDevelopment || !hasValidConnectionString)
-                {
-                    telemetryConfig.DisableTelemetry = true;
-                }
             });
 
             services.ConfigureTelemetryModule<DependencyTrackingTelemetryModule>((module, o) => { module.EnableSqlCommandTextInstrumentation = true; });
