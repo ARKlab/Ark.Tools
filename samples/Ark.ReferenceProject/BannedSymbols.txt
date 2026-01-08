@@ -97,10 +97,10 @@ M:System.Console.WriteLine(System.Decimal);Use NLog for logging instead of Conso
 M:System.Threading.Thread.Sleep(System.Int32);Use Task.Delay for async code or specify reason for blocking
 M:System.Threading.Thread.Sleep(System.TimeSpan);Use Task.Delay for async code or specify reason for blocking
 
-M:System.Threading.Tasks.Task.Wait();Don't use Task.Wait. Use Task.WaitSafely() to ensure we avoid deadlocks
-M:System.Threading.Tasks.Task.Wait(System.Int32);Don't use Task.Wait. Use Task.WaitSafely() to ensure we avoid deadlocks
-M:System.Threading.Tasks.Task.Wait(System.TimeSpan);Don't use Task.Wait. Use Task.WaitSafely() to ensure we avoid deadlocks
-M:System.Threading.Tasks.Task.Wait(System.Int32,System.Threading.CancellationToken);Don't use Task.Wait. Use Task.WaitSafely() to ensure we avoid deadlocks
-M:System.Threading.Tasks.Task.Wait(System.TimeSpan,System.Threading.CancellationToken);Don't use Task.Wait. Use Task.WaitSafely() to ensure we avoid deadlocks
-M:System.Threading.Tasks.Task.Wait(System.Threading.CancellationToken);Don't use Task.Wait. Use Task.WaitSafely() to ensure we avoid deadlocks
-P:System.Threading.Tasks.Task`1.Result;Don't use Task.Result. Use Task.GetResultSafely() to ensure we avoid deadlocks
+M:System.Threading.Tasks.Task.Wait();Don't use Task.Wait to avoid deadlocks
+M:System.Threading.Tasks.Task.Wait(System.Int32);Don't use Task.Wait to avoid deadlocks
+M:System.Threading.Tasks.Task.Wait(System.TimeSpan);Don't use Task.Wait to avoid deadlocks
+M:System.Threading.Tasks.Task.Wait(System.Int32,System.Threading.CancellationToken);Don't use Task.Wait to avoid deadlocks
+M:System.Threading.Tasks.Task.Wait(System.TimeSpan,System.Threading.CancellationToken);Don't use Task.Wait to avoid deadlocks
+M:System.Threading.Tasks.Task.Wait(System.Threading.CancellationToken);Don't use Task.Wait to avoid deadlocks
+P:System.Threading.Tasks.Task`1.Result;Don't use Task.Result. Use GetAwaiter().GetResult() to avoid deadlocks
