@@ -57,11 +57,42 @@ M:System.DateTimeOffset.op_Implicit(System.DateTime);Use explicit conversion or 
 P:System.DateTime.Today;Use NodaTime and use explicit Timezone, not implicitly the local timezone
 P:System.DateTimeOffset.Today;Use NodaTime and use explicit Timezone, not implicitly the local timezone
 
-M:System.Console.Write(System.String);Use NLog for logging instead of Console
-M:System.Console.Write(System.Object);Use NLog for logging instead of Console
-M:System.Console.WriteLine(System.String);Use NLog for logging instead of Console
-M:System.Console.WriteLine(System.Object);Use NLog for logging instead of Console
-M:System.Console.WriteLine();Use NLog for logging instead of Console
+M:System.Console.Write(System.Int32);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Int64);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.UInt32);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.UInt64);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Boolean);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Char);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Char[]);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Char[],System.Int32,System.Int32);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Single);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Double);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Object);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.String);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.String,System.Object);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.String,System.Object,System.Object);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.String,System.Object,System.Object,System.Object);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.String,System.Object[]);Use NLog for logging instead of Console.Write
+M:System.Console.Write(System.Decimal);Use NLog for logging instead of Console.Write
+
+M:System.Console.WriteLine;Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Int32);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Int64);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.UInt32);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.UInt64);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Boolean);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Char);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Char[]);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Char[],System.Int32,System.Int32);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Single);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Double);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Object);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.String);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.String,System.Object);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.String,System.Object,System.Object);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.String,System.Object,System.Object,System.Object);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.String,System.Object[]);Use NLog for logging instead of Console.WriteLine
+M:System.Console.WriteLine(System.Decimal);Use NLog for logging instead of Console.WriteLine
 
 M:System.Threading.Thread.Sleep(System.Int32);Use Task.Delay for async code or specify reason for blocking
 M:System.Threading.Thread.Sleep(System.TimeSpan);Use Task.Delay for async code or specify reason for blocking
