@@ -1,26 +1,9 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using System;
 using Ark.Tools.FtpClient.Core;
 
-using System;
-<<<<<<< TODO: Unmerged change from project 'Ark.Tools.FtpClient.SftpClient(net10.0)', Before:
-namespace Ark.Tools.FtpClient.SftpClient
-{
-    public sealed class SFtpClientConnectionFactory : IFtpClientConnectionFactory
-    {
-        public IFtpClientConnection Create(FtpConfig ftpConfig)
-        {
-            ArgumentNullException.ThrowIfNull(ftpConfig);
-            ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
-            ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
 
-            return new SftpClientConnection(ftpConfig);
-        }
-    }
-
-
-
-=======
 namespace Ark.Tools.FtpClient.SftpClient;
 
 public sealed class SFtpClientConnectionFactory : IFtpClientConnectionFactory
@@ -33,17 +16,4 @@ public sealed class SFtpClientConnectionFactory : IFtpClientConnectionFactory
 
         return new SftpClientConnection(ftpConfig);
     }
->>>>>>> After
-    namespace Ark.Tools.FtpClient.SftpClient;
-
-    public sealed class SFtpClientConnectionFactory : IFtpClientConnectionFactory
-    {
-        public IFtpClientConnection Create(FtpConfig ftpConfig)
-        {
-            ArgumentNullException.ThrowIfNull(ftpConfig);
-            ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
-            ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
-
-            return new SftpClientConnection(ftpConfig);
-        }
-    }
+}

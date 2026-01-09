@@ -1,61 +1,9 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Nodatime.Dapper;
 
 using Oracle.ManagedDataAccess.Client;
-<<<<<<< TODO: Unmerged change from project 'Ark.Tools.Sql.Oracle(net10.0)', Before:
-namespace Ark.Tools.Sql.Oracle
-{
-    public static class NodatimeDapperOracle
-    {
-        static NodatimeDapperOracle()
-        {
-            InstantHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.Precision = 9;
-                    orc.OracleDbType = OracleDbType.TimeStamp;
-                }
-            };
-            LocalDateHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.OracleDbType = OracleDbType.Date;
-                }
-            };
-            LocalDateTimeHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.Precision = 9;
-                    orc.OracleDbType = OracleDbType.TimeStamp;
-                }
-            };
-            OffsetDateTimeHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.Precision = 9;
-                    orc.OracleDbType = OracleDbType.TimeStampTZ;
-                }
-            };
-            LocalTimeHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.Precision = 9;
-                    orc.OracleDbType = OracleDbType.TimeStamp;
-                }
-            };
-        }
 
-        public static void Setup()
-        {
-            NodaTimeDapper.Setup();
-        }
-=======
 namespace Ark.Tools.Sql.Oracle;
 
 public static class NodatimeDapperOracle
@@ -106,58 +54,5 @@ public static class NodatimeDapperOracle
     public static void Setup()
     {
         NodaTimeDapper.Setup();
->>>>>>> After
-
-
-namespace Ark.Tools.Sql.Oracle;
-
-    public static class NodatimeDapperOracle
-    {
-        static NodatimeDapperOracle()
-        {
-            InstantHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.Precision = 9;
-                    orc.OracleDbType = OracleDbType.TimeStamp;
-                }
-            };
-            LocalDateHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.OracleDbType = OracleDbType.Date;
-                }
-            };
-            LocalDateTimeHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.Precision = 9;
-                    orc.OracleDbType = OracleDbType.TimeStamp;
-                }
-            };
-            OffsetDateTimeHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.Precision = 9;
-                    orc.OracleDbType = OracleDbType.TimeStampTZ;
-                }
-            };
-            LocalTimeHandler.Instance.OnSetValue += (s, p) =>
-            {
-                if (p is OracleParameter orc)
-                {
-                    orc.Precision = 9;
-                    orc.OracleDbType = OracleDbType.TimeStamp;
-                }
-            };
-        }
-
-        public static void Setup()
-        {
-            NodaTimeDapper.Setup();
-        }
     }
+}
