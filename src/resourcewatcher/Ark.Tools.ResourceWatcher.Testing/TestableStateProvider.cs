@@ -172,8 +172,7 @@ public class TestableStateProvider : IStateProvider
     public int CountByRetryCount(string tenant, int retryCount)
     {
         return _store.Values
-            .Where(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal))
-            .Count(s => s.RetryCount == retryCount);
+            .Count(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal) && s.RetryCount == retryCount);
     }
 
     /// <summary>
@@ -182,8 +181,7 @@ public class TestableStateProvider : IStateProvider
     public int CountBanned(string tenant, uint maxRetries)
     {
         return _store.Values
-            .Where(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal))
-            .Count(s => s.RetryCount > maxRetries);
+            .Count(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal) && s.RetryCount > maxRetries);
     }
 
     #endregion

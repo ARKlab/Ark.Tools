@@ -98,9 +98,11 @@ public abstract class AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
         var methods = typeof(TAggregateRoot)
             .GetTypeInfo()
             .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
-            .Where(mi => mi.Name == "Apply")
             .Where(mi =>
             {
+                if (mi.Name != "Apply")
+                    return false;
+                    
                 var parameters = mi.GetParameters();
                 return parameters.Length == 2
                     && aggregateEventType.GetTypeInfo().IsAssignableFrom(parameters[0].ParameterType)

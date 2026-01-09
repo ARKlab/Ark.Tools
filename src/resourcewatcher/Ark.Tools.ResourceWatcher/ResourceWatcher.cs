@@ -479,24 +479,26 @@ public class ProcessContext
         {
             if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Count != 0)
             {
-                if (CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).Any())
+                if (CurrentInfo.ModifiedSources.Any(x => !LastState.ModifiedSources.ContainsKey(x.Key)))
                 {
                     //New State contains new sources modified for the resource
+                    var firstNewSource = CurrentInfo.ModifiedSources.First(x => !LastState.ModifiedSources.ContainsKey(x.Key));
                     changed = (
-                                    source: CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).First().Key,
-                                    current: CurrentInfo.ModifiedSources.Where(x => !LastState.ModifiedSources.ContainsKey(x.Key)).First().Value,
+                                    source: firstNewSource.Key,
+                                    current: firstNewSource.Value,
                                     last: null
                                 );
 
                     return true;
                 }
-                else if (CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).Any())
+                else if (CurrentInfo.ModifiedSources.Any(x => x.Value > LastState.ModifiedSources[x.Key]))
                 {
                     //One or more sources have an updated modified respect the corrisponding source into last state ModifiedSources
+                    var firstUpdatedSource = CurrentInfo.ModifiedSources.First(x => x.Value > LastState.ModifiedSources[x.Key]);
                     changed = (
-                                    source: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Key,
-                                    current: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Value,
-                                    last: LastState.ModifiedSources[CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.ModifiedSources[x.Key]).First().Key]
+                                    source: firstUpdatedSource.Key,
+                                    current: firstUpdatedSource.Value,
+                                    last: LastState.ModifiedSources[firstUpdatedSource.Key]
                                 );
 
                     return true;
@@ -509,12 +511,13 @@ public class ProcessContext
             }
             else if (LastState?.Modified != null && LastState.Modified != default)
             {
-                if (CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).Any())
+                if (CurrentInfo.ModifiedSources.Any(x => x.Value > LastState.Modified))
                 {
                     //One or more sources have an updated modify respect to Modified
+                    var firstUpdatedSource = CurrentInfo.ModifiedSources.First(x => x.Value > LastState.Modified);
                     changed = (
-                                    source: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).First().Key,
-                                    current: CurrentInfo.ModifiedSources.Where(x => x.Value > LastState.Modified).First().Value,
+                                    source: firstUpdatedSource.Key,
+                                    current: firstUpdatedSource.Value,
                                     last: LastState.Modified
                                 );
 
@@ -547,7 +550,7 @@ public class ProcessContext
         {
             if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Count != 0)
             {
-                if (LastState.ModifiedSources.Where(x => x.Value < CurrentInfo.Modified).Any())
+                if (LastState.ModifiedSources.Any(x => x.Value < CurrentInfo.Modified))
                 {
                     //the new single modified is major at least of one old ModifiedSources
                     changed = (

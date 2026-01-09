@@ -123,7 +123,7 @@ public static class Ex
                         {
                             return ClaimTypes.Email;
                         }
-                        else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.Where(w => w.Type == "appidacr").SingleOrDefault()?.Value == "1")
+                        else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.SingleOrDefault(w => w.Type == "appidacr")?.Value == "1")
                         {
                             return "appid";
                         }
