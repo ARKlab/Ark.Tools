@@ -113,6 +113,7 @@ All source files must include the standard copyright header:
 - **Braces**: Allman style (new line before opening brace)
 - **Line endings**: CRLF
 - **Using directives**: Place outside namespace
+- **Namespace declarations**: Use file-scoped namespaces (C# 10+)
 - **Expression-bodied members**: Use for properties/accessors, avoid for methods/constructors
 
 ```csharp
@@ -123,6 +124,14 @@ public void ProcessData()
     {
         DoWork();
     }
+}
+
+// ✅ GOOD - File-scoped namespace (C# 10+)
+namespace Ark.Tools.MyNamespace;
+
+public class MyClass
+{
+    // class members
 }
 
 // ✅ GOOD - Expression-bodied properties
