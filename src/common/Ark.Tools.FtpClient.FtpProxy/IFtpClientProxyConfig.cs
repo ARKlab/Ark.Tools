@@ -15,6 +15,8 @@ namespace Ark.Tools.FtpClient.FtpProxy
         bool UseAuth0 { get; }
         int? ListingDegreeOfParallelism { get; }
     }
+
+
 =======
 namespace Ark.Tools.FtpClient.FtpProxy;
 
@@ -29,18 +31,16 @@ public interface IFtpClientProxyConfig
     bool UseAuth0 { get; }
     int? ListingDegreeOfParallelism { get; }
 >>>>>>> After
+    namespace Ark.Tools.FtpClient.FtpProxy;
 
 
-namespace Ark.Tools.FtpClient.FtpProxy;
-
-
-public interface IFtpClientProxyConfig
-{
-    string ClientID { get; }
-    string ClientKey { get; }
-    Uri FtpProxyWebInterfaceBaseUri { get; }
-    string ApiIdentifier { get; }
-    string TenantID { get; }
-    bool UseAuth0 { get; }
-    int? ListingDegreeOfParallelism { get; }
-}
+    public interface IFtpClientProxyConfig
+    {
+        string ClientID { get; }
+        string ClientKey { get; }
+        Uri FtpProxyWebInterfaceBaseUri { get; }
+        string ApiIdentifier { get; }
+        string TenantID { get; }
+        bool UseAuth0 { get; }
+        int? ListingDegreeOfParallelism { get; }
+    }

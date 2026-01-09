@@ -23,10 +23,10 @@ public sealed class FluentFtpClientPoolFactory : DefaultFtpClientPoolFactory
 
 namespace Ark.Tools.FtpClient.FluentFtp;
 
-public sealed class FluentFtpClientPoolFactory : DefaultFtpClientPoolFactory
-{
-    public FluentFtpClientPoolFactory()
-        : base(new FluentFtpClientConnectionFactory())
+    public sealed class FluentFtpClientPoolFactory : DefaultFtpClientPoolFactory
     {
+        public FluentFtpClientPoolFactory()
+            : base(new FluentFtpClientConnectionFactory())
+        {
+        }
     }
-}

@@ -51,344 +51,343 @@ using System.Security.Claims;
 using System.Diagnostics;
 #endif
 
-namespace Ark.Reference.Core.Application.Host
+namespace Ark.Reference.Core.Application.Host;
+
+public class ApiHost
 {
-    public class ApiHost
+    public ApiHost(IApiHostConfig config)
     {
-        public ApiHost(IApiHostConfig config)
-        {
-            this.Config = config;
-            this._applicationAssemblies = [
-                  typeof(ApiHost).Assembly
-            ];
-            this.Container = new Container();
-        }
+        this.Config = config;
+        this._applicationAssemblies = [
+              typeof(ApiHost).Assembly
+        ];
+        this.Container = new Container();
+    }
 
-        public void RegisterInto(Container container)
-        {
-            this.WithContainer(container);
+    public void RegisterInto(Container container)
+    {
+        this.WithContainer(container);
 
-            container.RegisterInstance(this);
+        container.RegisterInstance(this);
 
-            Container = container;
-        }
+        Container = container;
+    }
 
-        public ApiHost WithScopedContainer()
-        {
-            var container = new Container();
-            container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-            return WithContainer(container);
-        }
+    public ApiHost WithScopedContainer()
+    {
+        var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        return WithContainer(container);
+    }
 
-        public ApiHost WithContainer(Container container)
-        {
-            Container = container;
+    public ApiHost WithContainer(Container container)
+    {
+        Container = container;
 
-            Container.AllowResolvingFuncFactories();
+        Container.AllowResolvingFuncFactories();
 
-            Container.RequireSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
-            Container.RequireSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
-            Container.RequireSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
-            Container.RequireSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
+        Container.RequireSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
+        Container.RequireSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
+        Container.RequireSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+        Container.RequireSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
 
 #if DEBUG
-            if (Debugger.IsAttached)
-                Container.RegisterDecorator<IDbConnectionManager, SqlConnectionManagerLeakDecorator>(Lifestyle.Singleton);
+        if (Debugger.IsAttached)
+            Container.RegisterDecorator<IDbConnectionManager, SqlConnectionManagerLeakDecorator>(Lifestyle.Singleton);
 #endif
-            _registerContainer(Container);
+        _registerContainer(Container);
 
-            Container.RegisterInstance(this);
-
-
-            return this;
-        }
+        Container.RegisterInstance(this);
 
 
-        public ApiHost WithAuthorization()
+        return this;
+    }
+
+
+    public ApiHost WithAuthorization()
+    {
+        Container.RegisterAuthorizationBase();
+        Container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(PolicyAuthorizeOrLogicQueryDecorator<,>));
+        Container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(PolicyAuthorizeOrLogicRequestDecorator<,>));
+        Container.RegisterDecorator(typeof(ICommandHandler<>), typeof(PolicyAuthorizeOrLogicCommandDecorator<>));
+
+
+        Container.RegisterAuthorizationHandler<CoreRequiredScopePolicyHandler>();
+
+        Container.RegisterAuthorizationHandler<Ark.Reference.Common.Auth.PermissionAuthorizationHandler<Permissions>>();
+        Container.Register<IUserPermissionsProvider<Permissions>, PermissionsProvider>();
+
+        return this;
+    }
+
+    public ApiHost WithIClock(IClock? clock = null)
+    {
+        if (clock == null)
         {
-            Container.RegisterAuthorizationBase();
-            Container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(PolicyAuthorizeOrLogicQueryDecorator<,>));
-            Container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(PolicyAuthorizeOrLogicRequestDecorator<,>));
-            Container.RegisterDecorator(typeof(ICommandHandler<>), typeof(PolicyAuthorizeOrLogicCommandDecorator<>));
-
-
-            Container.RegisterAuthorizationHandler<CoreRequiredScopePolicyHandler>();
-
-            Container.RegisterAuthorizationHandler<Ark.Reference.Common.Auth.PermissionAuthorizationHandler<Permissions>>();
-            Container.Register<IUserPermissionsProvider<Permissions>, PermissionsProvider>();
-
-            return this;
+            Container.RegisterSingleton<IClock>(() => SystemClock.Instance);
         }
+        else
+            Container.RegisterInstance(clock);
 
-        public ApiHost WithIClock(IClock? clock = null)
+        return this;
+    }
+
+    public ApiHost WithRebus(Queue queue = Queue.Core, InMemNetwork? inMemNetwork = null, InMemorySubscriberStore? inMemorySubscriberStore = null)
+    {
+        var isInMemory = inMemNetwork != null && inMemorySubscriberStore != null;
+
+        if (queue != Queue.OneWay)
         {
-            if (clock == null)
+            var handlers = Container.GetTypesToRegister((queue switch
             {
-                Container.RegisterSingleton<IClock>(() => SystemClock.Instance);
-            }
-            else
-                Container.RegisterInstance(clock);
+                Queue.Core => typeof(IHandleMessagesCore<>),
+                _ => throw new NotSupportedException()
+            }), this._applicationAssemblies);
+            Container.Collection.Register(typeof(IHandleMessages<>), handlers);
 
-            return this;
+            Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
+            Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusLogDecorator<>));
         }
 
-        public ApiHost WithRebus(Queue queue = Queue.Core, InMemNetwork? inMemNetwork = null, InMemorySubscriberStore? inMemorySubscriberStore = null)
-        {
-            var isInMemory = inMemNetwork != null && inMemorySubscriberStore != null;
-
-            if (queue != Queue.OneWay)
+        Container?.ConfigureRebus(_ => _
+            .Logging(l => l.NLog())
+            .Transport(t =>
             {
-                var handlers = Container.GetTypesToRegister((queue switch
+                if (queue == Queue.OneWay)
                 {
-                    Queue.Core => typeof(IHandleMessagesCore<>),
-                    _ => throw new NotSupportedException()
-                }), this._applicationAssemblies);
-                Container.Collection.Register(typeof(IHandleMessages<>), handlers);
-
-                Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
-                Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusLogDecorator<>));
-            }
-
-            Container?.ConfigureRebus(_ => _
-                .Logging(l => l.NLog())
-                .Transport(t =>
-                {
-                    if (queue == Queue.OneWay)
+                    if (!isInMemory)
                     {
-                        if (!isInMemory)
-                        {
-                            if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.OrdinalIgnoreCase) == true)
-                                t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString);
-                            else
-                                t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString, new DefaultAzureCredential());
-                        }
+                        if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.OrdinalIgnoreCase) == true)
+                            t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString);
                         else
-                            t.UseDrainableInMemoryTransportAsOneWayClient(inMemNetwork!);
+                            t.UseAzureServiceBusAsOneWayClient(this.Config.AsbConnectionString, new DefaultAzureCredential());
+                    }
+                    else
+                        t.UseDrainableInMemoryTransportAsOneWayClient(inMemNetwork!);
+                }
+                else
+                {
+                    var listeningQueue = this.Config.RequestQueue + queue switch
+                    {
+                        Queue.Core => "",
+                        _ => throw new NotSupportedException()
+                    };
+                    if (!isInMemory)
+                    {
+                        if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.OrdinalIgnoreCase) == true)
+                            t.UseAzureServiceBus(this.Config.AsbConnectionString, listeningQueue)
+                                  .EnablePartitioning()
+                                  .AutomaticallyRenewPeekLock()
+                                  .UseNativeMessageDeliveryCount()
+                                  ;
+                        else
+                            t.UseAzureServiceBus(this.Config.AsbConnectionString, listeningQueue, new DefaultAzureCredential())
+                                .EnablePartitioning()
+                                .AutomaticallyRenewPeekLock()
+                                .UseNativeMessageDeliveryCount()
+                                ;
+
+                        t.UseNativeDeadlettering();
                     }
                     else
                     {
-                        var listeningQueue = this.Config.RequestQueue + queue switch
-                        {
-                            Queue.Core => "",
-                            _ => throw new NotSupportedException()
-                        };
-                        if (!isInMemory)
-                        {
-                            if (this.Config.AsbConnectionString?.Contains("SharedAccess", StringComparison.OrdinalIgnoreCase) == true)
-                                t.UseAzureServiceBus(this.Config.AsbConnectionString, listeningQueue)
-                                      .EnablePartitioning()
-                                      .AutomaticallyRenewPeekLock()
-                                      .UseNativeMessageDeliveryCount()
-                                      ;
-                            else
-                                t.UseAzureServiceBus(this.Config.AsbConnectionString, listeningQueue, new DefaultAzureCredential())
-                                    .EnablePartitioning()
-                                    .AutomaticallyRenewPeekLock()
-                                    .UseNativeMessageDeliveryCount()
-                                    ;
-
-                            t.UseNativeDeadlettering();
-                        }
-                        else
-                        {
-                            t.UseDrainableInMemoryTransport(inMemNetwork!, listeningQueue);
-                        }
+                        t.UseDrainableInMemoryTransport(inMemNetwork!, listeningQueue);
                     }
+                }
 
-                    t.Outbox(o =>
-                    {
-                        // this is used only by the Outbox processor, not on Send() or Publish()
-                        o.OutboxAsyncContextFactory(c => c.Use(Container.GetInstance<IOutboxAsyncContextFactory>()));
-                        o.OutboxOptions(o => o.StartProcessor = queue == Queue.Core);
-                        o.OutboxOptions(o => o.MaxMessagesPerBatch = 10);
-                    });
-                })
-                .Subscriptions(s =>
+                t.Outbox(o =>
                 {
-                    if (isInMemory)
-                        s.StoreInMemory(inMemorySubscriberStore);
-                })
-                .Routing(r =>
+                    // this is used only by the Outbox processor, not on Send() or Publish()
+                    o.OutboxAsyncContextFactory(c => c.Use(Container.GetInstance<IOutboxAsyncContextFactory>()));
+                    o.OutboxOptions(o => o.StartProcessor = queue == Queue.Core);
+                    o.OutboxOptions(o => o.MaxMessagesPerBatch = 10);
+                });
+            })
+            .Subscriptions(s =>
+            {
+                if (isInMemory)
+                    s.StoreInMemory(inMemorySubscriberStore);
+            })
+            .Routing(r =>
+            {
+                r.TypeBased()
+                    .MapAssemblyNamespaceOf<Ping_ProcessMessage.V1>(this.Config.RequestQueue);
+
+                //r.ForwardOnException<Exception>("error", LogLevel.Error, ex => _isContractException(ex));
+            })
+            .Options(o =>
+            {
+                o.ArkRetryStrategy(errorDetailsHeaderMaxLength: 10000, secondLevelRetriesEnabled: true, maxDeliveryAttempts: 3);
+
+                if (isInMemory)
                 {
-                    r.TypeBased()
-                        .MapAssemblyNamespaceOf<Ping_ProcessMessage.V1>(this.Config.RequestQueue);
+                    o.SetMaxParallelism(1);
+                }
 
-                    //r.ForwardOnException<Exception>("error", LogLevel.Error, ex => _isContractException(ex));
-                })
-                .Options(o =>
-                {
-                    o.ArkRetryStrategy(errorDetailsHeaderMaxLength: 10000, secondLevelRetriesEnabled: true, maxDeliveryAttempts: 3);
+                o.EnableCompression();
+                o.AutomaticallyFlowUserContext(Container);
+                o.UseApplicationInsight(Container);
+                o.UseApplicationInsightMetrics(Container);
+                o.FailFastOn<Exception>(ex => ex.IsFinal());
+                if (isInMemory)
+                    o.AddInProcessMessageInspector();
+            })
+            .DataBus(d =>
+            {
+                d.UseCompression(DataCompressionMode.Always)
+                    .StoreInBlobStorage(this.Config.StorageConnectionString, CommonConstants.RebusDataBusContainerName)
+                    .DoNotUpdateLastReadTime()
+                    ;
+                d.SendBigMessagesAsAttachments((256 - 64 - 2) * 1024); // 256KB (max size) - 64KB (max headers) - 2KB (just in case)
 
-                    if (isInMemory)
-                    {
-                        o.SetMaxParallelism(1);
-                    }
+            })
+            .Serialization(s =>
+            {
+                // Configure Rebus to use source-generated JSON serialization (API types only, no ProblemDetails)
+                // Note: JsonSerializerOptions get locked when passed to JsonSerializerContext constructor,
+                // so we must create the context first, then create NEW options for Rebus that use this context
+                var contextOptions = Ex.CreateCoreApiJsonSerializerOptions();
+                var jsonContext = new CoreApiJsonSerializerContext(contextOptions);
 
-                    o.EnableCompression();
-                    o.AutomaticallyFlowUserContext(Container);
-                    o.UseApplicationInsight(Container);
-                    o.UseApplicationInsightMetrics(Container);
-                    o.FailFastOn<Exception>(ex => ex.IsFinal());
-                    if (isInMemory)
-                        o.AddInProcessMessageInspector();
-                })
-                .DataBus(d =>
-                {
-                    d.UseCompression(DataCompressionMode.Always)
-                        .StoreInBlobStorage(this.Config.StorageConnectionString, CommonConstants.RebusDataBusContainerName)
-                        .DoNotUpdateLastReadTime()
-                        ;
-                    d.SendBigMessagesAsAttachments((256 - 64 - 2) * 1024); // 256KB (max size) - 64KB (max headers) - 2KB (just in case)
+                // Create separate options for Rebus that reference the context
+                var rebusOptions = Ex.CreateCoreApiJsonSerializerOptions();
+                rebusOptions.TypeInfoResolver = jsonContext;
 
-                })
-                .Serialization(s =>
-                {
-                    // Configure Rebus to use source-generated JSON serialization (API types only, no ProblemDetails)
-                    // Note: JsonSerializerOptions get locked when passed to JsonSerializerContext constructor,
-                    // so we must create the context first, then create NEW options for Rebus that use this context
-                    var contextOptions = Ex.CreateCoreApiJsonSerializerOptions();
-                    var jsonContext = new CoreApiJsonSerializerContext(contextOptions);
+                s.UseSystemTextJson(rebusOptions);
+            })
+            .Timeouts(t =>
+            {
+                t.OtherService<IRebusTime>().Register(c => new RebusNodaTimeClock(Container.GetInstance<IClock>()));
+                if (isInMemory)
+                    t.StoreInMemoryTests();
+            })
+        );
 
-                    // Create separate options for Rebus that reference the context
-                    var rebusOptions = Ex.CreateCoreApiJsonSerializerOptions();
-                    rebusOptions.TypeInfoResolver = jsonContext;
+        return this;
+    }
 
-                    s.UseSystemTextJson(rebusOptions);
-                })
-                .Timeouts(t =>
-                {
-                    t.OtherService<IRebusTime>().Register(c => new RebusNodaTimeClock(Container.GetInstance<IClock>()));
-                    if (isInMemory)
-                        t.StoreInMemoryTests();
-                })
+    public async void RunBusInBackground()
+    {
+        Container.StartBus();
+
+        await Container.GetInstance<IFileStorageService>().InitAsync().ConfigureAwait(false);
+    }
+
+
+    private void _registerContainer(Container container)
+    {
+        //Cfg
+        container.RegisterInstance(this.Config);
+        container.RegisterInstance<IRebusBusConfig>(this.Config);
+        container.RegisterInstance<ICoreDataContextConfig>(this.Config);
+        container.RegisterInstance<ICoreConfig>(this.Config);
+        container.RegisterInstance<IFileStorageServiceConfig>(this.Config);
+
+        var validatorAndHandlerAssemblies = new Assembly[] {
+                typeof(ApiHost).Assembly
+              , typeof(CommonConstants).Assembly
+        };
+
+        container.Register(typeof(IValidator<>),
+            container.GetTypesToRegister(typeof(IValidator<>), validatorAndHandlerAssemblies)
+                .Where(x => x.IsPublic)
+            , Lifestyle.Singleton);
+
+        container.Register(typeof(IQueryHandler<,>), validatorAndHandlerAssemblies);
+        container.Register(typeof(IRequestHandler<,>), validatorAndHandlerAssemblies);
+        container.Register(typeof(ICommandHandler<>), validatorAndHandlerAssemblies);
+        container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton,
+            c => !c.Handled);
+
+        container.RegisterDecorator(
+                 typeof(IRequestHandler<,>)
+               , typeof(OptimisticConcurrencyRetrierDecorator<,>)
             );
 
-            return this;
-        }
+        container.RegisterDecorator(
+                 typeof(IQueryHandler<,>)
+               , typeof(QueryFluentValidateDecorator<,>)
+            );
 
-        public async void RunBusInBackground()
-        {
-            Container.StartBus();
+        container.RegisterDecorator(
+                 typeof(IRequestHandler<,>)
+               , typeof(RequestFluentValidateDecorator<,>)
+            );
 
-            await Container.GetInstance<IFileStorageService>().InitAsync().ConfigureAwait(false);
-        }
+        //Dal
+        container.RegisterSingleton<ICoreDataContextFactory, CoreDataContextFactory>();
+        container.RegisterSingleton<IOutboxAsyncContextFactory, CoreDataContextFactory>();
 
-
-        private void _registerContainer(Container container)
-        {
-            //Cfg
-            container.RegisterInstance(this.Config);
-            container.RegisterInstance<IRebusBusConfig>(this.Config);
-            container.RegisterInstance<ICoreDataContextConfig>(this.Config);
-            container.RegisterInstance<ICoreConfig>(this.Config);
-            container.RegisterInstance<IFileStorageServiceConfig>(this.Config);
-
-            var validatorAndHandlerAssemblies = new Assembly[] {
-                    typeof(ApiHost).Assembly
-                  , typeof(CommonConstants).Assembly
-            };
-
-            container.Register(typeof(IValidator<>),
-                container.GetTypesToRegister(typeof(IValidator<>), validatorAndHandlerAssemblies)
-                    .Where(x => x.IsPublic)
-                , Lifestyle.Singleton);
-
-            container.Register(typeof(IQueryHandler<,>), validatorAndHandlerAssemblies);
-            container.Register(typeof(IRequestHandler<,>), validatorAndHandlerAssemblies);
-            container.Register(typeof(ICommandHandler<>), validatorAndHandlerAssemblies);
-            container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton,
-                c => !c.Handled);
-
-            container.RegisterDecorator(
-                     typeof(IRequestHandler<,>)
-                   , typeof(OptimisticConcurrencyRetrierDecorator<,>)
-                );
-
-            container.RegisterDecorator(
-                     typeof(IQueryHandler<,>)
-                   , typeof(QueryFluentValidateDecorator<,>)
-                );
-
-            container.RegisterDecorator(
-                     typeof(IRequestHandler<,>)
-                   , typeof(RequestFluentValidateDecorator<,>)
-                );
-
-            //Dal
-            container.RegisterSingleton<ICoreDataContextFactory, CoreDataContextFactory>();
-            container.RegisterSingleton<IOutboxAsyncContextFactory, CoreDataContextFactory>();
-
-            //Service
-            container.Register<IFileStorageService, FileStorageService>();
-        }
-
-        public ApiHost WithServiceIdentity(Func<ClaimsPrincipal> getter)
-        {
-            Container.RegisterSingleton<IContextProvider<ClaimsPrincipal>>(
-                () => new ExternalPrincipalContextProvider(getter));
-            return this;
-        }
-
-        public ApiHost WithServiceIdentity(ClaimsPrincipal claimsPrincipal)
-        {
-            Container.RegisterSingleton<IContextProvider<ClaimsPrincipal>>(
-                () => new ExternalPrincipalContextProvider(() => claimsPrincipal));
-            return this;
-        }
-
-        public ApiHost WithRebusIdentity()
-        {
-            Container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextProvider>();
-            return this;
-        }
-
-        public Container Container { get; private set; }
-        public IApiHostConfig Config { get; private set; }
-
-        private readonly Assembly[] _applicationAssemblies;
-
-        private sealed class NullValidator<T> : AbstractValidator<T>
-        {
-        }
-
-    }
-    sealed class ExternalPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
-    {
-        private readonly Func<ClaimsPrincipal> _getter;
-
-        public ExternalPrincipalContextProvider(Func<ClaimsPrincipal> getter)
-        {
-            _getter = getter;
-        }
-
-        public ClaimsPrincipal Current => _getter();
+        //Service
+        container.Register<IFileStorageService, FileStorageService>();
     }
 
-    sealed class RebusPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
+    public ApiHost WithServiceIdentity(Func<ClaimsPrincipal> getter)
     {
-        private readonly IMessageContextProvider _messageContextProvider;
-
-        public RebusPrincipalContextProvider(IMessageContextProvider messageContextProvider)
-        {
-            _messageContextProvider = messageContextProvider;
-        }
-
-        public ClaimsPrincipal Current => _messageContextProvider.Current?.IncomingStepContext.Load<ClaimsPrincipal>() ??
-                    throw new InvalidOperationException("MessageContextProvider is null. " +
-                        "This is usually caused by trying to access the 'Current Request User' outside a Message context");
+        Container.RegisterSingleton<IContextProvider<ClaimsPrincipal>>(
+            () => new ExternalPrincipalContextProvider(getter));
+        return this;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
-    public enum Queue
+    public ApiHost WithServiceIdentity(ClaimsPrincipal claimsPrincipal)
     {
-        OneWay,
-        Core,
+        Container.RegisterSingleton<IContextProvider<ClaimsPrincipal>>(
+            () => new ExternalPrincipalContextProvider(() => claimsPrincipal));
+        return this;
     }
 
-    sealed class CoreRequiredScopePolicyHandler : RequiredScopePolicyHandler
+    public ApiHost WithRebusIdentity()
     {
-        public CoreRequiredScopePolicyHandler() : base(AuthConstants.ScopePrefix)
-        {
-        }
+        Container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextProvider>();
+        return this;
+    }
+
+    public Container Container { get; private set; }
+    public IApiHostConfig Config { get; private set; }
+
+    private readonly Assembly[] _applicationAssemblies;
+
+    private sealed class NullValidator<T> : AbstractValidator<T>
+    {
+    }
+
+}
+sealed class ExternalPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
+{
+    private readonly Func<ClaimsPrincipal> _getter;
+
+    public ExternalPrincipalContextProvider(Func<ClaimsPrincipal> getter)
+    {
+        _getter = getter;
+    }
+
+    public ClaimsPrincipal Current => _getter();
+}
+
+sealed class RebusPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
+{
+    private readonly IMessageContextProvider _messageContextProvider;
+
+    public RebusPrincipalContextProvider(IMessageContextProvider messageContextProvider)
+    {
+        _messageContextProvider = messageContextProvider;
+    }
+
+    public ClaimsPrincipal Current => _messageContextProvider.Current?.IncomingStepContext.Load<ClaimsPrincipal>() ??
+                throw new InvalidOperationException("MessageContextProvider is null. " +
+                    "This is usually caused by trying to access the 'Current Request User' outside a Message context");
+}
+
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
+public enum Queue
+{
+    OneWay,
+    Core,
+}
+
+sealed class CoreRequiredScopePolicyHandler : RequiredScopePolicyHandler
+{
+    public CoreRequiredScopePolicyHandler() : base(AuthConstants.ScopePrefix)
+    {
     }
 }

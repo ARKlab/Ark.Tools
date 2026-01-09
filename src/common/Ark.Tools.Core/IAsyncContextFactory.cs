@@ -9,6 +9,8 @@ namespace Ark.Tools.Core
     {
         Task<T> CreateAsync(CancellationToken ctk = default);
     }
+
+
 =======
 namespace Ark.Tools.Core;
 
@@ -16,11 +18,9 @@ public interface IAsyncContextFactory<T> where T : IAsyncContext
 {
     Task<T> CreateAsync(CancellationToken ctk = default);
 >>>>>>> After
+    namespace Ark.Tools.Core;
 
-
-namespace Ark.Tools.Core;
-
-public interface IAsyncContextFactory<T> where T : IAsyncContext
-{
-    Task<T> CreateAsync(CancellationToken ctk = default);
-}
+    public interface IAsyncContextFactory<T> where T : IAsyncContext
+    {
+        Task<T> CreateAsync(CancellationToken ctk = default);
+    }

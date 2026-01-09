@@ -34,14 +34,14 @@ public class FtpClientPoolArxOneFactory : IFtpClientPoolFactory
 
 namespace Ark.Tools.FtpClient;
 
-public class FtpClientPoolArxOneFactory : IFtpClientPoolFactory
-{
-    public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
+    public class FtpClientPoolArxOneFactory : IFtpClientPoolFactory
     {
-        ArgumentNullException.ThrowIfNull(ftpConfig);
-        ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
-        ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
+        public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
+        {
+            ArgumentNullException.ThrowIfNull(ftpConfig);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
 
-        return new FtpClientPoolArxOne(maxPoolSize, ftpConfig);
+            return new FtpClientPoolArxOne(maxPoolSize, ftpConfig);
+        }
     }
-}

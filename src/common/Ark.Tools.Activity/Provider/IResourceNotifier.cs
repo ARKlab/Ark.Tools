@@ -7,6 +7,8 @@ namespace Ark.Tools.Activity.Provider
         string Provider { get; }
         Task Notify(string resourceId, Slice slice);
     }
+
+
 =======
 namespace Ark.Tools.Activity.Provider;
 
@@ -15,12 +17,10 @@ public interface IResourceNotifier
     string Provider { get; }
     Task Notify(string resourceId, Slice slice);
 >>>>>>> After
+    namespace Ark.Tools.Activity.Provider;
 
-
-namespace Ark.Tools.Activity.Provider;
-
-public interface IResourceNotifier
-{
-    string Provider { get; }
-    Task Notify(string resourceId, Slice slice);
-}
+    public interface IResourceNotifier
+    {
+        string Provider { get; }
+        Task Notify(string resourceId, Slice slice);
+    }

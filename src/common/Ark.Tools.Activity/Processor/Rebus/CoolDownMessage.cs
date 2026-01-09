@@ -21,13 +21,13 @@ public class CoolDownMessage
 
     public Slice ActivitySlice { get; set; }
 >>>>>>> After
-namespace Ark.Tools.Activity.Messages;
+    namespace Ark.Tools.Activity.Messages;
 
-public class CoolDownMessage
-{
-    public Resource Resource { get; set; }
+    public class CoolDownMessage
+    {
+        public Resource Resource { get; set; }
 
-    public Slice ResourceSlice { get; set; }
+        public Slice ResourceSlice { get; set; }
 
-    public Slice ActivitySlice { get; set; }
-}
+        public Slice ActivitySlice { get; set; }
+    }

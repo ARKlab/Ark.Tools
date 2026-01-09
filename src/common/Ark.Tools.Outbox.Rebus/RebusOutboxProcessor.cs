@@ -59,25 +59,25 @@ internal sealed class RebusOutboxProcessor : RebusOutboxProcessorCore
 namespace Ark.Tools.Outbox.Rebus;
 
 
-internal sealed class RebusOutboxProcessor : RebusOutboxProcessorCore
-{
-    private readonly IOutboxContextFactory _outboxContextFactory;
-
-    public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory)
-        : base(topMessagesToRetrieve, transport, backoffStrategy, rebusLoggerFactory)
+    internal sealed class RebusOutboxProcessor : RebusOutboxProcessorCore
     {
-        _outboxContextFactory = outboxContextFactory;
-    }
+        private readonly IOutboxContextFactory _outboxContextFactory;
 
-    protected override async Task<bool> _loop(CancellationToken ctk)
-    {
-        bool waitForMessages = true;
-        using (var ctx = _outboxContextFactory.Create())
+        public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory)
+            : base(topMessagesToRetrieve, transport, backoffStrategy, rebusLoggerFactory)
         {
-            waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
-            ctx.Commit();
+            _outboxContextFactory = outboxContextFactory;
         }
 
-        return waitForMessages;
+        protected override async Task<bool> _loop(CancellationToken ctk)
+        {
+            bool waitForMessages = true;
+            using (var ctx = _outboxContextFactory.Create())
+            {
+                waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
+                ctx.Commit();
+            }
+
+            return waitForMessages;
+        }
     }
-}

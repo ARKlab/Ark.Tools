@@ -12,6 +12,8 @@ namespace Ark.Tools.FtpClient.Core
         string Password { get; }
         ProxyTypes Type { get; }
     }
+
+
 =======
 namespace Ark.Tools.FtpClient.Core;
 
@@ -23,15 +25,13 @@ public interface ISocksConfig
     string Password { get; }
     ProxyTypes Type { get; }
 >>>>>>> After
+    namespace Ark.Tools.FtpClient.Core;
 
-
-namespace Ark.Tools.FtpClient.Core;
-
-public interface ISocksConfig
-{
-    string IpAddress { get; }
-    int Port { get; }
-    string UserName { get; }
-    string Password { get; }
-    ProxyTypes Type { get; }
-}
+    public interface ISocksConfig
+    {
+        string IpAddress { get; }
+        int Port { get; }
+        string UserName { get; }
+        string Password { get; }
+        ProxyTypes Type { get; }
+    }

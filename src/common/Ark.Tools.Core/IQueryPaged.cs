@@ -10,6 +10,8 @@ namespace Ark.Tools.Core
         int Limit { get; }
         int Skip { get; set; } // set is needed for page iterators to increment Skip being agnostic from the query itself
     }
+
+
 =======
 namespace Ark.Tools.Core;
 
@@ -19,13 +21,11 @@ public interface IQueryPaged
     int Limit { get; }
     int Skip { get; set; } // set is needed for page iterators to increment Skip being agnostic from the query itself
 >>>>>>> After
+    namespace Ark.Tools.Core;
 
-
-namespace Ark.Tools.Core;
-
-public interface IQueryPaged
-{
-    IEnumerable<string> Sort { get; }
-    int Limit { get; }
-    int Skip { get; set; } // set is needed for page iterators to increment Skip being agnostic from the query itself
-}
+    public interface IQueryPaged
+    {
+        IEnumerable<string> Sort { get; }
+        int Limit { get; }
+        int Skip { get; set; } // set is needed for page iterators to increment Skip being agnostic from the query itself
+    }

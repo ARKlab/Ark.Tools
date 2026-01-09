@@ -110,51 +110,51 @@ public static class PagedExtensions
 
 namespace Ark.Tools.Core;
 
-public static class PagedExtensions
-{
-
-    public static async Task<(IEnumerable<TResult>, long count)> ReadAllPagesAsync<TResult, TQuery>(this TQuery query, Func<TQuery, CancellationToken, Task<PagedResult<TResult>>> funcAsync, CancellationToken ctk = default)
-    where TQuery : IQueryPaged
+    public static class PagedExtensions
     {
-        var data = await QueryAllPagesAsync(query, funcAsync, ctk).ToListAsync(ctk).ConfigureAwait(false);
-        return (data, data.Count + query.Skip);
-    }
 
-    public static async Task<(IEnumerable<TResult>, long count)> ReadAllEnumerableAsync<TResult, TQuery>(
-          this TQuery query
-        , Func<TQuery, CancellationToken, Task<(IEnumerable<TResult> Data, long Count)>> funcAsync
-        , CancellationToken ctk = default)
+        public static async Task<(IEnumerable<TResult>, long count)> ReadAllPagesAsync<TResult, TQuery>(this TQuery query, Func<TQuery, CancellationToken, Task<PagedResult<TResult>>> funcAsync, CancellationToken ctk = default)
         where TQuery : IQueryPaged
-    {
-        var data = await QueryAllPagesAsync(query, async (q, ctk) =>
         {
-            var res = await funcAsync(q, ctk).ConfigureAwait(false);
+            var data = await QueryAllPagesAsync(query, funcAsync, ctk).ToListAsync(ctk).ConfigureAwait(false);
+            return (data, data.Count + query.Skip);
+        }
 
-            return new PagedResult<TResult>
+        public static async Task<(IEnumerable<TResult>, long count)> ReadAllEnumerableAsync<TResult, TQuery>(
+              this TQuery query
+            , Func<TQuery, CancellationToken, Task<(IEnumerable<TResult> Data, long Count)>> funcAsync
+            , CancellationToken ctk = default)
+            where TQuery : IQueryPaged
+        {
+            var data = await QueryAllPagesAsync(query, async (q, ctk) =>
             {
-                Count = res.Count,
-                Data = res.Data,
-                IsCountPartial = false,
-                Limit = query.Limit,
-                Skip = query.Skip,
-            };
-        }, ctk).ToListAsync(ctk).ConfigureAwait(false);
+                var res = await funcAsync(q, ctk).ConfigureAwait(false);
 
-        return (data, data.Count + query.Skip);
-    }
+                return new PagedResult<TResult>
+                {
+                    Count = res.Count,
+                    Data = res.Data,
+                    IsCountPartial = false,
+                    Limit = query.Limit,
+                    Skip = query.Skip,
+                };
+            }, ctk).ToListAsync(ctk).ConfigureAwait(false);
 
-    public static async IAsyncEnumerable<TResult> QueryAllPagesAsync<TQuery, TResult>(this TQuery query,
-                                                                                      Func<TQuery, CancellationToken, Task<PagedResult<TResult>>> executor,
-                                                                                      [EnumeratorCancellation] CancellationToken ctk = default)
-        where TQuery : IQueryPaged
-    {
-        PagedResult<TResult> lastPage;
-        do
+            return (data, data.Count + query.Skip);
+        }
+
+        public static async IAsyncEnumerable<TResult> QueryAllPagesAsync<TQuery, TResult>(this TQuery query,
+                                                                                          Func<TQuery, CancellationToken, Task<PagedResult<TResult>>> executor,
+                                                                                          [EnumeratorCancellation] CancellationToken ctk = default)
+            where TQuery : IQueryPaged
         {
-            lastPage = await executor(query, ctk).ConfigureAwait(false);
-            foreach (var e in lastPage.Data)
-                yield return e;
-            query.Skip = lastPage.Skip + lastPage.Limit;
-        } while (lastPage.Count > query.Skip || (lastPage.IsCountPartial == true && lastPage.Count == query.Skip));
+            PagedResult<TResult> lastPage;
+            do
+            {
+                lastPage = await executor(query, ctk).ConfigureAwait(false);
+                foreach (var e in lastPage.Data)
+                    yield return e;
+                query.Skip = lastPage.Skip + lastPage.Limit;
+            } while (lastPage.Count > query.Skip || (lastPage.IsCountPartial == true && lastPage.Count == query.Skip));
+        }
     }
-}

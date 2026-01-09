@@ -31,21 +31,21 @@ public class DefaultFtpClientFactory : IFtpClientFactory
     {
         return new FtpClient(ftpConfig, 2, _connectionFactory);
 >>>>>>> After
+        // Licensed under the MIT License. See LICENSE file for license information. 
 
-// Licensed under the MIT License. See LICENSE file for license information. 
 namespace Ark.Tools.FtpClient.Core;
 
-public class DefaultFtpClientFactory : IFtpClientFactory
-{
-    private readonly IFtpClientConnectionFactory _connectionFactory;
-
-    public DefaultFtpClientFactory(IFtpClientConnectionFactory connectionFactory)
+    public class DefaultFtpClientFactory : IFtpClientFactory
     {
-        _connectionFactory = connectionFactory;
-    }
+        private readonly IFtpClientConnectionFactory _connectionFactory;
 
-    public IFtpClient Create(FtpConfig ftpConfig)
-    {
-        return new FtpClient(ftpConfig, 2, _connectionFactory);
+        public DefaultFtpClientFactory(IFtpClientConnectionFactory connectionFactory)
+        {
+            _connectionFactory = connectionFactory;
+        }
+
+        public IFtpClient Create(FtpConfig ftpConfig)
+        {
+            return new FtpClient(ftpConfig, 2, _connectionFactory);
+        }
     }
-}

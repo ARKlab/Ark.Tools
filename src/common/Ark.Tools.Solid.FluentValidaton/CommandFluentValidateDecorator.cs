@@ -69,31 +69,31 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid;
 
-public class CommandFluentValidateDecorator<TCommand>
-    : ICommandHandler<TCommand>
-    where TCommand : ICommand
-{
-    private readonly ICommandHandler<TCommand> _decorated;
-    private readonly IValidator<TCommand> _validator;
-
-    public CommandFluentValidateDecorator(ICommandHandler<TCommand> decorated, IValidator<TCommand> validator)
+    public class CommandFluentValidateDecorator<TCommand>
+        : ICommandHandler<TCommand>
+        where TCommand : ICommand
     {
-        ArgumentNullException.ThrowIfNull(decorated);
-        ArgumentNullException.ThrowIfNull(validator);
+        private readonly ICommandHandler<TCommand> _decorated;
+        private readonly IValidator<TCommand> _validator;
 
-        _decorated = decorated;
-        _validator = validator;
-    }
+        public CommandFluentValidateDecorator(ICommandHandler<TCommand> decorated, IValidator<TCommand> validator)
+        {
+            ArgumentNullException.ThrowIfNull(decorated);
+            ArgumentNullException.ThrowIfNull(validator);
 
-    public void Execute(TCommand query)
-    {
-        _validator.ValidateAndThrow(query);
-        _decorated.Execute(query);
-    }
+            _decorated = decorated;
+            _validator = validator;
+        }
 
-    public async Task ExecuteAsync(TCommand query, CancellationToken ctk = default)
-    {
-        await _validator.ValidateAndThrowAsync(query, ctk).ConfigureAwait(false);
-        await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
+        public void Execute(TCommand query)
+        {
+            _validator.ValidateAndThrow(query);
+            _decorated.Execute(query);
+        }
+
+        public async Task ExecuteAsync(TCommand query, CancellationToken ctk = default)
+        {
+            await _validator.ValidateAndThrowAsync(query, ctk).ConfigureAwait(false);
+            await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
+        }
     }
-}

@@ -8,6 +8,8 @@ namespace Ark.Tools.Core
     {
         Guid AuditId { get; set; }
     }
+
+
 =======
 namespace Ark.Tools.Core;
 
@@ -15,11 +17,9 @@ public interface IAuditableEntity
 {
     Guid AuditId { get; set; }
 >>>>>>> After
+    namespace Ark.Tools.Core;
 
-
-namespace Ark.Tools.Core;
-
-public interface IAuditableEntity
-{
-    Guid AuditId { get; set; }
-}
+    public interface IAuditableEntity
+    {
+        Guid AuditId { get; set; }
+    }

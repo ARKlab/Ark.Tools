@@ -33,6 +33,8 @@ namespace Ark.Tools.ResourceWatcher.Testing
         /// </summary>
         public Instant RetrievedAt { get; init; }
     }
+
+
 =======
 namespace Ark.Tools.ResourceWatcher.Testing;
 
@@ -63,34 +65,32 @@ public sealed class StubResource : IResource<StubResourceMetadata>
     /// </summary>
     public Instant RetrievedAt { get; init; }
 >>>>>>> After
+    namespace Ark.Tools.ResourceWatcher.Testing;
 
-
-namespace Ark.Tools.ResourceWatcher.Testing;
-
-
-/// <summary>
-/// Stub resource for testing purposes.
-/// Contains metadata and a data payload.
-/// </summary>
-public sealed class StubResource : IResource<StubResourceMetadata>
-{
-    /// <summary>
-    /// Gets or sets the resource metadata.
-    /// </summary>
-    public required StubResourceMetadata Metadata { get; init; }
 
     /// <summary>
-    /// Gets or sets the resource data.
+    /// Stub resource for testing purposes.
+    /// Contains metadata and a data payload.
     /// </summary>
-    public required string Data { get; init; }
+    public sealed class StubResource : IResource<StubResourceMetadata>
+    {
+        /// <summary>
+        /// Gets or sets the resource metadata.
+        /// </summary>
+        public required StubResourceMetadata Metadata { get; init; }
 
-    /// <summary>
-    /// Gets or sets the resource checksum.
-    /// </summary>
-    public string? CheckSum { get; init; }
+        /// <summary>
+        /// Gets or sets the resource data.
+        /// </summary>
+        public required string Data { get; init; }
 
-    /// <summary>
-    /// Gets or sets the timestamp when the resource was retrieved.
-    /// </summary>
-    public Instant RetrievedAt { get; init; }
-}
+        /// <summary>
+        /// Gets or sets the resource checksum.
+        /// </summary>
+        public string? CheckSum { get; init; }
+
+        /// <summary>
+        /// Gets or sets the timestamp when the resource was retrieved.
+        /// </summary>
+        public Instant RetrievedAt { get; init; }
+    }

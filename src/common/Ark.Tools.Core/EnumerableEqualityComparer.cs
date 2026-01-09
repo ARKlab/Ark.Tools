@@ -81,38 +81,38 @@ public sealed class EnumerableEqualityComparer<T> : IEqualityComparer<IEnumerabl
 
 namespace Ark.Tools.Core;
 
-public sealed class EnumerableEqualityComparer<T> : IEqualityComparer<IEnumerable<T>>
-{
-    private readonly IEqualityComparer<T> _comparer;
-
-    public static readonly EnumerableEqualityComparer<T> Default = new();
-
-    public EnumerableEqualityComparer(IEqualityComparer<T>? comparer = null)
+    public sealed class EnumerableEqualityComparer<T> : IEqualityComparer<IEnumerable<T>>
     {
-        _comparer = comparer ?? EqualityComparer<T>.Default;
+        private readonly IEqualityComparer<T> _comparer;
+
+        public static readonly EnumerableEqualityComparer<T> Default = new();
+
+        public EnumerableEqualityComparer(IEqualityComparer<T>? comparer = null)
+        {
+            _comparer = comparer ?? EqualityComparer<T>.Default;
+        }
+
+        public bool Equals(IEnumerable<T>? first, IEnumerable<T>? second)
+        {
+            if (first == null)
+                return second == null;
+            if (second == null)
+                return false;
+
+            if (ReferenceEquals(first, second))
+                return true;
+
+            return first.SequenceEqual(second, _comparer);
+        }
+
+        public int GetHashCode(IEnumerable<T> enumerable)
+        {
+            HashCode hash = new();
+
+            if (enumerable is not null)
+                foreach (var e in enumerable)
+                    hash.Add(e, _comparer);
+
+            return hash.ToHashCode();
+        }
     }
-
-    public bool Equals(IEnumerable<T>? first, IEnumerable<T>? second)
-    {
-        if (first == null)
-            return second == null;
-        if (second == null)
-            return false;
-
-        if (ReferenceEquals(first, second))
-            return true;
-
-        return first.SequenceEqual(second, _comparer);
-    }
-
-    public int GetHashCode(IEnumerable<T> enumerable)
-    {
-        HashCode hash = new();
-
-        if (enumerable is not null)
-            foreach (var e in enumerable)
-                hash.Add(e, _comparer);
-
-        return hash.ToHashCode();
-    }
-}

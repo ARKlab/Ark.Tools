@@ -97,9 +97,53 @@ public static class Ex
         converters.Add(new LocalDateTimeRangeConverter());
         converters.Add(new ZonedDateTimeRangeConverter());
 >>>>>>> After
-Generic;
+        Generic;
 using System.Linq;
 
+namespace Ark.Tools.Nodatime;
+
+public static class Ex
+        {
+
+            public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
+            {
+                ArgumentNullException.ThrowIfNull(settings);
+
+
+                if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+                    throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+                // Add our converters
+                _addDefaultConverters(settings.Converters);
+
+                // return to allow fluent chaining if desired
+                return settings;
+            }
+
+            public static JsonSerializer ConfigureForNodaTimeRanges(this JsonSerializer serializer)
+            {
+                ArgumentNullException.ThrowIfNull(serializer);
+
+
+                if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+                    throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+                // Add our converters
+                _addDefaultConverters(serializer.Converters);
+
+                // return to allow fluent chaining if desired
+                return serializer;
+            }
+
+            private static void _addDefaultConverters(IList<JsonConverter> converters)
+            {
+                ArgumentNullException.ThrowIfNull(converters);
+
+                converters.Add(new LocalDateRangeConverter());
+                converters.Add(new LocalDateTimeRangeConverter());
+                converters.Add(new ZonedDateTimeRangeConverter());
+            }
+=======
 namespace Ark.Tools.Nodatime;
 
 public static class Ex
@@ -143,4 +187,230 @@ public static class Ex
         converters.Add(new LocalDateTimeRangeConverter());
         converters.Add(new ZonedDateTimeRangeConverter());
     }
+=======
+namespace Ark.Tools.Nodatime;
+
+public static class Ex
+{
+
+public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
+{
+    ArgumentNullException.ThrowIfNull(settings);
+
+
+    if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+        throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+    // Add our converters
+    _addDefaultConverters(settings.Converters);
+
+    // return to allow fluent chaining if desired
+    return settings;
 }
+
+public static JsonSerializer ConfigureForNodaTimeRanges(this JsonSerializer serializer)
+{
+    ArgumentNullException.ThrowIfNull(serializer);
+
+
+    if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+        throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+    // Add our converters
+    _addDefaultConverters(serializer.Converters);
+
+    // return to allow fluent chaining if desired
+    return serializer;
+}
+
+private static void _addDefaultConverters(IList<JsonConverter> converters)
+{
+    ArgumentNullException.ThrowIfNull(converters);
+
+    converters.Add(new LocalDateRangeConverter());
+    converters.Add(new LocalDateTimeRangeConverter());
+    converters.Add(new ZonedDateTimeRangeConverter());
+>>>>>>> After
+            Generic;
+using System.Linq;
+
+namespace Ark.Tools.Nodatime;
+
+public static class Ex
+            {
+
+                public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
+                {
+                    ArgumentNullException.ThrowIfNull(settings);
+
+
+                    if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+                        throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+                    // Add our converters
+                    _addDefaultConverters(settings.Converters);
+
+                    // return to allow fluent chaining if desired
+                    return settings;
+                }
+
+                public static JsonSerializer ConfigureForNodaTimeRanges(this JsonSerializer serializer)
+                {
+                    ArgumentNullException.ThrowIfNull(serializer);
+
+
+                    if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+                        throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+                    // Add our converters
+                    _addDefaultConverters(serializer.Converters);
+
+                    // return to allow fluent chaining if desired
+                    return serializer;
+                }
+
+                private static void _addDefaultConverters(IList<JsonConverter> converters)
+                {
+                    ArgumentNullException.ThrowIfNull(converters);
+
+                    converters.Add(new LocalDateRangeConverter());
+                    converters.Add(new LocalDateTimeRangeConverter());
+                    converters.Add(new ZonedDateTimeRangeConverter());
+                }
+>>>>>>> After
+
+<<<<<<< TODO: Unmerged change from project 'Ark.Tools.Nodatime.Json(net10.0)', Before:
+namespace Ark.Tools.Nodatime;
+
+    public static class Ex
+    {
+
+        public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
+        {
+            ArgumentNullException.ThrowIfNull(settings);
+
+
+            if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+                throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+            // Add our converters
+            _addDefaultConverters(settings.Converters);
+
+            // return to allow fluent chaining if desired
+            return settings;
+        }
+
+        public static JsonSerializer ConfigureForNodaTimeRanges(this JsonSerializer serializer)
+        {
+            ArgumentNullException.ThrowIfNull(serializer);
+
+
+            if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+                throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+            // Add our converters
+            _addDefaultConverters(serializer.Converters);
+
+            // return to allow fluent chaining if desired
+            return serializer;
+        }
+
+        private static void _addDefaultConverters(IList<JsonConverter> converters)
+        {
+            ArgumentNullException.ThrowIfNull(converters);
+
+            converters.Add(new LocalDateRangeConverter());
+            converters.Add(new LocalDateTimeRangeConverter());
+            converters.Add(new ZonedDateTimeRangeConverter());
+        }
+=======
+namespace Ark.Tools.Nodatime;
+
+public static class Ex
+{
+
+public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
+{
+    ArgumentNullException.ThrowIfNull(settings);
+
+
+    if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+        throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+    // Add our converters
+    _addDefaultConverters(settings.Converters);
+
+    // return to allow fluent chaining if desired
+    return settings;
+}
+
+public static JsonSerializer ConfigureForNodaTimeRanges(this JsonSerializer serializer)
+{
+    ArgumentNullException.ThrowIfNull(serializer);
+
+
+    if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+        throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+    // Add our converters
+    _addDefaultConverters(serializer.Converters);
+
+    // return to allow fluent chaining if desired
+    return serializer;
+}
+
+private static void _addDefaultConverters(IList<JsonConverter> converters)
+{
+    ArgumentNullException.ThrowIfNull(converters);
+
+    converters.Add(new LocalDateRangeConverter());
+    converters.Add(new LocalDateTimeRangeConverter());
+    converters.Add(new ZonedDateTimeRangeConverter());
+>>>>>>> After
+        Generic;
+using System.Linq;
+
+namespace Ark.Tools.Nodatime;
+
+public static class Ex
+        {
+
+            public static JsonSerializerSettings ConfigureForNodaTimeRanges(this JsonSerializerSettings settings)
+            {
+                ArgumentNullException.ThrowIfNull(settings);
+
+
+                if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+                    throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+                // Add our converters
+                _addDefaultConverters(settings.Converters);
+
+                // return to allow fluent chaining if desired
+                return settings;
+            }
+
+            public static JsonSerializer ConfigureForNodaTimeRanges(this JsonSerializer serializer)
+            {
+                ArgumentNullException.ThrowIfNull(serializer);
+
+
+                if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+                    throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
+
+                // Add our converters
+                _addDefaultConverters(serializer.Converters);
+
+                // return to allow fluent chaining if desired
+                return serializer;
+            }
+
+            private static void _addDefaultConverters(IList<JsonConverter> converters)
+            {
+                ArgumentNullException.ThrowIfNull(converters);
+
+                converters.Add(new LocalDateRangeConverter());
+                converters.Add(new LocalDateTimeRangeConverter());
+                converters.Add(new ZonedDateTimeRangeConverter());
+            }
+        }

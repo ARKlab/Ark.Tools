@@ -69,33 +69,33 @@ public class ArkSkipUselessSpamTelemetryProcessor : ITelemetryProcessor
 
 namespace Ark.Tools.ApplicationInsights;
 
-public class ArkSkipUselessSpamTelemetryProcessor : ITelemetryProcessor
-{
-    private readonly ITelemetryProcessor _next;
-
-    public ArkSkipUselessSpamTelemetryProcessor(ITelemetryProcessor next)
+    public class ArkSkipUselessSpamTelemetryProcessor : ITelemetryProcessor
     {
-        _next = next;
-    }
+        private readonly ITelemetryProcessor _next;
 
-    public void Process(ITelemetry item)
-    {
-        if (item is RequestTelemetry r
-            && r.Success == true
-            && r.Name?.StartsWith("OPTIONS", System.StringComparison.OrdinalIgnoreCase) == true)
-            return;
-
-        if (item is DependencyTelemetry d
-            && d.Success == true)
+        public ArkSkipUselessSpamTelemetryProcessor(ITelemetryProcessor next)
         {
-            if (d.Name == "Receive" && d.Type == "Azure Service Bus")
-                return;
-            if (d.Name.StartsWith("ServiceBusReceiver.", System.StringComparison.OrdinalIgnoreCase) && d.Type == "Azure Service Bus")
-                return;
-            if (d.Type == "SQL" && d.Data == "Commit")
-                return;
+            _next = next;
         }
 
-        _next.Process(item);
+        public void Process(ITelemetry item)
+        {
+            if (item is RequestTelemetry r
+                && r.Success == true
+                && r.Name?.StartsWith("OPTIONS", System.StringComparison.OrdinalIgnoreCase) == true)
+                return;
+
+            if (item is DependencyTelemetry d
+                && d.Success == true)
+            {
+                if (d.Name == "Receive" && d.Type == "Azure Service Bus")
+                    return;
+                if (d.Name.StartsWith("ServiceBusReceiver.", System.StringComparison.OrdinalIgnoreCase) && d.Type == "Azure Service Bus")
+                    return;
+                if (d.Type == "SQL" && d.Data == "Commit")
+                    return;
+            }
+
+            _next.Process(item);
+        }
     }
-}

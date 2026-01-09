@@ -1,8 +1,7 @@
-﻿namespace Ark.Reference.Common.Services.FileStorageService
+﻿namespace Ark.Reference.Common.Services.FileStorageService;
+
+public interface IFileStorageServiceConfig
 {
-    public interface IFileStorageServiceConfig
-    {
-        string? StorageAccount { get; }
-        string? StoragePrefix { get; }
-    }
+    string? StorageAccount { get; }
+    string? StoragePrefix { get; }
 }

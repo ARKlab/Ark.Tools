@@ -85,6 +85,8 @@ namespace Ark.Tools.FtpClient.SftpClient
             return DateTime.MinValue;
         }
     }
+
+
 =======
 namespace Ark.Tools.FtpClient.SftpClient;
 
@@ -167,71 +169,69 @@ internal static class FtpPathExtensions
         return DateTime.MinValue;
     }
 >>>>>>> After
+    namespace Ark.Tools.FtpClient.SftpClient;
 
-
-namespace Ark.Tools.FtpClient.SftpClient;
-
-internal static class FtpPathExtensions
-{
-
-    public static string GetFtpPath(this string path)
+    internal static class FtpPathExtensions
     {
-        if (String.IsNullOrEmpty(path))
-            return "./";
 
-        path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
-        if (path.Length == 0)
-            path = "./";
-
-        return path;
-    }
-
-    public static string GetFtpPath(this string path, params string[] segments)
-    {
-        if (String.IsNullOrEmpty(path))
-            path = "./";
-
-        foreach (string part in segments)
+        public static string GetFtpPath(this string path)
         {
-            if (part != null)
-            {
-                if (path.Length > 0 && !path.EndsWith('/'))
-                    path += "/";
-                path += Regex.Replace(part.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
-            }
+            if (String.IsNullOrEmpty(path))
+                return "./";
+
+            path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
+            if (path.Length == 0)
+                path = "./";
+
+            return path;
         }
 
-        path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
-        if (path.Length == 0)
-            path = "./";
+        public static string GetFtpPath(this string path, params string[] segments)
+        {
+            if (String.IsNullOrEmpty(path))
+                path = "./";
 
-        return path;
-    }
+            foreach (string part in segments)
+            {
+                if (part != null)
+                {
+                    if (path.Length > 0 && !path.EndsWith('/'))
+                        path += "/";
+                    path += Regex.Replace(part.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
+                }
+            }
 
-    public static string? GetFtpFileName(this string? path)
-    {
-        var tpath = (path == null ? null : path);
-        int lastslash = -1;
+            path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
+            if (path.Length == 0)
+                path = "./";
 
-        if (tpath == null)
-            return null;
+            return path;
+        }
 
-        lastslash = tpath.LastIndexOf('/');
-        if (lastslash < 0)
-            return tpath;
+        public static string? GetFtpFileName(this string? path)
+        {
+            var tpath = (path == null ? null : path);
+            int lastslash = -1;
 
-        lastslash += 1;
-        if (lastslash >= tpath.Length)
-            return tpath;
+            if (tpath == null)
+                return null;
 
-        return tpath[lastslash..];
-    }
+            lastslash = tpath.LastIndexOf('/');
+            if (lastslash < 0)
+                return tpath;
 
-    public static DateTime GetFtpDate(this string date, DateTimeStyles style)
-    {
-        string[] formats =
-        [
-            "yyyyMMddHHmmss",
+            lastslash += 1;
+            if (lastslash >= tpath.Length)
+                return tpath;
+
+            return tpath[lastslash..];
+        }
+
+        public static DateTime GetFtpDate(this string date, DateTimeStyles style)
+        {
+            string[] formats =
+            [
+                "yyyyMMddHHmmss",
             "yyyyMMddHHmmss.fff",
             "MMM dd  yyyy",
             "MMM  d  yyyy",
@@ -239,14 +239,14 @@ internal static class FtpPathExtensions
             "MMM  d HH:mm",
             "MM-dd-yy  hh:mmtt",
             "MM-dd-yyyy  hh:mmtt"
-        ];
-        DateTime parsed;
+            ];
+            DateTime parsed;
 
-        if (DateTime.TryParseExact(date, formats, CultureInfo.InvariantCulture, style, out parsed))
-        {
-            return parsed;
+            if (DateTime.TryParseExact(date, formats, CultureInfo.InvariantCulture, style, out parsed))
+            {
+                return parsed;
+            }
+
+            return DateTime.MinValue;
         }
-
-        return DateTime.MinValue;
     }
-}

@@ -7,6 +7,8 @@ namespace Ark.Tools.Outbox
     {
         Task<IOutboxAsyncContext> CreateAsync(CancellationToken ctk = default);
     }
+
+
 =======
 namespace Ark.Tools.Outbox;
 
@@ -14,11 +16,9 @@ public interface IOutboxAsyncContextFactory
 {
     Task<IOutboxAsyncContext> CreateAsync(CancellationToken ctk = default);
 >>>>>>> After
+    namespace Ark.Tools.Outbox;
 
-
-namespace Ark.Tools.Outbox;
-
-public interface IOutboxAsyncContextFactory
-{
-    Task<IOutboxAsyncContext> CreateAsync(CancellationToken ctk = default);
-}
+    public interface IOutboxAsyncContextFactory
+    {
+        Task<IOutboxAsyncContext> CreateAsync(CancellationToken ctk = default);
+    }

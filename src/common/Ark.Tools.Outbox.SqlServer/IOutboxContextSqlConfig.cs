@@ -15,10 +15,10 @@ public interface IOutboxContextSqlConfig
     string TableName { get; }
     string SchemaName { get; }
 >>>>>>> After
-namespace Ark.Tools.Outbox.SqlServer;
+    namespace Ark.Tools.Outbox.SqlServer;
 
-public interface IOutboxContextSqlConfig
-{
-    string TableName { get; }
-    string SchemaName { get; }
-}
+    public interface IOutboxContextSqlConfig
+    {
+        string TableName { get; }
+        string SchemaName { get; }
+    }

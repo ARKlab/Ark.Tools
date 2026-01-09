@@ -27,6 +27,8 @@ namespace Ark.Tools.Core.BusinessRuleViolation
         }
 
     }
+
+
 =======
 namespace Ark.Tools.Core.BusinessRuleViolation;
 
@@ -52,30 +54,28 @@ public sealed class BusinessRuleViolationException : Exception
         get => (Data["BusinessRuleViolation"] as BusinessRuleViolation)!;
     }
 >>>>>>> After
+    namespace Ark.Tools.Core.BusinessRuleViolation;
 
-
-namespace Ark.Tools.Core.BusinessRuleViolation;
-
-[Serializable]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "RCS1194:Implement exception constructors.", Justification = "Created from BusinessRuleViolation")]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Created from BusinessRuleViolation")]
-public sealed class BusinessRuleViolationException : Exception
-{
-    public BusinessRuleViolationException(BusinessRuleViolation br)
-        : base(br.Detail)
+    [Serializable]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "RCS1194:Implement exception constructors.", Justification = "Created from BusinessRuleViolation")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Created from BusinessRuleViolation")]
+    public sealed class BusinessRuleViolationException : Exception
     {
-        Data.Add("BusinessRuleViolation", br);
-    }
+        public BusinessRuleViolationException(BusinessRuleViolation br)
+            : base(br.Detail)
+        {
+            Data.Add("BusinessRuleViolation", br);
+        }
 
-    public BusinessRuleViolationException(BusinessRuleViolation br, Exception innerException)
-        : base(br.Detail, innerException)
-    {
-        Data.Add("BusinessRuleViolation", br);
-    }
+        public BusinessRuleViolationException(BusinessRuleViolation br, Exception innerException)
+            : base(br.Detail, innerException)
+        {
+            Data.Add("BusinessRuleViolation", br);
+        }
 
-    public BusinessRuleViolation BusinessRuleViolation
-    {
-        get => (Data["BusinessRuleViolation"] as BusinessRuleViolation)!;
-    }
+        public BusinessRuleViolation BusinessRuleViolation
+        {
+            get => (Data["BusinessRuleViolation"] as BusinessRuleViolation)!;
+        }
 
-}
+    }

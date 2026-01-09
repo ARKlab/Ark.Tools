@@ -17,11 +17,11 @@ public interface IEventEnvelope<out T>
     T Event { get; }
     IMetadata Metadata { get; }
 >>>>>>> After
-namespace Ark.Tools.EventSourcing.Events;
+    namespace Ark.Tools.EventSourcing.Events;
 
-public interface IEventEnvelope<out T>
-    where T : class, IEvent
-{
-    T Event { get; }
-    IMetadata Metadata { get; }
-}
+    public interface IEventEnvelope<out T>
+        where T : class, IEvent
+    {
+        T Event { get; }
+        IMetadata Metadata { get; }
+    }

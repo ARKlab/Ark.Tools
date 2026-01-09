@@ -37,17 +37,17 @@ public sealed class ResourceWatcherTelemetryModule : ITelemetryModule, IDisposab
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights;
 
-public sealed class ResourceWatcherTelemetryModule : ITelemetryModule, IDisposable
-{
-    private ResourceWatcherDiagnosticListener? _diagnosticListener;
-
-    public void Dispose()
+    public sealed class ResourceWatcherTelemetryModule : ITelemetryModule, IDisposable
     {
-        _diagnosticListener?.Dispose();
-    }
+        private ResourceWatcherDiagnosticListener? _diagnosticListener;
 
-    public void Initialize(TelemetryConfiguration configuration)
-    {
-        _diagnosticListener = new ResourceWatcherDiagnosticListener(configuration);
+        public void Dispose()
+        {
+            _diagnosticListener?.Dispose();
+        }
+
+        public void Initialize(TelemetryConfiguration configuration)
+        {
+            _diagnosticListener = new ResourceWatcherDiagnosticListener(configuration);
+        }
     }
-}

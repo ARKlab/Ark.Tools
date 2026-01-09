@@ -10,6 +10,8 @@ namespace Ark.Tools.Nodatime
     {
         public NullableOffsetDateTimeConverter() : base(typeof(OffsetDateTime?)) { }
     }
+
+
 =======
 namespace Ark.Tools.Nodatime;
 
@@ -17,11 +19,9 @@ public class NullableOffsetDateTimeConverter : NullableConverter
 {
     public NullableOffsetDateTimeConverter() : base(typeof(OffsetDateTime?)) { }
 >>>>>>> After
+    namespace Ark.Tools.Nodatime;
 
-
-namespace Ark.Tools.Nodatime;
-
-public class NullableOffsetDateTimeConverter : NullableConverter
-{
-    public NullableOffsetDateTimeConverter() : base(typeof(OffsetDateTime?)) { }
-}
+    public class NullableOffsetDateTimeConverter : NullableConverter
+    {
+        public NullableOffsetDateTimeConverter() : base(typeof(OffsetDateTime?)) { }
+    }

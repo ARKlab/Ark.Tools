@@ -59,7 +59,7 @@ namespace Ark.Tools.ResourceWatcher
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
             ArgumentOutOfRangeException.ThrowIfGreaterThan(tenant.Length, 128, nameof(tenant));
-            
+
             if (resourceIds != null)
             {
                 foreach (var r in resourceIds)
@@ -617,103 +617,103 @@ END
 namespace Ark.Tools.ResourceWatcher;
 
 
-public interface ISqlStateProviderConfig
-{
-    string DbConnectionString { get; }
-}
-
-public class SqlStateProvider : IStateProvider
-{
-    private readonly ISqlStateProviderConfig _config;
-    private readonly JsonSerializerSettings _jsonSerializerSettings;
-    private readonly IDbConnectionManager _connManager;
-
-    private const string _queryState = "SELECT [Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [ModifiedSourcesJson] FROM [State] WHERE [Tenant] = @tenant";
-
-    public SqlStateProvider(ISqlStateProviderConfig config, IDbConnectionManager connManager)
+    public interface ISqlStateProviderConfig
     {
-        ArgumentNullException.ThrowIfNull(config);
-        ArgumentNullException.ThrowIfNull(connManager);
-        ArgumentException.ThrowIfNullOrWhiteSpace(config.DbConnectionString);
-
-        _connManager = connManager;
-        _config = config;
-        _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.Instance;
+        string DbConnectionString { get; }
     }
 
-    sealed class EJ
+    public class SqlStateProvider : IStateProvider
     {
-        public string? ExtensionsJson { get; set; }
-    }
-    sealed class MMJ
-    {
-        public string? ModifiedSourcesJson { get; set; }
-    }
+        private readonly ISqlStateProviderConfig _config;
+        private readonly JsonSerializerSettings _jsonSerializerSettings;
+        private readonly IDbConnectionManager _connManager;
 
-    public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(tenant.Length, 128, nameof(tenant));
+        private const string _queryState = "SELECT [Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [ModifiedSourcesJson] FROM [State] WHERE [Tenant] = @tenant";
 
-        if (resourceIds != null)
+        public SqlStateProvider(ISqlStateProviderConfig config, IDbConnectionManager connManager)
         {
-            foreach (var r in resourceIds)
+            ArgumentNullException.ThrowIfNull(config);
+            ArgumentNullException.ThrowIfNull(connManager);
+            ArgumentException.ThrowIfNullOrWhiteSpace(config.DbConnectionString);
+
+            _connManager = connManager;
+            _config = config;
+            _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.Instance;
+        }
+
+        sealed class EJ
+        {
+            public string? ExtensionsJson { get; set; }
+        }
+        sealed class MMJ
+        {
+            public string? ModifiedSourcesJson { get; set; }
+        }
+
+        public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(tenant.Length, 128, nameof(tenant));
+
+            if (resourceIds != null)
             {
-                ArgumentException.ThrowIfNullOrWhiteSpace(r);
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(r.Length, 300, nameof(r));
+                foreach (var r in resourceIds)
+                {
+                    ArgumentException.ThrowIfNullOrWhiteSpace(r);
+                    ArgumentOutOfRangeException.ThrowIfGreaterThan(r.Length, 300, nameof(r));
+                }
+            }
+
+            ResourceState map(ResourceState r, EJ e, MMJ m)
+            {
+                if (e?.ExtensionsJson != null)
+                    r.Extensions = JsonConvert.DeserializeObject(e.ExtensionsJson, _jsonSerializerSettings);
+
+                if (m?.ModifiedSourcesJson != null)
+                    r.ModifiedSources = JsonConvert.DeserializeObject<Dictionary<string, LocalDateTime>>(m.ModifiedSourcesJson, _jsonSerializerSettings);
+
+                return r;
+            }
+
+            var c = await _connManager.GetAsync(_config.DbConnectionString, ctk).ConfigureAwait(false);
+            await using (c.ConfigureAwait(false))
+            {
+                if (resourceIds == null)
+                    return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState
+                        , map
+                        , param: new { tenant = tenant }
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
+                else if (resourceIds.Length == 0)
+                    return Enumerable.Empty<ResourceState>(); //Empty array should just return empty result
+                else if (resourceIds.Length < 2000) //limit is 2100
+                    return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in @resources"
+                        , map
+                        , param: new { tenant = tenant, resources = resourceIds }
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
+                else
+                    return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
+                        , map
+                        , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
+                        , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
             }
         }
 
-        ResourceState map(ResourceState r, EJ e, MMJ m)
+        public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
         {
-            if (e?.ExtensionsJson != null)
-                r.Extensions = JsonConvert.DeserializeObject(e.ExtensionsJson, _jsonSerializerSettings);
-
-            if (m?.ModifiedSourcesJson != null)
-                r.ModifiedSources = JsonConvert.DeserializeObject<Dictionary<string, LocalDateTime>>(m.ModifiedSourcesJson, _jsonSerializerSettings);
-
-            return r;
-        }
-
-        var c = await _connManager.GetAsync(_config.DbConnectionString, ctk).ConfigureAwait(false);
-        await using (c.ConfigureAwait(false))
-        {
-            if (resourceIds == null)
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState
-                    , map
-                    , param: new { tenant = tenant }
-                    , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
-            else if (resourceIds.Length == 0)
-                return Enumerable.Empty<ResourceState>(); //Empty array should just return empty result
-            else if (resourceIds.Length < 2000) //limit is 2100
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in @resources"
-                    , map
-                    , param: new { tenant = tenant, resources = resourceIds }
-                    , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
-            else
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
-                    , map
-                    , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
-                    , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
-        }
-    }
-
-    public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
-    {
-        var st = states.AsList();
-        foreach (var s in st)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(s.Tenant);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(s.Tenant.Length, 128, nameof(s.Tenant));
-            ArgumentException.ThrowIfNullOrWhiteSpace(s.ResourceId);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(s.ResourceId.Length, 300, nameof(s.ResourceId));
-        }
+            var st = states.AsList();
+            foreach (var s in st)
+            {
+                ArgumentException.ThrowIfNullOrWhiteSpace(s.Tenant);
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(s.Tenant.Length, 128, nameof(s.Tenant));
+                ArgumentException.ThrowIfNullOrWhiteSpace(s.ResourceId);
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(s.ResourceId.Length, 300, nameof(s.ResourceId));
+            }
 
 
-        var c = await _connManager.GetAsync(_config.DbConnectionString, ctk).ConfigureAwait(false);
-        await using (c.ConfigureAwait(false))
-        {
-            var q = @"
+            var c = await _connManager.GetAsync(_config.DbConnectionString, ctk).ConfigureAwait(false);
+            await using (c.ConfigureAwait(false))
+            {
+                var q = @"
 MERGE INTO [State] AS tgt
 USING @table AS src
     ON 1=1
@@ -735,29 +735,29 @@ WHEN MATCHED THEN
 ;
 ";
 
-            await c.ExecuteAsync(q, new
-            {
-                table = st.Select(x => new
+                await c.ExecuteAsync(q, new
                 {
-                    x.Tenant,
-                    x.ResourceId,
-                    Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
-                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings),
-                    LastEvent = x.LastEvent.ToDateTimeUtc(),
-                    RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
-                    x.RetryCount,
-                    x.CheckSum,
-                    ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
-                    Exception = x.LastException?.ToString()
-                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]")
-            }).ConfigureAwait(false);
+                    table = st.Select(x => new
+                    {
+                        x.Tenant,
+                        x.ResourceId,
+                        Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
+                        ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings),
+                        LastEvent = x.LastEvent.ToDateTimeUtc(),
+                        RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
+                        x.RetryCount,
+                        x.CheckSum,
+                        ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
+                        Exception = x.LastException?.ToString()
+                    }).ToDataTable().AsTableValuedParameter("[udt_State_v2]")
+                }).ConfigureAwait(false);
+            }
         }
-    }
 
-    public void EnsureTableAreCreated()
-    {
-        using var c = _connManager.Get(_config.DbConnectionString);
-        var q = @"
+        public void EnsureTableAreCreated()
+        {
+            using var c = _connManager.Get(_config.DbConnectionString);
+            var q = @"
 IF OBJECT_ID('State', 'U') IS NULL
 BEGIN
     CREATE TABLE [State](
@@ -909,6 +909,6 @@ BEGIN
 END 
 ";
 
-        c.Execute(q);
+            c.Execute(q);
+        }
     }
-}

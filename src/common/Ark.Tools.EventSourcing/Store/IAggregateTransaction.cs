@@ -18,6 +18,8 @@ namespace Ark.Tools.EventSourcing.Store
 
         Task SaveChangesAsync(CancellationToken ctk = default);
     }
+
+
 =======
 namespace Ark.Tools.EventSourcing.Store;
 
@@ -32,18 +34,16 @@ public interface IAggregateTransaction<TAggregateRoot, TAggregateState, TAggrega
 
     Task SaveChangesAsync(CancellationToken ctk = default);
 >>>>>>> After
+    namespace Ark.Tools.EventSourcing.Store;
 
+    public interface IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate> : IDisposable
+        where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
+        where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
+        where TAggregate : IAggregate
+    {
+        TAggregateRoot Aggregate { get; }
 
-namespace Ark.Tools.EventSourcing.Store;
+        IEnumerable<AggregateEventEnvelope<TAggregate>> History { get; }
 
-public interface IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate> : IDisposable
-    where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
-    where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
-    where TAggregate : IAggregate
-{
-    TAggregateRoot Aggregate { get; }
-
-    IEnumerable<AggregateEventEnvelope<TAggregate>> History { get; }
-
-    Task SaveChangesAsync(CancellationToken ctk = default);
-}
+        Task SaveChangesAsync(CancellationToken ctk = default);
+    }

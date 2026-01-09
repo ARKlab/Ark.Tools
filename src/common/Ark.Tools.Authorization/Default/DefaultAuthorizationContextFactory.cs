@@ -21,10 +21,10 @@ public class DefaultAuthorizationContextFactory : IAuthorizationContextFactory
 
 namespace Ark.Tools.Authorization;
 
-public class DefaultAuthorizationContextFactory : IAuthorizationContextFactory
-{
-    public AuthorizationContext Create(IAuthorizationPolicy policy, ClaimsPrincipal user, object? resource)
+    public class DefaultAuthorizationContextFactory : IAuthorizationContextFactory
     {
-        return new AuthorizationContext(policy, user, resource);
+        public AuthorizationContext Create(IAuthorizationPolicy policy, ClaimsPrincipal user, object? resource)
+        {
+            return new AuthorizationContext(policy, user, resource);
+        }
     }
-}

@@ -17,6 +17,8 @@ namespace Ark.Tools.EventSourcing.Store
     {
         TEvent? Event { get; }
     }
+
+
 =======
 namespace Ark.Tools.EventSourcing.Store;
 
@@ -33,20 +35,18 @@ public interface IOutboxEvent<TEvent> : IOutboxEvent
 {
     TEvent? Event { get; }
 >>>>>>> After
+    namespace Ark.Tools.EventSourcing.Store;
+
+    public interface IOutboxEvent
+    {
+        string Id { get; }
+        Dictionary<string, string> Metadata { get; }
+        void SetEvent(object @event);
+    }
 
 
-namespace Ark.Tools.EventSourcing.Store;
-
-public interface IOutboxEvent
-{
-    string Id { get; }
-    Dictionary<string, string> Metadata { get; }
-    void SetEvent(object @event);
-}
-
-
-public interface IOutboxEvent<TEvent> : IOutboxEvent
-    where TEvent : class, IDomainEvent
-{
-    TEvent? Event { get; }
-}
+    public interface IOutboxEvent<TEvent> : IOutboxEvent
+        where TEvent : class, IDomainEvent
+    {
+        TEvent? Event { get; }
+    }

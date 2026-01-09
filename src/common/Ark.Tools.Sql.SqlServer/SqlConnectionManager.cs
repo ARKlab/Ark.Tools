@@ -103,48 +103,48 @@ public class SqlConnectionManager : IDbConnectionManager
 
 namespace Ark.Tools.Sql.SqlServer;
 
-public class SqlConnectionManager : IDbConnectionManager
-{
-    protected static void OnInfoMessage(object sender, SqlInfoMessageEventArgs ev)
+    public class SqlConnectionManager : IDbConnectionManager
     {
-        SqlExceptionHandler.LogSqlInfoMessage(ev);
-    }
-
-    public DbConnection Get(string connectionString)
-    {
-        var conn = Build(connectionString);
-        try
+        protected static void OnInfoMessage(object sender, SqlInfoMessageEventArgs ev)
         {
-            conn.Open();
+            SqlExceptionHandler.LogSqlInfoMessage(ev);
+        }
+
+        public DbConnection Get(string connectionString)
+        {
+            var conn = Build(connectionString);
+            try
+            {
+                conn.Open();
+                return conn;
+            }
+            catch
+            {
+                conn?.Dispose();
+                throw;
+            }
+        }
+
+        public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
+        {
+            var conn = Build(connectionString);
+            try
+            {
+                await conn.OpenAsync(ctk).ConfigureAwait(false);
+                return conn;
+            }
+            catch
+            {
+                conn?.Dispose();
+                throw;
+            }
+        }
+
+        protected virtual SqlConnection Build(string connectionString)
+        {
+            var conn = new SqlConnection(connectionString);
+            conn.InfoMessage += new SqlInfoMessageEventHandler(OnInfoMessage);
+            conn.FireInfoMessageEventOnUserErrors = false;
             return conn;
         }
-        catch
-        {
-            conn?.Dispose();
-            throw;
-        }
     }
-
-    public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
-    {
-        var conn = Build(connectionString);
-        try
-        {
-            await conn.OpenAsync(ctk).ConfigureAwait(false);
-            return conn;
-        }
-        catch
-        {
-            conn?.Dispose();
-            throw;
-        }
-    }
-
-    protected virtual SqlConnection Build(string connectionString)
-    {
-        var conn = new SqlConnection(connectionString);
-        conn.InfoMessage += new SqlInfoMessageEventHandler(OnInfoMessage);
-        conn.FireInfoMessageEventOnUserErrors = false;
-        return conn;
-    }
-}

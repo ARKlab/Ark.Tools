@@ -19,12 +19,12 @@ public enum InstantHandlerType
     Int64Milliseconds = 2,
     Int64Seconds = 3,
 >>>>>>> After
-namespace Ark.Tools.Nodatime.Dapper;
+    namespace Ark.Tools.Nodatime.Dapper;
 
-public enum InstantHandlerType
-{
-    DateTime = 0,
-    Int64Ticks = 1,
-    Int64Milliseconds = 2,
-    Int64Seconds = 3,
-}
+    public enum InstantHandlerType
+    {
+        DateTime = 0,
+        Int64Ticks = 1,
+        Int64Milliseconds = 2,
+        Int64Seconds = 3,
+    }

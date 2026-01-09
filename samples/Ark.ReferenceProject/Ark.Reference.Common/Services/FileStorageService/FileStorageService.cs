@@ -7,66 +7,65 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Common.Services.FileStorageService
-{
-    public class FileStorageService
-        : IFileStorageService
-    {
-        private readonly IFileStorageServiceConfig _config;
-        private readonly BlobContainerClient _fileClient;
+namespace Ark.Reference.Common.Services.FileStorageService;
 
-        public FileStorageService(IFileStorageServiceConfig config)
-        {
+public class FileStorageService
+    : IFileStorageService
+{
+    private readonly IFileStorageServiceConfig _config;
+    private readonly BlobContainerClient _fileClient;
+
+    public FileStorageService(IFileStorageServiceConfig config)
+    {
 #pragma warning disable MA0015 // Specify the parameter name in ArgumentException
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StoragePrefix, nameof(config.StoragePrefix));
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StorageAccount, nameof(config.StorageAccount));
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StoragePrefix, nameof(config.StoragePrefix));
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(config.StorageAccount, nameof(config.StorageAccount));
 #pragma warning restore MA0015 // Specify the parameter name in ArgumentException
 
-            _config = config;
+        _config = config;
 
-            // there is no straigh support for switching between AccountKey and MSI supported by Blob library
-            var client = new BlobServiceClient(_config.StorageAccount);
+        // there is no straigh support for switching between AccountKey and MSI supported by Blob library
+        var client = new BlobServiceClient(_config.StorageAccount);
 
-            // in case of Development or Local
-            if (client.Uri.Scheme == "http")
-            { }
-            // in case credentials are supplied
-            else if (_config.StorageAccount.Contains("AccountKey", StringComparison.OrdinalIgnoreCase) || _config.StorageAccount.Contains("SharedAccessSignature", StringComparison.OrdinalIgnoreCase))
-            { }
-            else // anon, assume MSI
-            {
-                client = new BlobServiceClient(client.Uri, new DefaultAzureCredential());
-            }
-
-            _fileClient = client.GetBlobContainerClient(_config.StoragePrefix.ToLowerInvariant());
-        }
-
-        public Task SaveFileAsync(Guid guid, string filename, Stream fileContent, CancellationToken ctk = default)
+        // in case of Development or Local
+        if (client.Uri.Scheme == "http")
+        { }
+        // in case credentials are supplied
+        else if (_config.StorageAccount.Contains("AccountKey", StringComparison.OrdinalIgnoreCase) || _config.StorageAccount.Contains("SharedAccessSignature", StringComparison.OrdinalIgnoreCase))
+        { }
+        else // anon, assume MSI
         {
-            var blob = _getBlobFor(guid, filename);
-
-            return blob.UploadAsync(fileContent, ctk);
+            client = new BlobServiceClient(client.Uri, new DefaultAzureCredential());
         }
 
-        public async Task GetFileAsync(Stream fileStream, Guid guid, string filename, CancellationToken ctk = default)
-        {
-            var blob = _getBlobFor(guid, filename);
+        _fileClient = client.GetBlobContainerClient(_config.StoragePrefix.ToLowerInvariant());
+    }
 
-            await blob.DownloadToAsync(fileStream, cancellationToken: ctk).ConfigureAwait(false);
+    public Task SaveFileAsync(Guid guid, string filename, Stream fileContent, CancellationToken ctk = default)
+    {
+        var blob = _getBlobFor(guid, filename);
 
-            fileStream.Seek(0, SeekOrigin.Begin);
-        }
+        return blob.UploadAsync(fileContent, ctk);
+    }
 
-        private BlobClient _getBlobFor(Guid guid, string filename)
-        {
-            var name = string.Format(CultureInfo.InvariantCulture, "{0}/{1}", guid.ToString(), filename);
-            return _fileClient
-                .GetBlobClient(name);
-        }
+    public async Task GetFileAsync(Stream fileStream, Guid guid, string filename, CancellationToken ctk = default)
+    {
+        var blob = _getBlobFor(guid, filename);
 
-        public async Task InitAsync()
-        {
-            await _fileClient.CreateIfNotExistsAsync().ConfigureAwait(false);
-        }
+        await blob.DownloadToAsync(fileStream, cancellationToken: ctk).ConfigureAwait(false);
+
+        fileStream.Seek(0, SeekOrigin.Begin);
+    }
+
+    private BlobClient _getBlobFor(Guid guid, string filename)
+    {
+        var name = string.Format(CultureInfo.InvariantCulture, "{0}/{1}", guid.ToString(), filename);
+        return _fileClient
+            .GetBlobClient(name);
+    }
+
+    public async Task InitAsync()
+    {
+        await _fileClient.CreateIfNotExistsAsync().ConfigureAwait(false);
     }
 }

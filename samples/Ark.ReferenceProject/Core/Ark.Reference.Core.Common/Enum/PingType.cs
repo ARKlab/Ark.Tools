@@ -1,23 +1,22 @@
-﻿namespace Ark.Reference.Core.Common.Enum
+﻿namespace Ark.Reference.Core.Common.Enum;
+
+/// <summary>
+/// Defines the type categories for Ping entities
+/// </summary>
+public enum PingType
 {
     /// <summary>
-    /// Defines the type categories for Ping entities
+    /// Type has not been set
     /// </summary>
-    public enum PingType
-    {
-        /// <summary>
-        /// Type has not been set
-        /// </summary>
-        NotSet,
+    NotSet,
 
-        /// <summary>
-        /// Ping type 1
-        /// </summary>
-        Ping1,
+    /// <summary>
+    /// Ping type 1
+    /// </summary>
+    Ping1,
 
-        /// <summary>
-        /// Ping type 2
-        /// </summary>
-        Ping2
-    }
+    /// <summary>
+    /// Ping type 2
+    /// </summary>
+    Ping2
 }

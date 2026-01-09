@@ -52,23 +52,23 @@ public class FtpClientPoolArxOneWithSocksFactory : IFtpClientPoolFactory
 
 namespace Ark.Tools.FtpClient;
 
-public class FtpClientPoolArxOneWithSocksFactory : IFtpClientPoolFactory
-{
-    private readonly ISocksConfig _config;
-
-    public FtpClientPoolArxOneWithSocksFactory(ISocksConfig config)
+    public class FtpClientPoolArxOneWithSocksFactory : IFtpClientPoolFactory
     {
-        ArgumentNullException.ThrowIfNull(config);
+        private readonly ISocksConfig _config;
 
-        _config = config;
+        public FtpClientPoolArxOneWithSocksFactory(ISocksConfig config)
+        {
+            ArgumentNullException.ThrowIfNull(config);
+
+            _config = config;
+        }
+
+        public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
+        {
+            ArgumentNullException.ThrowIfNull(ftpConfig);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
+
+            return new FtpClientPoolArxOne(_config, maxPoolSize, ftpConfig);
+        }
     }
-
-    public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
-    {
-        ArgumentNullException.ThrowIfNull(ftpConfig);
-        ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
-        ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
-
-        return new FtpClientPoolArxOne(_config, maxPoolSize, ftpConfig);
-    }
-}

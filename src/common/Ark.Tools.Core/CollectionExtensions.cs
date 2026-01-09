@@ -36,16 +36,16 @@ public static class CollectionExtensions
 
 namespace Ark.Tools.Core;
 
-public static class CollectionExtensions
-{
-    public static List<T> ReplaceListElement<T>(this List<T> collection, T oldValue, T newValue)
+    public static class CollectionExtensions
     {
-        var updatedCollection = collection.ToList();
+        public static List<T> ReplaceListElement<T>(this List<T> collection, T oldValue, T newValue)
+        {
+            var updatedCollection = collection.ToList();
 
-        var index = collection.IndexOf(oldValue);
+            var index = collection.IndexOf(oldValue);
 
-        updatedCollection[index] = newValue;
+            updatedCollection[index] = newValue;
 
-        return updatedCollection;
+            return updatedCollection;
+        }
     }
-}

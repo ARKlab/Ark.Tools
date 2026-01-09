@@ -9,6 +9,8 @@ namespace Ark.Tools.Sql
         string ConnectionString { get; }
         IsolationLevel? IsolationLevel { get; }
     }
+
+
 =======
 namespace Ark.Tools.Sql;
 
@@ -17,12 +19,10 @@ public interface ISqlContextConfig
     string ConnectionString { get; }
     IsolationLevel? IsolationLevel { get; }
 >>>>>>> After
+    namespace Ark.Tools.Sql;
 
-
-namespace Ark.Tools.Sql;
-
-public interface ISqlContextConfig
-{
-    string ConnectionString { get; }
-    IsolationLevel? IsolationLevel { get; }
-}
+    public interface ISqlContextConfig
+    {
+        string ConnectionString { get; }
+        IsolationLevel? IsolationLevel { get; }
+    }

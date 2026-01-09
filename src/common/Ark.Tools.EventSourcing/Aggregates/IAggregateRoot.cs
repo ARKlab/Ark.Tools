@@ -17,11 +17,11 @@ public interface IAggregateRoot
     long Version { get; }
     bool IsNew { get; }
 >>>>>>> After
-namespace Ark.Tools.EventSourcing.Aggregates;
+    namespace Ark.Tools.EventSourcing.Aggregates;
 
-public interface IAggregateRoot
-{
-    string Identifier { get; }
-    long Version { get; }
-    bool IsNew { get; }
-}
+    public interface IAggregateRoot
+    {
+        string Identifier { get; }
+        long Version { get; }
+        bool IsNew { get; }
+    }

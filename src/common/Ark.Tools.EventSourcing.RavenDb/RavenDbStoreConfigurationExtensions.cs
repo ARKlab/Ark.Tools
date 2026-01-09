@@ -163,76 +163,76 @@ public static class RavenDbStoreConfigurationExtensions
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 
-public static class RavenDbStoreConfigurationExtensions
-{
-    public static DocumentStore ConfigureForArkEventSourcing(this DocumentStore store)
+    public static class RavenDbStoreConfigurationExtensions
     {
-        var current = store.Conventions.FindCollectionName;
-        store.Conventions.AddFindCollectionName(type =>
+        public static DocumentStore ConfigureForArkEventSourcing(this DocumentStore store)
         {
-            if (typeof(IOutboxEvent).IsAssignableFrom(type))
-                return RavenDbEventSourcingConstants.OutboxCollectionName;
-
-            if (typeof(AggregateEventStore<,>).IsAssignableFromEx(type) || typeof(AggregateEventStore).IsAssignableFrom(type))
+            var current = store.Conventions.FindCollectionName;
+            store.Conventions.AddFindCollectionName(type =>
             {
-                return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
-            }
+                if (typeof(IOutboxEvent).IsAssignableFrom(type))
+                    return RavenDbEventSourcingConstants.OutboxCollectionName;
 
-            return null;
-        });
+                if (typeof(AggregateEventStore<,>).IsAssignableFromEx(type) || typeof(AggregateEventStore).IsAssignableFrom(type))
+                {
+                    return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
+                }
 
-        store.Conventions.UseOptimisticConcurrency = true;
+                return null;
+            });
 
-        return store;
-    }
+            store.Conventions.UseOptimisticConcurrency = true;
 
-    public static DocumentConventions AddFindCollectionName(this DocumentConventions conventions, Func<Type, string?> func)
-    {
-        var current = conventions.FindCollectionName;
-        conventions.FindCollectionName = type =>
+            return store;
+        }
+
+        public static DocumentConventions AddFindCollectionName(this DocumentConventions conventions, Func<Type, string?> func)
         {
-            return func?.Invoke(type)
-                ?? current?.Invoke(type)
-                ?? DocumentConventions.DefaultGetCollectionName(type);
-        };
-
-        return conventions;
-    }
-
-    public static async Task SetupArk(this IDocumentStore store)
-    {
-        await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(new RevisionsConfiguration
-        {
-            Default = new RevisionsCollectionConfiguration
+            var current = conventions.FindCollectionName;
+            conventions.FindCollectionName = type =>
             {
-                Disabled = false,
-                PurgeOnDelete = false,
-                MinimumRevisionsToKeep = null,
-                MinimumRevisionAgeToKeep = null,
-            },
-            Collections = new Dictionary<string, RevisionsCollectionConfiguration>
-(StringComparer.Ordinal)
+                return func?.Invoke(type)
+                    ?? current?.Invoke(type)
+                    ?? DocumentConventions.DefaultGetCollectionName(type);
+            };
+
+            return conventions;
+        }
+
+        public static async Task SetupArk(this IDocumentStore store)
+        {
+            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(new RevisionsConfiguration
+            {
+                Default = new RevisionsCollectionConfiguration
+                {
+                    Disabled = false,
+                    PurgeOnDelete = false,
+                    MinimumRevisionsToKeep = null,
+                    MinimumRevisionAgeToKeep = null,
+                },
+                Collections = new Dictionary<string, RevisionsCollectionConfiguration>
+    (StringComparer.Ordinal)
             {
                 {RavenDbEventSourcingConstants.OutboxCollectionName, new RevisionsCollectionConfiguration {Disabled = true} },
             }
-        })).ConfigureAwait(false);
-    }
+            })).ConfigureAwait(false);
+        }
 
-    public static async Task EnsureNoRevisionForAggregateState<TAggregate>(this IDocumentStore store)
-        where TAggregate : IAggregate
-    {
-        var collection = AggregateHelper<TAggregate>.Name;
-        var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database)).ConfigureAwait(false);
-        var revision = database.Revisions;
-        if ((revision.Collections.ContainsKey(collection) && revision.Collections[collection].Disabled == true)
-            || revision.Default.Disabled)
-            return;
-
-        revision.Collections.Add(collection, new RevisionsCollectionConfiguration
+        public static async Task EnsureNoRevisionForAggregateState<TAggregate>(this IDocumentStore store)
+            where TAggregate : IAggregate
         {
-            Disabled = true
-        });
+            var collection = AggregateHelper<TAggregate>.Name;
+            var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database)).ConfigureAwait(false);
+            var revision = database.Revisions;
+            if ((revision.Collections.ContainsKey(collection) && revision.Collections[collection].Disabled == true)
+                || revision.Default.Disabled)
+                return;
 
-        await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision)).ConfigureAwait(false);
+            revision.Collections.Add(collection, new RevisionsCollectionConfiguration
+            {
+                Disabled = true
+            });
+
+            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision)).ConfigureAwait(false);
+        }
     }
-}

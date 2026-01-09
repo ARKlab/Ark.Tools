@@ -8,6 +8,8 @@ namespace Ark.Tools.EventSourcing.DomainEventPublisher
     {
         Task PublishAsync(OutboxEvent outboxEvent);
     }
+
+
 =======
 namespace Ark.Tools.EventSourcing.DomainEventPublisher;
 
@@ -15,11 +17,9 @@ public interface IDomainEventPublisher
 {
     Task PublishAsync(OutboxEvent outboxEvent);
 >>>>>>> After
+    namespace Ark.Tools.EventSourcing.DomainEventPublisher;
 
-
-namespace Ark.Tools.EventSourcing.DomainEventPublisher;
-
-public interface IDomainEventPublisher
-{
-    Task PublishAsync(OutboxEvent outboxEvent);
-}
+    public interface IDomainEventPublisher
+    {
+        Task PublishAsync(OutboxEvent outboxEvent);
+    }

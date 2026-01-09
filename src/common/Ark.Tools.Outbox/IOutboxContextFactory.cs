@@ -15,10 +15,10 @@ public interface IOutboxContextFactory
 {
     IOutboxContext Create();
 >>>>>>> After
-namespace Ark.Tools.Outbox;
+    namespace Ark.Tools.Outbox;
 
 
-public interface IOutboxContextFactory
-{
-    IOutboxContext Create();
-}
+    public interface IOutboxContextFactory
+    {
+        IOutboxContext Create();
+    }

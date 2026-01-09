@@ -1,22 +1,21 @@
 ﻿using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Solid;
 
-namespace Ark.Reference.Core.API.Queries
+namespace Ark.Reference.Core.API.Queries;
+
+/// <summary>
+/// Query to retrieve a Ping entity by name (for testing/demonstration)
+/// </summary>
+public static class Ping_GetByNameQuery
 {
     /// <summary>
-    /// Query to retrieve a Ping entity by name (for testing/demonstration)
+    /// Version 1 of the GetByName query
     /// </summary>
-    public static class Ping_GetByNameQuery
+    public record V1 : IQuery<Ping.V1.Output>
     {
         /// <summary>
-        /// Version 1 of the GetByName query
+        /// Gets or initializes the name of the Ping to retrieve
         /// </summary>
-        public record V1 : IQuery<Ping.V1.Output>
-        {
-            /// <summary>
-            /// Gets or initializes the name of the Ping to retrieve
-            /// </summary>
-            public string? Name { get; init; }
-        }
+        public string? Name { get; init; }
     }
 }

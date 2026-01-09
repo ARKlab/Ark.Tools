@@ -25,11 +25,11 @@ public class ContainerAuthorizationPolicyProvider : DefaultAuthorizationPolicyPr
 
 namespace Ark.Tools.Solid.Authorization;
 
-public class ContainerAuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
-{
-    public ContainerAuthorizationPolicyProvider(IEnumerable<IAuthorizationPolicy> policies)
+    public class ContainerAuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
     {
-        foreach (var p in policies)
-            AddPolicy(p);
+        public ContainerAuthorizationPolicyProvider(IEnumerable<IAuthorizationPolicy> policies)
+        {
+            foreach (var p in policies)
+                AddPolicy(p);
+        }
     }
-}

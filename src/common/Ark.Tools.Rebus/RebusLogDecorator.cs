@@ -62,28 +62,28 @@ public class RebusLogDecorator<T> : IHandleMessages<T>
 
 namespace Ark.Tools.Rebus;
 
-public class RebusLogDecorator<T> : IHandleMessages<T>
-{
-    private readonly IHandleMessages<T> _inner;
-    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-    public RebusLogDecorator(IHandleMessages<T> inner)
+    public class RebusLogDecorator<T> : IHandleMessages<T>
     {
-        _inner = inner;
-    }
+        private readonly IHandleMessages<T> _inner;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    public async Task Handle(T message)
-    {
-        var sw = Stopwatch.StartNew();
-        try
+        public RebusLogDecorator(IHandleMessages<T> inner)
         {
-            await _inner.Handle(message).ConfigureAwait(false);
-            _logger.Debug("Processed message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
+            _inner = inner;
         }
-        catch (Exception e)
+
+        public async Task Handle(T message)
         {
-            _logger.Warn(e, CultureInfo.InvariantCulture, "Failed processing message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
-            throw;
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                await _inner.Handle(message).ConfigureAwait(false);
+                _logger.Debug("Processed message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
+            }
+            catch (Exception e)
+            {
+                _logger.Warn(e, CultureInfo.InvariantCulture, "Failed processing message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
+                throw;
+            }
         }
     }
-}

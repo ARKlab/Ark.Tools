@@ -11,6 +11,8 @@ namespace Ark.Tools.Core
     {
         void Commit();
     }
+
+
 =======
 namespace Ark.Tools.Core;
 
@@ -21,14 +23,12 @@ public interface IContext : IDisposable
 {
     void Commit();
 >>>>>>> After
+    namespace Ark.Tools.Core;
 
-
-namespace Ark.Tools.Core;
-
-/// <summary>
-/// Common definition of transactional 'Context', disposable and committable.
-/// </summary>
-public interface IContext : IDisposable
-{
-    void Commit();
-}
+    /// <summary>
+    /// Common definition of transactional 'Context', disposable and committable.
+    /// </summary>
+    public interface IContext : IDisposable
+    {
+        void Commit();
+    }

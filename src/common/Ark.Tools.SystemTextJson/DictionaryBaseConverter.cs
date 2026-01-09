@@ -165,81 +165,81 @@ public sealed class ReadOnlyDictionaryConverter<TK, TV>
 
 namespace Ark.Tools.SystemTextJson;
 
-public sealed class DictionaryBaseConverter<TC, TK, TV> : AbstractDictionaryConverter<TC, TK, TV>
-    where TK : notnull
-    where TC : Dictionary<TK, TV>, new()
-{
-    public DictionaryBaseConverter(JsonSerializerOptions options)
-        : base(options)
+    public sealed class DictionaryBaseConverter<TC, TK, TV> : AbstractDictionaryConverter<TC, TK, TV>
+        where TK : notnull
+        where TC : Dictionary<TK, TV>, new()
     {
+        public DictionaryBaseConverter(JsonSerializerOptions options)
+            : base(options)
+        {
+        }
+
+        protected override TC InstantiateCollection(IDictionary<TK, TV> workingCollection)
+        {
+            return (TC)workingCollection;
+        }
+
+        protected override IDictionary<TK, TV> InstantiateWorkingCollection()
+        {
+            return new TC();
+        }
     }
 
-    protected override TC InstantiateCollection(IDictionary<TK, TV> workingCollection)
+    public sealed class IDictionaryBaseConverter<TC, TK, TV> : AbstractDictionaryConverter<TC, TK, TV>
+        where TK : notnull
+        where TC : IDictionary<TK, TV>, new()
     {
-        return (TC)workingCollection;
+        public IDictionaryBaseConverter(JsonSerializerOptions options)
+            : base(options)
+        {
+        }
+
+        protected override TC InstantiateCollection(IDictionary<TK, TV> workingCollection)
+        {
+            return (TC)workingCollection;
+        }
+
+        protected override IDictionary<TK, TV> InstantiateWorkingCollection()
+        {
+            return new TC();
+        }
     }
 
-    protected override IDictionary<TK, TV> InstantiateWorkingCollection()
+    public sealed class DictionaryConverter<TK, TV>
+        : AbstractDictionaryConverter<IDictionary<TK, TV>, TK, TV>
+        where TK : notnull
     {
-        return new TC();
-    }
-}
+        public DictionaryConverter(JsonSerializerOptions options) : base(options)
+        {
+        }
 
-public sealed class IDictionaryBaseConverter<TC, TK, TV> : AbstractDictionaryConverter<TC, TK, TV>
-    where TK : notnull
-    where TC : IDictionary<TK, TV>, new()
-{
-    public IDictionaryBaseConverter(JsonSerializerOptions options)
-        : base(options)
-    {
-    }
+        protected override IDictionary<TK, TV> InstantiateCollection(IDictionary<TK, TV> workingCollection)
+        {
+            return workingCollection;
+        }
 
-    protected override TC InstantiateCollection(IDictionary<TK, TV> workingCollection)
-    {
-        return (TC)workingCollection;
-    }
-
-    protected override IDictionary<TK, TV> InstantiateWorkingCollection()
-    {
-        return new TC();
-    }
-}
-
-public sealed class DictionaryConverter<TK, TV>
-    : AbstractDictionaryConverter<IDictionary<TK, TV>, TK, TV>
-    where TK : notnull
-{
-    public DictionaryConverter(JsonSerializerOptions options) : base(options)
-    {
+        protected override IDictionary<TK, TV> InstantiateWorkingCollection()
+        {
+            return new Dictionary<TK, TV>();
+        }
     }
 
-    protected override IDictionary<TK, TV> InstantiateCollection(IDictionary<TK, TV> workingCollection)
+    public sealed class ReadOnlyDictionaryConverter<TK, TV>
+        : AbstractDictionaryConverter<IReadOnlyDictionary<TK, TV>, TK, TV>
+        where TK : notnull
     {
-        return workingCollection;
-    }
+        public ReadOnlyDictionaryConverter(JsonSerializerOptions options)
+            : base(options)
+        {
+        }
 
-    protected override IDictionary<TK, TV> InstantiateWorkingCollection()
-    {
-        return new Dictionary<TK, TV>();
-    }
-}
+        protected override IReadOnlyDictionary<TK, TV> InstantiateCollection(IDictionary<TK, TV> workingCollection)
+        {
+            return new ReadOnlyDictionary<TK, TV>(workingCollection);
+        }
 
-public sealed class ReadOnlyDictionaryConverter<TK, TV>
-    : AbstractDictionaryConverter<IReadOnlyDictionary<TK, TV>, TK, TV>
-    where TK : notnull
-{
-    public ReadOnlyDictionaryConverter(JsonSerializerOptions options)
-        : base(options)
-    {
+        protected override IDictionary<TK, TV> InstantiateWorkingCollection()
+        {
+            return new Dictionary<TK, TV>();
+        }
     }
-
-    protected override IReadOnlyDictionary<TK, TV> InstantiateCollection(IDictionary<TK, TV> workingCollection)
-    {
-        return new ReadOnlyDictionary<TK, TV>(workingCollection);
-    }
-
-    protected override IDictionary<TK, TV> InstantiateWorkingCollection()
-    {
-        return new Dictionary<TK, TV>();
-    }
-}

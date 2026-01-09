@@ -11,6 +11,8 @@ namespace Ark.Tools.Core
         public int Limit { get; set; }
         public IEnumerable<T> Data { get; set; } = Enumerable.Empty<T>();
     }
+
+
 =======
 namespace Ark.Tools.Core;
 
@@ -20,13 +22,11 @@ public record ListResult<T>
     public int Limit { get; set; }
     public IEnumerable<T> Data { get; set; } = Enumerable.Empty<T>();
 >>>>>>> After
+    namespace Ark.Tools.Core;
 
-
-namespace Ark.Tools.Core;
-
-public record ListResult<T>
-{
-    public int Skip { get; set; }
-    public int Limit { get; set; }
-    public IEnumerable<T> Data { get; set; } = Enumerable.Empty<T>();
-}
+    public record ListResult<T>
+    {
+        public int Skip { get; set; }
+        public int Limit { get; set; }
+        public IEnumerable<T> Data { get; set; } = Enumerable.Empty<T>();
+    }

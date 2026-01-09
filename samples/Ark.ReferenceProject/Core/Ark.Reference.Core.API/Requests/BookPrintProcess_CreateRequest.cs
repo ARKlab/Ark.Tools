@@ -1,22 +1,21 @@
 using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Solid;
 
-namespace Ark.Reference.Core.API.Requests
+namespace Ark.Reference.Core.API.Requests;
+
+/// <summary>
+/// Request to create a new book print process
+/// </summary>
+public static class BookPrintProcess_CreateRequest
 {
     /// <summary>
-    /// Request to create a new book print process
+    /// Version 1 of the create request
     /// </summary>
-    public static class BookPrintProcess_CreateRequest
+    public record V1 : IRequest<BookPrintProcess.V1.Output>
     {
         /// <summary>
-        /// Version 1 of the create request
+        /// Gets or initializes the print process data
         /// </summary>
-        public record V1 : IRequest<BookPrintProcess.V1.Output>
-        {
-            /// <summary>
-            /// Gets or initializes the print process data
-            /// </summary>
-            public BookPrintProcess.V1.Create? Data { get; init; }
-        }
+        public BookPrintProcess.V1.Create? Data { get; init; }
     }
 }

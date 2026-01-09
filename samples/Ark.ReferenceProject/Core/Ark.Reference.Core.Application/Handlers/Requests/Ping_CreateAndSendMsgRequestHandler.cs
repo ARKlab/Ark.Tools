@@ -14,64 +14,63 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Core.Application.Handlers.Requests
+namespace Ark.Reference.Core.Application.Handlers.Requests;
+
+public class Ping_CreateAndSendMsgRequestHandler : IRequestHandler<Ping_CreateAndSendMsgRequest.V1, Ping.V1.Output>
 {
-    public class Ping_CreateAndSendMsgRequestHandler : IRequestHandler<Ping_CreateAndSendMsgRequest.V1, Ping.V1.Output>
-    {
-        private readonly ICoreDataContextFactory _coreDataContext;
-        private readonly IContextProvider<ClaimsPrincipal> _userContext;
-        private readonly IBus _bus;
+    private readonly ICoreDataContextFactory _coreDataContext;
+    private readonly IContextProvider<ClaimsPrincipal> _userContext;
+    private readonly IBus _bus;
 
-        public Ping_CreateAndSendMsgRequestHandler(
-              ICoreDataContextFactory coreDataContext
-              , IContextProvider<ClaimsPrincipal> userContext
-              , IBus bus
+    public Ping_CreateAndSendMsgRequestHandler(
+          ICoreDataContextFactory coreDataContext
+          , IContextProvider<ClaimsPrincipal> userContext
+          , IBus bus
 )
+    {
+        ArgumentNullException.ThrowIfNull(coreDataContext);
+        ArgumentNullException.ThrowIfNull(userContext);
+
+        _coreDataContext = coreDataContext;
+        _userContext = userContext;
+        _bus = bus;
+    }
+
+    public Ping.V1.Output Execute(Ping_CreateAndSendMsgRequest.V1 request)
+    {
+        return ExecuteAsync(request).GetAwaiter().GetResult();
+    }
+
+    public async Task<Ping.V1.Output> ExecuteAsync(Ping_CreateAndSendMsgRequest.V1 request, CancellationToken ctk = default)
+    {
+        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+
+        await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Create a new Ping", ctk).ConfigureAwait(false);
+
+        var createPingData = new Ping.V1.Output()
         {
-            ArgumentNullException.ThrowIfNull(coreDataContext);
-            ArgumentNullException.ThrowIfNull(userContext);
+            Name = request.Data?.Name,
+            Type = request.Data?.Type,
+            Code = $"PING_CODE_{request.Data?.Name}"
+        };
 
-            _coreDataContext = coreDataContext;
-            _userContext = userContext;
-            _bus = bus;
-        }
+        var id = await ctx.InsertPingAsync(createPingData, ctk).ConfigureAwait(false);
 
-        public Ping.V1.Output Execute(Ping_CreateAndSendMsgRequest.V1 request)
+        var entity = await ctx.ReadPingByIdAsync(id, ctk).ConfigureAwait(false);
+
+        MessageCounter.ResetCount();
+
+        using var scope = _bus.Enlist(ctx);
+
+        await _bus.Send(new Ping_ProcessMessage.V1()
         {
-            return ExecuteAsync(request).GetAwaiter().GetResult();
-        }
+            Id = id,
+        }).ConfigureAwait(false);
 
-        public async Task<Ping.V1.Output> ExecuteAsync(Ping_CreateAndSendMsgRequest.V1 request, CancellationToken ctk = default)
-        {
-            await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await scope.CompleteAsync().ConfigureAwait(false);
 
-            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Create a new Ping", ctk).ConfigureAwait(false);
+        await ctx.CommitAsync(ctk).ConfigureAwait(false);
 
-            var createPingData = new Ping.V1.Output()
-            {
-                Name = request.Data?.Name,
-                Type = request.Data?.Type,
-                Code = $"PING_CODE_{request.Data?.Name}"
-            };
-
-            var id = await ctx.InsertPingAsync(createPingData, ctk).ConfigureAwait(false);
-
-            var entity = await ctx.ReadPingByIdAsync(id, ctk).ConfigureAwait(false);
-
-            MessageCounter.ResetCount();
-
-            using var scope = _bus.Enlist(ctx);
-
-            await _bus.Send(new Ping_ProcessMessage.V1()
-            {
-                Id = id,
-            }).ConfigureAwait(false);
-
-            await scope.CompleteAsync().ConfigureAwait(false);
-
-            await ctx.CommitAsync(ctk).ConfigureAwait(false);
-
-            return entity!;
-        }
+        return entity!;
     }
 }

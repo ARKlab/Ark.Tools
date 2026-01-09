@@ -5,83 +5,82 @@ using Ark.ResourceWatcher.Sample.Dto;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Ark.ResourceWatcher.Sample.Tests.Mocks
+namespace Ark.ResourceWatcher.Sample.Tests.Mocks;
+
+/// <summary>
+/// Mock sink API for testing.
+/// </summary>
+public sealed class MockSinkApi
 {
+    private readonly List<SinkDto> _receivedPayloads = [];
+    private readonly List<string> _callHistory = [];
+    private int _failCount;
+    private bool _alwaysFail;
+
     /// <summary>
-    /// Mock sink API for testing.
+    /// Gets all payloads received by the sink.
     /// </summary>
-    public sealed class MockSinkApi
+    public IReadOnlyList<SinkDto> ReceivedPayloads => _receivedPayloads;
+
+    /// <summary>
+    /// Gets the call history.
+    /// </summary>
+    public IReadOnlyList<string> CallHistory => _callHistory;
+
+    /// <summary>
+    /// Gets the total number of records received.
+    /// </summary>
+    public int TotalRecordsReceived => _receivedPayloads.Sum(p => p.Records?.Count ?? 0);
+
+    /// <summary>
+    /// Configures the mock to fail on the next N calls.
+    /// </summary>
+    /// <param name="count">Number of calls that should fail.</param>
+    public void FailNextCalls(int count)
     {
-        private readonly List<SinkDto> _receivedPayloads = [];
-        private readonly List<string> _callHistory = [];
-        private int _failCount;
-        private bool _alwaysFail;
+        _failCount = count;
+    }
 
-        /// <summary>
-        /// Gets all payloads received by the sink.
-        /// </summary>
-        public IReadOnlyList<SinkDto> ReceivedPayloads => _receivedPayloads;
+    /// <summary>
+    /// Configures the mock to always fail.
+    /// </summary>
+    public void AlwaysFail()
+    {
+        _alwaysFail = true;
+    }
 
-        /// <summary>
-        /// Gets the call history.
-        /// </summary>
-        public IReadOnlyList<string> CallHistory => _callHistory;
+    /// <summary>
+    /// Receives a payload from the worker.
+    /// </summary>
+    /// <param name="payload">The sink payload.</param>
+    /// <returns>True if accepted, false if rejected.</returns>
+    public bool Receive(SinkDto payload)
+    {
+        _callHistory.Add(payload.SourceId ?? "unknown");
 
-        /// <summary>
-        /// Gets the total number of records received.
-        /// </summary>
-        public int TotalRecordsReceived => _receivedPayloads.Sum(p => p.Records?.Count ?? 0);
-
-        /// <summary>
-        /// Configures the mock to fail on the next N calls.
-        /// </summary>
-        /// <param name="count">Number of calls that should fail.</param>
-        public void FailNextCalls(int count)
+        if (_alwaysFail)
         {
-            _failCount = count;
+            return false;
         }
 
-        /// <summary>
-        /// Configures the mock to always fail.
-        /// </summary>
-        public void AlwaysFail()
+        if (_failCount > 0)
         {
-            _alwaysFail = true;
+            _failCount--;
+            return false;
         }
 
-        /// <summary>
-        /// Receives a payload from the worker.
-        /// </summary>
-        /// <param name="payload">The sink payload.</param>
-        /// <returns>True if accepted, false if rejected.</returns>
-        public bool Receive(SinkDto payload)
-        {
-            _callHistory.Add(payload.SourceId ?? "unknown");
+        _receivedPayloads.Add(payload);
+        return true;
+    }
 
-            if (_alwaysFail)
-            {
-                return false;
-            }
-
-            if (_failCount > 0)
-            {
-                _failCount--;
-                return false;
-            }
-
-            _receivedPayloads.Add(payload);
-            return true;
-        }
-
-        /// <summary>
-        /// Clears all received payloads and resets failure settings.
-        /// </summary>
-        public void Reset()
-        {
-            _receivedPayloads.Clear();
-            _callHistory.Clear();
-            _failCount = 0;
-            _alwaysFail = false;
-        }
+    /// <summary>
+    /// Clears all received payloads and resets failure settings.
+    /// </summary>
+    public void Reset()
+    {
+        _receivedPayloads.Clear();
+        _callHistory.Clear();
+        _failCount = 0;
+        _alwaysFail = false;
     }
 }

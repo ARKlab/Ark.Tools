@@ -47,21 +47,21 @@ public static class ClaimsPrincipalExtensions
 
 namespace Ark.Tools.Core;
 
-public static class ClaimsPrincipalExtensions
-{
-
-    public static string? GetUserId(this ClaimsPrincipal principal)
+    public static class ClaimsPrincipalExtensions
     {
-        return principal.GetUserEmail()
-            ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    }
+
+        public static string? GetUserId(this ClaimsPrincipal principal)
+        {
+            return principal.GetUserEmail()
+                ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
 
 
-    public static string? GetUserEmail(this ClaimsPrincipal principal)
-    {
-        return principal.FindFirst(AuthClaims.ArkEmailClaim)?.Value
-            ?? principal.FindFirst(AuthClaims.EmailsClaim)?.Value
-            ?? principal.FindFirst(ClaimTypes.Email)?.Value
-            ;
+        public static string? GetUserEmail(this ClaimsPrincipal principal)
+        {
+            return principal.FindFirst(AuthClaims.ArkEmailClaim)?.Value
+                ?? principal.FindFirst(AuthClaims.EmailsClaim)?.Value
+                ?? principal.FindFirst(ClaimTypes.Email)?.Value
+                ;
+        }
     }
-}

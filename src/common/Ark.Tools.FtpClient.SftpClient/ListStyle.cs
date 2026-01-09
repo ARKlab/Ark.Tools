@@ -8,6 +8,7 @@ namespace Ark.Tools.FtpClient.SftpClient
         Unix,
         Windows
     }
+
 =======
 namespace Ark.Tools.FtpClient.SftpClient;
 
@@ -17,13 +18,12 @@ internal enum ListStyle
     Unix,
     Windows
 >>>>>>> After
+    // Licensed under the MIT License. See LICENSE file for license information. 
+    namespace Ark.Tools.FtpClient.SftpClient;
 
-// Licensed under the MIT License. See LICENSE file for license information. 
-namespace Ark.Tools.FtpClient.SftpClient;
 
-
-internal enum ListStyle
-{
-    Unix,
-    Windows
-}
+    internal enum ListStyle
+    {
+        Unix,
+        Windows
+    }

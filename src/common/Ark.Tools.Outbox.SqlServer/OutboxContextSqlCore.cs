@@ -147,6 +147,8 @@ namespace Ark.Tools.Outbox.SqlServer
         }
 
     }
+
+
 =======
 namespace Ark.Tools.Outbox.SqlServer;
 
@@ -285,34 +287,32 @@ internal abstract class OutboxContextSqlCore
         return _connection.ExecuteAsync(cmd);
     }
 >>>>>>> After
+    namespace Ark.Tools.Outbox.SqlServer;
 
-
-namespace Ark.Tools.Outbox.SqlServer;
-
-internal abstract class OutboxContextSqlCore
-{
-    private readonly IOutboxContextSqlConfig _config;
-    private readonly Statements _statements;
-
-    private static readonly HeaderSerializer _headerSerializer = new();
-
-    protected OutboxContextSqlCore(IOutboxContextSqlConfig config)
+    internal abstract class OutboxContextSqlCore
     {
-        _config = config;
-        _statements = new Statements(config);
-    }
+        private readonly IOutboxContextSqlConfig _config;
+        private readonly Statements _statements;
 
-    protected abstract IDbTransaction _transaction { get; }
-    protected abstract IDbConnection _connection { get; }
+        private static readonly HeaderSerializer _headerSerializer = new();
 
-    sealed class Statements
-    {
-        internal Statements(IOutboxContextSqlConfig config)
+        protected OutboxContextSqlCore(IOutboxContextSqlConfig config)
         {
-            var schema = config.SchemaName ?? "dbo";
-            var table = config.TableName;
-            var full = $"[{schema}].[{table}]";
-            Insert = $@"
+            _config = config;
+            _statements = new Statements(config);
+        }
+
+        protected abstract IDbTransaction _transaction { get; }
+        protected abstract IDbConnection _connection { get; }
+
+        sealed class Statements
+        {
+            internal Statements(IOutboxContextSqlConfig config)
+            {
+                var schema = config.SchemaName ?? "dbo";
+                var table = config.TableName;
+                var full = $"[{schema}].[{table}]";
+                Insert = $@"
                     INSERT INTO {full}
                     (
                           [Headers]
@@ -325,7 +325,7 @@ internal abstract class OutboxContextSqlCore
                     )
                     ";
 
-            PeekLock = (int messageCount) => $@"
+                PeekLock = (int messageCount) => $@"
                     ;WITH batch AS (
                         SELECT TOP ({messageCount}) *
                         FROM {full}
@@ -337,16 +337,16 @@ internal abstract class OutboxContextSqlCore
                         , DELETED.[Body]
                     ";
 
-            Count = $@"
+                Count = $@"
                     SELECT COUNT(*) as [Count] 
                     FROM {full}
                     ";
 
-            Clear = $@"
+                Clear = $@"
                     DELETE FROM {full}
                     ";
 
-            CreateTable = $@"
+                CreateTable = $@"
                     IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = '{schema}')
                     BEGIN
 	                    EXEC('CREATE SCHEMA {schema}')
@@ -365,63 +365,63 @@ internal abstract class OutboxContextSqlCore
   
                     ";
 
+            }
+
+            public string Insert { get; }
+            public Func<int, string> PeekLock { get; }
+            public string Count { get; }
+            public string Clear { get; }
+            public string CreateTable { get; }
         }
 
-        public string Insert { get; }
-        public Func<int, string> PeekLock { get; }
-        public string Count { get; }
-        public string Clear { get; }
-        public string CreateTable { get; }
-    }
-
-    public async Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
-    {
-        foreach (var b in messages.Batch(1000))
+        public async Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
         {
-            var parameters = b.Select(message => new
+            foreach (var b in messages.Batch(1000))
             {
-                pHeaders = _headerSerializer.SerializeToString(message.Headers),
-                pBody = message.Body
-            });
+                var parameters = b.Select(message => new
+                {
+                    pHeaders = _headerSerializer.SerializeToString(message.Headers),
+                    pBody = message.Body
+                });
 
-            var cmd = new CommandDefinition(_statements.Insert, parameters, transaction: _transaction, cancellationToken: ctk);
+                var cmd = new CommandDefinition(_statements.Insert, parameters, transaction: _transaction, cancellationToken: ctk);
 
-            _ = await _connection.ExecuteAsync(cmd).ConfigureAwait(false);
+                _ = await _connection.ExecuteAsync(cmd).ConfigureAwait(false);
+            }
         }
-    }
 
-    public async Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
-    {
-        var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: _transaction, cancellationToken: ctk);
-
-        var res = await _connection.QueryAsync<(string Headers, byte[] Body)>(cmd).ConfigureAwait(false);
-
-        return res.Select(x => new OutboxMessage
+        public async Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
         {
-            Body = x.Body,
-            Headers = _headerSerializer.DeserializeFromString(x.Headers)
-        }).ToList();
+            var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: _transaction, cancellationToken: ctk);
+
+            var res = await _connection.QueryAsync<(string Headers, byte[] Body)>(cmd).ConfigureAwait(false);
+
+            return res.Select(x => new OutboxMessage
+            {
+                Body = x.Body,
+                Headers = _headerSerializer.DeserializeFromString(x.Headers)
+            }).ToList();
+        }
+
+        public Task<int> CountAsync(CancellationToken ctk = default)
+        {
+            var cmd = new CommandDefinition(_statements.Count, transaction: _transaction, cancellationToken: ctk);
+
+            return _connection.QuerySingleAsync<int>(cmd);
+        }
+
+        public Task ClearAsync(CancellationToken ctk = default)
+        {
+            var cmd = new CommandDefinition(_statements.Clear, transaction: _transaction, cancellationToken: ctk);
+
+            return _connection.ExecuteAsync(cmd);
+        }
+
+        public Task EnsureTableAreCreated(CancellationToken ctk = default)
+        {
+            var cmd = new CommandDefinition(_statements.CreateTable, transaction: _transaction, cancellationToken: ctk);
+
+            return _connection.ExecuteAsync(cmd);
+        }
+
     }
-
-    public Task<int> CountAsync(CancellationToken ctk = default)
-    {
-        var cmd = new CommandDefinition(_statements.Count, transaction: _transaction, cancellationToken: ctk);
-
-        return _connection.QuerySingleAsync<int>(cmd);
-    }
-
-    public Task ClearAsync(CancellationToken ctk = default)
-    {
-        var cmd = new CommandDefinition(_statements.Clear, transaction: _transaction, cancellationToken: ctk);
-
-        return _connection.ExecuteAsync(cmd);
-    }
-
-    public Task EnsureTableAreCreated(CancellationToken ctk = default)
-    {
-        var cmd = new CommandDefinition(_statements.CreateTable, transaction: _transaction, cancellationToken: ctk);
-
-        return _connection.ExecuteAsync(cmd);
-    }
-
-}

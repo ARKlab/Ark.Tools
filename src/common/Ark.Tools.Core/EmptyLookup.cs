@@ -29,13 +29,13 @@ public static class EmptyLookup<TKey, TElement>
 
 namespace Ark.Tools.Core;
 
-public static class EmptyLookup<TKey, TElement>
-{
-    private static readonly ILookup<TKey, TElement> _instance
-        = Enumerable.Empty<(TKey KeyType, TElement ValueType)>().ToLookup(x => x.KeyType, x => x.ValueType);
-
-    public static ILookup<TKey, TElement> Instance
+    public static class EmptyLookup<TKey, TElement>
     {
-        get { return _instance; }
+        private static readonly ILookup<TKey, TElement> _instance
+            = Enumerable.Empty<(TKey KeyType, TElement ValueType)>().ToLookup(x => x.KeyType, x => x.ValueType);
+
+        public static ILookup<TKey, TElement> Instance
+        {
+            get { return _instance; }
+        }
     }
-}

@@ -6,6 +6,8 @@ namespace Ark.Tools.Rebus
     {
         public IMessageContext Current => MessageContext.Current;
     }
+
+
 =======
 namespace Ark.Tools.Rebus;
 
@@ -13,11 +15,9 @@ public class MessageContextProvider : IMessageContextProvider
 {
     public IMessageContext Current => MessageContext.Current;
 >>>>>>> After
+    namespace Ark.Tools.Rebus;
 
-
-namespace Ark.Tools.Rebus;
-
-public class MessageContextProvider : IMessageContextProvider
-{
-    public IMessageContext Current => MessageContext.Current;
-}
+    public class MessageContextProvider : IMessageContextProvider
+    {
+        public IMessageContext Current => MessageContext.Current;
+    }

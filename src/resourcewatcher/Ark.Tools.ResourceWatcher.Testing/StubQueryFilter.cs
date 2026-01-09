@@ -25,6 +25,8 @@ namespace Ark.Tools.ResourceWatcher.Testing
         /// </summary>
         public string? ResourceIdPattern { get; set; }
     }
+
+
 =======
 namespace Ark.Tools.ResourceWatcher.Testing;
 
@@ -49,28 +51,26 @@ public sealed class StubQueryFilter
     /// </summary>
     public string? ResourceIdPattern { get; set; }
 >>>>>>> After
+    namespace Ark.Tools.ResourceWatcher.Testing;
 
-
-namespace Ark.Tools.ResourceWatcher.Testing;
-
-
-/// <summary>
-/// Query filter for stub resources.
-/// </summary>
-public sealed class StubQueryFilter
-{
-    /// <summary>
-    /// Gets or sets the start date for the query filter.
-    /// </summary>
-    public LocalDate? FromDate { get; set; }
 
     /// <summary>
-    /// Gets or sets the end date for the query filter.
+    /// Query filter for stub resources.
     /// </summary>
-    public LocalDate? ToDate { get; set; }
+    public sealed class StubQueryFilter
+    {
+        /// <summary>
+        /// Gets or sets the start date for the query filter.
+        /// </summary>
+        public LocalDate? FromDate { get; set; }
 
-    /// <summary>
-    /// Gets or sets the resource ID pattern for filtering.
-    /// </summary>
-    public string? ResourceIdPattern { get; set; }
-}
+        /// <summary>
+        /// Gets or sets the end date for the query filter.
+        /// </summary>
+        public LocalDate? ToDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resource ID pattern for filtering.
+        /// </summary>
+        public string? ResourceIdPattern { get; set; }
+    }

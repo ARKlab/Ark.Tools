@@ -12,6 +12,7 @@ namespace Ark.Tools.Nodatime.Intervals
         QuarterHour = 5, // unordered because added later
         HalfHour = 6, // unordered because added later
     }
+
 =======
 namespace Ark.Tools.Nodatime.Intervals;
 
@@ -25,17 +26,16 @@ public enum TimePeriod : byte
     QuarterHour = 5, // unordered because added later
     HalfHour = 6, // unordered because added later
 >>>>>>> After
+    // Licensed under the MIT License. See LICENSE file for license information. 
+    namespace Ark.Tools.Nodatime.Intervals;
 
-// Licensed under the MIT License. See LICENSE file for license information. 
-namespace Ark.Tools.Nodatime.Intervals;
-
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1028:Enum Storage should be Int32", Justification = "byte storage is sufficient")]
-public enum TimePeriod : byte
-{
-    None,
-    Hour = 2,
-    TenMinutes = 3,
-    Minute = 4,
-    QuarterHour = 5, // unordered because added later
-    HalfHour = 6, // unordered because added later
-}
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1028:Enum Storage should be Int32", Justification = "byte storage is sufficient")]
+    public enum TimePeriod : byte
+    {
+        None,
+        Hour = 2,
+        TenMinutes = 3,
+        Minute = 4,
+        QuarterHour = 5, // unordered because added later
+        HalfHour = 6, // unordered because added later
+    }

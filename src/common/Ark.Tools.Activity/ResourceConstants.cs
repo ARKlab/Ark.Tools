@@ -13,9 +13,9 @@ public static class ResourceConstants
 {
     public const int MaxRetryCount = 5;
 >>>>>>> After
-namespace Ark.Tools.Activity;
+    namespace Ark.Tools.Activity;
 
-public static class ResourceConstants
-{
-    public const int MaxRetryCount = 5;
-}
+    public static class ResourceConstants
+    {
+        public const int MaxRetryCount = 5;
+    }

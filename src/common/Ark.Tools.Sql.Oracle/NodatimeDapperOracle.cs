@@ -111,53 +111,53 @@ public static class NodatimeDapperOracle
 
 namespace Ark.Tools.Sql.Oracle;
 
-public static class NodatimeDapperOracle
-{
-    static NodatimeDapperOracle()
+    public static class NodatimeDapperOracle
     {
-        InstantHandler.Instance.OnSetValue += (s, p) =>
+        static NodatimeDapperOracle()
         {
-            if (p is OracleParameter orc)
+            InstantHandler.Instance.OnSetValue += (s, p) =>
             {
-                orc.Precision = 9;
-                orc.OracleDbType = OracleDbType.TimeStamp;
-            }
-        };
-        LocalDateHandler.Instance.OnSetValue += (s, p) =>
-        {
-            if (p is OracleParameter orc)
+                if (p is OracleParameter orc)
+                {
+                    orc.Precision = 9;
+                    orc.OracleDbType = OracleDbType.TimeStamp;
+                }
+            };
+            LocalDateHandler.Instance.OnSetValue += (s, p) =>
             {
-                orc.OracleDbType = OracleDbType.Date;
-            }
-        };
-        LocalDateTimeHandler.Instance.OnSetValue += (s, p) =>
-        {
-            if (p is OracleParameter orc)
+                if (p is OracleParameter orc)
+                {
+                    orc.OracleDbType = OracleDbType.Date;
+                }
+            };
+            LocalDateTimeHandler.Instance.OnSetValue += (s, p) =>
             {
-                orc.Precision = 9;
-                orc.OracleDbType = OracleDbType.TimeStamp;
-            }
-        };
-        OffsetDateTimeHandler.Instance.OnSetValue += (s, p) =>
-        {
-            if (p is OracleParameter orc)
+                if (p is OracleParameter orc)
+                {
+                    orc.Precision = 9;
+                    orc.OracleDbType = OracleDbType.TimeStamp;
+                }
+            };
+            OffsetDateTimeHandler.Instance.OnSetValue += (s, p) =>
             {
-                orc.Precision = 9;
-                orc.OracleDbType = OracleDbType.TimeStampTZ;
-            }
-        };
-        LocalTimeHandler.Instance.OnSetValue += (s, p) =>
-        {
-            if (p is OracleParameter orc)
+                if (p is OracleParameter orc)
+                {
+                    orc.Precision = 9;
+                    orc.OracleDbType = OracleDbType.TimeStampTZ;
+                }
+            };
+            LocalTimeHandler.Instance.OnSetValue += (s, p) =>
             {
-                orc.Precision = 9;
-                orc.OracleDbType = OracleDbType.TimeStamp;
-            }
-        };
-    }
+                if (p is OracleParameter orc)
+                {
+                    orc.Precision = 9;
+                    orc.OracleDbType = OracleDbType.TimeStamp;
+                }
+            };
+        }
 
-    public static void Setup()
-    {
-        NodaTimeDapper.Setup();
+        public static void Setup()
+        {
+            NodaTimeDapper.Setup();
+        }
     }
-}

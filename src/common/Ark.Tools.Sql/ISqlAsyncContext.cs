@@ -16,6 +16,8 @@ namespace Ark.Tools.Sql
         Task RollbackAsync(CancellationToken ctk = default);
         Task ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk = default);
     }
+
+
 =======
 namespace Ark.Tools.Sql;
 
@@ -26,14 +28,12 @@ public interface ISqlAsyncContext<TTag> : IAsyncContext
     Task RollbackAsync(CancellationToken ctk = default);
     Task ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk = default);
 >>>>>>> After
+    namespace Ark.Tools.Sql;
 
-
-namespace Ark.Tools.Sql;
-
-public interface ISqlAsyncContext<TTag> : IAsyncContext
-{
-    DbConnection Connection { get; }
-    DbTransaction Transaction { get; }
-    Task RollbackAsync(CancellationToken ctk = default);
-    Task ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk = default);
-}
+    public interface ISqlAsyncContext<TTag> : IAsyncContext
+    {
+        DbConnection Connection { get; }
+        DbTransaction Transaction { get; }
+        Task RollbackAsync(CancellationToken ctk = default);
+        Task ChangeIsolationLevelAsync(IsolationLevel isolationLevel, CancellationToken ctk = default);
+    }

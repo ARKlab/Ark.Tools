@@ -49,20 +49,20 @@ public class FtpClientPoolProxyFactory : IFtpClientPoolFactory
 namespace Ark.Tools.FtpClient.FtpProxy;
 
 
-public class FtpClientPoolProxyFactory : IFtpClientPoolFactory
-{
-    private readonly IFtpClientProxyConfig _config;
-    private readonly TokenProvider _tokenProvider;
-
-    public FtpClientPoolProxyFactory(IFtpClientProxyConfig config)
+    public class FtpClientPoolProxyFactory : IFtpClientPoolFactory
     {
-        ArgumentNullException.ThrowIfNull(config);
-        _config = config;
-        _tokenProvider = new TokenProvider(config);
-    }
+        private readonly IFtpClientProxyConfig _config;
+        private readonly TokenProvider _tokenProvider;
 
-    public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
-    {
-        return new FtpClientProxy(_config, _tokenProvider, ftpConfig);
+        public FtpClientPoolProxyFactory(IFtpClientProxyConfig config)
+        {
+            ArgumentNullException.ThrowIfNull(config);
+            _config = config;
+            _tokenProvider = new TokenProvider(config);
+        }
+
+        public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
+        {
+            return new FtpClientProxy(_config, _tokenProvider, ftpConfig);
+        }
     }
-}

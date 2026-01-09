@@ -14,6 +14,8 @@ namespace Ark.Tools.Solid.Authorization
 
         public ClaimsPrincipal Current => _getter();
     }
+
+
 =======
 namespace Ark.Tools.Solid.Authorization;
 
@@ -28,18 +30,16 @@ public class FixedPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
 
     public ClaimsPrincipal Current => _getter();
 >>>>>>> After
+    namespace Ark.Tools.Solid.Authorization;
 
-
-namespace Ark.Tools.Solid.Authorization;
-
-public class FixedPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
-{
-    private readonly Func<ClaimsPrincipal> _getter;
-
-    public FixedPrincipalContextProvider(Func<ClaimsPrincipal> getter)
+    public class FixedPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
     {
-        _getter = getter;
-    }
+        private readonly Func<ClaimsPrincipal> _getter;
 
-    public ClaimsPrincipal Current => _getter();
-}
+        public FixedPrincipalContextProvider(Func<ClaimsPrincipal> getter)
+        {
+            _getter = getter;
+        }
+
+        public ClaimsPrincipal Current => _getter();
+    }

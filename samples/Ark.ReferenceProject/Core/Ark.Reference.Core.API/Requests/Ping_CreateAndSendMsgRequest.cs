@@ -1,13 +1,12 @@
 ﻿using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Solid;
 
-namespace Ark.Reference.Core.API.Requests
+namespace Ark.Reference.Core.API.Requests;
+
+public static class Ping_CreateAndSendMsgRequest
 {
-    public static class Ping_CreateAndSendMsgRequest
+    public record V1 : IRequest<Ping.V1.Output>
     {
-        public record V1 : IRequest<Ping.V1.Output>
-        {
-            public Ping.V1.Create? Data { get; init; }
-        }
+        public Ping.V1.Create? Data { get; init; }
     }
 }

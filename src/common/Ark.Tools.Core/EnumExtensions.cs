@@ -72,33 +72,33 @@ public static class EnumExtensions
 
 namespace Ark.Tools.Core;
 
-public static class EnumExtensions
-{
-    public static string AsString<T>(this T value)
-            where T : System.Enum
+    public static class EnumExtensions
     {
-        DescriptionAttribute? desc = typeof(T)
-            .GetField(value.ToString())?
-            .GetCustomAttributes(typeof(DescriptionAttribute), false)
-            .SingleOrDefault() as DescriptionAttribute;
-
-        EnumMemberAttribute? em = typeof(T)
-            .GetField(value.ToString())?
-            .GetCustomAttributes(typeof(EnumMemberAttribute), false)
-            .SingleOrDefault() as EnumMemberAttribute;
-
-        return em?.Value ?? desc?.Description ?? value.ToString();
-    }
-
-    public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct, System.Enum
-    {
-        if (string.IsNullOrWhiteSpace(inputString)) return null;
-
-        if (Enum.TryParse<TEnum>(inputString, ignoreCase, out var retVal))
+        public static string AsString<T>(this T value)
+                where T : System.Enum
         {
-            return retVal;
+            DescriptionAttribute? desc = typeof(T)
+                .GetField(value.ToString())?
+                .GetCustomAttributes(typeof(DescriptionAttribute), false)
+                .SingleOrDefault() as DescriptionAttribute;
+
+            EnumMemberAttribute? em = typeof(T)
+                .GetField(value.ToString())?
+                .GetCustomAttributes(typeof(EnumMemberAttribute), false)
+                .SingleOrDefault() as EnumMemberAttribute;
+
+            return em?.Value ?? desc?.Description ?? value.ToString();
         }
 
-        return null;
+        public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct, System.Enum
+        {
+            if (string.IsNullOrWhiteSpace(inputString)) return null;
+
+            if (Enum.TryParse<TEnum>(inputString, ignoreCase, out var retVal))
+            {
+                return retVal;
+            }
+
+            return null;
+        }
     }
-}

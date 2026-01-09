@@ -39,18 +39,18 @@ public sealed class SimpleInjectorAggregateRootFactory : IAggregateRootFactory
 
 namespace Ark.Tools.EventSourcing.SimpleInjector;
 
-public sealed class SimpleInjectorAggregateRootFactory : IAggregateRootFactory
-{
-    private readonly Container _container;
-
-    public SimpleInjectorAggregateRootFactory(Container container)
+    public sealed class SimpleInjectorAggregateRootFactory : IAggregateRootFactory
     {
-        _container = container;
-    }
+        private readonly Container _container;
 
-    public TAggregateRoot Create<TAggregateRoot>()
-        where TAggregateRoot : class, IAggregateRoot
-    {
-        return _container.GetInstance<TAggregateRoot>();
+        public SimpleInjectorAggregateRootFactory(Container container)
+        {
+            _container = container;
+        }
+
+        public TAggregateRoot Create<TAggregateRoot>()
+            where TAggregateRoot : class, IAggregateRoot
+        {
+            return _container.GetInstance<TAggregateRoot>();
+        }
     }
-}

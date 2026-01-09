@@ -11,6 +11,8 @@ namespace Ark.Tools.FtpClient.SftpClient
         {
         }
     }
+
+
 =======
 namespace Ark.Tools.FtpClient.SftpClient;
 
@@ -21,14 +23,12 @@ public sealed class SFtpClientFactory : DefaultFtpClientFactory
     {
     }
 >>>>>>> After
+    namespace Ark.Tools.FtpClient.SftpClient;
 
-
-namespace Ark.Tools.FtpClient.SftpClient;
-
-public sealed class SFtpClientFactory : DefaultFtpClientFactory
-{
-    public SFtpClientFactory()
-        : base(new SFtpClientConnectionFactory())
+    public sealed class SFtpClientFactory : DefaultFtpClientFactory
     {
+        public SFtpClientFactory()
+            : base(new SFtpClientConnectionFactory())
+        {
+        }
     }
-}

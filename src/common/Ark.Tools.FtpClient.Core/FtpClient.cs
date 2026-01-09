@@ -52,24 +52,24 @@ public sealed class FtpClient : FtpClientWithConnectionBase
 
 namespace Ark.Tools.FtpClient.Core;
 
-public sealed class FtpClient : FtpClientWithConnectionBase
-{
-    private readonly IFtpClientConnectionFactory _connectionFactory;
-
-    public FtpClient(FtpConfig ftpConfig, IFtpClientConnectionFactory connectionFactory)
-        : base(ftpConfig)
+    public sealed class FtpClient : FtpClientWithConnectionBase
     {
-        _connectionFactory = connectionFactory;
-    }
+        private readonly IFtpClientConnectionFactory _connectionFactory;
 
-    public FtpClient(FtpConfig ftpConfig, int maxListingParallelism, IFtpClientConnectionFactory connectionFactory)
-        : base(ftpConfig, maxListingParallelism)
-    {
-        _connectionFactory = connectionFactory;
-    }
+        public FtpClient(FtpConfig ftpConfig, IFtpClientConnectionFactory connectionFactory)
+            : base(ftpConfig)
+        {
+            _connectionFactory = connectionFactory;
+        }
 
-    protected override Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
-    {
-        return Task.FromResult(_connectionFactory.Create(FtpConfig));
+        public FtpClient(FtpConfig ftpConfig, int maxListingParallelism, IFtpClientConnectionFactory connectionFactory)
+            : base(ftpConfig, maxListingParallelism)
+        {
+            _connectionFactory = connectionFactory;
+        }
+
+        protected override Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
+        {
+            return Task.FromResult(_connectionFactory.Create(FtpConfig));
+        }
     }
-}

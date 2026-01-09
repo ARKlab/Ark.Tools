@@ -6,6 +6,8 @@ namespace Ark.Tools.Rebus
     {
         IMessageContext Current { get; }
     }
+
+
 =======
 namespace Ark.Tools.Rebus;
 
@@ -13,11 +15,9 @@ public interface IMessageContextProvider
 {
     IMessageContext Current { get; }
 >>>>>>> After
+    namespace Ark.Tools.Rebus;
 
-
-namespace Ark.Tools.Rebus;
-
-public interface IMessageContextProvider
-{
-    IMessageContext Current { get; }
-}
+    public interface IMessageContextProvider
+    {
+        IMessageContext Current { get; }
+    }

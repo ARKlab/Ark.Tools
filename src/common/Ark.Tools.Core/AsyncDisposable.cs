@@ -67,31 +67,31 @@ public static class AsyncDisposable
 
 namespace Ark.Tools.Core;
 
-public static class AsyncDisposable
-{
-
-    private sealed class AnonymousDisposable : IAsyncDisposable
+    public static class AsyncDisposable
     {
-        private volatile Func<ValueTask>? _cleanup;
 
-        public AnonymousDisposable(Func<ValueTask> cleanup)
+        private sealed class AnonymousDisposable : IAsyncDisposable
         {
-            _cleanup = cleanup;
+            private volatile Func<ValueTask>? _cleanup;
+
+            public AnonymousDisposable(Func<ValueTask> cleanup)
+            {
+                _cleanup = cleanup;
+            }
+
+            /// <summary>
+            /// Gets a value that indicates whether the object is disposed.
+            /// </summary>
+            public bool IsDisposed => _cleanup == null;
+
+            public ValueTask DisposeAsync()
+            {
+                return Interlocked.Exchange(ref _cleanup, null)?.Invoke() ?? default;
+            }
         }
 
-        /// <summary>
-        /// Gets a value that indicates whether the object is disposed.
-        /// </summary>
-        public bool IsDisposed => _cleanup == null;
-
-        public ValueTask DisposeAsync()
+        public static IAsyncDisposable Create(Func<ValueTask> cleanup)
         {
-            return Interlocked.Exchange(ref _cleanup, null)?.Invoke() ?? default;
+            return new AnonymousDisposable(cleanup);
         }
     }
-
-    public static IAsyncDisposable Create(Func<ValueTask> cleanup)
-    {
-        return new AnonymousDisposable(cleanup);
-    }
-}

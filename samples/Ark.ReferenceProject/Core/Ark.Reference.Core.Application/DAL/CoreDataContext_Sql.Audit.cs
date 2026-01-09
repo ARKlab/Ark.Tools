@@ -5,35 +5,34 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Core.Application.DAL
+namespace Ark.Reference.Core.Application.DAL;
+
+public partial class CoreDataContext_Sql
 {
-    public partial class CoreDataContext_Sql
+    //private const string _schemaAudit = "dbo";
+    //private const string _tableAudit = "Audit";
+
+    public Task<(IEnumerable<AuditDto<AuditKind>> records, int totalCount)> ReadAuditByFilterAsync(
+          AuditQueryDto.V1<AuditKind> query
+        , CancellationToken ctk = default)
     {
-        //private const string _schemaAudit = "dbo";
-        //private const string _tableAudit = "Audit";
+        return _auditContext.ReadAuditByFilterAsync(query, ctk);
+    }
 
-        public Task<(IEnumerable<AuditDto<AuditKind>> records, int totalCount)> ReadAuditByFilterAsync(
-              AuditQueryDto.V1<AuditKind> query
-            , CancellationToken ctk = default)
-        {
-            return _auditContext.ReadAuditByFilterAsync(query, ctk);
-        }
+    public Task<IEnumerable<string>> ReadAuditUsersAsync(
+        CancellationToken ctk = default)
+    {
+        return _auditContext.ReadAuditUsersAsync(ctk);
+    }
 
-        public Task<IEnumerable<string>> ReadAuditUsersAsync(
-            CancellationToken ctk = default)
-        {
-            return _auditContext.ReadAuditUsersAsync(ctk);
-        }
+    public AuditDto<AuditKind> CurrentAudit { get => _auditContext.CurrentAudit; }
 
-        public AuditDto<AuditKind> CurrentAudit { get => _auditContext.CurrentAudit; }
-
-        public ValueTask<AuditDto<AuditKind>> EnsureAudit(
-            AuditKind kind
-            , string? userId
-            , string? infoMessage
-            , CancellationToken ctk = default)
-        {
-            return _auditContext.EnsureAudit(kind, userId, infoMessage, ctk);
-        }
+    public ValueTask<AuditDto<AuditKind>> EnsureAudit(
+        AuditKind kind
+        , string? userId
+        , string? infoMessage
+        , CancellationToken ctk = default)
+    {
+        return _auditContext.EnsureAudit(kind, userId, infoMessage, ctk);
     }
 }

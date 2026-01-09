@@ -73,33 +73,33 @@ public abstract class AbstractSqlContextWithOutbox<TTag> : AbstractSqlContext<TT
 
 namespace Ark.Tools.Outbox.SqlServer;
 
-public abstract class AbstractSqlContextWithOutbox<TTag> : AbstractSqlContext<TTag>, IOutboxContext
-{
-    private readonly OutboxContextSql<TTag> _outbox;
-
-    protected AbstractSqlContextWithOutbox(DbConnection connection, IOutboxContextSqlConfig config, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
-        : base(connection, isolationLevel)
+    public abstract class AbstractSqlContextWithOutbox<TTag> : AbstractSqlContext<TTag>, IOutboxContext
     {
-        _outbox = new OutboxContextSql<TTag>(this, config);
-    }
+        private readonly OutboxContextSql<TTag> _outbox;
 
-    public Task ClearAsync(CancellationToken ctk = default)
-    {
-        return _outbox.ClearAsync(ctk);
-    }
+        protected AbstractSqlContextWithOutbox(DbConnection connection, IOutboxContextSqlConfig config, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+            : base(connection, isolationLevel)
+        {
+            _outbox = new OutboxContextSql<TTag>(this, config);
+        }
 
-    public Task<int> CountAsync(CancellationToken ctk = default)
-    {
-        return _outbox.CountAsync(ctk);
-    }
+        public Task ClearAsync(CancellationToken ctk = default)
+        {
+            return _outbox.ClearAsync(ctk);
+        }
 
-    public Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
-    {
-        return _outbox.PeekLockMessagesAsync(messageCount, ctk);
-    }
+        public Task<int> CountAsync(CancellationToken ctk = default)
+        {
+            return _outbox.CountAsync(ctk);
+        }
 
-    public Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
-    {
-        return _outbox.SendAsync(messages, ctk);
+        public Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
+        {
+            return _outbox.PeekLockMessagesAsync(messageCount, ctk);
+        }
+
+        public Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
+        {
+            return _outbox.SendAsync(messages, ctk);
+        }
     }
-}

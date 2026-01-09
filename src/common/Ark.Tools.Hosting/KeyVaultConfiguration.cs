@@ -71,33 +71,33 @@ public static class KeyVaultConfigurationExtensions
 
 namespace Microsoft.Extensions.Configuration;
 
-public static class KeyVaultConfigurationExtensions
-{
-    private sealed class ArkKeyVaultSecretManager : KeyVaultSecretManager
+    public static class KeyVaultConfigurationExtensions
     {
-        public override string GetKey(KeyVaultSecret secret)
+        private sealed class ArkKeyVaultSecretManager : KeyVaultSecretManager
         {
-            return base.GetKey(secret).Replace('-', '.');
+            public override string GetKey(KeyVaultSecret secret)
+            {
+                return base.GetKey(secret).Replace('-', '.');
+            }
+        }
+
+        /// <summary>
+        /// AddAzureKeyVaultMSI
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
+        public static IConfigurationBuilder AddAzureKeyVaultMSI(this IConfigurationBuilder builder)
+        {
+            var config = builder.Build();
+            var keyVaultBaseUrl = config["KeyVault:BaseUrl"];
+
+            if (!string.IsNullOrEmpty(keyVaultBaseUrl))
+                builder.AddAzureKeyVault(
+                    new Uri(keyVaultBaseUrl)
+                    , new DefaultAzureCredential()
+                    , new ArkKeyVaultSecretManager()
+                );
+
+            return builder;
         }
     }
-
-    /// <summary>
-    /// AddAzureKeyVaultMSI
-    /// </summary>
-    /// <param name="builder"></param>
-    /// <returns></returns>
-    public static IConfigurationBuilder AddAzureKeyVaultMSI(this IConfigurationBuilder builder)
-    {
-        var config = builder.Build();
-        var keyVaultBaseUrl = config["KeyVault:BaseUrl"];
-
-        if (!string.IsNullOrEmpty(keyVaultBaseUrl))
-            builder.AddAzureKeyVault(
-                new Uri(keyVaultBaseUrl)
-                , new DefaultAzureCredential()
-                , new ArkKeyVaultSecretManager()
-            );
-
-        return builder;
-    }
-}

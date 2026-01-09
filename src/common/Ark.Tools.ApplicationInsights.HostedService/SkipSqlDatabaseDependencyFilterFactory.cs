@@ -38,17 +38,17 @@ public class SkipSqlDatabaseDependencyFilterFactory : ITelemetryProcessorFactory
 
 namespace Ark.Tools.ApplicationInsights.HostedService;
 
-public class SkipSqlDatabaseDependencyFilterFactory : ITelemetryProcessorFactory
-{
-    private readonly string _sqlConnection;
-
-    public SkipSqlDatabaseDependencyFilterFactory(string sqlConnection)
+    public class SkipSqlDatabaseDependencyFilterFactory : ITelemetryProcessorFactory
     {
-        this._sqlConnection = sqlConnection;
-    }
+        private readonly string _sqlConnection;
 
-    public ITelemetryProcessor Create(ITelemetryProcessor nextProcessor)
-    {
-        return new SkipSqlDatabaseDependencyFilter(nextProcessor, _sqlConnection);
+        public SkipSqlDatabaseDependencyFilterFactory(string sqlConnection)
+        {
+            this._sqlConnection = sqlConnection;
+        }
+
+        public ITelemetryProcessor Create(ITelemetryProcessor nextProcessor)
+        {
+            return new SkipSqlDatabaseDependencyFilter(nextProcessor, _sqlConnection);
+        }
     }
-}

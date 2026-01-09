@@ -15,10 +15,10 @@ public class ResourceSliceReady
     public Resource Resource { get; set; }
     public Slice Slice { get; set; }
 >>>>>>> After
-namespace Ark.Tools.Activity.Messages;
+    namespace Ark.Tools.Activity.Messages;
 
-public class ResourceSliceReady
-{
-    public Resource Resource { get; set; }
-    public Slice Slice { get; set; }
-}
+    public class ResourceSliceReady
+    {
+        public Resource Resource { get; set; }
+        public Slice Slice { get; set; }
+    }

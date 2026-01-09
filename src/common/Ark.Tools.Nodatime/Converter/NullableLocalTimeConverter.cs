@@ -10,6 +10,8 @@ namespace Ark.Tools.Nodatime
     {
         public NullableLocalTimeConverter() : base(typeof(LocalTime?)) { }
     }
+
+
 =======
 namespace Ark.Tools.Nodatime;
 
@@ -17,11 +19,9 @@ public class NullableLocalTimeConverter : NullableConverter
 {
     public NullableLocalTimeConverter() : base(typeof(LocalTime?)) { }
 >>>>>>> After
+    namespace Ark.Tools.Nodatime;
 
-
-namespace Ark.Tools.Nodatime;
-
-public class NullableLocalTimeConverter : NullableConverter
-{
-    public NullableLocalTimeConverter() : base(typeof(LocalTime?)) { }
-}
+    public class NullableLocalTimeConverter : NullableConverter
+    {
+        public NullableLocalTimeConverter() : base(typeof(LocalTime?)) { }
+    }

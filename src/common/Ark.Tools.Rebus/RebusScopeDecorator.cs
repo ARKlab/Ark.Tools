@@ -49,22 +49,22 @@ public class RebusScopeDecorator<T> : IHandleMessages<T>
 
 namespace Ark.Tools.Rebus;
 
-public class RebusScopeDecorator<T> : IHandleMessages<T>
-{
-    private readonly Func<IHandleMessages<T>> _inner;
-    private readonly Container _container;
-
-    public RebusScopeDecorator(Func<IHandleMessages<T>> inner, Container container)
+    public class RebusScopeDecorator<T> : IHandleMessages<T>
     {
-        _inner = inner;
-        _container = container;
-    }
+        private readonly Func<IHandleMessages<T>> _inner;
+        private readonly Container _container;
 
-    public async Task Handle(T message)
-    {
-        await using (AsyncScopedLifestyle.BeginScope(_container).ConfigureAwait(false))
+        public RebusScopeDecorator(Func<IHandleMessages<T>> inner, Container container)
         {
-            await _inner().Handle(message).ConfigureAwait(false);
+            _inner = inner;
+            _container = container;
+        }
+
+        public async Task Handle(T message)
+        {
+            await using (AsyncScopedLifestyle.BeginScope(_container).ConfigureAwait(false))
+            {
+                await _inner().Handle(message).ConfigureAwait(false);
+            }
         }
     }
-}

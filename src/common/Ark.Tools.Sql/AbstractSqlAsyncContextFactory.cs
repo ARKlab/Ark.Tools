@@ -56,6 +56,8 @@ namespace Ark.Tools.Sql
 
         protected abstract TContext CreateContext(DbTransaction transaction);
     }
+
+
 =======
 namespace Ark.Tools.Sql;
 
@@ -106,54 +108,52 @@ public abstract class AbstractSqlAsyncContextFactory<TContext, TTag> : IAsyncCon
 
     protected abstract TContext CreateContext(DbTransaction transaction);
 >>>>>>> After
+    namespace Ark.Tools.Sql;
 
-
-namespace Ark.Tools.Sql;
-
-public abstract class AbstractSqlAsyncContextFactory<TContext, TTag> : IAsyncContextFactory<TContext> where TContext : ISqlAsyncContext<TTag>
-{
-    private readonly IDbConnectionManager _connectionManager;
-    private readonly ISqlContextConfig _config;
-
-    protected AbstractSqlAsyncContextFactory(IDbConnectionManager connectionManager, ISqlContextConfig config)
+    public abstract class AbstractSqlAsyncContextFactory<TContext, TTag> : IAsyncContextFactory<TContext> where TContext : ISqlAsyncContext<TTag>
     {
-        _connectionManager = connectionManager;
-        _config = config;
-    }
+        private readonly IDbConnectionManager _connectionManager;
+        private readonly ISqlContextConfig _config;
 
-    public virtual async Task<TContext> CreateAsync(CancellationToken ctk = default)
-    {
-        DbConnection? connection = null;
-        DbTransaction? transaction = null;
-        var il = _config.IsolationLevel;
-        try
+        protected AbstractSqlAsyncContextFactory(IDbConnectionManager connectionManager, ISqlContextConfig config)
         {
-
-            connection = await _connectionManager.GetAsync(_config.ConnectionString, ctk).ConfigureAwait(false);
-
-            if (connection.State == ConnectionState.Closed)
-                await connection.OpenAsync(ctk).ConfigureAwait(false);
-
-            if (il is not null)
-                transaction = await connection.BeginTransactionAsync(il.Value, ctk).ConfigureAwait(false);
-            else
-                transaction = await connection.BeginTransactionAsync(ctk).ConfigureAwait(false);
-
-            return CreateContext(transaction);
+            _connectionManager = connectionManager;
+            _config = config;
         }
-        catch
+
+        public virtual async Task<TContext> CreateAsync(CancellationToken ctk = default)
         {
-            if (transaction != null)
+            DbConnection? connection = null;
+            DbTransaction? transaction = null;
+            var il = _config.IsolationLevel;
+            try
             {
-                await transaction.DisposeAsync().ConfigureAwait(false);
-            }
-            if (connection != null)
-            {
-                await connection.DisposeAsync().ConfigureAwait(false);
-            }
-            throw;
-        }
-    }
 
-    protected abstract TContext CreateContext(DbTransaction transaction);
-}
+                connection = await _connectionManager.GetAsync(_config.ConnectionString, ctk).ConfigureAwait(false);
+
+                if (connection.State == ConnectionState.Closed)
+                    await connection.OpenAsync(ctk).ConfigureAwait(false);
+
+                if (il is not null)
+                    transaction = await connection.BeginTransactionAsync(il.Value, ctk).ConfigureAwait(false);
+                else
+                    transaction = await connection.BeginTransactionAsync(ctk).ConfigureAwait(false);
+
+                return CreateContext(transaction);
+            }
+            catch
+            {
+                if (transaction != null)
+                {
+                    await transaction.DisposeAsync().ConfigureAwait(false);
+                }
+                if (connection != null)
+                {
+                    await connection.DisposeAsync().ConfigureAwait(false);
+                }
+                throw;
+            }
+        }
+
+        protected abstract TContext CreateContext(DbTransaction transaction);
+    }

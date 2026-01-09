@@ -116,10 +116,10 @@ namespace Ark.Tools.Nodatime.Intervals
         public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, DateTimeZone timezone)
         {
             ArgumentNullException.ThrowIfNull(timezone);
-            
+
             var start = _start;
             var increment = GetIncrement();
-            
+
             return SplitIntoIterator(period, timezone, start, increment);
 
             static IEnumerable<TimeInterval> SplitIntoIterator(TimePeriod period, DateTimeZone timezone, LocalDate start, Period increment)
@@ -551,125 +551,144 @@ public readonly struct DateInterval
 
 namespace Ark.Tools.Nodatime.Intervals;
 
-[StructLayout(LayoutKind.Auto)]
-public readonly struct DateInterval
-    : IComparable<DateInterval>
-    , IEquatable<DateInterval>
-{
-    private readonly DatePeriod _period;
-    private readonly LocalDate _start;
-
-    public DateInterval(LocalDate point, DatePeriod period)
+    [StructLayout(LayoutKind.Auto)]
+    public readonly struct DateInterval
+        : IComparable<DateInterval>
+        , IEquatable<DateInterval>
     {
-        if (point != StartOfInterval(point, period))
+        private readonly DatePeriod _period;
+        private readonly LocalDate _start;
+
+        public DateInterval(LocalDate point, DatePeriod period)
         {
-            throw new ArgumentException($"Point must be the start of the interval for the given period. Expected: {StartOfInterval(point, period)}, Actual: {point}", nameof(point));
+            if (point != StartOfInterval(point, period))
+            {
+                throw new ArgumentException($"Point must be the start of the interval for the given period. Expected: {StartOfInterval(point, period)}, Actual: {point}", nameof(point));
+            }
+
+            _period = period;
+            _start = point;
         }
 
-        _period = period;
-        _start = point;
-    }
-
-    public static DateInterval IntervalOf(LocalDate time, DatePeriod period)
-    {
-        return new DateInterval(StartOfInterval(time, period), period);
-    }
-
-    public static bool IsStartOfInterval(LocalDateTime time, DatePeriod period)
-    {
-        return LocalTime.Midnight == time.TimeOfDay && IsStartOfInterval(time.Date, period);
-    }
-
-    public static bool IsStartOfInterval(LocalDate date, DatePeriod period)
-    {
-        return DateInterval.StartOfInterval(date, period) == date;
-    }
-
-    public static LocalDate StartOfInterval(LocalDate date, DatePeriod period)
-    {
-        switch (period)
+        public static DateInterval IntervalOf(LocalDate time, DatePeriod period)
         {
-            case DatePeriod.Day:
-                return date;
-            case DatePeriod.Week:
-                return date.FirstDayOfTheWeek();
-            case DatePeriod.Month:
-                return date.FirstDayOfTheMonth();
-            case DatePeriod.Bimestral:
-                return new LocalDate(date.Year, ((date.Month - 1) / 2) * 2 + 1, 1, date.Calendar);
-            case DatePeriod.Trimestral:
-                return date.FirstDayOfTheQuarter();
-            case DatePeriod.Calendar:
-                return date.FirstDayOfTheYear();
+            return new DateInterval(StartOfInterval(time, period), period);
         }
 
-        return date;
-    }
-
-    public static LocalDate EndOfInterval(LocalDate date, DatePeriod period)
-    {
-        return StartOfInterval(date, period) + GetIncrement(period);
-    }
-
-    public readonly LocalDate Date { get { return _start; } }
-    public readonly LocalDateRange Range { get { return AsRange(); } }
-    public readonly DatePeriod Period { get { return _period; } }
-
-    public readonly DateInterval NextInterval()
-    {
-        return new DateInterval(_start + GetIncrement(), _period);
-    }
-
-    public readonly DateInterval PreviousInterval()
-    {
-        return new DateInterval(_start - GetIncrement(), _period);
-    }
-
-    public readonly DateInterval NextInterval(uint count)
-    {
-        return new DateInterval(_start + GetIncrement(count), _period);
-    }
-
-    public readonly DateInterval PreviousInterval(uint count)
-    {
-        return new DateInterval(_start - GetIncrement(count), _period);
-    }
-
-    public readonly bool CanSplitInto(DatePeriod period)
-    {
-        return _isValidperiodSplit(_period, period);
-    }
-
-    public readonly DateInterval LastOf(DatePeriod period)
-    {
-        InvalidOperationException.ThrowUnless(CanSplitInto(period));
-
-        var next = NextInterval();
-        var changeperiod = new DateInterval(next._start, period);
-        return changeperiod.PreviousInterval();
-    }
-
-    public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, string timezone)
-    {
-        return SplitInto(period, DateTimeZoneProviders.Tzdb[timezone]);
-    }
-
-    public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, DateTimeZone timezone)
-    {
-        ArgumentNullException.ThrowIfNull(timezone);
-
-        var start = _start;
-        var increment = GetIncrement();
-
-        return SplitIntoIterator(period, timezone, start, increment);
-
-        static IEnumerable<TimeInterval> SplitIntoIterator(TimePeriod period, DateTimeZone timezone, LocalDate start, Period increment)
+        public static bool IsStartOfInterval(LocalDateTime time, DatePeriod period)
         {
-            var s = timezone.AtStartOfDay(start);
-            var n = timezone.AtStartOfDay(start + increment);
+            return LocalTime.Midnight == time.TimeOfDay && IsStartOfInterval(time.Date, period);
+        }
 
-            var c = new TimeInterval(s, period);
-            var e = new TimeInterval(n, period);
+        public static bool IsStartOfInterval(LocalDate date, DatePeriod period)
+        {
+            return DateInterval.StartOfInterval(date, period) == date;
+        }
+
+        public static LocalDate StartOfInterval(LocalDate date, DatePeriod period)
+        {
+            switch (period)
+            {
+                case DatePeriod.Day:
+                    return date;
+                case DatePeriod.Week:
+                    return date.FirstDayOfTheWeek();
+                case DatePeriod.Month:
+                    return date.FirstDayOfTheMonth();
+                case DatePeriod.Bimestral:
+                    return new LocalDate(date.Year, ((date.Month - 1) / 2) * 2 + 1, 1, date.Calendar);
+                case DatePeriod.Trimestral:
+                    return date.FirstDayOfTheQuarter();
+                case DatePeriod.Calendar:
+                    return date.FirstDayOfTheYear();
+            }
+
+            return date;
+        }
+
+        public static LocalDate EndOfInterval(LocalDate date, DatePeriod period)
+        {
+            return StartOfInterval(date, period) + GetIncrement(period);
+        }
+
+        public readonly LocalDate Date { get { return _start; } }
+        public readonly LocalDateRange Range { get { return AsRange(); } }
+        public readonly DatePeriod Period { get { return _period; } }
+
+        public readonly DateInterval NextInterval()
+        {
+            return new DateInterval(_start + GetIncrement(), _period);
+        }
+
+        public readonly DateInterval PreviousInterval()
+        {
+            return new DateInterval(_start - GetIncrement(), _period);
+        }
+
+        public readonly DateInterval NextInterval(uint count)
+        {
+            return new DateInterval(_start + GetIncrement(count), _period);
+        }
+
+        public readonly DateInterval PreviousInterval(uint count)
+        {
+            return new DateInterval(_start - GetIncrement(count), _period);
+        }
+
+        public readonly bool CanSplitInto(DatePeriod period)
+        {
+            return _isValidperiodSplit(_period, period);
+        }
+
+        public readonly DateInterval LastOf(DatePeriod period)
+        {
+            InvalidOperationException.ThrowUnless(CanSplitInto(period));
+
+            var next = NextInterval();
+            var changeperiod = new DateInterval(next._start, period);
+            return changeperiod.PreviousInterval();
+        }
+
+        public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, string timezone)
+        {
+            return SplitInto(period, DateTimeZoneProviders.Tzdb[timezone]);
+        }
+
+        public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, DateTimeZone timezone)
+        {
+            ArgumentNullException.ThrowIfNull(timezone);
+
+            var start = _start;
+            var increment = GetIncrement();
+
+            return SplitIntoIterator(period, timezone, start, increment);
+
+            static IEnumerable<TimeInterval> SplitIntoIterator(TimePeriod period, DateTimeZone timezone, LocalDate start, Period increment)
+            {
+                var s = timezone.AtStartOfDay(start);
+                var n = timezone.AtStartOfDay(start + increment);
+
+                var c = new TimeInterval(s, period);
+                var e = new TimeInterval(n, period);
+
+                while (c < e)
+                {
+                    yield return c;
+                    c = c.NextInterval();
+                }
+            }
+        }
+
+        public readonly IEnumerable<DateInterval> SplitInto(DatePeriod period)
+        {
+            InvalidOperationException.ThrowUnless(CanSplitInto(period));
+
+
+            var s = _start;
+            var n = NextInterval()._start;
+
+            var c = new DateInterval(s, period);
+            var e = new DateInterval(n, period);
 
             while (c < e)
             {
@@ -677,145 +696,126 @@ public readonly struct DateInterval
                 c = c.NextInterval();
             }
         }
-    }
 
-    public readonly IEnumerable<DateInterval> SplitInto(DatePeriod period)
-    {
-        InvalidOperationException.ThrowUnless(CanSplitInto(period));
-
-
-        var s = _start;
-        var n = NextInterval()._start;
-
-        var c = new DateInterval(s, period);
-        var e = new DateInterval(n, period);
-
-        while (c < e)
+        public readonly LocalDateRange AsRange()
         {
-            yield return c;
-            c = c.NextInterval();
-        }
-    }
-
-    public readonly LocalDateRange AsRange()
-    {
-        return new LocalDateRange(_start, _start + GetIncrement());
-    }
-
-    public readonly bool Contains(DateInterval period)
-    {
-        return this.Range.Contains(period.Range);
-    }
-
-    public readonly Period GetIncrement()
-    {
-        return DateInterval.GetIncrement(_period);
-    }
-
-    public readonly Period GetIncrement(uint count)
-    {
-        return DateInterval.GetIncrement(_period, count);
-    }
-
-    public static Period GetIncrement(DatePeriod period)
-    {
-        return DateInterval.GetIncrement(period, 1);
-    }
-
-    public static Period GetIncrement(DatePeriod period, uint count)
-    {
-
-        var c = (int)count;
-        switch (period)
-        {
-            case DatePeriod.Day:
-                return NodaTime.Period.FromDays(1 * c);
-            case DatePeriod.Week:
-                return NodaTime.Period.FromWeeks(1 * c);
-            case DatePeriod.Month:
-                return NodaTime.Period.FromMonths(1 * c);
-            case DatePeriod.Bimestral:
-                return NodaTime.Period.FromMonths(2 * c);
-            case DatePeriod.Trimestral:
-                return NodaTime.Period.FromMonths(3 * c);
-            case DatePeriod.Calendar:
-                return NodaTime.Period.FromYears(1 * c);
+            return new LocalDateRange(_start, _start + GetIncrement());
         }
 
-        throw new ArgumentOutOfRangeException(nameof(period));
-    }
-
-    private static bool _isValidperiodSplit(DatePeriod source, DatePeriod target)
-    {
-        return target < source && target != DatePeriod.Week;
-    }
-
-    public readonly int CompareTo(DateInterval other)
-    {
-        InvalidOperationException.ThrowUnless(Period == other.Period);
-        return _start.CompareTo(other._start);
-    }
-
-    private static int CompareTo(DateInterval x, DateInterval y)
-    {
-        return x.CompareTo(y);
-    }
-
-    public override readonly int GetHashCode()
-    {
-        unchecked
+        public readonly bool Contains(DateInterval period)
         {
-            int hash = 7243;
-            hash = hash * 92821 + _start.GetHashCode();
-            hash = hash * 92821 + _period.GetHashCode();
-            return hash;
+            return this.Range.Contains(period.Range);
+        }
+
+        public readonly Period GetIncrement()
+        {
+            return DateInterval.GetIncrement(_period);
+        }
+
+        public readonly Period GetIncrement(uint count)
+        {
+            return DateInterval.GetIncrement(_period, count);
+        }
+
+        public static Period GetIncrement(DatePeriod period)
+        {
+            return DateInterval.GetIncrement(period, 1);
+        }
+
+        public static Period GetIncrement(DatePeriod period, uint count)
+        {
+
+            var c = (int)count;
+            switch (period)
+            {
+                case DatePeriod.Day:
+                    return NodaTime.Period.FromDays(1 * c);
+                case DatePeriod.Week:
+                    return NodaTime.Period.FromWeeks(1 * c);
+                case DatePeriod.Month:
+                    return NodaTime.Period.FromMonths(1 * c);
+                case DatePeriod.Bimestral:
+                    return NodaTime.Period.FromMonths(2 * c);
+                case DatePeriod.Trimestral:
+                    return NodaTime.Period.FromMonths(3 * c);
+                case DatePeriod.Calendar:
+                    return NodaTime.Period.FromYears(1 * c);
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(period));
+        }
+
+        private static bool _isValidperiodSplit(DatePeriod source, DatePeriod target)
+        {
+            return target < source && target != DatePeriod.Week;
+        }
+
+        public readonly int CompareTo(DateInterval other)
+        {
+            InvalidOperationException.ThrowUnless(Period == other.Period);
+            return _start.CompareTo(other._start);
+        }
+
+        private static int CompareTo(DateInterval x, DateInterval y)
+        {
+            return x.CompareTo(y);
+        }
+
+        public override readonly int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 7243;
+                hash = hash * 92821 + _start.GetHashCode();
+                hash = hash * 92821 + _period.GetHashCode();
+                return hash;
+            }
+        }
+
+        public readonly bool Equals(DateInterval other)
+        {
+            return _start == other._start && _period == other._period;
+        }
+
+        public static bool operator ==(DateInterval x, DateInterval y)
+        {
+            return x.Equals(y);
+        }
+
+        public static bool operator !=(DateInterval x, DateInterval y)
+        {
+            return !(x == y);
+        }
+
+        public static bool operator <(DateInterval x, DateInterval y)
+        {
+            return CompareTo(x, y) < 0;
+        }
+
+        public static bool operator >(DateInterval x, DateInterval y)
+        {
+
+            return CompareTo(x, y) > 0;
+
+        }
+
+        public static bool operator <=(DateInterval x, DateInterval y)
+        {
+
+            return CompareTo(x, y) <= 0;
+
+        }
+
+        public static bool operator >=(DateInterval x, DateInterval y)
+        {
+            return CompareTo(x, y) >= 0;
+        }
+
+        public override readonly bool Equals(object? obj)
+        {
+            if (obj is not DateInterval)
+                return false;
+
+            return Equals((DateInterval)obj);
         }
     }
-
-    public readonly bool Equals(DateInterval other)
-    {
-        return _start == other._start && _period == other._period;
-    }
-
-    public static bool operator ==(DateInterval x, DateInterval y)
-    {
-        return x.Equals(y);
-    }
-
-    public static bool operator !=(DateInterval x, DateInterval y)
-    {
-        return !(x == y);
-    }
-
-    public static bool operator <(DateInterval x, DateInterval y)
-    {
-        return CompareTo(x, y) < 0;
-    }
-
-    public static bool operator >(DateInterval x, DateInterval y)
-    {
-
-        return CompareTo(x, y) > 0;
-
-    }
-
-    public static bool operator <=(DateInterval x, DateInterval y)
-    {
-
-        return CompareTo(x, y) <= 0;
-
-    }
-
-    public static bool operator >=(DateInterval x, DateInterval y)
-    {
-        return CompareTo(x, y) >= 0;
-    }
-
-    public override readonly bool Equals(object? obj)
-    {
-        if (obj is not DateInterval)
-            return false;
-
-        return Equals((DateInterval)obj);
-    }
-}

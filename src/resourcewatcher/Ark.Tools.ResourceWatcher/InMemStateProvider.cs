@@ -67,30 +67,30 @@ public class InMemStateProvider : IStateProvider
 
 namespace Ark.Tools.ResourceWatcher;
 
-public class InMemStateProvider : IStateProvider
-{
-    private readonly ConcurrentDictionary<string, ResourceState> _store = new(System.StringComparer.Ordinal);
-
-    public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
+    public class InMemStateProvider : IStateProvider
     {
-        var res = new List<ResourceState>();
-        if (resourceIds == null)
-            res.AddRange(_store.Values);
-        else
+        private readonly ConcurrentDictionary<string, ResourceState> _store = new(System.StringComparer.Ordinal);
+
+        public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
         {
-            foreach (var r in resourceIds)
-                if (_store.TryGetValue(r, out var s))
-                    res.Add(s);
+            var res = new List<ResourceState>();
+            if (resourceIds == null)
+                res.AddRange(_store.Values);
+            else
+            {
+                foreach (var r in resourceIds)
+                    if (_store.TryGetValue(r, out var s))
+                        res.Add(s);
+            }
+
+            return Task.FromResult(res.AsEnumerable());
         }
 
-        return Task.FromResult(res.AsEnumerable());
-    }
+        public Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
+        {
+            foreach (var s in states)
+                _store.AddOrUpdate(s.ResourceId, s, (k, v) => s);
 
-    public Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
-    {
-        foreach (var s in states)
-            _store.AddOrUpdate(s.ResourceId, s, (k, v) => s);
-
-        return Task.CompletedTask;
+            return Task.CompletedTask;
+        }
     }
-}

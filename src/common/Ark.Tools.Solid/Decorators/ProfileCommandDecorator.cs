@@ -77,34 +77,34 @@ using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid.Decorators;
 
-public sealed class ProfileCommandDecorator<TCommand> : ICommandHandler<TCommand>
-    where TCommand : ICommand
-{
-    // We use Logger to trace the profile results. Could be written to a Db but I'm lazy atm.
-    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-    private readonly ICommandHandler<TCommand> _decorated;
-
-    public ProfileCommandDecorator(ICommandHandler<TCommand> decorated)
+    public sealed class ProfileCommandDecorator<TCommand> : ICommandHandler<TCommand>
+        where TCommand : ICommand
     {
-        ArgumentNullException.ThrowIfNull(decorated);
+        // We use Logger to trace the profile results. Could be written to a Db but I'm lazy atm.
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-        _decorated = decorated;
-    }
+        private readonly ICommandHandler<TCommand> _decorated;
 
-    public void Execute(TCommand command)
-    {
-        Stopwatch stopWatch = Stopwatch.StartNew();
-        _decorated.Execute(command);
-        stopWatch.Stop();
-        _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
-    }
+        public ProfileCommandDecorator(ICommandHandler<TCommand> decorated)
+        {
+            ArgumentNullException.ThrowIfNull(decorated);
 
-    public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
-    {
-        Stopwatch stopWatch = Stopwatch.StartNew();
-        await _decorated.ExecuteAsync(command, ctk).ConfigureAwait(false);
-        stopWatch.Stop();
-        _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
+            _decorated = decorated;
+        }
+
+        public void Execute(TCommand command)
+        {
+            Stopwatch stopWatch = Stopwatch.StartNew();
+            _decorated.Execute(command);
+            stopWatch.Stop();
+            _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
+        }
+
+        public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
+        {
+            Stopwatch stopWatch = Stopwatch.StartNew();
+            await _decorated.ExecuteAsync(command, ctk).ConfigureAwait(false);
+            stopWatch.Stop();
+            _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
+        }
     }
-}

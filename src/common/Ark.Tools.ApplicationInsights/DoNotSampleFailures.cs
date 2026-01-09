@@ -33,15 +33,15 @@ public class DoNotSampleFailures
 
 namespace Ark.Tools.AspNetCore.ApplicationInsights;
 
-public class DoNotSampleFailures
-    : ITelemetryInitializer
-{
-    public void Initialize(ITelemetry telemetry)
+    public class DoNotSampleFailures
+        : ITelemetryInitializer
     {
-        if (telemetry is ExceptionTelemetry || (telemetry is DependencyTelemetry dp && dp.Success == false) || (telemetry is RequestTelemetry rq && rq.Success == false))
+        public void Initialize(ITelemetry telemetry)
         {
-            if (telemetry is ISupportSampling s)
-                s.SamplingPercentage = 100;
+            if (telemetry is ExceptionTelemetry || (telemetry is DependencyTelemetry dp && dp.Success == false) || (telemetry is RequestTelemetry rq && rq.Success == false))
+            {
+                if (telemetry is ISupportSampling s)
+                    s.SamplingPercentage = 100;
+            }
         }
     }
-}

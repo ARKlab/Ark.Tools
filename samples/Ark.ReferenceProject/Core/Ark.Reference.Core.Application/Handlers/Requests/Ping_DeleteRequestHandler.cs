@@ -8,56 +8,55 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Core.Application.Handlers.Requests
+namespace Ark.Reference.Core.Application.Handlers.Requests;
+
+/// <summary>
+/// Handler for deleting a Ping entity
+/// </summary>
+public class Ping_DeleteRequestHandler : IRequestHandler<Ping_DeleteRequest.V1, bool>
 {
+    private readonly ICoreDataContextFactory _coreDataContext;
+    private readonly IContextProvider<ClaimsPrincipal> _userContext;
+
     /// <summary>
-    /// Handler for deleting a Ping entity
+    /// Initializes a new instance of the <see cref="Ping_DeleteRequestHandler"/> class
     /// </summary>
-    public class Ping_DeleteRequestHandler : IRequestHandler<Ping_DeleteRequest.V1, bool>
+    /// <param name="coreDataContext">The data context factory</param>
+    /// <param name="userContext">The user context provider</param>
+    public Ping_DeleteRequestHandler(
+          ICoreDataContextFactory coreDataContext
+          , IContextProvider<ClaimsPrincipal> userContext
+        )
     {
-        private readonly ICoreDataContextFactory _coreDataContext;
-        private readonly IContextProvider<ClaimsPrincipal> _userContext;
+        ArgumentNullException.ThrowIfNull(coreDataContext);
+        ArgumentNullException.ThrowIfNull(userContext);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Ping_DeleteRequestHandler"/> class
-        /// </summary>
-        /// <param name="coreDataContext">The data context factory</param>
-        /// <param name="userContext">The user context provider</param>
-        public Ping_DeleteRequestHandler(
-              ICoreDataContextFactory coreDataContext
-              , IContextProvider<ClaimsPrincipal> userContext
-            )
-        {
-            ArgumentNullException.ThrowIfNull(coreDataContext);
-            ArgumentNullException.ThrowIfNull(userContext);
+        _coreDataContext = coreDataContext;
+        _userContext = userContext;
+    }
 
-            _coreDataContext = coreDataContext;
-            _userContext = userContext;
-        }
+    /// <inheritdoc/>
+    public bool Execute(Ping_DeleteRequest.V1 request)
+    {
+        return ExecuteAsync(request).GetAwaiter().GetResult();
+    }
 
-        /// <inheritdoc/>
-        public bool Execute(Ping_DeleteRequest.V1 request)
-        {
-            return ExecuteAsync(request).GetAwaiter().GetResult();
-        }
+    /// <inheritdoc/>
+    public async Task<bool> ExecuteAsync(Ping_DeleteRequest.V1 request, CancellationToken ctk = default)
+    {
+        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
 
-        /// <inheritdoc/>
-        public async Task<bool> ExecuteAsync(Ping_DeleteRequest.V1 request, CancellationToken ctk = default)
-        {
-            await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var entity = await ctx.ReadPingByIdAsync(request.Id, ctk).ConfigureAwait(false);
 
-            var entity = await ctx.ReadPingByIdAsync(request.Id, ctk).ConfigureAwait(false);
+        if (entity == null)
+            return false;
 
-            if (entity == null)
-                return false;
+        await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Delete existing Ping", ctk).ConfigureAwait(false);
 
-            await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Delete existing Ping", ctk).ConfigureAwait(false);
+        await ctx.DeletePingAsync(request.Id, ctk).ConfigureAwait(false);
 
-            await ctx.DeletePingAsync(request.Id, ctk).ConfigureAwait(false);
+        await ctx.CommitAsync(ctk).ConfigureAwait(false);
 
-            await ctx.CommitAsync(ctk).ConfigureAwait(false);
-
-            return true;
-        }
+        return true;
     }
 }

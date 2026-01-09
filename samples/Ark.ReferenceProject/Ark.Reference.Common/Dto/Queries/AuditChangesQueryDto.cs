@@ -1,12 +1,11 @@
 ﻿using System;
 
-namespace Ark.Reference.Common.Dto.Queries
+namespace Ark.Reference.Common.Dto.Queries;
+
+public static class AuditChangesQueryDto
 {
-    public static class AuditChangesQueryDto
+    public record V1
     {
-        public record V1
-        {
-            public Guid AuditID { get; set; }
-        }
+        public Guid AuditID { get; set; }
     }
 }

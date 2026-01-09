@@ -6,6 +6,7 @@ namespace Ark.Tools.FtpClient.Core
     {
         IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig);
     }
+
 =======
 namespace Ark.Tools.FtpClient.Core;
 
@@ -13,11 +14,10 @@ public interface IFtpClientPoolFactory
 {
     IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig);
 >>>>>>> After
+    // Licensed under the MIT License. See LICENSE file for license information. 
+    namespace Ark.Tools.FtpClient.Core;
 
-// Licensed under the MIT License. See LICENSE file for license information. 
-namespace Ark.Tools.FtpClient.Core;
-
-public interface IFtpClientPoolFactory
-{
-    IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig);
-}
+    public interface IFtpClientPoolFactory
+    {
+        IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig);
+    }

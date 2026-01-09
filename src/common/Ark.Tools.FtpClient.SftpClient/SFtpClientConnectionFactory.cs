@@ -17,6 +17,9 @@ namespace Ark.Tools.FtpClient.SftpClient
             return new SftpClientConnection(ftpConfig);
         }
     }
+
+
+
 =======
 namespace Ark.Tools.FtpClient.SftpClient;
 
@@ -31,19 +34,16 @@ public sealed class SFtpClientConnectionFactory : IFtpClientConnectionFactory
         return new SftpClientConnection(ftpConfig);
     }
 >>>>>>> After
+    namespace Ark.Tools.FtpClient.SftpClient;
 
-
-
-namespace Ark.Tools.FtpClient.SftpClient;
-
-public sealed class SFtpClientConnectionFactory : IFtpClientConnectionFactory
-{
-    public IFtpClientConnection Create(FtpConfig ftpConfig)
+    public sealed class SFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
-        ArgumentNullException.ThrowIfNull(ftpConfig);
-        ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
-        ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
+        public IFtpClientConnection Create(FtpConfig ftpConfig)
+        {
+            ArgumentNullException.ThrowIfNull(ftpConfig);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
 
-        return new SftpClientConnection(ftpConfig);
+            return new SftpClientConnection(ftpConfig);
+        }
     }
-}

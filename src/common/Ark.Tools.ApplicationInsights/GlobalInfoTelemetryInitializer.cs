@@ -46,21 +46,21 @@ public class GlobalInfoTelemetryInitializer : ITelemetryInitializer
 
 namespace Ark.Tools.AspNetCore.ApplicationInsights;
 
-public class GlobalInfoTelemetryInitializer : ITelemetryInitializer
-{
-    private const string _processNameProperty = "ProcessName";
-    private readonly string? _processName;
-
-    public GlobalInfoTelemetryInitializer()
+    public class GlobalInfoTelemetryInitializer : ITelemetryInitializer
     {
-        _processName = Assembly.GetEntryAssembly()?.GetName().Name;
-    }
+        private const string _processNameProperty = "ProcessName";
+        private readonly string? _processName;
 
-    public void Initialize(ITelemetry telemetry)
-    {
-        if (telemetry != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
+        public GlobalInfoTelemetryInitializer()
         {
-            telemetry.Context.GlobalProperties.Add(_processNameProperty, _processName);
+            _processName = Assembly.GetEntryAssembly()?.GetName().Name;
+        }
+
+        public void Initialize(ITelemetry telemetry)
+        {
+            if (telemetry != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
+            {
+                telemetry.Context.GlobalProperties.Add(_processNameProperty, _processName);
+            }
         }
     }
-}

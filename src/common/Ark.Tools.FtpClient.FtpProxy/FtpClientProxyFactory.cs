@@ -46,20 +46,20 @@ public class FtpClientProxyFactory : IFtpClientFactory
 
 namespace Ark.Tools.FtpClient.FtpProxy;
 
-public class FtpClientProxyFactory : IFtpClientFactory
-{
-    private readonly IFtpClientProxyConfig _config;
-    private readonly TokenProvider _tokenProvider;
-
-    public FtpClientProxyFactory(IFtpClientProxyConfig config)
+    public class FtpClientProxyFactory : IFtpClientFactory
     {
-        ArgumentNullException.ThrowIfNull(config);
-        _config = config;
-        _tokenProvider = new TokenProvider(config);
-    }
+        private readonly IFtpClientProxyConfig _config;
+        private readonly TokenProvider _tokenProvider;
 
-    public IFtpClient Create(FtpConfig ftpConfig)
-    {
-        return new FtpClientProxy(_config, _tokenProvider, ftpConfig);
+        public FtpClientProxyFactory(IFtpClientProxyConfig config)
+        {
+            ArgumentNullException.ThrowIfNull(config);
+            _config = config;
+            _tokenProvider = new TokenProvider(config);
+        }
+
+        public IFtpClient Create(FtpConfig ftpConfig)
+        {
+            return new FtpClientProxy(_config, _tokenProvider, ftpConfig);
+        }
     }
-}

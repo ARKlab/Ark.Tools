@@ -17,6 +17,7 @@ namespace Ark.Tools.Core.BusinessRuleViolation
         public string Title { get; set; }
         public string? Detail { get; set; }
     }
+
 =======
 namespace Ark.Tools.Core.BusinessRuleViolation;
 
@@ -35,22 +36,21 @@ public class BusinessRuleViolation
     public string Title { get; set; }
     public string? Detail { get; set; }
 >>>>>>> After
-
-// Licensed under the MIT License. See LICENSE file for license information. 
-namespace Ark.Tools.Core.BusinessRuleViolation;
+    // Licensed under the MIT License. See LICENSE file for license information. 
+    namespace Ark.Tools.Core.BusinessRuleViolation;
 
 #pragma warning disable MA0049 // Type name should not match containing namespace
 #pragma warning disable CA1724 // Type names should not match namespaces
-public class BusinessRuleViolation
+    public class BusinessRuleViolation
 #pragma warning restore CA1724 // Type names should not match namespaces
 #pragma warning restore MA0049 // Type name should not match containing namespace
-{
-    public BusinessRuleViolation(string title)
     {
-        Title = title;
-    }
+        public BusinessRuleViolation(string title)
+        {
+            Title = title;
+        }
 
-    public int Status { get; set; } = 400;
-    public string Title { get; set; }
-    public string? Detail { get; set; }
-}
+        public int Status { get; set; } = 400;
+        public string Title { get; set; }
+        public string? Detail { get; set; }
+    }

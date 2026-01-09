@@ -9,58 +9,57 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Core.Application.Handlers.Requests
+namespace Ark.Reference.Core.Application.Handlers.Requests;
+
+/// <summary>
+/// Handler for creating a new Book entity
+/// </summary>
+public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>
 {
-    /// <summary>
-    /// Handler for creating a new Book entity
-    /// </summary>
-    public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>
+    private readonly ICoreDataContextFactory _coreDataContext;
+    private readonly IContextProvider<ClaimsPrincipal> _userContext;
+
+    public Book_CreateRequestHandler(
+        ICoreDataContextFactory coreDataContext,
+        IContextProvider<ClaimsPrincipal> userContext)
     {
-        private readonly ICoreDataContextFactory _coreDataContext;
-        private readonly IContextProvider<ClaimsPrincipal> _userContext;
+        ArgumentNullException.ThrowIfNull(coreDataContext);
+        ArgumentNullException.ThrowIfNull(userContext);
 
-        public Book_CreateRequestHandler(
-            ICoreDataContextFactory coreDataContext,
-            IContextProvider<ClaimsPrincipal> userContext)
+        _coreDataContext = coreDataContext;
+        _userContext = userContext;
+    }
+
+    /// <inheritdoc/>
+    public Book.V1.Output Execute(Book_CreateRequest.V1 request)
+    {
+        return ExecuteAsync(request).GetAwaiter().GetResult();
+    }
+
+    /// <inheritdoc/>
+    public async Task<Book.V1.Output> ExecuteAsync(Book_CreateRequest.V1 request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request.Data);
+
+        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+
+        await ctx.EnsureAudit(AuditKind.Book, _userContext.GetUserId(), "Create a new Book", ctk).ConfigureAwait(false);
+
+        var createBookData = new Book.V1.Output
         {
-            ArgumentNullException.ThrowIfNull(coreDataContext);
-            ArgumentNullException.ThrowIfNull(userContext);
+            Title = request.Data.Title,
+            Author = request.Data.Author,
+            Genre = request.Data.Genre,
+            ISBN = request.Data.ISBN,
+            Description = $"Book created: {request.Data.Title} by {request.Data.Author}"
+        };
 
-            _coreDataContext = coreDataContext;
-            _userContext = userContext;
-        }
+        var id = await ctx.InsertBookAsync(createBookData, ctk).ConfigureAwait(false);
 
-        /// <inheritdoc/>
-        public Book.V1.Output Execute(Book_CreateRequest.V1 request)
-        {
-            return ExecuteAsync(request).GetAwaiter().GetResult();
-        }
+        var entity = await ctx.ReadBookByIdAsync(id, ctk).ConfigureAwait(false);
 
-        /// <inheritdoc/>
-        public async Task<Book.V1.Output> ExecuteAsync(Book_CreateRequest.V1 request, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(request.Data);
+        await ctx.CommitAsync(ctk).ConfigureAwait(false);
 
-            await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
-
-            await ctx.EnsureAudit(AuditKind.Book, _userContext.GetUserId(), "Create a new Book", ctk).ConfigureAwait(false);
-
-            var createBookData = new Book.V1.Output
-            {
-                Title = request.Data.Title,
-                Author = request.Data.Author,
-                Genre = request.Data.Genre,
-                ISBN = request.Data.ISBN,
-                Description = $"Book created: {request.Data.Title} by {request.Data.Author}"
-            };
-
-            var id = await ctx.InsertBookAsync(createBookData, ctk).ConfigureAwait(false);
-
-            var entity = await ctx.ReadBookByIdAsync(id, ctk).ConfigureAwait(false);
-
-            await ctx.CommitAsync(ctk).ConfigureAwait(false);
-
-            return entity!;
-        }
+        return entity!;
     }
 }

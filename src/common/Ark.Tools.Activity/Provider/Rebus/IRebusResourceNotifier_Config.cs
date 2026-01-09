@@ -8,6 +8,7 @@ namespace Ark.Tools.Activity.Provider
         string AsbConnectionString { get; }
         bool StartAtCreation { get; }
     }
+
 =======
 namespace Ark.Tools.Activity.Provider;
 
@@ -17,12 +18,11 @@ public interface IRebusResourceNotifier_Config
     string AsbConnectionString { get; }
     bool StartAtCreation { get; }
 >>>>>>> After
+    namespace Ark.Tools.Activity.Provider;
 
-namespace Ark.Tools.Activity.Provider;
-
-public interface IRebusResourceNotifier_Config
-{
-    string ProviderName { get; }
-    string AsbConnectionString { get; }
-    bool StartAtCreation { get; }
-}
+    public interface IRebusResourceNotifier_Config
+    {
+        string ProviderName { get; }
+        string AsbConnectionString { get; }
+        bool StartAtCreation { get; }
+    }

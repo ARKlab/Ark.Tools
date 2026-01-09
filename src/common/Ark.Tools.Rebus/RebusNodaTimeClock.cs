@@ -17,6 +17,8 @@ namespace Ark.Tools.Rebus
 
         public DateTimeOffset Now => _clock.GetCurrentInstant().ToDateTimeOffset();
     }
+
+
 =======
 namespace Ark.Tools.Rebus;
 
@@ -31,18 +33,16 @@ public sealed class RebusNodaTimeClock : IRebusTime
 
     public DateTimeOffset Now => _clock.GetCurrentInstant().ToDateTimeOffset();
 >>>>>>> After
+    namespace Ark.Tools.Rebus;
 
-
-namespace Ark.Tools.Rebus;
-
-public sealed class RebusNodaTimeClock : IRebusTime
-{
-    private readonly IClock _clock;
-
-    public RebusNodaTimeClock(IClock clock)
+    public sealed class RebusNodaTimeClock : IRebusTime
     {
-        _clock = clock;
-    }
+        private readonly IClock _clock;
 
-    public DateTimeOffset Now => _clock.GetCurrentInstant().ToDateTimeOffset();
-}
+        public RebusNodaTimeClock(IClock clock)
+        {
+            _clock = clock;
+        }
+
+        public DateTimeOffset Now => _clock.GetCurrentInstant().ToDateTimeOffset();
+    }

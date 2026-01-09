@@ -63,29 +63,29 @@ public class EnableAdaptiveSamplingWithCustomSettings : IConfigureOptions<Teleme
 
 namespace Ark.Tools.ApplicationInsights;
 
-public class EnableAdaptiveSamplingWithCustomSettings : IConfigureOptions<TelemetryConfiguration>
-{
-    private readonly IOptions<SamplingPercentageEstimatorSettings> _settings;
-
-    public EnableAdaptiveSamplingWithCustomSettings(IOptions<SamplingPercentageEstimatorSettings> settings)
+    public class EnableAdaptiveSamplingWithCustomSettings : IConfigureOptions<TelemetryConfiguration>
     {
-        this._settings = settings;
-    }
+        private readonly IOptions<SamplingPercentageEstimatorSettings> _settings;
 
-    public void Configure(TelemetryConfiguration tc)
-    {
-        void samplingCallback(double ratePerSecond, double currentPercentage, double newPercentage, bool isChanged, SamplingPercentageEstimatorSettings estimatorSettings)
+        public EnableAdaptiveSamplingWithCustomSettings(IOptions<SamplingPercentageEstimatorSettings> settings)
         {
-            if (isChanged)
-            {
-                tc.SetLastObservedSamplingPercentage(SamplingTelemetryItemTypes.Request, newPercentage);
-            }
+            this._settings = settings;
         }
 
-        tc.DefaultTelemetrySink.TelemetryProcessorChainBuilder
-            .UseAdaptiveSampling(_settings.Value, samplingCallback, excludedTypes: "Event")
-            .UseAdaptiveSampling(_settings.Value, null, includedTypes: "Event")
-            .Build()
-            ;
+        public void Configure(TelemetryConfiguration tc)
+        {
+            void samplingCallback(double ratePerSecond, double currentPercentage, double newPercentage, bool isChanged, SamplingPercentageEstimatorSettings estimatorSettings)
+            {
+                if (isChanged)
+                {
+                    tc.SetLastObservedSamplingPercentage(SamplingTelemetryItemTypes.Request, newPercentage);
+                }
+            }
+
+            tc.DefaultTelemetrySink.TelemetryProcessorChainBuilder
+                .UseAdaptiveSampling(_settings.Value, samplingCallback, excludedTypes: "Event")
+                .UseAdaptiveSampling(_settings.Value, null, includedTypes: "Event")
+                .Build()
+                ;
+        }
     }
-}

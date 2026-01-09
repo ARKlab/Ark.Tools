@@ -1,33 +1,32 @@
-namespace Ark.Reference.Core.Common.Enum
+namespace Ark.Reference.Core.Common.Enum;
+
+/// <summary>
+/// Defines the genre categories for Book entities
+/// </summary>
+public enum BookGenre
 {
     /// <summary>
-    /// Defines the genre categories for Book entities
+    /// Genre has not been set
     /// </summary>
-    public enum BookGenre
-    {
-        /// <summary>
-        /// Genre has not been set
-        /// </summary>
-        NotSet,
+    NotSet,
 
-        /// <summary>
-        /// Fiction genre
-        /// </summary>
-        Fiction,
+    /// <summary>
+    /// Fiction genre
+    /// </summary>
+    Fiction,
 
-        /// <summary>
-        /// NonFiction genre
-        /// </summary>
-        NonFiction,
+    /// <summary>
+    /// NonFiction genre
+    /// </summary>
+    NonFiction,
 
-        /// <summary>
-        /// Science genre
-        /// </summary>
-        Science,
+    /// <summary>
+    /// Science genre
+    /// </summary>
+    Science,
 
-        /// <summary>
-        /// Technology genre
-        /// </summary>
-        Technology
-    }
+    /// <summary>
+    /// Technology genre
+    /// </summary>
+    Technology
 }

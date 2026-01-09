@@ -34,14 +34,14 @@ public class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
 
 namespace Ark.Tools.FtpClient.FluentFtp;
 
-public class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
-{
-    public IFtpClientConnection Create(FtpConfig ftpConfig)
+    public class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
     {
-        ArgumentNullException.ThrowIfNull(ftpConfig);
-        ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
-        ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
+        public IFtpClientConnection Create(FtpConfig ftpConfig)
+        {
+            ArgumentNullException.ThrowIfNull(ftpConfig);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
+            ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
 
-        return new FluentFtpClientConnection(ftpConfig);
+            return new FluentFtpClientConnection(ftpConfig);
+        }
     }
-}

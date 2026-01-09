@@ -17,11 +17,11 @@ public interface IAggregateRootFactory
         where TAggregateRoot : class, IAggregateRoot
         ;
 >>>>>>> After
-namespace Ark.Tools.EventSourcing.Aggregates;
+    namespace Ark.Tools.EventSourcing.Aggregates;
 
-public interface IAggregateRootFactory
-{
-    TAggregateRoot Create<TAggregateRoot>()
-        where TAggregateRoot : class, IAggregateRoot
-        ;
-}
+    public interface IAggregateRootFactory
+    {
+        TAggregateRoot Create<TAggregateRoot>()
+            where TAggregateRoot : class, IAggregateRoot
+            ;
+    }

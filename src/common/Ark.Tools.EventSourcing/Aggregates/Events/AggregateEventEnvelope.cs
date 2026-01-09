@@ -28,12 +28,12 @@ public sealed class AggregateEventEnvelope<TAggregate>
 namespace Ark.Tools.EventSourcing.Aggregates;
 
 
-public sealed class AggregateEventEnvelope<TAggregate>
-    : EventEnvelope<IAggregateEvent<TAggregate>>
-    where TAggregate : IAggregate
-{
-    public AggregateEventEnvelope(IAggregateEvent<TAggregate> aggregateEvent, IMetadata metadata)
-        : base(aggregateEvent, metadata)
+    public sealed class AggregateEventEnvelope<TAggregate>
+        : EventEnvelope<IAggregateEvent<TAggregate>>
+        where TAggregate : IAggregate
     {
+        public AggregateEventEnvelope(IAggregateEvent<TAggregate> aggregateEvent, IMetadata metadata)
+            : base(aggregateEvent, metadata)
+        {
+        }
     }
-}

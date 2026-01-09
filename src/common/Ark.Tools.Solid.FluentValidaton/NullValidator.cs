@@ -7,16 +7,16 @@ namespace Ark.Tools.Solid.FluentValidator
     public class NullValidator<T> : AbstractValidator<T>
     {
     }
+
+
 =======
 namespace Ark.Tools.Solid.FluentValidator;
 
 public class NullValidator<T> : AbstractValidator<T>
 {
 >>>>>>> After
+    namespace Ark.Tools.Solid.FluentValidator;
 
-
-namespace Ark.Tools.Solid.FluentValidator;
-
-public class NullValidator<T> : AbstractValidator<T>
-{
-}
+    public class NullValidator<T> : AbstractValidator<T>
+    {
+    }

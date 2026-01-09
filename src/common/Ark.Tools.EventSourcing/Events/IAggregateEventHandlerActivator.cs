@@ -9,6 +9,8 @@ namespace Ark.Tools.EventSourcing.Events
             where TEvent : IAggregateEvent<TAggregate>
             ;
     }
+
+
 =======
 namespace Ark.Tools.EventSourcing.Events;
 
@@ -19,14 +21,12 @@ public interface IAggregateEventHandlerActivator
         where TEvent : IAggregateEvent<TAggregate>
         ;
 >>>>>>> After
+    namespace Ark.Tools.EventSourcing.Events;
 
-
-namespace Ark.Tools.EventSourcing.Events;
-
-public interface IAggregateEventHandlerActivator
-{
-    IAggregateEventHandler<TAggregate, TEvent>? GetHandler<TAggregate, TEvent>(TEvent @event)
-        where TAggregate : IAggregate
-        where TEvent : IAggregateEvent<TAggregate>
-        ;
-}
+    public interface IAggregateEventHandlerActivator
+    {
+        IAggregateEventHandler<TAggregate, TEvent>? GetHandler<TAggregate, TEvent>(TEvent @event)
+            where TAggregate : IAggregate
+            where TEvent : IAggregateEvent<TAggregate>
+            ;
+    }

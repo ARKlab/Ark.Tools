@@ -116,54 +116,54 @@ sealed class HostServiceWrap<T> : IHostedService where T : WorkerHost
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 
-public static partial class Ex
-{
-    public static IHostBuilder AddWorkerHostInfrastracture(this IHostBuilder builder)
+    public static partial class Ex
     {
-        return builder.ConfigureAppConfiguration((ctx, cfg) =>
+        public static IHostBuilder AddWorkerHostInfrastracture(this IHostBuilder builder)
         {
-            cfg.AddArkEnvironmentVariables();
-        });
-    }
+            return builder.ConfigureAppConfiguration((ctx, cfg) =>
+            {
+                cfg.AddArkEnvironmentVariables();
+            });
+        }
 
-    public static IHostBuilder AddWorkerHost<T>(this IHostBuilder builder, Func<IServiceProvider, T> configHost) where T : WorkerHost
-    {
-        return builder.ConfigureServices(services =>
+        public static IHostBuilder AddWorkerHost<T>(this IHostBuilder builder, Func<IServiceProvider, T> configHost) where T : WorkerHost
         {
-            services.AddSingleton(configHost);
+            return builder.ConfigureServices(services =>
+            {
+                services.AddSingleton(configHost);
 
-            services.AddSingleton<IHostedService, HostServiceWrap<T>>();
-        });
-    }
+                services.AddSingleton<IHostedService, HostServiceWrap<T>>();
+            });
+        }
 
-    public static void StartAndWaitForShutdown(this IHostBuilder builder)
-    {
-        var host = builder.Build();
-
-        using (host)
+        public static void StartAndWaitForShutdown(this IHostBuilder builder)
         {
-            host.Start();
-            host.WaitForShutdown();
+            var host = builder.Build();
+
+            using (host)
+            {
+                host.Start();
+                host.WaitForShutdown();
+            }
         }
     }
-}
 
-sealed class HostServiceWrap<T> : IHostedService where T : WorkerHost
-{
-    private readonly T _host;
-
-    public HostServiceWrap(T host)
+    sealed class HostServiceWrap<T> : IHostedService where T : WorkerHost
     {
-        _host = host;
-    }
+        private readonly T _host;
 
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        return Task.Run(() => _host.Start(), cancellationToken);
-    }
+        public HostServiceWrap(T host)
+        {
+            _host = host;
+        }
 
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.Run(() => _host.Stop(), cancellationToken);
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            return Task.Run(() => _host.Start(), cancellationToken);
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.Run(() => _host.Stop(), cancellationToken);
+        }
     }
-}

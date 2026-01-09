@@ -20,6 +20,8 @@ namespace Ark.Tools.Activity.Processor
 
         TimeSpan? CoolDown { get; }
     }
+
+
 =======
 namespace Ark.Tools.Activity.Processor;
 
@@ -37,21 +39,19 @@ public interface ISliceActivity
 
     TimeSpan? CoolDown { get; }
 >>>>>>> After
+    namespace Ark.Tools.Activity.Processor;
 
+    public interface ISliceActivity
+    {
+        ILogger Logger { get; }
 
-namespace Ark.Tools.Activity.Processor;
+        Resource Resource { get; }
 
-public interface ISliceActivity
-{
-    ILogger Logger { get; }
+        ResourceDependency[] Dependencies { get; }
 
-    Resource Resource { get; }
+        IEnumerable<Slice> ImpactedSlices(Resource resource, Slice slice);
 
-    ResourceDependency[] Dependencies { get; }
+        Task Process(Slice activitySlice);
 
-    IEnumerable<Slice> ImpactedSlices(Resource resource, Slice slice);
-
-    Task Process(Slice activitySlice);
-
-    TimeSpan? CoolDown { get; }
-}
+        TimeSpan? CoolDown { get; }
+    }

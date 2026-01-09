@@ -1,12 +1,11 @@
 ﻿
 
-namespace Ark.Reference.Core.API.Messages
+namespace Ark.Reference.Core.API.Messages;
+
+public static class Ping_ProcessMessage
 {
-    public static class Ping_ProcessMessage
+    public record V1
     {
-        public record V1
-        {
-            public int Id { get; init; }
-        }
+        public int Id { get; init; }
     }
 }

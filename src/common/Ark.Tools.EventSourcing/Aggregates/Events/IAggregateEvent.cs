@@ -10,6 +10,8 @@ namespace Ark.Tools.EventSourcing.Aggregates
         where TAggregate : IAggregate
     {
     }
+
+
 =======
 namespace Ark.Tools.EventSourcing.Aggregates;
 
@@ -21,15 +23,13 @@ public interface IAggregateEvent<TAggregate> : IAggregateEvent
     where TAggregate : IAggregate
 {
 >>>>>>> After
+    namespace Ark.Tools.EventSourcing.Aggregates;
 
+    public interface IAggregateEvent : IEvent
+    {
+    }
 
-namespace Ark.Tools.EventSourcing.Aggregates;
-
-public interface IAggregateEvent : IEvent
-{
-}
-
-public interface IAggregateEvent<TAggregate> : IAggregateEvent
-    where TAggregate : IAggregate
-{
-}
+    public interface IAggregateEvent<TAggregate> : IAggregateEvent
+        where TAggregate : IAggregate
+    {
+    }

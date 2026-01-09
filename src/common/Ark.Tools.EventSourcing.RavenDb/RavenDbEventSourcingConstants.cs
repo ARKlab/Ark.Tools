@@ -7,6 +7,7 @@ namespace Ark.Tools.EventSourcing.RavenDb
         public const string OutboxCollectionName = "@ArkOutbox";
         public const string AggregateEventsCollectionName = "@ArkAggregateEvents";
     }
+
 =======
 namespace Ark.Tools.EventSourcing.RavenDb;
 
@@ -15,11 +16,10 @@ public static class RavenDbEventSourcingConstants
     public const string OutboxCollectionName = "@ArkOutbox";
     public const string AggregateEventsCollectionName = "@ArkAggregateEvents";
 >>>>>>> After
+    namespace Ark.Tools.EventSourcing.RavenDb;
 
-namespace Ark.Tools.EventSourcing.RavenDb;
-
-public static class RavenDbEventSourcingConstants
-{
-    public const string OutboxCollectionName = "@ArkOutbox";
-    public const string AggregateEventsCollectionName = "@ArkAggregateEvents";
-}
+    public static class RavenDbEventSourcingConstants
+    {
+        public const string OutboxCollectionName = "@ArkOutbox";
+        public const string AggregateEventsCollectionName = "@ArkAggregateEvents";
+    }

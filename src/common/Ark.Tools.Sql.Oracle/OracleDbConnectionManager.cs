@@ -107,50 +107,50 @@ public class OracleDbConnectionManager : IDbConnectionManager
 
 namespace Ark.Tools.Sql.Oracle;
 
-public class OracleDbConnectionManager : IDbConnectionManager
-{
-    protected static void OnInfoMessage(object sender, OracleInfoMessageEventArgs ev)
+    public class OracleDbConnectionManager : IDbConnectionManager
     {
-        OracleExceptionHandler.LogSqlInfoMessage(ev);
-    }
-
-
-    public DbConnection Get(string connectionString)
-    {
-        var conn = Build(connectionString);
-        try
+        protected static void OnInfoMessage(object sender, OracleInfoMessageEventArgs ev)
         {
-            conn.Open();
+            OracleExceptionHandler.LogSqlInfoMessage(ev);
+        }
+
+
+        public DbConnection Get(string connectionString)
+        {
+            var conn = Build(connectionString);
+            try
+            {
+                conn.Open();
+                return conn;
+            }
+            catch
+            {
+                conn?.Dispose();
+                throw;
+            }
+        }
+
+        public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
+        {
+            var conn = Build(connectionString);
+            try
+            {
+                await conn.OpenAsync(ctk).ConfigureAwait(false);
+                return conn;
+            }
+            catch
+            {
+                conn?.Dispose();
+                throw;
+            }
+        }
+
+        protected virtual OracleConnection Build(string connectionString)
+        {
+            var conn = new OracleConnection(connectionString);
+
+            conn.InfoMessage += new OracleInfoMessageEventHandler(OnInfoMessage);
+
             return conn;
         }
-        catch
-        {
-            conn?.Dispose();
-            throw;
-        }
     }
-
-    public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
-    {
-        var conn = Build(connectionString);
-        try
-        {
-            await conn.OpenAsync(ctk).ConfigureAwait(false);
-            return conn;
-        }
-        catch
-        {
-            conn?.Dispose();
-            throw;
-        }
-    }
-
-    protected virtual OracleConnection Build(string connectionString)
-    {
-        var conn = new OracleConnection(connectionString);
-
-        conn.InfoMessage += new OracleInfoMessageEventHandler(OnInfoMessage);
-
-        return conn;
-    }
-}

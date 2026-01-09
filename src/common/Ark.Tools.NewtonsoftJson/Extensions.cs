@@ -44,18 +44,18 @@ public static class Extensions
 
 namespace Newtonsoft.Json;
 
-public static class Extensions
-{
-    public static JsonSerializerSettings ConfigureArkDefaults(this JsonSerializerSettings @this)
+    public static class Extensions
     {
-        @this.TypeNameHandling = TypeNameHandling.None;
-        @this.ObjectCreationHandling = ObjectCreationHandling.Replace;
-        @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-        @this.ConfigureForNodaTimeRanges();
-        @this.Converters.Add(new StringEnumConverter());
-        @this.Converters.Add(new ValueCollectionConverter());
-        @this.ContractResolver = new CamelCasePropertyNamesContractResolver();
+        public static JsonSerializerSettings ConfigureArkDefaults(this JsonSerializerSettings @this)
+        {
+            @this.TypeNameHandling = TypeNameHandling.None;
+            @this.ObjectCreationHandling = ObjectCreationHandling.Replace;
+            @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+            @this.ConfigureForNodaTimeRanges();
+            @this.Converters.Add(new StringEnumConverter());
+            @this.Converters.Add(new ValueCollectionConverter());
+            @this.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
-        return @this;
+            return @this;
+        }
     }
-}

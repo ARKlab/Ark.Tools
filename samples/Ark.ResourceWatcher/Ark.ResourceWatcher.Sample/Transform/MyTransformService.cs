@@ -8,118 +8,117 @@ using CsvHelper.Configuration;
 using System.Globalization;
 using System.Text;
 
-namespace Ark.ResourceWatcher.Sample.Transform
+namespace Ark.ResourceWatcher.Sample.Transform;
+
+/// <summary>
+/// Transforms CSV byte content to SinkDto.
+/// </summary>
+public sealed class MyTransformService
 {
+    private readonly string _sourceId;
+
     /// <summary>
-    /// Transforms CSV byte content to SinkDto.
+    /// Initializes a new instance of the <see cref="MyTransformService"/> class.
     /// </summary>
-    public sealed class MyTransformService
+    /// <param name="sourceId">The source identifier for the output.</param>
+    public MyTransformService(string sourceId)
     {
-        private readonly string _sourceId;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MyTransformService"/> class.
-        /// </summary>
-        /// <param name="sourceId">The source identifier for the output.</param>
-        public MyTransformService(string sourceId)
-        {
-            _sourceId = sourceId;
-        }
-
-        /// <summary>
-        /// Transforms CSV byte content to SinkDto.
-        /// </summary>
-        /// <param name="input">The CSV data as a byte array.</param>
-        /// <returns>The transformed SinkDto.</returns>
-        public SinkDto Transform(byte[] input)
-        {
-            ArgumentNullException.ThrowIfNull(input);
-
-            var content = Encoding.UTF8.GetString(input);
-
-            // Handle empty input
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                return new SinkDto
-                {
-                    SourceId = _sourceId,
-                    Records = []
-                };
-            }
-
-            using var reader = new StringReader(content);
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = true,
-                TrimOptions = TrimOptions.Trim,
-                HeaderValidated = null, // Don't validate headers - allow extra columns
-                PrepareHeaderForMatch = args => args.Header.ToLowerInvariant() // Case-insensitive matching
-            };
-
-            using var csv = new CsvReader(reader, config);
-
-            csv.Context.RegisterClassMap<SinkRecordMap>();
-
-            List<SinkRecord> records;
-            try
-            {
-                records = csv.GetRecords<SinkRecord>().ToList();
-            }
-            catch (CsvHelper.CsvHelperException ex)
-            {
-                throw new TransformException($"CSV parsing error: {ex.Message}", ex);
-            }
-
-            return new SinkDto
-            {
-                SourceId = _sourceId,
-                Records = records
-            };
-        }
-
-        /// <summary>
-        /// CsvHelper ClassMap for mapping CSV columns to SinkRecord properties.
-        /// Maps required columns by name/index and collects additional columns into Properties.
-        /// </summary>
-        private sealed class SinkRecordMap : ClassMap<SinkRecord>
-        {
-            public SinkRecordMap()
-            {
-                // Map required columns by name (case-insensitive due to PrepareHeaderForMatch)
-                Map(m => m.Id).Name("id").Index(0);
-                Map(m => m.Name).Name("name").Index(1);
-                Map(m => m.Value).Name("value").Index(2);
-            }
-        }
+        _sourceId = sourceId;
     }
 
     /// <summary>
-    /// Exception thrown when transformation fails.
+    /// Transforms CSV byte content to SinkDto.
     /// </summary>
-    public sealed class TransformException : Exception
+    /// <param name="input">The CSV data as a byte array.</param>
+    /// <returns>The transformed SinkDto.</returns>
+    public SinkDto Transform(byte[] input)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TransformException"/> class.
-        /// </summary>
-        public TransformException() : base()
+        ArgumentNullException.ThrowIfNull(input);
+
+        var content = Encoding.UTF8.GetString(input);
+
+        // Handle empty input
+        if (string.IsNullOrWhiteSpace(content))
         {
+            return new SinkDto
+            {
+                SourceId = _sourceId,
+                Records = []
+            };
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TransformException"/> class.
-        /// </summary>
-        /// <param name="message">The error message.</param>
-        public TransformException(string message) : base(message)
+        using var reader = new StringReader(content);
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
+            HasHeaderRecord = true,
+            TrimOptions = TrimOptions.Trim,
+            HeaderValidated = null, // Don't validate headers - allow extra columns
+            PrepareHeaderForMatch = args => args.Header.ToLowerInvariant() // Case-insensitive matching
+        };
+
+        using var csv = new CsvReader(reader, config);
+
+        csv.Context.RegisterClassMap<SinkRecordMap>();
+
+        List<SinkRecord> records;
+        try
+        {
+            records = csv.GetRecords<SinkRecord>().ToList();
+        }
+        catch (CsvHelper.CsvHelperException ex)
+        {
+            throw new TransformException($"CSV parsing error: {ex.Message}", ex);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TransformException"/> class.
-        /// </summary>
-        /// <param name="message">The error message.</param>
-        /// <param name="innerException">The inner exception.</param>
-        public TransformException(string message, Exception innerException) : base(message, innerException)
+        return new SinkDto
         {
+            SourceId = _sourceId,
+            Records = records
+        };
+    }
+
+    /// <summary>
+    /// CsvHelper ClassMap for mapping CSV columns to SinkRecord properties.
+    /// Maps required columns by name/index and collects additional columns into Properties.
+    /// </summary>
+    private sealed class SinkRecordMap : ClassMap<SinkRecord>
+    {
+        public SinkRecordMap()
+        {
+            // Map required columns by name (case-insensitive due to PrepareHeaderForMatch)
+            Map(m => m.Id).Name("id").Index(0);
+            Map(m => m.Name).Name("name").Index(1);
+            Map(m => m.Value).Name("value").Index(2);
         }
+    }
+}
+
+/// <summary>
+/// Exception thrown when transformation fails.
+/// </summary>
+public sealed class TransformException : Exception
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TransformException"/> class.
+    /// </summary>
+    public TransformException() : base()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TransformException"/> class.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    public TransformException(string message) : base(message)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TransformException"/> class.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    /// <param name="innerException">The inner exception.</param>
+    public TransformException(string message, Exception innerException) : base(message, innerException)
+    {
     }
 }

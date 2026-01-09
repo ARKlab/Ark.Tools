@@ -60,27 +60,27 @@ public class RequestFluentValidateDecorator<TRequest, TResponse>
 
 namespace Ark.Tools.Solid;
 
-public class RequestFluentValidateDecorator<TRequest, TResponse>
-    : IRequestHandler<TRequest, TResponse> where TRequest : IRequest<TResponse>
-{
-    private readonly IRequestHandler<TRequest, TResponse> _decorated;
-    private readonly IValidator<TRequest> _validator;
-
-    public RequestFluentValidateDecorator(IRequestHandler<TRequest, TResponse> decorated, IValidator<TRequest> validator)
+    public class RequestFluentValidateDecorator<TRequest, TResponse>
+        : IRequestHandler<TRequest, TResponse> where TRequest : IRequest<TResponse>
     {
-        _decorated = decorated;
-        _validator = validator;
-    }
+        private readonly IRequestHandler<TRequest, TResponse> _decorated;
+        private readonly IValidator<TRequest> _validator;
 
-    public TResponse Execute(TRequest request)
-    {
-        _validator.ValidateAndThrow(request);
-        return _decorated.Execute(request);
-    }
+        public RequestFluentValidateDecorator(IRequestHandler<TRequest, TResponse> decorated, IValidator<TRequest> validator)
+        {
+            _decorated = decorated;
+            _validator = validator;
+        }
 
-    public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
-    {
-        await _validator.ValidateAndThrowAsync(request, ctk).ConfigureAwait(false);
-        return await _decorated.ExecuteAsync(request, ctk).ConfigureAwait(false);
+        public TResponse Execute(TRequest request)
+        {
+            _validator.ValidateAndThrow(request);
+            return _decorated.Execute(request);
+        }
+
+        public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
+        {
+            await _validator.ValidateAndThrowAsync(request, ctk).ConfigureAwait(false);
+            return await _decorated.ExecuteAsync(request, ctk).ConfigureAwait(false);
+        }
     }
-}

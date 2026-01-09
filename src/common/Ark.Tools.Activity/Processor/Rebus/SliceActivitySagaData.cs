@@ -26,6 +26,8 @@ namespace Ark.Tools.Activity.Processor
         public bool IsScheduled { get; set; }
         public bool IsCoolDown => CoolDownTill > DateTimeOffset.UtcNow;
     }
+
+
 =======
 namespace Ark.Tools.Activity.Processor;
 
@@ -48,26 +50,24 @@ public sealed class SliceActivitySagaData : SagaData
     public bool IsScheduled { get; set; }
     public bool IsCoolDown => CoolDownTill > DateTimeOffset.UtcNow;
 >>>>>>> After
+    namespace Ark.Tools.Activity.Processor;
 
-
-namespace Ark.Tools.Activity.Processor;
-
-public sealed class SliceActivitySagaData : SagaData
-{
-    public Slice ActivitySlice { get; set; }
-
-    public string FormattedSliceStart
+    public sealed class SliceActivitySagaData : SagaData
     {
-        get
+        public Slice ActivitySlice { get; set; }
+
+        public string FormattedSliceStart
         {
-            return this.ActivitySlice.ToString();
+            get
+            {
+                return this.ActivitySlice.ToString();
+            }
         }
+
+        public List<SliceReady> MissingSlices { get; set; } = new List<SliceReady> { };
+
+        public DateTimeOffset? CoolDownTill { get; set; }
+
+        public bool IsScheduled { get; set; }
+        public bool IsCoolDown => CoolDownTill > DateTimeOffset.UtcNow;
     }
-
-    public List<SliceReady> MissingSlices { get; set; } = new List<SliceReady> { };
-
-    public DateTimeOffset? CoolDownTill { get; set; }
-
-    public bool IsScheduled { get; set; }
-    public bool IsCoolDown => CoolDownTill > DateTimeOffset.UtcNow;
-}

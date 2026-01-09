@@ -10,6 +10,8 @@ namespace Ark.Tools.Nodatime
     {
         public NullableInstantConverter() : base(typeof(Instant?)) { }
     }
+
+
 =======
 namespace Ark.Tools.Nodatime;
 
@@ -17,11 +19,9 @@ public class NullableInstantConverter : NullableConverter
 {
     public NullableInstantConverter() : base(typeof(Instant?)) { }
 >>>>>>> After
+    namespace Ark.Tools.Nodatime;
 
-
-namespace Ark.Tools.Nodatime;
-
-public class NullableInstantConverter : NullableConverter
-{
-    public NullableInstantConverter() : base(typeof(Instant?)) { }
-}
+    public class NullableInstantConverter : NullableConverter
+    {
+        public NullableInstantConverter() : base(typeof(Instant?)) { }
+    }

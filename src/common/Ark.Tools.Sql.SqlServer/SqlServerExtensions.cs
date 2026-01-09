@@ -64,28 +64,28 @@ public static class SqlServerExtensions
 
 namespace Ark.Tools.Sql.SqlServer;
 
-public static class SqlServerExtensions
-{
-
-    public static string AsSqlServerPagedQuery(this string query, string[] sortFields)
+    public static class SqlServerExtensions
     {
-        return $@"
+
+        public static string AsSqlServerPagedQuery(this string query, string[] sortFields)
+        {
+            return $@"
                 {query}
 
                 ORDER BY {String.Join(", ", sortFields)}
                 OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY
 
                 SELECT COUNT(*) FROM({query}) a";
+        }
+
+        public static async Task<(IEnumerable<TReturn> data, int count)> ReadPagedAsync<TReturn>(this IDbConnection connection, CommandDefinition cmd)
+        {
+            var r = await connection.QueryMultipleAsync(cmd).ConfigureAwait(false);
+            await using var _ = r.ConfigureAwait(false);
+
+            var retVal = await r.ReadAsync<TReturn>().ConfigureAwait(false);
+            var count = await r.ReadFirstAsync<int>().ConfigureAwait(false);
+
+            return (retVal, count);
+        }
     }
-
-    public static async Task<(IEnumerable<TReturn> data, int count)> ReadPagedAsync<TReturn>(this IDbConnection connection, CommandDefinition cmd)
-    {
-        var r = await connection.QueryMultipleAsync(cmd).ConfigureAwait(false);
-        await using var _ = r.ConfigureAwait(false);
-
-        var retVal = await r.ReadAsync<TReturn>().ConfigureAwait(false);
-        var count = await r.ReadFirstAsync<int>().ConfigureAwait(false);
-
-        return (retVal, count);
-    }
-}

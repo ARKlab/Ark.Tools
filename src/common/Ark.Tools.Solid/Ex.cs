@@ -25,10 +25,10 @@ public static class Ex
 
 namespace Ark.Tools.Solid;
 
-public static class Ex
-{
-    public static string? GetUserId(this IContextProvider<ClaimsPrincipal> context)
+    public static class Ex
     {
-        return context.Current.GetUserId();
+        public static string? GetUserId(this IContextProvider<ClaimsPrincipal> context)
+        {
+            return context.Current.GetUserId();
+        }
     }
-}

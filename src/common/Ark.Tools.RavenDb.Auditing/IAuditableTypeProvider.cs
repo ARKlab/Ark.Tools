@@ -17,6 +17,8 @@ namespace Ark.Tools.RavenDb.Auditing
 
         public List<Type> TypeList { get; set; }
     }
+
+
 =======
 namespace Ark.Tools.RavenDb.Auditing;
 
@@ -34,21 +36,19 @@ public class AuditableTypeProvider : IAuditableTypeProvider
 
     public List<Type> TypeList { get; set; }
 >>>>>>> After
+    namespace Ark.Tools.RavenDb.Auditing;
 
-
-namespace Ark.Tools.RavenDb.Auditing;
-
-public interface IAuditableTypeProvider
-{
-    List<Type> TypeList { get; }
-}
-
-public class AuditableTypeProvider : IAuditableTypeProvider
-{
-    public AuditableTypeProvider(List<Type> typeList)
+    public interface IAuditableTypeProvider
     {
-        TypeList = typeList;
+        List<Type> TypeList { get; }
     }
 
-    public List<Type> TypeList { get; set; }
-}
+    public class AuditableTypeProvider : IAuditableTypeProvider
+    {
+        public AuditableTypeProvider(List<Type> typeList)
+        {
+            TypeList = typeList;
+        }
+
+        public List<Type> TypeList { get; set; }
+    }
