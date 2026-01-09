@@ -22,7 +22,7 @@ dotnet_diagnostic.MA0016.severity = suggestion
 dotnet_diagnostic.MA0028.severity = warning
 
 # MA0029: Combine LINQ methods
-dotnet_diagnostic.MA0029.severity = suggestion
+dotnet_diagnostic.MA0029.severity = warning
 
 # MA0032: Use an overload with a CancellationToken argument
 dotnet_diagnostic.MA0032.severity = none

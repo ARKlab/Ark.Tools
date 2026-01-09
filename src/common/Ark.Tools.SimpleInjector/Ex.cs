@@ -105,8 +105,8 @@ public static partial class Ex
         var registrations = (
             from r in container.GetCurrentRegistrations()
             where r.ServiceType.IsGenericType
-            where r.ServiceType.GetGenericTypeDefinition() == def
-            where serviceType.IsAssignableFrom(r.ServiceType)
+                && r.ServiceType.GetGenericTypeDefinition() == def
+                && serviceType.IsAssignableFrom(r.ServiceType)
             select r)
             .ToArray();
 
@@ -150,8 +150,8 @@ public static partial class Ex
         var registrations = (
             from r in container.GetCurrentRegistrations()
             where r.ServiceType.IsGenericType
-            where r.ServiceType.GetGenericTypeDefinition() == def
-            where serviceType.IsAssignableFrom(r.ServiceType)
+                && r.ServiceType.GetGenericTypeDefinition() == def
+                && serviceType.IsAssignableFrom(r.ServiceType)
             select r)
             .ToArray();
 

@@ -292,7 +292,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
             var filter = _buildFilter();
             var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetMetadata(filter, ctk).ConfigureAwait(false);
 
-            InvalidOperationException.ThrowIf(meta.Where(x => x.Modified == default && (x.ModifiedSources == null || x.ModifiedSources.Count == 0)).Any(), "At least one field between Modified and ModifiedSources must be populated");
+            InvalidOperationException.ThrowIf(meta.Any(x => x.Modified == default && (x.ModifiedSources == null || x.ModifiedSources.Count == 0)), "At least one field between Modified and ModifiedSources must be populated");
 
             foreach (var p in _metadataFilterChain)
                 meta = meta.Where(m => p(m));
