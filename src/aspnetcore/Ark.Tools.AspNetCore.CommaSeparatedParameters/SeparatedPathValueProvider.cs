@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
 
+using System.Buffers;
 using System.Globalization;
 
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 
 public class SeparatedPathValueProvider : RouteValueProvider
 {
+    private readonly SearchValues<char> _separatorSearchValues;
     private readonly char _separator;
     private readonly string? _key;
 
@@ -21,6 +23,7 @@ public class SeparatedPathValueProvider : RouteValueProvider
         : base(BindingSource.Path, values, CultureInfo.InvariantCulture)
     {
         _separator = separator;
+        _separatorSearchValues = SearchValues.Create([separator]);
         _key = key;
     }
 
@@ -33,7 +36,7 @@ public class SeparatedPathValueProvider : RouteValueProvider
 
         var result = base.GetValue(key);
 
-        if (result != ValueProviderResult.None && result.Values.Any(x => x?.IndexOf(_separator, StringComparison.Ordinal) > 0))
+        if (result != ValueProviderResult.None && result.Values.Any(x => x != null && x.AsSpan().ContainsAny(_separatorSearchValues)))
         {
             var splitValues = new StringValues(result.Values
                 .SelectMany(x => x!.Split([_separator], StringSplitOptions.None)).ToArray());
