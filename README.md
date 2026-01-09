@@ -64,6 +64,8 @@ Upgrading from an older version? Check out our migration guides:
 - [Migration to v4.5](docs/migration-v4.md) - NLog v5, Structured Logging, Slack integration
 - [Migration from v2 to v3](docs/migration-v3.md) - AspNetCore v5, Microsoft.Data.SqlClient, Flurl v3
 
+For .NET 10 modernization and performance optimization, see [.NET 10 Modernization Guide](docs/modernization-issues/)
+
 ## Building & Testing
 
 ```bash
