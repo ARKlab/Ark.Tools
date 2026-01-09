@@ -170,4 +170,4 @@ Based on analysis, prioritize these files:
 
 - [Memory<T> and Span<T> Usage Guidelines](https://learn.microsoft.com/en-us/dotnet/standard/memory-and-spans/memory-t-usage-guidelines)
 - [.NET 10 Runtime Improvements](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/runtime)
-- [Full Modernization Plan](../modernization-plan-net10.md#11-adopt-spant-and-memoryt-for-string-operations)
+- [Full Modernization Plan](./README.md#11-adopt-spant-and-memoryt-for-string-operations)

@@ -121,4 +121,4 @@ None - can be implemented independently. Works well after file-scoped namespaces
 ## References
 
 - [Microsoft Docs: Global using directives](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive#global-modifier)
-- [Full Modernization Plan](../modernization-plan-net10.md#22-implement-global-usings)
+- [Full Modernization Plan](./README.md#22-implement-global-usings)

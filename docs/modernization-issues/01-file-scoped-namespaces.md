@@ -102,4 +102,4 @@ None - can be implemented independently.
 ## References
 
 - [Microsoft Docs: File-scoped namespaces](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-10.0/file-scoped-namespaces)
-- [Full Modernization Plan](../modernization-plan-net10.md#13-migrate-to-file-scoped-namespaces)
+- [Full Modernization Plan](./README.md#13-migrate-to-file-scoped-namespaces)

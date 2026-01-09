@@ -165,4 +165,4 @@ None - can be implemented independently.
 - [CA1827 Documentation](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1827)
 - [CA1854 Documentation](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1854)
 - [CA1864 Documentation](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1864)
-- [Full Modernization Plan](../modernization-plan-net10.md#14-optimize-linq-and-collection-patterns)
+- [Full Modernization Plan](./README.md#14-optimize-linq-and-collection-patterns)
