@@ -1,6 +1,4 @@
-using NLog;
 using NLog.Common;
-using NLog.Config;
 using NLog.Targets;
 
 using Slack.Webhooks;

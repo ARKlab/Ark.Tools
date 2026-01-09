@@ -5,7 +5,6 @@ using NLog;
 using Polly;
 
 using System.Globalization;
-using System.Net;
 
 namespace Ark.Tools.FtpClient.Core;
 

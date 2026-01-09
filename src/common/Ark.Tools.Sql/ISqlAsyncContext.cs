@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
 
-using System.Data;
-using System.Data.Common;
 
 namespace Ark.Tools.Sql;
 

@@ -1,5 +1,4 @@
 using Rebus.Config;
-using Rebus.Messages;
 using Rebus.Transport;
 
 using System.Globalization;

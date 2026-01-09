@@ -16,6 +16,10 @@
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
   <!--===============================================================================-->
+
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="Flurl.Http" />
+  </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="CacheCow.Client" />

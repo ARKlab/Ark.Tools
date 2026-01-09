@@ -3,7 +3,6 @@ using Ark.Tools.Core;
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Nodatime.Intervals;
 
-using NodaTime;
 
 
 namespace Ark.Tools.Nodatime.TimeSeries;

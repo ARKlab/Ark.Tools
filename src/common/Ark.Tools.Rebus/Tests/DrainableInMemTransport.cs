@@ -1,4 +1,3 @@
-using Rebus.Messages;
 using Rebus.Transport;
 using Rebus.Transport.InMem;
 

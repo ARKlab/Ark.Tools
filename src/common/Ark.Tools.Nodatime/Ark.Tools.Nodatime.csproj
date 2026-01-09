@@ -18,6 +18,10 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="NodaTime" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
   </ItemGroup>

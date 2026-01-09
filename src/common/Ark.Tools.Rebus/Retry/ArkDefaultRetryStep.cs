@@ -1,8 +1,6 @@
 using Rebus.Exceptions;
 using Rebus.Extensions;
 using Rebus.Logging;
-using Rebus.Messages;
-using Rebus.Pipeline;
 using Rebus.Retry;
 using Rebus.Retry.FailFast;
 using Rebus.Retry.Simple;

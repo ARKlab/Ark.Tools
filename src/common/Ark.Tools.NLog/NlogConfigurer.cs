@@ -5,9 +5,7 @@ using Ark.Tools.NLog.Slack;
 using Microsoft.ApplicationInsights.NLogTarget;
 using Microsoft.Data.SqlClient;
 
-using NLog;
 using NLog.Common;
-using NLog.Config;
 using NLog.LayoutRenderers;
 using NLog.Layouts;
 using NLog.MailKit;

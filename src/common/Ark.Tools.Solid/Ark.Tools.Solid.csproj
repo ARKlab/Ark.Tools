@@ -17,6 +17,10 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="NLog" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />

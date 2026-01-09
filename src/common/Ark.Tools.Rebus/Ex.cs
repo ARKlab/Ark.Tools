@@ -1,8 +1,6 @@
 using Rebus.Bus;
 using Rebus.Config;
 using Rebus.Exceptions;
-using Rebus.Messages;
-using Rebus.Pipeline;
 using Rebus.Pipeline.Receive;
 using Rebus.Pipeline.Send;
 using Rebus.Time;

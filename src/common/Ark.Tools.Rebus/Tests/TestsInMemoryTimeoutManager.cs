@@ -1,5 +1,4 @@
 using Rebus.Extensions;
-using Rebus.Messages;
 using Rebus.Time;
 using Rebus.Timeouts;
 

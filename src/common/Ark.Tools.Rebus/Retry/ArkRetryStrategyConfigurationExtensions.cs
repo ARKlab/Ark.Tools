@@ -1,6 +1,5 @@
 using Rebus.Config;
 using Rebus.Logging;
-using Rebus.Messages;
 using Rebus.Retry;
 using Rebus.Retry.FailFast;
 using Rebus.Retry.Simple;

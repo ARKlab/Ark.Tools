@@ -1,8 +1,6 @@
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
-using Rebus.Messages;
-using Rebus.Pipeline;
 
 using SimpleInjector;
 
