@@ -2,6 +2,7 @@
 
 * [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
 * [Remove Nito.AsyncEx.Coordination Dependency](#remove-nitoasyncexcoordination-dependency)
+* [Oracle CommandTimeout Default Changed](#oracle-commandtimeout-default-changed)
 * [Migrate SQL Projects to SDK-based](#migrate-sql-projects-to-sdk-based)
 * [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbukle-10.x)
 * [Replace FluentAssertions with AwesomeAssertions](#replace-fluntasserion-with-awesomeassertion)
@@ -191,6 +192,63 @@ The `Nito.AsyncEx.Coordination` library has been removed from Ark.Tools as it is
 ### Migration Timeline
 
 This change is transparent for existing users of `Ark.Tools.ResourceWatcher`. No action is required unless you were directly using `Nito.AsyncEx.Coordination` in your own code.
+
+## Oracle CommandTimeout Default Changed
+
+**⚠️ BREAKING CHANGE**: In Ark.Tools v6, `OracleDbConnectionManager` now sets a default `CommandTimeout` of **30 seconds** on all `OracleConnection` instances. In v5, the default was 0 (infinite timeout).
+
+### What Changed
+
+- **v5 behavior**: OracleConnection instances had `CommandTimeout = 0` (infinite timeout)
+- **v6 behavior**: OracleConnection instances now have `CommandTimeout = 30` seconds by default
+
+This change aligns Oracle connections with .NET ADO.NET standards (SQL Server defaults to 30 seconds) and prevents unbounded or runaway queries.
+
+### Migration Guide
+
+**For most applications**: No changes required. The 30-second default is appropriate for typical OLTP queries.
+
+**For applications with long-running queries**: You must explicitly set a higher timeout for queries that legitimately take longer than 30 seconds:
+
+```csharp
+// Option 1: Set timeout per command (recommended)
+using var connection = connectionManager.Get(connectionString);
+using var command = connection.CreateCommand();
+command.CommandText = "SELECT * FROM large_table WHERE complex_condition";
+command.CommandTimeout = 300; // 5 minutes for this specific query
+
+// Option 2: Set timeout for all commands on a connection
+using var connection = connectionManager.Get(connectionString);
+((OracleConnection)connection).CommandTimeout = 300; // 5 minutes for all commands
+
+// Option 3: Extend OracleDbConnectionManager for custom default
+public class CustomOracleConnectionManager : OracleDbConnectionManager
+{
+    protected override OracleConnection Build(string connectionString)
+    {
+        var conn = base.Build(connectionString);
+        conn.CommandTimeout = 300; // Custom default for all connections
+        return conn;
+    }
+}
+```
+
+### Action Required
+
+1. **Identify long-running queries**: Review your application for queries that take longer than 30 seconds to execute
+2. **Set appropriate timeouts**: For each long-running query, set an appropriate `CommandTimeout` value
+3. **Test thoroughly**: Test your application to ensure no queries are timing out unexpectedly
+
+### Benefits
+
+- **Increased resiliency**: Prevents unbounded queries from blocking resources indefinitely
+- **Consistency**: Aligns Oracle behavior with SQL Server and other ADO.NET providers
+- **Predictability**: Makes timeout behavior explicit and configurable
+
+### Documentation References
+
+- [Oracle Connection Properties](https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/ConnectionProperties.html)
+- [Oracle Command Properties](https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/CommandProperties.html)
 
 ## Migrate SQL Projects to SDK-based
 
