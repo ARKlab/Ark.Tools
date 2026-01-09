@@ -16,7 +16,6 @@
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval
-- Use `FluentAssertions` (deprecated) - use `AwesomeAssertions` instead
 - Use `IFlurlClientFactory` directly - use `IArkFlurlClientFactory`
 - Use string interpolation in NLog calls (e.g., `_logger.Info($"...")`)
 - Skip XML documentation on public members
@@ -181,7 +180,7 @@ throw new ArgumentNullException(nameof(parameter));
 - Use Reqnroll with Gherkin feature files for integration tests
 - Configure `TableMappingConfiguration` for custom types (see `tests/Ark.Tools.ResourceWatcher.Tests/Init/TableMappingConfiguration.cs`)
 - Use horizontal table format (property names as column headers) in feature files
-- Use `AwesomeAssertions` for test assertions (FluentAssertions is deprecated)
+- Use `FluentAssertions` for test assertions in all test projects
 
 ### Test Strategy
 - Prefer Integration tests mocking **only external** services
@@ -265,7 +264,7 @@ Host.CreateDefaultBuilder(args)
 - **Rebus** - Messaging
 - **Flurl** - HTTP client
 - **Swashbuckle** - OpenAPI 3.1 support
-- **AwesomeAssertions** - Test assertions (replaces FluentAssertions)
+- **FluentAssertions** - Test assertions
 
 ## Contributing
 
