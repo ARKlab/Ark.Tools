@@ -1,38 +1,36 @@
 ﻿using Ark.Tools.Solid;
-using System;
-
 
 using Hellang.Middleware.ProblemDetails;
 
 using Microsoft.AspNetCore.Http;
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;
 
-namespace WebApplicationDemo.Application.Handlers.Requests
+namespace WebApplicationDemo.Application.Handlers.Requests;
+
+public class Post_EntityRequestProblemDetailsHandler : IRequestHandler<Post_EntityRequestProblemDetails.V1, Entity.V1.Output>
 {
-    public class Post_EntityRequestProblemDetailsHandler : IRequestHandler<Post_EntityRequestProblemDetails.V1, Entity.V1.Output>
+    public Entity.V1.Output Execute(Post_EntityRequestProblemDetails.V1 request)
     {
-        public Entity.V1.Output Execute(Post_EntityRequestProblemDetails.V1 request)
+        return ExecuteAsync(request).ConfigureAwait(true).GetAwaiter().GetResult();
+    }
+
+    public Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequestProblemDetails.V1 request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var problem = new OutOfCreditProblemDetails()
         {
-            return ExecuteAsync(request).ConfigureAwait(true).GetAwaiter().GetResult();
-        }
+            Balance = 30.0m,
+            Accounts = { "/account/12345", "/account/67890" },
+            Status = StatusCodes.Status400BadRequest,
+        };
 
-        public Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequestProblemDetails.V1 request, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(request);
-
-            var problem = new OutOfCreditProblemDetails()
-            {
-                Balance = 30.0m,
-                Accounts = { "/account/12345", "/account/67890" },
-                Status = StatusCodes.Status400BadRequest,
-            };
-
-            throw new ProblemDetailsException(problem);
-        }
+        throw new ProblemDetailsException(problem);
     }
 }

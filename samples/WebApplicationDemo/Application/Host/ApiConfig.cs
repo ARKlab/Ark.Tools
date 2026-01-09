@@ -1,6 +1,5 @@
-﻿namespace WebApplicationDemo.Application.Host
+﻿namespace WebApplicationDemo.Application.Host;
+
+public class ApiConfig
 {
-    public class ApiConfig
-    {
-    }
 }

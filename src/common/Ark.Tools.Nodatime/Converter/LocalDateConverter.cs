@@ -8,68 +8,67 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 
-namespace Ark.Tools.Nodatime
+namespace Ark.Tools.Nodatime;
+
+public class LocalDateConverter : TypeConverter
 {
-    public class LocalDateConverter : TypeConverter
+    private readonly LocalDatePattern _pattern = LocalDatePattern.Iso;
+
+    private static readonly Type[] _supportedFrom =
+    [
+        typeof(string),typeof(LocalDate),typeof(DateTime)
+    ];
+
+    public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
     {
-        private readonly LocalDatePattern _pattern = LocalDatePattern.Iso;
+        if (_supportedFrom.Contains(sourceType)) return true;
 
-        private static readonly Type[] _supportedFrom =
-        [
-            typeof(string),typeof(LocalDate),typeof(DateTime)
-        ];
+        return base.CanConvertFrom(context, sourceType);
+    }
 
-        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
+    public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
+    {
+        if (value is LocalDate res)
         {
-            if (_supportedFrom.Contains(sourceType)) return true;
-
-            return base.CanConvertFrom(context, sourceType);
+            return res;
+        }
+        if (value is DateTime d && d == d.Date)
+        {
+            return LocalDate.FromDateTime(d);
+        }
+        if (value is string s)
+        {
+            var r = _pattern.WithCulture(culture ?? CultureInfo.InvariantCulture).Parse(s);
+            if (r.Success)
+                return r.Value;
+            // little hack, not the finest, but should work
+            if (DateTime.TryParse(s, culture ?? CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) && dt.Date == dt)
+                return LocalDate.FromDateTime(dt);
         }
 
-        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
+
+        return base.ConvertFrom(context, culture, value);
+    }
+
+    public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
+    {
+        if (destinationType == typeof(string) || destinationType == typeof(DateTime))
+            return true;
+
+        return base.CanConvertTo(context, destinationType);
+    }
+
+    public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
+    {
+        if (value is LocalDate ld)
         {
-            if (value is LocalDate res)
-            {
-                return res;
-            }
-            if (value is DateTime d && d == d.Date)
-            {
-                return LocalDate.FromDateTime(d);
-            }
-            if (value is string s)
-            {
-                var r = _pattern.WithCulture(culture ?? CultureInfo.InvariantCulture).Parse(s);
-                if (r.Success)
-                    return r.Value;
-                // little hack, not the finest, but should work
-                if (DateTime.TryParse(s, culture ?? CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) && dt.Date == dt)
-                    return LocalDate.FromDateTime(dt);
-            }
+            if (destinationType == typeof(string))
+                return _pattern.Format(ld);
 
-
-            return base.ConvertFrom(context, culture, value);
+            if (destinationType == typeof(DateTime))
+                return ld.ToDateTimeUnspecified();
         }
 
-        public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
-        {
-            if (destinationType == typeof(string) || destinationType == typeof(DateTime))
-                return true;
-
-            return base.CanConvertTo(context, destinationType);
-        }
-
-        public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
-        {
-            if (value is LocalDate ld)
-            {
-                if (destinationType == typeof(string))
-                    return _pattern.Format(ld);
-
-                if (destinationType == typeof(DateTime))
-                    return ld.ToDateTimeUnspecified();
-            }
-
-            return base.ConvertTo(context, culture, value, destinationType);
-        }
+        return base.ConvertTo(context, culture, value, destinationType);
     }
 }

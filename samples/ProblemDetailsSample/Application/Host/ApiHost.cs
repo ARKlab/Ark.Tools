@@ -12,86 +12,85 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-namespace ProblemDetailsSample.Application.Handlers.Host
+namespace ProblemDetailsSample.Application.Handlers.Host;
+
+public class ApiHost
 {
-    public class ApiHost
+    public ApiHost(ApiConfig config)
     {
-        public ApiHost(ApiConfig config)
-        {
-            this.Config = config;
+        this.Config = config;
 
-            this._applicationAssemblies = [
-                typeof(ApiHost).Assembly,
-                //Assembly.Load("ProblemDetailsSample")
-            ];
-        }
+        this._applicationAssemblies = [
+            typeof(ApiHost).Assembly,
+            //Assembly.Load("ProblemDetailsSample")
+        ];
+    }
 
-        public ApiHost WithContainer(Container container)
-        {
-            Container = container;
+    public ApiHost WithContainer(Container container)
+    {
+        Container = container;
 
-            Container.AllowResolvingFuncFactories();
+        Container.AllowResolvingFuncFactories();
 
-            Container.RequireSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
-            Container.RequireSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
-            Container.RequireSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
-            Container.RequireSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
+        Container.RequireSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
+        Container.RequireSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
+        Container.RequireSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+        Container.RequireSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
 
-            _registerContainer(Container);
+        _registerContainer(Container);
 
-            return this;
-        }
+        return this;
+    }
 
-        private void _registerContainer(Container container)
-        {
-            container.Register(typeof(IValidator<>),
-                container.GetTypesToRegister(typeof(IValidator<>), this._applicationAssemblies)
-                    .Where(x => x.IsPublic)
-                , Lifestyle.Singleton);
+    private void _registerContainer(Container container)
+    {
+        container.Register(typeof(IValidator<>),
+            container.GetTypesToRegister(typeof(IValidator<>), this._applicationAssemblies)
+                .Where(x => x.IsPublic)
+            , Lifestyle.Singleton);
 
-            container.Register(typeof(IQueryHandler<,>), this._applicationAssemblies);
-            container.Register(typeof(IRequestHandler<,>), this._applicationAssemblies);
+        container.Register(typeof(IQueryHandler<,>), this._applicationAssemblies);
+        container.Register(typeof(IRequestHandler<,>), this._applicationAssemblies);
 
-            container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton,
-                c => !c.Handled);
+        container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton,
+            c => !c.Handled);
 
-            container.RegisterDecorator(
-                     typeof(IQueryHandler<,>)
-                   , typeof(QueryFluentValidateDecorator<,>)
-                );
+        container.RegisterDecorator(
+                 typeof(IQueryHandler<,>)
+               , typeof(QueryFluentValidateDecorator<,>)
+            );
 
-            container.RegisterDecorator(
-                     typeof(IRequestHandler<,>)
-                   , typeof(RequestFluentValidateDecorator<,>)
-                );
+        container.RegisterDecorator(
+                 typeof(IRequestHandler<,>)
+               , typeof(RequestFluentValidateDecorator<,>)
+            );
 
-            container.RegisterInstance(this.Config);
+        container.RegisterInstance(this.Config);
 
-            // DAL
-            //container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
-        }
+        // DAL
+        //container.Register<ISqlContext<DataSql>, MiddlewareDataContext_Sql>();
+    }
 
-        public void RunInBackground()
-        {
+    public void RunInBackground()
+    {
 
-        }
+    }
 
-        public void RunAndBlock()
-        {
-            this.RunInBackground();
+    public void RunAndBlock()
+    {
+        this.RunInBackground();
 #pragma warning disable RS0030 // Legitimate use: keeping application running indefinitely
-            Thread.Sleep(Timeout.Infinite);
+        Thread.Sleep(Timeout.Infinite);
 #pragma warning restore RS0030
-        }
+    }
 
-        public Container? Container { get; private set; }
+    public Container? Container { get; private set; }
 
-        public ApiConfig Config { get; private set; }
+    public ApiConfig Config { get; private set; }
 
-        private readonly Assembly[] _applicationAssemblies;
+    private readonly Assembly[] _applicationAssemblies;
 
-        private sealed class NullValidator<T> : AbstractValidator<T>
-        {
-        }
+    private sealed class NullValidator<T> : AbstractValidator<T>
+    {
     }
 }

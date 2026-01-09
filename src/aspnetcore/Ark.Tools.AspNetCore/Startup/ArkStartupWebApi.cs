@@ -5,35 +5,34 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Ark.Tools.AspNetCore.Startup
+namespace Ark.Tools.AspNetCore.Startup;
+
+public abstract class ArkStartupWebApi : ArkStartupWebApiCommon
 {
-    public abstract class ArkStartupWebApi : ArkStartupWebApiCommon
+    private readonly ArkStartupBase _anotherBase;
+
+    protected ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment)
+        : this(configuration, environment, false)
     {
-        private readonly ArkStartupBase _anotherBase;
+    }
 
-        protected ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment)
-            : this(configuration, environment, false)
-        {
-        }
+    protected ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
+        : base(configuration, environment, useNewtonsoftJson)
+    {
+        _anotherBase = new ArkStartupBase(configuration);
+    }
 
-        protected ArkStartupWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
-            : base(configuration, environment, useNewtonsoftJson)
-        {
-            _anotherBase = new ArkStartupBase(configuration);
-        }
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        _anotherBase.ConfigureServices(services);
 
-        public override void ConfigureServices(IServiceCollection services)
-        {
-            _anotherBase.ConfigureServices(services);
+        base.ConfigureServices(services);
+    }
 
-            base.ConfigureServices(services);
-        }
+    public override void Configure(IApplicationBuilder app)
+    {
+        _anotherBase.Configure(app);
 
-        public override void Configure(IApplicationBuilder app)
-        {
-            _anotherBase.Configure(app);
-
-            base.Configure(app);
-        }
+        base.Configure(app);
     }
 }

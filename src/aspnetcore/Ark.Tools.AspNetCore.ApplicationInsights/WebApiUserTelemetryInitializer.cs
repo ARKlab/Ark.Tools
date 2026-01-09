@@ -7,42 +7,41 @@ using Microsoft.AspNetCore.Http;
 
 using System.Security.Claims;
 
-namespace Ark.Tools.AspNetCore.ApplicationInsights
+namespace Ark.Tools.AspNetCore.ApplicationInsights;
+
+public class WebApiUserTelemetryInitializer : TelemetryInitializerBase
 {
-    public class WebApiUserTelemetryInitializer : TelemetryInitializerBase
+    public WebApiUserTelemetryInitializer(IHttpContextAccessor httpContextAccessor)
+        : base(httpContextAccessor)
     {
-        public WebApiUserTelemetryInitializer(IHttpContextAccessor httpContextAccessor)
-            : base(httpContextAccessor)
+    }
+
+    protected override void OnInitializeTelemetry(
+        HttpContext platformContext,
+        RequestTelemetry requestTelemetry,
+        ITelemetry telemetry)
+    {
+
+        if (string.IsNullOrEmpty(requestTelemetry.Context.User.AuthenticatedUserId))
         {
+            var id = platformContext.Request.HttpContext.User?.Identity;
+            if (id?.IsAuthenticated == true)
+            {
+                if (!string.IsNullOrWhiteSpace(id.Name))
+                    requestTelemetry.Context.User.AuthenticatedUserId = id.Name;
+                else if (id is ClaimsIdentity ci)
+                    requestTelemetry.Context.User.AuthenticatedUserId = ci.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            }
         }
 
-        protected override void OnInitializeTelemetry(
-            HttpContext platformContext,
-            RequestTelemetry requestTelemetry,
-            ITelemetry telemetry)
+        if (!string.IsNullOrEmpty(requestTelemetry.Context.User.AuthenticatedUserId))
         {
+            telemetry.Context.User.AuthenticatedUserId = requestTelemetry.Context.User.AuthenticatedUserId;
+        }
 
-            if (string.IsNullOrEmpty(requestTelemetry.Context.User.AuthenticatedUserId))
-            {
-                var id = platformContext.Request.HttpContext.User?.Identity;
-                if (id?.IsAuthenticated == true)
-                {
-                    if (!string.IsNullOrWhiteSpace(id.Name))
-                        requestTelemetry.Context.User.AuthenticatedUserId = id.Name;
-                    else if (id is ClaimsIdentity ci)
-                        requestTelemetry.Context.User.AuthenticatedUserId = ci.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(requestTelemetry.Context.User.AuthenticatedUserId))
-            {
-                telemetry.Context.User.AuthenticatedUserId = requestTelemetry.Context.User.AuthenticatedUserId;
-            }
-
-            if (!string.IsNullOrEmpty(requestTelemetry.Context.User.AccountId))
-            {
-                telemetry.Context.User.AccountId = requestTelemetry.Context.User.AccountId;
-            }
+        if (!string.IsNullOrEmpty(requestTelemetry.Context.User.AccountId))
+        {
+            telemetry.Context.User.AccountId = requestTelemetry.Context.User.AccountId;
         }
     }
 }

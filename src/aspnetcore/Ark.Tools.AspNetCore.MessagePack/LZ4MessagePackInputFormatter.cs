@@ -8,45 +8,44 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using System;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.AspNetCore.MessagePackFormatter
+namespace Ark.Tools.AspNetCore.MessagePackFormatter;
+
+public class LZ4MessagePackInputFormatter : InputFormatter
 {
-    public class LZ4MessagePackInputFormatter : InputFormatter
+    const string ContentType = "application/x.msgpacklz4";
+
+    readonly MessagePackSerializerOptions _options;
+
+    public LZ4MessagePackInputFormatter()
+        : this(MessagePackSerializer.DefaultOptions)
     {
-        const string ContentType = "application/x.msgpacklz4";
+    }
 
-        readonly MessagePackSerializerOptions _options;
+    public LZ4MessagePackInputFormatter(IFormatterResolver resolver)
+        : this(MessagePackSerializer.DefaultOptions.WithResolver(resolver))
+    {
+    }
 
-        public LZ4MessagePackInputFormatter()
-            : this(MessagePackSerializer.DefaultOptions)
-        {
-        }
+    public LZ4MessagePackInputFormatter(MessagePackSerializerOptions options)
+    {
+        SupportedMediaTypes.Add(ContentType);
 
-        public LZ4MessagePackInputFormatter(IFormatterResolver resolver)
-            : this(MessagePackSerializer.DefaultOptions.WithResolver(resolver))
-        {
-        }
+        _options = options.WithCompression(MessagePackCompression.Lz4Block);
+    }
 
-        public LZ4MessagePackInputFormatter(MessagePackSerializerOptions options)
-        {
-            SupportedMediaTypes.Add(ContentType);
+    protected override bool CanReadType(Type type)
+    {
+        return _options.Resolver.GetFormatterDynamic(type) != null && base.CanReadType(type);
+    }
 
-            _options = options.WithCompression(MessagePackCompression.Lz4Block);
-        }
+    public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
 
-        protected override bool CanReadType(Type type)
-        {
-            return _options.Resolver.GetFormatterDynamic(type) != null && base.CanReadType(type);
-        }
+        var request = context.HttpContext.Request;
+        var ctk = context.HttpContext.RequestAborted;
 
-        public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)
-        {
-            ArgumentNullException.ThrowIfNull(context);
-
-            var request = context.HttpContext.Request;
-            var ctk = context.HttpContext.RequestAborted;
-
-            var result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, _options, ctk).ConfigureAwait(false);
-            return await InputFormatterResult.SuccessAsync(result).ConfigureAwait(false);
-        }
+        var result = await MessagePackSerializer.DeserializeAsync(context.ModelType, request.Body, _options, ctk).ConfigureAwait(false);
+        return await InputFormatterResult.SuccessAsync(result).ConfigureAwait(false);
     }
 }

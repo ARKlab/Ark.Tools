@@ -2,13 +2,12 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Builder;
 
-namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy
+namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy;
+
+public static class BasicAuthAzureActiveDirectoryProxyMiddlewareExtensions
 {
-    public static class BasicAuthAzureActiveDirectoryProxyMiddlewareExtensions
+    public static IApplicationBuilder UseBasicAuthAzureActiveDirectoryProxy(this IApplicationBuilder app, BasicAuthAzureActiveDirectoryProxyConfig config)
     {
-        public static IApplicationBuilder UseBasicAuthAzureActiveDirectoryProxy(this IApplicationBuilder app, BasicAuthAzureActiveDirectoryProxyConfig config)
-        {
-            return app.UseMiddleware<BasicAuthAzureActiveDirectoryProxyMiddleware>(config);
-        }
+        return app.UseMiddleware<BasicAuthAzureActiveDirectoryProxyMiddleware>(config);
     }
 }

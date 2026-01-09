@@ -1,7 +1,6 @@
-﻿namespace TestWorker.Configs
+﻿namespace TestWorker.Configs;
+
+public enum Test_Recipe
 {
-    public enum Test_Recipe
-    {
-        Test,
-    }
+    Test,
 }

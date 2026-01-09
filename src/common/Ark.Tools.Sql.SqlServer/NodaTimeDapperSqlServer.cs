@@ -3,8 +3,7 @@
 using Ark.Tools.Nodatime.Dapper;
 
 using Microsoft.Data.SqlClient;
-
-
+<<<<<<< TODO: Unmerged change from project 'Ark.Tools.Sql.SqlServer(net10.0)', Before:
 namespace Ark.Tools.Sql.SqlServer
 {
     public static class NodaTimeDapperSqlServer
@@ -52,5 +51,102 @@ namespace Ark.Tools.Sql.SqlServer
         {
             NodaTimeDapper.Setup();
         }
+=======
+namespace Ark.Tools.Sql.SqlServer;
+
+public static class NodaTimeDapperSqlServer
+{
+    static NodaTimeDapperSqlServer()
+    {
+        InstantHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.DateTime2;
+            }
+        };
+        LocalDateHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.Date;
+            }
+        };
+        LocalDateTimeHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.DateTime2;
+            }
+        };
+        OffsetDateTimeHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.DateTimeOffset;
+            }
+        };
+        LocalTimeHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.Time;
+            }
+        };
+    }
+
+    public static void Setup()
+    {
+        NodaTimeDapper.Setup();
+>>>>>>> After
+
+
+
+namespace Ark.Tools.Sql.SqlServer;
+
+public static class NodaTimeDapperSqlServer
+{
+    static NodaTimeDapperSqlServer()
+    {
+        InstantHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.DateTime2;
+            }
+        };
+        LocalDateHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.Date;
+            }
+        };
+        LocalDateTimeHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.DateTime2;
+            }
+        };
+        OffsetDateTimeHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.DateTimeOffset;
+            }
+        };
+        LocalTimeHandler.Instance.OnSetValue += (s, p) =>
+        {
+            if (p is SqlParameter sql)
+            {
+                sql.SqlDbType = System.Data.SqlDbType.Time;
+            }
+        };
+    }
+
+    public static void Setup()
+    {
+        NodaTimeDapper.Setup();
     }
 }

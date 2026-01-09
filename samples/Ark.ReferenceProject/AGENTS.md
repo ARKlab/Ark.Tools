@@ -308,7 +308,7 @@ Host.CreateDefaultBuilder(args)
 
 ### MUST Rules
 
-- **Traditional namespace blocks**: Always use traditional namespace blocks with braces - `namespace X { }` instead of file-scoped `namespace X;`
+- **File-scoped namespaces**: Use file-scoped namespaces (C# 10+) - `namespace X;` instead of block-scoped `namespace X { }`
 - **Research with MS Docs MCP**: When uncertain about C# patterns, libraries, or best practices, use the Microsoft Docs MCP tool to research current documentation and recommendations
 - **Builder pattern for test entities**: Use the Current property pattern with table-driven steps
   - Add `public EntityType? Current { get; private set; }` to step definition classes

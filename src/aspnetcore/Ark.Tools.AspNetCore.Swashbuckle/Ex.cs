@@ -10,29 +10,28 @@ using System;
 using System.IO;
 using System.Reflection;
 
-namespace Ark.Tools.AspNetCore.Swashbuckle
+namespace Ark.Tools.AspNetCore.Swashbuckle;
+
+public static partial class Ex
 {
-    public static partial class Ex
+    public static void IncludeXmlCommentsForAssembly<T>(this SwaggerGenOptions o) => o.IncludeXmlCommentsForAssembly(typeof(T).Assembly);
+
+    public static void IncludeXmlCommentsForAssembly(this SwaggerGenOptions o, Assembly assembly)
     {
-        public static void IncludeXmlCommentsForAssembly<T>(this SwaggerGenOptions o) => o.IncludeXmlCommentsForAssembly(typeof(T).Assembly);
+        var baseDirectory = System.AppContext.BaseDirectory;
+        var commentsFileName = assembly.GetName().Name + ".xml";
+        var path = Path.Combine(baseDirectory, commentsFileName);
+        if (File.Exists(path))
+            o.IncludeXmlComments(path);
+    }
 
-        public static void IncludeXmlCommentsForAssembly(this SwaggerGenOptions o, Assembly assembly)
-        {
-            var baseDirectory = System.AppContext.BaseDirectory;
-            var commentsFileName = assembly.GetName().Name + ".xml";
-            var path = Path.Combine(baseDirectory, commentsFileName);
-            if (File.Exists(path))
-                o.IncludeXmlComments(path);
-        }
+    public static IServiceCollection ArkConfigureSwagger(this IServiceCollection services, Action<SwaggerOptions> setup)
+    {
+        return services.Configure(setup);
+    }
 
-        public static IServiceCollection ArkConfigureSwagger(this IServiceCollection services, Action<SwaggerOptions> setup)
-        {
-            return services.Configure(setup);
-        }
-
-        public static IServiceCollection ArkConfigureSwaggerUI(this IServiceCollection services, Action<SwaggerUIOptions> setup)
-        {
-            return services.Configure(setup);
-        }
+    public static IServiceCollection ArkConfigureSwaggerUI(this IServiceCollection services, Action<SwaggerUIOptions> setup)
+    {
+        return services.Configure(setup);
     }
 }

@@ -5,36 +5,35 @@ using Microsoft.OData.ModelBuilder;
 
 using WebApplicationDemo.Dto;
 
-namespace WebApplicationDemo.Configuration
+namespace WebApplicationDemo.Configuration;
+
+public class MarketRecordConfiguration : IModelConfiguration
 {
-    public class MarketRecordConfiguration : IModelConfiguration
+    public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string? routePrefix)
     {
-        public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string? routePrefix)
+        if (apiVersion == ApiVersions.V1)
         {
-            if (apiVersion == ApiVersions.V1)
+            var recordv1 = builder.EntitySet<MarketRecordV1>("MarketRecordV1").EntityType;
+
+            recordv1.HasKey(p => new
             {
-                var recordv1 = builder.EntitySet<MarketRecordV1>("MarketRecordV1").EntityType;
+                p.Market,
+                p.DateTimeOffset
+            });
 
-                recordv1.HasKey(p => new
-                {
-                    p.Market,
-                    p.DateTimeOffset
-                });
+            recordv1.Select().Filter();
+        }
 
-                recordv1.Select().Filter();
-            }
+        if (apiVersion == ApiVersions.V0)
+        {
+            var recordv0 = builder.EntitySet<MarketRecordV0>("MarketRecord").EntityType;
 
-            if (apiVersion == ApiVersions.V0)
+            recordv0.HasKey(p => new
             {
-                var recordv0 = builder.EntitySet<MarketRecordV0>("MarketRecord").EntityType;
-
-                recordv0.HasKey(p => new
-                {
-                    p.Market,
-                    p.DateTimeOffset
-                });
-                recordv0.Select().Filter();
-            }
+                p.Market,
+                p.DateTimeOffset
+            });
+            recordv0.Select().Filter();
         }
     }
 }

@@ -2,13 +2,12 @@
 
 using WebApplicationDemo.Dto;
 
-namespace WebApplicationDemo.Api.Requests
+namespace WebApplicationDemo.Api.Requests;
+
+public static class Post_EntityRequestBusinessRuleViolation
 {
-    public static class Post_EntityRequestBusinessRuleViolation
+    public class V1 : IRequest<Entity.V1.Output>
     {
-        public class V1 : IRequest<Entity.V1.Output>
-        {
-            public string? EntityId { get; set; }
-        }
+        public string? EntityId { get; set; }
     }
 }

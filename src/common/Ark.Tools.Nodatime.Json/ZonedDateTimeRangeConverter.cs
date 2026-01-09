@@ -8,87 +8,86 @@ using NodaTime;
 using System;
 using System.Globalization;
 
-namespace Ark.Tools.Nodatime.Json
+namespace Ark.Tools.Nodatime.Json;
+
+
+public class ZonedDateTimeRangeConverter : JsonConverter
 {
+    private static readonly Type _type = typeof(ZonedDateTimeRange);
+    private static readonly Type _nullableType = typeof(Nullable<ZonedDateTimeRange>);
 
-    public class ZonedDateTimeRangeConverter : JsonConverter
+    public override bool CanConvert(Type objectType)
     {
-        private static readonly Type _type = typeof(ZonedDateTimeRange);
-        private static readonly Type _nullableType = typeof(Nullable<ZonedDateTimeRange>);
+        return objectType == _type || objectType == _nullableType;
+    }
 
-        public override bool CanConvert(Type objectType)
+    private sealed class Surrogate
+    {
+        public ZonedDateTime Start { get; set; }
+        public ZonedDateTime End { get; set; }
+    }
+
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    {
+
+        if (reader.TokenType == JsonToken.Null)
         {
-            return objectType == _type || objectType == _nullableType;
+            if (objectType != _nullableType)
+            {
+                throw new JsonReaderException(string.Format(CultureInfo.InvariantCulture, "Cannot convert null value to {0}.", objectType));
+            }
+            return null;
         }
 
-        private sealed class Surrogate
+        var jo = JObject.Load(reader);
+
+        if (jo == null)
         {
-            public ZonedDateTime Start { get; set; }
-            public ZonedDateTime End { get; set; }
+            if (objectType != _nullableType)
+            {
+                throw new JsonReaderException(string.Format(CultureInfo.InvariantCulture, "Cannot convert null value to {0}.", objectType));
+            }
+            return null;
         }
 
-        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+        var s = jo.ToObject<Surrogate>(serializer);
+        if (s == null) return null;
+
+        return new ZonedDateTimeRange(s.Start, s.End);
+    }
+
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    {
+        if (value == null)
         {
-
-            if (reader.TokenType == JsonToken.Null)
-            {
-                if (objectType != _nullableType)
-                {
-                    throw new JsonReaderException(string.Format(CultureInfo.InvariantCulture, "Cannot convert null value to {0}.", objectType));
-                }
-                return null;
-            }
-
-            var jo = JObject.Load(reader);
-
-            if (jo == null)
-            {
-                if (objectType != _nullableType)
-                {
-                    throw new JsonReaderException(string.Format(CultureInfo.InvariantCulture, "Cannot convert null value to {0}.", objectType));
-                }
-                return null;
-            }
-
-            var s = jo.ToObject<Surrogate>(serializer);
-            if (s == null) return null;
-
-            return new ZonedDateTimeRange(s.Start, s.End);
+            throw new ArgumentNullException(nameof(value));
         }
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        if (!(value is ZonedDateTimeRange || value is Nullable<ZonedDateTimeRange>))
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            if (!(value is ZonedDateTimeRange || value is Nullable<ZonedDateTimeRange>))
-            {
-                throw new JsonWriterException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(ZonedDateTimeRange).FullName, value.GetType().FullName));
-            }
-
-            ZonedDateTimeRange? r = null;
-
-            if (value is Nullable<ZonedDateTimeRange>)
-                r = value as Nullable<ZonedDateTimeRange>;
-
-
-            if (value is ZonedDateTimeRange)
-            {
-                r = (ZonedDateTimeRange)value;
-            }
-
-            if (r.HasValue)
-            {
-                serializer.Serialize(writer, new Surrogate { Start = r.Value.Start, End = r.Value.End });
-            }
-            else
-            {
-                writer.WriteNull();
-            }
-
-
+            throw new JsonWriterException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(ZonedDateTimeRange).FullName, value.GetType().FullName));
         }
+
+        ZonedDateTimeRange? r = null;
+
+        if (value is Nullable<ZonedDateTimeRange>)
+            r = value as Nullable<ZonedDateTimeRange>;
+
+
+        if (value is ZonedDateTimeRange)
+        {
+            r = (ZonedDateTimeRange)value;
+        }
+
+        if (r.HasValue)
+        {
+            serializer.Serialize(writer, new Surrogate { Start = r.Value.Start, End = r.Value.End });
+        }
+        else
+        {
+            writer.WriteNull();
+        }
+
+
     }
 }

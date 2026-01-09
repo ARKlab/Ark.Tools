@@ -2,16 +2,15 @@
 
 using ProblemDetailsSample.Api.Queries;
 
-namespace ProblemDetailsSample.Application.Handlers.Vaildators
+namespace ProblemDetailsSample.Application.Handlers.Vaildators;
+
+public class Get_EntityByIdQueryValidator : AbstractValidator<Get_EntityByIdQuery.V1>
 {
-    public class Get_EntityByIdQueryValidator : AbstractValidator<Get_EntityByIdQuery.V1>
+    public Get_EntityByIdQueryValidator()
     {
-        public Get_EntityByIdQueryValidator()
-        {
-            RuleFor(x => x.EntityId)
-                .NotEmpty()
-                .MaximumLength(10)
-                ;
-        }
+        RuleFor(x => x.EntityId)
+            .NotEmpty()
+            .MaximumLength(10)
+            ;
     }
 }

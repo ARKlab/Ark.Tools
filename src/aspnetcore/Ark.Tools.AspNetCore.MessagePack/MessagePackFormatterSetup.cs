@@ -8,28 +8,27 @@ using Microsoft.Net.Http.Headers;
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace Ark.Tools.AspNetCore.MessagePackFormatter
+namespace Ark.Tools.AspNetCore.MessagePackFormatter;
+
+[UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+internal sealed class MessagePackFormatterSetup : IConfigureOptions<MvcOptions>
 {
-    [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
-    internal sealed class MessagePackFormatterSetup : IConfigureOptions<MvcOptions>
+    private readonly IFormatterResolver _resolver;
+
+    public MessagePackFormatterSetup(IFormatterResolver resolver)
     {
-        private readonly IFormatterResolver _resolver;
+        _resolver = resolver;
+    }
 
-        public MessagePackFormatterSetup(IFormatterResolver resolver)
-        {
-            _resolver = resolver;
-        }
+    public void Configure(MvcOptions opt)
+    {
+        opt.FormatterMappings.SetMediaTypeMappingForFormat("mplz4", MediaTypeHeaderValue.Parse("application/x.msgpacklz4"));
+        opt.FormatterMappings.SetMediaTypeMappingForFormat("mp", MediaTypeHeaderValue.Parse("application/x-msgpack"));
 
-        public void Configure(MvcOptions opt)
-        {
-            opt.FormatterMappings.SetMediaTypeMappingForFormat("mplz4", MediaTypeHeaderValue.Parse("application/x.msgpacklz4"));
-            opt.FormatterMappings.SetMediaTypeMappingForFormat("mp", MediaTypeHeaderValue.Parse("application/x-msgpack"));
+        opt.OutputFormatters.Add(new MessagePackOutputFormatter(_resolver));
+        opt.InputFormatters.Add(new MessagePackInputFormatter(_resolver));
 
-            opt.OutputFormatters.Add(new MessagePackOutputFormatter(_resolver));
-            opt.InputFormatters.Add(new MessagePackInputFormatter(_resolver));
-
-            opt.OutputFormatters.Add(new LZ4MessagePackOutputFormatter(_resolver));
-            opt.InputFormatters.Add(new LZ4MessagePackInputFormatter(_resolver));
-        }
+        opt.OutputFormatters.Add(new LZ4MessagePackOutputFormatter(_resolver));
+        opt.InputFormatters.Add(new LZ4MessagePackInputFormatter(_resolver));
     }
 }

@@ -4,21 +4,19 @@ using Microsoft.AspNetCore.Http;
 
 using System.Diagnostics;
 
-namespace Ark.Tools.AspNetCore.ProblemDetails
-{
-    public static class ProblemDetailsHelper
-    {
-        public static void SetTraceId(Microsoft.AspNetCore.Mvc.ProblemDetails details, HttpContext httpContext)
-        {
-            // this is the same behaviour that Asp.Net core uses
-            var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
-            details.Extensions["traceId"] = traceId;
-        }
+namespace Ark.Tools.AspNetCore.ProblemDetails;
 
-        public static void SetType(Microsoft.AspNetCore.Mvc.ProblemDetails details, int statusCode)
-        {
-            details.Type = $"https://httpstatuses.com/{statusCode}";
-        }
+public static class ProblemDetailsHelper
+{
+    public static void SetTraceId(Microsoft.AspNetCore.Mvc.ProblemDetails details, HttpContext httpContext)
+    {
+        // this is the same behaviour that Asp.Net core uses
+        var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+        details.Extensions["traceId"] = traceId;
     }
 
+    public static void SetType(Microsoft.AspNetCore.Mvc.ProblemDetails details, int statusCode)
+    {
+        details.Type = $"https://httpstatuses.com/{statusCode}";
+    }
 }

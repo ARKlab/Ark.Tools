@@ -4,7 +4,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
-
+<<<<<<< TODO: Unmerged change from project 'Ark.Tools.Core(net10.0)', Before:
 namespace Ark.Tools.Core
 {
     public static class EnumExtensions
@@ -36,5 +36,69 @@ namespace Ark.Tools.Core
 
             return null;
         }
+=======
+namespace Ark.Tools.Core;
+
+public static class EnumExtensions
+{
+    public static string AsString<T>(this T value)
+            where T : System.Enum
+    {
+        DescriptionAttribute? desc = typeof(T)
+            .GetField(value.ToString())?
+            .GetCustomAttributes(typeof(DescriptionAttribute), false)
+            .SingleOrDefault() as DescriptionAttribute;
+
+        EnumMemberAttribute? em = typeof(T)
+            .GetField(value.ToString())?
+            .GetCustomAttributes(typeof(EnumMemberAttribute), false)
+            .SingleOrDefault() as EnumMemberAttribute;
+
+        return em?.Value ?? desc?.Description ?? value.ToString();
+    }
+
+    public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct, System.Enum
+    {
+        if (string.IsNullOrWhiteSpace(inputString)) return null;
+
+        if (Enum.TryParse<TEnum>(inputString, ignoreCase, out var retVal))
+        {
+            return retVal;
+        }
+
+        return null;
+>>>>>>> After
+
+
+namespace Ark.Tools.Core;
+
+public static class EnumExtensions
+{
+    public static string AsString<T>(this T value)
+            where T : System.Enum
+    {
+        DescriptionAttribute? desc = typeof(T)
+            .GetField(value.ToString())?
+            .GetCustomAttributes(typeof(DescriptionAttribute), false)
+            .SingleOrDefault() as DescriptionAttribute;
+
+        EnumMemberAttribute? em = typeof(T)
+            .GetField(value.ToString())?
+            .GetCustomAttributes(typeof(EnumMemberAttribute), false)
+            .SingleOrDefault() as EnumMemberAttribute;
+
+        return em?.Value ?? desc?.Description ?? value.ToString();
+    }
+
+    public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct, System.Enum
+    {
+        if (string.IsNullOrWhiteSpace(inputString)) return null;
+
+        if (Enum.TryParse<TEnum>(inputString, ignoreCase, out var retVal))
+        {
+            return retVal;
+        }
+
+        return null;
     }
 }

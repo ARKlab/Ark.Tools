@@ -2,11 +2,10 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 
-namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
+namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
+
+[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+public sealed class CsvAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
-    public sealed class CsvAttribute : Attribute
-    {
-        public char Separator { get; set; } = ',';
-    }
+    public char Separator { get; set; } = ',';
 }

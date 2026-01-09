@@ -9,49 +9,48 @@ using System;
 
 using System.Text.Json;
 
-namespace Ark.Tools.Http
-{
-    public static partial class Ex
-    {
-        public static IFlurlClientBuilder ConfigureArkDefaults(this IFlurlClientBuilder builder, bool useNewtonsoftJson = false)
-        {
-            var j = new CookieJar();
-            return builder
-                .AllowAnyHttpStatus()
-                .WithTimeout(TimeSpan.FromMinutes(5))
-                .ConfigureInnerHandler(h =>
-                {
-                    if (h is null) return; // can be null when using TestServer.CreateHandler() as inner handler
-                    h.AutomaticDecompression = System.Net.DecompressionMethods.All;
-                })
-                .BeforeCall(c => c.Request.WithCookies(j))
-                .WithAutoRedirect(true)
-                .WithSettings(s =>
-                {
-                    if (!useNewtonsoftJson)
-                        s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
-                    else
-                        s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
-                })
-                ;
-        }
+namespace Ark.Tools.Http;
 
-        public static IFlurlClient ConfigureArkDefaults(this IFlurlClient client, bool useNewtonsoftJson = false)
-        {
-            var j = new CookieJar();
-            return client
-                .AllowAnyHttpStatus()
-                .WithTimeout(TimeSpan.FromMinutes(5))
-                .BeforeCall(c => c.Request.WithCookies(j))
-                .WithAutoRedirect(true)
-                .WithSettings(s =>
-                {
-                    if (!useNewtonsoftJson)
-                        s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
-                    else
-                        s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
-                })
-                ;
-        }
+public static partial class Ex
+{
+    public static IFlurlClientBuilder ConfigureArkDefaults(this IFlurlClientBuilder builder, bool useNewtonsoftJson = false)
+    {
+        var j = new CookieJar();
+        return builder
+            .AllowAnyHttpStatus()
+            .WithTimeout(TimeSpan.FromMinutes(5))
+            .ConfigureInnerHandler(h =>
+            {
+                if (h is null) return; // can be null when using TestServer.CreateHandler() as inner handler
+                h.AutomaticDecompression = System.Net.DecompressionMethods.All;
+            })
+            .BeforeCall(c => c.Request.WithCookies(j))
+            .WithAutoRedirect(true)
+            .WithSettings(s =>
+            {
+                if (!useNewtonsoftJson)
+                    s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
+                else
+                    s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
+            })
+            ;
+    }
+
+    public static IFlurlClient ConfigureArkDefaults(this IFlurlClient client, bool useNewtonsoftJson = false)
+    {
+        var j = new CookieJar();
+        return client
+            .AllowAnyHttpStatus()
+            .WithTimeout(TimeSpan.FromMinutes(5))
+            .BeforeCall(c => c.Request.WithCookies(j))
+            .WithAutoRedirect(true)
+            .WithSettings(s =>
+            {
+                if (!useNewtonsoftJson)
+                    s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
+                else
+                    s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
+            })
+            ;
     }
 }

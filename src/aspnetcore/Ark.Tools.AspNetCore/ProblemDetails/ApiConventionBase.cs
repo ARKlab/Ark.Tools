@@ -6,28 +6,27 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using System.Linq;
 using System.Reflection;
 
-namespace Ark.Tools.AspNetCore.ProblemDetails
+namespace Ark.Tools.AspNetCore.ProblemDetails;
+
+public abstract class ApiConventionBase : IControllerModelConvention
 {
-    public abstract class ApiConventionBase : IControllerModelConvention
+    void IControllerModelConvention.Apply(ControllerModel controller)
     {
-        void IControllerModelConvention.Apply(ControllerModel controller)
+        if (IsApiController(controller))
         {
-            if (IsApiController(controller))
-            {
-                ApplyControllerConvention(controller);
-            }
+            ApplyControllerConvention(controller);
         }
-
-        protected virtual bool IsApiController(ControllerModel controller)
-        {
-            if (controller.Attributes.OfType<ApiControllerAttribute>().Any())
-            {
-                return true;
-            }
-
-            return controller.ControllerType.Assembly.GetCustomAttributes().OfType<ApiControllerAttribute>().Any();
-        }
-
-        protected abstract void ApplyControllerConvention(ControllerModel controller);
     }
+
+    protected virtual bool IsApiController(ControllerModel controller)
+    {
+        if (controller.Attributes.OfType<ApiControllerAttribute>().Any())
+        {
+            return true;
+        }
+
+        return controller.ControllerType.Assembly.GetCustomAttributes().OfType<ApiControllerAttribute>().Any();
+    }
+
+    protected abstract void ApplyControllerConvention(ControllerModel controller);
 }

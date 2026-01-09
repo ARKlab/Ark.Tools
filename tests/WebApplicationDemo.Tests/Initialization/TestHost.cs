@@ -16,86 +16,85 @@ using System.Net.Http;
 
 [assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
 
-namespace WebApplicationDemo.Tests
+namespace WebApplicationDemo.Tests;
+
+[Binding]
+public static class TestHost
 {
-    [Binding]
-    public static class TestHost
+    private static readonly Uri _baseUri = new("https://localhost:5001");
+    private static IHost? _server;
+    private static ArkFlurlClientFactory? _factory;
+
+
+    //internal static string SqlConnection;
+
+    [BeforeTestRun]
+    public static void BeforeTests()
     {
-        private static readonly Uri _baseUri = new("https://localhost:5001");
-        private static IHost? _server;
-        private static ArkFlurlClientFactory? _factory;
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
+        Program.InitStatic(Array.Empty<string>());
 
+        //_smtp = SimpleSmtpServer.Start();
 
-        //internal static string SqlConnection;
-
-        [BeforeTestRun]
-        public static void BeforeTests()
-        {
-            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
-            Program.InitStatic(Array.Empty<string>());
-
-            //_smtp = SimpleSmtpServer.Start();
-
-            var builder = Program.GetHostBuilder(Array.Empty<string>())
-                .ConfigureWebHost(wh =>
-                {
-                    wh.UseTestServer();
-                });
-
-            _server = builder.Start();
-            _factory = new ArkFlurlClientFactory(new TestServerfactory(_server.GetTestServer()));
-        }
-
-        [BeforeFeature(Order = 0)]
-        public static void BeforeFeature(FeatureContext ctx)
-        {
-            ctx.Set(_server);
-            //ctx.Set(_client);
-            //ctx.Set(_smtp);
-        }
-
-        [BeforeScenario(Order = 0)]
-        public static void BeforeScenario(ScenarioContext ctx)
-        {
-            if (_factory == null) throw new InvalidOperationException("");
-            ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
-        }
-
-        [AfterScenario]
-        public static void FlushLogs()
-        {
-            try
+        var builder = Program.GetHostBuilder(Array.Empty<string>())
+            .ConfigureWebHost(wh =>
             {
-                LogManager.Flush(TimeSpan.FromSeconds(2));
-            }
-            catch
-            {
-            }
-        }
+                wh.UseTestServer();
+            });
 
+        _server = builder.Start();
+        _factory = new ArkFlurlClientFactory(new TestServerfactory(_server.GetTestServer()));
+    }
 
-        [AfterTestRun]
-        public static void AfterTests()
+    [BeforeFeature(Order = 0)]
+    public static void BeforeFeature(FeatureContext ctx)
+    {
+        ctx.Set(_server);
+        //ctx.Set(_client);
+        //ctx.Set(_smtp);
+    }
+
+    [BeforeScenario(Order = 0)]
+    public static void BeforeScenario(ScenarioContext ctx)
+    {
+        if (_factory == null) throw new InvalidOperationException("");
+        ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
+    }
+
+    [AfterScenario]
+    public static void FlushLogs()
+    {
+        try
         {
-            _server?.Dispose();
-            //_smtp?.Dispose();
-
+            LogManager.Flush(TimeSpan.FromSeconds(2));
         }
+        catch
+        {
+        }
+    }
+
+
+    [AfterTestRun]
+    public static void AfterTests()
+    {
+        _server?.Dispose();
+        //_smtp?.Dispose();
 
     }
 
-    sealed class TestServerfactory : DefaultFlurlClientFactory
+}
+
+sealed class TestServerfactory : DefaultFlurlClientFactory
+{
+    private readonly TestServer _server;
+
+    public TestServerfactory(TestServer server)
     {
-        private readonly TestServer _server;
+        _server = server;
+    }
 
-        public TestServerfactory(TestServer server)
-        {
-            _server = server;
-        }
-
-        public override HttpMessageHandler CreateInnerHandler()
-        {
-            return _server.CreateHandler();
-        }
+    public override HttpMessageHandler CreateInnerHandler()
+    {
+        return _server.CreateHandler();
     }
 }

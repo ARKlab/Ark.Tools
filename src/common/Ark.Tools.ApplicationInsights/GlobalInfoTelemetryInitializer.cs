@@ -4,7 +4,7 @@ using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
 
 using System.Reflection;
-
+<<<<<<< TODO: Unmerged change from project 'Ark.Tools.ApplicationInsights(net10.0)', Before:
 namespace Ark.Tools.AspNetCore.ApplicationInsights
 {
     public class GlobalInfoTelemetryInitializer : ITelemetryInitializer
@@ -23,6 +23,44 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights
             {
                 telemetry.Context.GlobalProperties.Add(_processNameProperty, _processName);
             }
+=======
+namespace Ark.Tools.AspNetCore.ApplicationInsights;
+
+public class GlobalInfoTelemetryInitializer : ITelemetryInitializer
+{
+    private const string _processNameProperty = "ProcessName";
+    private readonly string? _processName;
+
+    public GlobalInfoTelemetryInitializer()
+    {
+        _processName = Assembly.GetEntryAssembly()?.GetName().Name;
+    }
+
+    public void Initialize(ITelemetry telemetry)
+    {
+        if (telemetry != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
+        {
+            telemetry.Context.GlobalProperties.Add(_processNameProperty, _processName);
+>>>>>>> After
+
+
+namespace Ark.Tools.AspNetCore.ApplicationInsights;
+
+public class GlobalInfoTelemetryInitializer : ITelemetryInitializer
+{
+    private const string _processNameProperty = "ProcessName";
+    private readonly string? _processName;
+
+    public GlobalInfoTelemetryInitializer()
+    {
+        _processName = Assembly.GetEntryAssembly()?.GetName().Name;
+    }
+
+    public void Initialize(ITelemetry telemetry)
+    {
+        if (telemetry != null && _processName != null && !telemetry.Context.GlobalProperties.ContainsKey(_processNameProperty))
+        {
+            telemetry.Context.GlobalProperties.Add(_processNameProperty, _processName);
         }
     }
 }

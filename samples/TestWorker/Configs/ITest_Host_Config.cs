@@ -1,9 +1,8 @@
 ﻿using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
-namespace TestWorker.Configs
+namespace TestWorker.Configs;
+
+public interface ITest_Host_Config : IHostConfig, ISqlStateProviderConfig
 {
-    public interface ITest_Host_Config : IHostConfig, ISqlStateProviderConfig
-    {
-    }
 }

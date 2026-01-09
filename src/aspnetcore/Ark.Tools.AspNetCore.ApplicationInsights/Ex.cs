@@ -4,17 +4,16 @@ using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 
 using Microsoft.Extensions.Hosting;
 
-namespace Ark.Tools.AspNetCore.ApplicationInsights
-{
-    public static partial class Ex
-    {
-        public static IHostBuilder AddApplicationInsithsTelemetryForWebHostArk(this IHostBuilder builder)
-        {
-            return builder.ConfigureServices((ctx, services) =>
-            {
-                services.ArkApplicationInsightsTelemetry(ctx.Configuration);
-            });
-        }
+namespace Ark.Tools.AspNetCore.ApplicationInsights;
 
+public static partial class Ex
+{
+    public static IHostBuilder AddApplicationInsithsTelemetryForWebHostArk(this IHostBuilder builder)
+    {
+        return builder.ConfigureServices((ctx, services) =>
+        {
+            services.ArkApplicationInsightsTelemetry(ctx.Configuration);
+        });
     }
+
 }

@@ -3,16 +3,15 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Solid
+namespace Ark.Tools.Solid;
+
+public interface IQuery<TResult>
 {
-    public interface IQuery<TResult>
-    {
-    }
+}
 
-    public interface IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>
-    {
-        TResult Execute(TQuery query);
+public interface IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>
+{
+    TResult Execute(TQuery query);
 
-        Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default);
-    }
+    Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default);
 }

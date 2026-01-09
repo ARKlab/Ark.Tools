@@ -3,11 +3,25 @@
 using NodaTime;
 
 using System.ComponentModel;
-
+<<<<<<< TODO: Unmerged change from project 'Ark.Tools.Nodatime(net10.0)', Before:
 namespace Ark.Tools.Nodatime
 {
     public class NullableOffsetDateTimeConverter : NullableConverter
     {
         public NullableOffsetDateTimeConverter() : base(typeof(OffsetDateTime?)) { }
     }
+=======
+namespace Ark.Tools.Nodatime;
+
+public class NullableOffsetDateTimeConverter : NullableConverter
+{
+    public NullableOffsetDateTimeConverter() : base(typeof(OffsetDateTime?)) { }
+>>>>>>> After
+
+
+namespace Ark.Tools.Nodatime;
+
+public class NullableOffsetDateTimeConverter : NullableConverter
+{
+    public NullableOffsetDateTimeConverter() : base(typeof(OffsetDateTime?)) { }
 }

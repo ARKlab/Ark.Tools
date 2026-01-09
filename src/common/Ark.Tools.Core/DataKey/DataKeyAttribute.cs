@@ -2,11 +2,10 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 
-namespace Ark.Tools.Core.DataKey
-{
+namespace Ark.Tools.Core.DataKey;
 
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public sealed class DataKeyAttribute : Attribute
-    {
-    }
+
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public sealed class DataKeyAttribute : Attribute
+{
 }

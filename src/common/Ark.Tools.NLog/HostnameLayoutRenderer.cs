@@ -10,89 +10,88 @@ using System.Net;
 using System.Text;
 using System.Threading;
 
-namespace Ark.Tools.NLog
+namespace Ark.Tools.NLog;
+
+
+[LayoutRenderer("ark.hostname")]
+[AppDomainFixedOutput]
+[ThreadAgnostic]
+public class HostNameLayoutRenderer : LayoutRenderer
 {
+    internal string? HostName { get; private set; }
 
-    [LayoutRenderer("ark.hostname")]
-    [AppDomainFixedOutput]
-    [ThreadAgnostic]
-    public class HostNameLayoutRenderer : LayoutRenderer
+    /// <summary>
+    /// Initializes the layout renderer.
+    /// </summary>
+    protected override void InitializeLayoutRenderer()
     {
-        internal string? HostName { get; private set; }
-
-        /// <summary>
-        /// Initializes the layout renderer.
-        /// </summary>
-        protected override void InitializeLayoutRenderer()
+        base.InitializeLayoutRenderer();
+        try
         {
-            base.InitializeLayoutRenderer();
+            this.HostName = Environment.MachineName;
             try
             {
-                this.HostName = Environment.MachineName;
-                try
-                {
 
-                    var dns = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME")
-                        ?? Environment.GetEnvironmentVariable("RoleName")
-                        ?? Dns.GetHostName()
-                        ;
+                var dns = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME")
+                    ?? Environment.GetEnvironmentVariable("RoleName")
+                    ?? Dns.GetHostName()
+                    ;
 
-                    if (dns is not null)
-                        this.HostName = dns + "@" + this.HostName;
+                if (dns is not null)
+                    this.HostName = dns + "@" + this.HostName;
 
-                }
-                catch { /* if we cannot get hostname - ignore */ }
             }
-            catch (Exception exception)
-            {
-                if (MustBeRethrown(exception))
-                {
-                    throw;
-                }
-
-                InternalLogger.Error("Error getting machine name {0}", exception);
-                this.HostName = string.Empty;
-            }
+            catch { /* if we cannot get hostname - ignore */ }
         }
-
-        /// <summary>
-        /// Renders the machine name and appends it to the specified <see cref="StringBuilder" />.
-        /// </summary>
-        /// <param name="builder">The <see cref="StringBuilder"/> to append the rendered data to.</param>
-        /// <param name="logEvent">Logging event.</param>
-        protected override void Append(StringBuilder builder, LogEventInfo logEvent)
+        catch (Exception exception)
         {
-            builder.Append(this.HostName);
-        }
+            if (MustBeRethrown(exception))
+            {
+                throw;
+            }
 
-        private static bool MustBeRethrown(Exception exception)
+            InternalLogger.Error("Error getting machine name {0}", exception);
+            this.HostName = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Renders the machine name and appends it to the specified <see cref="StringBuilder" />.
+    /// </summary>
+    /// <param name="builder">The <see cref="StringBuilder"/> to append the rendered data to.</param>
+    /// <param name="logEvent">Logging event.</param>
+    protected override void Append(StringBuilder builder, LogEventInfo logEvent)
+    {
+        builder.Append(this.HostName);
+    }
+
+    private static bool MustBeRethrown(Exception exception)
+    {
+        if (exception is StackOverflowException)
         {
-            if (exception is StackOverflowException)
-            {
-                return true;
-            }
-
-            if (exception is ThreadAbortException)
-            {
-                return true;
-            }
-
-            if (exception is OutOfMemoryException)
-            {
-                return true;
-            }
-
-            if (exception is NLogConfigurationException)
-            {
-                return true;
-            }
-
-            if (exception.GetType().IsSubclassOf(typeof(NLogConfigurationException)))
-            {
-                return true;
-            }
-
-            return false;
+            return true;
         }
+
+        if (exception is ThreadAbortException)
+        {
+            return true;
+        }
+
+        if (exception is OutOfMemoryException)
+        {
+            return true;
+        }
+
+        if (exception is NLogConfigurationException)
+        {
+            return true;
+        }
+
+        if (exception.GetType().IsSubclassOf(typeof(NLogConfigurationException)))
+        {
+            return true;
+        }
+
+        return false;
     }
 }

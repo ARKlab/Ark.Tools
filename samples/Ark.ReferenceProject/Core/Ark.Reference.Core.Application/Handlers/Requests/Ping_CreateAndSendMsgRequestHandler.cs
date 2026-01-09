@@ -1,5 +1,4 @@
 ﻿using Ark.Reference.Core.API.Messages;
-using System;
 using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Application.Handlers.Messages;
@@ -8,9 +7,9 @@ using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Outbox.Rebus;
 using Ark.Tools.Solid;
 
-
 using Rebus.Bus;
 
+using System;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;

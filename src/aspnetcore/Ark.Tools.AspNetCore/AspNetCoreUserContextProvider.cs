@@ -7,28 +7,27 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Security.Claims;
 
-namespace Ark.Tools.AspNetCore
+namespace Ark.Tools.AspNetCore;
+
+public class AspNetCoreUserContextProvider : IContextProvider<ClaimsPrincipal>
 {
-    public class AspNetCoreUserContextProvider : IContextProvider<ClaimsPrincipal>
+    private readonly IHttpContextAccessor _accessor;
+
+    public AspNetCoreUserContextProvider(IHttpContextAccessor accessor)
     {
-        private readonly IHttpContextAccessor _accessor;
+        _accessor = accessor;
+    }
 
-        public AspNetCoreUserContextProvider(IHttpContextAccessor accessor)
+    public ClaimsPrincipal Current
+    {
+        get
         {
-            _accessor = accessor;
-        }
-
-        public ClaimsPrincipal Current
-        {
-            get
-            {
-                var ctx = _accessor.HttpContext;
-                if (ctx is null)
-                    throw new InvalidOperationException("HttpContext is null. " +
-                        "This is usually caused by trying to access the 'Current Request User' outside a Request context, " +
-                        "like a background HostedService.");
-                return ctx.User;
-            }
+            var ctx = _accessor.HttpContext;
+            if (ctx is null)
+                throw new InvalidOperationException("HttpContext is null. " +
+                    "This is usually caused by trying to access the 'Current Request User' outside a Request context, " +
+                    "like a background HostedService.");
+            return ctx.User;
         }
     }
 }

@@ -3,16 +3,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Solid
+namespace Ark.Tools.Solid;
+
+public interface ICommand { }
+
+public interface ICommandHandler<TCommand>
+    where TCommand : ICommand
 {
-    public interface ICommand { }
+    void Execute(TCommand command);
 
-    public interface ICommandHandler<TCommand>
-        where TCommand : ICommand
-    {
-        void Execute(TCommand command);
-
-        Task ExecuteAsync(TCommand command, CancellationToken ctk = default);
-    }
-
+    Task ExecuteAsync(TCommand command, CancellationToken ctk = default);
 }

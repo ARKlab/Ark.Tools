@@ -1,10 +1,9 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace WebApplicationDemo.Dto
+namespace WebApplicationDemo.Dto;
+
+public interface IExampleHealthCheckService
 {
-    public interface IExampleHealthCheckService
-    {
-        public Task CheckHealthAsync(CancellationToken cancellationToken = default);
-    }
+    public Task CheckHealthAsync(CancellationToken cancellationToken = default);
 }

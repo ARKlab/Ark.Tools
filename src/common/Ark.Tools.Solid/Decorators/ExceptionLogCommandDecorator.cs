@@ -7,46 +7,45 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Solid.Decorators
+namespace Ark.Tools.Solid.Decorators;
+
+public sealed class ExceptionLogCommandDecorator<TCommand> : ICommandHandler<TCommand>
+    where TCommand : ICommand
 {
-    public sealed class ExceptionLogCommandDecorator<TCommand> : ICommandHandler<TCommand>
-        where TCommand : ICommand
+    private readonly ICommandHandler<TCommand> _decorated;
+
+    public ExceptionLogCommandDecorator(ICommandHandler<TCommand> decorated)
     {
-        private readonly ICommandHandler<TCommand> _decorated;
+        ArgumentNullException.ThrowIfNull(decorated);
 
-        public ExceptionLogCommandDecorator(ICommandHandler<TCommand> decorated)
+        _decorated = decorated;
+    }
+
+    public void Execute(TCommand command)
+    {
+        try
         {
-            ArgumentNullException.ThrowIfNull(decorated);
-
-            _decorated = decorated;
+            _decorated.Execute(command);
         }
-
-        public void Execute(TCommand command)
+        catch (Exception ex)
         {
-            try
-            {
-                _decorated.Execute(command);
-            }
-            catch (Exception ex)
-            {
-                Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
-                logger.Error(ex, "Exception occured");
-                throw;
-            }
+            Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
+            logger.Error(ex, "Exception occured");
+            throw;
         }
+    }
 
-        public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
+    public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
+    {
+        try
         {
-            try
-            {
-                await _decorated.ExecuteAsync(command, ctk).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
-                logger.Error(ex, "Exception occured");
-                throw;
-            }
+            await _decorated.ExecuteAsync(command, ctk).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
+            logger.Error(ex, "Exception occured");
+            throw;
         }
     }
 }

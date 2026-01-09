@@ -1,7 +1,6 @@
-﻿namespace ProblemDetailsSample.Application.Handlers
-{
-    public class ApiConfig
-    {
+﻿namespace ProblemDetailsSample.Application.Handlers;
 
-    }
+public class ApiConfig
+{
+
 }

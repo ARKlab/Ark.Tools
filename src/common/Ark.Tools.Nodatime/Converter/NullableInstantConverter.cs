@@ -3,11 +3,25 @@
 using NodaTime;
 
 using System.ComponentModel;
-
+<<<<<<< TODO: Unmerged change from project 'Ark.Tools.Nodatime(net10.0)', Before:
 namespace Ark.Tools.Nodatime
 {
     public class NullableInstantConverter : NullableConverter
     {
         public NullableInstantConverter() : base(typeof(Instant?)) { }
     }
+=======
+namespace Ark.Tools.Nodatime;
+
+public class NullableInstantConverter : NullableConverter
+{
+    public NullableInstantConverter() : base(typeof(Instant?)) { }
+>>>>>>> After
+
+
+namespace Ark.Tools.Nodatime;
+
+public class NullableInstantConverter : NullableConverter
+{
+    public NullableInstantConverter() : base(typeof(Instant?)) { }
 }

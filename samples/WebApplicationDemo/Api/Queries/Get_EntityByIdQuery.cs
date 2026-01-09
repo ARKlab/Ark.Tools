@@ -4,14 +4,13 @@ using NodaTime;
 
 using WebApplicationDemo.Dto;
 
-namespace WebApplicationDemo.Api.Queries
+namespace WebApplicationDemo.Api.Queries;
+
+public static class Get_EntityByIdQuery
 {
-    public static class Get_EntityByIdQuery
+    public class V1 : IQuery<Entity.V1.Output?>
     {
-        public class V1 : IQuery<Entity.V1.Output?>
-        {
-            public string? EntityId { get; set; }
-            public Instant? AsOf { get; set; }
-        }
+        public string? EntityId { get; set; }
+        public Instant? AsOf { get; set; }
     }
 }

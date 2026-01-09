@@ -6,29 +6,28 @@ using NodaTime;
 
 using System.Collections.Generic;
 
-namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
+namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
+
+public sealed class FtpMetadata : IResourceMetadata
 {
-    public sealed class FtpMetadata : IResourceMetadata
+    internal FtpMetadata(FtpEntry entry)
     {
-        internal FtpMetadata(FtpEntry entry)
-        {
-            Entry = entry;
-            ResourceId = entry.FullPath;
-            Modified = LocalDateTime.FromDateTime(entry.Modified);
-            ModifiedSources = null;
-        }
-
-        public FtpEntry Entry { get; }
-
-        public LocalDateTime Modified { get; }
-        public Dictionary<string, LocalDateTime>? ModifiedSources { get; }
-
-        public string ResourceId { get; }
-
-        public object Extensions => new
-        {
-            Entry.Name,
-            Entry.Size,
-        };
+        Entry = entry;
+        ResourceId = entry.FullPath;
+        Modified = LocalDateTime.FromDateTime(entry.Modified);
+        ModifiedSources = null;
     }
+
+    public FtpEntry Entry { get; }
+
+    public LocalDateTime Modified { get; }
+    public Dictionary<string, LocalDateTime>? ModifiedSources { get; }
+
+    public string ResourceId { get; }
+
+    public object Extensions => new
+    {
+        Entry.Name,
+        Entry.Size,
+    };
 }

@@ -4,14 +4,13 @@ using NodaTime;
 
 using ProblemDetailsSample.Common.Dto;
 
-namespace ProblemDetailsSample.Api.Queries
+namespace ProblemDetailsSample.Api.Queries;
+
+public static class Get_EntityByIdNotFoundQuery
 {
-    public static class Get_EntityByIdNotFoundQuery
+    public class V1 : IQuery<Entity.V1.Output>
     {
-        public class V1 : IQuery<Entity.V1.Output>
-        {
-            public string? EntityId { get; set; }
-            public Instant? AsOf { get; set; }
-        }
+        public string? EntityId { get; set; }
+        public Instant? AsOf { get; set; }
     }
 }

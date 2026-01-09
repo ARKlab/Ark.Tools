@@ -109,6 +109,7 @@ private readonly MockProviderApi _mockApi;
 - **Braces**: Allman style (new line before opening brace)
 - **Line endings**: CRLF
 - **Using directives**: Place outside namespace
+- **Namespace declarations**: Use file-scoped namespaces (C# 10+)
 
 ```csharp
 // ✅ GOOD - Allman braces
@@ -118,6 +119,14 @@ public void Process(MyResource file, CancellationToken ctk = default)
     {
         Transform(file.Data);
     }
+}
+
+// ✅ GOOD - File-scoped namespace (C# 10+)
+namespace Ark.ResourceWatcher.Sample;
+
+public class MyProcessor
+{
+    // class members
 }
 ```
 

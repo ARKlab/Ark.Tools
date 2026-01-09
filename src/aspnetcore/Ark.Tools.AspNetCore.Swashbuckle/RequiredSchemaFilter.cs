@@ -5,13 +5,12 @@ using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 using System;
-namespace Ark.Tools.AspNetCore.Swashbuckle
+namespace Ark.Tools.AspNetCore.Swashbuckle;
+
+[Obsolete("Supported by Swashbuckle", true, UrlFormat = "https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/v10.0.0/docs/configure-and-customize-swaggergen.md#flag-required-parameters-and-schema-properties")]
+public class RequiredSchemaFilter : ISchemaFilter
 {
-    [Obsolete("Supported by Swashbuckle", true, UrlFormat = "https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/v10.0.0/docs/configure-and-customize-swaggergen.md#flag-required-parameters-and-schema-properties")]
-    public class RequiredSchemaFilter : ISchemaFilter
+    public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
-        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
-        {
-        }
     }
 }

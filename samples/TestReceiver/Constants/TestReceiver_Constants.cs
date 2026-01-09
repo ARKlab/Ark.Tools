@@ -1,16 +1,15 @@
-﻿namespace TestWorker.Constants
+﻿namespace TestWorker.Constants;
+
+internal static class Test_Constants
 {
-    internal static class Test_Constants
-    {
-        //public const int WorkerSleepDefault = 5;
-        //public static int ThreadCountDefault = Environment.ProcessorCount;
-        //public const bool IsSingleThreadDefault = false;
-        public const bool StartAtCreationDefault = true;
-        //public const int RetryCountTreshold = 6;
-        //public const int KeepSessionAliveInMinutes = 30;
+    //public const int WorkerSleepDefault = 5;
+    //public static int ThreadCountDefault = Environment.ProcessorCount;
+    //public const bool IsSingleThreadDefault = false;
+    public const bool StartAtCreationDefault = true;
+    //public const int RetryCountTreshold = 6;
+    //public const int KeepSessionAliveInMinutes = 30;
 
-        public const string DataTimezone = "CET";
-        public const string ProviderName = "TestWorker";
+    public const string DataTimezone = "CET";
+    public const string ProviderName = "TestWorker";
 
-    }
 }

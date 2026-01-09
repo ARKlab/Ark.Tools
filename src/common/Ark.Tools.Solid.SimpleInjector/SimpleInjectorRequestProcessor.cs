@@ -6,38 +6,37 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Solid.SimpleInjector
+namespace Ark.Tools.Solid.SimpleInjector;
+
+public class SimpleInjectorRequestProcessor : IRequestProcessor
 {
-    public class SimpleInjectorRequestProcessor : IRequestProcessor
+    private readonly Container _container;
+
+    public SimpleInjectorRequestProcessor(Container container)
     {
-        private readonly Container _container;
+        _container = container;
+    }
 
-        public SimpleInjectorRequestProcessor(Container container)
-        {
-            _container = container;
-        }
+    private object _getHandlerInstance<TResponse>(IRequest<TResponse> request)
+    {
+        var RequestType = request.GetType();
+        var handlerType = typeof(IRequestHandler<,>).MakeGenericType(RequestType, typeof(TResponse));
 
-        private object _getHandlerInstance<TResponse>(IRequest<TResponse> request)
-        {
-            var RequestType = request.GetType();
-            var handlerType = typeof(IRequestHandler<,>).MakeGenericType(RequestType, typeof(TResponse));
+        return _container.GetInstance(handlerType);
+    }
 
-            return _container.GetInstance(handlerType);
-        }
+    [DebuggerStepThrough]
+    public TResponse Execute<TResponse>(IRequest<TResponse> request)
+    {
+        dynamic requestHandler = _getHandlerInstance(request);
 
-        [DebuggerStepThrough]
-        public TResponse Execute<TResponse>(IRequest<TResponse> request)
-        {
-            dynamic requestHandler = _getHandlerInstance(request);
+        return requestHandler.Execute((dynamic)request);
+    }
 
-            return requestHandler.Execute((dynamic)request);
-        }
-
-        [DebuggerStepThrough]
-        public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
-        {
-            dynamic requestHandler = _getHandlerInstance(request);
-            return await requestHandler.ExecuteAsync((dynamic)request, ctk);
-        }
+    [DebuggerStepThrough]
+    public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
+    {
+        dynamic requestHandler = _getHandlerInstance(request);
+        return await requestHandler.ExecuteAsync((dynamic)request, ctk);
     }
 }

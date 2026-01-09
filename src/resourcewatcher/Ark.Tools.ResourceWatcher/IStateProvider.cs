@@ -4,11 +4,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.ResourceWatcher
+namespace Ark.Tools.ResourceWatcher;
+
+public interface IStateProvider
 {
-    public interface IStateProvider
-    {
-        Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default);
-        Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default);
-    }
+    Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default);
+    Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default);
 }

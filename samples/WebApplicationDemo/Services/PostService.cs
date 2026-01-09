@@ -10,34 +10,33 @@ using System.Threading.Tasks;
 
 using WebApplicationDemo.Dto;
 
-namespace WebApplicationDemo.Services
+namespace WebApplicationDemo.Services;
+
+public sealed class PostService : IPostService, IDisposable
 {
-    public sealed class PostService : IPostService, IDisposable
+    private readonly IFlurlClient _jsonPlaceHolderClient;
+
+    private readonly Uri _url = new("https://jsonplaceholder.typicode.com/");
+
+    public PostService(IArkFlurlClientFactory factory)
     {
-        private readonly IFlurlClient _jsonPlaceHolderClient;
-
-        private readonly Uri _url = new("https://jsonplaceholder.typicode.com/");
-
-        public PostService(IArkFlurlClientFactory factory)
+        _jsonPlaceHolderClient = factory.Get(_url, s =>
         {
-            _jsonPlaceHolderClient = factory.Get(_url, s =>
-            {
-                s.Timeout = TimeSpan.FromSeconds(10);
-            });
-        }
+            s.Timeout = TimeSpan.FromSeconds(10);
+        });
+    }
 
-        public async Task<List<Post>> GetPosts(CancellationToken ctk)
-        {
-            var response = await _jsonPlaceHolderClient.Request("posts").GetStringAsync(cancellationToken: ctk).ConfigureAwait(false);
+    public async Task<List<Post>> GetPosts(CancellationToken ctk)
+    {
+        var response = await _jsonPlaceHolderClient.Request("posts").GetStringAsync(cancellationToken: ctk).ConfigureAwait(false);
 
-            var data = JsonSerializer.Deserialize<List<Post>>(response);
+        var data = JsonSerializer.Deserialize<List<Post>>(response);
 
-            return data ?? new List<Post>();
-        }
+        return data ?? new List<Post>();
+    }
 
-        public void Dispose()
-        {
-            _jsonPlaceHolderClient?.Dispose();
-        }
+    public void Dispose()
+    {
+        _jsonPlaceHolderClient?.Dispose();
     }
 }

@@ -8,30 +8,29 @@ using NLog;
 using System;
 using System.Globalization;
 
-namespace Ark.Tools.AspNetCore
+namespace Ark.Tools.AspNetCore;
+
+public sealed class ArkDefaultExceptionFilterAttribute : ExceptionFilterAttribute
 {
-    public sealed class ArkDefaultExceptionFilterAttribute : ExceptionFilterAttribute
+    public override void OnException(ExceptionContext context)
     {
-        public override void OnException(ExceptionContext context)
-        {
-            _log(context);
+        _log(context);
 
-            base.OnException(context);
-        }
+        base.OnException(context);
+    }
 
-        private static void _log(ExceptionContext context)
-        {
-            Logger logger;
+    private static void _log(ExceptionContext context)
+    {
+        Logger logger;
 
-            if (context.ActionDescriptor?.DisplayName != null)
-                logger = LogManager.GetLogger(context.ActionDescriptor.DisplayName);
-            else
-                logger = LogManager.GetCurrentClassLogger();
+        if (context.ActionDescriptor?.DisplayName != null)
+            logger = LogManager.GetLogger(context.ActionDescriptor.DisplayName);
+        else
+            logger = LogManager.GetCurrentClassLogger();
 
-            Exception e = context.Exception;
-            var requestUri = context.HttpContext?.Request?.Path ?? new PathString();
-            var requestMethod = context.HttpContext?.Request?.Method ?? "METHOD_NOT_SET";
-            logger.Error(e, CultureInfo.InvariantCulture, "Exception for {Method} - {Uri}: {Message}", requestMethod, requestUri, e.Message);
-        }
+        Exception e = context.Exception;
+        var requestUri = context.HttpContext?.Request?.Path ?? new PathString();
+        var requestMethod = context.HttpContext?.Request?.Method ?? "METHOD_NOT_SET";
+        logger.Error(e, CultureInfo.InvariantCulture, "Exception for {Method} - {Uri}: {Message}", requestMethod, requestUri, e.Message);
     }
 }

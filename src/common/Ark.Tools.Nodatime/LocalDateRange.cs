@@ -9,189 +9,188 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
 
-namespace Ark.Tools.Nodatime
+namespace Ark.Tools.Nodatime;
+
+[StructLayout(LayoutKind.Auto)]
+public struct LocalDateRange
+    : IEquatable<LocalDateRange>
 {
-    [StructLayout(LayoutKind.Auto)]
-    public struct LocalDateRange
-        : IEquatable<LocalDateRange>
+    private LocalDate _start, _end;
+
+    public LocalDateRange(LocalDate start, LocalDate end)
     {
-        private LocalDate _start, _end;
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, end, nameof(start));
 
-        public LocalDateRange(LocalDate start, LocalDate end)
+        _start = start;
+        _end = end;
+    }
+    public override readonly string ToString()
+    {
+        return string.Format(CultureInfo.InvariantCulture, "Start:{0} | End:{1}", _start, _end);
+    }
+
+
+    public LocalDate Start
+    {
+        readonly get { return _start; }
+        set
         {
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, end, nameof(start));
-
-            _start = start;
-            _end = end;
+            _start = value;
         }
-        public override readonly string ToString()
+    }
+    public LocalDate End
+    {
+        readonly get { return _end; }
+        set
         {
-            return string.Format(CultureInfo.InvariantCulture, "Start:{0} | End:{1}", _start, _end);
+            _end = value;
         }
+    }
 
+    public readonly bool Contains(LocalDate ld)
+    {
+        return ld >= _start && ld < _end;
+    }
 
-        public LocalDate Start
-        {
-            readonly get { return _start; }
-            set
-            {
-                _start = value;
-            }
-        }
-        public LocalDate End
-        {
-            readonly get { return _end; }
-            set
-            {
-                _end = value;
-            }
-        }
+    public readonly bool Contains(LocalDateTime ldt)
+    {
+        return ldt.Date >= _start && ldt.Date < End;
+    }
 
-        public readonly bool Contains(LocalDate ld)
-        {
-            return ld >= _start && ld < _end;
-        }
+    public readonly bool Contains(LocalDateRange other)
+    {
+        return other._start >= _start && other._end <= _end;
+    }
 
-        public readonly bool Contains(LocalDateTime ldt)
-        {
-            return ldt.Date >= _start && ldt.Date < End;
-        }
+    public readonly bool Overlaps(LocalDateRange other)
+    {
+        return _start < other._end && _end > other._start;
+    }
 
-        public readonly bool Contains(LocalDateRange other)
-        {
-            return other._start >= _start && other._end <= _end;
-        }
+    public readonly bool OverlapsOrContiguous(LocalDateRange other)
+    {
+        return Overlaps(other) || IsContiguous(other);
+    }
 
-        public readonly bool Overlaps(LocalDateRange other)
-        {
-            return _start < other._end && _end > other._start;
-        }
+    public readonly bool IsContiguous(LocalDateRange other)
+    {
+        return _start == other._end || _end == other._start;
+    }
 
-        public readonly bool OverlapsOrContiguous(LocalDateRange other)
-        {
-            return Overlaps(other) || IsContiguous(other);
-        }
+    public readonly LocalDateRange MergeOverlapsOrContiguous(LocalDateRange other)
+    {
+        InvalidOperationException.ThrowUnless(OverlapsOrContiguous(other), "Ranges must overlap or be contiguous to merge.");
+        return new LocalDateRange(_start.MinWith(other._start), _end.MaxWith(other._end));
+    }
 
-        public readonly bool IsContiguous(LocalDateRange other)
-        {
-            return _start == other._end || _end == other._start;
-        }
+    public readonly LocalDateRange Merge(LocalDateRange other)
+    {
+        return new LocalDateRange(_start.MinWith(other._start), _end.MaxWith(other._end));
+    }
 
-        public readonly LocalDateRange MergeOverlapsOrContiguous(LocalDateRange other)
+    public readonly IEnumerable<LocalDateRange> Subtract(LocalDateRange other)
+    {
+        //      |------------|
+        //  |--------------------|
+        if (other.Contains(this))
+            return Array.Empty<LocalDateRange>();
+        //  |----------------|
+        //                      |----|
+        else if (!Overlaps(other))
+            return [this];
+        else if (Contains(other))
         {
-            InvalidOperationException.ThrowUnless(OverlapsOrContiguous(other), "Ranges must overlap or be contiguous to merge.");
-            return new LocalDateRange(_start.MinWith(other._start), _end.MaxWith(other._end));
-        }
-
-        public readonly LocalDateRange Merge(LocalDateRange other)
-        {
-            return new LocalDateRange(_start.MinWith(other._start), _end.MaxWith(other._end));
-        }
-
-        public readonly IEnumerable<LocalDateRange> Subtract(LocalDateRange other)
-        {
-            //      |------------|
-            //  |--------------------|
-            if (other.Contains(this))
-                return Array.Empty<LocalDateRange>();
             //  |----------------|
-            //                      |----|
-            else if (!Overlaps(other))
-                return [this];
-            else if (Contains(other))
-            {
-                //  |----------------|
-                //  |----|
-                if (_start == other._start)
-                    return [new LocalDateRange(other._end, _end)];
-                //  |----------------|
-                //              |----|
-                else if (_end == other._end)
-                    return [new LocalDateRange(_start, other._start)];
-                //  |----------------|
-                //        |----|
-                else
-                    return [
-                        new LocalDateRange(_start, other._start),
-                        new LocalDateRange(other._end, _end)
-                    ];
-            }
+            //  |----|
+            if (_start == other._start)
+                return [new LocalDateRange(other._end, _end)];
+            //  |----------------|
+            //              |----|
+            else if (_end == other._end)
+                return [new LocalDateRange(_start, other._start)];
+            //  |----------------|
+            //        |----|
             else
-            {
-                //      |----------------|
-                //   |----|
-                if (other.Contains(_start))
-                    return [new LocalDateRange(other._end, _end)];
-                //  |----------------|
-                //                |----|
-                else
-                    return [new LocalDateRange(_start, other._start)];
-            }
+                return [
+                    new LocalDateRange(_start, other._start),
+                    new LocalDateRange(other._end, _end)
+                ];
         }
-
-        public readonly LocalDateTimeRange ToLocalDateTimeRange()
+        else
         {
-            return new LocalDateTimeRange(_start.AtMidnight(), _end.AtMidnight());
+            //      |----------------|
+            //   |----|
+            if (other.Contains(_start))
+                return [new LocalDateRange(other._end, _end)];
+            //  |----------------|
+            //                |----|
+            else
+                return [new LocalDateRange(_start, other._start)];
         }
+    }
 
-        public readonly ZonedDateTimeRange ToZonedDateTimeRange(string timezone)
+    public readonly LocalDateTimeRange ToLocalDateTimeRange()
+    {
+        return new LocalDateTimeRange(_start.AtMidnight(), _end.AtMidnight());
+    }
+
+    public readonly ZonedDateTimeRange ToZonedDateTimeRange(string timezone)
+    {
+        return ToLocalDateTimeRange().ToZonedDateTimeRange(timezone);
+    }
+
+    public readonly ZonedDateTimeRange ToZonedDateTimeRange(DateTimeZone dateTimeZone)
+    {
+        return ToLocalDateTimeRange().ToZonedDateTimeRange(dateTimeZone);
+    }
+
+    public readonly ZonedDateTimeRange InZone(string timezone)
+    {
+        return ToZonedDateTimeRange(timezone);
+    }
+
+    public readonly ZonedDateTimeRange InZone(DateTimeZone dateTimeZone)
+    {
+        return ToZonedDateTimeRange(dateTimeZone);
+    }
+
+    public readonly ZonedDateTimeRange InUtc()
+    {
+        return ToZonedDateTimeRange(DateTimeZone.Utc);
+    }
+
+
+    public override readonly int GetHashCode()
+    {
+        unchecked
         {
-            return ToLocalDateTimeRange().ToZonedDateTimeRange(timezone);
+            int hash = 7243;
+            hash = hash * 92821 + Start.GetHashCode();
+            hash = hash * 92821 + End.GetHashCode();
+            return hash;
         }
+    }
 
-        public readonly ZonedDateTimeRange ToZonedDateTimeRange(DateTimeZone dateTimeZone)
-        {
-            return ToLocalDateTimeRange().ToZonedDateTimeRange(dateTimeZone);
-        }
+    public readonly bool Equals(LocalDateRange other)
+    {
+        return Start == other._start && End == other._end;
+    }
 
-        public readonly ZonedDateTimeRange InZone(string timezone)
-        {
-            return ToZonedDateTimeRange(timezone);
-        }
+    public static bool operator ==(LocalDateRange x, LocalDateRange y)
+    {
+        return x.Equals(y);
+    }
 
-        public readonly ZonedDateTimeRange InZone(DateTimeZone dateTimeZone)
-        {
-            return ToZonedDateTimeRange(dateTimeZone);
-        }
+    public static bool operator !=(LocalDateRange x, LocalDateRange y)
+    {
+        return !(x == y);
+    }
 
-        public readonly ZonedDateTimeRange InUtc()
-        {
-            return ToZonedDateTimeRange(DateTimeZone.Utc);
-        }
+    public override readonly bool Equals(object? obj)
+    {
+        if (obj is not LocalDateRange)
+            return false;
 
-
-        public override readonly int GetHashCode()
-        {
-            unchecked
-            {
-                int hash = 7243;
-                hash = hash * 92821 + Start.GetHashCode();
-                hash = hash * 92821 + End.GetHashCode();
-                return hash;
-            }
-        }
-
-        public readonly bool Equals(LocalDateRange other)
-        {
-            return Start == other._start && End == other._end;
-        }
-
-        public static bool operator ==(LocalDateRange x, LocalDateRange y)
-        {
-            return x.Equals(y);
-        }
-
-        public static bool operator !=(LocalDateRange x, LocalDateRange y)
-        {
-            return !(x == y);
-        }
-
-        public override readonly bool Equals(object? obj)
-        {
-            if (obj is not LocalDateRange)
-                return false;
-
-            return Equals((LocalDateRange)obj);
-        }
+        return Equals((LocalDateRange)obj);
     }
 }
