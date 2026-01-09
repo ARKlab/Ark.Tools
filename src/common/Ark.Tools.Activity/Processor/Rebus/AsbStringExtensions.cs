@@ -5,7 +5,9 @@ namespace Ark.Tools.Activity;
 
 public static class AsbStringExtensions
 {
-    // SearchValues for valid Azure Service Bus entity name characters (letters, digits, and '/')
+    // SearchValues for valid Azure Service Bus entity name characters
+    // Includes: A-Z, a-z, 0-9, and forward slash (/)
+    // This explicit character list enables SIMD vectorization for optimal performance
     private static readonly SearchValues<char> _validChars = SearchValues.Create(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/");
 
