@@ -11,201 +11,200 @@ using Reqnroll.Assist;
 
 using System.Collections.Generic;
 
-namespace Ark.Reference.Core.Tests.Features
+namespace Ark.Reference.Core.Tests.Features;
+
+[Binding]
+public sealed class BookSteps
 {
-    [Binding]
-    public sealed class BookSteps
+    private readonly TestClient _client;
+    private readonly string _controllerName = "book";
+
+    private Book.V1.Output? _output;
+    private readonly Dictionary<string, int> _entityNameId = new(System.StringComparer.Ordinal);
+
+    public Book.V1.Output? Current { get; private set; }
+
+    public BookSteps(TestClient client)
     {
-        private readonly TestClient _client;
-        private readonly string _controllerName = "book";
+        _client = client;
+    }
 
-        private Book.V1.Output? _output;
-        private readonly Dictionary<string, int> _entityNameId = new(System.StringComparer.Ordinal);
-
-        public Book.V1.Output? Current { get; private set; }
-
-        public BookSteps(TestClient client)
+    //** SETUP ********************************************************************
+    [Given(@"I have created the test books for filter testing")]
+    public void GivenIHaveCreatedTheTestBooksForFilterTesting()
+    {
+        var testBooks = new[]
         {
-            _client = client;
-        }
+            new Book.V1.Create { Title = "Clean Code", Author = "Martin", Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0132350884" },
+            new Book.V1.Create { Title = "Design Patterns", Author = "GoF", Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0201633610" },
+            new Book.V1.Create { Title = "The Hobbit", Author = "Tolkien", Genre = Common.Enum.BookGenre.Fiction, ISBN = "978-0345339683" }
+        };
 
-        //** SETUP ********************************************************************
-        [Given(@"I have created the test books for filter testing")]
-        public void GivenIHaveCreatedTheTestBooksForFilterTesting()
+        foreach (var book in testBooks)
         {
-            var testBooks = new[]
-            {
-                new Book.V1.Create { Title = "Clean Code", Author = "Martin", Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0132350884" },
-                new Book.V1.Create { Title = "Design Patterns", Author = "GoF", Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0201633610" },
-                new Book.V1.Create { Title = "The Hobbit", Author = "Tolkien", Genre = Common.Enum.BookGenre.Fiction, ISBN = "978-0345339683" }
-            };
-
-            foreach (var book in testBooks)
-            {
-                _client.PostAsJson($"{_controllerName}", book);
-                _client.ThenTheRequestSucceded();
-
-                var res = _client.ReadAs<Book.V1.Output?>();
-                if (res?.Title != null)
-                    _entityNameId.TryAdd(res.Title, res.Id);
-            }
-        }
-
-        [Given("I have created a book with")]
-        public void GivenICreateABookWith(Table table)
-        {
-            var body = table.CreateInstance<Book.V1.Create>();
-            _client.PostAsJson($"{_controllerName}/", body);
+            _client.PostAsJson($"{_controllerName}", book);
             _client.ThenTheRequestSucceded();
 
-            Current = _client.ReadAs<Book.V1.Output?>();
-            _output = Current;
-            if (Current?.Title != null)
-                _entityNameId.TryAdd(Current.Title, Current.Id);
+            var res = _client.ReadAs<Book.V1.Output?>();
+            if (res?.Title != null)
+                _entityNameId.TryAdd(res.Title, res.Id);
         }
+    }
 
-        [When("I create a single Book with")]
-        public void WhenICreateASingleBookWith(Table table)
+    [Given("I have created a book with")]
+    public void GivenICreateABookWith(Table table)
+    {
+        var body = table.CreateInstance<Book.V1.Create>();
+        _client.PostAsJson($"{_controllerName}/", body);
+        _client.ThenTheRequestSucceded();
+
+        Current = _client.ReadAs<Book.V1.Output?>();
+        _output = Current;
+        if (Current?.Title != null)
+            _entityNameId.TryAdd(Current.Title, Current.Id);
+    }
+
+    [When("I create a single Book with")]
+    public void WhenICreateASingleBookWith(Table table)
+    {
+        var body = table.CreateInstance<Book.V1.Create>();
+        _client.PostAsJson($"{_controllerName}/", body);
+
+        if (_client.LastResponse.ResponseMessage.IsSuccessStatusCode)
         {
-            var body = table.CreateInstance<Book.V1.Create>();
-            _client.PostAsJson($"{_controllerName}/", body);
-
-            if (_client.LastResponse.ResponseMessage.IsSuccessStatusCode)
-            {
-                var c = _client.ReadAs<Book.V1.Output?>();
-                _output = c;
-                Current = c;
-                if (c?.Title != null)
-                    _entityNameId.TryAdd(c.Title, c.Id);
-            }
+            var c = _client.ReadAs<Book.V1.Output?>();
+            _output = c;
+            Current = c;
+            if (c?.Title != null)
+                _entityNameId.TryAdd(c.Title, c.Id);
         }
+    }
 
-        [When(@"I create multiple Book with")]
-        public void WhenICreateMultipleBookWith(Table table)
+    [When(@"I create multiple Book with")]
+    public void WhenICreateMultipleBookWith(Table table)
+    {
+        var entities = table.CreateSet<Book.V1.Create>();
+
+        foreach (var e in entities)
         {
-            var entities = table.CreateSet<Book.V1.Create>();
-
-            foreach (var e in entities)
-            {
-                _client.PostAsJson($"{_controllerName}", e);
-                _client.ThenTheRequestSucceded();
-
-                if (_client.LastStatusCodeIsSuccess())
-                {
-                    var res = _client.ReadAs<Book.V1.Output?>();
-                    if (res?.Title != null)
-                        _entityNameId.Add(res.Title, res.Id);
-                }
-            }
-        }
-
-        //** GET ********************************************************************
-        [When(@"I request the Book '([^']*)' by id")]
-        public void WhenIRequestTheBookById(string name)
-        {
-            _entityNameId.TryGetValue(name, out var id).Should().BeTrue();
-
-            _client.Get($"{_controllerName}/{id}");
+            _client.PostAsJson($"{_controllerName}", e);
+            _client.ThenTheRequestSucceded();
 
             if (_client.LastStatusCodeIsSuccess())
             {
-                _output = _client.ReadAs<Book.V1.Output?>();
+                var res = _client.ReadAs<Book.V1.Output?>();
+                if (res?.Title != null)
+                    _entityNameId.Add(res.Title, res.Id);
             }
         }
+    }
 
-        [When(@"I request the Book by")]
-        public void WhenIRequestTheBookBy(Table table)
+    //** GET ********************************************************************
+    [When(@"I request the Book '([^']*)' by id")]
+    public void WhenIRequestTheBookById(string name)
+    {
+        _entityNameId.TryGetValue(name, out var id).Should().BeTrue();
+
+        _client.Get($"{_controllerName}/{id}");
+
+        if (_client.LastStatusCodeIsSuccess())
         {
-            var url = new Url($"{_controllerName}");
+            _output = _client.ReadAs<Book.V1.Output?>();
+        }
+    }
 
-            foreach (var row in table.Rows)
+    [When(@"I request the Book by")]
+    public void WhenIRequestTheBookBy(Table table)
+    {
+        var url = new Url($"{_controllerName}");
+
+        foreach (var row in table.Rows)
+        {
+            foreach (var kv in row)
             {
-                foreach (var kv in row)
-                {
-                    url.SetQueryParam(kv.Key, kv.Value);
-                }
-            }
-
-            _client.Get(url.ToString());
-        }
-
-        //** UPDATE ********************************************************************
-        [When(@"I update the Book '([^']*)' with")]
-        public void WhenIUpdateTheBookWith(string name, Table table)
-        {
-            _entityNameId.TryGetValue(name, out var id).Should().BeTrue();
-
-            var body = table.CreateInstance<Book.V1.Update>();
-
-            _client.PutAsJson($"{_controllerName}/{id}", body);
-
-            if (_client.LastStatusCodeIsSuccess())
-            {
-                _output = _client.ReadAs<Book.V1.Output?>();
-                if (_output?.Title != null)
-                    _entityNameId.TryAdd(_output.Title, _output.Id);
+                url.SetQueryParam(kv.Key, kv.Value);
             }
         }
 
-        [When(@"I try to update a Book with")]
-        public void WhenITryToUpdateABookWith(Table table)
+        _client.Get(url.ToString());
+    }
+
+    //** UPDATE ********************************************************************
+    [When(@"I update the Book '([^']*)' with")]
+    public void WhenIUpdateTheBookWith(string name, Table table)
+    {
+        _entityNameId.TryGetValue(name, out var id).Should().BeTrue();
+
+        var body = table.CreateInstance<Book.V1.Update>();
+
+        _client.PutAsJson($"{_controllerName}/{id}", body);
+
+        if (_client.LastStatusCodeIsSuccess())
         {
-            var body = table.CreateInstance<Book.V1.Update>();
-
-            _client.PutAsJson($"{_controllerName}/{body.Id}", body);
-
-            if (_client.LastStatusCodeIsSuccess())
-            {
-                _output = _client.ReadAs<Book.V1.Output?>();
-            }
+            _output = _client.ReadAs<Book.V1.Output?>();
+            if (_output?.Title != null)
+                _entityNameId.TryAdd(_output.Title, _output.Id);
         }
+    }
 
-        //** DELETE ********************************************************************
-        [When(@"I delete the Book '([^']*)' by id")]
-        public void WhenIDeleteTheBookById(string name)
+    [When(@"I try to update a Book with")]
+    public void WhenITryToUpdateABookWith(Table table)
+    {
+        var body = table.CreateInstance<Book.V1.Update>();
+
+        _client.PutAsJson($"{_controllerName}/{body.Id}", body);
+
+        if (_client.LastStatusCodeIsSuccess())
         {
-            _entityNameId.TryGetValue(name, out var id).Should().BeTrue();
-
-            _client.Delete($"{_controllerName}/{id}");
+            _output = _client.ReadAs<Book.V1.Output?>();
         }
+    }
 
-        //** ASSERTIONS ****************************************************************
-        [Then(@"the stored Book response should be")]
-        public void ThenTheStoredBookResponseShouldBe(Table table)
-        {
-            BookMatched(_output, table);
-        }
+    //** DELETE ********************************************************************
+    [When(@"I delete the Book '([^']*)' by id")]
+    public void WhenIDeleteTheBookById(string name)
+    {
+        _entityNameId.TryGetValue(name, out var id).Should().BeTrue();
 
-        [Then(@"the Book response should match")]
-        public void ThenTheBookResponseShouldMatch(Table table)
-        {
-            BookMatched(_output, table);
-        }
+        _client.Delete($"{_controllerName}/{id}");
+    }
 
-        [Then(@"the Book response count should be (.*)")]
-        public void ThenTheBookResponseCountShouldBe(int expectedCount)
-        {
-            var res = _client.ReadAs<PagedResult<Book.V1.Output>>();
-            res.Should().NotBeNull();
-            res!.Count.Should().Be(expectedCount);
-        }
+    //** ASSERTIONS ****************************************************************
+    [Then(@"the stored Book response should be")]
+    public void ThenTheStoredBookResponseShouldBe(Table table)
+    {
+        BookMatched(_output, table);
+    }
 
-        private static void BookMatched(Book.V1.Output? output, Table table)
-        {
-            output.Should().NotBeNull();
-            var expected = table.CreateInstance<Book.V1.Output>();
+    [Then(@"the Book response should match")]
+    public void ThenTheBookResponseShouldMatch(Table table)
+    {
+        BookMatched(_output, table);
+    }
 
-            if (!string.IsNullOrWhiteSpace(expected.Title))
-                output!.Title.Should().Be(expected.Title);
+    [Then(@"the Book response count should be (.*)")]
+    public void ThenTheBookResponseCountShouldBe(int expectedCount)
+    {
+        var res = _client.ReadAs<PagedResult<Book.V1.Output>>();
+        res.Should().NotBeNull();
+        res!.Count.Should().Be(expectedCount);
+    }
 
-            if (!string.IsNullOrWhiteSpace(expected.Author))
-                output!.Author.Should().Be(expected.Author);
+    private static void BookMatched(Book.V1.Output? output, Table table)
+    {
+        output.Should().NotBeNull();
+        var expected = table.CreateInstance<Book.V1.Output>();
 
-            if (expected.Genre.HasValue && expected.Genre.Value != Common.Enum.BookGenre.NotSet)
-                output!.Genre.Should().Be(expected.Genre);
+        if (!string.IsNullOrWhiteSpace(expected.Title))
+            output!.Title.Should().Be(expected.Title);
 
-            if (!string.IsNullOrWhiteSpace(expected.ISBN))
-                output!.ISBN.Should().Be(expected.ISBN);
-        }
+        if (!string.IsNullOrWhiteSpace(expected.Author))
+            output!.Author.Should().Be(expected.Author);
+
+        if (expected.Genre.HasValue && expected.Genre.Value != Common.Enum.BookGenre.NotSet)
+            output!.Genre.Should().Be(expected.Genre);
+
+        if (!string.IsNullOrWhiteSpace(expected.ISBN))
+            output!.ISBN.Should().Be(expected.ISBN);
     }
 }

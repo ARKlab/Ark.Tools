@@ -4,10 +4,9 @@ using System.Threading.Tasks;
 
 using WebApplicationDemo.Dto;
 
-namespace WebApplicationDemo.Services
+namespace WebApplicationDemo.Services;
+
+public interface IPostService
 {
-    public interface IPostService
-    {
-        Task<List<Post>> GetPosts(CancellationToken ctk);
-    }
+    Task<List<Post>> GetPosts(CancellationToken ctk);
 }

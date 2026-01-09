@@ -1,9 +1,8 @@
-﻿
-namespace Ark.Tools.EventSourcing.RavenDb
+
+namespace Ark.Tools.EventSourcing.RavenDb;
+
+public static class RavenDbEventSourcingConstants
 {
-    public static class RavenDbEventSourcingConstants
-    {
-        public const string OutboxCollectionName = "@ArkOutbox";
-        public const string AggregateEventsCollectionName = "@ArkAggregateEvents";
-    }
+    public const string OutboxCollectionName = "@ArkOutbox";
+    public const string AggregateEventsCollectionName = "@ArkAggregateEvents";
 }

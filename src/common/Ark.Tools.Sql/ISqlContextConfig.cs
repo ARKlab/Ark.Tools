@@ -1,12 +1,11 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.Data;
 
-namespace Ark.Tools.Sql
+namespace Ark.Tools.Sql;
+
+public interface ISqlContextConfig
 {
-    public interface ISqlContextConfig
-    {
-        string ConnectionString { get; }
-        IsolationLevel? IsolationLevel { get; }
-    }
+    string ConnectionString { get; }
+    IsolationLevel? IsolationLevel { get; }
 }

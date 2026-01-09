@@ -2,13 +2,12 @@
 
 using WebApplicationDemo.Dto;
 
-namespace WebApplicationDemo.Api.Requests
+namespace WebApplicationDemo.Api.Requests;
+
+public static class Post_PolymorphicRequest
 {
-    public static class Post_PolymorphicRequest
+    public class V1 : IRequest<Polymorphic?>
     {
-        public class V1 : IRequest<Polymorphic?>
-        {
-            public Polymorphic? Entity { get; set; }
-        }
+        public Polymorphic? Entity { get; set; }
     }
 }

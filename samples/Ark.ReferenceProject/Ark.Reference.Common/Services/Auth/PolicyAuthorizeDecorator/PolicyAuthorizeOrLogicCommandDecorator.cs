@@ -11,67 +11,66 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace Ark.Reference.Common.Services.Auth
+namespace Ark.Reference.Common.Services.Auth;
+
+public class PolicyAuthorizeOrLogicCommandDecorator<TCommand> : ICommandHandler<TCommand>
+    where TCommand : ICommand
 {
-    public class PolicyAuthorizeOrLogicCommandDecorator<TCommand> : ICommandHandler<TCommand>
-        where TCommand : ICommand
+    private readonly IAuthorizationService _authSvc;
+    private readonly IContextProvider<ClaimsPrincipal> _currentUser;
+    private readonly Container _container;
+    private readonly ICommandHandler<TCommand> _inner;
+    private readonly PolicyAuthorizeAttribute[] _policies;
+
+    public PolicyAuthorizeOrLogicCommandDecorator(ICommandHandler<TCommand> inner, IAuthorizationService authSvc, IContextProvider<ClaimsPrincipal> currentUser, Container container)
     {
-        private readonly IAuthorizationService _authSvc;
-        private readonly IContextProvider<ClaimsPrincipal> _currentUser;
-        private readonly Container _container;
-        private readonly ICommandHandler<TCommand> _inner;
-        private readonly PolicyAuthorizeAttribute[] _policies;
+        _inner = inner;
+        _authSvc = authSvc;
+        _currentUser = currentUser;
+        _container = container;
+        _policies = typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
+    }
 
-        public PolicyAuthorizeOrLogicCommandDecorator(ICommandHandler<TCommand> inner, IAuthorizationService authSvc, IContextProvider<ClaimsPrincipal> currentUser, Container container)
-        {
-            _inner = inner;
-            _authSvc = authSvc;
-            _currentUser = currentUser;
-            _container = container;
-            _policies = typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
-        }
+    public void Execute(TCommand command)
+    {
+        ExecuteAsync(command).GetAwaiter().GetResult();
+    }
 
-        public void Execute(TCommand command)
+    public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
+    {
+        if (_policies.Length != 0)
         {
-            ExecuteAsync(command).GetAwaiter().GetResult();
-        }
+            var policyFailed = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 
-        public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
-        {
-            if (_policies.Length != 0)
+            foreach (var p in _policies)
             {
-                var policyFailed = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+                var policy = await Tools.Solid.Authorization.Ex.GetPolicyAsync(p, _authSvc.PolicyProvider, ctk).ConfigureAwait(false);
+                var resource = await Tools.Solid.Authorization.Ex.GetResourceAsync(_container, command, policy, ctk).ConfigureAwait(false);
 
-                foreach (var p in _policies)
+                if (policy != null)
                 {
-                    var policy = await Tools.Solid.Authorization.Ex.GetPolicyAsync(p, _authSvc.PolicyProvider, ctk).ConfigureAwait(false);
-                    var resource = await Tools.Solid.Authorization.Ex.GetResourceAsync(_container, command, policy, ctk).ConfigureAwait(false);
+                    (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk).ConfigureAwait(false);
 
-                    if (policy != null)
+                    if (authorized)
                     {
-                        (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk).ConfigureAwait(false);
-
-                        if (authorized)
-                        {
-                            await _inner.ExecuteAsync(command, ctk).ConfigureAwait(false);
-                            return;
-                        }
-                        else
-                            policyFailed.Add(policy.Name, messages.ToList());
+                        await _inner.ExecuteAsync(command, ctk).ConfigureAwait(false);
+                        return;
                     }
-                }
-
-                if (policyFailed.Count > 0)
-                {
-                    var exceptionMessage = new List<string>();
-                    foreach (var pFail in policyFailed)
-                        exceptionMessage.Add($"Security policy {pFail.Key} not satisfied, messages: {string.Join(Environment.NewLine, pFail.Value)}");
-
-                    throw new UnauthorizedAccessException(string.Join(Environment.NewLine, exceptionMessage));
+                    else
+                        policyFailed.Add(policy.Name, messages.ToList());
                 }
             }
 
-            await _inner.ExecuteAsync(command, ctk).ConfigureAwait(false);
+            if (policyFailed.Count > 0)
+            {
+                var exceptionMessage = new List<string>();
+                foreach (var pFail in policyFailed)
+                    exceptionMessage.Add($"Security policy {pFail.Key} not satisfied, messages: {string.Join(Environment.NewLine, pFail.Value)}");
+
+                throw new UnauthorizedAccessException(string.Join(Environment.NewLine, exceptionMessage));
+            }
         }
+
+        await _inner.ExecuteAsync(command, ctk).ConfigureAwait(false);
     }
 }

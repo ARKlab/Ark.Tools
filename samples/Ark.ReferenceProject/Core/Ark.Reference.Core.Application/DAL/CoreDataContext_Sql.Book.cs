@@ -17,50 +17,50 @@ using System.Threading.Tasks;
 
 using static Dapper.SqlMapper;
 
-namespace Ark.Reference.Core.Application.DAL
+namespace Ark.Reference.Core.Application.DAL;
+
+public partial class CoreDataContext_Sql
 {
-    public partial class CoreDataContext_Sql
+    private const string _schemaBook = "dbo";
+    private const string _tableBook = "Book";
+
+    public async Task<Book.V1.Output?> ReadBookByIdAsync(int id, CancellationToken ctk = default)
     {
-        private const string _schemaBook = "dbo";
-        private const string _tableBook = "Book";
+        _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByIdAsync called");
 
-        public async Task<Book.V1.Output?> ReadBookByIdAsync(int id, CancellationToken ctk = default)
+        var (data, _) = await ReadBookByFiltersAsync(new BookSearchQueryDto.V1()
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByIdAsync called");
+            Id = [id],
+            Limit = 1
+        }, ctk).ConfigureAwait(false);
 
-            var (data, _) = await ReadBookByFiltersAsync(new BookSearchQueryDto.V1()
-            {
-                Id = [id],
-                Limit = 1
-            }, ctk).ConfigureAwait(false);
+        _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByIdAsync ended");
 
-            _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByIdAsync ended");
+        return data.SingleOrDefault();
+    }
 
-            return data.SingleOrDefault();
-        }
+    public async Task<(IEnumerable<Book.V1.Output> data, int count)> ReadBookByFiltersAsync(BookSearchQueryDto.V1 query, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByFiltersAsync called");
 
-        public async Task<(IEnumerable<Book.V1.Output> data, int count)> ReadBookByFiltersAsync(BookSearchQueryDto.V1 query, CancellationToken ctk = default)
+        var sortFields = query.Sort.CompileSorts(new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByFiltersAsync called");
+            {"id", "E.[Id]" },
+            {"title", "E.[Title]" },
+            {"author", "E.[Author]" },
+        }, "E.[Id] DESC");
 
-            var sortFields = query.Sort.CompileSorts(new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                {"id", "E.[Id]" },
-                {"title", "E.[Title]" },
-                {"author", "E.[Author]" },
-            }, "E.[Id] DESC");
+        var parameters = new
+        {
+            @Id = query.Id,
+            @Title = query.Title,
+            @Author = query.Author,
+            @Genre = query.Genre?.Select(x => x.ToString()),
+            @Skip = query.Skip,
+            @Limit = query.Limit
+        };
 
-            var parameters = new
-            {
-                @Id = query.Id,
-                @Title = query.Title,
-                @Author = query.Author,
-                @Genre = query.Genre?.Select(x => x.ToString()),
-                @Skip = query.Skip,
-                @Limit = query.Limit
-            };
-
-            var cmdText = $@"
+        var cmdText = $@"
                 SELECT 
                       E.[Id]
                     , E.[Title]
@@ -78,34 +78,34 @@ namespace Ark.Reference.Core.Application.DAL
                   {(query.Author?.Length > 0 ? "AND E.[Author] IN @Author" : "")}
                   {(query.Genre?.Length > 0 ? "AND E.[Genre]  IN @Genre" : "")}
             "
-            .AsSqlServerPagedQuery(sortFields);
+        .AsSqlServerPagedQuery(sortFields);
 
-            var cmd = new CommandDefinition(cmdText, parameters, transaction: Transaction, cancellationToken: ctk);
+        var cmd = new CommandDefinition(cmdText, parameters, transaction: Transaction, cancellationToken: ctk);
 
-            var (data, count) = await Connection.ReadPagedAsync<BookView>(cmd).ConfigureAwait(false);
+        var (data, count) = await Connection.ReadPagedAsync<BookView>(cmd).ConfigureAwait(false);
 
-            var d = data.Select(s => s.ToOutput());
+        var d = data.Select(s => s.ToOutput());
 
-            _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByFiltersAsync ended");
+        _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByFiltersAsync ended");
 
-            return (d, count);
-        }
+        return (d, count);
+    }
 
-        public async Task<int> InsertBookAsync(Book.V1.Output entity, CancellationToken ctk = default)
+    public async Task<int> InsertBookAsync(Book.V1.Output entity, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "InsertBookAsync called");
+
+        var parameters = new
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "InsertBookAsync called");
+            @Title = entity.Title,
+            @Author = entity.Author,
+            @Genre = entity.Genre.ToString(),
+            @ISBN = entity.ISBN,
+            @Description = entity.Description,
+            @AuditId = CurrentAudit?.AuditId,
+        };
 
-            var parameters = new
-            {
-                @Title = entity.Title,
-                @Author = entity.Author,
-                @Genre = entity.Genre.ToString(),
-                @ISBN = entity.ISBN,
-                @Description = entity.Description,
-                @AuditId = CurrentAudit?.AuditId,
-            };
-
-            var cmdText = $@"
+        var cmdText = $@"
                 INSERT INTO [{_schemaBook}].[{_tableBook}] (
                       [Title]
                     , [Author]
@@ -125,36 +125,36 @@ namespace Ark.Reference.Core.Application.DAL
                 )
             ";
 
-            var cmd = new CommandDefinition(
-                cmdText,
-                parameters,
-                transaction: Transaction,
-                cancellationToken: ctk
-            );
+        var cmd = new CommandDefinition(
+            cmdText,
+            parameters,
+            transaction: Transaction,
+            cancellationToken: ctk
+        );
 
-            var id = await Connection.ExecuteScalarAsync<int>(cmd).ConfigureAwait(false);
+        var id = await Connection.ExecuteScalarAsync<int>(cmd).ConfigureAwait(false);
 
-            _logger.Trace(CultureInfo.InvariantCulture, "InsertBookAsync ended");
+        _logger.Trace(CultureInfo.InvariantCulture, "InsertBookAsync ended");
 
-            return id;
-        }
+        return id;
+    }
 
-        public async Task PutBookAsync(Book.V1.Output entity, CancellationToken ctk = default)
+    public async Task PutBookAsync(Book.V1.Output entity, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "PutBookAsync called");
+
+        var parameters = new
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "PutBookAsync called");
+            @Id = entity.Id,
+            @Title = entity.Title,
+            @Author = entity.Author,
+            @Genre = entity.Genre.ToString(),
+            @ISBN = entity.ISBN,
+            @Description = entity.Description,
+            @AuditId = CurrentAudit?.AuditId,
+        };
 
-            var parameters = new
-            {
-                @Id = entity.Id,
-                @Title = entity.Title,
-                @Author = entity.Author,
-                @Genre = entity.Genre.ToString(),
-                @ISBN = entity.ISBN,
-                @Description = entity.Description,
-                @AuditId = CurrentAudit?.AuditId,
-            };
-
-            var query = @$"
+        var query = @$"
                 UPDATE  [{_schemaBook}].[{_tableBook}]
 
                 SET
@@ -169,54 +169,54 @@ namespace Ark.Reference.Core.Application.DAL
                 AND  [Id] = @Id
             ";
 
-            var cmd = new CommandDefinition(
-                query,
-                parameters,
-                transaction: Transaction,
-                cancellationToken: ctk
-            );
+        var cmd = new CommandDefinition(
+            query,
+            parameters,
+            transaction: Transaction,
+            cancellationToken: ctk
+        );
 
-            await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
+        await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
 
-            _logger.Trace(CultureInfo.InvariantCulture, "PutBookAsync ended");
-        }
+        _logger.Trace(CultureInfo.InvariantCulture, "PutBookAsync ended");
+    }
 
-        public async Task DeleteBookAsync(int id, CancellationToken ctk = default)
+    public async Task DeleteBookAsync(int id, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "DeleteBookAsync called");
+
+        var parameters = new
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "DeleteBookAsync called");
+            @Id = id
+        };
 
-            var parameters = new
-            {
-                @Id = id
-            };
-
-            var cmdText = $@"
+        var cmdText = $@"
                 DELETE FROM [{_schemaBook}].[{_tableBook}]
                 WHERE 1 = 1 
                     AND [Id] = @Id
             ";
 
-            var cmd = new CommandDefinition(
-                cmdText,
-                parameters,
-                transaction: Transaction,
-                cancellationToken: ctk
-            );
+        var cmd = new CommandDefinition(
+            cmdText,
+            parameters,
+            transaction: Transaction,
+            cancellationToken: ctk
+        );
 
-            await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
+        await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
 
-            _logger.Trace(CultureInfo.InvariantCulture, "DeleteBookAsync ended");
-        }
+        _logger.Trace(CultureInfo.InvariantCulture, "DeleteBookAsync ended");
+    }
 
-        public async Task<(AuditedEntityDto<Book.V1.Output>? pre, AuditedEntityDto<Book.V1.Output>? cur)> ReadBookAuditAsync(Guid auditId, CancellationToken ctk = default)
+    public async Task<(AuditedEntityDto<Book.V1.Output>? pre, AuditedEntityDto<Book.V1.Output>? cur)> ReadBookAuditAsync(Guid auditId, CancellationToken ctk = default)
+    {
+        var param = new
         {
-            var param = new
-            {
-                @AuditId = auditId,
-            };
+            @AuditId = auditId,
+        };
 
-            var cmd = new CommandDefinition(
-                $@"
+        var cmd = new CommandDefinition(
+            $@"
                     SELECT 
                           F.[Id]
                         , F.[Title]
@@ -239,54 +239,53 @@ namespace Ark.Reference.Core.Application.DAL
                     WHERE 1=1
                             AND R.[AuditId] = @AuditId
                 ",
-                param, transaction: Transaction, cancellationToken: ctk
-             );
+            param, transaction: Transaction, cancellationToken: ctk
+         );
 
-            var data = await Connection.QueryAsync<BookView>(cmd).ConfigureAwait(false);
+        var data = await Connection.QueryAsync<BookView>(cmd).ConfigureAwait(false);
 
-            var resTable = data
-                .Select(s => new AuditedEntityDto<Book.V1.Output>()
-                {
-                    Entity = s.ToOutput(),
-                    SysStartTime = s.SysStartTime!.Value,
-                    SysEndTime = s.SysEndTime!.Value
-                })
-                .ToList();
-
-            var cur = resTable.FirstOrDefault(w => w.Entity!.AuditId == auditId);
-            var pre = resTable.FirstOrDefault(w => w.Entity!.AuditId != auditId);
-
-            return (pre, cur);
-        }
-
-        #region Private view
-        private sealed record BookView
-        {
-            public int Id { get; set; }
-            public string? Title { get; set; }
-            public string? Author { get; set; }
-            public string? Genre { get; set; }
-            public string? ISBN { get; set; }
-            public string? Description { get; set; }
-
-            public Guid AuditId { get; set; }
-            public Instant? SysStartTime { get; set; }
-            public Instant? SysEndTime { get; set; }
-
-            public Book.V1.Output ToOutput()
+        var resTable = data
+            .Select(s => new AuditedEntityDto<Book.V1.Output>()
             {
-                return new Book.V1.Output
-                {
-                    Id = Id,
-                    Title = Title,
-                    Author = Author,
-                    Genre = string.IsNullOrEmpty(Genre) ? null : Enum.Parse<BookGenre>(Genre),
-                    ISBN = ISBN,
-                    Description = Description,
-                    AuditId = AuditId,
-                };
-            }
-        }
-        #endregion
+                Entity = s.ToOutput(),
+                SysStartTime = s.SysStartTime!.Value,
+                SysEndTime = s.SysEndTime!.Value
+            })
+            .ToList();
+
+        var cur = resTable.FirstOrDefault(w => w.Entity!.AuditId == auditId);
+        var pre = resTable.FirstOrDefault(w => w.Entity!.AuditId != auditId);
+
+        return (pre, cur);
     }
+
+    #region Private view
+    private sealed record BookView
+    {
+        public int Id { get; set; }
+        public string? Title { get; set; }
+        public string? Author { get; set; }
+        public string? Genre { get; set; }
+        public string? ISBN { get; set; }
+        public string? Description { get; set; }
+
+        public Guid AuditId { get; set; }
+        public Instant? SysStartTime { get; set; }
+        public Instant? SysEndTime { get; set; }
+
+        public Book.V1.Output ToOutput()
+        {
+            return new Book.V1.Output
+            {
+                Id = Id,
+                Title = Title,
+                Author = Author,
+                Genre = string.IsNullOrEmpty(Genre) ? null : Enum.Parse<BookGenre>(Genre),
+                ISBN = ISBN,
+                Description = Description,
+                AuditId = AuditId,
+            };
+        }
+    }
+    #endregion
 }

@@ -2,25 +2,24 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace ProblemDetailsSample.Common.Dto
+namespace ProblemDetailsSample.Common.Dto;
+
+public static class Entity
 {
-    public static class Entity
+    public static class V1
     {
-        public static class V1
+        public class Input : IEntityWithETag
         {
-            public class Input : IEntityWithETag
-            {
-                public virtual string? _ETag { get; set; }
+            public virtual string? _ETag { get; set; }
 
-                [Required]
-                public string? EntityId { get; set; }
-            }
-
-            public class Output : Input
-            {
-                public int Value { get; set; }
-            }
+            [Required]
+            public string? EntityId { get; set; }
         }
 
+        public class Output : Input
+        {
+            public int Value { get; set; }
+        }
     }
+
 }

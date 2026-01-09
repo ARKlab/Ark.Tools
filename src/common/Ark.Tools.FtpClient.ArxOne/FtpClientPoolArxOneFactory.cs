@@ -1,20 +1,19 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 using Ark.Tools.FtpClient.Core;
 
 
-namespace Ark.Tools.FtpClient
-{
-    public class FtpClientPoolArxOneFactory : IFtpClientPoolFactory
-    {
-        public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
-        {
-            ArgumentNullException.ThrowIfNull(ftpConfig);
-            ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
-            ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
+namespace Ark.Tools.FtpClient;
 
-            return new FtpClientPoolArxOne(maxPoolSize, ftpConfig);
-        }
+public class FtpClientPoolArxOneFactory : IFtpClientPoolFactory
+{
+    public IFtpClientPool Create(int maxPoolSize, FtpConfig ftpConfig)
+    {
+        ArgumentNullException.ThrowIfNull(ftpConfig);
+        ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
+        ArgumentNullException.ThrowIfNull(ftpConfig.Credentials);
+
+        return new FtpClientPoolArxOne(maxPoolSize, ftpConfig);
     }
 }

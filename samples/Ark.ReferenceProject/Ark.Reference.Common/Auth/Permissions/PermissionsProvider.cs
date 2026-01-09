@@ -4,13 +4,12 @@ using Ark.Tools.Authorization.Requirement;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Common.Auth
+namespace Ark.Reference.Common.Auth;
+
+public class PermissionsProvider : IUserPermissionsProvider<Permissions>
 {
-    public class PermissionsProvider : IUserPermissionsProvider<Permissions>
+    public async Task<IEnumerable<Permissions>> GetPermissions(AuthorizationContext context)
     {
-        public async Task<IEnumerable<Permissions>> GetPermissions(AuthorizationContext context)
-        {
-            return context.User.GetPermissions();
-        }
+        return context.User.GetPermissions();
     }
 }

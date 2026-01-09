@@ -1,13 +1,12 @@
-﻿using Ark.Tools.EventSourcing.Events;
+using Ark.Tools.EventSourcing.Events;
 
-namespace Ark.Tools.EventSourcing.Aggregates
+namespace Ark.Tools.EventSourcing.Aggregates;
+
+public interface IAggregateEvent : IEvent
 {
-    public interface IAggregateEvent : IEvent
-    {
-    }
+}
 
-    public interface IAggregateEvent<TAggregate> : IAggregateEvent
-        where TAggregate : IAggregate
-    {
-    }
+public interface IAggregateEvent<TAggregate> : IAggregateEvent
+    where TAggregate : IAggregate
+{
 }

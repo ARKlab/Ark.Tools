@@ -4,31 +4,30 @@ using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using NodaTime;
 
-namespace Ark.ResourceWatcher.Sample.Dto
+namespace Ark.ResourceWatcher.Sample.Dto;
+
+/// <summary>
+/// Represents a fetched blob resource with its content.
+/// </summary>
+public sealed class MyResource : IResource<MyMetadata>
 {
     /// <summary>
-    /// Represents a fetched blob resource with its content.
+    /// Gets the metadata for this blob.
     /// </summary>
-    public sealed class MyResource : IResource<MyMetadata>
-    {
-        /// <summary>
-        /// Gets the metadata for this blob.
-        /// </summary>
-        public required MyMetadata Metadata { get; init; }
+    public required MyMetadata Metadata { get; init; }
 
-        /// <summary>
-        /// Gets the binary content of the blob.
-        /// </summary>
-        public required byte[] Data { get; init; }
+    /// <summary>
+    /// Gets the binary content of the blob.
+    /// </summary>
+    public required byte[] Data { get; init; }
 
-        /// <summary>
-        /// Gets the checksum (hash) of the blob content for change detection.
-        /// </summary>
-        public string? CheckSum { get; init; }
+    /// <summary>
+    /// Gets the checksum (hash) of the blob content for change detection.
+    /// </summary>
+    public string? CheckSum { get; init; }
 
-        /// <summary>
-        /// Gets the timestamp when this resource was retrieved.
-        /// </summary>
-        public Instant RetrievedAt { get; init; }
-    }
+    /// <summary>
+    /// Gets the timestamp when this resource was retrieved.
+    /// </summary>
+    public Instant RetrievedAt { get; init; }
 }

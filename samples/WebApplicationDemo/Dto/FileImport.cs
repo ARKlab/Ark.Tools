@@ -1,8 +1,7 @@
-﻿namespace WebApplicationDemo.Dto
+﻿namespace WebApplicationDemo.Dto;
+
+public class FileImport
 {
-    public class FileImport
-    {
-        public int ImportId { get; set; }
-        public string? FileName { get; set; }
-    }
+    public int ImportId { get; set; }
+    public string? FileName { get; set; }
 }

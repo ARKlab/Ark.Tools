@@ -11,88 +11,87 @@ using System.Reflection;
 
 using static Ark.Tools.NLog.NLogConfigurer;
 
-namespace Ark.Tools.NLog
+namespace Ark.Tools.NLog;
+
+public static class NLogConfigurerConfiguration
 {
-    public static class NLogConfigurerConfiguration
+    public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, bool async = true)
     {
-        public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, bool async = true)
+        var config = new Config
         {
-            var config = new Config
-            {
-                SQLConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SqlConnStringName),
-                SmtpConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SmtpConnStringName),
-                MailTo = cfg.GetNLogSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
-                ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
-                SlackWebhook = cfg.GetNLogSetting(NLogDefaultConfigKeys.SlackWebHook),
-                Async = async
-            };
+            SQLConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SqlConnStringName),
+            SmtpConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SmtpConnStringName),
+            MailTo = cfg.GetNLogSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
+            ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
+            SlackWebhook = cfg.GetNLogSetting(NLogDefaultConfigKeys.SlackWebHook),
+            Async = async
+        };
 
-            @this.WithArkDefaultTargetsAndRules(config);
+        @this.WithArkDefaultTargetsAndRules(config);
 
-            return @this;
-        }
+        return @this;
+    }
 
-        public static string? GetNLogSetting(this IConfiguration cfg, string key)
+    public static string? GetNLogSetting(this IConfiguration cfg, string key)
+    {
+        // 1. Settings consts are defined with '.' separator for hierarchy (historical)
+        // 2. For AppSettings we need to replace '.' with ':'
+        // 3. For ConnectionStrings we need to try both with '.' and with '_' because
+        //    On Windows hosting '.' is permitted 
+        //    On Linux hosting '.' is replaced by Azure with '_'
+        var res = cfg[key];
+        if (res != null) return res;
+
+        res = cfg[key.Replace('.', ':')];
+        if (res != null) return res;
+
+        res = cfg[key.Replace('.', '_')];
+
+        return res;
+    }
+
+    public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, string logTableName, string? mailFrom = null, bool async = true)
+    {
+        var config = new Config
         {
-            // 1. Settings consts are defined with '.' separator for hierarchy (historical)
-            // 2. For AppSettings we need to replace '.' with ':'
-            // 3. For ConnectionStrings we need to try both with '.' and with '_' because
-            //    On Windows hosting '.' is permitted 
-            //    On Linux hosting '.' is replaced by Azure with '_'
-            var res = cfg[key];
-            if (res != null) return res;
+            SQLConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SqlConnStringName),
+            SQLTableName = logTableName,
+            SmtpConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SmtpConnStringName),
+            MailTo = cfg.GetNLogSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
+            MailFrom = mailFrom,
+            ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
+            SlackWebhook = cfg.GetNLogSetting(NLogDefaultConfigKeys.SlackWebHook),
+            Async = async
+        };
 
-            res = cfg[key.Replace('.', ':')];
-            if (res != null) return res;
+        @this.WithArkDefaultTargetsAndRules(config);
 
-            res = cfg[key.Replace('.', '_')];
+        return @this;
+    }
 
-            return res;
-        }
+    public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string? appName = null, string? mailFrom = null, Action<Configurer>? configure = null)
+    {
+        appName ??= Assembly.GetEntryAssembly()?.GetName().Name ?? AppDomain.CurrentDomain.FriendlyName ?? "Unknown";
 
-        public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, string logTableName, string? mailFrom = null, bool async = true)
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
-            var config = new Config
-            {
-                SQLConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SqlConnStringName),
-                SQLTableName = logTableName,
-                SmtpConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SmtpConnStringName),
-                MailTo = cfg.GetNLogSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
-                MailFrom = mailFrom,
-                ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
-                SlackWebhook = cfg.GetNLogSetting(NLogDefaultConfigKeys.SlackWebHook),
-                Async = async
-            };
+            global::NLog.LogManager.GetLogger("Main").Fatal(e.ExceptionObject as Exception, "UnhandledException");
+            global::NLog.LogManager.Flush();
+        };
 
-            @this.WithArkDefaultTargetsAndRules(config);
-
-            return @this;
-        }
-
-        public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string? appName = null, string? mailFrom = null, Action<Configurer>? configure = null)
+        return builder.ConfigureLogging((ctx, logging) =>
         {
-            appName ??= Assembly.GetEntryAssembly()?.GetName().Name ?? AppDomain.CurrentDomain.FriendlyName ?? "Unknown";
+            var c = NLogConfigurer.For(appName)
+               .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, appName, mailFrom,
+                    async: !ctx.HostingEnvironment.EnvironmentName.Contains("IntegrationTests", StringComparison.OrdinalIgnoreCase))
+               ;
 
-            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
-            {
-                global::NLog.LogManager.GetLogger("Main").Fatal(e.ExceptionObject as Exception, "UnhandledException");
-                global::NLog.LogManager.Flush();
-            };
+            configure?.Invoke(c);
 
-            return builder.ConfigureLogging((ctx, logging) =>
-            {
-                var c = NLogConfigurer.For(appName)
-                   .WithDefaultTargetsAndRulesFromConfiguration(ctx.Configuration, appName, mailFrom,
-                        async: !ctx.HostingEnvironment.EnvironmentName.Contains("IntegrationTests", StringComparison.OrdinalIgnoreCase))
-                   ;
+            c.Apply();
 
-                configure?.Invoke(c);
-
-                c.Apply();
-
-                logging.ClearProviders();
-                logging.AddNLog();
-            });
-        }
+            logging.ClearProviders();
+            logging.AddNLog();
+        });
     }
 }

@@ -1,6 +1,5 @@
-﻿namespace Ark.Tools.EventSourcing.Events
+namespace Ark.Tools.EventSourcing.Events;
+
+public interface IDomainEvent : IEvent
 {
-    public interface IDomainEvent : IEvent
-    {
-    }
 }

@@ -1,8 +1,7 @@
-﻿namespace Ark.Tools.Outbox.SqlServer
+namespace Ark.Tools.Outbox.SqlServer;
+
+public interface IOutboxContextSqlConfig
 {
-    public interface IOutboxContextSqlConfig
-    {
-        string TableName { get; }
-        string SchemaName { get; }
-    }
+    string TableName { get; }
+    string SchemaName { get; }
 }

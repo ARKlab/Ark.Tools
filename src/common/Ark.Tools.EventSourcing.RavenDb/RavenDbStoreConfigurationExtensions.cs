@@ -1,4 +1,4 @@
-﻿using Ark.Tools.EventSourcing.Aggregates;
+using Ark.Tools.EventSourcing.Aggregates;
 using Ark.Tools.EventSourcing.Store;
 
 using Raven.Client.Documents;
@@ -10,79 +10,78 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.EventSourcing.RavenDb
+namespace Ark.Tools.EventSourcing.RavenDb;
+
+public static class RavenDbStoreConfigurationExtensions
 {
-    public static class RavenDbStoreConfigurationExtensions
+    public static DocumentStore ConfigureForArkEventSourcing(this DocumentStore store)
     {
-        public static DocumentStore ConfigureForArkEventSourcing(this DocumentStore store)
+        var current = store.Conventions.FindCollectionName;
+        store.Conventions.AddFindCollectionName(type =>
         {
-            var current = store.Conventions.FindCollectionName;
-            store.Conventions.AddFindCollectionName(type =>
+            if (typeof(IOutboxEvent).IsAssignableFrom(type))
+                return RavenDbEventSourcingConstants.OutboxCollectionName;
+
+            if (typeof(AggregateEventStore<,>).IsAssignableFromEx(type) || typeof(AggregateEventStore).IsAssignableFrom(type))
             {
-                if (typeof(IOutboxEvent).IsAssignableFrom(type))
-                    return RavenDbEventSourcingConstants.OutboxCollectionName;
+                return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
+            }
 
-                if (typeof(AggregateEventStore<,>).IsAssignableFromEx(type) || typeof(AggregateEventStore).IsAssignableFrom(type))
-                {
-                    return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
-                }
+            return null;
+        });
 
-                return null;
-            });
+        store.Conventions.UseOptimisticConcurrency = true;
 
-            store.Conventions.UseOptimisticConcurrency = true;
+        return store;
+    }
 
-            return store;
-        }
-
-        public static DocumentConventions AddFindCollectionName(this DocumentConventions conventions, Func<Type, string?> func)
+    public static DocumentConventions AddFindCollectionName(this DocumentConventions conventions, Func<Type, string?> func)
+    {
+        var current = conventions.FindCollectionName;
+        conventions.FindCollectionName = type =>
         {
-            var current = conventions.FindCollectionName;
-            conventions.FindCollectionName = type =>
-            {
-                return func?.Invoke(type)
-                    ?? current?.Invoke(type)
-                    ?? DocumentConventions.DefaultGetCollectionName(type);
-            };
+            return func?.Invoke(type)
+                ?? current?.Invoke(type)
+                ?? DocumentConventions.DefaultGetCollectionName(type);
+        };
 
-            return conventions;
-        }
+        return conventions;
+    }
 
-        public static async Task SetupArk(this IDocumentStore store)
+    public static async Task SetupArk(this IDocumentStore store)
+    {
+        await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(new RevisionsConfiguration
         {
-            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(new RevisionsConfiguration
+            Default = new RevisionsCollectionConfiguration
             {
-                Default = new RevisionsCollectionConfiguration
-                {
-                    Disabled = false,
-                    PurgeOnDelete = false,
-                    MinimumRevisionsToKeep = null,
-                    MinimumRevisionAgeToKeep = null,
-                },
-                Collections = new Dictionary<string, RevisionsCollectionConfiguration>
+                Disabled = false,
+                PurgeOnDelete = false,
+                MinimumRevisionsToKeep = null,
+                MinimumRevisionAgeToKeep = null,
+            },
+            Collections = new Dictionary<string, RevisionsCollectionConfiguration>
 (StringComparer.Ordinal)
-                {
-                    {RavenDbEventSourcingConstants.OutboxCollectionName, new RevisionsCollectionConfiguration {Disabled = true} },
-                }
-            })).ConfigureAwait(false);
-        }
-
-        public static async Task EnsureNoRevisionForAggregateState<TAggregate>(this IDocumentStore store)
-            where TAggregate : IAggregate
-        {
-            var collection = AggregateHelper<TAggregate>.Name;
-            var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database)).ConfigureAwait(false);
-            var revision = database.Revisions;
-            if ((revision.Collections.ContainsKey(collection) && revision.Collections[collection].Disabled == true)
-                || revision.Default.Disabled)
-                return;
-
-            revision.Collections.Add(collection, new RevisionsCollectionConfiguration
             {
-                Disabled = true
-            });
+                {RavenDbEventSourcingConstants.OutboxCollectionName, new RevisionsCollectionConfiguration {Disabled = true} },
+            }
+        })).ConfigureAwait(false);
+    }
 
-            await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision)).ConfigureAwait(false);
-        }
+    public static async Task EnsureNoRevisionForAggregateState<TAggregate>(this IDocumentStore store)
+        where TAggregate : IAggregate
+    {
+        var collection = AggregateHelper<TAggregate>.Name;
+        var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database)).ConfigureAwait(false);
+        var revision = database.Revisions;
+        if ((revision.Collections.ContainsKey(collection) && revision.Collections[collection].Disabled == true)
+            || revision.Default.Disabled)
+            return;
+
+        revision.Collections.Add(collection, new RevisionsCollectionConfiguration
+        {
+            Disabled = true
+        });
+
+        await store.Maintenance.SendAsync(new ConfigureRevisionsOperation(revision)).ConfigureAwait(false);
     }
 }

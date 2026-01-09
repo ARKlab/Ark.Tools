@@ -1,11 +1,10 @@
-﻿namespace Ark.Tools.Activity.Messages
+namespace Ark.Tools.Activity.Messages;
+
+public class CoolDownMessage
 {
-    public class CoolDownMessage
-    {
-        public Resource Resource { get; set; }
+    public Resource Resource { get; set; }
 
-        public Slice ResourceSlice { get; set; }
+    public Slice ResourceSlice { get; set; }
 
-        public Slice ActivitySlice { get; set; }
-    }
+    public Slice ActivitySlice { get; set; }
 }

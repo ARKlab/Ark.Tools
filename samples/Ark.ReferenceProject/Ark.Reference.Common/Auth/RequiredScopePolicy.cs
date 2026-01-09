@@ -1,19 +1,18 @@
 ﻿using Ark.Tools.Authorization;
 
-namespace Ark.Reference.Common.Auth
+namespace Ark.Reference.Common.Auth;
+
+public class RequiredScopePolicy : AuthorizationPolicy, IAuthorizationRequirement
 {
-    public class RequiredScopePolicy : AuthorizationPolicy, IAuthorizationRequirement
+    public string Scope { get; set; }
+
+    public RequiredScopePolicy(string scope)
     {
-        public string Scope { get; set; }
+        Scope = scope;
+    }
 
-        public RequiredScopePolicy(string scope)
-        {
-            Scope = scope;
-        }
-
-        protected override void Build(AuthorizationPolicyBuilder builder)
-        {
-            builder.AddRequirements(this);
-        }
+    protected override void Build(AuthorizationPolicyBuilder builder)
+    {
+        builder.AddRequirements(this);
     }
 }

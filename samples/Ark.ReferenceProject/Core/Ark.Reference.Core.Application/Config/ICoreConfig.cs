@@ -1,7 +1,6 @@
-﻿namespace Ark.Reference.Core.Application.Config
+﻿namespace Ark.Reference.Core.Application.Config;
+
+public interface ICoreConfig
 {
-    public interface ICoreConfig
-    {
-        string? Environment { get; }
-    }
+    string? Environment { get; }
 }

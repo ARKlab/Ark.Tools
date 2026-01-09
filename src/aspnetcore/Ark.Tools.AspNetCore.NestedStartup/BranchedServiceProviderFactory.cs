@@ -4,25 +4,24 @@ using Microsoft.Extensions.DependencyInjection;
 
 using System;
 
-namespace Ark.Tools.AspNetCore.NestedStartup
+namespace Ark.Tools.AspNetCore.NestedStartup;
+
+internal sealed class BranchedServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
 {
-    internal sealed class BranchedServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
+    private readonly IServiceProvider _parent;
+
+    public BranchedServiceProviderFactory(IServiceProvider parent)
     {
-        private readonly IServiceProvider _parent;
+        _parent = parent;
+    }
 
-        public BranchedServiceProviderFactory(IServiceProvider parent)
-        {
-            _parent = parent;
-        }
+    public IServiceCollection CreateBuilder(IServiceCollection services)
+    {
+        return services;
+    }
 
-        public IServiceCollection CreateBuilder(IServiceCollection services)
-        {
-            return services;
-        }
-
-        public IServiceProvider CreateServiceProvider(IServiceCollection containerBuilder)
-        {
-            return new BranchedServiceProvider(_parent, containerBuilder.BuildServiceProvider());
-        }
+    public IServiceProvider CreateServiceProvider(IServiceCollection containerBuilder)
+    {
+        return new BranchedServiceProvider(_parent, containerBuilder.BuildServiceProvider());
     }
 }

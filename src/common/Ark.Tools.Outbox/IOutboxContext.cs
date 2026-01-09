@@ -1,7 +1,6 @@
-﻿using Ark.Tools.Core;
+using Ark.Tools.Core;
 
-namespace Ark.Tools.Outbox
-{
+namespace Ark.Tools.Outbox;
 
-    public interface IOutboxContext : IOutboxContextCore, IContext { }
-}
+
+public interface IOutboxContext : IOutboxContextCore, IContext { }

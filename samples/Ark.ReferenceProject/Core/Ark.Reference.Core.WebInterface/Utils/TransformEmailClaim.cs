@@ -3,34 +3,33 @@
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Core.WebInterface.Utils
+namespace Ark.Reference.Core.WebInterface.Utils;
+
+public class TransformEmailClaim : IClaimsTransformation
 {
-    public class TransformEmailClaim : IClaimsTransformation
+    public TransformEmailClaim()
     {
-        public TransformEmailClaim()
-        {
-            // Constructor logic here if needed
-        }
+        // Constructor logic here if needed
+    }
 
-        public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
-        {
-            if (principal.HasClaim(c => c.Type == ClaimTypes.Email))
-                return principal;
+    public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
+    {
+        if (principal.HasClaim(c => c.Type == ClaimTypes.Email))
+            return principal;
 
-            // If it does not exist, look for the custom email claim
-            var emailClaim = principal.FindFirst(c => c.Type == "emails");
-            if (emailClaim == null)
-                return principal;
+        // If it does not exist, look for the custom email claim
+        var emailClaim = principal.FindFirst(c => c.Type == "emails");
+        if (emailClaim == null)
+            return principal;
 
-            // Clone the current principal to avoid modifying the existing principal directly
-            var clone = principal.Clone();
+        // Clone the current principal to avoid modifying the existing principal directly
+        var clone = principal.Clone();
 
-            // Create a new claim with the standard email claim type
-            var newEmailClaim = new Claim(ClaimTypes.Email, emailClaim.Value);
-            // Add the new claim to the cloned identity
-            (clone.Identity as ClaimsIdentity)?.AddClaim(newEmailClaim);
-            return clone;
+        // Create a new claim with the standard email claim type
+        var newEmailClaim = new Claim(ClaimTypes.Email, emailClaim.Value);
+        // Add the new claim to the cloned identity
+        (clone.Identity as ClaimsIdentity)?.AddClaim(newEmailClaim);
+        return clone;
 
-        }
     }
 }

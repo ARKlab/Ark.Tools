@@ -2,16 +2,15 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
-namespace Ark.Tools.AspNetCore.ProblemDetails
+namespace Ark.Tools.AspNetCore.ProblemDetails;
+
+/// <summary>
+///     Apply <see cref="ProblemDetailsResultAttribute" /> to all Api controllers
+/// </summary>
+public class ProblemDetailsResultApiConvention : ApiConventionBase
 {
-    /// <summary>
-    ///     Apply <see cref="ProblemDetailsResultAttribute" /> to all Api controllers
-    /// </summary>
-    public class ProblemDetailsResultApiConvention : ApiConventionBase
+    protected override void ApplyControllerConvention(ControllerModel controller)
     {
-        protected override void ApplyControllerConvention(ControllerModel controller)
-        {
-            controller.Filters.Add(new ProblemDetailsResultAttribute());
-        }
+        controller.Filters.Add(new ProblemDetailsResultAttribute());
     }
 }

@@ -5,16 +5,15 @@ using System;
 
 using TestWorker.Constants;
 
-namespace TestWorker.Configs
-{
-    public class Test_Host_Config : DefaultHostConfig, ITest_Host_Config
-    {
-        public Test_Host_Config()
-        {
-            WorkerName = Test_Constants.AppName;
-        }
+namespace TestWorker.Configs;
 
-        public string? StateDbConnectionString { get; set; }
-        string ISqlStateProviderConfig.DbConnectionString => StateDbConnectionString ?? throw new InvalidOperationException("");
+public class Test_Host_Config : DefaultHostConfig, ITest_Host_Config
+{
+    public Test_Host_Config()
+    {
+        WorkerName = Test_Constants.AppName;
     }
+
+    public string? StateDbConnectionString { get; set; }
+    string ISqlStateProviderConfig.DbConnectionString => StateDbConnectionString ?? throw new InvalidOperationException("");
 }

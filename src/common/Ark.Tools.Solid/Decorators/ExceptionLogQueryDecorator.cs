@@ -7,45 +7,44 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Solid.Decorators
+namespace Ark.Tools.Solid.Decorators;
+
+public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>, IDisposable
 {
-    public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>, IDisposable
+    private readonly IQueryHandler<TQuery, TResult> _decorated;
+    private readonly ILogger _logger;
+
+    public ExceptionLogQueryDecorator(IQueryHandler<TQuery, TResult> decorated)
     {
-        private readonly IQueryHandler<TQuery, TResult> _decorated;
-        private readonly ILogger _logger;
+        ArgumentNullException.ThrowIfNull(decorated);
 
-        public ExceptionLogQueryDecorator(IQueryHandler<TQuery, TResult> decorated)
+        _decorated = decorated;
+        _logger = LogManager.GetLogger(_decorated.GetType().ToString());
+    }
+
+    public TResult Execute(TQuery query)
+    {
+        try
         {
-            ArgumentNullException.ThrowIfNull(decorated);
-
-            _decorated = decorated;
-            _logger = LogManager.GetLogger(_decorated.GetType().ToString());
+            return _decorated.Execute(query);
         }
-
-        public TResult Execute(TQuery query)
+        catch (Exception ex)
         {
-            try
-            {
-                return _decorated.Execute(query);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Exception occured");
-                throw;
-            }
+            _logger.Error(ex, "Exception occured");
+            throw;
         }
+    }
 
-        public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
+    public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
+    {
+        try
         {
-            try
-            {
-                return await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Exception occured");
-                throw;
-            }
+            return await _decorated.ExecuteAsync(query, ctk).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Exception occured");
+            throw;
         }
     }
 }

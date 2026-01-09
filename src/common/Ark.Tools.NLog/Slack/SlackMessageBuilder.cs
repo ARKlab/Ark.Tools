@@ -1,107 +1,106 @@
-﻿using Slack.Webhooks;
+using Slack.Webhooks;
 
 using System;
 using System.Collections.Generic;
 
-namespace Ark.Tools.NLog.Slack
+namespace Ark.Tools.NLog.Slack;
+
+public class SlackMessageBuilder
 {
-    public class SlackMessageBuilder
-    {
-        private readonly SlackMessage _slackMessage;
+    private readonly SlackMessage _slackMessage;
 #pragma warning disable MA0046 // Use EventHandler<T> to declare events
-        private event Action<Exception>? Error;
+    private event Action<Exception>? Error;
 #pragma warning restore MA0046 // Use EventHandler<T> to declare events
-        private bool _existError;
+    private bool _existError;
 
-        public SlackMessageBuilder()
+    public SlackMessageBuilder()
+    {
+        _slackMessage = new SlackMessage();
+    }
+
+    public static SlackMessageBuilder Build()
+    {
+        return new SlackMessageBuilder();
+    }
+
+    public SlackMessageBuilder WithMessage(string message)
+    {
+        this._slackMessage.Text = message;
+
+        return this;
+    }
+
+    public SlackMessageBuilder AddAttachment(string color, IEnumerable<(string title, string? text)> fields)
+    {
+        var a = new SlackAttachment
         {
-            _slackMessage = new SlackMessage();
-        }
+            Color = color
+        };
 
-        public static SlackMessageBuilder Build()
-        {
-            return new SlackMessageBuilder();
-        }
+        a.Fields = new List<SlackField>();
 
-        public SlackMessageBuilder WithMessage(string message)
-        {
-            this._slackMessage.Text = message;
-
-            return this;
-        }
-
-        public SlackMessageBuilder AddAttachment(string color, IEnumerable<(string title, string? text)> fields)
-        {
-            var a = new SlackAttachment
+        foreach (var (title, text) in fields)
+            a.Fields.Add(new SlackField()
             {
-                Color = color
-            };
+                Title = title,
+                Value = text,
+                Short = true
+            });
 
-            a.Fields = new List<SlackField>();
+        if (this._slackMessage.Attachments == null)
+            this._slackMessage.Attachments = new List<SlackAttachment>();
 
-            foreach (var (title, text) in fields)
-                a.Fields.Add(new SlackField()
-                {
-                    Title = title,
-                    Value = text,
-                    Short = true
-                });
+        this._slackMessage.Attachments.Add(a);
 
-            if (this._slackMessage.Attachments == null)
-                this._slackMessage.Attachments = new List<SlackAttachment>();
+        return this;
+    }
 
-            this._slackMessage.Attachments.Add(a);
-
-            return this;
-        }
-
-        public SlackMessageBuilder AddAttachment(string message, string color, IEnumerable<(string title, string text)> fields)
+    public SlackMessageBuilder AddAttachment(string message, string color, IEnumerable<(string title, string text)> fields)
+    {
+        var a = new SlackAttachment
         {
-            var a = new SlackAttachment
+            Text = message,
+            Color = color
+        };
+
+        a.Fields = new List<SlackField>();
+
+        foreach (var (title, text) in fields)
+            a.Fields.Add(new SlackField()
             {
-                Text = message,
-                Color = color
-            };
+                Title = title,
+                Value = text,
+                Short = true
+            });
 
-            a.Fields = new List<SlackField>();
+        if (this._slackMessage.Attachments == null)
+            this._slackMessage.Attachments = new List<SlackAttachment>();
 
-            foreach (var (title, text) in fields)
-                a.Fields.Add(new SlackField()
-                {
-                    Title = title,
-                    Value = text,
-                    Short = true
-                });
+        this._slackMessage.Attachments.Add(a);
 
-            if (this._slackMessage.Attachments == null)
-                this._slackMessage.Attachments = new List<SlackAttachment>();
+        return this;
+    }
 
-            this._slackMessage.Attachments.Add(a);
+    public SlackMessageBuilder OnError(Action<Exception> error)
+    {
+        this.Error += error;
+        _existError = true;
 
-            return this;
-        }
+        return this;
+    }
 
-        public SlackMessageBuilder OnError(Action<Exception> error)
+    public void Send(SlackClient client)
+    {
+        try
         {
-            this.Error += error;
-            _existError = true;
-
-            return this;
+            client.Post(_slackMessage);
         }
-
-        public void Send(SlackClient client)
+        catch (Exception e)
         {
-            try
-            {
-                client.Post(_slackMessage);
-            }
-            catch (Exception e)
-            {
-                if (_existError)
-                    Error?.Invoke(e);
-                else
-                    throw;
-            }
+            if (_existError)
+                Error?.Invoke(e);
+            else
+                throw;
         }
     }
 }

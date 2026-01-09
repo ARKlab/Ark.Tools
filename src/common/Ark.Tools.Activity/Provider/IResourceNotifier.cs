@@ -1,10 +1,9 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
-namespace Ark.Tools.Activity.Provider
+namespace Ark.Tools.Activity.Provider;
+
+public interface IResourceNotifier
 {
-    public interface IResourceNotifier
-    {
-        string Provider { get; }
-        Task Notify(string resourceId, Slice slice);
-    }
+    string Provider { get; }
+    Task Notify(string resourceId, Slice slice);
 }

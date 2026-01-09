@@ -14,53 +14,52 @@ using System.Threading.Tasks;
 
 using TestWorker.Dto;
 
-namespace TestWorker.DataProvider
+namespace TestWorker.DataProvider;
+
+public class Test_ProviderFilter
 {
-    public class Test_ProviderFilter
-    {
 #pragma warning disable RS0030 // Sample/test code - intentionally using local time for demo
-        public LocalDate Date { get; set; } = LocalDate.FromDateTime(DateTime.Now);
+    public LocalDate Date { get; set; } = LocalDate.FromDateTime(DateTime.Now);
 #pragma warning restore RS0030
-        public int Count { get; set; } = 10;
+    public int Count { get; set; } = 10;
+}
+
+public class TestProvider : IResourceProvider<Test_FileMetadataDto, Test_File, Test_ProviderFilter>
+{
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+    public TestProvider()
+    {
     }
 
-    public class TestProvider : IResourceProvider<Test_FileMetadataDto, Test_File, Test_ProviderFilter>
+    public Task<IEnumerable<Test_FileMetadataDto>> GetMetadata(Test_ProviderFilter filter, CancellationToken ctk = default)
     {
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-        public TestProvider()
+        return Task.Run(() =>
         {
-        }
-
-        public Task<IEnumerable<Test_FileMetadataDto>> GetMetadata(Test_ProviderFilter filter, CancellationToken ctk = default)
-        {
-            return Task.Run(() =>
-            {
-                var metadataList = Enumerable.Range(1, filter.Count).Select(x =>
-                    new Test_FileMetadataDto
-                    {
-                        FileName = "TestFileName" + x,
-                        Date = filter.Date,
-                    }
-                ).ToList();
-
-                return metadataList.AsEnumerable();
-            });
-        }
-
-        public Task<Test_File?> GetResource(Test_FileMetadataDto metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
-        {
-            return Task.Run<Test_File?>(() =>
-            {
-                var downloadedFile = new Test_File(metadata)
+            var metadataList = Enumerable.Range(1, filter.Count).Select(x =>
+                new Test_FileMetadataDto
                 {
-                    DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
-                };
+                    FileName = "TestFileName" + x,
+                    Date = filter.Date,
+                }
+            ).ToList();
 
-                _logger.Info(CultureInfo.InvariantCulture, "File {FileName} downloaded successfully", downloadedFile.Metadata.FileName);
+            return metadataList.AsEnumerable();
+        });
+    }
 
-                return downloadedFile;
-            });
-        }
+    public Task<Test_File?> GetResource(Test_FileMetadataDto metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+    {
+        return Task.Run<Test_File?>(() =>
+        {
+            var downloadedFile = new Test_File(metadata)
+            {
+                DownloadedAt = SystemClock.Instance.GetCurrentInstant(),
+            };
+
+            _logger.Info(CultureInfo.InvariantCulture, "File {FileName} downloaded successfully", downloadedFile.Metadata.FileName);
+
+            return downloadedFile;
+        });
     }
 }

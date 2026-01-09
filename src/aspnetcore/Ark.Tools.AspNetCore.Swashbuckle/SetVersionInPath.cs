@@ -6,21 +6,20 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 using System.Linq;
 
-namespace Ark.Tools.AspNetCore.Swashbuckle
+namespace Ark.Tools.AspNetCore.Swashbuckle;
+
+public class SetVersionInPaths : IDocumentFilter
 {
-    public class SetVersionInPaths : IDocumentFilter
+    public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
-        public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
-        {
-            var dict = swaggerDoc.Paths
-                .ToDictionary(
-                    path => path.Key.Replace("v{api-version}", swaggerDoc.Info.Version, System.StringComparison.Ordinal),
-                    path => path.Value,
-                    System.StringComparer.Ordinal);
+        var dict = swaggerDoc.Paths
+            .ToDictionary(
+                path => path.Key.Replace("v{api-version}", swaggerDoc.Info.Version, System.StringComparison.Ordinal),
+                path => path.Value,
+                System.StringComparer.Ordinal);
 
 
-            foreach (var item in dict)
-                swaggerDoc.Paths[item.Key] = item.Value;
-        }
+        foreach (var item in dict)
+            swaggerDoc.Paths[item.Key] = item.Value;
     }
 }

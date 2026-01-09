@@ -4,33 +4,32 @@ using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using NodaTime;
 
-namespace Ark.Tools.ResourceWatcher.Testing
+namespace Ark.Tools.ResourceWatcher.Testing;
+
+
+/// <summary>
+/// Stub resource for testing purposes.
+/// Contains metadata and a data payload.
+/// </summary>
+public sealed class StubResource : IResource<StubResourceMetadata>
 {
+    /// <summary>
+    /// Gets or sets the resource metadata.
+    /// </summary>
+    public required StubResourceMetadata Metadata { get; init; }
 
     /// <summary>
-    /// Stub resource for testing purposes.
-    /// Contains metadata and a data payload.
+    /// Gets or sets the resource data.
     /// </summary>
-    public sealed class StubResource : IResource<StubResourceMetadata>
-    {
-        /// <summary>
-        /// Gets or sets the resource metadata.
-        /// </summary>
-        public required StubResourceMetadata Metadata { get; init; }
+    public required string Data { get; init; }
 
-        /// <summary>
-        /// Gets or sets the resource data.
-        /// </summary>
-        public required string Data { get; init; }
+    /// <summary>
+    /// Gets or sets the resource checksum.
+    /// </summary>
+    public string? CheckSum { get; init; }
 
-        /// <summary>
-        /// Gets or sets the resource checksum.
-        /// </summary>
-        public string? CheckSum { get; init; }
-
-        /// <summary>
-        /// Gets or sets the timestamp when the resource was retrieved.
-        /// </summary>
-        public Instant RetrievedAt { get; init; }
-    }
+    /// <summary>
+    /// Gets or sets the timestamp when the resource was retrieved.
+    /// </summary>
+    public Instant RetrievedAt { get; init; }
 }

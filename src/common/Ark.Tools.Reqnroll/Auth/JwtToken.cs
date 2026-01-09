@@ -1,29 +1,28 @@
-﻿using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 using System;
 
-namespace Ark.Tools.Reqnroll.Auth
+namespace Ark.Tools.Reqnroll.Auth;
+
+public sealed class JwtToken
 {
-    public sealed class JwtToken
+    private readonly SecurityTokenDescriptor _token;
+
+    internal JwtToken(SecurityTokenDescriptor token)
     {
-        private readonly SecurityTokenDescriptor _token;
+        this._token = token;
+    }
 
-        internal JwtToken(SecurityTokenDescriptor token)
+    public DateTime ValidTo => _token.Expires ?? DateTime.MinValue;
+    public string Value
+    {
+        get
         {
-            this._token = token;
-        }
+            var handler = new JsonWebTokenHandler();
+            handler.SetDefaultTimesOnTokenCreation = false;
 
-        public DateTime ValidTo => _token.Expires ?? DateTime.MinValue;
-        public string Value
-        {
-            get
-            {
-                var handler = new JsonWebTokenHandler();
-                handler.SetDefaultTimesOnTokenCreation = false;
-
-                return handler.CreateToken(_token);
-            }
+            return handler.CreateToken(_token);
         }
     }
 }

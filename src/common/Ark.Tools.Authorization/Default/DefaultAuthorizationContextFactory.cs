@@ -1,12 +1,11 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 
-namespace Ark.Tools.Authorization
+namespace Ark.Tools.Authorization;
+
+public class DefaultAuthorizationContextFactory : IAuthorizationContextFactory
 {
-    public class DefaultAuthorizationContextFactory : IAuthorizationContextFactory
+    public AuthorizationContext Create(IAuthorizationPolicy policy, ClaimsPrincipal user, object? resource)
     {
-        public AuthorizationContext Create(IAuthorizationPolicy policy, ClaimsPrincipal user, object? resource)
-        {
-            return new AuthorizationContext(policy, user, resource);
-        }
+        return new AuthorizationContext(policy, user, resource);
     }
 }

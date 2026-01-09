@@ -1,29 +1,28 @@
-﻿using Ark.Tools.Activity.Messages;
+using Ark.Tools.Activity.Messages;
 
 using Rebus.Sagas;
 
 using System;
 using System.Collections.Generic;
 
-namespace Ark.Tools.Activity.Processor
+namespace Ark.Tools.Activity.Processor;
+
+public sealed class SliceActivitySagaData : SagaData
 {
-    public sealed class SliceActivitySagaData : SagaData
+    public Slice ActivitySlice { get; set; }
+
+    public string FormattedSliceStart
     {
-        public Slice ActivitySlice { get; set; }
-
-        public string FormattedSliceStart
+        get
         {
-            get
-            {
-                return this.ActivitySlice.ToString();
-            }
+            return this.ActivitySlice.ToString();
         }
-
-        public List<SliceReady> MissingSlices { get; set; } = new List<SliceReady> { };
-
-        public DateTimeOffset? CoolDownTill { get; set; }
-
-        public bool IsScheduled { get; set; }
-        public bool IsCoolDown => CoolDownTill > DateTimeOffset.UtcNow;
     }
+
+    public List<SliceReady> MissingSlices { get; set; } = new List<SliceReady> { };
+
+    public DateTimeOffset? CoolDownTill { get; set; }
+
+    public bool IsScheduled { get; set; }
+    public bool IsCoolDown => CoolDownTill > DateTimeOffset.UtcNow;
 }

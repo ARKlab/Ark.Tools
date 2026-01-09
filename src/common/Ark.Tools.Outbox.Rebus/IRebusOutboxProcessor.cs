@@ -1,8 +1,7 @@
-﻿namespace Ark.Tools.Outbox.Rebus
+namespace Ark.Tools.Outbox.Rebus;
+
+internal interface IRebusOutboxProcessor
 {
-    internal interface IRebusOutboxProcessor
-    {
-        void Start();
-        void Stop();
-    }
+    void Start();
+    void Stop();
 }

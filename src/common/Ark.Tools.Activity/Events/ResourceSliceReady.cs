@@ -1,8 +1,7 @@
-﻿namespace Ark.Tools.Activity.Messages
+namespace Ark.Tools.Activity.Messages;
+
+public class ResourceSliceReady
 {
-    public class ResourceSliceReady
-    {
-        public Resource Resource { get; set; }
-        public Slice Slice { get; set; }
-    }
+    public Resource Resource { get; set; }
+    public Slice Slice { get; set; }
 }

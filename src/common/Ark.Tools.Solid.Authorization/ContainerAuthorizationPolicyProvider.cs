@@ -1,15 +1,14 @@
-﻿using Ark.Tools.Authorization;
+using Ark.Tools.Authorization;
 
 using System.Collections.Generic;
 
-namespace Ark.Tools.Solid.Authorization
+namespace Ark.Tools.Solid.Authorization;
+
+public class ContainerAuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
 {
-    public class ContainerAuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
+    public ContainerAuthorizationPolicyProvider(IEnumerable<IAuthorizationPolicy> policies)
     {
-        public ContainerAuthorizationPolicyProvider(IEnumerable<IAuthorizationPolicy> policies)
-        {
-            foreach (var p in policies)
-                AddPolicy(p);
-        }
+        foreach (var p in policies)
+            AddPolicy(p);
     }
 }

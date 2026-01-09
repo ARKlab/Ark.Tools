@@ -5,29 +5,28 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Reference.Common.Services.Audit
+namespace Ark.Reference.Common.Services.Audit;
+
+public interface IAuditDataContext<TAuditKind> : IAsyncContext
+        where TAuditKind : struct, Enum
 {
-    public interface IAuditDataContext<TAuditKind> : IAsyncContext
-            where TAuditKind : struct, Enum
-    {
-        #region Audit
-        Task<(IEnumerable<AuditDto<TAuditKind>> records, int totalCount)> ReadAuditByFilterAsync(
-            AuditQueryDto.V1<TAuditKind> query
-            , CancellationToken ctk = default
-            );
+    #region Audit
+    Task<(IEnumerable<AuditDto<TAuditKind>> records, int totalCount)> ReadAuditByFilterAsync(
+        AuditQueryDto.V1<TAuditKind> query
+        , CancellationToken ctk = default
+        );
 
-        Task<IEnumerable<string>> ReadAuditUsersAsync(
-            CancellationToken ctk = default
-            );
+    Task<IEnumerable<string>> ReadAuditUsersAsync(
+        CancellationToken ctk = default
+        );
 
-        ValueTask<AuditDto<TAuditKind>> EnsureAudit(
-            TAuditKind kind
-            , string? userId
-            , string? infoMessage
-            , CancellationToken ctk = default
-            );
+    ValueTask<AuditDto<TAuditKind>> EnsureAudit(
+        TAuditKind kind
+        , string? userId
+        , string? infoMessage
+        , CancellationToken ctk = default
+        );
 
-        AuditDto<TAuditKind> CurrentAudit { get; }
-        #endregion
-    }
+    AuditDto<TAuditKind> CurrentAudit { get; }
+    #endregion
 }

@@ -1,11 +1,10 @@
-﻿using Ark.Tools.EventSourcing.Store;
+using Ark.Tools.EventSourcing.Store;
 
 using System.Threading.Tasks;
 
-namespace Ark.Tools.EventSourcing.DomainEventPublisher
+namespace Ark.Tools.EventSourcing.DomainEventPublisher;
+
+public interface IDomainEventPublisher
 {
-    public interface IDomainEventPublisher
-    {
-        Task PublishAsync(OutboxEvent outboxEvent);
-    }
+    Task PublishAsync(OutboxEvent outboxEvent);
 }

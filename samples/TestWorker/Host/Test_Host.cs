@@ -14,113 +14,110 @@ using TestWorker.DataProvider;
 using TestWorker.Dto;
 using TestWorker.Writer;
 
-namespace TestWorker.HostNs
+namespace TestWorker.HostNs;
+
+public static class Test_Host
 {
-    public static class Test_Host
+    public class Host : WorkerHost<Test_File, Test_FileMetadataDto, Test_ProviderFilter>
     {
-        public class Host : WorkerHost<Test_File, Test_FileMetadataDto, Test_ProviderFilter>
+        public ITest_Host_Config Config { get; private set; }
+
+        public Host(ITest_Host_Config config) : base(config)
         {
-            public ITest_Host_Config Config { get; private set; }
+            Config = config;
 
-            public Host(ITest_Host_Config config) : base(config)
+            this.UseDataProvider<TestProvider>(deps =>
             {
-                Config = config;
+                deps.Container.RegisterInstance(config);
+            });
 
-                this.UseDataProvider<TestProvider>(deps =>
-                {
-                    deps.Container.RegisterInstance(config);
-                });
+            this.UseSqlStateProvider(config);
+        }
 
-                this.UseSqlStateProvider(config);
-            }
-
-            public Task RunOnceAsync(LocalDate date, CancellationToken ctk = default)
-            {
+        public Task RunOnceAsync(LocalDate date, CancellationToken ctk = default)
+        {
 #pragma warning disable RS0030 // Sample/test code - intentionally using local time for demo
-                return base.RunOnceAsync(f => f.Date = LocalDate.FromDateTime(DateTime.Today), ctk);
+            return base.RunOnceAsync(f => f.Date = LocalDate.FromDateTime(DateTime.Today), ctk);
 #pragma warning restore RS0030
-            }
-
-            public Host WithTestWriter()
-            {
-                this.AppendFileProcessor<TestWriter>(deps =>
-                {
-                    //deps.Container.RegisterInstance(cfg);
-                });
-
-                return this;
-            }
-
-
-            public Host WithNotifier(IRebusResourceNotifier_Config rebusCfg)
-            {
-                this.AppendFileProcessor<TestWriter_Notifier>(deps =>
-                {
-                    deps.Container.RegisterInstance(rebusCfg);
-                    deps.Container.RegisterSingleton<RebusResourceNotifier>();
-                });
-
-                //_logger.Info(CultureInfo.InvariantCulture, "Rebus notifier added to host");
-
-                return this;
-            }
-
         }
 
-        public static Host Configure(IConfiguration configuration, Test_Recipe? recipe = null, Action<Test_Host_Config>? configurer = null)
+        public Host WithTestWriter()
         {
-            var localRecipe = configuration["Test:Recipe"];
-
-            Test_Recipe r = default;
-
-#pragma warning disable RS0030 // Sample/test code - enum parsing demonstration
-            if (recipe.HasValue || Enum.TryParse<Test_Recipe>(localRecipe, out r))
-#pragma warning restore RS0030
+            this.AppendFileProcessor<TestWriter>(deps =>
             {
-                if (recipe.HasValue)
-                    r = recipe.Value;
+                //deps.Container.RegisterInstance(cfg);
+            });
 
-                Host? h = null;
-
-                switch (r)
-                {
-                    case Test_Recipe.Test:
-                        h = _configureForTest(configuration, configurer);
-                        break;
-                    default:
-                        throw new NotSupportedException($"Recipe not supported: {recipe}");
-                }
-
-                return h;
-            }
-
-            throw new InvalidOperationException("Invalid Recipe");
+            return this;
         }
 
-        private static Host _configureForTest(IConfiguration configuration, Action<Test_Host_Config>? configurer)
+
+        public Host WithNotifier(IRebusResourceNotifier_Config rebusCfg)
         {
-            var baseCfg = new Test_Host_Config()
+            this.AppendFileProcessor<TestWriter_Notifier>(deps =>
             {
-                StateDbConnectionString = configuration["ConnectionStrings:Workers.Database"],
-                Sleep = TimeSpan.FromSeconds(30),
-                MaxRetries = 2,
-            };
+                deps.Container.RegisterInstance(rebusCfg);
+                deps.Container.RegisterSingleton<RebusResourceNotifier>();
+            });
 
-            //var rebusCfg = new RebusResourceNotifier_Config(configuration["ConnectionStrings:Test.Rebus"])
-            //{
-            //};
+            //_logger.Info(CultureInfo.InvariantCulture, "Rebus notifier added to host");
 
-            configurer?.Invoke(baseCfg);
-
-            var h = new Host(baseCfg)
-                .WithTestWriter()
-                //.WithNotifier(rebusCfg)
-                ;
-
-            h.AddProviderFilterConfigurer(c => c.Count = 100);
-            return h;
+            return this;
         }
+
     }
 
+    public static Host Configure(IConfiguration configuration, Test_Recipe? recipe = null, Action<Test_Host_Config>? configurer = null)
+    {
+        var localRecipe = configuration["Test:Recipe"];
 
+        Test_Recipe r = default;
+
+#pragma warning disable RS0030 // Sample/test code - enum parsing demonstration
+        if (recipe.HasValue || Enum.TryParse<Test_Recipe>(localRecipe, out r))
+#pragma warning restore RS0030
+        {
+            if (recipe.HasValue)
+                r = recipe.Value;
+
+            Host? h = null;
+
+            switch (r)
+            {
+                case Test_Recipe.Test:
+                    h = _configureForTest(configuration, configurer);
+                    break;
+                default:
+                    throw new NotSupportedException($"Recipe not supported: {recipe}");
+            }
+
+            return h;
+        }
+
+        throw new InvalidOperationException("Invalid Recipe");
+    }
+
+    private static Host _configureForTest(IConfiguration configuration, Action<Test_Host_Config>? configurer)
+    {
+        var baseCfg = new Test_Host_Config()
+        {
+            StateDbConnectionString = configuration["ConnectionStrings:Workers.Database"],
+            Sleep = TimeSpan.FromSeconds(30),
+            MaxRetries = 2,
+        };
+
+        //var rebusCfg = new RebusResourceNotifier_Config(configuration["ConnectionStrings:Test.Rebus"])
+        //{
+        //};
+
+        configurer?.Invoke(baseCfg);
+
+        var h = new Host(baseCfg)
+            .WithTestWriter()
+            //.WithNotifier(rebusCfg)
+            ;
+
+        h.AddProviderFilterConfigurer(c => c.Count = 100);
+        return h;
+    }
 }

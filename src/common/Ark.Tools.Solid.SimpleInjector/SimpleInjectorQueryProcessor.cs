@@ -6,39 +6,38 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Solid.SimpleInjector
+namespace Ark.Tools.Solid.SimpleInjector;
+
+public class SimpleInjectorQueryProcessor : IQueryProcessor
 {
-    public class SimpleInjectorQueryProcessor : IQueryProcessor
+    private readonly Container _container;
+
+    public SimpleInjectorQueryProcessor(Container container)
     {
-        private readonly Container _container;
+        _container = container;
+    }
 
-        public SimpleInjectorQueryProcessor(Container container)
-        {
-            _container = container;
-        }
+    private object _getHandlerInstance<TResult>(IQuery<TResult> query)
+    {
+        var queryType = query.GetType();
+        var handlerType = typeof(IQueryHandler<,>).MakeGenericType(queryType, typeof(TResult));
 
-        private object _getHandlerInstance<TResult>(IQuery<TResult> query)
-        {
-            var queryType = query.GetType();
-            var handlerType = typeof(IQueryHandler<,>).MakeGenericType(queryType, typeof(TResult));
+        return _container.GetInstance(handlerType);
+    }
 
-            return _container.GetInstance(handlerType);
-        }
+    [DebuggerStepThrough]
+    public TResult Execute<TResult>(IQuery<TResult> query)
+    {
+        dynamic queryHandler = _getHandlerInstance(query);
 
-        [DebuggerStepThrough]
-        public TResult Execute<TResult>(IQuery<TResult> query)
-        {
-            dynamic queryHandler = _getHandlerInstance(query);
+        return queryHandler.Execute((dynamic)query);
+    }
 
-            return queryHandler.Execute((dynamic)query);
-        }
-
-        [DebuggerStepThrough]
-        public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
-        {
-            dynamic queryHandler = _getHandlerInstance(query);
-            TResult res = await queryHandler.ExecuteAsync((dynamic)query, ctk);
-            return res;
-        }
+    [DebuggerStepThrough]
+    public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
+    {
+        dynamic queryHandler = _getHandlerInstance(query);
+        TResult res = await queryHandler.ExecuteAsync((dynamic)query, ctk);
+        return res;
     }
 }

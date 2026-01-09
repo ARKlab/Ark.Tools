@@ -4,11 +4,10 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Sql
+namespace Ark.Tools.Sql;
+
+public interface IDbConnectionManager
 {
-    public interface IDbConnectionManager
-    {
-        DbConnection Get(string connectionString);
-        Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default);
-    }
+    DbConnection Get(string connectionString);
+    Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default);
 }

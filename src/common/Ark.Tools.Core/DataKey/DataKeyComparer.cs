@@ -4,54 +4,53 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Ark.Tools.Core.DataKey
+namespace Ark.Tools.Core.DataKey;
+
+public class DataKeyComparer<T> : IEqualityComparer<T>
+    where T : class
 {
-    public class DataKeyComparer<T> : IEqualityComparer<T>
-        where T : class
+    private static readonly PropertyInfo[] _keyProperties = typeof(T).GetProperties()
+            .Where(prop => prop.GetCustomAttributes(typeof(DataKeyAttribute), false).Length != 0)
+            .ToArray()
+            ;
+
+    public bool Equals(T? x, T? y)
     {
-        private static readonly PropertyInfo[] _keyProperties = typeof(T).GetProperties()
-                .Where(prop => prop.GetCustomAttributes(typeof(DataKeyAttribute), false).Length != 0)
-                .ToArray()
-                ;
+        if (x == null || y == null) return false;
+        if (_keyProperties.Length == 0) return x == y;
 
-        public bool Equals(T? x, T? y)
+        foreach (var prop in _keyProperties)
         {
-            if (x == null || y == null) return false;
-            if (_keyProperties.Length == 0) return x == y;
+            var xprop = prop.GetValue(x);
+            var yprop = prop.GetValue(y);
 
-            foreach (var prop in _keyProperties)
-            {
-                var xprop = prop.GetValue(x);
-                var yprop = prop.GetValue(y);
+            if ((xprop == null) ^ (yprop == null)) return false;
 
-                if ((xprop == null) ^ (yprop == null)) return false;
-
-                // null == false is false. if xprop is null, yprop is too give the XOR above so it's ok not to return.
-                // I want to catch only when xprop!=null and Equals return false so that false? == false
-                if (xprop?.Equals(yprop) == false)
-                    return false;
-            }
-
-            return true;
+            // null == false is false. if xprop is null, yprop is too give the XOR above so it's ok not to return.
+            // I want to catch only when xprop!=null and Equals return false so that false? == false
+            if (xprop?.Equals(yprop) == false)
+                return false;
         }
 
-        public int GetHashCode(T obj)
+        return true;
+    }
+
+    public int GetHashCode(T obj)
+    {
+        if (obj == null)
         {
-            if (obj == null)
-            {
-                return 0;
-            }
+            return 0;
+        }
 
-            if (_keyProperties.Length == 0) return obj.GetHashCode();
+        if (_keyProperties.Length == 0) return obj.GetHashCode();
 
-            unchecked // Overflow is fine, just wrap
-            {
-                int hash = 17;
-                foreach (var prop in _keyProperties)
-                    hash = hash * 23 + prop.GetValue(obj)?.GetHashCode() ?? 0;
+        unchecked // Overflow is fine, just wrap
+        {
+            int hash = 17;
+            foreach (var prop in _keyProperties)
+                hash = hash * 23 + prop.GetValue(obj)?.GetHashCode() ?? 0;
 
-                return hash;
-            }
+            return hash;
         }
     }
 }

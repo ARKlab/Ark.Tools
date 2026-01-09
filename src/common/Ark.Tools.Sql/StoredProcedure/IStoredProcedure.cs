@@ -2,19 +2,18 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Sql.StoredProcedure
-{
-    public interface IStoredProcedure<TResult> where TResult : notnull
-    {
-        TResult? LastResult { get; }
-        TResult? Execute();
-        Task<TResult?> ExecuteAsync();
-    }
+namespace Ark.Tools.Sql.StoredProcedure;
 
-    public interface IStoredProcedure<TResult, TParameter> where TResult : notnull
-    {
-        TResult? LastResult { get; }
-        TResult? Execute(TParameter param);
-        Task<TResult?> ExecuteAsync(TParameter param);
-    }
+public interface IStoredProcedure<TResult> where TResult : notnull
+{
+    TResult? LastResult { get; }
+    TResult? Execute();
+    Task<TResult?> ExecuteAsync();
+}
+
+public interface IStoredProcedure<TResult, TParameter> where TResult : notnull
+{
+    TResult? LastResult { get; }
+    TResult? Execute(TParameter param);
+    Task<TResult?> ExecuteAsync(TParameter param);
 }

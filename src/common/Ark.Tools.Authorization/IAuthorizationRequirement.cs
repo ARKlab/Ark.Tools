@@ -1,9 +1,8 @@
-﻿namespace Ark.Tools.Authorization
+namespace Ark.Tools.Authorization;
+
+/// <summary>
+/// Represents an authorization requirement.
+/// </summary>
+public interface IAuthorizationRequirement
 {
-    /// <summary>
-    /// Represents an authorization requirement.
-    /// </summary>
-    public interface IAuthorizationRequirement
-    {
-    }
 }

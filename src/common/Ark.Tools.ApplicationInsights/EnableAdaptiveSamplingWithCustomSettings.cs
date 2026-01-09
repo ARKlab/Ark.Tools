@@ -1,35 +1,34 @@
-﻿using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.Extensibility.Implementation;
 using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
 using Microsoft.Extensions.Options;
 
-namespace Ark.Tools.ApplicationInsights
+namespace Ark.Tools.ApplicationInsights;
+
+public class EnableAdaptiveSamplingWithCustomSettings : IConfigureOptions<TelemetryConfiguration>
 {
-    public class EnableAdaptiveSamplingWithCustomSettings : IConfigureOptions<TelemetryConfiguration>
+    private readonly IOptions<SamplingPercentageEstimatorSettings> _settings;
+
+    public EnableAdaptiveSamplingWithCustomSettings(IOptions<SamplingPercentageEstimatorSettings> settings)
     {
-        private readonly IOptions<SamplingPercentageEstimatorSettings> _settings;
+        this._settings = settings;
+    }
 
-        public EnableAdaptiveSamplingWithCustomSettings(IOptions<SamplingPercentageEstimatorSettings> settings)
+    public void Configure(TelemetryConfiguration tc)
+    {
+        void samplingCallback(double ratePerSecond, double currentPercentage, double newPercentage, bool isChanged, SamplingPercentageEstimatorSettings estimatorSettings)
         {
-            this._settings = settings;
-        }
-
-        public void Configure(TelemetryConfiguration tc)
-        {
-            void samplingCallback(double ratePerSecond, double currentPercentage, double newPercentage, bool isChanged, SamplingPercentageEstimatorSettings estimatorSettings)
+            if (isChanged)
             {
-                if (isChanged)
-                {
-                    tc.SetLastObservedSamplingPercentage(SamplingTelemetryItemTypes.Request, newPercentage);
-                }
+                tc.SetLastObservedSamplingPercentage(SamplingTelemetryItemTypes.Request, newPercentage);
             }
-
-            tc.DefaultTelemetrySink.TelemetryProcessorChainBuilder
-                .UseAdaptiveSampling(_settings.Value, samplingCallback, excludedTypes: "Event")
-                .UseAdaptiveSampling(_settings.Value, null, includedTypes: "Event")
-                .Build()
-                ;
         }
+
+        tc.DefaultTelemetrySink.TelemetryProcessorChainBuilder
+            .UseAdaptiveSampling(_settings.Value, samplingCallback, excludedTypes: "Event")
+            .UseAdaptiveSampling(_settings.Value, null, includedTypes: "Event")
+            .Build()
+            ;
     }
 }

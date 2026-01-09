@@ -17,48 +17,48 @@ using System.Threading.Tasks;
 
 using static Dapper.SqlMapper;
 
-namespace Ark.Reference.Core.Application.DAL
+namespace Ark.Reference.Core.Application.DAL;
+
+public partial class CoreDataContext_Sql
 {
-    public partial class CoreDataContext_Sql
+    private const string _schemaPing = "dbo";
+    private const string _tablePing = "Ping";
+
+    public async Task<Ping.V1.Output?> ReadPingByIdAsync(int id, CancellationToken ctk = default)
     {
-        private const string _schemaPing = "dbo";
-        private const string _tablePing = "Ping";
+        _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByIdAsync called");
 
-        public async Task<Ping.V1.Output?> ReadPingByIdAsync(int id, CancellationToken ctk = default)
+        var (data, _) = await ReadPingByFiltersAsync(new PingSearchQueryDto.V1()
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByIdAsync called");
+            Id = [id],
+            Limit = 1
+        }, ctk).ConfigureAwait(false);
 
-            var (data, _) = await ReadPingByFiltersAsync(new PingSearchQueryDto.V1()
-            {
-                Id = [id],
-                Limit = 1
-            }, ctk).ConfigureAwait(false);
+        _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByIdAsync ended");
 
-            _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByIdAsync ended");
+        return data.SingleOrDefault();
+    }
 
-            return data.SingleOrDefault();
-        }
+    public async Task<(IEnumerable<Ping.V1.Output> data, int count)> ReadPingByFiltersAsync(PingSearchQueryDto.V1 query, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByFiltersAsync called");
 
-        public async Task<(IEnumerable<Ping.V1.Output> data, int count)> ReadPingByFiltersAsync(PingSearchQueryDto.V1 query, CancellationToken ctk = default)
-        {
-            _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByFiltersAsync called");
-
-            var sortFields = query.Sort.CompileSorts(new Dictionary<string, string>
+        var sortFields = query.Sort.CompileSorts(new Dictionary<string, string>
 (StringComparer.Ordinal)
-            {
-                {"id", "E.[Id]" },
-            }, "E.[Id] DESC");
+        {
+            {"id", "E.[Id]" },
+        }, "E.[Id] DESC");
 
-            var parameters = new
-            {
-                @Id = query.Id,
-                @Name = query.Name,
-                @Type = query.Type?.Select(x => x.ToString()),
-                @Skip = query.Skip,
-                @Limit = query.Limit
-            };
+        var parameters = new
+        {
+            @Id = query.Id,
+            @Name = query.Name,
+            @Type = query.Type?.Select(x => x.ToString()),
+            @Skip = query.Skip,
+            @Limit = query.Limit
+        };
 
-            var cmdText = $@"
+        var cmdText = $@"
                 SELECT 
                       E.[Id]
                     , E.[Name]
@@ -72,32 +72,32 @@ namespace Ark.Reference.Core.Application.DAL
                   {(query.Name?.Length > 0 ? "AND E.[Name] IN @Name" : "")}
                   {(query.Type?.Length > 0 ? "AND E.[Type] IN @Type" : "")}
             "
-            .AsSqlServerPagedQuery(sortFields);
+        .AsSqlServerPagedQuery(sortFields);
 
-            var cmd = new CommandDefinition(cmdText, parameters, transaction: Transaction, cancellationToken: ctk);
+        var cmd = new CommandDefinition(cmdText, parameters, transaction: Transaction, cancellationToken: ctk);
 
-            var (data, count) = await Connection.ReadPagedAsync<PingView>(cmd).ConfigureAwait(false);
+        var (data, count) = await Connection.ReadPagedAsync<PingView>(cmd).ConfigureAwait(false);
 
-            var d = data.Select(s => s.ToOutput());
+        var d = data.Select(s => s.ToOutput());
 
-            _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByFiltersAsync ended");
+        _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByFiltersAsync ended");
 
-            return (d, count);
-        }
+        return (d, count);
+    }
 
-        public async Task<int> InsertPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
+    public async Task<int> InsertPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "InsertPingAsync called");
+
+        var parameters = new
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "InsertPingAsync called");
+            @Name = entity.Name,
+            @Type = entity.Type.ToString(),
+            @Code = entity.Code,
+            @AuditId = CurrentAudit?.AuditId,
+        };
 
-            var parameters = new
-            {
-                @Name = entity.Name,
-                @Type = entity.Type.ToString(),
-                @Code = entity.Code,
-                @AuditId = CurrentAudit?.AuditId,
-            };
-
-            var cmdText = $@"
+        var cmdText = $@"
                 INSERT INTO [{_schemaPing}].[{_tablePing}]
                 (
                       [Name]
@@ -117,34 +117,34 @@ namespace Ark.Reference.Core.Application.DAL
                   SCOPE_IDENTITY();
             ";
 
-            var cmd = new CommandDefinition(
-                cmdText,
-                parameters,
-                transaction: Transaction,
-                cancellationToken: ctk
-            );
+        var cmd = new CommandDefinition(
+            cmdText,
+            parameters,
+            transaction: Transaction,
+            cancellationToken: ctk
+        );
 
-            var id = await Connection.QuerySingleAsync<int>(cmd).ConfigureAwait(false);
+        var id = await Connection.QuerySingleAsync<int>(cmd).ConfigureAwait(false);
 
-            _logger.Trace(CultureInfo.InvariantCulture, "InsertPingAsync ended");
+        _logger.Trace(CultureInfo.InvariantCulture, "InsertPingAsync ended");
 
-            return id;
-        }
+        return id;
+    }
 
-        public async Task PutPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
+    public async Task PutPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "PutPingAsync called");
+
+        var parameters = new
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "PutPingAsync called");
+            @Id = entity.Id,
+            @Name = entity.Name,
+            @Type = entity.Type.ToString(),
+            @Code = entity.Code,
+            @AuditId = CurrentAudit?.AuditId,
+        };
 
-            var parameters = new
-            {
-                @Id = entity.Id,
-                @Name = entity.Name,
-                @Type = entity.Type.ToString(),
-                @Code = entity.Code,
-                @AuditId = CurrentAudit?.AuditId,
-            };
-
-            var query = @$"
+        var query = @$"
                 UPDATE  [{_schemaPing}].[{_tablePing}]
 
                 SET
@@ -157,41 +157,41 @@ namespace Ark.Reference.Core.Application.DAL
                 AND  [Id] = @Id
             ";
 
-            var cmd = new CommandDefinition(
-                query,
-                parameters,
-                transaction: Transaction
-            );
+        var cmd = new CommandDefinition(
+            query,
+            parameters,
+            transaction: Transaction
+        );
 
-            await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
+        await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
 
-            _logger.Trace(CultureInfo.InvariantCulture, "PutPingAsync ended");
+        _logger.Trace(CultureInfo.InvariantCulture, "PutPingAsync ended");
 
-            return;
-        }
+        return;
+    }
 
-        public async Task PatchPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
+    public async Task PatchPingAsync(Ping.V1.Output entity, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "PatchPingAsync called");
+
+        var parameters = new
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "PatchPingAsync called");
+            @Id = entity.Id,
+            @Name = entity.Name,
+            @Type = entity.Type?.ToString(),
+            @Code = entity.Code,
+            @AuditId = CurrentAudit?.AuditId,
+        };
 
-            var parameters = new
-            {
-                @Id = entity.Id,
-                @Name = entity.Name,
-                @Type = entity.Type?.ToString(),
-                @Code = entity.Code,
-                @AuditId = CurrentAudit?.AuditId,
-            };
+        var updateValues = new List<string>();
 
-            var updateValues = new List<string>();
+        if (entity.Name != null)
+            updateValues.Add($"[Name] = @Name");
 
-            if (entity.Name != null)
-                updateValues.Add($"[Name] = @Name");
+        if (entity.Type != null)
+            updateValues.Add($"[Type] = @Type");
 
-            if (entity.Type != null)
-                updateValues.Add($"[Type] = @Type");
-
-            var query = @$"
+        var query = @$"
                 UPDATE  [{_schemaPing}].[{_tablePing}]
 
                 SET
@@ -203,58 +203,58 @@ namespace Ark.Reference.Core.Application.DAL
                 AND  [Id] = @Id
             ";
 
-            var cmd = new CommandDefinition(
-                query,
-                parameters,
-                transaction: Transaction
-            );
+        var cmd = new CommandDefinition(
+            query,
+            parameters,
+            transaction: Transaction
+        );
 
-            await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
+        await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
 
-            _logger.Trace(CultureInfo.InvariantCulture, "PatchPingAsync ended");
+        _logger.Trace(CultureInfo.InvariantCulture, "PatchPingAsync ended");
 
-            return;
-        }
+        return;
+    }
 
-        public async Task DeletePingAsync(int id, CancellationToken ctk = default)
+    public async Task DeletePingAsync(int id, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "DeletePingAsync called");
+
+        var parameters = new
         {
-            _logger.Trace(CultureInfo.InvariantCulture, "DeletePingAsync called");
+            @Id = id
+        };
 
-            var parameters = new
-            {
-                @Id = id
-            };
-
-            var cmdText = $@"
+        var cmdText = $@"
                 DELETE FROM [{_schemaPing}].[{_tablePing}]
                 WHERE 1 = 1 
                     AND [Id] = @Id
             ";
 
-            var cmd = new CommandDefinition(
-                cmdText,
-                parameters,
-                transaction: Transaction,
-                cancellationToken: ctk
-            );
+        var cmd = new CommandDefinition(
+            cmdText,
+            parameters,
+            transaction: Transaction,
+            cancellationToken: ctk
+        );
 
-            await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
+        await Connection.ExecuteAsync(cmd).ConfigureAwait(false);
 
-            _logger.Trace(CultureInfo.InvariantCulture, "DeletePingAsync ended");
+        _logger.Trace(CultureInfo.InvariantCulture, "DeletePingAsync ended");
 
-            return;
-        }
+        return;
+    }
 
 
-        public async Task<(AuditedEntityDto<Ping.V1.Output>? pre, AuditedEntityDto<Ping.V1.Output>? cur)> ReadPingAuditAsync(Guid auditId, CancellationToken ctk = default)
+    public async Task<(AuditedEntityDto<Ping.V1.Output>? pre, AuditedEntityDto<Ping.V1.Output>? cur)> ReadPingAuditAsync(Guid auditId, CancellationToken ctk = default)
+    {
+        var param = new
         {
-            var param = new
-            {
-                @AuditId = auditId,
-            };
+            @AuditId = auditId,
+        };
 
-            var cmd = new CommandDefinition(
-                $@"
+        var cmd = new CommandDefinition(
+            $@"
                     SELECT 
                           F.[Id]
                         , F.[Name]
@@ -277,55 +277,53 @@ namespace Ark.Reference.Core.Application.DAL
                     WHERE 1=1
                             AND R.[AuditId] = @AuditId
                 ",
-                param, transaction: Transaction, cancellationToken: ctk
-             );
+            param, transaction: Transaction, cancellationToken: ctk
+         );
 
-            var data = await Connection.QueryAsync<PingView>(cmd).ConfigureAwait(false);
+        var data = await Connection.QueryAsync<PingView>(cmd).ConfigureAwait(false);
 
-            var resTable = data
-                .Select(s => new AuditedEntityDto<Ping.V1.Output>()
-                {
-                    Entity = s.ToOutput(),
-                    SysStartTime = s.SysStartTime!.Value,
-                    SysEndTime = s.SysEndTime!.Value
-                })
-                .ToList();
-
-            var cur = resTable.FirstOrDefault(w => w.Entity!.AuditId == auditId);
-            var pre = resTable.FirstOrDefault(w => w.Entity!.AuditId != auditId);
-
-            return (pre, cur);
-        }
-
-
-
-        #region Private view
-        private sealed record PingView
-        {
-            public int Id { get; set; }
-            public string? Name { get; set; }
-            public string? Type { get; set; }
-            public string? Code { get; set; }
-
-
-            public Guid AuditId { get; set; }
-            public Instant? SysStartTime { get; set; }
-            public Instant? SysEndTime { get; set; }
-
-            public Ping.V1.Output ToOutput()
+        var resTable = data
+            .Select(s => new AuditedEntityDto<Ping.V1.Output>()
             {
-                return new Ping.V1.Output
-                {
-                    Id = Id,
-                    Name = Name,
-                    Type = string.IsNullOrEmpty(Type) ? null : Enum.Parse<PingType>(Type),
-                    Code = Code,
+                Entity = s.ToOutput(),
+                SysStartTime = s.SysStartTime!.Value,
+                SysEndTime = s.SysEndTime!.Value
+            })
+            .ToList();
 
-                    AuditId = AuditId,
-                };
-            }
-        }
-        #endregion
+        var cur = resTable.FirstOrDefault(w => w.Entity!.AuditId == auditId);
+        var pre = resTable.FirstOrDefault(w => w.Entity!.AuditId != auditId);
+
+        return (pre, cur);
     }
 
+
+
+    #region Private view
+    private sealed record PingView
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public string? Type { get; set; }
+        public string? Code { get; set; }
+
+
+        public Guid AuditId { get; set; }
+        public Instant? SysStartTime { get; set; }
+        public Instant? SysEndTime { get; set; }
+
+        public Ping.V1.Output ToOutput()
+        {
+            return new Ping.V1.Output
+            {
+                Id = Id,
+                Name = Name,
+                Type = string.IsNullOrEmpty(Type) ? null : Enum.Parse<PingType>(Type),
+                Code = Code,
+
+                AuditId = AuditId,
+            };
+        }
+    }
+    #endregion
 }

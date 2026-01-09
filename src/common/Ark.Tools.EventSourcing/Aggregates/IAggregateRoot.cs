@@ -1,12 +1,8 @@
-﻿namespace Ark.Tools.EventSourcing.Aggregates
+namespace Ark.Tools.EventSourcing.Aggregates;
+
+public interface IAggregateRoot
 {
-    public interface IAggregateRoot
-    {
-        string Identifier { get; }
-        long Version { get; }
-        bool IsNew { get; }
-    }
-
-
-
+    string Identifier { get; }
+    long Version { get; }
+    bool IsNew { get; }
 }

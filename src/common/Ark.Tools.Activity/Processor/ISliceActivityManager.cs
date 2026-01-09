@@ -1,15 +1,12 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
-namespace Ark.Tools.Activity.Processor
+namespace Ark.Tools.Activity.Processor;
+
+public interface ISliceActivityManager
 {
-    public interface ISliceActivityManager
-    {
-        Task Start();
-    }
+    Task Start();
+}
 
-    public interface ISliceActivityManager<T> : ISliceActivityManager where T : class, ISliceActivity
-    {
-    }
-
-
+public interface ISliceActivityManager<T> : ISliceActivityManager where T : class, ISliceActivity
+{
 }

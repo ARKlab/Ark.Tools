@@ -1,27 +1,26 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 
-namespace Ark.Tools.NewtonsoftJson
+namespace Ark.Tools.NewtonsoftJson;
+
+// for quick retrocompatibility
+public class ArkDefaultJsonSerializerSettings : ArkJsonSerializerSettings
 {
-    // for quick retrocompatibility
-    public class ArkDefaultJsonSerializerSettings : ArkJsonSerializerSettings
-    {
-        public static ArkDefaultJsonSerializerSettings Instance { get; } = new ArkDefaultJsonSerializerSettings();
-    }
+    public static ArkDefaultJsonSerializerSettings Instance { get; } = new ArkDefaultJsonSerializerSettings();
+}
 
-    public class ArkJsonSerializerSettings : JsonSerializerSettings
-    {
+public class ArkJsonSerializerSettings : JsonSerializerSettings
+{
 
-        public ArkJsonSerializerSettings()
-        {
-            this.ConfigureArkDefaults();
-        }
-    }
-
-    /// <summary>
-    /// JsonSerializer with ArkDefaultSettings
-    /// </summary>
-    public static class ArkJsonSerializer
+    public ArkJsonSerializerSettings()
     {
-        public static JsonSerializer Instance { get; } = JsonSerializer.Create(ArkDefaultJsonSerializerSettings.Instance);
+        this.ConfigureArkDefaults();
     }
+}
+
+/// <summary>
+/// JsonSerializer with ArkDefaultSettings
+/// </summary>
+public static class ArkJsonSerializer
+{
+    public static JsonSerializer Instance { get; } = JsonSerializer.Create(ArkDefaultJsonSerializerSettings.Instance);
 }

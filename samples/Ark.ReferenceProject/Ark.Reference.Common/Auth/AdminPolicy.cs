@@ -2,13 +2,12 @@
 using Ark.Tools.Authorization.Requirement;
 
 
-namespace Ark.Reference.Common.Auth
+namespace Ark.Reference.Common.Auth;
+
+public class AdminPolicy : AuthorizationPolicy
 {
-    public class AdminPolicy : AuthorizationPolicy
+    protected override void Build(AuthorizationPolicyBuilder builder)
     {
-        protected override void Build(AuthorizationPolicyBuilder builder)
-        {
-            builder.RequireUserPermission(Permissions.Admin);
-        }
+        builder.RequireUserPermission(Permissions.Admin);
     }
 }

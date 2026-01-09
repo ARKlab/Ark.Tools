@@ -1,12 +1,11 @@
 using Ark.Tools.Solid;
 
-namespace Ark.Reference.Core.API.Requests
+namespace Ark.Reference.Core.API.Requests;
+
+public static class Book_DeleteRequest
 {
-    public static class Book_DeleteRequest
+    public record V1 : IRequest<bool>
     {
-        public record V1 : IRequest<bool>
-        {
-            public int Id { get; init; }
-        }
+        public int Id { get; init; }
     }
 }

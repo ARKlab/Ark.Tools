@@ -11,38 +11,37 @@ using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using NodaTime;
 
-namespace Ark.ResourceWatcher.Sample.Host
+namespace Ark.ResourceWatcher.Sample.Host;
+
+/// <summary>
+/// Worker host for processing blobs from external storage.
+/// </summary>
+public sealed class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
 {
     /// <summary>
-    /// Worker host for processing blobs from external storage.
+    /// Initializes a new instance of the <see cref="MyWorkerHost"/> class.
     /// </summary>
-    public sealed class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
+    /// <param name="config">The worker host configuration.</param>
+    public MyWorkerHost(MyWorkerHostConfig config)
+        : base(config)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MyWorkerHost"/> class.
-        /// </summary>
-        /// <param name="config">The worker host configuration.</param>
-        public MyWorkerHost(MyWorkerHostConfig config)
-            : base(config)
+        Use(d =>
         {
-            Use(d =>
-            {
-                // commond deps
-                d.Container.RegisterInstance<IArkFlurlClientFactory>(new ArkFlurlClientFactory());
-                d.Container.RegisterInstance<IClock>(SystemClock.Instance);
-            });
+            // commond deps
+            d.Container.RegisterInstance<IArkFlurlClientFactory>(new ArkFlurlClientFactory());
+            d.Container.RegisterInstance<IClock>(SystemClock.Instance);
+        });
 
-            UseDataProvider<MyStorageResourceProvider>(d =>
-            {
-                d.Container.RegisterInstance<IMyStorageResourceProviderConfig>(config);
-            });
+        UseDataProvider<MyStorageResourceProvider>(d =>
+        {
+            d.Container.RegisterInstance<IMyStorageResourceProviderConfig>(config);
+        });
 
-            AppendFileProcessor<MyResourceProcessor>(d =>
-            {
-                d.Container.RegisterInstance<IMyResourceProcessorConfig>(config);
-            });
+        AppendFileProcessor<MyResourceProcessor>(d =>
+        {
+            d.Container.RegisterInstance<IMyResourceProcessorConfig>(config);
+        });
 
-            UseStateProvider<InMemStateProvider>();
-        }
+        UseStateProvider<InMemStateProvider>();
     }
 }

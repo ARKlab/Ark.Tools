@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.Solid;
+
 using System;
 
 
@@ -8,20 +9,19 @@ using System.Threading.Tasks;
 using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;
 
-namespace WebApplicationDemo.Application.Handlers.Requests
+namespace WebApplicationDemo.Application.Handlers.Requests;
+
+public class Post_PolymorphicRequestHandler : IRequestHandler<Post_PolymorphicRequest.V1, Polymorphic?>
 {
-    public class Post_PolymorphicRequestHandler : IRequestHandler<Post_PolymorphicRequest.V1, Polymorphic?>
+    public Polymorphic? Execute(Post_PolymorphicRequest.V1 request)
     {
-        public Polymorphic? Execute(Post_PolymorphicRequest.V1 request)
-        {
-            return ExecuteAsync(request).ConfigureAwait(true).GetAwaiter().GetResult();
-        }
+        return ExecuteAsync(request).ConfigureAwait(true).GetAwaiter().GetResult();
+    }
 
-        public async Task<Polymorphic?> ExecuteAsync(Post_PolymorphicRequest.V1 request, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(request);
+    public async Task<Polymorphic?> ExecuteAsync(Post_PolymorphicRequest.V1 request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-            return await Task.FromResult(request.Entity).ConfigureAwait(false);
-        }
+        return await Task.FromResult(request.Entity).ConfigureAwait(false);
     }
 }

@@ -1,10 +1,9 @@
-﻿namespace System.Text.Json
+namespace System.Text.Json;
+
+/// <summary>
+/// JsonSerializer with ArkDefaultSettings
+/// </summary>
+public static class ArkSerializerOptions
 {
-    /// <summary>
-    /// JsonSerializer with ArkDefaultSettings
-    /// </summary>
-    public static class ArkSerializerOptions
-    {
-        public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    }
+    public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
 }

@@ -5,20 +5,19 @@ using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Ark.Tools.AspNetCore.Swashbuckle
+namespace Ark.Tools.AspNetCore.Swashbuckle;
+
+public class PrettifyOperationIdOperationFilter : IOperationFilter
 {
-    public class PrettifyOperationIdOperationFilter : IOperationFilter
+    public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        if (context.ApiDescription.ActionDescriptor is ControllerActionDescriptor cad)
         {
-            if (context.ApiDescription.ActionDescriptor is ControllerActionDescriptor cad)
-            {
-                operation.OperationId = $@"{context.ApiDescription.HttpMethod}{context.ApiDescription.RelativePath?
-                    .Replace(@"v{api-version}", "", System.StringComparison.Ordinal)
-                    .Replace(@"/", @"_", System.StringComparison.Ordinal)
-                    .Replace(@"{", @"_", System.StringComparison.Ordinal)
-                    .Replace(@"}", @"_", System.StringComparison.Ordinal)}";
-            }
+            operation.OperationId = $@"{context.ApiDescription.HttpMethod}{context.ApiDescription.RelativePath?
+                .Replace(@"v{api-version}", "", System.StringComparison.Ordinal)
+                .Replace(@"/", @"_", System.StringComparison.Ordinal)
+                .Replace(@"{", @"_", System.StringComparison.Ordinal)
+                .Replace(@"}", @"_", System.StringComparison.Ordinal)}";
         }
     }
 }

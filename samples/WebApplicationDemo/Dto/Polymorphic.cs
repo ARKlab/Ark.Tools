@@ -9,84 +9,83 @@ using NodaTime;
 using System;
 using System.Collections.Generic;
 
-namespace WebApplicationDemo.Dto
+namespace WebApplicationDemo.Dto;
+
+public enum BaseKind
 {
-    public enum BaseKind
+    A, B
+}
+
+[JsonConverter(typeof(PolymorphicConverter))]
+[System.Text.Json.Serialization.JsonConverter(typeof(PolymorphicConverterSTJ))]
+public abstract class Polymorphic
+{
+    public string? Id { get; set; }
+    public BaseKind Kind { get; set; }
+}
+
+public class A : Polymorphic
+{
+    public A() : base()
     {
-        A, B
+        Kind = BaseKind.A;
     }
 
-    [JsonConverter(typeof(PolymorphicConverter))]
-    [System.Text.Json.Serialization.JsonConverter(typeof(PolymorphicConverterSTJ))]
-    public abstract class Polymorphic
+    public int ValueFromA { get; set; }
+    public LocalDateRange? Range { get; set; }
+
+    public IList<string> StringList { get; set; } = new List<string>();
+    public IDictionary<LocalDate, double?> Ts { get; set; } = new Dictionary<LocalDate, double?>();
+}
+
+public class B : Polymorphic
+{
+    public B() : base()
     {
-        public string? Id { get; set; }
-        public BaseKind Kind { get; set; }
+        Kind = BaseKind.B;
     }
 
-    public class A : Polymorphic
+    public int ValueFromB { get; set; }
+}
+
+sealed class PolymorphicConverterSTJ : Ark.Tools.SystemTextJson.JsonPolymorphicConverter<Polymorphic, BaseKind>
+{
+    public PolymorphicConverterSTJ()
+        : base(nameof(Polymorphic.Kind))
     {
-        public A() : base()
+    }
+
+    protected override Type GetType(BaseKind discriminatorValue)
+    {
+        switch (discriminatorValue)
         {
-            Kind = BaseKind.A;
+            case BaseKind.A:
+                return typeof(A);
+            case BaseKind.B:
+                return typeof(B);
         }
 
-        public int ValueFromA { get; set; }
-        public LocalDateRange? Range { get; set; }
-
-        public IList<string> StringList { get; set; } = new List<string>();
-        public IDictionary<LocalDate, double?> Ts { get; set; } = new Dictionary<LocalDate, double?>();
+        throw new NotSupportedException();
     }
+}
 
-    public class B : Polymorphic
+
+sealed class PolymorphicConverter : JsonPolymorphicConverter<Polymorphic>
+{
+    protected override Polymorphic Create(Type objectType, JObject jObject)
     {
-        public B() : base()
+        if (jObject.TryGetValue(nameof(Polymorphic.Kind), StringComparison.OrdinalIgnoreCase, out var token))
         {
-            Kind = BaseKind.B;
-        }
-
-        public int ValueFromB { get; set; }
-    }
-
-    sealed class PolymorphicConverterSTJ : Ark.Tools.SystemTextJson.JsonPolymorphicConverter<Polymorphic, BaseKind>
-    {
-        public PolymorphicConverterSTJ()
-            : base(nameof(Polymorphic.Kind))
-        {
-        }
-
-        protected override Type GetType(BaseKind discriminatorValue)
-        {
-            switch (discriminatorValue)
+            var kind = token.ToObject<BaseKind>();
+            switch (kind)
             {
                 case BaseKind.A:
-                    return typeof(A);
+                    return new A();
                 case BaseKind.B:
-                    return typeof(B);
+                    return new B();
             }
-
-            throw new NotSupportedException();
         }
-    }
 
-
-    sealed class PolymorphicConverter : JsonPolymorphicConverter<Polymorphic>
-    {
-        protected override Polymorphic Create(Type objectType, JObject jObject)
-        {
-            if (jObject.TryGetValue(nameof(Polymorphic.Kind), StringComparison.OrdinalIgnoreCase, out var token))
-            {
-                var kind = token.ToObject<BaseKind>();
-                switch (kind)
-                {
-                    case BaseKind.A:
-                        return new A();
-                    case BaseKind.B:
-                        return new B();
-                }
-            }
-
-            throw new InvalidOperationException("Can't deserialize SourceEntry. SourceEntry.Kind field not found or not valid.");
-        }
+        throw new InvalidOperationException("Can't deserialize SourceEntry. SourceEntry.Kind field not found or not valid.");
     }
 }

@@ -1,28 +1,27 @@
 ﻿using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Query.Validator;
 
-namespace Ark.Tools.AspNetCore.RavenDb
+namespace Ark.Tools.AspNetCore.RavenDb;
+
+public class RavenDefaultODataValidationSettings : ODataValidationSettings
 {
-    public class RavenDefaultODataValidationSettings : ODataValidationSettings
+    public RavenDefaultODataValidationSettings()
     {
-        public RavenDefaultODataValidationSettings()
-        {
-            AllowedQueryOptions = AllowedQueryOptions.Top
-                                | AllowedQueryOptions.Skip
-                                | AllowedQueryOptions.Filter
-                                | AllowedQueryOptions.OrderBy
-                                ;
+        AllowedQueryOptions = AllowedQueryOptions.Top
+                            | AllowedQueryOptions.Skip
+                            | AllowedQueryOptions.Filter
+                            | AllowedQueryOptions.OrderBy
+                            ;
 
-            AllowedFunctions = AllowedFunctions.Any
-                             | AllowedFunctions.EndsWith
-                             & ~(AllowedFunctions.Contains)
-                             ;
+        AllowedFunctions = AllowedFunctions.Any
+                         | AllowedFunctions.EndsWith
+                         & ~(AllowedFunctions.Contains)
+                         ;
 
-            AllowedLogicalOperators = AllowedLogicalOperators.All;
+        AllowedLogicalOperators = AllowedLogicalOperators.All;
 
-            MaxAnyAllExpressionDepth = 5;
+        MaxAnyAllExpressionDepth = 5;
 
-            MaxTop = 1000;
-        }
+        MaxTop = 1000;
     }
 }

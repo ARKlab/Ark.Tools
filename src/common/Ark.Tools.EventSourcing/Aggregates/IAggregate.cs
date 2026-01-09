@@ -1,6 +1,5 @@
-﻿namespace Ark.Tools.EventSourcing.Aggregates
+namespace Ark.Tools.EventSourcing.Aggregates;
+
+public interface IAggregate
 {
-    public interface IAggregate
-    {
-    }
 }

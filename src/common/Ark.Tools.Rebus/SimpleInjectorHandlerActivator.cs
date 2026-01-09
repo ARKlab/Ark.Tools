@@ -1,4 +1,4 @@
-﻿using Rebus.Activation;
+using Rebus.Activation;
 using Rebus.Handlers;
 using Rebus.Transport;
 
@@ -7,15 +7,14 @@ using SimpleInjector;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Rebus
-{
-    public class SimpleInjectorHandlerActivator : IHandlerActivator
-    {
-        readonly Container _container;
-        public SimpleInjectorHandlerActivator(Container container) { _container = container; }
+namespace Ark.Tools.Rebus;
 
-        public Task<IEnumerable<IHandleMessages<TMessage>>> GetHandlers<TMessage>(
-            TMessage m, ITransactionContext transactionContext) =>
-            Task.FromResult(_container.GetAllInstances<IHandleMessages<TMessage>>());
-    }
+public class SimpleInjectorHandlerActivator : IHandlerActivator
+{
+    readonly Container _container;
+    public SimpleInjectorHandlerActivator(Container container) { _container = container; }
+
+    public Task<IEnumerable<IHandleMessages<TMessage>>> GetHandlers<TMessage>(
+        TMessage m, ITransactionContext transactionContext) =>
+        Task.FromResult(_container.GetAllInstances<IHandleMessages<TMessage>>());
 }

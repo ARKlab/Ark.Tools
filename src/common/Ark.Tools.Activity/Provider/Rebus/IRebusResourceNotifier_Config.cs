@@ -1,10 +1,9 @@
-﻿
-namespace Ark.Tools.Activity.Provider
+
+namespace Ark.Tools.Activity.Provider;
+
+public interface IRebusResourceNotifier_Config
 {
-    public interface IRebusResourceNotifier_Config
-    {
-        string ProviderName { get; }
-        string AsbConnectionString { get; }
-        bool StartAtCreation { get; }
-    }
+    string ProviderName { get; }
+    string AsbConnectionString { get; }
+    bool StartAtCreation { get; }
 }

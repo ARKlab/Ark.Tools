@@ -1,33 +1,32 @@
-﻿using Rebus.Logging;
+using Rebus.Logging;
 using Rebus.Transport;
 using Rebus.Workers.ThreadPoolBased;
 
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Outbox.Rebus
+namespace Ark.Tools.Outbox.Rebus;
+
+
+internal sealed class RebusOutboxProcessor : RebusOutboxProcessorCore
 {
+    private readonly IOutboxContextFactory _outboxContextFactory;
 
-    internal sealed class RebusOutboxProcessor : RebusOutboxProcessorCore
+    public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory)
+        : base(topMessagesToRetrieve, transport, backoffStrategy, rebusLoggerFactory)
     {
-        private readonly IOutboxContextFactory _outboxContextFactory;
+        _outboxContextFactory = outboxContextFactory;
+    }
 
-        public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory)
-            : base(topMessagesToRetrieve, transport, backoffStrategy, rebusLoggerFactory)
+    protected override async Task<bool> _loop(CancellationToken ctk)
+    {
+        bool waitForMessages = true;
+        using (var ctx = _outboxContextFactory.Create())
         {
-            _outboxContextFactory = outboxContextFactory;
+            waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
+            ctx.Commit();
         }
 
-        protected override async Task<bool> _loop(CancellationToken ctk)
-        {
-            bool waitForMessages = true;
-            using (var ctx = _outboxContextFactory.Create())
-            {
-                waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
-                ctx.Commit();
-            }
-
-            return waitForMessages;
-        }
+        return waitForMessages;
     }
 }

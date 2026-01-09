@@ -1,15 +1,14 @@
-﻿using Ark.Tools.EventSourcing.Events;
+using Ark.Tools.EventSourcing.Events;
 
-namespace Ark.Tools.EventSourcing.Aggregates
+namespace Ark.Tools.EventSourcing.Aggregates;
+
+
+public sealed class AggregateEventEnvelope<TAggregate>
+    : EventEnvelope<IAggregateEvent<TAggregate>>
+    where TAggregate : IAggregate
 {
-
-    public sealed class AggregateEventEnvelope<TAggregate>
-        : EventEnvelope<IAggregateEvent<TAggregate>>
-        where TAggregate : IAggregate
+    public AggregateEventEnvelope(IAggregateEvent<TAggregate> aggregateEvent, IMetadata metadata)
+        : base(aggregateEvent, metadata)
     {
-        public AggregateEventEnvelope(IAggregateEvent<TAggregate> aggregateEvent, IMetadata metadata)
-            : base(aggregateEvent, metadata)
-        {
-        }
     }
 }

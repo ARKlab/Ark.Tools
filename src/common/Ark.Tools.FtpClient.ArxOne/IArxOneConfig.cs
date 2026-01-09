@@ -1,14 +1,13 @@
-﻿using Ark.Tools.FtpClient.Core;
+using Ark.Tools.FtpClient.Core;
 
 using ArxOne.Ftp;
 
 using System;
 
-namespace Ark.Tools.FtpClient
+namespace Ark.Tools.FtpClient;
+
+public interface IArxOneConfig
 {
-    public interface IArxOneConfig
-    {
-        ISocksConfig? SocksConfig { get; }
-        Action<FtpClientParameters>? Configurer { get; }
-    }
+    ISocksConfig? SocksConfig { get; }
+    Action<FtpClientParameters>? Configurer { get; }
 }

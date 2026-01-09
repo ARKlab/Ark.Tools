@@ -1,9 +1,8 @@
-﻿namespace Ark.Reference.Core.Application.Config
+﻿namespace Ark.Reference.Core.Application.Config;
+
+public interface IRebusBusConfig
 {
-    public interface IRebusBusConfig
-    {
-        string? AsbConnectionString { get; }
-        string? RequestQueue { get; }
-        string? StorageConnectionString { get; }
-    }
+    string? AsbConnectionString { get; }
+    string? RequestQueue { get; }
+    string? StorageConnectionString { get; }
 }

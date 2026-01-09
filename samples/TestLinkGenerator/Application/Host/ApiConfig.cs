@@ -1,6 +1,5 @@
-﻿namespace TestWithoutArkTools.Application.Host
+﻿namespace TestWithoutArkTools.Application.Host;
+
+public class ApiConfig
 {
-    public class ApiConfig
-    {
-    }
 }

@@ -1,14 +1,13 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 
-namespace Ark.Tools.FtpClient.FluentFtp
+namespace Ark.Tools.FtpClient.FluentFtp;
+
+public sealed class FluentFtpClientFactory : DefaultFtpClientFactory
 {
-    public sealed class FluentFtpClientFactory : DefaultFtpClientFactory
+    public FluentFtpClientFactory()
+        : base(new FluentFtpClientConnectionFactory())
     {
-        public FluentFtpClientFactory()
-            : base(new FluentFtpClientConnectionFactory())
-        {
-        }
     }
 }

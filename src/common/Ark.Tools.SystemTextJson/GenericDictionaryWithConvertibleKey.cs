@@ -1,4 +1,4 @@
-﻿using Ark.Tools.Core;
+using Ark.Tools.Core;
 
 using System;
 using System.Collections.Generic;
@@ -6,76 +6,75 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Ark.Tools.SystemTextJson
+namespace Ark.Tools.SystemTextJson;
+
+public sealed class GenericDictionaryWithConvertibleKey : JsonConverterFactory
 {
-    public sealed class GenericDictionaryWithConvertibleKey : JsonConverterFactory
+    public override bool CanConvert(Type typeToConvert)
     {
-        public override bool CanConvert(Type typeToConvert)
+        Type? actualTypeToConvert;
+        Type? keyType = null;
+        if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericBaseClass(typeof(Dictionary<,>))) != null)
         {
-            Type? actualTypeToConvert;
-            Type? keyType = null;
-            if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericBaseClass(typeof(Dictionary<,>))) != null)
-            {
-                keyType = actualTypeToConvert.GetGenericArguments()[0];
-            }
-            else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IDictionary<,>))) != null)
-            {
-                keyType = actualTypeToConvert.GetGenericArguments()[0];
-            }
-            else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IReadOnlyDictionary<,>))) != null)
-            {
-                keyType = actualTypeToConvert.GetGenericArguments()[0];
-            }
-
-            if (keyType != null && keyType != typeof(string))
-            {
-                var converter = TypeDescriptor.GetConverter(keyType);
-                return converter.CanConvertFrom(typeof(string)) && converter.CanConvertTo(typeof(string));
-            }
-
-            return false;
+            keyType = actualTypeToConvert.GetGenericArguments()[0];
+        }
+        else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IDictionary<,>))) != null)
+        {
+            keyType = actualTypeToConvert.GetGenericArguments()[0];
+        }
+        else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IReadOnlyDictionary<,>))) != null)
+        {
+            keyType = actualTypeToConvert.GetGenericArguments()[0];
         }
 
-        public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+        if (keyType != null && keyType != typeof(string))
         {
-            Type? actualTypeToConvert;
-            Type? converterType = null;
-            if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericBaseClass(typeof(Dictionary<,>))) != null)
-            {
-                var args = actualTypeToConvert.GetGenericArguments();
-                var keyType = args[0];
-                var elementType = args[1];
+            var converter = TypeDescriptor.GetConverter(keyType);
+            return converter.CanConvertFrom(typeof(string)) && converter.CanConvertTo(typeof(string));
+        }
 
-                converterType = typeof(DictionaryBaseConverter<,,>)
+        return false;
+    }
+
+    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        Type? actualTypeToConvert;
+        Type? converterType = null;
+        if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericBaseClass(typeof(Dictionary<,>))) != null)
+        {
+            var args = actualTypeToConvert.GetGenericArguments();
+            var keyType = args[0];
+            var elementType = args[1];
+
+            converterType = typeof(DictionaryBaseConverter<,,>)
+                .MakeGenericType(typeToConvert, keyType, elementType);
+        }
+        else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IDictionary<,>))) != null)
+        {
+            var args = actualTypeToConvert.GetGenericArguments();
+            var keyType = args[0];
+            var elementType = args[1];
+
+            if (actualTypeToConvert == typeToConvert)
+                converterType = typeof(DictionaryConverter<,>)
+                    .MakeGenericType(keyType, elementType);
+            else
+                converterType = typeof(IDictionaryBaseConverter<,,>)
                     .MakeGenericType(typeToConvert, keyType, elementType);
-            }
-            else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IDictionary<,>))) != null)
-            {
-                var args = actualTypeToConvert.GetGenericArguments();
-                var keyType = args[0];
-                var elementType = args[1];
-
-                if (actualTypeToConvert == typeToConvert)
-                    converterType = typeof(DictionaryConverter<,>)
-                        .MakeGenericType(keyType, elementType);
-                else
-                    converterType = typeof(IDictionaryBaseConverter<,,>)
-                        .MakeGenericType(typeToConvert, keyType, elementType);
-            }
-            else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IReadOnlyDictionary<,>))) != null)
-            {
-                var args = actualTypeToConvert.GetGenericArguments();
-                var keyType = args[0];
-                var elementType = args[1];
-
-                converterType = typeof(ReadOnlyDictionaryConverter<,>)
-                        .MakeGenericType(keyType, elementType);
-            }
-
-            if (converterType != null)
-                return (JsonConverter?)Activator.CreateInstance(converterType, options);
-
-            return null;
         }
+        else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IReadOnlyDictionary<,>))) != null)
+        {
+            var args = actualTypeToConvert.GetGenericArguments();
+            var keyType = args[0];
+            var elementType = args[1];
+
+            converterType = typeof(ReadOnlyDictionaryConverter<,>)
+                    .MakeGenericType(keyType, elementType);
+        }
+
+        if (converterType != null)
+            return (JsonConverter?)Activator.CreateInstance(converterType, options);
+
+        return null;
     }
 }

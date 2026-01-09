@@ -5,20 +5,19 @@ using NodaTime;
 using System;
 using System.Collections.Generic;
 
-namespace Ark.Tools.ResourceWatcher
-{
+namespace Ark.Tools.ResourceWatcher;
 
-    public class ResourceState : IResourceTrackedState
-    {
-        public virtual string? Tenant { get; set; }
-        public virtual string ResourceId { get; set; } = string.Empty;
-        public virtual string? CheckSum { get; set; }
-        public virtual LocalDateTime Modified { get; set; }
-        public virtual Dictionary<string, LocalDateTime>? ModifiedSources { get; set; }
-        public virtual Instant LastEvent { get; set; }
-        public virtual Instant? RetrievedAt { get; set; }
-        public virtual int RetryCount { get; set; }
-        public virtual object? Extensions { get; set; }
-        public virtual Exception? LastException { get; set; }
-    }
+
+public class ResourceState : IResourceTrackedState
+{
+    public virtual string? Tenant { get; set; }
+    public virtual string ResourceId { get; set; } = string.Empty;
+    public virtual string? CheckSum { get; set; }
+    public virtual LocalDateTime Modified { get; set; }
+    public virtual Dictionary<string, LocalDateTime>? ModifiedSources { get; set; }
+    public virtual Instant LastEvent { get; set; }
+    public virtual Instant? RetrievedAt { get; set; }
+    public virtual int RetryCount { get; set; }
+    public virtual object? Extensions { get; set; }
+    public virtual Exception? LastException { get; set; }
 }

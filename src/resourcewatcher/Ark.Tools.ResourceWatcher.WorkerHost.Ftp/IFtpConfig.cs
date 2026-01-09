@@ -4,13 +4,12 @@ using Ark.Tools.FtpClient.Core;
 
 using System;
 
-namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp
+namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
+
+public interface IFtpConfig
 {
-    public interface IFtpConfig
-    {
-        FtpConfig FtpConfig { get; }
-        TimeSpan ListingTimeout { get; }
-        TimeSpan DownloadTimeout { get; }
-        int MaxConcurrentConnections { get; }
-    }
+    FtpConfig FtpConfig { get; }
+    TimeSpan ListingTimeout { get; }
+    TimeSpan DownloadTimeout { get; }
+    int MaxConcurrentConnections { get; }
 }

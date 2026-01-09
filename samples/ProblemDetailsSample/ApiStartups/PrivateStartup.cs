@@ -19,69 +19,68 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
-namespace ProblemDetailsSample
+namespace ProblemDetailsSample;
+
+public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
 {
-    public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
+    public PrivateStartup(IConfiguration config, IHostEnvironment env, IServiceProvider provider)
+        : base(config, env, true)
     {
-        public PrivateStartup(IConfiguration config, IHostEnvironment env, IServiceProvider provider)
-            : base(config, env, true)
+        ServiceProvider = provider;
+    }
+
+    public override IEnumerable<ApiVersion> Versions => ProblemDetailsSampleConstants
+        .PrivateVersions
+        .Reverse()
+        .Select(x =>
         {
-            ServiceProvider = provider;
-        }
+            var split = x.Split('.').Select(v => int.Parse(v, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture)).ToArray();
+            return new ApiVersion(split[0], split[1]);
+        });
 
-        public override IEnumerable<ApiVersion> Versions => ProblemDetailsSampleConstants
-            .PrivateVersions
-            .Reverse()
-            .Select(x =>
-            {
-                var split = x.Split('.').Select(v => int.Parse(v, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture)).ToArray();
-                return new ApiVersion(split[0], split[1]);
-            });
+    public IServiceProvider ServiceProvider { get; }
 
-        public IServiceProvider ServiceProvider { get; }
+    public override OpenApiInfo MakeInfo(ApiVersion version)
+        => new()
+        { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV", CultureInfo.InvariantCulture) };
 
-        public override OpenApiInfo MakeInfo(ApiVersion version)
-            => new()
-            { Title = "ProblemDetailsSample Private API", Version = version.ToString("VVVV", CultureInfo.InvariantCulture) };
+    // This method gets called by the runtime. Use this method to add services to the container.
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        base.ConfigureServices(services);
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public override void ConfigureServices(IServiceCollection services)
+        //Removed AUTH 
+
+        services.ArkConfigureSwaggerUI(c =>
         {
-            base.ConfigureServices(services);
+            c.MaxDisplayedTags(100);
+            c.DefaultModelRendering(ModelRendering.Example);
+            c.ShowExtensions();
+        });
 
-            //Removed AUTH 
+        //services.ConfigureSwaggerGen(c =>
+        //{
+        //    c.IncludeXmlCommentsForAssembly<UrlComposer>();
+        //    c.DocumentFilter<AddUserImpersonationScope>();
+        //});
 
-            services.ArkConfigureSwaggerUI(c =>
-            {
-                c.MaxDisplayedTags(100);
-                c.DefaultModelRendering(ModelRendering.Example);
-                c.ShowExtensions();
-            });
+        //services.AddMvcCore()
+        //    .AddMvcOptions(opt =>
+        //    {
+        //        opt.Filters.Add(new OfferPricingExceptionFilter());
+        //    });
+    }
 
-            //services.ConfigureSwaggerGen(c =>
-            //{
-            //    c.IncludeXmlCommentsForAssembly<UrlComposer>();
-            //    c.DocumentFilter<AddUserImpersonationScope>();
-            //});
+    protected override void RegisterContainer(IServiceProvider services)
+    {
+        base.RegisterContainer(services);
 
-            //services.AddMvcCore()
-            //    .AddMvcOptions(opt =>
-            //    {
-            //        opt.Filters.Add(new OfferPricingExceptionFilter());
-            //    });
-        }
-
-        protected override void RegisterContainer(IServiceProvider services)
+        var cfg = new ApiConfig()
         {
-            base.RegisterContainer(services);
+        };
 
-            var cfg = new ApiConfig()
-            {
-            };
+        var apiHost = new ApiHost(cfg)
+            .WithContainer(Container);
 
-            var apiHost = new ApiHost(cfg)
-                .WithContainer(Container);
-
-        }
     }
 }

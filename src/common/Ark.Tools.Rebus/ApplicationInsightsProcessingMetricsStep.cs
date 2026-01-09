@@ -1,4 +1,4 @@
-﻿using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Metrics;
 
 using Rebus.Extensions;
@@ -13,88 +13,87 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Rebus
+namespace Ark.Tools.Rebus;
+
+[StepDocumentation("ApplicationInsights Metric tracking: TimeInQueue (success-only) and ProcessingTime")]
+public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
 {
-    [StepDocumentation("ApplicationInsights Metric tracking: TimeInQueue (success-only) and ProcessingTime")]
-    public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
+    private readonly Container _container;
+    private readonly IRebusTime _time;
+    private readonly Lazy<Metrics> _metrics;
+
+
+    public ApplicationInsightsProcessingMetricsStep(Container container, IRebusTime time)
     {
-        private readonly Container _container;
-        private readonly IRebusTime _time;
-        private readonly Lazy<Metrics> _metrics;
+        _container = container;
+        _time = time;
+
+        _metrics = new Lazy<Metrics>(() => new Metrics(_container.GetInstance<TelemetryClient>()), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+    }
 
 
-        public ApplicationInsightsProcessingMetricsStep(Container container, IRebusTime time)
+    public async Task Process(IncomingStepContext context, Func<Task> next)
+    {
+        var transportMessage = context.Load<TransportMessage>();
+
+        var messageType = transportMessage.Headers.GetValueOrNull(Headers.Type);
+        var sw = Stopwatch.StartNew();
+        var operationResult = "failure";
+
+        try
         {
-            _container = container;
-            _time = time;
+            await next().ConfigureAwait(false);
+            sw.Stop();
+            var now = _time.Now;
+            operationResult = "success";
 
-            _metrics = new Lazy<Metrics>(() => new Metrics(_container.GetInstance<TelemetryClient>()), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+            var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime], CultureInfo.InvariantCulture);
+            var totalTime = now - enqueuedTime;
+            var timeInQueue = totalTime - TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+
+            _metrics.Value.TrackTimeInQueue(timeInQueue, messageType);
+        }
+        finally
+        {
+            _metrics.Value.TrackMessageProcessing(TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds), messageType, operationResult);
         }
 
+    }
+    sealed class Metrics
+    {
+        private static readonly MetricConfigurationForMeasurement _defaultConfigForMeasurement = new(
+                                                                10000,
+                                                                10000,
+                                                                new MetricSeriesConfigurationForMeasurement(restrictToUInt32Values: true));
+        private readonly Metric _timeInQueue;
+        private readonly Metric _messageProcessing;
 
-        public async Task Process(IncomingStepContext context, Func<Task> next)
+        internal Metrics(TelemetryClient client)
         {
-            var transportMessage = context.Load<TransportMessage>();
-
-            var messageType = transportMessage.Headers.GetValueOrNull(Headers.Type);
-            var sw = Stopwatch.StartNew();
-            var operationResult = "failure";
-
-            try
-            {
-                await next().ConfigureAwait(false);
-                sw.Stop();
-                var now = _time.Now;
-                operationResult = "success";
-
-                var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime], CultureInfo.InvariantCulture);
-                var totalTime = now - enqueuedTime;
-                var timeInQueue = totalTime - TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
-
-                _metrics.Value.TrackTimeInQueue(timeInQueue, messageType);
-            }
-            finally
-            {
-                _metrics.Value.TrackMessageProcessing(TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds), messageType, operationResult);
-            }
-
+            _timeInQueue = client.GetMetric(new MetricIdentifier("Rebus", "Message TimeInQueue (Success)", "MessageType"), _defaultConfigForMeasurement);
+            _messageProcessing = client.GetMetric(new MetricIdentifier("Rebus", "Message ProcessingTime", "MessageType", "OperationResult"), _defaultConfigForMeasurement);
         }
-        sealed class Metrics
+
+        internal void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)
         {
-            private static readonly MetricConfigurationForMeasurement _defaultConfigForMeasurement = new(
-                                                                    10000,
-                                                                    10000,
-                                                                    new MetricSeriesConfigurationForMeasurement(restrictToUInt32Values: true));
-            private readonly Metric _timeInQueue;
-            private readonly Metric _messageProcessing;
+            _timeInQueue.TrackValue(_sanitize(timeInQueue), messageType);
+        }
 
-            internal Metrics(TelemetryClient client)
-            {
-                _timeInQueue = client.GetMetric(new MetricIdentifier("Rebus", "Message TimeInQueue (Success)", "MessageType"), _defaultConfigForMeasurement);
-                _messageProcessing = client.GetMetric(new MetricIdentifier("Rebus", "Message ProcessingTime", "MessageType", "OperationResult"), _defaultConfigForMeasurement);
-            }
+        internal void TrackMessageProcessing(TimeSpan messageProcessing, string messageType, string operationResult)
+        {
+            _messageProcessing.TrackValue(_sanitize(messageProcessing), messageType, operationResult);
+        }
 
-            internal void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)
-            {
-                _timeInQueue.TrackValue(_sanitize(timeInQueue), messageType);
-            }
+        private static uint _sanitize(TimeSpan span)
+        {
+            var totalMilliseconds = span.TotalMilliseconds;
+            if (totalMilliseconds < 0)
+                return 0;
 
-            internal void TrackMessageProcessing(TimeSpan messageProcessing, string messageType, string operationResult)
-            {
-                _messageProcessing.TrackValue(_sanitize(messageProcessing), messageType, operationResult);
-            }
+            if (totalMilliseconds > UInt32.MaxValue)
+                return UInt32.MaxValue;
 
-            private static uint _sanitize(TimeSpan span)
-            {
-                var totalMilliseconds = span.TotalMilliseconds;
-                if (totalMilliseconds < 0)
-                    return 0;
-
-                if (totalMilliseconds > UInt32.MaxValue)
-                    return UInt32.MaxValue;
-
-                return (uint)totalMilliseconds;
-            }
+            return (uint)totalMilliseconds;
         }
     }
 }

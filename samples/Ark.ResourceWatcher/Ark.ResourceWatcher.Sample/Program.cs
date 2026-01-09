@@ -10,34 +10,33 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Ark.ResourceWatcher.Sample
+namespace Ark.ResourceWatcher.Sample;
+
+sealed class Program
 {
-    sealed class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
-                .AddWorkerHostInfrastracture()
-                .ConfigureNLog("BlobWorkerSample")
-                .AddWorkerHost(sp =>
+        var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
+            .AddWorkerHostInfrastracture()
+            .ConfigureNLog("BlobWorkerSample")
+            .AddWorkerHost(sp =>
+            {
+                var cfg = sp.GetRequiredService<IConfiguration>();
+
+                var config = new MyWorkerHostConfig
                 {
-                    var cfg = sp.GetRequiredService<IConfiguration>();
+                    WorkerName = "BlobWorkerSample",
+                    Sleep = TimeSpan.FromMinutes(1),
+                    MaxRetries = 3,
+                    DegreeOfParallelism = 2,
+                    ProviderUrl = new Uri(cfg["Provider:BaseUrl"] ?? "http://localhost:10000"),
+                    SinkUrl = new Uri(cfg["Sink:BaseUrl"] ?? "https://statuscodes.io/200")
+                };
 
-                    var config = new MyWorkerHostConfig
-                    {
-                        WorkerName = "BlobWorkerSample",
-                        Sleep = TimeSpan.FromMinutes(1),
-                        MaxRetries = 3,
-                        DegreeOfParallelism = 2,
-                        ProviderUrl = new Uri(cfg["Provider:BaseUrl"] ?? "http://localhost:10000"),
-                        SinkUrl = new Uri(cfg["Sink:BaseUrl"] ?? "https://statuscodes.io/200")
-                    };
+                return new MyWorkerHost(config);
+            })
+            .UseConsoleLifetime();
 
-                    return new MyWorkerHost(config);
-                })
-                .UseConsoleLifetime();
-
-            hostBuilder.StartAndWaitForShutdown();
-        }
+        hostBuilder.StartAndWaitForShutdown();
     }
 }

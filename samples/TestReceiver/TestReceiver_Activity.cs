@@ -7,69 +7,68 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace TestReceiver
+namespace TestReceiver;
+
+internal interface ITestReceiver_Config
 {
-    internal interface ITestReceiver_Config
+    string ActivitySqlConnectionString { get; }
+}
+
+internal sealed class TestReceiver_Activity : CalendarSliceActivity
+{
+    private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+    private readonly ITestReceiver_Config _config;
+
+    public TestReceiver_Activity(ITestReceiver_Config config)
     {
-        string ActivitySqlConnectionString { get; }
+        _config = config;
+#pragma warning disable RS0030 // Sample/test code - console output for demonstration
+        Console.WriteLine($"********** Now {DateTimeOffset.UtcNow} ********");
+#pragma warning restore RS0030
     }
 
-    internal sealed class TestReceiver_Activity : CalendarSliceActivity
+    public override Ark.Tools.Activity.ResourceDependency[] Dependencies
     {
-        private static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
-        private readonly ITestReceiver_Config _config;
-
-        public TestReceiver_Activity(ITestReceiver_Config config)
+        get
         {
-            _config = config;
-#pragma warning disable RS0030 // Sample/test code - console output for demonstration
-            Console.WriteLine($"********** Now {DateTimeOffset.UtcNow} ********");
-#pragma warning restore RS0030
+            return [
+                ResourceDependency.OneSlice("test", "first", activitySlice => activitySlice),
+            ];
         }
-
-        public override Ark.Tools.Activity.ResourceDependency[] Dependencies
-        {
-            get
-            {
-                return [
-                    ResourceDependency.OneSlice("test", "first", activitySlice => activitySlice),
-                ];
-            }
-        }
-
-
-        protected override IEnumerable<Ark.Tools.Activity.Slice> _generateCalendar()
-        {
-            var current = Slice.From(new LocalDate(2012, 1, 1), "CET");
-            while (current.SliceStart.Year < 2020)
-            {
-                yield return current;
-                current = current.MoveDays(1);
-            }
-        }
-
-        public override Resource Resource { get; } = new Resource("TestReceiver", "TestReceiver_Activity");
-
-        //public override TimeSpan? CoolDown { get; } = new TimeSpan(0, 2, 0);
-
-        public override NLog.ILogger Logger
-        {
-            get { return _logger; }
-        }
-
-        public override TimeSpan? CoolDown => null;
-
-        public override async Task Process(Ark.Tools.Activity.Slice activitySlice)
-        {
-            await Task.Delay(new TimeSpan(0, 0, 5)).ConfigureAwait(false);
-
-#pragma warning disable RS0030 // Sample/test code - console output for demonstration
-            Console.WriteLine($"** Process Started Now {DateTimeOffset.UtcNow}**");
-#pragma warning restore RS0030
-            throw new TimeoutException("Exception!");
-
-            //await Task.FromResult(true);
-        }
-
     }
+
+
+    protected override IEnumerable<Ark.Tools.Activity.Slice> _generateCalendar()
+    {
+        var current = Slice.From(new LocalDate(2012, 1, 1), "CET");
+        while (current.SliceStart.Year < 2020)
+        {
+            yield return current;
+            current = current.MoveDays(1);
+        }
+    }
+
+    public override Resource Resource { get; } = new Resource("TestReceiver", "TestReceiver_Activity");
+
+    //public override TimeSpan? CoolDown { get; } = new TimeSpan(0, 2, 0);
+
+    public override NLog.ILogger Logger
+    {
+        get { return _logger; }
+    }
+
+    public override TimeSpan? CoolDown => null;
+
+    public override async Task Process(Ark.Tools.Activity.Slice activitySlice)
+    {
+        await Task.Delay(new TimeSpan(0, 0, 5)).ConfigureAwait(false);
+
+#pragma warning disable RS0030 // Sample/test code - console output for demonstration
+        Console.WriteLine($"** Process Started Now {DateTimeOffset.UtcNow}**");
+#pragma warning restore RS0030
+        throw new TimeoutException("Exception!");
+
+        //await Task.FromResult(true);
+    }
+
 }

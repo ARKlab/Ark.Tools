@@ -7,48 +7,47 @@ using Microsoft.AspNetCore.Routing;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Ark.Tools.AspNetCore.Startup
+namespace Ark.Tools.AspNetCore.Startup;
+
+internal sealed class ArkDefaultConventions : IActionModelConvention
 {
-    internal sealed class ArkDefaultConventions : IActionModelConvention
+    private static readonly HashSet<string> _consumeMethods = new(System.StringComparer.Ordinal) { "POST", "PUT", "PATCH" };
+
+    public void Apply(ActionModel action)
     {
-        private static readonly HashSet<string> _consumeMethods = new(System.StringComparer.Ordinal) { "POST", "PUT", "PATCH" };
+        var models = action.Selectors.OfType<SelectorModel>();
+        var methods = models
+            .SelectMany(m => m.EndpointMetadata)
+            .OfType<HttpMethodMetadata>()
+            .SelectMany(m => m.HttpMethods)
+            .ToList();
 
-        public void Apply(ActionModel action)
+        var isOData = models
+            .SelectMany(m => m.EndpointMetadata)
+            .OfType<Microsoft.AspNetCore.OData.Routing.ODataRoutingMetadata>()
+            .Any();
+
+        if (isOData) return;
+
+        // This should be extended with support for
+        //       1. ProblemDetails defaults (400, 401, 403, 500)
+        //       2. Alter ProducesResponseType adding ContentTypes there (possible?)
+        //       3. 'Remove' default xml, plain, etc Formatters which are registered by default by MVC
+        // Long story short: content-negotiation is a mess.
+
+        if (methods != null
+            && _consumeMethods.Intersect(methods, System.StringComparer.Ordinal).Any()
+            && action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any())
+            && !action.Filters.OfType<ConsumesAttribute>().Any()
+            && !action.Controller.Filters.OfType<ConsumesAttribute>().Any())
         {
-            var models = action.Selectors.OfType<SelectorModel>();
-            var methods = models
-                .SelectMany(m => m.EndpointMetadata)
-                .OfType<HttpMethodMetadata>()
-                .SelectMany(m => m.HttpMethods)
-                .ToList();
-
-            var isOData = models
-                .SelectMany(m => m.EndpointMetadata)
-                .OfType<Microsoft.AspNetCore.OData.Routing.ODataRoutingMetadata>()
-                .Any();
-
-            if (isOData) return;
-
-            // This should be extended with support for
-            //       1. ProblemDetails defaults (400, 401, 403, 500)
-            //       2. Alter ProducesResponseType adding ContentTypes there (possible?)
-            //       3. 'Remove' default xml, plain, etc Formatters which are registered by default by MVC
-            // Long story short: content-negotiation is a mess.
-
-            if (methods != null
-                && _consumeMethods.Intersect(methods, System.StringComparer.Ordinal).Any()
-                && action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any())
-                && !action.Filters.OfType<ConsumesAttribute>().Any()
-                && !action.Controller.Filters.OfType<ConsumesAttribute>().Any())
-            {
-                action.Filters.Add(new ConsumesAttribute("application/json"));
-            }
-
-            if (!action.Filters.OfType<ProducesAttribute>().Any()
-                && !action.Controller.Filters.OfType<ProducesAttribute>().Any()
-                )
-                action.Filters.Add(new ProducesAttribute("application/json"));
-
+            action.Filters.Add(new ConsumesAttribute("application/json"));
         }
+
+        if (!action.Filters.OfType<ProducesAttribute>().Any()
+            && !action.Controller.Filters.OfType<ProducesAttribute>().Any()
+            )
+            action.Filters.Add(new ProducesAttribute("application/json"));
+
     }
 }

@@ -1,4 +1,4 @@
-﻿using Ark.Tools.EventSourcing.Aggregates;
+using Ark.Tools.EventSourcing.Aggregates;
 using Ark.Tools.EventSourcing.Store;
 
 using Raven.Client.Documents.Operations.CompareExchange;
@@ -10,128 +10,127 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.EventSourcing.RavenDb
+namespace Ark.Tools.EventSourcing.RavenDb;
+
+public class RavenDbEventSourcingAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
+    : AggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
+    where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
+    where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
+    where TAggregate : IAggregate
 {
-    public class RavenDbEventSourcingAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
-        : AggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
-        where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
-        where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
-        where TAggregate : IAggregate
+    private readonly IAsyncDocumentSession _session;
+    private readonly string _chexKey;
+    private CompareExchangeValue<long>? _chex;
+
+    public RavenDbEventSourcingAggregateTransaction(
+        IAsyncDocumentSession session,
+        string aggregateId,
+        IAggregateRootFactory aggregateRootFactory
+        )
+        : base(aggregateId, aggregateRootFactory)
     {
-        private readonly IAsyncDocumentSession _session;
-        private readonly string _chexKey;
-        private CompareExchangeValue<long>? _chex;
+        session.Advanced.UseOptimisticConcurrency = false;
+        _session = session;
 
-        public RavenDbEventSourcingAggregateTransaction(
-            IAsyncDocumentSession session,
-            string aggregateId,
-            IAggregateRootFactory aggregateRootFactory
-            )
-            : base(aggregateId, aggregateRootFactory)
+        _chexKey = $"{AggregateHelper<TAggregate>.Name}/{aggregateId}/version";
+    }
+
+
+    public override async Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default)
+    {
+        var aggrname = AggregateHelper<TAggregate>.Name;
+        var envelopes = new List<AggregateEventStore>();
+
+        _chex = await _session.Advanced.ClusterTransaction.GetCompareExchangeValueAsync<long>(_chexKey, ctk).ConfigureAwait(false);
+
+        if (_chex == null)
         {
-            session.Advanced.UseOptimisticConcurrency = false;
-            _session = session;
-
-            _chexKey = $"{AggregateHelper<TAggregate>.Name}/{aggregateId}/version";
+            return Array.Empty<AggregateEventEnvelope<TAggregate>>();
         }
 
+        maxVersion = Math.Min(_chex.Value, maxVersion);
 
-        public override async Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default)
+        string? lastId = null;
+        while (envelopes.Count != maxVersion)
         {
-            var aggrname = AggregateHelper<TAggregate>.Name;
-            var envelopes = new List<AggregateEventStore>();
+            var results = await _session.Advanced.StreamAsync<AggregateEventStore>(
+                $"{aggrname}/{Identifier}/",
+                startAfter: lastId,
+                pageSize: (int)maxVersion - envelopes.Count,
+                token: ctk).ConfigureAwait(false);
 
-            _chex = await _session.Advanced.ClusterTransaction.GetCompareExchangeValueAsync<long>(_chexKey, ctk).ConfigureAwait(false);
-
-            if (_chex == null)
-            {
-                return Array.Empty<AggregateEventEnvelope<TAggregate>>();
-            }
-
-            maxVersion = Math.Min(_chex.Value, maxVersion);
-
-            string? lastId = null;
-            while (envelopes.Count != maxVersion)
-            {
-                var results = await _session.Advanced.StreamAsync<AggregateEventStore>(
-                    $"{aggrname}/{Identifier}/",
-                    startAfter: lastId,
-                    pageSize: (int)maxVersion - envelopes.Count,
-                    token: ctk).ConfigureAwait(false);
-
-                while (envelopes.Count != maxVersion
-                    && await results.MoveNextAsync(
+            while (envelopes.Count != maxVersion
+                && await results.MoveNextAsync(
 #if NET10_0_OR_GREATER
 #else
-    ctk
+ctk
 #endif
-                        ).ConfigureAwait(false))
-                {
-                    var envelope = results.Current;
-                    if (envelope.Document.AggregateVersion != envelopes.Count + 1)
-                        break;
-
-                    envelopes.Add(envelope.Document);
-                    lastId = envelope.Id;
-                }
-            }
-
-            return envelopes.Select(x => x.FromStore<TAggregate>());
-        }
-
-
-        public override async Task SaveChangesAsync(CancellationToken ctk = default)
-        {
-            if (Aggregate.UncommittedAggregateEvents.Any())
+                    ).ConfigureAwait(false))
             {
-                if (_chex == null)
-                    _chex = _session.Advanced.ClusterTransaction.CreateCompareExchangeValue<long>(_chexKey, Aggregate.Version);
-                else
-                    _chex.Value = Aggregate.Version;
+                var envelope = results.Current;
+                if (envelope.Document.AggregateVersion != envelopes.Count + 1)
+                    break;
 
-                foreach (var e in Aggregate.UncommittedDomainEvents)
-                {
-                    var eventType = e.Event.GetType();
-                    var outboxType = typeof(OutboxEvent<>).MakeGenericType(eventType);
-
-                    var evt = (OutboxEvent)(Activator.CreateInstance(outboxType) ?? throw new InvalidOperationException($"Failed to create instance for type {outboxType}"));
-
-                    evt.Id = e.Metadata.EventId;
-                    evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
-                    evt.SetEvent(e.Event);
-
-                    await _session.StoreAsync(evt, ctk).ConfigureAwait(false);
-                }
-
-                foreach (var e in Aggregate.UncommittedAggregateEvents)
-                {
-                    await _session.StoreAsync(e.ToStore(), ctk).ConfigureAwait(false);
-                }
-
-                await _session.StoreAsync(Aggregate.State, AggregateHelper<TAggregate>.Name + "/" + Aggregate.Identifier, ctk).ConfigureAwait(false);
-
-                await _session.SaveChangesAsync(ctk).ConfigureAwait(false);
+                envelopes.Add(envelope.Document);
+                lastId = envelope.Id;
             }
-
-            Aggregate.Commit();
         }
 
-        #region IDisposable Support
-        private bool _disposedValue; // To detect redundant calls
-
-        protected override void Dispose(bool disposing)
-        {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    _session?.Dispose();
-                }
-                _disposedValue = true;
-            }
-            base.Dispose(disposing);
-        }
-
-        #endregion
+        return envelopes.Select(x => x.FromStore<TAggregate>());
     }
+
+
+    public override async Task SaveChangesAsync(CancellationToken ctk = default)
+    {
+        if (Aggregate.UncommittedAggregateEvents.Any())
+        {
+            if (_chex == null)
+                _chex = _session.Advanced.ClusterTransaction.CreateCompareExchangeValue<long>(_chexKey, Aggregate.Version);
+            else
+                _chex.Value = Aggregate.Version;
+
+            foreach (var e in Aggregate.UncommittedDomainEvents)
+            {
+                var eventType = e.Event.GetType();
+                var outboxType = typeof(OutboxEvent<>).MakeGenericType(eventType);
+
+                var evt = (OutboxEvent)(Activator.CreateInstance(outboxType) ?? throw new InvalidOperationException($"Failed to create instance for type {outboxType}"));
+
+                evt.Id = e.Metadata.EventId;
+                evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
+                evt.SetEvent(e.Event);
+
+                await _session.StoreAsync(evt, ctk).ConfigureAwait(false);
+            }
+
+            foreach (var e in Aggregate.UncommittedAggregateEvents)
+            {
+                await _session.StoreAsync(e.ToStore(), ctk).ConfigureAwait(false);
+            }
+
+            await _session.StoreAsync(Aggregate.State, AggregateHelper<TAggregate>.Name + "/" + Aggregate.Identifier, ctk).ConfigureAwait(false);
+
+            await _session.SaveChangesAsync(ctk).ConfigureAwait(false);
+        }
+
+        Aggregate.Commit();
+    }
+
+    #region IDisposable Support
+    private bool _disposedValue; // To detect redundant calls
+
+    protected override void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                _session?.Dispose();
+            }
+            _disposedValue = true;
+        }
+        base.Dispose(disposing);
+    }
+
+    #endregion
 }

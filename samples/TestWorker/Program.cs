@@ -8,29 +8,28 @@ using Microsoft.Extensions.Hosting;
 
 using TestWorker.Constants;
 
-namespace TestWorker
+namespace TestWorker;
+
+sealed class Program
 {
-    sealed class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            var hostBuilder = Host.CreateDefaultBuilder(args)
-                .AddApplicationInsightsForWorkerHost()
-                .ConfigureNLog(Test_Constants.AppName)
-                .AddWorkerHost(
-                    s =>
+        var hostBuilder = Host.CreateDefaultBuilder(args)
+            .AddApplicationInsightsForWorkerHost()
+            .ConfigureNLog(Test_Constants.AppName)
+            .AddWorkerHost(
+                s =>
+                {
+                    var cfg = s.GetRequiredService<IConfiguration>();
+                    var h = HostNs.Test_Host.Configure(cfg, configurer: c =>
                     {
-                        var cfg = s.GetRequiredService<IConfiguration>();
-                        var h = HostNs.Test_Host.Configure(cfg, configurer: c =>
-                        {
-                            //c.IgnoreState = Debugger.IsAttached;
-                        });
+                        //c.IgnoreState = Debugger.IsAttached;
+                    });
 
-                        return h;
-                    })
-                .UseConsoleLifetime();
+                    return h;
+                })
+            .UseConsoleLifetime();
 
-            hostBuilder.StartAndWaitForShutdown();
-        }
+        hostBuilder.StartAndWaitForShutdown();
     }
 }

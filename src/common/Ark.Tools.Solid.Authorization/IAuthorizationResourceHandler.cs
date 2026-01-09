@@ -1,14 +1,13 @@
-﻿using Ark.Tools.Authorization;
+using Ark.Tools.Authorization;
 
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Solid.Authorization
+namespace Ark.Tools.Solid.Authorization;
+
+public interface IAuthorizationResourceHandler<T, TPolicy>
+        where T : class
+        where TPolicy : IAuthorizationPolicy
 {
-    public interface IAuthorizationResourceHandler<T, TPolicy>
-            where T : class
-            where TPolicy : IAuthorizationPolicy
-    {
-        Task<object> GetResouceAsync(T query, CancellationToken ctk = default);
-    }
+    Task<object> GetResouceAsync(T query, CancellationToken ctk = default);
 }

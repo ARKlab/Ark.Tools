@@ -1,10 +1,9 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Outbox
+namespace Ark.Tools.Outbox;
+
+public interface IOutboxAsyncContextFactory
 {
-    public interface IOutboxAsyncContextFactory
-    {
-        Task<IOutboxAsyncContext> CreateAsync(CancellationToken ctk = default);
-    }
+    Task<IOutboxAsyncContext> CreateAsync(CancellationToken ctk = default);
 }

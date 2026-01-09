@@ -8,41 +8,40 @@ using System;
 using System.Globalization;
 using System.Linq;
 
-namespace Ark.Tools.AspNetCore.CommaSeparatedParameters
+namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
+
+public class SeparatedPathValueProvider : RouteValueProvider
 {
-    public class SeparatedPathValueProvider : RouteValueProvider
+    private readonly char _separator;
+    private readonly string? _key;
+
+    public SeparatedPathValueProvider(char separator, RouteValueDictionary values)
+        : this(null, separator, values)
+    { }
+
+    public SeparatedPathValueProvider(string? key, char separator, RouteValueDictionary values)
+        : base(BindingSource.Path, values, CultureInfo.InvariantCulture)
     {
-        private readonly char _separator;
-        private readonly string? _key;
+        _separator = separator;
+        _key = key;
+    }
 
-        public SeparatedPathValueProvider(char separator, RouteValueDictionary values)
-            : this(null, separator, values)
-        { }
-
-        public SeparatedPathValueProvider(string? key, char separator, RouteValueDictionary values)
-            : base(BindingSource.Path, values, CultureInfo.InvariantCulture)
+    public override ValueProviderResult GetValue(string key)
+    {
+        if (_key != null && _key != key)
         {
-            _separator = separator;
-            _key = key;
+            return ValueProviderResult.None;
         }
 
-        public override ValueProviderResult GetValue(string key)
+        var result = base.GetValue(key);
+
+        if (result != ValueProviderResult.None && result.Values.Any(x => x?.IndexOf(_separator, StringComparison.Ordinal) > 0))
         {
-            if (_key != null && _key != key)
-            {
-                return ValueProviderResult.None;
-            }
-
-            var result = base.GetValue(key);
-
-            if (result != ValueProviderResult.None && result.Values.Any(x => x?.IndexOf(_separator, StringComparison.Ordinal) > 0))
-            {
-                var splitValues = new StringValues(result.Values
-                    .SelectMany(x => x!.Split([_separator], StringSplitOptions.None)).ToArray());
-                return new ValueProviderResult(splitValues, result.Culture);
-            }
-
-            return result;
+            var splitValues = new StringValues(result.Values
+                .SelectMany(x => x!.Split([_separator], StringSplitOptions.None)).ToArray());
+            return new ValueProviderResult(splitValues, result.Culture);
         }
+
+        return result;
     }
 }

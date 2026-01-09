@@ -9,31 +9,30 @@ using System.Threading.Tasks;
 
 using WebApplicationDemo.Api.Queries;
 
-namespace WebApplicationDemo.Controllers
+namespace WebApplicationDemo.Controllers;
+
+[Route("flurl-demo")]
+[ApiVersion(3.0)]
+public class FlurlDemoController : ApiController
 {
-    [Route("flurl-demo")]
-    [ApiVersion(3.0)]
-    public class FlurlDemoController : ApiController
+    private readonly IQueryProcessor _queryProcessor;
+
+
+    public FlurlDemoController(IQueryProcessor queryProcessor)
     {
-        private readonly IQueryProcessor _queryProcessor;
+        _queryProcessor = queryProcessor;
+    }
 
-
-        public FlurlDemoController(IQueryProcessor queryProcessor)
+    [Route("posts")]
+    [HttpGet]
+    public async Task<IActionResult> Get(CancellationToken ctk)
+    {
+        var query = new Get_PostsQuery.V1()
         {
-            _queryProcessor = queryProcessor;
-        }
+        };
 
-        [Route("posts")]
-        [HttpGet]
-        public async Task<IActionResult> Get(CancellationToken ctk)
-        {
-            var query = new Get_PostsQuery.V1()
-            {
-            };
+        var res = await _queryProcessor.ExecuteAsync(query, ctk).ConfigureAwait(false);
 
-            var res = await _queryProcessor.ExecuteAsync(query, ctk).ConfigureAwait(false);
-
-            return Ok(res);
-        }
+        return Ok(res);
     }
 }

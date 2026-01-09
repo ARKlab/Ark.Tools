@@ -4,14 +4,13 @@ using NodaTime;
 
 using ProblemDetailsSample.Common.Dto;
 
-namespace ProblemDetailsSample.Api.Queries
+namespace ProblemDetailsSample.Api.Queries;
+
+public static class Get_EntityByIdExceptionQuery
 {
-    public static class Get_EntityByIdExceptionQuery
+    public class V1 : IQuery<Entity.V1.Output>
     {
-        public class V1 : IQuery<Entity.V1.Output>
-        {
-            public string? EntityId { get; set; }
-            public Instant? AsOf { get; set; }
-        }
+        public string? EntityId { get; set; }
+        public Instant? AsOf { get; set; }
     }
 }

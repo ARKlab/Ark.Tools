@@ -1,22 +1,21 @@
 ﻿using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Solid;
 
-namespace Ark.Reference.Core.API.Requests
+namespace Ark.Reference.Core.API.Requests;
+
+/// <summary>
+/// Request to create a new Ping entity
+/// </summary>
+public static class Ping_CreateRequest
 {
     /// <summary>
-    /// Request to create a new Ping entity
+    /// Version 1 of the create request
     /// </summary>
-    public static class Ping_CreateRequest
+    public record V1 : IRequest<Ping.V1.Output>
     {
         /// <summary>
-        /// Version 1 of the create request
+        /// Gets or initializes the creation data for the Ping
         /// </summary>
-        public record V1 : IRequest<Ping.V1.Output>
-        {
-            /// <summary>
-            /// Gets or initializes the creation data for the Ping
-            /// </summary>
-            public Ping.V1.Create? Data { get; init; }
-        }
+        public Ping.V1.Create? Data { get; init; }
     }
 }

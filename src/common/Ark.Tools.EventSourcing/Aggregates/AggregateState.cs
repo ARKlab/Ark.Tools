@@ -1,34 +1,33 @@
-﻿using System;
+using System;
 
-namespace Ark.Tools.EventSourcing.Aggregates
+namespace Ark.Tools.EventSourcing.Aggregates;
+
+public abstract class AggregateState<TAggregateState, TAggregate> : IAggregateState
+    where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
+    where TAggregate : IAggregate
 {
-    public abstract class AggregateState<TAggregateState, TAggregate> : IAggregateState
-        where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
-        where TAggregate : IAggregate
-    {
-        internal bool _isRootManaged;
-        internal string _identifier = string.Empty;
-        internal long _version;
+    internal bool _isRootManaged;
+    internal string _identifier = string.Empty;
+    internal long _version;
 
-        public string Identifier
+    public string Identifier
+    {
+        get { return _identifier; }
+        set
         {
-            get { return _identifier; }
-            set
-            {
-                if (_isRootManaged)
-                    throw new InvalidOperationException($"Cannot set Identifier when AggregateState is managed by an AggregateRoot");
-                _identifier = value;
-            }
+            if (_isRootManaged)
+                throw new InvalidOperationException($"Cannot set Identifier when AggregateState is managed by an AggregateRoot");
+            _identifier = value;
         }
-        public long Version
+    }
+    public long Version
+    {
+        get { return _version; }
+        set
         {
-            get { return _version; }
-            set
-            {
-                if (_isRootManaged)
-                    throw new InvalidOperationException($"Cannot set Version when AggregateState is managed by an AggregateRoot");
-                _version = value;
-            }
+            if (_isRootManaged)
+                throw new InvalidOperationException($"Cannot set Version when AggregateState is managed by an AggregateRoot");
+            _version = value;
         }
     }
 }

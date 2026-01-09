@@ -4,60 +4,59 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Ark.Tools.Core
+namespace Ark.Tools.Core;
+
+/// <summary>
+/// Provides extension methods for InvalidOperationException using C# 14 extension members.
+/// </summary>
+public static class InvalidOperationExceptionExtensions
 {
     /// <summary>
-    /// Provides extension methods for InvalidOperationException using C# 14 extension members.
+    /// Extension members for InvalidOperationException to provide ThrowIf and ThrowUnless static methods.
     /// </summary>
-    public static class InvalidOperationExceptionExtensions
+    extension(InvalidOperationException)
     {
         /// <summary>
-        /// Extension members for InvalidOperationException to provide ThrowIf and ThrowUnless static methods.
+        /// Throws an InvalidOperationException if the specified condition is true.
         /// </summary>
-        extension(InvalidOperationException)
+        /// <param name="condition">The condition to evaluate.</param>
+        /// <param name="message">Optional custom message for the exception.</param>
+        /// <param name="conditionExpression">The expression of the condition (captured automatically).</param>
+        /// <exception cref="InvalidOperationException">Thrown when condition is true.</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ThrowIf(
+            [DoesNotReturnIf(true)] bool condition,
+            string? message = null,
+            [CallerArgumentExpression(nameof(condition))] string? conditionExpression = null)
         {
-            /// <summary>
-            /// Throws an InvalidOperationException if the specified condition is true.
-            /// </summary>
-            /// <param name="condition">The condition to evaluate.</param>
-            /// <param name="message">Optional custom message for the exception.</param>
-            /// <param name="conditionExpression">The expression of the condition (captured automatically).</param>
-            /// <exception cref="InvalidOperationException">Thrown when condition is true.</exception>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void ThrowIf(
-                [DoesNotReturnIf(true)] bool condition,
-                string? message = null,
-                [CallerArgumentExpression(nameof(condition))] string? conditionExpression = null)
+            if (condition)
             {
-                if (condition)
-                {
-                    var errorMessage = message != null 
-                        ? $"{message} (condition: {conditionExpression})"
-                        : $"Condition failed: {conditionExpression}";
-                    throw new InvalidOperationException(errorMessage);
-                }
+                var errorMessage = message != null 
+                    ? $"{message} (condition: {conditionExpression})"
+                    : $"Condition failed: {conditionExpression}";
+                throw new InvalidOperationException(errorMessage);
             }
+        }
 
-            /// <summary>
-            /// Throws an InvalidOperationException if the specified condition is false.
-            /// </summary>
-            /// <param name="condition">The condition to evaluate.</param>
-            /// <param name="message">Optional custom message for the exception.</param>
-            /// <param name="conditionExpression">The expression of the condition (captured automatically).</param>
-            /// <exception cref="InvalidOperationException">Thrown when condition is false.</exception>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void ThrowUnless(
-                [DoesNotReturnIf(false)] bool condition,
-                string? message = null,
-                [CallerArgumentExpression(nameof(condition))] string? conditionExpression = null)
+        /// <summary>
+        /// Throws an InvalidOperationException if the specified condition is false.
+        /// </summary>
+        /// <param name="condition">The condition to evaluate.</param>
+        /// <param name="message">Optional custom message for the exception.</param>
+        /// <param name="conditionExpression">The expression of the condition (captured automatically).</param>
+        /// <exception cref="InvalidOperationException">Thrown when condition is false.</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ThrowUnless(
+            [DoesNotReturnIf(false)] bool condition,
+            string? message = null,
+            [CallerArgumentExpression(nameof(condition))] string? conditionExpression = null)
+        {
+            if (!condition)
             {
-                if (!condition)
-                {
-                    var errorMessage = message != null 
-                        ? $"{message} (condition: {conditionExpression})"
-                        : $"Condition failed: {conditionExpression}";
-                    throw new InvalidOperationException(errorMessage);
-                }
+                var errorMessage = message != null 
+                    ? $"{message} (condition: {conditionExpression})"
+                    : $"Condition failed: {conditionExpression}";
+                throw new InvalidOperationException(errorMessage);
             }
         }
     }

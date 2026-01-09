@@ -3,12 +3,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ark.Tools.Solid
-{
-    public interface ICommandProcessor
-    {
-        void Execute(ICommand command);
+namespace Ark.Tools.Solid;
 
-        Task ExecuteAsync(ICommand command, CancellationToken ctk = default);
-    }
+public interface ICommandProcessor
+{
+    void Execute(ICommand command);
+
+    Task ExecuteAsync(ICommand command, CancellationToken ctk = default);
 }

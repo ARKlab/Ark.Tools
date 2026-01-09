@@ -4,78 +4,77 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Ark.Tools.Core
-{
-    /// <summary>
-    /// Utility class for tracking and disposing of objects that implement IDisposable.
-    /// </summary>
-    public sealed class DisposableContainer : IDisposable
-    {
-        private readonly List<IDisposable> _disposables;
-        private const int DefaultCapacity = 16;
-        private readonly Lock _gate = new();
-        private bool _disposed;
+namespace Ark.Tools.Core;
 
-        public DisposableContainer()
+/// <summary>
+/// Utility class for tracking and disposing of objects that implement IDisposable.
+/// </summary>
+public sealed class DisposableContainer : IDisposable
+{
+    private readonly List<IDisposable> _disposables;
+    private const int DefaultCapacity = 16;
+    private readonly Lock _gate = new();
+    private bool _disposed;
+
+    public DisposableContainer()
+    {
+        _disposables = new(DefaultCapacity);
+    }
+
+    public DisposableContainer(params IDisposable[] disposables)
+    {
+        ArgumentNullException.ThrowIfNull(disposables);
+
+        _disposables = new(disposables.Length);
+        foreach (var d in disposables)
         {
-            _disposables = new(DefaultCapacity);
+            ArgumentNullException.ThrowIfNull(d);
+            _disposables.Add(d);
+        }
+    }
+
+    /// <summary>
+    /// Disposes of all elements of list.
+    /// </summary>
+    public void Dispose()
+    {
+        List<IDisposable>? disposables = null;
+
+        lock (_gate)
+        {
+            if (!_disposed)
+            {
+                disposables = _disposables;
+                _disposables.Clear();
+                Volatile.Write(ref _disposed, true);
+            }
         }
 
-        public DisposableContainer(params IDisposable[] disposables)
+        if (disposables is not null)
         {
-            ArgumentNullException.ThrowIfNull(disposables);
-
-            _disposables = new(disposables.Length);
             foreach (var d in disposables)
             {
-                ArgumentNullException.ThrowIfNull(d);
-                _disposables.Add(d);
+                d.Dispose();
             }
         }
+    }
 
-        /// <summary>
-        /// Disposes of all elements of list.
-        /// </summary>
-        public void Dispose()
+    /// <summary>
+    /// Add an item to the list.
+    /// </summary>
+    public void Add(IDisposable item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        lock (_gate)
         {
-            List<IDisposable>? disposables = null;
-
-            lock (_gate)
+            if (!_disposed)
             {
-                if (!_disposed)
-                {
-                    disposables = _disposables;
-                    _disposables.Clear();
-                    Volatile.Write(ref _disposed, true);
-                }
-            }
-
-            if (disposables is not null)
-            {
-                foreach (var d in disposables)
-                {
-                    d.Dispose();
-                }
+                _disposables.Add(item);
+                return;
             }
         }
 
-        /// <summary>
-        /// Add an item to the list.
-        /// </summary>
-        public void Add(IDisposable item)
-        {
-            ArgumentNullException.ThrowIfNull(item);
-
-            lock (_gate)
-            {
-                if (!_disposed)
-                {
-                    _disposables.Add(item);
-                    return;
-                }
-            }
-
-            item.Dispose();
-        }
+        item.Dispose();
     }
 }

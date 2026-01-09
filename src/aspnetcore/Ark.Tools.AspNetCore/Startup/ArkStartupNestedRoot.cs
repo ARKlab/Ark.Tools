@@ -4,26 +4,25 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Ark.Tools.AspNetCore.Startup
+namespace Ark.Tools.AspNetCore.Startup;
+
+public class ArkStartupNestedRoot
 {
-    public class ArkStartupNestedRoot
+    private readonly ArkStartupBase _anotherBase;
+
+    public ArkStartupNestedRoot(IConfiguration configuration)
     {
-        private readonly ArkStartupBase _anotherBase;
-
-        public ArkStartupNestedRoot(IConfiguration configuration)
-        {
-            _anotherBase = new ArkStartupBase(configuration);
-        }
-
-        public virtual void ConfigureServices(IServiceCollection services)
-        {
-            _anotherBase.ConfigureServices(services);
-        }
-
-        public virtual void Configure(IApplicationBuilder app)
-        {
-            _anotherBase.Configure(app);
-        }
-
+        _anotherBase = new ArkStartupBase(configuration);
     }
+
+    public virtual void ConfigureServices(IServiceCollection services)
+    {
+        _anotherBase.ConfigureServices(services);
+    }
+
+    public virtual void Configure(IApplicationBuilder app)
+    {
+        _anotherBase.Configure(app);
+    }
+
 }

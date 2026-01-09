@@ -6,62 +6,61 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TestReceiver
+namespace TestReceiver;
+
+sealed class Config : ITestReceiver_Config, IRebusSliceActivityManagerConfig
 {
-    sealed class Config : ITestReceiver_Config, IRebusSliceActivityManagerConfig
+    public string? RebusConnstring { get; set; }
+    public string ActivitySqlConnectionString
     {
-        public string? RebusConnstring { get; set; }
-        public string ActivitySqlConnectionString
-        {
-            get { return "DB"; }
-        }
-
-        public string AsbConnectionString => RebusConnstring ?? throw new InvalidOperationException("");
-
-        public string SagaSqlConnectionString
-        {
-            get { return "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=TestPlayground.Database;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True"; }
-        }
+        get { return "DB"; }
     }
 
+    public string AsbConnectionString => RebusConnstring ?? throw new InvalidOperationException("");
 
-    sealed class Program
+    public string SagaSqlConnectionString
     {
+        get { return "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=TestPlayground.Database;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True"; }
+    }
+}
 
-        static async Task Main(string[] args)
+
+sealed class Program
+{
+
+    static async Task Main(string[] args)
+    {
+        NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+
+        try
         {
-            NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+            await using var container = new Container();
 
-            try
+            var cfg = new Config()
             {
-                await using var container = new Container();
-
-                var cfg = new Config()
-                {
-                    RebusConnstring = "12"
-                };
+                RebusConnstring = "12"
+            };
 
 
-                var reg = Lifestyle.Singleton.CreateRegistration<Config>(container);
+            var reg = Lifestyle.Singleton.CreateRegistration<Config>(container);
 
 
-                container.RegisterInstance(cfg);
-                container.AddRegistration<ITestReceiver_Config>(reg);
-                container.AddRegistration<IRebusSliceActivityManagerConfig>(reg);
+            container.RegisterInstance(cfg);
+            container.AddRegistration<ITestReceiver_Config>(reg);
+            container.AddRegistration<IRebusSliceActivityManagerConfig>(reg);
 
-                //container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
-                container.RegisterActivities(typeof(RebusSliceActivityManager<>), typeof(TestReceiver_Activity));
+            //container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
+            container.RegisterActivities(typeof(RebusSliceActivityManager<>), typeof(TestReceiver_Activity));
 
 
 
-                await container.StartActivities().ConfigureAwait(false);
-                await Task.Delay(Timeout.Infinite).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.Fatal(ex, "The materializer has gone in error");
-            }
-
+            await container.StartActivities().ConfigureAwait(false);
+            await Task.Delay(Timeout.Infinite).ConfigureAwait(false);
         }
+        catch (Exception ex)
+        {
+            _logger.Fatal(ex, "The materializer has gone in error");
+        }
+
     }
 }

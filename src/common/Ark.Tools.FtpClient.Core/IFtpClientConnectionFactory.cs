@@ -1,9 +1,8 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-namespace Ark.Tools.FtpClient.Core
+namespace Ark.Tools.FtpClient.Core;
+
+public interface IFtpClientConnectionFactory
 {
-    public interface IFtpClientConnectionFactory
-    {
-        IFtpClientConnection Create(FtpConfig ftpConfig);
-    }
+    IFtpClientConnection Create(FtpConfig ftpConfig);
 }

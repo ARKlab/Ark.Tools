@@ -2,18 +2,17 @@
 
 using System.Collections.Generic;
 
-namespace ProblemDetailsSample.Models
+namespace ProblemDetailsSample.Models;
+
+public class OutOfCreditProblemDetails : ArkProblemDetails
 {
-    public class OutOfCreditProblemDetails : ArkProblemDetails
+    public OutOfCreditProblemDetails()
+        : base("You do not have enough credit.")
     {
-        public OutOfCreditProblemDetails()
-            : base("You do not have enough credit.")
-        {
-            Accounts = new List<string>();
-        }
-
-        public decimal Balance { get; set; }
-
-        public ICollection<string> Accounts { get; }
+        Accounts = new List<string>();
     }
+
+    public decimal Balance { get; set; }
+
+    public ICollection<string> Accounts { get; }
 }

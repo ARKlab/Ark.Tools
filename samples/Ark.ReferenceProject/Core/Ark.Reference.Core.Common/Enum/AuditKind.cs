@@ -1,23 +1,22 @@
-﻿namespace Ark.Reference.Core.Common.Enum
+﻿namespace Ark.Reference.Core.Common.Enum;
+
+/// <summary>
+/// Defines the kinds of entities that can be audited
+/// </summary>
+public enum AuditKind
 {
     /// <summary>
-    /// Defines the kinds of entities that can be audited
+    /// Ping entity audit
     /// </summary>
-    public enum AuditKind
-    {
-        /// <summary>
-        /// Ping entity audit
-        /// </summary>
-        Ping,
+    Ping,
 
-        /// <summary>
-        /// Book entity audit
-        /// </summary>
-        Book,
+    /// <summary>
+    /// Book entity audit
+    /// </summary>
+    Book,
 
-        /// <summary>
-        /// BookPrintProcess entity audit
-        /// </summary>
-        BookPrintProcess,
-    }
+    /// <summary>
+    /// BookPrintProcess entity audit
+    /// </summary>
+    BookPrintProcess,
 }

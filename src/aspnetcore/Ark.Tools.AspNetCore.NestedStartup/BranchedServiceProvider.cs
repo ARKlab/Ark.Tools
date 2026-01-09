@@ -2,22 +2,21 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System;
 
-namespace Ark.Tools.AspNetCore.NestedStartup
+namespace Ark.Tools.AspNetCore.NestedStartup;
+
+internal sealed class BranchedServiceProvider : IServiceProvider
 {
-    internal sealed class BranchedServiceProvider : IServiceProvider
+    private readonly IServiceProvider _parentService;
+    private readonly IServiceProvider _service;
+
+    public BranchedServiceProvider(IServiceProvider parentService, IServiceProvider service)
     {
-        private readonly IServiceProvider _parentService;
-        private readonly IServiceProvider _service;
+        _parentService = parentService;
+        _service = service;
+    }
 
-        public BranchedServiceProvider(IServiceProvider parentService, IServiceProvider service)
-        {
-            _parentService = parentService;
-            _service = service;
-        }
-
-        public object? GetService(Type serviceType)
-        {
-            return _service.GetService(serviceType) ?? _parentService.GetService(serviceType);
-        }
+    public object? GetService(Type serviceType)
+    {
+        return _service.GetService(serviceType) ?? _parentService.GetService(serviceType);
     }
 }

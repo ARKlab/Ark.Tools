@@ -1,11 +1,7 @@
-﻿namespace Ark.Tools.EventSourcing.Aggregates
+namespace Ark.Tools.EventSourcing.Aggregates;
+
+public interface IAggregateState
 {
-    public interface IAggregateState
-    {
-        string Identifier { get; }
-        long Version { get; }
-    }
-
-
-
+    string Identifier { get; }
+    long Version { get; }
 }

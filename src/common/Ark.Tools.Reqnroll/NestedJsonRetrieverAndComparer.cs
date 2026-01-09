@@ -1,4 +1,4 @@
-﻿using Ark.Tools.NewtonsoftJson;
+using Ark.Tools.NewtonsoftJson;
 using Ark.Tools.Nodatime;
 
 using Newtonsoft.Json;
@@ -13,53 +13,52 @@ using Reqnroll.Assist;
 using System;
 using System.Collections.Generic;
 
-namespace Ark.Tools.Reqnroll
+namespace Ark.Tools.Reqnroll;
+
+public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComparer
 {
-    public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComparer
+    private static readonly JsonSerializerSettings _settings;
+
+    static NestedJsonRetrieverAndComparer()
     {
-        private static readonly JsonSerializerSettings _settings;
-
-        static NestedJsonRetrieverAndComparer()
+        var s = new ArkJsonSerializerSettings
         {
-            var s = new ArkJsonSerializerSettings
-            {
-                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-                NullValueHandling = NullValueHandling.Ignore,
-                TypeNameHandling = TypeNameHandling.None,
-                ObjectCreationHandling = ObjectCreationHandling.Replace
-            };
+            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            NullValueHandling = NullValueHandling.Ignore,
+            TypeNameHandling = TypeNameHandling.None,
+            ObjectCreationHandling = ObjectCreationHandling.Replace
+        };
 
-            s.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
-            s.ConfigureForNodaTimeRanges();
-            s.Converters.Add(new StringEnumConverter());
+        s.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+        s.ConfigureForNodaTimeRanges();
+        s.Converters.Add(new StringEnumConverter());
 
-            _settings = s;
-        }
+        _settings = s;
+    }
 
-        public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
-        {
-            if (string.IsNullOrWhiteSpace(keyValuePair.Value)) return null;
+    public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
+    {
+        if (string.IsNullOrWhiteSpace(keyValuePair.Value)) return null;
 
-            return JsonConvert.DeserializeObject(keyValuePair.Value, propertyType, _settings);
-        }
+        return JsonConvert.DeserializeObject(keyValuePair.Value, propertyType, _settings);
+    }
 
-        public bool CanRetrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
-        {
-            return propertyType == typeof(TType);
-        }
+    public bool CanRetrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
+    {
+        return propertyType == typeof(TType);
+    }
 
-        public bool CanCompare(object actualValue)
-        {
-            return actualValue?.GetType() == typeof(TType);
-        }
+    public bool CanCompare(object actualValue)
+    {
+        return actualValue?.GetType() == typeof(TType);
+    }
 
-        public bool Compare(string expectedValue, object actualValue)
-        {
-            if (actualValue == null ^ string.IsNullOrWhiteSpace(expectedValue)) return false;
-            if (string.IsNullOrWhiteSpace(expectedValue) && actualValue == null) return true;
-            if (actualValue == null) return false;
+    public bool Compare(string expectedValue, object actualValue)
+    {
+        if (actualValue == null ^ string.IsNullOrWhiteSpace(expectedValue)) return false;
+        if (string.IsNullOrWhiteSpace(expectedValue) && actualValue == null) return true;
+        if (actualValue == null) return false;
 
-            return JToken.DeepEquals(JToken.Parse(expectedValue), JToken.FromObject(actualValue, JsonSerializer.Create(_settings)));
-        }
+        return JToken.DeepEquals(JToken.Parse(expectedValue), JToken.FromObject(actualValue, JsonSerializer.Create(_settings)));
     }
 }

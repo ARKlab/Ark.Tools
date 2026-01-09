@@ -8,83 +8,82 @@ using NodaTime;
 using System;
 using System.Globalization;
 
-namespace Ark.Tools.Nodatime.Json
+namespace Ark.Tools.Nodatime.Json;
+
+public class LocalDateTimeRangeConverter : JsonConverter
 {
-    public class LocalDateTimeRangeConverter : JsonConverter
+    private static readonly Type _type = typeof(LocalDateTimeRange);
+    private static readonly Type _nullableType = typeof(Nullable<LocalDateTimeRange>);
+
+    public override bool CanConvert(Type objectType)
     {
-        private static readonly Type _type = typeof(LocalDateTimeRange);
-        private static readonly Type _nullableType = typeof(Nullable<LocalDateTimeRange>);
+        return objectType == _type || objectType == _nullableType;
+    }
 
-        public override bool CanConvert(Type objectType)
+    private sealed class Surrogate
+    {
+        public LocalDateTime Start { get; set; }
+        public LocalDateTime End { get; set; }
+    }
+
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    {
+
+        if (reader.TokenType == JsonToken.Null)
         {
-            return objectType == _type || objectType == _nullableType;
+            if (objectType != _nullableType)
+            {
+                throw new JsonReaderException(string.Format("Cannot convert null value to {0}.", objectType));
+            }
+            return null;
         }
 
-        private sealed class Surrogate
+        var jo = JObject.Load(reader);
+
+        if (jo == null)
         {
-            public LocalDateTime Start { get; set; }
-            public LocalDateTime End { get; set; }
+            if (objectType != _nullableType)
+            {
+                throw new JsonReaderException(string.Format("Cannot convert null value to {0}.", objectType));
+            }
+            return null;
         }
 
-        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+        var s = jo.ToObject<Surrogate>(serializer);
+        if (s == null) return null;
+
+        return new LocalDateTimeRange(s.Start, s.End);
+    }
+
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    {
+        if (value == null)
         {
-
-            if (reader.TokenType == JsonToken.Null)
-            {
-                if (objectType != _nullableType)
-                {
-                    throw new JsonReaderException(string.Format("Cannot convert null value to {0}.", objectType));
-                }
-                return null;
-            }
-
-            var jo = JObject.Load(reader);
-
-            if (jo == null)
-            {
-                if (objectType != _nullableType)
-                {
-                    throw new JsonReaderException(string.Format("Cannot convert null value to {0}.", objectType));
-                }
-                return null;
-            }
-
-            var s = jo.ToObject<Surrogate>(serializer);
-            if (s == null) return null;
-
-            return new LocalDateTimeRange(s.Start, s.End);
+            throw new ArgumentNullException(nameof(value));
         }
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        if (!(value is LocalDateTimeRange || value is Nullable<LocalDateTimeRange>))
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            throw new JsonWriterException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateTimeRange).FullName, value.GetType().FullName));
+        }
 
-            if (!(value is LocalDateTimeRange || value is Nullable<LocalDateTimeRange>))
-            {
-                throw new JsonWriterException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateTimeRange).FullName, value.GetType().FullName));
-            }
+        LocalDateTimeRange? r = null;
 
-            LocalDateTimeRange? r = null;
+        if (value is Nullable<LocalDateTimeRange>)
+            r = value as Nullable<LocalDateTimeRange>;
 
-            if (value is Nullable<LocalDateTimeRange>)
-                r = value as Nullable<LocalDateTimeRange>;
+        if (value is LocalDateTimeRange)
+        {
+            r = (LocalDateTimeRange)value;
+        }
 
-            if (value is LocalDateTimeRange)
-            {
-                r = (LocalDateTimeRange)value;
-            }
-
-            if (r.HasValue)
-            {
-                serializer.Serialize(writer, new Surrogate { Start = r.Value.Start, End = r.Value.End });
-            }
-            else
-            {
-                writer.WriteNull();
-            }
+        if (r.HasValue)
+        {
+            serializer.Serialize(writer, new Surrogate { Start = r.Value.Start, End = r.Value.End });
+        }
+        else
+        {
+            writer.WriteNull();
         }
     }
 }
