@@ -1,6 +1,5 @@
 using Ark.Tools.Authorization;
 
-using System.Collections.Generic;
 
 namespace Ark.Tools.Solid.Authorization;
 

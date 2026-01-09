@@ -1,14 +1,9 @@
-﻿using Ark.Tools.Authorization;
+using Ark.Tools.Authorization;
 using Ark.Tools.Solid;
 
 using SimpleInjector;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 
 
 namespace Ark.Reference.Common.Services.Auth;

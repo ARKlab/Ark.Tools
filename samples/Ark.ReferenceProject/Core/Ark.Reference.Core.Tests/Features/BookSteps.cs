@@ -9,7 +9,6 @@ using Flurl;
 using Reqnroll;
 using Reqnroll.Assist;
 
-using System.Collections.Generic;
 
 namespace Ark.Reference.Core.Tests.Features;
 

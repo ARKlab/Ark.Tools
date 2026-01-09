@@ -1,6 +1,5 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -31,7 +30,7 @@ public static class InvalidOperationExceptionExtensions
         {
             if (condition)
             {
-                var errorMessage = message != null 
+                var errorMessage = message != null
                     ? $"{message} (condition: {conditionExpression})"
                     : $"Condition failed: {conditionExpression}";
                 throw new InvalidOperationException(errorMessage);
@@ -53,7 +52,7 @@ public static class InvalidOperationExceptionExtensions
         {
             if (!condition)
             {
-                var errorMessage = message != null 
+                var errorMessage = message != null
                     ? $"{message} (condition: {conditionExpression})"
                     : $"Condition failed: {conditionExpression}";
                 throw new InvalidOperationException(errorMessage);

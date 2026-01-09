@@ -1,4 +1,4 @@
-﻿using Ark.Tools.Core.EntityTag;
+using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Http;
 
 using AwesomeAssertions;
@@ -11,8 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using Reqnroll;
 
-using System;
-using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 

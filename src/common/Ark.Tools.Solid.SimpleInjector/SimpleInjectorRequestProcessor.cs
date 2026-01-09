@@ -1,10 +1,8 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using SimpleInjector;
 
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid.SimpleInjector;
 

@@ -1,10 +1,7 @@
 using Raven.Client.Documents.Operations.Attachments;
 using Raven.Client.Documents.Session;
 
-using System.Collections.Generic;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.RavenDb.Auditing;
 

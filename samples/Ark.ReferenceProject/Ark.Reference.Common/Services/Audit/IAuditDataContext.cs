@@ -1,9 +1,5 @@
-﻿using Ark.Tools.Core;
+using Ark.Tools.Core;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Common.Services.Audit;
 

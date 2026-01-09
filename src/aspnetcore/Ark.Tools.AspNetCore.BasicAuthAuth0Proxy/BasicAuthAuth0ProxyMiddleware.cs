@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Auth0;
 
@@ -9,9 +9,7 @@ using Microsoft.AspNetCore.Http;
 
 using Polly;
 
-using System;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy;
 

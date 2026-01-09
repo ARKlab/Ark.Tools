@@ -1,11 +1,8 @@
-﻿using Ark.Tools.Core;
+using Ark.Tools.Core;
 
 using NodaTime;
 using NodaTime.Text;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 
 namespace Ark.Reference.Core.Common;

@@ -1,4 +1,4 @@
-﻿using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Solid;
 
 using Microsoft.AspNetCore.Http;
@@ -7,9 +7,6 @@ using ProblemDetailsSample.Api.Requests;
 using ProblemDetailsSample.Common.Dto;
 using ProblemDetailsSample.Models;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ProblemDetailsSample.Api.Queries;
 

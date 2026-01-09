@@ -3,7 +3,6 @@ using Ark.Tools.EventSourcing.Store;
 
 using Rebus.Bus;
 
-using System.Threading.Tasks;
 
 namespace Ark.Tools.DomainEventPublisher.Rebus;
 

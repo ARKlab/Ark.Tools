@@ -1,4 +1,3 @@
-﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace Ark.Reference.Core.Tests.Auth;

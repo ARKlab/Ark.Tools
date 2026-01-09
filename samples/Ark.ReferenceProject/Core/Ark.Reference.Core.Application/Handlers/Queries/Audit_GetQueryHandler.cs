@@ -1,12 +1,10 @@
-﻿using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries;
 

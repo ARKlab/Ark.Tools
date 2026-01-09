@@ -1,4 +1,4 @@
-﻿using Ark.Tools.Core;
+using Ark.Tools.Core;
 
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Query.Validator;
@@ -7,9 +7,6 @@ using Raven.Client.Documents;
 using Raven.Client.Documents.Linq;
 using Raven.Client.Documents.Session;
 
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.RavenDb;
 

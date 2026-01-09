@@ -1,4 +1,3 @@
-﻿using System;
 using System.Globalization;
 
 namespace Ark.Reference.Common.Exceptions;

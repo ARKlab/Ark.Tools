@@ -28,10 +28,7 @@ using Rebus.Transport.InMem;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 
 namespace Ark.Reference.Core.WebInterface;

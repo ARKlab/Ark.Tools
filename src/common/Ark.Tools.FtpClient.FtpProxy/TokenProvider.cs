@@ -9,10 +9,7 @@ using Microsoft.Identity.Client;
 
 using Polly;
 
-using System;
 using System.Security.Authentication;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.FtpClient.FtpProxy;
 

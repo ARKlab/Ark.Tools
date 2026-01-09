@@ -1,12 +1,10 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Primitives;
 
-using System;
 using System.Globalization;
-using System.Linq;
 
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 

@@ -2,8 +2,6 @@ using Rebus.Logging;
 using Rebus.Transport;
 using Rebus.Workers.ThreadPoolBased;
 
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.Rebus;
 

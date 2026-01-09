@@ -1,9 +1,6 @@
-﻿using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Enum;
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.DAL;
 

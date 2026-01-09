@@ -4,9 +4,6 @@ using Ark.Tools.EventSourcing.Store;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Subscriptions;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 

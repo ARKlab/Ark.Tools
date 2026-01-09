@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Common.Services.Audit.Dto;
 using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Application.DAL;
@@ -7,10 +7,6 @@ using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries;
 

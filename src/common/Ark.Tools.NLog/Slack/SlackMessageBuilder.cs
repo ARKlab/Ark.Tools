@@ -1,7 +1,5 @@
 using Slack.Webhooks;
 
-using System;
-using System.Collections.Generic;
 
 namespace Ark.Tools.NLog.Slack;
 

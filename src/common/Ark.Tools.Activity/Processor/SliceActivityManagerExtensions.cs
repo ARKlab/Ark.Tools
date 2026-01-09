@@ -3,11 +3,8 @@ using Ark.Tools.SimpleInjector;
 
 using SimpleInjector;
 
-using System;
 
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Activity.Processor;
 

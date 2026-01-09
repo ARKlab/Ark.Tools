@@ -5,9 +5,6 @@ using AwesomeAssertions;
 using NodaTime;
 using NodaTime.Text;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Ark.Tools.ResourceWatcher.Tests.Steps;
 

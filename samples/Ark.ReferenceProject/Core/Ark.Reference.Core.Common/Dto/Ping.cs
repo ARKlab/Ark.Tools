@@ -1,7 +1,6 @@
-﻿using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Enum;
 
-using System;
 
 namespace Ark.Reference.Core.Common.Dto;
 

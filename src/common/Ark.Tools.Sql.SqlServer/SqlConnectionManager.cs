@@ -3,8 +3,6 @@
 using Microsoft.Data.SqlClient;
 
 using System.Data.Common;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql.SqlServer;
 

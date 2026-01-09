@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.AspNetCore.ProblemDetails;
 
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Ark.Tools.AspNetCore.JsonContext;

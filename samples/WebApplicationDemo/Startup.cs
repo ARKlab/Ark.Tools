@@ -23,8 +23,6 @@ using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 

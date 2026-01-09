@@ -1,11 +1,8 @@
-﻿using Ark.Tools.Activity;
+using Ark.Tools.Activity;
 using Ark.Tools.Activity.Processor;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace TestReceiver;
 

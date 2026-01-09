@@ -1,4 +1,4 @@
-﻿using Ark.Tools.AspNetCore.NestedStartup;
+using Ark.Tools.AspNetCore.NestedStartup;
 using Ark.Tools.Core;
 using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Solid;
@@ -12,9 +12,6 @@ using ProblemDetailsSample.Api.Queries;
 using ProblemDetailsSample.Api.Requests;
 using ProblemDetailsSample.Common.Dto;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ProblemDetailsSample.Controllers.Private;
 

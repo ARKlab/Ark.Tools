@@ -1,14 +1,9 @@
-﻿using Dapper;
+using Dapper;
 
 using NLog;
 
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Common.Services.Audit;
 

@@ -1,14 +1,11 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 
-using System;
-using System.Collections.Generic;
 
-using System.Linq;
 
 using WebApplicationDemo.Dto;
 

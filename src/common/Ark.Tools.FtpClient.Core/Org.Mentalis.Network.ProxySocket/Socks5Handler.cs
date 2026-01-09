@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Org.Mentalis.Network.ProxySocket.Authentication;
 
-using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;

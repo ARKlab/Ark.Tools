@@ -1,9 +1,7 @@
-﻿using Ark.Tools.Core;
+using Ark.Tools.Core;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 
 namespace Ark.Reference.Common.Services.Audit;
 

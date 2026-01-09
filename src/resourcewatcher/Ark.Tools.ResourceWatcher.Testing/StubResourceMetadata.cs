@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 
 namespace Ark.Tools.ResourceWatcher.Testing;
 

@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Flurl.Http.Configuration;
 
-using System;
 using System.Reflection;
 
 namespace Ark.Tools.Http;

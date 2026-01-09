@@ -1,10 +1,6 @@
-﻿using Ark.Tools.Authorization;
+using Ark.Tools.Authorization;
 using Ark.Tools.Authorization.Requirement;
 
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Common.Auth;
 

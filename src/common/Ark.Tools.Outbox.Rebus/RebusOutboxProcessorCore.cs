@@ -5,10 +5,6 @@ using Rebus.Messages;
 using Rebus.Transport;
 using Rebus.Workers.ThreadPoolBased;
 
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.Rebus;
 

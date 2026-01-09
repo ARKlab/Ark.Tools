@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Common.Auth;
+using Ark.Reference.Common.Auth;
 using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
 
@@ -10,13 +10,9 @@ using Microsoft.Data.SqlClient;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Common;
 

@@ -1,12 +1,9 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 //using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace Ark.Tools.AspNetCore.NestedStartup;

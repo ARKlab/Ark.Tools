@@ -1,6 +1,5 @@
 using Ark.Tools.EventSourcing.Store;
 
-using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.DomainEventPublisher;
 

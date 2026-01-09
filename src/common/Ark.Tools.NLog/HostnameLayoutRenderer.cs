@@ -1,14 +1,12 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NLog;
 using NLog.Common;
 using NLog.Config;
 using NLog.LayoutRenderers;
 
-using System;
 using System.Net;
 using System.Text;
-using System.Threading;
 
 namespace Ark.Tools.NLog;
 

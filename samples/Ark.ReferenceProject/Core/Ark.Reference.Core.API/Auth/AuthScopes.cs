@@ -1,4 +1,3 @@
-﻿using System.Collections.Generic;
 
 namespace Ark.Reference.Core.API.Auth;
 

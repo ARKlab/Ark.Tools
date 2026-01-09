@@ -1,10 +1,7 @@
-﻿using Ark.Reference.Core.API.Queries;
+using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Tools.Solid;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries;
 

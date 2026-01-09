@@ -1,6 +1,5 @@
-﻿using Ark.Reference.Common.Dto;
+using Ark.Reference.Common.Dto;
 
-using System.Collections.Generic;
 
 namespace Ark.Reference.Common.Services.Audit.Dto;
 

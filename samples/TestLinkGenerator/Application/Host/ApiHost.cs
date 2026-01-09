@@ -1,4 +1,4 @@
-﻿using Ark.Tools.SimpleInjector;
+using Ark.Tools.SimpleInjector;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Sql;
@@ -8,9 +8,7 @@ using FluentValidation;
 
 using SimpleInjector;
 
-using System.Linq;
 using System.Reflection;
-using System.Threading;
 
 namespace TestWithoutArkTools.Application.Host;
 

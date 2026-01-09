@@ -1,6 +1,5 @@
-﻿using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Core.BusinessRuleViolation;
 
-using System.Collections.Generic;
 
 namespace ProblemDetailsSample.Models;
 

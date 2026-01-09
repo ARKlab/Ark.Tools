@@ -1,9 +1,7 @@
-﻿using Ark.Tools.ResourceWatcher;
+using Ark.Tools.ResourceWatcher;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 
 namespace TestWorker.Dto;
 

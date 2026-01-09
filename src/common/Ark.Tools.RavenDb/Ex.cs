@@ -10,10 +10,7 @@ using Raven.Client.Exceptions.Database;
 using Raven.Client.ServerWide;
 using Raven.Client.ServerWide.Operations;
 
-using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 
 namespace Ark.Tools.RavenDb;
 

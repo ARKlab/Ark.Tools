@@ -1,12 +1,10 @@
-﻿using Ark.Tools.Core;
+using Ark.Tools.Core;
 using Ark.Tools.Core.EntityTag;
 
 using MessagePack;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace WebApplicationDemo.Dto;

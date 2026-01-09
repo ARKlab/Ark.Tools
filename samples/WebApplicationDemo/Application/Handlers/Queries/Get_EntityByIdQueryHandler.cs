@@ -1,14 +1,10 @@
-﻿using Ark.Tools.Solid;
+using Ark.Tools.Solid;
 
 using NLog;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
 
 using WebApplicationDemo.Dto;
 

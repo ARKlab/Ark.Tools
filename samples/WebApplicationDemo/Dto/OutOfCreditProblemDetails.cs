@@ -1,6 +1,5 @@
-﻿using Ark.Tools.AspNetCore.ProblemDetails;
+using Ark.Tools.AspNetCore.ProblemDetails;
 
-using System.Collections.Generic;
 
 namespace WebApplicationDemo.Dto;
 

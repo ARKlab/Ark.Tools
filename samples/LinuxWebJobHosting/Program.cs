@@ -12,9 +12,7 @@ using Microsoft.Extensions.Hosting;
 
 using NLog;
 
-using System;
 using System.Globalization;
-using System.Threading.Tasks;
 
 namespace Processor.Service.WebInterface;
 

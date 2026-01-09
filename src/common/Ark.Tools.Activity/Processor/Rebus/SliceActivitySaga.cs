@@ -1,14 +1,10 @@
 using Ark.Tools.Activity.Messages;
-
+using Ark.Tools.Core;
 
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Sagas;
 
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Ark.Tools.Core;
 
 namespace Ark.Tools.Activity.Processor;
 

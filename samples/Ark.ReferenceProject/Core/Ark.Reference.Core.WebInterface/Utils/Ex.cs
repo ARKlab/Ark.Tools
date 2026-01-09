@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Core.Common.Auth;
+using Ark.Reference.Core.Common.Auth;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,10 +9,7 @@ using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
 

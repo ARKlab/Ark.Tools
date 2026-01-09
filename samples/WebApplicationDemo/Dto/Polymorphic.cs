@@ -1,4 +1,4 @@
-﻿using Ark.Tools.NewtonsoftJson;
+using Ark.Tools.NewtonsoftJson;
 using Ark.Tools.Nodatime;
 
 using Newtonsoft.Json;
@@ -6,8 +6,6 @@ using Newtonsoft.Json.Linq;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 
 namespace WebApplicationDemo.Dto;
 

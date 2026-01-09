@@ -1,11 +1,9 @@
-﻿using Ark.Tools.Activity;
+using Ark.Tools.Activity;
 using Ark.Tools.Activity.Provider;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using NodaTime;
 
-using System.Threading;
-using System.Threading.Tasks;
 
 using TestWorker.Constants;
 using TestWorker.Dto;

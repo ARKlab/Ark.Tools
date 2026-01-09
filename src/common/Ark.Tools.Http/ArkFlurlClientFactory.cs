@@ -3,7 +3,6 @@
 using Flurl.Http;
 using Flurl.Http.Configuration;
 
-using System;
 
 namespace Ark.Tools.Http;
 

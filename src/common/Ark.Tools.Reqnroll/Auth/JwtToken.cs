@@ -1,7 +1,6 @@
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-using System;
 
 namespace Ark.Tools.Reqnroll.Auth;
 

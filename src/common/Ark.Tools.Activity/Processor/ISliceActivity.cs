@@ -1,8 +1,5 @@
 using NLog;
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Activity.Processor;
 

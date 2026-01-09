@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Common.Dto;
+using Ark.Reference.Common.Dto;
 using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
@@ -12,8 +12,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Reqnroll;
 using Reqnroll.Assist;
 
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 
 namespace Ark.Reference.Core.Tests.Features;

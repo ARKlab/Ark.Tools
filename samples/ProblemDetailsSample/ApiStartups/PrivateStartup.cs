@@ -1,4 +1,4 @@
-﻿using Ark.Tools.AspNetCore.Startup;
+using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
@@ -14,10 +14,7 @@ using ProblemDetailsSample.Application.Handlers.Host;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 
 namespace ProblemDetailsSample;
 

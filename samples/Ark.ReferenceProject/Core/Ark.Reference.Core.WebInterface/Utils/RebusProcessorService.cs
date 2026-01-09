@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Core.Application;
+using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Application.Host;
 
 using Microsoft.ApplicationInsights;
@@ -15,9 +15,6 @@ using Rebus.Transport.InMem;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Utils;
 

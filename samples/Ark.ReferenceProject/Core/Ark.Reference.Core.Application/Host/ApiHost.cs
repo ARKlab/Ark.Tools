@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Common;
+using Ark.Reference.Common;
 using Ark.Reference.Common.Auth;
 using Ark.Reference.Common.Services.Auth;
 using Ark.Reference.Common.Services.Decorators;
@@ -41,9 +41,7 @@ using Rebus.Transport.InMem;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
-using System;
 using System.Data;
-using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 

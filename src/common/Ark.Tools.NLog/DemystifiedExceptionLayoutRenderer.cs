@@ -3,7 +3,6 @@
 using NLog.Config;
 using NLog.LayoutRenderers;
 
-using System;
 using System.Diagnostics;
 using System.Text;
 

@@ -1,8 +1,5 @@
-﻿using Ark.Tools.Solid;
+using Ark.Tools.Solid;
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 using WebApplicationDemo.Api.Queries;
 using WebApplicationDemo.Dto;

@@ -1,7 +1,5 @@
 using Ark.Tools.Authorization;
 
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Solid.Authorization;
 

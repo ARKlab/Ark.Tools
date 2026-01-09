@@ -5,7 +5,6 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Exceptions;
 using Ark.Tools.Core;
 
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Ark.Reference.Core.API.JsonContext;

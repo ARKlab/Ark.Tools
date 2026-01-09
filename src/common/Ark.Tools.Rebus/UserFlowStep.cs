@@ -6,10 +6,7 @@ using Rebus.Pipeline;
 
 using SimpleInjector;
 
-using System;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus;
 

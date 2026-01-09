@@ -4,7 +4,6 @@ using Rebus.Logging;
 using Rebus.Transport;
 using Rebus.Workers.ThreadPoolBased;
 
-using System;
 
 namespace Ark.Tools.Outbox.Rebus.Config;
 

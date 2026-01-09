@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.NLog.Slack;
 
@@ -14,7 +14,6 @@ using NLog.MailKit;
 using NLog.Targets;
 using NLog.Targets.Wrappers;
 
-using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;

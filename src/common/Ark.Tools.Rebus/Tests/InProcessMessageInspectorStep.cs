@@ -1,8 +1,5 @@
 using Rebus.Pipeline;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus.Tests;
 

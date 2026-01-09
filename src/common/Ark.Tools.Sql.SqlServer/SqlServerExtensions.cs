@@ -2,10 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Dapper;
 
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql.SqlServer;
 

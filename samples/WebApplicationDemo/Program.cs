@@ -7,9 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using System;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace WebApplicationDemo;
 

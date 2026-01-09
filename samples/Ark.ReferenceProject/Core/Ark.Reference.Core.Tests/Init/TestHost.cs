@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Common;
+using Ark.Reference.Common;
 using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Application.Config;
 using Ark.Reference.Core.WebInterface;
@@ -30,11 +30,9 @@ using Reqnroll;
 
 using SimpleInjector;
 
-using System;
 using System.IO;
 using System.Net.Http;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 [assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
 

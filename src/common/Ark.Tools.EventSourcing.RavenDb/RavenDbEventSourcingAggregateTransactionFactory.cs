@@ -9,8 +9,6 @@ using Raven.Client.Documents.Session;
 using SimpleInjector;
 
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 

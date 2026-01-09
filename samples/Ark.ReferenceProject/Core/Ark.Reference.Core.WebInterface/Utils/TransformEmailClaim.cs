@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Utils;
 

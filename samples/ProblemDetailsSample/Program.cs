@@ -1,4 +1,4 @@
-﻿using Ark.Tools.Nodatime;
+using Ark.Tools.Nodatime;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -6,9 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using System;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace ProblemDetailsSample;
 
