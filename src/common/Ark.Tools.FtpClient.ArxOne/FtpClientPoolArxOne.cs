@@ -6,7 +6,6 @@ using ArxOne.Ftp;
 
 using Org.Mentalis.Network.ProxySocket;
 
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 

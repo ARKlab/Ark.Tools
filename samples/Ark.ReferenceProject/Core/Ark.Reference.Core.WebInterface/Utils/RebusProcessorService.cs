@@ -2,9 +2,6 @@ using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Application.Host;
 
 using Microsoft.ApplicationInsights;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 using NodaTime;
 

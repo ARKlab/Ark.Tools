@@ -2,7 +2,6 @@ using Azure.Identity;
 using Azure.Storage.Blobs;
 
 using System.Globalization;
-using System.IO;
 
 namespace Ark.Reference.Common.Services.FileStorageService;
 

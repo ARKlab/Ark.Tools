@@ -10,7 +10,6 @@ using Raven.Client.Json.Serialization;
 
 using Sparrow.Json;
 
-using System.IO;
 using System.Linq.Expressions;
 
 namespace Ark.Tools.RavenDb.Auditing;

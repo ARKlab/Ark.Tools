@@ -2,7 +2,6 @@ using Ark.Tools.Solid;
 
 using Asp.Versioning;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using NLog;

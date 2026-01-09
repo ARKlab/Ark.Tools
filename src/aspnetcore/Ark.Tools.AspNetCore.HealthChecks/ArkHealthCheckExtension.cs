@@ -11,7 +11,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 using SimpleInjector;
 
-using System.IO;
 
 namespace Ark.Tools.AspNetCore.HealthChecks;
 

@@ -1,8 +1,6 @@
-﻿using Ark.Tools.AspNetCore.NestedStartup;
+using Ark.Tools.AspNetCore.NestedStartup;
 using Ark.Tools.AspNetCore.Startup;
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 
 namespace ProblemDetailsSample;
 

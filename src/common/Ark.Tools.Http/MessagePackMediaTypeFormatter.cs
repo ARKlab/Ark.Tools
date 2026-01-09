@@ -2,9 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using MessagePack;
 
-using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 

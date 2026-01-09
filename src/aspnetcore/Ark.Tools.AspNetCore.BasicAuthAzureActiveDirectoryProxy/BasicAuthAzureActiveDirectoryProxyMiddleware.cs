@@ -6,7 +6,6 @@ using Newtonsoft.Json;
 
 using Polly;
 
-using System.Net.Http;
 using System.Text;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy;

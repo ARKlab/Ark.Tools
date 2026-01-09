@@ -5,7 +5,6 @@ using Flurl.Http;
 
 using MessagePack;
 
-using System.Net.Http;
 
 namespace Ark.Tools.Http;
 

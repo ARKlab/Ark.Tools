@@ -1,7 +1,6 @@
 using Asp.Versioning;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 
 namespace TestWithoutArkTools.Controllers;

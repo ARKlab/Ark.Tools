@@ -3,7 +3,6 @@ using Ark.Tools.Solid;
 using NLog;
 
 using System.Globalization;
-using System.IO;
 
 using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;

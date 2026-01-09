@@ -1,4 +1,3 @@
-using System.IO;
 
 namespace Ark.Reference.Common.Services.FileStorageService;
 

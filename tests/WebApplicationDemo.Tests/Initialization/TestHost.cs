@@ -11,7 +11,6 @@ using NLog;
 
 using Reqnroll;
 
-using System.Net.Http;
 
 [assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
 

@@ -7,7 +7,6 @@ using Ark.Tools.Core;
 
 using AwesomeAssertions;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Reqnroll;
 using Reqnroll.Assist;

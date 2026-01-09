@@ -16,7 +16,6 @@ using Microsoft.Extensions.Options;
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Net.Http;
 using System.Text.Json;
 
 using ProblemDetailsOptions = Hellang.Middleware.ProblemDetails.ProblemDetailsOptions;

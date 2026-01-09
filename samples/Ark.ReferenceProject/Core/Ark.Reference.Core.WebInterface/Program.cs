@@ -2,15 +2,10 @@ using Ark.Reference.Common;
 using Ark.Reference.Core.WebInterface.Utils;
 using Ark.Tools.NLog;
 
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 using Rebus.Persistence.InMem;
 using Rebus.Transport.InMem;
 
-using System.IO;
 
 namespace Ark.Reference.Core.WebInterface;
 

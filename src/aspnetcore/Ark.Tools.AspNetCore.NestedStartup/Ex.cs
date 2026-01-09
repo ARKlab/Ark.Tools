@@ -8,8 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using System.IO;
-
 namespace Ark.Tools.AspNetCore.NestedStartup;
 
 public static class Ex

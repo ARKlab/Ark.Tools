@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Http;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ark.Reference.Core.WebInterface.Utils;

@@ -13,7 +13,6 @@ using Polly;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 

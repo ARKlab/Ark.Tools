@@ -8,7 +8,6 @@ using AwesomeAssertions.Execution;
 using Flurl.Http;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Reqnroll;
 

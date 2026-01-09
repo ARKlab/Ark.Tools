@@ -5,7 +5,6 @@ using Ark.Tools.FtpClient.Core;
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
 
-using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;

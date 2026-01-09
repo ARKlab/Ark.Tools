@@ -1,7 +1,6 @@
 using Raven.Client.Documents.Operations.Attachments;
 using Raven.Client.Documents.Session;
 
-using System.IO;
 
 namespace Ark.Tools.RavenDb.Auditing;
 

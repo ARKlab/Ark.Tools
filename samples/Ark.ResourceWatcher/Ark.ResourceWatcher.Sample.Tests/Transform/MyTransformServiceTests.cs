@@ -5,9 +5,7 @@ using Ark.ResourceWatcher.Sample.Transform;
 
 using AwesomeAssertions;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;

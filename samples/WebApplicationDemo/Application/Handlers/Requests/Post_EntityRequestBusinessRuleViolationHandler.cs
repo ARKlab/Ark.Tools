@@ -1,7 +1,6 @@
 using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Solid;
 
-using Microsoft.AspNetCore.Http;
 
 
 using WebApplicationDemo.Api.Requests;

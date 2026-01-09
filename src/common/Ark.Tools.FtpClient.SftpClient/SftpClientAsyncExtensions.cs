@@ -1,6 +1,5 @@
 using Renci.SshNet;
 
-using System.IO;
 
 using Client = Renci.SshNet.SftpClient;
 

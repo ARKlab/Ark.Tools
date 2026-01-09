@@ -6,7 +6,6 @@ using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System.IO;
 using System.Reflection;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;

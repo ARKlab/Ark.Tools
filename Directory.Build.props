@@ -5,6 +5,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>1591</NoWarn>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
 
   </PropertyGroup>
 
@@ -65,14 +66,6 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 
   </PropertyGroup>
-
-	<ItemGroup Label="Global Usings">
-		<Using Include="System" />
-		<Using Include="System.Collections.Generic" />
-		<Using Include="System.Linq" />
-		<Using Include="System.Threading" />
-		<Using Include="System.Threading.Tasks" />
-	</ItemGroup>
 
 	<ItemGroup Label="Global Analyzer Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />

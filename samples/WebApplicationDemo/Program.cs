@@ -2,12 +2,7 @@ using Ark.Tools.NLog;
 using Ark.Tools.Nodatime;
 using Ark.Tools.Nodatime.Dapper;
 
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
-using System.IO;
 
 namespace WebApplicationDemo;
 

@@ -30,8 +30,6 @@ using Reqnroll;
 
 using SimpleInjector;
 
-using System.IO;
-using System.Net.Http;
 using System.Security.Claims;
 
 [assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
