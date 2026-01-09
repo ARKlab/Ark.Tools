@@ -1,6 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -35,7 +35,7 @@ public class OracleDbConnectionManagerTests
 
         // Assert
         connection.Should().NotBeNull();
-        connection!.CommandTimeout.Should().Be(30, "CommandTimeout should be set to 30 seconds");
+        connection!.CommandTimeout.Should().Be(30);
 
         // Cleanup
         connection.Dispose();
@@ -60,7 +60,7 @@ public class OracleDbConnectionManagerTests
         // Assert
         command.Should().NotBeNull();
         command.Should().BeOfType<OracleCommand>();
-        command.CommandTimeout.Should().Be(30, "Command should inherit 30-second timeout from connection");
+        command.CommandTimeout.Should().Be(30);
 
         // Cleanup
         command.Dispose();
@@ -85,7 +85,7 @@ public class OracleDbConnectionManagerTests
         command.CommandTimeout = customTimeout;
 
         // Assert
-        command.CommandTimeout.Should().Be(customTimeout, "Command timeout should be overridable");
+        command.CommandTimeout.Should().Be(customTimeout);
 
         // Cleanup
         command.Dispose();
@@ -110,8 +110,8 @@ public class OracleDbConnectionManagerTests
         var command = connection.CreateCommand();
 
         // Assert
-        connection.CommandTimeout.Should().Be(customTimeout, "Connection timeout should be overridable");
-        command.CommandTimeout.Should().Be(customTimeout, "Command should inherit updated connection timeout");
+        connection.CommandTimeout.Should().Be(customTimeout);
+        command.CommandTimeout.Should().Be(customTimeout);
 
         // Cleanup
         command.Dispose();

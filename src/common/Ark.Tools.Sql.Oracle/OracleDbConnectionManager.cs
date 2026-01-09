@@ -14,8 +14,8 @@ namespace Ark.Tools.Sql.Oracle;
 /// </summary>
 /// <remarks>
 /// See Oracle documentation:
-/// - <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/odpnt/ConnectionCommandTimeout.html">OracleConnection.CommandTimeout Property</a>
-/// - <a href="https://docs.oracle.com/en/database/oracle/oracle-database/19/odpnt/CommandCommandTimeout.html">OracleCommand.CommandTimeout Reference</a>
+/// - <a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/ConnectionProperties.html">OracleConnection Properties Reference</a>
+/// - <a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/CommandProperties.html">OracleCommand Properties Reference</a>
 /// </remarks>
 public class OracleDbConnectionManager : IDbConnectionManager
 {
@@ -64,7 +64,7 @@ public class OracleDbConnectionManager : IDbConnectionManager
     /// The CommandTimeout property is set to 30 seconds to prevent unbounded query execution,
     /// aligning with .NET ADO.NET standards (e.g., SQL Server default is 30 seconds).
     /// Commands created from this connection will inherit the 30-second timeout unless explicitly overridden.
-    /// See: <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/odpnt/ConnectionCommandTimeout.html">Oracle CommandTimeout Documentation</a>
+    /// See: <a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/ConnectionProperties.html">Oracle Connection Properties Documentation</a>
     /// </remarks>
     protected virtual OracleConnection Build(string connectionString)
     {
@@ -75,7 +75,7 @@ public class OracleDbConnectionManager : IDbConnectionManager
         // Set CommandTimeout to 30 seconds to align with industry standard practice.
         // This prevents unbounded or runaway queries by default while still allowing
         // consumers to override per command or per connection.
-        // See: https://docs.oracle.com/en/database/oracle/oracle-database/26/odpnt/ConnectionCommandTimeout.html
+        // See: https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/ConnectionProperties.html
         conn.CommandTimeout = 30;
 
         return conn;
