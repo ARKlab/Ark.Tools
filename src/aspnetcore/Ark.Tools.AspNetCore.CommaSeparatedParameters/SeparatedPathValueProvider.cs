@@ -36,7 +36,7 @@ public class SeparatedPathValueProvider : RouteValueProvider
 
         var result = base.GetValue(key);
 
-        if (result != ValueProviderResult.None && result.Values.Any(x => x != null && x.AsSpan().ContainsAny(_separatorSearchValues)))
+        if (result != ValueProviderResult.None && result.Values.Any(x => x != null && x.AsSpan().IndexOfAny(_separatorSearchValues) > 0))
         {
             var splitValues = new StringValues(result.Values
                 .SelectMany(x => x!.Split([_separator], StringSplitOptions.None)).ToArray());
