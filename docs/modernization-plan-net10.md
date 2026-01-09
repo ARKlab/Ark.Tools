@@ -82,6 +82,7 @@ Based on the modernization opportunities identified, the following analyzer rule
 **Effort:** Medium  
 **Applicability:** String parsing, manipulation, and validation scenarios  
 **Analyzer Support:** CA1846 (Prefer AsSpan over Substring) - currently set to `warning` ✅
+  - **Note:** No warnings currently appear because the codebase has **zero** `.Substring()` usages - already following best practices! The analyzer will catch any future Substring usage.
 
 #### Current Pattern (Example from EnumerableExtensions.cs)
 ```csharp
@@ -795,58 +796,113 @@ return string.Create(length, (userId, timestamp), (span, state) =>
 
 **Impact:** Low - Enables better JIT devirtualization  
 **Effort:** Low  
-**Applicability:** Local variables and return types
+**Applicability:** Local variables and return types  
+**Analyzer Support:** CA1859 (Use concrete types when possible) - currently set to `suggestion` ✅
+
+#### General Guidance: Public vs Private Methods
+
+**Rule of Thumb:**
+- **Public methods**: Use interface types (IEnumerable<T>, ICollection<T>, IList<T>) for flexibility and abstraction
+- **Private methods**: Use concrete types (List<T>, ImmutableArray<T>, etc.) for better performance via JIT devirtualization
 
 ```csharp
-// Less optimal:
-IEnumerable<string> GetItems()
+// PUBLIC METHODS - Use interfaces for flexibility
+public IEnumerable<User> GetActiveUsers()
 {
-    return new List<string> { "a", "b", "c" };
+    return _users.Where(u => u.IsActive); // IEnumerable for deferred execution
 }
 
-// Better (when caller doesn't need IEnumerable flexibility):
-List<string> GetItems()
+public IReadOnlyList<Order> GetRecentOrders()
 {
-    return new List<string> { "a", "b", "c" };
+    return _orders.OrderByDescending(o => o.Date).Take(10).ToList(); // IReadOnlyList for caller
 }
 
-// Or use ICollection/IList when caller needs collection features:
-ICollection<string> GetItems()
+// PRIVATE METHODS - Use concrete types for performance
+private List<User> FilterUsers(List<User> users, Func<User, bool> predicate)
 {
-    return new List<string> { "a", "b", "c" };
+    return users.Where(predicate).ToList(); // List<T> enables JIT optimizations
+}
+
+private ImmutableArray<string> ProcessItems(ImmutableArray<string> items)
+{
+    // Concrete type allows compiler to optimize enumeration
+    return items.Where(i => i.Length > 0).ToImmutableArray();
 }
 ```
 
-**Analyzer CA1859 will suggest these optimizations.**
+#### Specific Scenarios
 
-**Special Case - IEnumerable for Immutable Collections:**
-
-IEnumerable is often used as a return type for truly immutable collections. Consider these patterns:
-
+**1. Small, Known Collections**
 ```csharp
-// When returning immutable collection, IEnumerable signals intent
+// AVOID - Interface hides optimization opportunities
+private IEnumerable<string> GetErrorCodes()
+{
+    return new List<string> { "E001", "E002", "E003" };
+}
+
+// PREFER - Concrete type for private method
+private List<string> GetErrorCodes()
+{
+    return ["E001", "E002", "E003"]; // Collection expression with concrete type
+}
+```
+
+**2. Immutable Collections**
+```csharp
+// PUBLIC - IEnumerable signals immutability
 public IEnumerable<string> GetReadOnlyItems()
 {
-    return _items.AsReadOnly(); // or ImmutableArray, FrozenSet, etc.
+    return _items.AsReadOnly(); // or ImmutableArray, FrozenSet
 }
 
-// For mutable collections caller will modify, use concrete type
-public List<string> GetMutableItems()
+// PRIVATE - Use concrete immutable type
+private ImmutableArray<string> GetConfigValues()
 {
-    return new List<string>(_items);
-}
-
-// For large result sets with deferred execution, keep IEnumerable
-public IEnumerable<Item> QueryItems()
-{
-    return _repository.Query().Where(x => x.IsActive); // LINQ deferred execution
+    return ImmutableArray.Create("value1", "value2");
 }
 ```
 
-**Guidance:**
-- Use `IEnumerable<T>` for: immutable collections, LINQ deferred execution, large result sets
-- Use concrete types (`List<T>`, `ImmutableArray<T>`, etc.) for: small collections, when caller needs specific features
-- Use `ICollection<T>` or `IList<T>` when: caller needs count, indexing, but not specific implementation
+**3. LINQ Deferred Execution**
+```csharp
+// PUBLIC - Keep IEnumerable for deferred execution
+public IEnumerable<Item> QueryActiveItems()
+{
+    return _repository.Query().Where(x => x.IsActive); // Deferred, no ToList()
+}
+
+// PRIVATE - Materialize if immediate execution needed
+private List<Item> LoadItemsForProcessing()
+{
+    return _repository.Query().Where(x => x.IsActive).ToList(); // Immediate
+}
+```
+
+**4. Collection Operations**
+```csharp
+// PUBLIC - ICollection when caller needs Count/Add
+public ICollection<string> GetMutableTags()
+{
+    return new List<string>(_tags);
+}
+
+// PRIVATE - List when you control the usage
+private List<string> BuildTagList()
+{
+    var tags = new List<string>();
+    // ... build logic
+    return tags;
+}
+```
+
+**Summary:**
+- **Public API surface**: Use abstractions (interfaces) for flexibility, versioning, testing
+- **Private implementation**: Use concrete types for performance (JIT can devirtualize)
+- **IEnumerable<T>**: Use for deferred LINQ execution, large datasets, truly immutable collections
+- **List<T>**: Use for private methods with small-medium collections
+- **ImmutableArray<T>**: Use for immutable data with fast iteration (better than ImmutableList)
+- **IReadOnlyList<T>/IReadOnlyCollection<T>**: Use for public APIs returning read-only data
+
+**Analyzer CA1859 will suggest these optimizations for local variables and private methods.**
 
 ---
 
