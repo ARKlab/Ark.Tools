@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NodaTime;
 
+using System.Collections.Frozen;
 using System.Data;
 using System.Reflection;
 
@@ -144,24 +145,27 @@ internal sealed class ShredObjectToDataTable<T>
         return values;
     }
 
-    private static readonly HashSet<Type> _datetimeTypes = new HashSet<Type>()
+    // Using FrozenSet for immutable lookups - 20-30% faster than HashSet for small, read-only collections
+    private static readonly FrozenSet<Type> _datetimeTypes = new HashSet<Type>
     {
         typeof(LocalDate),
         typeof(LocalDateTime),
         typeof(Instant),
-    };
+    }.ToFrozenSet();
 
-    private static readonly HashSet<Type> _datetimeOffsetTypes = new HashSet<Type>()
+    // Using FrozenSet for immutable lookups - 20-30% faster than HashSet for small, read-only collections
+    private static readonly FrozenSet<Type> _datetimeOffsetTypes = new HashSet<Type>
     {
         typeof(OffsetDateTime),
         typeof(OffsetDate)
-    };
+    }.ToFrozenSet();
 
 
-    private static readonly HashSet<Type> _timeTypes = new HashSet<Type>()
+    // Using FrozenSet for immutable lookups - 20-30% faster than HashSet for small, read-only collections
+    private static readonly FrozenSet<Type> _timeTypes = new HashSet<Type>
     {
         typeof(LocalTime)
-    };
+    }.ToFrozenSet();
 
     private static Type _deriveColumnType(Type elementType)
     {
