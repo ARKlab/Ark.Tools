@@ -2,15 +2,10 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 
 using Rebus.Extensions;
-using Rebus.Messages;
-using Rebus.Pipeline;
 
 using SimpleInjector;
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus;
 

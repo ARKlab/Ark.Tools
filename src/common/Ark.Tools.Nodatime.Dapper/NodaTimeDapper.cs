@@ -1,6 +1,5 @@
 using Dapper;
 
-using System;
 
 namespace Ark.Tools.Nodatime.Dapper;
 

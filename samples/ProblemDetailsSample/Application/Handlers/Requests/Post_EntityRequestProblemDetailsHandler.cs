@@ -1,16 +1,12 @@
-﻿using Ark.Tools.Solid;
+using Ark.Tools.Solid;
 
 using Hellang.Middleware.ProblemDetails;
 
-using Microsoft.AspNetCore.Http;
 
 using ProblemDetailsSample.Api.Requests;
 using ProblemDetailsSample.Common.Dto;
 using ProblemDetailsSample.Models;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ProblemDetailsSample.Api.Queries;
 

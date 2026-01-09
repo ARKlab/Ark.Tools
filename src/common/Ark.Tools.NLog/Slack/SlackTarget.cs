@@ -1,13 +1,8 @@
-using NLog;
 using NLog.Common;
-using NLog.Config;
 using NLog.Targets;
 
 using Slack.Webhooks;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Ark.Tools.NLog.Slack;
 

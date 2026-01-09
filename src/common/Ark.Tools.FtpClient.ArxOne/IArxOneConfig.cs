@@ -2,7 +2,6 @@ using Ark.Tools.FtpClient.Core;
 
 using ArxOne.Ftp;
 
-using System;
 
 namespace Ark.Tools.FtpClient;
 

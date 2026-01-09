@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
@@ -11,16 +11,10 @@ using Newtonsoft.Json;
 
 using Polly;
 
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.AspNetCore.Auth0;
 

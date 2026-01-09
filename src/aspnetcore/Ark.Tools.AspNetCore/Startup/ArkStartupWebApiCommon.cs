@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.ProblemDetails;
@@ -29,10 +29,7 @@ using SimpleInjector;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.Startup;

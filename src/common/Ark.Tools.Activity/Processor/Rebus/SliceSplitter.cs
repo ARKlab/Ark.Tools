@@ -1,13 +1,10 @@
 
 using NLog;
-using System;
 
 using Rebus.Bus;
 using Rebus.Handlers;
 
 using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
 
 using ResourceSliceReady = Ark.Tools.Activity.Messages.ResourceSliceReady;
 using SliceReady = Ark.Tools.Activity.Messages.SliceReady;

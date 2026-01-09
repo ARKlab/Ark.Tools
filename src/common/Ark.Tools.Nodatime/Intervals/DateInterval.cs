@@ -1,11 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using NodaTime;
-
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Ark.Tools.Core;
+
+
+using System.Runtime.InteropServices;
 
 namespace Ark.Tools.Nodatime.Intervals;
 
@@ -115,10 +113,10 @@ public readonly struct DateInterval
     public readonly IEnumerable<TimeInterval> SplitInto(TimePeriod period, DateTimeZone timezone)
     {
         ArgumentNullException.ThrowIfNull(timezone);
-        
+
         var start = _start;
         var increment = GetIncrement();
-        
+
         return SplitIntoIterator(period, timezone, start, increment);
 
         static IEnumerable<TimeInterval> SplitIntoIterator(TimePeriod period, DateTimeZone timezone, LocalDate start, Period increment)

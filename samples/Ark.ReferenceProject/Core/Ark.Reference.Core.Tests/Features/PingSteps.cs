@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Core.Common.Dto;
+using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Tests.Init;
 using Ark.Tools.Core;
 
@@ -9,7 +9,6 @@ using Flurl;
 using Reqnroll;
 using Reqnroll.Assist;
 
-using System.Collections.Generic;
 
 namespace Ark.Reference.Core.Tests.Features;
 

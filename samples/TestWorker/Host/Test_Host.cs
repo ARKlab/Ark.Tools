@@ -1,13 +1,10 @@
-﻿using Ark.Tools.Activity.Provider;
+using Ark.Tools.Activity.Provider;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using Microsoft.Extensions.Configuration;
 
 using NodaTime;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 using TestWorker.Configs;
 using TestWorker.DataProvider;

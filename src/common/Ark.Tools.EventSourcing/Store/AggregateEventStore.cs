@@ -1,9 +1,6 @@
 using Ark.Tools.EventSourcing.Aggregates;
 using Ark.Tools.EventSourcing.Events;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Ark.Tools.EventSourcing.Store;
 

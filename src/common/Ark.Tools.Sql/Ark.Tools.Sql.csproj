@@ -17,6 +17,11 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="System.Data" />
+    <Using Include="System.Data.Common" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
   </ItemGroup>

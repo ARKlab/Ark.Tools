@@ -4,11 +4,6 @@ using Ark.Tools.EventSourcing.Store;
 using Raven.Client.Documents.Operations.CompareExchange;
 using Raven.Client.Documents.Session;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 

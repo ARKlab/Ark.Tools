@@ -1,4 +1,3 @@
-using System;
 
 namespace Ark.Tools.EventSourcing.Aggregates;
 

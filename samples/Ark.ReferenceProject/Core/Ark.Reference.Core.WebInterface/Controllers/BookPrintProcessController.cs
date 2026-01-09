@@ -7,12 +7,8 @@ using Ark.Tools.Solid;
 
 using Asp.Versioning;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Controllers;
 

@@ -2,7 +2,6 @@ using Rebus.Config;
 using Rebus.Transport;
 using Rebus.Transport.InMem;
 
-using System;
 
 namespace Ark.Tools.Rebus.Tests;
 

@@ -2,8 +2,6 @@ using Ark.Tools.Activity.Messages;
 
 using Rebus.Sagas;
 
-using System;
-using System.Collections.Generic;
 
 namespace Ark.Tools.Activity.Processor;
 

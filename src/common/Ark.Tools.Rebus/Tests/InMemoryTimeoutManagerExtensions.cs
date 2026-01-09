@@ -2,7 +2,6 @@ using Rebus.Config;
 using Rebus.Time;
 using Rebus.Timeouts;
 
-using System;
 
 namespace Ark.Tools.Rebus.Tests;
 

@@ -1,14 +1,11 @@
-﻿using Ark.Tools.Solid;
+using Ark.Tools.Solid;
 
 using Asp.Versioning;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using NLog;
 
-using System.Threading;
-using System.Threading.Tasks;
 
 using WebApplicationDemo.Api.Requests;
 

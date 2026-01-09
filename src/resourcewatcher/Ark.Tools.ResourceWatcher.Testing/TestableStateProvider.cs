@@ -2,12 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NodaTime;
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher.Testing;
 

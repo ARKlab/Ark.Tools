@@ -16,9 +16,7 @@ using Rebus.Serialization.Json;
 
 using SimpleInjector;
 
-using System;
 using System.Globalization;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Activity.Provider;
 

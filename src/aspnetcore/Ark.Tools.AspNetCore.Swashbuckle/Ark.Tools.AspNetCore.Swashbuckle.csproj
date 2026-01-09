@@ -21,6 +21,11 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <Using Include="Microsoft.OpenApi" />
+  </ItemGroup>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

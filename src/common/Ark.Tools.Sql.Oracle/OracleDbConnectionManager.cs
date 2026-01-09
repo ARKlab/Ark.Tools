@@ -3,8 +3,6 @@
 using Oracle.ManagedDataAccess.Client;
 
 using System.Data.Common;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Sql.Oracle;
 
@@ -71,7 +69,7 @@ public class OracleDbConnectionManager : IDbConnectionManager
         var conn = new OracleConnection(connectionString);
 
         conn.InfoMessage += new OracleInfoMessageEventHandler(OnInfoMessage);
-        
+
         // Set CommandTimeout to 30 seconds to align with industry standard practice.
         // This prevents unbounded or runaway queries by default while still allowing
         // consumers to override per command or per connection.

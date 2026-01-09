@@ -1,10 +1,9 @@
-﻿using Ark.Reference.Common;
+using Ark.Reference.Common;
 using Ark.Reference.Common.Services.FileStorageService;
 using Ark.Tools.Sql;
 
 using Microsoft.Extensions.Configuration;
 
-using System;
 using System.Data;
 
 namespace Ark.Reference.Core.Application.Config;

@@ -1,6 +1,4 @@
-﻿using Microsoft.OpenApi;
 
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
 

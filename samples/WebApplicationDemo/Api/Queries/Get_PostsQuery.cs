@@ -1,6 +1,5 @@
-﻿using Ark.Tools.Solid;
+using Ark.Tools.Solid;
 
-using System.Collections.Generic;
 
 using WebApplicationDemo.Dto;
 

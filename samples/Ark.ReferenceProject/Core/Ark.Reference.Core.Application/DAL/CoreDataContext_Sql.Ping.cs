@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Common;
+using Ark.Reference.Common;
 using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
@@ -8,12 +8,7 @@ using Dapper;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 using static Dapper.SqlMapper;
 

@@ -1,10 +1,7 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace TestWithoutArkTools.Controllers;
 

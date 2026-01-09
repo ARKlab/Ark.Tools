@@ -1,12 +1,8 @@
-﻿using Ark.Tools.AspNetCore.Startup;
+using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
 
 using ProblemDetailsSample.Application.Handlers;
@@ -14,10 +10,7 @@ using ProblemDetailsSample.Application.Handlers.Host;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 
 namespace ProblemDetailsSample;
 

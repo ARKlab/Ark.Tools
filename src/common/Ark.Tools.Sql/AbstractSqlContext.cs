@@ -1,10 +1,6 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System;
-using System.Data;
-using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 
 namespace Ark.Tools.Sql;
 

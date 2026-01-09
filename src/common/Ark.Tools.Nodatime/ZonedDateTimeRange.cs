@@ -1,14 +1,12 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 
-using NodaTime;
+using Ark.Tools.Core;
 
-using System;
-using System.Collections.Generic;
+
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using Ark.Tools.Core;
 
 namespace Ark.Tools.Nodatime;
 

@@ -1,4 +1,4 @@
-﻿using Ark.Tools.Http;
+using Ark.Tools.Http;
 
 using Flurl.Http;
 using Flurl.Http.Configuration;
@@ -11,8 +11,6 @@ using NLog;
 
 using Reqnroll;
 
-using System;
-using System.Net.Http;
 
 [assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
 

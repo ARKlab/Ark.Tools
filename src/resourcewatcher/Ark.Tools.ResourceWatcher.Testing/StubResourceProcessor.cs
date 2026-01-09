@@ -2,10 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher.Testing;
 

@@ -1,6 +1,5 @@
-﻿using Ark.Tools.Activity.Provider;
+using Ark.Tools.Activity.Provider;
 
-using System;
 
 using TestWorker.Constants;
 

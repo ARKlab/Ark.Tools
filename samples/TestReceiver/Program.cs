@@ -1,10 +1,7 @@
-﻿using Ark.Tools.Activity.Processor;
+using Ark.Tools.Activity.Processor;
 
 using SimpleInjector;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace TestReceiver;
 

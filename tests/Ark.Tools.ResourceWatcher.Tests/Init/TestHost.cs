@@ -3,15 +3,12 @@
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using NodaTime;
 
 using Reqnroll;
 
-using System;
 using System.Globalization;
-using System.IO;
 
 // Scenarios can run in parallel, but SQL integration tests must run sequentially
 [assembly: Parallelize(Scope = ExecutionScope.ClassLevel)]

@@ -8,9 +8,6 @@ using Raven.Client.Documents.Session;
 
 using SimpleInjector;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 

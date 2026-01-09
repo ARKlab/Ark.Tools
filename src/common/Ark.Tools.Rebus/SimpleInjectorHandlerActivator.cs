@@ -4,8 +4,6 @@ using Rebus.Transport;
 
 using SimpleInjector;
 
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus;
 

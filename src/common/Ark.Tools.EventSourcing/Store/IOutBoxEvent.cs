@@ -1,6 +1,5 @@
 using Ark.Tools.EventSourcing.Events;
 
-using System.Collections.Generic;
 
 namespace Ark.Tools.EventSourcing.Store;
 

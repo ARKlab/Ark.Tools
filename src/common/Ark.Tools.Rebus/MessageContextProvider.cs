@@ -1,4 +1,3 @@
-using Rebus.Pipeline;
 
 namespace Ark.Tools.Rebus;
 

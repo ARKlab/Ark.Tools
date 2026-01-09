@@ -1,8 +1,5 @@
-﻿using Ark.Tools.ResourceWatcher.WorkerHost;
+using Ark.Tools.ResourceWatcher.WorkerHost;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 using TestWorker.Dto;
 

@@ -1,7 +1,6 @@
-﻿using Ark.Tools.ResourceWatcher;
+using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
-using System;
 
 using TestWorker.Constants;
 

@@ -6,8 +6,6 @@ using Ark.Tools.ResourceWatcher.Testing;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
 
 namespace Ark.ResourceWatcher.Sample.Tests.Hooks;
 

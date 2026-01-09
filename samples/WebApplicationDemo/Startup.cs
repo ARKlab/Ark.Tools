@@ -11,22 +11,15 @@ using MessagePack.Resolvers;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OData;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 
 using WebApplicationDemo.Application.Host;
 using WebApplicationDemo.Configuration;

@@ -3,8 +3,6 @@ using Rebus.Retry;
 using Rebus.Retry.FailFast;
 using Rebus.Retry.Simple;
 
-using System;
-using System.Threading;
 
 namespace Ark.Tools.Rebus.Retry;
 

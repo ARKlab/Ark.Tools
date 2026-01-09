@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 
 using NLog.Extensions.Logging;
 
-using System;
 using System.Reflection;
 
 using static Ark.Tools.NLog.NLogConfigurer;

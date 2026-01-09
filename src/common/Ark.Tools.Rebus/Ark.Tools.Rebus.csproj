@@ -21,6 +21,11 @@
 	</PropertyGroup>
 	<!--===============================================================================-->
 
+	<ItemGroup Label="Project-Specific Usings">
+		<Using Include="Rebus.Messages" />
+		<Using Include="Rebus.Pipeline" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Rebus" />
 		<PackageReference Include="Rebus.NLog" />

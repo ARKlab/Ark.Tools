@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Core.Application.Config;
+using Ark.Reference.Core.Application.Config;
 using Ark.Tools.Core;
 using Ark.Tools.Outbox;
 using Ark.Tools.Solid;
@@ -8,8 +8,6 @@ using NodaTime;
 
 using System.Data.Common;
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.Application.DAL;
 

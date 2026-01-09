@@ -21,6 +21,11 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="NLog" />
+    <Using Include="NLog.Config" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Ben.Demystifier" />
     <PackageReference Include="Microsoft.ApplicationInsights.NLogTarget" />

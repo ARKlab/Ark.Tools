@@ -1,10 +1,7 @@
-﻿using Ark.Tools.Solid;
+using Ark.Tools.Solid;
 
 using Polly;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Common.Services.Decorators;
 

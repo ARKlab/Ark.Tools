@@ -1,10 +1,7 @@
-﻿using Ark.Reference.Core.Application;
+using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Application.Host;
 
 using Microsoft.ApplicationInsights;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 using NodaTime;
 
@@ -15,9 +12,6 @@ using Rebus.Transport.InMem;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Utils;
 

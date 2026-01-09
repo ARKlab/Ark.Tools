@@ -11,11 +11,6 @@ using Newtonsoft.Json;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.ResourceWatcher;
 
@@ -57,7 +52,7 @@ public class SqlStateProvider : IStateProvider
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(tenant.Length, 128, nameof(tenant));
-        
+
         if (resourceIds != null)
         {
             foreach (var r in resourceIds)

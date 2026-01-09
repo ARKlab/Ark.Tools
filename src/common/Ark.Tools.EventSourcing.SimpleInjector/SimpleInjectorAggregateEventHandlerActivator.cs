@@ -3,7 +3,6 @@ using Ark.Tools.EventSourcing.Events;
 
 using SimpleInjector;
 
-using System;
 
 namespace Ark.Tools.EventSourcing.SimpleInjector;
 

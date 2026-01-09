@@ -2,9 +2,6 @@ using Rebus.Messages;
 using Rebus.Transport;
 
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Outbox.Rebus;
 

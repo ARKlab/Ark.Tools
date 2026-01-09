@@ -1,10 +1,8 @@
-﻿using NodaTime;
+using NodaTime;
 using NodaTime.Testing;
 
 using Reqnroll;
 
-using System;
-using System.Linq;
 
 
 namespace Ark.Reference.Core.Tests.Init;

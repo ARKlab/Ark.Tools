@@ -1,4 +1,4 @@
-﻿using Ark.Reference.Common.Services.Audit;
+using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Common.Services.Audit.Dto;
 using Ark.Reference.Core.API.Queries;
 using Ark.Reference.Core.Common.Enum;
@@ -9,10 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using NodaTime;
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Reference.Core.WebInterface.Controllers;
 

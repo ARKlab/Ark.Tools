@@ -1,12 +1,10 @@
-﻿using Hellang.Middleware.ProblemDetails;
-
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 
 namespace Ark.Reference.Core.WebInterface.Utils;
 
-public class ConfigureProblemDetails : IConfigureOptions<ProblemDetailsOptions>
+public class ConfigureProblemDetails : IConfigureOptions<Hellang.Middleware.ProblemDetails.ProblemDetailsOptions>
 {
-    public void Configure(ProblemDetailsOptions options)
+    public void Configure(Hellang.Middleware.ProblemDetails.ProblemDetailsOptions options)
     {
     }
 }

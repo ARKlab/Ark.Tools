@@ -3,8 +3,6 @@ using Rebus.Handlers;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
-using System;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Rebus;
 

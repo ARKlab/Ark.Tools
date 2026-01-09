@@ -3,9 +3,6 @@ using Ark.Tools.Outbox.Rebus.Config;
 
 using Rebus.Transport;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Rebus.Config;
 

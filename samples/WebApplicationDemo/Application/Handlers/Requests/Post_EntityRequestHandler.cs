@@ -1,10 +1,7 @@
-﻿using Ark.Tools.Solid;
+using Ark.Tools.Solid;
 
 using NodaTime;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;

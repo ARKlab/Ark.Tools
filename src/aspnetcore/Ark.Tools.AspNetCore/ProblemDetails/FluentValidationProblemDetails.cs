@@ -1,10 +1,7 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Hellang.Middleware.ProblemDetails;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 

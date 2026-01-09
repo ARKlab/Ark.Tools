@@ -4,7 +4,6 @@ using Microsoft.Data.SqlClient;
 
 using NLog;
 
-using System;
 
 namespace Ark.Tools.Sql.SqlServer;
 

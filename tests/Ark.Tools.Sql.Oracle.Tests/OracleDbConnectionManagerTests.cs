@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 using AwesomeAssertions;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Oracle.ManagedDataAccess.Client;
 

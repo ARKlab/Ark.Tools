@@ -1,4 +1,4 @@
-﻿using Ark.Tools.Http;
+using Ark.Tools.Http;
 using Ark.Tools.SimpleInjector;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
@@ -9,9 +9,7 @@ using FluentValidation;
 
 using SimpleInjector;
 
-using System.Linq;
 using System.Reflection;
-using System.Threading;
 
 using WebApplicationDemo.Dto;
 using WebApplicationDemo.Services;

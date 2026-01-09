@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.ResourceWatcher.Sample.Dto;
 
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Ark.ResourceWatcher.Sample.Tests.Mocks;
 

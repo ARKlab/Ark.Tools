@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Builders;
@@ -16,13 +16,8 @@ using Polly;
 using Polly.Caching;
 using Polly.Caching.Memory;
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.Auth0;
 

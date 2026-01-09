@@ -1,11 +1,7 @@
-﻿using Microsoft.Extensions.Hosting;
 
 using NLog;
 
-using System;
 using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace LinuxWebJobHosting.Utils;
 

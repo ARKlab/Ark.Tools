@@ -1,11 +1,8 @@
-﻿using Ark.Tools.Solid;
+using Ark.Tools.Solid;
 
 using ProblemDetailsSample.Api.Requests;
 using ProblemDetailsSample.Common.Dto;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ProblemDetailsSample.Api.Queries;
 

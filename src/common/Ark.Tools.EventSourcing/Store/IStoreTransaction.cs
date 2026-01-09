@@ -1,10 +1,6 @@
 using Ark.Tools.EventSourcing.Events;
 
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ark.Tools.EventSourcing.Store;
 

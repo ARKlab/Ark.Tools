@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.Extensions.DiagnosticAdapter;
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher;

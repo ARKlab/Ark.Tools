@@ -4,7 +4,6 @@ using NLog;
 
 using Oracle.ManagedDataAccess.Client;
 
-using System;
 
 namespace Ark.Tools.Sql.Oracle;
 
