@@ -3,6 +3,8 @@
   <PropertyGroup>
     <AspNetCoreModuleName>AspNetCoreModuleV2</AspNetCoreModuleName>
     <AspNetCoreHostingModel>inprocess</AspNetCoreHostingModel>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

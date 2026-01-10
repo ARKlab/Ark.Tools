@@ -6,6 +6,8 @@
     <Version>1.2.3</Version>
     <OutputType>Exe</OutputType>
 	  <IsPackable>false</IsPackable>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

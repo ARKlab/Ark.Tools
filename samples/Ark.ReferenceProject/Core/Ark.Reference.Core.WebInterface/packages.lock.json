@@ -45,6 +45,12 @@
           "System.IdentityModel.Tokens.Jwt": "8.15.0"
         }
       },
+      "Microsoft.NET.ILLink.Tasks": {
+        "type": "Direct",
+        "requested": "[10.0.1, )",
+        "resolved": "10.0.1",
+        "contentHash": "ISahzLHsHY7vrwqr2p1YWZ+gsxoBRtH7gWRDK8fDUst9pp2He0GiesaqEfeX0V8QMCJM3eNEHGGpnIcPjFo2NQ=="
+      },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
         "requested": "[4.1.5, )",

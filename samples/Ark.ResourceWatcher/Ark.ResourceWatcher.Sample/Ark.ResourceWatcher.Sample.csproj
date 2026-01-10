@@ -4,6 +4,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

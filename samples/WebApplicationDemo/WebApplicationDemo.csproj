@@ -4,6 +4,8 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
 	<IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

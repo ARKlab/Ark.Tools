@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFrameworks>net10.0</TargetFrameworks>
 	  <IsPackable>false</IsPackable>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>
