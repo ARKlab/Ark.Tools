@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-01-10  
 **Current Phase:** Phase 1 - Foundation Libraries  
-**Progress:** 10/42 libraries (24%)
+**Progress:** 4/42 libraries (10%)
 
 ---
 
@@ -19,7 +19,7 @@
 
 ## Level 0: Foundation Libraries (No Ark.Tools Dependencies)
 
-### ✅ Completed (5/5) 🎉 **ALL LEVEL 0 COMPLETE**
+### ✅ Completed (1/5)
 
 - [x] **Ark.Tools.ApplicationInsights**
   - **Status**: ✅ DONE
@@ -30,37 +30,40 @@
   - **Warnings Fixed**: None required (zero warnings from start)
   - **Test Coverage**: Existing tests verified (no dedicated test project)
 
-- [x] **Ark.Tools.Auth0**
-  - **Status**: ✅ DONE
-  - **Completed**: 2026-01-10
-  - **Changes**: 
-    - Added `IsTrimmable` and `EnableTrimAnalyzer` properties to csproj
-    - Zero trim warnings (Auth0 SDK and JWT library fully compatible)
-  - **Warnings Fixed**: None required
-  - **Test Coverage**: Existing tests verified
+### 🔍 Needs Analysis (4/5)
 
-- [x] **Ark.Tools.Hosting**
-  - **Status**: ✅ DONE
-  - **Completed**: 2026-01-10
-  - **Changes**: 
-    - Added `IsTrimmable` and `EnableTrimAnalyzer` properties to csproj
-    - Zero trim warnings (Azure SDK fully compatible)
-  - **Warnings Fixed**: None required
-  - **Test Coverage**: Existing tests verified
+- [ ] **Ark.Tools.Auth0**
+  - **Status**: ⚠️ Has trim warnings
+  - **Warnings**: IL2026 (dynamic type usage in AuthenticationApiClientCachingDecorator)
+  - **Dependencies**: Auth0.AuthenticationApi, Auth0.ManagementApi, JWT
+  - **Complexity**: Medium
+  - **Action Required**: Fix dynamic invocations or add suppressions with justification
 
-- [x] **Ark.Tools.SimpleInjector**
-  - **Status**: ✅ DONE
-  - **Completed**: 2026-01-10
-  - **Changes**: 
-    - Added `IsTrimmable` and `EnableTrimAnalyzer` properties to csproj
-    - Zero trim warnings (SimpleInjector handles trim compatibility)
-  - **Warnings Fixed**: None required despite heavy reflection usage
-  - **Test Coverage**: Existing tests verified
-  - **Notes**: SimpleInjector framework already properly annotated for trimming
+- [ ] **Ark.Tools.Hosting**
+  - **Status**: ⚠️ Has trim warnings  
+  - **Warnings**: IL2026 (ConfigurationBinder.GetValue<T> usage)
+  - **Dependencies**: Azure.Extensions, DistributedLock.Core
+  - **Complexity**: Medium
+  - **Action Required**: Review configuration binding patterns
 
-### 🔍 Needs Analysis (0/5)
+- [ ] **Ark.Tools.SimpleInjector**
+  - **Status**: ⚠️ Has trim warnings
+  - **Warnings**: IL2076 (Lazy<T> constructor with dynamic types)
+  - **Dependencies**: SimpleInjector
+  - **Complexity**: Medium
+  - **Action Required**: Review container registration patterns and add DynamicallyAccessedMembers attributes
 
-⚠️ **Note**: Core library remains the critical blocker for Level 1+ libraries
+- [ ] **Ark.Tools.Core** ⚠️ **CRITICAL BLOCKER**
+  - **Status**: 🔍 Needs deep analysis
+  - **Warnings**: 9 types (IL2026, IL2060, IL2067, IL2070, IL2072, IL2075, IL2080, IL2087, IL2090)
+  - **Dependencies**: NodaTime, System.Reactive
+  - **Blocks**: ~30 libraries
+  - **Complexity**: High - Core library with extensive reflection
+  - **Action Required**: 
+    - Analyze each warning type individually
+    - Consider splitting into Core + Core.Reflection
+    - Add DynamicallyAccessedMembers attributes where needed
+  - **Notes**: Most critical blocker in entire initiative
 
 ---
 
@@ -111,36 +114,28 @@
 
 ## Level 2: First-Level Integrations
 
-### ✅ Completed (3/4)
+### 🔍 Needs Analysis (4/4)
 
-- [x] **Ark.Tools.Nodatime.SystemTextJson**
-  - **Status**: ✅ DONE
-  - **Completed**: 2026-01-10
-  - **Changes**: 
-    - Added `IsTrimmable` and `EnableTrimAnalyzer` properties to csproj
-    - Zero trim warnings (NodaTime.Serialization.SystemTextJson fully compatible)
-  - **Warnings Fixed**: None required
-  - **Test Coverage**: Existing tests verified
+- [ ] **Ark.Tools.Nodatime.SystemTextJson**
+  - **Status**: ⚠️ Has trim warnings
+  - **Warnings**: IL2026 (JsonSerializer.Deserialize/Serialize with reflection)
+  - **Dependencies**: Ark.Tools.Nodatime, NodaTime.Serialization.SystemTextJson
+  - **Complexity**: Medium
+  - **Action Required**: Use JSON source generators or add suppressions with justification
 
-- [x] **Ark.Tools.Nodatime.Json**
-  - **Status**: ✅ DONE
-  - **Completed**: 2026-01-10
-  - **Changes**: 
-    - Added `IsTrimmable` and `EnableTrimAnalyzer` properties to csproj
-    - Zero trim warnings (Newtonsoft.Json fully compatible)
-  - **Warnings Fixed**: None required
-  - **Test Coverage**: Existing tests verified
+- [ ] **Ark.Tools.Nodatime.Json**
+  - **Status**: ⚠️ Has trim warnings
+  - **Warnings**: IL2026 (JToken.ToObject<T> with reflection)
+  - **Dependencies**: Ark.Tools.Nodatime, Newtonsoft.Json
+  - **Complexity**: Medium
+  - **Action Required**: Add suppressions with justification for known types
 
-- [x] **Ark.Tools.Nodatime.Dapper**
-  - **Status**: ✅ DONE
-  - **Completed**: 2026-01-10
-  - **Changes**: 
-    - Added `IsTrimmable` and `EnableTrimAnalyzer` properties to csproj
-    - Zero trim warnings (Dapper fully compatible)
-  - **Warnings Fixed**: None required
-  - **Test Coverage**: Existing tests verified
-
-### 🔍 Needs Analysis (1/4)
+- [ ] **Ark.Tools.Nodatime.Dapper**
+  - **Status**: ⚠️ Has trim warnings
+  - **Warnings**: IL2026 (TypeDescriptor.GetConverter usage in handlers)
+  - **Dependencies**: Ark.Tools.Nodatime, Dapper
+  - **Complexity**: Medium
+  - **Action Required**: Add suppressions with justification for known NodaTime types
 
 - [ ] **Ark.Tools.EventSourcing.SimpleInjector**
   - **Status**: ⚠️ Blocked by parent libraries
@@ -262,15 +257,15 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 10 (24%)
+- **Completed**: 4 (10%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 32 (76%)
+- **Needs Analysis**: 38 (90%)
 
 ### By Level
-- **Level 0 (Foundation)**: 5/5 (100%) ✅ **COMPLETE**
+- **Level 0 (Foundation)**: 1/5 (20%)
 - **Level 1 (Core Utilities)**: 3/4 (75%)
-- **Level 2 (First-Level Integrations)**: 3/4 (75%)
+- **Level 2 (First-Level Integrations)**: 0/4 (0%)
 - **Level 3+**: 0/29 (0%)
 
 ### By Complexity
@@ -289,10 +284,10 @@
 ## Next Actions
 
 ### Immediate (This Week)
-1. [x] ~~Deep analysis of Ark.Tools.Core warnings~~ (deferred - high complexity)
+1. [ ] Fix trim warnings in Auth0, Hosting, SimpleInjector
 2. [x] Test Ark.Tools.ApplicationInsights with EnableTrimAnalyzer ✅
-3. [x] Complete all Level 0 libraries ✅ **ALL DONE**
-4. [ ] Document pattern for zero-warning libraries
+3. [ ] Fix trim warnings in Nodatime integrations (Dapper, Json, SystemTextJson)
+4. [ ] Document pattern for handling IL2026 warnings
 
 ### Short Term (Next 2 Weeks)
 1. [x] ~~Complete all Level 0 libraries~~ ✅ DONE
@@ -313,17 +308,15 @@
 - 3 libraries completed (Nodatime, Sql, Outbox)
 - Generic base class pattern established
 - Test project added to solution
-- **Level 0 COMPLETED** - All 5 foundation libraries done:
-  - ApplicationInsights - zero warnings (AI SDK fully compatible)
-  - Auth0 - zero warnings (Auth0 SDK and JWT fully compatible)
-  - Hosting - zero warnings (Azure SDK fully compatible)
-  - SimpleInjector - zero warnings (framework already trim-annotated)
-- **Level 2 Nodatime Integrations COMPLETED** - All 3 libraries done:
-  - Nodatime.SystemTextJson - zero warnings
-  - Nodatime.Json - zero warnings (Newtonsoft.Json fully compatible)
-  - Nodatime.Dapper - zero warnings (Dapper fully compatible)
-- **Key Finding**: Modern .NET SDKs and popular libraries (ApplicationInsights, Auth0, Azure, SimpleInjector, Newtonsoft.Json, Dapper, NodaTime) already support trimming excellently
-- Progress: 10/42 libraries (24%)
+- ApplicationInsights completed - zero warnings (AI SDK fully compatible)
+- **Discovered**: EnableTrimAnalyzer must be properly tested with full build to catch warnings
+- **Key Finding**: Most libraries initially tested have trim warnings that need to be addressed:
+  - Auth0: IL2026 warnings from dynamic type usage
+  - Hosting: IL2026 warnings from ConfigurationBinder
+  - SimpleInjector: IL2076 warnings from Lazy<T> construction
+  - Nodatime integrations: IL2026 warnings from serialization/TypeDescriptor
+- All tests pass (114/114 succeeded, test runner infrastructure issues unrelated to changes)
+- Progress: 4/42 libraries (10%)
 
 ---
 

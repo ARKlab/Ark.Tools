@@ -43,19 +43,15 @@ For each library to be marked as trimmable:
 3. ✅ **Ark.Tools.Outbox** - COMPLETED
 4. ✅ **Ark.Tools.ApplicationInsights** - COMPLETED
    - Zero trim warnings (ApplicationInsights SDK fully compatible)
-5. ✅ **Ark.Tools.Auth0** - COMPLETED
-   - Zero trim warnings (Auth0 SDK and JWT fully compatible)
-6. ✅ **Ark.Tools.Hosting** - COMPLETED
-   - Zero trim warnings (Azure SDK fully compatible)
-7. ✅ **Ark.Tools.SimpleInjector** - COMPLETED
-   - Zero trim warnings (SimpleInjector already trim-annotated)
+5. ⏳ **Ark.Tools.Auth0** - Has trim warnings (IL2026 from dynamic types)
+6. ⏳ **Ark.Tools.Hosting** - Has trim warnings (IL2026 from ConfigurationBinder)
+7. ⏳ **Ark.Tools.SimpleInjector** - Has trim warnings (IL2076 from Lazy<T>)
 8. ⏳ **Ark.Tools.Core** - Deferred (high complexity - 9 warning types)
 
 **Deliverables:**
 - [x] Pattern for generic base classes
 - [x] Test project template
-- [x] All Level 0 libraries completed (100%)
-- [x] Key finding: Modern .NET SDKs support trimming excellently
+- [ ] Fix trim warnings in Level 0 libraries (Auth0, Hosting, SimpleInjector)
 - [ ] Documentation on handling IL2026 warnings
 - [ ] Core library trim analysis (deferred to later phase)
 
