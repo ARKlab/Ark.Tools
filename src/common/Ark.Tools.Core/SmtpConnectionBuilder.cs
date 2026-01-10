@@ -27,32 +27,18 @@ public class SmtpConnectionBuilder
     {
         var span = smtpConnectionString.AsSpan();
 
-        // Split by semicolons using Span
-        int start = 0;
-        int semicolonIndex;
-        while ((semicolonIndex = span[start..].IndexOf(';')) >= 0)
+        // Use MemoryExtensions.Split for efficient span-based splitting
+        foreach (var segmentRange in span.Split(';'))
         {
-            var segment = span.Slice(start, semicolonIndex).Trim();
-            if (segment.Length > 0)
-            {
-                var equalsIndex = segment.IndexOf('=');
-                if (equalsIndex < 0)
-                    throw new FormatException();
+            var segment = span[segmentRange].Trim();
+            if (segment.Length == 0)
+                continue;
 
-                _processKeyValue(segment[..equalsIndex].Trim(), segment[(equalsIndex + 1)..].Trim());
-            }
-            start += semicolonIndex + 1;
-        }
-
-        // Add the last segment
-        var lastSegment = span[start..].Trim();
-        if (lastSegment.Length > 0)
-        {
-            var equalsIndex = lastSegment.IndexOf('=');
+            var equalsIndex = segment.IndexOf('=');
             if (equalsIndex < 0)
                 throw new FormatException();
 
-            _processKeyValue(lastSegment[..equalsIndex].Trim(), lastSegment[(equalsIndex + 1)..].Trim());
+            _processKeyValue(segment[..equalsIndex].Trim(), segment[(equalsIndex + 1)..].Trim());
         }
     }
 
