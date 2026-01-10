@@ -1,0 +1,72 @@
+is_global = true
+
+#### Microsoft Visual Studio Threading Analyzers (VSTHRD*) ####
+
+# VSTHRD001: Avoid legacy thread switching methods
+dotnet_diagnostic.VSTHRD001.severity = warning
+
+# VSTHRD002: Avoid problematic synchronous waits
+dotnet_diagnostic.VSTHRD002.severity = error
+
+# VSTHRD003: Avoid awaiting foreign Tasks
+dotnet_diagnostic.VSTHRD003.severity = suggestion
+
+# VSTHRD004: Await SwitchToMainThreadAsync
+dotnet_diagnostic.VSTHRD004.severity = warning
+
+# VSTHRD010: Invoke single-threaded types on Main thread
+dotnet_diagnostic.VSTHRD010.severity = warning
+
+# VSTHRD011: Use AsyncLazy<T>
+dotnet_diagnostic.VSTHRD011.severity = suggestion
+
+# VSTHRD012: Provide JoinableTaskFactory where allowed
+dotnet_diagnostic.VSTHRD012.severity = none
+
+# VSTHRD100: Avoid async void methods
+dotnet_diagnostic.VSTHRD100.severity = error
+
+# VSTHRD101: Avoid unsupported async delegates
+dotnet_diagnostic.VSTHRD101.severity = error
+
+# VSTHRD102: Implement internal logic asynchronously
+dotnet_diagnostic.VSTHRD102.severity = suggestion
+
+# VSTHRD103: Call async methods when in an async method
+dotnet_diagnostic.VSTHRD103.severity = warning
+
+# VSTHRD104: Offer async option
+dotnet_diagnostic.VSTHRD104.severity = suggestion
+
+# VSTHRD105: Avoid method overloads that assume TaskScheduler.Current
+dotnet_diagnostic.VSTHRD105.severity = warning
+
+# VSTHRD106: Use InvokeAsync to raise async events
+dotnet_diagnostic.VSTHRD106.severity = warning
+
+# VSTHRD107: Await Task within using expression
+dotnet_diagnostic.VSTHRD107.severity = warning
+
+# VSTHRD108: Assert thread affinity unconditionally
+dotnet_diagnostic.VSTHRD108.severity = suggestion
+
+# VSTHRD109: Switch instead of assert in async methods
+dotnet_diagnostic.VSTHRD109.severity = warning
+
+# VSTHRD110: Observe result of async calls
+dotnet_diagnostic.VSTHRD110.severity = error
+
+# VSTHRD111: Use ConfigureAwait(bool)
+dotnet_diagnostic.VSTHRD111.severity = suggestion
+
+# VSTHRD112: Implement System.IAsyncDisposable
+dotnet_diagnostic.VSTHRD112.severity = suggestion
+
+# VSTHRD113: Check for System.IAsyncDisposable
+dotnet_diagnostic.VSTHRD113.severity = suggestion
+
+# VSTHRD114: Avoid returning a null Task
+dotnet_diagnostic.VSTHRD114.severity = error
+
+# VSTHRD200: Use "Async" suffix for async methods
+# Note: This rule is configured in .meziantou.globalconfig, not here to avoid conflicts
