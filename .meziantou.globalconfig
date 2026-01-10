@@ -104,6 +104,3 @@ dotnet_diagnostic.MA0152.severity = warning
 
 # MA0160: Use ContainsKey instead of TryGetValue
 dotnet_diagnostic.MA0160.severity = warning
-
-# VSTHRD200: Use "Async" suffix for async methods
-dotnet_diagnostic.VSTHRD200.severity = silent

@@ -69,4 +69,4 @@ dotnet_diagnostic.VSTHRD113.severity = suggestion
 dotnet_diagnostic.VSTHRD114.severity = error
 
 # VSTHRD200: Use "Async" suffix for async methods
-# Note: This rule is configured in .meziantou.globalconfig, not here to avoid conflicts
+dotnet_diagnostic.VSTHRD200.severity = none
