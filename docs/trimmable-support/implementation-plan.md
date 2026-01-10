@@ -41,7 +41,8 @@ For each library to be marked as trimmable:
    - Test coverage added
 2. ✅ **Ark.Tools.Sql** - COMPLETED
 3. ✅ **Ark.Tools.Outbox** - COMPLETED
-4. ⏳ **Ark.Tools.ApplicationInsights** - Testing required
+4. ✅ **Ark.Tools.ApplicationInsights** - COMPLETED
+   - Zero trim warnings (ApplicationInsights SDK fully compatible)
 5. ⏳ **Ark.Tools.Core** - Critical blocker (9 warning types)
 
 **Deliverables:**
