@@ -12,6 +12,10 @@ namespace Ark.Tools.SystemTextJson;
 // https://github.com/dotnet/runtime/issues/38812#issuecomment-740648217
 public sealed class UniversalInvariantTypeConverterJsonConverter : JsonConverterFactory
 {
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "The typeToConvert parameter comes from types that have TypeConverterAttribute, ensuring the TypeConverter is preserved.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2067:DynamicallyAccessedMembersMismatch",
+        Justification = "The typeToConvert parameter comes from types that have TypeConverterAttribute, ensuring the TypeConverter is preserved.")]
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         var typeConverter = TypeDescriptor.GetConverter(typeToConvert);

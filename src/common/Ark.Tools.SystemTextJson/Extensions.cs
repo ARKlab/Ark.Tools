@@ -4,6 +4,7 @@ using Ark.Tools.SystemTextJson;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace System.Text.Json;
@@ -33,6 +34,7 @@ public static class Extensions
         return @this;
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static byte[]? SerializeToByte<TObj>(this TObj obj, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (obj == null)
@@ -41,6 +43,7 @@ public static class Extensions
         return JsonSerializer.SerializeToUtf8Bytes(obj, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static TOut? Deserialize<TOut>(this byte[] bytes, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (bytes == null)
@@ -53,6 +56,7 @@ public static class Extensions
         return JsonSerializer.Deserialize<TOut>(span, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static string? Serialize<TObj>(this TObj obj, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (obj == null)
@@ -61,6 +65,7 @@ public static class Extensions
         return JsonSerializer.Serialize(obj, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static TOut? Deserialize<TOut>(this string s, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (s == null)
@@ -69,17 +74,20 @@ public static class Extensions
         return JsonSerializer.Deserialize<TOut>(s, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static T? ToObject<T>(this JsonElement element, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         return element.GetRawText().Deserialize<T>(jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static T? ToObject<T>(this JsonDocument document, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         return document.RootElement.GetRawText().Deserialize<T>(jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static object? Deserialize(this byte[] bytes, Type type, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (bytes == null)
@@ -88,6 +96,7 @@ public static class Extensions
         return JsonSerializer.Deserialize(bytes, type, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static object? Deserialize(this string jsonString, Type type, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (string.IsNullOrEmpty(jsonString))
@@ -97,6 +106,7 @@ public static class Extensions
     }
 
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static TOut? DeserializeFromFile<TOut>(this string jsonStringFilePath, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (string.IsNullOrEmpty(jsonStringFilePath))
@@ -106,6 +116,7 @@ public static class Extensions
         return JsonSerializer.Deserialize<TOut>(fs, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
     public static string? Serialize(this object obj, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (obj == null)

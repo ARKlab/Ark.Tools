@@ -1,9 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Ark.Tools.SystemTextJson;
 
-public sealed class DictionaryBaseConverter<TC, TK, TV> : AbstractDictionaryConverter<TC, TK, TV>
+public sealed class DictionaryBaseConverter<TC, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TK, TV> : AbstractDictionaryConverter<TC, TK, TV>
     where TK : notnull
     where TC : Dictionary<TK, TV>, new()
 {
@@ -23,7 +24,7 @@ public sealed class DictionaryBaseConverter<TC, TK, TV> : AbstractDictionaryConv
     }
 }
 
-public sealed class IDictionaryBaseConverter<TC, TK, TV> : AbstractDictionaryConverter<TC, TK, TV>
+public sealed class IDictionaryBaseConverter<TC, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TK, TV> : AbstractDictionaryConverter<TC, TK, TV>
     where TK : notnull
     where TC : IDictionary<TK, TV>, new()
 {
@@ -43,7 +44,7 @@ public sealed class IDictionaryBaseConverter<TC, TK, TV> : AbstractDictionaryCon
     }
 }
 
-public sealed class DictionaryConverter<TK, TV>
+public sealed class DictionaryConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TK, TV>
     : AbstractDictionaryConverter<IDictionary<TK, TV>, TK, TV>
     where TK : notnull
 {
@@ -62,7 +63,7 @@ public sealed class DictionaryConverter<TK, TV>
     }
 }
 
-public sealed class ReadOnlyDictionaryConverter<TK, TV>
+public sealed class ReadOnlyDictionaryConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TK, TV>
     : AbstractDictionaryConverter<IReadOnlyDictionary<TK, TV>, TK, TV>
     where TK : notnull
 {
