@@ -25,16 +25,38 @@ This document provides guidelines and patterns for making Ark.Tools libraries tr
    </PropertyGroup>
    ```
 
-2. **Build and check for warnings:**
+2. **Restore packages with force re-evaluation:**
+   ```bash
+   dotnet restore --force-evaluate
+   ```
+   
+   ⚠️ **Critical**: When adding `IsTrimmable` and `EnableTrimAnalyzer`, the build system automatically adds `Microsoft.NET.ILLink.Tasks` package reference. You **must** run `dotnet restore --force-evaluate` to update package lock files, otherwise the build will fail with NU1004 errors.
+
+3. **Build and check for warnings:**
    ```bash
    dotnet build --no-restore
    ```
+   
+   ⚠️ **Important**: Run the full build (not just `--no-restore` alone) to ensure `EnableTrimAnalyzer` properly activates and catches all trim warnings. Building without a proper restore may not detect warnings.
 
-3. **Fix or suppress warnings** (see sections below)
+4. **Fix or suppress warnings** (see sections below)
 
-4. **Add tests** for trim-sensitive code paths
+5. **Add tests** for trim-sensitive code paths
 
-5. **Verify** with full test suite
+6. **Run all tests to verify no regressions:**
+   ```bash
+   dotnet test --no-build --no-restore
+   ```
+   
+   ⚠️ **Required**: Always run the full test suite after enabling trimming to ensure no functionality is broken. Even if a library builds with zero warnings, it may have runtime issues that only tests will catch.
+
+### Common Pitfalls to Avoid
+
+❌ **Don't skip the restore step** - Package lock files must be updated when trimming properties are added
+
+❌ **Don't assume zero build warnings means success** - Always run tests to verify runtime behavior
+
+❌ **Don't use `--no-restore` during initial testing** - This may hide trim warnings from `EnableTrimAnalyzer`
 
 ---
 
@@ -199,6 +221,22 @@ public void InvokeMethods<
 ---
 
 ## Testing Strategy
+
+### Critical Testing Requirements
+
+⚠️ **Always run the full test suite** after enabling trimming for a library. Even if the build succeeds with zero warnings, trimming can cause runtime failures that only tests will catch.
+
+**Required test command:**
+```bash
+dotnet test --no-build --no-restore
+```
+
+### Why Full Testing is Essential
+
+1. **Build warnings only catch compile-time issues** - Many trimming problems only manifest at runtime
+2. **Package lock file changes** - The `Microsoft.NET.ILLink.Tasks` package addition may affect dependencies
+3. **Behavioral verification** - Tests ensure that trimmed code still behaves correctly
+4. **Regression detection** - Existing functionality must not break when trimming is enabled
 
 ### Test Categories
 
