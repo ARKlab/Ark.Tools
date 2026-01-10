@@ -3,6 +3,7 @@
 
 using AwesomeAssertions;
 using NodaTime;
+using System.ComponentModel;
 
 [assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
 
@@ -10,148 +11,214 @@ namespace Ark.Tools.Nodatime.Tests;
 
 /// <summary>
 /// Tests for NullableConverter implementations to ensure TypeConverter functionality
-/// doesn't regress when refactoring to generic implementation.
+/// works correctly with roundtrip conversions.
 /// </summary>
 [TestClass]
 public class NullableConverterTests
 {
     /// <summary>
-    /// Verifies that NullableLocalDateConverter can be instantiated and has correct UnderlyingType.
+    /// Verifies that NullableLocalDateConverter can convert LocalDate to string and back.
     /// </summary>
     [TestMethod]
-    public void NullableLocalDateConverter_ShouldHaveCorrectUnderlyingType()
-    {
-        // Arrange & Act
-        var converter = new NullableLocalDateConverter();
-
-        // Assert
-        converter.Should().NotBeNull();
-        var underlyingType = converter.GetType().BaseType?.GetProperty("UnderlyingType")?.GetValue(converter) as Type;
-        Assert.AreEqual(typeof(LocalDate), underlyingType);
-    }
-
-    /// <summary>
-    /// Verifies that NullableLocalDateConverter can convert from string.
-    /// </summary>
-    [TestMethod]
-    public void NullableLocalDateConverter_ShouldConvertFromString()
+    public void NullableLocalDateConverter_ShouldRoundtripConversion()
     {
         // Arrange
-        var converter = new NullableLocalDateConverter();
+        var converter = TypeDescriptor.GetConverter(typeof(LocalDate?));
+        var original = new LocalDate(2024, 1, 10);
 
-        // Act & Assert
-        converter.CanConvertFrom(typeof(string)).Should().BeTrue();
-    }
+        // Act - Convert to string
+        var stringValue = converter.ConvertToString(original);
+        stringValue.Should().NotBeNullOrWhiteSpace();
 
-    /// <summary>
-    /// Verifies that NullableLocalTimeConverter can be instantiated and has correct UnderlyingType.
-    /// </summary>
-    [TestMethod]
-    public void NullableLocalTimeConverter_ShouldHaveCorrectUnderlyingType()
-    {
-        // Arrange & Act
-        var converter = new NullableLocalTimeConverter();
+        // Convert back from string
+        var converted = converter.ConvertFromString(stringValue);
 
         // Assert
-        converter.Should().NotBeNull();
-        var underlyingType = converter.GetType().BaseType?.GetProperty("UnderlyingType")?.GetValue(converter) as Type;
-        Assert.AreEqual(typeof(LocalTime), underlyingType);
+        converted.Should().BeOfType<LocalDate>();
+        ((LocalDate)converted!).Should().Be(original);
     }
 
     /// <summary>
-    /// Verifies that NullableLocalTimeConverter can convert from string.
+    /// Verifies that NullableLocalDateConverter handles null values correctly.
     /// </summary>
     [TestMethod]
-    public void NullableLocalTimeConverter_ShouldConvertFromString()
+    public void NullableLocalDateConverter_ShouldHandleNullValue()
     {
         // Arrange
-        var converter = new NullableLocalTimeConverter();
+        var converter = TypeDescriptor.GetConverter(typeof(LocalDate?));
+        LocalDate? nullValue = null;
 
-        // Act & Assert
-        converter.CanConvertFrom(typeof(string)).Should().BeTrue();
+        // Act - Convert null to string
+        var stringValue = converter.ConvertToString(nullValue);
+
+        // Assert - null should convert to empty string
+        stringValue.Should().Be(string.Empty);
+
+        // Act - Convert empty string back
+        var converted = converter.ConvertFromString(string.Empty);
+
+        // Assert - should get null back
+        converted.Should().BeNull();
     }
 
     /// <summary>
-    /// Verifies that NullableLocalDateTimeConverter can be instantiated and has correct UnderlyingType.
+    /// Verifies that NullableLocalTimeConverter can convert LocalTime to string and back.
     /// </summary>
     [TestMethod]
-    public void NullableLocalDateTimeConverter_ShouldHaveCorrectUnderlyingType()
+    public void NullableLocalTimeConverter_ShouldRoundtripConversion()
     {
-        // Arrange & Act
-        var converter = new NullableLocalDateTimeConverter();
+        // Arrange
+        var converter = TypeDescriptor.GetConverter(typeof(LocalTime?));
+        var original = new LocalTime(14, 30, 45);
+
+        // Act - Convert to string
+        var stringValue = converter.ConvertToString(original);
+        stringValue.Should().NotBeNullOrWhiteSpace();
+
+        // Convert back from string
+        var converted = converter.ConvertFromString(stringValue);
 
         // Assert
-        converter.Should().NotBeNull();
-        var underlyingType = converter.GetType().BaseType?.GetProperty("UnderlyingType")?.GetValue(converter) as Type;
-        Assert.AreEqual(typeof(LocalDateTime), underlyingType);
+        converted.Should().BeOfType<LocalTime>();
+        ((LocalTime)converted!).Should().Be(original);
     }
 
     /// <summary>
-    /// Verifies that NullableLocalDateTimeConverter can convert from string.
+    /// Verifies that NullableLocalTimeConverter handles null values correctly.
     /// </summary>
     [TestMethod]
-    public void NullableLocalDateTimeConverter_ShouldConvertFromString()
+    public void NullableLocalTimeConverter_ShouldHandleNullValue()
     {
         // Arrange
-        var converter = new NullableLocalDateTimeConverter();
+        var converter = TypeDescriptor.GetConverter(typeof(LocalTime?));
+        LocalTime? nullValue = null;
 
-        // Act & Assert
-        converter.CanConvertFrom(typeof(string)).Should().BeTrue();
-    }
-
-    /// <summary>
-    /// Verifies that NullableInstantConverter can be instantiated and has correct UnderlyingType.
-    /// </summary>
-    [TestMethod]
-    public void NullableInstantConverter_ShouldHaveCorrectUnderlyingType()
-    {
-        // Arrange & Act
-        var converter = new NullableInstantConverter();
+        // Act
+        var stringValue = converter.ConvertToString(nullValue);
 
         // Assert
-        converter.Should().NotBeNull();
-        var underlyingType = converter.GetType().BaseType?.GetProperty("UnderlyingType")?.GetValue(converter) as Type;
-        Assert.AreEqual(typeof(Instant), underlyingType);
+        stringValue.Should().Be(string.Empty);
+        converter.ConvertFromString(string.Empty).Should().BeNull();
     }
 
     /// <summary>
-    /// Verifies that NullableInstantConverter can convert from string.
+    /// Verifies that NullableLocalDateTimeConverter can convert LocalDateTime to string and back.
     /// </summary>
     [TestMethod]
-    public void NullableInstantConverter_ShouldConvertFromString()
+    public void NullableLocalDateTimeConverter_ShouldRoundtripConversion()
     {
         // Arrange
-        var converter = new NullableInstantConverter();
+        var converter = TypeDescriptor.GetConverter(typeof(LocalDateTime?));
+        var original = new LocalDateTime(2024, 1, 10, 14, 30, 45);
 
-        // Act & Assert
-        converter.CanConvertFrom(typeof(string)).Should().BeTrue();
-    }
+        // Act - Convert to string
+        var stringValue = converter.ConvertToString(original);
+        stringValue.Should().NotBeNullOrWhiteSpace();
 
-    /// <summary>
-    /// Verifies that NullableOffsetDateTimeConverter can be instantiated and has correct UnderlyingType.
-    /// </summary>
-    [TestMethod]
-    public void NullableOffsetDateTimeConverter_ShouldHaveCorrectUnderlyingType()
-    {
-        // Arrange & Act
-        var converter = new NullableOffsetDateTimeConverter();
+        // Convert back from string
+        var converted = converter.ConvertFromString(stringValue);
 
         // Assert
-        converter.Should().NotBeNull();
-        var underlyingType = converter.GetType().BaseType?.GetProperty("UnderlyingType")?.GetValue(converter) as Type;
-        Assert.AreEqual(typeof(OffsetDateTime), underlyingType);
+        converted.Should().BeOfType<LocalDateTime>();
+        ((LocalDateTime)converted!).Should().Be(original);
     }
 
     /// <summary>
-    /// Verifies that NullableOffsetDateTimeConverter can convert from string.
+    /// Verifies that NullableLocalDateTimeConverter handles null values correctly.
     /// </summary>
     [TestMethod]
-    public void NullableOffsetDateTimeConverter_ShouldConvertFromString()
+    public void NullableLocalDateTimeConverter_ShouldHandleNullValue()
     {
         // Arrange
-        var converter = new NullableOffsetDateTimeConverter();
+        var converter = TypeDescriptor.GetConverter(typeof(LocalDateTime?));
+        LocalDateTime? nullValue = null;
 
-        // Act & Assert
-        converter.CanConvertFrom(typeof(string)).Should().BeTrue();
+        // Act
+        var stringValue = converter.ConvertToString(nullValue);
+
+        // Assert
+        stringValue.Should().Be(string.Empty);
+        converter.ConvertFromString(string.Empty).Should().BeNull();
+    }
+
+    /// <summary>
+    /// Verifies that NullableInstantConverter can convert Instant to string and back.
+    /// </summary>
+    [TestMethod]
+    public void NullableInstantConverter_ShouldRoundtripConversion()
+    {
+        // Arrange
+        var converter = TypeDescriptor.GetConverter(typeof(Instant?));
+        var original = Instant.FromUtc(2024, 1, 10, 14, 30, 45);
+
+        // Act - Convert to string
+        var stringValue = converter.ConvertToString(original);
+        stringValue.Should().NotBeNullOrWhiteSpace();
+
+        // Convert back from string
+        var converted = converter.ConvertFromString(stringValue);
+
+        // Assert
+        converted.Should().BeOfType<Instant>();
+        ((Instant)converted!).Should().Be(original);
+    }
+
+    /// <summary>
+    /// Verifies that NullableInstantConverter handles null values correctly.
+    /// </summary>
+    [TestMethod]
+    public void NullableInstantConverter_ShouldHandleNullValue()
+    {
+        // Arrange
+        var converter = TypeDescriptor.GetConverter(typeof(Instant?));
+        Instant? nullValue = null;
+
+        // Act
+        var stringValue = converter.ConvertToString(nullValue);
+
+        // Assert
+        stringValue.Should().Be(string.Empty);
+        converter.ConvertFromString(string.Empty).Should().BeNull();
+    }
+
+    /// <summary>
+    /// Verifies that NullableOffsetDateTimeConverter can convert OffsetDateTime to string and back.
+    /// </summary>
+    [TestMethod]
+    public void NullableOffsetDateTimeConverter_ShouldRoundtripConversion()
+    {
+        // Arrange
+        var converter = TypeDescriptor.GetConverter(typeof(OffsetDateTime?));
+        var offset = Offset.FromHours(2);
+        var original = new OffsetDateTime(new LocalDateTime(2024, 1, 10, 14, 30, 45), offset);
+
+        // Act - Convert to string
+        var stringValue = converter.ConvertToString(original);
+        stringValue.Should().NotBeNullOrWhiteSpace();
+
+        // Convert back from string
+        var converted = converter.ConvertFromString(stringValue);
+
+        // Assert
+        converted.Should().BeOfType<OffsetDateTime>();
+        ((OffsetDateTime)converted!).Should().Be(original);
+    }
+
+    /// <summary>
+    /// Verifies that NullableOffsetDateTimeConverter handles null values correctly.
+    /// </summary>
+    [TestMethod]
+    public void NullableOffsetDateTimeConverter_ShouldHandleNullValue()
+    {
+        // Arrange
+        var converter = TypeDescriptor.GetConverter(typeof(OffsetDateTime?));
+        OffsetDateTime? nullValue = null;
+
+        // Act
+        var stringValue = converter.ConvertToString(nullValue);
+
+        // Assert
+        stringValue.Should().Be(string.Empty);
+        converter.ConvertFromString(string.Empty).Should().BeNull();
     }
 }
