@@ -125,14 +125,19 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     #region Caching
 
-    private async Task<AccessTokenResponse> _getToken<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : notnull
+    private async Task<AccessTokenResponse> _getToken<TRequest>(
+        TRequest request, 
+        Func<TRequest, string> getKey, 
+        Func<TRequest, CancellationToken, Task<AccessTokenResponse>> getTokenAsync,
+        CancellationToken cancellationToken = default) 
+        where TRequest : notnull
     {
-        var key = (string)_getKey((dynamic)request);
+        var key = getKey(request);
 
         var task = _pendingTasks.GetOrAdd(
             key,
             k => _accessTokenResponseCachePolicy.ExecuteAsync(
-                ctx => _inner.GetTokenAsync((dynamic)request, cancellationToken),
+                ctx => getTokenAsync(request, cancellationToken),
                 new Context(k)
             )
         ) as Task<AccessTokenResponse>;
@@ -145,7 +150,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodeTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _getToken(request, cancellationToken);
+        return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
     private static string _getKey(AuthorizationCodeTokenRequest r)
@@ -155,7 +160,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodePkceTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _getToken(request, cancellationToken);
+        return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
     private static string _getKey(AuthorizationCodePkceTokenRequest r)
@@ -165,7 +170,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<AccessTokenResponse> GetTokenAsync(ClientCredentialsTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _getToken(request, cancellationToken);
+        return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
     private static string _getKey(ClientCredentialsTokenRequest r)
@@ -175,7 +180,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<AccessTokenResponse> GetTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _getToken(request, cancellationToken);
+        return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
     private static string _getKey(RefreshTokenRequest r)
@@ -185,7 +190,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<AccessTokenResponse> GetTokenAsync(ResourceOwnerTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _getToken(request, cancellationToken);
+        return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
     private static string _getKey(ResourceOwnerTokenRequest r)
@@ -208,7 +213,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<AccessTokenResponse> GetTokenAsync(PasswordlessEmailTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _getToken(request, cancellationToken);
+        return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
     private static string _getKey(PasswordlessEmailTokenRequest r)
@@ -218,7 +223,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<AccessTokenResponse> GetTokenAsync(PasswordlessSmsTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _getToken(request, cancellationToken);
+        return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
     private static string _getKey(PasswordlessSmsTokenRequest r)
@@ -228,7 +233,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<AccessTokenResponse> GetTokenAsync(DeviceCodeTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _getToken(request, cancellationToken);
+        return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
     private static string _getKey(DeviceCodeTokenRequest r)
