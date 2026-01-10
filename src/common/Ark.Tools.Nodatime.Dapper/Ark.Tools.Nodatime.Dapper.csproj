@@ -14,6 +14,10 @@
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
 
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+
+    <!-- Trimming configuration -->
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 	
   <!--===============================================================================-->

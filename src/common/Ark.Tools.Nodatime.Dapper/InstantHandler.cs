@@ -4,6 +4,7 @@ using NodaTime;
 
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.Nodatime.Dapper;
 
@@ -29,6 +30,8 @@ public sealed class InstantHandler : SqlMapper.TypeHandler<Instant>
         OnSetValue?.Invoke(this, parameter);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", 
+        Justification = "The TypeConverter for NodaTime.Instant is statically registered in Ark.Tools.Nodatime and will not be trimmed. The Instant type is a known NodaTime struct with a well-defined TypeConverter.")]
     public override Instant Parse(object? value)
     {
         if (value == null || value is DBNull) return default;
