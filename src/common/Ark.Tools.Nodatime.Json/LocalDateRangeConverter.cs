@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 
 using NodaTime;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Ark.Tools.Nodatime.Json;
@@ -25,6 +26,8 @@ public class LocalDateTimeRangeConverter : JsonConverter
         public LocalDateTime End { get; set; }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "The Surrogate type is a private class defined in this converter with only LocalDate properties. NodaTime types are explicitly supported by NodaTime.Serialization.JsonNet and will not be trimmed.")]
     public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
 

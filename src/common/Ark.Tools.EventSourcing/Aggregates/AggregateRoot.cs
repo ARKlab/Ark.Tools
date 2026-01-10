@@ -3,6 +3,7 @@ using Ark.Tools.EventSourcing.Store;
 
 
 using System.Collections.Frozen;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -70,7 +71,7 @@ public abstract class AggregateTransaction<TAggregateRoot, TAggregateState, TAgg
     }
 }
 
-public abstract class AggregateRoot<TAggregateRoot, TAggregateState, TAggregate> : IAggregateRoot
+public abstract class AggregateRoot<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicMethods)] TAggregateRoot, TAggregateState, TAggregate> : IAggregateRoot
     where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
     where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
     where TAggregate : IAggregate
