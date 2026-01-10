@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-10  
-**Current Phase:** Phase 1 - Foundation Libraries  
-**Progress:** 4/42 libraries (10%)
+**Current Phase:** Phase 2 - First-Level Integrations  
+**Progress:** 12/42 libraries (29%)
 
 ---
 
@@ -101,7 +101,7 @@
 
 ## Level 1: Core Utilities (Depend on Core Only)
 
-### ✅ Completed (3/4)
+### ✅ Completed (4/4)
 
 - [x] **Ark.Tools.Nodatime**
   - **Status**: ✅ DONE
@@ -130,39 +130,45 @@
   - **Warnings**: Zero (clean)
   - **Test Coverage**: Existing tests verified
 
-### 🔍 Needs Analysis (1/4)
-
-- [ ] **Ark.Tools.EventSourcing**
-  - **Status**: ⚠️ Known issues
-  - **Warnings**: IL2070, IL2090 (GetInterfaces, GetMethods reflection)
-  - **Dependencies**: Ark.Tools.Core
-  - **Complexity**: High - Event handling uses reflection
-  - **Action Required**:
-    - Add DynamicallyAccessedMembers attributes to generic parameters
-    - Test event sourcing workflows
-  - **Notes**: Cannot be split, core logic requires reflection
+- [x] **Ark.Tools.EventSourcing**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-10
+  - **Changes**:
+    - Added `DynamicallyAccessedMembers.Interfaces` attribute to `Ex.IsAssignableFromEx` parameter
+    - Added `DynamicallyAccessedMembers.NonPublicMethods` attribute to `AggregateRoot<TAggregateRoot>` generic parameter
+  - **Warnings Fixed**: IL2070, IL2090 (GetInterfaces, GetMethods reflection)
+  - **Test Coverage**: Full solution build verified; 115 tests passed
+  - **Pattern**: DynamicallyAccessedMembers attributes for reflection operations
 
 ---
 
 ## Level 2: First-Level Integrations
 
-### 🔍 Needs Analysis (4/4)
+### ✅ Completed (4/4)
 
-- [ ] **Ark.Tools.Nodatime.SystemTextJson**
-  - **Status**: ⚠️ Has trim warnings
-  - **Warnings**: IL2026 (JsonSerializer.Deserialize/Serialize with reflection)
-  - **Dependencies**: Ark.Tools.Nodatime, NodaTime.Serialization.SystemTextJson
-  - **Complexity**: Medium
-  - **Action Required**: Use JSON source generators or add suppressions with justification
+- [x] **Ark.Tools.Nodatime.SystemTextJson**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-10
+  - **Changes**:
+    - Added `UnconditionalSuppressMessage` to Read and Write methods in 3 converter classes
+    - Method-level suppressions for JsonSerializer.Deserialize/Serialize calls
+  - **Warnings Fixed**: IL2026 (6 occurrences from JsonSerializer operations)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Method-level suppressions for known NodaTime types
+  - **Justification**: Surrogate types only contain NodaTime types supported by NodaTime.Serialization.SystemTextJson
 
-- [ ] **Ark.Tools.Nodatime.Json**
-  - **Status**: ⚠️ Has trim warnings
-  - **Warnings**: IL2026 (JToken.ToObject<T> with reflection)
-  - **Dependencies**: Ark.Tools.Nodatime, Newtonsoft.Json
-  - **Complexity**: Medium
-  - **Action Required**: Add suppressions with justification for known types
+- [x] **Ark.Tools.Nodatime.Json**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-10
+  - **Changes**:
+    - Added `UnconditionalSuppressMessage` to ReadJson methods in 3 converter classes
+    - Method-level suppressions for JToken.ToObject<T> calls
+  - **Warnings Fixed**: IL2026 (3 occurrences from JToken.ToObject operations)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Method-level suppressions for known NodaTime types
+  - **Justification**: Surrogate types only contain NodaTime types supported by NodaTime.Serialization.JsonNet
 
-- [ ] **Ark.Tools.Nodatime.Dapper**
+- [x] **Ark.Tools.Nodatime.Dapper**
   - **Status**: ✅ DONE
   - **Completed**: 2026-01-10
   - **Changes**:
@@ -173,11 +179,13 @@
   - **Pattern**: Method-level suppressions for known TypeConverters
   - **Justification**: All NodaTime TypeConverters are statically registered in Ark.Tools.Nodatime and won't be trimmed
 
-- [ ] **Ark.Tools.EventSourcing.SimpleInjector**
-  - **Status**: ⚠️ Blocked by parent libraries
-  - **Dependencies**: Ark.Tools.EventSourcing, Ark.Tools.SimpleInjector
-  - **Complexity**: Medium
-  - **Action Required**: Test after EventSourcing + SimpleInjector fixed
+- [x] **Ark.Tools.EventSourcing.SimpleInjector**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-10
+  - **Changes**: Added trimming configuration
+  - **Warnings**: Zero (clean)
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.EventSourcing, Ark.Tools.SimpleInjector (both complete)
 
 ---
 
@@ -293,15 +301,15 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 8 (19%)
+- **Completed**: 12 (29%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 34 (81%)
+- **Needs Analysis**: 30 (71%)
 
 ### By Level
 - **Level 0 (Foundation)**: 5/5 (100%) ✅ COMPLETE!
-- **Level 1 (Core Utilities)**: 3/4 (75%)
-- **Level 2 (First-Level Integrations)**: 1/4 (25%)
+- **Level 1 (Core Utilities)**: 4/4 (100%) ✅ COMPLETE!
+- **Level 2 (First-Level Integrations)**: 4/4 (100%) ✅ COMPLETE!
 - **Level 3+**: 0/29 (0%)
 
 ### By Complexity
@@ -311,8 +319,8 @@
 
 ### By Priority
 - **Critical Blockers**: 1 (Core only - NLog may not be needed)
-- **High Priority**: 4 (Level 1 libraries)
-- **Medium Priority**: 20 (Level 2-4 libraries)
+- **High Priority**: 0 (All Level 0-2 complete!)
+- **Medium Priority**: 20 (Level 3-4 libraries)
 - **Low Priority**: 12 (Level 5+ libraries)
 
 ---
@@ -322,14 +330,18 @@
 ### Immediate (This Week)
 1. [x] Fix trim warnings in Auth0, Hosting, SimpleInjector ✅
 2. [x] Test Ark.Tools.ApplicationInsights with EnableTrimAnalyzer ✅
-3. [ ] Fix trim warnings in remaining Nodatime integrations (Json, SystemTextJson)
+3. [x] Fix trim warnings in remaining Nodatime integrations (Json, SystemTextJson) ✅
 4. [x] Document pattern for handling IL2026 warnings ✅
-5. [ ] Update progress tracker with detailed findings from completed libraries
+5. [x] Update progress tracker with detailed findings from completed libraries ✅
+6. [x] Fix Ark.Tools.EventSourcing ✅
+7. [x] Complete Level 2 serialization libraries ✅
 
 ### Short Term (Next 2 Weeks)
 1. [x] ~~Complete all Level 0 libraries~~ ✅ DONE
-2. [ ] Fix Ark.Tools.EventSourcing
-3. [ ] Start Level 2 serialization libraries
+2. [x] ~~Fix Ark.Tools.EventSourcing~~ ✅ DONE
+3. [x] ~~Start Level 2 serialization libraries~~ ✅ DONE
+4. [ ] Start Level 3 serialization utilities (Tasks, NewtonsoftJson, SystemTextJson)
+5. [ ] Start Level 4 HTTP & Logging (Http, NLog)
 
 ### Medium Term (Weeks 3-4)
 1. [ ] Complete all serialization libraries
@@ -339,6 +351,21 @@
 ---
 
 ## Update Log
+
+### 2026-01-10 (Evening Session)
+- **Level 1 Core Utilities**: 100% COMPLETE! (4/4 libraries)
+  - EventSourcing: Fixed IL2070/IL2090 by adding DynamicallyAccessedMembers attributes
+    - Added `DynamicallyAccessedMembers.Interfaces` to method parameter
+    - Added `DynamicallyAccessedMembers.NonPublicMethods` to generic parameter
+- **Level 2 First-Level Integrations**: 100% COMPLETE! (4/4 libraries)
+  - Nodatime.Json: Fixed IL2026 (3 occurrences) with suppressions for JToken.ToObject
+  - Nodatime.SystemTextJson: Fixed IL2026 (6 occurrences) with suppressions for JsonSerializer operations
+  - EventSourcing.SimpleInjector: Zero warnings (clean!)
+- **Patterns Established**:
+  1. **DynamicallyAccessedMembers**: Add attributes to generic parameters and method parameters that use reflection
+  2. **Method-level Suppressions**: For JSON serialization of known types with proper justification
+- **Testing**: Full solution build verified - 0 warnings, 0 errors, 115 tests passed
+- **Progress**: 12/42 libraries (29%) - Levels 0, 1, and 2 now complete!
 
 ### 2026-01-10 (Afternoon Session)
 - **Level 0 Foundation Libraries**: 100% COMPLETE! (5/5 libraries)
@@ -357,7 +384,7 @@
 - **Testing Strategy**: Build verification of dependent projects; no dedicated unit tests needed for trimming support
 - Progress: 8/42 libraries (19%)
 
-### 2026-01-10
+### 2026-01-10 (Morning Session)
 - Initial progress tracker created
 - 3 libraries completed (Nodatime, Sql, Outbox)
 - Generic base class pattern established
