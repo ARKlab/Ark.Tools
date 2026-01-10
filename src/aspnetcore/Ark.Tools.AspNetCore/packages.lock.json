@@ -721,10 +721,7 @@
         }
       },
       "ark.tools.aspnetcore.commaseparatedparameters": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )"
-        }
+        "type": "Project"
       },
       "ark.tools.aspnetcore.healthchecks": {
         "type": "Project",
