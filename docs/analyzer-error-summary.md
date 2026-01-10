@@ -1,5 +1,11 @@
 # Analyzer Errors and Configuration Summary
 
+**Last Updated:** After adding analyzers to sample projects (Ark.ReferenceProject and Ark.ResourceWatcher)
+
+**Scope:** All errors listed below apply to:
+- Main source code (`src/`)
+- Sample projects (`samples/Ark.ReferenceProject/`, `samples/Ark.ResourceWatcher/`)
+
 ## Active Errors (TreatWarningsAsErrors=true)
 
 ### VSTHRD110: Observe the awaitable result of this method call
@@ -202,3 +208,25 @@ catch (Exception)
 2. Consider promoting the recommended rules from suggestion to warning
 
 3. Update `.vsthreading.globalconfig`, `.errorprone.globalconfig`, and `.meziantou.globalconfig` as needed
+
+---
+
+## Sample Projects Configuration
+
+The new analyzers have been added to both sample project directories:
+
+### Ark.ReferenceProject (`samples/Ark.ReferenceProject/`)
+- ✅ Added `Microsoft.VisualStudio.Threading.Analyzers` v17.14.15
+- ✅ Added `ErrorProne.NET.CoreAnalyzers` v0.1.2
+- ✅ Added package versions to `Directory.Packages.props`
+- ✅ Updated `Directory.Build.props` with PackageReferences and GlobalAnalyzerConfigFiles
+- ✅ Copied `.vsthreading.globalconfig` and `.errorprone.globalconfig` files
+
+### Ark.ResourceWatcher (`samples/Ark.ResourceWatcher/`)
+- ✅ Added `Microsoft.VisualStudio.Threading.Analyzers` v17.14.15
+- ✅ Added `ErrorProne.NET.CoreAnalyzers` v0.1.2
+- ✅ Added package versions to `Directory.Packages.props`
+- ✅ Updated `Directory.Build.props` with PackageReferences and GlobalAnalyzerConfigFiles
+- ✅ Copied `.vsthreading.globalconfig` and `.errorprone.globalconfig` files
+
+**Result:** No new errors detected in sample projects. All 5 errors remain in main source code only.
