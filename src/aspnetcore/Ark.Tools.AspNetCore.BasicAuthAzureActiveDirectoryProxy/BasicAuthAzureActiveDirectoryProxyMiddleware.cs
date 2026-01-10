@@ -100,7 +100,9 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                 }
                 catch (Exception ex)
                 {
+#pragma warning disable CA1848 // Use LoggerMessage delegates - trace level doesn't need performance optimization
                     _logger.LogTrace(ex, "Basic authentication failed");
+#pragma warning restore CA1848
                 }
 #pragma warning restore CA1031 // Do not catch general exception types
             }

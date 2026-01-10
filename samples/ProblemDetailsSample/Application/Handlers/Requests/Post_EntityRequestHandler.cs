@@ -10,7 +10,9 @@ public class Post_EntityRequestHandler : IRequestHandler<Post_EntityRequest.V1, 
 {
     public Entity.V1.Output Execute(Post_EntityRequest.V1 request)
     {
+#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
         return ExecuteAsync(request).ConfigureAwait(true).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
     }
 
     public async Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequest.V1 request, CancellationToken ctk = default)

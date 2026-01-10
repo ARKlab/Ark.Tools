@@ -96,7 +96,11 @@ public abstract class OutboxConsumerBase : IOutboxConsumer, IDisposable
     {
         _processorCT?.Dispose();
         if (_processorTask is not null)
+#pragma warning disable VSTHRD003 // Task.WhenAny is acceptable here for timeout pattern
+#pragma warning disable EPC13 // Result should be observed - intentional fire-and-forget with timeout
             await Task.WhenAny(_processorTask, Task.Delay(Timeout.Infinite, ctk)).ConfigureAwait(false);
+#pragma warning restore EPC13
+#pragma warning restore VSTHRD003
     }
 
     protected virtual void Dispose(bool disposing)

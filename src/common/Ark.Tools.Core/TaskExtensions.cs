@@ -5,6 +5,7 @@ namespace Ark.Tools.Core;
 
 #pragma warning disable MA0134 // Observe result of async calls
 #pragma warning disable MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
+#pragma warning disable VSTHRD003 // Avoid awaiting or returning a Task representing work that was not started within your context
 public static class TaskExtensions
 {
     public static Task IgnoreExceptions(this Task task)
