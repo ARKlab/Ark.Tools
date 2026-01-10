@@ -99,7 +99,6 @@ public class SlackTarget : TargetWithContext
             return "#cccccc";
     }
 
-    // Using FrozenDictionary for immutable lookup - 20-30% faster than Dictionary for small, read-only collections
     private static readonly FrozenDictionary<LogLevel, string> _logLevelSlackColorMap = new Dictionary<LogLevel, string>
     {
         { LogLevel.Warn, "warning" },

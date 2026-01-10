@@ -75,7 +75,6 @@ public abstract class AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
     where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
     where TAggregate : IAggregate
 {
-    // Using FrozenDictionary for immutable lookup - 20-30% faster than Dictionary for read-only collections
     private static readonly FrozenDictionary<Type, Action<TAggregateRoot, IAggregateEvent<TAggregate>, IMetadata>> _applyMethods;
     private static readonly string _aggregateName = AggregateHelper<TAggregate>.Name;
 

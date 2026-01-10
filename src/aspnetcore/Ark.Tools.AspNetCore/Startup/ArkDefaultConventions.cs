@@ -10,7 +10,6 @@ namespace Ark.Tools.AspNetCore.Startup;
 
 internal sealed class ArkDefaultConventions : IActionModelConvention
 {
-    // Using FrozenSet for immutable lookup - 20-30% faster than HashSet for small, read-only collections
     private static readonly FrozenSet<string> _consumeMethods = new[] { "POST", "PUT", "PATCH" }.ToFrozenSet(System.StringComparer.Ordinal);
 
     public void Apply(ActionModel action)

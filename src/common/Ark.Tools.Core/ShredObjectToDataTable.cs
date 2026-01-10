@@ -145,7 +145,6 @@ internal sealed class ShredObjectToDataTable<T>
         return values;
     }
 
-    // Using FrozenSet for immutable lookups - 20-30% faster than HashSet for small, read-only collections
     private static readonly FrozenSet<Type> _datetimeTypes = new[]
     {
         typeof(LocalDate),
@@ -153,7 +152,6 @@ internal sealed class ShredObjectToDataTable<T>
         typeof(Instant),
     }.ToFrozenSet();
 
-    // Using FrozenSet for immutable lookups - 20-30% faster than HashSet for small, read-only collections
     private static readonly FrozenSet<Type> _datetimeOffsetTypes = new[]
     {
         typeof(OffsetDateTime),
@@ -161,7 +159,6 @@ internal sealed class ShredObjectToDataTable<T>
     }.ToFrozenSet();
 
 
-    // Using FrozenSet for immutable lookups - 20-30% faster than HashSet for small, read-only collections
     private static readonly FrozenSet<Type> _timeTypes = new[]
     {
         typeof(LocalTime)
