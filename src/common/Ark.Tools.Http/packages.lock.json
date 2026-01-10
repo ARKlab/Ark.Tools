@@ -301,6 +301,7 @@
         "contentHash": "M5cCC1ZMkZr9jbSQGTHnVkb5TDN67qWCV7AP8TAHdGkvDlu0puT5NzemESNn9+HkYIDpWpocP68/i+/ame2/2w=="
       }
     },
+    "net10.0/linux-x64": {},
     "net8.0": {
       "CacheCow.Client": {
         "type": "Direct",
@@ -630,6 +631,7 @@
         "resolved": "6.1.0",
         "contentHash": "M5cCC1ZMkZr9jbSQGTHnVkb5TDN67qWCV7AP8TAHdGkvDlu0puT5NzemESNn9+HkYIDpWpocP68/i+/ame2/2w=="
       }
-    }
+    },
+    "net8.0/linux-x64": {}
   }
 }

@@ -44,6 +44,17 @@ jobs:
     - name: 'Build project (dacpac copy issue)'
       run: dotnet build --no-restore --configuration Debug
 
+    - name: 'Verify ReadyToRun and SingleFile publish'
+      run: |
+        echo "Publishing WebApplicationDemo with ReadyToRun and SingleFile..."
+        dotnet publish samples/WebApplicationDemo/WebApplicationDemo.csproj -c Release -r linux-x64 --self-contained false -f net10.0 -o /tmp/publish-webdemo -p:RestoreLockedMode=false
+        echo "Verifying published output exists..."
+        ls -lh /tmp/publish-webdemo/WebApplicationDemo
+        echo "Publishing Ark.ResourceWatcher.Sample with ReadyToRun and SingleFile..."
+        dotnet publish samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample/Ark.ResourceWatcher.Sample.csproj -c Release -r linux-x64 --self-contained false -f net10.0 -o /tmp/publish-resourcewatcher -p:RestoreLockedMode=false
+        ls -lh /tmp/publish-resourcewatcher/Ark.ResourceWatcher.Sample
+        echo "Publish verification completed successfully"
+
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1
       
