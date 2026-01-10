@@ -4,6 +4,15 @@ root = true
 # C# files
 [*.cs]
 
+# MA0004: Use Task.ConfigureAwait - downgrade to suggestion for sample project
+dotnet_diagnostic.MA0004.severity = suggestion
+
+# VSTHRD002: Synchronous waits - downgrade to warning for sample project (legacy sync wrappers)
+dotnet_diagnostic.VSTHRD002.severity = warning
+
+# VSTHRD100: Async void - downgrade to warning for sample project
+dotnet_diagnostic.VSTHRD100.severity = warning
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing

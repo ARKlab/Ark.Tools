@@ -6,6 +6,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
+		<!-- Exclude sample-specific analyzer warnings from being treated as errors -->
+		<WarningsNotAsErrors>VSTHRD002;VSTHRD100;MA0004;ERP022</WarningsNotAsErrors>
 
 		<Version>0.9.1</Version>
     

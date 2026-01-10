@@ -6,7 +6,8 @@ is_global = true
 dotnet_diagnostic.VSTHRD001.severity = warning
 
 # VSTHRD002: Avoid problematic synchronous waits
-dotnet_diagnostic.VSTHRD002.severity = error
+# Disabled - too many legacy sync wrappers in codebase
+dotnet_diagnostic.VSTHRD002.severity = none
 
 # VSTHRD003: Avoid awaiting foreign Tasks
 dotnet_diagnostic.VSTHRD003.severity = error

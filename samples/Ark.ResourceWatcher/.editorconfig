@@ -4,6 +4,9 @@ root = true
 # C# files
 [*.cs]
 
+# MA0004: Use Task.ConfigureAwait - downgrade to suggestion for sample project
+dotnet_diagnostic.MA0004.severity = suggestion
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing

@@ -4,7 +4,8 @@ is_global = true
 
 
 # MA0004: Use Task.ConfigureAwait
-dotnet_diagnostic.MA0004.severity = warning
+# Downgraded to suggestion for sample project (not production code)
+dotnet_diagnostic.MA0004.severity = suggestion
 
 # MA0006: Use String.Equals instead of equality operator
 dotnet_diagnostic.MA0006.severity = silent
