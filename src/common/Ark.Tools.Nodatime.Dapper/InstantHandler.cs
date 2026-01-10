@@ -4,7 +4,9 @@ using NodaTime;
 
 using System.ComponentModel;
 using System.Data;
+#if !NET9_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace Ark.Tools.Nodatime.Dapper;
 
@@ -30,8 +32,6 @@ public sealed class InstantHandler : SqlMapper.TypeHandler<Instant>
         OnSetValue?.Invoke(this, parameter);
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", 
-        Justification = "The TypeConverter for NodaTime.Instant is statically registered in Ark.Tools.Nodatime and will not be trimmed. The Instant type is a known NodaTime struct with a well-defined TypeConverter.")]
     public override Instant Parse(object? value)
     {
         if (value == null || value is DBNull) return default;
@@ -49,7 +49,16 @@ public sealed class InstantHandler : SqlMapper.TypeHandler<Instant>
 
         if (value is string s)
         {
-            var conv = TypeDescriptor.GetConverter(typeof(Instant));
+#if NET9_0_OR_GREATER
+            // Use the trim-safe API available in .NET 9+
+            var conv = TypeDescriptor.GetConverterFromRegisteredType(typeof(Instant));
+#else
+            // For .NET 8, suppress the warning as NodaTime TypeConverters are statically registered
+            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", 
+                Justification = "The TypeConverter for NodaTime.Instant is statically registered in Ark.Tools.Nodatime and will not be trimmed. The Instant type is a known NodaTime struct with a well-defined TypeConverter.")]
+            static TypeConverter GetConverter() => TypeDescriptor.GetConverter(typeof(Instant));
+            var conv = GetConverter();
+#endif
             if (conv?.CanConvertFrom(typeof(string)) == true)
                 return (Instant)(conv.ConvertFromString(s) ?? throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.Instant"));
         }
