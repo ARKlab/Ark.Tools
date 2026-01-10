@@ -17,6 +17,11 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <PropertyGroup>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" />
     <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />

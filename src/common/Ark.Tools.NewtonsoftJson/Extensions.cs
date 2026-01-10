@@ -7,10 +7,13 @@ using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Newtonsoft.Json;
 
 public static class Extensions
 {
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
     public static JsonSerializerSettings ConfigureArkDefaults(this JsonSerializerSettings @this)
     {
         @this.TypeNameHandling = TypeNameHandling.None;

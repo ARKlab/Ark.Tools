@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
