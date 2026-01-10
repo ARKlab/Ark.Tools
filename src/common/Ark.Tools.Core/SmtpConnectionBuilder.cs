@@ -35,7 +35,7 @@ public class SmtpConnectionBuilder
                 continue;
 
             var equalsIndex = segment.IndexOf('=');
-            if (equalsIndex < 0)
+            if (equalsIndex <= 0 || equalsIndex == segment.Length - 1)
                 throw new FormatException();
 
             _processKeyValue(segment[..equalsIndex].Trim(), segment[(equalsIndex + 1)..].Trim());
