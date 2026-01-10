@@ -18,6 +18,12 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <!-- Trimming Configuration -->
+  <PropertyGroup>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
   <ItemGroup Label="Project-Specific Usings">
     <Using Include="NodaTime" />
   </ItemGroup>
