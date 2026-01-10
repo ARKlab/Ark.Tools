@@ -2,6 +2,7 @@ using Ark.Tools.EventSourcing.Events;
 using Ark.Tools.EventSourcing.Store;
 
 
+using System.Collections.Frozen;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -74,7 +75,7 @@ public abstract class AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
     where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()
     where TAggregate : IAggregate
 {
-    private static readonly IReadOnlyDictionary<Type, Action<TAggregateRoot, IAggregateEvent<TAggregate>, IMetadata>> _applyMethods;
+    private static readonly FrozenDictionary<Type, Action<TAggregateRoot, IAggregateEvent<TAggregate>, IMetadata>> _applyMethods;
     private static readonly string _aggregateName = AggregateHelper<TAggregate>.Name;
 
     private readonly List<AggregateEventEnvelope<TAggregate>> _uncommittedAggregateEvents = new();
@@ -134,7 +135,8 @@ public abstract class AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
 
                     return lambda.Compile();
                 }
-            );
+            )
+            .ToFrozenDictionary();
     }
 
     internal void SetState(TAggregateState state)

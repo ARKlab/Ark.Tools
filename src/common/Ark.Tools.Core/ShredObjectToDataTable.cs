@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NodaTime;
 
+using System.Collections.Frozen;
 using System.Data;
 using System.Reflection;
 
@@ -144,24 +145,24 @@ internal sealed class ShredObjectToDataTable<T>
         return values;
     }
 
-    private static readonly HashSet<Type> _datetimeTypes = new HashSet<Type>()
+    private static readonly FrozenSet<Type> _datetimeTypes = new[]
     {
         typeof(LocalDate),
         typeof(LocalDateTime),
         typeof(Instant),
-    };
+    }.ToFrozenSet();
 
-    private static readonly HashSet<Type> _datetimeOffsetTypes = new HashSet<Type>()
+    private static readonly FrozenSet<Type> _datetimeOffsetTypes = new[]
     {
         typeof(OffsetDateTime),
         typeof(OffsetDate)
-    };
+    }.ToFrozenSet();
 
 
-    private static readonly HashSet<Type> _timeTypes = new HashSet<Type>()
+    private static readonly FrozenSet<Type> _timeTypes = new[]
     {
         typeof(LocalTime)
-    };
+    }.ToFrozenSet();
 
     private static Type _deriveColumnType(Type elementType)
     {

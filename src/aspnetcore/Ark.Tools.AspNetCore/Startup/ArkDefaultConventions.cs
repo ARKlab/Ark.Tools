@@ -4,12 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Routing;
 
+using System.Collections.Frozen;
 
 namespace Ark.Tools.AspNetCore.Startup;
 
 internal sealed class ArkDefaultConventions : IActionModelConvention
 {
-    private static readonly HashSet<string> _consumeMethods = new(System.StringComparer.Ordinal) { "POST", "PUT", "PATCH" };
+    private static readonly FrozenSet<string> _consumeMethods = new[] { "POST", "PUT", "PATCH" }.ToFrozenSet(System.StringComparer.Ordinal);
 
     public void Apply(ActionModel action)
     {
