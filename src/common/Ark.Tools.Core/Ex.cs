@@ -110,33 +110,6 @@ public static unsafe class StringExtensions
         return value.Length <= maxLength ? value : value[..maxLength];
     }
 
-    /// <summary>
-    /// Splits a string into a list of strings using MemoryExtensions.Split for efficient, zero-allocation parsing.
-    /// This method reduces allocations compared to string.Split() by processing spans directly.
-    /// The final result still requires string allocations for the returned list, but intermediate
-    /// operations (finding separators, slicing) are allocation-free.
-    /// </summary>
-    /// <param name="value">The string to split</param>
-    /// <param name="separator">The character separator</param>
-    /// <returns>List of split strings</returns>
-    public static List<string> SplitToList(this string value, char separator)
-    {
-        if (string.IsNullOrEmpty(value))
-            return [];
-
-        var span = value.AsSpan();
-        var result = new List<string>();
-
-        // Use MemoryExtensions.Split for efficient span-based splitting
-        // Reduces intermediate allocations during parsing
-        foreach (var range in span.Split(separator))
-        {
-            result.Add(span[range].ToString());
-        }
-
-        return result;
-    }
-
 }
 
 static class SqlLikeStringUtilities

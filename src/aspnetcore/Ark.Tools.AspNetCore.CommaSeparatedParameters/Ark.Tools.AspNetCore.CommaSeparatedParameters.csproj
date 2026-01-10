@@ -24,8 +24,4 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../../common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
-  </ItemGroup>
-
 </Project>
