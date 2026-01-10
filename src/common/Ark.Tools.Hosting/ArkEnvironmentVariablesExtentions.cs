@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
+using System.Diagnostics.CodeAnalysis;
 
 
 
@@ -49,6 +50,7 @@ public static class ArkEnvironmentVariablesExtentions
 
 public static class ConfigurationExtensions
 {
+    [RequiresUnreferencedCode("In case the type is non-primitive, the trimmer cannot statically analyze the object's type so its members may be trimmed.")]
     public static T GetRequiredValue<T>(this IConfiguration configuration, string key)
     {
         return configuration.GetValue<T>(key) ?? throw new ArgumentException("Parameter not found in configuration", key);

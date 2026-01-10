@@ -3,6 +3,7 @@
 using SimpleInjector;
 using SimpleInjector.Diagnostics;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
 
@@ -222,6 +223,10 @@ public static partial class Ex
         container.ResolveUnregisteredType += _resolvingFuncFactoriesHandler;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2075:UnrecognizedReflectionPattern", 
+        Justification = "The serviceType comes from SimpleInjector's container registration which has already validated the type's constructability. Lazy<T> construction is safe for all types registered with SimpleInjector.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2076:UnrecognizedReflectionPattern", 
+        Justification = "The serviceType comes from SimpleInjector's container registration which has already validated the type's constructability. Lazy<T> construction is safe for all types registered with SimpleInjector.")]
     private static void _resolvingLazyServicesHandler(object? sender, UnregisteredTypeEventArgs e)
     {
         var container = sender as Container;
