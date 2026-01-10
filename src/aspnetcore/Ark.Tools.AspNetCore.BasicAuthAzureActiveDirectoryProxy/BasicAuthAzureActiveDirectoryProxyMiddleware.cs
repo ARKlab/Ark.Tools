@@ -53,12 +53,18 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                                           Convert.FromBase64String(
                                                 authHeader.Parameter ?? string.Empty));
 
-                    var parts = parameter.Split(':');
+                    var span = parameter.AsSpan();
+                    var colonIndex = span.IndexOf(':');
 
-                    if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
+                    if (colonIndex > 0 && colonIndex < span.Length - 1)
                     {
-                        string username = parts[0];
-                        string password = parts[1];
+                        var usernameSpan = span[..colonIndex];
+                        var passwordSpan = span[(colonIndex + 1)..];
+
+                        if (!usernameSpan.IsWhiteSpace() && !passwordSpan.IsWhiteSpace())
+                        {
+                            string username = usernameSpan.ToString();
+                            string password = passwordSpan.ToString();
 
                         using var content = new FormUrlEncodedContent(
                             [
@@ -85,7 +91,8 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                                 return JsonConvert.DeserializeObject<OAuthResult>(payload);
                             }, context.RequestAborted, true).ConfigureAwait(false);
 
-                        context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";
+                            context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";
+                        }
                     }
                 }
                 catch (Exception)

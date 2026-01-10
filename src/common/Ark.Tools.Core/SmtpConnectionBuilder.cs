@@ -25,59 +25,62 @@ public class SmtpConnectionBuilder
 
     private void _parse(string smtpConnectionString)
     {
-        var split = smtpConnectionString
-            .Split([';'], StringSplitOptions.RemoveEmptyEntries)
-            .Select(x => x.Trim())
-            .Select(x => x.Split('=')
-                          .Select(y => y.Trim())
-                          .ToArray()
-                   )
-            .ToArray()
-            ;
+        var span = smtpConnectionString.AsSpan();
 
-        if (split.Any(x => x.Length != 2))
-            throw new FormatException();
-
-        foreach (var pair in split)
+        // Split by semicolons using Span
+        int start = 0;
+        int semicolonIndex;
+        while ((semicolonIndex = span[start..].IndexOf(';')) >= 0)
         {
-            switch (pair[0].ToUpperInvariant())
+            var segment = span.Slice(start, semicolonIndex).Trim();
+            if (segment.Length > 0)
             {
-                case "SERVER":
-                    {
-                        this.Server = pair[1];
-                        break;
-                    }
+                var equalsIndex = segment.IndexOf('=');
+                if (equalsIndex < 0)
+                    throw new FormatException();
 
-                case "PORT":
-                    {
-                        this.Port = Int32.Parse(pair[1], CultureInfo.InvariantCulture);
-                        break;
-                    }
-
-                case "USERNAME":
-                    {
-                        this.Username = pair[1];
-                        break;
-                    }
-
-                case "PASSWORD":
-                    {
-                        this.Password = pair[1];
-                        break;
-                    }
-
-                case "USESSL":
-                    {
-                        this.UseSsl = bool.Parse(pair[1]);
-                        break;
-                    }
-
-                case "FROM":
-                    {
-                        this.From = pair[1];
-                        break;
-                    }
+                _processKeyValue(segment[..equalsIndex].Trim(), segment[(equalsIndex + 1)..].Trim());
             }
+            start += semicolonIndex + 1;
+        }
+
+        // Add the last segment
+        var lastSegment = span[start..].Trim();
+        if (lastSegment.Length > 0)
+        {
+            var equalsIndex = lastSegment.IndexOf('=');
+            if (equalsIndex < 0)
+                throw new FormatException();
+
+            _processKeyValue(lastSegment[..equalsIndex].Trim(), lastSegment[(equalsIndex + 1)..].Trim());
+        }
+    }
+
+    private void _processKeyValue(ReadOnlySpan<char> key, ReadOnlySpan<char> value)
+    {
+        if (key.Equals("SERVER", StringComparison.OrdinalIgnoreCase))
+        {
+            this.Server = value.ToString();
+        }
+        else if (key.Equals("PORT", StringComparison.OrdinalIgnoreCase))
+        {
+            this.Port = Int32.Parse(value, CultureInfo.InvariantCulture);
+        }
+        else if (key.Equals("USERNAME", StringComparison.OrdinalIgnoreCase))
+        {
+            this.Username = value.ToString();
+        }
+        else if (key.Equals("PASSWORD", StringComparison.OrdinalIgnoreCase))
+        {
+            this.Password = value.ToString();
+        }
+        else if (key.Equals("USESSL", StringComparison.OrdinalIgnoreCase))
+        {
+            this.UseSsl = bool.Parse(value);
+        }
+        else if (key.Equals("FROM", StringComparison.OrdinalIgnoreCase))
+        {
+            this.From = value.ToString();
         }
     }
 

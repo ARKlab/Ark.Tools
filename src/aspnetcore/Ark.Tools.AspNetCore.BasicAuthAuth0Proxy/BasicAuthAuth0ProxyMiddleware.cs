@@ -58,12 +58,18 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
                                           Convert.FromBase64String(
                                                 authHeader.Parameter ?? string.Empty));
 
-                    var parts = parameter.Split(':');
+                    var span = parameter.AsSpan();
+                    var colonIndex = span.IndexOf(':');
 
-                    if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
+                    if (colonIndex > 0 && colonIndex < span.Length - 1)
                     {
-                        string userName = parts[0];
-                        string password = parts[1];
+                        var usernameSpan = span[..colonIndex];
+                        var passwordSpan = span[(colonIndex + 1)..];
+
+                        if (!usernameSpan.IsWhiteSpace() && !passwordSpan.IsWhiteSpace())
+                        {
+                            string userName = usernameSpan.ToString();
+                            string password = passwordSpan.ToString();
 
                         var accessToken = await _policy.ExecuteAsync(async (ct) =>
                             {
@@ -83,6 +89,7 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
 
                         context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
                     }
+                }
                 }
                 catch
                 {

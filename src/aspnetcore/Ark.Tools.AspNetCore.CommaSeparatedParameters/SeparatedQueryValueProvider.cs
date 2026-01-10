@@ -36,11 +36,43 @@ public class SeparatedQueryValueProvider : QueryStringValueProvider
 
         var result = base.GetValue(key);
 
-        if (result != ValueProviderResult.None && result.Values.Any(x => x != null && x.AsSpan().IndexOfAny(_separatorSearchValues) > 0))
+        if (result != ValueProviderResult.None && result.Values.Any(x => x != null && x.AsSpan().IndexOfAny(_separatorSearchValues) >= 0))
         {
-            var splitValues = new StringValues(result.Values
-                .SelectMany(x => x!.Split([_separator], StringSplitOptions.None)).ToArray());
-            return new ValueProviderResult(splitValues, result.Culture);
+            var splitValues = new List<string>();
+            foreach (var value in result.Values)
+            {
+                if (value == null)
+                    continue;
+
+                var span = value.AsSpan();
+                if (span.IndexOfAny(_separatorSearchValues) < 0)
+                {
+                    splitValues.Add(value);
+                    continue;
+                }
+
+                // Use Span-based splitting to avoid allocations
+                int start = 0;
+                int separatorIndex;
+                while ((separatorIndex = span[start..].IndexOf(_separator)) >= 0)
+                {
+                    splitValues.Add(span.Slice(start, separatorIndex).ToString());
+                    start += separatorIndex + 1;
+                }
+
+                // Add the remaining part
+                if (start < span.Length)
+                {
+                    splitValues.Add(span[start..].ToString());
+                }
+                else if (start == span.Length)
+                {
+                    // Handle trailing separator
+                    splitValues.Add(string.Empty);
+                }
+            }
+
+            return new ValueProviderResult(new StringValues([.. splitValues]), result.Culture);
         }
 
         return result;
