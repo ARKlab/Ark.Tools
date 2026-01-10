@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 
@@ -53,7 +54,7 @@ public static class Ex
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Historical naming")]
-    public static bool IsAssignableFromEx(this Type baseType, Type extendType)
+    public static bool IsAssignableFromEx(this Type baseType, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type extendType)
     {
         if (baseType.IsInterface)
         {
