@@ -15,7 +15,8 @@ dotnet_diagnostic.EPC13.severity = warning
 dotnet_diagnostic.EPC14.severity = suggestion
 
 # EPC15: Use ConfigureAwait(false) on await
-dotnet_diagnostic.EPC15.severity = suggestion
+# Disabled in favor of MA0004
+dotnet_diagnostic.EPC15.severity = none
 
 # EPC16: Possible null reference when awaiting a result of null-conditional expression
 dotnet_diagnostic.EPC16.severity = warning
@@ -87,7 +88,7 @@ dotnet_diagnostic.ERP021.severity = warning
 dotnet_diagnostic.ERP022.severity = error
 
 # ERP023: Possible multiple enumeration of IEnumerable
-dotnet_diagnostic.ERP023.severity = suggestion
+dotnet_diagnostic.ERP023.severity = error
 
 # ERP031: Marking API as not thread-safe
 dotnet_diagnostic.ERP031.severity = warning

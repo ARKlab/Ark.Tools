@@ -9,7 +9,7 @@ dotnet_diagnostic.VSTHRD001.severity = warning
 dotnet_diagnostic.VSTHRD002.severity = error
 
 # VSTHRD003: Avoid awaiting foreign Tasks
-dotnet_diagnostic.VSTHRD003.severity = suggestion
+dotnet_diagnostic.VSTHRD003.severity = error
 
 # VSTHRD004: Await SwitchToMainThreadAsync
 dotnet_diagnostic.VSTHRD004.severity = warning
@@ -57,7 +57,8 @@ dotnet_diagnostic.VSTHRD109.severity = warning
 dotnet_diagnostic.VSTHRD110.severity = error
 
 # VSTHRD111: Use ConfigureAwait(bool)
-dotnet_diagnostic.VSTHRD111.severity = suggestion
+# Disabled in favor of MA0004
+dotnet_diagnostic.VSTHRD111.severity = none
 
 # VSTHRD112: Implement System.IAsyncDisposable
 dotnet_diagnostic.VSTHRD112.severity = suggestion

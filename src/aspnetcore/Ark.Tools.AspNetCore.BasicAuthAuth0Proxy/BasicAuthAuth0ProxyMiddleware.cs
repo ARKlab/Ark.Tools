@@ -6,6 +6,7 @@ using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 using Polly;
 
@@ -19,11 +20,13 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
     private readonly BasicAuthAuth0ProxyConfig _config;
     private readonly AsyncPolicy _policy;
     private readonly AuthenticationApiClientCachingDecorator _auth0;
+    private readonly ILogger<BasicAuthAuth0ProxyMiddleware> _logger;
 
-    public BasicAuthAuth0ProxyMiddleware(RequestDelegate next, BasicAuthAuth0ProxyConfig config)
+    public BasicAuthAuth0ProxyMiddleware(RequestDelegate next, BasicAuthAuth0ProxyConfig config, ILogger<BasicAuthAuth0ProxyMiddleware> logger)
     {
         _next = next;
         _config = config;
+        _logger = logger;
 
         _policy = Policy.Handle<Exception>()
             .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(r));
@@ -91,9 +94,9 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
                     }
                 }
                 }
-                catch
+                catch (Exception ex)
                 {
-
+                    _logger.LogTrace(ex, "Basic authentication failed");
                 }
 #pragma warning restore CA1031 // Do not catch general exception types
             }
