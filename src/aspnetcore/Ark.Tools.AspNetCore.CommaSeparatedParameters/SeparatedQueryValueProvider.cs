@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Core;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Primitives;
@@ -38,41 +40,15 @@ public class SeparatedQueryValueProvider : QueryStringValueProvider
 
         if (result != ValueProviderResult.None && result.Values.Any(x => x != null && x.AsSpan().IndexOfAny(_separatorSearchValues) >= 0))
         {
-            var splitValues = new List<string>();
-            foreach (var value in result.Values)
-            {
-                if (value == null)
-                    continue;
+            // Use Span-based splitting via extension method from Ark.Tools.Core
+            // Reduces intermediate allocations during parsing compared to string.Split()
+            // Final StringValues conversion still allocates, but separator detection and slicing are allocation-free
+            var splitValues = result.Values
+                .Where(x => x != null)
+                .SelectMany(x => x!.SplitToList(_separator))
+                .ToArray();
 
-                var span = value.AsSpan();
-                if (span.IndexOfAny(_separatorSearchValues) < 0)
-                {
-                    splitValues.Add(value);
-                    continue;
-                }
-
-                // Use Span-based splitting to avoid allocations
-                int start = 0;
-                int separatorIndex;
-                while ((separatorIndex = span[start..].IndexOf(_separator)) >= 0)
-                {
-                    splitValues.Add(span.Slice(start, separatorIndex).ToString());
-                    start += separatorIndex + 1;
-                }
-
-                // Add the remaining part
-                if (start < span.Length)
-                {
-                    splitValues.Add(span[start..].ToString());
-                }
-                else if (start == span.Length)
-                {
-                    // Handle trailing separator
-                    splitValues.Add(string.Empty);
-                }
-            }
-
-            return new ValueProviderResult(new StringValues([.. splitValues]), result.Culture);
+            return new ValueProviderResult(new StringValues(splitValues), result.Culture);
         }
 
         return result;
