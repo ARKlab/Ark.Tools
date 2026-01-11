@@ -6,6 +6,8 @@ using Raven.Client.Documents.Conventions;
 using Raven.Client.Documents.Operations.Revisions;
 using Raven.Client.ServerWide.Operations;
 
+using System.Diagnostics.CodeAnalysis;
+
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 
@@ -14,18 +16,26 @@ public static class RavenDbStoreConfigurationExtensions
     public static DocumentStore ConfigureForArkEventSourcing(this DocumentStore store)
     {
         var current = store.Conventions.FindCollectionName;
-        store.Conventions.AddFindCollectionName(type =>
+        
+        [UnconditionalSuppressMessage("Trimming", "IL2067",
+            Justification = "The lambda is used for type checks on well-known event sourcing types (IOutboxEvent, AggregateEventStore). These types are part of the event sourcing framework and will be preserved.")]
+        void ConfigureCollectionName()
         {
-            if (typeof(IOutboxEvent).IsAssignableFrom(type))
-                return RavenDbEventSourcingConstants.OutboxCollectionName;
-
-            if (typeof(AggregateEventStore<,>).IsAssignableFromEx(type) || typeof(AggregateEventStore).IsAssignableFrom(type))
+            store.Conventions.AddFindCollectionName(type =>
             {
-                return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
-            }
+                if (typeof(IOutboxEvent).IsAssignableFrom(type))
+                    return RavenDbEventSourcingConstants.OutboxCollectionName;
 
-            return null;
-        });
+                if (typeof(AggregateEventStore<,>).IsAssignableFromEx(type) || typeof(AggregateEventStore).IsAssignableFrom(type))
+                {
+                    return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
+                }
+
+                return null;
+            });
+        }
+        
+        ConfigureCollectionName();
 
         store.Conventions.UseOptimisticConcurrency = true;
 

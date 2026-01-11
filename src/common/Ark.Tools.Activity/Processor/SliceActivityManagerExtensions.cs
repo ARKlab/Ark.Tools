@@ -4,6 +4,7 @@ using Ark.Tools.SimpleInjector;
 using SimpleInjector;
 
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Ark.Tools.Activity.Processor;
@@ -23,7 +24,10 @@ public static class SliceActivityManagerExtensions
         foreach (var a in activities)
         {
             container.Register(a);
-            container.RegisterSingleton(typeof(ISliceActivityManager<>).MakeGenericType(a), activityManagerType.MakeGenericType(a));
+            [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType",
+                Justification = "Activity types come from SimpleInjector's GetTypesToRegister which only returns concrete types that implement ISliceActivity. These types are explicitly registered in the container and will not be trimmed.")]
+            void RegisterManager() => container.RegisterSingleton(typeof(ISliceActivityManager<>).MakeGenericType(a), activityManagerType.MakeGenericType(a));
+            RegisterManager();
         }
     }
 
@@ -41,7 +45,10 @@ public static class SliceActivityManagerExtensions
         foreach (var a in activityTypes)
         {
             container.Register(a);
-            container.RegisterSingleton(typeof(ISliceActivityManager<>).MakeGenericType(a), activityManagerType.MakeGenericType(a));
+            [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType",
+                Justification = "Activity types are explicitly passed as parameters by the caller. The caller is responsible for ensuring these types implement ISliceActivity and will not be trimmed.")]
+            void RegisterManager() => container.RegisterSingleton(typeof(ISliceActivityManager<>).MakeGenericType(a), activityManagerType.MakeGenericType(a));
+            RegisterManager();
         }
     }
 

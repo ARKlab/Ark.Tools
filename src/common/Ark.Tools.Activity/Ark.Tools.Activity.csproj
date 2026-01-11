@@ -6,6 +6,8 @@
     <PackageTags>Ark;C#;.NET;Framework;Activity;Slice;ETL</PackageTags>
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <!--===============================================================================-->
 
