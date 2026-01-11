@@ -17,12 +17,6 @@ public class RequestFluentValidateDecorator<TRequest, TResponse>
         _validator = validator;
     }
 
-    public TResponse Execute(TRequest request)
-    {
-        _validator.ValidateAndThrow(request);
-        return _decorated.Execute(request);
-    }
-
     public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
         await _validator.ValidateAndThrowAsync(request, ctk).ConfigureAwait(false);

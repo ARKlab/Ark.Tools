@@ -28,12 +28,6 @@ public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, 
     }
 
     /// <inheritdoc/>
-    public Book.V1.Output Execute(Book_CreateRequest.V1 request)
-    {
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-    }
-
-    /// <inheritdoc/>
     public async Task<Book.V1.Output> ExecuteAsync(Book_CreateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request.Data);

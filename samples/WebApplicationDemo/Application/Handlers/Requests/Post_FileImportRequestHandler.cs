@@ -13,11 +13,6 @@ public class Post_FileImportRequestHandler : IRequestHandler<Post_FileImportRequ
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    public FileImport? Execute(Post_FileImportRequest.V1 request)
-    {
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-    }
-
     public async Task<FileImport?> ExecuteAsync(Post_FileImportRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);

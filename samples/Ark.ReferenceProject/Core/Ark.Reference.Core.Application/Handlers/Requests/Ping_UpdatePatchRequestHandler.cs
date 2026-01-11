@@ -34,12 +34,6 @@ public class Ping_UpdatePatchRequestHandler : IRequestHandler<Ping_UpdatePatchRe
     }
 
     /// <inheritdoc/>
-    public Ping.V1.Output? Execute(Ping_UpdatePatchRequest.V1 request)
-    {
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-    }
-
-    /// <inheritdoc/>
     public async Task<Ping.V1.Output?> ExecuteAsync(Ping_UpdatePatchRequest.V1 request, CancellationToken ctk = default)
     {
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);

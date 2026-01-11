@@ -21,12 +21,6 @@ public class CommandFluentValidateDecorator<TCommand>
         _validator = validator;
     }
 
-    public void Execute(TCommand query)
-    {
-        _validator.ValidateAndThrow(query);
-        _decorated.Execute(query);
-    }
-
     public async Task ExecuteAsync(TCommand query, CancellationToken ctk = default)
     {
         await _validator.ValidateAndThrowAsync(query, ctk).ConfigureAwait(false);

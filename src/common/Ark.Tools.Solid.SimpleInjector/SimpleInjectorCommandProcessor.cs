@@ -24,11 +24,13 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
     }
 
     [DebuggerStepThrough]
+#pragma warning disable CS0618 // Type or member is obsolete
+    [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     public void Execute(ICommand command)
     {
-        dynamic commandHandler = _getHandlerInstance(command);
-        commandHandler.Execute((dynamic)command);
+        throw new NotSupportedException("Synchronous execution is not supported. Use ExecuteAsync instead.");
     }
+#pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)

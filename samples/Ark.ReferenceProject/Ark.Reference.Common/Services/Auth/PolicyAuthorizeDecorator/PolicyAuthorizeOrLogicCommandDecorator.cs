@@ -26,13 +26,6 @@ public class PolicyAuthorizeOrLogicCommandDecorator<TCommand> : ICommandHandler<
         _policies = typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
     }
 
-    public void Execute(TCommand command)
-    {
-#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
-        ExecuteAsync(command).GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002
-    }
-
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
     {
         if (_policies.Length != 0)

@@ -15,20 +15,6 @@ public sealed class ExceptionLogRequestDecorator<TRequest, TResponse> : IRequest
         _decorated = decorated;
     }
 
-    public TResponse Execute(TRequest request)
-    {
-        try
-        {
-            return _decorated.Execute(request);
-        }
-        catch (Exception ex)
-        {
-            Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
-            logger.Error(ex, "Exception occured");
-            throw;
-        }
-    }
-
     public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
         try

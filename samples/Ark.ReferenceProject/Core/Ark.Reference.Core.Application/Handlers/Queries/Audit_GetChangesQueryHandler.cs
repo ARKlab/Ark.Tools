@@ -19,11 +19,6 @@ public class Audit_GetChangesQueryHandler : IQueryHandler<Audit_GetChangesQuery.
         _dataContext = dataContext;
     }
 
-    public IAuditRecordReturn<IAuditEntity> Execute(Audit_GetChangesQuery.V1 query)
-    {
-        return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
-    }
-
     public async Task<IAuditRecordReturn<IAuditEntity>> ExecuteAsync(Audit_GetChangesQuery.V1 query, CancellationToken ctk = default)
     {
         var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);

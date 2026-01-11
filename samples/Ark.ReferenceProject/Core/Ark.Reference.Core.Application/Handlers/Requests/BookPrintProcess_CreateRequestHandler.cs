@@ -36,12 +36,6 @@ public class BookPrintProcess_CreateRequestHandler : IRequestHandler<BookPrintPr
     }
 
     /// <inheritdoc/>
-    public BookPrintProcess.V1.Output Execute(BookPrintProcess_CreateRequest.V1 request)
-    {
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-    }
-
-    /// <inheritdoc/>
     public async Task<BookPrintProcess.V1.Output> ExecuteAsync(BookPrintProcess_CreateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);

@@ -20,12 +20,6 @@ public class QueryFluentValidateDecorator<TQuery, TResponse>
         _validator = validator;
     }
 
-    public TResponse Execute(TQuery query)
-    {
-        _validator.ValidateAndThrow(query);
-        return _decorated.Execute(query);
-    }
-
     public async Task<TResponse> ExecuteAsync(TQuery query, CancellationToken ctk = default)
     {
         await _validator.ValidateAndThrowAsync(query, ctk).ConfigureAwait(false);

@@ -14,11 +14,6 @@ public class Get_EntityByIdQueryHandler : IQueryHandler<Get_EntityByIdQuery.V1, 
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    public Entity.V1.Output? Execute(Get_EntityByIdQuery.V1 query)
-    {
-        return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
-    }
-
     public async Task<Entity.V1.Output?> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);

@@ -24,12 +24,13 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
     }
 
     [DebuggerStepThrough]
+#pragma warning disable CS0618 // Type or member is obsolete
+    [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     public TResult Execute<TResult>(IQuery<TResult> query)
     {
-        dynamic queryHandler = _getHandlerInstance(query);
-
-        return queryHandler.Execute((dynamic)query);
+        throw new NotSupportedException("Synchronous execution is not supported. Use ExecuteAsync instead.");
     }
+#pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)

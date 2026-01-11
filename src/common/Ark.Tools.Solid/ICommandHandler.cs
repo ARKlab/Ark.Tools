@@ -8,7 +8,5 @@ public interface ICommand { }
 public interface ICommandHandler<TCommand>
     where TCommand : ICommand
 {
-    void Execute(TCommand command);
-
     Task ExecuteAsync(TCommand command, CancellationToken ctk = default);
 }

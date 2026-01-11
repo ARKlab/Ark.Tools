@@ -33,11 +33,6 @@ public class Ping_CreateAndSendMsgRequestHandler : IRequestHandler<Ping_CreateAn
         _bus = bus;
     }
 
-    public Ping.V1.Output Execute(Ping_CreateAndSendMsgRequest.V1 request)
-    {
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-    }
-
     public async Task<Ping.V1.Output> ExecuteAsync(Ping_CreateAndSendMsgRequest.V1 request, CancellationToken ctk = default)
     {
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);

@@ -18,19 +18,6 @@ public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<
         _logger = LogManager.GetLogger(_decorated.GetType().ToString());
     }
 
-    public TResult Execute(TQuery query)
-    {
-        try
-        {
-            return _decorated.Execute(query);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Exception occured");
-            throw;
-        }
-    }
-
     public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
     {
         try

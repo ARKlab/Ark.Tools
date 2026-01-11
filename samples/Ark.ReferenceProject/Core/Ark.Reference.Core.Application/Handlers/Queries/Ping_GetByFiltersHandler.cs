@@ -26,12 +26,6 @@ public class Ping_GetByFiltersHandler : IQueryHandler<Ping_GetByFiltersQuery.V1,
     }
 
     /// <inheritdoc/>
-    public PagedResult<Ping.V1.Output> Execute(Ping_GetByFiltersQuery.V1 query)
-    {
-        return ExecuteAsync(query).GetAwaiter().GetResult();
-    }
-
-    /// <inheritdoc/>
     public async Task<PagedResult<Ping.V1.Output>> ExecuteAsync(Ping_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);

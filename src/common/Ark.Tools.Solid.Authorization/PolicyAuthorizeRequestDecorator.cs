@@ -24,13 +24,6 @@ public class PolicyAuthorizeRequestDecorator<TRequest, TResult> : IRequestHandle
         _policies = typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
-    public TResult Execute(TRequest request)
-    {
-#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002
-    }
-
     public async Task<TResult> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
         if (_policies.Length != 0)

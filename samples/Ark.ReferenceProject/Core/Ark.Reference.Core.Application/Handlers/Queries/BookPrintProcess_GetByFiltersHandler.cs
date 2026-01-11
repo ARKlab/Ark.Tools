@@ -20,12 +20,6 @@ public class BookPrintProcess_GetByFiltersHandler : IQueryHandler<BookPrintProce
     }
 
     /// <inheritdoc/>
-    public PagedResult<BookPrintProcess.V1.Output> Execute(BookPrintProcess_GetByFiltersQuery.V1 query)
-    {
-        return ExecuteAsync(query).GetAwaiter().GetResult();
-    }
-
-    /// <inheritdoc/>
     public async Task<PagedResult<BookPrintProcess.V1.Output>> ExecuteAsync(BookPrintProcess_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
     {
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);

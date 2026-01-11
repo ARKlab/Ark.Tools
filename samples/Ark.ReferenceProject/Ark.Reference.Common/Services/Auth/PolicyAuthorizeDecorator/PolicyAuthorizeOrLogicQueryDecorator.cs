@@ -26,13 +26,6 @@ public class PolicyAuthorizeOrLogicQueryDecorator<TQuery, TResult> : IQueryHandl
         _policies = typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
     }
 
-    public TResult Execute(TQuery query)
-    {
-#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
-        return ExecuteAsync(query).GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002
-    }
-
     public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
     {
         if (_policies.Length != 0)

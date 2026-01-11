@@ -14,11 +14,6 @@ internal sealed class Audit_GetUsersQueryHandler : IQueryHandler<Audit_GetUsersQ
         _dataContext = dataContext;
     }
 
-    public IEnumerable<string> Execute(Audit_GetUsersQuery.V1 query)
-    {
-        return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
-    }
-
     public async Task<IEnumerable<string>> ExecuteAsync(Audit_GetUsersQuery.V1 query, CancellationToken ctk = default)
     {
         var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);

@@ -21,14 +21,6 @@ public sealed class ProfileCommandDecorator<TCommand> : ICommandHandler<TCommand
         _decorated = decorated;
     }
 
-    public void Execute(TCommand command)
-    {
-        Stopwatch stopWatch = Stopwatch.StartNew();
-        _decorated.Execute(command);
-        stopWatch.Stop();
-        _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
-    }
-
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
     {
         Stopwatch stopWatch = Stopwatch.StartNew();

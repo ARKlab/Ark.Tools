@@ -16,11 +16,6 @@ public class Get_PostsQueryHandler : IQueryHandler<Get_PostsQuery.V1, List<Post>
         _postService = postService;
     }
 
-    public List<Post> Execute(Get_PostsQuery.V1 query)
-    {
-        return ExecuteAsync(query).GetAwaiter().GetResult();
-    }
-
     public async Task<List<Post>> ExecuteAsync(Get_PostsQuery.V1 query, CancellationToken ctk = default)
     {
         return await _postService.GetPosts(ctk).ConfigureAwait(false);

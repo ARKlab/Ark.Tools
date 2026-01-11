@@ -1,5 +1,6 @@
 # Migration to Ark.Tools v6
 
+* [CQRS Handler Execute Methods Removed](#cqrs-handler-execute-methods-removed)
 * [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
 * [Remove Nito.AsyncEx.Coordination Dependency](#remove-nitoasyncexcoordination-dependency)
 * [Oracle CommandTimeout Default Changed](#oracle-commandtimeout-default-changed)
@@ -12,6 +13,100 @@
 * [Migrate SLN to SLNX](#migrate-sln-to-slnx)
 * [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
 * [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
+
+## CQRS Handler Execute Methods Removed
+
+**⚠️ BREAKING CHANGE**: In Ark.Tools v6, synchronous `Execute()` methods have been **removed** from all CQRS handler interfaces (`ICommandHandler`, `IQueryHandler`, `IRequestHandler`). Only async `ExecuteAsync()` methods are now supported.
+
+### What Changed
+
+**v5 behavior**:
+```csharp
+public interface ICommandHandler<TCommand> where TCommand : ICommand
+{
+    void Execute(TCommand command);  // ❌ REMOVED in v6
+    Task ExecuteAsync(TCommand command, CancellationToken ctk = default);
+}
+```
+
+**v6 behavior**:
+```csharp
+public interface ICommandHandler<TCommand> where TCommand : ICommand
+{
+    Task ExecuteAsync(TCommand command, CancellationToken ctk = default);  // ✅ Only async
+}
+```
+
+### Migration Guide
+
+**For Handler Implementations**: Remove all `Execute()` method implementations. Keep only `ExecuteAsync()` methods.
+
+```csharp
+// Before (v5)
+public class MyCommandHandler : ICommandHandler<MyCommand>
+{
+    public void Execute(MyCommand command)
+    {
+        return ExecuteAsync(command).GetAwaiter().GetResult();
+    }
+
+    public async Task ExecuteAsync(MyCommand command, CancellationToken ctk = default)
+    {
+        // implementation
+    }
+}
+
+// After (v6)
+public class MyCommandHandler : ICommandHandler<MyCommand>
+{
+    public async Task ExecuteAsync(MyCommand command, CancellationToken ctk = default)
+    {
+        // implementation
+    }
+}
+```
+
+**For Processor Usage from Non-Async Methods**: The processor interfaces (`ICommandProcessor`, `IQueryProcessor`, `IRequestProcessor`) still define the `Execute()` method but it is marked as `[Obsolete(error: true)]` and will throw `NotSupportedException` if called.
+
+If you need to call a processor from a non-async method, use one of these patterns:
+
+```csharp
+// ❌ BAD - Will throw NotSupportedException
+processor.Execute(command);
+
+// ✅ Use Task.Run (recommended)
+Task.Run(() => processor.ExecuteAsync(command)).GetAwaiter().GetResult();
+
+// ✅ Best solution: Make your method async
+public async Task MyMethodAsync()
+{
+    await processor.ExecuteAsync(command);
+}
+```
+
+**Important Considerations**:
+
+1. **Prefer making methods async**: The best solution is to make your calling code async all the way up the call stack.
+
+2. **Avoid sync-over-async in hot paths**: Blocking on async code can cause thread pool starvation and deadlocks in some contexts (e.g., ASP.NET request handling).
+
+3. **For background services**: Consider using `IHostedService` or `BackgroundService` which are async by design.
+
+### Benefits
+
+- **Better async/await support**: No more sync-over-async patterns that can cause deadlocks
+- **Improved performance**: True async execution without thread blocking
+- **Cleaner code**: Single responsibility - handlers only implement one execution pattern
+- **Modern .NET**: Aligns with .NET's async-first approach
+
+### Affected Interfaces
+
+- `ICommandHandler<TCommand>`
+- `IQueryHandler<TQuery, TResult>`
+- `IRequestHandler<TRequest, TResponse>`
+- `ICommandProcessor` (Execute marked obsolete with error)
+- `IQueryProcessor` (Execute marked obsolete with error)
+- `IRequestProcessor` (Execute marked obsolete with error)
 
 ## Remove Ensure.That Dependency
 

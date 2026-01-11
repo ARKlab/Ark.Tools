@@ -24,12 +24,13 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
     }
 
     [DebuggerStepThrough]
+#pragma warning disable CS0618 // Type or member is obsolete
+    [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     public TResponse Execute<TResponse>(IRequest<TResponse> request)
     {
-        dynamic requestHandler = _getHandlerInstance(request);
-
-        return requestHandler.Execute((dynamic)request);
+        throw new NotSupportedException("Synchronous execution is not supported. Use ExecuteAsync instead.");
     }
+#pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)

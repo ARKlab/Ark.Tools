@@ -10,11 +10,6 @@ namespace WebApplicationDemo.Application.Handlers.Requests;
 
 public class Post_EntityRequestHandler : IRequestHandler<Post_EntityRequest.V1, Entity.V1.Output>
 {
-    public Entity.V1.Output Execute(Post_EntityRequest.V1 request)
-    {
-        return ExecuteAsync(request).ConfigureAwait(true).GetAwaiter().GetResult();
-    }
-
     public async Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);

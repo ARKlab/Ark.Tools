@@ -17,20 +17,6 @@ public sealed class ExceptionLogCommandDecorator<TCommand> : ICommandHandler<TCo
         _decorated = decorated;
     }
 
-    public void Execute(TCommand command)
-    {
-        try
-        {
-            _decorated.Execute(command);
-        }
-        catch (Exception ex)
-        {
-            Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
-            logger.Error(ex, "Exception occured");
-            throw;
-        }
-    }
-
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
     {
         try

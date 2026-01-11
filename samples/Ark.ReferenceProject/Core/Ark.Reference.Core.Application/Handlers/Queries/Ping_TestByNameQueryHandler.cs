@@ -11,12 +11,6 @@ namespace Ark.Reference.Core.Application.Handlers.Queries;
 internal sealed class Ping_TestByNameQueryHandler : IQueryHandler<Ping_GetByNameQuery.V1, Ping.V1.Output>
 {
     /// <inheritdoc/>
-    public Ping.V1.Output Execute(Ping_GetByNameQuery.V1 query)
-    {
-        return ExecuteAsync(query).GetAwaiter().GetResult();
-    }
-
-    /// <inheritdoc/>
     public async Task<Ping.V1.Output> ExecuteAsync(Ping_GetByNameQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
