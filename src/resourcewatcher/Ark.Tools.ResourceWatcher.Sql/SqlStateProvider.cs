@@ -36,7 +36,7 @@ public class SqlStateProvider : IStateProvider
 
         _connManager = connManager;
         _config = config;
-        _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.GetInstance();
+        _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.Instance;
     }
 
     sealed class EJ

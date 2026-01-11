@@ -11,15 +11,14 @@ public class ArkDefaultJsonSerializerSettings : ArkJsonSerializerSettings
     {
     }
 
-    /// <summary>
-    /// Gets a singleton instance of ArkDefaultJsonSerializerSettings.
-    /// </summary>
-    /// <returns>A shared instance of ArkDefaultJsonSerializerSettings.</returns>
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
-    public static ArkDefaultJsonSerializerSettings GetInstance() => _instance;
+    public static ArkDefaultJsonSerializerSettings Instance
+    {
+        [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
+        get => _instance;
+    }
 
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "The singleton instance is created here but warnings are propagated through the GetInstance() method.")]
+        Justification = "The singleton instance is created here but warnings are propagated through the Instance property getter.")]
     private static readonly ArkDefaultJsonSerializerSettings _instance = new ArkDefaultJsonSerializerSettings();
 }
 
@@ -37,14 +36,13 @@ public class ArkJsonSerializerSettings : JsonSerializerSettings
 /// </summary>
 public static class ArkJsonSerializer
 {
-    /// <summary>
-    /// Gets a singleton JsonSerializer instance with ArkDefaultSettings.
-    /// </summary>
-    /// <returns>A shared JsonSerializer instance.</returns>
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
-    public static JsonSerializer GetInstance() => _instance;
+    public static JsonSerializer Instance
+    {
+        [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
+        get => _instance;
+    }
 
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "The singleton instance is created here but warnings are propagated through the GetInstance() method.")]
-    private static readonly JsonSerializer _instance = JsonSerializer.Create(ArkDefaultJsonSerializerSettings.GetInstance());
+        Justification = "The singleton instance is created here but warnings are propagated through the Instance property getter.")]
+    private static readonly JsonSerializer _instance = JsonSerializer.Create(ArkDefaultJsonSerializerSettings.Instance);
 }

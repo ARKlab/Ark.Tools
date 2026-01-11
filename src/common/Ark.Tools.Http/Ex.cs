@@ -29,7 +29,7 @@ public static partial class Ex
                 if (!useNewtonsoftJson)
                     s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
                 else
-                    s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.GetInstance());
+                    s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
             })
             ;
     }
@@ -47,7 +47,7 @@ public static partial class Ex
                 if (!useNewtonsoftJson)
                     s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
                 else
-                    s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.GetInstance());
+                    s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
             })
             ;
     }

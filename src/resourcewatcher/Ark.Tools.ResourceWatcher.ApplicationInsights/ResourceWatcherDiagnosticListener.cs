@@ -458,7 +458,7 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
                 }
             }
 
-            string extensionsString = JsonConvert.SerializeObject(pc.NewState.Extensions, ArkDefaultJsonSerializerSettings.GetInstance());
+            string extensionsString = JsonConvert.SerializeObject(pc.NewState.Extensions, ArkDefaultJsonSerializerSettings.Instance);
             data.Properties.Add("Extensions", extensionsString);
         }
     }
