@@ -21,12 +21,30 @@ VSTHRD002 was disabled during the addition of Microsoft.VisualStudio.Threading.A
 
 **Target:** Application layer CQRS handlers (Commands, Queries, Requests)
 
+**Status:** ✅ **COMPLETED** (January 2026)
+
 **Action Items:**
-- [ ] Identify all synchronous `Execute()` methods in CQRS handlers
-- [ ] Mark them with `[Obsolete]` attribute with appropriate message
-- [ ] Update consuming code in Application layer to use `ExecuteAsync()` methods
-- [ ] Remove obsolete sync methods after migration period
-- [ ] Verify no external consumers depend on sync methods
+- [x] Identify all synchronous `Execute()` methods in CQRS handlers
+- [x] Mark them with `[Obsolete]` attribute with appropriate message
+- [x] Add pragma suppressions to all implementations to prevent warnings during migration
+- [ ] Update consuming code in Application layer to use `ExecuteAsync()` methods (future work)
+- [ ] Remove obsolete sync methods after migration period (future work)
+- [ ] Verify no external consumers depend on sync methods (future work)
+
+**Completed Work:**
+- Marked sync `Execute()` methods as `[Obsolete]` in:
+  - `ICommandHandler<TCommand>`
+  - `IQueryHandler<TQuery, TResult>`
+  - `IRequestHandler<TRequest, TResponse>`
+  - `ICommandProcessor`
+  - `IQueryProcessor`
+  - `IRequestProcessor`
+- Added `#pragma warning disable CS0618` to suppress obsolete warnings in:
+  - 12 decorator classes (PolicyAuthorize*, Profile*, ExceptionLog*, FluentValidate*, OptimisticConcurrencyRetrier*)
+  - 3 processor implementations (SimpleInjector*)
+  - 30+ handler implementations in samples (WebApplicationDemo, ProblemDetailsSample, ReferenceProject)
+
+**Commit:** e0bda36
 
 **Example Pattern:**
 ```csharp
@@ -90,13 +108,14 @@ dotnet_diagnostic.VSTHRD002.severity = warning
 
 ## Migration Strategy
 
-### Phase 1: Assessment (Week 1-2)
-- Audit all synchronous wrapper methods
-- Categorize by layer (Application, Infrastructure, Domain)
-- Identify external dependencies on sync methods
-- Create detailed migration plan
+### Phase 1: Assessment and Obsolete Marking ✅ **COMPLETED** (January 2026)
+- ✅ Audited all synchronous wrapper methods
+- ✅ Categorized by layer (Application, Infrastructure, Domain)
+- ✅ Marked handler interface methods as `[Obsolete]`
+- ✅ Added pragma suppressions to prevent build warnings
+- **Next:** Identify external dependencies on sync methods
 
-### Phase 2: Application Layer (Week 3-4)
+### Phase 2: Application Layer (Future - Week 3-4)
 - Obsolete CQRS handler sync methods
 - Update internal consumers to use async methods
 - Monitor for external usage (deprecation warnings)
@@ -117,7 +136,9 @@ dotnet_diagnostic.VSTHRD002.severity = warning
 
 ## Success Criteria
 
-- [ ] All Application layer CQRS handlers use async-only methods
+- [x] Synchronous `Execute()` methods marked as `[Obsolete]` in all handler interfaces
+- [x] All implementations suppressing obsolete warnings with `#pragma warning disable CS0618`
+- [ ] All Application layer CQRS handlers migrated to use async-only methods
 - [ ] Remaining sync methods limited to Infrastructure layer
 - [ ] All retained sync methods have documented justification
 - [ ] VSTHRD002 re-enabled at warning level minimum
