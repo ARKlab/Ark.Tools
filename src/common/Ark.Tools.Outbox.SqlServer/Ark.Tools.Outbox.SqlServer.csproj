@@ -7,6 +7,9 @@
     <Description>Outbox pattern implementation</Description>
     <PackageTags>Ark;C#;.NET;Framework;OutboxPattern;Outbox</PackageTags>
 
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 

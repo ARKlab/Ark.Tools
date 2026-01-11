@@ -7,6 +7,9 @@
     <Description>Core abstractions for FtpClient</Description>
     <PackageTags>Ark;C#;.NET;Framework;Ftp;FtpClient</PackageTags>
 
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 
