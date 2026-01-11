@@ -1,7 +1,0 @@
-is_global = true
-
-#### Meziantou.Analyzer Rules - Test Projects Override ####
-
-# MA0004: Use Task.ConfigureAwait
-# Downgraded to suggestion for test projects (not production code)
-dotnet_diagnostic.MA0004.severity = suggestion
