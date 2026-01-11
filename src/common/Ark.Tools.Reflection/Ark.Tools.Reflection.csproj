@@ -1,14 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>Core utilities over System.Text.Json</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
+    <Description>Reflection utilities and helpers for Ark.Tools - NOT TRIMMABLE</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Reflection</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageReleaseNotes>Split from Ark.Tools.Core to separate reflection-heavy code</PackageReleaseNotes>
 
     <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
@@ -17,20 +21,17 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
-  <PropertyGroup>
-    <IsTrimmable>false</IsTrimmable>
-    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Macross.Json.Extensions" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
-    <ProjectReference Include="..\Ark.Tools.Reflection\Ark.Tools.Reflection.csproj" />
-    <ProjectReference Include="..\Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="System.Reactive" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
+    <PackageReference Include="System.Linq.Async" />
+  </ItemGroup>
 
 </Project>

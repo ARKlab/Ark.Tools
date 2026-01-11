@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Core;
+
 using NodaTime;
 
 using System.Collections.Concurrent;
@@ -8,7 +10,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace Ark.Tools.Core;
+namespace Ark.Tools.Reflection;
 
 public static partial class EnumerableExtensions
 {

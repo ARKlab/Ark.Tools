@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.Reflection;
 
-namespace Ark.Tools.Core;
+namespace Ark.Tools.Reflection;
 
 /// <summary>
 /// Reflection utilities

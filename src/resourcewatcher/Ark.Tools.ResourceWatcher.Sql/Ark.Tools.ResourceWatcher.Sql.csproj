@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\common\Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Reflection\Ark.Tools.Reflection.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
   </ItemGroup>
