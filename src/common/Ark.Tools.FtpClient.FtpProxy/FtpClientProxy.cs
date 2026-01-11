@@ -6,6 +6,7 @@ using Ark.Tools.Http;
 using Flurl.Http;
 using Flurl.Http.Configuration;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace Ark.Tools.FtpClient.FtpProxy;
@@ -201,6 +202,8 @@ public sealed class FtpClientProxy : IFtpClientPool
         return _tokenProvider.GetToken(ctk);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "This FTP client uses well-known DTOs for FtpProxy API communication. The types are explicitly referenced in this library and won't be trimmed.")]
     private IFlurlClient _initClient()
     {
         var flurlClient = new FlurlClientBuilder(_config.FtpProxyWebInterfaceBaseUri.ToString())
