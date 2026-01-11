@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-11  
-**Current Phase:** Phase 2 - Level 5 Extended Utilities  
-**Progress:** 17/42 libraries (40%)
+**Current Phase:** Phase 2 - Level 5 Extended Utilities (Almost Complete!)  
+**Progress:** 23/42 libraries (55%)
 
 ---
 
@@ -273,19 +273,63 @@
 
 ## Level 5: Extended Utilities (9 libraries)
 
-### 🔍 Needs Analysis (9/9)
+### ✅ Completed (6/9)
 
-- [ ] **Ark.Tools.Authorization**
-  - **Dependencies**: Ark.Tools.NLog
+- [x] **Ark.Tools.NLog.Configuration**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added `IsTrimmable` and `EnableTrimAnalyzer` properties only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.NLog.ConfigurationManager**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added `IsTrimmable` and `EnableTrimAnalyzer` properties only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.Authorization**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `DynamicallyAccessedMembers.PublicParameterlessConstructor` to policyType parameter (constructor 1)
+    - Added `DynamicallyAccessedMembers.PublicConstructors` to policyType parameter (constructor 2)
+  - **Warnings Fixed**: IL2070, IL2067 (3 unique occurrences)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: DynamicallyAccessedMembers attributes for Activator.CreateInstance
+  - **Dependencies**: Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.Solid**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added `IsTrimmable` and `EnableTrimAnalyzer` properties only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.Core (NOT trimmable but not blocking), Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.Sql.Oracle**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added `IsTrimmable` and `EnableTrimAnalyzer` properties only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.NLog ✅, Ark.Tools.Nodatime.Dapper ✅, Ark.Tools.Sql ✅
+
+- [x] **Ark.Tools.Sql.SqlServer**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added `IsTrimmable` and `EnableTrimAnalyzer` properties only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.NLog ✅, Ark.Tools.Nodatime.Dapper ✅, Ark.Tools.Sql ✅
+
+### 🔍 Needs Analysis (3/9)
   
 - [ ] **Ark.Tools.FtpClient.Core**
   - **Dependencies**: Ark.Tools.Core, Ark.Tools.NLog
-  
-- [ ] **Ark.Tools.NLog.Configuration**
-  - **Dependencies**: Ark.Tools.NLog
-  
-- [ ] **Ark.Tools.NLog.ConfigurationManager**
-  - **Dependencies**: Ark.Tools.NLog
   
 - [ ] **Ark.Tools.Outbox.SqlServer**
   - **Dependencies**: Ark.Tools.NLog, Ark.Tools.Outbox, Ark.Tools.Sql, Ark.Tools.SystemTextJson
@@ -293,15 +337,6 @@
 - [ ] **Ark.Tools.Reqnroll**
   - **Dependencies**: Ark.Tools.Http
   - **Notes**: Testing library - lower priority for trimming
-  
-- [ ] **Ark.Tools.Solid**
-  - **Dependencies**: Ark.Tools.Core, Ark.Tools.NLog
-  
-- [ ] **Ark.Tools.Sql.Oracle**
-  - **Dependencies**: Ark.Tools.NLog, Ark.Tools.Nodatime.Dapper, Ark.Tools.Sql
-  
-- [ ] **Ark.Tools.Sql.SqlServer**
-  - **Dependencies**: Ark.Tools.NLog, Ark.Tools.Nodatime.Dapper, Ark.Tools.Sql
 
 ---
 
@@ -340,10 +375,10 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 17 (40%)
+- **Completed**: 23 (55%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 25 (60%)
+- **Needs Analysis**: 19 (45%)
 
 ### By Level
 - **Level 0 (Foundation)**: 5/5 (100%) ✅ COMPLETE!
@@ -351,7 +386,8 @@
 - **Level 2 (First-Level Integrations)**: 4/4 (100%) ✅ COMPLETE!
 - **Level 3 (Serialization Utilities)**: 3/3 (100%) ✅ COMPLETE!
 - **Level 4 (HTTP & Logging)**: 2/2 (100%) ✅ COMPLETE!
-- **Level 5+**: 0/24 (0%)
+- **Level 5 (Extended Utilities)**: 6/9 (67%)
+- **Level 6+**: 0/15 (0%)
 
 ### By Complexity
 - **Low Complexity**: ~15 libraries (expected easy wins)
@@ -394,7 +430,27 @@
 
 ## Update Log
 
-### 2026-01-11 (Level 4 Complete - HTTP & Logging!)
+### 2026-01-11 (Evening Session - Level 5 Almost Complete!)
+- **Level 5 Extended Utilities**: 67% COMPLETE! (6/9 libraries)
+  - **Batch 1 - Configuration & Authorization**:
+    - **Ark.Tools.NLog.Configuration**: Zero warnings from start
+    - **Ark.Tools.NLog.ConfigurationManager**: Zero warnings from start
+    - **Ark.Tools.Authorization**: Fixed IL2070, IL2067 (3 occurrences)
+      - Added `DynamicallyAccessedMembers.PublicParameterlessConstructor` to policyType parameter
+      - Added `DynamicallyAccessedMembers.PublicConstructors` to policyType parameter (with args)
+      - Pattern: DynamicallyAccessedMembers for Activator.CreateInstance calls
+  - **Batch 2 - SOLID & SQL Extensions**:
+    - **Ark.Tools.Solid**: Zero warnings from start
+    - **Ark.Tools.Sql.Oracle**: Zero warnings from start
+    - **Ark.Tools.Sql.SqlServer**: Zero warnings from start
+- **Patterns Established**:
+  1. **Activator Pattern**: Add `DynamicallyAccessedMembers.PublicParameterlessConstructor` or `DynamicallyAccessedMembers.PublicConstructors` to Type parameters used with Activator.CreateInstance
+  2. **Simple Extension Libraries**: Many libraries require no code changes, just trimming properties
+- **Testing**: Full solution build verified for all 6 libraries - 0 warnings, 0 errors
+- **Progress**: 23/42 libraries (55%) - Over halfway done!
+- **Remaining Level 5**: Only 3 libraries left (FtpClient.Core, Outbox.SqlServer, Reqnroll)
+
+### 2026-01-11 (Morning Session - Level 4 Complete!)
 - **Level 4 HTTP & Logging**: 100% COMPLETE! (2/2 libraries)
   - **Ark.Tools.Http**: Fixed IL2026 (4 occurrences)
     - Added `RequiresUnreferencedCode` to `Ex.ConfigureArkDefaults` extension methods (2 overloads)
