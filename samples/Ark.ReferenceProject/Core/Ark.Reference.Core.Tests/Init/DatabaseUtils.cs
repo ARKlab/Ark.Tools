@@ -17,9 +17,11 @@ sealed class DatabaseUtils
     [BeforeTestRun(Order = -1)]
     public static async Task CreateNLogDatabaseIfNotExists()
     {
-        await using var conn = new SqlConnection(DatabaseConnectionString);
+        var conn = new SqlConnection(DatabaseConnectionString);
+        await using var _ = conn.ConfigureAwait(false);
         await conn.OpenAsync().ConfigureAwait(false);
-        await using var cmd = new SqlCommand($"IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn);
+        var cmd = new SqlCommand($"IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn);
+        await using var _cmd = cmd.ConfigureAwait(false);
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
     }
 
@@ -51,9 +53,11 @@ sealed class DatabaseUtils
 
     private static async Task _cleanUpEntireDb(bool resetProfileCalendar = false)
     {
-        await using var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString);
+        var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString);
+        await using var _ = ctx.ConfigureAwait(false);
         await ctx.OpenAsync().ConfigureAwait(false);
-        await using var tx = await ctx.BeginTransactionAsync().ConfigureAwait(false);
+        var tx = await ctx.BeginTransactionAsync().ConfigureAwait(false);
+        await using var _tx = tx.ConfigureAwait(false);
         await ctx.ExecuteAsync(
             @"[ops].[ResetFull_onlyForTesting]",
             new

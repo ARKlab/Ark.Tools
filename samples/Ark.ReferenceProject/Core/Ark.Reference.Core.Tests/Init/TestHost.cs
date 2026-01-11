@@ -134,7 +134,8 @@ public sealed class TestHost : IDisposable
                     var due = ignoreDeferred ? 0 : TestsInMemoryTimeoutManager.DueCount;
 
 
-                    await using var outbox = await ctx.CreateAsync().ConfigureAwait(false);
+                    var outbox = await ctx.CreateAsync().ConfigureAwait(false);
+                    await using var _ = outbox.ConfigureAwait(false);
                     var outboxCount = await outbox.CountAsync().ConfigureAwait(false);
                     await outbox.CommitAsync().ConfigureAwait(false);
 
@@ -155,7 +156,8 @@ public sealed class TestHost : IDisposable
         do
         {
             {
-                await using var outbox = await Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>().CreateAsync().ConfigureAwait(false);
+                var outbox = await Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>().CreateAsync().ConfigureAwait(false);
+                await using var _ = outbox.ConfigureAwait(false);
                 await outbox.ClearAsync().ConfigureAwait(false);
                 await outbox.CommitAsync().ConfigureAwait(false);
             }
