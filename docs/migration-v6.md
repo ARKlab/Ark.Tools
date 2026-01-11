@@ -365,6 +365,86 @@ Update the CI Pipelines to reference the new SLNX file.
 
 More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/#getting-started)
 
+## TypeConverter Registration for Trimming Support (.NET 9+)
+
+**⚠️ IMPORTANT for Trimmed Applications**: If your application uses trimming (especially Native AOT) and serializes DTOs with dictionaries that have non-string keys (e.g., `Dictionary<OffsetDateTime, TValue>`), you need to explicitly register TypeConverters.
+
+### What Changed
+
+Starting with .NET 9, `TypeDescriptor.GetConverterFromRegisteredType` is the trim-safe alternative to `TypeDescriptor.GetConverter`. Ark.Tools v6 uses conditional compilation to leverage this new API when targeting .NET 9+.
+
+For .NET 8 and earlier, the library continues to use `TypeDescriptor.GetConverter` with appropriate suppressions.
+
+### Migration Guide for .NET 9+
+
+**Register TypeConverters in your application startup** using `TypeDescriptor.RegisterType`:
+
+```csharp
+using System.ComponentModel;
+using NodaTime;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        // Register all NodaTime types that you use as dictionary keys
+        TypeDescriptor.RegisterType<OffsetDateTime>();
+        TypeDescriptor.RegisterType<LocalDate>();
+        TypeDescriptor.RegisterType<LocalTime>();
+        TypeDescriptor.RegisterType<Instant>();
+        // ... register other types as needed
+        
+        var builder = WebApplication.CreateSlimBuilder(args);
+        // ... rest of your application setup
+    }
+}
+```
+
+### Example: DTO with Dictionary with Convertible Keys
+
+```csharp
+// DTO class
+public class MyDto
+{
+    // Dictionary with OffsetDateTime keys requires OffsetDateTime TypeConverter
+    public Dictionary<OffsetDateTime, string> EventTimestamps { get; set; } = new();
+}
+
+// Application startup (Program.cs or similar)
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        // Register the OffsetDateTime type so its TypeConverter is preserved
+        TypeDescriptor.RegisterType<OffsetDateTime>();
+        
+        var builder = WebApplication.CreateSlimBuilder(args);
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.ConfigureArkDefaults();
+        });
+        
+        var app = builder.Build();
+        app.Run();
+    }
+}
+```
+
+### Why This is Required
+
+When using trimming (especially Native AOT), the trimmer removes unused code including TypeConverter metadata. By calling `TypeDescriptor.RegisterType<T>()`, you explicitly tell the trimmer to preserve the TypeConverter for that type, ensuring dictionary key serialization works correctly.
+
+### When to Register Types
+
+Register a type when:
+- It's used as a dictionary key in DTOs that will be serialized/deserialized
+- It has a `TypeConverter` attribute
+- You're using trimming/Native AOT deployment
+
+### For .NET 8 Applications
+
+No action required. The library handles TypeConverter discovery using the traditional reflection-based approach with appropriate trim warning suppressions.
+
 ## Adopt Central Package Management
 
 CPM helps ensuring dependencies are aligned across the solution and helps Bots (e.g. Renovate) to manage dependencies.

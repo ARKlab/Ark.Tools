@@ -34,7 +34,7 @@ public static class Extensions
         return @this;
     }
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo<TObj> for trim-safe serialization.")]
     public static byte[]? SerializeToByte<TObj>(this TObj obj, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (obj == null)
@@ -43,7 +43,7 @@ public static class Extensions
         return JsonSerializer.SerializeToUtf8Bytes(obj, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo<TOut> for trim-safe deserialization.")]
     public static TOut? Deserialize<TOut>(this byte[] bytes, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (bytes == null)
@@ -56,7 +56,7 @@ public static class Extensions
         return JsonSerializer.Deserialize<TOut>(span, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo<TObj> for trim-safe serialization.")]
     public static string? Serialize<TObj>(this TObj obj, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (obj == null)
@@ -65,7 +65,7 @@ public static class Extensions
         return JsonSerializer.Serialize(obj, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo<TOut> for trim-safe deserialization.")]
     public static TOut? Deserialize<TOut>(this string s, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (s == null)
@@ -74,20 +74,20 @@ public static class Extensions
         return JsonSerializer.Deserialize<TOut>(s, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use JsonSerializer.Deserialize with JsonTypeInfo<T> for trim-safe deserialization.")]
     public static T? ToObject<T>(this JsonElement element, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         return element.GetRawText().Deserialize<T>(jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use JsonSerializer.Deserialize with JsonTypeInfo<T> for trim-safe deserialization.")]
     public static T? ToObject<T>(this JsonDocument document, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         return document.RootElement.GetRawText().Deserialize<T>(jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use JsonSerializer.Deserialize with JsonTypeInfo for trim-safe deserialization.")]
     public static object? Deserialize(this byte[] bytes, Type type, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (bytes == null)
@@ -96,7 +96,7 @@ public static class Extensions
         return JsonSerializer.Deserialize(bytes, type, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use JsonSerializer.Deserialize with JsonTypeInfo for trim-safe deserialization.")]
     public static object? Deserialize(this string jsonString, Type type, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (string.IsNullOrEmpty(jsonString))
@@ -106,7 +106,7 @@ public static class Extensions
     }
 
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use JsonSerializer.Deserialize with JsonTypeInfo<TOut> for trim-safe deserialization.")]
     public static TOut? DeserializeFromFile<TOut>(this string jsonStringFilePath, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (string.IsNullOrEmpty(jsonStringFilePath))
@@ -116,7 +116,7 @@ public static class Extensions
         return JsonSerializer.Deserialize<TOut>(fs, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
-    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use the overload that takes a JsonTypeInfo or JsonSerializerContext.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use JsonSerializer.Serialize with JsonTypeInfo for trim-safe serialization.")]
     public static string? Serialize(this object obj, JsonSerializerOptions? jsonSerializerOptions = null)
     {
         if (obj == null)

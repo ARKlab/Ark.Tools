@@ -209,20 +209,36 @@ Nodatime.* → [JSON chain] → Serialization blocked
 
 ## Metrics and Tracking
 
-### Current Status (2026-01-10)
+### Current Status (2026-01-11)
 
 - **Total Libraries**: 42
-- **Completed**: 3 (7%)
+- **Completed**: 15 (36%)
 - **In Progress**: 0
-- **Not Started**: 39 (93%)
+- **Not Started**: 27 (64%)
 
 ### Target Milestones
 
-- **Week 2**: 5 libraries (12%)
+- **Week 2**: 5 libraries (12%) ✅ Exceeded - 15 completed
 - **Week 4**: 10 libraries (24%)
 - **Week 6**: 15 libraries (36%)
 - **Week 10**: 30 libraries (71%)
 - **Week 12**: 42 libraries (100%)
+
+## TODO Items
+
+### Testing and Validation
+
+- [ ] **Add test case for Dictionary with convertible keys** (Priority: High)
+  - Location: `samples/Ark.ReferenceProject/WebApplicationDemo` or new test project
+  - Test DTOs with `Dictionary<OffsetDateTime, TValue>` and other NodaTime types as keys
+  - Verify serialization/deserialization works correctly with trimming enabled
+  - Validate that `TypeDescriptor.RegisterType` is required for .NET 9+ trimmed apps
+  - Document findings in `docs/trimmable-support/progress-tracker.md`
+
+### Documentation
+
+- [x] Add migration guide for TypeConverter registration in v6 migration doc
+- [x] Update implementation plan with TODO items
 
 ## Risk Assessment
 
