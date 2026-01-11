@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Ark.Tools.Outbox.SqlServer;
@@ -19,6 +20,8 @@ public class HeaderSerializer
     /// <summary>
     /// Encodes the headers into a string
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "The type Dictionary<string, string> is a well-known type with simple key-value pairs. Both string key and string value are primitive types that are always preserved by the trimmer.")]
     public string SerializeToString(Dictionary<string, string>? headers)
     {
         return JsonSerializer.Serialize(headers, _options);
@@ -27,6 +30,8 @@ public class HeaderSerializer
     /// <summary>
     /// Encodes the headers into a byte array
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "The type Dictionary<string, string> is a well-known type with simple key-value pairs. Both string key and string value are primitive types that are always preserved by the trimmer.")]
     public byte[] Serialize(Dictionary<string, string>? headers)
     {
         return JsonSerializer.SerializeToUtf8Bytes(headers, _options);
@@ -35,6 +40,8 @@ public class HeaderSerializer
     /// <summary>
     /// Decodes the headers from the given byte array
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "The type Dictionary<string, string> is a well-known type with simple key-value pairs. Both string key and string value are primitive types that are always preserved by the trimmer.")]
     public Dictionary<string, string>? Deserialize(byte[] bytes)
     {
         var readOnlySpan = new ReadOnlySpan<byte>(bytes);
@@ -45,6 +52,8 @@ public class HeaderSerializer
     /// <summary>
     /// Decodes the headers from the given string
     /// </summary>
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "The type Dictionary<string, string> is a well-known type with simple key-value pairs. Both string key and string value are primitive types that are always preserved by the trimmer.")]
     public Dictionary<string, string>? DeserializeFromString(string str)
     {
         return JsonSerializer.Deserialize<Dictionary<string, string>>(str, _options);
