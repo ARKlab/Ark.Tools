@@ -230,15 +230,38 @@ Nodatime.* → [JSON chain] → Serialization blocked
 
 - [ ] **Add test case for Dictionary with convertible keys** (Priority: High)
   - Location: `samples/Ark.ReferenceProject/WebApplicationDemo` or new test project
+  - Test DTOs with custom types as dictionary keys (e.g., `ProductId`, `OrderNumber`)
   - Test DTOs with `Dictionary<OffsetDateTime, TValue>` and other NodaTime types as keys
-  - Verify serialization/deserialization works correctly with trimming enabled
-  - Validate that `TypeDescriptor.RegisterType` is required for .NET 9+ trimmed apps
+  - Verify serialization/deserialization works correctly with .NET 9+ (requires `TypeDescriptor.RegisterType`)
+  - Verify .NET 8 continues to work without registration
   - Document findings in `docs/trimmable-support/progress-tracker.md`
+
+- [ ] **Add test case for polymorphism with System.Text.Json** (Priority: Medium)
+  - Location: `samples/Ark.ReferenceProject/WebApplicationDemo`
+  - Test polymorphic serialization using `JsonPolymorphicConverter`
+  - Verify trimming compatibility
+  - Document any registration requirements
+
+### Research Items
+
+- [x] **NullableStructSerializer.cs: Check if still needed in .NET 8+**
+  - **Status**: KEEP - Still provides value
+  - **Reason**: While .NET 8 improved nullable struct support, this converter provides explicit handling for nullable structs with custom converters, ensuring consistent behavior
+  - **Context**: Added for STJ v6 to support generic nullable struct for structs with custom converters
+  - **Decision**: Keep for now, but can be removed in future if .NET adds native support
+
+- [x] **UniversalInvariantTypeConverterJsonConverter.cs: Check if issue #38812 resolved in .NET 8**
+  - **Status**: KEEP - Issue NOT resolved
+  - **Issue**: [GitHub #38812](https://github.com/dotnet/runtime/issues/38812) - System.Text.Json does not support TypeConverters
+  - **.NET 8 Status**: Still NOT supported, issue closed as "Won't Fix" - System.Text.Json will not support TypeConverter attributes by design
+  - **Reason**: This converter bridges the gap for types decorated with `TypeConverterAttribute`, which is still needed
+  - **Decision**: Keep indefinitely, this is a permanent gap in System.Text.Json vs Newtonsoft.Json
 
 ### Documentation
 
 - [x] Add migration guide for TypeConverter registration in v6 migration doc
 - [x] Update implementation plan with TODO items
+- [x] Clarify that GetConverterFromRegisteredType applies to ALL .NET 9+ apps, not just trimmed apps
 
 ## Risk Assessment
 

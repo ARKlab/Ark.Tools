@@ -4,6 +4,15 @@ using System.Text.Json.Serialization;
 
 namespace Ark.Tools.SystemTextJson;
 
+/// <summary>
+/// JsonConverter for nullable structs with custom converters.
+/// </summary>
+/// <remarks>
+/// This converter provides explicit handling for nullable value types (T?) where T has a custom JsonConverter.
+/// While .NET 8+ has improved nullable struct support, this converter ensures consistent behavior
+/// and proper null handling for all scenarios.
+/// </remarks>
+/// <typeparam name="TStruct">The nullable value type to convert.</typeparam>
 public class NullableStructSerializer<TStruct> : JsonConverter<TStruct?>
     where TStruct : struct
 {

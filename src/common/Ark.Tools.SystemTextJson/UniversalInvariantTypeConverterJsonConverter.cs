@@ -8,7 +8,23 @@ using System.Text.Json.Serialization;
 
 namespace Ark.Tools.SystemTextJson;
 
-
+/// <summary>
+/// JsonConverterFactory that provides TypeConverter-based serialization for types decorated with TypeConverterAttribute.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This converter bridges a fundamental gap in System.Text.Json: it does not natively support the TypeConverter pattern,
+/// unlike Newtonsoft.Json. See <see href="https://github.com/dotnet/runtime/issues/38812">GitHub issue #38812</see>.
+/// </para>
+/// <para>
+/// <strong>Status as of .NET 8</strong>: The issue is closed as "Won't Fix" - System.Text.Json will NOT support 
+/// TypeConverter attributes by design. This is a permanent difference from Newtonsoft.Json.
+/// </para>
+/// <para>
+/// This converter enables types with TypeConverterAttribute to be serialized/deserialized as strings,
+/// maintaining compatibility with Newtonsoft.Json behavior and allowing gradual migration.
+/// </para>
+/// </remarks>
 // https://github.com/dotnet/runtime/issues/38812#issuecomment-740648217
 public sealed class UniversalInvariantTypeConverterJsonConverter : JsonConverterFactory
 {
