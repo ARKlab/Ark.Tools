@@ -11,6 +11,7 @@ namespace Ark.Tools.Activity.Processor;
 
 public static class SliceActivityManagerExtensions
 {
+    [RequiresUnreferencedCode("This method performs assembly scanning to discover types implementing ISliceActivity. The trimmer cannot statically analyze which types will be discovered, so they may be trimmed. Consider using the overload that accepts explicit Type[] parameters instead.")]
     public static void RegisterActivities(this Container container, Type activityManagerType, params Assembly[] fromAssemblies)
     {
         ArgumentNullException.ThrowIfNull(container);
@@ -24,13 +25,11 @@ public static class SliceActivityManagerExtensions
         foreach (var a in activities)
         {
             container.Register(a);
-            [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType",
-                Justification = "Activity types come from SimpleInjector's GetTypesToRegister which only returns concrete types that implement ISliceActivity. These types are explicitly registered in the container and will not be trimmed.")]
-            void RegisterManager() => container.RegisterSingleton(typeof(ISliceActivityManager<>).MakeGenericType(a), activityManagerType.MakeGenericType(a));
-            RegisterManager();
+            container.RegisterSingleton(typeof(ISliceActivityManager<>).MakeGenericType(a), activityManagerType.MakeGenericType(a));
         }
     }
 
+    [RequiresUnreferencedCode("This method uses MakeGenericType with runtime type parameters. The caller must ensure that the activity types passed as parameters are preserved by the trimmer.")]
     public static void RegisterActivities(this Container container, Type activityManagerType, params Type[] activityTypes)
     {
         ArgumentNullException.ThrowIfNull(container);
@@ -45,10 +44,7 @@ public static class SliceActivityManagerExtensions
         foreach (var a in activityTypes)
         {
             container.Register(a);
-            [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType",
-                Justification = "Activity types are explicitly passed as parameters by the caller. The caller is responsible for ensuring these types implement ISliceActivity and will not be trimmed.")]
-            void RegisterManager() => container.RegisterSingleton(typeof(ISliceActivityManager<>).MakeGenericType(a), activityManagerType.MakeGenericType(a));
-            RegisterManager();
+            container.RegisterSingleton(typeof(ISliceActivityManager<>).MakeGenericType(a), activityManagerType.MakeGenericType(a));
         }
     }
 
