@@ -263,6 +263,24 @@ Nodatime.* → [JSON chain] → Serialization blocked
 - [x] Update implementation plan with TODO items
 - [x] Clarify that GetConverterFromRegisteredType applies to ALL .NET 9+ apps, not just trimmed apps
 
+### Future Enhancements
+
+- [ ] **Extend Flurl helpers to support Source Generated System.Text.Json** (Priority: Medium)
+  - Location: `src/common/Ark.Tools.Http/ArkFlurlClientFactory.cs`
+  - Current implementation uses reflection-based JSON serialization via `ArkSerializerOptions.JsonOptions`
+  - Add overload or configuration option to accept `JsonSerializerContext` for source-generated serialization
+  - This would eliminate the need for `RequiresUnreferencedCode` attribute on `Get` methods
+  - Benefits: Fully trim-safe HTTP client configuration for applications using source generation
+  - Related: `Ex.ConfigureArkDefaults` method also needs source generation support
+
+- [ ] **Extend NLog STJ serializer to support Source Generated System.Text.Json** (Priority: Low)
+  - Location: `src/common/Ark.Tools.NLog/NlogConfigurer.cs` - `STJSerializer.SerializeObject` method
+  - Current implementation uses reflection-based `JsonSerializer.Serialize` for diagnostic logging
+  - Consider adding optional `JsonSerializerContext` parameter or configuration
+  - Note: This is lower priority as NLog serialization is for diagnostic purposes and handles failures gracefully
+  - Would allow applications using source generation to avoid reflection warnings in logging scenarios
+
+
 ## Risk Assessment
 
 ### High Risk Items

@@ -13,6 +13,7 @@ using NLog.Targets;
 using NLog.Targets.Wrappers;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -661,6 +662,8 @@ END
         /// <param name="value">The object to serialize to JSON.</param>
         /// <param name="builder">Output destination.</param>
         /// <returns>Serialize succeeded (true/false)</returns>
+        [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+            Justification = "This method is used by NLog for diagnostic logging purposes. The types being serialized are determined at runtime based on what developers log, making static analysis impossible. NLog already handles serialization failures gracefully by catching exceptions.")]
         public bool SerializeObject(object? value, StringBuilder builder)
         {
 #pragma warning disable CA1031 // Do not catch general exception types
