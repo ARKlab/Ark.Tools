@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Flurl.Http.Configuration;
 
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.Http;
 
@@ -16,6 +17,7 @@ public class ArkFlurlClientFactory : IArkFlurlClientFactory
         _clientFactory = clientFactory ?? new DefaultFlurlClientFactory();
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
     public IFlurlClient Get(string baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoftJson = null)
     {
         var builder = new ArkFlurlClientBuilder(baseUrl, _clientFactory)
@@ -27,5 +29,6 @@ public class ArkFlurlClientFactory : IArkFlurlClientFactory
         return builder.Build();
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
     public IFlurlClient Get(Uri baseUrl, Action<FlurlHttpSettings>? settings = null, bool? useNewtonsoftJson = null) => Get(baseUrl.ToString(), settings, useNewtonsoftJson);
 }
