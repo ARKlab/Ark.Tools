@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -6,7 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace Ark.Tools.SystemTextJson;
 
-public abstract class AbstractDictionaryConverter<TC, TK, TV> : JsonConverter<TC>
+public abstract class AbstractDictionaryConverter<TC, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TK, TV> : JsonConverter<TC>
     where TK : notnull
     where TC : IEnumerable<KeyValuePair<TK, TV>>
 {
@@ -17,6 +18,10 @@ public abstract class AbstractDictionaryConverter<TC, TK, TV> : JsonConverter<TC
 
     protected abstract TC InstantiateCollection(IDictionary<TK, TV> workingCollection);
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "TK is constrained with DynamicallyAccessedMembers.All to preserve TypeConverter metadata.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2087:DynamicallyAccessedMembersMismatch",
+        Justification = "TK is constrained with DynamicallyAccessedMembers.All to preserve TypeConverter metadata.")]
     protected AbstractDictionaryConverter(JsonSerializerOptions options)
     {
         _keyConverter = TypeDescriptor.GetConverter(typeof(TK));

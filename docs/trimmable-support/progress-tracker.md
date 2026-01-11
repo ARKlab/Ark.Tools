@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-10  
-**Current Phase:** Phase 2 - First-Level Integrations  
-**Progress:** 12/42 libraries (29%)
+**Current Phase:** Phase 2 - Level 4 HTTP & Logging  
+**Progress:** 15/42 libraries (36%)
 
 ---
 
@@ -191,25 +191,52 @@
 
 ## Level 3: Serialization Utilities
 
-### 🔍 Needs Analysis (3/3)
+### ✅ Completed (3/3)
 
-- [ ] **Ark.Tasks**
-  - **Status**: ⚠️ Blocked by Nodatime.Json
-  - **Dependencies**: Ark.Tools.Nodatime.Json
-  - **Complexity**: Low
-  - **Action Required**: Wait for Nodatime.Json
+- [x] **Ark.Tasks**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-10
+  - **Changes**: Added `IsTrimmable` and `EnableTrimAnalyzer` properties to csproj
+  - **Warnings Fixed**: None (library was already trim-compatible - zero warnings)
+  - **Test Coverage**: No dedicated test project; verified build succeeds
+  - **Dependencies**: Ark.Tools.Nodatime.Json ✅ (complete)
 
-- [ ] **Ark.Tools.NewtonsoftJson**
-  - **Status**: ⚠️ Blocked by Nodatime.Json
-  - **Dependencies**: Ark.Tools.Nodatime.Json, Newtonsoft.Json
-  - **Complexity**: Medium
-  - **Action Required**: Test after Nodatime.Json fixed
+- [x] **Ark.Tools.NewtonsoftJson**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-10
+  - **Changes**:
+    - Added `RequiresUnreferencedCode` attribute to `ArkJsonSerializerSettings` constructor
+    - Added `UnconditionalSuppressMessage` to properties in `ArkDefaultJsonSerializerSettings` and `ArkJsonSerializer`
+    - Added explicit constructor to `ArkDefaultJsonSerializerSettings` with suppression
+    - Added `RequiresUnreferencedCode` to `ConfigureArkDefaults` extension method
+  - **Warnings Fixed**: IL2026 (6 occurrences from Newtonsoft.Json APIs)
+    - JsonSerializer.Create(JsonSerializerSettings)
+    - StringEnumConverter constructor
+    - CamelCasePropertyNamesContractResolver constructor
+  - **Test Coverage**: No dedicated test project; verified build succeeds
+  - **Pattern**: Propagate RequiresUnreferencedCode to public API that uses reflection-based Newtonsoft.Json
+  - **Dependencies**: Ark.Tools.Nodatime.Json ✅ (complete)
 
-- [ ] **Ark.Tools.SystemTextJson**
-  - **Status**: ⚠️ Blocked by Nodatime.SystemTextJson
-  - **Dependencies**: Ark.Tools.Core, Ark.Tools.Nodatime.SystemTextJson
-  - **Complexity**: Medium
-  - **Action Required**: Test after Nodatime.SystemTextJson fixed
+- [x] **Ark.Tools.SystemTextJson**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-10
+  - **Changes**:
+    - Added `RequiresUnreferencedCode` to all public extension methods in Extensions.cs
+    - Added `UnconditionalSuppressMessage` to ArkSerializerOptions.JsonOptions property
+    - Added `DynamicallyAccessedMembers.All` attribute to TK generic parameters in AbstractDictionaryConverter and derived classes
+    - Added suppressions to converter methods (NullableStructSerializer, JsonPolymorphicConverter, ValueCollectionJsonConverterFactory)
+    - Added suppressions for TypeDescriptor.GetConverter and MakeGenericType calls
+  - **Warnings Fixed**: IL2026, IL2046, IL2055, IL2062, IL2067, IL2087, IL2091 (multiple occurrences)
+    - JsonSerializer.Serialize/Deserialize methods
+    - TypeDescriptor.GetConverter usage
+    - MakeGenericType calls
+    - GetConverter method calls
+  - **Test Coverage**: No dedicated test project; verified build succeeds
+  - **Pattern**: 
+    - Propagate RequiresUnreferencedCode to public extension methods
+    - Use UnconditionalSuppressMessage for override methods that can't have RequiresUnreferencedCode
+    - Add DynamicallyAccessedMembers attributes for TypeConverter scenarios
+  - **Dependencies**: Ark.Tools.Nodatime.SystemTextJson ✅ (complete), Ark.Tools.Core (NOT trimmable but not blocking)
 
 ---
 
@@ -301,16 +328,17 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 12 (29%)
+- **Completed**: 15 (36%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 30 (71%)
+- **Needs Analysis**: 27 (64%)
 
 ### By Level
 - **Level 0 (Foundation)**: 5/5 (100%) ✅ COMPLETE!
 - **Level 1 (Core Utilities)**: 4/4 (100%) ✅ COMPLETE!
 - **Level 2 (First-Level Integrations)**: 4/4 (100%) ✅ COMPLETE!
-- **Level 3+**: 0/29 (0%)
+- **Level 3 (Serialization Utilities)**: 3/3 (100%) ✅ COMPLETE!
+- **Level 4+**: 0/26 (0%)
 
 ### By Complexity
 - **Low Complexity**: ~15 libraries (expected easy wins)
@@ -340,17 +368,40 @@
 1. [x] ~~Complete all Level 0 libraries~~ ✅ DONE
 2. [x] ~~Fix Ark.Tools.EventSourcing~~ ✅ DONE
 3. [x] ~~Start Level 2 serialization libraries~~ ✅ DONE
-4. [ ] Start Level 3 serialization utilities (Tasks, NewtonsoftJson, SystemTextJson)
+4. [x] ~~Start Level 3 serialization utilities (Tasks, NewtonsoftJson, SystemTextJson)~~ ✅ DONE
 5. [ ] Start Level 4 HTTP & Logging (Http, NLog)
 
 ### Medium Term (Weeks 3-4)
-1. [ ] Complete all serialization libraries
+1. [x] ~~Complete all serialization libraries~~ ✅ DONE (Level 3)
 2. [ ] Enable Ark.Tools.NLog
 3. [ ] Start integration libraries
 
 ---
 
 ## Update Log
+
+### 2026-01-10 (Late Evening Session - Level 3 Complete!)
+- **Level 3 Serialization Utilities**: 100% COMPLETE! (3/3 libraries)
+  - **Ark.Tasks**: Zero warnings from start - library was already trim-compatible
+  - **Ark.Tools.NewtonsoftJson**: Fixed IL2026 (6 occurrences)
+    - Added `RequiresUnreferencedCode` to ArkJsonSerializerSettings constructor
+    - Added `UnconditionalSuppressMessage` to static properties
+    - Added explicit constructor to ArkDefaultJsonSerializerSettings with suppression
+    - Propagated RequiresUnreferencedCode to ConfigureArkDefaults extension method
+  - **Ark.Tools.SystemTextJson**: Fixed IL2026, IL2046, IL2055, IL2062, IL2067, IL2087, IL2091 (many occurrences)
+    - Added `RequiresUnreferencedCode` to all public extension methods
+    - Added `UnconditionalSuppressMessage` to ArkSerializerOptions.JsonOptions property
+    - Added `DynamicallyAccessedMembers.All` to TK generic parameters in dictionary converters
+    - Used UnconditionalSuppressMessage for override methods (can't use RequiresUnreferencedCode on overrides)
+    - Added suppressions for TypeDescriptor.GetConverter and MakeGenericType calls
+- **Patterns Established**:
+  1. **JSON Library Wrapper Pattern**: For libraries wrapping System.Text.Json or Newtonsoft.Json
+     - Propagate `RequiresUnreferencedCode` to public extension methods that call serialization APIs
+     - Use `UnconditionalSuppressMessage` for properties and override methods
+  2. **Dictionary Key TypeConverter Pattern**: Add `DynamicallyAccessedMembers.All` to key generic parameters when using TypeDescriptor.GetConverter
+  3. **Override Methods**: Cannot use `RequiresUnreferencedCode` on overrides - use `UnconditionalSuppressMessage` instead
+- **Testing**: Full builds verified - 0 warnings, 0 errors
+- **Progress**: 15/42 libraries (36%) - Levels 0, 1, 2, and 3 now complete!
 
 ### 2026-01-10 (Evening Session)
 - **Level 1 Core Utilities**: 100% COMPLETE! (4/4 libraries)

@@ -17,6 +17,11 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <PropertyGroup>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Macross.Json.Extensions" />
   </ItemGroup>

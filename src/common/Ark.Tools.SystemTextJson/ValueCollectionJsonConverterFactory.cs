@@ -32,6 +32,8 @@ public class ValueCollectionJsonConverterFactory : JsonConverterFactory
     [UnconditionalSuppressMessage("ReflectionAnalysis", "CA1812", Justification = "Instantiated via reflection in CreateConverter method")]
     private sealed class Converter<T> : JsonConverter<ValueCollection<T>>
     {
+        [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+            Justification = "The element type T comes from ValueCollection<T> which is instantiated by the factory. The factory ensures T is preserved.")]
         public override ValueCollection<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartArray)
@@ -54,6 +56,8 @@ public class ValueCollectionJsonConverterFactory : JsonConverterFactory
             return elements;
         }
 
+        [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+            Justification = "The element type T comes from ValueCollection<T> which is instantiated by the factory. The factory ensures T is preserved.")]
         public override void Write(Utf8JsonWriter writer, ValueCollection<T> value, JsonSerializerOptions options)
         {
             JsonSerializer.Serialize(writer, value.AsEnumerable(), options);

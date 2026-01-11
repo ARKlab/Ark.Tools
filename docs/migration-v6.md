@@ -365,6 +365,143 @@ Update the CI Pipelines to reference the new SLNX file.
 
 More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/#getting-started)
 
+## TypeConverter Registration for Dictionary Keys with Custom Types (Ark.Tools v6)
+
+**⚠️ BREAKING CHANGE**: Ark.Tools v6 uses `TypeDescriptor.GetConverterFromRegisteredType` for .NET 9+ targets, which requires explicit TypeConverter registration for types used as dictionary keys in JSON serialization.
+
+### What Changed
+
+**For ALL applications targeting .NET 9+** (regardless of trimming):
+- Ark.Tools.SystemTextJson uses `TypeDescriptor.GetConverterFromRegisteredType` when compiled for .NET 9+
+- This API requires types to be registered via `TypeDescriptor.RegisterType<T>()`
+- **Applications relying on TypeConverter attributes alone will break**
+
+**For applications targeting .NET 8**:
+- No changes required
+- Continues to use `TypeDescriptor.GetConverter` which discovers TypeConverters via attributes
+
+### Why This Change Was Made
+
+.NET 9 introduced trim-safe TypeDescriptor APIs that don't rely on reflection. To support Native AOT and trimming scenarios, Ark.Tools v6 adopted these APIs for .NET 9+ targets using conditional compilation.
+
+### Migration Guide
+
+**If your DTOs have dictionaries with custom keys decorated with `TypeConverterAttribute`, you MUST register those types in your application startup:**
+
+```csharp
+using System.ComponentModel;
+
+// Custom type with TypeConverter
+[TypeConverter(typeof(ProductIdConverter))]
+public readonly struct ProductId
+{
+    public string Value { get; }
+    // ... implementation
+}
+
+// DTO using the custom type as dictionary key
+public class OrderDto
+{
+    public Dictionary<ProductId, int> ProductQuantities { get; set; } = new();
+}
+
+// Application startup (Program.cs or Startup.cs)
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        // ⚠️ REQUIRED for .NET 9+ applications
+        // Register all custom types used as dictionary keys
+        TypeDescriptor.RegisterType<ProductId>();
+        
+        var builder = WebApplication.CreateSlimBuilder(args);
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.ConfigureArkDefaults();
+        });
+        
+        var app = builder.Build();
+        app.Run();
+    }
+}
+```
+
+### When to Register Types
+
+Register a type when ALL of these are true:
+- Your application targets .NET 9 or later
+- The type is decorated with `TypeConverterAttribute`
+- The type is used as a dictionary key in DTOs that will be serialized/deserialized with System.Text.Json
+
+### Common Types to Register
+
+**NodaTime types** (these are already handled by Ark.Tools.Nodatime, no registration needed):
+- OffsetDateTime, LocalDate, LocalTime, Instant, etc.
+
+**Your custom domain types** (you MUST register these):
+```csharp
+// Examples of types you need to register
+TypeDescriptor.RegisterType<ProductId>();
+TypeDescriptor.RegisterType<CustomerId>();
+TypeDescriptor.RegisterType<OrderNumber>();
+// ... register all custom types used as dictionary keys
+```
+
+### For .NET 8 Applications
+
+No changes required. TypeConverter discovery continues to work via reflection as before.
+
+### Testing Your Migration
+
+After migration, verify that:
+1. Serialization of DTOs with dictionary keys works correctly
+2. Deserialization produces the correct dictionary structure
+3. No runtime exceptions about missing TypeConverters
+
+```csharp
+// Test example
+var dto = new OrderDto 
+{ 
+    ProductQuantities = new Dictionary<ProductId, int>
+    {
+        { new ProductId("PROD-001"), 5 },
+        { new ProductId("PROD-002"), 3 }
+    }
+};
+
+var json = JsonSerializer.Serialize(dto, ArkSerializerOptions.JsonOptions);
+var deserialized = JsonSerializer.Deserialize<OrderDto>(json, ArkSerializerOptions.JsonOptions);
+
+// Verify both dictionaries have the same keys and values
+```
+        
+        var builder = WebApplication.CreateSlimBuilder(args);
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.ConfigureArkDefaults();
+        });
+        
+        var app = builder.Build();
+        app.Run();
+    }
+}
+```
+
+### Why This is Required
+
+When using trimming (especially Native AOT), the trimmer removes unused code including TypeConverter metadata. By calling `TypeDescriptor.RegisterType<T>()`, you explicitly tell the trimmer to preserve the TypeConverter for that type, ensuring dictionary key serialization works correctly.
+
+### When to Register Types
+
+Register a type when:
+- It's used as a dictionary key in DTOs that will be serialized/deserialized
+- It has a `TypeConverter` attribute
+- You're using trimming/Native AOT deployment
+
+### For .NET 8 Applications
+
+No action required. The library handles TypeConverter discovery using the traditional reflection-based approach with appropriate trim warning suppressions.
+
 ## Adopt Central Package Management
 
 CPM helps ensuring dependencies are aligned across the solution and helps Bots (e.g. Renovate) to manage dependencies.

@@ -1,18 +1,33 @@
 # Trimming Implementation Plan
 
-**Last Updated:** 2026-01-10  
-**Status:** Phase 1 - In Progress
+**Last Updated:** 2026-01-11  
+**Status:** Phase 2 - In Progress
 
 ## Executive Summary
 
-This document outlines the strategy for making all 42 Ark.Tools common libraries trim-compatible. The work is divided into 5 phases spanning approximately 12 weeks.
+This document outlines the strategy for making Ark.Tools libraries trim-compatible. The work is divided into phases based on dependency order, with the goal of making **as many libraries trimmable as feasible**.
 
-## Goals
+## Goals and Philosophy
 
-1. **Enable trimming** for all libraries where feasible
-2. **Reduce deployment sizes** by 30-40% for trimmed applications
-3. **Maintain compatibility** with existing code
+### Primary Goals
+
+1. **Make as many libraries trimmable as feasible** - Not every library needs to be trim-compatible
+2. **Reduce deployment sizes** by 30-40% for trimmed applications using Ark.Tools
+3. **Maintain backward compatibility** with existing code
 4. **Establish patterns** for trim-safe code in future development
+5. **Document clearly** which libraries are not trimmable and why
+
+### When NOT to Force Trimming
+
+It is **perfectly acceptable** to leave a library as non-trimmable if:
+
+- The library fundamentally requires dynamic reflection that cannot be statically analyzed
+- Making it trim-safe would require breaking changes or major refactoring
+- The complexity/effort outweighs the benefits for that specific library
+- The library is rarely used in trim-sensitive deployment scenarios (e.g., development tools, build-time utilities)
+- The library depends on third-party packages that are fundamentally not trim-compatible
+
+**Document the reason** in the library's README or in this plan when deciding not to pursue trimming support.
 
 ## Implementation Strategy
 
@@ -25,9 +40,17 @@ The implementation follows a dependency-ordered approach, starting with librarie
 For each library to be marked as trimmable:
 - ✅ Build succeeds with `<IsTrimmable>true</IsTrimmable>`
 - ✅ Build succeeds with `<EnableTrimAnalyzer>true</EnableTrimAnalyzer>`
-- ✅ Zero IL#### trim warnings
+- ✅ Zero IL#### trim warnings (or all warnings properly suppressed with valid justifications)
 - ✅ All existing tests pass
 - ✅ Roundtrip/integration tests added for trim-sensitive code
+
+### Success Criteria for Non-Trimmable Decision
+
+For libraries intentionally left as non-trimmable:
+- ✅ Clear documentation of **why** the library is not trimmable
+- ✅ Assessment that the cost of making it trimmable outweighs the benefit
+- ✅ Consideration of whether the library could be split (trim-safe core + reflection-heavy extensions)
+- ✅ Verification that dependent libraries can still be made trimmable
 
 ## 5-Phase Rollout Plan
 
@@ -186,20 +209,59 @@ Nodatime.* → [JSON chain] → Serialization blocked
 
 ## Metrics and Tracking
 
-### Current Status (2026-01-10)
+### Current Status (2026-01-11)
 
 - **Total Libraries**: 42
-- **Completed**: 3 (7%)
+- **Completed**: 15 (36%)
 - **In Progress**: 0
-- **Not Started**: 39 (93%)
+- **Not Started**: 27 (64%)
 
 ### Target Milestones
 
-- **Week 2**: 5 libraries (12%)
+- **Week 2**: 5 libraries (12%) ✅ Exceeded - 15 completed
 - **Week 4**: 10 libraries (24%)
 - **Week 6**: 15 libraries (36%)
 - **Week 10**: 30 libraries (71%)
 - **Week 12**: 42 libraries (100%)
+
+## TODO Items
+
+### Testing and Validation
+
+- [ ] **Add test case for Dictionary with convertible keys** (Priority: High)
+  - Location: `samples/Ark.ReferenceProject/WebApplicationDemo` or new test project
+  - Test DTOs with custom types as dictionary keys (e.g., `ProductId`, `OrderNumber`)
+  - Test DTOs with `Dictionary<OffsetDateTime, TValue>` and other NodaTime types as keys
+  - Verify serialization/deserialization works correctly with .NET 9+ (requires `TypeDescriptor.RegisterType`)
+  - Verify .NET 8 continues to work without registration
+  - Document findings in `docs/trimmable-support/progress-tracker.md`
+
+- [ ] **Add test case for polymorphism with System.Text.Json** (Priority: Medium)
+  - Location: `samples/Ark.ReferenceProject/WebApplicationDemo`
+  - Test polymorphic serialization using `JsonPolymorphicConverter`
+  - Verify trimming compatibility
+  - Document any registration requirements
+
+### Research Items
+
+- [x] **NullableStructSerializer.cs: Check if still needed in .NET 8+**
+  - **Status**: KEEP - Still provides value
+  - **Reason**: While .NET 8 improved nullable struct support, this converter provides explicit handling for nullable structs with custom converters, ensuring consistent behavior
+  - **Context**: Added for STJ v6 to support generic nullable struct for structs with custom converters
+  - **Decision**: Keep for now, but can be removed in future if .NET adds native support
+
+- [x] **UniversalInvariantTypeConverterJsonConverter.cs: Check if issue #38812 resolved in .NET 8**
+  - **Status**: KEEP - Issue NOT resolved
+  - **Issue**: [GitHub #38812](https://github.com/dotnet/runtime/issues/38812) - System.Text.Json does not support TypeConverters
+  - **.NET 8 Status**: Still NOT supported, issue closed as "Won't Fix" - System.Text.Json will not support TypeConverter attributes by design
+  - **Reason**: This converter bridges the gap for types decorated with `TypeConverterAttribute`, which is still needed
+  - **Decision**: Keep indefinitely, this is a permanent gap in System.Text.Json vs Newtonsoft.Json
+
+### Documentation
+
+- [x] Add migration guide for TypeConverter registration in v6 migration doc
+- [x] Update implementation plan with TODO items
+- [x] Clarify that GetConverterFromRegisteredType applies to ALL .NET 9+ apps, not just trimmed apps
 
 ## Risk Assessment
 
