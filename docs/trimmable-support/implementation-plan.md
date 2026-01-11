@@ -1,18 +1,33 @@
 # Trimming Implementation Plan
 
-**Last Updated:** 2026-01-10  
-**Status:** Phase 1 - In Progress
+**Last Updated:** 2026-01-11  
+**Status:** Phase 2 - In Progress
 
 ## Executive Summary
 
-This document outlines the strategy for making all 42 Ark.Tools common libraries trim-compatible. The work is divided into 5 phases spanning approximately 12 weeks.
+This document outlines the strategy for making Ark.Tools libraries trim-compatible. The work is divided into phases based on dependency order, with the goal of making **as many libraries trimmable as feasible**.
 
-## Goals
+## Goals and Philosophy
 
-1. **Enable trimming** for all libraries where feasible
-2. **Reduce deployment sizes** by 30-40% for trimmed applications
-3. **Maintain compatibility** with existing code
+### Primary Goals
+
+1. **Make as many libraries trimmable as feasible** - Not every library needs to be trim-compatible
+2. **Reduce deployment sizes** by 30-40% for trimmed applications using Ark.Tools
+3. **Maintain backward compatibility** with existing code
 4. **Establish patterns** for trim-safe code in future development
+5. **Document clearly** which libraries are not trimmable and why
+
+### When NOT to Force Trimming
+
+It is **perfectly acceptable** to leave a library as non-trimmable if:
+
+- The library fundamentally requires dynamic reflection that cannot be statically analyzed
+- Making it trim-safe would require breaking changes or major refactoring
+- The complexity/effort outweighs the benefits for that specific library
+- The library is rarely used in trim-sensitive deployment scenarios (e.g., development tools, build-time utilities)
+- The library depends on third-party packages that are fundamentally not trim-compatible
+
+**Document the reason** in the library's README or in this plan when deciding not to pursue trimming support.
 
 ## Implementation Strategy
 
@@ -25,9 +40,17 @@ The implementation follows a dependency-ordered approach, starting with librarie
 For each library to be marked as trimmable:
 - ✅ Build succeeds with `<IsTrimmable>true</IsTrimmable>`
 - ✅ Build succeeds with `<EnableTrimAnalyzer>true</EnableTrimAnalyzer>`
-- ✅ Zero IL#### trim warnings
+- ✅ Zero IL#### trim warnings (or all warnings properly suppressed with valid justifications)
 - ✅ All existing tests pass
 - ✅ Roundtrip/integration tests added for trim-sensitive code
+
+### Success Criteria for Non-Trimmable Decision
+
+For libraries intentionally left as non-trimmable:
+- ✅ Clear documentation of **why** the library is not trimmable
+- ✅ Assessment that the cost of making it trimmable outweighs the benefit
+- ✅ Consideration of whether the library could be split (trim-safe core + reflection-heavy extensions)
+- ✅ Verification that dependent libraries can still be made trimmable
 
 ## 5-Phase Rollout Plan
 

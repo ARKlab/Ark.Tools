@@ -2,13 +2,26 @@
 
 This document provides guidelines and patterns for making Ark.Tools libraries trim-compatible.
 
+## Core Philosophy
+
+### Primary Goal: Make as Much as Possible Trimmable
+
+The goal of this initiative is to **make as many libraries trimmable as feasible**, not to force every library to be trim-compatible. It is perfectly acceptable—and sometimes the right decision—to leave certain libraries as not trimmable if:
+
+1. **The library fundamentally requires dynamic reflection** that cannot be expressed with trim annotations
+2. **The complexity/effort to make it trim-safe outweighs the benefits** for that particular library
+3. **Refactoring would break backward compatibility** in unacceptable ways
+4. **The library is rarely used in trim-sensitive scenarios** (e.g., development tools, build-time utilities)
+
+**When in doubt, document why a library is not trimmable** rather than forcing an inappropriate solution.
+
 ## Table of Contents
 
 1. [Quick Start](#quick-start)
 2. [Common Patterns](#common-patterns)
 3. [Warning Types and Solutions](#warning-types-and-solutions)
 4. [Testing Strategy](#testing-strategy)
-5. [When to Suppress](#when-to-suppress)
+5. [When to Suppress (CRITICAL)](#when-to-suppress-critical)
 6. [Anti-Patterns](#anti-patterns)
 
 ---
@@ -300,44 +313,204 @@ public class ConverterTests
 
 ---
 
-## When to Suppress
+## When to Suppress (CRITICAL)
+
+⚠️ **READ THIS SECTION CAREFULLY** - Incorrect use of `UnconditionalSuppressMessage` can hide real trimming bugs.
+
+### Microsoft's Guidance on UnconditionalSuppressMessage
+
+Per [Microsoft's official documentation](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming#unconditionalsuppressmessage):
+
+> **When suppressing warnings, you are responsible for guaranteeing the trim compatibility of the code based on invariants that you know to be true by inspection and testing. Use caution with these annotations, because if they are incorrect, or if invariants of your code change, they might end up hiding incorrect code.**
+
+**Critical Rule**: `UnconditionalSuppressMessage` should **ONLY** be used when:
+1. The code is **genuinely safe** despite the warning
+2. The intent **cannot be expressed** with `RequiresUnreferencedCode` or `DynamicallyAccessedMembers` attributes
+3. You can **prove by inspection and testing** that the code will work correctly when trimmed
 
 ### ✅ Safe to Suppress When
 
-1. **Type is statically known via generics**
-   - Generic type parameter with constraint
-   - Concrete type in code
+#### 1. **Private initialization with public propagation**
 
-2. **Type is explicitly registered**
-   - Hardcoded type list
-   - Compile-time type reference
+When warnings are properly propagated through public APIs:
 
-3. **Framework guarantees preservation**
-   - Attribute-based discovery (e.g., [JsonSerializable])
-   - Known framework patterns
+```csharp
+public static ArkDefaultJsonSerializerSettings Instance
+{
+    [RequiresUnreferencedCode("JSON serialization might require unreferenced types.")]
+    get => _instance;  // ✅ Warning propagated here
+}
 
-### ❌ Unsafe to Suppress When
+[UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+    Justification = "The singleton instance is created here but warnings are propagated through the Instance property getter.")]
+private static readonly ArkDefaultJsonSerializerSettings _instance = new();  // ✅ Safe - warning propagated above
+```
 
-1. **Dynamic type discovery**
-   - Assembly scanning
-   - Type.GetType(string)
+#### 2. **Type is statically known via generics**
 
-2. **Unknown types at compile time**
-   - User-provided type names
-   - Configuration-based types
+Generic type parameter with constraint ensures type is known at compile time:
 
-3. **Third-party library constraints**
-   - Library requires reflection
-   - No control over type registration
+```csharp
+public class Converter<T> where T : struct
+{
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "The generic type parameter T is known at compile time for each concrete instantiation, making the underlying type statically discoverable and trim-safe.")]
+    public Converter() : base(typeof(T))
+    {
+    }
+}
+```
 
-### Suppression Template
+#### 3. **Type is explicitly registered and annotated**
 
-Always include a detailed justification:
+When types are explicitly listed and proper annotations ensure preservation:
+
+```csharp
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+public Type this[int i]
+{
+    [UnconditionalSuppressMessage("Trimming", "IL2063",
+        Justification = "The list only contains types stored through the annotated setter which ensures constructors are preserved.")]
+    get => types[i];  // ✅ Safe - setter annotation guarantees constructor preservation
+    set => types[i] = value;
+}
+```
+
+#### 4. **Framework guarantees preservation**
+
+When using framework patterns that guarantee type preservation:
+
+```csharp
+// Source-generated JSON context
+[JsonSerializable(typeof(MyType))]
+[UnconditionalSuppressMessage("Trimming", "IL2026",
+    Justification = "JsonSerializable attribute ensures MyType and its properties are preserved.")]
+public partial class MyJsonContext : JsonSerializerContext { }
+```
+
+#### 5. **Override methods (IL2046 constraint)**
+
+When overriding methods that cannot have `RequiresUnreferencedCode`:
 
 ```csharp
 [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-    Justification = "Explain WHY this is trim-safe. Example: The type T is known at compile time because [reason]. The trimmer will preserve [what] because [how].")]
+    Justification = "TStruct is constrained to value types. The factory ensures TStruct will be preserved.")]
+public override TStruct? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+{
+    return JsonSerializer.Deserialize<TStruct>(ref reader, options);
+}
 ```
+
+### ❌ Unsafe to Suppress When
+
+#### 1. **Dynamic type discovery without preservation**
+
+```csharp
+// ❌ WRONG - Type from string is not preserved
+[UnconditionalSuppressMessage("Trimming", "IL2026")]
+public object Create(string typeName)
+{
+    var type = Type.GetType(typeName);  // Trimmer doesn't know what types to keep!
+    return Activator.CreateInstance(type);
+}
+```
+
+#### 2. **Hiding warnings instead of propagating**
+
+```csharp
+// ❌ WRONG - Suppressing on public API hides warning from callers
+[UnconditionalSuppressMessage("Trimming", "IL2026")]
+public void ProcessDynamic(Type type)  // Should use RequiresUnreferencedCode instead!
+{
+    var converter = TypeDescriptor.GetConverter(type);
+    // ...
+}
+```
+
+#### 3. **Unknown types at compile time**
+
+```csharp
+// ❌ WRONG - User-provided type names cannot be statically analyzed
+[UnconditionalSuppressMessage("Trimming", "IL2026")]
+public void LoadPlugin(string assemblyName, string typeName)
+{
+    var assembly = Assembly.LoadFrom(assemblyName);
+    var type = assembly.GetType(typeName);
+    // ...
+}
+```
+
+#### 4. **Invalid justification based on non-reflective usage**
+
+Per Microsoft's documentation, this is **explicitly invalid**:
+
+```csharp
+// ❌ INVALID - Using a property non-reflectively doesn't guarantee reflection will work
+[UnconditionalSuppressMessage("Trimming", "IL2063",
+    Justification = "*INVALID* Only need to serialize properties that are used by the app. *INVALID*")]
+public string Serialize(object o)
+{
+    foreach (var property in o.GetType().GetProperties())  // ❌ Properties may be trimmed!
+    {
+        AppendProperty(sb, property, o);
+    }
+}
+```
+
+### Decision Tree: Should I Use UnconditionalSuppressMessage?
+
+```
+Is the warning valid?
+├─ NO → Use UnconditionalSuppressMessage with detailed justification
+│       Example: Generic type known at compile time
+│
+└─ YES → Can I express the intent with RequiresUnreferencedCode?
+    ├─ YES → Use RequiresUnreferencedCode (propagate warning)
+    │        Example: Method uses reflection on dynamic types
+    │
+    └─ NO → Can I express the intent with DynamicallyAccessedMembers?
+        ├─ YES → Use DynamicallyAccessedMembers
+        │        Example: Type parameter used for reflection
+        │
+        └─ NO → Is the code genuinely safe despite the warning?
+            ├─ YES → Use UnconditionalSuppressMessage
+            │        Example: Override method, warning propagated elsewhere
+            │
+            └─ NO → Refactor code to be trim-safe
+                     Example: Replace assembly scanning with explicit types
+```
+
+### Suppression Template (REQUIRED)
+
+**ALWAYS include a detailed justification** explaining:
+1. **Why** the code is safe despite the warning
+2. **What** ensures the types/members are preserved
+3. **How** the trimmer will know what to keep
+
+```csharp
+[UnconditionalSuppressMessage("Trimming", "IL20XX:WarningCode",
+    Justification = "Explain WHY this is trim-safe. State WHAT ensures preservation. Describe HOW the trimmer knows what to keep. Example: The type T is known at compile time through the generic constraint, ensuring the trimmer preserves the necessary members.")]
+```
+
+### Common Valid Justifications
+
+| Pattern | Valid Justification Example |
+|---------|---------------------------|
+| Generic with known type | "The generic type parameter T is known at compile time for each concrete instantiation, making the type statically discoverable and trim-safe." |
+| Private field with public propagation | "The singleton instance is created here but warnings are propagated through the Instance property getter." |
+| Annotated collection | "The collection only contains types stored through the annotated setter which ensures the required members are preserved." |
+| Override constraint | "Cannot use RequiresUnreferencedCode on override. The factory/caller is responsible for ensuring type preservation." |
+| Source generator | "The [JsonSerializable] attribute ensures this type and its properties are preserved by the trimmer." |
+
+### When in Doubt
+
+**Default to propagating warnings, not suppressing them.**
+
+If you're unsure whether a suppression is safe:
+1. Use `RequiresUnreferencedCode` to propagate the warning instead
+2. Ask for review with specific details about why you think it's safe
+3. Add comprehensive tests to verify behavior with trimming enabled
+4. Document the uncertainty in code comments for future review
 
 ---
 
