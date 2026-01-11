@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-11  
-**Current Phase:** Phase 2 - Level 5 Extended Utilities (Almost Complete!)  
-**Progress:** 23/42 libraries (55%)
+**Current Phase:** Phase 2 - Level 5 Extended Utilities (COMPLETE!)  
+**Progress:** 26/42 libraries (62%)
 
 ---
 
@@ -273,7 +273,7 @@
 
 ## Level 5: Extended Utilities (9 libraries)
 
-### ✅ Completed (6/9)
+### ✅ Completed (9/9) - LEVEL COMPLETE!
 
 - [x] **Ark.Tools.NLog.Configuration**
   - **Status**: ✅ DONE
@@ -326,17 +326,38 @@
   - **Test Coverage**: Full solution build verified
   - **Dependencies**: Ark.Tools.NLog ✅, Ark.Tools.Nodatime.Dapper ✅, Ark.Tools.Sql ✅
 
-### 🔍 Needs Analysis (3/9)
-  
-- [ ] **Ark.Tools.FtpClient.Core**
-  - **Dependencies**: Ark.Tools.Core, Ark.Tools.NLog
-  
-- [ ] **Ark.Tools.Outbox.SqlServer**
-  - **Dependencies**: Ark.Tools.NLog, Ark.Tools.Outbox, Ark.Tools.Sql, Ark.Tools.SystemTextJson
-  
-- [ ] **Ark.Tools.Reqnroll**
-  - **Dependencies**: Ark.Tools.Http
-  - **Notes**: Testing library - lower priority for trimming
+- [x] **Ark.Tools.FtpClient.Core**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added `IsTrimmable` and `EnableTrimAnalyzer` properties only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.Core (NOT trimmable but not blocking), Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.Outbox.SqlServer**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `UnconditionalSuppressMessage` to all HeaderSerializer methods
+    - Suppressions for JsonSerializer.Serialize/Deserialize operations
+  - **Warnings Fixed**: IL2026 (4 occurrences from JsonSerializer operations)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Well-known types with primitive key-value pairs
+  - **Justification**: Dictionary<string, string> only contains string primitives that are always preserved by the trimmer
+  - **Dependencies**: Ark.Tools.NLog ✅, Ark.Tools.Outbox ✅, Ark.Tools.Sql ✅, Ark.Tools.SystemTextJson ✅
+
+- [x] **Ark.Tools.Reqnroll**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `DynamicallyAccessedMembers.PublicProperties | NonPublicProperties` to TableExtensions generic parameters
+    - Added `UnconditionalSuppressMessage` to StringTypeConverterValueRetriver methods
+    - Added `UnconditionalSuppressMessage` to NestedJsonRetrieverAndComparer methods
+    - Created local function with suppressions for MakeGenericMethod usage
+  - **Warnings Fixed**: IL2026, IL2067, IL2075, IL2076, IL2090, IL2091 (22 total occurrences)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Testing libraries - types come from test DTOs preserved by test framework
+  - **Dependencies**: Ark.Tools.Http ✅
 
 ---
 
@@ -375,10 +396,10 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 23 (55%)
+- **Completed**: 26 (62%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 19 (45%)
+- **Needs Analysis**: 16 (38%)
 
 ### By Level
 - **Level 0 (Foundation)**: 5/5 (100%) ✅ COMPLETE!
@@ -386,7 +407,8 @@
 - **Level 2 (First-Level Integrations)**: 4/4 (100%) ✅ COMPLETE!
 - **Level 3 (Serialization Utilities)**: 3/3 (100%) ✅ COMPLETE!
 - **Level 4 (HTTP & Logging)**: 2/2 (100%) ✅ COMPLETE!
-- **Level 5 (Extended Utilities)**: 6/9 (67%)
+- **Level 5 (Extended Utilities)**: 9/9 (100%) ✅ COMPLETE!
+- **Level 6+**: 0/15 (0%)
 - **Level 6+**: 0/15 (0%)
 
 ### By Complexity
@@ -423,12 +445,33 @@
 ### Medium Term (Weeks 3-4)
 1. [x] ~~Complete all serialization libraries~~ ✅ DONE (Level 3)
 2. [x] ~~Enable Ark.Tools.NLog~~ ✅ DONE
-3. [ ] Start Level 5 Extended Utilities (9 libraries now unblocked by NLog)
+3. [x] ~~Start Level 5 Extended Utilities (9 libraries now unblocked by NLog)~~ ✅ DONE
 4. [ ] Continue with Level 6+ integration libraries
 
 ---
 
 ## Update Log
+
+### 2026-01-11 (Late Session - Level 5 COMPLETE!)
+- **Level 5 Extended Utilities**: 100% COMPLETE! (9/9 libraries)
+  - **Batch 3 - Final Level 5 Libraries**:
+    - **Ark.Tools.FtpClient.Core**: Zero warnings from start
+    - **Ark.Tools.Outbox.SqlServer**: Fixed IL2026 (4 occurrences)
+      - Added `UnconditionalSuppressMessage` to all HeaderSerializer methods
+      - Pattern: Well-known types with primitive key-value pairs (Dictionary<string, string>)
+      - Justification: String primitives are always preserved by the trimmer
+    - **Ark.Tools.Reqnroll**: Fixed IL2026, IL2067, IL2075, IL2076, IL2090, IL2091 (22 occurrences)
+      - Added `DynamicallyAccessedMembers.PublicProperties | NonPublicProperties` to TableExtensions generic parameters
+      - Added `UnconditionalSuppressMessage` to StringTypeConverterValueRetriver and NestedJsonRetrieverAndComparer
+      - Created local function with suppressions for MakeGenericMethod usage
+      - Pattern: Testing libraries - types come from test DTOs preserved by test framework
+- **Patterns Established**:
+  1. **Testing Library Pattern**: For Reqnroll/BDD frameworks, suppress warnings with justification that types come from test DTOs
+  2. **Well-Known Type Pattern**: Suppress warnings for Dictionary<string, string> and other primitive collections
+  3. **Generic Constraints Pattern**: Use DynamicallyAccessedMembers attributes on generic parameters that use reflection
+- **Testing**: Full solution build verified for all 3 libraries - 0 warnings, 0 errors
+- **Progress**: 26/42 libraries (62%) - Level 5 COMPLETE! Levels 0-5 all done!
+- **Milestone**: All foundational, core, and extended utility libraries are now trimmable!
 
 ### 2026-01-11 (Evening Session - Level 5 Almost Complete!)
 - **Level 5 Extended Utilities**: 67% COMPLETE! (6/9 libraries)
