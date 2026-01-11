@@ -7,9 +7,6 @@
     <Description>Reqnroll utilities</Description>
     <PackageTags>Ark;C#;.NET;Framework;Reqnroll</PackageTags>
 
-    <IsTrimmable>true</IsTrimmable>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
 

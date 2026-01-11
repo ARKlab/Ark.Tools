@@ -1,7 +1,6 @@
 using Reqnroll;
 using Reqnroll.Assist;
 
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -9,7 +8,7 @@ namespace Ark.Tools.Reqnroll;
 
 public static class TableExtensions
 {
-    public static T CreateComplexObject<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>(this DataTable table)
+    public static T CreateComplexObject<T>(this DataTable table)
     {
         var s = table.CreateComplexSet<T>();
         return s.Single();
@@ -20,7 +19,7 @@ public static class TableExtensions
     /// <typeparam name="T"></typeparam>
     /// <param name="table"></param>
     /// <returns></returns>
-    public static IEnumerable<T> CreateComplexSet<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>(this DataTable table)
+    public static IEnumerable<T> CreateComplexSet<T>(this DataTable table)
     {
         var items = new List<T>();
 
@@ -30,7 +29,7 @@ public static class TableExtensions
         return items;
     }
 
-    public static T CreateComplexType<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>(this DataTableRow tableRow)
+    public static T CreateComplexType<T>(this DataTableRow tableRow)
     {
         T result = tableRow.CreateInstance<T>();
 
@@ -72,16 +71,8 @@ public static class TableExtensions
                         CallingConventions.Any,
                         [typeof(Table)],
                         null);
-                [UnconditionalSuppressMessage("Trimming", "IL2075:DynamicallyAccessedMembers",
-                    Justification = "This is used by Reqnroll for test data binding. The property types come from test DTOs that are preserved by the test framework.")]
-                [UnconditionalSuppressMessage("Trimming", "IL2076:DynamicallyAccessedMembers",
-                    Justification = "This is used by Reqnroll for test data binding. The property types come from test DTOs that are preserved by the test framework.")]
-                object? GetPropValue()
-                {
-                    createInstance = createInstance?.MakeGenericMethod(prop.PropertyType);
-                    return createInstance?.Invoke(null, [subTable]);
-                }
-                object? propValue = GetPropValue();
+                createInstance = createInstance?.MakeGenericMethod(prop.PropertyType);
+                object? propValue = createInstance?.Invoke(null, [subTable]);
 
                 prop.SetValue(result, propValue);
             }
@@ -96,7 +87,7 @@ public static class TableExtensions
     /// <typeparam name="T"></typeparam>
     /// <param name="table"></param>
     /// <returns></returns>
-    public static IEnumerable<T> VerifyPropertiesAndCreateSet<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)] T>(this DataTable table)
+    public static IEnumerable<T> VerifyPropertiesAndCreateSet<T>(this DataTable table)
     {
         table.VerifyAllPropertiesExistOnTargetType<T>();
         return table.CreateComplexSet<T>();
@@ -107,7 +98,7 @@ public static class TableExtensions
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="table"></param>
-    public static void VerifyAllPropertiesExistOnTargetType<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this DataTable table)
+    public static void VerifyAllPropertiesExistOnTargetType<T>(this DataTable table)
     {
         var headers = table.Header.Select(e => e.Split('.').First());
         var propertiesOnTargetType = typeof(T).GetProperties().Select(e => e.Name).ToList();

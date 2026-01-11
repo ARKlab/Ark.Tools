@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-11  
-**Current Phase:** Phase 2 - Level 5 Extended Utilities (COMPLETE!)  
-**Progress:** 26/42 libraries (62%)
+**Current Phase:** Phase 2 - Level 5 Extended Utilities (Nearly Complete)  
+**Progress:** 25/42 libraries (60%)
 
 ---
 
@@ -273,7 +273,7 @@
 
 ## Level 5: Extended Utilities (9 libraries)
 
-### ✅ Completed (9/9) - LEVEL COMPLETE!
+### ✅ Completed (8/9)
 
 - [x] **Ark.Tools.NLog.Configuration**
   - **Status**: ✅ DONE
@@ -346,18 +346,14 @@
   - **Justification**: Dictionary<string, string> only contains string primitives that are always preserved by the trimmer
   - **Dependencies**: Ark.Tools.NLog ✅, Ark.Tools.Outbox ✅, Ark.Tools.Sql ✅, Ark.Tools.SystemTextJson ✅
 
+### ❌ Not Trimmable (1/9)
+
 - [x] **Ark.Tools.Reqnroll**
-  - **Status**: ✅ DONE
-  - **Completed**: 2026-01-11
-  - **Changes**:
-    - Added `DynamicallyAccessedMembers.PublicProperties | NonPublicProperties` to TableExtensions generic parameters
-    - Added `UnconditionalSuppressMessage` to StringTypeConverterValueRetriver methods
-    - Added `UnconditionalSuppressMessage` to NestedJsonRetrieverAndComparer methods
-    - Created local function with suppressions for MakeGenericMethod usage
-  - **Warnings Fixed**: IL2026, IL2067, IL2075, IL2076, IL2090, IL2091 (22 total occurrences)
-  - **Test Coverage**: Full solution build verified
-  - **Pattern**: Testing libraries - types come from test DTOs preserved by test framework
-  - **Dependencies**: Ark.Tools.Http ✅
+  - **Status**: ❌ NOT TRIMMABLE
+  - **Reason**: Test-only library - no benefit in trimming test projects
+  - **Decision Date**: 2026-01-11
+  - **Notes**: This is a testing utility library used exclusively in test projects. Since test projects are not deployed and trimming primarily benefits deployed applications by reducing size, making this library trimmable provides no practical value.
+  - **Dependencies**: Ark.Tools.Http
 
 ---
 
@@ -396,7 +392,8 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 26 (62%)
+- **Completed**: 25 (60%)
+- **Not Trimmable**: 1 (2%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
 - **Needs Analysis**: 16 (38%)
@@ -407,8 +404,7 @@
 - **Level 2 (First-Level Integrations)**: 4/4 (100%) ✅ COMPLETE!
 - **Level 3 (Serialization Utilities)**: 3/3 (100%) ✅ COMPLETE!
 - **Level 4 (HTTP & Logging)**: 2/2 (100%) ✅ COMPLETE!
-- **Level 5 (Extended Utilities)**: 9/9 (100%) ✅ COMPLETE!
-- **Level 6+**: 0/15 (0%)
+- **Level 5 (Extended Utilities)**: 8/9 (89%) - 1 marked as not trimmable
 - **Level 6+**: 0/15 (0%)
 
 ### By Complexity
@@ -452,26 +448,24 @@
 
 ## Update Log
 
-### 2026-01-11 (Late Session - Level 5 COMPLETE!)
-- **Level 5 Extended Utilities**: 100% COMPLETE! (9/9 libraries)
+### 2026-01-11 (Late Session - Level 5 Nearly Complete)
+- **Level 5 Extended Utilities**: 89% COMPLETE! (8/9 libraries, 1 marked not trimmable)
   - **Batch 3 - Final Level 5 Libraries**:
     - **Ark.Tools.FtpClient.Core**: Zero warnings from start
     - **Ark.Tools.Outbox.SqlServer**: Fixed IL2026 (4 occurrences)
       - Added `UnconditionalSuppressMessage` to all HeaderSerializer methods
       - Pattern: Well-known types with primitive key-value pairs (Dictionary<string, string>)
       - Justification: String primitives are always preserved by the trimmer
-    - **Ark.Tools.Reqnroll**: Fixed IL2026, IL2067, IL2075, IL2076, IL2090, IL2091 (22 occurrences)
-      - Added `DynamicallyAccessedMembers.PublicProperties | NonPublicProperties` to TableExtensions generic parameters
-      - Added `UnconditionalSuppressMessage` to StringTypeConverterValueRetriver and NestedJsonRetrieverAndComparer
-      - Created local function with suppressions for MakeGenericMethod usage
-      - Pattern: Testing libraries - types come from test DTOs preserved by test framework
+    - **Ark.Tools.Reqnroll**: ❌ Marked as NOT TRIMMABLE
+      - Reason: Test-only library - no benefit in trimming test projects
+      - Reverted all trimming changes per feedback
+      - Testing libraries used exclusively in test projects don't need to be trimmable since tests aren't deployed
 - **Patterns Established**:
-  1. **Testing Library Pattern**: For Reqnroll/BDD frameworks, suppress warnings with justification that types come from test DTOs
+  1. **Test Library Decision**: Libraries used exclusively for testing should be marked as not trimmable
   2. **Well-Known Type Pattern**: Suppress warnings for Dictionary<string, string> and other primitive collections
-  3. **Generic Constraints Pattern**: Use DynamicallyAccessedMembers attributes on generic parameters that use reflection
-- **Testing**: Full solution build verified for all 3 libraries - 0 warnings, 0 errors
-- **Progress**: 26/42 libraries (62%) - Level 5 COMPLETE! Levels 0-5 all done!
-- **Milestone**: All foundational, core, and extended utility libraries are now trimmable!
+- **Testing**: Full solution build verified for 2 libraries - 0 warnings, 0 errors
+- **Progress**: 25/42 libraries (60%), 1 marked not trimmable (2%)
+- **Note**: Reverted Reqnroll changes based on feedback that test-only libraries don't benefit from trimming
 
 ### 2026-01-11 (Evening Session - Level 5 Almost Complete!)
 - **Level 5 Extended Utilities**: 67% COMPLETE! (6/9 libraries)

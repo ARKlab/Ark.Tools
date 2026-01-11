@@ -10,8 +10,6 @@ using NodaTime.Serialization.JsonNet;
 
 using Reqnroll.Assist;
 
-using System.Diagnostics.CodeAnalysis;
-
 
 namespace Ark.Tools.Reqnroll;
 
@@ -19,8 +17,6 @@ public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComp
 {
     private static readonly JsonSerializerSettings _settings;
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "This class is used by Reqnroll for test data binding. The TType generic parameter ensures the type is preserved by the test framework.")]
     static NestedJsonRetrieverAndComparer()
     {
         var s = new ArkJsonSerializerSettings
@@ -38,8 +34,6 @@ public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComp
         _settings = s;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "This method is used by Reqnroll for test data binding. The propertyType comes from test DTOs that are preserved by the test framework.")]
     public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
     {
         if (string.IsNullOrWhiteSpace(keyValuePair.Value)) return null;
@@ -57,8 +51,6 @@ public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComp
         return actualValue?.GetType() == typeof(TType);
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "This method is used by Reqnroll for test comparison. The actualValue type is preserved by the test framework.")]
     public bool Compare(string expectedValue, object actualValue)
     {
         if (actualValue == null ^ string.IsNullOrWhiteSpace(expectedValue)) return false;
