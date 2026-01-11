@@ -74,13 +74,10 @@ If you need to call a processor from a non-async method, use one of these patter
 // ❌ BAD - Will throw NotSupportedException
 processor.Execute(command);
 
-// ✅ OPTION 1: Use Task.Run (recommended for most cases)
+// ✅ Use Task.Run (recommended)
 Task.Run(() => processor.ExecuteAsync(command)).GetAwaiter().GetResult();
 
-// ✅ OPTION 2: Use async wrapper with synchronization context
-Task.Run(async () => await processor.ExecuteAsync(command)).GetAwaiter().GetResult();
-
-// ✅ OPTION 3: Make your method async (best solution)
+// ✅ Best solution: Make your method async
 public async Task MyMethodAsync()
 {
     await processor.ExecuteAsync(command);
@@ -93,12 +90,7 @@ public async Task MyMethodAsync()
 
 2. **Avoid sync-over-async in hot paths**: Blocking on async code can cause thread pool starvation and deadlocks in some contexts (e.g., ASP.NET request handling).
 
-3. **Use Task.Run for fire-and-forget**: If you don't need the result and can continue execution:
-   ```csharp
-   _ = Task.Run(() => processor.ExecuteAsync(command));
-   ```
-
-4. **For background services**: Consider using `IHostedService` or `BackgroundService` which are async by design.
+3. **For background services**: Consider using `IHostedService` or `BackgroundService` which are async by design.
 
 ### Benefits
 

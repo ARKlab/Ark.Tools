@@ -14,6 +14,8 @@ using Reqnroll;
 using System.Net;
 using System.Net.Http.Headers;
 
+#pragma warning disable VSTHRD002 // Test helper methods use sync-over-async patterns for simplicity
+
 namespace WebApplicationDemo.Tests;
 
 [Binding]
