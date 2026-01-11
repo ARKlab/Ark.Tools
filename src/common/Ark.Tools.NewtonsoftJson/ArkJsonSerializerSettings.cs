@@ -6,15 +6,21 @@ namespace Ark.Tools.NewtonsoftJson;
 // for quick retrocompatibility
 public class ArkDefaultJsonSerializerSettings : ArkJsonSerializerSettings
 {
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "This class wraps Newtonsoft.Json functionality which requires reflection. Consumers using this class are expected to use RequiresUnreferencedCode or suppress appropriately.")]
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
     public ArkDefaultJsonSerializerSettings() : base()
     {
     }
 
+    /// <summary>
+    /// Gets a singleton instance of ArkDefaultJsonSerializerSettings.
+    /// </summary>
+    /// <returns>A shared instance of ArkDefaultJsonSerializerSettings.</returns>
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
+    public static ArkDefaultJsonSerializerSettings GetInstance() => _instance;
+
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "This class wraps Newtonsoft.Json functionality which requires reflection. Consumers using this property are expected to use RequiresUnreferencedCode or suppress appropriately.")]
-    public static ArkDefaultJsonSerializerSettings Instance { get; } = new ArkDefaultJsonSerializerSettings();
+        Justification = "The singleton instance is created here but warnings are propagated through the GetInstance() method.")]
+    private static readonly ArkDefaultJsonSerializerSettings _instance = new ArkDefaultJsonSerializerSettings();
 }
 
 public class ArkJsonSerializerSettings : JsonSerializerSettings
@@ -31,7 +37,14 @@ public class ArkJsonSerializerSettings : JsonSerializerSettings
 /// </summary>
 public static class ArkJsonSerializer
 {
+    /// <summary>
+    /// Gets a singleton JsonSerializer instance with ArkDefaultSettings.
+    /// </summary>
+    /// <returns>A shared JsonSerializer instance.</returns>
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
+    public static JsonSerializer GetInstance() => _instance;
+
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "This class wraps Newtonsoft.Json functionality which requires reflection. Consumers using this property are expected to use RequiresUnreferencedCode or suppress appropriately.")]
-    public static JsonSerializer Instance { get; } = JsonSerializer.Create(ArkDefaultJsonSerializerSettings.Instance);
+        Justification = "The singleton instance is created here but warnings are propagated through the GetInstance() method.")]
+    private static readonly JsonSerializer _instance = JsonSerializer.Create(ArkDefaultJsonSerializerSettings.GetInstance());
 }
