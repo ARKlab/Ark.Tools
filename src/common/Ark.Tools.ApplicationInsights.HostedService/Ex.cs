@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Ark.Tools.ApplicationInsights.HostedService;
@@ -33,10 +34,17 @@ public static partial class Ex
                 o.SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(1);
             });
 
-            services.Configure<SamplingPercentageEstimatorSettings>(o =>
+            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+                Justification = "SamplingPercentageEstimatorSettings is a well-known ApplicationInsights SDK type with simple properties that are preserved by the trimmer when the SDK is referenced.")]
+            static void ConfigureSamplingSettings(IConfiguration configuration, IServiceCollection services)
             {
-                ctx.Configuration.GetSection("ApplicationInsights").GetSection("EstimatorSettings").Bind(o);
-            });
+                services.Configure<SamplingPercentageEstimatorSettings>(o =>
+                {
+                    configuration.GetSection("ApplicationInsights").GetSection("EstimatorSettings").Bind(o);
+                });
+            }
+
+            ConfigureSamplingSettings(ctx.Configuration, services);
 
             // Resolve connection string from configuration
             var connectionString = ctx.Configuration["ApplicationInsights:ConnectionString"]
