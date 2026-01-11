@@ -5,12 +5,14 @@ using Ark.Tools.NewtonsoftJson;
 using Flurl.Http.Configuration;
 
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Ark.Tools.Http;
 
 public static partial class Ex
 {
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
     public static IFlurlClientBuilder ConfigureArkDefaults(this IFlurlClientBuilder builder, bool useNewtonsoftJson = false)
     {
         var j = new CookieJar();
@@ -34,6 +36,7 @@ public static partial class Ex
             ;
     }
 
+    [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
     public static IFlurlClient ConfigureArkDefaults(this IFlurlClient client, bool useNewtonsoftJson = false)
     {
         var j = new CookieJar();

@@ -1,12 +1,13 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.NewtonsoftJson;
 
 
 
-public abstract class JsonPolymorphicConverter<T> : JsonConverter where T : notnull
+public abstract class JsonPolymorphicConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T> : JsonConverter where T : notnull
 {
     /// <summary>
     /// Create an instance of objectType, based properties in the JSON object

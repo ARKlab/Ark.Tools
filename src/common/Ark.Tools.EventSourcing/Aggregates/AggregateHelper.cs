@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Ark.Tools.EventSourcing.Aggregates;
@@ -19,7 +20,7 @@ public static class AggregateHelper<TAggregate>
             ?? typeof(TEvent).Name;
     }
 
-    public static string EventName(Type t)
+    public static string EventName([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type t)
     {
         if (!typeof(IAggregateEvent<TAggregate>).IsAssignableFrom(t))
             throw new ArgumentException("is not an event for this aggregate", nameof(t));
@@ -40,7 +41,7 @@ public static class AggregateHelper<TAggregate>
 
 public static class AggregateHelper
 {
-    public static string AggregateName(Type t)
+    public static string AggregateName([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type t)
     {
         if (!typeof(IAggregateRoot).IsAssignableFrom(t))
             throw new ArgumentException("is not an aggregate root", nameof(t));
