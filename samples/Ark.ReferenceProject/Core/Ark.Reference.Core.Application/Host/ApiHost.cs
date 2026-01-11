@@ -271,7 +271,6 @@ public class ApiHost
         await Container.GetInstance<IFileStorageService>().InitAsync(ctk).ConfigureAwait(false);
     }
 
-
     private void _registerContainer(Container container)
     {
         //Cfg

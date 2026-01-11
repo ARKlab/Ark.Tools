@@ -3,7 +3,7 @@ namespace Ark.Reference.Common.Services.FileStorageService;
 
 public interface IFileStorageService
 {
-    Task InitAsync();
+    Task InitAsync(CancellationToken ctk = default);
 
     Task SaveFileAsync(Guid guid, string filename, Stream fileContent, CancellationToken ctk = default);
 
