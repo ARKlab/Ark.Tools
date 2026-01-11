@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-11  
-**Current Phase:** Phase 2 - Level 5 Extended Utilities (Nearly Complete)  
-**Progress:** 25/42 libraries (60%)
+**Current Phase:** Phase 3 - Level 7-8 High-Level Integrations  
+**Progress:** 33/42 libraries (79%)
 
 ---
 
@@ -359,19 +359,92 @@
 
 ## Level 6: Framework Integrations (9 libraries)
 
-### 🔍 Needs Analysis (9/9)
+### ✅ Completed (7/9)
 
-- [ ] **Ark.Tools.ApplicationInsights.HostedService**
-- [ ] **Ark.Tools.FtpClient.ArxOne**
-- [ ] **Ark.Tools.FtpClient.FluentFtp**
-- [ ] **Ark.Tools.FtpClient.FtpProxy**
-- [ ] **Ark.Tools.FtpClient.SftpClient**
-- [ ] **Ark.Tools.RavenDb** ⚠️ Likely complex
-  - **Notes**: ORM - Heavy reflection expected
-- [ ] **Ark.Tools.Rebus** ⚠️ Likely complex
-  - **Notes**: Message bus - Heavy reflection expected
-- [ ] **Ark.Tools.Solid.FluentValidaton**
-- [ ] **Ark.Tools.Solid.SimpleInjector**
+- [x] **Ark.Tools.ApplicationInsights.HostedService**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `UnconditionalSuppressMessage` to local function for ConfigurationBinder.Bind
+    - Suppression safe as SamplingPercentageEstimatorSettings is well-known ApplicationInsights SDK type
+  - **Warnings Fixed**: IL2026 (1 occurrence)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Local function with suppression for SDK types
+
+- [x] **Ark.Tools.FtpClient.ArxOne**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.FtpClient.Core ✅, Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.FtpClient.FluentFtp**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.FtpClient.Core ✅, Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.FtpClient.FtpProxy**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `UnconditionalSuppressMessage` to `_initClient` private method
+    - Suppression safe as FtpProxy uses well-known DTOs for API communication
+  - **Warnings Fixed**: IL2026 (1 occurrence from ConfigureArkDefaults)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Private initialization with well-known DTOs
+  - **Dependencies**: Ark.Tools.Auth0 ✅, Ark.Tools.FtpClient.Core ✅, Ark.Tools.Http ✅, Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.FtpClient.SftpClient**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.FtpClient.Core ✅, Ark.Tools.NLog ✅
+
+- [x] **Ark.Tools.RavenDb**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start ⭐ (surprisingly clean for ORM library)
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.Core (NOT trimmable but not blocking), Ark.Tools.Solid ✅
+  - **Notes**: Despite being an ORM library, contains only utility methods with no reflection usage
+
+- [x] **Ark.Tools.Rebus**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start ⭐ (surprisingly clean for message bus library)
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.ApplicationInsights ✅, Ark.Tools.Core (NOT trimmable but not blocking), Ark.Tools.SimpleInjector ✅, Ark.Tools.Solid ✅
+  - **Notes**: Despite being a message bus integration library, the wrapper code has no reflection usage
+
+### ❌ Not Trimmable (2/9)
+
+- [x] **Ark.Tools.Solid.FluentValidation**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.Solid ✅
+
+- [x] **Ark.Tools.Solid.SimpleInjector**
+  - **Status**: ❌ NOT TRIMMABLE
+  - **Reason**: Fundamentally uses dynamic invocation for handler dispatch
+  - **Decision Date**: 2026-01-11
+  - **Notes**: 
+    - Uses C# `dynamic` keyword to call handler methods
+    - Relies on runtime type construction via `MakeGenericType`
+    - Handlers resolved from SimpleInjector container at runtime
+    - Would require breaking changes to make trimmable
+    - Added detailed README documenting why and suggesting alternatives
+  - **Dependencies**: Ark.Tools.SimpleInjector ✅, Ark.Tools.Solid ✅
 
 ---
 
@@ -392,11 +465,11 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 25 (60%)
-- **Not Trimmable**: 1 (2%)
+- **Completed**: 33 (79%)
+- **Not Trimmable**: 2 (5%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 16 (38%)
+- **Needs Analysis**: 7 (17%)
 
 ### By Level
 - **Level 0 (Foundation)**: 5/5 (100%) ✅ COMPLETE!
@@ -405,18 +478,19 @@
 - **Level 3 (Serialization Utilities)**: 3/3 (100%) ✅ COMPLETE!
 - **Level 4 (HTTP & Logging)**: 2/2 (100%) ✅ COMPLETE!
 - **Level 5 (Extended Utilities)**: 8/9 (89%) - 1 marked as not trimmable
-- **Level 6+**: 0/15 (0%)
+- **Level 6 (Framework Integrations)**: 9/9 (100%) ✅ COMPLETE! - 7 trimmable, 2 not trimmable
+- **Level 7-8 (High-Level)**: 0/6 (0%)
 
 ### By Complexity
-- **Low Complexity**: ~15 libraries (expected easy wins)
-- **Medium Complexity**: ~20 libraries (standard patterns apply)
-- **High Complexity**: ~7 libraries (significant effort required)
+- **Low Complexity**: 20 libraries completed (easy wins with zero warnings)
+- **Medium Complexity**: 13 libraries completed (standard patterns applied)
+- **High Complexity**: 0 libraries completed, 2 marked not trimmable
 
 ### By Priority
-- **Critical Blockers**: 1 (Ark.Tools.Core only)
+- **Critical Blockers**: 1 (Ark.Tools.Core only - still not addressed)
 - **High Priority**: 0 (All critical dependencies now complete!)
-- **Medium Priority**: 18 (Level 5-6 libraries)
-- **Low Priority**: 10 (Level 7+ libraries)
+- **Medium Priority**: 0 (All Levels 0-6 complete!)
+- **Low Priority**: 6 (Level 7-8 libraries remaining)
 
 ---
 
@@ -447,6 +521,40 @@
 ---
 
 ## Update Log
+
+### 2026-01-11 (Final Session - Level 6 COMPLETE! 🎉)
+- **Level 6 Framework Integrations**: 100% COMPLETE! (9/9 libraries)
+  - **Batch 1 - ApplicationInsights & FtpClient**:
+    - **Ark.Tools.ApplicationInsights.HostedService**: Fixed IL2026 (1 occurrence)
+      - Added local function with `UnconditionalSuppressMessage` for ConfigurationBinder.Bind
+      - Pattern: Well-known SDK types (SamplingPercentageEstimatorSettings)
+    - **Ark.Tools.FtpClient.ArxOne**: Zero warnings from start
+    - **Ark.Tools.FtpClient.FluentFtp**: Zero warnings from start
+    - **Ark.Tools.FtpClient.FtpProxy**: Fixed IL2026 (1 occurrence)
+      - Added suppression to private `_initClient` method
+      - Pattern: Private initialization with well-known DTOs
+    - **Ark.Tools.FtpClient.SftpClient**: Zero warnings from start
+  - **Batch 2 - Solid Integrations**:
+    - **Ark.Tools.Solid.FluentValidation**: Zero warnings from start
+    - **Ark.Tools.Solid.SimpleInjector**: ❌ Marked as NOT TRIMMABLE
+      - Reason: Fundamentally uses C# `dynamic` keyword for handler dispatch
+      - Uses runtime type construction and dynamic invocation
+      - Would require breaking changes to make trimmable
+      - Added detailed README explaining why and suggesting alternatives
+  - **Batch 3 - Complex Frameworks (Surprising Results!)**:
+    - **Ark.Tools.RavenDb**: Zero warnings from start ⭐
+      - Initially expected to be complex (ORM library)
+      - Only contains utility methods with no reflection usage
+    - **Ark.Tools.Rebus**: Zero warnings from start ⭐
+      - Initially expected to be complex (message bus library)
+      - Wrapper code has no reflection usage
+- **Patterns Established**:
+  1. **Not All ORMs/Message Buses Are Complex**: Wrapper libraries around complex frameworks can be simple
+  2. **Dynamic Dispatch Pattern**: Libraries using C# `dynamic` for handler invocation cannot be trimmed
+  3. **Well-Known SDK Types Pattern**: Suppressions safe for configuration binding of SDK types
+- **Testing**: Full solution builds verified for all 9 libraries
+- **Progress**: 33/42 libraries (79%), 2 marked not trimmable (5%)
+- **Milestone**: All Levels 0-6 now complete! Only 6 high-level integration libraries remaining
 
 ### 2026-01-11 (Late Session - Level 5 Nearly Complete)
 - **Level 5 Extended Utilities**: 89% COMPLETE! (8/9 libraries, 1 marked not trimmable)
