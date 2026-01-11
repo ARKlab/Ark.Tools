@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-11  
-**Current Phase:** Phase 3 - Level 7-8 High-Level Integrations  
-**Progress:** 33/42 libraries (79%)
+**Current Phase:** ✅ Phase 3 COMPLETE - All Levels 0-8 Done!  
+**Progress:** 36/42 libraries (86%) - Only Ark.Tools.Core remaining!
 
 ---
 
@@ -450,14 +450,79 @@
 
 ## Level 7-8: High-Level Integrations (6 libraries)
 
-### 🔍 Needs Analysis (6/6)
+### ✅ Completed (3/6)
 
-- [ ] **Ark.Tools.Activity**
-- [ ] **Ark.Tools.EventSourcing.Rebus**
-- [ ] **Ark.Tools.Outbox.Rebus**
-- [ ] **Ark.Tools.RavenDb.Auditing**
-- [ ] **Ark.Tools.Solid.Authorization**
-- [ ] **Ark.Tools.EventSourcing.RavenDb**
+- [x] **Ark.Tools.Activity**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `UnconditionalSuppressMessage` to local functions wrapping `MakeGenericType` calls
+    - Used local function pattern for cleaner suppression scoping
+  - **Warnings Fixed**: IL2055 (2 occurrences from MakeGenericType)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Local function with suppression for DI container registration patterns
+  - **Dependencies**: Ark.Tasks ✅, Ark.Tools.NLog ✅, Ark.Tools.Rebus ✅, Ark.Tools.Nodatime.Json ✅, Ark.Tools.SimpleInjector ✅
+
+- [x] **Ark.Tools.EventSourcing.Rebus**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.EventSourcing ✅, Ark.Tools.Rebus ✅
+
+- [x] **Ark.Tools.Outbox.Rebus**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.Outbox ✅, Ark.Tools.Rebus ✅
+
+- [x] **Ark.Tools.EventSourcing.RavenDb**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `UnconditionalSuppressMessage` to local function wrapping lambda for collection name configuration
+    - Added `UnconditionalSuppressMessage` to `_getDispatchMethod` for `MakeGenericMethod` call
+  - **Warnings Fixed**: IL2067, IL2060 (from IsAssignableFromEx and MakeGenericMethod)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Local function wrapping complex lambda expressions with interface checks
+  - **Justification**: Event sourcing types are well-known framework types that will be preserved
+  - **Dependencies**: Ark.Tools.EventSourcing ✅, Ark.Tools.EventSourcing.SimpleInjector ✅, Ark.Tools.RavenDb.Auditing (NOT trimmable but not blocking), Ark.Tools.RavenDb ✅
+
+### ❌ Not Trimmable (2/6)
+
+- [x] **Ark.Tools.RavenDb.Auditing**
+  - **Status**: ❌ NOT TRIMMABLE
+  - **Reason**: Fundamentally relies on runtime reflection and dynamic types
+  - **Decision Date**: 2026-01-11
+  - **Technical Issues**:
+    - **Assembly scanning** - Uses `Assembly.GetTypes()` to discover all types implementing `IAuditableEntity`
+    - **Dynamic property access** - Uses C# `dynamic` keyword to access audit entity properties at runtime
+  - **Notes**: 
+    - Ex.cs line 28: `assemblies.SelectMany(x => x.GetTypes())` discovers auditable entities
+    - RavenDbAuditProcessor.cs lines 99, 111: Dynamic property access on audit entities
+    - Would require breaking changes to make trimmable (explicit type registration, refactor away from dynamic)
+    - Cost outweighs benefits for typical usage scenarios
+  - **Documentation**: Added README_TRIMMING.md explaining why not trimmable
+  - **Dependencies**: Ark.Tools.RavenDb ✅
+
+- [x] **Ark.Tools.Solid.Authorization**
+  - **Status**: ❌ NOT TRIMMABLE
+  - **Reason**: Fundamentally uses C# `dynamic` keyword for handler invocation
+  - **Decision Date**: 2026-01-11
+  - **Technical Issues**:
+    - **Dynamic invocation** - Uses `dynamic` to call authorization resource handler methods
+    - Ex.cs line 67-71: `dynamic handler = c.GetInstance(handlerType); return await handler.GetResouceAsync((dynamic)query, ctk);`
+    - Handler type constructed at runtime using `MakeGenericType`, then invoked dynamically
+  - **Notes**:
+    - Similar to Ark.Tools.Solid.SimpleInjector
+    - Would require reflection with explicit method invocation instead of `dynamic`
+    - Would need DynamicallyAccessedMembers attributes and potentially breaking API changes
+    - Authorization handlers typically few in number and preserved anyway
+  - **Documentation**: Added README_TRIMMING.md explaining why not trimmable and comparing to Solid.SimpleInjector
+  - **Dependencies**: Ark.Tools.Authorization ✅, Ark.Tools.Solid.SimpleInjector (NOT trimmable)
 
 ---
 
@@ -465,11 +530,11 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 33 (79%)
-- **Not Trimmable**: 2 (5%)
+- **Completed**: 36 (86%)
+- **Not Trimmable**: 4 (10%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 7 (17%)
+- **Needs Analysis**: 2 (5%) - Only Ark.Tools.Core remaining
 
 ### By Level
 - **Level 0 (Foundation)**: 5/5 (100%) ✅ COMPLETE!
@@ -479,18 +544,18 @@
 - **Level 4 (HTTP & Logging)**: 2/2 (100%) ✅ COMPLETE!
 - **Level 5 (Extended Utilities)**: 8/9 (89%) - 1 marked as not trimmable
 - **Level 6 (Framework Integrations)**: 9/9 (100%) ✅ COMPLETE! - 7 trimmable, 2 not trimmable
-- **Level 7-8 (High-Level)**: 0/6 (0%)
+- **Level 7-8 (High-Level)**: 6/6 (100%) ✅ COMPLETE! - 4 trimmable, 2 not trimmable
 
 ### By Complexity
-- **Low Complexity**: 20 libraries completed (easy wins with zero warnings)
+- **Low Complexity**: 23 libraries completed (easy wins with zero warnings)
 - **Medium Complexity**: 13 libraries completed (standard patterns applied)
-- **High Complexity**: 0 libraries completed, 2 marked not trimmable
+- **High Complexity**: 0 libraries completed, 4 marked not trimmable
 
 ### By Priority
 - **Critical Blockers**: 1 (Ark.Tools.Core only - still not addressed)
 - **High Priority**: 0 (All critical dependencies now complete!)
-- **Medium Priority**: 0 (All Levels 0-6 complete!)
-- **Low Priority**: 6 (Level 7-8 libraries remaining)
+- **Medium Priority**: 0 (All Levels 0-8 complete!)
+- **Low Priority**: 1 (Ark.Tools.Core remaining)
 
 ---
 
@@ -521,6 +586,47 @@
 ---
 
 ## Update Log
+
+### 2026-01-11 (Afternoon Session - Level 7-8 COMPLETE! 🎉 ALL LEVELS DONE!)
+- **Level 7-8 High-Level Integrations**: 100% COMPLETE! (6/6 libraries - 4 trimmable, 2 not trimmable)
+  - **Batch 1 - Activity & EventSourcing**:
+    - **Ark.Tools.Activity**: Fixed IL2055 (2 occurrences)
+      - Added `UnconditionalSuppressMessage` to local functions wrapping `MakeGenericType` calls
+      - Used local function pattern for cleaner suppression scoping
+      - Pattern: DI container registration with runtime type construction
+      - Justification: Activity types from SimpleInjector's GetTypesToRegister are explicitly registered
+    - **Ark.Tools.EventSourcing.Rebus**: Zero warnings from start
+      - Simple integration library with no reflection usage
+    - **Ark.Tools.Outbox.Rebus**: Zero warnings from start
+      - Simple integration library with no reflection usage
+  - **Batch 2 - RavenDb Libraries**:
+    - **Ark.Tools.RavenDb.Auditing**: ❌ Marked as NOT TRIMMABLE
+      - Reason: Fundamentally uses `Assembly.GetTypes()` for type discovery and C# `dynamic` for property access
+      - Ex.cs line 28: Assembly scanning to discover all types implementing `IAuditableEntity`
+      - RavenDbAuditProcessor.cs: Dynamic property access on audit entities
+      - Would require breaking changes (explicit type registration, refactor away from dynamic)
+      - Added detailed README_TRIMMING.md explaining why
+    - **Ark.Tools.Solid.Authorization**: ❌ Marked as NOT TRIMMABLE
+      - Reason: Fundamentally uses C# `dynamic` keyword for handler invocation
+      - Ex.cs lines 67-71: `dynamic handler = c.GetInstance(handlerType); await handler.GetResouceAsync((dynamic)query, ctk);`
+      - Similar pattern to Ark.Tools.Solid.SimpleInjector
+      - Handler type constructed via `MakeGenericType` then invoked dynamically
+      - Added detailed README_TRIMMING.md with comparison to Solid.SimpleInjector
+    - **Ark.Tools.EventSourcing.RavenDb**: Fixed IL2067, IL2060 (2 unique error types)
+      - Added `UnconditionalSuppressMessage` to local function wrapping lambda for collection name configuration
+      - Added `UnconditionalSuppressMessage` to `_getDispatchMethod` for `MakeGenericMethod` call
+      - Pattern: Local function wrapping complex lambda expressions with interface checks
+      - Justification: Event sourcing types are well-known framework types preserved by the system
+- **Patterns Established**:
+  1. **Assembly Scanning Pattern**: Libraries using `Assembly.GetTypes()` for discovery cannot be trimmed
+  2. **Dynamic Invocation Pattern**: Libraries using C# `dynamic` for method calls cannot be trimmed
+  3. **Local Function Wrapper Pattern**: Wrap complex lambdas in local functions for cleaner suppression scoping
+  4. **Event Sourcing Framework Types**: Event types and aggregate types are preserved by the event sourcing system
+- **Decision Process**: Two libraries assessed and marked as NOT TRIMMABLE with detailed documentation
+- **Testing**: Full solution build verified - 0 warnings, 0 errors
+- **Progress**: 36/42 libraries (86%), 4 marked not trimmable (10%)
+- **🎉 MILESTONE**: **ALL LEVELS 0-8 NOW COMPLETE!** Only Ark.Tools.Core remains (critical blocker)
+- **Achievement**: 86% of libraries are now trimmable, exceeding initial 70% target!
 
 ### 2026-01-11 (Final Session - Level 6 COMPLETE! 🎉)
 - **Level 6 Framework Integrations**: 100% COMPLETE! (9/9 libraries)
