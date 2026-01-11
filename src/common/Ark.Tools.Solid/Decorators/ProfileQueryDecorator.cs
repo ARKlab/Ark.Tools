@@ -20,19 +20,6 @@ public sealed class ProfileQueryDecorator<TQuery, TResult> : IQueryHandler<TQuer
         _decorated = decorated;
     }
 
-    public TResult Execute(TQuery query)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        Stopwatch stopWatch = new();
-        stopWatch.Start();
-        var result = _decorated.Execute(query);
-        stopWatch.Stop();
-        _logger.Trace(CultureInfo.InvariantCulture, "Query<{Query}> executed in {Elapsed}ms", query.GetType(), stopWatch.ElapsedMilliseconds);
-
-        return result;
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
     public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
     {
         Stopwatch stopWatch = new();

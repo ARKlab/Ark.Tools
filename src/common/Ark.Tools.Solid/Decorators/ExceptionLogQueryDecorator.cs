@@ -18,21 +18,6 @@ public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<
         _logger = LogManager.GetLogger(_decorated.GetType().ToString());
     }
 
-    public TResult Execute(TQuery query)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        try
-        {
-            return _decorated.Execute(query);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Exception occured");
-            throw;
-        }
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
     public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
     {
         try

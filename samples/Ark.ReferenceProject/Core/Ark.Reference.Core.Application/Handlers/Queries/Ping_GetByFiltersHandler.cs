@@ -26,14 +26,6 @@ public class Ping_GetByFiltersHandler : IQueryHandler<Ping_GetByFiltersQuery.V1,
     }
 
     /// <inheritdoc/>
-    public PagedResult<Ping.V1.Output> Execute(Ping_GetByFiltersQuery.V1 query)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        return ExecuteAsync(query).GetAwaiter().GetResult();
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    /// <inheritdoc/>
     public async Task<PagedResult<Ping.V1.Output>> ExecuteAsync(Ping_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);

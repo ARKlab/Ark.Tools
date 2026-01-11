@@ -34,14 +34,6 @@ public class Ping_CreateRequestHandler : IRequestHandler<Ping_CreateRequest.V1, 
     }
 
     /// <inheritdoc/>
-    public Ping.V1.Output Execute(Ping_CreateRequest.V1 request)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    /// <inheritdoc/>
     public async Task<Ping.V1.Output> ExecuteAsync(Ping_CreateRequest.V1 request, CancellationToken ctk = default)
     {
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);

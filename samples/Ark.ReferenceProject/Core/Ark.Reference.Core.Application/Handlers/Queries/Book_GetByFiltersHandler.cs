@@ -20,14 +20,6 @@ public class Book_GetByFiltersHandler : IQueryHandler<Book_GetByFiltersQuery.V1,
     }
 
     /// <inheritdoc/>
-    public PagedResult<Book.V1.Output> Execute(Book_GetByFiltersQuery.V1 query)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        return ExecuteAsync(query).GetAwaiter().GetResult();
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    /// <inheritdoc/>
     public async Task<PagedResult<Book.V1.Output>> ExecuteAsync(Book_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
     {
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);

@@ -17,14 +17,6 @@ public class RequestFluentValidateDecorator<TRequest, TResponse>
         _validator = validator;
     }
 
-    public TResponse Execute(TRequest request)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        _validator.ValidateAndThrow(request);
-        return _decorated.Execute(request);
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
     public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
         await _validator.ValidateAndThrowAsync(request, ctk).ConfigureAwait(false);

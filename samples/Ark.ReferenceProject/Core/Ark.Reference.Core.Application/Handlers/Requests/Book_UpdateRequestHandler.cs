@@ -28,14 +28,6 @@ public class Book_UpdateRequestHandler : IRequestHandler<Book_UpdateRequest.V1, 
     }
 
     /// <inheritdoc/>
-    public Book.V1.Output? Execute(Book_UpdateRequest.V1 request)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    /// <inheritdoc/>
     public async Task<Book.V1.Output?> ExecuteAsync(Book_UpdateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request.Data);

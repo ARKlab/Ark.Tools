@@ -33,14 +33,6 @@ public class Ping_DeleteRequestHandler : IRequestHandler<Ping_DeleteRequest.V1, 
     }
 
     /// <inheritdoc/>
-    public bool Execute(Ping_DeleteRequest.V1 request)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    /// <inheritdoc/>
     public async Task<bool> ExecuteAsync(Ping_DeleteRequest.V1 request, CancellationToken ctk = default)
     {
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);

@@ -15,22 +15,6 @@ public sealed class ExceptionLogRequestDecorator<TRequest, TResponse> : IRequest
         _decorated = decorated;
     }
 
-    public TResponse Execute(TRequest request)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        try
-        {
-            return _decorated.Execute(request);
-        }
-        catch (Exception ex)
-        {
-            Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
-            logger.Error(ex, "Exception occured");
-            throw;
-        }
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
     public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
         try

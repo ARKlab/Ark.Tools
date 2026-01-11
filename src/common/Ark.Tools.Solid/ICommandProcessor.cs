@@ -5,7 +5,7 @@ namespace Ark.Tools.Solid;
 
 public interface ICommandProcessor
 {
-    [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.")]
+    [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     void Execute(ICommand command);
 
     Task ExecuteAsync(ICommand command, CancellationToken ctk = default);

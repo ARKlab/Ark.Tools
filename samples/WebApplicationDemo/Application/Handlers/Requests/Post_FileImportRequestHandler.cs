@@ -13,13 +13,6 @@ public class Post_FileImportRequestHandler : IRequestHandler<Post_FileImportRequ
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    public FileImport? Execute(Post_FileImportRequest.V1 request)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        return ExecuteAsync(request).GetAwaiter().GetResult();
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
     public async Task<FileImport?> ExecuteAsync(Post_FileImportRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);

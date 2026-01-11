@@ -21,14 +21,6 @@ public class CommandFluentValidateDecorator<TCommand>
         _validator = validator;
     }
 
-    public void Execute(TCommand query)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        _validator.ValidateAndThrow(query);
-        _decorated.Execute(query);
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
     public async Task ExecuteAsync(TCommand query, CancellationToken ctk = default)
     {
         await _validator.ValidateAndThrowAsync(query, ctk).ConfigureAwait(false);

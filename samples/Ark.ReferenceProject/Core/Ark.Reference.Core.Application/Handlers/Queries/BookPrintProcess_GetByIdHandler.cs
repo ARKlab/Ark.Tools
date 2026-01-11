@@ -19,14 +19,6 @@ public class BookPrintProcess_GetByIdHandler : IQueryHandler<BookPrintProcess_Ge
     }
 
     /// <inheritdoc/>
-    public BookPrintProcess.V1.Output? Execute(BookPrintProcess_GetByIdQuery.V1 query)
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        return ExecuteAsync(query).GetAwaiter().GetResult();
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    /// <inheritdoc/>
     public async Task<BookPrintProcess.V1.Output?> ExecuteAsync(BookPrintProcess_GetByIdQuery.V1 query, CancellationToken ctk = default)
     {
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
