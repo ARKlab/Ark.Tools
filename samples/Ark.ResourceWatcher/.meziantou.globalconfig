@@ -4,6 +4,7 @@ is_global = true
 
 
 # MA0004: Use Task.ConfigureAwait
+# Downgraded to suggestion for sample project (not production code)
 dotnet_diagnostic.MA0004.severity = suggestion
 
 # MA0006: Use String.Equals instead of equality operator
@@ -104,6 +105,3 @@ dotnet_diagnostic.MA0152.severity = warning
 
 # MA0160: Use ContainsKey instead of TryGetValue
 dotnet_diagnostic.MA0160.severity = warning
-
-# VSTHRD200: Use "Async" suffix for async methods
-dotnet_diagnostic.VSTHRD200.severity = silent

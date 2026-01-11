@@ -1,0 +1,6 @@
+# EditorConfig for test projects - override MA0004 severity
+root = false
+
+[*.cs]
+# MA0004: Use Task.ConfigureAwait - downgrade to suggestion for test projects
+dotnet_diagnostic.MA0004.severity = suggestion

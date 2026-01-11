@@ -64,10 +64,12 @@ public sealed class FtpClientPool : FtpClientWithConnectionBase, IFtpClientPool
         {
             _pool.Push(pooled.Inner);
         }
+#pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional cleanup
         catch
         {
             pooled.Inner.Dispose();
         }
+#pragma warning restore ERP022
         finally
         {
             _semaphore.Release();

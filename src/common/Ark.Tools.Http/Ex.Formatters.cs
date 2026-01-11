@@ -9,6 +9,7 @@ namespace Ark.Tools.Http;
 
 public static partial class Ex
 {
+#pragma warning disable VSTHRD003 // Avoid awaiting or returning a Task representing work that was not started within your context
     public static async Task<T?> Receive<T>(this Task<IFlurlResponse> response, MediaTypeFormatterCollection formatterCollection, CancellationToken cancellationToken = default)
     {
         var resp = await response.ConfigureAwait(false);
@@ -16,6 +17,7 @@ public static partial class Ex
 
         return await resp.ResponseMessage.Content.ReadAsAsync<T>(formatterCollection, cancellationToken).ConfigureAwait(false);
     }
+#pragma warning restore VSTHRD003
 
     public static Task<T?> GetAsync<T>(this IFlurlRequest request, MediaTypeFormatterCollection formatterCollection, HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead, CancellationToken cancellationToken = default)
     {

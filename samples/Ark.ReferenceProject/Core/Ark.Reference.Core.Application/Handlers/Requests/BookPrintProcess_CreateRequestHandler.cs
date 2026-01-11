@@ -47,7 +47,8 @@ public class BookPrintProcess_CreateRequestHandler : IRequestHandler<BookPrintPr
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.Data);
 
-        await using var ctx = await _dataContextFactory.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _dataContextFactory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         // Check if there's already a running or pending print process for this book
         var existingProcess = await ctx.ReadRunningPrintProcessForBookAsync(request.Data.BookId, ctk).ConfigureAwait(false);

@@ -24,7 +24,8 @@ internal sealed class Audit_GetQueryHandler : IQueryHandler<Audit_GetQuery.V1, P
 
     public async Task<PagedResult<AuditDto<AuditKind>>> ExecuteAsync(Audit_GetQuery.V1 query, CancellationToken ctk = default)
     {
-        await using var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var (records, count) = await ctx.ReadAuditByFilterAsync(query, ctk: ctk).ConfigureAwait(false);
 

@@ -13,7 +13,9 @@ public class EntityRequestBusinessRuleViolationHandler : IRequestHandler<Post_En
 {
     public Entity.V1.Output Execute(Post_EntityRequestBusinessRuleViolation.V1 request)
     {
+#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
         return ExecuteAsync(request).ConfigureAwait(true).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
     }
 
     public Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequestBusinessRuleViolation.V1 request, CancellationToken ctk = default)

@@ -48,7 +48,8 @@ public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetad
         // Send to sink API
         await _client
             .Request("data")
-            .PostJsonAsync(sinkData, cancellationToken: ctk);
+            .PostJsonAsync(sinkData, cancellationToken: ctk)
+            .ConfigureAwait(false);
 
         _logger.Info(CultureInfo.InvariantCulture, "Successfully processed blob {ResourceId}",
             file.Metadata.ResourceId);

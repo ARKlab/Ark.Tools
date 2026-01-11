@@ -38,7 +38,8 @@ public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, 
     {
         ArgumentNullException.ThrowIfNull(request.Data);
 
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         await ctx.EnsureAudit(AuditKind.Book, _userContext.GetUserId(), "Create a new Book", ctk).ConfigureAwait(false);
 

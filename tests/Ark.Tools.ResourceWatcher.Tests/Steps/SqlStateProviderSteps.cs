@@ -386,10 +386,12 @@ public sealed class SqlStateProviderSteps : IDisposable
                 conn.Open();
                 conn.Execute("DELETE FROM [State] WHERE [Tenant] LIKE 'test-%' OR [Tenant] LIKE 'tenant-%' OR [Tenant] LIKE 'batch-%'");
             }
+#pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional cleanup
             catch
             {
                 // Ignore cleanup errors
             }
+#pragma warning restore ERP022
         }
     }
 }

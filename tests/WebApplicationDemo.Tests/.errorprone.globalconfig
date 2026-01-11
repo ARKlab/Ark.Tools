@@ -1,0 +1,7 @@
+is_global = true
+
+#### ErrorProne.NET Rules - Test Project Override ####
+
+# ERP022: Exit point swallows an unobserved exception
+# Downgraded to warning for test project (intentional exception swallowing in cleanup code)
+dotnet_diagnostic.ERP022.severity = warning

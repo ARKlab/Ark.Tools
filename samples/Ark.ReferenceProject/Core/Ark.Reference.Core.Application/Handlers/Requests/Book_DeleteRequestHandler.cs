@@ -27,7 +27,8 @@ public class Book_DeleteRequestHandler : IRequestHandler<Book_DeleteRequest.V1, 
     /// <inheritdoc/>
     public async Task<bool> ExecuteAsync(Book_DeleteRequest.V1 request, CancellationToken ctk = default)
     {
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var existing = await ctx.ReadBookByIdAsync(request.Id, ctk).ConfigureAwait(false);
         if (existing == null)

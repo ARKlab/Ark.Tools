@@ -33,7 +33,8 @@ public class Ping_ProcessMessageHandler
     public async Task Handle(Ping_ProcessMessage.V1 message)
     {
         int currentMessageCount = MessageCounter.Increment();
-        await using var ctx = await _coreDataContext.CreateAsync().ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync().ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Update Ping Async").ConfigureAwait(false);
 
@@ -65,7 +66,8 @@ public class Ping_ProcessMessageHandler
     {
         int currentMessageCount = MessageCounter.GetCount();
 
-        await using var ctx = await _coreDataContext.CreateAsync().ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync().ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
         var invoiceRun = await ctx.ReadPingByIdAsync(message.Id).ConfigureAwait(false);
         if (invoiceRun == null) return;
 

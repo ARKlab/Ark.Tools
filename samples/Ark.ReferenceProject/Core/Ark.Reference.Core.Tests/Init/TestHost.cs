@@ -76,9 +76,11 @@ public sealed class TestHost : IDisposable
         {
             _afterScenarioAssertionScope?.Dispose();
         }
+#pragma warning disable ERP022 // Intentional cleanup - exceptions ignored
         catch
         {
         }
+#pragma warning restore ERP022
         _afterScenarioAssertionScope = null;
         _scenarioContext = null;
     }
@@ -224,9 +226,11 @@ public sealed class TestHost : IDisposable
         {
             LogManager.Flush(TimeSpan.FromSeconds(2));
         }
+#pragma warning disable ERP022 // Intentional cleanup - exceptions ignored
         catch
         {
         }
+#pragma warning restore ERP022
     }
 
     [AfterTestRun]
@@ -241,9 +245,11 @@ public sealed class TestHost : IDisposable
         {
             _afterScenarioAssertionScope?.Dispose();
         }
+#pragma warning disable ERP022 // Intentional cleanup - exceptions ignored
         catch
         {
         }
+#pragma warning restore ERP022
     }
 }
 

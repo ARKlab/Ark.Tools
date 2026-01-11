@@ -28,7 +28,8 @@ public class Book_GetByFiltersHandler : IQueryHandler<Book_GetByFiltersQuery.V1,
     /// <inheritdoc/>
     public async Task<PagedResult<Book.V1.Output>> ExecuteAsync(Book_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
     {
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var searchQuery = new BookSearchQueryDto.V1
         {

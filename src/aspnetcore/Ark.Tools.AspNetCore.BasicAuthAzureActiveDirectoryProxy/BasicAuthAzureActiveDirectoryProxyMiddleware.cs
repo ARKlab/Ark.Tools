@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
 
@@ -15,11 +16,13 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     private readonly RequestDelegate _next;
     private readonly BasicAuthAzureActiveDirectoryProxyConfig _config;
     private readonly HttpClient _client;
+    private readonly ILogger<BasicAuthAzureActiveDirectoryProxyMiddleware> _logger;
 
-    public BasicAuthAzureActiveDirectoryProxyMiddleware(RequestDelegate next, BasicAuthAzureActiveDirectoryProxyConfig config)
+    public BasicAuthAzureActiveDirectoryProxyMiddleware(RequestDelegate next, BasicAuthAzureActiveDirectoryProxyConfig config, ILogger<BasicAuthAzureActiveDirectoryProxyMiddleware> logger)
     {
         _next = next;
         _config = config;
+        _logger = logger;
 #pragma warning disable CA2000 // Dispose objects before losing scope
         _client = new HttpClient(new HttpClientHandler()
         {
@@ -95,8 +98,12 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                         }
                     }
                 }
-                catch (Exception)
-                { }
+                catch (Exception ex)
+                {
+#pragma warning disable CA1848 // Use LoggerMessage delegates - trace level doesn't need performance optimization
+                    _logger.LogTrace(ex, "Basic authentication failed");
+#pragma warning restore CA1848
+                }
 #pragma warning restore CA1031 // Do not catch general exception types
             }
 

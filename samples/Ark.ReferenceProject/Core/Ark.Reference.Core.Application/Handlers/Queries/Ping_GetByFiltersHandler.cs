@@ -36,7 +36,8 @@ public class Ping_GetByFiltersHandler : IQueryHandler<Ping_GetByFiltersQuery.V1,
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var (data, count) = await ctx.ReadPingByFiltersAsync(query, ctk).ConfigureAwait(false);
 

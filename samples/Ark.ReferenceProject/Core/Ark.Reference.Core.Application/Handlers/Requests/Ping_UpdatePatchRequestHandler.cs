@@ -42,7 +42,8 @@ public class Ping_UpdatePatchRequestHandler : IRequestHandler<Ping_UpdatePatchRe
     /// <inheritdoc/>
     public async Task<Ping.V1.Output?> ExecuteAsync(Ping_UpdatePatchRequest.V1 request, CancellationToken ctk = default)
     {
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var entity = await ctx.ReadPingByIdAsync(request.Id, ctk).ConfigureAwait(false);
 

@@ -264,7 +264,7 @@ public class ApiHost
         return this;
     }
 
-    public async void RunBusInBackground()
+    public async Task RunBusInBackgroundAsync()
     {
         Container.StartBus();
 

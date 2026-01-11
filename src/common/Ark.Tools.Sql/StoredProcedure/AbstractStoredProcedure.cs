@@ -14,11 +14,13 @@ public abstract class AbstractStoredProcedure<TResult, TParameter> : IStoredProc
         Transaction = transaction;
     }
 
+#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
     public TResult? Execute(TParameter param)
     {
         LastResult = ExecuteImplAsync(Transaction, param).GetAwaiter().GetResult();
         return LastResult;
     }
+#pragma warning restore VSTHRD002
 
     public async Task<TResult?> ExecuteAsync(TParameter param)
     {
@@ -40,11 +42,13 @@ public abstract class AbstractStoredProcedure<TResult> : IStoredProcedure<TResul
     {
         Transaction = transaction;
     }
+#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
     public TResult? Execute()
     {
         LastResult = ExecuteImplAsync(Transaction).GetAwaiter().GetResult();
         return LastResult;
     }
+#pragma warning restore VSTHRD002
 
     public async Task<TResult?> ExecuteAsync()
     {
