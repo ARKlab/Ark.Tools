@@ -11,7 +11,6 @@ using Raven.Client.Exceptions.Documents.Subscriptions;
 using Raven.Client.Exceptions.Security;
 
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 
@@ -175,8 +174,6 @@ where startsWith(id(e), '{prefix}')
 
     sealed class FakeEvent : IAggregateEvent<TAggregate> { }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2060:MakeGenericMethod",
-        Justification = "The event type comes from the aggregate event subscription which ensures all event types are preserved. The generic method _invokeHandler<T> will have its type arguments preserved through the aggregate event system.")]
     MethodInfo _getDispatchMethod(Type eventType)
     {
         Func<FakeEvent, IMetadata, Task> a = _invokeHandler<FakeEvent>;
