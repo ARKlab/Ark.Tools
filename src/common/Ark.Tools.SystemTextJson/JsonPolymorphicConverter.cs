@@ -8,15 +8,9 @@ namespace Ark.Tools.SystemTextJson;
 /// Base class for polymorphic JSON deserialization using a discriminator property.
 /// </summary>
 /// <remarks>
-/// <para>
 /// This converter enables polymorphic deserialization by reading a discriminator property from JSON
 /// and using it to determine the concrete type to deserialize. Derived classes implement the GetType
 /// method to map discriminator values to concrete types.
-/// </para>
-/// <para>
-/// <strong>Testing Note</strong>: Polymorphic scenarios should be tested in WebApplicationDemo to ensure
-/// trimming compatibility. See docs/trimmable-support/implementation-plan.md for TODO items.
-/// </para>
 /// </remarks>
 /// <typeparam name="TBase">The base type or interface for polymorphic deserialization.</typeparam>
 /// <typeparam name="TDiscriminatorEnum">The enum type used as discriminator values.</typeparam>
