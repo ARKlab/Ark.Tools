@@ -4,7 +4,6 @@ using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
 using Ark.Tools.Core;
-using Ark.Tools.Reflection;
 
 using Asp.Versioning;
 
@@ -166,7 +165,7 @@ public abstract class ArkStartupWebApiCommon
 
             c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
-            c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @"", StringComparison.Ordinal));
+            c.CustomSchemaIds((type) => Ark.Tools.Reflection.ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @"", StringComparison.Ordinal));
             c.SelectSubTypesUsing(t =>
             {
                 if (t.IsGenericTypeDefinition) return Enumerable.Empty<Type>();

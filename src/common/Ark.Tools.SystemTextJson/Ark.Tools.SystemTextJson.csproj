@@ -18,8 +18,8 @@
   <!--===============================================================================-->
 
   <PropertyGroup>
-    <IsTrimmable>false</IsTrimmable>
-    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +28,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
-    <ProjectReference Include="..\Ark.Tools.Reflection\Ark.Tools.Reflection.csproj" />
     <ProjectReference Include="..\Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj" />
   </ItemGroup>
 
