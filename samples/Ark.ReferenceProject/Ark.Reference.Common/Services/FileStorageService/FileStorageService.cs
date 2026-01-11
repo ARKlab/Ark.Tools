@@ -60,8 +60,8 @@ public class FileStorageService
             .GetBlobClient(name);
     }
 
-    public async Task InitAsync()
+    public async Task InitAsync(CancellationToken ctk = default)
     {
-        await _fileClient.CreateIfNotExistsAsync().ConfigureAwait(false);
+        await _fileClient.CreateIfNotExistsAsync(cancellationToken: ctk).ConfigureAwait(false);
     }
 }

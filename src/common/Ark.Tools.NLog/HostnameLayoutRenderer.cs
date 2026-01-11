@@ -37,7 +37,9 @@ public class HostNameLayoutRenderer : LayoutRenderer
                     this.HostName = dns + "@" + this.HostName;
 
             }
+#pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional
             catch { /* if we cannot get hostname - ignore */ }
+#pragma warning restore ERP022
         }
         catch (Exception exception)
         {

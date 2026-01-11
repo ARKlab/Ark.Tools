@@ -28,7 +28,9 @@ public class PolicyAuthorizeOrLogicRequestDecorator<TRequest, TResult> : IReques
 
     public TResult Execute(TRequest request)
     {
+#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
         return ExecuteAsync(request).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
     }
 
     public async Task<TResult> ExecuteAsync(TRequest request, CancellationToken ctk = default)

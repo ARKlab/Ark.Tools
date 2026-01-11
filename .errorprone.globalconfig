@@ -1,0 +1,94 @@
+is_global = true
+
+#### ErrorProne.NET Analyzers (EPC*, ERP*) ####
+
+# EPC11: Warn when StringBuilder created but ToString never called
+dotnet_diagnostic.EPC11.severity = warning
+
+# EPC12: Possible loss of information when capturing a loop variable in closure
+dotnet_diagnostic.EPC12.severity = warning
+
+# EPC13: Suspicious exception handling (catch without throw)
+dotnet_diagnostic.EPC13.severity = warning
+
+# EPC14: ConfigureAwait(false) is redundant
+dotnet_diagnostic.EPC14.severity = suggestion
+
+# EPC15: Use ConfigureAwait(false) on await
+# Disabled in favor of MA0004
+dotnet_diagnostic.EPC15.severity = none
+
+# EPC16: Possible null reference when awaiting a result of null-conditional expression
+dotnet_diagnostic.EPC16.severity = warning
+
+# EPC17: Avoid using async lambda for void return delegate
+dotnet_diagnostic.EPC17.severity = error
+
+# EPC18: Use synchronous method instead of async when possible
+dotnet_diagnostic.EPC18.severity = suggestion
+
+# EPC20: Suspicious implementation of equality for a value type
+dotnet_diagnostic.EPC20.severity = warning
+
+# EPC21: Consider making struct readonly
+dotnet_diagnostic.EPC21.severity = suggestion
+
+# EPC22: Avoid calling ToString on string
+dotnet_diagnostic.EPC22.severity = warning
+
+# EPC23: Nested call to Task.Result may cause deadlock
+dotnet_diagnostic.EPC23.severity = error
+
+# EPC24: Prefer using Task.FromResult instead of Task.Run for completed tasks
+dotnet_diagnostic.EPC24.severity = warning
+
+# EPC25: Avoid using Thread.Sleep in async methods
+dotnet_diagnostic.EPC25.severity = error
+
+# EPC26: Incorrect await in catch/finally block
+dotnet_diagnostic.EPC26.severity = error
+
+# EPC27: Avoid using async void methods
+dotnet_diagnostic.EPC27.severity = error
+
+# EPC28: Suspicious equality implementation (value type has Equals but no GetHashCode)
+dotnet_diagnostic.EPC28.severity = warning
+
+# EPC29: Incorrect await inside a loop
+dotnet_diagnostic.EPC29.severity = suggestion
+
+# EPC30: Avoid using TaskCompletionSource without specifying TaskCreationOptions
+dotnet_diagnostic.EPC30.severity = suggestion
+
+# EPC31: Do not return null for Task-like types
+dotnet_diagnostic.EPC31.severity = error
+
+# EPC32: Use RunContinuationsAsynchronously for TaskCompletionSource
+dotnet_diagnostic.EPC32.severity = warning
+
+# EPC33: Do not use Thread.Sleep in async methods
+dotnet_diagnostic.EPC33.severity = error
+
+# EPC34: Avoid using Task.Factory.StartNew
+dotnet_diagnostic.EPC34.severity = suggestion
+
+# EPC35: Avoid using blocking calls inside async methods
+dotnet_diagnostic.EPC35.severity = error
+
+# EPC36: Avoid using async delegates with TaskCreationOptions.LongRunning
+dotnet_diagnostic.EPC36.severity = warning
+
+# EPC37: Do not validate arguments inside async methods
+dotnet_diagnostic.EPC37.severity = suggestion
+
+# ERP021: OnException(ex) was called with non-serializable exception
+dotnet_diagnostic.ERP021.severity = warning
+
+# ERP022: Unobserved exception in async void method
+dotnet_diagnostic.ERP022.severity = error
+
+# ERP023: Possible multiple enumeration of IEnumerable
+dotnet_diagnostic.ERP023.severity = error
+
+# ERP031: Marking API as not thread-safe
+dotnet_diagnostic.ERP031.severity = warning

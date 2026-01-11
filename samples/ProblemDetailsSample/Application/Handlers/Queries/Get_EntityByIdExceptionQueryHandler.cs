@@ -9,7 +9,9 @@ public class Get_EntityByIdExceptionQueryHandler : IQueryHandler<Get_EntityByIdE
 {
     public Entity.V1.Output Execute(Get_EntityByIdExceptionQuery.V1 query)
     {
+#pragma warning disable VSTHRD002 // Sync wrapper for legacy API
         return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
     }
 
     public Task<Entity.V1.Output> ExecuteAsync(Get_EntityByIdExceptionQuery.V1 query, CancellationToken ctk = default)

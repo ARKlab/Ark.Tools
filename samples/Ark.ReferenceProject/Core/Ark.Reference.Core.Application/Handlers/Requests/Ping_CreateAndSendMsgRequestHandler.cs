@@ -40,7 +40,8 @@ public class Ping_CreateAndSendMsgRequestHandler : IRequestHandler<Ping_CreateAn
 
     public async Task<Ping.V1.Output> ExecuteAsync(Ping_CreateAndSendMsgRequest.V1 request, CancellationToken ctk = default)
     {
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         await ctx.EnsureAudit(AuditKind.Ping, _userContext.GetUserId(), "Create a new Ping", ctk).ConfigureAwait(false);
 

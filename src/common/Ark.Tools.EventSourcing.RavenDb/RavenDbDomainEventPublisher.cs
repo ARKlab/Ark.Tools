@@ -60,10 +60,12 @@ public sealed class RavenDbDomainEventPublisher : IDisposable
                 await _worker.Run(_exec, ctk).ConfigureAwait(false);
             }
             catch (TaskCanceledException) { throw; }
+#pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional retry with delay
             catch (Exception)
             {
                 await Task.Delay(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
             }
+#pragma warning restore ERP022
         }
 
     }

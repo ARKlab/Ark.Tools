@@ -38,7 +38,9 @@ internal abstract class RebusOutboxProcessorCore : IRebusOutboxProcessor, IDispo
     public void Stop()
     {
         _busDisposalCancellationTokenSource.Cancel();
+#pragma warning disable VSTHRD002 // Sync wrapper for Stop method - wait for batch completion
         _task.GetAwaiter().GetResult(); // wait for batch to complete
+#pragma warning restore VSTHRD002
     }
 
     protected async Task<bool> _tryProcessMessages(IOutboxContextCore ctx, CancellationToken ctk)

@@ -264,13 +264,12 @@ public class ApiHost
         return this;
     }
 
-    public async void RunBusInBackground()
+    public async Task RunBusInBackgroundAsync(CancellationToken ctk = default)
     {
         Container.StartBus();
 
-        await Container.GetInstance<IFileStorageService>().InitAsync().ConfigureAwait(false);
+        await Container.GetInstance<IFileStorageService>().InitAsync(ctk).ConfigureAwait(false);
     }
-
 
     private void _registerContainer(Container container)
     {
