@@ -8,6 +8,7 @@ public interface ICommand { }
 public interface ICommandHandler<TCommand>
     where TCommand : ICommand
 {
+    [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.")]
     void Execute(TCommand command);
 
     Task ExecuteAsync(TCommand command, CancellationToken ctk = default);

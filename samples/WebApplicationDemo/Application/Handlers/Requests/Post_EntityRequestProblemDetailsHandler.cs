@@ -13,7 +13,9 @@ public class Post_EntityRequestProblemDetailsHandler : IRequestHandler<Post_Enti
 {
     public Entity.V1.Output Execute(Post_EntityRequestProblemDetails.V1 request)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(request).ConfigureAwait(true).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public Task<Entity.V1.Output> ExecuteAsync(Post_EntityRequestProblemDetails.V1 request, CancellationToken ctk = default)

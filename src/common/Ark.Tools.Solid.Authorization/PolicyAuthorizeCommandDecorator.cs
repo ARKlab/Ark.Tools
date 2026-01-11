@@ -26,9 +26,11 @@ public class PolicyAuthorizeCommandDecorator<TCommand> : ICommandHandler<TComman
 
     public void Execute(TCommand command)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
 #pragma warning disable VSTHRD002 // Sync wrapper for legacy API
         ExecuteAsync(command).GetAwaiter().GetResult();
 #pragma warning restore VSTHRD002
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)

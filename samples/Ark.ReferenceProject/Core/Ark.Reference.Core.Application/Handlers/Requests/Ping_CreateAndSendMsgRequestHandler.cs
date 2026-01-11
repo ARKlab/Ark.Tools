@@ -35,7 +35,9 @@ public class Ping_CreateAndSendMsgRequestHandler : IRequestHandler<Ping_CreateAn
 
     public Ping.V1.Output Execute(Ping_CreateAndSendMsgRequest.V1 request)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(request).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task<Ping.V1.Output> ExecuteAsync(Ping_CreateAndSendMsgRequest.V1 request, CancellationToken ctk = default)

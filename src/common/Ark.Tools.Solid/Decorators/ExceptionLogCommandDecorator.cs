@@ -19,6 +19,7 @@ public sealed class ExceptionLogCommandDecorator<TCommand> : ICommandHandler<TCo
 
     public void Execute(TCommand command)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         try
         {
             _decorated.Execute(command);
@@ -29,6 +30,7 @@ public sealed class ExceptionLogCommandDecorator<TCommand> : ICommandHandler<TCo
             logger.Error(ex, "Exception occured");
             throw;
         }
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)

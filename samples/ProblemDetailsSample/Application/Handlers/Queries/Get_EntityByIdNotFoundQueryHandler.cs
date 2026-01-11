@@ -10,9 +10,11 @@ public class Get_EntityByIdNotFoundQueryHandler : IQueryHandler<Get_EntityByIdNo
 {
     public Entity.V1.Output Execute(Get_EntityByIdNotFoundQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
 #pragma warning disable VSTHRD002 // Sync wrapper for legacy API
         return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
 #pragma warning restore VSTHRD002
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public Task<Entity.V1.Output> ExecuteAsync(Get_EntityByIdNotFoundQuery.V1 query, CancellationToken ctk = default)

@@ -19,7 +19,9 @@ internal sealed class Audit_GetQueryHandler : IQueryHandler<Audit_GetQuery.V1, P
 
     public PagedResult<AuditDto<AuditKind>> Execute(Audit_GetQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task<PagedResult<AuditDto<AuditKind>>> ExecuteAsync(Audit_GetQuery.V1 query, CancellationToken ctk = default)

@@ -22,7 +22,9 @@ public class BookPrintProcess_GetByFiltersHandler : IQueryHandler<BookPrintProce
     /// <inheritdoc/>
     public PagedResult<BookPrintProcess.V1.Output> Execute(BookPrintProcess_GetByFiltersQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(query).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     /// <inheritdoc/>

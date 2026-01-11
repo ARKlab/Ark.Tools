@@ -22,6 +22,7 @@ public sealed class ProfileRequestDecorator<TRequest, TResponse> : IRequestHandl
 
     public TResponse Execute(TRequest request)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         Stopwatch stopWatch = new();
         stopWatch.Start();
         var result = _decorated.Execute(request);
@@ -29,6 +30,7 @@ public sealed class ProfileRequestDecorator<TRequest, TResponse> : IRequestHandl
         _logger.Trace(() => string.Format(CultureInfo.InvariantCulture, "Request<{0}> executed in {1}ms", request.GetType(), stopWatch.ElapsedMilliseconds));
 
         return result;
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)

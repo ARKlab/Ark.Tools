@@ -23,10 +23,12 @@ public sealed class ProfileCommandDecorator<TCommand> : ICommandHandler<TCommand
 
     public void Execute(TCommand command)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         Stopwatch stopWatch = Stopwatch.StartNew();
         _decorated.Execute(command);
         stopWatch.Stop();
         _logger.Trace(CultureInfo.InvariantCulture, "Command<{Command}> executed in {Elapsed}ms", command.GetType(), stopWatch.ElapsedMilliseconds);
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)

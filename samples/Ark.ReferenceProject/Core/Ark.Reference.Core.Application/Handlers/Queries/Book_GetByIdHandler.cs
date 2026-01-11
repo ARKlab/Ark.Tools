@@ -21,7 +21,9 @@ public class Book_GetByIdHandler : IQueryHandler<Book_GetByIdQuery.V1, Book.V1.O
     /// <inheritdoc/>
     public Book.V1.Output? Execute(Book_GetByIdQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(query).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     /// <inheritdoc/>

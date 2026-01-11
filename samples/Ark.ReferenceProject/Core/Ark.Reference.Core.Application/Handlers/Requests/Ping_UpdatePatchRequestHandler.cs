@@ -36,7 +36,9 @@ public class Ping_UpdatePatchRequestHandler : IRequestHandler<Ping_UpdatePatchRe
     /// <inheritdoc/>
     public Ping.V1.Output? Execute(Ping_UpdatePatchRequest.V1 request)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(request).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     /// <inheritdoc/>

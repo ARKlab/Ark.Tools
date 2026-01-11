@@ -9,6 +9,7 @@ public interface IRequest<TResponse>
 
 public interface IRequestHandler<TRequest, TResponse> where TRequest : IRequest<TResponse>
 {
+    [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.")]
     TResponse Execute(TRequest Request);
 
     Task<TResponse> ExecuteAsync(TRequest Request, CancellationToken ctk = default);

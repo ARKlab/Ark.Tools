@@ -18,7 +18,9 @@ public class Get_PostsQueryHandler : IQueryHandler<Get_PostsQuery.V1, List<Post>
 
     public List<Post> Execute(Get_PostsQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(query).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task<List<Post>> ExecuteAsync(Get_PostsQuery.V1 query, CancellationToken ctk = default)

@@ -5,6 +5,7 @@ namespace Ark.Tools.Solid;
 
 public interface IRequestProcessor
 {
+    [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.")]
     TResponse Execute<TResponse>(IRequest<TResponse> request);
 
     Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default);

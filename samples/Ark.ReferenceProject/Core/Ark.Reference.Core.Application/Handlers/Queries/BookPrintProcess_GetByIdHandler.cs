@@ -21,7 +21,9 @@ public class BookPrintProcess_GetByIdHandler : IQueryHandler<BookPrintProcess_Ge
     /// <inheritdoc/>
     public BookPrintProcess.V1.Output? Execute(BookPrintProcess_GetByIdQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(query).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     /// <inheritdoc/>

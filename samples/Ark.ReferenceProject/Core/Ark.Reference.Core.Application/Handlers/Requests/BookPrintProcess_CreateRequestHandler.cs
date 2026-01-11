@@ -38,7 +38,9 @@ public class BookPrintProcess_CreateRequestHandler : IRequestHandler<BookPrintPr
     /// <inheritdoc/>
     public BookPrintProcess.V1.Output Execute(BookPrintProcess_CreateRequest.V1 request)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(request).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     /// <inheritdoc/>

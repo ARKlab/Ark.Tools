@@ -24,12 +24,14 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
     }
 
     [DebuggerStepThrough]
+#pragma warning disable CS0618 // Type or member is obsolete
     public TResponse Execute<TResponse>(IRequest<TResponse> request)
     {
         dynamic requestHandler = _getHandlerInstance(request);
 
         return requestHandler.Execute((dynamic)request);
     }
+#pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)

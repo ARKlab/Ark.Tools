@@ -16,12 +16,14 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResult> : I
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync method")]
+#pragma warning disable CS0618 // Type or member is obsolete
     public TResult Execute(TRequest Request)
     {
         return Policy.Handle<Exception>(ex => ex.IsOptimistic())
             .Retry(2)
             .Execute(() => _inner.Execute(Request));
     }
+#pragma warning restore CS0618 // Type or member is obsolete
 
     public async Task<TResult> ExecuteAsync(TRequest Request, CancellationToken ctk = default)
     {

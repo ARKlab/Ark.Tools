@@ -16,7 +16,9 @@ public class Get_EntityByIdQueryHandler : IQueryHandler<Get_EntityByIdQuery.V1, 
 
     public Entity.V1.Output? Execute(Get_EntityByIdQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task<Entity.V1.Output?> ExecuteAsync(Get_EntityByIdQuery.V1 query, CancellationToken ctk = default)

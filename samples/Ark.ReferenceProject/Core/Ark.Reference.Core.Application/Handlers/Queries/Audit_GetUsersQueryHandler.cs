@@ -16,7 +16,9 @@ internal sealed class Audit_GetUsersQueryHandler : IQueryHandler<Audit_GetUsersQ
 
     public IEnumerable<string> Execute(Audit_GetUsersQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(query).ConfigureAwait(true).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task<IEnumerable<string>> ExecuteAsync(Audit_GetUsersQuery.V1 query, CancellationToken ctk = default)

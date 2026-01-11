@@ -27,7 +27,9 @@ public class Ping_GetIdHandler : IQueryHandler<Ping_GetByIdQuery.V1, Ping.V1.Out
     /// <inheritdoc/>
     public Ping.V1.Output? Execute(Ping_GetByIdQuery.V1 query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(query).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     /// <inheritdoc/>

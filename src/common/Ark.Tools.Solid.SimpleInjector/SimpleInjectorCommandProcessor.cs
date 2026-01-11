@@ -24,11 +24,13 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
     }
 
     [DebuggerStepThrough]
+#pragma warning disable CS0618 // Type or member is obsolete
     public void Execute(ICommand command)
     {
         dynamic commandHandler = _getHandlerInstance(command);
         commandHandler.Execute((dynamic)command);
     }
+#pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)

@@ -22,8 +22,10 @@ public class QueryFluentValidateDecorator<TQuery, TResponse>
 
     public TResponse Execute(TQuery query)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         _validator.ValidateAndThrow(query);
         return _decorated.Execute(query);
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task<TResponse> ExecuteAsync(TQuery query, CancellationToken ctk = default)

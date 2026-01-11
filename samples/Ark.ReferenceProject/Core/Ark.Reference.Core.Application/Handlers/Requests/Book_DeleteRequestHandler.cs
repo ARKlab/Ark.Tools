@@ -21,7 +21,9 @@ public class Book_DeleteRequestHandler : IRequestHandler<Book_DeleteRequest.V1, 
     /// <inheritdoc/>
     public bool Execute(Book_DeleteRequest.V1 request)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         return ExecuteAsync(request).GetAwaiter().GetResult();
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     /// <inheritdoc/>

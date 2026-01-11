@@ -26,9 +26,11 @@ public class PolicyAuthorizeRequestDecorator<TRequest, TResult> : IRequestHandle
 
     public TResult Execute(TRequest request)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
 #pragma warning disable VSTHRD002 // Sync wrapper for legacy API
         return ExecuteAsync(request).GetAwaiter().GetResult();
 #pragma warning restore VSTHRD002
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public async Task<TResult> ExecuteAsync(TRequest request, CancellationToken ctk = default)
