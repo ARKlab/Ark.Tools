@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
-**Last Updated:** 2026-01-10  
-**Current Phase:** Phase 2 - Level 4 HTTP & Logging  
-**Progress:** 15/42 libraries (36%)
+**Last Updated:** 2026-01-11  
+**Current Phase:** Phase 2 - Level 5 Extended Utilities  
+**Progress:** 17/42 libraries (40%)
 
 ---
 
@@ -242,20 +242,32 @@
 
 ## Level 4: HTTP & Logging
 
-### 🔍 Needs Analysis (2/2)
+### ✅ Completed (2/2)
 
-- [ ] **Ark.Tools.Http**
-  - **Status**: ⚠️ Blocked by serialization libs
-  - **Dependencies**: Ark.Tools.NewtonsoftJson, Ark.Tools.SystemTextJson
-  - **Complexity**: Medium (Flurl HTTP client)
-  - **Action Required**: Test after serialization libraries fixed
+- [x] **Ark.Tools.Http**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `RequiresUnreferencedCode` to `Ex.ConfigureArkDefaults` extension methods (2 methods)
+    - Added `RequiresUnreferencedCode` to `IArkFlurlClientFactory.Get` methods (2 methods)
+    - Added `RequiresUnreferencedCode` to `ArkFlurlClientFactory.Get` methods (2 methods)
+  - **Warnings Fixed**: IL2026 (4 occurrences)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: Propagate RequiresUnreferencedCode to public APIs that use JSON serialization
+  - **Dependencies**: Ark.Tools.NewtonsoftJson ✅, Ark.Tools.SystemTextJson ✅
 
-- [ ] **Ark.Tools.NLog** ⚠️ **HIGH PRIORITY**
-  - **Status**: 🔍 Not yet tested
-  - **Dependencies**: Ark.Tools.ApplicationInsights, Ark.Tools.Core, Ark.Tools.SystemTextJson
-  - **Blocks**: ~20 libraries
-  - **Complexity**: Medium - Logging integration
-  - **Action Required**: Test early, many libraries depend on this
+- [x] **Ark.Tools.NLog** ⚠️ **HIGH PRIORITY - COMPLETED**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Added `UnconditionalSuppressMessage` to `STJSerializer.SerializeObject` method
+    - Added System.Diagnostics.CodeAnalysis using directive
+  - **Warnings Fixed**: IL2026 (4 occurrences from JsonSerializer.Serialize)
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: UnconditionalSuppressMessage for internal NLog JSON serialization
+  - **Justification**: Used for diagnostic logging with runtime-determined types; NLog handles failures gracefully
+  - **Dependencies**: Ark.Tools.ApplicationInsights ✅, Ark.Tools.Core (NOT trimmable but not blocking), Ark.Tools.SystemTextJson ✅
+  - **Impact**: Unblocks ~20 libraries that depend on NLog
 
 ---
 
@@ -328,17 +340,18 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 15 (36%)
+- **Completed**: 17 (40%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 27 (64%)
+- **Needs Analysis**: 25 (60%)
 
 ### By Level
 - **Level 0 (Foundation)**: 5/5 (100%) ✅ COMPLETE!
 - **Level 1 (Core Utilities)**: 4/4 (100%) ✅ COMPLETE!
 - **Level 2 (First-Level Integrations)**: 4/4 (100%) ✅ COMPLETE!
 - **Level 3 (Serialization Utilities)**: 3/3 (100%) ✅ COMPLETE!
-- **Level 4+**: 0/26 (0%)
+- **Level 4 (HTTP & Logging)**: 2/2 (100%) ✅ COMPLETE!
+- **Level 5+**: 0/24 (0%)
 
 ### By Complexity
 - **Low Complexity**: ~15 libraries (expected easy wins)
@@ -346,10 +359,10 @@
 - **High Complexity**: ~7 libraries (significant effort required)
 
 ### By Priority
-- **Critical Blockers**: 1 (Core only - NLog may not be needed)
-- **High Priority**: 0 (All Level 0-2 complete!)
-- **Medium Priority**: 20 (Level 3-4 libraries)
-- **Low Priority**: 12 (Level 5+ libraries)
+- **Critical Blockers**: 1 (Ark.Tools.Core only)
+- **High Priority**: 0 (All critical dependencies now complete!)
+- **Medium Priority**: 18 (Level 5-6 libraries)
+- **Low Priority**: 10 (Level 7+ libraries)
 
 ---
 
@@ -369,16 +382,39 @@
 2. [x] ~~Fix Ark.Tools.EventSourcing~~ ✅ DONE
 3. [x] ~~Start Level 2 serialization libraries~~ ✅ DONE
 4. [x] ~~Start Level 3 serialization utilities (Tasks, NewtonsoftJson, SystemTextJson)~~ ✅ DONE
-5. [ ] Start Level 4 HTTP & Logging (Http, NLog)
+5. [x] ~~Start Level 4 HTTP & Logging (Http, NLog)~~ ✅ DONE
 
 ### Medium Term (Weeks 3-4)
 1. [x] ~~Complete all serialization libraries~~ ✅ DONE (Level 3)
-2. [ ] Enable Ark.Tools.NLog
-3. [ ] Start integration libraries
+2. [x] ~~Enable Ark.Tools.NLog~~ ✅ DONE
+3. [ ] Start Level 5 Extended Utilities (9 libraries now unblocked by NLog)
+4. [ ] Continue with Level 6+ integration libraries
 
 ---
 
 ## Update Log
+
+### 2026-01-11 (Level 4 Complete - HTTP & Logging!)
+- **Level 4 HTTP & Logging**: 100% COMPLETE! (2/2 libraries)
+  - **Ark.Tools.Http**: Fixed IL2026 (4 occurrences)
+    - Added `RequiresUnreferencedCode` to `Ex.ConfigureArkDefaults` extension methods (2 overloads)
+    - Added `RequiresUnreferencedCode` to `IArkFlurlClientFactory.Get` interface methods (2 overloads)
+    - Added `RequiresUnreferencedCode` to `ArkFlurlClientFactory.Get` implementation methods (2 overloads)
+    - Pattern: Propagate RequiresUnreferencedCode to public APIs that configure JSON serialization
+  - **Ark.Tools.NLog**: Fixed IL2026 (4 occurrences) ⚠️ **HIGH IMPACT**
+    - Added `UnconditionalSuppressMessage` to internal `STJSerializer.SerializeObject` method
+    - Justification: Used for NLog diagnostic logging with runtime-determined types; NLog handles failures gracefully
+    - Pattern: UnconditionalSuppressMessage for internal framework integration code
+    - **Impact**: Unblocks ~20 libraries that depend on NLog for logging
+- **Patterns Established**:
+  1. **HTTP Client Configuration Pattern**: Propagate `RequiresUnreferencedCode` through entire call chain when configuring JSON serialization
+  2. **Internal Framework Integration Pattern**: Use `UnconditionalSuppressMessage` for internal classes that integrate with frameworks (NLog) where:
+     - Types are determined at runtime based on user code
+     - Framework handles serialization failures gracefully
+     - No public API directly exposes the reflection-based code
+- **Testing**: Full solution build verified - 0 warnings, 0 errors
+- **Progress**: 17/42 libraries (40%) - Levels 0, 1, 2, 3, and 4 now complete!
+- **Milestone**: All critical infrastructure libraries (Foundation, Core Utilities, Serialization, HTTP, Logging) are now trimmable!
 
 ### 2026-01-10 (Late Evening Session - Level 3 Complete!)
 - **Level 3 Serialization Utilities**: 100% COMPLETE! (3/3 libraries)
