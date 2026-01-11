@@ -26,7 +26,8 @@ public class Audit_GetChangesQueryHandler : IQueryHandler<Audit_GetChangesQuery.
 
     public async Task<IAuditRecordReturn<IAuditEntity>> ExecuteAsync(Audit_GetChangesQuery.V1 query, CancellationToken ctk = default)
     {
-        await using var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var (records, count) = await ctx.ReadAuditByFilterAsync(new Audit_GetQuery.V1 { AuditIds = [query.AuditId] }, ctk).ConfigureAwait(false);
 

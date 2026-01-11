@@ -28,7 +28,8 @@ public class BookPrintProcess_GetByFiltersHandler : IQueryHandler<BookPrintProce
     /// <inheritdoc/>
     public async Task<PagedResult<BookPrintProcess.V1.Output>> ExecuteAsync(BookPrintProcess_GetByFiltersQuery.V1 query, CancellationToken ctk = default)
     {
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var searchQuery = new BookPrintProcessSearchQueryDto.V1
         {

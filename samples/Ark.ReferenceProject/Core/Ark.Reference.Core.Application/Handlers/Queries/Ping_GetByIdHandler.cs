@@ -35,7 +35,8 @@ public class Ping_GetIdHandler : IQueryHandler<Ping_GetByIdQuery.V1, Ping.V1.Out
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var entity = await ctx.ReadPingByIdAsync(query.Id, ctk).ConfigureAwait(false);
 

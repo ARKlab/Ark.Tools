@@ -38,7 +38,8 @@ public class Book_UpdateRequestHandler : IRequestHandler<Book_UpdateRequest.V1, 
     {
         ArgumentNullException.ThrowIfNull(request.Data);
 
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var existing = await ctx.ReadBookByIdAsync(request.Id, ctk).ConfigureAwait(false);
         if (existing == null)

@@ -29,7 +29,8 @@ public class BookPrintProcess_StartMessageHandler
 
     public async Task Handle(BookPrintProcess_StartMessage.V1 message)
     {
-        await using var ctx = await _dataContextFactory.CreateAsync().ConfigureAwait(false);
+        var ctx = await _dataContextFactory.CreateAsync().ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var process = await ctx.ReadBookPrintProcessByIdAsync(message.BookPrintProcessId).ConfigureAwait(false);
         if (process == null) return; // Process was deleted
@@ -64,7 +65,8 @@ public class BookPrintProcess_StartMessageHandler
             }
 
             // Update progress
-            await using var updateCtx = await _dataContextFactory.CreateAsync().ConfigureAwait(false);
+            var updateCtx = await _dataContextFactory.CreateAsync().ConfigureAwait(false);
+            await using var _updateCtx = updateCtx.ConfigureAwait(false);
             var currentProcess = await updateCtx.ReadBookPrintProcessByIdAsync(message.BookPrintProcessId).ConfigureAwait(false);
             if (currentProcess == null) return; // Process was deleted
 
@@ -86,7 +88,8 @@ public class BookPrintProcess_StartMessageHandler
     {
         var ex = message.Exceptions?.FirstOrDefault();
 
-        await using var ctx = await _dataContextFactory.CreateAsync().ConfigureAwait(false);
+        var ctx = await _dataContextFactory.CreateAsync().ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var process = await ctx.ReadBookPrintProcessByIdAsync(message.Message.BookPrintProcessId).ConfigureAwait(false);
         if (process == null) return; // Process was deleted
