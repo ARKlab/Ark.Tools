@@ -17,29 +17,26 @@ public static class RavenDbStoreConfigurationExtensions
     {
         var current = store.Conventions.FindCollectionName;
         
-        [UnconditionalSuppressMessage("Trimming", "IL2067",
-            Justification = "The lambda is used for type checks on well-known event sourcing types (IOutboxEvent, AggregateEventStore). These types are part of the event sourcing framework and will be preserved.")]
-        void ConfigureCollectionName()
-        {
-            store.Conventions.AddFindCollectionName(type =>
-            {
-                if (typeof(IOutboxEvent).IsAssignableFrom(type))
-                    return RavenDbEventSourcingConstants.OutboxCollectionName;
-
-                if (typeof(AggregateEventStore<,>).IsAssignableFromEx(type) || typeof(AggregateEventStore).IsAssignableFrom(type))
-                {
-                    return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
-                }
-
-                return null;
-            });
-        }
-        
-        ConfigureCollectionName();
+        store.Conventions.AddFindCollectionName(GetCollectionName);
 
         store.Conventions.UseOptimisticConcurrency = true;
 
         return store;
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2067",
+        Justification = "The type parameter is used for interface checks on well-known event sourcing types (IOutboxEvent, AggregateEventStore). These are framework types that are preserved by the event sourcing system. The method is private and only called from ConfigureForArkEventSourcing.")]
+    private static string? GetCollectionName(Type type)
+    {
+        if (typeof(IOutboxEvent).IsAssignableFrom(type))
+            return RavenDbEventSourcingConstants.OutboxCollectionName;
+
+        if (typeof(AggregateEventStore<,>).IsAssignableFromEx(type) || typeof(AggregateEventStore).IsAssignableFrom(type))
+        {
+            return RavenDbEventSourcingConstants.AggregateEventsCollectionName;
+        }
+
+        return null;
     }
 
     public static DocumentConventions AddFindCollectionName(this DocumentConventions conventions, Func<Type, string?> func)
