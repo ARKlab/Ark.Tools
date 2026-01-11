@@ -1,3 +1,5 @@
+
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.Authorization;
 
@@ -26,7 +28,7 @@ public sealed class PolicyAuthorizeAttribute : Attribute
     /// Initializes a new instance of the <see cref="PolicyAuthorizeAttribute"/> class. 
     /// </summary>
     /// <param name="policyType">The required policy. Must implement <see cref="IAuthorizationPolicy"/></param>
-    public PolicyAuthorizeAttribute(Type policyType)
+    public PolicyAuthorizeAttribute([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type policyType)
     {
         if (!typeof(IAuthorizationPolicy).IsAssignableFrom(policyType) || policyType.GetConstructor(Type.EmptyTypes) == null)
             throw new ArgumentException("should implement IAuthorizationPolicy", nameof(policyType));
@@ -39,7 +41,7 @@ public sealed class PolicyAuthorizeAttribute : Attribute
     /// </summary>
     /// <param name="policyType">The required policy. Must implement <see cref="IAuthorizationPolicy"/></param>
     /// <param name="args">Args for the policy</param>
-    public PolicyAuthorizeAttribute(Type policyType, params object[] args)
+    public PolicyAuthorizeAttribute([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type policyType, params object[] args)
     {
         if (!typeof(IAuthorizationPolicy).IsAssignableFrom(policyType))
             throw new ArgumentException("should implement IAuthorizationPolicy", nameof(policyType));
