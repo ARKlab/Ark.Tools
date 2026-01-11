@@ -4,12 +4,14 @@ using Ark.Tools.SimpleInjector;
 using SimpleInjector;
 
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Ark.Tools.Activity.Processor;
 
 public static class SliceActivityManagerExtensions
 {
+    [RequiresUnreferencedCode("This method performs assembly scanning to discover types implementing ISliceActivity. The trimmer cannot statically analyze which types will be discovered, so they may be trimmed. Consider using the overload that accepts explicit Type[] parameters instead.")]
     public static void RegisterActivities(this Container container, Type activityManagerType, params Assembly[] fromAssemblies)
     {
         ArgumentNullException.ThrowIfNull(container);
@@ -27,6 +29,7 @@ public static class SliceActivityManagerExtensions
         }
     }
 
+    [RequiresUnreferencedCode("This method uses MakeGenericType with runtime type parameters. The caller must ensure that the activity types passed as parameters are preserved by the trimmer.")]
     public static void RegisterActivities(this Container container, Type activityManagerType, params Type[] activityTypes)
     {
         ArgumentNullException.ThrowIfNull(container);

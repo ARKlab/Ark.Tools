@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-11  
-**Current Phase:** Phase 3 - Level 7-8 High-Level Integrations  
-**Progress:** 33/42 libraries (79%)
+**Current Phase:** ✅ Phase 3 COMPLETE - All Levels 0-8 Done!  
+**Progress:** 35/42 libraries (83%) - Only Ark.Tools.Core remaining!
 
 ---
 
@@ -450,14 +450,85 @@
 
 ## Level 7-8: High-Level Integrations (6 libraries)
 
-### 🔍 Needs Analysis (6/6)
+### ✅ Completed (3/6)
 
-- [ ] **Ark.Tools.Activity**
-- [ ] **Ark.Tools.EventSourcing.Rebus**
-- [ ] **Ark.Tools.Outbox.Rebus**
-- [ ] **Ark.Tools.RavenDb.Auditing**
-- [ ] **Ark.Tools.Solid.Authorization**
-- [ ] **Ark.Tools.EventSourcing.RavenDb**
+- [x] **Ark.Tools.Activity**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Changed to use `RequiresUnreferencedCode` instead of `UnconditionalSuppressMessage` for assembly scanning methods
+    - Properly propagates trim warnings to callers for both `RegisterActivities` overloads
+  - **Warnings Fixed**: IL2055 (2 occurrences from MakeGenericType) - now properly propagated
+  - **Test Coverage**: Full solution build verified
+  - **Pattern**: RequiresUnreferencedCode for public APIs that use reflection/assembly scanning
+  - **Dependencies**: Ark.Tasks ✅, Ark.Tools.NLog ✅, Ark.Tools.Rebus ✅, Ark.Tools.Nodatime.Json ✅, Ark.Tools.SimpleInjector ✅
+
+- [x] **Ark.Tools.EventSourcing.Rebus**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.EventSourcing ✅, Ark.Tools.Rebus ✅
+
+- [x] **Ark.Tools.Outbox.Rebus**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**: Added trimming configuration only
+  - **Warnings Fixed**: Zero warnings from start
+  - **Test Coverage**: Full solution build verified
+  - **Dependencies**: Ark.Tools.Outbox ✅, Ark.Tools.Rebus ✅
+
+### ❌ Not Trimmable (3/6)
+
+- [x] **Ark.Tools.EventSourcing.RavenDb**
+  - **Status**: ❌ NOT TRIMMABLE
+  - **Reason**: RavenDB library extensively uses reflection; unsafe to trim
+  - **Decision Date**: 2026-01-11
+  - **Technical Issues**:
+    - **RavenDB integration** - RavenDB's `DocumentConventions.FindCollectionName` uses reflection for type discovery
+    - **Dynamic collection naming** - Configures RavenDB to recognize event sourcing types (`IOutboxEvent`, `AggregateEventStore<,>`) dynamically
+    - **Event handler dispatch** - Uses `MakeGenericMethod` for runtime event handler dispatch
+    - **Type interface checking** - `IsAssignableFromEx` requires preserved interface metadata
+  - **Notes**: 
+    - RavenDbStoreConfigurationExtensions.cs: Configures RavenDB conventions with type-based collection naming
+    - RavenDbAggregateEventProcessor.cs: Uses `MakeGenericMethod` for dynamic event handler dispatch
+    - RavenDB performs type discovery and mapping that cannot be statically analyzed
+    - Would require replacing RavenDB's dynamic features with explicit registration (breaking changes)
+    - Cost and risk significantly outweigh benefits
+  - **Documentation**: Added README_TRIMMING.md explaining RavenDB integration issues
+  - **Dependencies**: Ark.Tools.EventSourcing ✅, Ark.Tools.EventSourcing.SimpleInjector ✅, Ark.Tools.RavenDb.Auditing (NOT trimmable), Ark.Tools.RavenDb ✅
+
+- [x] **Ark.Tools.RavenDb.Auditing**
+  - **Status**: ❌ NOT TRIMMABLE
+  - **Reason**: Fundamentally relies on runtime reflection and dynamic types
+  - **Decision Date**: 2026-01-11
+  - **Technical Issues**:
+    - **Assembly scanning** - Uses `Assembly.GetTypes()` to discover all types implementing `IAuditableEntity`
+    - **Dynamic property access** - Uses C# `dynamic` keyword to access audit entity properties at runtime
+  - **Notes**: 
+    - Ex.cs line 28: `assemblies.SelectMany(x => x.GetTypes())` discovers auditable entities
+    - RavenDbAuditProcessor.cs lines 99, 111: Dynamic property access on audit entities
+    - Would require breaking changes to make trimmable (explicit type registration, refactor away from dynamic)
+    - Cost outweighs benefits for typical usage scenarios
+  - **Documentation**: Added README_TRIMMING.md explaining why not trimmable
+  - **Dependencies**: Ark.Tools.RavenDb ✅
+
+- [x] **Ark.Tools.Solid.Authorization**
+  - **Status**: ❌ NOT TRIMMABLE
+  - **Reason**: Fundamentally uses C# `dynamic` keyword for handler invocation
+  - **Decision Date**: 2026-01-11
+  - **Technical Issues**:
+    - **Dynamic invocation** - Uses `dynamic` to call authorization resource handler methods
+    - Ex.cs line 67-71: `dynamic handler = c.GetInstance(handlerType); return await handler.GetResouceAsync((dynamic)query, ctk);`
+    - Handler type constructed at runtime using `MakeGenericType`, then invoked dynamically
+  - **Notes**:
+    - Similar to Ark.Tools.Solid.SimpleInjector
+    - Would require reflection with explicit method invocation instead of `dynamic`
+    - Would need DynamicallyAccessedMembers attributes and potentially breaking API changes
+    - Authorization handlers typically few in number and preserved anyway
+  - **Documentation**: Added README_TRIMMING.md explaining why not trimmable and comparing to Solid.SimpleInjector
+  - **Dependencies**: Ark.Tools.Authorization ✅, Ark.Tools.Solid.SimpleInjector (NOT trimmable)
 
 ---
 
@@ -465,11 +536,11 @@
 
 ### Overall Progress
 - **Total Libraries**: 42
-- **Completed**: 33 (79%)
-- **Not Trimmable**: 2 (5%)
+- **Completed**: 35 (83%)
+- **Not Trimmable**: 5 (12%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
-- **Needs Analysis**: 7 (17%)
+- **Needs Analysis**: 2 (5%) - Only Ark.Tools.Core remaining
 
 ### By Level
 - **Level 0 (Foundation)**: 5/5 (100%) ✅ COMPLETE!
@@ -479,18 +550,18 @@
 - **Level 4 (HTTP & Logging)**: 2/2 (100%) ✅ COMPLETE!
 - **Level 5 (Extended Utilities)**: 8/9 (89%) - 1 marked as not trimmable
 - **Level 6 (Framework Integrations)**: 9/9 (100%) ✅ COMPLETE! - 7 trimmable, 2 not trimmable
-- **Level 7-8 (High-Level)**: 0/6 (0%)
+- **Level 7-8 (High-Level)**: 6/6 (100%) ✅ COMPLETE! - 3 trimmable, 3 not trimmable
 
 ### By Complexity
-- **Low Complexity**: 20 libraries completed (easy wins with zero warnings)
-- **Medium Complexity**: 13 libraries completed (standard patterns applied)
-- **High Complexity**: 0 libraries completed, 2 marked not trimmable
+- **Low Complexity**: 23 libraries completed (easy wins with zero warnings)
+- **Medium Complexity**: 12 libraries completed (standard patterns applied)
+- **High Complexity**: 0 libraries completed, 5 marked not trimmable
 
 ### By Priority
 - **Critical Blockers**: 1 (Ark.Tools.Core only - still not addressed)
 - **High Priority**: 0 (All critical dependencies now complete!)
-- **Medium Priority**: 0 (All Levels 0-6 complete!)
-- **Low Priority**: 6 (Level 7-8 libraries remaining)
+- **Medium Priority**: 0 (All Levels 0-8 complete!)
+- **Low Priority**: 1 (Ark.Tools.Core remaining)
 
 ---
 
@@ -521,6 +592,41 @@
 ---
 
 ## Update Log
+
+### 2026-01-11 (Evening Session - EventSourcing.RavenDb Reverted)
+- **Decision**: Reverted Ark.Tools.EventSourcing.RavenDb to NOT TRIMMABLE status
+  - **Rationale**: RavenDB library extensively uses reflection internally; unsafe to trim despite initial suppressions
+  - **Changes Reverted**:
+    - Removed `IsTrimmable` and `EnableTrimAnalyzer` from csproj
+    - Removed IL2067 and IL2060 suppressions from RavenDbStoreConfigurationExtensions.cs
+    - Removed suppressions from RavenDbAggregateEventProcessor.cs
+  - **Documentation**: Added comprehensive README_TRIMMING.md explaining:
+    - RavenDB's reflection-based collection naming and type discovery
+    - Dynamic event handler dispatch via `MakeGenericMethod`
+    - Type interface checking that requires preserved metadata
+    - Impact on trimmed deployments and alternative approaches
+  - **Updated Statistics**: 35/42 libraries (83%) trimmable, 5 marked not trimmable (12%)
+  - **Level 7-8 Status**: 3 trimmable, 3 not trimmable (Activity, EventSourcing.Rebus, Outbox.Rebus are trimmable)
+
+### 2026-01-11 (Afternoon Session - Level 7-8 Initial Completion)
+- **Level 7-8 High-Level Integrations**: Initial work on 6 libraries
+  - **Batch 1 - Activity & EventSourcing**:
+    - **Ark.Tools.Activity**: Changed to use `RequiresUnreferencedCode` (code review feedback)
+      - Originally used `UnconditionalSuppressMessage` for `MakeGenericType` calls
+      - Updated to properly propagate warnings for assembly scanning methods
+      - Pattern: RequiresUnreferencedCode for public APIs that use reflection
+    - **Ark.Tools.EventSourcing.Rebus**: Zero warnings from start
+    - **Ark.Tools.Outbox.Rebus**: Zero warnings from start
+  - **Batch 2 - RavenDb Libraries**:
+    - **Ark.Tools.RavenDb.Auditing**: ❌ Marked as NOT TRIMMABLE
+      - Uses `Assembly.GetTypes()` and C# `dynamic` keyword
+    - **Ark.Tools.Solid.Authorization**: ❌ Marked as NOT TRIMMABLE
+      - Uses C# `dynamic` for handler invocation
+    - **Ark.Tools.EventSourcing.RavenDb**: ❌ Initially marked trimmable, later reverted (see Evening Session)
+- **Code Review Process**:
+  - Changed Activity library from `UnconditionalSuppressMessage` to `RequiresUnreferencedCode`
+  - Improved justification for EventSourcing.RavenDb suppressions (before revert decision)
+- **Testing**: Full solution build verified
 
 ### 2026-01-11 (Final Session - Level 6 COMPLETE! 🎉)
 - **Level 6 Framework Integrations**: 100% COMPLETE! (9/9 libraries)
