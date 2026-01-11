@@ -27,7 +27,8 @@ public class Book_GetByIdHandler : IQueryHandler<Book_GetByIdQuery.V1, Book.V1.O
     /// <inheritdoc/>
     public async Task<Book.V1.Output?> ExecuteAsync(Book_GetByIdQuery.V1 query, CancellationToken ctk = default)
     {
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
         return await ctx.ReadBookByIdAsync(query.Id, ctk).ConfigureAwait(false);
     }
 }

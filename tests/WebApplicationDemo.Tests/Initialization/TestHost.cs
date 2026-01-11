@@ -66,9 +66,11 @@ public static class TestHost
         {
             LogManager.Flush(TimeSpan.FromSeconds(2));
         }
+#pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional cleanup
         catch
         {
         }
+#pragma warning restore ERP022
     }
 
 

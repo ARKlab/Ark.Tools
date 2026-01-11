@@ -28,9 +28,11 @@ public static class Ex
         var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
 #pragma warning disable MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
 #pragma warning disable MA0040 // Forward the CancellationToken parameter to methods that take one
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits - required in callback context
         var r2 = lifetime.ApplicationStopping.Register(()
             => webHostBuilder.StopAsync().GetAwaiter().GetResult()
             );
+#pragma warning restore VSTHRD002
 #pragma warning restore MA0040 // Forward the CancellationToken parameter to methods that take one
 #pragma warning restore MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
 

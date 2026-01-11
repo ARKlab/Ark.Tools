@@ -41,7 +41,8 @@ public class Ping_DeleteRequestHandler : IRequestHandler<Ping_DeleteRequest.V1, 
     /// <inheritdoc/>
     public async Task<bool> ExecuteAsync(Ping_DeleteRequest.V1 request, CancellationToken ctk = default)
     {
-        await using var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
+        await using var _ = ctx.ConfigureAwait(false);
 
         var entity = await ctx.ReadPingByIdAsync(request.Id, ctk).ConfigureAwait(false);
 

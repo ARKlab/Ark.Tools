@@ -54,7 +54,6 @@ sealed class DatabaseUtils
         await using var ctx = new SqlConnection(TestHost.DBConfig.ConnectionString);
         await ctx.OpenAsync().ConfigureAwait(false);
         await using var tx = await ctx.BeginTransactionAsync().ConfigureAwait(false);
-
         await ctx.ExecuteAsync(
             @"[ops].[ResetFull_onlyForTesting]",
             new
