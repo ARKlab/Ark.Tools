@@ -17,6 +17,8 @@ jobs:
           - 10000:10000
           - 10001:10001
           - 10002:10002
+        options: >-
+          --skipApiVersionCheck
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2025-latest
         ports:
