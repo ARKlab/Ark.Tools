@@ -57,7 +57,7 @@
 	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
 	  <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
 	  <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.1" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.2" />
 	  <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
 	  <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
 	  <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
@@ -125,8 +125,8 @@
 	  <!-- AUTH -->
 	  <PackageVersion Include="Auth0.AuthenticationApi" Version="7.43.0" />
 	  <PackageVersion Include="Auth0.ManagementApi" Version="7.43.0" />
-	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.80.0" />
-	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.80.0" />
+	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.81.0" />
+	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.81.0" />
 	  <PackageVersion Include="JWT" Version="11.0.0" />
 	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
 	  <PackageVersion Include="Azure.Identity" Version="1.17.1" />
@@ -144,10 +144,10 @@
 	  <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
 
 	  <!-- BUILD TOOLS -->
-	  <PackageVersion Include="Polyfill" Version="9.6.0" />
+	  <PackageVersion Include="Polyfill" Version="9.7.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.101" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-	  <PackageVersion Include="Meziantou.Analyzer" Version="2.0.270" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="2.0.276" />
 	  <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15" />
 	  <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
 	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />

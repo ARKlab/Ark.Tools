@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.270, )",
-        "resolved": "2.0.270",
-        "contentHash": "nmBRAIyaNnYInQ3vm58vtjltueRyiiedIfab6zvvkwh7mI+iv3gxbgy2FZi3iBDucH/eDJ51BbzVlNwszJ3vtA=="
+        "requested": "[2.0.276, )",
+        "resolved": "2.0.276",
+        "contentHash": "3XFEEjrTAhCP23y+g+GDeKcHoJEfb/R4MgIqySKL7rZ4IKdavNeYMu9OjBMWSUJewqOk0qcVt0OtnucfykgCaA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -70,9 +70,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.6.0, )",
-        "resolved": "9.6.0",
-        "contentHash": "2Uivtqpr/Kh/deBCs+8AIaULeuwI2vC4VPG8Gap+b+oHONfgNK5nngkriOtHIKOlkzvU62lckRpWL/eOVuVqBw=="
+        "requested": "[9.7.0, )",
+        "resolved": "9.7.0",
+        "contentHash": "0KMGnpeZe7TZCnM+Hc0sihtJJFFlTq2IAEmkgFtyGLNpCB98pqowyyHCsaFRahFFhKbGDU/1zWHDTBLFOlqvBA=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -729,20 +729,20 @@
       },
       "Microsoft.Identity.Client": {
         "type": "CentralTransitive",
-        "requested": "[4.80.0, )",
-        "resolved": "4.80.0",
-        "contentHash": "nmg+q17mKdNafWvaX7Of5Xh8sxc4acsD6xOOczp7kgjAzR7bpseYGZzg38XPoS/vW7k92sGKCWgHSogB0K62KQ==",
+        "requested": "[4.81.0, )",
+        "resolved": "4.81.0",
+        "contentHash": "xpIOopc3HFeF1JdKkQoAVQYEblqWJAUzAnuV9B9J3E+vPxtvbKcVabRd6rr2PA7yVLjTnCY8sytCpUsZhOBX5A==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "8.14.0"
         }
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "CentralTransitive",
-        "requested": "[4.80.0, )",
-        "resolved": "4.80.0",
-        "contentHash": "cPXcfsyYNwDPP1DHW0TAdfu2d+VrWmRc75s1vdA0N0z8osK4LHRhjFUDEK/xBBA2DOyhbk+SpWpyhBR3Fi5LAA==",
+        "requested": "[4.81.0, )",
+        "resolved": "4.81.0",
+        "contentHash": "Z4yS/OXEn8J/btGlLS8VNIjpQDRXjZEWzSMUguqDbwV5Jg+0qwJHCYzwQ+O89mOZVXU4C5EhuCcoRnkJlnPJQw==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.80.0",
+          "Microsoft.Identity.Client": "4.81.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
       },
