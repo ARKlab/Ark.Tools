@@ -41,13 +41,6 @@ stages:
       variables:
         NUGET_PACKAGES: '${{ parameters.workingDirectory }}/.nuget/packages'
       services:
-        azurite:
-          image: mcr.microsoft.com/azure-storage/azurite:latest
-          ports:
-          - 10000:10000
-          - 10001:10001
-          - 10002:10002
-          options: --skipApiVersionCheck
         sqlserver:
           image: mcr.microsoft.com/mssql/server:2022-latest
           env:
@@ -56,6 +49,15 @@ stages:
           ports:
           - 1433:1433
       steps:
+      - script: |
+          docker run -d \
+            -p 10000:10000 \
+            -p 10001:10001 \
+            -p 10002:10002 \
+            mcr.microsoft.com/azure-storage/azurite:latest \
+            azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+        displayName: 'Start Azurite'
+
       - task: NuGetToolInstaller@1
         displayName: 'Use NuGet 6.x'
         inputs:
