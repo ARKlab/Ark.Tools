@@ -1,95 +1,17 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Core;
+
 using System.Reflection;
 
 namespace Ark.Tools.Reflection;
 
 /// <summary>
-/// Reflection utilities
+/// Reflection utilities that are NOT trim-compatible.
+/// For trim-safe reflection helpers, see Ark.Tools.Core.ReflectionHelper.
 /// </summary>
 public static class ReflectionHelper
 {
-    /// <summary>
-    /// Get the `Attribute` object of the specified type associated with a member.
-    /// </summary>
-    /// <typeparam name="TAttribute">Type of attribute to get.</typeparam>
-    /// <param name="memberInfo">The member to look for the attribute on.</param>
-    public static TAttribute? GetAttribute<TAttribute>(MemberInfo memberInfo)
-    {
-        var attributes = from a in memberInfo.GetCustomAttributes(true)
-                         where a is TAttribute
-                         select a;
-
-        return attributes.Cast<TAttribute>().FirstOrDefault();
-    }
-
-    /// <summary>
-    /// Get the `Attribute` object of the specified type associated with a class.
-    /// </summary>
-    /// <typeparam name="TAttribute">Type of attribute to get.</typeparam>
-    /// <param name="type">The class to look for the attribute on.</param>
-    public static TAttribute? GetAttribute<TAttribute>(Type type)
-    {
-        var attributes = from a in type.GetCustomAttributes(true)
-                         where a is TAttribute
-                         select a;
-
-        return attributes.Cast<TAttribute>().FirstOrDefault();
-    }
-
-    public static Type? GetCompatibleGenericBaseClass(this Type? type, Type baseType)
-    {
-        Type? baseTypeToCheck = type;
-
-        while (baseTypeToCheck != null && baseTypeToCheck != typeof(object))
-        {
-            if (baseTypeToCheck.IsGenericType)
-            {
-                Type genericTypeToCheck = baseTypeToCheck.GetGenericTypeDefinition();
-                if (genericTypeToCheck == baseType)
-                {
-                    return baseTypeToCheck;
-                }
-            }
-
-            baseTypeToCheck = baseTypeToCheck.BaseType;
-        }
-
-        return null;
-    }
-
-    public static Type? GetCompatibleGenericInterface(this Type? type, Type interfaceType)
-    {
-        if (type == null) return null;
-
-        Type interfaceToCheck = type;
-
-        if (interfaceToCheck.IsGenericType)
-        {
-            interfaceToCheck = interfaceToCheck.GetGenericTypeDefinition();
-        }
-
-        if (interfaceToCheck == interfaceType)
-        {
-            return type;
-        }
-
-        foreach (Type typeToCheck in type.GetInterfaces())
-        {
-            if (typeToCheck.IsGenericType)
-            {
-                Type genericInterfaceToCheck = typeToCheck.GetGenericTypeDefinition();
-                if (genericInterfaceToCheck == interfaceType)
-                {
-                    return typeToCheck;
-                }
-            }
-        }
-
-        return null;
-    }
-
-
     /// <summary>
     /// Get the item type of a type that implements `IEnumerable`.
     /// </summary>
