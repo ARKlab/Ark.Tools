@@ -3,7 +3,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Ark.Tools.Reflection;
+namespace Ark.Tools.Core.Reflection;
 
 /// <summary>
 /// Generates new Types with dynamically added properties.

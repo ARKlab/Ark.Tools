@@ -957,12 +957,12 @@
           "Ark.Tools.AspNetCore.NestedStartup": "[1.0.0, )",
           "Ark.Tools.AspNetCore.Swashbuckle": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.Core.Reflection": "[1.0.0, )",
           "Ark.Tools.Hosting": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
           "Ark.Tools.Nodatime.Json": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Ark.Tools.Reflection": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
@@ -1051,6 +1051,14 @@
           "System.Reactive": "[6.1.0, )"
         }
       },
+      "ark.tools.core.reflection": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "NodaTime": "[3.3.0, )",
+          "System.Reactive": "[6.1.0, )"
+        }
+      },
       "ark.tools.hosting": {
         "type": "Project",
         "dependencies": {
@@ -1129,14 +1137,6 @@
           "NodaTime.Serialization.SystemTextJson": "[1.3.0, )"
         }
       },
-      "ark.tools.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "NodaTime": "[3.3.0, )",
-          "System.Reactive": "[6.1.0, )"
-        }
-      },
       "ark.tools.reqnroll": {
         "type": "Project",
         "dependencies": {
@@ -1194,7 +1194,6 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Ark.Tools.Reflection": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
       },

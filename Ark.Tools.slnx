@@ -7,6 +7,7 @@
     <Project Path="src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
     <Project Path="src/common/Ark.Tasks/Ark.Tasks.csproj" />
     <Project Path="src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
+    <Project Path="src/common/Ark.Tools.Core.Reflection/Ark.Tools.Core.Reflection.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.RavenDb/Ark.Tools.EventSourcing.RavenDb.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.Rebus/Ark.Tools.EventSourcing.Rebus.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.SimpleInjector/Ark.Tools.EventSourcing.SimpleInjector.csproj" />

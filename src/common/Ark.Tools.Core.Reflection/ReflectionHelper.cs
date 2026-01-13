@@ -4,7 +4,7 @@ using Ark.Tools.Core;
 
 using System.Reflection;
 
-namespace Ark.Tools.Reflection;
+namespace Ark.Tools.Core.Reflection;
 
 /// <summary>
 /// Reflection utilities that are NOT trim-compatible.

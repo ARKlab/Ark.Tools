@@ -926,6 +926,14 @@
           "System.Reactive": "[6.1.0, )"
         }
       },
+      "ark.tools.core.reflection": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "NodaTime": "[3.3.0, )",
+          "System.Reactive": "[6.1.0, )"
+        }
+      },
       "ark.tools.http": {
         "type": "Project",
         "dependencies": {
@@ -1014,14 +1022,6 @@
           "Rebus.SqlServer": "[8.4.0, )"
         }
       },
-      "ark.tools.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "NodaTime": "[3.3.0, )",
-          "System.Reactive": "[6.1.0, )"
-        }
-      },
       "ark.tools.simpleinjector": {
         "type": "Project",
         "dependencies": {
@@ -1076,7 +1076,6 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Ark.Tools.Reflection": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
       }

@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace Ark.Tools.Reflection;
+namespace Ark.Tools.Core.Reflection;
 
 public static partial class EnumerableExtensions
 {

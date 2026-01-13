@@ -8,7 +8,7 @@ using System.Collections.Frozen;
 using System.Data;
 using System.Reflection;
 
-namespace Ark.Tools.Reflection;
+namespace Ark.Tools.Core.Reflection;
 
 //http://msdn.microsoft.com/en-us/library/bb669096.aspx
 internal sealed class ShredObjectToDataTable<T>

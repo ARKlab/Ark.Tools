@@ -46,7 +46,7 @@
     <ProjectReference Include="..\Ark.Tools.AspNetCore.NestedStartup\Ark.Tools.AspNetCore.NestedStartup.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.Swashbuckle\Ark.Tools.AspNetCore.Swashbuckle.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
-    <ProjectReference Include="..\..\common\Ark.Tools.Reflection\Ark.Tools.Reflection.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Core.Reflection\Ark.Tools.Core.Reflection.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Hosting\Ark.Tools.Hosting.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />

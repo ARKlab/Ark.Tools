@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.Data;
 
-namespace Ark.Tools.Reflection;
+namespace Ark.Tools.Core.Reflection;
 
 //Add static methods to IEnumerable (Extension)
 public static class ArkDataTableExtensions

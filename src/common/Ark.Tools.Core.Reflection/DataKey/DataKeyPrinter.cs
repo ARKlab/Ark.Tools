@@ -5,7 +5,7 @@ using Ark.Tools.Core.DataKey;
 using System.Reflection;
 using System.Text;
 
-namespace Ark.Tools.Reflection.DataKey;
+namespace Ark.Tools.Core.Reflection.DataKey;
 
 public static class DataKeyPrinter
 {

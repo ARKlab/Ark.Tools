@@ -4,7 +4,7 @@ using Ark.Tools.Core.DataKey;
 
 using System.Reflection;
 
-namespace Ark.Tools.Reflection.DataKey;
+namespace Ark.Tools.Core.Reflection.DataKey;
 
 public class DataKeyComparer<T> : IEqualityComparer<T>
     where T : class

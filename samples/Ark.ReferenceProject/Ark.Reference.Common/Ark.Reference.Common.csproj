@@ -10,7 +10,7 @@
 	<ItemGroup>
 		<PackageReference Include="Ark.Tools.NLog.Configuration" />
 		<PackageReference Include="Ark.Tools.Nodatime" />
-		<PackageReference Include="Ark.Tools.Reflection" />
+		<PackageReference Include="Ark.Tools.Core.Reflection" />
 		<PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
 		<PackageReference Include="Ark.Tools.Rebus" />
 		<PackageReference Include="Ark.Tools.Http" />
