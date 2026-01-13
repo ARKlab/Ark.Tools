@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
 using Ark.Tools.NewtonsoftJson;
-using Ark.Tools.Core.Reflection;
 using Ark.Tools.Sql;
 
 using Dapper;
@@ -92,7 +91,7 @@ public class SqlStateProvider : IStateProvider
             else
                 return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
                     , map
-                    , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
+                    , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTable().AsTableValuedParameter("udt_ResourceIdList") }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
         }
     }

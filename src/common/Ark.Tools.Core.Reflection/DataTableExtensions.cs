@@ -4,19 +4,64 @@ using System.Data;
 
 namespace Ark.Tools.Core.Reflection;
 
-//Add static methods to IEnumerable (Extension)
+/// <summary>
+/// Extension methods for converting IEnumerable to DataTable with polymorphic support.
+/// These methods support derived types but are not trim-compatible.
+/// For trim-safe conversion (without polymorphic support), use ToDataTable() from Ark.Tools.Core.
+/// </summary>
 public static class ArkDataTableExtensions
 {
+    /// <summary>
+    /// Converts an IEnumerable&lt;T&gt; to a DataTable with support for polymorphic types.
+    /// This method supports derived types but is not trim-compatible.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the source sequence.</typeparam>
+    /// <param name="source">The source sequence to convert.</param>
+    /// <returns>A DataTable containing the data from the source sequence.</returns>
+    public static DataTable ToDataTablePolymorphic<T>(this IEnumerable<T> source)
+    {
+        return new ShredObjectToDataTable<T>().Shred(source, null, null);
+    }
+
+    /// <summary>
+    /// Converts an IEnumerable&lt;T&gt; to a DataTable with support for polymorphic types and options.
+    /// This method supports derived types but is not trim-compatible.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the source sequence.</typeparam>
+    /// <param name="source">The source sequence to convert.</param>
+    /// <param name="table">The DataTable to load data into. If null, a new table is created.</param>
+    /// <param name="options">Specifies how values from the source sequence will be applied to existing rows in the table.</param>
+    /// <returns>A DataTable containing the data from the source sequence.</returns>
+    public static DataTable ToDataTablePolymorphic<T>(this IEnumerable<T> source,
+                                                DataTable table, LoadOption? options)
+    {
+        return new ShredObjectToDataTable<T>().Shred(source, table, options);
+    }
+
+    /// <summary>
+    /// Legacy method name. Use ToDataTablePolymorphic instead.
+    /// </summary>
+    [Obsolete("Use ToDataTablePolymorphic() instead. This method will be removed in a future version.")]
     public static DataTable ToDataTableArk<T>(this IEnumerable<T> source)
     {
         return new ShredObjectToDataTable<T>().Shred(source, null, null);
     }
 
+    /// <summary>
+    /// Legacy method name. Use ToDataTablePolymorphic instead.
+    /// Note: The ToDataTable() method in Ark.Tools.Core no longer supports polymorphic types.
+    /// </summary>
+    [Obsolete("Use ToDataTablePolymorphic() for polymorphic support, or use ToDataTable() from Ark.Tools.Core for trim-safe conversion without polymorphic support. This method will be removed in a future version.")]
     public static DataTable ToDataTable<T>(this IEnumerable<T> source)
     {
         return new ShredObjectToDataTable<T>().Shred(source, null, null);
     }
 
+    /// <summary>
+    /// Legacy method name. Use ToDataTablePolymorphic instead.
+    /// Note: The ToDataTable() method in Ark.Tools.Core no longer supports polymorphic types.
+    /// </summary>
+    [Obsolete("Use ToDataTablePolymorphic() for polymorphic support, or use ToDataTable() from Ark.Tools.Core for trim-safe conversion without polymorphic support. This method will be removed in a future version.")]
     public static DataTable ToDataTable<T>(this IEnumerable<T> source,
                                                 DataTable table, LoadOption? options)
     {

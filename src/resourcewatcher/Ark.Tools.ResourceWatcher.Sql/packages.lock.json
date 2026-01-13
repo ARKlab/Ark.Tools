@@ -256,14 +256,6 @@
           "System.Reactive": "[6.1.0, )"
         }
       },
-      "ark.tools.core.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "NodaTime": "[3.3.0, )",
-          "System.Reactive": "[6.1.0, )"
-        }
-      },
       "ark.tools.newtonsoftjson": {
         "type": "Project",
         "dependencies": {
@@ -843,15 +835,6 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "NodaTime": "[3.3.0, )",
-          "System.Linq.Async": "[7.0.0, )",
-          "System.Reactive": "[6.1.0, )"
-        }
-      },
-      "ark.tools.core.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
           "NodaTime": "[3.3.0, )",
           "System.Linq.Async": "[7.0.0, )",
           "System.Reactive": "[6.1.0, )"
