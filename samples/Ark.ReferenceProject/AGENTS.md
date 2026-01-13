@@ -19,6 +19,7 @@
 - Note: `JsonSerializerOptions` get locked when passed to a `JsonSerializerContext` constructor, preventing reuse for multiple contexts - create separate instances for each context
 - **BusinessRuleViolations**: Derive from `Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation`, specialize with domain-specific properties (e.g., `BookPrintingProcessAlreadyRunningViolation` with `BookId` property). The class name itself serves as the error code
 - **Controller Routing**: Always use explicit routes at the controller class level (e.g., `[Route("bookPrintProcess")]` in camelCase). Never use `[controller]` or other implicit routes. Add `[ApiVersion("1.0")]` or appropriate version on the controller. Use sub-routes on action methods (e.g., `[HttpGet("{id}")]`)
+- **Async Methods**: Always use `async` and `await` in async methods, even when the only operation is `return await task`. Do NOT optimize by returning the Task directly - this harms stacktrace clarity in production debugging
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval

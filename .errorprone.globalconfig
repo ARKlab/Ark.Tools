@@ -25,7 +25,8 @@ dotnet_diagnostic.EPC16.severity = warning
 dotnet_diagnostic.EPC17.severity = error
 
 # EPC18: Use synchronous method instead of async when possible
-dotnet_diagnostic.EPC18.severity = suggestion
+# Disabled - we prefer stacktrace clarity over micro-optimization. Always use async/await even for simple return await patterns.
+dotnet_diagnostic.EPC18.severity = none
 
 # EPC20: Suspicious implementation of equality for a value type
 dotnet_diagnostic.EPC20.severity = warning
