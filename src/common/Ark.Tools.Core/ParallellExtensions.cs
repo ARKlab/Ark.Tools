@@ -1,47 +1,66 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System.Reactive.Concurrency;
-using System.Reactive.Linq;
-using System.Reactive.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Ark.Tools.Core;
 
 public static class ParallellExtensions
 {
-    public static Task Parallel<T>(this IList<T> list, int degree, Func<T, Task> action, CancellationToken ctk = default)
+    public static async Task Parallel<T>(this IList<T> list, int degree, Func<T, Task> action, CancellationToken ctk = default)
     {
-        return list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk);
-    }
-    public static Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<T, Task<TResult>> action, CancellationToken ctk = default)
-    {
-        return list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk);
+        await list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk).ConfigureAwait(false);
     }
 
-    public static Task Parallel<T>(this IList<T> list, int degree, Func<int, T, Task> action, CancellationToken ctk = default)
+    public static async Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<T, Task<TResult>> action, CancellationToken ctk = default)
     {
-        return list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk);
+        return await list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk).ConfigureAwait(false);
     }
 
-    public static Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<int, T, Task<TResult>> action, CancellationToken ctk = default)
+    public static async Task Parallel<T>(this IList<T> list, int degree, Func<int, T, Task> action, CancellationToken ctk = default)
     {
-        return list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk);
+        await list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk).ConfigureAwait(false);
     }
 
-    public static Task Parallel<T>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task> action, CancellationToken ctk = default)
+    public static async Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<int, T, Task<TResult>> action, CancellationToken ctk = default)
     {
-        return list.ToObservable()
-            .Select((x, i) => Observable.FromAsync(ct => action(i, x, ct)).SubscribeOn(DefaultScheduler.Instance))
-            .Merge(degree)
-            .ToList()
-            .ToTask(ctk);
+        return await list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk).ConfigureAwait(false);
     }
 
-    public static Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task<TResult>> action, CancellationToken ctk = default)
+    public static async Task Parallel<T>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task> action, CancellationToken ctk = default)
     {
-        return list.ToObservable()
-            .Select((x, i) => Observable.FromAsync(ct => action(i, x, ct)).SubscribeOn(DefaultScheduler.Instance))
-            .Merge(degree)
-            .ToList()
-            .ToTask(ctk);
+        var options = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = degree,
+            CancellationToken = ctk
+        };
+
+        await System.Threading.Tasks.Parallel.ForEachAsync(
+            list.Select((item, index) => (item, index)),
+            options,
+            async (tuple, ct) =>
+            {
+                await action(tuple.index, tuple.item, ct).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+    }
+
+    public static async Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task<TResult>> action, CancellationToken ctk = default)
+    {
+        var results = new ConcurrentBag<(int Index, TResult Result)>();
+        var options = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = degree,
+            CancellationToken = ctk
+        };
+
+        await System.Threading.Tasks.Parallel.ForEachAsync(
+            list.Select((item, index) => (item, index)),
+            options,
+            async (tuple, ct) =>
+            {
+                var result = await action(tuple.index, tuple.item, ct).ConfigureAwait(false);
+                results.Add((tuple.index, result));
+            }).ConfigureAwait(false);
+
+        return results.OrderBy(x => x.Index).Select(x => x.Result).ToList();
     }
 }

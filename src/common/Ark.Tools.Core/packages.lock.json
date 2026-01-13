@@ -66,12 +66,6 @@
         "resolved": "9.7.2",
         "contentHash": "NugbokVZv48G4UueFhFdOJTik7i2ThcuPk9Sw5I+kWQjdxZt4bKIpc74lEtv7MXdaREWJPmMmtjQuRWUX4uyIw=="
       },
-      "System.Reactive": {
-        "type": "Direct",
-        "requested": "[6.1.0, )",
-        "resolved": "6.1.0",
-        "contentHash": "M5cCC1ZMkZr9jbSQGTHnVkb5TDN67qWCV7AP8TAHdGkvDlu0puT5NzemESNn9+HkYIDpWpocP68/i+/ame2/2w=="
-      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.102",
@@ -157,12 +151,6 @@
           "System.Interactive.Async": "7.0.0",
           "System.Linq.AsyncEnumerable": "10.0.0"
         }
-      },
-      "System.Reactive": {
-        "type": "Direct",
-        "requested": "[6.1.0, )",
-        "resolved": "6.1.0",
-        "contentHash": "M5cCC1ZMkZr9jbSQGTHnVkb5TDN67qWCV7AP8TAHdGkvDlu0puT5NzemESNn9+HkYIDpWpocP68/i+/ame2/2w=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
