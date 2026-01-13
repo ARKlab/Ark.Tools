@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-13  
-**Current Phase:** ✅ ALL COMMON + RESOURCEWATCHER LIBRARIES COMPLETE!  
-**Progress:** 43/50 libraries (86%) trimmable - 6 common libraries + 11 AspNetCore marked NOT TRIMMABLE with documentation
+**Current Phase:** ✅ COMMON LIBRARIES COMPLETE, RESOURCEWATCHER IN PROGRESS  
+**Progress:** 42/50 libraries (84%) trimmable - 7 common libraries + 11 AspNetCore + 1 ResourceWatcher marked NOT TRIMMABLE with documentation
 
 ---
 
@@ -526,15 +526,15 @@
 
 ### Overall Progress
 - **Common Libraries**: 35/42 (83%) trimmable - 6 marked NOT TRIMMABLE
-- **ResourceWatcher Libraries**: 8/8 (100%) trimmable ✅ ALL COMPLETE!
+- **ResourceWatcher Libraries**: 7/8 (88%) trimmable - 1 marked NOT TRIMMABLE (Sql)
 - **AspNetCore Libraries**: 0/11 (0%) - All marked NOT TRIMMABLE (Microsoft MVC limitation)
 - **Total Libraries**: 50 (42 common + 8 ResourceWatcher)
-- **Total Trimmable**: 43 (86%)
-- **Total Not Trimmable**: 17 (34%) - 6 common + 11 AspNetCore, all documented with clear reasons
+- **Total Trimmable**: 42 (84%)
+- **Total Not Trimmable**: 18 (36%) - 6 common + 1 ResourceWatcher + 11 AspNetCore, all documented with clear reasons
 
 ### By Category
 - **Common Libraries**: 35/42 (83%) ✅
-- **ResourceWatcher Libraries**: 8/8 (100%) ✅ ALL COMPLETE!
+- **ResourceWatcher Libraries**: 7/8 (88%) - 1 NOT TRIMMABLE (ResourceWatcher.Sql)
 - **AspNetCore Libraries**: 0/11 (0%) - ❌ NOT TRIMMABLE (MVC dependency)
 
 ### By Level (Common Libraries)
@@ -548,16 +548,16 @@
 - **Level 7-8 (High-Level)**: 3/6 (50%) - 3 trimmable, 3 not trimmable (EventSourcing.RavenDb, RavenDb.Auditing, one other)
 
 ### By Complexity
-- **Low Complexity**: 28 libraries completed (easy wins with zero warnings)
-  - 23 common + 5 ResourceWatcher
+- **Low Complexity**: 27 libraries completed (easy wins with zero warnings)
+  - 23 common + 4 ResourceWatcher
 - **Medium Complexity**: 15 libraries completed (standard patterns applied)
   - 12 common + 3 ResourceWatcher
-- **High Complexity**: 0 libraries completed, 17 marked not trimmable with proper documentation
-  - 6 common + 11 AspNetCore
+- **High Complexity**: 0 libraries completed, 18 marked not trimmable with proper documentation
+  - 6 common + 1 ResourceWatcher + 11 AspNetCore
 
 ### Key Achievements
-- ✅ 86% of all libraries (43/50) are now trimmable
-- ✅ 100% of ResourceWatcher libraries trimmable
+- ✅ 84% of all libraries (42/50) are now trimmable
+- ✅ 88% of ResourceWatcher libraries trimmable (7/8)
 - ✅ All common infrastructure libraries trimmable
 - ✅ All non-trimmable libraries documented with clear technical reasons
 
@@ -591,13 +591,34 @@
 
 ## Update Log
 
-### 2026-01-13 (ResourceWatcher Libraries - ALL COMPLETE! 🎉)
-- **All 8 ResourceWatcher Libraries**: ✅ 100% COMPLETE!
-  - **Completion**: All ResourceWatcher libraries successfully enabled for trimming
+### 2026-01-13 (Code Review Feedback - ResourceWatcher.Sql Reverted)
+- **Ark.Tools.ResourceWatcher.Sql**: ❌ Marked as NOT TRIMMABLE after code review
+  - **Feedback**: RequiresUnreferencedCode should be preferred over UnconditionalSuppressMessage
+  - **Reason**: ArkDefaultJsonSerializerSettings is not trim-safe (uses Newtonsoft.Json with reflection)
+  - **Changes Reverted**:
+    - Removed `IsTrimmable` and `EnableTrimAnalyzer` from csproj
+    - Removed `UnconditionalSuppressMessage` attributes from SqlStateProvider.cs
+    - Reverted to original state before trimming changes
+  - **Documentation Added**:
+    - Created `README_TRIMMING.md` explaining why library is not trimmable
+    - Created `docs/todo/migrate-resourcewatcher-sql-to-stj.md` with migration plan
+  - **Migration Plan**: Migrate to System.Text.Json with source generation
+    - Replace Newtonsoft.Json with System.Text.Json
+    - Use JsonSerializerContext for compile-time serialization
+    - Define well-typed DTOs for Extensions
+    - Estimated effort: 4-8 hours
+- **Updated Statistics**:
+  - **ResourceWatcher Libraries**: 7/8 (88%) trimmable - 1 NOT TRIMMABLE
+  - **Total Libraries**: 50 (42 common + 8 ResourceWatcher)
+  - **Total Trimmable**: 42/50 (84%)
+  - **Total Not Trimmable**: 18 (36%) - 6 common + 1 ResourceWatcher + 11 AspNetCore
+
+### 2026-01-13 (ResourceWatcher Libraries - Initial Implementation)
+- **7 of 8 ResourceWatcher Libraries**: ✅ Trimmable
   - **Build Verification**: Full solution build - **0 warnings, 0 errors** ✅
   - **Time**: Completed in single session (~2 hours)
-  - **Code Changes**: Only 3 of 8 libraries (37.5%) required code modifications
-  - **Clean Libraries**: 5 of 8 libraries (62.5%) were already trim-compatible - just needed properties enabled
+  - **Code Changes**: Only 2 of 7 trimmable libraries (29%) required code modifications
+  - **Clean Libraries**: 5 of 7 libraries (71%) were already trim-compatible - just needed properties enabled
 
 - **Level 0 - Foundation**:
   - **Ark.Tools.ResourceWatcher**: Fixed IL2026 (4 occurrences)
@@ -612,12 +633,7 @@
     - Serializes Extensions dictionary for Application Insights telemetry
     - Justification: Dictionary<string, string> contains only primitive values that are always preserved
   
-  - **Ark.Tools.ResourceWatcher.Sql**: Fixed IL2026 (5 occurrences)
-    - Added `UnconditionalSuppressMessage` to 3 methods: constructor, LoadStateAsync, SaveStateAsync
-    - Serializes well-known types for SQL state persistence:
-      - Extensions: dynamic object with primitive values
-      - ModifiedSources: Dictionary<string, LocalDateTime> with NodaTime converters registered
-    - Justification: Controlled JSON serialization of well-known types for core state persistence functionality
+  - **Ark.Tools.ResourceWatcher.Sql**: ❌ NOT TRIMMABLE (see above for details)
   
   - **Ark.Tools.ResourceWatcher.Testing**: Zero warnings from start ✅
   - **Ark.Tools.ResourceWatcher.WorkerHost**: Zero warnings from start ✅
@@ -629,23 +645,24 @@
 
 - **Patterns Established**:
   1. **DiagnosticSource Telemetry Pattern**: Suppress IL2026 for internal diagnostic methods writing well-known anonymous types
-  2. **JSON State Persistence Pattern**: Suppress IL2026 for controlled JSON serialization of well-known types
-  3. **Clean Architecture Validation**: 62.5% of libraries required zero code changes - demonstrates good design
+  2. **RequiresUnreferencedCode Preference**: Use RequiresUnreferencedCode instead of UnconditionalSuppressMessage when possible
+  3. **Clean Architecture Validation**: 71% of trimmable libraries required zero code changes - demonstrates good design
 
 - **Overall Statistics After ResourceWatcher**:
   - **Common Libraries**: 35/42 (83%) trimmable
-  - **ResourceWatcher Libraries**: 8/8 (100%) trimmable ✅
+  - **ResourceWatcher Libraries**: 7/8 (88%) trimmable
   - **AspNetCore Libraries**: 0/11 (0%) - all marked NOT TRIMMABLE (MVC dependency)
   - **Total Libraries**: 50 (42 common + 8 ResourceWatcher)
-  - **Total Trimmable**: 43/50 (86%) ✅
-  - **Target Achievement**: 30-40% size reduction - ✅ EXCEEDED!
+  - **Total Trimmable**: 42/50 (84%) ✅
+  - **Target Achievement**: 30-40% size reduction - ✅ ACHIEVED!
 
 - **Documentation Updates**:
-  - Updated progress-tracker.md with complete ResourceWatcher section
-  - Updated README.md with new progress statistics
-  - Updated overall summary statistics
+  - Updated progress-tracker.md with ResourceWatcher section including NOT TRIMMABLE entry
+  - Updated README.md with corrected progress statistics
+  - Added README_TRIMMING.md to ResourceWatcher.Sql
+  - Created TODO item for STJ migration
 
-- **Next Steps**: ResourceWatcher initiative complete. Consider if any additional library groups need trimming support.
+- **Next Steps**: Monitor for additional code review feedback. Consider STJ migration for ResourceWatcher.Sql.
 
 ### 2026-01-11 (Final Session - Ark.Tools.Core Analysis Complete! 🎉)
 - **Ark.Tools.Core**: ❌ Marked as NOT TRIMMABLE after comprehensive analysis
@@ -931,17 +948,20 @@ All 8 ResourceWatcher libraries successfully enabled for trimming with minimal c
   - **Dependencies**: Ark.Tools.ResourceWatcher ✅, Ark.Tools.ApplicationInsights.HostedService ✅, Ark.Tools.NewtonsoftJson ✅
 
 - [x] **Ark.Tools.ResourceWatcher.Sql**
-  - **Status**: ✅ DONE
-  - **Completed**: 2026-01-13
-  - **Changes**:
-    - Added `IsTrimmable` and `EnableTrimAnalyzer` properties
-    - Added `UnconditionalSuppressMessage` to 3 methods: constructor, LoadStateAsync, SaveStateAsync
-    - Added System.Diagnostics.CodeAnalysis using directive
-  - **Warnings Fixed**: IL2026 (5 unique occurrences from Newtonsoft.Json serialization)
-  - **Pattern**: Method-level suppressions for state persistence
-  - **Justification**: Serializes well-known types - Extensions (dynamic object with primitives), ModifiedSources (Dictionary<string, LocalDateTime>); NodaTime converters registered
-  - **Build Status**: ✅ 0 warnings, 0 errors
-  - **Dependencies**: Ark.Tools.ResourceWatcher ✅, Ark.Tools.NewtonsoftJson ✅, Ark.Tools.Sql.SqlServer ✅
+  - **Status**: ❌ NOT TRIMMABLE
+  - **Decision Date**: 2026-01-13
+  - **Reason**: Uses ArkDefaultJsonSerializerSettings which is marked with RequiresUnreferencedCode
+  - **Technical Issues**:
+    - **Newtonsoft.Json Dependency** - SqlStateProvider uses ArkDefaultJsonSerializerSettings.Instance for JSON serialization
+    - **RequiresUnreferencedCode Propagation** - Per code review, RequiresUnreferencedCode should be used instead of UnconditionalSuppressMessage
+    - **Not Trim-Safe** - Newtonsoft.Json relies on reflection that cannot be statically analyzed
+  - **Migration Path**: See docs/todo/migrate-resourcewatcher-sql-to-stj.md
+    - Migrate to System.Text.Json with source generation
+    - Define well-typed DTOs for Extensions
+    - Use JsonSerializerContext for compile-time serialization
+    - Estimated effort: 4-8 hours
+  - **Documentation**: Added README_TRIMMING.md explaining why not trimmable and migration plan
+  - **Dependencies**: Ark.Tools.ResourceWatcher ✅, Ark.Tools.NewtonsoftJson (NOT trimmable), Ark.Tools.Sql.SqlServer ✅
 
 - [x] **Ark.Tools.ResourceWatcher.Testing**
   - **Status**: ✅ DONE
@@ -994,13 +1014,13 @@ All 8 ResourceWatcher libraries successfully enabled for trimming with minimal c
 ### Summary Statistics
 
 - **Total Libraries**: 8
-- **Trimmable**: 8 (100%) ✅
-- **Zero Warnings**: All builds successful with 0 warnings, 0 errors
-- **Code Changes**: Only 3 libraries needed suppressions (37.5%)
-- **Suppressions Added**: 8 total
+- **Trimmable**: 7 (88%)
+- **Not Trimmable**: 1 (12%) - ResourceWatcher.Sql (Newtonsoft.Json dependency)
+- **Code Changes**: Only 2 libraries needed suppressions for trimmable ones (29%)
+- **Suppressions Added**: 5 total (for trimmable libraries)
   - 4 in ResourceWatcherDiagnosticSource (DiagnosticSource telemetry)
   - 1 in ResourceWatcherDiagnosticListener (ApplicationInsights telemetry)
-  - 3 in SqlStateProvider (state persistence)
+- **Migration Plan**: TODO item created for ResourceWatcher.Sql to migrate to System.Text.Json
 
 ---
 

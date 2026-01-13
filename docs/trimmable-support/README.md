@@ -14,11 +14,11 @@ Assembly trimming is a .NET feature that removes unused code from published appl
 
 ## Quick Links
 
-- **Progress**: 43/50 libraries (86%) trimmable
+- **Progress**: 42/50 libraries (84%) trimmable
   - Common Libraries: 35/42 (83%) ✅
-  - ResourceWatcher Libraries: 8/8 (100%) ✅ ALL COMPLETE!
+  - ResourceWatcher Libraries: 7/8 (88%) - 1 NOT TRIMMABLE (Sql - Newtonsoft.Json dependency)
   - AspNetCore Libraries: 0/11 (0%) - ❌ NOT TRIMMABLE (Microsoft MVC limitation)
-- **Current Phase**: ✅ ALL COMMON + RESOURCEWATCHER LIBRARIES COMPLETE!
+- **Current Phase**: ✅ COMMON LIBRARIES COMPLETE, RESOURCEWATCHER IN PROGRESS
 - **Target**: 30-40% deployment size reduction - ✅ ACHIEVED!
 
 ## References
