@@ -8,7 +8,7 @@ public class InMemStateProvider : IStateProvider
 {
     private readonly ConcurrentDictionary<string, ResourceState> _store = new(System.StringComparer.Ordinal);
 
-    public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
+    public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
     {
         var res = new List<ResourceState>();
         if (resourceIds == null)
@@ -20,14 +20,14 @@ public class InMemStateProvider : IStateProvider
                     res.Add(s);
         }
 
-        return await Task.FromResult(res.AsEnumerable()).ConfigureAwait(false);
+        return Task.FromResult(res.AsEnumerable());
     }
 
-    public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
+    public Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
     {
         foreach (var s in states)
             _store.AddOrUpdate(s.ResourceId, s, (k, v) => s);
 
-        await Task.CompletedTask.ConfigureAwait(false);
+        return Task.CompletedTask;
     }
 }

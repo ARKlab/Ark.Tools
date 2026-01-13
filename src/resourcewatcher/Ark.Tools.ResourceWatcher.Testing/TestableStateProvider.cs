@@ -38,7 +38,7 @@ public class TestableStateProvider : IStateProvider
     /// <summary>
     /// Saves state for the given resources.
     /// </summary>
-    public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
+    public Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
     {
         foreach (var s in states)
         {
@@ -46,7 +46,7 @@ public class TestableStateProvider : IStateProvider
             _store.AddOrUpdate(key, s, (k, v) => s);
         }
 
-        await Task.CompletedTask.ConfigureAwait(false);
+        return Task.CompletedTask;
     }
 
     #region Test Helpers
