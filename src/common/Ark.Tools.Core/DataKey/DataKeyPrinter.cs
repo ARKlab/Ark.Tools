@@ -1,22 +1,21 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.Core.DataKey;
-
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 
-namespace Ark.Tools.Core.Reflection.DataKey;
+namespace Ark.Tools.Core.DataKey;
 
 public static class DataKeyPrinter
 {
-    public static string? PrintKey<T>(T obj) where T : class
+    public static string? PrintKey<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(T obj) where T : class
     {
         return DataKeyPrinter<T>.Print(obj);
     }
 }
 
 
-public static class DataKeyPrinter<T>
+public static class DataKeyPrinter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>
     where T : class
 {
     private static readonly PropertyInfo[] _keyProperties = typeof(T).GetProperties()
