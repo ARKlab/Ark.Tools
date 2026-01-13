@@ -927,8 +927,7 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "NodaTime": "[3.3.0, )",
-          "System.Reactive": "[6.1.0, )"
+          "NodaTime": "[3.3.0, )"
         }
       },
       "ark.tools.core.reflection": {

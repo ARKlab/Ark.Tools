@@ -79,8 +79,7 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "NodaTime": "[3.3.0, )",
-          "System.Reactive": "[6.1.0, )"
+          "NodaTime": "[3.3.0, )"
         }
       }
     },
@@ -186,8 +185,7 @@
         "type": "Project",
         "dependencies": {
           "NodaTime": "[3.3.0, )",
-          "System.Linq.Async": "[7.0.0, )",
-          "System.Reactive": "[6.1.0, )"
+          "System.Linq.Async": "[7.0.0, )"
         }
       }
     }

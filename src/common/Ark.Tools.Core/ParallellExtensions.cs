@@ -1,29 +1,33 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace Ark.Tools.Core;
 
 public static class ParallellExtensions
 {
-    public static async Task Parallel<T>(this IList<T> list, int degree, Func<T, Task> action, CancellationToken ctk = default)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Task Parallel<T>(this IList<T> list, int degree, Func<T, Task> action, CancellationToken ctk = default)
     {
-        await list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk).ConfigureAwait(false);
+        return list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk);
     }
 
-    public static async Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<T, Task<TResult>> action, CancellationToken ctk = default)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<T, Task<TResult>> action, CancellationToken ctk = default)
     {
-        return await list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk).ConfigureAwait(false);
+        return list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk);
     }
 
-    public static async Task Parallel<T>(this IList<T> list, int degree, Func<int, T, Task> action, CancellationToken ctk = default)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Task Parallel<T>(this IList<T> list, int degree, Func<int, T, Task> action, CancellationToken ctk = default)
     {
-        await list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk).ConfigureAwait(false);
+        return list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk);
     }
 
-    public static async Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<int, T, Task<TResult>> action, CancellationToken ctk = default)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<int, T, Task<TResult>> action, CancellationToken ctk = default)
     {
-        return await list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk).ConfigureAwait(false);
+        return list.Parallel(degree, (i, x, ct) => action.Invoke(i, x), ctk);
     }
 
     public static async Task Parallel<T>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task> action, CancellationToken ctk = default)
@@ -45,7 +49,7 @@ public static class ParallellExtensions
 
     public static async Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<int, T, CancellationToken, Task<TResult>> action, CancellationToken ctk = default)
     {
-        var results = new ConcurrentBag<(int Index, TResult Result)>();
+        var results = new TResult[list.Count];
         var options = new ParallelOptions
         {
             MaxDegreeOfParallelism = degree,
@@ -58,9 +62,9 @@ public static class ParallellExtensions
             async (tuple, ct) =>
             {
                 var result = await action(tuple.index, tuple.item, ct).ConfigureAwait(false);
-                results.Add((tuple.index, result));
+                results[tuple.index] = result;
             }).ConfigureAwait(false);
 
-        return results.OrderBy(x => x.Index).Select(x => x.Result).ToList();
+        return results;
     }
 }

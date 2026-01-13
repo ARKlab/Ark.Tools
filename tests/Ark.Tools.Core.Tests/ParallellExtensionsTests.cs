@@ -5,7 +5,9 @@ using Ark.Tools.Core;
 using AwesomeAssertions;
 using System.Collections.Concurrent;
 
-namespace Ark.Tools.Core.Reflection.Tests;
+[assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
+
+namespace Ark.Tools.Core.Tests;
 
 /// <summary>
 /// Tests for ParallellExtensions to ensure parallel processing works correctly.
