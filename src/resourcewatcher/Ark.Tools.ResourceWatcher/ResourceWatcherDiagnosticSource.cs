@@ -5,6 +5,7 @@ using NLog;
 using NodaTime.Text;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Ark.Tools.ResourceWatcher;
@@ -342,6 +343,8 @@ internal sealed class ResourceWatcherDiagnosticSource
     }
     #endregion
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "DiagnosticSource writes well-known anonymous types for telemetry. Payload types are simple DTOs with primitive properties that are preserved. Diagnostic data is optional and does not affect core functionality.")]
     private static Activity _start(string operationName, Func<object> getPayload, bool unlinkFromParent = false)
     {
         string activityName = BaseActivityName + "." + operationName;
@@ -360,6 +363,8 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "DiagnosticSource writes well-known anonymous types for telemetry. Payload types are simple DTOs with primitive properties that are preserved. Diagnostic data is optional and does not affect core functionality.")]
     private static void _stop(Activity activity, Func<object> getPayload)
     {
         if (activity != null)
@@ -368,6 +373,8 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "DiagnosticSource writes well-known anonymous types for telemetry. Payload types are simple DTOs with primitive properties that are preserved. Diagnostic data is optional and does not affect core functionality.")]
     private static void _reportEvent(string eventName, Func<object> getPayload)
     {
         var name = BaseActivityName + "." + eventName;
@@ -378,6 +385,8 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "DiagnosticSource writes well-known anonymous types for telemetry. Payload types are simple DTOs with primitive properties that are preserved. Diagnostic data is optional and does not affect core functionality.")]
     private static void _reportException(string exceptionName, Exception ex, string tenant)
     {
         var name = BaseActivityName + "." + exceptionName;
