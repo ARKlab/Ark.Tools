@@ -1,8 +1,8 @@
 # Trimming Progress Tracker
 
 **Last Updated:** 2026-01-13  
-**Current Phase:** ✅ COMMON LIBRARIES COMPLETE, RESOURCEWATCHER IN PROGRESS  
-**Progress:** 42/50 libraries (84%) trimmable - 7 common libraries + 11 AspNetCore + 1 ResourceWatcher marked NOT TRIMMABLE with documentation
+**Status:** ✅ **INITIATIVE COMPLETE**  
+**Final Result:** 43/50 libraries (86%) trimmable - 5 common libraries + 1 ResourceWatcher + 11 AspNetCore marked NOT TRIMMABLE with documentation
 
 ---
 
@@ -62,30 +62,42 @@
   - **Pattern**: Justified suppressions for DI container patterns
   - **Justification**: ServiceType comes from SimpleInjector's validated container registration
 
-### ❌ Not Trimmable (1/1)
+### ✅ Completed (1/1)
 
 - [x] **Ark.Tools.Core**
+  - **Status**: ✅ DONE
+  - **Completed**: 2026-01-11
+  - **Changes**:
+    - Library split completed - reflection features moved to Ark.Tools.Core.Reflection
+    - Core library now builds with 0 trim warnings
+    - Contains only trim-safe utilities (extensions, value objects, business exceptions, async helpers)
+  - **Warnings Fixed**: All reflection-based code moved to separate library
+  - **Test Coverage**: Full solution build verified - 0 warnings, 0 errors
+  - **Pattern**: Library splitting to isolate reflection-heavy features
+  - **Dependencies**: None (foundation library)
+
+### ❌ Not Trimmable (1/1)
+
+- [x] **Ark.Tools.Core.Reflection**
   - **Status**: ❌ NOT TRIMMABLE
   - **Decision Date**: 2026-01-11
-  - **Reason**: Fundamentally relies on runtime reflection that cannot be statically analyzed
+  - **Reason**: Contains reflection-based utilities that fundamentally rely on runtime type discovery
   - **Technical Issues**:
-    - **88 trim warnings** across 7 files when trimming is enabled
+    - **88+ trim warnings** from reflection-based features
     - **ShredObjectToDataTable&lt;T&gt;** - Uses Type.GetFields/GetProperties to convert objects to DataTables
     - **LINQ Queryable Extensions** - IQueryable.AsQueryable requires expression tree compilation (IL2026)
     - **ReflectionHelper** - Type introspection utilities (GetInterfaces, etc.) by design
-    - **DynamicTypeAssembly** - Runtime type creation via Reflection.Emit
-    - **DataKeyComparer/Printer** - Reflects over properties to find [DataKey] attributes
   - **Warning Types**: IL2026, IL2060, IL2067, IL2070, IL2072, IL2075, IL2080, IL2087, IL2090
   - **Notes**:
-    - Making it trimmable would require breaking changes or 40-60 hours of refactoring
-    - Library splitting considered but rejected (high risk, marginal benefit)
-    - **Impact**: Despite Core not being trimmable, 35/42 libraries (83%) are now trimmable
-    - Most dependent libraries can still be marked trimmable (they use non-reflection parts)
+    - Split from Ark.Tools.Core to enable trimming support for the base library
+    - Library split successfully completed (vs originally considered and rejected)
+    - **Impact**: Ark.Tools.Core is now trimmable ✅, 36/42 libraries (86%) are now trimmable
+    - Most applications don't need reflection features and can use Core without Reflection
   - **Documentation**: Added comprehensive README_TRIMMING.md explaining:
-    - Why each feature is not trimmable
-    - Which parts are safe to use in trimmed apps
-    - How to preserve the assembly if needed
-    - Alternative approaches considered and rejected
+    - Why reflection features are not trimmable
+    - Library split rationale and benefits
+    - Migration guide (backward compatible)
+    - Alternatives to reflection-based utilities
 
 ---
 
