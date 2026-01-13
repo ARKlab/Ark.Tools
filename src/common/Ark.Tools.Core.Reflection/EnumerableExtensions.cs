@@ -37,9 +37,8 @@ public static partial class EnumerableExtensions
 
             var apply = _cache.GetOrAdd(orderBy, k =>
             {
-
-                var chain = _parseOrderBy(k, paramName)
-                    .Select(_compileOrderBy).ToArray();
+                // Parse and compile in one pass to avoid intermediate allocations
+                var chain = _parseAndCompileOrderBy(k, paramName);
 
                 IQueryable<T> apply(IQueryable<T> c)
                 {
@@ -56,36 +55,109 @@ public static partial class EnumerableExtensions
         }
 
 
-        private static Func<IQueryable<T>, IQueryable<T>> _compileOrderBy(OrderByInfo orderByInfo)
+        private static Func<IQueryable<T>, IQueryable<T>>[] _parseAndCompileOrderBy(string orderBy, string? orderByParam)
         {
-            string[] props = orderByInfo.PropertyName.Split('.');
+            if (String.IsNullOrEmpty(orderBy))
+                return [];
+            
+            var result = new List<Func<IQueryable<T>, IQueryable<T>>>();
+            
+            // Use modern MemoryExtensions.Split to avoid allocations
+            ReadOnlySpan<char> span = orderBy.AsSpan();
+            bool initial = true;
+            
+            // Process each comma-separated item using SpanSplitEnumerator
+            foreach (var itemRange in span.Split(','))
+            {
+                ReadOnlySpan<char> item = span[itemRange].Trim();
+                
+                if (item.IsEmpty)
+                    continue;
+
+                // Split on space to separate property name from ASC/DESC
+                // Collect parts while skipping empty spans (from multiple spaces)
+                ReadOnlySpan<char> propertySpan = ReadOnlySpan<char>.Empty;
+                ReadOnlySpan<char> directionSpan = ReadOnlySpan<char>.Empty;
+                int partCount = 0;
+                
+                foreach (var partRange in item.Split(' '))
+                {
+                    ReadOnlySpan<char> part = item[partRange].Trim();
+                    
+                    // Skip empty parts (caused by multiple spaces)
+                    if (part.IsEmpty)
+                        continue;
+                    
+                    partCount++;
+                    
+                    if (partCount == 1)
+                        propertySpan = part;
+                    else if (partCount == 2)
+                        directionSpan = part;
+                    else
+                        break; // More than 2 non-empty parts
+                }
+                
+                if (partCount > 2)
+                    throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item.ToString()), orderByParam);
+                
+                if (propertySpan.IsEmpty)
+                    throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
+
+                SortDirection dir = SortDirection.Ascending;
+                
+                if (partCount == 2 && !directionSpan.IsEmpty)
+                {
+                    dir = directionSpan.Equals("desc", StringComparison.OrdinalIgnoreCase) 
+                        ? SortDirection.Descending 
+                        : SortDirection.Ascending;
+                }
+
+                // Compile directly without creating intermediate struct
+                result.Add(_compileOrderBy(propertySpan, dir, initial));
+
+                initial = false;
+            }
+            
+            return result.ToArray();
+        }
+
+        private static Func<IQueryable<T>, IQueryable<T>> _compileOrderBy(ReadOnlySpan<char> propertyPath, SortDirection direction, bool initial)
+        {
             Type type = typeof(T);
 
             ParameterExpression arg = Expression.Parameter(type, "x");
             Expression expr = arg;
-            foreach (string prop in props)
+            
+            // Split property path by '.' and navigate the property chain
+            foreach (var propRange in propertyPath.Split('.'))
             {
+                ReadOnlySpan<char> propSpan = propertyPath[propRange];
+                
                 // use reflection (not ComponentModel) to mirror LINQ
-                PropertyInfo? pi = type.GetProperty(prop);
-                if (pi is null) throw new InvalidOperationException($"Property '{prop}' not found in {orderByInfo.PropertyName}");
+                string propName = propSpan.ToString();
+                PropertyInfo? pi = type.GetProperty(propName);
+                if (pi is null) 
+                    throw new InvalidOperationException($"Property '{propName}' not found in {propertyPath.ToString()}");
 
                 expr = Expression.Property(expr, pi);
                 type = pi.PropertyType;
             }
+            
             Type delegateType = typeof(Func<,>).MakeGenericType(typeof(T), type);
             var lambda = Expression.Lambda(delegateType, expr, arg);
             string methodName = String.Empty;
 
-            if (orderByInfo.Initial)
+            if (initial)
             {
-                if (orderByInfo.Direction == SortDirection.Ascending)
+                if (direction == SortDirection.Ascending)
                     methodName = "OrderBy";
                 else
                     methodName = "OrderByDescending";
             }
             else
             {
-                if (orderByInfo.Direction == SortDirection.Ascending)
+                if (direction == SortDirection.Ascending)
                     methodName = "ThenBy";
                 else
                     methodName = "ThenByDescending";
@@ -110,50 +182,6 @@ public static partial class EnumerableExtensions
                 ;
 
             return apply;
-        }
-
-        private static IEnumerable<OrderByInfo> _parseOrderBy(string orderBy, string? orderByParam)
-        {
-            if (String.IsNullOrEmpty(orderBy))
-                yield break;
-
-            string[] items = orderBy.Split(',');
-            bool initial = true;
-            foreach (string item in items)
-            {
-                string[] pair = item.Trim().Split(' ');
-
-                if (pair.Length > 2)
-                    throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item), orderByParam);
-
-                string prop = pair[0].Trim();
-
-                if (String.IsNullOrEmpty(prop))
-                    throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
-
-                SortDirection dir = SortDirection.Ascending;
-
-                if (pair.Length == 2)
-                    dir = ("desc".Equals(pair[1].Trim(), StringComparison.OrdinalIgnoreCase) ? SortDirection.Descending : SortDirection.Ascending);
-
-                yield return new OrderByInfo(prop, dir, initial);
-
-                initial = false;
-            }
-        }
-
-        public sealed record OrderByInfo
-        {
-            public OrderByInfo(string propertyName, SortDirection direction, bool initial)
-            {
-                PropertyName = propertyName;
-                Direction = direction;
-                Initial = initial;
-            }
-
-            public string PropertyName { get; init; }
-            public SortDirection Direction { get; init; }
-            public bool Initial { get; init; }
         }
 
         public enum SortDirection
