@@ -72,7 +72,7 @@ public static partial class EnumerableExtensions
                     continue;
 
                 // Split on space to separate property name from ASC/DESC
-                var spaceEnumerator = item.SplitAny(" ");
+                var spaceEnumerator = item.SplitAny(' ');
                 
                 if (!spaceEnumerator.MoveNext())
                 {
@@ -127,9 +127,10 @@ public static partial class EnumerableExtensions
                 ReadOnlySpan<char> propSpan = propertyPath[propRange];
                 
                 // use reflection (not ComponentModel) to mirror LINQ
-                PropertyInfo? pi = type.GetProperty(propSpan.ToString());
+                string propName = propSpan.ToString();
+                PropertyInfo? pi = type.GetProperty(propName);
                 if (pi is null) 
-                    throw new InvalidOperationException($"Property '{propSpan.ToString()}' not found in {propertyPath.ToString()}");
+                    throw new InvalidOperationException($"Property '{propName}' not found in {propertyPath.ToString()}");
 
                 expr = Expression.Property(expr, pi);
                 type = pi.PropertyType;
