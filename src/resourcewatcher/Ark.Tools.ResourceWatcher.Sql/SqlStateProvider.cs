@@ -91,7 +91,7 @@ public class SqlStateProvider : IStateProvider
             else
                 return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
                     , map
-                    , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTable().AsTableValuedParameter("udt_ResourceIdList") }
+                    , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
         }
     }
@@ -147,7 +147,7 @@ UPDATE SET
                     x.CheckSum,
                     ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
                     Exception = x.LastException?.ToString()
-                }).ToDataTable().AsTableValuedParameter("[udt_State_v2]")
+                }).ToDataTableArk().AsTableValuedParameter("[udt_State_v2]")
             }).ConfigureAwait(false);
         }
     }

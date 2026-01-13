@@ -600,14 +600,6 @@
           "System.Reactive": "[6.1.0, )"
         }
       },
-      "ark.tools.core.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "NodaTime": "[3.3.0, )",
-          "System.Reactive": "[6.1.0, )"
-        }
-      },
       "ark.tools.http": {
         "type": "Project",
         "dependencies": {
@@ -692,7 +684,6 @@
       "ark.tools.resourcewatcher.sql": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core.Reflection": "[1.0.0, )",
           "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
@@ -1723,15 +1714,6 @@
           "System.Reactive": "[6.1.0, )"
         }
       },
-      "ark.tools.core.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "NodaTime": "[3.3.0, )",
-          "System.Linq.Async": "[7.0.0, )",
-          "System.Reactive": "[6.1.0, )"
-        }
-      },
       "ark.tools.http": {
         "type": "Project",
         "dependencies": {
@@ -1816,7 +1798,6 @@
       "ark.tools.resourcewatcher.sql": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core.Reflection": "[1.0.0, )",
           "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",

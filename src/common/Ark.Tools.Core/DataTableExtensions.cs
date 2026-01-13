@@ -27,7 +27,7 @@ public static class DataTableExtensions
     public static DataTable ToDataTable<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T>(
         this IEnumerable<T> source)
     {
-        return new ShredObjectToDataTable<T>().Shred(source, null, null);
+        return ShredObjectToDataTable<T>.Shred(source, null, null);
     }
 
     /// <summary>
@@ -44,24 +44,29 @@ public static class DataTableExtensions
         DataTable table,
         LoadOption? options)
     {
-        return new ShredObjectToDataTable<T>().Shred(source, table, options);
+        return ShredObjectToDataTable<T>.Shred(source, table, options);
+    }
+
+    /// <summary>
+    /// Converts an IEnumerable&lt;T&gt; to a DataTable.
+    /// Only supports the exact type T (not derived types).
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the source sequence.</typeparam>
+    /// <param name="source">The source sequence to convert.</param>
+    /// <returns>A DataTable containing the data from the source sequence.</returns>
+    public static DataTable ToDataTableArk<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T>(
+        this IEnumerable<T> source)
+    {
+        return ShredObjectToDataTable<T>.Shred(source, null, null);
     }
 
     // Internal implementation class
-    private sealed class ShredObjectToDataTable<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T>
+    private static class ShredObjectToDataTable<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T>
     {
-        private readonly FieldInfo[] _fi;
-        private readonly PropertyInfo[] _pi;
-        private readonly Dictionary<string, int> _ordinalMap;
+        private static readonly FieldInfo[] _fi = typeof(T).GetFields();
+        private static readonly PropertyInfo[] _pi = typeof(T).GetProperties();
 
-        public ShredObjectToDataTable()
-        {
-            _fi = typeof(T).GetFields();
-            _pi = typeof(T).GetProperties();
-            _ordinalMap = new(StringComparer.Ordinal);
-        }
-
-        public DataTable Shred(IEnumerable<T> source, DataTable? table, LoadOption? options)
+        public static DataTable Shred(IEnumerable<T> source, DataTable? table, LoadOption? options)
         {
             // Load the table from the scalar sequence if T is a primitive type.
             if (typeof(T).IsPrimitive)
@@ -75,8 +80,8 @@ public static class DataTableExtensions
                 table = new DataTable(typeof(T).Name);
             }
 
-            // Initialize the ordinal map and create the table schema based on type T.
-            InitializeTable(table);
+            // Initialize the table schema based on type T.
+            var ordinalMap = InitializeTable(table);
 
             // Enumerate the source sequence and load the object values into rows.
             table.BeginLoadData();
@@ -86,11 +91,11 @@ public static class DataTableExtensions
                 {
                     if (options is not null)
                     {
-                        table.LoadDataRow(ShredObject(table, e.Current), options.Value);
+                        table.LoadDataRow(ShredObject(table, e.Current, ordinalMap), options.Value);
                     }
                     else
                     {
-                        table.LoadDataRow(ShredObject(table, e.Current), true);
+                        table.LoadDataRow(ShredObject(table, e.Current, ordinalMap), true);
                     }
                 }
             }
@@ -136,69 +141,65 @@ public static class DataTableExtensions
             return table;
         }
 
-        private object?[] ShredObject(DataTable table, T? instance)
+        private static object?[] ShredObject(DataTable table, T? instance, FrozenDictionary<string, int> ordinalMap)
         {
             // Add the property and field values of the instance to an array.
             var values = new object?[table.Columns.Count];
             
             foreach (var f in _fi)
             {
-                values[_ordinalMap[f.Name]] = ConvertColumnValue(f.GetValue(instance));
+                values[ordinalMap[f.Name]] = ConvertColumnValue(f.GetValue(instance));
             }
 
             foreach (var p in _pi)
             {
-                values[_ordinalMap[p.Name]] = ConvertColumnValue(p.GetValue(instance, null));
+                values[ordinalMap[p.Name]] = ConvertColumnValue(p.GetValue(instance, null));
             }
 
             return values;
         }
 
-        private void InitializeTable(DataTable table)
+        private static FrozenDictionary<string, int> InitializeTable(DataTable table)
         {
+            var ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
+
             // Add fields as columns
             foreach (var f in _fi)
             {
-                if (!_ordinalMap.ContainsKey(f.Name))
+                if (!table.Columns.Contains(f.Name))
                 {
                     var columnType = DeriveColumnType(f.FieldType);
-                    DataColumn dc;
-                    if (table.Columns.Contains(f.Name))
-                    {
-                        dc = table.Columns[f.Name]!;
-                    }
-                    else
-                    {
-                        // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
-                        #pragma warning disable IL2072
-                        dc = table.Columns.Add(f.Name, columnType);
-                        #pragma warning restore IL2072
-                    }
-                    _ordinalMap.Add(f.Name, dc.Ordinal);
+                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
+                    #pragma warning disable IL2072
+                    var dc = table.Columns.Add(f.Name, columnType);
+                    #pragma warning restore IL2072
+                    ordinalMap.Add(f.Name, dc.Ordinal);
+                }
+                else
+                {
+                    ordinalMap.Add(f.Name, table.Columns[f.Name]!.Ordinal);
                 }
             }
 
             // Add properties as columns
             foreach (var p in _pi)
             {
-                if (!_ordinalMap.ContainsKey(p.Name))
+                if (!table.Columns.Contains(p.Name))
                 {
                     var columnType = DeriveColumnType(p.PropertyType);
-                    DataColumn dc;
-                    if (table.Columns.Contains(p.Name))
-                    {
-                        dc = table.Columns[p.Name]!;
-                    }
-                    else
-                    {
-                        // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
-                        #pragma warning disable IL2072
-                        dc = table.Columns.Add(p.Name, columnType);
-                        #pragma warning restore IL2072
-                    }
-                    _ordinalMap.Add(p.Name, dc.Ordinal);
+                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
+                    #pragma warning disable IL2072
+                    var dc = table.Columns.Add(p.Name, columnType);
+                    #pragma warning restore IL2072
+                    ordinalMap.Add(p.Name, dc.Ordinal);
+                }
+                else
+                {
+                    ordinalMap.Add(p.Name, table.Columns[p.Name]!.Ordinal);
                 }
             }
+
+            return ordinalMap.ToFrozenDictionary();
         }
 
         private static readonly FrozenSet<Type> _datetimeTypes = new[]
