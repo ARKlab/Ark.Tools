@@ -282,4 +282,28 @@ public class EnumerableExtensionsTests
         resultUpper[0].Age.Should().Be(35);
         resultMixed[0].Age.Should().Be(35);
     }
+
+    /// <summary>
+    /// Verifies that OrderBy handles multiple spaces correctly.
+    /// </summary>
+    [TestMethod]
+    public void OrderBy_WithMultipleSpaces_ShouldHandleCorrectly()
+    {
+        // Arrange
+        var data = new[]
+        {
+            new TestEntity { Name = "Charlie", Age = 30 },
+            new TestEntity { Name = "Alice", Age = 25 },
+            new TestEntity { Name = "Bob", Age = 35 }
+        };
+
+        // Act - multiple prefix/suffix spaces and spaces between property and direction
+        var result = data.AsQueryable().OrderBy("   Name    ASC,   Age    DESC   ").ToArray();
+
+        // Assert
+        result.Should().HaveCount(3);
+        result[0].Name.Should().Be("Alice");
+        result[1].Name.Should().Be("Bob");
+        result[2].Name.Should().Be("Charlie");
+    }
 }

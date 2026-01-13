@@ -57,6 +57,9 @@ public static partial class EnumerableExtensions
 
         private static Func<IQueryable<T>, IQueryable<T>>[] _parseAndCompileOrderBy(string orderBy, string? orderByParam)
         {
+            if (String.IsNullOrEmpty(orderBy))
+                return [];
+            
             var result = new List<Func<IQueryable<T>, IQueryable<T>>>();
             
             // Use modern MemoryExtensions.Split to avoid allocations
@@ -72,37 +75,42 @@ public static partial class EnumerableExtensions
                     continue;
 
                 // Split on space to separate property name from ASC/DESC
-                var spaceEnumerator = item.Split(' ');
+                // Collect parts while skipping empty spans (from multiple spaces)
+                ReadOnlySpan<char> propertySpan = ReadOnlySpan<char>.Empty;
+                ReadOnlySpan<char> directionSpan = ReadOnlySpan<char>.Empty;
+                int partCount = 0;
                 
-                if (!spaceEnumerator.MoveNext())
+                foreach (var partRange in item.Split(' '))
                 {
-                    throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
+                    ReadOnlySpan<char> part = item[partRange].Trim();
+                    
+                    // Skip empty parts (caused by multiple spaces)
+                    if (part.IsEmpty)
+                        continue;
+                    
+                    partCount++;
+                    
+                    if (partCount == 1)
+                        propertySpan = part;
+                    else if (partCount == 2)
+                        directionSpan = part;
+                    else
+                        break; // More than 2 non-empty parts
                 }
                 
-                ReadOnlySpan<char> propertySpan = item[spaceEnumerator.Current].Trim();
+                if (partCount > 2)
+                    throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item.ToString()), orderByParam);
                 
                 if (propertySpan.IsEmpty)
                     throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
 
                 SortDirection dir = SortDirection.Ascending;
                 
-                // Check if there's a second part (ASC/DESC)
-                if (spaceEnumerator.MoveNext())
+                if (partCount == 2 && !directionSpan.IsEmpty)
                 {
-                    ReadOnlySpan<char> directionSpan = item[spaceEnumerator.Current].Trim();
-                    
-                    // Check if there are more than 2 parts
-                    if (spaceEnumerator.MoveNext())
-                    {
-                        throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item.ToString()), orderByParam);
-                    }
-                    
-                    if (!directionSpan.IsEmpty)
-                    {
-                        dir = directionSpan.Equals("desc", StringComparison.OrdinalIgnoreCase) 
-                            ? SortDirection.Descending 
-                            : SortDirection.Ascending;
-                    }
+                    dir = directionSpan.Equals("desc", StringComparison.OrdinalIgnoreCase) 
+                        ? SortDirection.Descending 
+                        : SortDirection.Ascending;
                 }
 
                 // Compile directly without creating intermediate struct
