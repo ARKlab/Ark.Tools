@@ -14,24 +14,24 @@ public abstract class AbstractSqlAsyncContextWithOutbox<TTag> : AbstractSqlAsync
         _outbox = new OutboxAsyncContextSql<TTag>(this, config);
     }
 
-    public Task ClearAsync(CancellationToken ctk = default)
+    public async Task ClearAsync(CancellationToken ctk = default)
     {
-        return _outbox.ClearAsync(ctk);
+        await _outbox.ClearAsync(ctk).ConfigureAwait(false);
     }
 
-    public Task<int> CountAsync(CancellationToken ctk = default)
+    public async Task<int> CountAsync(CancellationToken ctk = default)
     {
-        return _outbox.CountAsync(ctk);
+        return await _outbox.CountAsync(ctk).ConfigureAwait(false);
     }
 
-    public Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
+    public async Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(int messageCount = 10, CancellationToken ctk = default)
     {
-        return _outbox.PeekLockMessagesAsync(messageCount, ctk);
+        return await _outbox.PeekLockMessagesAsync(messageCount, ctk).ConfigureAwait(false);
     }
 
-    public Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
+    public async Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
     {
-        return _outbox.SendAsync(messages, ctk);
+        await _outbox.SendAsync(messages, ctk).ConfigureAwait(false);
     }
 
 }

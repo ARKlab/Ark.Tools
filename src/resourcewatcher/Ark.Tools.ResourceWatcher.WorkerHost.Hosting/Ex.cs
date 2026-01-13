@@ -47,13 +47,13 @@ sealed class HostServiceWrap<T> : IHostedService where T : WorkerHost
         _host = host;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        return Task.Run(() => _host.Start(), cancellationToken);
+        await Task.Run(() => _host.Start(), cancellationToken).ConfigureAwait(false);
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        return Task.Run(() => _host.Stop(), cancellationToken);
+        await Task.Run(() => _host.Stop(), cancellationToken).ConfigureAwait(false);
     }
 }

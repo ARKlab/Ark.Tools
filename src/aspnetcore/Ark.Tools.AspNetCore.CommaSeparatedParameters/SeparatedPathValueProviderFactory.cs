@@ -21,9 +21,9 @@ public class SeparatedPathValueProviderFactory : IValueProviderFactory
     }
 
 
-    public Task CreateValueProviderAsync(ValueProviderFactoryContext context)
+    public async Task CreateValueProviderAsync(ValueProviderFactoryContext context)
     {
         context.ValueProviders.Insert(0, new SeparatedPathValueProvider(_key, _separator, context.ActionContext.RouteData.Values));
-        return Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }

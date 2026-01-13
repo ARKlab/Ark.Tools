@@ -124,11 +124,11 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
             result = result.Where(m => m.ResourceId.Contains(filter.ResourceIdPattern, StringComparison.OrdinalIgnoreCase));
         }
 
-        return Task.FromResult(result);
+        return await Task.FromResult(result).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public Task<StubResource?> GetResource(StubResourceMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+    public async Task<StubResource?> GetResource(StubResourceMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
     {
         FetchCallCount++;
         FetchedResourceIds.Add(metadata.ResourceId);
@@ -142,12 +142,12 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
         if (_returnNullOnChecksum.TryGetValue(metadata.ResourceId, out var checksum) &&
             lastState?.CheckSum == checksum)
         {
-            return Task.FromResult<StubResource?>(null);
+            return await Task.FromResult<StubResource?>(null).ConfigureAwait(false);
         }
 
         if (_resources.TryGetValue(metadata.ResourceId, out var resource))
         {
-            return Task.FromResult<StubResource?>(resource);
+            return await Task.FromResult<StubResource?>(resource).ConfigureAwait(false);
         }
 
         throw new KeyNotFoundException($"Resource not found: {metadata.ResourceId}");

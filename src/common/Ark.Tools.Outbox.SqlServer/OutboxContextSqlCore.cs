@@ -120,25 +120,25 @@ internal abstract class OutboxContextSqlCore
         }).ToList();
     }
 
-    public Task<int> CountAsync(CancellationToken ctk = default)
+    public async Task<int> CountAsync(CancellationToken ctk = default)
     {
         var cmd = new CommandDefinition(_statements.Count, transaction: _transaction, cancellationToken: ctk);
 
-        return _connection.QuerySingleAsync<int>(cmd);
+        return await _connection.QuerySingleAsync<int>(cmd).ConfigureAwait(false);
     }
 
-    public Task ClearAsync(CancellationToken ctk = default)
+    public async Task ClearAsync(CancellationToken ctk = default)
     {
         var cmd = new CommandDefinition(_statements.Clear, transaction: _transaction, cancellationToken: ctk);
 
-        return _connection.ExecuteAsync(cmd);
+        await _connection.ExecuteAsync(cmd).ConfigureAwait(false);
     }
 
-    public Task EnsureTableAreCreated(CancellationToken ctk = default)
+    public async Task EnsureTableAreCreated(CancellationToken ctk = default)
     {
         var cmd = new CommandDefinition(_statements.CreateTable, transaction: _transaction, cancellationToken: ctk);
 
-        return _connection.ExecuteAsync(cmd);
+        await _connection.ExecuteAsync(cmd).ConfigureAwait(false);
     }
 
 }

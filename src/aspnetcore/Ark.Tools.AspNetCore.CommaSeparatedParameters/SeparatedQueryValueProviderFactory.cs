@@ -21,9 +21,9 @@ public class SeparatedQueryValueProviderFactory : IValueProviderFactory
     }
 
 
-    public Task CreateValueProviderAsync(ValueProviderFactoryContext context)
+    public async Task CreateValueProviderAsync(ValueProviderFactoryContext context)
     {
         context.ValueProviders.Insert(0, new SeparatedQueryValueProvider(_key, _separator, context.ActionContext.HttpContext.Request.Query));
-        return Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }

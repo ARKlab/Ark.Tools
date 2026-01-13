@@ -107,14 +107,14 @@ public static class ArkHealthCheckExtension
             _container = container;
         }
 
-        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
             // this is needed as the HealthCheck background service (from UI) starts before the Configure(app) is called, 
             // and thus before the Container is fully configured as now is Configured at Configure(app) first line.
             // FIXME: move SimpleInjector registrations in ConfigureServices providing CrossWire extensions for Applications
-            if (!_container.IsLocked) return Task.FromResult(HealthCheckResult.Degraded("Application not yet fully started"));
+            if (!_container.IsLocked) return HealthCheckResult.Degraded("Application not yet fully started");
 
-            return _container.GetInstance<T>().CheckHealthAsync(context, cancellationToken);
+            return await _container.GetInstance<T>().CheckHealthAsync(context, cancellationToken).ConfigureAwait(false);
         }
     }
 

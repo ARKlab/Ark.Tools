@@ -95,30 +95,30 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         return _inner.BuildWsFedUrl();
     }
 
-    public Task<string> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
+    public async Task<string> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.ChangePasswordAsync(request, cancellationToken);
+        return await _inner.ChangePasswordAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
     [Obsolete("GetImpersonationUrlAsync is deprecated")]
-    public Task<Uri> GetImpersonationUrlAsync(ImpersonationRequest request, CancellationToken cancellationToken = default)
+    public async Task<Uri> GetImpersonationUrlAsync(ImpersonationRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.GetImpersonationUrlAsync(request, cancellationToken);
+        return await _inner.GetImpersonationUrlAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<SignupUserResponse> SignupUserAsync(SignupUserRequest request, CancellationToken cancellationToken = default)
+    public async Task<SignupUserResponse> SignupUserAsync(SignupUserRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.SignupUserAsync(request, cancellationToken);
+        return await _inner.SignupUserAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<PasswordlessEmailResponse> StartPasswordlessEmailFlowAsync(PasswordlessEmailRequest request, CancellationToken cancellationToken = default)
+    public async Task<PasswordlessEmailResponse> StartPasswordlessEmailFlowAsync(PasswordlessEmailRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.StartPasswordlessEmailFlowAsync(request, cancellationToken);
+        return await _inner.StartPasswordlessEmailFlowAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<PasswordlessSmsResponse> StartPasswordlessSmsFlowAsync(PasswordlessSmsRequest request, CancellationToken cancellationToken = default)
+    public async Task<PasswordlessSmsResponse> StartPasswordlessSmsFlowAsync(PasswordlessSmsRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.StartPasswordlessSmsFlowAsync(request, cancellationToken);
+        return await _inner.StartPasswordlessSmsFlowAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
     #endregion
@@ -241,9 +241,9 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         return $"DeviceCodeTokenRequest{r.ClientId}{r.DeviceCode}";
     }
 
-    public Task<DeviceCodeResponse> StartDeviceFlowAsync(DeviceCodeRequest request, CancellationToken cancellationToken = default)
+    public async Task<DeviceCodeResponse> StartDeviceFlowAsync(DeviceCodeRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.StartDeviceFlowAsync(request, cancellationToken);
+        return await _inner.StartDeviceFlowAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
     public void Dispose()
@@ -252,59 +252,59 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         if (_inner is IDisposable disposable) disposable.Dispose();
     }
 
-    public Task RevokeRefreshTokenAsync(RevokeRefreshTokenRequest request, CancellationToken cancellationToken = default)
+    public async Task RevokeRefreshTokenAsync(RevokeRefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.RevokeRefreshTokenAsync(request, cancellationToken);
+        await _inner.RevokeRefreshTokenAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<PushedAuthorizationRequestResponse> PushedAuthorizationRequestAsync(PushedAuthorizationRequest request, CancellationToken cancellationToken = default)
+    public async Task<PushedAuthorizationRequestResponse> PushedAuthorizationRequestAsync(PushedAuthorizationRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.PushedAuthorizationRequestAsync(request, cancellationToken);
+        return await _inner.PushedAuthorizationRequestAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<ClientInitiatedBackchannelAuthorizationResponse> ClientInitiatedBackchannelAuthorization(ClientInitiatedBackchannelAuthorizationRequest request, CancellationToken cancellationToken = default)
+    public async Task<ClientInitiatedBackchannelAuthorizationResponse> ClientInitiatedBackchannelAuthorization(ClientInitiatedBackchannelAuthorizationRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.ClientInitiatedBackchannelAuthorization(request, cancellationToken);
+        return await _inner.ClientInitiatedBackchannelAuthorization(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<ClientInitiatedBackchannelAuthorizationTokenResponse> GetTokenAsync(ClientInitiatedBackchannelAuthorizationTokenRequest request, CancellationToken cancellationToken = default)
+    public async Task<ClientInitiatedBackchannelAuthorizationTokenResponse> GetTokenAsync(ClientInitiatedBackchannelAuthorizationTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.GetTokenAsync(request, cancellationToken);
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<AssociateMfaAuthenticatorResponse> AssociateMfaAuthenticatorAsync(AssociateMfaAuthenticatorRequest request, CancellationToken cancellationToken = default)
+    public async Task<AssociateMfaAuthenticatorResponse> AssociateMfaAuthenticatorAsync(AssociateMfaAuthenticatorRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.AssociateMfaAuthenticatorAsync(request, cancellationToken);
+        return await _inner.AssociateMfaAuthenticatorAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<IList<Authenticator>> ListMfaAuthenticatorsAsync(string accessToken, CancellationToken cancellationToken = default)
+    public async Task<IList<Authenticator>> ListMfaAuthenticatorsAsync(string accessToken, CancellationToken cancellationToken = default)
     {
-        return _inner.ListMfaAuthenticatorsAsync(accessToken, cancellationToken);
+        return await _inner.ListMfaAuthenticatorsAsync(accessToken, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task DeleteMfaAuthenticatorAsync(DeleteMfaAuthenticatorRequest request, CancellationToken cancellationToken = default)
+    public async Task DeleteMfaAuthenticatorAsync(DeleteMfaAuthenticatorRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.DeleteMfaAuthenticatorAsync(request, cancellationToken);
+        await _inner.DeleteMfaAuthenticatorAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<MfaOobTokenResponse> GetTokenAsync(MfaOobTokenRequest request, CancellationToken cancellationToken = default)
+    public async Task<MfaOobTokenResponse> GetTokenAsync(MfaOobTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.GetTokenAsync(request, cancellationToken);
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<MfaOtpTokenResponse> GetTokenAsync(MfaOtpTokenRequest request, CancellationToken cancellationToken = default)
+    public async Task<MfaOtpTokenResponse> GetTokenAsync(MfaOtpTokenRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.GetTokenAsync(request, cancellationToken);
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<MfaRecoveryCodeResponse> GetTokenAsync(MfaRecoveryCodeRequest request, CancellationToken cancellationToken = default)
+    public async Task<MfaRecoveryCodeResponse> GetTokenAsync(MfaRecoveryCodeRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.GetTokenAsync(request, cancellationToken);
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<MfaChallengeResponse> MfaChallenge(MfaChallengeRequest request, CancellationToken cancellationToken = default)
+    public async Task<MfaChallengeResponse> MfaChallenge(MfaChallengeRequest request, CancellationToken cancellationToken = default)
     {
-        return _inner.MfaChallenge(request, cancellationToken);
+        return await _inner.MfaChallenge(request, cancellationToken).ConfigureAwait(false);
     }
     #endregion
 }

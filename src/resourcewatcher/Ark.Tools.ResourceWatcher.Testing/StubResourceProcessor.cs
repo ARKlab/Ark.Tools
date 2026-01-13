@@ -49,7 +49,7 @@ public sealed class StubResourceProcessor : IResourceProcessor<StubResource, Stu
     }
 
     /// <inheritdoc/>
-    public Task Process(StubResource file, CancellationToken ctk = default)
+    public async Task Process(StubResource file, CancellationToken ctk = default)
     {
         ProcessCallCount++;
         ProcessedResourceIds.Add(file.Metadata.ResourceId);
@@ -60,6 +60,6 @@ public sealed class StubResourceProcessor : IResourceProcessor<StubResource, Stu
             throw new InvalidOperationException($"Simulated processing failure for resource: {file.Metadata.ResourceId}");
         }
 
-        return Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }
