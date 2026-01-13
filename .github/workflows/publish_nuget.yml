@@ -16,12 +16,6 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: 'ubuntu-latest'
     services:
-      azurite:
-        image: mcr.microsoft.com/azure-storage/azurite:latest
-        ports:
-          - 10000:10000
-          - 10001:10001
-          - 10002:10002
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2025-latest
         ports:
@@ -34,6 +28,15 @@ jobs:
     steps:
     - name: 'Checkout'
       uses: actions/checkout@v6
+
+    - name: 'Start Azurite'
+      run: |
+        docker run -d \
+          -p 10000:10000 \
+          -p 10001:10001 \
+          -p 10002:10002 \
+          mcr.microsoft.com/azure-storage/azurite:latest \
+          azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
 
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v5
