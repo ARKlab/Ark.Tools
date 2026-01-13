@@ -29,6 +29,8 @@ jobs:
     - name: 'Checkout'
       uses: actions/checkout@v6
 
+    # Temporary workaround: --skipApiVersionCheck is needed until Azurite supports the latest Azure Storage API version
+    # See: https://github.com/Azure/Azurite/issues/2623
     - name: 'Start Azurite'
       run: |
         docker run -d \

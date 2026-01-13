@@ -49,6 +49,8 @@ stages:
           ports:
           - 1433:1433
       steps:
+      # Temporary workaround: --skipApiVersionCheck is needed until Azurite supports the latest Azure Storage API version
+      # See: https://github.com/Azure/Azurite/issues/2623
       - script: |
           docker run -d \
             -p 10000:10000 \
