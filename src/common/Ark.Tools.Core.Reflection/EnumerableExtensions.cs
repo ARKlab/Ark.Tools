@@ -117,29 +117,91 @@ public static partial class EnumerableExtensions
             if (String.IsNullOrEmpty(orderBy))
                 yield break;
 
-            string[] items = orderBy.Split(',');
-            bool initial = true;
-            foreach (string item in items)
+            // Parse all items first to avoid span lifetime issues with yield
+            var items = _parseOrderByItems(orderBy, orderByParam);
+            
+            foreach (var item in items)
             {
-                string[] pair = item.Trim().Split(' ');
+                yield return item;
+            }
+        }
 
-                if (pair.Length > 2)
-                    throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item), orderByParam);
+        private static List<OrderByInfo> _parseOrderByItems(string orderBy, string? orderByParam)
+        {
+            var result = new List<OrderByInfo>();
+            
+            // Use span to avoid string allocations during parsing
+            ReadOnlySpan<char> span = orderBy.AsSpan();
+            bool initial = true;
+            
+            // Process each comma-separated item
+            while (span.Length > 0)
+            {
+                // Find the next comma
+                int commaIndex = span.IndexOf(',');
+                ReadOnlySpan<char> item;
+                
+                if (commaIndex >= 0)
+                {
+                    item = span[..commaIndex].Trim();
+                    span = span[(commaIndex + 1)..];
+                }
+                else
+                {
+                    item = span.Trim();
+                    span = ReadOnlySpan<char>.Empty;
+                }
 
-                string prop = pair[0].Trim();
+                // Parse the property and direction from this item
+                // Split on space to separate property name from ASC/DESC
+                int spaceIndex = item.IndexOf(' ');
+                ReadOnlySpan<char> propertySpan;
+                ReadOnlySpan<char> directionSpan = ReadOnlySpan<char>.Empty;
+                int partCount = 1;
 
-                if (String.IsNullOrEmpty(prop))
+                if (spaceIndex >= 0)
+                {
+                    propertySpan = item[..spaceIndex].Trim();
+                    var remainder = item[(spaceIndex + 1)..].Trim();
+                    
+                    if (remainder.Length > 0)
+                    {
+                        directionSpan = remainder;
+                        partCount = 2;
+                        
+                        // Check if there are more than 2 parts (space-separated tokens)
+                        int secondSpaceIndex = directionSpan.IndexOf(' ');
+                        if (secondSpaceIndex >= 0)
+                        {
+                            partCount = 3; // At least 3 parts detected
+                        }
+                    }
+                }
+                else
+                {
+                    propertySpan = item;
+                }
+
+                if (partCount > 2)
+                    throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item.ToString()), orderByParam);
+
+                if (propertySpan.IsEmpty)
                     throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
+
+                // Convert property span to string (required for the OrderByInfo)
+                string prop = propertySpan.ToString();
 
                 SortDirection dir = SortDirection.Ascending;
 
-                if (pair.Length == 2)
-                    dir = ("desc".Equals(pair[1].Trim(), StringComparison.OrdinalIgnoreCase) ? SortDirection.Descending : SortDirection.Ascending);
+                if (partCount == 2)
+                    dir = (directionSpan.Equals("desc", StringComparison.OrdinalIgnoreCase) ? SortDirection.Descending : SortDirection.Ascending);
 
-                yield return new OrderByInfo(prop, dir, initial);
+                result.Add(new OrderByInfo(prop, dir, initial));
 
                 initial = false;
             }
+            
+            return result;
         }
 
         public sealed record OrderByInfo
