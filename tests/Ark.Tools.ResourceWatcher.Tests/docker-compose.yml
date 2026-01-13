@@ -16,3 +16,6 @@ services:
       - "10000:10000"
       - "10001:10001"
       - "10002:10002"
+    # Temporary workaround: --skipApiVersionCheck is needed until Azurite supports the latest Azure Storage API version
+    # See: https://github.com/Azure/Azurite/issues/2623
+    command: azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
