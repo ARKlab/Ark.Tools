@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using NodaTime.Text;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights;
@@ -423,6 +424,8 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
 
 
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "Serializes Extensions dictionary for Application Insights telemetry. Extensions is a well-known Dictionary<string, string> with primitive values that are always preserved. Telemetry data is optional and does not affect core functionality.")]
     private static void _propertiesProcessContext(ISupportProperties data, ProcessContext pc)
     {
         data.Properties.Add("ResourceId", pc.CurrentInfo.ResourceId);

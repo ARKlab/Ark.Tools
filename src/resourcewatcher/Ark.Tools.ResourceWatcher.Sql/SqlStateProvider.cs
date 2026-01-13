@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 
 using NodaTime;
 
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.ResourceWatcher;
 
@@ -28,6 +29,8 @@ public class SqlStateProvider : IStateProvider
 
     private const string _queryState = "SELECT [Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [ModifiedSourcesJson] FROM [State] WHERE [Tenant] = @tenant";
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "ArkDefaultJsonSerializerSettings is used for persisting state with well-known types. Warnings are propagated through LoadStateAsync and SaveStateAsync methods.")]
     public SqlStateProvider(ISqlStateProviderConfig config, IDbConnectionManager connManager)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -48,6 +51,8 @@ public class SqlStateProvider : IStateProvider
         public string? ModifiedSourcesJson { get; set; }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "Deserializes well-known types from SQL state storage: Extensions is a dynamic object with primitive values, ModifiedSources is Dictionary<string, LocalDateTime>. LocalDateTime has NodaTime converters registered. State persistence is core functionality with controlled types.")]
     public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
@@ -96,6 +101,8 @@ public class SqlStateProvider : IStateProvider
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "Serializes well-known types to SQL state storage: Extensions is a dynamic object with primitive values, ModifiedSources is Dictionary<string, LocalDateTime>. LocalDateTime has NodaTime converters registered. State persistence is core functionality with controlled types.")]
     public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
     {
         var st = states.AsList();
