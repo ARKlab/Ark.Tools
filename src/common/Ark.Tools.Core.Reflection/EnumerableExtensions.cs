@@ -72,7 +72,7 @@ public static partial class EnumerableExtensions
                     continue;
 
                 // Split on space to separate property name from ASC/DESC
-                var spaceEnumerator = item.SplitAny(' ');
+                var spaceEnumerator = item.Split(' ');
                 
                 if (!spaceEnumerator.MoveNext())
                 {
