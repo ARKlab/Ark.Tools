@@ -29,12 +29,14 @@ internal sealed class ResourceWatcherDiagnosticSource
 
     #region Event
 #pragma warning disable CA1822 // Mark members as static
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void HostStartEvent()
 #pragma warning restore CA1822 // Mark members as static
     {
         ResourceWatcherDiagnosticSource._reportEvent("HostStartEvent", () => new { });
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void RunTookTooLong(Activity activity)
     {
         _logger.Fatal($"Check for tenant {_tenant} took too much:{activity.Duration}");
@@ -47,6 +49,7 @@ internal sealed class ResourceWatcherDiagnosticSource
             });
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void ProcessResourceTookTooLong(string resourceId, Activity activity)
     {
         _logger.Fatal($"Processing of ResourceId={resourceId} took too much: {activity.Duration}");
@@ -62,6 +65,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region Run
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public Activity RunStart(RunType type, DateTime now)
     {
         _logger.Info(CultureInfo.InvariantCulture, "Check started for tenant {Tenant} at {Now}", _tenant, now);
@@ -77,6 +81,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void RunFailed(Activity activity, Exception ex)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -90,6 +95,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         _logger.Error(ex, $"Check failed for tenant {_tenant} in {activity.Duration}");
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void RunSuccessful(Activity activity, IList<ProcessContext> evaluated)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () =>
@@ -125,6 +131,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
     #region GetResources
 #pragma warning disable CA1822 // Mark members as static
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public Activity GetResourcesStart()
 #pragma warning restore CA1822 // Mark members as static
     {
@@ -136,6 +143,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void GetResourcesFailed(Activity activity, Exception ex)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -146,6 +154,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         );
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void GetResourcesSuccessful(Activity activity, int count)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -162,6 +171,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
     #region CheckState
 #pragma warning disable CA1822 // Mark members as static
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public Activity CheckStateStart()
 #pragma warning restore CA1822 // Mark members as static
     {
@@ -173,6 +183,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void CheckStateSuccessful(Activity activity, IEnumerable<ProcessContext> evaluated)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () =>
@@ -197,6 +208,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     }
 
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void CheckStateFailed(Activity activity, Exception ex)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -209,6 +221,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region ProcessResource
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public Activity ProcessResourceStart(ProcessContext processContext)
     {
         bool result = processContext.IsResourceUpdated(out var infos);
@@ -241,6 +254,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void ProcessResourceFailed(Activity activity, ProcessContext pc, bool isBanned, Exception ex)
     {
         var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
@@ -254,6 +268,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         });
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void ProcessResourceSuccessful(Activity activity, ProcessContext pc)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -281,6 +296,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region FetchResource
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public Activity FetchResourceStart(ProcessContext pc)
     {
         Activity activity = ResourceWatcherDiagnosticSource._start("FetchResource", () => new
@@ -293,6 +309,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void FetchResourceFailed(Activity activity, ProcessContext pc, Exception ex)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -304,6 +321,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         );
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void FetchResourceSuccessful(Activity activity, ProcessContext pc)
     {
         //_setTags(activity, processType.ToString(), processType.ToString());
@@ -319,6 +337,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
 
     #region Exception
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void ProcessResourceSaveFailed(string resourceId, Exception ex)
     {
         _logger.Error(ex, $"Saving of ResourceId={resourceId} failed");
@@ -326,6 +345,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         _reportException("ProcessResourceSaveFailed", ex, _tenant);
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void ThrowDuplicateResourceIdRetrived(string duplicateId)
     {
         var ex = new InvalidOperationException($"Found multiple entries for ResouceId: {duplicateId}");
@@ -335,6 +355,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         throw ex;
     }
 
+    [RequiresUnreferencedCode("DiagnosticSource writes anonymous types for telemetry using reflection.")]
     public void ReportRunConsecutiveFailureLimitReached(Exception ex, int count)
     {
         _logger.Fatal($"Failed {count} times consecutively");
@@ -343,8 +364,6 @@ internal sealed class ResourceWatcherDiagnosticSource
     }
     #endregion
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "DiagnosticSource writes well-known anonymous types for telemetry. Payload types are simple DTOs with primitive properties that are preserved. Diagnostic data is optional and does not affect core functionality.")]
     private static Activity _start(string operationName, Func<object> getPayload, bool unlinkFromParent = false)
     {
         string activityName = BaseActivityName + "." + operationName;
@@ -363,8 +382,6 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "DiagnosticSource writes well-known anonymous types for telemetry. Payload types are simple DTOs with primitive properties that are preserved. Diagnostic data is optional and does not affect core functionality.")]
     private static void _stop(Activity activity, Func<object> getPayload)
     {
         if (activity != null)
@@ -373,8 +390,6 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "DiagnosticSource writes well-known anonymous types for telemetry. Payload types are simple DTOs with primitive properties that are preserved. Diagnostic data is optional and does not affect core functionality.")]
     private static void _reportEvent(string eventName, Func<object> getPayload)
     {
         var name = BaseActivityName + "." + eventName;
@@ -385,8 +400,6 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "DiagnosticSource writes well-known anonymous types for telemetry. Payload types are simple DTOs with primitive properties that are preserved. Diagnostic data is optional and does not affect core functionality.")]
     private static void _reportException(string exceptionName, Exception ex, string tenant)
     {
         var name = BaseActivityName + "." + exceptionName;
