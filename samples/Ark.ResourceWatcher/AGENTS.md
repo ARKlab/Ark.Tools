@@ -21,6 +21,7 @@ Ark.ResourceWatcher sample demonstrates ETL pipeline patterns using:
 - Use `AwesomeAssertions` for test assertions
 - Follow Conventional Commits for all commit messages
 - Follow SOLID and KISS principles
+- **Async Methods**: Always use `async` and `await` in async methods, even when the only operation is `return await task`. Do NOT optimize by returning the Task directly - this harms stacktrace clarity in production debugging
 
 **MUST NOT:**
 - Use `FluentAssertions` (deprecated) - use `AwesomeAssertions` instead

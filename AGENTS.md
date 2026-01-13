@@ -13,6 +13,7 @@
 - Work in small, tested increments - make one logical change at a time, build and test before proceeding
 - Follow existing patterns in the codebase - check similar files first
 - Follow SOLID and KISS principles
+- **Async Methods**: Always use `async` and `await` in async methods, even when the only operation is `return await task`. Do NOT optimize by returning the Task directly - this harms stacktrace clarity in production debugging
 
 **MUST NOT:**
 - Add new 3rd party dependencies without explicit approval
@@ -144,6 +145,38 @@ public User GetUser(string id)
     return _repository.Find(id);
 }
 ```
+
+### Async/Await Best Practices
+
+**CRITICAL**: Always use `async` and `await` in async methods for stacktrace clarity. Do NOT optimize by returning Task directly.
+
+```csharp
+// ❌ BAD - Returning Task directly (harmful for stacktraces)
+public Task<User> GetUserAsync(string id)
+{
+    return _repository.FindAsync(id);
+}
+
+// ✅ GOOD - Always use async/await for clear stacktraces
+public async Task<User> GetUserAsync(string id)
+{
+    return await _repository.FindAsync(id).ConfigureAwait(false);
+}
+
+// ❌ BAD - Even when it's the only await
+public Task<int> ProcessDataAsync(Data data)
+{
+    return _processor.ProcessAsync(data);
+}
+
+// ✅ GOOD - Prefer stacktrace clarity over micro-optimization
+public async Task<int> ProcessDataAsync(Data data)
+{
+    return await _processor.ProcessAsync(data).ConfigureAwait(false);
+}
+```
+
+**Rationale**: While returning Task directly may seem more efficient, it removes the method from the exception stacktrace, making production debugging significantly harder. The performance difference is negligible compared to the debugging benefits.
 
 ### Logging Best Practices
 ```csharp

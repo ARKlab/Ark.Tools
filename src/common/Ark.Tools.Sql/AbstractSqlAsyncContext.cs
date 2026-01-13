@@ -32,9 +32,9 @@ public abstract class AbstractSqlAsyncContext<TTag> : ISqlAsyncContext<TTag>, ID
         }
     }
 
-    public Task CommitAsync(CancellationToken ctk = default)
+    public async Task CommitAsync(CancellationToken ctk = default)
     {
-        return CommitAsync(false, ctk);
+        await CommitAsync(false, ctk).ConfigureAwait(false);
     }
 
     public virtual async Task CommitAsync(bool reuse, CancellationToken ctk = default)

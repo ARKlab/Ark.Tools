@@ -54,9 +54,9 @@ public abstract class AggregateTransaction<TAggregateRoot, TAggregateState, TAgg
         _createFromHistory(events);
     }
 
-    public Task LoadAsync(CancellationToken ctk = default)
+    public async Task LoadAsync(CancellationToken ctk = default)
     {
-        return LoadAsync(long.MaxValue, ctk);
+        await LoadAsync(long.MaxValue, ctk).ConfigureAwait(false);
     }
 
     public abstract Task<IEnumerable<AggregateEventEnvelope<TAggregate>>> LoadHistory(long maxVersion, CancellationToken ctk = default);
