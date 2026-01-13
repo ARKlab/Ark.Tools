@@ -364,7 +364,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     }
     #endregion
 
-    private static Activity _start(string operationName, Func<object> getPayload, bool unlinkFromParent = false)
+    private static Activity _start<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string operationName, Func<T> getPayload, bool unlinkFromParent = false)
     {
         string activityName = BaseActivityName + "." + operationName;
 
@@ -382,7 +382,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
-    private static void _stop(Activity activity, Func<object> getPayload)
+    private static void _stop<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(Activity activity, Func<T> getPayload)
     {
         if (activity != null)
         {
@@ -390,7 +390,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
     }
 
-    private static void _reportEvent(string eventName, Func<object> getPayload)
+    private static void _reportEvent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string eventName, Func<T> getPayload)
     {
         var name = BaseActivityName + "." + eventName;
 
