@@ -165,7 +165,7 @@ public abstract class ArkStartupWebApiCommon
 
             c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
-            c.CustomSchemaIds((type) => ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @"", StringComparison.Ordinal));
+            c.CustomSchemaIds((type) => Ark.Tools.Core.Reflection.ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @"", StringComparison.Ordinal));
             c.SelectSubTypesUsing(t =>
             {
                 if (t.IsGenericTypeDefinition) return Enumerable.Empty<Type>();

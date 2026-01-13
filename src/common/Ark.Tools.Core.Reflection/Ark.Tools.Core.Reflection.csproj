@@ -2,19 +2,17 @@
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <IsTrimmable>true</IsTrimmable>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>Core language tools or utilities over dependencies</Description>
-    <PackageTags>Ark;C#;.NET;Framework</PackageTags>
+    <Description>Reflection utilities and helpers for Ark.Tools - NOT TRIMMABLE</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Reflection</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageReleaseNotes>Split from Ark.Tools.Core to separate reflection-heavy code</PackageReleaseNotes>
 
     <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
@@ -23,13 +21,17 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
-	<ItemGroup>
-		<PackageReference Include="NodaTime" />
-		<PackageReference Include="System.Reactive" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+  </ItemGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
-		<PackageReference Include="System.Linq.Async" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="System.Reactive" />
+  </ItemGroup>
 
-	</Project>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
+    <PackageReference Include="System.Linq.Async" />
+  </ItemGroup>
+
+</Project>

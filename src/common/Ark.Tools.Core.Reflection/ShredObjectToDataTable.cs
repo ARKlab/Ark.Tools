@@ -1,12 +1,14 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Core;
+
 using NodaTime;
 
 using System.Collections.Frozen;
 using System.Data;
 using System.Reflection;
 
-namespace Ark.Tools.Core;
+namespace Ark.Tools.Core.Reflection;
 
 //http://msdn.microsoft.com/en-us/library/bb669096.aspx
 internal sealed class ShredObjectToDataTable<T>

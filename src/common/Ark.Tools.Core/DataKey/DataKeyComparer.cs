@@ -1,10 +1,11 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Ark.Tools.Core.DataKey;
 
-public class DataKeyComparer<T> : IEqualityComparer<T>
+public class DataKeyComparer<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T> : IEqualityComparer<T>
     where T : class
 {
     private static readonly PropertyInfo[] _keyProperties = typeof(T).GetProperties()
