@@ -74,28 +74,52 @@ public static class DataTableExtensions
                 return ShredPrimitive(source, table, options);
             }
 
-            // Create a new table if the input table is null.
+            // Fast path: new table with sequential field/property ordering
             if (table == null)
             {
                 table = new DataTable(typeof(T).Name);
+                InitializeNewTable(table);
+
+                // Enumerate the source sequence using fast sequential path
+                table.BeginLoadData();
+                using (var e = source.GetEnumerator())
+                {
+                    while (e.MoveNext())
+                    {
+                        var values = ShredObjectSequential(table, e.Current);
+
+                        if (options is not null)
+                        {
+                            table.LoadDataRow(values, options.Value);
+                        }
+                        else
+                        {
+                            table.LoadDataRow(values, true);
+                        }
+                    }
+                }
+                table.EndLoadData();
+
+                return table;
             }
 
-            // Initialize the table schema based on type T.
-            var ordinalMap = InitializeTable(table);
+            // Slow path: existing table - use ordinal map
+            var ordinalMap = GetOrdinalMap(table);
 
-            // Enumerate the source sequence and load the object values into rows.
             table.BeginLoadData();
             using (var e = source.GetEnumerator())
             {
                 while (e.MoveNext())
                 {
+                    var values = ShredObject(table, e.Current, ordinalMap);
+
                     if (options is not null)
                     {
-                        table.LoadDataRow(ShredObject(table, e.Current, ordinalMap), options.Value);
+                        table.LoadDataRow(values, options.Value);
                     }
                     else
                     {
-                        table.LoadDataRow(ShredObject(table, e.Current, ordinalMap), true);
+                        table.LoadDataRow(values, true);
                     }
                 }
             }
@@ -159,11 +183,59 @@ public static class DataTableExtensions
             return values;
         }
 
-        private static FrozenDictionary<string, int> InitializeTable(DataTable table)
+        private static object?[] ShredObjectSequential(DataTable table, T? instance)
         {
+            // Fast path: fields then properties in sequential order
+            var values = new object?[table.Columns.Count];
+            var index = 0;
+            
+            foreach (var f in _fi)
+            {
+                values[index++] = ConvertColumnValue(f.GetValue(instance));
+            }
+
+            foreach (var p in _pi)
+            {
+                values[index++] = ConvertColumnValue(p.GetValue(instance, null));
+            }
+
+            return values;
+        }
+
+        private static void InitializeNewTable(DataTable table)
+        {
+            // Add fields first, then properties (preserves sequential ordering)
+            foreach (var f in _fi)
+            {
+                if (!table.Columns.Contains(f.Name))
+                {
+                    var columnType = DeriveColumnType(f.FieldType);
+                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
+                    #pragma warning disable IL2072
+                    table.Columns.Add(f.Name, columnType);
+                    #pragma warning restore IL2072
+                }
+            }
+
+            foreach (var p in _pi)
+            {
+                if (!table.Columns.Contains(p.Name))
+                {
+                    var columnType = DeriveColumnType(p.PropertyType);
+                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
+                    #pragma warning disable IL2072
+                    table.Columns.Add(p.Name, columnType);
+                    #pragma warning restore IL2072
+                }
+            }
+        }
+
+        private static FrozenDictionary<string, int> GetOrdinalMap(DataTable table)
+        {
+            // For existing tables, build ordinal map and add missing columns
             var ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
 
-            // Add fields as columns
+            // Add fields as columns (or get existing ordinals)
             foreach (var f in _fi)
             {
                 if (!table.Columns.Contains(f.Name))
@@ -181,7 +253,7 @@ public static class DataTableExtensions
                 }
             }
 
-            // Add properties as columns
+            // Add properties as columns (or get existing ordinals)
             foreach (var p in _pi)
             {
                 if (!table.Columns.Contains(p.Name))
