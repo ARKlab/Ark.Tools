@@ -5,6 +5,7 @@ using NLog;
 using NodaTime.Text;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Ark.Tools.ResourceWatcher;
@@ -208,6 +209,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region ProcessResource
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
     public Activity ProcessResourceStart(ProcessContext processContext)
     {
         bool result = processContext.IsResourceUpdated(out var infos);
@@ -240,6 +242,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
     public void ProcessResourceFailed(Activity activity, ProcessContext pc, bool isBanned, Exception ex)
     {
         var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
@@ -253,6 +256,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         });
     }
 
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
     public void ProcessResourceSuccessful(Activity activity, ProcessContext pc)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -280,6 +284,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region FetchResource
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
     public Activity FetchResourceStart(ProcessContext pc)
     {
         Activity activity = ResourceWatcherDiagnosticSource._start("FetchResource", () => new
@@ -292,6 +297,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
     public void FetchResourceFailed(Activity activity, ProcessContext pc, Exception ex)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -303,6 +309,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         );
     }
 
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
     public void FetchResourceSuccessful(Activity activity, ProcessContext pc)
     {
         //_setTags(activity, processType.ToString(), processType.ToString());
@@ -342,7 +349,9 @@ internal sealed class ResourceWatcherDiagnosticSource
     }
     #endregion
 
-    private static Activity _start(string operationName, Func<object> getPayload, bool unlinkFromParent = false)
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "Generic type parameter has DynamicallyAccessedMembers annotation. Anonymous types with primitive properties and types marked with DynamicDependency are preserved.")]
+    private static Activity _start<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string operationName, Func<T> getPayload, bool unlinkFromParent = false)
     {
         string activityName = BaseActivityName + "." + operationName;
 
@@ -360,7 +369,9 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
-    private static void _stop(Activity activity, Func<object> getPayload)
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "Generic type parameter has DynamicallyAccessedMembers annotation. Anonymous types with primitive properties and types marked with DynamicDependency are preserved.")]
+    private static void _stop<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(Activity activity, Func<T> getPayload)
     {
         if (activity != null)
         {
@@ -368,7 +379,9 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
     }
 
-    private static void _reportEvent(string eventName, Func<object> getPayload)
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "Generic type parameter has DynamicallyAccessedMembers annotation. Anonymous types with primitive properties and types marked with DynamicDependency are preserved.")]
+    private static void _reportEvent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string eventName, Func<T> getPayload)
     {
         var name = BaseActivityName + "." + eventName;
 
@@ -378,6 +391,8 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "Anonymous type contains only primitive properties that are always preserved.")]
     private static void _reportException(string exceptionName, Exception ex, string tenant)
     {
         var name = BaseActivityName + "." + exceptionName;
