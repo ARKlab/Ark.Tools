@@ -1,117 +1,128 @@
 # Trimming Compatibility - Ark.Tools.ResourceWatcher.Sql
 
-## Status: ❌ NOT TRIMMABLE
+## Status: ✅ CONDITIONALLY TRIMMABLE
 
-**Decision Date:** 2026-01-13  
-**Rationale:** Depends on Newtonsoft.Json via ArkDefaultJsonSerializerSettings which is not trim-safe
+**Decision Date:** 2026-01-14  
+**Rationale:** Now uses System.Text.Json with converters for core functionality. Trim-safe for applications using Dictionary&lt;string, object&gt; or JsonElement for Extensions.
 
 ---
 
-## Why This Library Is Not Trimmable
+## Trimming Compatibility
 
-### Newtonsoft.Json Dependency
+### What Changed
 
-The `SqlStateProvider` class uses `ArkDefaultJsonSerializerSettings.Instance` for JSON serialization/deserialization of state data. The `ArkDefaultJsonSerializerSettings` class is marked with `RequiresUnreferencedCode` because Newtonsoft.Json fundamentally relies on reflection over types that may be removed when trimming.
+The library has been migrated from Newtonsoft.Json to System.Text.Json with the following improvements:
 
-**Location:** `SqlStateProvider.cs` line 42
+1. **NodaTime Support**: Uses `NodaTime.Serialization.SystemTextJson` converters
+2. **Extensions Handling**: Deserializes Extensions as `JsonElement` for dynamic data
+3. **ModifiedSources**: Fully trim-safe serialization of `Dictionary<string, LocalDateTime>`
+4. **Source Generation**: Includes `SqlStateProviderJsonContext` for trim-compatible types
+
+### Trim-Safe Usage
+
+For fully trim-safe applications, use one of these patterns for `IResourceMetadata.Extensions`:
 
 ```csharp
-public SqlStateProvider(ISqlStateProviderConfig config, IDbConnectionManager connManager)
+// Option 1: Dictionary<string, object>
+object IResourceMetadata.Extensions => new Dictionary<string, object>
 {
-    // ...
-    _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.Instance; // Not trim-safe
+    ["lastOffset"] = 12345,
+    ["cursor"] = "abc-cursor"
+};
+
+// Option 2: JsonElement (after deserialization)
+// Extensions are automatically returned as JsonElement from LoadStateAsync
+```
+
+### Conditional Trim Warning
+
+The `SaveStateAsync` method may trigger trim warnings if Extensions contains arbitrary objects (e.g., anonymous types):
+
+```csharp
+// ⚠️ This pattern works but is not fully trim-safe
+object IResourceMetadata.Extensions => new
+{
+    FileName = "test.txt",
+    LastOffset = 12345
+};
+```
+
+**Why**: Anonymous objects and custom types require reflection-based serialization, which cannot be statically analyzed by the trimmer.
+
+**Solution**: Use `Dictionary<string, object>` or `JsonElement` instead for trim-safe code.
+
+---
+
+## Benefits
+
+### Performance Improvements
+- **Faster serialization** - Uses NodaTime converters optimized for System.Text.Json
+- **Reduced memory allocations** - More efficient than Newtonsoft.Json
+- **Trim compatibility** - Smaller deployment sizes for trim-enabled applications
+
+### Maintainability
+- **Modern JSON library** - Uses the .NET standard System.Text.Json
+- **Better integration** - Works seamlessly with other Ark.Tools components using System.Text.Json
+- **Clear data structure** - JsonElement makes Extensions schema explicit
+
+---
+
+## Migration from Previous Versions
+
+### Breaking Changes
+
+**None** - The migration is backward compatible:
+
+- Existing SQL data is read correctly
+- Extensions are deserialized as `JsonElement` instead of `JObject`
+- Test assertions updated to work with `JsonElement`
+
+### Code Changes Required
+
+If your tests check Extensions using Newtonsoft.Json types:
+
+```csharp
+// ❌ OLD - Newtonsoft.Json
+if (state.Extensions is Newtonsoft.Json.Linq.JObject jObj)
+{
+    jObj[key]?.ToString().Should().Be(expectedValue);
+}
+
+// ✅ NEW - System.Text.Json
+if (state.Extensions is JsonElement element)
+{
+    if (element.TryGetProperty(key, out var property))
+    {
+        property.GetString().Should().Be(expectedValue);
+    }
 }
 ```
-
-### JSON Serialization Usage
-
-The library serializes and deserializes the following types to/from SQL:
-
-1. **Extensions** - Dynamic object with primitive values
-2. **ModifiedSources** - Dictionary<string, LocalDateTime>
-
-Both use Newtonsoft.Json's reflection-based serialization:
-
-```csharp
-// Deserialization
-r.Extensions = JsonConvert.DeserializeObject(e.ExtensionsJson, _jsonSerializerSettings);
-r.ModifiedSources = JsonConvert.DeserializeObject<Dictionary<string, LocalDateTime>>(
-    m.ModifiedSourcesJson, _jsonSerializerSettings);
-
-// Serialization
-ModifiedSourcesJson = x.ModifiedSources == null 
-    ? null 
-    : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings);
-ExtensionsJson = x.Extensions == null 
-    ? null 
-    : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings);
-```
-
-### Why RequiresUnreferencedCode Is Preferred
-
-Per the code review feedback, `RequiresUnreferencedCode` should always be preferred to `UnconditionalSuppressMessage` because:
-
-1. It properly propagates trim warnings to callers
-2. It makes it clear to consumers that the API is not trim-safe
-3. It prevents hiding potential trimming issues
-
-Since `ArkDefaultJsonSerializerSettings` is not trim-safe, this library cannot be marked as trimmable.
-
----
-
-## Migration Path
-
-See [docs/todo/migrate-resourcewatcher-sql-to-stj.md](../../../docs/todo/migrate-resourcewatcher-sql-to-stj.md) for the migration plan to System.Text.Json with source generation support.
-
-### Future Trim-Safe Implementation
-
-Once migrated to System.Text.Json with source generation:
-
-1. Replace Newtonsoft.Json with System.Text.Json
-2. Use JsonSerializerContext for source-generated serialization
-3. Define source-generated contexts for:
-   - Extensions serialization (dynamic object → well-defined DTO)
-   - ModifiedSources (Dictionary<string, LocalDateTime>)
-4. Enable IsTrimmable and EnableTrimAnalyzer
-5. Achieve zero trim warnings
-
-**Estimated Effort:** 4-8 hours
-**Benefits:** 
-- Fully trim-compatible
-- Better performance (source generation)
-- No reflection overhead
-- Smaller deployment size
 
 ---
 
 ## Impact on Applications
 
-### Applications Using This Library Cannot Trim
+### Trim-Enabled Applications
 
-If your application uses `Ark.Tools.ResourceWatcher.Sql`:
-- Trimming is **not supported** due to Newtonsoft.Json dependency
-- You must deploy the full application without trimming
-- Alternative: Implement a custom state provider using System.Text.Json
+✅ **Can trim** if using `Dictionary<string, object>` or `JsonElement` for Extensions  
+⚠️ **Conditional** if using arbitrary objects (anonymous types, custom classes) for Extensions
 
-### Workaround for Trimmed Applications
+### Non-Trimmed Applications
 
-If you need trimming support:
-
-1. **Option 1:** Implement a custom `IStateProvider` using System.Text.Json
-2. **Option 2:** Use `InMemStateProvider` instead (trimmable, but in-memory only)
-3. **Option 3:** Wait for migration to STJ (see TODO item)
+✅ **Fully compatible** - No changes required
 
 ---
 
 ## Related Files
 
 - `SqlStateProvider.cs` - State provider implementation
-- `docs/todo/migrate-resourcewatcher-sql-to-stj.md` - Migration plan
+- `SqlStateProviderJsonContext.cs` - Source-generated JSON context
+- `docs/todo/migrate-resourcewatcher-sql-to-stj.md` - ~~Migration plan~~ (completed)
 
 ---
 
 ## References
 
-- [Microsoft: Prepare libraries for trimming](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming)
-- [Newtonsoft.Json trimming limitations](https://github.com/JamesNK/Newtonsoft.Json/issues/2736)
 - [System.Text.Json source generation](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation)
+- [NodaTime.Serialization.SystemTextJson](https://nodatime.org/3.0.x/userguide/serialization)
+- [Trimming preparation guide](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming)
