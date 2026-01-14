@@ -5,9 +5,6 @@ using Ark.ResourceWatcher.Sample.Dto;
 using CsvHelper;
 using CsvHelper.Configuration;
 
-using System.Globalization;
-using System.Text;
-
 namespace Ark.ResourceWatcher.Sample.Transform;
 
 /// <summary>
@@ -65,7 +62,7 @@ public sealed class MyTransformService
         {
             records = csv.GetRecords<SinkRecord>().ToList();
         }
-        catch (CsvHelper.CsvHelperException ex)
+        catch (CsvHelperException ex)
         {
             throw new TransformException($"CSV parsing error: {ex.Message}", ex);
         }

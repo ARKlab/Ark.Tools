@@ -145,16 +145,6 @@
         "resolved": "4.1.5",
         "contentHash": "i5z+cNu/cOcdO0AgFB8aXk8w6In2H+haaDfSgd9ImvQIK+rSHavHZIogVoAZLL8jLwYx4bAcs5b7EyuMMG4mQQ=="
       },
-      "Microsoft.SourceLink.GitHub": {
-        "type": "Direct",
-        "requested": "[10.0.102, )",
-        "resolved": "10.0.102",
-        "contentHash": "Oxq3RCIJSdtpIU4hLqO7XaDe/Ra3HS9Wi8rJl838SAg6Zu1iQjerA0+xXWBgUFYbgknUGCLOU0T+lzMLkvY9Qg==",
-        "dependencies": {
-          "Microsoft.Build.Tasks.Git": "10.0.102",
-          "Microsoft.SourceLink.Common": "10.0.102"
-        }
-      },
       "Microsoft.VisualStudio.Threading.Analyzers": {
         "type": "Direct",
         "requested": "[17.14.15, )",
@@ -229,11 +219,6 @@
         "type": "Transitive",
         "resolved": "9.0.4",
         "contentHash": "YgZYAWzyNuPVtPq6WNm0bqOWNjYaWgl5mBWTGZyNoXitYBUYSp6iUB9AwK0V1mo793qRJUXz2t6UZrWITZSvuQ=="
-      },
-      "Microsoft.Build.Tasks.Git": {
-        "type": "Transitive",
-        "resolved": "10.0.102",
-        "contentHash": "0i81LYX31U6UiXz4NOLbvc++u+/mVDmOt+PskrM/MygpDxkv9THKQyRUmavBpLK6iBV0abNWnn+CQgSRz//Pwg=="
       },
       "Microsoft.CodeAnalysis.Analyzers": {
         "type": "Transitive",
@@ -373,11 +358,6 @@
           "Microsoft.IdentityModel.Logging": "8.15.0"
         }
       },
-      "Microsoft.SourceLink.Common": {
-        "type": "Transitive",
-        "resolved": "10.0.102",
-        "contentHash": "Mk1IMb9q5tahC2NltxYXFkLBtuBvfBoCQ3pIxYQWfzbCE9o1OB9SsHe0hnNGo7lWgTA/ePbFAJLWu6nLL9K17A=="
-      },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
         "resolved": "1.0.0",
@@ -486,8 +466,8 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "10.0.1",
-        "contentHash": "9SqHNq+lAjZeyPcm69FTQEjr+wsRYvkS3aW8yxoEndVYwDRkCrsP/44QPqpWHwzevoX26rkOoQ6kr7GZWngw2A=="
+        "resolved": "10.0.2",
+        "contentHash": "me7W69hkjdu5EzHXCQSXv9OS3uAkMXT26oZuWTaabeoO5BPxSVuRVJ2FSfIW8xyGxBb6mKCE6ZKg7TLk3IzJBQ=="
       },
       "YamlDotNet": {
         "type": "Transitive",
@@ -621,11 +601,11 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "CentralTransitive",
-        "requested": "[10.0.1, )",
-        "resolved": "10.0.1",
-        "contentHash": "HfOAIlSA8OuaxBZD6xjsUWhtB0KdKSWEfRId8gSGveLUjuP6G8IxfiFgJNxaiRIEC1kx4pSvz3Em5xW/J6LLxA==",
+        "requested": "[10.0.2, )",
+        "resolved": "10.0.2",
+        "contentHash": "UpBPpVzF+xbB3GsBrraPvlYCwUiOhs+RLxnTMKLqDs2gNNaAtxQRlKjXfMV3zxE+hiQkGId5olZ+9tE6xXHdwQ==",
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "10.0.1"
+          "System.Security.Cryptography.ProtectedData": "10.0.2"
         }
       }
     }

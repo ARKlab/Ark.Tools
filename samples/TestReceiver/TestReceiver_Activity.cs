@@ -24,7 +24,7 @@ internal sealed class TestReceiver_Activity : CalendarSliceActivity
 #pragma warning restore RS0030
     }
 
-    public override Ark.Tools.Activity.ResourceDependency[] Dependencies
+    public override ResourceDependency[] Dependencies
     {
         get
         {
@@ -35,7 +35,7 @@ internal sealed class TestReceiver_Activity : CalendarSliceActivity
     }
 
 
-    protected override IEnumerable<Ark.Tools.Activity.Slice> _generateCalendar()
+    protected override IEnumerable<Slice> _generateCalendar()
     {
         var current = Slice.From(new LocalDate(2012, 1, 1), "CET");
         while (current.SliceStart.Year < 2020)
@@ -56,7 +56,7 @@ internal sealed class TestReceiver_Activity : CalendarSliceActivity
 
     public override TimeSpan? CoolDown => null;
 
-    public override async Task Process(Ark.Tools.Activity.Slice activitySlice)
+    public override async Task Process(Slice activitySlice)
     {
         await Task.Delay(new TimeSpan(0, 0, 5)).ConfigureAwait(false);
 

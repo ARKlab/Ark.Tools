@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Globalization;
 
 namespace Microsoft.Extensions.Configuration.EnvironmentVariables;
 
@@ -17,8 +16,8 @@ public class ArkEnvironmentVariablesConfigurationProvider : ConfigurationProvide
     private const string _connStrKey = "ConnectionStrings:";
     private const string _providerKeyFormat = "ConnectionStrings:{0}_ProviderName";
 
-    private static readonly System.Text.CompositeFormat _connStrKeyCompositeFormat = System.Text.CompositeFormat.Parse(_connStrKeyFormat);
-    private static readonly System.Text.CompositeFormat _providerKeyCompositeFormat = System.Text.CompositeFormat.Parse(_providerKeyFormat);
+    private static readonly CompositeFormat _connStrKeyCompositeFormat = System.Text.CompositeFormat.Parse(_connStrKeyFormat);
+    private static readonly CompositeFormat _providerKeyCompositeFormat = System.Text.CompositeFormat.Parse(_providerKeyFormat);
 
     private readonly string _prefix;
 

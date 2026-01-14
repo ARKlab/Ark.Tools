@@ -1,14 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-
-  <PropertyGroup Label="Test Settings">
-    <IsTestProject>true</IsTestProject>
-    <IsPackable>false</IsPackable>
-    
-    <OutputType>Exe</OutputType>
-
-    <EnableMSTestRunner>true</EnableMSTestRunner>
-
+  <PropertyGroup>
     <!-- 
       IMPORTANT: SqlStateProvider integration tests require sequential framework execution.
       The EnsureTableAreCreated() method drops/recreates UDT types, causing conflicts 
@@ -16,28 +8,13 @@
     -->
     <TestTfmsInParallel>false</TestTfmsInParallel>
     <TestingPlatformDisableParallel>true</TestingPlatformDisableParallel>
-
-    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
-
   </PropertyGroup>
 
-  <ItemGroup Label="Testing Platform Settings">
-    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
-    <PackageReference Include="Microsoft.Testing.Extensions.Retry" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
-  </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="AwesomeAssertions" />    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />    
     <PackageReference Include="Moq" />
-    <PackageReference Include="MSTest.TestAdapter" />
-    <PackageReference Include="MSTest.TestFramework" />
     <PackageReference Include="NodaTime.Testing" />
     <PackageReference Include="Reqnroll.MsTest" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
@@ -53,19 +30,5 @@
     <ProjectReference Include="..\..\src\resourcewatcher\Ark.Tools.ResourceWatcher.Testing\Ark.Tools.ResourceWatcher.Testing.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-
-    <None Update="appsettings.IntegrationTests.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    
-    <None Update="reqnroll.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-
-  </ItemGroup>
 
 </Project>

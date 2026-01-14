@@ -10,8 +10,6 @@ using Microsoft.Extensions.Logging;
 
 using Polly;
 
-using System.Text;
-
 namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy;
 
 public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable

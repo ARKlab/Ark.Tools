@@ -13,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails;

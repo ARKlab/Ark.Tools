@@ -48,7 +48,7 @@ internal sealed class FormDataJsonBinder : IModelBinder
             bindingContext.Result = ModelBindingResult.Success(result);
 
         }
-        catch (System.Text.Json.JsonException ex1)
+        catch (JsonException ex1)
         {
             bindingContext.ModelState.TryAddModelException(modelBindingKey, ex1);
             bindingContext.Result = ModelBindingResult.Failed();

@@ -4,7 +4,7 @@ namespace Ark.Reference.Core.Common.Exceptions;
 /// Business rule violation indicating that a book print process is already running for a given book.
 /// The class name itself serves as the error code for this specific violation.
 /// </summary>
-public class BookPrintingProcessAlreadyRunningViolation : Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation
+public class BookPrintingProcessAlreadyRunningViolation : Tools.Core.BusinessRuleViolation.BusinessRuleViolation
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="BookPrintingProcessAlreadyRunningViolation"/> class

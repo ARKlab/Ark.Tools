@@ -80,7 +80,7 @@ ctk
         if (Aggregate.UncommittedAggregateEvents.Any())
         {
             if (_chex == null)
-                _chex = _session.Advanced.ClusterTransaction.CreateCompareExchangeValue<long>(_chexKey, Aggregate.Version);
+                _chex = _session.Advanced.ClusterTransaction.CreateCompareExchangeValue(_chexKey, Aggregate.Version);
             else
                 _chex.Value = Aggregate.Version;
 

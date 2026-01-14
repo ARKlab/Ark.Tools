@@ -7,8 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 
 using Reqnroll;
 
-using System.Text;
-
 namespace Ark.Reference.Core.Tests.Auth;
 
 [Binding]

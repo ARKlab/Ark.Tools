@@ -11,7 +11,6 @@ using Raven.Client.Exceptions.Documents.Subscriptions;
 using Raven.Client.Exceptions.Security;
 
 using System.Collections.Concurrent;
-using System.Globalization;
 using System.Reflection;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
@@ -176,7 +175,7 @@ where startsWith(id(e), '{prefix}')
 
     MethodInfo _getDispatchMethod(Type eventType)
     {
-        Func<FakeEvent, IMetadata, Task> a = _invokeHandler<FakeEvent>;
+        Func<FakeEvent, IMetadata, Task> a = _invokeHandler;
 
         return a.Method.GetGenericMethodDefinition().MakeGenericMethod(eventType);
     }

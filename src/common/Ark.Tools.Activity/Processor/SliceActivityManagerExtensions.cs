@@ -3,8 +3,6 @@ using Ark.Tools.SimpleInjector;
 
 using SimpleInjector;
 
-
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Ark.Tools.Activity.Processor;

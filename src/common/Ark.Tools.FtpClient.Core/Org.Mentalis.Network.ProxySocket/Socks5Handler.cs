@@ -3,7 +3,6 @@
 using Org.Mentalis.Network.ProxySocket.Authentication;
 
 using System.Net.Sockets;
-using System.Text;
 
 namespace Org.Mentalis.Network.ProxySocket;
 

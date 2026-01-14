@@ -12,8 +12,6 @@ using AwesomeAssertions;
 
 using Reqnroll;
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Ark.ResourceWatcher.Sample.Tests.Steps;
 
 /// <summary>

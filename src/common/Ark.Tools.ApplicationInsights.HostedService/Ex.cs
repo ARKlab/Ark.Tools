@@ -11,7 +11,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Ark.Tools.ApplicationInsights.HostedService;

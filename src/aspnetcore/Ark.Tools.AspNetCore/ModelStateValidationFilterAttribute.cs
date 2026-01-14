@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Ark.Tools.AspNetCore;
 
-[System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
 public sealed class SkipModelStateValidationFilterAttribute : Attribute
 {
 }

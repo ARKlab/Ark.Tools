@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
 [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]

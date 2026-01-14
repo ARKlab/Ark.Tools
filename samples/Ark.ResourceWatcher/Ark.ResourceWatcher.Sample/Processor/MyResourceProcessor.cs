@@ -9,8 +9,6 @@ using Flurl.Http;
 
 using NLog;
 
-using System.Globalization;
-
 namespace Ark.ResourceWatcher.Sample.Processor;
 
 /// <summary>

@@ -5,33 +5,6 @@
 	  <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <PropertyGroup Label="Test Settings">
-    <IsTestProject>true</IsTestProject>
-    
-    <OutputType>Exe</OutputType>
-
-    <EnableMSTestRunner>true</EnableMSTestRunner>
-
-    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
-  </PropertyGroup>
-
-  <ItemGroup Label="Testing Platform Settings">
-    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
-    <PackageReference Include="Microsoft.Testing.Extensions.Retry" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="MSTest.TestAdapter" />
-    <PackageReference Include="MSTest.TestFramework" />
-    <PackageReference Include="AwesomeAssertions" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="../../src/common/Ark.Tools.Core.Reflection/Ark.Tools.Core.Reflection.csproj" />
   </ItemGroup>

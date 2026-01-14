@@ -1,6 +1,3 @@
-
-using System.Diagnostics.CodeAnalysis;
-
 namespace Ark.Tools.Authorization;
 
 /// <summary>

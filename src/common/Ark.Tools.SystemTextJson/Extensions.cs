@@ -4,7 +4,6 @@ using Ark.Tools.SystemTextJson;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 

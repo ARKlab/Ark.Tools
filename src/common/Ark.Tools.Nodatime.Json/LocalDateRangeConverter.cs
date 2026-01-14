@@ -5,15 +5,12 @@ using Newtonsoft.Json.Linq;
 
 using NodaTime;
 
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-
 namespace Ark.Tools.Nodatime.Json;
 
 public class LocalDateTimeRangeConverter : JsonConverter
 {
     private static readonly Type _type = typeof(LocalDateTimeRange);
-    private static readonly Type _nullableType = typeof(Nullable<LocalDateTimeRange>);
+    private static readonly Type _nullableType = typeof(LocalDateTimeRange?);
 
     public override bool CanConvert(Type objectType)
     {
@@ -64,15 +61,15 @@ public class LocalDateTimeRangeConverter : JsonConverter
             throw new ArgumentNullException(nameof(value));
         }
 
-        if (!(value is LocalDateTimeRange || value is Nullable<LocalDateTimeRange>))
+        if (!(value is LocalDateTimeRange || value is LocalDateTimeRange?))
         {
             throw new JsonWriterException(string.Format(CultureInfo.InvariantCulture, "Unexpected value when converting. Expected {0}, got {1}.", typeof(LocalDateTimeRange).FullName, value.GetType().FullName));
         }
 
         LocalDateTimeRange? r = null;
 
-        if (value is Nullable<LocalDateTimeRange>)
-            r = value as Nullable<LocalDateTimeRange>;
+        if (value is LocalDateTimeRange?)
+            r = value as LocalDateTimeRange?;
 
         if (value is LocalDateTimeRange)
         {

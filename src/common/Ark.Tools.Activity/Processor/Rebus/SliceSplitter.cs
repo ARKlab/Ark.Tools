@@ -4,8 +4,6 @@ using NLog;
 using Rebus.Bus;
 using Rebus.Handlers;
 
-using System.Globalization;
-
 using ResourceSliceReady = Ark.Tools.Activity.Messages.ResourceSliceReady;
 using SliceReady = Ark.Tools.Activity.Messages.SliceReady;
 
@@ -13,7 +11,7 @@ namespace Ark.Tools.Activity.Processor;
 
 public class SliceSplitter
     : IHandleMessages<ResourceSliceReady>
-    , IHandleMessages<Ark.Tasks.Messages.ResourceSliceReady>
+    , IHandleMessages<Tasks.Messages.ResourceSliceReady>
 {
     private readonly ISliceActivity _activity;
     private readonly IBus _bus;

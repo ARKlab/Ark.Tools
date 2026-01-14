@@ -27,7 +27,7 @@ public static class FakeServerWebHostBuilderExtensions
             .ConfigureServices((ctx, services) =>
             {
                 services.AddTransient<IServiceProviderFactory<IServiceCollection>>(s => new BranchedServiceProviderFactory(parentServiceProvider));
-                services.AddTransient<IConfiguration>(s => configuration);
+                services.AddTransient(s => configuration);
             });
     }
 }

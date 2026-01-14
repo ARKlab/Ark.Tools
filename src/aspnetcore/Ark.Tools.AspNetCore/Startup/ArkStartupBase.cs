@@ -52,7 +52,7 @@ internal sealed class ArkStartupBase
             ;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Pattern")]
+    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Pattern")]
     public void Configure(IApplicationBuilder app)
     {
         var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();

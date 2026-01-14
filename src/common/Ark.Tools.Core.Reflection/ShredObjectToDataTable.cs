@@ -1,7 +1,5 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.Core;
-
 using NodaTime;
 
 using System.Collections.Frozen;
@@ -13,10 +11,10 @@ namespace Ark.Tools.Core.Reflection;
 //http://msdn.microsoft.com/en-us/library/bb669096.aspx
 internal sealed class ShredObjectToDataTable<T>
 {
-    private readonly System.Reflection.FieldInfo[] _fi;
-    private readonly System.Reflection.PropertyInfo[] _pi;
-    private readonly System.Collections.Generic.Dictionary<string, int> _ordinalMap;
-    private readonly System.Type _type;
+    private readonly FieldInfo[] _fi;
+    private readonly PropertyInfo[] _pi;
+    private readonly Dictionary<string, int> _ordinalMap;
+    private readonly Type _type;
 
     // ObjectShredder constructor. 
     public ShredObjectToDataTable()

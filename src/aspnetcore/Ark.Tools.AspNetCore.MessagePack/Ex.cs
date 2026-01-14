@@ -14,7 +14,7 @@ public static class Ex
     public static void AddMessagePackFormatter(this IServiceCollection services, IFormatterResolver? resolver = null)
     {
         if (resolver != null)
-            services.TryAddSingleton<IFormatterResolver>(resolver);
+            services.TryAddSingleton(resolver);
         services.TryAddEnumerable(ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, MessagePackFormatterSetup>());
     }
 }

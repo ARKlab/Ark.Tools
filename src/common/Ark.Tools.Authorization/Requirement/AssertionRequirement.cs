@@ -31,7 +31,7 @@ public class AssertionRequirement : IAuthorizationHandler, IAuthorizationRequire
     }
 
     /// <summary>
-    /// Calls <see cref="AssertionRequirement.Handler"/> to see if authorization is allowed.
+    /// Calls <see cref="Handler"/> to see if authorization is allowed.
     /// </summary>
     /// <param name="context">The authorization information.</param>
     /// <param name="ctk">CancellationToken</param>

@@ -3,8 +3,6 @@ using NodaTime.Text;
 
 using Reqnroll.Assist;
 
-using System.Globalization;
-
 namespace Ark.Tools.Reqnroll;
 
 public class NodaTimeValueRetriverAndComparer : IValueRetriever, IValueComparer

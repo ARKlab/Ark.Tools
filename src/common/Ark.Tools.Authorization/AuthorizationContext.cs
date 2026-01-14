@@ -45,7 +45,7 @@ public class AuthorizationContext
     public virtual ClaimsPrincipal User { get; }
 
     /// <summary>
-    /// The optional resource to evaluate the <see cref="AuthorizationContext.Policy"/> against.
+    /// The optional resource to evaluate the <see cref="Policy"/> against.
     /// </summary>
     public virtual object? Resource { get; }
 
@@ -86,7 +86,7 @@ public class AuthorizationContext
     }
 
     /// <summary>
-    /// Called to indicate <see cref="AuthorizationContext.HasSucceeded"/> will
+    /// Called to indicate <see cref="HasSucceeded"/> will
     /// never return true, even if all requirements are met.
     /// </summary>
     public virtual void Fail()

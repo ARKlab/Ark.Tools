@@ -1,7 +1,5 @@
 using Reqnroll.Assist;
 
-using System.Globalization;
-
 namespace Ark.Tools.Reqnroll;
 
 public class DoubleValueComparer : IValueComparer

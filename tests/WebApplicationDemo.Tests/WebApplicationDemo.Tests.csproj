@@ -6,50 +6,12 @@
 
   </PropertyGroup>
 
-  <PropertyGroup Label="Test Settings">
-    <IsTestProject>true</IsTestProject>
-    
-    <OutputType>Exe</OutputType>
-
-    <EnableMSTestRunner>true</EnableMSTestRunner>
-
-    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
-
-  </PropertyGroup>
-
-  <ItemGroup Label="Testing Platform Settings">
-    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
-    <PackageReference Include="Microsoft.Testing.Extensions.Retry" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="appsettings.IntegrationTests.json">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-
-
-    <PackageReference Include="MSTest.TestAdapter" />
-    <PackageReference Include="MSTest.TestFramework" />
 		<PackageReference Include="Reqnroll.MsTest" />
 		<PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
   </ItemGroup>

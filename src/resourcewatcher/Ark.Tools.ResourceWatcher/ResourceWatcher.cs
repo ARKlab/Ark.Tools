@@ -7,7 +7,6 @@ using NLog;
 using NodaTime;
 
 using System.Diagnostics;
-using System.Globalization;
 
 namespace Ark.Tools.ResourceWatcher;
 

@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace Ark.Reference.Common.Exceptions;
 
 public class ExternalServiceException : Exception

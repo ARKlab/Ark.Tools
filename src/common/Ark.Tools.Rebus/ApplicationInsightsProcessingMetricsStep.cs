@@ -7,7 +7,6 @@ using Rebus.Time;
 using SimpleInjector;
 
 using System.Diagnostics;
-using System.Globalization;
 
 namespace Ark.Tools.Rebus;
 

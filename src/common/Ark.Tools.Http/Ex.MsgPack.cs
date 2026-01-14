@@ -7,7 +7,7 @@ using MessagePack;
 
 namespace Ark.Tools.Http;
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "Mimiking Flurl signatures")]
+[SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "Mimiking Flurl signatures")]
 public static partial class Ex
 {
 #pragma warning disable VSTHRD003 // Avoid awaiting or returning a Task representing work that was not started within your context

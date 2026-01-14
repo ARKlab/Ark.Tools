@@ -38,7 +38,7 @@ sealed class DatabaseUtils
     }
 
     [BeforeScenario]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Reqnroll requires instance methods for BeforeScenario")]
+    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Reqnroll requires instance methods for BeforeScenario")]
     public async Task CleanUpEntireDbBeforeScenario(FeatureContext fctx, ScenarioContext sctx)
     {
         if (fctx.FeatureInfo.Tags.Contains("CleanDbBeforeScenario", StringComparer.Ordinal) ||

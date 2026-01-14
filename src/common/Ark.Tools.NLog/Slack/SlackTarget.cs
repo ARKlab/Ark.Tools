@@ -10,10 +10,10 @@ namespace Ark.Tools.NLog.Slack;
 [Target(NLogConfigurer.SlackTarget)]
 public class SlackTarget : TargetWithContext
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1056:URI-like properties should not be strings", Justification = "NLog configuration limitation")]
+    [SuppressMessage("Design", "CA1056:URI-like properties should not be strings", Justification = "NLog configuration limitation")]
     public string? WebHookUrl { get; set; }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "CloseTarget() is called during Dispose() by NLog")]
+    [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "CloseTarget() is called during Dispose() by NLog")]
     private SlackClient? _client = null;
 
     public SlackTarget() : base()
@@ -26,7 +26,7 @@ public class SlackTarget : TargetWithContext
     [ArrayParameter(typeof(TargetPropertyWithContext), "field")]
     public IList<TargetPropertyWithContext> Fields => ContextProperties;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Params are injected by NLog")]
+    [SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Params are injected by NLog")]
     protected override void InitializeTarget()
     {
         if (String.IsNullOrWhiteSpace(this.WebHookUrl))

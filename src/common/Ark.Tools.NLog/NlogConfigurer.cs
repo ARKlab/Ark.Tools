@@ -13,10 +13,7 @@ using NLog.Targets;
 using NLog.Targets.Wrappers;
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 
 using TargetPropertyWithContext = Microsoft.ApplicationInsights.NLogTarget.TargetPropertyWithContext;
@@ -74,7 +71,7 @@ public static class NLogConfigurer
         return @this.WithApplicationInsightsRule("*", LogLevel.Error);
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
+    [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
     public record Config(
         string? SQLConnectionString = null,
         string? SQLTableName = null,
@@ -158,8 +155,8 @@ public static class NLogConfigurer
             ?? "Production";
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Targets are Disposed by NLog")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Targets are Disposed by NLog")]
+    [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
     public sealed class Configurer
     {
         internal LoggingConfiguration _config = new();
@@ -563,7 +560,7 @@ VALUES
         }
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync init method")]
+    [SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync init method")]
     private static void _ensureTableIsCreated(string connString, string logTableName)
     {
         var creteLogTable = string.Format(@"

@@ -1,8 +1,6 @@
 ﻿using Ark.Tools.Nodatime;
 using Ark.Tools.Sql.SqlServer;
 
-using System.Globalization;
-
 namespace Ark.Reference.Common;
 
 public static class GlobalInit

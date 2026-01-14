@@ -112,7 +112,7 @@ public class ApiHost
 
         Container.RegisterAuthorizationHandler<CoreRequiredScopePolicyHandler>();
 
-        Container.RegisterAuthorizationHandler<Ark.Reference.Common.Auth.PermissionAuthorizationHandler<Permissions>>();
+        Container.RegisterAuthorizationHandler<Reference.Common.Auth.PermissionAuthorizationHandler<Permissions>>();
         Container.Register<IUserPermissionsProvider<Permissions>, PermissionsProvider>();
 
         return this;
@@ -375,7 +375,7 @@ sealed class RebusPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
                     "This is usually caused by trying to access the 'Current Request User' outside a Message context");
 }
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
 public enum Queue
 {
     OneWay,

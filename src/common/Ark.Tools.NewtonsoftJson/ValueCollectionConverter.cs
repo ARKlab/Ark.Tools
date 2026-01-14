@@ -45,7 +45,7 @@ public sealed class ValueCollectionConverter : JsonConverter
         }
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via reflection in _getConverter method")]
+    [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via reflection in _getConverter method")]
     private sealed class Converter<T> : JsonConverter<ValueCollection<T>>
     {
         public override ValueCollection<T>? ReadJson(JsonReader reader, Type objectType, ValueCollection<T>? existingValue, bool hasExistingValue, JsonSerializer serializer)

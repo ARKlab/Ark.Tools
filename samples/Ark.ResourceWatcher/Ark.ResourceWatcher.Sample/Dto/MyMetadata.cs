@@ -7,7 +7,7 @@ namespace Ark.ResourceWatcher.Sample.Dto;
 /// <summary>
 /// Metadata for a blob resource in external storage.
 /// </summary>
-public sealed class MyMetadata : Ark.Tools.ResourceWatcher.IResourceMetadata
+public sealed class MyMetadata : Tools.ResourceWatcher.IResourceMetadata
 {
     /// <summary>
     /// Gets the unique identifier for the blob (typically the blob path).

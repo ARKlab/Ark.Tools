@@ -7,8 +7,6 @@ using Newtonsoft.Json.Serialization;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Newtonsoft.Json;
 
 public static class Extensions

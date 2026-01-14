@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 using NLog;
 
-using System.Globalization;
-
 namespace Ark.Tools.AspNetCore;
 
 public sealed class ArkDefaultExceptionFilterAttribute : ExceptionFilterAttribute

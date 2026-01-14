@@ -62,9 +62,9 @@ public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager
             );
 
         _container.Register<IHandleMessages<ResourceSliceReady>, SliceSplitter>();
-        _container.Register<IHandleMessages<Ark.Tasks.Messages.ResourceSliceReady>, SliceSplitter>();
+        _container.Register<IHandleMessages<Tasks.Messages.ResourceSliceReady>, SliceSplitter>();
         _container.Register<IHandleMessages<SliceReady>, SliceActivitySaga>();
-        _container.Register<IHandleMessages<Ark.Tasks.Messages.SliceReady>, SliceActivitySaga>();
+        _container.Register<IHandleMessages<Tasks.Messages.SliceReady>, SliceActivitySaga>();
         _container.Register<IHandleMessages<CoolDownMessage>, SliceActivitySaga>();
         _container.Register<ISliceActivity>(_activityFactory);
 

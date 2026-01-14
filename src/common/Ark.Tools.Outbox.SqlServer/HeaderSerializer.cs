@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Ark.Tools.Outbox.SqlServer;

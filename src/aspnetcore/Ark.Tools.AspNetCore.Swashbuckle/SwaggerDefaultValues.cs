@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
-
-using System.Globalization;
 using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
