@@ -39,9 +39,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.101, )",
-        "resolved": "10.0.101",
-        "contentHash": "nbq9XaN1hXbeaAAaI2Cv9su+TSs8n8iu9VmltGXDmQSTKDXh02AKykGYdHiVeaQaVvwxGJRwjsaTPSPYiD/RNQ=="
+        "requested": "[10.0.102, )",
+        "resolved": "10.0.102",
+        "contentHash": "4toG7NN4bwoIt5KAUJd8vhJQt5vwaLTBWdDOSeyaAAQP1wXLIkVshsMtKMIrPGpm0w+pHFpX7ffWqdB6ZAinoQ=="
       },
       "Microsoft.IdentityModel.JsonWebTokens": {
         "type": "Direct",
@@ -72,9 +72,9 @@
       },
       "Reqnroll": {
         "type": "Direct",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "MgjPaf12sWZKzW0XfqBsZ6EnM9Sf2rIpTWDiFhf1KzxXBKuh542WjfDCjgJYCwjMciVqM2IgW/eHUrJc4l3tGg==",
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "PVKVLPLCFtUlDjF12E8kwdoGEIWwFIlfYqFVFmcsA9/ylHhnOHWMgJoO4MoVH98VDZuhKoIYGZQY2NioBostoA==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "22.2.0",
@@ -419,9 +419,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.101, )",
-        "resolved": "10.0.101",
-        "contentHash": "nbq9XaN1hXbeaAAaI2Cv9su+TSs8n8iu9VmltGXDmQSTKDXh02AKykGYdHiVeaQaVvwxGJRwjsaTPSPYiD/RNQ=="
+        "requested": "[10.0.102, )",
+        "resolved": "10.0.102",
+        "contentHash": "4toG7NN4bwoIt5KAUJd8vhJQt5vwaLTBWdDOSeyaAAQP1wXLIkVshsMtKMIrPGpm0w+pHFpX7ffWqdB6ZAinoQ=="
       },
       "Microsoft.IdentityModel.JsonWebTokens": {
         "type": "Direct",
@@ -452,9 +452,9 @@
       },
       "Reqnroll": {
         "type": "Direct",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "MgjPaf12sWZKzW0XfqBsZ6EnM9Sf2rIpTWDiFhf1KzxXBKuh542WjfDCjgJYCwjMciVqM2IgW/eHUrJc4l3tGg==",
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "PVKVLPLCFtUlDjF12E8kwdoGEIWwFIlfYqFVFmcsA9/ylHhnOHWMgJoO4MoVH98VDZuhKoIYGZQY2NioBostoA==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "22.2.0",
