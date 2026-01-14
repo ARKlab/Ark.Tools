@@ -28,9 +28,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.101, )",
-        "resolved": "10.0.101",
-        "contentHash": "nbq9XaN1hXbeaAAaI2Cv9su+TSs8n8iu9VmltGXDmQSTKDXh02AKykGYdHiVeaQaVvwxGJRwjsaTPSPYiD/RNQ=="
+        "requested": "[10.0.102, )",
+        "resolved": "10.0.102",
+        "contentHash": "4toG7NN4bwoIt5KAUJd8vhJQt5vwaLTBWdDOSeyaAAQP1wXLIkVshsMtKMIrPGpm0w+pHFpX7ffWqdB6ZAinoQ=="
       },
       "Microsoft.Extensions.Configuration": {
         "type": "Direct",
@@ -206,20 +206,20 @@
       },
       "Reqnroll.MSTest": {
         "type": "Direct",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "w6PY5oYU1MXHOnHjsykrUEjggBTeVFOYAyrBqPernHgdQX1h4HdLvRuVF+/9kRo6NbA6sXzqTD8Rkwx81IUIkQ==",
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "NdaMMkeDbi3buRogUwiG0Px0Tm7uAwTD/nKnUoaCXtEUPk0z8uptN+4pyPmSah3+0Rnfs0Zk7SeunHZ5SORFxw==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "3.3.1",
-          "Reqnroll.Tools.MsBuild.Generation": "3.3.1"
+          "Reqnroll": "3.3.2",
+          "Reqnroll.Tools.MsBuild.Generation": "3.3.2"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "Z3t0AYoK9YRqB+PIMCeFZESRleagben7vsOETIFlzATpi+u91woOBQx4Vv9sMNBBvq0iTZOTb4zDBuHO7MZSmA=="
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "nYG5sxsXDUTfEscIp2QeGhwchaQJi6fCIvJle4ayenNj6koq4KY5zawj80E3V/eaU9Uy7A82nMY3BhoyaLY6lg=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -670,7 +670,7 @@
           "AwesomeAssertions": "[9.3.0, )",
           "AwesomeAssertions.Web": "[1.9.6, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.15.0, )",
-          "Reqnroll": "[3.3.1, )"
+          "Reqnroll": "[3.3.2, )"
         }
       },
       "ark.tools.resourcewatcher": {
@@ -1031,9 +1031,9 @@
       },
       "Reqnroll": {
         "type": "CentralTransitive",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "MgjPaf12sWZKzW0XfqBsZ6EnM9Sf2rIpTWDiFhf1KzxXBKuh542WjfDCjgJYCwjMciVqM2IgW/eHUrJc4l3tGg==",
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "PVKVLPLCFtUlDjF12E8kwdoGEIWwFIlfYqFVFmcsA9/ylHhnOHWMgJoO4MoVH98VDZuhKoIYGZQY2NioBostoA==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "22.2.0",
@@ -1097,9 +1097,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.101, )",
-        "resolved": "10.0.101",
-        "contentHash": "nbq9XaN1hXbeaAAaI2Cv9su+TSs8n8iu9VmltGXDmQSTKDXh02AKykGYdHiVeaQaVvwxGJRwjsaTPSPYiD/RNQ=="
+        "requested": "[10.0.102, )",
+        "resolved": "10.0.102",
+        "contentHash": "4toG7NN4bwoIt5KAUJd8vhJQt5vwaLTBWdDOSeyaAAQP1wXLIkVshsMtKMIrPGpm0w+pHFpX7ffWqdB6ZAinoQ=="
       },
       "Microsoft.Extensions.Configuration": {
         "type": "Direct",
@@ -1276,20 +1276,20 @@
       },
       "Reqnroll.MSTest": {
         "type": "Direct",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "w6PY5oYU1MXHOnHjsykrUEjggBTeVFOYAyrBqPernHgdQX1h4HdLvRuVF+/9kRo6NbA6sXzqTD8Rkwx81IUIkQ==",
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "NdaMMkeDbi3buRogUwiG0Px0Tm7uAwTD/nKnUoaCXtEUPk0z8uptN+4pyPmSah3+0Rnfs0Zk7SeunHZ5SORFxw==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "3.3.1",
-          "Reqnroll.Tools.MsBuild.Generation": "3.3.1"
+          "Reqnroll": "3.3.2",
+          "Reqnroll.Tools.MsBuild.Generation": "3.3.2"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "Z3t0AYoK9YRqB+PIMCeFZESRleagben7vsOETIFlzATpi+u91woOBQx4Vv9sMNBBvq0iTZOTb4zDBuHO7MZSmA=="
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "nYG5sxsXDUTfEscIp2QeGhwchaQJi6fCIvJle4ayenNj6koq4KY5zawj80E3V/eaU9Uy7A82nMY3BhoyaLY6lg=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -1778,7 +1778,7 @@
           "AwesomeAssertions": "[9.3.0, )",
           "AwesomeAssertions.Web": "[1.9.6, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.15.0, )",
-          "Reqnroll": "[3.3.1, )"
+          "Reqnroll": "[3.3.2, )"
         }
       },
       "ark.tools.resourcewatcher": {
@@ -2138,9 +2138,9 @@
       },
       "Reqnroll": {
         "type": "CentralTransitive",
-        "requested": "[3.3.1, )",
-        "resolved": "3.3.1",
-        "contentHash": "MgjPaf12sWZKzW0XfqBsZ6EnM9Sf2rIpTWDiFhf1KzxXBKuh542WjfDCjgJYCwjMciVqM2IgW/eHUrJc4l3tGg==",
+        "requested": "[3.3.2, )",
+        "resolved": "3.3.2",
+        "contentHash": "PVKVLPLCFtUlDjF12E8kwdoGEIWwFIlfYqFVFmcsA9/ylHhnOHWMgJoO4MoVH98VDZuhKoIYGZQY2NioBostoA==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "22.2.0",
