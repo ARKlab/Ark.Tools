@@ -4,7 +4,7 @@
     "local>ARKlab/renovate-config"
   ],
   "constraints": {
-    "dotnet": "10.0.101"
+    "dotnet": "10.0.102"
   },
   "customManagers": [
     {
@@ -18,17 +18,6 @@
       "depNameTemplate": "dotnet-sdk",
       "datasourceTemplate": "dotnet-version",
       "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/.sqlproj$/"
-      ],
-      "matchStrings": [
-        "<Sdk\\s+Name=\"(?<depName>.*?)\"\\s+Version=\"(?<currentValue>.*?)\"\\s*/>"
-      ],
-      "datasourceTemplate": "nuget",
-      "versioningTemplate": "nuget"
     }
   ]
 }
