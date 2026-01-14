@@ -309,7 +309,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     #endregion
 }
 
-[System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
+[UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by dependency injection")]
 sealed record Token
 {
     [JsonPropertyName("exp")]

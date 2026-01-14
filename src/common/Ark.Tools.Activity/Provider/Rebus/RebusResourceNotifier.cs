@@ -16,8 +16,6 @@ using Rebus.Serialization.Json;
 
 using SimpleInjector;
 
-using System.Globalization;
-
 namespace Ark.Tools.Activity.Provider;
 
 public class RebusResourceNotifier : IResourceNotifier, IDisposable

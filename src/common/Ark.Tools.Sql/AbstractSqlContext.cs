@@ -1,7 +1,5 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Ark.Tools.Sql;
 
 public abstract class AbstractSqlContext<TTag> : ISqlContext<TTag>

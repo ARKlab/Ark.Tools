@@ -24,9 +24,6 @@ using Rebus.Transport.InMem;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System.Globalization;
-using System.Text;
-
 namespace Ark.Reference.Core.WebInterface;
 
 
@@ -61,7 +58,7 @@ public class Startup : ArkStartupWebApi
         var coreApiContext = new CoreApiJsonSerializerContext(coreApiOptions);
 
         var problemDetailsOptions = Application.Ex.CreateCoreApiJsonSerializerOptions();
-        var problemDetailsContext = new Ark.Tools.AspNetCore.JsonContext.ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
+        var problemDetailsContext = new Tools.AspNetCore.JsonContext.ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
 
         // Combine source-generated contexts with minimal reflection fallback
         // The fallback is required only for Hellang.Middleware.ProblemDetails internal types

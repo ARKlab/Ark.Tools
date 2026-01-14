@@ -3,33 +3,14 @@
 
   <PropertyGroup Label="Test Settings">
     <IsTestProject>true</IsTestProject>
-    
-    <OutputType>Exe</OutputType>
-
-    <EnableMSTestRunner>true</EnableMSTestRunner>
-
-    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
   </PropertyGroup>
-
-  <ItemGroup Label="Testing Platform Settings">
-    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
-    <PackageReference Include="Microsoft.Testing.Extensions.Retry" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
-  </ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="ExcelDataReader" />
 		<PackageReference Include="ExcelDataReader.DataSet" />
 		<PackageReference Include="Microsoft.AspNetCore.TestHost" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="Microsoft.SqlServer.DacFx" />
 		<PackageReference Include="Moq" />
-		<PackageReference Include="MSTest.TestAdapter" />
-		<PackageReference Include="MSTest.TestFramework" />
 		<PackageReference Include="netDumbster" />
 		<PackageReference Include="NodaTime.Testing" />
 		<PackageReference Include="Reqnroll.MsTest" />
@@ -53,21 +34,6 @@
 
 
   <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    
-    <None Update="appsettings.IntegrationTests.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    
-    <None Update="reqnroll.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    
-    <None Update="testconfig.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
 
     <None Update="Ark.Reference.Core.Database.dacpac">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

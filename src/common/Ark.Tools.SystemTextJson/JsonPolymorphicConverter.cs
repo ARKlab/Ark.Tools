@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -24,7 +23,7 @@ public abstract class JsonPolymorphicConverter<TBase, TDiscriminatorEnum> : Json
         _discriminatorPropertyName = discriminatorPropertyName;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1721:Property names should not match get methods", Justification = "Historical naming")]
+    [SuppressMessage("Naming", "CA1721:Property names should not match get methods", Justification = "Historical naming")]
     protected abstract Type GetType(TDiscriminatorEnum discriminatorValue);
 
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",

@@ -2,13 +2,11 @@
   
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1591</NoWarn>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
 
+	<!-- Default version for local development - allows samples to use locally built packages -->
+	<!-- Override with -p:Version=x.y.z during release builds -->
+	<Version Condition="'$(Version)' == ''">999.9.9</Version>
   </PropertyGroup>
-
 
 	<PropertyGroup Label="Continuous Integration Build Detection">
 		<!-- Azure Pipelines / DevOpsServer -->
@@ -22,61 +20,58 @@
 		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
-  <PropertyGroup Label="Common Build Settings">
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+	<PropertyGroup Label="Common Build Settings">
+		<IsPackable>false</IsPackable>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-	<!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
-	<EmbedUntrackedSources>true</EmbedUntrackedSources>
-    
-    <DebugType>portable</DebugType>
-	<DebugSymbols>true</DebugSymbols>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+		<GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
 
-	<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
-	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-	<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
-	  
+		<!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		
+		<DebugType>portable</DebugType>
+		<DebugSymbols>true</DebugSymbols>
 
-	<!--
-      Disabling static graph restore due to a bug related to NuGetAuditSuppress.
-      See: https://github.com/NuGet/Home/issues/14300
-    -->
-	<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
-    <RestoreSerializeGlobalProperties>true</RestoreSerializeGlobalProperties>
+		<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+		<EnablePackageValidation>true</EnablePackageValidation>
+		
+		<!--
+		Disabling static graph restore due to a bug related to NuGetAuditSuppress.
+		See: https://github.com/NuGet/Home/issues/14300
+		-->
+		<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
+		<RestoreSerializeGlobalProperties>true</RestoreSerializeGlobalProperties>
 
-	<Deterministic>true</Deterministic>
-	
-	<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
-	<Features>strict</Features>
+		<Deterministic>true</Deterministic>
+		
+		<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
+		<Features>strict</Features>
 
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisLevel>latest-all</AnalysisLevel>
-    <LangVersion>latest</LangVersion>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<ReportAnalyzer>true</ReportAnalyzer>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisLevel>latest-all</AnalysisLevel>
+		<LangVersion>latest</LangVersion>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
-	<!--
-      Other options are available. Read the documentation for more information:
-      https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
-    -->
-	<GenerateSBOM>true</GenerateSBOM>
+		<!--
+		Other options are available. Read the documentation for more information:
+		https://github.com/microsoft/sbom-tool/tree/fd23d6333c92bfc14f0e2c8af6681d178716c345/src/Microsoft.Sbom.Targets
+		-->
+		<GenerateSBOM>true</GenerateSBOM>
 
-	<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+		<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 
-  </PropertyGroup>
-
-	<ItemGroup Label="Global Analyzer Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).vsthreading.globalconfig" />
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).errorprone.globalconfig" />
-	</ItemGroup>
-
-	<ItemGroup Label="Banned API Analyzer" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
-	</ItemGroup>
+	</PropertyGroup>
 
 	<PropertyGroup Label="NuGet Audit">
 		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
@@ -85,71 +80,48 @@
 		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
+	<PropertyGroup Label="Test Project" Condition="'$(IsTestProject)' == '' And ( $(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.UnitTests')) )">
+    	<IsTestProject>true</IsTestProject>
+	</PropertyGroup>
 
-		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
+  <PropertyGroup Label="Test Settings" Condition="'$(IsTestProject)' == 'true'">
+    <IsPackable>false</IsPackable>
+    
+    <OutputType>Exe</OutputType>
 
-		<PackageReference Include="Meziantou.Analyzer">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
+    <EnableMSTestRunner>true</EnableMSTestRunner>
 
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+  </PropertyGroup>
 
-		<PackageReference Include="ErrorProne.NET.CoreAnalyzers">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
-
-		<PackageReference Include="Microsoft.Sbom.Targets">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
-
-		<PackageReference Include="Polyfill">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-		</PackageReference>
+	<ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />
+		<EditorConfigFiles Include="$(MSBuildThisFileDirectory).*.editorconfig" />
 	</ItemGroup>
 
-  <PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
 
-	<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
-	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	<PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
 
-	<!-- Default version for local development - allows samples to use locally built packages -->
-	<!-- Override with -p:Version=x.y.z during release builds -->
-	<Version Condition="'$(Version)' == ''">999.9.9</Version>
+		<!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 
-    <PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
-	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>ark-dark.png</PackageIcon>
-    <RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>      
-    <Authors>ARK Labs</Authors>
-    <Copyright>Copyright (C) 2024 ARK S.r.l</Copyright>
+		<PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageIcon>ark-dark.png</PackageIcon>
+		<RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>      
+		<Authors>ARK Labs</Authors>
+		<Copyright>Copyright (C) 2024 ARK S.r.l</Copyright>
 
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">true</EnablePackageValidation>
-
-  </PropertyGroup>
+	</PropertyGroup>
   
 	<ItemGroup Condition="$(IsPackable) != 'false'">
 		<None Include="$(MSBuildThisFileDirectory)ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
 	</ItemGroup>
-	
+
     <PropertyGroup>
 	    <!-- https://developercommunity.visualstudio.com/t/application-insight-doesnt-show-logs-from-local-de/1240506 -->
 	    <!-- https://stackoverflow.com/a/64877356 -->

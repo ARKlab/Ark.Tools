@@ -1,14 +1,7 @@
 <Project>
-	<PropertyGroup>	
+	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
-		<IsPackable>false</IsPackable>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
-
 		<Version>0.9.1</Version>
-    
 	</PropertyGroup>
 
 	<PropertyGroup Label="Continuous Integration Build Detection">
@@ -23,8 +16,14 @@
 		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
-
   <PropertyGroup Label="Common Build Settings">
+	<IsPackable>false</IsPackable>
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
@@ -39,8 +38,8 @@
 	<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
 	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 	<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+	<EnablePackageValidation>true</EnablePackageValidation>
 	  
-
 	<!--
       Disabling static graph restore due to a bug related to NuGetAuditSuppress.
       See: https://github.com/NuGet/Home/issues/14300
@@ -53,6 +52,7 @@
 	<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
 	<Features>strict</Features>
 
+	<ReportAnalyzer>true</ReportAnalyzer>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest-all</AnalysisLevel>
     <LangVersion>latest</LangVersion>
@@ -76,27 +76,24 @@
 		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
 	</PropertyGroup>
 
-	
-	<ItemGroup>
-		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
-		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="All" />
-		<PackageReference Include="Meziantou.Analyzer" PrivateAssets="All" />
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="All" />
-		<PackageReference Include="ErrorProne.NET.CoreAnalyzers" PrivateAssets="All" />
-		<PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
-	</ItemGroup>
+	<PropertyGroup Label="Test Project" Condition="'$(IsTestProject)' == '' And ( $(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.UnitTests')) )">
+    	<IsTestProject>true</IsTestProject>
+	</PropertyGroup>
 
-	<ItemGroup Label="Global Analyzer Config Files">
-		<!-- Shared analyzer configs (explicitly loaded first) -->
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).netanalyzers.globalconfig" />
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).meziantou.globalconfig" />
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).vsthreading.globalconfig" />
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).errorprone.globalconfig" />
-		<!-- Note: .globalconfig is automatically discovered and has higher precedence -->
-	</ItemGroup>
+  <PropertyGroup Label="Test Settings" Condition="'$(IsTestProject)' == 'true'">
+    <IsPackable>false</IsPackable>
+    
+    <OutputType>Exe</OutputType>
 
-	<ItemGroup Label="Banned API Analyzer">
-		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+  </PropertyGroup>
+
+	<ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />
+		<EditorConfigFiles Include="$(MSBuildThisFileDirectory).*.editorconfig" />
 	</ItemGroup>
 	
+		
 </Project>

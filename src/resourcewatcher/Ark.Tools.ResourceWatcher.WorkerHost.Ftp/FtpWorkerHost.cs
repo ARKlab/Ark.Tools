@@ -118,7 +118,7 @@ public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata
             return file;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "Used only for checksum")]
+        [SuppressMessage("Security", "CA5351:Do Not Use Broken Cryptographic Algorithms", Justification = "Used only for checksum")]
         private static string _computeChecksum(byte[] contents)
         {
             return MD5.HashData(contents).ToHexString();

@@ -14,8 +14,6 @@ using NodaTime;
 using Reqnroll;
 using Reqnroll.Assist;
 
-using System.Globalization;
-
 using DataTable = Reqnroll.DataTable;
 
 namespace Ark.Tools.ResourceWatcher.Tests.Steps;

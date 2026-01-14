@@ -4,7 +4,6 @@ using NLog.Common;
 using NLog.LayoutRenderers;
 
 using System.Net;
-using System.Text;
 
 namespace Ark.Tools.NLog;
 

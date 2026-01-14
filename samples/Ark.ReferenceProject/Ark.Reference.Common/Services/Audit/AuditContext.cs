@@ -3,7 +3,6 @@ using Dapper;
 using NLog;
 
 using System.Data;
-using System.Globalization;
 
 namespace Ark.Reference.Common.Services.Audit;
 

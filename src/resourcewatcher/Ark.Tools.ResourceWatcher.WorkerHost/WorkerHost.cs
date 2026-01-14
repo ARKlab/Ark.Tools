@@ -12,12 +12,11 @@ using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 using System.Diagnostics;
-using System.Globalization;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost;
 
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
 public delegate void VoidEventHandler();
 
 public abstract class WorkerHost
@@ -60,7 +59,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
 
     private Container _container { get; } = new Container();
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
+    [SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
     private event VoidEventHandler? _onBeforeStart;
 
     public sealed class Dependencies
@@ -74,9 +73,9 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
 
         public Container Container => _host._container;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1003:Use generic event handler instances", Justification = "Historical - Public API - Next Major")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1030:Use events where appropriate", Justification = "<Pending>")]
+        [SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
+        [SuppressMessage("Design", "CA1003:Use generic event handler instances", Justification = "Historical - Public API - Next Major")]
+        [SuppressMessage("Design", "CA1030:Use events where appropriate", Justification = "<Pending>")]
         public event VoidEventHandler OnBeforeStart { add { _host._onBeforeStart += value; } remove { _host._onBeforeStart -= value; } }
     }
 

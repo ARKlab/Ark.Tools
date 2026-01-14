@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 
 namespace Ark.Tools.Core;
@@ -19,7 +18,7 @@ public static class EnumExtensions
     /// attribute ensures the trimmer preserves the public fields of the enum type.
     /// </remarks>
     public static string AsString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T>(this T value)
-            where T : System.Enum
+            where T : Enum
     {
         DescriptionAttribute? desc = typeof(T)
             .GetField(value.ToString())?
@@ -34,7 +33,7 @@ public static class EnumExtensions
         return em?.Value ?? desc?.Description ?? value.ToString();
     }
 
-    public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct, System.Enum
+    public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct, Enum
     {
         if (string.IsNullOrWhiteSpace(inputString)) return null;
 

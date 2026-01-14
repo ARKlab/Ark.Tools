@@ -8,7 +8,6 @@ using Ark.Tools.Rebus.Tests;
 
 using AwesomeAssertions;
 
-using Flurl.Http;
 using Flurl.Http.Configuration;
 
 using Microsoft.AspNetCore.Hosting;
@@ -18,8 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using NLog;
-
-using NodaTime;
 
 using Polly;
 
@@ -32,7 +29,7 @@ using SimpleInjector;
 
 using System.Security.Claims;
 
-[assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
+[assembly: DoNotParallelize]
 
 namespace Ark.Reference.Core.Tests.Init;
 
@@ -194,7 +191,7 @@ public sealed class TestHost : IDisposable
                     services.AddTransient<Func<ScenarioContext>>(s => () => _scenarioContext ?? throw new InvalidOperationException("ScenarioContext is accessed outside of a Scenario."));
                     services.AddSingleton(Env.RebusNetwork);
                     services.AddSingleton(Env.RebusSubscriber);
-                    services.AddSingleton<IClock>(MockIClock.FakeClock);
+                    services.AddSingleton(MockIClock.FakeClock);
                 });
             });
 
@@ -218,7 +215,7 @@ public sealed class TestHost : IDisposable
     public static void BeforeScenario(ScenarioContext ctx)
     {
         if (Factory == null) throw new InvalidOperationException("");
-        ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => Factory.Get(_baseUri));
+        ctx.ScenarioContainer.RegisterFactoryAs(c => Factory.Get(_baseUri));
     }
 
     [AfterScenario]

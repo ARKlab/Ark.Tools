@@ -1,27 +1,70 @@
 <Project>
-	<!-- DO NOT MOVE THIS TO Directory.Build.props. 
-	     Props are evaluated early, before any Targets. 
-	     Target is evaluated last, after all Targets. 
-		 appsettings.json are added automatically by AspNetCore targets as Content
-	-->
-	<ItemGroup>
-		<Content Remove="$(MSBuildProjectDirectory)\appsettings*.json" />
-		<Content Remove="$(MSBuildProjectDirectory)\appsettings.*.json" />
-		<None Include="$(MSBuildProjectDirectory)\appsettings*.json" >
+
+	<!-- Remove this on eject -->
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
+
+
+	<ItemGroup Label="Settings Files">
+		<Content Remove="$(MSBuildProjectDirectory)/appsettings*.json" />
+		<Content Remove="$(MSBuildProjectDirectory)/appsettings.*.json" />
+		<None Include="$(MSBuildProjectDirectory)/appsettings*.json" >
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
 		</None>
-		<None Include="$(MSBuildProjectDirectory)\appsettings.*.json" >
+		<None Include="$(MSBuildProjectDirectory)/appsettings.*.json" >
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
 		</None>
 
-		<None Include="$(MSBuildProjectDirectory)\reqnroll*.json" >
+		<None Include="$(MSBuildProjectDirectory)/reqnroll*.json" >
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+
+		<None Update="$(MSBuildProjectDirectory)/testconfig.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 
-	<!-- Remove this on eject -->
-    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
+	<ItemGroup Condition="'$(Language)' == 'C#' AND ('$(ImplicitUsings)' == 'true' or '$(ImplicitUsings)' == 'enable')">
+		<Using Include="System.Diagnostics.CodeAnalysis" />
+		<Using Include="System.Globalization" />
+		<Using Include="System.Text" />
+	</ItemGroup>
+		
+	<ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="All" />
+		<PackageReference Include="Meziantou.Analyzer" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="All" />
+		<PackageReference Include="ErrorProne.NET.CoreAnalyzers" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
+	</ItemGroup>
+
+	<ItemGroup Label="Banned API Analyzer" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+	</ItemGroup>
+
+	<Target Name="Disable_SponsorLink" BeforeTargets="CoreCompile">
+		<ItemGroup>
+			<Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'DevLooped.SponsorLink' " />
+			<Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'Moq.CodeAnalysis' " />
+		</ItemGroup>
+	</Target>
+
+	
+  <ItemGroup Label="Testing Platform Settings" Condition="'$(IsTestProject)' == 'true'">
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+    <PackageReference Include="MSTest.Analyzers" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="AwesomeAssertions" />    
+  </ItemGroup>
 	
 </Project>

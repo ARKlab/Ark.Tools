@@ -3,7 +3,6 @@ using NLog;
 using Rebus.Handlers;
 
 using System.Diagnostics;
-using System.Globalization;
 
 namespace Ark.Tools.Rebus;
 

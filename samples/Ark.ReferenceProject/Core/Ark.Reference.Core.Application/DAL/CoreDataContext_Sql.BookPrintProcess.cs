@@ -5,8 +5,6 @@ using Ark.Tools.Sql.SqlServer;
 
 using Dapper;
 
-using System.Globalization;
-
 namespace Ark.Reference.Core.Application.DAL;
 
 public partial class CoreDataContext_Sql

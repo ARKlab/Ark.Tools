@@ -1,8 +1,9 @@
 <Project>
 
-	<!-- Remove this on eject -->
-    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
 
+	<ItemGroup>
+		<PackageReference Include="Polyfill" PrivateAssets="All" />
+	</ItemGroup>
 
 	<ItemGroup Label="Settings Files">
 		<Content Remove="$(MSBuildProjectDirectory)/appsettings*.json" />
@@ -50,20 +51,21 @@
 			<Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'Moq.CodeAnalysis' " />
 		</ItemGroup>
 	</Target>
-	
-	<ItemGroup Label="Testing Platform Settings" Condition="'$(IsTestProject)' == 'true'">
-		<PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
-		<PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-		<PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
-		<PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
-		<PackageReference Include="Microsoft.Testing.Extensions.Retry" />
-		<PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-		<PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
-		<PackageReference Include="MSTest.TestAdapter" />
-		<PackageReference Include="MSTest.TestFramework" />
-		<PackageReference Include="MSTest.Analyzers" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" />
-		<PackageReference Include="AwesomeAssertions" />    
-	</ItemGroup>
-	
+
+
+  <ItemGroup Label="Testing Platform Settings" Condition="'$(IsTestProject)' == 'true'">
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+    <PackageReference Include="MSTest.Analyzers" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="AwesomeAssertions" />    
+  </ItemGroup>
+
 </Project>

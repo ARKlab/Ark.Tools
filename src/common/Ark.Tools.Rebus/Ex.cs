@@ -8,8 +8,6 @@ using Rebus.Transport;
 
 using SimpleInjector;
 
-using System.Globalization;
-
 namespace Ark.Tools.Rebus;
 
 public static class Ex

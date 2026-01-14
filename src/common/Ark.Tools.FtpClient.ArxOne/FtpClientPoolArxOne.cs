@@ -11,7 +11,7 @@ using System.Net.Sockets;
 
 namespace Ark.Tools.FtpClient;
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2214:Do not call overridable methods in constructors", Justification = "Designed to be overridden")]
+[SuppressMessage("Usage", "CA2214:Do not call overridable methods in constructors", Justification = "Designed to be overridden")]
 public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
 {
     private readonly ArxOne.Ftp.FtpClient _client;
@@ -45,7 +45,7 @@ public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
         _client = _getClient();
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Socket must be configured sync")]
+    [SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Socket must be configured sync")]
     private protected virtual ArxOne.Ftp.FtpClient _getClient()
     {
         var ftpClientParameters = new FtpClientParameters()

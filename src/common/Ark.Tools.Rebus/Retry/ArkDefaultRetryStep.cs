@@ -7,7 +7,6 @@ using Rebus.Retry.Simple;
 using Rebus.Transport;
 
 using System.Collections.Concurrent;
-using System.Globalization;
 
 namespace Ark.Tools.Rebus.Retry;
 

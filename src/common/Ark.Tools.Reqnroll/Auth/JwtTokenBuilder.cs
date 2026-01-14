@@ -90,7 +90,7 @@ public sealed class JwtTokenBuilder
 
     #region " private "
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Parameters are injected as Properties and validated after bindings")]
+    [SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Parameters are injected as Properties and validated after bindings")]
     private void _ensureArguments()
     {
         if (this._securityKey == null)

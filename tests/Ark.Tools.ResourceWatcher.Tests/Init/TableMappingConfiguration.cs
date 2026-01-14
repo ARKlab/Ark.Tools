@@ -8,7 +8,7 @@ using Reqnroll.Assist;
 namespace Ark.Tools.ResourceWatcher.Tests.Init;
 
 [Binding]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1052:Static holder types should be Static or NotInheritable", Justification = "Reqnroll requires instance methods for BeforeTestRun")]
+[SuppressMessage("Design", "CA1052:Static holder types should be Static or NotInheritable", Justification = "Reqnroll requires instance methods for BeforeTestRun")]
 public class TableMappingConfiguration
 {
     [BeforeTestRun]

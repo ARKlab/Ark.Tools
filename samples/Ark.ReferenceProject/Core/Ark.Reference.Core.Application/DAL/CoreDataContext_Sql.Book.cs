@@ -8,8 +8,6 @@ using Dapper;
 
 using NodaTime;
 
-using System.Globalization;
-
 using static Dapper.SqlMapper;
 
 namespace Ark.Reference.Core.Application.DAL;

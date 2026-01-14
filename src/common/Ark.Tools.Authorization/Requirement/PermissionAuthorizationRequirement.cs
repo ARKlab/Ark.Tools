@@ -8,7 +8,7 @@ namespace Ark.Tools.Authorization.Requirement;
 /// <typeparam name="TPermissionEnum">The enum of possible permissions.</typeparam>
 public class PermissionAuthorizationRequirement<TPermissionEnum>
     : IAuthorizationRequirement
-    where TPermissionEnum : System.Enum
+    where TPermissionEnum : Enum
 {
     /// <summary>
     /// Creates a new instance of <see cref="PermissionAuthorizationRequirement{TPermissionEnum}"/>.
@@ -33,7 +33,7 @@ public class PermissionAuthorizationRequirement<TPermissionEnum>
 /// <typeparam name="TResource">The resource type the permission refers to.</typeparam>
 public class PermissionAuthorizationRequirement<TPermissionEnum, TResource>
     : PermissionAuthorizationRequirement<TPermissionEnum>
-    where TPermissionEnum : System.Enum
+    where TPermissionEnum : Enum
 {
 
     /// <summary>
@@ -51,7 +51,7 @@ public class PermissionAuthorizationRequirement<TPermissionEnum, TResource>
 /// </summary>
 /// <typeparam name="TPermissionEnum">The enum of possible permissions.</typeparam>
 public interface IUserPermissionsProvider<TPermissionEnum>
-    where TPermissionEnum : System.Enum
+    where TPermissionEnum : Enum
 {
     /// <summary>
     /// Returns all valid permissions for the give <paramref name="context"/>.
@@ -67,7 +67,7 @@ public interface IUserPermissionsProvider<TPermissionEnum>
 /// </summary>
 /// <typeparam name="TPermissionEnum">The enum of possible permissions.</typeparam>
 public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHandler
-    where TPermissionEnum : System.Enum
+    where TPermissionEnum : Enum
 {
     private readonly IUserPermissionsProvider<TPermissionEnum> _provider;
 
@@ -107,7 +107,7 @@ public static partial class Ex
     /// <param name="Permission">The required permission</param>
     /// <returns></returns>
     public static AuthorizationPolicyBuilder RequireUserPermission<TPermissionEnum>(this AuthorizationPolicyBuilder builder, TPermissionEnum Permission)
-        where TPermissionEnum : System.Enum
+        where TPermissionEnum : Enum
     {
         builder.AddRequirements(new PermissionAuthorizationRequirement<TPermissionEnum>(Permission));
         return builder;
@@ -123,7 +123,7 @@ public static partial class Ex
     /// <param name="Permission">The required permission.</param>
     /// <returns></returns>
     public static AuthorizationPolicyBuilder RequireUserPermission<TResource, TPermissionEnum>(this AuthorizationPolicyBuilder builder, TPermissionEnum Permission)
-        where TPermissionEnum : System.Enum
+        where TPermissionEnum : Enum
     {
         builder.AddRequirements(new PermissionAuthorizationRequirement<TPermissionEnum, TResource>(Permission));
         return builder;

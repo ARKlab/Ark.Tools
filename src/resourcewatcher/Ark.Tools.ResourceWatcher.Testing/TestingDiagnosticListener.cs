@@ -19,7 +19,7 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     /// <summary>
     /// Gets all captured processing results by resource ID.
     /// </summary>
-    public System.Collections.Generic.IReadOnlyDictionary<string, ResourceProcessingResult> Results => _results;
+    public IReadOnlyDictionary<string, ResourceProcessingResult> Results => _results;
 
     /// <summary>
     /// Gets all captured run results.

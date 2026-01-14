@@ -14,11 +14,10 @@ using Polly;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
-using System.Text;
 
 namespace Ark.Tools.AspNetCore.Auth0;
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "AuthenticationApiClient is a HttpClient which is long-lived")]
+[SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "AuthenticationApiClient is a HttpClient which is long-lived")]
 public class Auth0AccessTokenJwtEvents : JwtBearerEvents
 {
     private readonly AuthenticationApiClient _auth0;
@@ -62,7 +61,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
         return resp.AccessToken;
     }
 
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
+    [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
     sealed record PolicyResult
     {
         public IList<string> Groups { get; set; } = new List<string>();

@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.Nodatime;
 

@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
 
 using System.Buffers;
-using System.Globalization;
 
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 

@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Flurl.Http.Configuration;
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Ark.Tools.Http;
 
 public class ArkFlurlClientFactory : IArkFlurlClientFactory

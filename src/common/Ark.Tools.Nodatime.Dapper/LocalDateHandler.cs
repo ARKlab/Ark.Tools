@@ -4,9 +4,6 @@ using NodaTime;
 
 using System.ComponentModel;
 using System.Data;
-#if !NET9_0_OR_GREATER
-using System.Diagnostics.CodeAnalysis;
-#endif
 
 namespace Ark.Tools.Nodatime.Dapper;
 
@@ -18,8 +15,8 @@ public sealed class LocalDateHandler : SqlMapper.TypeHandler<LocalDate>
 
     public static readonly LocalDateHandler Instance = new();
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical mistake - Public API - Next Major")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1003:Use generic event handler instances", Justification = "Historical mistake - Public API - Next Major")]
+    [SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical mistake - Public API - Next Major")]
+    [SuppressMessage("Design", "CA1003:Use generic event handler instances", Justification = "Historical mistake - Public API - Next Major")]
     public event EventHandler<IDbDataParameter>? OnSetValue;
 
     public override void SetValue(IDbDataParameter parameter, LocalDate value)

@@ -23,7 +23,7 @@ public enum ProxyTypes
 /// Implements a Socket class that can connect trough a SOCKS proxy server.
 /// </summary>
 /// <remarks>This class implements SOCKS4[A] and SOCKS5.<br>It does not, however, implement the BIND commands, so you cannot .</br></remarks>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "MA0049:Type name should not match containing namespace", Justification = "3rd party code")]
+[SuppressMessage("Design", "MA0049:Type name should not match containing namespace", Justification = "3rd party code")]
 public class ProxySocket : Socket
 {
     /// <summary>

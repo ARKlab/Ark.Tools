@@ -5,16 +5,13 @@ using Newtonsoft.Json.Linq;
 
 using NodaTime;
 
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-
 namespace Ark.Tools.Nodatime.Json;
 
 
 public class ZonedDateTimeRangeConverter : JsonConverter
 {
     private static readonly Type _type = typeof(ZonedDateTimeRange);
-    private static readonly Type _nullableType = typeof(Nullable<ZonedDateTimeRange>);
+    private static readonly Type _nullableType = typeof(ZonedDateTimeRange?);
 
     public override bool CanConvert(Type objectType)
     {
@@ -65,15 +62,15 @@ public class ZonedDateTimeRangeConverter : JsonConverter
             throw new ArgumentNullException(nameof(value));
         }
 
-        if (!(value is ZonedDateTimeRange || value is Nullable<ZonedDateTimeRange>))
+        if (!(value is ZonedDateTimeRange || value is ZonedDateTimeRange?))
         {
             throw new JsonWriterException(string.Format("Unexpected value when converting. Expected {0}, got {1}.", typeof(ZonedDateTimeRange).FullName, value.GetType().FullName));
         }
 
         ZonedDateTimeRange? r = null;
 
-        if (value is Nullable<ZonedDateTimeRange>)
-            r = value as Nullable<ZonedDateTimeRange>;
+        if (value is ZonedDateTimeRange?)
+            r = value as ZonedDateTimeRange?;
 
 
         if (value is ZonedDateTimeRange)

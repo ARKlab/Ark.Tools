@@ -7,7 +7,7 @@ namespace Org.Mentalis.Network.ProxySocket;
 /// The exception that is thrown when a proxy error occurs.
 /// </summary>
 [Serializable]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Constructors implemented as needed.")]
+[SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Constructors implemented as needed.")]
 public class ProxyException : Exception
 {
     /// <summary>

@@ -20,7 +20,7 @@ public class MockIClock : Steps
     public void SetIClock(ScenarioContext sctx, FeatureContext fctx)
     {
         _fakeClock.AutoAdvance = Duration.Zero;
-        ScenarioContext.ScenarioContainer.RegisterInstanceAs<IClock>(FakeClock);
+        ScenarioContext.ScenarioContainer.RegisterInstanceAs(FakeClock);
         GivenTheCurrentInstantIs(SystemClock.Instance.GetCurrentInstant().WithOffset(Offset.FromHours(2)));
 
         //        this is needed for Rebus as sometime we need a normal Defer, sometime we need a 'Fake' defer.

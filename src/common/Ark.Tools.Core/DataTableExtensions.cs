@@ -3,7 +3,6 @@
 
 using System.Collections.Frozen;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 using NodaTime;

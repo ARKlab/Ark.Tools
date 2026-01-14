@@ -12,7 +12,7 @@ namespace Ark.Tools.Activity.Processor;
 public sealed class SliceActivitySaga
     : Saga<SliceActivitySagaData>
     , IAmInitiatedBy<SliceReady>
-    , IAmInitiatedBy<Ark.Tasks.Messages.SliceReady>
+    , IAmInitiatedBy<Tasks.Messages.SliceReady>
     , IHandleMessages<CoolDownMessage>
 
 {
@@ -118,7 +118,7 @@ public sealed class SliceActivitySaga
     protected override void CorrelateMessages(ICorrelationConfig<SliceActivitySagaData> config)
     {
         config.Correlate<SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
-        config.Correlate<Ark.Tasks.Messages.SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
+        config.Correlate<Tasks.Messages.SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
         config.Correlate<CoolDownMessage>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
     }
 }

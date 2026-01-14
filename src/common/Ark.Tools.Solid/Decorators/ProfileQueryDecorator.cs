@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 
 using System.Diagnostics;
-using System.Globalization;
 
 namespace Ark.Tools.Solid.Decorators;
 

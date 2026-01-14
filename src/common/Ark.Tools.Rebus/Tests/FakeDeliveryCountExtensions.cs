@@ -1,8 +1,6 @@
 using Rebus.Config;
 using Rebus.Transport;
 
-using System.Globalization;
-
 namespace MET.International.Common.Rebus.Tests;
 
 public static class FakeDeliveryCountExtensions

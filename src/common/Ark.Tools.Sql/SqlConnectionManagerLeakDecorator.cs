@@ -67,7 +67,7 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
         private readonly Timer? _timer;
 
         //Store reference to connection so we can unsubscribe from state change events
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "Only used to track leakage. The StateChange is used to trick GC and track proper dispose.")]
+        [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "Only used to track leakage. The StateChange is used to trick GC and track proper dispose.")]
         private DbConnection? _connection = null;
 
         private static int _idCounter;

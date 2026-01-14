@@ -3,7 +3,6 @@
 using NLog.LayoutRenderers;
 
 using System.Diagnostics;
-using System.Text;
 
 namespace Ark.Tools.NLog;
 

@@ -7,8 +7,6 @@ using Newtonsoft.Json;
 
 using Polly;
 
-using System.Text;
-
 namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy;
 
 public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
@@ -112,7 +110,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         await _next(context).ConfigureAwait(false);
     }
 
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
+    [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
     sealed record OAuthResult
     {
         public string? Token_Type { get; set; }

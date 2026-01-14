@@ -87,7 +87,7 @@ public sealed class JwtTokenBuilder
 
     #region " private "
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Params are binded to Properties")]
+    [SuppressMessage("Usage", "MA0015:Specify the parameter name in ArgumentException", Justification = "Params are binded to Properties")]
     private void _ensureArguments()
     {
         if (this._securityKey == null)

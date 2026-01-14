@@ -5,8 +5,6 @@ using NLog;
 using NodaTime.Text;
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 
 namespace Ark.Tools.ResourceWatcher;
 

@@ -4,8 +4,6 @@ using NLog;
 
 using Polly;
 
-using System.Globalization;
-
 namespace Ark.Tools.FtpClient.Core;
 
 public abstract class FtpClientWithConnectionBase : FtpClientBase

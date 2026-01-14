@@ -3,7 +3,6 @@
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
-using Ark.Tools.Core;
 
 using Asp.Versioning;
 
@@ -29,7 +28,6 @@ using SimpleInjector;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System.Globalization;
 using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.Startup;

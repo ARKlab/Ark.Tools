@@ -8,8 +8,6 @@ using NodaTime;
 
 using Reqnroll;
 
-using System.Globalization;
-
 // Scenarios can run in parallel, but SQL integration tests must run sequentially
 [assembly: Parallelize(Scope = ExecutionScope.ClassLevel)]
 

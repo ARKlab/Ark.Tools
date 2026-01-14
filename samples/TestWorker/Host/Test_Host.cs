@@ -71,7 +71,7 @@ public static class Test_Host
         Test_Recipe r = default;
 
 #pragma warning disable RS0030 // Sample/test code - enum parsing demonstration
-        if (recipe.HasValue || Enum.TryParse<Test_Recipe>(localRecipe, out r))
+        if (recipe.HasValue || Enum.TryParse(localRecipe, out r))
 #pragma warning restore RS0030
         {
             if (recipe.HasValue)

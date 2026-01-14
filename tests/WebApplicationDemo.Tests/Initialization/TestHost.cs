@@ -1,6 +1,5 @@
 using Ark.Tools.Http;
 
-using Flurl.Http;
 using Flurl.Http.Configuration;
 
 using Microsoft.AspNetCore.Hosting;
@@ -12,7 +11,7 @@ using NLog;
 using Reqnroll;
 
 
-[assembly: Microsoft.VisualStudio.TestTools.UnitTesting.DoNotParallelize]
+[assembly: DoNotParallelize]
 
 namespace WebApplicationDemo.Tests;
 
@@ -56,7 +55,7 @@ public static class TestHost
     public static void BeforeScenario(ScenarioContext ctx)
     {
         if (_factory == null) throw new InvalidOperationException("");
-        ctx.ScenarioContainer.RegisterFactoryAs<IFlurlClient>(c => _factory.Get(_baseUri));
+        ctx.ScenarioContainer.RegisterFactoryAs(c => _factory.Get(_baseUri));
     }
 
     [AfterScenario]

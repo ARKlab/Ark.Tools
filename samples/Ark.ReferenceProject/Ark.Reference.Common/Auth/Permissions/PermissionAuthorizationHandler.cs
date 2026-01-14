@@ -5,7 +5,7 @@ using Ark.Tools.Authorization.Requirement;
 namespace Ark.Reference.Common.Auth;
 
 public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHandler
-    where TPermissionEnum : System.Enum
+    where TPermissionEnum : Enum
 {
     private readonly IUserPermissionsProvider<TPermissionEnum> _provider;
 
