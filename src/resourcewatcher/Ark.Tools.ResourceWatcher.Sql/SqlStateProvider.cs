@@ -98,8 +98,9 @@ public class SqlStateProvider : IStateProvider
         {
             if (e?.ExtensionsJson != null)
             {
-#pragma warning disable IL2026 // Acceptable: JsonElement deserialization with converters is trim-compatible
-                // Deserialize as JsonElement to support dynamic data while remaining trim-safe
+                // Note: Using JsonSerializerOptions overload instead of JsonTypeInfo to leverage NodaTime converters
+                // The IL2026 warning is acceptable here as JsonElement and converters are trim-compatible
+#pragma warning disable IL2026
                 var element = JsonSerializer.Deserialize<JsonElement>(e.ExtensionsJson, _jsonSerializerOptions);
 #pragma warning restore IL2026
                 r.Extensions = element;
@@ -107,7 +108,9 @@ public class SqlStateProvider : IStateProvider
 
             if (m?.ModifiedSourcesJson != null)
             {
-#pragma warning disable IL2026 // Acceptable: Dictionary with NodaTime converters is trim-compatible
+                // Note: Using JsonSerializerOptions overload to leverage NodaTime converters for LocalDateTime
+                // The IL2026 warning is acceptable here as Dictionary and NodaTime converters are trim-compatible
+#pragma warning disable IL2026
                 r.ModifiedSources = JsonSerializer.Deserialize<Dictionary<string, LocalDateTime>>(m.ModifiedSourcesJson, _jsonSerializerOptions);
 #pragma warning restore IL2026
             }
@@ -189,7 +192,9 @@ UPDATE SET
                     x.Tenant,
                     x.ResourceId,
                     Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
-#pragma warning disable IL2026 // Acceptable: Dictionary with NodaTime converters is trim-compatible
+                    // Note: Using JsonSerializerOptions overload to leverage NodaTime converters for LocalDateTime
+                    // The IL2026 warning is acceptable here as Dictionary and NodaTime converters are trim-compatible
+#pragma warning disable IL2026
                     ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonSerializer.Serialize(x.ModifiedSources, _jsonSerializerOptions),
 #pragma warning restore IL2026
                     LastEvent = x.LastEvent.ToDateTimeUtc(),

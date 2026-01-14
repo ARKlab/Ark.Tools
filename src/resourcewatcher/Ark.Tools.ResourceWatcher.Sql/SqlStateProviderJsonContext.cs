@@ -12,6 +12,12 @@ namespace Ark.Tools.ResourceWatcher;
 /// This context enables trim-safe serialization of state data to SQL Server.
 /// Configured with Ark default settings at compile-time via JsonSourceGenerationOptions attribute.
 /// </summary>
+/// <remarks>
+/// Note: This context is currently not used directly with JsonTypeInfo overloads because
+/// we rely on NodaTime converters that must be added via JsonSerializerOptions.
+/// The context is kept for documentation and potential future use when NodaTime
+/// provides source-generated converters.
+/// </remarks>
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
