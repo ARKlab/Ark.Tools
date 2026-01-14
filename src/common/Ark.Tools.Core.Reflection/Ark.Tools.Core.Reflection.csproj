@@ -27,7 +27,6 @@
 
   <ItemGroup>
     <PackageReference Include="NodaTime" />
-    <PackageReference Include="System.Reactive" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
