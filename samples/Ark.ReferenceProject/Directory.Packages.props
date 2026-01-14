@@ -38,7 +38,7 @@
     <PackageVersion Include="Polly" Version="8.6.5" />
     
     <!-- Testing packages -->
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
