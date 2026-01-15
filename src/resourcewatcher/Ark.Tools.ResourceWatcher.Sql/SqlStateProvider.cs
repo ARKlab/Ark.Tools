@@ -1,14 +1,12 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
-using Ark.Tools.Nodatime.SystemTextJson;
 using Ark.Tools.Sql;
 
 using Dapper;
 
-using NodaTime;
-
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ark.Tools.ResourceWatcher;
 
@@ -16,12 +14,20 @@ namespace Ark.Tools.ResourceWatcher;
 public interface ISqlStateProviderConfig
 {
     string DbConnectionString { get; }
+    
+    /// <summary>
+    /// Optional JsonSerializerContext for Extensions serialization.
+    /// When provided, enables trim-safe serialization of Extensions.
+    /// When null, falls back to reflection-based serialization (not trim-safe).
+    /// </summary>
+    JsonSerializerContext? ExtensionsJsonContext { get => null; }
 }
 
 public class SqlStateProvider : IStateProvider
 {
     private readonly ISqlStateProviderConfig _config;
-    private readonly JsonSerializerOptions _jsonSerializerOptions;
+    private readonly JsonSerializerOptions _internalJsonOptions;
+    private readonly JsonSerializerContext? _extensionsJsonContext;
     private readonly IDbConnectionManager _connManager;
 
     private const string _queryState = "SELECT [Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [ModifiedSourcesJson] FROM [State] WHERE [Tenant] = @tenant";
@@ -34,13 +40,12 @@ public class SqlStateProvider : IStateProvider
 
         _connManager = connManager;
         _config = config;
+        _extensionsJsonContext = config.ExtensionsJsonContext;
         
-        // Create options with NodaTime converters - converters work with source generation
-        _jsonSerializerOptions = new JsonSerializerOptions();
-        _jsonSerializerOptions.ConfigureForNodaTimeArkDefaults();
-        
-        // Don't set TypeInfoResolver here - converters take precedence
-        // The source generation context will be used when we call Serialize/Deserialize with JsonTypeInfo
+        // Create internal JsonSerializerOptions with Ark defaults
+        // Used for Extensions when no external context is provided
+        _internalJsonOptions = new JsonSerializerOptions();
+        _internalJsonOptions.ConfigureArkDefaults();
     }
 
     sealed class EJ
@@ -53,31 +58,29 @@ public class SqlStateProvider : IStateProvider
     }
 
     /// <summary>
-    /// Serializes Extensions object to JSON using trim-safe approach when possible.
-    /// Supports JsonElement, Dictionary&lt;string, object&gt;, and arbitrary objects.
+    /// Serializes Extensions object to JSON.
+    /// When ExtensionsJsonContext is provided, uses trim-safe serialization.
+    /// Otherwise falls back to reflection-based serialization for backward compatibility.
     /// </summary>
-    /// <remarks>
-    /// For arbitrary objects (e.g., anonymous objects from IResourceMetadata.Extensions),
-    /// this method uses reflection-based serialization for backward compatibility.
-    /// Consider using Dictionary&lt;string, object&gt; or JsonElement for trim-safe applications.
-    /// </remarks>
-    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Serializing arbitrary objects requires types that cannot be statically analyzed. Use Dictionary<string, object> or JsonElement for trim-safe code.")]
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Serializing arbitrary objects without JsonSerializerContext requires types that cannot be statically analyzed. Provide ExtensionsJsonContext in config for trim-safe code.")]
     private string? _serializeExtensions(object? extensions)
     {
         if (extensions == null)
             return null;
 
+        // Use external JsonSerializerContext if provided (trim-safe)
+        if (_extensionsJsonContext != null)
+        {
+            return extensions.Serialize(extensions.GetType(), _extensionsJsonContext);
+        }
+
+        // Fallback to reflection-based serialization (not trim-safe)
         // If it's already a JsonElement (deserialized from DB), serialize it directly
         if (extensions is JsonElement element)
-            return JsonSerializer.Serialize(element, _jsonSerializerOptions);
-
-        // If it's a Dictionary<string, object>, serialize it
-        if (extensions is Dictionary<string, object> dict)
-            return JsonSerializer.Serialize(dict, _jsonSerializerOptions);
+            return JsonSerializer.Serialize(element, _internalJsonOptions);
 
         // For other objects, serialize as object (uses reflection - not trim-safe but maintains compatibility)
-        // This handles anonymous objects and custom types used in IResourceMetadata.Extensions
-        return JsonSerializer.Serialize(extensions, _jsonSerializerOptions);
+        return JsonSerializer.Serialize(extensions, _internalJsonOptions);
     }
 
     public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
@@ -98,20 +101,17 @@ public class SqlStateProvider : IStateProvider
         {
             if (e?.ExtensionsJson != null)
             {
-                // Note: Using JsonSerializerOptions overload instead of JsonTypeInfo to leverage NodaTime converters
-                // The IL2026 warning is acceptable here as JsonElement and converters are trim-compatible
-#pragma warning disable IL2026
-                var element = JsonSerializer.Deserialize<JsonElement>(e.ExtensionsJson, _jsonSerializerOptions);
+                // Deserialize as JsonElement for dynamic data
+#pragma warning disable IL2026 // Acceptable: JsonElement deserialization is trim-compatible
+                r.Extensions = JsonSerializer.Deserialize<JsonElement>(e.ExtensionsJson, _internalJsonOptions);
 #pragma warning restore IL2026
-                r.Extensions = element;
             }
 
             if (m?.ModifiedSourcesJson != null)
             {
-                // Note: Using JsonSerializerOptions overload to leverage NodaTime converters for LocalDateTime
-                // The IL2026 warning is acceptable here as Dictionary and NodaTime converters are trim-compatible
-#pragma warning disable IL2026
-                r.ModifiedSources = JsonSerializer.Deserialize<Dictionary<string, LocalDateTime>>(m.ModifiedSourcesJson, _jsonSerializerOptions);
+                // Use NodaTime converters from Ark defaults for ModifiedSources
+#pragma warning disable IL2026 // Acceptable: Dictionary with NodaTime converters is trim-compatible when converters are registered
+                r.ModifiedSources = JsonSerializer.Deserialize<Dictionary<string, NodaTime.LocalDateTime>>(m.ModifiedSourcesJson, _internalJsonOptions);
 #pragma warning restore IL2026
             }
 
@@ -192,16 +192,15 @@ UPDATE SET
                     x.Tenant,
                     x.ResourceId,
                     Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
-                    // Note: Using JsonSerializerOptions overload to leverage NodaTime converters for LocalDateTime
-                    // The IL2026 warning is acceptable here as Dictionary and NodaTime converters are trim-compatible
-#pragma warning disable IL2026
-                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonSerializer.Serialize(x.ModifiedSources, _jsonSerializerOptions),
+                    // Use NodaTime converters from Ark defaults for ModifiedSources
+#pragma warning disable IL2026 // Acceptable: Dictionary with NodaTime converters is trim-compatible when converters are registered
+                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonSerializer.Serialize(x.ModifiedSources, _internalJsonOptions),
 #pragma warning restore IL2026
                     LastEvent = x.LastEvent.ToDateTimeUtc(),
                     RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
                     x.RetryCount,
                     x.CheckSum,
-#pragma warning disable IL2026 // Acceptable: arbitrary objects in Extensions require reflection for backward compatibility
+#pragma warning disable IL2026 // Acceptable: arbitrary objects in Extensions require reflection when no context provided
                     ExtensionsJson = _serializeExtensions(x.Extensions),
 #pragma warning restore IL2026
                     Exception = x.LastException?.ToString()

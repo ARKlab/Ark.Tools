@@ -286,6 +286,7 @@
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Dapper": "[2.1.66, )"
         }
       },
@@ -852,6 +853,7 @@
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Dapper": "[2.1.66, )"
         }
       },
