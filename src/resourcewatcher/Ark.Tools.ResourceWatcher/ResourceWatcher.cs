@@ -5,6 +5,7 @@ using Ark.Tools.Core;
 using NLog;
 
 using NodaTime;
+using NodaTime.Text;
 
 using System.Diagnostics;
 
@@ -167,7 +168,10 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable where T : IR
                 Activity.Current = activityRun;
             }
 
-            _diagnosticSource.RunSuccessful(activityRun, evaluated);
+            var resultCounts = evaluated
+                .GroupBy(x => x.ResultType ?? ResultType.Skipped)
+                .ToDictionary(g => g.Key, g => g.Count());
+            _diagnosticSource.RunSuccessful(activityRun, resultCounts);
 
             if (activityRun.Duration > _config.RunDurationNotificationLimit)
                 _diagnosticSource.RunTookTooLong(activityRun);
@@ -188,7 +192,10 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable where T : IR
 
             var evaluated = _createEvalueteList(list, states);
 
-            _diagnosticSource.CheckStateSuccessful(activityCheckState, evaluated);
+            var processCounts = evaluated
+                .GroupBy(x => x.ProcessType)
+                .ToDictionary(g => g.Key, g => g.Count());
+            _diagnosticSource.CheckStateSuccessful(activityCheckState, processCounts);
 
             return evaluated;
         }
@@ -303,17 +310,35 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable where T : IR
         var info = pc.CurrentInfo;
         var lastState = pc.LastState;
 
-        using var activity = _diagnosticSource.FetchResourceStart(pc);
+        using var activity = _diagnosticSource.FetchResourceStart(
+            resourceId: info.ResourceId,
+            index: pc.Index,
+            total: pc.Total,
+            processType: pc.ProcessType
+        );
 
         try
         {
             var res = await _retrievePayload(info, lastState, ctk).ConfigureAwait(false);
-            _diagnosticSource.FetchResourceSuccessful(activity, pc);
+            _diagnosticSource.FetchResourceSuccessful(
+                activity: activity,
+                resourceId: info.ResourceId,
+                index: pc.Index,
+                total: pc.Total,
+                processType: pc.ProcessType
+            );
             return res;
         }
         catch (Exception ex)
         {
-            _diagnosticSource.FetchResourceFailed(activity, pc, ex);
+            _diagnosticSource.FetchResourceFailed(
+                activity: activity,
+                resourceId: info.ResourceId,
+                index: pc.Index,
+                total: pc.Total,
+                processType: pc.ProcessType,
+                ex: ex
+            );
             throw;
         }
     }
@@ -331,7 +356,18 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable where T : IR
         ]);
         try
         {
-            using var processActivity = _diagnosticSource.ProcessResourceStart(pc);
+            var isResourceUpdated = pc.IsResourceUpdated(out var modifiedInfo);
+            using var processActivity = _diagnosticSource.ProcessResourceStart(
+                resourceId: info.ResourceId,
+                index: pc.Index,
+                total: pc.Total,
+                lastRetryCount: lastState?.RetryCount,
+                isResourceUpdated: isResourceUpdated,
+                modifiedSource: modifiedInfo.source,
+                currentModified: modifiedInfo.current != null ? LocalDateTimePattern.ExtendedIso.Format(modifiedInfo.current.Value) : null,
+                lastModified: modifiedInfo.last != null ? LocalDateTimePattern.ExtendedIso.Format(modifiedInfo.last.Value) : null,
+                processType: pc.ProcessType
+            );
 
             var payload = new AsyncLazy<T?>(() => _fetchResource(pc, ctk));
 
@@ -394,7 +430,15 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable where T : IR
                     pc.ResultType = ResultType.NoAction;
                 }
 
-                _diagnosticSource.ProcessResourceSuccessful(processActivity, pc);
+                _diagnosticSource.ProcessResourceSuccessful(
+                    activity: processActivity,
+                    resourceId: info.ResourceId,
+                    index: pc.Index,
+                    total: pc.Total,
+                    processType: pc.ProcessType,
+                    resultType: pc.ResultType,
+                    newRetryCount: state.RetryCount
+                );
 
                 if (processActivity.Duration > _config.ResourceDurationNotificationLimit)
                     _diagnosticSource.ProcessResourceTookTooLong(info.ResourceId, processActivity);
@@ -407,7 +451,15 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable where T : IR
 
                 state.Extensions = info.Extensions;
 
-                _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
+                _diagnosticSource.ProcessResourceFailed(
+                    activity: processActivity,
+                    resourceId: info.ResourceId,
+                    index: pc.Index,
+                    total: pc.Total,
+                    processType: pc.ProcessType,
+                    isBanned: isBanned,
+                    ex: ex
+                );
             }
 
             await _stateProvider.SaveStateAsync([state], ctk).ConfigureAwait(false);

@@ -23,11 +23,12 @@ This plan details the implementation of type-safe Extensions in ResourceWatcher 
 - [ ] Item 10: Documentation Updates
 - [ ] Item 11: Extension Packages Update
 - [ ] Item 12: AoT/Trimming Validation
+- [ ] Item 13: Review and Clean Up Diagnostic Attributes
 
-**Total Items**: 12  
+**Total Items**: 13  
 **Completed**: 0  
 **In Progress**: 0  
-**Not Started**: 12
+**Not Started**: 13
 
 ---
 
@@ -659,7 +660,7 @@ dotnet build --no-restore
 **Status**: Not Started  
 **Estimated Effort**: 4-6 hours  
 **Depends On**: Items 1-11  
-**Blocks**: None
+**Blocks**: Item 13
 
 ### Objective
 Validate that the implementation is fully AoT and trimming compatible.
@@ -714,6 +715,81 @@ dotnet publish -c Release
 - [x] AoT test app publishes successfully
 - [x] AoT test app runs correctly
 - [x] All features work in trimmed/AoT scenarios
+
+---
+
+## Item 13: Review and Clean Up Diagnostic Attributes
+
+**Status**: Not Started  
+**Estimated Effort**: 1-2 hours  
+**Depends On**: Item 12  
+**Blocks**: None
+
+### Objective
+Review and remove unnecessary UnconditionalSuppressMessage and DynamicDependency attributes that were required for generic diagnostic methods but are no longer needed after refactoring to non-generic methods with primitive parameters.
+
+### Tasks
+
+#### Task 13.1: Review ResourceWatcherDiagnosticSource
+- [ ] Review all `[UnconditionalSuppressMessage]` attributes in `ResourceWatcherDiagnosticSource.cs`
+- [ ] Verify if they are still needed after removing generic methods
+- [ ] Remove attributes that are no longer necessary
+- [ ] Document any that must remain with clear justification
+
+**Files**:
+- `src/resourcewatcher/Ark.Tools.ResourceWatcher/ResourceWatcherDiagnosticSource.cs`
+
+#### Task 13.2: Review DynamicDependency Attributes
+- [ ] Search for `[DynamicDependency]` attributes across the codebase
+- [ ] Verify if they are still needed (e.g., for ProcessContext references)
+- [ ] Remove obsolete attributes
+- [ ] Update attributes if generic types changed
+
+**Files**:
+- All `src/resourcewatcher/**/*.cs` files
+
+#### Task 13.3: Review Other Diagnostic Attributes
+- [ ] Search for `[RequiresUnreferencedCode]` attributes
+- [ ] Search for `[RequiresDynamicCode]` attributes
+- [ ] Verify each is still necessary
+- [ ] Remove or update as appropriate
+
+**Files**:
+- All `src/resourcewatcher/**/*.cs` files
+
+#### Task 13.4: Verify Build and Trimming
+- [ ] Build with trimming enabled
+- [ ] Ensure no new trim warnings
+- [ ] Run AoT test to verify functionality
+
+**Command**:
+```bash
+dotnet build -c Release /p:PublishTrimmed=true
+# Should build with 0 warnings
+```
+
+### Verification
+```bash
+cd src/resourcewatcher/Ark.Tools.ResourceWatcher
+dotnet build --no-restore
+# Should build with 0 errors, 0 warnings
+```
+
+### Success Criteria
+- [x] All unnecessary diagnostic suppression attributes removed
+- [x] All remaining attributes have clear justification in code comments
+- [x] Build succeeds with no new warnings
+- [x] AoT/trimming tests still pass
+- [x] Code is cleaner and more maintainable
+
+### Rationale
+The refactoring from generic diagnostic methods (which passed `ProcessContext<TExtensions>`) to non-generic methods (which pass primitive parameters) means:
+- Generic type reflection is no longer needed in diagnostic methods
+- `[DynamicDependency]` attributes for `ProcessContext<>` may no longer be required
+- `[UnconditionalSuppressMessage]` for IL2026 trimming warnings may no longer be needed
+- The code should be simpler and more AOT-friendly
+
+This review ensures we maintain clean, minimal code without unnecessary attributes.
 
 ---
 

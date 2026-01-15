@@ -28,7 +28,8 @@ public abstract class WorkerHost
 }
 
 /// <summary>
-/// A host for a classic worker that poll resources from one provider, with state-tracking and "writer" (outputs)
+/// A host for a classic worker that polls resources from one provider, with state-tracking and processors (outputs).
+/// Generic version with type-safe extension data.
 /// </summary>
 /// <remarks>
 /// The work can be summarized in the following pseudo-code:
@@ -48,10 +49,11 @@ public abstract class WorkerHost
 /// </remarks>
 /// <typeparam name="TResource">The resource data</typeparam>
 /// <typeparam name="TMetadata">The resource metadata listed from a provider</typeparam>
-/// <typeparam name="TQueryFilter">The filter that the provider support</typeparam>
-public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
-    where TResource : class, IResource<TMetadata>
-    where TMetadata : class, IResourceMetadata
+/// <typeparam name="TQueryFilter">The filter that the provider supports</typeparam>
+/// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
+public class WorkerHost<TResource, TMetadata, TQueryFilter, TExtensions> : WorkerHost
+    where TResource : class, IResource<TMetadata, TExtensions>
+    where TMetadata : class, IResourceMetadata<TExtensions>
     where TQueryFilter : class, new()
 {
     private readonly List<Predicate<TMetadata>> _predicates = new() { };
@@ -64,9 +66,9 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
 
     public sealed class Dependencies
     {
-        private readonly WorkerHost<TResource, TMetadata, TQueryFilter> _host;
+        private readonly WorkerHost<TResource, TMetadata, TQueryFilter, TExtensions> _host;
 
-        internal Dependencies(WorkerHost<TResource, TMetadata, TQueryFilter> host)
+        internal Dependencies(WorkerHost<TResource, TMetadata, TQueryFilter, TExtensions> host)
         {
             _host = host;
         }
@@ -111,29 +113,29 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
     /// <param name="deps">Used to register provider dependencies</param>
     /// <param name="lifeStyle">The lifeStyle of the DataProvider (Default: Singleton)</param>
     public void UseDataProvider<TDataProvider>(Action<Dependencies>? deps = null, Lifestyle? lifeStyle = null)
-        where TDataProvider : class, IResourceProvider<TMetadata, TResource, TQueryFilter>
+        where TDataProvider : class, IResourceProvider<TMetadata, TResource, TQueryFilter, TExtensions>
     {
         this.Use(d =>
         {
             deps?.Invoke(d);
-            d.Container.Register<IResourceProvider<TMetadata, TResource, TQueryFilter>, TDataProvider>(lifeStyle ?? Lifestyle.Singleton);
+            d.Container.Register<IResourceProvider<TMetadata, TResource, TQueryFilter, TExtensions>, TDataProvider>(lifeStyle ?? Lifestyle.Singleton);
         });
     }
 
     /// <summary>
-    /// Append a processor to the collection. They are execute in order of insertion
+    /// Append a processor to the collection. They are executed in order of insertion
     /// </summary>
     /// <typeparam name="TFileProcessor">The processor</typeparam>
     /// <param name="deps">Used to register processor dependencies</param>
     /// <param name="lifeStyle">The lifeStyle of the FileProcessor (Default: Singleton)</param>
     public void AppendFileProcessor<TFileProcessor>(Action<Dependencies>? deps = null, Lifestyle? lifeStyle = null)
-        where TFileProcessor : class, IResourceProcessor<TResource, TMetadata>
+        where TFileProcessor : class, IResourceProcessor<TResource, TMetadata, TExtensions>
     {
         this.Use(d =>
         {
             deps?.Invoke(d);
             d.Container.Register<TFileProcessor>(lifeStyle ?? Lifestyle.Singleton);
-            d.Container.Collection.Append<IResourceProcessor<TResource, TMetadata>, TFileProcessor>();
+            d.Container.Collection.Append<IResourceProcessor<TResource, TMetadata, TExtensions>, TFileProcessor>();
         });
     }
 
@@ -141,14 +143,14 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
     /// Set the state provider implementation to use
     /// </summary>
     /// <typeparam name="TStateProvider">The state provider</typeparam>
-    /// <param name="deps"></param>
+    /// <param name="deps">Used to register state provider dependencies</param>
     public void UseStateProvider<TStateProvider>(Action<Dependencies>? deps = null)
-        where TStateProvider : class, IStateProvider
+        where TStateProvider : class, IStateProvider<TExtensions>
     {
         this.Use(d =>
         {
             deps?.Invoke(d);
-            d.Container.RegisterSingleton<IStateProvider, TStateProvider>();
+            d.Container.RegisterSingleton<IStateProvider<TExtensions>, TStateProvider>();
         });
     }
 
@@ -178,7 +180,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
     /// Exec a single run with additional configurer for the provider filter.
     /// </summary>
     /// <param name="filterConfigurer">Additional filter configurer to apply as last</param>
-    /// <param name="ctk"></param>
+    /// <param name="ctk">Cancellation token</param>
     /// <returns></returns>
     public async Task RunOnceAsync(Action<TQueryFilter>? filterConfigurer = null, CancellationToken ctk = default)
     {
@@ -243,7 +245,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
         public TimeSpan ResourceDurationNotificationLimit => _config.ResourceDurationNotificationLimit;
     }
 
-    sealed class Watcher : ResourceWatcher<TResource>
+    sealed class Watcher : ResourceWatcher<TResource, TExtensions>
     {
         private readonly IEnumerable<Action<TQueryFilter>> _filterChainBuilder;
         private readonly IEnumerable<Predicate<TMetadata>> _metadataFilterChain;
@@ -257,7 +259,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
             , IEnumerable<Action<TQueryFilter>> filterChainBuilder
             , IEnumerable<Predicate<TMetadata>> metadataFilterChain
             )
-            : base(container.GetInstance<IResourceWatcherConfig>(), container.GetInstance<IStateProvider>())
+            : base(container.GetInstance<IResourceWatcherConfig>(), container.GetInstance<IStateProvider<TExtensions>>())
         {
             _filterChainBuilder = filterChainBuilder;
             _metadataFilterChain = metadataFilterChain;
@@ -286,10 +288,10 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
             }
         }
 
-        protected override async Task<IEnumerable<IResourceMetadata>> _getResourcesInfo(CancellationToken ctk = default)
+        protected override async Task<IEnumerable<IResourceMetadata<TExtensions>>> _getResourcesInfo(CancellationToken ctk = default)
         {
             var filter = _buildFilter();
-            var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetMetadata(filter, ctk).ConfigureAwait(false);
+            var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter, TExtensions>>().GetMetadata(filter, ctk).ConfigureAwait(false);
 
             InvalidOperationException.ThrowIf(meta.Any(x => x.Modified == default && (x.ModifiedSources == null || x.ModifiedSources.Count == 0)), "At least one field between Modified and ModifiedSources must be populated");
 
@@ -310,7 +312,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
             return f;
         }
 
-        protected override async Task _processResource(ChangedStateContext<TResource> context, CancellationToken ctk = default)
+        protected override async Task _processResource(ChangedStateContext<TResource, TExtensions> context, CancellationToken ctk = default)
         {
             var sw = Stopwatch.StartNew();
             var data = await context.Payload.ConfigureAwait(false);
@@ -319,7 +321,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
             {
                 _logger.Info(CultureInfo.InvariantCulture, "Retrived ResourceId={ResourceId} in {Elapsed}", context.Info.ResourceId, sw.Elapsed);
 
-                foreach (var w in _container.GetAllInstances<IResourceProcessor<TResource, TMetadata>>())
+                foreach (var w in _container.GetAllInstances<IResourceProcessor<TResource, TMetadata, TExtensions>>())
                 {
                     sw.Restart();
                     await w.Process(data, ctk).ConfigureAwait(false);
@@ -332,9 +334,30 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost
             }
         }
 
-        protected override Task<TResource?> _retrievePayload(IResourceMetadata info, IResourceTrackedState? lastState, CancellationToken ctk = default)
+        protected override Task<TResource?> _retrievePayload(IResourceMetadata<TExtensions> info, IResourceTrackedState<TExtensions>? lastState, CancellationToken ctk = default)
         {
-            return _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter>>().GetResource((TMetadata)info, lastState, ctk);
+            return _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter, TExtensions>>().GetResource((TMetadata)info, lastState, ctk);
         }
+    }
+}
+
+/// <summary>
+/// Non-generic proxy class for backward compatibility.
+/// Inherits from <see cref="WorkerHost{TResource, TMetadata, TQueryFilter, TExtensions}"/> with <see cref="VoidExtensions"/>.
+/// </summary>
+/// <typeparam name="TResource">The resource data</typeparam>
+/// <typeparam name="TMetadata">The resource metadata listed from a provider</typeparam>
+/// <typeparam name="TQueryFilter">The filter that the provider supports</typeparam>
+public class WorkerHost<TResource, TMetadata, TQueryFilter> : WorkerHost<TResource, TMetadata, TQueryFilter, VoidExtensions>
+    where TResource : class, IResource<TMetadata>
+    where TMetadata : class, IResourceMetadata
+    where TQueryFilter : class, new()
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WorkerHost{TResource, TMetadata, TQueryFilter}"/> class.
+    /// </summary>
+    /// <param name="config">The host configuration</param>
+    public WorkerHost(IHostConfig config) : base(config)
+    {
     }
 }
