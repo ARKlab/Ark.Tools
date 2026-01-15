@@ -9,6 +9,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost;
 /// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
 public interface IResource<TMetadata, TExtensions> : IResourceState
     where TMetadata : class, IResourceMetadata<TExtensions>
+    where TExtensions : class
 {
     /// <summary>
     /// Gets the metadata for this resource.

@@ -2,6 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NLog;
 
+using NodaTime;
+using NodaTime.Text;
+
 using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher;
@@ -190,7 +193,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region ProcessResource
-    public Activity ProcessResourceStart(string resourceId, int? index, int? total, int? lastRetryCount, bool isResourceUpdated, string? modifiedSource, string? currentModified, string? lastModified, ProcessType processType)
+    public Activity ProcessResourceStart(string resourceId, int? index, int? total, int? lastRetryCount, bool isResourceUpdated, string? modifiedSource, LocalDateTime? currentModified, LocalDateTime? lastModified, ProcessType processType)
     {
         if (!isResourceUpdated)
         {
@@ -205,8 +208,8 @@ internal sealed class ResourceWatcherDiagnosticSource
                 , total
                 , resourceId
                 , modifiedSource ?? string.Empty
-                , currentModified ?? "null"
-                , lastModified ?? "null"
+                , currentModified != null ? LocalDateTimePattern.ExtendedIso.Format(currentModified.Value) : "null"
+                , lastModified != null ? LocalDateTimePattern.ExtendedIso.Format(lastModified.Value) : "null"
                 , lastRetryCount
             );
         }
@@ -217,6 +220,9 @@ internal sealed class ResourceWatcherDiagnosticSource
             Index = index,
             Total = total,
             ProcessType = processType,
+            ModifiedSource = modifiedSource,
+            CurrentModified = currentModified,
+            LastModified = lastModified,
             Tenant = _tenant,
         });
 

@@ -10,6 +10,7 @@ namespace Ark.Tools.ResourceWatcher;
 /// </summary>
 /// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
 public class ResourceState<TExtensions> : IResourceTrackedState<TExtensions>
+    where TExtensions : class
 {
     /// <summary>
     /// The tenant identifier

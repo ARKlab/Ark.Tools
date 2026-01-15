@@ -55,6 +55,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter, TExtensions> : Worke
     where TResource : class, IResource<TMetadata, TExtensions>
     where TMetadata : class, IResourceMetadata<TExtensions>
     where TQueryFilter : class, new()
+    where TExtensions : class
 {
     private readonly List<Predicate<TMetadata>> _predicates = new() { };
     private readonly List<Action<TQueryFilter>> _configurers = new() { };

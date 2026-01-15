@@ -9,6 +9,7 @@ namespace Ark.Tools.ResourceWatcher;
 /// </summary>
 /// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
 public class InMemStateProvider<TExtensions> : IStateProvider<TExtensions>
+    where TExtensions : class
 {
     private readonly ConcurrentDictionary<string, ResourceState<TExtensions>> _store = new(StringComparer.Ordinal);
 

@@ -5,7 +5,6 @@ using Ark.Tools.Core;
 using NLog;
 
 using NodaTime;
-using NodaTime.Text;
 
 using System.Diagnostics;
 
@@ -16,7 +15,9 @@ namespace Ark.Tools.ResourceWatcher;
 /// </summary>
 /// <typeparam name="T">The resource state type</typeparam>
 /// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
-public abstract class ResourceWatcher<T, TExtensions> : IDisposable where T : IResourceState
+public abstract class ResourceWatcher<T, TExtensions> : IDisposable 
+    where T : IResourceState
+    where TExtensions : class
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly IResourceWatcherConfig _config;
@@ -364,8 +365,8 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable where T : IR
                 lastRetryCount: lastState?.RetryCount,
                 isResourceUpdated: isResourceUpdated,
                 modifiedSource: modifiedInfo.source,
-                currentModified: modifiedInfo.current != null ? LocalDateTimePattern.ExtendedIso.Format(modifiedInfo.current.Value) : null,
-                lastModified: modifiedInfo.last != null ? LocalDateTimePattern.ExtendedIso.Format(modifiedInfo.last.Value) : null,
+                currentModified: modifiedInfo.current,
+                lastModified: modifiedInfo.last,
                 processType: pc.ProcessType
             );
 
@@ -539,6 +540,7 @@ public enum ProcessType
 }
 
 public class ProcessContext<TExtensions>
+    where TExtensions : class
 {
     public ProcessContext(IResourceMetadata<TExtensions> currentInfo)
     {
@@ -697,7 +699,9 @@ public class ProcessContext : ProcessContext<VoidExtensions>
     }
 }
 
-public sealed class ChangedStateContext<T, TExtensions> where T : IResourceState
+public sealed class ChangedStateContext<T, TExtensions> 
+    where T : IResourceState
+    where TExtensions : class
 {
     public ChangedStateContext(IResourceMetadata<TExtensions> info, IResourceTrackedState<TExtensions>? lastState, AsyncLazy<T?> payload)
     {

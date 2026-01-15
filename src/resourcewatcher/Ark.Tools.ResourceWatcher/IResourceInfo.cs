@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NodaTime;
-using System.Runtime.InteropServices;
 
 namespace Ark.Tools.ResourceWatcher;
 
@@ -10,35 +9,19 @@ namespace Ark.Tools.ResourceWatcher;
 /// Use this as the TExtensions parameter when no extension data is needed.
 /// </summary>
 /// <remarks>
-/// This type is optimized for minimal memory footprint and serialization cost.
-/// It serializes to JSON null and has no runtime overhead.
+/// This type is a singleton class that serializes to JSON null.
+/// Use <see cref="Instance"/> to get the singleton instance.
 /// </remarks>
-[StructLayout(LayoutKind.Auto)]
-public readonly struct VoidExtensions : IEquatable<VoidExtensions>
+public sealed class VoidExtensions
 {
     /// <summary>
-    /// Gets a singleton instance. Always returns default(VoidExtensions).
+    /// Gets the singleton instance.
     /// </summary>
-    public static VoidExtensions Instance => default;
+    public static VoidExtensions Instance { get; } = new VoidExtensions();
 
-    /// <inheritdoc/>
-    public bool Equals(VoidExtensions other) => true;
-
-    /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is VoidExtensions;
-
-    /// <inheritdoc/>
-    public override int GetHashCode() => 0;
-
-    /// <summary>
-    /// Equality operator.
-    /// </summary>
-    public static bool operator ==(VoidExtensions left, VoidExtensions right) => true;
-
-    /// <summary>
-    /// Inequality operator.
-    /// </summary>
-    public static bool operator !=(VoidExtensions left, VoidExtensions right) => false;
+    private VoidExtensions()
+    {
+    }
 }
 
 /// <summary>
@@ -46,6 +29,7 @@ public readonly struct VoidExtensions : IEquatable<VoidExtensions>
 /// </summary>
 /// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
 public interface IResourceMetadata<TExtensions>
+    where TExtensions : class
 {
     /// <summary>
     /// The "key" identifier of the resource

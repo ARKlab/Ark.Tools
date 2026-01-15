@@ -12,6 +12,7 @@ namespace Ark.Tools.ResourceWatcher.WorkerHost;
 public interface IResourceProcessor<TResource, TMetadata, TExtensions>
     where TResource : class, IResource<TMetadata, TExtensions>
     where TMetadata : class, IResourceMetadata<TExtensions>
+    where TExtensions : class
 {
     /// <summary>
     /// Processes the specified resource.

@@ -14,6 +14,7 @@ public interface IResourceProvider<TMetadata, TResource, TQueryFilter, TExtensio
     where TMetadata : class, IResourceMetadata<TExtensions>
     where TResource : class, IResource<TMetadata, TExtensions>
     where TQueryFilter : class, new()
+    where TExtensions : class
 {
     /// <summary>
     /// Gets metadata for resources matching the specified filter.

@@ -8,6 +8,7 @@ namespace Ark.Tools.ResourceWatcher;
 /// </summary>
 /// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
 public interface IStateProvider<TExtensions>
+    where TExtensions : class
 {
     /// <summary>
     /// Loads state for resources in the specified tenant.

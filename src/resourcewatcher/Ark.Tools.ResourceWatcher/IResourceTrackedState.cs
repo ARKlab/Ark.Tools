@@ -9,6 +9,7 @@ namespace Ark.Tools.ResourceWatcher;
 /// </summary>
 /// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
 public interface IResourceTrackedState<TExtensions> : IResourceMetadata<TExtensions>
+    where TExtensions : class
 {
     /// <summary>
     /// Number of times processing has been retried

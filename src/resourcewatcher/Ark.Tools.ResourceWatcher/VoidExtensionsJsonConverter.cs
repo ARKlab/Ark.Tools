@@ -11,25 +11,6 @@ namespace Ark.Tools.ResourceWatcher;
 public class VoidExtensionsJsonConverter : JsonConverter<VoidExtensions>
 {
     /// <inheritdoc/>
-    public override VoidExtensions Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        reader.Skip();
-        return default;
-    }
-
-    /// <inheritdoc/>
-    public override void Write(Utf8JsonWriter writer, VoidExtensions value, JsonSerializerOptions options)
-    {
-        writer.WriteNullValue();
-    }
-}
-
-/// <summary>
-/// JSON converter for <see cref="Nullable{VoidExtensions}"/> that serializes to/from null.
-/// </summary>
-public class NullableVoidExtensionsJsonConverter : JsonConverter<VoidExtensions?>
-{
-    /// <inheritdoc/>
     public override VoidExtensions? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         reader.Skip();
