@@ -7,7 +7,7 @@ using NodaTime;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
 
-public sealed class FtpMetadata : IResourceMetadata
+public sealed class FtpMetadata : IResourceMetadata<FtpResourceExtensions>
 {
     internal FtpMetadata(FtpEntry entry)
     {
@@ -15,6 +15,11 @@ public sealed class FtpMetadata : IResourceMetadata
         ResourceId = entry.FullPath;
         Modified = LocalDateTime.FromDateTime(entry.Modified);
         ModifiedSources = null;
+        Extensions = new FtpResourceExtensions
+        {
+            Name = entry.Name,
+            Size = entry.Size
+        };
     }
 
     public FtpEntry Entry { get; }
@@ -24,5 +29,5 @@ public sealed class FtpMetadata : IResourceMetadata
 
     public string ResourceId { get; }
 
-    public VoidExtensions? Extensions => null;
+    public FtpResourceExtensions Extensions { get; }
 }

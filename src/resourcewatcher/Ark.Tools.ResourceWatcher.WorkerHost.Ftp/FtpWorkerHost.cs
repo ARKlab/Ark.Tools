@@ -14,7 +14,7 @@ using System.Security.Cryptography;
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
 
 
-public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata, FtpFilter>
+public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata, FtpFilter, FtpResourceExtensions>
 {
     public FtpWorkerHost(IFtpHostConfig config)
         : base(config)
@@ -56,7 +56,7 @@ public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata
         });
     }
 
-    sealed class FtpProvider : IResourceProvider<FtpMetadata, FtpFile<TPayload>, FtpFilter>, IDisposable
+    sealed class FtpProvider : IResourceProvider<FtpMetadata, FtpFile<TPayload>, FtpFilter, FtpResourceExtensions>, IDisposable
     {
         private readonly IFtpConfig _config;
         private readonly IFtpClientPool _ftpClient;
@@ -92,7 +92,7 @@ public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata
             return res.ToList();
         }
 
-        public async Task<FtpFile<TPayload>?> GetResource(FtpMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
+        public async Task<FtpFile<TPayload>?> GetResource(FtpMetadata metadata, IResourceTrackedState<FtpResourceExtensions>? lastState, CancellationToken ctk = default)
         {
             var contents = await Policy
                 .Handle<Exception>()
