@@ -1,5 +1,18 @@
 # ResourceWatcher Type-Safe Extensions Implementation Plan
 
+## Decision Record
+
+**Date**: 2026-01-15  
+**Decision**: Approve **Approach 1 (Generic Type Parameter with Migration Mitigations)**  
+**Status**: Approved  
+**Target Release**: v6.0.0
+
+**Key Points**:
+- Non-generic proxy classes eliminate breaking changes for 80-90% of users
+- Only users actively using Extensions (~10-20%) need to migrate to typed models
+- Full type safety, AoT compatibility, and zero runtime reflection
+- Two migration paths: (1) Use proxy classes (no changes), (2) Define typed extensions
+
 ## Problem Statement
 
 Currently, `IResourceMetadata.Extensions` is defined as `object?`, which creates several issues:
@@ -162,17 +175,7 @@ public class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
     // Non-generic proxy inherits from generic version with VoidExtensions
 }
 
-// After (v6) - Option 2: Explicit VoidExtensions (if needed)
-public class MyMetadata : IResourceMetadata<VoidExtensions>
-{
-    public VoidExtensions? Extensions { get; init; }
-}
-
-public class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter, VoidExtensions>
-{
-}
-
-// After (v6) - Option 3: Strongly-typed extensions
+// After (v6) - Option 2: Strongly-typed extensions
 public record MyExtensions
 {
     public long LastOffset { get; init; }
@@ -891,42 +894,12 @@ public class MyHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
 }
 ```
 
-#### Option 2: Explicit VoidExtensions (If Proxy Doesn't Work)
-
-If you don't use Extensions but need explicit types:
-
-```csharp
-// Before (v5)
-public class MyMetadata : IResourceMetadata
-{
-    public required string ResourceId { get; init; }
-    public LocalDateTime Modified { get; init; }
-    public object? Extensions { get; init; }  // Always null
-}
-
-public class MyHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
-{
-}
-
-// After (v6) - Explicit generic parameter
-public class MyMetadata : IResourceMetadata<VoidExtensions>
-{
-    public required string ResourceId { get; init; }
-    public LocalDateTime Modified { get; init; }
-    public VoidExtensions? Extensions { get; init; }  // Use VoidExtensions
-}
-
-public class MyHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter, VoidExtensions>
-{
-}
-```
-
-#### Option 3: Strongly-Typed Extensions (Recommended for Extension Users)
+#### Option 2: Strongly-Typed Extensions (Recommended for Extension Users)
 
 If you use Extensions, define a type-safe model:
 
 ```csharp
-// Before (v6) - Runtime type checking
+// Before (v5) - Runtime type checking
 public class MyMetadata : IResourceMetadata
 {
     public object? Extensions { get; init; }
@@ -1106,14 +1079,6 @@ services.AddSingleton<IStateProvider<MyExtensions>>(sp =>
 - [ ] Gather feedback from early adopters
 - [ ] Address any issues found
 
-#### 7.4 Release
-
-- [ ] Update version to v6.0.0
-- [ ] Create GitHub release with full changelog
-- [ ] Publish NuGet packages
-- [ ] Announce breaking changes
-- [ ] Update documentation website (if applicable)
-
 ## Technical Considerations
 
 ### JSON Serialization Strategy
@@ -1249,7 +1214,7 @@ public class VoidExtensionsJsonConverter : JsonConverter<VoidExtensions>
 **Mitigation**:
 - Non-generic proxy classes provide **zero breaking changes** for 80-90% of users
 - Clear migration guide with step-by-step instructions for Extension users
-- Code samples showing before/after for all three migration options
+- Code samples showing before/after for both migration options
 - Early communication and alpha/beta testing period
 - Compiler errors guide users to exactly what needs updating
 
@@ -1260,7 +1225,7 @@ public class VoidExtensionsJsonConverter : JsonConverter<VoidExtensions>
 **Mitigation**:
 - Proxy classes hide complexity for users not using Extensions
 - Default generic parameter `TExtensions = VoidExtensions` on classes
-- Excellent documentation with examples for all three migration paths
+- Excellent documentation with examples for both migration paths
 - IntelliSense XML comments explaining each parameter
 - Type aliases for common scenarios
 
