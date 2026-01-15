@@ -14,6 +14,8 @@ using NodaTime;
 using Reqnroll;
 using Reqnroll.Assist;
 
+using System.Text.Json;
+
 using DataTable = Reqnroll.DataTable;
 
 namespace Ark.Tools.ResourceWatcher.Tests.Steps;
@@ -355,10 +357,17 @@ public sealed class SqlStateProviderSteps : IDisposable
         var state = _getLoadedResource(resourceId);
         state.Extensions.Should().NotBeNull();
 
-        // Extensions come back as dynamic from JSON deserialization
-        if (state.Extensions is Newtonsoft.Json.Linq.JObject jObj)
+        // Extensions come back as JsonElement from System.Text.Json deserialization
+        if (state.Extensions is JsonElement element)
         {
-            jObj[key]?.ToString().Should().Be(expectedValue);
+            if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(key, out var property))
+            {
+                property.GetString().Should().Be(expectedValue);
+            }
+            else
+            {
+                throw new InvalidOperationException($"Extension property '{key}' not found in JsonElement");
+            }
         }
         else if (state.Extensions is Dictionary<string, object> dict)
         {

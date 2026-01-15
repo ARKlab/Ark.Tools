@@ -1,16 +1,12 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Core;
-using Ark.Tools.NewtonsoftJson;
 using Ark.Tools.Sql;
 
 using Dapper;
 
-
-using Newtonsoft.Json;
-
-using NodaTime;
-
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ark.Tools.ResourceWatcher;
 
@@ -18,12 +14,20 @@ namespace Ark.Tools.ResourceWatcher;
 public interface ISqlStateProviderConfig
 {
     string DbConnectionString { get; }
+    
+    /// <summary>
+    /// Optional JsonSerializerContext for Extensions serialization.
+    /// When provided, enables trim-safe serialization of Extensions.
+    /// When null, falls back to reflection-based serialization (not trim-safe).
+    /// </summary>
+    JsonSerializerContext? ExtensionsJsonContext { get => null; }
 }
 
 public class SqlStateProvider : IStateProvider
 {
     private readonly ISqlStateProviderConfig _config;
-    private readonly JsonSerializerSettings _jsonSerializerSettings;
+    private readonly JsonSerializerOptions _internalJsonOptions;
+    private readonly JsonSerializerContext? _extensionsJsonContext;
     private readonly IDbConnectionManager _connManager;
 
     private const string _queryState = "SELECT [Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [ModifiedSourcesJson] FROM [State] WHERE [Tenant] = @tenant";
@@ -36,7 +40,12 @@ public class SqlStateProvider : IStateProvider
 
         _connManager = connManager;
         _config = config;
-        _jsonSerializerSettings = ArkDefaultJsonSerializerSettings.Instance;
+        _extensionsJsonContext = config.ExtensionsJsonContext;
+        
+        // Create internal JsonSerializerOptions with Ark defaults
+        // Used for Extensions when no external context is provided
+        _internalJsonOptions = new JsonSerializerOptions();
+        _internalJsonOptions.ConfigureArkDefaults();
     }
 
     sealed class EJ
@@ -46,6 +55,32 @@ public class SqlStateProvider : IStateProvider
     sealed class MMJ
     {
         public string? ModifiedSourcesJson { get; set; }
+    }
+
+    /// <summary>
+    /// Serializes Extensions object to JSON.
+    /// When ExtensionsJsonContext is provided, uses trim-safe serialization.
+    /// Otherwise falls back to reflection-based serialization for backward compatibility.
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Serializing arbitrary objects without JsonSerializerContext requires types that cannot be statically analyzed. Provide ExtensionsJsonContext in config for trim-safe code.")]
+    private string? _serializeExtensions(object? extensions)
+    {
+        if (extensions == null)
+            return null;
+
+        // Use external JsonSerializerContext if provided (trim-safe)
+        if (_extensionsJsonContext != null)
+        {
+            return extensions.Serialize(extensions.GetType(), _extensionsJsonContext);
+        }
+
+        // Fallback to reflection-based serialization (not trim-safe)
+        // If it's already a JsonElement (deserialized from DB), serialize it directly
+        if (extensions is JsonElement element)
+            return JsonSerializer.Serialize(element, _internalJsonOptions);
+
+        // For other objects, serialize as object (uses reflection - not trim-safe but maintains compatibility)
+        return JsonSerializer.Serialize(extensions, _internalJsonOptions);
     }
 
     public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
@@ -65,10 +100,20 @@ public class SqlStateProvider : IStateProvider
         ResourceState map(ResourceState r, EJ e, MMJ m)
         {
             if (e?.ExtensionsJson != null)
-                r.Extensions = JsonConvert.DeserializeObject(e.ExtensionsJson, _jsonSerializerSettings);
+            {
+                // Deserialize as JsonElement for dynamic data
+#pragma warning disable IL2026 // Acceptable: JsonElement deserialization is trim-compatible
+                r.Extensions = JsonSerializer.Deserialize<JsonElement>(e.ExtensionsJson, _internalJsonOptions);
+#pragma warning restore IL2026
+            }
 
             if (m?.ModifiedSourcesJson != null)
-                r.ModifiedSources = JsonConvert.DeserializeObject<Dictionary<string, LocalDateTime>>(m.ModifiedSourcesJson, _jsonSerializerSettings);
+            {
+                // Use NodaTime converters from Ark defaults for ModifiedSources
+#pragma warning disable IL2026 // Acceptable: Dictionary with NodaTime converters is trim-compatible when converters are registered
+                r.ModifiedSources = JsonSerializer.Deserialize<Dictionary<string, NodaTime.LocalDateTime>>(m.ModifiedSourcesJson, _internalJsonOptions);
+#pragma warning restore IL2026
+            }
 
             return r;
         }
@@ -96,6 +141,13 @@ public class SqlStateProvider : IStateProvider
         }
     }
 
+    /// <summary>
+    /// Saves resource states to SQL Server.
+    /// </summary>
+    /// <remarks>
+    /// This method may use reflection-based serialization for Extensions containing arbitrary objects.
+    /// For optimal trim compatibility, use Dictionary&lt;string, object&gt; or JsonElement for Extensions.
+    /// </remarks>
     public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
     {
         var st = states.AsList();
@@ -140,12 +192,17 @@ UPDATE SET
                     x.Tenant,
                     x.ResourceId,
                     Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
-                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonConvert.SerializeObject(x.ModifiedSources, _jsonSerializerSettings),
+                    // Use NodaTime converters from Ark defaults for ModifiedSources
+#pragma warning disable IL2026 // Acceptable: Dictionary with NodaTime converters is trim-compatible when converters are registered
+                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonSerializer.Serialize(x.ModifiedSources, _internalJsonOptions),
+#pragma warning restore IL2026
                     LastEvent = x.LastEvent.ToDateTimeUtc(),
                     RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
                     x.RetryCount,
                     x.CheckSum,
-                    ExtensionsJson = x.Extensions == null ? null : JsonConvert.SerializeObject(x.Extensions, _jsonSerializerSettings),
+#pragma warning disable IL2026 // Acceptable: arbitrary objects in Extensions require reflection when no context provided
+                    ExtensionsJson = _serializeExtensions(x.Extensions),
+#pragma warning restore IL2026
                     Exception = x.LastException?.ToString()
                 }).ToDataTableArk().AsTableValuedParameter("[udt_State_v2]")
             }).ConfigureAwait(false);

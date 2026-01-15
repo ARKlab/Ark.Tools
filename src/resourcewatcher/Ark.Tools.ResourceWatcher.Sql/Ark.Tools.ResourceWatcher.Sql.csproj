@@ -17,12 +17,18 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <PropertyGroup>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Dapper" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\common\Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj" />
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
   </ItemGroup>
