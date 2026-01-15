@@ -4,13 +4,18 @@ using System.Collections.Concurrent;
 
 namespace Ark.Tools.ResourceWatcher;
 
-public class InMemStateProvider : IStateProvider
+/// <summary>
+/// In-memory state provider with type-safe extension data.
+/// </summary>
+/// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
+public class InMemStateProvider<TExtensions> : IStateProvider<TExtensions>
 {
-    private readonly ConcurrentDictionary<string, ResourceState> _store = new(System.StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, ResourceState<TExtensions>> _store = new(StringComparer.Ordinal);
 
-    public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
+    /// <inheritdoc/>
+    public Task<IEnumerable<ResourceState<TExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
     {
-        var res = new List<ResourceState>();
+        var res = new List<ResourceState<TExtensions>>();
         if (resourceIds == null)
             res.AddRange(_store.Values);
         else
@@ -23,11 +28,20 @@ public class InMemStateProvider : IStateProvider
         return Task.FromResult(res.AsEnumerable());
     }
 
-    public Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
+    /// <inheritdoc/>
+    public Task SaveStateAsync(IEnumerable<ResourceState<TExtensions>> states, CancellationToken ctk = default)
     {
         foreach (var s in states)
             _store.AddOrUpdate(s.ResourceId, s, (k, v) => s);
 
         return Task.CompletedTask;
     }
+}
+
+/// <summary>
+/// Non-generic in-memory state provider for backward compatibility.
+/// Uses <see cref="VoidExtensions"/> for extension data.
+/// </summary>
+public class InMemStateProvider : InMemStateProvider<VoidExtensions>
+{
 }

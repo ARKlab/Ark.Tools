@@ -88,7 +88,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         _logger.Error(ex, $"Check failed for tenant {_tenant} in {activity.Duration}");
     }
 
-    public void RunSuccessful(Activity activity, IList<ProcessContext> evaluated)
+    public void RunSuccessful<TExtensions>(Activity activity, IList<ProcessContext<TExtensions>> evaluated)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () =>
         {
@@ -171,7 +171,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
-    public void CheckStateSuccessful(Activity activity, IEnumerable<ProcessContext> evaluated)
+    public void CheckStateSuccessful<TExtensions>(Activity activity, IEnumerable<ProcessContext<TExtensions>> evaluated)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () =>
         {
@@ -207,8 +207,8 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region ProcessResource
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public Activity ProcessResourceStart(ProcessContext processContext)
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext<>))]
+    public Activity ProcessResourceStart<TExtensions>(ProcessContext<TExtensions> processContext)
     {
         bool result = processContext.IsResourceUpdated(out var infos);
 
@@ -240,8 +240,8 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public void ProcessResourceFailed(Activity activity, ProcessContext pc, bool isBanned, Exception ex)
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext<>))]
+    public void ProcessResourceFailed<TExtensions>(Activity activity, ProcessContext<TExtensions> pc, bool isBanned, Exception ex)
     {
         var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
         _logger.Log(lvl, ex, CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} process Failed", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
@@ -254,8 +254,8 @@ internal sealed class ResourceWatcherDiagnosticSource
         });
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public void ProcessResourceSuccessful(Activity activity, ProcessContext pc)
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext<>))]
+    public void ProcessResourceSuccessful<TExtensions>(Activity activity, ProcessContext<TExtensions> pc)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
         {
@@ -282,8 +282,8 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region FetchResource
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public Activity FetchResourceStart(ProcessContext pc)
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext<>))]
+    public Activity FetchResourceStart<TExtensions>(ProcessContext<TExtensions> pc)
     {
         Activity activity = ResourceWatcherDiagnosticSource._start("FetchResource", () => new
         {
@@ -295,8 +295,8 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public void FetchResourceFailed(Activity activity, ProcessContext pc, Exception ex)
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext<>))]
+    public void FetchResourceFailed<TExtensions>(Activity activity, ProcessContext<TExtensions> pc, Exception ex)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
         {
@@ -307,8 +307,8 @@ internal sealed class ResourceWatcherDiagnosticSource
         );
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public void FetchResourceSuccessful(Activity activity, ProcessContext pc)
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext<>))]
+    public void FetchResourceSuccessful<TExtensions>(Activity activity, ProcessContext<TExtensions> pc)
     {
         //_setTags(activity, processType.ToString(), processType.ToString());
 
