@@ -76,7 +76,7 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
     }
 
     /// <inheritdoc/>
-    public async Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+    public async Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
     {
         var response = await _client
             .Request("blobs", metadata.ResourceId)

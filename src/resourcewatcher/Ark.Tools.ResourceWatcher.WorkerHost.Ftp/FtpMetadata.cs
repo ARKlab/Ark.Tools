@@ -24,9 +24,5 @@ public sealed class FtpMetadata : IResourceMetadata
 
     public string ResourceId { get; }
 
-    public object Extensions => new
-    {
-        Entry.Name,
-        Entry.Size,
-    };
+    public VoidExtensions? Extensions => null;
 }

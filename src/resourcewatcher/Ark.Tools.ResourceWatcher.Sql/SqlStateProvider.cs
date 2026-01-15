@@ -83,7 +83,7 @@ public class SqlStateProvider : IStateProvider
         return JsonSerializer.Serialize(extensions, _internalJsonOptions);
     }
 
-    public async Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
+    public async Task<IEnumerable<ResourceState<VoidExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(tenant.Length, 128, nameof(tenant));
@@ -97,15 +97,10 @@ public class SqlStateProvider : IStateProvider
             }
         }
 
-        ResourceState map(ResourceState r, EJ e, MMJ m)
+        ResourceState<VoidExtensions> map(ResourceState r, EJ e, MMJ m)
         {
-            if (e?.ExtensionsJson != null)
-            {
-                // Deserialize as JsonElement for dynamic data
-#pragma warning disable IL2026 // Acceptable: JsonElement deserialization is trim-compatible
-                r.Extensions = JsonSerializer.Deserialize<JsonElement>(e.ExtensionsJson, _internalJsonOptions);
-#pragma warning restore IL2026
-            }
+            // For VoidExtensions, Extensions should always be null
+            // We ignore any ExtensionsJson in the database
 
             if (m?.ModifiedSourcesJson != null)
             {
@@ -122,19 +117,19 @@ public class SqlStateProvider : IStateProvider
         await using (c.ConfigureAwait(false))
         {
             if (resourceIds == null)
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState
+                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<VoidExtensions>>(_queryState
                     , map
                     , param: new { tenant = tenant }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
             else if (resourceIds.Length == 0)
-                return Enumerable.Empty<ResourceState>(); //Empty array should just return empty result
+                return Enumerable.Empty<ResourceState<VoidExtensions>>(); //Empty array should just return empty result
             else if (resourceIds.Length < 2000) //limit is 2100
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in @resources"
+                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<VoidExtensions>>(_queryState + " and [ResourceId] in @resources"
                     , map
                     , param: new { tenant = tenant, resources = resourceIds }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
             else
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
+                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<VoidExtensions>>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
                     , map
                     , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
@@ -148,7 +143,7 @@ public class SqlStateProvider : IStateProvider
     /// This method may use reflection-based serialization for Extensions containing arbitrary objects.
     /// For optimal trim compatibility, use Dictionary&lt;string, object&gt; or JsonElement for Extensions.
     /// </remarks>
-    public async Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
+    public async Task SaveStateAsync(IEnumerable<ResourceState<VoidExtensions>> states, CancellationToken ctk = default)
     {
         var st = states.AsList();
         foreach (var s in st)

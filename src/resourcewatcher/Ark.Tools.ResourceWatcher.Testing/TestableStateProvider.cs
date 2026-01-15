@@ -12,14 +12,14 @@ namespace Ark.Tools.ResourceWatcher.Testing;
 /// </summary>
 public class TestableStateProvider : IStateProvider
 {
-    private readonly ConcurrentDictionary<(string Tenant, string ResourceId), ResourceState> _store = new();
+    private readonly ConcurrentDictionary<(string Tenant, string ResourceId), ResourceState<VoidExtensions>> _store = new();
 
     /// <summary>
     /// Loads state for the given tenant and optional resource IDs.
     /// </summary>
-    public Task<IEnumerable<ResourceState>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
+    public Task<IEnumerable<ResourceState<VoidExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
     {
-        IEnumerable<ResourceState> res;
+        IEnumerable<ResourceState<VoidExtensions>> res;
 
         if (resourceIds == null)
         {
@@ -32,13 +32,13 @@ public class TestableStateProvider : IStateProvider
                 .Select(r => _store[(tenant, r)]);
         }
 
-        return Task.FromResult(res);
+        return Task.FromResult(res.AsEnumerable());
     }
 
     /// <summary>
     /// Saves state for the given resources.
     /// </summary>
-    public Task SaveStateAsync(IEnumerable<ResourceState> states, CancellationToken ctk = default)
+    public Task SaveStateAsync(IEnumerable<ResourceState<VoidExtensions>> states, CancellationToken ctk = default)
     {
         foreach (var s in states)
         {
@@ -54,7 +54,7 @@ public class TestableStateProvider : IStateProvider
     /// <summary>
     /// Gets the state for a specific resource, or null if not found.
     /// </summary>
-    public ResourceState? GetState(string tenant, string resourceId)
+    public ResourceState<VoidExtensions>? GetState(string tenant, string resourceId)
     {
         _store.TryGetValue((tenant, resourceId), out var state);
         return state;
@@ -64,14 +64,14 @@ public class TestableStateProvider : IStateProvider
     /// Gets the state for a resource in the default tenant.
     /// This is a convenience method for single-tenant testing scenarios.
     /// </summary>
-    public ResourceState? GetResourceState(string tenant, string resourceId) => GetState(tenant, resourceId);
+    public ResourceState<VoidExtensions>? GetResourceState(string tenant, string resourceId) => GetState(tenant, resourceId);
 
     /// <summary>
     /// Sets state for a resource. Convenience method for testing.
     /// </summary>
-    public void SetResourceState(string tenant, ResourceState state)
+    public void SetResourceState(string tenant, ResourceState<VoidExtensions> state)
     {
-        var stateWithTenant = new ResourceState
+        var stateWithTenant = new ResourceState<VoidExtensions>
         {
             Tenant = tenant,
             ResourceId = state.ResourceId,
@@ -88,7 +88,7 @@ public class TestableStateProvider : IStateProvider
     /// <summary>
     /// Gets all states for a tenant.
     /// </summary>
-    public IReadOnlyList<ResourceState> GetAllStates(string tenant)
+    public IReadOnlyList<ResourceState<VoidExtensions>> GetAllStates(string tenant)
     {
         return _store.Values.Where(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal)).ToList();
     }
@@ -96,7 +96,7 @@ public class TestableStateProvider : IStateProvider
     /// <summary>
     /// Sets state directly for testing purposes.
     /// </summary>
-    public void SetState(ResourceState state)
+    public void SetState(ResourceState<VoidExtensions> state)
     {
         var key = (state.Tenant ?? string.Empty, state.ResourceId);
         _store.AddOrUpdate(key, state, (k, v) => state);
@@ -115,7 +115,7 @@ public class TestableStateProvider : IStateProvider
         Instant lastEvent,
         Instant? retrievedAt = null)
     {
-        var state = new ResourceState
+        var state = new ResourceState<VoidExtensions>
         {
             Tenant = tenant,
             ResourceId = resourceId,

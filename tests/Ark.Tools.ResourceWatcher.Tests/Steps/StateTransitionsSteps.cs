@@ -150,7 +150,7 @@ public sealed class StateTransitionsSteps : IDisposable
     /// <summary>
     /// Helper method to update an existing state by applying a modifier action.
     /// </summary>
-    private void _updateExistingState(string resourceId, Action<ResourceState> modifier)
+    private void _updateExistingState(string resourceId, Action<ResourceState<VoidExtensions>> modifier)
     {
         var state = _stateProvider.GetState(_config.WorkerName, resourceId);
         if (state != null)
@@ -291,8 +291,9 @@ public sealed class StateTransitionsSteps : IDisposable
         });
         _workerHost.Use(d =>
         {
-            // Register state provider as IStateProvider interface to ensure proper resolution
+            // Register state provider as both IStateProvider and IStateProvider<VoidExtensions> to ensure proper resolution
             d.Container.RegisterInstance<IStateProvider>(_stateProvider);
+            d.Container.RegisterInstance<IStateProvider<VoidExtensions>>(_stateProvider);
         });
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -443,7 +444,7 @@ internal sealed class TestableDataProvider : IResourceProvider<StubResourceMetad
     public Task<IEnumerable<StubResourceMetadata>> GetMetadata(StubQueryFilter filter, CancellationToken ctk = default)
         => _inner.GetMetadata(filter, ctk);
 
-    public Task<StubResource?> GetResource(StubResourceMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+    public Task<StubResource?> GetResource(StubResourceMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
         => _inner.GetResource(metadata, lastState, ctk);
 }
 

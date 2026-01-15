@@ -30,7 +30,7 @@ public sealed class StubResourceMetadata : IResourceMetadata
     /// <summary>
     /// Gets or sets extension data for the resource.
     /// </summary>
-    public object? Extensions { get; init; }
+    public VoidExtensions? Extensions { get; init; }
 
     /// <summary>
     /// Creates a new metadata with incremented Modified time.

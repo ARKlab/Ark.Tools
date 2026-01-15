@@ -92,7 +92,7 @@ public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata
             return res.ToList();
         }
 
-        public async Task<FtpFile<TPayload>?> GetResource(FtpMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+        public async Task<FtpFile<TPayload>?> GetResource(FtpMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
         {
             var contents = await Policy
                 .Handle<Exception>()
