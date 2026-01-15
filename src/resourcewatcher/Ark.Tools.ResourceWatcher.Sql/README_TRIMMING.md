@@ -1,9 +1,9 @@
 # Trimming Compatibility - Ark.Tools.ResourceWatcher.Sql
 
-## Status: ✅ CONDITIONALLY TRIMMABLE
+## Status: ✅ FULLY TRIMMABLE (with configuration)
 
-**Decision Date:** 2026-01-14  
-**Rationale:** Now uses System.Text.Json with converters for core functionality. Trim-safe for applications using Dictionary&lt;string, object&gt; or JsonElement for Extensions.
+**Decision Date:** 2026-01-15  
+**Rationale:** Uses System.Text.Json with Ark defaults and optional JsonSerializerContext for Extensions. Fully trim-safe when ExtensionsJsonContext is provided.
 
 ---
 
@@ -13,33 +13,51 @@
 
 The library has been migrated from Newtonsoft.Json to System.Text.Json with the following improvements:
 
-1. **NodaTime Support**: Uses `NodaTime.Serialization.SystemTextJson` converters
-2. **Extensions Handling**: Deserializes Extensions as `JsonElement` for dynamic data
-3. **ModifiedSources**: Fully trim-safe serialization of `Dictionary<string, LocalDateTime>`
-4. **Source Generation**: Includes `SqlStateProviderJsonContext` for trim-compatible types
+1. **Ark Defaults**: Uses `ConfigureArkDefaults()` with NodaTime converters for internal fields
+2. **Extensions Handling**: Supports optional `ExtensionsJsonContext` for trim-safe Extensions serialization
+3. **ModifiedSources**: Fully trim-safe serialization using NodaTime converters
+4. **Source Generation**: Includes `SqlStateProviderJsonContext` for internal types
 
-### Trim-Safe Usage
+### Fully Trim-Safe Configuration
 
-For fully trim-safe applications, use one of these patterns for `IResourceMetadata.Extensions`:
+To achieve zero trim warnings, provide a `JsonSerializerContext` for Extensions serialization:
 
 ```csharp
-// Option 1: Dictionary<string, object>
-object IResourceMetadata.Extensions => new Dictionary<string, object>
+// 1. Define your Extensions type
+public class MyExtensions
 {
-    ["lastOffset"] = 12345,
-    ["cursor"] = "abc-cursor"
-};
+    public int LastOffset { get; set; }
+    public string? Cursor { get; set; }
+}
 
-// Option 2: JsonElement (after deserialization)
-// Extensions are automatically returned as JsonElement from LoadStateAsync
+// 2. Create a JsonSerializerContext with source generation
+[JsonSerializable(typeof(MyExtensions))]
+[JsonSerializable(typeof(JsonElement))]
+internal partial class MyExtensionsJsonContext : JsonSerializerContext
+{
+}
+
+// 3. Configure SqlStateProvider with the context
+public class MyConfig : ISqlStateProviderConfig
+{
+    public string DbConnectionString { get; init; } = "";
+    public JsonSerializerContext ExtensionsJsonContext => MyExtensionsJsonContext.Default;
+}
+
+// 4. Use typed Extensions in your metadata
+object IResourceMetadata.Extensions => new MyExtensions
+{
+    LastOffset = 12345,
+    Cursor = "abc-cursor"
+};
 ```
 
-### Conditional Trim Warning
+### Backward Compatible (with warnings)
 
-The `SaveStateAsync` method may trigger trim warnings if Extensions contains arbitrary objects (e.g., anonymous types):
+For backward compatibility, `ExtensionsJsonContext` is optional. When not provided, Extensions are serialized using reflection (triggers IL2026 warnings):
 
 ```csharp
-// ⚠️ This pattern works but is not fully trim-safe
+// ⚠️ Works but triggers trim warnings when ExtensionsJsonContext is not provided
 object IResourceMetadata.Extensions => new
 {
     FileName = "test.txt",
@@ -47,7 +65,13 @@ object IResourceMetadata.Extensions => new
 };
 ```
 
-**Why**: Anonymous objects and custom types require reflection-based serialization, which cannot be statically analyzed by the trimmer.
+### Default Behavior
+
+When no `ExtensionsJsonContext` is provided:
+- Extensions are deserialized as `JsonElement`
+- Extensions are serialized using reflection-based JSON serialization
+- Triggers IL2026 trim warnings at call site
+- Maintains full backward compatibility with existing code
 
 **Solution**: Use `Dictionary<string, object>` or `JsonElement` instead for trim-safe code.
 
