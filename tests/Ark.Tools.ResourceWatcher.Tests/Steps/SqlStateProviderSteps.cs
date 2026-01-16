@@ -50,7 +50,6 @@ public sealed class SqlStateProviderSteps : IDisposable
     private string _currentTenant = "test-tenant";
     private readonly Instant _now = SystemClock.Instance.GetCurrentInstant();
     private readonly string _testRunId = Guid.NewGuid().ToString("N")[..8];
-    private static readonly Lock _dbSetupLock = new();
 
     public SqlStateProviderSteps(ScenarioContext scenarioContext)
     {
@@ -100,24 +99,8 @@ public sealed class SqlStateProviderSteps : IDisposable
         // Create a generic SqlStateProvider<TestResourceExtensions>
         _stateProvider = new SqlStateProvider<TestResourceExtensions>(_config!, _connectionManager);
 
-        // Ensure tables exist - thread-safe with locking
-        // Note: EnsureTableAreCreated() has DROP TYPE which can fail if type is in use
-        // so we wrap in try-catch and retry once
-        lock (_dbSetupLock)
-        {
-            try
-            {
-                _stateProvider.EnsureTableAreCreated();
-            }
-            catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 3732) // Cannot drop type - in use
-            {
-                // Type is in use by another process, wait and retry
-#pragma warning disable RS0030 // Test infrastructure: retry on SQL conflict
-                Thread.Sleep(100);
-#pragma warning restore RS0030
-                _stateProvider.EnsureTableAreCreated();
-            }
-        }
+        // Schema is already initialized in TestHost.BeforeTestRun()
+        // No need to call EnsureTableAreCreated() here - avoids race conditions
 
         // Use unique tenant prefix for this test run to avoid conflicts
         _currentTenant = string.Create(CultureInfo.InvariantCulture, $"test-{_testRunId}");

@@ -47,7 +47,6 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     
     private readonly Instant _now = SystemClock.Instance.GetCurrentInstant();
     private readonly string _testRunId = Guid.NewGuid().ToString("N")[..8];
-    private static readonly Lock _dbSetupLock = new();
 
     public TypeSafeExtensionsSteps(ScenarioContext scenarioContext)
     {
@@ -94,13 +93,8 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         _config.Should().NotBeNull();
         _connectionManager.Should().NotBeNull();
 
-        // Use VoidExtensions provider to create schema (works for all types)
-        var tempProvider = new SqlStateProvider<VoidExtensions>(_config!, _connectionManager!);
-        
-        lock (_dbSetupLock)
-        {
-            tempProvider.EnsureTableAreCreated();
-        }
+        // Schema is already initialized in TestHost.BeforeTestRun()
+        // No need to call EnsureTableAreCreated() here - avoids race conditions
     }
 
     // ===== VOIDEXTENSIONS SETUP =====
