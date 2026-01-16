@@ -243,6 +243,24 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         };
     }
 
+    [Given(@"the resource has typed extension with ETag ""(.*)""")]
+    public void GivenTheResourceHasTypedExtensionWithETag(string etag)
+    {
+        _currentTypedState.Should().NotBeNull();
+        
+        var current = _currentTypedState!.Extensions ?? new TestExtensions();
+        _currentTypedState.Extensions = current with { ETag = etag };
+    }
+
+    [Given(@"the resource has typed extension with Counter (.*)")]
+    public void GivenTheResourceHasTypedExtensionWithCounter(int counter)
+    {
+        _currentTypedState.Should().NotBeNull();
+        
+        var current = _currentTypedState!.Extensions ?? new TestExtensions();
+        _currentTypedState.Extensions = current with { Counter = counter };
+    }
+
     [Given(@"the resource has typed extension metadata ""(.*)"" with value ""(.*)""")]
     public void GivenTheResourceHasTypedExtensionMetadataWithValue(string key, string value)
     {
@@ -387,11 +405,12 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public void ThenTheExtensionsColumnInDatabaseShouldBeNullFor(string resourceId)
     {
         _config.Should().NotBeNull();
+        _currentVoidState.Should().NotBeNull();
         
         using var conn = new Microsoft.Data.SqlClient.SqlConnection(_config!.DbConnectionString);
         var extensionsJson = conn.QuerySingleOrDefault<string>(
-            "SELECT ExtensionsJson FROM [State] WHERE ResourceId LIKE @ResourceId",
-            new { ResourceId = $"%{resourceId}" });
+            "SELECT ExtensionsJson FROM [State] WHERE Tenant = @Tenant AND ResourceId = @ResourceId",
+            new { Tenant = _currentVoidState!.Tenant, ResourceId = _currentVoidState.ResourceId });
         
         extensionsJson.Should().BeNull();
     }
