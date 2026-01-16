@@ -128,7 +128,7 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
     }
 
     /// <inheritdoc/>
-    public Task<StubResource?> GetResource(StubResourceMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+    public Task<StubResource?> GetResource(StubResourceMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
     {
         FetchCallCount++;
         FetchedResourceIds.Add(metadata.ResourceId);

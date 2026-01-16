@@ -4,7 +4,7 @@ using NodaTime;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
 
-public sealed class FtpFile<TPayload> : IResource<FtpMetadata>
+public sealed class FtpFile<TPayload> : IResource<FtpMetadata, FtpResourceExtensions>
 {
     public FtpFile(FtpMetadata metadata)
     {

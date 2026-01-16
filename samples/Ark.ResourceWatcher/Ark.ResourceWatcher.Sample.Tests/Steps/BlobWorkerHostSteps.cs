@@ -129,7 +129,7 @@ public sealed class BlobWorkerHostSteps
             return Task.FromResult(_mockApi.ListBlobs());
         }
 
-        public Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+        public Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
         {
             return Task.FromResult(_mockApi.GetBlob(metadata.ResourceId));
         }

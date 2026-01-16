@@ -10,18 +10,30 @@ using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher;
 
-public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
+/// <summary>
+/// Abstract base class for resource watchers with type-safe extension data.
+/// </summary>
+/// <typeparam name="T">The resource state type</typeparam>
+/// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
+public abstract class ResourceWatcher<T, TExtensions> : IDisposable 
+    where T : IResourceState
+    where TExtensions : class
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly IResourceWatcherConfig _config;
-    private readonly IStateProvider _stateProvider;
+    private readonly IStateProvider<TExtensions> _stateProvider;
     private readonly Lock _lock = new() { };
     private volatile bool _isStarted;
     private CancellationTokenSource? _cts;
     private Task? _task;
     private readonly ResourceWatcherDiagnosticSource _diagnosticSource;
 
-    protected ResourceWatcher(IResourceWatcherConfig config, IStateProvider stateProvider)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ResourceWatcher{T, TExtensions}"/> class.
+    /// </summary>
+    /// <param name="config">The resource watcher configuration</param>
+    /// <param name="stateProvider">The state provider for tracking resource state</param>
+    protected ResourceWatcher(IResourceWatcherConfig config, IStateProvider<TExtensions> stateProvider)
     {
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(stateProvider);
@@ -157,7 +169,10 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
                 Activity.Current = activityRun;
             }
 
-            _diagnosticSource.RunSuccessful(activityRun, evaluated);
+            var resultCounts = evaluated
+                .GroupBy(x => x.ResultType ?? ResultType.Skipped)
+                .ToDictionary(g => g.Key, g => g.Count());
+            _diagnosticSource.RunSuccessful(activityRun, resultCounts);
 
             if (activityRun.Duration > _config.RunDurationNotificationLimit)
                 _diagnosticSource.RunTookTooLong(activityRun);
@@ -169,16 +184,19 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
         }
     }
 
-    private async Task<IList<ProcessContext>> _evaluateActions(IList<IResourceMetadata> list, CancellationToken ctk)
+    private async Task<IList<ProcessContext<TExtensions>>> _evaluateActions(IList<IResourceMetadata<TExtensions>> list, CancellationToken ctk)
     {
         using var activityCheckState = _diagnosticSource.CheckStateStart();
         try
         {
-            var states = _config.IgnoreState ? Enumerable.Empty<ResourceState>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
+            var states = _config.IgnoreState ? Enumerable.Empty<ResourceState<TExtensions>>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
 
             var evaluated = _createEvalueteList(list, states);
 
-            _diagnosticSource.CheckStateSuccessful(activityCheckState, evaluated);
+            var processCounts = evaluated
+                .GroupBy(x => x.ProcessType)
+                .ToDictionary(g => g.Key, g => g.Count());
+            _diagnosticSource.CheckStateSuccessful(activityCheckState, processCounts);
 
             return evaluated;
         }
@@ -189,7 +207,7 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
         }
     }
 
-    private async Task<IList<IResourceMetadata>> _getResources(DateTime now, CancellationToken ctk)
+    private async Task<IList<IResourceMetadata<TExtensions>>> _getResources(DateTime now, CancellationToken ctk)
     {
         using var activityResource = _diagnosticSource.GetResourcesStart();
 
@@ -218,11 +236,11 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
         }
     }
 
-    private IList<ProcessContext> _createEvalueteList(IList<IResourceMetadata> list, IEnumerable<ResourceState> states)
+    private IList<ProcessContext<TExtensions>> _createEvalueteList(IList<IResourceMetadata<TExtensions>> list, IEnumerable<ResourceState<TExtensions>> states)
     {
         var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
          {
-             var x = new ProcessContext(i) { LastState = s.SingleOrDefault() };
+             var x = new ProcessContext<TExtensions>(i) { LastState = s.SingleOrDefault() };
              if (x.LastState == null)
              {
                  x.ProcessType = ProcessType.New;
@@ -265,31 +283,68 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
         return ev;
     }
 
-    protected abstract Task<IEnumerable<IResourceMetadata>> _getResourcesInfo(CancellationToken ctk = default);
-    protected abstract Task<T?> _retrievePayload(IResourceMetadata info, IResourceTrackedState? lastState, CancellationToken ctk = default);
-    protected abstract Task _processResource(ChangedStateContext<T> context, CancellationToken ctk = default);
+    /// <summary>
+    /// Gets information about resources to be watched.
+    /// </summary>
+    /// <param name="ctk">Cancellation token</param>
+    /// <returns>Collection of resource metadata</returns>
+    protected abstract Task<IEnumerable<IResourceMetadata<TExtensions>>> _getResourcesInfo(CancellationToken ctk = default);
+    
+    /// <summary>
+    /// Retrieves the payload for a specific resource.
+    /// </summary>
+    /// <param name="info">Resource metadata</param>
+    /// <param name="lastState">Last tracked state of the resource</param>
+    /// <param name="ctk">Cancellation token</param>
+    /// <returns>The resource payload, or null if not available</returns>
+    protected abstract Task<T?> _retrievePayload(IResourceMetadata<TExtensions> info, IResourceTrackedState<TExtensions>? lastState, CancellationToken ctk = default);
+    
+    /// <summary>
+    /// Processes a resource that has changed.
+    /// </summary>
+    /// <param name="context">The context containing resource state information</param>
+    /// <param name="ctk">Cancellation token</param>
+    protected abstract Task _processResource(ChangedStateContext<T, TExtensions> context, CancellationToken ctk = default);
 
-    private async Task<T?> _fetchResource(ProcessContext pc, CancellationToken ctk = default)
+    private async Task<T?> _fetchResource(ProcessContext<TExtensions> pc, CancellationToken ctk = default)
     {
         var info = pc.CurrentInfo;
         var lastState = pc.LastState;
 
-        using var activity = _diagnosticSource.FetchResourceStart(pc);
+        using var activity = _diagnosticSource.FetchResourceStart(
+            resourceId: info.ResourceId,
+            index: pc.Index,
+            total: pc.Total,
+            processType: pc.ProcessType
+        );
 
         try
         {
             var res = await _retrievePayload(info, lastState, ctk).ConfigureAwait(false);
-            _diagnosticSource.FetchResourceSuccessful(activity, pc);
+            _diagnosticSource.FetchResourceSuccessful(
+                activity: activity,
+                resourceId: info.ResourceId,
+                index: pc.Index,
+                total: pc.Total,
+                processType: pc.ProcessType
+            );
             return res;
         }
         catch (Exception ex)
         {
-            _diagnosticSource.FetchResourceFailed(activity, pc, ex);
+            _diagnosticSource.FetchResourceFailed(
+                activity: activity,
+                resourceId: info.ResourceId,
+                index: pc.Index,
+                total: pc.Total,
+                processType: pc.ProcessType,
+                ex: ex
+            );
             throw;
         }
     }
 
-    private async Task _processEntry(ProcessContext pc, CancellationToken ctk = default)
+    private async Task _processEntry(ProcessContext<TExtensions> pc, CancellationToken ctk = default)
     {
         var info = pc.CurrentInfo;
         var lastState = pc.LastState;
@@ -302,11 +357,22 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
         ]);
         try
         {
-            using var processActivity = _diagnosticSource.ProcessResourceStart(pc);
+            var isResourceUpdated = pc.IsResourceUpdated(out var modifiedInfo);
+            using var processActivity = _diagnosticSource.ProcessResourceStart(
+                resourceId: info.ResourceId,
+                index: pc.Index,
+                total: pc.Total,
+                lastRetryCount: lastState?.RetryCount,
+                isResourceUpdated: isResourceUpdated,
+                modifiedSource: modifiedInfo.source,
+                currentModified: modifiedInfo.current,
+                lastModified: modifiedInfo.last,
+                processType: pc.ProcessType
+            );
 
             var payload = new AsyncLazy<T?>(() => _fetchResource(pc, ctk));
 
-            var state = pc.NewState = new ResourceState()
+            var state = pc.NewState = new ResourceState<TExtensions>()
             {
                 Tenant = _config.Tenant,
                 ResourceId = info.ResourceId,
@@ -324,7 +390,7 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
                 pc.ResultType = ResultType.Normal;
                 IResourceState? newState = default;
 
-                await _processResource(new ChangedStateContext<T>(info, lastState, payload), ctk).ConfigureAwait(false);
+                await _processResource(new ChangedStateContext<T, TExtensions>(info, lastState, payload), ctk).ConfigureAwait(false);
 
                 // if handlers retrived data, fetch the result to check the checksum
                 if (payload.IsStarted)
@@ -365,7 +431,15 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
                     pc.ResultType = ResultType.NoAction;
                 }
 
-                _diagnosticSource.ProcessResourceSuccessful(processActivity, pc);
+                _diagnosticSource.ProcessResourceSuccessful(
+                    activity: processActivity,
+                    resourceId: info.ResourceId,
+                    index: pc.Index,
+                    total: pc.Total,
+                    processType: pc.ProcessType,
+                    resultType: pc.ResultType,
+                    newRetryCount: state.RetryCount
+                );
 
                 if (processActivity.Duration > _config.ResourceDurationNotificationLimit)
                     _diagnosticSource.ProcessResourceTookTooLong(info.ResourceId, processActivity);
@@ -378,7 +452,15 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
 
                 state.Extensions = info.Extensions;
 
-                _diagnosticSource.ProcessResourceFailed(processActivity, pc, isBanned, ex);
+                _diagnosticSource.ProcessResourceFailed(
+                    activity: processActivity,
+                    resourceId: info.ResourceId,
+                    index: pc.Index,
+                    total: pc.Total,
+                    processType: pc.ProcessType,
+                    isBanned: isBanned,
+                    ex: ex
+                );
             }
 
             await _stateProvider.SaveStateAsync([state], ctk).ConfigureAwait(false);
@@ -392,7 +474,7 @@ public abstract class ResourceWatcher<T> : IDisposable where T : IResourceState
         }
     }
 
-    private static LocalDateTime _getEarliestModified(IResourceMetadata info)
+    private static LocalDateTime _getEarliestModified(IResourceMetadata<TExtensions> info)
     {
         if (info.ModifiedSources != null && info.ModifiedSources.Count != 0)
         {
@@ -457,16 +539,17 @@ public enum ProcessType
     NothingToDo
 }
 
-public class ProcessContext
+public class ProcessContext<TExtensions>
+    where TExtensions : class
 {
-    public ProcessContext(IResourceMetadata currentInfo)
+    public ProcessContext(IResourceMetadata<TExtensions> currentInfo)
     {
         CurrentInfo = currentInfo;
     }
 
-    public IResourceMetadata CurrentInfo { get; }
-    public ResourceState? LastState { get; set; }
-    public ResourceState? NewState { get; set; }
+    public IResourceMetadata<TExtensions> CurrentInfo { get; }
+    public ResourceState<TExtensions>? LastState { get; set; }
+    public ResourceState<TExtensions>? NewState { get; set; }
     public ProcessType ProcessType { get; set; }
     public ResultType? ResultType { get; set; }
     public int? Index { get; set; }
@@ -605,9 +688,22 @@ public class ProcessContext
     }
 }
 
-public sealed class ChangedStateContext<T> where T : IResourceState
+/// <summary>
+/// Non-generic proxy class for backward compatibility.
+/// Uses <see cref="VoidExtensions"/> for extension data.
+/// </summary>
+public class ProcessContext : ProcessContext<VoidExtensions>
 {
-    public ChangedStateContext(IResourceMetadata info, IResourceTrackedState? lastState, AsyncLazy<T?> payload)
+    public ProcessContext(IResourceMetadata currentInfo) : base(currentInfo)
+    {
+    }
+}
+
+public sealed class ChangedStateContext<T, TExtensions> 
+    where T : IResourceState
+    where TExtensions : class
+{
+    public ChangedStateContext(IResourceMetadata<TExtensions> info, IResourceTrackedState<TExtensions>? lastState, AsyncLazy<T?> payload)
     {
         Info = info;
         Payload = payload;
@@ -615,6 +711,6 @@ public sealed class ChangedStateContext<T> where T : IResourceState
     }
 
     public AsyncLazy<T?> Payload { get; }
-    public IResourceMetadata Info { get; }
-    public IResourceTrackedState? LastState { get; }
+    public IResourceMetadata<TExtensions> Info { get; }
+    public IResourceTrackedState<TExtensions>? LastState { get; }
 }

@@ -1,5 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
+using Ark.Tools.ResourceWatcher;
 using NodaTime;
 
 namespace Ark.ResourceWatcher.Sample.Dto;
@@ -7,7 +8,7 @@ namespace Ark.ResourceWatcher.Sample.Dto;
 /// <summary>
 /// Metadata for a blob resource in external storage.
 /// </summary>
-public sealed class MyMetadata : Tools.ResourceWatcher.IResourceMetadata
+public sealed class MyMetadata : IResourceMetadata
 {
     /// <summary>
     /// Gets the unique identifier for the blob (typically the blob path).
@@ -27,7 +28,7 @@ public sealed class MyMetadata : Tools.ResourceWatcher.IResourceMetadata
     /// <summary>
     /// Gets optional extension data for incremental loading (e.g., byte offset).
     /// </summary>
-    public object? Extensions { get; init; }
+    public VoidExtensions? Extensions { get; init; }
 
     /// <summary>
     /// Gets the content type of the blob.

@@ -324,7 +324,7 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
 
     #region ProcessEntry
     [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
-    public override void OnProcessResourceStop(string tenant, ProcessContext processContext, Exception exception)
+    public override void OnProcessResourceStop(string tenant, string resourceId, int? index, int? total, ProcessType processType, ResultType? resultType, int? newRetryCount, Exception exception)
     {
         var currentActivity = Activity.Current;
         if (currentActivity == null) return;
@@ -344,7 +344,11 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
 
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
-        _propertiesProcessContext(telemetry, processContext);
+        telemetry.Properties.Add("ResourceId", resourceId);
+        telemetry.Properties.Add("ProcessType", processType.ToString());
+        if (resultType.HasValue)
+            telemetry.Properties.Add("ResultType", resultType.Value.ToString());
+        telemetry.Properties.Add("Idx/Total", index?.ToString(CultureInfo.InvariantCulture) + "/" + total?.ToString(CultureInfo.InvariantCulture));
 
         //Exception
         if (exception != null)
@@ -361,7 +365,11 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
 
             //Properties and metrics
             telemetryException.Properties.Add("Tenant", tenant);
-            _propertiesProcessContext(telemetryException, processContext);
+            telemetryException.Properties.Add("ResourceId", resourceId);
+            telemetryException.Properties.Add("ProcessType", processType.ToString());
+            if (resultType.HasValue)
+                telemetryException.Properties.Add("ResultType", resultType.Value.ToString());
+            telemetryException.Properties.Add("Idx/Total", index?.ToString(CultureInfo.InvariantCulture) + "/" + total?.ToString(CultureInfo.InvariantCulture));
 
             this._client.TrackException(telemetryException);
         }
@@ -373,7 +381,7 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
 
     #region FetchResource
     [DiagnosticName("Ark.Tools.ResourceWatcher.FetchResource.Stop")]
-    public override void OnFetchResourceStop(string tenant, ProcessContext processContext, Exception exception)
+    public override void OnFetchResourceStop(string tenant, string resourceId, int? index, int? total, ProcessType processType, Exception exception)
     {
         var currentActivity = Activity.Current;
         if (currentActivity == null) return;
@@ -394,7 +402,9 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
 
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
-        _propertiesProcessContext(telemetry, processContext);
+        telemetry.Properties.Add("ResourceId", resourceId);
+        telemetry.Properties.Add("ProcessType", processType.ToString());
+        telemetry.Properties.Add("Idx/Total", index?.ToString(CultureInfo.InvariantCulture) + "/" + total?.ToString(CultureInfo.InvariantCulture));
 
         //Exception
         if (exception != null)
@@ -411,7 +421,9 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
 
             //Properties and metrics
             telemetryException.Properties.Add("Tenant", tenant);
-            _propertiesProcessContext(telemetryException, processContext);
+            telemetryException.Properties.Add("ResourceId", resourceId);
+            telemetryException.Properties.Add("ProcessType", processType.ToString());
+            telemetryException.Properties.Add("Idx/Total", index?.ToString(CultureInfo.InvariantCulture) + "/" + total?.ToString(CultureInfo.InvariantCulture));
 
             this._client.TrackException(telemetryException);
         }

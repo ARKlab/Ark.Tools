@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using NLog;
 
+using NodaTime;
 using NodaTime.Text;
 
 using System.Diagnostics;
@@ -88,30 +89,20 @@ internal sealed class ResourceWatcherDiagnosticSource
         _logger.Error(ex, $"Check failed for tenant {_tenant} in {activity.Duration}");
     }
 
-    public void RunSuccessful(Activity activity, IList<ProcessContext> evaluated)
+    public void RunSuccessful(Activity activity, Dictionary<ResultType, int> resultCounts)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () =>
         {
-            var total = 0;
-            var counts = evaluated
-                .GroupBy(x => x.ResultType ?? throw new InvalidOperationException("ResultType is null"))
-                .ToDictionary(x => x.Key, x => x.Count());
-            foreach (var k in Enum.GetValues<ResultType>().Cast<ResultType>())
-            {
-                if (!counts.ContainsKey(k))
-                    counts[k] = 0;
-
-                total += counts[k];
-            }
+            var total = resultCounts.Values.Sum();
 
             return new
             {
                 ResourcesFound = total,
-                Normal = counts[ResultType.Normal],
-                NoNewData = counts[ResultType.NoNewData],
-                NoAction = counts[ResultType.NoAction],
-                Error = counts[ResultType.Error],
-                Skipped = counts[ResultType.Skipped],
+                Normal = resultCounts.GetValueOrDefault(ResultType.Normal, 0),
+                NoNewData = resultCounts.GetValueOrDefault(ResultType.NoNewData, 0),
+                NoAction = resultCounts.GetValueOrDefault(ResultType.NoAction, 0),
+                Error = resultCounts.GetValueOrDefault(ResultType.Error, 0),
+                Skipped = resultCounts.GetValueOrDefault(ResultType.Skipped, 0),
                 Tenant = _tenant,
             };
         }
@@ -171,23 +162,18 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
-    public void CheckStateSuccessful(Activity activity, IEnumerable<ProcessContext> evaluated)
+    public void CheckStateSuccessful(Activity activity, Dictionary<ProcessType, int> processCounts)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () =>
         {
-            var counts = evaluated.GroupBy(x => x.ProcessType).ToDictionary(x => x.Key, x => x.Count());
-            foreach (var k in Enum.GetValues<ProcessType>().Cast<ProcessType>())
-                if (!counts.ContainsKey(k))
-                    counts[k] = 0;
-
             return new
             {
-                ResourcesNew = counts[ProcessType.New],
-                ResourcesUpdated = counts[ProcessType.Updated],
-                ResourcesRetried = counts[ProcessType.Retry],
-                ResourcesRetriedAfterBan = counts[ProcessType.RetryAfterBan],
-                ResourcesBanned = counts[ProcessType.Banned],
-                ResourcesNothingToDo = counts[ProcessType.NothingToDo],
+                ResourcesNew = processCounts.GetValueOrDefault(ProcessType.New, 0),
+                ResourcesUpdated = processCounts.GetValueOrDefault(ProcessType.Updated, 0),
+                ResourcesRetried = processCounts.GetValueOrDefault(ProcessType.Retry, 0),
+                ResourcesRetriedAfterBan = processCounts.GetValueOrDefault(ProcessType.RetryAfterBan, 0),
+                ResourcesBanned = processCounts.GetValueOrDefault(ProcessType.Banned, 0),
+                ResourcesNothingToDo = processCounts.GetValueOrDefault(ProcessType.NothingToDo, 0),
                 Tenant = _tenant,
             };
         }
@@ -207,87 +193,114 @@ internal sealed class ResourceWatcherDiagnosticSource
     #endregion
 
     #region ProcessResource
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public Activity ProcessResourceStart(ProcessContext processContext)
+    public Activity ProcessResourceStart(string resourceId, int? index, int? total, int? lastRetryCount, bool isResourceUpdated, string? modifiedSource, LocalDateTime? currentModified, LocalDateTime? lastModified, ProcessType processType)
     {
-        bool result = processContext.IsResourceUpdated(out var infos);
-
-        if (!result)
+        if (!isResourceUpdated)
         {
             _logger.Info(CultureInfo.InvariantCulture, "No changes detected on ResourceId={ResourceId}"
-             , processContext.CurrentInfo.ResourceId
+             , resourceId
             );
         }
         else
         {
             _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) Detected change on ResourceId={ResourceId}, Resource.ModifiedSource={ModifiedSource}, Resource.Modified={Modified}, OldState.Modified={OldModified}, OldState.Retry={OldRetryCount}. Processing..."
-                , processContext.Index
-                , processContext.Total
-                , processContext.CurrentInfo.ResourceId
-                , infos.source ?? string.Empty
-                , infos.current != null ? LocalDateTimePattern.ExtendedIso.Format(infos.current.Value) : "null"
-                , infos.last != null ? LocalDateTimePattern.ExtendedIso.Format(infos.last.Value) : "null"
-                , processContext.LastState?.RetryCount
+                , index
+                , total
+                , resourceId
+                , modifiedSource ?? string.Empty
+                , currentModified != null ? LocalDateTimePattern.ExtendedIso.Format(currentModified.Value) : "null"
+                , lastModified != null ? LocalDateTimePattern.ExtendedIso.Format(lastModified.Value) : "null"
+                , lastRetryCount
             );
         }
 
         Activity activity = ResourceWatcherDiagnosticSource._start("ProcessResource", () => new
         {
-            ProcessContext = processContext,
+            ResourceId = resourceId,
+            Index = index,
+            Total = total,
+            ProcessType = processType,
+            ModifiedSource = modifiedSource,
+            CurrentModified = currentModified,
+            LastModified = lastModified,
             Tenant = _tenant,
         });
 
         return activity;
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public void ProcessResourceFailed(Activity activity, ProcessContext pc, bool isBanned, Exception ex)
+    public void ProcessResourceFailed(Activity activity, string resourceId, int? index, int? total, ProcessType processType, bool isBanned, Exception ex)
     {
         var lvl = isBanned ? LogLevel.Fatal : LogLevel.Warn;
-        _logger.Log(lvl, ex, CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} process Failed", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
+        _logger.Log(lvl, ex, CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} process Failed", index, total, resourceId);
 
         ResourceWatcherDiagnosticSource._stop(activity, () => new
         {
-            ProcessContext = pc,
+            ResourceId = resourceId,
+            Index = index,
+            Total = total,
+            ProcessType = processType,
             Exception = ex,
             Tenant = _tenant,
         });
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public void ProcessResourceSuccessful(Activity activity, ProcessContext pc)
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Anonymous object properties are statically known and safe for trimming")]
+    public void ProcessResourceSuccessful(Activity activity, string resourceId, int? index, int? total, ProcessType processType, ResultType? resultType, int? newRetryCount)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
         {
-            ProcessContext = pc,
+            ResourceId = resourceId,
+            Index = index,
+            Total = total,
+            ProcessType = processType,
+            ResultType = resultType,
             Tenant = _tenant,
         });
 
-        if (pc.ResultType == ResultType.NoNewData)
+        // Emit explicit diagnostic event for listeners that need structured data
+        if (_source.IsEnabled("Ark.Tools.ResourceWatcher.ProcessResource.Stop"))
         {
-            _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} No payload retrived, so no new state. Generally due to a same-checksum", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
+            _source.Write("Ark.Tools.ResourceWatcher.ProcessResource.Stop", new
+            {
+                Tenant = _tenant,
+                ResourceId = resourceId,
+                Index = index,
+                Total = total,
+                ProcessType = processType,
+                ResultType = resultType,
+                NewRetryCount = newRetryCount,
+                Exception = (Exception?)null
+            });
         }
-        else if (pc.ResultType == ResultType.NoAction)
+
+        if (resultType == ResultType.NoNewData)
         {
-            _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} No action has been triggered and payload has not been retrieved. We do not change the state", pc.Index, pc.Total, pc.CurrentInfo.ResourceId);
+            _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} No payload retrived, so no new state. Generally due to a same-checksum", index, total, resourceId);
         }
-        else if (pc.ResultType == ResultType.Normal)
+        else if (resultType == ResultType.NoAction)
         {
-            if (pc.NewState?.RetryCount == 0)
-                _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} handled successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
+            _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} No action has been triggered and payload has not been retrieved. We do not change the state", index, total, resourceId);
+        }
+        else if (resultType == ResultType.Normal)
+        {
+            if (newRetryCount == 0)
+                _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} handled successfully in {Duration}", index, total, resourceId, activity?.Duration);
             else
-                _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} handled not successfully in {Duration}", pc.Index, pc.Total, pc.CurrentInfo.ResourceId, activity?.Duration);
+                _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} handled not successfully in {Duration}", index, total, resourceId, activity?.Duration);
         }
     }
     #endregion
 
     #region FetchResource
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public Activity FetchResourceStart(ProcessContext pc)
+    public Activity FetchResourceStart(string resourceId, int? index, int? total, ProcessType processType)
     {
         Activity activity = ResourceWatcherDiagnosticSource._start("FetchResource", () => new
         {
-            ProcessContext = pc,
+            ResourceId = resourceId,
+            Index = index,
+            Total = total,
+            ProcessType = processType,
             Tenant = _tenant,
         }
         );
@@ -295,29 +308,63 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public void FetchResourceFailed(Activity activity, ProcessContext pc, Exception ex)
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Anonymous object properties are statically known and safe for trimming")]
+    public void FetchResourceFailed(Activity activity, string resourceId, int? index, int? total, ProcessType processType, Exception ex)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
         {
-            ProcessContext = pc,
+            ResourceId = resourceId,
+            Index = index,
+            Total = total,
+            ProcessType = processType,
             Exception = ex,
             Tenant = _tenant,
         }
         );
+
+        // Emit explicit diagnostic event for listeners
+        if (_source.IsEnabled("Ark.Tools.ResourceWatcher.FetchResource.Stop"))
+        {
+            _source.Write("Ark.Tools.ResourceWatcher.FetchResource.Stop", new
+            {
+                Tenant = _tenant,
+                ResourceId = resourceId,
+                Index = index,
+                Total = total,
+                ProcessType = processType,
+                Exception = ex
+            });
+        }
     }
 
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ProcessContext))]
-    public void FetchResourceSuccessful(Activity activity, ProcessContext pc)
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Anonymous object properties are statically known and safe for trimming")]
+    public void FetchResourceSuccessful(Activity activity, string resourceId, int? index, int? total, ProcessType processType)
     {
         //_setTags(activity, processType.ToString(), processType.ToString());
 
         ResourceWatcherDiagnosticSource._stop(activity, () => new
         {
-            ProcessContext = pc,
+            ResourceId = resourceId,
+            Index = index,
+            Total = total,
+            ProcessType = processType,
             Tenant = _tenant,
         }
         );
+
+        // Emit explicit diagnostic event for listeners
+        if (_source.IsEnabled("Ark.Tools.ResourceWatcher.FetchResource.Stop"))
+        {
+            _source.Write("Ark.Tools.ResourceWatcher.FetchResource.Stop", new
+            {
+                Tenant = _tenant,
+                ResourceId = resourceId,
+                Index = index,
+                Total = total,
+                ProcessType = processType,
+                Exception = (Exception?)null
+            });
+        }
     }
     #endregion
 

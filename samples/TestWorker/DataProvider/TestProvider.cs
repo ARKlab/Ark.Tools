@@ -43,7 +43,7 @@ public class TestProvider : IResourceProvider<Test_FileMetadataDto, Test_File, T
         });
     }
 
-    public Task<Test_File?> GetResource(Test_FileMetadataDto metadata, IResourceTrackedState? lastState, CancellationToken ctk = default)
+    public Task<Test_File?> GetResource(Test_FileMetadataDto metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
     {
         return Task.Run<Test_File?>(() =>
         {

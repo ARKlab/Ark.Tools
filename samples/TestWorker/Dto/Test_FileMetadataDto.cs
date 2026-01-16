@@ -10,13 +10,10 @@ public class Test_FileMetadataDto : IResourceMetadata
     public string? FileName { get; set; }
     public LocalDate Date { get; set; }
 
-    string IResourceMetadata.ResourceId => FileName ?? String.Empty;
-    LocalDateTime IResourceMetadata.Modified { get; }
+    string IResourceMetadata<VoidExtensions>.ResourceId => FileName ?? String.Empty;
+    LocalDateTime IResourceMetadata<VoidExtensions>.Modified { get; }
 
-    Dictionary<string, LocalDateTime> IResourceMetadata.ModifiedSources { get; } = new Dictionary<string, LocalDateTime>(StringComparer.Ordinal) { { "Source1", LocalDateTime.FromDateTime(DateTime.UtcNow) } };
+    Dictionary<string, LocalDateTime>? IResourceMetadata<VoidExtensions>.ModifiedSources { get; } = new Dictionary<string, LocalDateTime>(StringComparer.Ordinal) { { "Source1", LocalDateTime.FromDateTime(DateTime.UtcNow) } };
 
-    object IResourceMetadata.Extensions => new
-    {
-        FileName,
-    };
+    VoidExtensions? IResourceMetadata<VoidExtensions>.Extensions => null;
 }
