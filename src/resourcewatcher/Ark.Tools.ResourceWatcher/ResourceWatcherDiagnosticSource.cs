@@ -1,14 +1,11 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-#pragma warning disable IDE0005 // Using directive is unnecessary - false positive, needed for UnconditionalSuppressMessage
-
 using NLog;
 
 using NodaTime;
 using NodaTime.Text;
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.ResourceWatcher;
 

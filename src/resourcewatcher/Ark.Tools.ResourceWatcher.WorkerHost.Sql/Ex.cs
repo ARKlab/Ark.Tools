@@ -55,4 +55,48 @@ public static class Ex
             r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider>() as SqlStateProvider)!.EnsureTableAreCreated();
         });
     }
+
+    /// <summary>
+    /// Use the SqlStateProvider as StateProvider with typed extensions
+    /// </summary>
+    /// <typeparam name="TFile"></typeparam>
+    /// <typeparam name="TMetadata"></typeparam>
+    /// <typeparam name="TQueryFilter"></typeparam>
+    /// <typeparam name="TExtensions"></typeparam>
+    /// <param name="host">The workerHost</param>
+    /// <param name="connectionString">The SQL connectionString</param>
+    public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, TExtensions>
+        (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, string connectionString)
+        where TFile : class, IResource<TMetadata, TExtensions>
+        where TMetadata : class, IResourceMetadata<TExtensions>
+        where TQueryFilter : class, new()
+        where TExtensions : class
+    {
+        host.UseSqlStateProvider(new SqlStateProviderConfig { DbConnectionString = connectionString });
+    }
+
+    /// <summary>
+    /// Use the SqlStateProvider as StateProvider with typed extensions
+    /// </summary>
+    /// <param name="host">The workerHost</param>
+    /// <param name="config">The config</param>
+    public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, TExtensions>
+        (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, ISqlStateProviderConfig config)
+        where TFile : class, IResource<TMetadata, TExtensions>
+        where TMetadata : class, IResourceMetadata<TExtensions>
+        where TQueryFilter : class, new()
+        where TExtensions : class
+    {
+        NodaTimeDapperSqlServer.Setup();
+
+        Dapper.SqlMapper.AddTypeMap(typeof(DateTime), DbType.DateTime2);
+        Dapper.SqlMapper.AddTypeMap(typeof(DateTime?), DbType.DateTime2);
+
+        host.UseStateProvider<SqlStateProvider<TExtensions>>(r =>
+        {
+            r.Container.RegisterSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
+            r.Container.RegisterInstance(config);
+            r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider<TExtensions>>() as SqlStateProvider<TExtensions>)!.EnsureTableAreCreated();
+        });
+    }
 }
