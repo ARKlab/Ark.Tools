@@ -23,15 +23,15 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps;
 public sealed class StateTransitionsSteps : IDisposable
 {
     private readonly ScenarioContext _scenarioContext;
-    private readonly StubResourceProvider _provider = new();
-    private readonly StubResourceProcessor _processor = new();
-    private readonly TestableStateProvider _stateProvider = new();
+    private readonly StubResourceProvider<VoidExtensions> _provider = new();
+    private readonly StubResourceProcessor<VoidExtensions> _processor = new();
+    private readonly TestableStateProvider<VoidExtensions> _stateProvider = new();
     private readonly TestingDiagnosticListener _diagnosticListener = new();
-    private readonly List<StubResourceMetadata> _metadata = [];
-    private readonly Dictionary<string, StubResource> _resources = new(StringComparer.Ordinal);
+    private readonly List<StubResourceMetadata<VoidExtensions>> _metadata = [];
+    private readonly Dictionary<string, StubResource<VoidExtensions>> _resources = new(StringComparer.Ordinal);
     private readonly TestHostConfig _config = new();
     private FakeClock _clock = new(Instant.FromUtc(2024, 1, 15, 12, 0, 0));
-    private WorkerHost<StubResource, StubResourceMetadata, StubQueryFilter>? _workerHost;
+    private WorkerHost<StubResource<VoidExtensions>, StubResourceMetadata<VoidExtensions>, StubQueryFilter, VoidExtensions>? _workerHost;
 
     public StateTransitionsSteps(ScenarioContext scenarioContext)
     {
@@ -81,14 +81,14 @@ public sealed class StateTransitionsSteps : IDisposable
     public void GivenAResourceWithModifiedAndChecksum(string resourceId, string modifiedString, string checksum)
     {
         var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-        var metadata = new StubResourceMetadata
+        var metadata = new StubResourceMetadata<VoidExtensions>
         {
             ResourceId = resourceId,
             Modified = modified,
             ModifiedSources = null
         };
         _metadata.Add(metadata);
-        _resources[resourceId] = new StubResource
+        _resources[resourceId] = new StubResource<VoidExtensions>
         {
             Metadata = metadata,
             Data = $"Data for {resourceId}",
@@ -109,7 +109,7 @@ public sealed class StateTransitionsSteps : IDisposable
         var lastMetadata = _metadata.Last();
         var sources = lastMetadata.ModifiedSources ?? CommonStepHelpers.CreateModifiedSourcesDictionary();
         sources[CommonStepHelpers.NormalizeSourceName(sourceName)] = modified;
-        var updatedMetadata = new StubResourceMetadata
+        var updatedMetadata = new StubResourceMetadata<VoidExtensions>
         {
             ResourceId = lastMetadata.ResourceId,
             Modified = lastMetadata.Modified,
@@ -117,7 +117,7 @@ public sealed class StateTransitionsSteps : IDisposable
             Extensions = lastMetadata.Extensions
         };
         _metadata[^1] = updatedMetadata;
-        _resources[updatedMetadata.ResourceId] = new StubResource
+        _resources[updatedMetadata.ResourceId] = new StubResource<VoidExtensions>
         {
             Metadata = updatedMetadata,
             Data = _resources[updatedMetadata.ResourceId].Data,
@@ -280,7 +280,7 @@ public sealed class StateTransitionsSteps : IDisposable
         // Subscribe to diagnostics before creating the worker host
         System.Diagnostics.DiagnosticListener.AllListeners.Subscribe(_diagnosticListener);
 
-        _workerHost = new WorkerHost<StubResource, StubResourceMetadata, StubQueryFilter>(_config);
+        _workerHost = new WorkerHost<StubResource<VoidExtensions>, StubResourceMetadata<VoidExtensions>, StubQueryFilter, VoidExtensions>(_config);
         _workerHost.UseDataProvider<TestableDataProvider>(d =>
         {
             d.Container.RegisterInstance(_provider);
@@ -291,8 +291,7 @@ public sealed class StateTransitionsSteps : IDisposable
         });
         _workerHost.Use(d =>
         {
-            // Register state provider as both IStateProvider and IStateProvider<VoidExtensions> to ensure proper resolution
-            d.Container.RegisterInstance<IStateProvider>(_stateProvider);
+            // Register state provider
             d.Container.RegisterInstance<IStateProvider<VoidExtensions>>(_stateProvider);
         });
 
@@ -432,34 +431,34 @@ public sealed class StateTransitionsSteps : IDisposable
 /// <summary>
 /// Testable data provider that delegates to StubResourceProvider.
 /// </summary>
-internal sealed class TestableDataProvider : IResourceProvider<StubResourceMetadata, StubResource, StubQueryFilter>
+internal sealed class TestableDataProvider : IResourceProvider<StubResourceMetadata<VoidExtensions>, StubResource<VoidExtensions>, StubQueryFilter, VoidExtensions>
 {
-    private readonly StubResourceProvider _inner;
+    private readonly StubResourceProvider<VoidExtensions> _inner;
 
-    public TestableDataProvider(StubResourceProvider inner)
+    public TestableDataProvider(StubResourceProvider<VoidExtensions> inner)
     {
         _inner = inner;
     }
 
-    public Task<IEnumerable<StubResourceMetadata>> GetMetadata(StubQueryFilter filter, CancellationToken ctk = default)
+    public Task<IEnumerable<StubResourceMetadata<VoidExtensions>>> GetMetadata(StubQueryFilter filter, CancellationToken ctk = default)
         => _inner.GetMetadata(filter, ctk);
 
-    public Task<StubResource?> GetResource(StubResourceMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
+    public Task<StubResource<VoidExtensions>?> GetResource(StubResourceMetadata<VoidExtensions> metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
         => _inner.GetResource(metadata, lastState, ctk);
 }
 
 /// <summary>
 /// Testable processor that delegates to StubResourceProcessor.
 /// </summary>
-internal sealed class TestableProcessor : IResourceProcessor<StubResource, StubResourceMetadata>
+internal sealed class TestableProcessor : IResourceProcessor<StubResource<VoidExtensions>, StubResourceMetadata<VoidExtensions>, VoidExtensions>
 {
-    private readonly StubResourceProcessor _inner;
+    private readonly StubResourceProcessor<VoidExtensions> _inner;
 
-    public TestableProcessor(StubResourceProcessor inner)
+    public TestableProcessor(StubResourceProcessor<VoidExtensions> inner)
     {
         _inner = inner;
     }
 
-    public Task Process(StubResource file, CancellationToken ctk = default)
+    public Task Process(StubResource<VoidExtensions> file, CancellationToken ctk = default)
         => _inner.Process(file, ctk);
 }
