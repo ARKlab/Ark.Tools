@@ -144,7 +144,7 @@ public abstract class ResourceWatcherDiagnosticListenerBase : IObserver<Diagnost
     }
 
     [DiagnosticName("Ark.Tools.ResourceWatcher.FetchResource.Stop")]
-    public virtual void OnFetchResourceStop(string tenant, ProcessContext processContext, Exception exception)
+    public virtual void OnFetchResourceStop(string tenant, string resourceId, int? index, int? total, ProcessType processType, Exception exception)
     {
 
     }
@@ -160,7 +160,7 @@ public abstract class ResourceWatcherDiagnosticListenerBase : IObserver<Diagnost
     }
 
     [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
-    public virtual void OnProcessResourceStop(string tenant, ProcessContext processContext, Exception exception)
+    public virtual void OnProcessResourceStop(string tenant, string resourceId, int? index, int? total, ProcessType processType, ResultType? resultType, int? newRetryCount, Exception exception)
     {
 
     }

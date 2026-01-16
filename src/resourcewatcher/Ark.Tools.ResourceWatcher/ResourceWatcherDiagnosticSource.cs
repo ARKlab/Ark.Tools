@@ -1,11 +1,14 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#pragma warning disable IDE0005 // Using directive is unnecessary - false positive, needed for UnconditionalSuppressMessage
+
 using NLog;
 
 using NodaTime;
 using NodaTime.Text;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.Tools.ResourceWatcher;
 
@@ -245,6 +248,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         });
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Anonymous object properties are statically known and safe for trimming")]
     public void ProcessResourceSuccessful(Activity activity, string resourceId, int? index, int? total, ProcessType processType, ResultType? resultType, int? newRetryCount)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -256,6 +260,22 @@ internal sealed class ResourceWatcherDiagnosticSource
             ResultType = resultType,
             Tenant = _tenant,
         });
+
+        // Emit explicit diagnostic event for listeners that need structured data
+        if (_source.IsEnabled("Ark.Tools.ResourceWatcher.ProcessResource.Stop"))
+        {
+            _source.Write("Ark.Tools.ResourceWatcher.ProcessResource.Stop", new
+            {
+                Tenant = _tenant,
+                ResourceId = resourceId,
+                Index = index,
+                Total = total,
+                ProcessType = processType,
+                ResultType = resultType,
+                NewRetryCount = newRetryCount,
+                Exception = (Exception?)null
+            });
+        }
 
         if (resultType == ResultType.NoNewData)
         {
@@ -291,6 +311,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         return activity;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Anonymous object properties are statically known and safe for trimming")]
     public void FetchResourceFailed(Activity activity, string resourceId, int? index, int? total, ProcessType processType, Exception ex)
     {
         ResourceWatcherDiagnosticSource._stop(activity, () => new
@@ -303,8 +324,23 @@ internal sealed class ResourceWatcherDiagnosticSource
             Tenant = _tenant,
         }
         );
+
+        // Emit explicit diagnostic event for listeners
+        if (_source.IsEnabled("Ark.Tools.ResourceWatcher.FetchResource.Stop"))
+        {
+            _source.Write("Ark.Tools.ResourceWatcher.FetchResource.Stop", new
+            {
+                Tenant = _tenant,
+                ResourceId = resourceId,
+                Index = index,
+                Total = total,
+                ProcessType = processType,
+                Exception = ex
+            });
+        }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Anonymous object properties are statically known and safe for trimming")]
     public void FetchResourceSuccessful(Activity activity, string resourceId, int? index, int? total, ProcessType processType)
     {
         //_setTags(activity, processType.ToString(), processType.ToString());
@@ -318,6 +354,20 @@ internal sealed class ResourceWatcherDiagnosticSource
             Tenant = _tenant,
         }
         );
+
+        // Emit explicit diagnostic event for listeners
+        if (_source.IsEnabled("Ark.Tools.ResourceWatcher.FetchResource.Stop"))
+        {
+            _source.Write("Ark.Tools.ResourceWatcher.FetchResource.Stop", new
+            {
+                Tenant = _tenant,
+                ResourceId = resourceId,
+                Index = index,
+                Total = total,
+                ProcessType = processType,
+                Exception = (Exception?)null
+            });
+        }
     }
     #endregion
 

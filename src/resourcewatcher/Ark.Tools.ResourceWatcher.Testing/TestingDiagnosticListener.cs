@@ -131,20 +131,20 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     }
 
     [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResource.Stop")]
-    public override void OnProcessResourceStop(string tenant, ProcessContext processContext, Exception exception)
+    public override void OnProcessResourceStop(string tenant, string resourceId, int? index, int? total, ProcessType processType, ResultType? resultType, int? newRetryCount, Exception exception)
     {
         var result = new ResourceProcessingResult
         {
             Tenant = tenant,
-            ResourceId = processContext.CurrentInfo.ResourceId,
-            ProcessType = processContext.ProcessType,
-            ResultType = processContext.ResultType,
+            ResourceId = resourceId,
+            ProcessType = processType,
+            ResultType = resultType,
             Exception = exception,
-            Index = processContext.Index,
-            Total = processContext.Total
+            Index = index,
+            Total = total
         };
 
-        _results.AddOrUpdate(processContext.CurrentInfo.ResourceId, result, (k, v) => result);
+        _results.AddOrUpdate(resourceId, result, (k, v) => result);
     }
 
     [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
