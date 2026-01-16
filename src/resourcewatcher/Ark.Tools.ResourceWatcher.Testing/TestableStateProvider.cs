@@ -10,16 +10,18 @@ namespace Ark.Tools.ResourceWatcher.Testing;
 /// A testable state provider that extends InMemStateProvider with tenant filtering,
 /// assertion helpers, and the ability to pre-populate and inspect state for testing.
 /// </summary>
-public class TestableStateProvider : IStateProvider
+/// <typeparam name="TExtensions">The type of extension data stored with each resource state.</typeparam>
+public class TestableStateProvider<TExtensions> : IStateProvider<TExtensions>
+    where TExtensions : class
 {
-    private readonly ConcurrentDictionary<(string Tenant, string ResourceId), ResourceState<VoidExtensions>> _store = new();
+    private readonly ConcurrentDictionary<(string Tenant, string ResourceId), ResourceState<TExtensions>> _store = new();
 
     /// <summary>
     /// Loads state for the given tenant and optional resource IDs.
     /// </summary>
-    public Task<IEnumerable<ResourceState<VoidExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
+    public Task<IEnumerable<ResourceState<TExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
     {
-        IEnumerable<ResourceState<VoidExtensions>> res;
+        IEnumerable<ResourceState<TExtensions>> res;
 
         if (resourceIds == null)
         {
@@ -38,7 +40,7 @@ public class TestableStateProvider : IStateProvider
     /// <summary>
     /// Saves state for the given resources.
     /// </summary>
-    public Task SaveStateAsync(IEnumerable<ResourceState<VoidExtensions>> states, CancellationToken ctk = default)
+    public Task SaveStateAsync(IEnumerable<ResourceState<TExtensions>> states, CancellationToken ctk = default)
     {
         foreach (var s in states)
         {
@@ -54,7 +56,7 @@ public class TestableStateProvider : IStateProvider
     /// <summary>
     /// Gets the state for a specific resource, or null if not found.
     /// </summary>
-    public ResourceState<VoidExtensions>? GetState(string tenant, string resourceId)
+    public ResourceState<TExtensions>? GetState(string tenant, string resourceId)
     {
         _store.TryGetValue((tenant, resourceId), out var state);
         return state;
@@ -64,14 +66,14 @@ public class TestableStateProvider : IStateProvider
     /// Gets the state for a resource in the default tenant.
     /// This is a convenience method for single-tenant testing scenarios.
     /// </summary>
-    public ResourceState<VoidExtensions>? GetResourceState(string tenant, string resourceId) => GetState(tenant, resourceId);
+    public ResourceState<TExtensions>? GetResourceState(string tenant, string resourceId) => GetState(tenant, resourceId);
 
     /// <summary>
     /// Sets state for a resource. Convenience method for testing.
     /// </summary>
-    public void SetResourceState(string tenant, ResourceState<VoidExtensions> state)
+    public void SetResourceState(string tenant, ResourceState<TExtensions> state)
     {
-        var stateWithTenant = new ResourceState<VoidExtensions>
+        var stateWithTenant = new ResourceState<TExtensions>
         {
             Tenant = tenant,
             ResourceId = state.ResourceId,
@@ -88,7 +90,7 @@ public class TestableStateProvider : IStateProvider
     /// <summary>
     /// Gets all states for a tenant.
     /// </summary>
-    public IReadOnlyList<ResourceState<VoidExtensions>> GetAllStates(string tenant)
+    public IReadOnlyList<ResourceState<TExtensions>> GetAllStates(string tenant)
     {
         return _store.Values.Where(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal)).ToList();
     }
@@ -96,7 +98,7 @@ public class TestableStateProvider : IStateProvider
     /// <summary>
     /// Sets state directly for testing purposes.
     /// </summary>
-    public void SetState(ResourceState<VoidExtensions> state)
+    public void SetState(ResourceState<TExtensions> state)
     {
         var key = (state.Tenant ?? string.Empty, state.ResourceId);
         _store.AddOrUpdate(key, state, (k, v) => state);
@@ -113,9 +115,10 @@ public class TestableStateProvider : IStateProvider
         string? checkSum,
         int retryCount,
         Instant lastEvent,
-        Instant? retrievedAt = null)
+        Instant? retrievedAt = null,
+        TExtensions? extensions = null)
     {
-        var state = new ResourceState<VoidExtensions>
+        var state = new ResourceState<TExtensions>
         {
             Tenant = tenant,
             ResourceId = resourceId,
@@ -124,7 +127,8 @@ public class TestableStateProvider : IStateProvider
             CheckSum = checkSum,
             RetryCount = retryCount,
             LastEvent = lastEvent,
-            RetrievedAt = retrievedAt
+            RetrievedAt = retrievedAt,
+            Extensions = extensions
         };
         SetState(state);
     }
@@ -185,4 +189,12 @@ public class TestableStateProvider : IStateProvider
     }
 
     #endregion
+}
+
+/// <summary>
+/// Non-generic proxy class for backward compatibility.
+/// Inherits from <see cref="TestableStateProvider{TExtensions}"/> with <see cref="VoidExtensions"/>.
+/// </summary>
+public class TestableStateProvider : TestableStateProvider<VoidExtensions>
+{
 }

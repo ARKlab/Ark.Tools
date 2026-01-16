@@ -10,7 +10,9 @@ namespace Ark.Tools.ResourceWatcher.Testing;
 /// Stub resource metadata for testing purposes.
 /// Implements all IResourceMetadata properties with testable defaults.
 /// </summary>
-public sealed class StubResourceMetadata : IResourceMetadata
+/// <typeparam name="TExtensions">The type of extension data stored with the resource metadata.</typeparam>
+public class StubResourceMetadata<TExtensions> : IResourceMetadata<TExtensions>
+    where TExtensions : class
 {
     /// <summary>
     /// Gets or sets the resource identifier.
@@ -30,16 +32,16 @@ public sealed class StubResourceMetadata : IResourceMetadata
     /// <summary>
     /// Gets or sets extension data for the resource.
     /// </summary>
-    public VoidExtensions? Extensions { get; init; }
+    public TExtensions? Extensions { get; init; }
 
     /// <summary>
     /// Creates a new metadata with incremented Modified time.
     /// </summary>
     /// <param name="increment">The time increment to add.</param>
     /// <returns>A new metadata instance with updated timestamp.</returns>
-    public StubResourceMetadata WithIncrement(Duration increment)
+    public StubResourceMetadata<TExtensions> WithIncrement(Duration increment)
     {
-        return new StubResourceMetadata
+        return new StubResourceMetadata<TExtensions>
         {
             ResourceId = ResourceId,
             Modified = Modified.PlusTicks((long)increment.TotalTicks),
@@ -54,12 +56,12 @@ public sealed class StubResourceMetadata : IResourceMetadata
     /// <param name="source">The source identifier.</param>
     /// <param name="modified">The new modified timestamp for the source.</param>
     /// <returns>A new metadata instance with updated source timestamp.</returns>
-    public StubResourceMetadata WithSourceModified(string source, LocalDateTime modified)
+    public StubResourceMetadata<TExtensions> WithSourceModified(string source, LocalDateTime modified)
     {
         var sources = ModifiedSources != null
             ? new Dictionary<string, LocalDateTime>(ModifiedSources, StringComparer.Ordinal) { [source] = modified }
             : new Dictionary<string, LocalDateTime>(StringComparer.Ordinal) { [source] = modified };
-        return new StubResourceMetadata
+        return new StubResourceMetadata<TExtensions>
         {
             ResourceId = ResourceId,
             Modified = Modified,
@@ -67,4 +69,12 @@ public sealed class StubResourceMetadata : IResourceMetadata
             Extensions = Extensions
         };
     }
+}
+
+/// <summary>
+/// Non-generic proxy class for backward compatibility.
+/// Inherits from <see cref="StubResourceMetadata{TExtensions}"/> with <see cref="VoidExtensions"/>.
+/// </summary>
+public sealed class StubResourceMetadata : StubResourceMetadata<VoidExtensions>
+{
 }
