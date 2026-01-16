@@ -55,8 +55,8 @@
       },
       "Auth0.Core": {
         "type": "Transitive",
-        "resolved": "7.43.0",
-        "contentHash": "1IzTrS5jNA87Bp+PVI44ZaZ+YTkC5NDZr9GYrKA/DLt2Bkqb2oAW6fwxuiajXwNfIDbkJIpIFTTYjSnmIZMBeQ==",
+        "resolved": "7.43.1",
+        "contentHash": "skXgPKcn3/g+1TeBReW/n/lawjENbOr6sQT4WzVILyJ4dUh9rdlsfJKZUq9hCleW8owW/cplA9LbJEWZMO5cWA==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
@@ -740,8 +740,8 @@
       "ark.tools.aspnetcore.auth0": {
         "type": "Project",
         "dependencies": {
-          "Auth0.AuthenticationApi": "[7.43.0, )",
-          "Auth0.ManagementApi": "[7.43.0, )",
+          "Auth0.AuthenticationApi": "[7.43.1, )",
+          "Auth0.ManagementApi": "[7.43.1, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.2, )",
           "Polly": "[8.6.5, )"
         }
@@ -1040,22 +1040,22 @@
       },
       "Auth0.AuthenticationApi": {
         "type": "CentralTransitive",
-        "requested": "[7.43.0, )",
-        "resolved": "7.43.0",
-        "contentHash": "i7Mp7q58kA+/f2EEbbsVCFyBRATKBNM/oF7GPhfRPBAcKN1O8kvL2bhNeNUDJiuuENsOzfVkeN41lxEVbGL3qA==",
+        "requested": "[7.43.1, )",
+        "resolved": "7.43.1",
+        "contentHash": "GILKa7kVUnQferegYRgVBkS3JZr6kPdR7x3LLJu5P3xMXN9+/mHNYCRG9Xo6+wah/gf33nCmpfbMA9yiEgbJzA==",
         "dependencies": {
-          "Auth0.Core": "7.43.0",
+          "Auth0.Core": "7.43.1",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.15.0",
           "System.IdentityModel.Tokens.Jwt": "8.15.0"
         }
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[7.43.0, )",
-        "resolved": "7.43.0",
-        "contentHash": "AYzV82i7RpPAHVGe7GaW4McYgk03AbZ0+RPMcMoV9VU4l7oZ/88G20NYkWZEH4DbTQsD5RXdGFN4flw95pIi5w==",
+        "requested": "[7.43.1, )",
+        "resolved": "7.43.1",
+        "contentHash": "K8RMnz/MNazi7I+LhvDKwzXVGaTHA5yTLWd3AcL757AZtNocIIPFgY4CH0kDOEITsPErFHI/wbx7PVRCiMrcZw==",
         "dependencies": {
-          "Auth0.Core": "7.43.0"
+          "Auth0.Core": "7.43.1"
         }
       },
       "Azure.Extensions.AspNetCore.Configuration.Secrets": {
