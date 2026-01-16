@@ -10,10 +10,12 @@ namespace Ark.Tools.ResourceWatcher.Testing;
 /// Stub resource provider that returns preconfigured resources.
 /// Allows control over what resources are returned and simulating failures.
 /// </summary>
-public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadata, StubResource, StubQueryFilter>
+/// <typeparam name="TExtensions">The type of extension data stored with the resource metadata.</typeparam>
+public class StubResourceProvider<TExtensions> : IResourceProvider<StubResourceMetadata<TExtensions>, StubResource<TExtensions>, StubQueryFilter, TExtensions>
+    where TExtensions : class
 {
-    private readonly List<StubResourceMetadata> _metadata = [];
-    private readonly Dictionary<string, StubResource> _resources = [];
+    private readonly List<StubResourceMetadata<TExtensions>> _metadata = [];
+    private readonly Dictionary<string, StubResource<TExtensions>> _resources = [];
     private readonly HashSet<string> _failOnFetch = [];
     private readonly Dictionary<string, string> _returnNullOnChecksum = [];
     private Func<Exception>? _listException;
@@ -37,7 +39,7 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
     /// Configures the provider with metadata to be returned by GetMetadata.
     /// </summary>
     /// <param name="metadata">The metadata to return.</param>
-    public void SetMetadata(IEnumerable<StubResourceMetadata> metadata)
+    public void SetMetadata(IEnumerable<StubResourceMetadata<TExtensions>> metadata)
     {
         _metadata.Clear();
         _metadata.AddRange(metadata);
@@ -47,7 +49,7 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
     /// Configures the provider with a resource to be returned by GetResource.
     /// </summary>
     /// <param name="resource">The resource to return.</param>
-    public void SetResource(StubResource resource)
+    public void SetResource(StubResource<TExtensions> resource)
     {
         _resources[resource.Metadata.ResourceId] = resource;
     }
@@ -56,7 +58,7 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
     /// Configures multiple resources at once.
     /// </summary>
     /// <param name="resources">The resources to configure.</param>
-    public void SetResources(IEnumerable<StubResource> resources)
+    public void SetResources(IEnumerable<StubResource<TExtensions>> resources)
     {
         foreach (var resource in resources)
         {
@@ -108,7 +110,7 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
     }
 
     /// <inheritdoc/>
-    public Task<IEnumerable<StubResourceMetadata>> GetMetadata(StubQueryFilter filter, CancellationToken ctk = default)
+    public Task<IEnumerable<StubResourceMetadata<TExtensions>>> GetMetadata(StubQueryFilter filter, CancellationToken ctk = default)
     {
         ListCallCount++;
 
@@ -117,7 +119,7 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
             throw _listException();
         }
 
-        IEnumerable<StubResourceMetadata> result = _metadata;
+        IEnumerable<StubResourceMetadata<TExtensions>> result = _metadata;
 
         if (!string.IsNullOrEmpty(filter.ResourceIdPattern))
         {
@@ -128,7 +130,7 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
     }
 
     /// <inheritdoc/>
-    public Task<StubResource?> GetResource(StubResourceMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
+    public Task<StubResource<TExtensions>?> GetResource(StubResourceMetadata<TExtensions> metadata, IResourceTrackedState<TExtensions>? lastState, CancellationToken ctk = default)
     {
         FetchCallCount++;
         FetchedResourceIds.Add(metadata.ResourceId);
@@ -142,14 +144,22 @@ public sealed class StubResourceProvider : IResourceProvider<StubResourceMetadat
         if (_returnNullOnChecksum.TryGetValue(metadata.ResourceId, out var checksum) &&
             lastState?.CheckSum == checksum)
         {
-            return Task.FromResult<StubResource?>(null);
+            return Task.FromResult<StubResource<TExtensions>?>(null);
         }
 
         if (_resources.TryGetValue(metadata.ResourceId, out var resource))
         {
-            return Task.FromResult<StubResource?>(resource);
+            return Task.FromResult<StubResource<TExtensions>?>(resource);
         }
 
         throw new KeyNotFoundException($"Resource not found: {metadata.ResourceId}");
     }
+}
+
+/// <summary>
+/// Non-generic proxy class for backward compatibility.
+/// Inherits from <see cref="StubResourceProvider{TExtensions}"/> with <see cref="VoidExtensions"/>.
+/// </summary>
+public sealed class StubResourceProvider : StubResourceProvider<VoidExtensions>
+{
 }

@@ -9,7 +9,9 @@ namespace Ark.Tools.ResourceWatcher.Testing;
 /// <summary>
 /// Stub resource processor that tracks processed resources and allows simulating failures.
 /// </summary>
-public sealed class StubResourceProcessor : IResourceProcessor<StubResource, StubResourceMetadata>
+/// <typeparam name="TExtensions">The type of extension data stored with the resource metadata.</typeparam>
+public class StubResourceProcessor<TExtensions> : IResourceProcessor<StubResource<TExtensions>, StubResourceMetadata<TExtensions>, TExtensions>
+    where TExtensions : class
 {
     private readonly HashSet<string> _failOnProcess = [];
 
@@ -26,7 +28,7 @@ public sealed class StubResourceProcessor : IResourceProcessor<StubResource, Stu
     /// <summary>
     /// Gets the list of resources that were processed.
     /// </summary>
-    public List<StubResource> ProcessedResources { get; } = [];
+    public List<StubResource<TExtensions>> ProcessedResources { get; } = [];
 
     /// <summary>
     /// Configures a resource ID to fail on process.
@@ -49,7 +51,7 @@ public sealed class StubResourceProcessor : IResourceProcessor<StubResource, Stu
     }
 
     /// <inheritdoc/>
-    public Task Process(StubResource file, CancellationToken ctk = default)
+    public Task Process(StubResource<TExtensions> file, CancellationToken ctk = default)
     {
         ProcessCallCount++;
         ProcessedResourceIds.Add(file.Metadata.ResourceId);
@@ -62,4 +64,12 @@ public sealed class StubResourceProcessor : IResourceProcessor<StubResource, Stu
 
         return Task.CompletedTask;
     }
+}
+
+/// <summary>
+/// Non-generic proxy class for backward compatibility.
+/// Inherits from <see cref="StubResourceProcessor{TExtensions}"/> with <see cref="VoidExtensions"/>.
+/// </summary>
+public sealed class StubResourceProcessor : StubResourceProcessor<VoidExtensions>
+{
 }
