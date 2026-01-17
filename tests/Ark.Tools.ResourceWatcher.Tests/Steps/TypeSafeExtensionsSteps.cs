@@ -1,10 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
-using Ark.Tools.Nodatime.Dapper;
 using Ark.Tools.ResourceWatcher.Testing;
 using Ark.Tools.ResourceWatcher.Tests.Init;
-using Ark.Tools.Sql;
-using Ark.Tools.Sql.SqlServer;
 
 using AwesomeAssertions;
 
@@ -24,17 +21,17 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps;
 /// <summary>
 /// Step definitions for type-safe extensions tests.
 /// Tests both VoidExtensions and strongly-typed TestExtensions.
+/// Follows Driver pattern with injected context for state management.
 /// </summary>
 [Binding]
 [Scope(Tag = "typesafe-extensions")]
 public sealed class TypeSafeExtensionsSteps : IDisposable
 {
     private readonly ScenarioContext _scenarioContext;
+    private readonly SqlStateProviderContext _dbContext;
     private SqlStateProvider<VoidExtensions>? _voidStateProvider;
     private SqlStateProvider<TestExtensions>? _typedStateProvider;
     private readonly Dictionary<string, object> _namedProviders = [];
-    private SqlStateProviderConfig? _config;
-    private IDbConnectionManager? _connectionManager;
     
     private readonly List<ResourceState<VoidExtensions>> _voidStatesToSave = [];
     private readonly List<ResourceState<TestExtensions>> _typedStatesToSave = [];
@@ -46,53 +43,26 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     private ResourceState<TestExtensions>? _currentTypedState;
     
     private readonly Instant _now = SystemClock.Instance.GetCurrentInstant();
-    private readonly string _testRunId = Guid.NewGuid().ToString("N")[..8];
 
-    public TypeSafeExtensionsSteps(ScenarioContext scenarioContext)
+    // Expose current states for potential injection by other step classes
+    public ResourceState<VoidExtensions>? CurrentVoid => _currentVoidState;
+    public ResourceState<TestExtensions>? CurrentTyped => _currentTypedState;
+
+    public TypeSafeExtensionsSteps(ScenarioContext scenarioContext, SqlStateProviderContext dbContext)
     {
         _scenarioContext = scenarioContext;
-    }
-
-    private string _getUniqueTenant(string baseTenant)
-    {
-        return string.Create(CultureInfo.InvariantCulture, $"{baseTenant}-{_testRunId}");
+        _dbContext = dbContext;
     }
 
     [Given(@"a SQL Server database is available for type-safe extensions")]
     public void GivenASqlServerDatabaseIsAvailableForTypeSafeExtensions()
     {
-        NodaTimeDapper.Setup();
-
-        var connectionString = TestHost.Configuration["ConnectionStrings:SqlServer"];
-        connectionString.Should().NotBeNullOrEmpty("SQL Server connection string must be configured");
-
-        _config = new SqlStateProviderConfig
-        {
-            DbConnectionString = connectionString!
-        };
-
-        // Ensure database exists
-        var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
-        var dbName = builder.InitialCatalog;
-        builder.InitialCatalog = "master";
-
-        using var masterConn = new Microsoft.Data.SqlClient.SqlConnection(builder.ConnectionString);
-        masterConn.Open();
-        masterConn.Execute(string.Create(CultureInfo.InvariantCulture, $@"
-            IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'{dbName}')
-            BEGIN
-                CREATE DATABASE [{dbName}]
-            END"));
-
-        _connectionManager = new SqlConnectionManager();
+        _dbContext.InitializeDatabase();
     }
 
     [Given(@"the database schema is prepared")]
     public void GivenTheDatabaseSchemaIsPrepared()
     {
-        _config.Should().NotBeNull();
-        _connectionManager.Should().NotBeNull();
-
         // Schema is already initialized in TestHost.BeforeTestRun()
         // No need to call EnsureTableAreCreated() here - avoids race conditions
     }
@@ -102,26 +72,20 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Given(@"a SqlStateProvider configured for VoidExtensions")]
     public void GivenASqlStateProviderConfiguredForVoidExtensions()
     {
-        _config.Should().NotBeNull();
-        _connectionManager.Should().NotBeNull();
-        
-        _voidStateProvider = new SqlStateProvider<VoidExtensions>(_config!, _connectionManager!);
+        _voidStateProvider = new SqlStateProvider<VoidExtensions>(_dbContext.Config, _dbContext.ConnectionManager);
     }
 
     [Given(@"a SqlStateProvider configured for VoidExtensions as ""(.*)""")]
     public void GivenASqlStateProviderConfiguredForVoidExtensionsAs(string providerName)
     {
-        _config.Should().NotBeNull();
-        _connectionManager.Should().NotBeNull();
-        
-        var provider = new SqlStateProvider<VoidExtensions>(_config!, _connectionManager!);
+        var provider = new SqlStateProvider<VoidExtensions>(_dbContext.Config, _dbContext.ConnectionManager);
         _namedProviders[providerName] = provider;
     }
 
     [Given(@"a resource state with VoidExtensions for tenant ""(.*)"" and resource ""(.*)""")]
     public void GivenAResourceStateWithVoidExtensionsForTenantAndResource(string tenant, string resourceId, DataTable table)
     {
-        tenant = _getUniqueTenant(tenant);
+        tenant = _dbContext.GetUniqueTenant(tenant);
         var data = table.CreateInstance<StateDataRow>();
 
         _currentVoidState = new ResourceState<VoidExtensions>
@@ -143,33 +107,27 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Given(@"a SqlStateProvider configured for typed extensions")]
     public void GivenASqlStateProviderConfiguredForTypedExtensions()
     {
-        _config.Should().NotBeNull();
-        _connectionManager.Should().NotBeNull();
-        
         // Create config with JSON context for TestExtensions
         var configWithContext = new SqlStateProviderConfigWithContext
         {
-            DbConnectionString = _config!.DbConnectionString,
+            DbConnectionString = _dbContext.Config.DbConnectionString,
             ExtensionsJsonContext = TestExtensionsJsonContext.Default
         };
         
-        _typedStateProvider = new SqlStateProvider<TestExtensions>(configWithContext, _connectionManager!);
+        _typedStateProvider = new SqlStateProvider<TestExtensions>(configWithContext, _dbContext.ConnectionManager);
     }
 
     [Given(@"a SqlStateProvider configured for typed extensions as ""(.*)""")]
     public void GivenASqlStateProviderConfiguredForTypedExtensionsAs(string providerName)
     {
-        _config.Should().NotBeNull();
-        _connectionManager.Should().NotBeNull();
-        
         // Create config with JSON context for TestExtensions
         var configWithContext = new SqlStateProviderConfigWithContext
         {
-            DbConnectionString = _config!.DbConnectionString,
+            DbConnectionString = _dbContext.Config.DbConnectionString,
             ExtensionsJsonContext = TestExtensionsJsonContext.Default
         };
         
-        var provider = new SqlStateProvider<TestExtensions>(configWithContext, _connectionManager!);
+        var provider = new SqlStateProvider<TestExtensions>(configWithContext, _dbContext.ConnectionManager);
         _namedProviders[providerName] = provider;
     }
 
@@ -185,7 +143,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Given(@"a resource state with typed extensions for tenant ""(.*)"" and resource ""(.*)""")]
     public void GivenAResourceStateWithTypedExtensionsForTenantAndResource(string tenant, string resourceId, DataTable table)
     {
-        tenant = _getUniqueTenant(tenant);
+        tenant = _dbContext.GetUniqueTenant(tenant);
         var data = table.CreateInstance<StateDataRow>();
 
         _currentTypedState = new ResourceState<TestExtensions>
@@ -365,7 +323,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public async Task WhenILoadVoidExtensionsStateForTenant(string tenant)
     {
         _voidStateProvider.Should().NotBeNull();
-        tenant = _getUniqueTenant(tenant);
+        tenant = _dbContext.GetUniqueTenant(tenant);
         
         _loadedVoidStates = await _voidStateProvider!.LoadStateAsync(tenant, null, CancellationToken.None);
     }
@@ -374,7 +332,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public async Task WhenILoadTypedExtensionsStateForTenant(string tenant)
     {
         _typedStateProvider.Should().NotBeNull();
-        tenant = _getUniqueTenant(tenant);
+        tenant = _dbContext.GetUniqueTenant(tenant);
         
         _loadedTypedStates = await _typedStateProvider!.LoadStateAsync(tenant, null, CancellationToken.None);
     }
@@ -398,10 +356,9 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"the Extensions column in database should be null for ""(.*)""")]
     public void ThenTheExtensionsColumnInDatabaseShouldBeNullFor(string resourceId)
     {
-        _config.Should().NotBeNull();
         _currentVoidState.Should().NotBeNull();
         
-        using var conn = new Microsoft.Data.SqlClient.SqlConnection(_config!.DbConnectionString);
+        using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
         var extensionsJson = conn.QuerySingleOrDefault<string>(
             "SELECT ExtensionsJson FROM [State] WHERE Tenant = @Tenant AND ResourceId = @ResourceId",
             new { Tenant = _currentVoidState!.Tenant, ResourceId = _currentVoidState.ResourceId });
@@ -523,7 +480,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _namedProviders.Should().ContainKey(providerName);
         var provider = (SqlStateProvider<VoidExtensions>)_namedProviders[providerName];
-        tenant = _getUniqueTenant(tenant);
+        tenant = _dbContext.GetUniqueTenant(tenant);
         
         var states = await provider.LoadStateAsync(tenant, [resourceId], CancellationToken.None);
         states.Should().NotBeEmpty();
@@ -539,7 +496,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _namedProviders.Should().ContainKey(providerName);
         var provider = (SqlStateProvider<TestExtensions>)_namedProviders[providerName];
-        tenant = _getUniqueTenant(tenant);
+        tenant = _dbContext.GetUniqueTenant(tenant);
         
         var states = await provider.LoadStateAsync(tenant, [resourceId], CancellationToken.None);
         states.Should().NotBeEmpty();
