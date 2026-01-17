@@ -5,6 +5,8 @@ using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 using Ark.Tools.Sql.SqlServer;
 
+using Dapper;
+
 using Microsoft.Extensions.Configuration;
 
 using NodaTime;
@@ -68,7 +70,22 @@ public sealed class TestHost
         {
             lock (DbSetupLock.Instance)
             {
-                // Use VoidExtensions provider to create schema (works for all extension types)
+                // First, ensure the database exists by connecting to master
+                var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+                var dbName = builder.InitialCatalog;
+                builder.InitialCatalog = "master";
+
+                using (var masterConn = new Microsoft.Data.SqlClient.SqlConnection(builder.ConnectionString))
+                {
+                    masterConn.Open();
+                    masterConn.Execute(string.Create(CultureInfo.InvariantCulture, $@"
+                        IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'{dbName}')
+                        BEGIN
+                            CREATE DATABASE [{dbName}]
+                        END"));
+                }
+
+                // Now use VoidExtensions provider to create tables (database exists now)
                 var config = new TestSqlStateProviderConfig
                 {
                     DbConnectionString = connectionString
@@ -76,7 +93,7 @@ public sealed class TestHost
                 var connManager = new SqlConnectionManager();
                 var provider = new SqlStateProvider<VoidExtensions>(config, connManager);
                 
-                // Ensure database and tables exist
+                // Ensure tables exist
                 provider.EnsureTableAreCreated();
                 _dbSchemaInitialized = true;
             }
