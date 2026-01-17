@@ -31,9 +31,9 @@ public sealed class BlobQueryFilter
 
 /// <summary>
 /// Resource provider that lists and fetches blobs from an external blob storage API.
-/// Demonstrates incremental loading using strongly-typed <see cref="BlobExtensions"/>.
+/// Demonstrates incremental loading using strongly-typed <see cref="MyExtensions"/>.
 /// </summary>
-public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, MyResource, BlobQueryFilter, BlobExtensions>
+public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, MyResource, BlobQueryFilter, MyExtensions>
 {
     private readonly IFlurlClient _client;
     private readonly IClock _clock;
@@ -89,7 +89,7 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
     /// We also use the ETag to detect if the blob has changed at all, avoiding
     /// unnecessary downloads when the blob is unchanged.
     /// </remarks>
-    public async Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState<BlobExtensions>? lastState, CancellationToken ctk = default)
+    public async Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState<MyExtensions>? lastState, CancellationToken ctk = default)
     {
         // Access typed extensions with compile-time safety and IntelliSense support
         var lastETag = lastState?.Extensions?.LastETag;
@@ -143,10 +143,10 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
                 ContentType = metadata.ContentType,
                 Size = metadata.Size,
                 // Update extensions with new tracking information
-                // ✅ Type-safe: compiler ensures we're using BlobExtensions, not object
+                // ✅ Type-safe: compiler ensures we're using MyExtensions, not object
                 // ✅ IntelliSense: IDE autocompletes available properties
                 // ✅ Refactoring: renaming properties is safe across the codebase
-                Extensions = new BlobExtensions
+                Extensions = new MyExtensions
                 {
                     LastProcessedOffset = newOffset,
                     LastETag = currentETag,

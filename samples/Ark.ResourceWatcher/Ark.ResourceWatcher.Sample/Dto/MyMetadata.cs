@@ -7,9 +7,9 @@ namespace Ark.ResourceWatcher.Sample.Dto;
 
 /// <summary>
 /// Metadata for a blob resource in external storage.
-/// Uses strongly-typed <see cref="BlobExtensions"/> for incremental loading support.
+/// Uses strongly-typed <see cref="MyExtensions"/> for incremental loading support.
 /// </summary>
-public sealed class MyMetadata : IResourceMetadata<BlobExtensions>
+public sealed class MyMetadata : IResourceMetadata<MyExtensions>
 {
     /// <summary>
     /// Gets the unique identifier for the blob (typically the blob path).
@@ -30,7 +30,7 @@ public sealed class MyMetadata : IResourceMetadata<BlobExtensions>
     /// Gets strongly-typed extension data for incremental loading.
     /// Supports tracking byte offsets, ETags, and sync timestamps.
     /// </summary>
-    public BlobExtensions? Extensions { get; init; }
+    public MyExtensions? Extensions { get; init; }
 
     /// <summary>
     /// Gets the content type of the blob.

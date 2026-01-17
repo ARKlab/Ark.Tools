@@ -14,7 +14,7 @@ namespace Ark.ResourceWatcher.Sample.Processor;
 /// <summary>
 /// Processor that transforms blob content and sends it to a sink API.
 /// </summary>
-public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetadata, BlobExtensions>
+public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetadata, MyExtensions>
 {
     private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 

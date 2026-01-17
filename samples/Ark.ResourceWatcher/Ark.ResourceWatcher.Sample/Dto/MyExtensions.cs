@@ -17,7 +17,7 @@ namespace Ark.ResourceWatcher.Sample.Dto;
 /// <item><description>Refactoring safety - rename/delete operations are caught at compile time</description></item>
 /// </list>
 /// </remarks>
-public sealed record BlobExtensions
+public sealed record MyExtensions
 {
     /// <summary>
     /// Gets the byte offset of the last processed position in an append-only blob.

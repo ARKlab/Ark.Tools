@@ -37,8 +37,8 @@ namespace Ark.ResourceWatcher.Sample;
 /// };
 /// 
 /// // Register state provider with typed extensions
-/// services.AddSingleton&lt;IStateProvider&lt;BlobExtensions&gt;&gt;(sp =&gt;
-///     new SqlStateProvider&lt;BlobExtensions&gt;(config, connectionManager));
+/// services.AddSingleton&lt;IStateProvider&lt;MyExtensions&gt;&gt;(sp =&gt;
+///     new SqlStateProvider&lt;MyExtensions&gt;(config, connectionManager));
 /// </code>
 /// <para>
 /// The <see cref="JsonSerializableAttribute"/> tells the compiler which types need
@@ -46,15 +46,15 @@ namespace Ark.ResourceWatcher.Sample;
 /// serialization code for these types.
 /// </para>
 /// </remarks>
-[JsonSerializable(typeof(BlobExtensions))]
-[JsonSerializable(typeof(ResourceState<BlobExtensions>))]
+[JsonSerializable(typeof(MyExtensions))]
+[JsonSerializable(typeof(ResourceState<MyExtensions>))]
 [JsonSerializable(typeof(Dictionary<string, string>))]
 public sealed partial class SampleJsonContext : JsonSerializerContext
 {
     // This class is partial - the compiler generates the implementation at build time
     // The generated code provides:
-    // - Metadata for serializing BlobExtensions
-    // - Metadata for serializing ResourceState<BlobExtensions>
+    // - Metadata for serializing MyExtensions
+    // - Metadata for serializing ResourceState<MyExtensions>
     // - Optimized serialization/deserialization methods
     // - No runtime reflection needed
 }
