@@ -103,11 +103,13 @@ Reqnroll throws: "Binding types cannot be generic"
 
 ## Recommended Refactoring Steps
 
-### Phase 1: Extract Common Setup (Low Risk) ✅
+### Phase 1: Extract Common Setup (Low Risk) ✅ COMPLETE
 - [x] Create `SqlStateProviderContext` for DB initialization
 - [x] Create `DbSetupLock` for thread-safe schema setup
-- [ ] Update all step classes to inject `SqlStateProviderContext`
-- [ ] Replace duplicated `GivenASqlServerDatabaseIsAvailable()` with context call
+- [x] Update all step classes to inject `SqlStateProviderContext`
+- [x] Replace duplicated `GivenASqlServerDatabaseIsAvailable()` with context call
+- [x] Eliminate ~150 lines of duplicated code
+- [x] All tests passing (62/62)
 
 ### Phase 2: Consolidate Assertions (Medium Risk)
 - [ ] Extend `CommonStepHelpers` with assertion verbs
@@ -115,7 +117,7 @@ Reqnroll throws: "Binding types cannot be generic"
 - [ ] Create shared "Then" step definitions for common assertions
 
 ### Phase 3: State Sharing (High Risk)
-- [ ] Expose `Current` properties in step classes
+- [x] Expose `Current` properties in step classes
 - [ ] Inject step classes into each other where needed
 - [ ] Remove duplicated state initialization code
 
