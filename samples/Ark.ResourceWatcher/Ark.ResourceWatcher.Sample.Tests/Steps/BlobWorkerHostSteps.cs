@@ -57,7 +57,7 @@ public sealed class BlobWorkerHostSteps
     public async Task WhenTheWorkerRunsOneCycle()
     {
         // Create a WorkerHost with mock provider and processor
-        var workerHost = new WorkerHost<MyResource, MyMetadata, BlobQueryFilter>(_context.Config);
+        var workerHost = new WorkerHost<MyResource, MyMetadata, BlobQueryFilter, MyExtensions>(_context.Config);
 
         // Configure mock provider
         workerHost.UseDataProvider<MockBlobResourceProvider>(d =>
@@ -72,7 +72,7 @@ public sealed class BlobWorkerHostSteps
         });
 
         // Configure state provider
-        workerHost.UseStateProvider<TestableStateProvider>(d =>
+        workerHost.UseStateProvider<TestableStateProvider<MyExtensions>>(d =>
         {
             d.Container.RegisterInstance(_context.StateProvider);
         });
@@ -115,7 +115,7 @@ public sealed class BlobWorkerHostSteps
     /// <summary>
     /// Mock provider that uses the test MockBlobStorageApi.
     /// </summary>
-    private sealed class MockBlobResourceProvider : IResourceProvider<MyMetadata, MyResource, BlobQueryFilter>
+    private sealed class MockBlobResourceProvider : IResourceProvider<MyMetadata, MyResource, BlobQueryFilter, MyExtensions>
     {
         private readonly Mocks.MockProviderApi _mockApi;
 
@@ -129,7 +129,7 @@ public sealed class BlobWorkerHostSteps
             return Task.FromResult(_mockApi.ListBlobs());
         }
 
-        public Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
+        public Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState<MyExtensions>? lastState, CancellationToken ctk = default)
         {
             return Task.FromResult(_mockApi.GetBlob(metadata.ResourceId));
         }
@@ -138,7 +138,7 @@ public sealed class BlobWorkerHostSteps
     /// <summary>
     /// Mock processor that uses the test MockSinkApi.
     /// </summary>
-    private sealed class MockBlobResourceProcessor : IResourceProcessor<MyResource, MyMetadata>
+    private sealed class MockBlobResourceProcessor : IResourceProcessor<MyResource, MyMetadata, MyExtensions>
     {
         private readonly Mocks.MockSinkApi _mockSinkApi;
 
