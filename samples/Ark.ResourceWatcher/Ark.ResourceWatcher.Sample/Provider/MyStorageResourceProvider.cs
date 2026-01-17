@@ -31,8 +31,9 @@ public sealed class BlobQueryFilter
 
 /// <summary>
 /// Resource provider that lists and fetches blobs from an external blob storage API.
+/// Demonstrates incremental loading using strongly-typed <see cref="BlobExtensions"/>.
 /// </summary>
-public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, MyResource, BlobQueryFilter>
+public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, MyResource, BlobQueryFilter, BlobExtensions>
 {
     private readonly IFlurlClient _client;
     private readonly IClock _clock;
@@ -76,23 +77,90 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
     }
 
     /// <inheritdoc/>
-    public async Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
+    /// <remarks>
+    /// This implementation demonstrates incremental loading of append-only blobs.
+    /// If the blob supports range requests and we have a LastProcessedOffset, we only
+    /// fetch the new bytes since the last processing. This is useful for:
+    /// <list type="bullet">
+    /// <item><description>Log files that are continuously appended to</description></item>
+    /// <item><description>Event streams where events are only added, never modified</description></item>
+    /// <item><description>Large files where downloading the entire content is expensive</description></item>
+    /// </list>
+    /// We also use the ETag to detect if the blob has changed at all, avoiding
+    /// unnecessary downloads when the blob is unchanged.
+    /// </remarks>
+    public async Task<MyResource?> GetResource(MyMetadata metadata, IResourceTrackedState<BlobExtensions>? lastState, CancellationToken ctk = default)
     {
-        var response = await _client
-            .Request("blobs", metadata.ResourceId)
-            .GetAsync(cancellationToken: ctk);
+        // Access typed extensions with compile-time safety and IntelliSense support
+        var lastETag = lastState?.Extensions?.LastETag;
+        var lastOffset = lastState?.Extensions?.LastProcessedOffset ?? 0L;
+
+        var request = _client.Request("blobs", metadata.ResourceId);
+
+        // If we have an ETag from last fetch, use conditional request to avoid downloading unchanged blobs
+        if (!string.IsNullOrEmpty(lastETag))
+        {
+            request = request.WithHeader("If-None-Match", lastETag);
+        }
+
+        // For append-only blobs (like log files), fetch only new data since last offset
+        // This dramatically reduces bandwidth and processing time for large files
+        if (lastOffset > 0 && metadata.ContentType?.Contains("text/plain", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            // Use HTTP Range header to fetch only bytes from lastOffset onwards
+            // Format: "bytes=1024-" means "get all bytes starting from position 1024"
+            request = request.WithHeader("Range", $"bytes={lastOffset}-");
+        }
+
+        var response = await request.GetAsync(cancellationToken: ctk);
+
+        // If blob hasn't changed (304 Not Modified), return null to skip processing
+        if (response.StatusCode == 304)
+        {
+            return null;
+        }
 
         var data = await response.GetBytesAsync();
+
+        // Get the current ETag from response for future conditional requests
+        var currentETag = response.Headers.FirstOrDefault("ETag");
+        
+        // Calculate new offset (for append-only resources)
+        var newOffset = lastOffset + data.Length;
 
         // Compute checksum for change detection
         var checksum = Convert.ToHexString(SHA256.HashData(data));
 
+        var now = _clock.GetCurrentInstant();
+
         return new MyResource
         {
-            Metadata = metadata,
+            Metadata = new MyMetadata
+            {
+                ResourceId = metadata.ResourceId,
+                Modified = metadata.Modified,
+                ModifiedSources = metadata.ModifiedSources,
+                ContentType = metadata.ContentType,
+                Size = metadata.Size,
+                // Update extensions with new tracking information
+                // ✅ Type-safe: compiler ensures we're using BlobExtensions, not object
+                // ✅ IntelliSense: IDE autocompletes available properties
+                // ✅ Refactoring: renaming properties is safe across the codebase
+                Extensions = new BlobExtensions
+                {
+                    LastProcessedOffset = newOffset,
+                    LastETag = currentETag,
+                    LastSuccessfulSync = now,
+                    Metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        ["ContentLength"] = data.Length.ToString(),
+                        ["FetchTime"] = now.ToString("O", null)
+                    }
+                }
+            },
             Data = data,
             CheckSum = checksum,
-            RetrievedAt = _clock.GetCurrentInstant()
+            RetrievedAt = now
         };
     }
 }

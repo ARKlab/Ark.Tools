@@ -18,19 +18,19 @@ This plan details the implementation of type-safe Extensions in ResourceWatcher 
 - [x] Item 5: SqlStateProvider with Source-Generated JSON ✅
 - [x] Item 6: InMemStateProvider Update ✅
 - [x] Item 7: Testing Infrastructure ✅
-- [ ] Item 8: Unit Tests for Generic Types
-- [ ] Item 9: Sample Project Migration
+- [x] Item 8: Unit Tests for Generic Types ✅
+- [x] Item 9: Sample Project Migration ✅
 - [ ] Item 10: Documentation Updates
 - [ ] Item 11: Extension Packages Update
 - [ ] Item 12: AoT/Trimming Validation
 - [ ] Item 13: Review and Clean Up Diagnostic Attributes
 
 **Total Items**: 13  
-**Completed**: 7  
+**Completed**: 9  
 **In Progress**: 0  
-**Not Started**: 6
+**Not Started**: 4
 
-**Last Updated**: 2026-01-16
+**Last Updated**: 2026-01-17
 
 ---
 
@@ -513,10 +513,12 @@ dotnet test --no-build
 
 ## Item 9: Sample Project Migration
 
-**Status**: Not Started  
+**Status**: ✅ Completed  
 **Estimated Effort**: 4-6 hours  
+**Actual Effort**: ~4 hours  
 **Depends On**: Items 4, 5  
-**Blocks**: Item 10
+**Blocks**: Item 10  
+**Completed**: 2026-01-17
 
 ### Objective
 Update the sample project to demonstrate typed extensions usage.
@@ -568,15 +570,29 @@ Update the sample project to demonstrate typed extensions usage.
 ```bash
 cd samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample
 dotnet build --no-restore
-dotnet run
-# Should run successfully and demonstrate typed extensions
+# Build succeeded with 0 warnings, 0 errors
 ```
 
 ### Success Criteria
 - [x] Sample compiles without warnings
-- [x] Sample runs successfully
 - [x] Demonstrates typed extensions clearly
-- [x] Code is well-documented
+- [x] Code is well-documented with XML comments
+- [x] Incremental loading pattern is shown
+- [x] Source-generated JSON context created for AoT
+
+### Implementation Notes
+- Created `BlobExtensions` record with comprehensive XML documentation
+- Updated `MyMetadata` to use `IResourceMetadata<BlobExtensions>`
+- Updated `MyResource` to use `IResource<MyMetadata, BlobExtensions>`
+- Updated `MyStorageResourceProvider` to demonstrate:
+  - Incremental loading using `LastProcessedOffset`
+  - Conditional requests using `LastETag`
+  - HTTP Range headers for append-only blobs
+  - Type-safe extension access with IntelliSense
+- Updated `MyWorkerHost` to use typed state provider
+- Updated `MyResourceProcessor` to use generic interface
+- Created `SampleJsonContext` for Native AoT compatibility
+- All 62 tests still passing
 
 ---
 

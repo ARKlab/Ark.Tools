@@ -14,7 +14,7 @@ namespace Ark.ResourceWatcher.Sample.Processor;
 /// <summary>
 /// Processor that transforms blob content and sends it to a sink API.
 /// </summary>
-public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetadata>
+public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetadata, BlobExtensions>
 {
     private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
@@ -33,14 +33,14 @@ public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetad
     /// <inheritdoc/>
     public async Task Process(MyResource file, CancellationToken ctk = default)
     {
-        _logger.Info(CultureInfo.InvariantCulture, "Processing blob {ResourceId} ({Size} bytes)",
+        _logger.Info(System.Globalization.CultureInfo.InvariantCulture, "Processing blob {ResourceId} ({Size} bytes)",
             file.Metadata.ResourceId, file.Data.Length);
 
         // Transform the CSV content
         var transformer = new MyTransformService(file.Metadata.ResourceId);
         var sinkData = transformer.Transform(file.Data);
 
-        _logger.Debug(CultureInfo.InvariantCulture, "Transformed {RecordCount} records from {ResourceId}",
+        _logger.Debug(System.Globalization.CultureInfo.InvariantCulture, "Transformed {RecordCount} records from {ResourceId}",
             sinkData.Records.Count, file.Metadata.ResourceId);
 
         // Send to sink API
@@ -49,7 +49,7 @@ public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetad
             .PostJsonAsync(sinkData, cancellationToken: ctk)
             .ConfigureAwait(false);
 
-        _logger.Info(CultureInfo.InvariantCulture, "Successfully processed blob {ResourceId}",
+        _logger.Info(System.Globalization.CultureInfo.InvariantCulture, "Successfully processed blob {ResourceId}",
             file.Metadata.ResourceId);
     }
 }

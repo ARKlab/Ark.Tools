@@ -8,8 +8,9 @@ namespace Ark.ResourceWatcher.Sample.Dto;
 
 /// <summary>
 /// Represents a fetched blob resource with its content.
+/// Uses strongly-typed <see cref="BlobExtensions"/> for incremental loading support.
 /// </summary>
-public sealed class MyResource : IResource<MyMetadata>
+public sealed class MyResource : IResource<MyMetadata, BlobExtensions>
 {
     /// <summary>
     /// Gets the metadata for this blob.
