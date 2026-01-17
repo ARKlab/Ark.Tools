@@ -1,9 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.Nodatime.Dapper;
 using Ark.Tools.ResourceWatcher.Tests.Init;
-using Ark.Tools.Sql;
-using Ark.Tools.Sql.SqlServer;
 
 using AwesomeAssertions;
 
@@ -35,92 +32,41 @@ public sealed class TestResourceExtensions
 /// <summary>
 /// Step definitions for SqlStateProvider integration tests.
 /// These bindings are scoped to the @sqlstateprovider tag to avoid conflicts with StateTransitionsSteps.
+/// Follows Driver pattern with injected context for state management.
 /// </summary>
 [Binding]
 [Scope(Tag = "sqlstateprovider")]
 public sealed class SqlStateProviderSteps : IDisposable
 {
     private readonly ScenarioContext _scenarioContext;
+    private readonly SqlStateProviderContext _dbContext;
     private SqlStateProvider<TestResourceExtensions>? _stateProvider;
-    private SqlStateProviderConfig? _config;
-    private IDbConnectionManager? _connectionManager;
     private readonly List<ResourceState<TestResourceExtensions>> _statesToSave = [];
     private IEnumerable<ResourceState<TestResourceExtensions>>? _loadedStates;
     private ResourceState<TestResourceExtensions>? _currentState;
     private string _currentTenant = "test-tenant";
     private readonly Instant _now = SystemClock.Instance.GetCurrentInstant();
-    private readonly string _testRunId = Guid.NewGuid().ToString("N")[..8];
-    private static readonly Lock _dbSetupLock = new();
 
-    public SqlStateProviderSteps(ScenarioContext scenarioContext)
+    // Expose current state for potential injection by other step classes
+    public ResourceState<TestResourceExtensions>? Current => _currentState;
+
+    public SqlStateProviderSteps(ScenarioContext scenarioContext, SqlStateProviderContext dbContext)
     {
         _scenarioContext = scenarioContext;
-    }
-
-    /// <summary>
-    /// Gets a unique tenant name for this test run to avoid parallel test conflicts.
-    /// </summary>
-    private string _getUniqueTenant(string baseTenant)
-    {
-        return string.Create(CultureInfo.InvariantCulture, $"{baseTenant}-{_testRunId}");
-    }
-
-    [Given(@"a SQL Server database is available")]
-    public void GivenASqlServerDatabaseIsAvailable()
-    {
-        // Setup NodaTime Dapper type handlers for DateTime <-> NodaTime conversions
-        NodaTimeDapper.Setup();
-
-        var connectionString = TestHost.Configuration["ConnectionStrings:SqlServer"];
-        connectionString.Should().NotBeNullOrEmpty("SQL Server connection string must be configured in appsettings.IntegrationTests.json");
-
-        _config = new SqlStateProviderConfig
-        {
-            DbConnectionString = connectionString!
-        };
-
-        // Ensure database exists
-        var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
-        var dbName = builder.InitialCatalog;
-        builder.InitialCatalog = "master";
-
-        using var masterConn = new Microsoft.Data.SqlClient.SqlConnection(builder.ConnectionString);
-        masterConn.Open();
-        masterConn.Execute(string.Create(CultureInfo.InvariantCulture, $@"
-            IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'{dbName}')
-            BEGIN
-                CREATE DATABASE [{dbName}]
-            END"));
+        _dbContext = dbContext;
     }
 
     [Given(@"the SqlStateProvider is configured")]
     public void GivenTheSqlStateProviderIsConfigured()
     {
-        _connectionManager = new SqlConnectionManager();
-        // Create a generic SqlStateProvider<TestResourceExtensions>
-        _stateProvider = new SqlStateProvider<TestResourceExtensions>(_config!, _connectionManager);
+        // Create a generic SqlStateProvider<TestResourceExtensions> using shared context
+        _stateProvider = new SqlStateProvider<TestResourceExtensions>(_dbContext.Config, _dbContext.ConnectionManager);
 
-        // Ensure tables exist - thread-safe with locking
-        // Note: EnsureTableAreCreated() has DROP TYPE which can fail if type is in use
-        // so we wrap in try-catch and retry once
-        lock (_dbSetupLock)
-        {
-            try
-            {
-                _stateProvider.EnsureTableAreCreated();
-            }
-            catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 3732) // Cannot drop type - in use
-            {
-                // Type is in use by another process, wait and retry
-#pragma warning disable RS0030 // Test infrastructure: retry on SQL conflict
-                Thread.Sleep(100);
-#pragma warning restore RS0030
-                _stateProvider.EnsureTableAreCreated();
-            }
-        }
+        // Schema is already initialized in TestHost.BeforeTestRun()
+        // No need to call EnsureTableAreCreated() here - avoids race conditions
 
         // Use unique tenant prefix for this test run to avoid conflicts
-        _currentTenant = string.Create(CultureInfo.InvariantCulture, $"test-{_testRunId}");
+        _currentTenant = _dbContext.GetUniqueTenant("test");
     }
 
     [When(@"I call EnsureTableAreCreated")]
@@ -132,7 +78,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Then(@"the State table should exist")]
     public void ThenTheStateTableShouldExist()
     {
-        using var conn = new Microsoft.Data.SqlClient.SqlConnection(_config!.DbConnectionString);
+        using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
         conn.Open();
         var exists = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'State'");
         exists.Should().Be(1);
@@ -141,7 +87,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Then(@"the udt_State_v2 type should exist")]
     public void ThenTheUdtStateV2TypeShouldExist()
     {
-        using var conn = new Microsoft.Data.SqlClient.SqlConnection(_config!.DbConnectionString);
+        using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
         conn.Open();
         var exists = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM sys.types WHERE name = 'udt_State_v2'");
         exists.Should().Be(1);
@@ -150,7 +96,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Then(@"the udt_ResourceIdList type should exist")]
     public void ThenTheUdtResourceIdListTypeShouldExist()
     {
-        using var conn = new Microsoft.Data.SqlClient.SqlConnection(_config!.DbConnectionString);
+        using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
         conn.Open();
         var exists = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM sys.types WHERE name = 'udt_ResourceIdList'");
         exists.Should().Be(1);
@@ -159,7 +105,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Given(@"a new resource state for tenant ""(.*)"" and resource ""(.*)""")]
     public void GivenANewResourceStateForTenantAndResource(string tenant, string resourceId, DataTable table)
     {
-        var uniqueTenant = _getUniqueTenant(tenant);
+        var uniqueTenant = _dbContext.GetUniqueTenant(tenant);
         _currentTenant = uniqueTenant;
 
         // Create ResourceState from table using Reqnroll's table mapping (supports NodaTime via TableMappingConfiguration)
@@ -175,7 +121,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Given(@"a basic resource state for tenant ""(.*)"" and resource ""(.*)""")]
     public void GivenABasicResourceStateForTenantAndResource(string tenant, string resourceId)
     {
-        var uniqueTenant = _getUniqueTenant(tenant);
+        var uniqueTenant = _dbContext.GetUniqueTenant(tenant);
         _currentTenant = uniqueTenant;
 
         var state = new ResourceState<TestResourceExtensions>
@@ -192,16 +138,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Given(@"the resource has ModifiedSource ""(.*)"" at ""(.*)""")]
     public void GivenTheResourceHasModifiedSourceAt(string sourceName, string modifiedString)
     {
-        _setModifiedSource(sourceName, modifiedString);
-    }
-
-    private void _setModifiedSource(string sourceName, string modifiedString)
-    {
-        var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-        _currentState!.ModifiedSources ??= CommonStepHelpers.CreateModifiedSourcesDictionary();
-        _currentState.ModifiedSources[sourceName] = modified;
-        // Clear Modified if using ModifiedSources
-        _currentState.Modified = default;
+        _currentState!.SetModifiedSource(sourceName, modifiedString);
     }
 
     [Given(@"the resource has extension ""(.*)"" with value ""(.*)""")]
@@ -222,7 +159,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Given(@"(.*) resource states for tenant ""(.*)""")]
     public void GivenResourceStatesForTenant(int count, string tenant)
     {
-        var uniqueTenant = _getUniqueTenant(tenant);
+        var uniqueTenant = _dbContext.GetUniqueTenant(tenant);
         _currentTenant = uniqueTenant;
         for (int i = 0; i < count; i++)
         {
@@ -255,7 +192,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     /// </summary>
     private async Task _loadStateForTenantAsync(string tenant, string[]? resourceIds = null)
     {
-        var uniqueTenant = _getUniqueTenant(tenant);
+        var uniqueTenant = _dbContext.GetUniqueTenant(tenant);
         _currentTenant = uniqueTenant;
         _loadedStates = resourceIds == null
             ? await _stateProvider!.LoadStateAsync(uniqueTenant)
@@ -299,19 +236,19 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Then(@"the loaded state should contain resource ""(.*)""")]
     public void ThenTheLoadedStateShouldContainResource(string resourceId)
     {
-        _loadedStates.Should().Contain(s => s.ResourceId == resourceId);
+        _loadedStates.ShouldContainResource(resourceId);
     }
 
     [Then(@"the loaded state should not contain resource ""(.*)""")]
     public void ThenTheLoadedStateShouldNotContainResource(string resourceId)
     {
-        _loadedStates.Should().NotContain(s => s.ResourceId == resourceId);
+        _loadedStates.ShouldNotContainResource(resourceId);
     }
 
     [Then(@"the loaded state should contain (.*) resources")]
     public void ThenTheLoadedStateShouldContainResources(int count)
     {
-        _loadedStates.Should().HaveCount(count);
+        _loadedStates.ShouldHaveResourceCount(count);
     }
 
     [Then(@"the loaded state should be empty")]
@@ -320,40 +257,30 @@ public sealed class SqlStateProviderSteps : IDisposable
         _loadedStates.Should().BeEmpty();
     }
 
-    /// <summary>
-    /// Gets a loaded resource by ID with a helpful assertion message.
-    /// </summary>
-    private ResourceState<TestResourceExtensions> _getLoadedResource(string resourceId)
-    {
-        return _loadedStates!.GetFirst(
-            s => s.ResourceId == resourceId,
-            $"Resource '{resourceId}' in loaded states");
-    }
-
     [Then(@"resource ""(.*)"" should have Modified ""(.*)""")]
     public void ThenResourceShouldHaveModified(string resourceId, string modifiedString)
     {
         var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-        _getLoadedResource(resourceId).Modified.Should().Be(expected);
+        _loadedStates.FindByResourceId(resourceId).Modified.Should().Be(expected);
     }
 
     [Then(@"resource ""(.*)"" should have CheckSum ""(.*)""")]
     public void ThenResourceShouldHaveCheckSum(string resourceId, string checksum)
     {
-        _getLoadedResource(resourceId).CheckSum.Should().Be(checksum);
+        _loadedStates.FindByResourceId(resourceId).CheckSum.Should().Be(checksum);
     }
 
     [Then(@"resource ""(.*)"" should have RetryCount (.*)")]
     public void ThenResourceShouldHaveRetryCount(string resourceId, int retryCount)
     {
-        _getLoadedResource(resourceId).RetryCount.Should().Be(retryCount);
+        _loadedStates.FindByResourceId(resourceId).RetryCount.Should().Be(retryCount);
     }
 
     [Then(@"resource ""(.*)"" should have ModifiedSource ""(.*)"" at ""(.*)""")]
     public void ThenResourceShouldHaveModifiedSourceAt(string resourceId, string sourceName, string modifiedString)
     {
         var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-        var state = _getLoadedResource(resourceId);
+        var state = _loadedStates.FindByResourceId(resourceId);
         state.ModifiedSources.Should().NotBeNull();
         state.ModifiedSources.Should().ContainKey(sourceName);
         state.ModifiedSources![sourceName].Should().Be(expected);
@@ -362,7 +289,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Then(@"resource ""(.*)"" should have extension ""(.*)"" with value ""(.*)""")]
     public void ThenResourceShouldHaveExtensionWithValue(string resourceId, string key, string expectedValue)
     {
-        var state = _getLoadedResource(resourceId);
+        var state = _loadedStates.FindByResourceId(resourceId);
         state.Extensions.Should().NotBeNull("Extensions should be set");
         state.Extensions!.Metadata.Should().NotBeNull("Extensions.Metadata should be set");
         state.Extensions.Metadata.Should().ContainKey(key, $"Extension key '{key}' should exist");
@@ -371,22 +298,19 @@ public sealed class SqlStateProviderSteps : IDisposable
 
     public void Dispose()
     {
-        // Clean up test data
-        if (_config != null)
+        // Clean up test data using shared DB context
+        try
         {
-            try
-            {
-                using var conn = new Microsoft.Data.SqlClient.SqlConnection(_config.DbConnectionString);
-                conn.Open();
-                conn.Execute("DELETE FROM [State] WHERE [Tenant] LIKE 'test-%' OR [Tenant] LIKE 'tenant-%' OR [Tenant] LIKE 'batch-%'");
-            }
-#pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional cleanup
-            catch
-            {
-                // Ignore cleanup errors
-            }
-#pragma warning restore ERP022
+            using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
+            conn.Open();
+            conn.Execute("DELETE FROM [State] WHERE [Tenant] LIKE 'test-%' OR [Tenant] LIKE 'tenant-%' OR [Tenant] LIKE 'batch-%'");
         }
+#pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional cleanup
+        catch
+        {
+            // Ignore cleanup errors
+        }
+#pragma warning restore ERP022
     }
 }
 
