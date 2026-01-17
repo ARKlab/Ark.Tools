@@ -1,6 +1,7 @@
 # Migration to Ark.Tools v6
 
 * [CQRS Handler Execute Methods Removed](#cqrs-handler-execute-methods-removed)
+* [ResourceWatcher Type-Safe Extensions](#resourcewatcher-type-safe-extensions)
 * [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
 * [Remove Nito.AsyncEx.Coordination Dependency](#remove-nitoasyncexcoordination-dependency)
 * [Oracle CommandTimeout Default Changed](#oracle-commandtimeout-default-changed)
@@ -11,7 +12,8 @@
   * [(Optional) Rename "SpecFlow" to "IntegrationTests"](#optional-rename-specflow-to-integrationtests)
 * [Migrate tests to MTPv2](#migrate-tests-to-mtpv2)
 * [Migrate SLN to SLNX](#migrate-sln-to-slnx)
-* [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
+* [TypeConverter Registration for Dictionary Keys](#typeconverter-registration-for-dictionary-keys-with-custom-types-ark-tools-v6)
+* [Adopt Central Package Management](#adopt-central-package-management)
 * [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
 
 ## CQRS Handler Execute Methods Removed
@@ -107,6 +109,233 @@ public async Task MyMethodAsync()
 - `ICommandProcessor` (Execute marked obsolete with error)
 - `IQueryProcessor` (Execute marked obsolete with error)
 - `IRequestProcessor` (Execute marked obsolete with error)
+
+## ResourceWatcher Type-Safe Extensions
+
+**⚠️ BREAKING CHANGE**: ResourceWatcher now uses generic type parameters to provide compile-time type safety for extension data. The `Extensions` property on `IResourceMetadata` is now strongly typed.
+
+### What Changed
+
+**v5 behavior**:
+```csharp
+public interface IResourceMetadata
+{
+    string ResourceId { get; }
+    LocalDateTime Modified { get; }
+    Dictionary<string, LocalDateTime>? ModifiedSources { get; }
+    object? Extensions { get; }  // ❌ Runtime type checking required
+}
+
+public class WorkerHost<TResource, TMetadata, TQueryFilter> { }
+```
+
+**v6 behavior**:
+```csharp
+public interface IResourceMetadata<TExtensions> where TExtensions : class
+{
+    string ResourceId { get; }
+    LocalDateTime Modified { get; }
+    Dictionary<string, LocalDateTime>? ModifiedSources { get; }
+    TExtensions? Extensions { get; }  // ✅ Compile-time type safety
+}
+
+// Generic version with explicit extensions type
+public class WorkerHost<TResource, TMetadata, TQueryFilter, TExtensions> { }
+
+// Non-generic proxy for backward compatibility
+public class WorkerHost<TResource, TMetadata, TQueryFilter>
+    : WorkerHost<TResource, TMetadata, TQueryFilter, VoidExtensions> { }
+```
+
+### Migration Guide
+
+#### Option 1: Use Non-Generic Proxy Classes (Easiest - Minimal Changes!)
+
+**For users who don't use Extensions, there are MINIMAL breaking changes** thanks to proxy classes:
+
+```csharp
+// Before (v5) - Your existing code
+public class MyMetadata : IResourceMetadata
+{
+    public required string ResourceId { get; init; }
+    public LocalDateTime Modified { get; init; }
+    public Dictionary<string, LocalDateTime>? ModifiedSources { get; init; }
+    public object? Extensions { get; init; }  // Never used
+}
+
+public class MyHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
+{
+}
+
+// After (v6) - MINIMAL CHANGES!
+// The same code continues to work with small adjustment to Extensions property:
+// - IResourceMetadata now inherits from IResourceMetadata<VoidExtensions>
+// - WorkerHost<TResource, TMetadata, TQueryFilter> now inherits from 
+//   WorkerHost<TResource, TMetadata, TQueryFilter, VoidExtensions>
+
+public class MyMetadata : IResourceMetadata
+{
+    public required string ResourceId { get; init; }
+    public LocalDateTime Modified { get; init; }
+    public Dictionary<string, LocalDateTime>? ModifiedSources { get; init; }
+    public VoidExtensions? Extensions { get; init; }  // Change from object? to VoidExtensions?
+}
+
+public class MyHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
+{
+    // Zero other changes required!
+}
+```
+
+#### Option 2: Strongly-Typed Extensions (Recommended for Extension Users)
+
+If you use Extensions, define a type-safe model:
+
+```csharp
+// Before (v5) - Runtime type checking
+public class MyMetadata : IResourceMetadata
+{
+    public required string ResourceId { get; init; }
+    public LocalDateTime Modified { get; init; }
+    public Dictionary<string, LocalDateTime>? ModifiedSources { get; init; }
+    public object? Extensions { get; init; }
+}
+
+public async Task<MyResource?> GetResource(
+    MyMetadata metadata,
+    IResourceTrackedState? lastState,
+    CancellationToken ctk)
+{
+    // ❌ Runtime type checking, no IntelliSense
+    long lastOffset = 0;
+    if (lastState?.Extensions is JsonElement ext && 
+        ext.TryGetProperty("lastOffset", out var offsetProp))
+    {
+        lastOffset = offsetProp.GetInt64();
+    }
+    
+    return new MyResource
+    {
+        Metadata = metadata,
+        Extensions = new { lastOffset = newOffset }  // Anonymous type
+    };
+}
+
+// After (v6) - Compile-time type safety
+public record MyExtensions
+{
+    public long LastOffset { get; init; }
+    public string? ETag { get; init; }
+}
+
+public class MyMetadata : IResourceMetadata<MyExtensions>
+{
+    public required string ResourceId { get; init; }
+    public LocalDateTime Modified { get; init; }
+    public Dictionary<string, LocalDateTime>? ModifiedSources { get; init; }
+    public MyExtensions? Extensions { get; init; }
+}
+
+public class MyResource : IResource<MyMetadata, MyExtensions>
+{
+    public required MyMetadata Metadata { get; init; }
+    // ... other properties
+}
+
+public async Task<MyResource?> GetResource(
+    MyMetadata metadata,
+    IResourceTrackedState<MyExtensions>? lastState,
+    CancellationToken ctk)
+{
+    // ✅ Type-safe access with IntelliSense
+    var lastOffset = lastState?.Extensions?.LastOffset ?? 0;
+    var lastETag = lastState?.Extensions?.ETag;
+    
+    return new MyResource
+    {
+        Metadata = metadata with
+        {
+            Extensions = new MyExtensions 
+            { 
+                LastOffset = newOffset,
+                ETag = currentETag
+            }
+        }
+    };
+}
+
+// Update WorkerHost to use typed extensions
+public class MyHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter, MyExtensions>
+{
+    // Explicitly specify extension type as 4th generic parameter
+}
+```
+
+### AoT/Trimming Considerations
+
+For Native AoT or trimming, provide a source-generated JSON context:
+
+```csharp
+// 1. Define JSON context for your extensions type
+[JsonSerializable(typeof(MyExtensions))]
+[JsonSerializable(typeof(ResourceState<MyExtensions>))]
+public partial class MyJsonContext : JsonSerializerContext { }
+
+// 2. Implement ISqlStateProviderConfig with JsonContext
+public class MyHostConfig : IHostConfig, ISqlStateProviderConfig
+{
+    public string Tenant => "my-tenant";
+    public string WorkerName => "MyWorker";
+    public string ConnectionString => _connectionString;
+    
+    // Provide source-generated context for AoT
+    public JsonSerializerContext? JsonContext => MyJsonContext.Default;
+}
+
+// 3. Use SqlStateProvider (automatically picks up JsonContext from config)
+var host = new WorkerHost<MyResource, MyMetadata, BlobQueryFilter, MyExtensions>(config);
+host.UseSqlStateProvider();
+```
+
+### Impact Summary
+
+| Component | Change Required | Complexity |
+|-----------|----------------|------------|
+| Metadata class (no Extensions) | Change `object?` to `VoidExtensions?` | ✅ Trivial |
+| Metadata class (with Extensions) | Define typed extension model | ⚠️ Low |
+| Resource class | Add generic parameter OR use proxy | ⚠️ Low |
+| Provider class | Add generic parameter OR use proxy | ⚠️ Low |
+| Processor class | Add generic parameter OR use proxy | ⚠️ Low |
+| WorkerHost (no Extensions) | ✅ **None** (proxy class works) | ✅ None |
+| WorkerHost (with Extensions) | Add 4th generic parameter | ⚠️ Low |
+| StateProvider | Update registration (generic or proxy) | ⚠️ Low |
+| Extension usage | Remove runtime casting | ✅ Benefit |
+| AoT deployment | Create source-generated JSON context | ⚠️ Medium |
+
+**Key Point**: With proxy classes, **most users only need to change Extensions property type from `object?` to `VoidExtensions?`**.
+
+### Why This Change?
+
+1. **Type Safety**: Catch extension-related errors at compile time
+2. **Better IntelliSense**: Full IDE support for extension properties
+3. **AoT Compatible**: Native AoT and trimming fully supported
+4. **Performance**: No runtime reflection or type checking
+5. **Maintainability**: Self-documenting code with explicit types
+
+### Database State Compatibility
+
+**Good news**: Existing state in the database is **automatically compatible**. No data migration required.
+
+```csharp
+// Old state with Extensions = new { lastOffset = 1024 }
+// Stored as JSON: {"lastOffset": 1024}
+
+// New typed extensions
+public record MyExtensions { public long LastOffset { get; init; } }
+
+// Deserializes correctly from: {"lastOffset": 1024}
+// ✅ No database migration needed
+```
 
 ## Remove Ensure.That Dependency
 
