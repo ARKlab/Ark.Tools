@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.ResourceWatcher.Sample.Config;
+using Ark.ResourceWatcher.Sample.Dto;
 using Ark.ResourceWatcher.Sample.Tests.Mocks;
 using Ark.Tools.ResourceWatcher.Testing;
 
@@ -27,7 +28,7 @@ public sealed class BlobTestContext : IDisposable
     /// <summary>
     /// Gets or sets the testable state provider.
     /// </summary>
-    public TestableStateProvider StateProvider { get; } = new();
+    public TestableStateProvider<MyExtensions> StateProvider { get; } = new();
 
     /// <summary>
     /// Gets or sets the testing diagnostic listener.

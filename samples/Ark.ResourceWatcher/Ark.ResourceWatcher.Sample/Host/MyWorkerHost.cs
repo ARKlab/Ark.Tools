@@ -15,8 +15,9 @@ namespace Ark.ResourceWatcher.Sample.Host;
 
 /// <summary>
 /// Worker host for processing blobs from external storage.
+/// Uses strongly-typed <see cref="MyExtensions"/> for incremental loading support.
 /// </summary>
-public sealed class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter>
+public sealed class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryFilter, MyExtensions>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="MyWorkerHost"/> class.
@@ -42,6 +43,6 @@ public sealed class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryF
             d.Container.RegisterInstance<IMyResourceProcessorConfig>(config);
         });
 
-        UseStateProvider<InMemStateProvider>();
+        UseStateProvider<InMemStateProvider<MyExtensions>>();
     }
 }
