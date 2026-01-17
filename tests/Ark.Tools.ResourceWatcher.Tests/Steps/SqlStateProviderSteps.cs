@@ -144,16 +144,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Given(@"the resource has ModifiedSource ""(.*)"" at ""(.*)""")]
     public void GivenTheResourceHasModifiedSourceAt(string sourceName, string modifiedString)
     {
-        _setModifiedSource(sourceName, modifiedString);
-    }
-
-    private void _setModifiedSource(string sourceName, string modifiedString)
-    {
-        var modified = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-        _currentState!.ModifiedSources ??= CommonStepHelpers.CreateModifiedSourcesDictionary();
-        _currentState.ModifiedSources[sourceName] = modified;
-        // Clear Modified if using ModifiedSources
-        _currentState.Modified = default;
+        _currentState!.SetModifiedSource(sourceName, modifiedString);
     }
 
     [Given(@"the resource has extension ""(.*)"" with value ""(.*)""")]

@@ -145,4 +145,40 @@ internal static class CommonStepHelpers
         states.Should().NotBeNull("Loaded states should not be null");
         states!.Should().HaveCount(expectedCount, $"Should have {expectedCount} resources");
     }
+
+    /// <summary>
+    /// Sets a ModifiedSource on a resource state, handling dictionary initialization and clearing Modified.
+    /// </summary>
+    /// <typeparam name="TExtensions">The extension type for the resource state.</typeparam>
+    /// <param name="state">The resource state to modify.</param>
+    /// <param name="sourceName">The source name to set.</param>
+    /// <param name="modifiedDateTime">The modified date/time value.</param>
+    public static void SetModifiedSource<TExtensions>(
+        this ResourceState<TExtensions> state,
+        string sourceName,
+        LocalDateTime modifiedDateTime)
+        where TExtensions : class
+    {
+        state.ModifiedSources ??= CreateModifiedSourcesDictionary();
+        state.ModifiedSources[sourceName] = modifiedDateTime;
+        // Clear Modified when using ModifiedSources
+        state.Modified = default;
+    }
+
+    /// <summary>
+    /// Sets a ModifiedSource from an ISO 8601 date/time string.
+    /// </summary>
+    /// <typeparam name="TExtensions">The extension type for the resource state.</typeparam>
+    /// <param name="state">The resource state to modify.</param>
+    /// <param name="sourceName">The source name to set.</param>
+    /// <param name="modifiedString">The ISO 8601 formatted date/time string.</param>
+    public static void SetModifiedSource<TExtensions>(
+        this ResourceState<TExtensions> state,
+        string sourceName,
+        string modifiedString)
+        where TExtensions : class
+    {
+        var modified = ParseLocalDateTime(modifiedString);
+        state.SetModifiedSource(sourceName, modified);
+    }
 }
