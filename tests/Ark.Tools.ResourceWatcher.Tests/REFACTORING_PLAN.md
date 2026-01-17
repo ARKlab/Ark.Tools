@@ -111,10 +111,13 @@ Reqnroll throws: "Binding types cannot be generic"
 - [x] Eliminate ~150 lines of duplicated code
 - [x] All tests passing (62/62)
 
-### Phase 2: Consolidate Assertions (Medium Risk)
-- [ ] Extend `CommonStepHelpers` with assertion verbs
-- [ ] Extract resource finding logic
-- [ ] Create shared "Then" step definitions for common assertions
+### Phase 2: Consolidate Assertions (Medium Risk) ✅ COMPLETE
+- [x] Extend `CommonStepHelpers` with assertion verbs
+- [x] Extract resource finding logic (FindByResourceId)
+- [x] Create shared assertion helpers (ShouldContainResource, ShouldNotContainResource, ShouldHaveResourceCount)
+- [x] Simplify 17 assertion methods across 2 step files
+- [x] Eliminate ~40 lines of duplicated code
+- [x] All tests passing (62/62)
 
 ### Phase 3: State Sharing (High Risk)
 - [x] Expose `Current` properties in step classes
