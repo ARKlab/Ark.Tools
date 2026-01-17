@@ -8,7 +8,6 @@ using AwesomeAssertions;
 using Dapper;
 
 using NodaTime;
-using NodaTime.Text;
 
 using Reqnroll;
 using Reqnroll.Assist;
@@ -342,15 +341,13 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"the VoidExtensions loaded state should contain resource ""(.*)""")]
     public void ThenTheVoidExtensionsLoadedStateShouldContainResource(string resourceId)
     {
-        _loadedVoidStates.Should().NotBeNull();
-        _loadedVoidStates!.Should().Contain(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
+        _loadedVoidStates.ShouldContainResource(resourceId);
     }
 
     [Then(@"the VoidExtensions loaded state should contain (.*) resources")]
     public void ThenTheVoidExtensionsLoadedStateShouldContainResources(int count)
     {
-        _loadedVoidStates.Should().NotBeNull();
-        _loadedVoidStates!.Should().HaveCount(count);
+        _loadedVoidStates.ShouldHaveResourceCount(count);
     }
 
     [Then(@"the Extensions column in database should be null for ""(.*)""")]
@@ -376,12 +373,9 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"resource ""(.*)"" VoidExtensions should be default value")]
     public void ThenResourceVoidExtensionsShouldBeDefaultValue(string resourceId)
     {
-        _loadedVoidStates.Should().NotBeNull();
-        var state = _loadedVoidStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
-        state.Should().NotBeNull();
-        
+        var state = _loadedVoidStates.FindByResourceId(resourceId);
         // VoidExtensions should be null (default for nullable reference type)
-        state!.Extensions.Should().BeNull();
+        state.Extensions.Should().BeNull();
     }
 
     // ===== TYPED EXTENSIONS ASSERTIONS =====
@@ -389,47 +383,38 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"the typed extensions loaded state should contain resource ""(.*)""")]
     public void ThenTheTypedExtensionsLoadedStateShouldContainResource(string resourceId)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        _loadedTypedStates!.Should().Contain(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
+        _loadedTypedStates.ShouldContainResource(resourceId);
     }
 
     [Then(@"resource ""(.*)"" should have typed extension LastOffset (.*)")]
     public void ThenResourceShouldHaveTypedExtensionLastOffset(string resourceId, long expectedOffset)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        var state = _loadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
-        state.Should().NotBeNull();
-        state!.Extensions.Should().NotBeNull();
+        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        state.Extensions.Should().NotBeNull();
         state.Extensions!.LastOffset.Should().Be(expectedOffset);
     }
 
     [Then(@"resource ""(.*)"" should have typed extension ETag ""(.*)""")]
     public void ThenResourceShouldHaveTypedExtensionETag(string resourceId, string expectedETag)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        var state = _loadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
-        state.Should().NotBeNull();
-        state!.Extensions.Should().NotBeNull();
+        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        state.Extensions.Should().NotBeNull();
         state.Extensions!.ETag.Should().Be(expectedETag);
     }
 
     [Then(@"resource ""(.*)"" should have typed extension Counter (.*)")]
     public void ThenResourceShouldHaveTypedExtensionCounter(string resourceId, int expectedCounter)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        var state = _loadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
-        state.Should().NotBeNull();
-        state!.Extensions.Should().NotBeNull();
+        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        state.Extensions.Should().NotBeNull();
         state.Extensions!.Counter.Should().Be(expectedCounter);
     }
 
     [Then(@"resource ""(.*)"" should have typed extension metadata ""(.*)"" with value ""(.*)""")]
     public void ThenResourceShouldHaveTypedExtensionMetadataWithValue(string resourceId, string key, string expectedValue)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        var state = _loadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
-        state.Should().NotBeNull();
-        state!.Extensions.Should().NotBeNull();
+        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        state.Extensions.Should().NotBeNull();
         state.Extensions!.Metadata.Should().NotBeNull();
         state.Extensions.Metadata!.Should().ContainKey(key);
         state.Extensions.Metadata[key].Should().Be(expectedValue);
@@ -438,30 +423,23 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"resource ""(.*)"" should have null typed extensions")]
     public void ThenResourceShouldHaveNullTypedExtensions(string resourceId)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        var state = _loadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
-        state.Should().NotBeNull();
-        state!.Extensions.Should().BeNull();
+        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        state.Extensions.Should().BeNull();
     }
 
     [Then(@"resource ""(.*)"" should have Modified ""(.*)""")]
     public void ThenResourceShouldHaveModified(string resourceId, string modified)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        var state = _loadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
-        state.Should().NotBeNull();
-        
-        var expectedModified = LocalDateTimePattern.ExtendedIso.Parse(modified).Value;
-        state!.Modified.Should().Be(expectedModified);
+        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        var expected = CommonStepHelpers.ParseLocalDateTime(modified);
+        state.Modified.Should().Be(expected);
     }
 
     [Then(@"resource ""(.*)"" should have RetryCount (.*)")]
     public void ThenResourceShouldHaveRetryCount(string resourceId, int expectedRetryCount)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        var state = _loadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
-        state.Should().NotBeNull();
-        state!.RetryCount.Should().Be(expectedRetryCount);
+        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        state.RetryCount.Should().Be(expectedRetryCount);
     }
 
     [Then(@"resource ""(.*)"" should have CheckSum ""(.*)""")]

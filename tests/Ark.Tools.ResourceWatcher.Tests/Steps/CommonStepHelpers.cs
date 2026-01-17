@@ -77,4 +77,72 @@ internal static class CommonStepHelpers
         item.Should().NotBeNull($"{itemDescription} should exist");
         return item!;
     }
+
+    /// <summary>
+    /// Finds a resource state by resource ID suffix.
+    /// Common pattern used across multiple step classes for finding resources in loaded states.
+    /// </summary>
+    /// <typeparam name="TExtensions">The extension type for the resource state.</typeparam>
+    /// <param name="states">The collection of resource states to search.</param>
+    /// <param name="resourceId">The resource ID or suffix to search for.</param>
+    /// <returns>The matching resource state.</returns>
+    public static ResourceState<TExtensions> FindByResourceId<TExtensions>(
+        this IEnumerable<ResourceState<TExtensions>>? states,
+        string resourceId)
+        where TExtensions : class
+    {
+        states.Should().NotBeNull("Loaded states should not be null when finding resource");
+        return states!.GetFirst(
+            s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal),
+            $"Resource with ID ending in '{resourceId}'");
+    }
+
+    /// <summary>
+    /// Asserts that a resource state contains a specific resource by ID.
+    /// </summary>
+    /// <typeparam name="TExtensions">The extension type for the resource state.</typeparam>
+    /// <param name="states">The collection of resource states.</param>
+    /// <param name="resourceId">The resource ID or suffix to check for.</param>
+    public static void ShouldContainResource<TExtensions>(
+        this IEnumerable<ResourceState<TExtensions>>? states,
+        string resourceId)
+        where TExtensions : class
+    {
+        states.Should().NotBeNull("Loaded states should not be null");
+        states!.Should().Contain(
+            s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal),
+            $"Resource with ID ending in '{resourceId}' should exist");
+    }
+
+    /// <summary>
+    /// Asserts that a resource state does not contain a specific resource by ID.
+    /// </summary>
+    /// <typeparam name="TExtensions">The extension type for the resource state.</typeparam>
+    /// <param name="states">The collection of resource states.</param>
+    /// <param name="resourceId">The resource ID or suffix to check for.</param>
+    public static void ShouldNotContainResource<TExtensions>(
+        this IEnumerable<ResourceState<TExtensions>>? states,
+        string resourceId)
+        where TExtensions : class
+    {
+        states.Should().NotBeNull("Loaded states should not be null");
+        states!.Should().NotContain(
+            s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal),
+            $"Resource with ID ending in '{resourceId}' should not exist");
+    }
+
+    /// <summary>
+    /// Asserts the count of resources in a collection.
+    /// </summary>
+    /// <typeparam name="TExtensions">The extension type for the resource state.</typeparam>
+    /// <param name="states">The collection of resource states.</param>
+    /// <param name="expectedCount">The expected number of resources.</param>
+    public static void ShouldHaveResourceCount<TExtensions>(
+        this IEnumerable<ResourceState<TExtensions>>? states,
+        int expectedCount)
+        where TExtensions : class
+    {
+        states.Should().NotBeNull("Loaded states should not be null");
+        states!.Should().HaveCount(expectedCount, $"Should have {expectedCount} resources");
+    }
 }

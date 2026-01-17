@@ -251,19 +251,19 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Then(@"the loaded state should contain resource ""(.*)""")]
     public void ThenTheLoadedStateShouldContainResource(string resourceId)
     {
-        _loadedStates.Should().Contain(s => s.ResourceId == resourceId);
+        _loadedStates.ShouldContainResource(resourceId);
     }
 
     [Then(@"the loaded state should not contain resource ""(.*)""")]
     public void ThenTheLoadedStateShouldNotContainResource(string resourceId)
     {
-        _loadedStates.Should().NotContain(s => s.ResourceId == resourceId);
+        _loadedStates.ShouldNotContainResource(resourceId);
     }
 
     [Then(@"the loaded state should contain (.*) resources")]
     public void ThenTheLoadedStateShouldContainResources(int count)
     {
-        _loadedStates.Should().HaveCount(count);
+        _loadedStates.ShouldHaveResourceCount(count);
     }
 
     [Then(@"the loaded state should be empty")]
@@ -272,40 +272,30 @@ public sealed class SqlStateProviderSteps : IDisposable
         _loadedStates.Should().BeEmpty();
     }
 
-    /// <summary>
-    /// Gets a loaded resource by ID with a helpful assertion message.
-    /// </summary>
-    private ResourceState<TestResourceExtensions> _getLoadedResource(string resourceId)
-    {
-        return _loadedStates!.GetFirst(
-            s => s.ResourceId == resourceId,
-            $"Resource '{resourceId}' in loaded states");
-    }
-
     [Then(@"resource ""(.*)"" should have Modified ""(.*)""")]
     public void ThenResourceShouldHaveModified(string resourceId, string modifiedString)
     {
         var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-        _getLoadedResource(resourceId).Modified.Should().Be(expected);
+        _loadedStates.FindByResourceId(resourceId).Modified.Should().Be(expected);
     }
 
     [Then(@"resource ""(.*)"" should have CheckSum ""(.*)""")]
     public void ThenResourceShouldHaveCheckSum(string resourceId, string checksum)
     {
-        _getLoadedResource(resourceId).CheckSum.Should().Be(checksum);
+        _loadedStates.FindByResourceId(resourceId).CheckSum.Should().Be(checksum);
     }
 
     [Then(@"resource ""(.*)"" should have RetryCount (.*)")]
     public void ThenResourceShouldHaveRetryCount(string resourceId, int retryCount)
     {
-        _getLoadedResource(resourceId).RetryCount.Should().Be(retryCount);
+        _loadedStates.FindByResourceId(resourceId).RetryCount.Should().Be(retryCount);
     }
 
     [Then(@"resource ""(.*)"" should have ModifiedSource ""(.*)"" at ""(.*)""")]
     public void ThenResourceShouldHaveModifiedSourceAt(string resourceId, string sourceName, string modifiedString)
     {
         var expected = CommonStepHelpers.ParseLocalDateTime(modifiedString);
-        var state = _getLoadedResource(resourceId);
+        var state = _loadedStates.FindByResourceId(resourceId);
         state.ModifiedSources.Should().NotBeNull();
         state.ModifiedSources.Should().ContainKey(sourceName);
         state.ModifiedSources![sourceName].Should().Be(expected);
@@ -314,7 +304,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [Then(@"resource ""(.*)"" should have extension ""(.*)"" with value ""(.*)""")]
     public void ThenResourceShouldHaveExtensionWithValue(string resourceId, string key, string expectedValue)
     {
-        var state = _getLoadedResource(resourceId);
+        var state = _loadedStates.FindByResourceId(resourceId);
         state.Extensions.Should().NotBeNull("Extensions should be set");
         state.Extensions!.Metadata.Should().NotBeNull("Extensions.Metadata should be set");
         state.Extensions.Metadata.Should().ContainKey(key, $"Extension key '{key}' should exist");
