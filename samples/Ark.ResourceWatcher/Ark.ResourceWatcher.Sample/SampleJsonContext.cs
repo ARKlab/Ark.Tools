@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.ResourceWatcher.Sample.Dto;
-using Ark.Tools.ResourceWatcher;
 
 using System.Text.Json.Serialization;
 
@@ -47,14 +46,11 @@ namespace Ark.ResourceWatcher.Sample;
 /// </para>
 /// </remarks>
 [JsonSerializable(typeof(MyExtensions))]
-[JsonSerializable(typeof(ResourceState<MyExtensions>))]
-[JsonSerializable(typeof(Dictionary<string, string>))]
 public sealed partial class SampleJsonContext : JsonSerializerContext
 {
     // This class is partial - the compiler generates the implementation at build time
     // The generated code provides:
     // - Metadata for serializing MyExtensions
-    // - Metadata for serializing ResourceState<MyExtensions>
     // - Optimized serialization/deserialization methods
     // - No runtime reflection needed
 }
