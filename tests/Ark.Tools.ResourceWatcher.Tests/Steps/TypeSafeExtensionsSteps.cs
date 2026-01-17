@@ -40,12 +40,6 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         _dbContext = dbContext;
     }
 
-    [Given(@"a SQL Server database is available for type-safe extensions")]
-    public void GivenASqlServerDatabaseIsAvailableForTypeSafeExtensions()
-    {
-        _dbContext.InitializeDatabase();
-    }
-
     [Given(@"the database schema is prepared")]
     public void GivenTheDatabaseSchemaIsPrepared()
     {

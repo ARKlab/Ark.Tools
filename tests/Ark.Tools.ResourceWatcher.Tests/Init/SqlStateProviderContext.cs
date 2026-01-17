@@ -16,6 +16,7 @@ namespace Ark.Tools.ResourceWatcher.Tests.Init;
 /// Shared context for SQL Server database and SqlStateProvider configuration.
 /// Provides common database setup functionality for all ResourceWatcher tests.
 /// This follows the Driver pattern - reusable state and verbs across test scenarios.
+/// Contains both state management and reusable Given/When/Then verbs.
 /// </summary>
 [Binding]
 public sealed class SqlStateProviderContext
@@ -75,6 +76,29 @@ public sealed class SqlStateProviderContext
             END"));
 
         ConnectionManager = new SqlConnectionManager();
+    }
+
+    // ===== VERBS (Given/When/Then) =====
+    // These verbs are moved here from step classes as they only delegate to context methods
+    
+    /// <summary>
+    /// Given verb: Initializes SQL Server database.
+    /// Moved from SqlStateProviderSteps as it only calls InitializeDatabase().
+    /// </summary>
+    [Given(@"a SQL Server database is available")]
+    public void GivenASqlServerDatabaseIsAvailable()
+    {
+        InitializeDatabase();
+    }
+
+    /// <summary>
+    /// Given verb: Initializes SQL Server database for type-safe extensions.
+    /// Moved from TypeSafeExtensionsSteps as it only calls InitializeDatabase().
+    /// </summary>
+    [Given(@"a SQL Server database is available for type-safe extensions")]
+    public void GivenASqlServerDatabaseIsAvailableForTypeSafeExtensions()
+    {
+        InitializeDatabase();
     }
 
     /// <summary>

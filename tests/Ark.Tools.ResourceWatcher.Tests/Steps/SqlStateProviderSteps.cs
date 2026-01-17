@@ -56,12 +56,6 @@ public sealed class SqlStateProviderSteps : IDisposable
         _dbContext = dbContext;
     }
 
-    [Given(@"a SQL Server database is available")]
-    public void GivenASqlServerDatabaseIsAvailable()
-    {
-        _dbContext.InitializeDatabase();
-    }
-
     [Given(@"the SqlStateProvider is configured")]
     public void GivenTheSqlStateProviderIsConfigured()
     {
