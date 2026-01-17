@@ -26,30 +26,17 @@ namespace Ark.Tools.ResourceWatcher.Tests.Steps;
 [Scope(Tag = "typesafe-extensions")]
 public sealed class TypeSafeExtensionsSteps : IDisposable
 {
-    private readonly ScenarioContext _scenarioContext;
+    private readonly TypeSafeExtensionsContext _context;
     private readonly SqlStateProviderContext _dbContext;
     private SqlStateProvider<VoidExtensions>? _voidStateProvider;
     private SqlStateProvider<TestExtensions>? _typedStateProvider;
     private readonly Dictionary<string, object> _namedProviders = [];
     
-    private readonly List<ResourceState<VoidExtensions>> _voidStatesToSave = [];
-    private readonly List<ResourceState<TestExtensions>> _typedStatesToSave = [];
-    
-    private IEnumerable<ResourceState<VoidExtensions>>? _loadedVoidStates;
-    private IEnumerable<ResourceState<TestExtensions>>? _loadedTypedStates;
-    
-    private ResourceState<VoidExtensions>? _currentVoidState;
-    private ResourceState<TestExtensions>? _currentTypedState;
-    
     private readonly Instant _now = SystemClock.Instance.GetCurrentInstant();
 
-    // Expose current states for potential injection by other step classes
-    public ResourceState<VoidExtensions>? CurrentVoid => _currentVoidState;
-    public ResourceState<TestExtensions>? CurrentTyped => _currentTypedState;
-
-    public TypeSafeExtensionsSteps(ScenarioContext scenarioContext, SqlStateProviderContext dbContext)
+    public TypeSafeExtensionsSteps(TypeSafeExtensionsContext context, SqlStateProviderContext dbContext)
     {
-        _scenarioContext = scenarioContext;
+        _context = context;
         _dbContext = dbContext;
     }
 
@@ -87,7 +74,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         tenant = _dbContext.GetUniqueTenant(tenant);
         var data = table.CreateInstance<StateDataRow>();
 
-        _currentVoidState = new ResourceState<VoidExtensions>
+        _context.CurrentVoid = new ResourceState<VoidExtensions>
         {
             Tenant = tenant,
             ResourceId = resourceId,
@@ -98,7 +85,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
             Extensions = null // VoidExtensions is always null
         };
 
-        _voidStatesToSave.Add(_currentVoidState);
+        _context.VoidStatesToSave.Add(_context.CurrentVoid);
     }
 
     // ===== TYPED EXTENSIONS SETUP =====
@@ -145,7 +132,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         tenant = _dbContext.GetUniqueTenant(tenant);
         var data = table.CreateInstance<StateDataRow>();
 
-        _currentTypedState = new ResourceState<TestExtensions>
+        _context.CurrentTyped = new ResourceState<TestExtensions>
         {
             Tenant = tenant,
             ResourceId = resourceId,
@@ -156,15 +143,15 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
             Extensions = null // Will be set by subsequent steps if needed
         };
 
-        _typedStatesToSave.Add(_currentTypedState);
+        _context.TypedStatesToSave.Add(_context.CurrentTyped);
     }
 
     [Given(@"the resource has typed extension with LastOffset (.*) and ETag ""(.*)""")]
     public void GivenTheResourceHasTypedExtensionWithLastOffsetAndETag(long lastOffset, string etag)
     {
-        _currentTypedState.Should().NotBeNull();
+        _context.CurrentTyped.Should().NotBeNull();
         
-        _currentTypedState!.Extensions = new TestExtensions
+        _context.CurrentTyped!.Extensions = new TestExtensions
         {
             LastOffset = lastOffset,
             ETag = etag
@@ -174,9 +161,9 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Given(@"the resource has typed extension with LastOffset (.*) and Counter (.*)")]
     public void GivenTheResourceHasTypedExtensionWithLastOffsetAndCounter(long lastOffset, int counter)
     {
-        _currentTypedState.Should().NotBeNull();
+        _context.CurrentTyped.Should().NotBeNull();
         
-        _currentTypedState!.Extensions = new TestExtensions
+        _context.CurrentTyped!.Extensions = new TestExtensions
         {
             LastOffset = lastOffset,
             Counter = counter
@@ -186,9 +173,9 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Given(@"the resource has typed extension with LastOffset (.*)")]
     public void GivenTheResourceHasTypedExtensionWithLastOffset(long lastOffset)
     {
-        _currentTypedState.Should().NotBeNull();
+        _context.CurrentTyped.Should().NotBeNull();
         
-        _currentTypedState!.Extensions = new TestExtensions
+        _context.CurrentTyped!.Extensions = new TestExtensions
         {
             LastOffset = lastOffset
         };
@@ -197,44 +184,44 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Given(@"the resource has typed extension with ETag ""(.*)""")]
     public void GivenTheResourceHasTypedExtensionWithETag(string etag)
     {
-        _currentTypedState.Should().NotBeNull();
+        _context.CurrentTyped.Should().NotBeNull();
         
-        var current = _currentTypedState!.Extensions ?? new TestExtensions();
-        _currentTypedState.Extensions = current with { ETag = etag };
+        var current = _context.CurrentTyped!.Extensions ?? new TestExtensions();
+        _context.CurrentTyped.Extensions = current with { ETag = etag };
     }
 
     [Given(@"the resource has typed extension with Counter (.*)")]
     public void GivenTheResourceHasTypedExtensionWithCounter(int counter)
     {
-        _currentTypedState.Should().NotBeNull();
+        _context.CurrentTyped.Should().NotBeNull();
         
-        var current = _currentTypedState!.Extensions ?? new TestExtensions();
-        _currentTypedState.Extensions = current with { Counter = counter };
+        var current = _context.CurrentTyped!.Extensions ?? new TestExtensions();
+        _context.CurrentTyped.Extensions = current with { Counter = counter };
     }
 
     [Given(@"the resource has typed extension metadata ""(.*)"" with value ""(.*)""")]
     public void GivenTheResourceHasTypedExtensionMetadataWithValue(string key, string value)
     {
-        _currentTypedState.Should().NotBeNull();
-        _currentTypedState!.Extensions.Should().NotBeNull("Extensions must be initialized before adding metadata");
+        _context.CurrentTyped.Should().NotBeNull();
+        _context.CurrentTyped!.Extensions.Should().NotBeNull("Extensions must be initialized before adding metadata");
         
-        var metadata = _currentTypedState.Extensions!.Metadata ?? new Dictionary<string, string>(StringComparer.Ordinal);
+        var metadata = _context.CurrentTyped.Extensions!.Metadata ?? new Dictionary<string, string>(StringComparer.Ordinal);
         metadata[key] = value;
         
-        _currentTypedState.Extensions = _currentTypedState.Extensions with { Metadata = metadata };
+        _context.CurrentTyped.Extensions = _context.CurrentTyped.Extensions with { Metadata = metadata };
     }
 
     [Given(@"the resource has null typed extensions")]
     public void GivenTheResourceHasNullTypedExtensions()
     {
-        _currentTypedState.Should().NotBeNull();
-        _currentTypedState!.Extensions = null;
+        _context.CurrentTyped.Should().NotBeNull();
+        _context.CurrentTyped!.Extensions = null;
     }
 
     [Given(@"the resource ""(.*)"" has typed extension with LastOffset (.*)")]
     public void GivenTheResourceHasTypedExtensionWithLastOffset(string resourceId, long lastOffset)
     {
-        var state = _typedStatesToSave.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
+        var state = _context.TypedStatesToSave.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
         state.Should().NotBeNull($"Resource {resourceId} should exist");
         
         state!.Extensions = new TestExtensions
@@ -249,36 +236,36 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public async Task WhenISaveTheVoidExtensionsResourceState()
     {
         _voidStateProvider.Should().NotBeNull();
-        _currentVoidState.Should().NotBeNull();
+        _context.CurrentVoid.Should().NotBeNull();
         
-        await _voidStateProvider!.SaveStateAsync([_currentVoidState!], CancellationToken.None);
+        await _voidStateProvider!.SaveStateAsync([_context.CurrentVoid!], CancellationToken.None);
     }
 
     [When(@"I save all VoidExtensions resource states")]
     public async Task WhenISaveAllVoidExtensionsResourceStates()
     {
         _voidStateProvider.Should().NotBeNull();
-        _voidStatesToSave.Should().NotBeEmpty();
+        _context.VoidStatesToSave.Should().NotBeEmpty();
         
-        await _voidStateProvider!.SaveStateAsync(_voidStatesToSave, CancellationToken.None);
+        await _voidStateProvider!.SaveStateAsync(_context.VoidStatesToSave, CancellationToken.None);
     }
 
     [When(@"I save the typed extensions resource state")]
     public async Task WhenISaveTheTypedExtensionsResourceState()
     {
         _typedStateProvider.Should().NotBeNull();
-        _currentTypedState.Should().NotBeNull();
+        _context.CurrentTyped.Should().NotBeNull();
         
-        await _typedStateProvider!.SaveStateAsync([_currentTypedState!], CancellationToken.None);
+        await _typedStateProvider!.SaveStateAsync([_context.CurrentTyped!], CancellationToken.None);
     }
 
     [When(@"I save all typed extensions resource states")]
     public async Task WhenISaveAllTypedExtensionsResourceStates()
     {
         _typedStateProvider.Should().NotBeNull();
-        _typedStatesToSave.Should().NotBeEmpty();
+        _context.TypedStatesToSave.Should().NotBeEmpty();
         
-        await _typedStateProvider!.SaveStateAsync(_typedStatesToSave, CancellationToken.None);
+        await _typedStateProvider!.SaveStateAsync(_context.TypedStatesToSave, CancellationToken.None);
     }
 
     [When(@"I save the VoidExtensions resource state with provider ""(.*)""")]
@@ -286,9 +273,9 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _namedProviders.Should().ContainKey(providerName);
         var provider = (SqlStateProvider<VoidExtensions>)_namedProviders[providerName];
-        _currentVoidState.Should().NotBeNull();
+        _context.CurrentVoid.Should().NotBeNull();
         
-        await provider.SaveStateAsync([_currentVoidState!], CancellationToken.None);
+        await provider.SaveStateAsync([_context.CurrentVoid!], CancellationToken.None);
     }
 
     [When(@"I save the typed extensions resource state with provider ""(.*)""")]
@@ -296,9 +283,9 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _namedProviders.Should().ContainKey(providerName);
         var provider = (SqlStateProvider<TestExtensions>)_namedProviders[providerName];
-        _currentTypedState.Should().NotBeNull();
+        _context.CurrentTyped.Should().NotBeNull();
         
-        await provider.SaveStateAsync([_currentTypedState!], CancellationToken.None);
+        await provider.SaveStateAsync([_context.CurrentTyped!], CancellationToken.None);
     }
 
     // ===== UPDATE OPERATIONS =====
@@ -306,7 +293,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [When(@"I update typed extensions for resource ""(.*)"" with LastOffset (.*) and ETag ""(.*)""")]
     public void WhenIUpdateTypedExtensionsForResourceWithLastOffsetAndETag(string resourceId, long lastOffset, string etag)
     {
-        var state = _typedStatesToSave.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
+        var state = _context.TypedStatesToSave.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
         state.Should().NotBeNull();
         
         state!.Extensions = new TestExtensions
@@ -324,7 +311,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         _voidStateProvider.Should().NotBeNull();
         tenant = _dbContext.GetUniqueTenant(tenant);
         
-        _loadedVoidStates = await _voidStateProvider!.LoadStateAsync(tenant, null, CancellationToken.None);
+        _context.LoadedVoidStates = await _voidStateProvider!.LoadStateAsync(tenant, null, CancellationToken.None);
     }
 
     [When(@"I load typed extensions state for tenant ""(.*)""")]
@@ -333,7 +320,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         _typedStateProvider.Should().NotBeNull();
         tenant = _dbContext.GetUniqueTenant(tenant);
         
-        _loadedTypedStates = await _typedStateProvider!.LoadStateAsync(tenant, null, CancellationToken.None);
+        _context.LoadedTypedStates = await _typedStateProvider!.LoadStateAsync(tenant, null, CancellationToken.None);
     }
 
     // ===== VOIDEXTENSIONS ASSERTIONS =====
@@ -341,24 +328,24 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"the VoidExtensions loaded state should contain resource ""(.*)""")]
     public void ThenTheVoidExtensionsLoadedStateShouldContainResource(string resourceId)
     {
-        _loadedVoidStates.ShouldContainResource(resourceId);
+        _context.LoadedVoidStates.ShouldContainResource(resourceId);
     }
 
     [Then(@"the VoidExtensions loaded state should contain (.*) resources")]
     public void ThenTheVoidExtensionsLoadedStateShouldContainResources(int count)
     {
-        _loadedVoidStates.ShouldHaveResourceCount(count);
+        _context.LoadedVoidStates.ShouldHaveResourceCount(count);
     }
 
     [Then(@"the Extensions column in database should be null for ""(.*)""")]
     public void ThenTheExtensionsColumnInDatabaseShouldBeNullFor(string resourceId)
     {
-        _currentVoidState.Should().NotBeNull();
+        _context.CurrentVoid.Should().NotBeNull();
         
         using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
         var extensionsJson = conn.QuerySingleOrDefault<string>(
             "SELECT ExtensionsJson FROM [State] WHERE Tenant = @Tenant AND ResourceId = @ResourceId",
-            new { Tenant = _currentVoidState!.Tenant, ResourceId = _currentVoidState.ResourceId });
+            new { Tenant = _context.CurrentVoid!.Tenant, ResourceId = _context.CurrentVoid.ResourceId });
         
         extensionsJson.Should().BeNull();
     }
@@ -366,14 +353,14 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"all VoidExtensions resources should have null Extensions")]
     public void ThenAllVoidExtensionsResourcesShouldHaveNullExtensions()
     {
-        _loadedVoidStates.Should().NotBeNull();
-        _loadedVoidStates!.Should().AllSatisfy(s => s.Extensions.Should().BeNull());
+        _context.LoadedVoidStates.Should().NotBeNull();
+        _context.LoadedVoidStates!.Should().AllSatisfy(s => s.Extensions.Should().BeNull());
     }
 
     [Then(@"resource ""(.*)"" VoidExtensions should be default value")]
     public void ThenResourceVoidExtensionsShouldBeDefaultValue(string resourceId)
     {
-        var state = _loadedVoidStates.FindByResourceId(resourceId);
+        var state = _context.LoadedVoidStates.FindByResourceId(resourceId);
         // VoidExtensions should be null (default for nullable reference type)
         state.Extensions.Should().BeNull();
     }
@@ -383,13 +370,13 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"the typed extensions loaded state should contain resource ""(.*)""")]
     public void ThenTheTypedExtensionsLoadedStateShouldContainResource(string resourceId)
     {
-        _loadedTypedStates.ShouldContainResource(resourceId);
+        _context.LoadedTypedStates.ShouldContainResource(resourceId);
     }
 
     [Then(@"resource ""(.*)"" should have typed extension LastOffset (.*)")]
     public void ThenResourceShouldHaveTypedExtensionLastOffset(string resourceId, long expectedOffset)
     {
-        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        var state = _context.LoadedTypedStates.FindByResourceId(resourceId);
         state.Extensions.Should().NotBeNull();
         state.Extensions!.LastOffset.Should().Be(expectedOffset);
     }
@@ -397,7 +384,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"resource ""(.*)"" should have typed extension ETag ""(.*)""")]
     public void ThenResourceShouldHaveTypedExtensionETag(string resourceId, string expectedETag)
     {
-        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        var state = _context.LoadedTypedStates.FindByResourceId(resourceId);
         state.Extensions.Should().NotBeNull();
         state.Extensions!.ETag.Should().Be(expectedETag);
     }
@@ -405,7 +392,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"resource ""(.*)"" should have typed extension Counter (.*)")]
     public void ThenResourceShouldHaveTypedExtensionCounter(string resourceId, int expectedCounter)
     {
-        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        var state = _context.LoadedTypedStates.FindByResourceId(resourceId);
         state.Extensions.Should().NotBeNull();
         state.Extensions!.Counter.Should().Be(expectedCounter);
     }
@@ -413,7 +400,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"resource ""(.*)"" should have typed extension metadata ""(.*)"" with value ""(.*)""")]
     public void ThenResourceShouldHaveTypedExtensionMetadataWithValue(string resourceId, string key, string expectedValue)
     {
-        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        var state = _context.LoadedTypedStates.FindByResourceId(resourceId);
         state.Extensions.Should().NotBeNull();
         state.Extensions!.Metadata.Should().NotBeNull();
         state.Extensions.Metadata!.Should().ContainKey(key);
@@ -423,14 +410,14 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"resource ""(.*)"" should have null typed extensions")]
     public void ThenResourceShouldHaveNullTypedExtensions(string resourceId)
     {
-        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        var state = _context.LoadedTypedStates.FindByResourceId(resourceId);
         state.Extensions.Should().BeNull();
     }
 
     [Then(@"resource ""(.*)"" should have Modified ""(.*)""")]
     public void ThenResourceShouldHaveModified(string resourceId, string modified)
     {
-        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        var state = _context.LoadedTypedStates.FindByResourceId(resourceId);
         var expected = CommonStepHelpers.ParseLocalDateTime(modified);
         state.Modified.Should().Be(expected);
     }
@@ -438,15 +425,15 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     [Then(@"resource ""(.*)"" should have RetryCount (.*)")]
     public void ThenResourceShouldHaveRetryCount(string resourceId, int expectedRetryCount)
     {
-        var state = _loadedTypedStates.FindByResourceId(resourceId);
+        var state = _context.LoadedTypedStates.FindByResourceId(resourceId);
         state.RetryCount.Should().Be(expectedRetryCount);
     }
 
     [Then(@"resource ""(.*)"" should have CheckSum ""(.*)""")]
     public void ThenResourceShouldHaveCheckSum(string resourceId, string expectedCheckSum)
     {
-        _loadedTypedStates.Should().NotBeNull();
-        var state = _loadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
+        _context.LoadedTypedStates.Should().NotBeNull();
+        var state = _context.LoadedTypedStates!.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
         state.Should().NotBeNull();
         state!.CheckSum.Should().Be(expectedCheckSum);
     }
@@ -483,14 +470,14 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         // Just check that it contains the resource ID (allows for tenant prefix)
         state.ResourceId.Should().Contain(resourceId);
         
-        _scenarioContext["typed-resource-state"] = state;
+        _context.LoadedTypedResourceForVerification = state;
     }
 
     [Then(@"the typed resource should have LastOffset (.*)")]
     public void ThenTheTypedResourceShouldHaveLastOffset(long expectedOffset)
     {
-        _scenarioContext.Should().ContainKey("typed-resource-state");
-        var state = (ResourceState<TestExtensions>)_scenarioContext["typed-resource-state"];
+        _context.LoadedTypedResourceForVerification.Should().NotBeNull();
+        var state = _context.LoadedTypedResourceForVerification!;
         
         state.Extensions.Should().NotBeNull();
         state.Extensions!.LastOffset.Should().Be(expectedOffset);
