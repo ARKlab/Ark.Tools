@@ -11,6 +11,10 @@
     <Version>$(RavenDbGroupVersion)</Version>
     <VersionSuffix>$(RavenDbGroupVersionSuffix)</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+    
+    <!-- Trimming Support -->
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <!--===============================================================================-->
 
