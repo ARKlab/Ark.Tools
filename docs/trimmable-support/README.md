@@ -8,49 +8,52 @@ Assembly trimming is a .NET feature that removes unused code from published appl
 
 ## Documentation Files
 
-- **[guidelines.md](guidelines.md)** - ⭐ **START HERE** - Best practices and patterns for making libraries trimmable
-- **[implementation-plan.md](implementation-plan.md)** - Overall strategy, completion report, and post-review analysis
-- **[progress-tracker.md](progress-tracker.md)** - Detailed status and implementation notes for all 50 libraries
-- **[deep-dive-analysis.md](deep-dive-analysis.md)** - Technical analysis of complexity and effort for each library
+- **[overhaul-plan.md](overhaul-plan.md)** - 🆕 **CRITICAL** - Comprehensive plan to achieve 100% Trimmable libraries
+- **[guidelines.md](guidelines.md)** - ⭐ Best practices and patterns for making libraries trimmable
+- **[implementation-plan.md](implementation-plan.md)** - Original strategy and completion report (being revised)
+- **[progress-tracker.md](progress-tracker.md)** - Detailed status for all 50 libraries (being updated)
+- **[deep-dive-analysis.md](deep-dive-analysis.md)** - Technical analysis of complexity and effort
 
 ## Quick Status
 
-- **Status**: ✅ **INITIATIVE COMPLETE AND VALIDATED** (2026-01-18)
-- **Progress**: **42/50 libraries (84%) trimmable** - Target Exceeded! 🎉
-  - Common Libraries: 35/42 (83%) ✅
+- **Status**: 🔄 **OVERHAUL IN PROGRESS** (2026-01-18)
+- **Current Progress**: **42/50 libraries (84%) trimmable**
+  - Common Libraries: 37/43 (86%) ✅
   - ResourceWatcher Libraries: 7/8 (88%) ✅
-  - AspNetCore Libraries: 0/11 (0%) - ❌ NOT TRIMMABLE (Microsoft MVC limitation)
-- **Achievement**: 30-40% deployment size reduction - ✅ ACHIEVED!
+  - AspNetCore Libraries: 0/11 (0%) - Under review
+- **NEW GOAL**: **100% of src/ libraries Trimmable** with RequiresUnreferencedCode where needed
+- **Key Insight**: A library CAN be Trimmable even with RequiresUnreferencedCode methods
 
 ## Recent Updates (2026-01-18)
 
-### Post-Completion Review Completed
+### ⚠️ IMPORTANT: Direction Change After Review
 
-A comprehensive review validated the implementation against Microsoft best practices:
+Based on feedback from @AndreaCuneo, the original approach needs significant revision:
 
-✅ **All Patterns Validated:**
-- UnconditionalSuppressMessage usage appropriate (30+ uses reviewed)
-- RequiresUnreferencedCode coverage complete (68 attributes)
-- Core.Reflection split decision confirmed correct
-- All 8 non-trimmable libraries have valid technical reasons
+**Previous Understanding (INCORRECT):**
+- Some libraries should remain "not trimmable"
+- Split Core.Reflection into separate package
+- Accept 84% as final result
 
-✅ **Documentation Enhanced:**
-- Guidelines updated with Microsoft documentation references
-- Library design principles section added
-- Core.Reflection split documented in migration-v6.md
-- Comprehensive overhaul analysis added
+**Corrected Understanding (CORRECT):**
+- **A library is Trimmable as long as all warnings are handled**, including exposing RequiresUnreferencedCode
+- Libraries CAN have methods with RequiresUnreferencedCode and still be marked `<IsTrimmable>true</IsTrimmable>`
+- **ALL libraries under src/ MUST be Trimmable** (100% goal)
+- Core.Reflection should be merged back with RequiresUnreferencedCode on methods
 
-✅ **Recommendations Identified:**
-- ResourceWatcher.Sql migration opportunity (optional for v7)
-- Http/NLog source generation enhancements (optional for v7+)
-- All changes are minor enhancements, not critical
+### New Overhaul Plan
 
-### Key Findings
+See **[overhaul-plan.md](overhaul-plan.md)** for comprehensive strategy:
 
-1. **Current implementation follows Microsoft best practices** ✅
-2. **84% trimmable is excellent achievement** - Realistic maximum is 86% ✅
-3. **No major overhaul required** - Minor enhancements completed ✅
-4. **Clear migration path documented** for applications ✅
+**Phase 1:** Review UnconditionalSuppressMessage usage - replace inappropriate uses with RequiresUnreferencedCode
+
+**Phase 2:** Merge Core.Reflection back into Core with RequiresUnreferencedCode attributes
+
+**Phase 3:** Make all 6 remaining common libraries Trimmable with RequiresUnreferencedCode
+
+**Phase 4:** Investigate AspNetCore libraries for Trimmable status
+
+**Expected Outcome:** 100% of src/ libraries Trimmable
 
 ## For Library Authors
 
