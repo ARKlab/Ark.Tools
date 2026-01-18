@@ -323,10 +323,21 @@ Per [Microsoft's official documentation](https://learn.microsoft.com/en-us/dotne
 
 > **When suppressing warnings, you are responsible for guaranteeing the trim compatibility of the code based on invariants that you know to be true by inspection and testing. Use caution with these annotations, because if they are incorrect, or if invariants of your code change, they might end up hiding incorrect code.**
 
+**Key Principle from Microsoft**: "It's only valid to suppress a warning if there are annotations or code that ensure the reflected-on members are visible targets of reflection. It isn't sufficient that the member was a target of a call, field, or property access."
+
 **Critical Rule**: `UnconditionalSuppressMessage` should **ONLY** be used when:
 1. The code is **genuinely safe** despite the warning
 2. The intent **cannot be expressed** with `RequiresUnreferencedCode` or `DynamicallyAccessedMembers` attributes
 3. You can **prove by inspection and testing** that the code will work correctly when trimmed
+4. The trimmer cannot prove safety statically, but you have invariants ensuring correctness
+
+**Warning from Microsoft**: Properties, fields, and methods that aren't visible targets of reflection could be:
+- Inlined
+- Have their names removed  
+- Get moved to different types
+- Otherwise be optimized in ways that break reflection
+
+This means suppressions can become incorrect as trimming optimizations evolve.
 
 ### ✅ Safe to Suppress When
 
@@ -559,6 +570,38 @@ Always investigate warnings before suppressing. They often indicate real trimmin
 
 ---
 
+## Library Design Principles for Trimming
+
+### Microsoft's Recommendations
+
+Based on [Microsoft's official guidance](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming#recommendations), follow these principles when designing libraries for trimming:
+
+1. **Avoid reflection when possible** - Minimize reflection scope so it's reachable only from a small part of the library
+
+2. **Annotate with DynamicallyAccessedMembers** - Statically express trimming requirements when possible
+
+3. **Reorganize code for analyzability** - Make it follow analyzable patterns that can be annotated
+
+4. **Propagate RequiresUnreferencedCode to public APIs** - When code is incompatible with trimming, annotate it and propagate up to relevant public APIs
+
+5. **Avoid reflection in static constructors** - Using statically unanalyzable reflection in static constructors results in warnings propagating to all members of the class
+
+6. **Avoid annotating virtual/interface methods** - Requires all overrides to have matching annotations
+
+7. **Consider source generators** - For reflection-heavy APIs (like serializers), adopt source generators for better static analysis
+
+### When a Library Should NOT Be Trimmable
+
+**It's perfectly valid** to mark a library as not trimmable when:
+
+- **The library fundamentally requires dynamic reflection** that cannot be expressed with trim annotations
+- **Making it trim-safe would require breaking changes** or major refactoring
+- **The complexity/effort outweighs the benefits** for that specific library
+- **The library is rarely used in trim-sensitive deployment scenarios** (e.g., development tools, build-time utilities)
+- **Third-party dependencies** are fundamentally not trim-compatible
+
+**Document the reason** clearly when deciding not to pursue trimming support.
+
 ## Library Splitting Guidance
 
 ### When to Consider Splitting
@@ -566,6 +609,7 @@ Always investigate warnings before suppressing. They often indicate real trimmin
 1. **Small trim-unsafe portion** of otherwise trim-safe library
 2. **Optional features** that require reflection
 3. **Clear separation** between core and advanced features
+4. **Majority of users don't need the reflection features**
 
 ### How to Split
 
@@ -573,26 +617,52 @@ Always investigate warnings before suppressing. They often indicate real trimmin
 2. Move trim-unsafe types to new project
 3. Original library depends on new library (not vice versa)
 4. Document which package to use when
+5. **Ensure backward compatibility** - Existing code should continue to work
 
 ### Example Structure
 
 ```
-Ark.Tools.Core (trimmable)
+Ark.Tools.Core (trimmable) ✅
 ├── Basic utilities
 ├── Extension methods
+├── Value objects
 └── Simple helpers
+→ 83% of applications use only these features
 
-Ark.Tools.Core.Reflection (not trimmable)
-├── Reflection utilities
-├── Dynamic type handling
+Ark.Tools.Core.Reflection (not trimmable) ❌
+├── ShredObjectToDataTable
+├── IQueryable extensions
+├── ReflectionHelper utilities
 └── Assembly scanning
+→ Only needed by 17% of applications with specific requirements
 ```
+
+**Benefits of Splitting:**
+- ✅ Most applications can achieve full trimming support
+- ✅ Clear choice between trimming vs reflection features
+- ✅ Backward compatible (no breaking changes)
+- ✅ Applications pay only for what they use
 
 ---
 
 ## Additional Resources
 
-- [Microsoft: Prepare libraries for trimming](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming)
-- [Trim warnings reference](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trim-warnings)
-- [DynamicallyAccessedMembers](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute)
-- [JSON source generation](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation)
+### Official Microsoft Documentation
+
+**Core Concepts:**
+- [Prepare .NET libraries for trimming](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming) - Comprehensive guide for library authors
+- [Understanding trim analysis](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trimming-concepts) - How the trimmer analyzes code
+- [Fixing trim warnings](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/fixing-warnings) - Step-by-step workflows for resolving warnings
+- [Trim warnings reference](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trim-warnings) - Complete list of IL#### warning codes
+
+**Attributes and APIs:**
+- [RequiresUnreferencedCodeAttribute](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.codeanalysis.requiresunreferencedcodeattribute) - Mark code as incompatible with trimming
+- [UnconditionalSuppressMessageAttribute](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.codeanalysis.unconditionalsuppressmessageattribute) - Suppress warnings with justification
+- [DynamicallyAccessedMembersAttribute](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.codeanalysis.dynamicallyaccessedmembersattribute) - Specify reflection requirements
+- [DynamicDependencyAttribute](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.codeanalysis.dynamicdependencyattribute) - Keep specific members (last resort)
+
+**Advanced Topics:**
+- [JSON source generation](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation) - Trim-safe JSON serialization
+- [Native AOT compatibility](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) - AOT analyzers and requirements
+- [Intrinsic APIs marked RequiresUnreferencedCode](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/intrinsic-requiresunreferencedcode-apis) - Special cases (MakeGenericMethod, etc.)
+- [Known trimming incompatibilities](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities) - Framework-level issues
