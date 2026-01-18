@@ -19,6 +19,8 @@ public sealed class FakeServer : IServer
 
     public IFeatureCollection Features { get; }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2091:Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' requirements", Justification = "StartAsync is constrained by IServer interface. The TContext type is controlled by ASP.NET Core hosting and has a well-known structure with HttpContext property.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2090:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' requirements", Justification = "StartAsync is constrained by IServer interface. The TContext type is controlled by ASP.NET Core hosting and has a well-known structure with HttpContext property.")]
     public Task StartAsync<TContext>(IHttpApplication<TContext> application, CancellationToken cancellationToken) where TContext : notnull
     {
         var prop = typeof(TContext).GetProperty("HttpContext") ?? throw new InvalidOperationException("TContext do not expose HttpContext property");
