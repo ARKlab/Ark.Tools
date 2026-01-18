@@ -11,6 +11,7 @@ namespace Ark.Tools.AspNetCore.JsonContext;
 /// This context includes all common error response types used by Ark.Tools middleware.
 /// Configured with Ark default settings at compile-time via JsonSourceGenerationOptions attribute.
 /// </summary>
+[UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "JSON source generation for Exception types requires TargetSite property which uses reflection. This is acceptable for error serialization scenarios.")]
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

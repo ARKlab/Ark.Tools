@@ -106,6 +106,8 @@ public class ArkProblemDetailsOptionsSetup
         options.Map<BusinessRuleViolationException>(_toProblemDetails);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2070:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' requirements", Justification = "BusinessRuleViolation types are known at compile time and preserved.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "BusinessRuleViolation serialization requires reflection on well-known domain types that are preserved.")]
     private Microsoft.AspNetCore.Mvc.ProblemDetails _toProblemDetails(BusinessRuleViolationException arg)
     {
         var pdt = _brvMap.GetOrAdd(arg.BusinessRuleViolation.GetType(), t =>

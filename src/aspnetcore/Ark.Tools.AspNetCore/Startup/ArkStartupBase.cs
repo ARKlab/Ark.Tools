@@ -22,6 +22,8 @@ internal sealed class ArkStartupBase
     {
         Configuration = configuration;
     }
+    
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "ConfigureServices is the startup configuration method that sets up Application Insights. Configuration binding is required and types are preserved by the hosting infrastructure.")]
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpContextAccessor();
