@@ -10,10 +10,6 @@
     <Version>$(EventSourcingGroupVersion)</Version>
     <VersionSuffix>$(EventSourcingGroupVersionSuffix)</VersionSuffix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
-    
-    <!-- Trimming Support -->
-    <IsTrimmable>true</IsTrimmable>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <!--===============================================================================-->
 
