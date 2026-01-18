@@ -81,6 +81,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
         public PolicyResult? Policy { get; set; }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "CacheEntry and PolicyResult are well-known internal types with simple properties that are preserved.")]
     public override async Task TokenValidated(TokenValidatedContext context)
     {
         var cache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
