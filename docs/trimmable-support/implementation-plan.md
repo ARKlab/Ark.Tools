@@ -1,7 +1,21 @@
 # Trimming Implementation Plan
 
-**Last Updated:** 2026-01-13  
-**Status:** ✅ COMPLETE - 42/50 Libraries (84%) Trimmable
+**⚠️ IMPORTANT UPDATE (2026-01-18):**
+
+This document contains the original implementation plan and post-completion review. However, based on critical feedback, a **new overhaul plan** has been created.
+
+**See [overhaul-plan.md](overhaul-plan.md) for the updated strategy to achieve 100% Trimmable libraries.**
+
+Key changes:
+- Libraries CAN be Trimmable with RequiresUnreferencedCode methods
+- Goal revised to 100% of src/ libraries Trimmable (not 84%)
+- Core.Reflection will be merged back (not kept separate)
+- Review of all UnconditionalSuppressMessage usage planned
+
+---
+
+**Last Updated:** 2026-01-13 (Original completion)  
+**Status:** ✅ COMPLETE - ⚠️ BEING REVISED per overhaul-plan.md
 
 ## Executive Summary
 
@@ -492,31 +506,34 @@ Following the completion of the trimming initiative, a comprehensive review was 
 
 **Question:** Should we merge Ark.Tools.Core.Reflection back into Ark.Tools.Core?
 
-**Analysis:**
+**⚠️ UPDATE (2026-01-18):** This analysis was based on incorrect understanding. The correct approach is:
 
-| Factor | Merge Back | Keep Separated (Current) |
-|--------|-----------|--------------------------|
-| **Trimming Support** | ❌ Core becomes not trimmable | ✅ Core remains trimmable |
-| **Backward Compatibility** | ✅ Single package | ✅ No breaking changes |
-| **User Choice** | ❌ All-or-nothing | ✅ Choose trimming vs reflection |
-| **Deployment Size** | ❌ Larger for most users | ✅ 30-40% smaller for 83% of apps |
-| **Complexity** | ✅ Simpler (1 package) | ⚠️ More packages to manage |
-| **Library Count Trimmable** | ❌ 34/42 (81%) | ✅ 35/42 (83%) |
-| **Developer Experience** | ⚠️ Simpler for reflection users | ⚠️ Extra package for reflection users |
+**NEW Recommendation:** **MERGE BACK** ✅
 
-**Recommendation:** **KEEP SEPARATED** ✅
+**Corrected Understanding:**
+- A library CAN be marked `<IsTrimmable>true</IsTrimmable>` even with methods that have `RequiresUnreferencedCode`
+- The key is having **zero trim warnings** at build time
+- `RequiresUnreferencedCode` propagates warnings to library users (who can suppress if needed)
+- Merging back with proper `RequiresUnreferencedCode` attributes achieves:
+  - ✅ Core becomes single package again (simpler)
+  - ✅ Core is still Trimmable (100% trim compatible)
+  - ✅ Users get warnings when using reflection features (can suppress)
+  - ✅ No separate package to maintain
 
-**Rationale:**
-1. **Core was split intentionally** after comprehensive analysis (88+ warnings)
-2. **83% of applications** don't use reflection features - they benefit from trimming
-3. **17% using reflection** add one extra package reference (minimal burden)
-4. **Microsoft guidance:** "If an API is mostly trim-incompatible, alternative coding approaches to the API might need to be considered. Consider adopting other technology like source generators."
-5. **Successful pattern:** Demonstrates pragmatic approach to trimming support
-6. **Future-proof:** As trimming becomes more important, split library provides clear migration path
+**Revised Analysis:**
 
-**Alternative Considered:** 
-- Merge and mark entire Core as not trimmable via README
-- **Rejected:** Defeats the purpose of the initiative, penalizes 83% of users
+| Factor | Merge Back with RequiresUnreferencedCode |
+|--------|------------------------------------------|
+| **Trimming Support** | ✅ Core remains Trimmable (with warnings propagated) |
+| **Backward Compatibility** | ✅ Single package (breaking change but easier to migrate) |
+| **User Choice** | ✅ Users see warnings and can suppress if needed |
+| **Deployment Size** | ✅ Same trimming benefits (unused code still trimmed) |
+| **Complexity** | ✅ Simpler (1 package instead of 2) |
+| **Library Count Trimmable** | ✅ 43/43 (100%) with merge |
+| **Developer Experience** | ✅ Simpler for all users |
+
+**Action Required:**
+See overhaul-plan.md Phase 2 for detailed merge implementation plan.
 
 ### Trim-Safe Alternative APIs Analysis
 
@@ -647,10 +664,9 @@ public static class NlogConfigurer
 **Future Enhancements (Next Major Version):**
 
 1. **ResourceWatcher.Sql Migration** (Medium Priority)
-   - Migrate to System.Text.Json with source generation
-   - Effort: 4-8 hours
-   - Result: 100% ResourceWatcher libraries trimmable
-   - See: `docs/todo/migrate-resourcewatcher-sql-to-stj.md`
+   - ✅ **COMPLETED** - Already migrated to System.Text.Json
+   - Library is already marked `<IsTrimmable>true</IsTrimmable>`
+   - No further action needed
 
 2. **Http/NLog Source Generation Overloads** (Low Priority)
    - Add source generation overloads for modern apps
@@ -716,7 +732,7 @@ Total uses of RequiresUnreferencedCode in src/: **68 attributes**
 | Aspect | Status | Action |
 |--------|--------|--------|
 | **UnconditionalSuppressMessage Usage** | ✅ Appropriate | Keep as-is |
-| **Core.Reflection Merge** | ❌ Not Recommended | Keep separated |
+| **Core.Reflection Merge** | ✅ Recommended (with RequiresUnreferencedCode) | Merge back - see overhaul-plan.md |
 | **Trim-Safe Alternatives** | ⚠️ 1 Opportunity | Document for v7 |
 | **RequiresUnreferencedCode Coverage** | ✅ Complete | No changes needed |
 | **Current Trimmable Percentage** | ✅ 84% (42/50) | Excellent |

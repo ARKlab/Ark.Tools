@@ -37,7 +37,7 @@ All AspNetCore libraries are currently marked as NOT TRIMMABLE due to MVC depend
 
 ### ResourceWatcher Libraries
 
-1. **Ark.Tools.ResourceWatcher.Sql** - Currently NOT TRIMMABLE (Newtonsoft.Json)
+1. **Ark.Tools.ResourceWatcher.Sql** - ✅ **ALREADY TRIMMABLE** (uses System.Text.Json, not Newtonsoft.Json)
 
 ---
 
@@ -71,6 +71,10 @@ All AspNetCore libraries are currently marked as NOT TRIMMABLE due to MVC depend
 - Ark.Tools.ResourceWatcher.ApplicationInsights (telemetry)
 
 **Expected Outcome:** Some UnconditionalSuppressMessage will change to RequiresUnreferencedCode
+
+**Documentation Updates:**
+- Update migration-v6.md if any public API changes affect migration
+- Document which suppressions were changed and why
 
 ---
 
@@ -115,11 +119,17 @@ public static IQueryable<T> AsQueryable<T>(this IEnumerable<T> source) { ... }
 
 **Step 3: Add DynamicallyAccessedMembers Where Appropriate**
 
-Some methods can be made more trim-friendly:
+Some methods can be made more trim-friendly. **Important:** For generic methods like `ToDataTable<T>`, review if the generic type parameter `T` also needs `DynamicallyAccessedMembers` attribute to preserve properties for reflection.
+
 ```csharp
+// Example 1: Type parameter
 public static Type? GetCompatibleGenericInterface(
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] this Type type, 
     Type genericInterface)
+
+// Example 2: Generic type parameter (verify if needed)
+public static DataTable ToDataTable<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(
+    this IEnumerable<T> items) { ... }
 ```
 
 **Step 4: Update Core.csproj**
@@ -155,6 +165,11 @@ In v6.0, reflection utilities were split into a separate package. In v6.1, they 
 - Users get warnings when using reflection features (they can suppress if needed)
 - Simpler package structure
 
+**Documentation Updates:**
+- Update migration-v6.md with Core.Reflection merge guidance
+- Update README files in Core to reflect consolidated structure
+- Update any examples or samples that reference Core.Reflection
+
 ---
 
 ### Phase 3: Make All Non-Trimmable Libraries Trimmable (Medium Priority)
@@ -185,12 +200,19 @@ public static class Ex
 1. Add `RequiresUnreferencedCode` to all public methods using dynamic
 2. Add to .csproj: `<IsTrimmable>true</IsTrimmable>`
 3. Test build for zero warnings
+4. Update migration-v6.md if needed
 
 #### 3.2 Ark.Tools.Solid.Authorization
 
 **Current Issue:** Dynamic dispatch
 
 **Solution:** Same as Solid.SimpleInjector - add RequiresUnreferencedCode
+
+**Steps:**
+1. Add `RequiresUnreferencedCode` to methods using dynamic
+2. Add to .csproj: `<IsTrimmable>true</IsTrimmable>`
+3. Test build for zero warnings
+4. Update migration-v6.md if needed
 
 #### 3.3 Ark.Tools.EventSourcing.RavenDb
 
@@ -222,26 +244,34 @@ public static IEnumerable<Type> GetAuditableTypes(params Assembly[] assemblies)
 }
 ```
 
+**Steps:**
+1. Add `RequiresUnreferencedCode` to affected methods
+2. Add to .csproj: `<IsTrimmable>true</IsTrimmable>`
+3. Test build for zero warnings
+4. Update migration-v6.md if needed
+
 #### 3.5 Ark.Tools.Reqnroll
 
 **Decision:** Mark as Trimmable with RequiresUnreferencedCode
 
 Even though it's a test library, we should be consistent. Users won't trim test projects anyway.
 
+**Steps:**
+1. Add `RequiresUnreferencedCode` to methods using reflection
+2. Add to .csproj: `<IsTrimmable>true</IsTrimmable>`
+3. Update migration-v6.md if test library users need guidance
+
 #### 3.6 Ark.Tools.ResourceWatcher.Sql
 
-**Current Issue:** Newtonsoft.Json dependency
+**Current Status:** ✅ **ALREADY TRIMMABLE** 
 
-**Option 1 (Recommended):** Migrate to System.Text.Json with source generation
-**Option 2 (Quick):** Add RequiresUnreferencedCode to methods using JSON
+Investigation shows this library already uses System.Text.Json (NOT Newtonsoft.Json) and is marked as `<IsTrimmable>true</IsTrimmable>`.
 
-For quick win, use Option 2:
-```csharp
-[RequiresUnreferencedCode("Uses Newtonsoft.Json which requires reflection.")]
-public async Task<IResourceTrackedState?> GetStateAsync(...)
-```
+**Action:** No changes needed - already meets requirements.
 
-Then plan migration to STJ for v7.
+**Documentation Updates for Phase 3:**
+- Update migration-v6.md with any breaking changes from RequiresUnreferencedCode additions
+- Document trimming behavior for each affected library
 
 ---
 
@@ -260,6 +290,10 @@ Then plan migration to STJ for v7.
 - Start with simplest: Ark.Tools.AspNetCore.ApplicationInsights
 - Then: Ark.Tools.AspNetCore.Auth0
 - Finally: Ark.Tools.AspNetCore (base)
+
+**Documentation Updates for Phase 4:**
+- Update migration-v6.md with AspNetCore trimming guidance
+- Document which AspNetCore features are/aren't trim-compatible
 
 ---
 
