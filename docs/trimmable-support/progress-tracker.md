@@ -1,8 +1,62 @@
 # Trimming Progress Tracker
 
-**Last Updated:** 2026-01-13  
-**Status:** ✅ **INITIATIVE COMPLETE**  
-**Final Result:** 43/50 libraries (86%) trimmable - 5 common libraries + 1 ResourceWatcher + 11 AspNetCore marked NOT TRIMMABLE with documentation
+**Last Updated:** 2026-01-18  
+**Status:** 🔄 **IN PROGRESS - 80.6% ACHIEVEMENT**  
+**Final Result:** 50/62 libraries (80.6%) trimmable - 11 libraries reverted due to trim warnings, 1 deferred (Core.Reflection)
+
+---
+
+## Current Status (After CI Fix)
+
+### Summary by Category
+
+- **Common Libraries:** 37/43 (86.0%) trimmable
+  - 5 reverted due to trim warnings
+  - 1 deferred (Core.Reflection - 76+ warnings)
+- **ResourceWatcher Libraries:** 8/8 (100%) ✅
+- **AspNetCore Libraries:** 5/11 (45.5%) trimmable
+  - 6 reverted due to trim warnings
+- **Total:** 50/62 (80.6%)
+
+### Key Statistics
+
+- **Build Status:** 0 errors, 0 warnings ✅
+- **Test Results:** 147/147 passing ✅
+- **CI Status:** Passing ✅
+
+### Latest Updates (2026-01-18)
+
+#### CI Fix - Reverted Libraries with Trim Warnings
+
+After enabling trimming, 11 libraries were found to have actual trim warnings that were previously hidden. These have been reverted to NOT trimmable status:
+
+**Common Libraries Reverted (5):**
+- ❌ Ark.Tools.Reqnroll - 44 warnings (reflection, JSON serialization)
+- ❌ Ark.Tools.Solid.SimpleInjector - 12 warnings (dynamic dispatch)
+- ❌ Ark.Tools.Solid.Authorization - 4 warnings (dynamic dispatch)
+- ❌ Ark.Tools.EventSourcing.RavenDb - 6 warnings (RavenDB reflection)
+- ❌ Ark.Tools.RavenDb.Auditing - 8 warnings (assembly scanning)
+
+**AspNetCore Libraries Reverted (6):**
+- ❌ Ark.Tools.AspNetCore - 32 warnings (assembly reflection)
+- ❌ Ark.Tools.AspNetCore.ApplicationInsights - 4 warnings
+- ❌ Ark.Tools.AspNetCore.Auth0 - 6 warnings
+- ❌ Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy - 2 warnings
+- ❌ Ark.Tools.AspNetCore.NestedStartup - 6 warnings
+- ❌ Ark.Tools.AspNetCore.Swashbuckle - 4 warnings
+
+**AspNetCore Libraries Successfully Made Trimmable (5):**
+- ✅ Ark.Tools.AspNetCore.BasicAuthAuth0Proxy - Zero warnings
+- ✅ Ark.Tools.AspNetCore.CommaSeparatedParameters - Zero warnings
+- ✅ Ark.Tools.AspNetCore.HealthChecks - Zero warnings
+- ✅ Ark.Tools.AspNetCore.MessagePack - Zero warnings
+- ✅ Ark.Tools.AspNetCore.RavenDb - Zero warnings
+
+### Remaining Work
+
+To achieve 100% trimmable:
+1. **11 libraries with warnings** need RequiresUnreferencedCode or UnconditionalSuppressMessage
+2. **Core.Reflection** (76+ warnings) - deferred as optional
 
 ---
 

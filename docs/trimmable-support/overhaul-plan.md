@@ -1,8 +1,61 @@
 # Trimming Support Overhaul Plan
 
 **Created:** 2026-01-18  
-**Status:** 🔄 IN PROGRESS  
+**Status:** 🔄 **IN PROGRESS - 80.6% ACHIEVEMENT**  
 **Goal:** Make ALL libraries under src/ Trimmable (100%)
+
+---
+
+## Current Status (After CI Fix)
+
+**50 out of 62 libraries (80.6%) are now trimmable with ZERO build warnings**
+
+### Progress by Category
+
+- **Common Libraries:** 37/43 (86.0%) - 6 libraries have unresolved trim warnings
+- **AspNetCore Libraries:** 5/11 (45.5%) - 6 libraries have unresolved trim warnings
+- **ResourceWatcher Libraries:** 8/8 (100%) ✅
+- **Total:** 50/62 (80.6%)
+
+### Phase Results
+
+- ✅ **Phase 1:** UnconditionalSuppressMessage Review - COMPLETE (no changes needed)
+- ⚠️ **Phase 2 (Modified):** Common Libraries - PARTIAL (reverted 5 libraries with warnings)
+- ⏳ **Phase 3:** Core.Reflection - DEFERRED (76+ warnings)
+- ⚠️ **Phase 4:** AspNetCore Libraries - PARTIAL (reverted 6 libraries with warnings)
+
+### Libraries Reverted (Have Trim Warnings)
+
+**Common Libraries (5):**
+1. **Ark.Tools.Reqnroll** - 44 warnings (reflection, JSON serialization)
+2. **Ark.Tools.Solid.SimpleInjector** - 12 warnings (dynamic dispatch)
+3. **Ark.Tools.Solid.Authorization** - 4 warnings (dynamic dispatch)
+4. **Ark.Tools.EventSourcing.RavenDb** - 6 warnings (RavenDB reflection)
+5. **Ark.Tools.RavenDb.Auditing** - 8 warnings (assembly scanning)
+
+**AspNetCore Libraries (6):**
+1. **Ark.Tools.AspNetCore** - 32 warnings (assembly reflection)
+2. **Ark.Tools.AspNetCore.ApplicationInsights** - 4 warnings
+3. **Ark.Tools.AspNetCore.Auth0** - 6 warnings
+4. **Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy** - 2 warnings
+5. **Ark.Tools.AspNetCore.NestedStartup** - 6 warnings
+6. **Ark.Tools.AspNetCore.Swashbuckle** - 4 warnings
+
+### Successfully Made Trimmable
+
+**AspNetCore Libraries (5 with zero warnings):**
+- ✅ Ark.Tools.AspNetCore.BasicAuthAuth0Proxy
+- ✅ Ark.Tools.AspNetCore.CommaSeparatedParameters
+- ✅ Ark.Tools.AspNetCore.HealthChecks
+- ✅ Ark.Tools.AspNetCore.MessagePack
+- ✅ Ark.Tools.AspNetCore.RavenDb
+
+### Next Steps
+
+To achieve 100%, the 11 reverted libraries need:
+- Add `RequiresUnreferencedCode` attributes to public APIs that use reflection
+- Add `UnconditionalSuppressMessage` to internal methods where safe
+- Achieve zero build warnings
 
 ---
 
