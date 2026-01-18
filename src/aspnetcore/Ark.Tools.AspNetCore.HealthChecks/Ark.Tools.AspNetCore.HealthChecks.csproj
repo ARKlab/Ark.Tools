@@ -20,6 +20,10 @@
 		<Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
 
 		<AutoGenerateBindingRedirects></AutoGenerateBindingRedirects>
+    
+    <!-- Trimming Support -->
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
 	</PropertyGroup>
 	<!--===============================================================================-->
 
