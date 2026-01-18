@@ -24,7 +24,7 @@ public class MyMetadata : IResourceMetadata
     public required string ResourceId { get; init; }
     public LocalDateTime Modified { get; init; }
     public Dictionary<string, LocalDateTime>? ModifiedSources { get; init; }
-    public object? Extensions { get; init; }
+    public VoidExtensions? Extensions { get; init; }  // VoidExtensions for resources without extension data
 }
 
 // 2. Define your resource (the actual data)
@@ -214,23 +214,34 @@ Detect new or changed resources across the entire dataset:
 
 ### Within-Resource Incremental (Append-Only)
 
-For append-only resources like log files or growing datasets:
+For append-only resources like log files or growing datasets, use typed extensions to track incremental state:
 
 ```csharp
+// 1. Define a typed extension for incremental state
+public record AppendOnlyExtensions
+{
+    public long LastOffset { get; init; }
+}
+
+// 2. Use the typed extension in metadata
+public class LogMetadata : IResourceMetadata<AppendOnlyExtensions>
+{
+    public required string ResourceId { get; init; }
+    public LocalDateTime Modified { get; init; }
+    public Dictionary<string, LocalDateTime>? ModifiedSources { get; init; }
+    public AppendOnlyExtensions? Extensions { get; init; }
+}
+
+// 3. Implement provider with type-safe extension access
 public class AppendOnlyProvider : IResourceProvider<LogMetadata, LogResource, object>
 {
     public async Task<LogResource?> GetResource(
         LogMetadata metadata, 
-        IResourceTrackedState? lastState, 
+        IResourceTrackedState<AppendOnlyExtensions>? lastState, 
         CancellationToken ctk = default)
     {
-        // Read last offset from Extensions
-        long lastOffset = 0;
-        if (lastState?.Extensions is JsonElement ext && 
-            ext.TryGetProperty("lastOffset", out var offsetProp))
-        {
-            lastOffset = offsetProp.GetInt64();
-        }
+        // ✅ Type-safe access with IntelliSense - no runtime type checking needed
+        var lastOffset = lastState?.Extensions?.LastOffset ?? 0L;
 
         // Fetch only new bytes (Range request)
         var (newBytes, newOffset) = await _api.GetBytesFromOffset(
@@ -238,12 +249,14 @@ public class AppendOnlyProvider : IResourceProvider<LogMetadata, LogResource, ob
 
         return new LogResource
         {
-            Metadata = metadata,
+            Metadata = metadata with
+            {
+                // Store new offset for next run
+                Extensions = new AppendOnlyExtensions { LastOffset = newOffset }
+            },
             Data = newBytes,
             CheckSum = ComputeHash(newBytes),
-            RetrievedAt = SystemClock.Instance.GetCurrentInstant(),
-            // Store new offset for next run
-            Extensions = new { lastOffset = newOffset }
+            RetrievedAt = SystemClock.Instance.GetCurrentInstant()
         };
     }
 }
@@ -259,6 +272,300 @@ Compute checksum of new bytes
   ↓
 Update State: { "lastOffset": 2048 }
 ```
+
+## Type-Safe Extensions
+
+ResourceWatcher provides compile-time type safety for extension data through generic type parameters. This feature eliminates runtime type checking and provides full IntelliSense support.
+
+### Why Use Typed Extensions?
+
+**Benefits:**
+- ✅ **Compile-time type safety**: Catch extension-related errors at compile time
+- ✅ **IntelliSense support**: Full IDE support for extension properties
+- ✅ **AoT compatible**: Native AoT and trimming fully supported
+- ✅ **No runtime reflection**: Zero overhead for type checking
+- ✅ **Self-documenting**: Extension structure is explicit in code
+
+### Basic Usage
+
+For resources without extension data, use the non-generic interfaces (which default to `VoidExtensions`):
+
+```csharp
+public class SimpleMetadata : IResourceMetadata
+{
+    public required string ResourceId { get; init; }
+    public LocalDateTime Modified { get; init; }
+    public Dictionary<string, LocalDateTime>? ModifiedSources { get; init; }
+    public VoidExtensions? Extensions { get; init; }
+}
+
+// WorkerHost automatically uses VoidExtensions
+var host = new WorkerHost<MyResource, SimpleMetadata, object>(config);
+```
+
+### Defining Typed Extensions
+
+For resources that need extension data, define a record or class with your extension properties:
+
+```csharp
+// 1. Define your extension type
+public record BlobExtensions
+{
+    /// <summary>Last processed byte offset for incremental loading</summary>
+    public long LastOffset { get; init; }
+    
+    /// <summary>ETag from last successful fetch for conditional requests</summary>
+    public string? LastETag { get; init; }
+    
+    /// <summary>Timestamp of last successful processing</summary>
+    public Instant? LastProcessed { get; init; }
+}
+
+// 2. Use the extension type in your metadata
+public class BlobMetadata : IResourceMetadata<BlobExtensions>
+{
+    public required string ResourceId { get; init; }
+    public LocalDateTime Modified { get; init; }
+    public Dictionary<string, LocalDateTime>? ModifiedSources { get; init; }
+    public BlobExtensions? Extensions { get; init; }
+}
+
+// 3. Update your resource interface
+public class BlobResource : IResource<BlobMetadata, BlobExtensions>
+{
+    public required BlobMetadata Metadata { get; init; }
+    public required byte[] Data { get; init; }
+    public string? CheckSum { get; init; }
+    public Instant RetrievedAt { get; init; }
+}
+
+// 4. Implement provider with type-safe access
+public class BlobProvider : IResourceProvider<BlobMetadata, BlobResource, object, BlobExtensions>
+{
+    public async Task<BlobResource?> GetResource(
+        BlobMetadata metadata,
+        IResourceTrackedState<BlobExtensions>? lastState,
+        CancellationToken ctk = default)
+    {
+        // ✅ Type-safe extension access with IntelliSense
+        var lastOffset = lastState?.Extensions?.LastOffset ?? 0L;
+        var lastETag = lastState?.Extensions?.LastETag;
+        
+        // Use extensions for conditional requests
+        var response = await _blobClient.DownloadAsync(
+            metadata.ResourceId,
+            new BlobDownloadOptions
+            {
+                Range = new HttpRange(lastOffset),
+                Conditions = new BlobRequestConditions
+                {
+                    IfNoneMatch = lastETag != null ? new ETag(lastETag) : null
+                }
+            },
+            ctk);
+        
+        return new BlobResource
+        {
+            Metadata = metadata with
+            {
+                Extensions = new BlobExtensions
+                {
+                    LastOffset = lastOffset + response.Content.Length,
+                    LastETag = response.Details.ETag.ToString(),
+                    LastProcessed = SystemClock.Instance.GetCurrentInstant()
+                }
+            },
+            Data = await BinaryData.FromStreamAsync(response.Content, ctk),
+            CheckSum = ComputeHash(response.Content),
+            RetrievedAt = SystemClock.Instance.GetCurrentInstant()
+        };
+    }
+}
+
+// 5. Configure WorkerHost with typed extensions
+var host = new WorkerHost<BlobResource, BlobMetadata, object, BlobExtensions>(config);
+host.UseDataProvider<BlobProvider>();
+host.AppendFileProcessor<BlobProcessor>();
+```
+
+### Extension Serialization
+
+Extensions are automatically serialized to JSON and stored in the state provider:
+
+```sql
+-- In SQL Server, extensions are stored as JSON
+SELECT ResourceId, ExtensionsJson FROM [State]
+-- {"lastOffset": 2048, "lastETag": "\"0x8D9...\""lastProcessed": "2024-01-15T10:30:00Z"}
+```
+
+### Common Extension Patterns
+
+#### Incremental Offset Tracking
+
+```csharp
+public record OffsetExtensions
+{
+    public long LastOffset { get; init; }
+    public long TotalBytesProcessed { get; init; }
+}
+
+// In provider
+var lastOffset = lastState?.Extensions?.LastOffset ?? 0L;
+var newOffset = await FetchFromOffset(lastOffset);
+
+return resource with
+{
+    Metadata = metadata with
+    {
+        Extensions = new OffsetExtensions
+        {
+            LastOffset = newOffset,
+            TotalBytesProcessed = (lastState?.Extensions?.TotalBytesProcessed ?? 0) + bytesRead
+        }
+    }
+};
+```
+
+#### Cursor-Based Pagination
+
+```csharp
+public record PaginationExtensions
+{
+    public string? ContinuationToken { get; init; }
+    public int PageNumber { get; init; }
+}
+
+// In provider
+var token = lastState?.Extensions?.ContinuationToken;
+var (items, nextToken) = await _api.GetPageAsync(token, ctk);
+
+return resource with
+{
+    Metadata = metadata with
+    {
+        Extensions = new PaginationExtensions
+        {
+            ContinuationToken = nextToken,
+            PageNumber = (lastState?.Extensions?.PageNumber ?? 0) + 1
+        }
+    }
+};
+```
+
+#### Multi-Source Tracking
+
+```csharp
+public record MultiSourceExtensions
+{
+    public Dictionary<string, long> SourceOffsets { get; init; } = new();
+    public Dictionary<string, string?> SourceETags { get; init; } = new();
+}
+
+// In provider
+var headerOffset = lastState?.Extensions?.SourceOffsets.GetValueOrDefault("header") ?? 0;
+var bodyOffset = lastState?.Extensions?.SourceOffsets.GetValueOrDefault("body") ?? 0;
+
+// ... fetch from multiple sources ...
+
+return resource with
+{
+    Metadata = metadata with
+    {
+        Extensions = new MultiSourceExtensions
+        {
+            SourceOffsets = new Dictionary<string, long>
+            {
+                ["header"] = newHeaderOffset,
+                ["body"] = newBodyOffset
+            },
+            SourceETags = new Dictionary<string, string?>
+            {
+                ["header"] = headerETag,
+                ["body"] = bodyETag
+            }
+        }
+    }
+};
+```
+
+## AoT and Trimming
+
+ResourceWatcher v6 is fully compatible with Native AoT and trimming when using typed extensions with source-generated JSON contexts.
+
+### Source-Generated JSON Context
+
+For AoT deployment, provide a source-generated JSON context for your extension types:
+
+```csharp
+// 1. Define your extension type
+public record MyExtensions
+{
+    public long LastOffset { get; init; }
+    public string? LastETag { get; init; }
+}
+
+// 2. Create a JSON source generation context
+[JsonSerializable(typeof(MyExtensions))]
+[JsonSerializable(typeof(ResourceState<MyExtensions>))]
+public partial class MyJsonContext : JsonSerializerContext { }
+
+// 3. Register with SqlStateProvider
+public class MyHostConfig : IHostConfig, ISqlStateProviderConfig
+{
+    public string Tenant => "my-tenant";
+    public string WorkerName => "MyWorker";
+    public string ConnectionString => _connectionString;
+    
+    // Provide source-generated context for AoT
+    public JsonSerializerContext? JsonContext => MyJsonContext.Default;
+}
+
+// 4. Use in application startup
+var host = new WorkerHost<MyResource, MyMetadata, object, MyExtensions>(config);
+host.UseSqlStateProvider();  // Automatically uses JsonContext from config
+```
+
+### AoT Requirements
+
+When deploying with Native AoT:
+
+1. **Define typed extensions**: Use explicit types instead of anonymous objects
+2. **Create JSON context**: Use `[JsonSerializable]` attributes for all extension types
+3. **Register JSON context**: Provide `JsonSerializerContext` to `SqlStateProvider` via config
+4. **Enable PublishAot**: Add `<PublishAot>true</PublishAot>` to your project file
+
+```xml
+<!-- MyWorker.csproj -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <PublishAot>true</PublishAot>
+  </PropertyGroup>
+  
+  <!-- Add ResourceWatcher packages -->
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.ResourceWatcher.WorkerHost" Version="6.0.0" />
+    <PackageReference Include="Ark.Tools.ResourceWatcher.Sql" Version="6.0.0" />
+  </ItemGroup>
+</Project>
+```
+
+### Trimming Compatibility
+
+ResourceWatcher v6 is fully trimmable with zero warnings:
+
+```bash
+# Publish with trimming enabled
+dotnet publish -c Release /p:PublishTrimmed=true
+
+# Should produce 0 trim warnings
+```
+
+If you encounter trim warnings, ensure:
+- All extension types are registered in `JsonSerializerContext`
+- No reflection-based JSON serialization is used
+- `VoidExtensions` is used for resources without extension data
 
 ## State Providers
 
@@ -329,6 +636,8 @@ public class MyDiagnosticObserver : IObserver<DiagnosticListener>
 
 Use `Ark.Tools.ResourceWatcher.Testing` for comprehensive testing:
 
+### Basic Testing with VoidExtensions
+
 ```csharp
 // TestableStateProvider for state assertions
 var stateProvider = new TestableStateProvider();
@@ -348,6 +657,114 @@ result.ProcessType.Should().Be(ProcessType.New);
 result.ResultType.Should().Be(ResultType.Normal);
 ```
 
+### Testing with Typed Extensions
+
+```csharp
+// 1. Define test extension type
+public record TestExtensions
+{
+    public long LastOffset { get; init; }
+    public string? LastETag { get; init; }
+}
+
+// 2. Create state provider with typed extensions
+var stateProvider = new TestableStateProvider<TestExtensions>();
+
+// 3. Set initial state with extensions
+stateProvider.SetState(
+    tenant,
+    resourceId,
+    modified,
+    null,
+    new TestExtensions { LastOffset = 1024, LastETag = "etag1" },
+    retryCount: 0,
+    instant);
+
+// 4. Assert extension state after processing
+var state = stateProvider.GetState(tenant, resourceId);
+state.Extensions?.LastOffset.Should().Be(2048);
+state.Extensions?.LastETag.Should().Be("etag2");
+
+// 5. Verify state transitions preserve extensions
+state.RetryCount.Should().Be(0);
+state.Modified.Should().Be(newModified);
+```
+
+### Integration Testing with SqlStateProvider
+
+```csharp
+// 1. Define JSON context for AoT-compatible testing
+[JsonSerializable(typeof(TestExtensions))]
+[JsonSerializable(typeof(ResourceState<TestExtensions>))]
+public partial class TestJsonContext : JsonSerializerContext { }
+
+// 2. Create SqlStateProvider with source-generated context
+var config = new SqlStateProviderConfig
+{
+    Tenant = "test-tenant",
+    ConnectionString = _testDbConnectionString,
+    JsonContext = TestJsonContext.Default
+};
+
+var stateProvider = new SqlStateProvider<TestExtensions>(
+    config,
+    connectionManager,
+    TestJsonContext.Default.Options);
+
+// 3. Save and load state with extensions
+var originalState = new ResourceState<TestExtensions>
+{
+    Tenant = "test-tenant",
+    ResourceId = "resource-1",
+    Modified = new LocalDateTime(2024, 1, 15, 10, 30),
+    Extensions = new TestExtensions
+    {
+        LastOffset = 1024,
+        LastETag = "original-etag"
+    },
+    RetryCount = 0,
+    LastEvent = Instant.FromUtc(2024, 1, 15, 10, 30)
+};
+
+await stateProvider.SaveStateAsync(new[] { originalState }, ctk);
+
+// 4. Load and verify
+var loaded = await stateProvider.LoadStateAsync("test-tenant", ctk);
+var loadedState = loaded.Single();
+
+loadedState.Extensions?.LastOffset.Should().Be(1024);
+loadedState.Extensions?.LastETag.Should().Be("original-etag");
+```
+
+### Testing State Transitions
+
+```csharp
+// Test incremental offset updates
+var provider = new TestableStateProvider<OffsetExtensions>();
+
+// Initial state
+provider.SetState(tenant, resourceId, baseModified, null,
+    new OffsetExtensions { LastOffset = 0 },
+    retryCount: 0, instant);
+
+// Simulate resource update
+var newExtensions = new OffsetExtensions { LastOffset = 1024 };
+provider.SetState(tenant, resourceId, newModified, null,
+    newExtensions, retryCount: 0, instant.Plus(Duration.FromMinutes(5)));
+
+// Verify offset advanced
+var state = provider.GetState(tenant, resourceId);
+state.Extensions?.LastOffset.Should().Be(1024);
+
+// Simulate another update
+provider.SetState(tenant, resourceId, newModified2, null,
+    new OffsetExtensions { LastOffset = 2048 },
+    retryCount: 0, instant.Plus(Duration.FromMinutes(10)));
+
+state = provider.GetState(tenant, resourceId);
+state.Extensions?.LastOffset.Should().Be(2048);
+```
+
 ## Packages
 
 | Package | Description |
@@ -361,8 +778,10 @@ result.ResultType.Should().Be(ResultType.Normal);
 ## Best Practices
 
 1. **ResourceIds MUST be unique**: ResourceId MUST uniquely identify a specific resource - include enough context to ensure uniqueness
-2. **Use default BanDuration unless needed**: The default BanDuration is typically sufficient; only customize if you have specific requirements
-3. **Implement idempotent processors**: Resources may be reprocessed on failures
-4. **Checksums are optional**: Use checksums for unreliable timestamps when sources don't update Modified reliably, but they are not required
-5. **Store incremental state in Extensions**: For append-only or cursor-based loading
-6. **Configure parallelism carefully**: Balance throughput vs. API rate limits
+2. **Use typed extensions for incremental state**: Define explicit extension types instead of anonymous objects for better type safety and AoT compatibility
+3. **Use VoidExtensions when not needed**: For resources without extension data, use the non-generic interfaces that default to `VoidExtensions`
+4. **Implement idempotent processors**: Resources may be reprocessed on failures
+5. **Checksums are optional**: Use checksums for unreliable timestamps when sources don't update Modified reliably, but they are not required
+6. **Use default BanDuration unless needed**: The default BanDuration is typically sufficient; only customize if you have specific requirements
+7. **Provide JSON context for AoT**: When deploying with Native AoT, create a source-generated `JsonSerializerContext` for your extension types
+8. **Configure parallelism carefully**: Balance throughput vs. API rate limits
