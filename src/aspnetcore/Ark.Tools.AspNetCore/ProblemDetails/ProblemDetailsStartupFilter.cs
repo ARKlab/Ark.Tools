@@ -15,7 +15,10 @@ public class ProblemDetailsStartupFilter : IStartupFilter
         _routeProvider = routeProvider;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IStartupFilter.Configure interface method doesn't have RequiresUnreferencedCode. ProblemDetails router dynamically resolves type names for diagnostic purposes.")]
+    // NOTE: IStartupFilter.Configure interface method cannot have RequiresUnreferencedCode without breaking ASP.NET Core startup.
+    // This calls IProblemDetailsRouterProvider.BuildRouter which has RequiresUnreferencedCode for dynamic type resolution
+    // used in diagnostic routes. The diagnostic feature is non-critical and will gracefully degrade in trimmed applications.
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IStartupFilter.Configure interface constraint prevents RequiresUnreferencedCode. Calls BuildRouter for diagnostic routes with Type.GetType. Diagnostic feature is non-critical and degrades gracefully if types are trimmed.")]
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
     {
         return app =>

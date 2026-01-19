@@ -35,7 +35,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         ((IDisposable)_client).Dispose();
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "OAuthResult is a well-known internal type with simple properties that are preserved.")]
+    [RequiresUnreferencedCode("Invoke uses Newtonsoft.Json reflection-based serialization for OAuthResult type.")]
     public async Task Invoke(HttpContext context)
     {
         System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;

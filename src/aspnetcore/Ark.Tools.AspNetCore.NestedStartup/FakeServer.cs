@@ -19,8 +19,14 @@ public sealed class FakeServer : IServer
 
     public IFeatureCollection Features { get; }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2091:Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' requirements", Justification = "StartAsync is constrained by IServer interface which doesn't have DynamicallyAccessedMembers. The TContext type is controlled by ASP.NET Core hosting and has a well-known structure with HttpContext property.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2090:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' requirements", Justification = "StartAsync is constrained by IServer interface which doesn't have DynamicallyAccessedMembers. The TContext type is controlled by ASP.NET Core hosting and has a well-known structure with HttpContext property.")]
+    // NOTE: This implementation uses reflection on TContext which is provided by ASP.NET Core hosting infrastructure.
+    // In production scenarios, TContext is DefaultHttpContext or similar types from Microsoft.AspNetCore.Http which are
+    // preserved by the framework. This is a test/fake server implementation used only in development scenarios.
+    // The UnconditionalSuppressMessage is used because the IServer interface doesn't have DynamicallyAccessedMembers,
+    // preventing us from properly annotating this method. If this code is used in trimmed applications, the hosting
+    // types must be preserved through root descriptors or the application will fail at runtime with clear exceptions.
+    [UnconditionalSuppressMessage("Trimming", "IL2091:Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' requirements", Justification = "TContext is provided by ASP.NET Core hosting (typically DefaultHttpContext) which is preserved by the framework. This is a test server used in development. IServer interface prevents proper annotation. Runtime exceptions will occur if hosting types are trimmed.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2090:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' requirements", Justification = "TContext is provided by ASP.NET Core hosting (typically DefaultHttpContext) which is preserved by the framework. This is a test server used in development. IServer interface prevents proper annotation. Runtime exceptions will occur if hosting types are trimmed.")]
     public Task StartAsync<TContext>(IHttpApplication<TContext> application, CancellationToken cancellationToken) where TContext : notnull
     {
         var prop = typeof(TContext).GetProperty("HttpContext") ?? throw new InvalidOperationException("TContext do not expose HttpContext property");

@@ -39,7 +39,11 @@ public class ArkProblemDetailsOptionsSetup
     private readonly DynamicTypeAssembly _dynamicTypeAssembly;
     private readonly ConcurrentDictionary<Type, Type> _brvMap;
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IConfigureOptions<T>.Configure interface method doesn't have RequiresUnreferencedCode. ProblemDetails configuration requires reflection for BusinessRuleViolation serialization.")]
+    // NOTE: IConfigureOptions<T>.Configure interface method cannot have RequiresUnreferencedCode without breaking Options pattern.
+    // This Configure method sets up ProblemDetails mappings including BusinessRuleViolationException which uses reflection
+    // for serialization. The BusinessRuleViolation base class has DynamicallyAccessedMembers for PublicProperties to help
+    // preserve derived types, but trimmed applications must ensure all BusinessRuleViolation types are preserved.
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IConfigureOptions<T>.Configure interface constraint prevents RequiresUnreferencedCode. BusinessRuleViolation base class has DynamicallyAccessedMembers for PublicProperties. Applications must preserve all BusinessRuleViolation-derived types.")]
     public void Configure(ProblemDetailsOptions options)
     {
         // This is the default behavior; only include exception details in a development environment.
@@ -82,8 +86,10 @@ public class ArkProblemDetailsOptionsSetup
         _configureExceptionProblemDetails(options);
     }
 
-    // This will map Exceptions to the corresponding Conflict status code.
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "BusinessRuleViolation serialization requires reflection. This is suppressed here as the Configure method already has the suppression.")]
+    // NOTE: This is a private helper method called from Configure which already has UnconditionalSuppressMessage.
+    // BusinessRuleViolation base class has DynamicallyAccessedMembers for PublicProperties. The _toProblemDetails method
+    // requires reflection and JSON serialization of BusinessRuleViolation-derived types. Suppression is at Configure level.
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Called from Configure method which has UnconditionalSuppressMessage. BusinessRuleViolation has DynamicallyAccessedMembers for PublicProperties. Warning is suppressed at public API boundary.")]
     private void _configureExceptionProblemDetails(ProblemDetailsOptions options)
     {
 
