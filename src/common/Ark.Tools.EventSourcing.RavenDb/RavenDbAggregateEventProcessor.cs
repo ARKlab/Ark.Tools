@@ -173,7 +173,7 @@ where startsWith(id(e), '{prefix}')
 
     sealed class FakeEvent : IAggregateEvent<TAggregate> { }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "Event handler dispatch uses reflection. Event types must be preserved.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2060", Justification = "MakeGenericMethod creates dispatcher for event handlers. Event types are preserved through handler registration in IAggregateEventHandlerActivator.")]
     MethodInfo _getDispatchMethod(Type eventType)
     {
         Func<FakeEvent, IMetadata, Task> a = _invokeHandler;

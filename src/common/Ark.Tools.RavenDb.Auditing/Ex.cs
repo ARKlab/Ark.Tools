@@ -34,12 +34,14 @@ public static class Ex
         services.AddHostedServiceAuditProcessor(types);
     }
 
+    [RequiresUnreferencedCode("RavenDB audit processor uses dynamic types for document revisions. Document types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services, List<Type> types)
     {
         services.AddHostedService<RavenDbAuditProcessor>();
         services.AddSingleton<IAuditableTypeProvider>(ss => new AuditableTypeProvider(types));
     }
 
+    [RequiresUnreferencedCode("RavenDB audit processor uses dynamic types for document revisions. Document types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services, AuditableTypeProvider provider)
     {
         services.AddHostedService<RavenDbAuditProcessor>();

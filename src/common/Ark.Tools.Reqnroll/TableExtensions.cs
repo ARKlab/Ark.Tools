@@ -8,6 +8,7 @@ namespace Ark.Tools.Reqnroll;
 
 public static class TableExtensions
 {
+    [RequiresUnreferencedCode("Reqnroll test helper uses reflection to create test objects. Test types must be preserved.")]
     public static T CreateComplexObject<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this DataTable table)
     {
         var s = table.CreateComplexSet<T>();
@@ -19,6 +20,7 @@ public static class TableExtensions
     /// <typeparam name="T"></typeparam>
     /// <param name="table"></param>
     /// <returns></returns>
+    [RequiresUnreferencedCode("Reqnroll test helper uses reflection to create test objects. Test types must be preserved.")]
     public static IEnumerable<T> CreateComplexSet<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this DataTable table)
     {
         var items = new List<T>();
@@ -29,9 +31,7 @@ public static class TableExtensions
         return items;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "Reqnroll test helper uses reflection to create test objects. Test types must be preserved.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2076", Justification = "Reqnroll test helper uses reflection to create test objects. Test types must be preserved.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2090", Justification = "Reqnroll test helper uses reflection to create test objects. Test types must be preserved.")]
+    [RequiresUnreferencedCode("Reqnroll test helper uses reflection to create test objects. Test types must be preserved.")]
     public static T CreateComplexType<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this DataTableRow tableRow)
     {
         T result = tableRow.CreateInstance<T>();
@@ -90,6 +90,7 @@ public static class TableExtensions
     /// <typeparam name="T"></typeparam>
     /// <param name="table"></param>
     /// <returns></returns>
+    [RequiresUnreferencedCode("Reqnroll test helper uses reflection to create test objects. Test types must be preserved.")]
     public static IEnumerable<T> VerifyPropertiesAndCreateSet<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this DataTable table)
     {
         table.VerifyAllPropertiesExistOnTargetType<T>();
