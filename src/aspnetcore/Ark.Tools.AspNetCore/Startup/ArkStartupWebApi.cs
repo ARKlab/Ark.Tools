@@ -22,6 +22,7 @@ public abstract class ArkStartupWebApi : ArkStartupWebApiCommon
         _anotherBase = new ArkStartupBase(configuration);
     }
 
+    [RequiresUnreferencedCode("ConfigureServices uses configuration binding for Application Insights setup.")]
     public override void ConfigureServices(IServiceCollection services)
     {
         _anotherBase.ConfigureServices(services);
@@ -29,6 +30,7 @@ public abstract class ArkStartupWebApi : ArkStartupWebApiCommon
         base.ConfigureServices(services);
     }
 
+    [RequiresUnreferencedCode("Configure uses ProblemDetails router which dynamically resolves types for diagnostic purposes.")]
     public override void Configure(IApplicationBuilder app)
     {
         _anotherBase.Configure(app);

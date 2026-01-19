@@ -25,8 +25,7 @@ public class ProblemDetailsRouterProvider : IProblemDetailsRouterProvider
     public IRouter? Router { get; private set; }
 
     [MemberNotNull(nameof(Router))]
-    [UnconditionalSuppressMessage("Trimming", "IL2057:Unrecognized value passed to parameter of 'Type.GetType'", Justification = "ProblemDetails router dynamically resolves type names from route parameters. This is a diagnostic/debugging feature.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "ProblemDetails router uses reflection for diagnostic purposes. This is a non-critical debugging feature.")]
+    [RequiresUnreferencedCode("ProblemDetails router dynamically resolves type names from route parameters for diagnostic purposes.")]
     public void BuildRouter(IApplicationBuilder app)
     {
         var pageRouteHandler = new RouteHandler(context =>

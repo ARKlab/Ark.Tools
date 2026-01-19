@@ -51,7 +51,7 @@ public abstract class ArkStartupWebApiCommon
         HostEnvironment = hostEnvironment;
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "ConfigureServices is the ASP.NET Core startup configuration method. MVC, JSON serialization, and Swagger require reflection. Types are preserved by the hosting infrastructure.")]
+    [RequiresUnreferencedCode("ConfigureServices uses MVC, JSON serialization, and Swagger which require reflection.")]
     public virtual void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpContextAccessor();
@@ -257,6 +257,7 @@ public abstract class ArkStartupWebApiCommon
 
     public abstract OpenApiInfo MakeInfo(ApiVersion version);
 
+    [RequiresUnreferencedCode("Configure uses ProblemDetails router which dynamically resolves types for diagnostic purposes.")]
     public virtual void Configure(IApplicationBuilder app)
     {
         app.UseSimpleInjector(Container);

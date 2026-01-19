@@ -22,6 +22,7 @@ public abstract class ArkStartupNestedWebApi<TArea>
     {
     }
 
+    [RequiresUnreferencedCode("ConfigureServices uses MVC, JSON serialization, and Swagger which require reflection.")]
     public override void ConfigureServices(IServiceCollection services)
     {
         services.ConfigureControllerArea<TArea>();

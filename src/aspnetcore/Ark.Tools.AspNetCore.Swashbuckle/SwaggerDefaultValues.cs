@@ -18,7 +18,7 @@ public class SwaggerDefaultValues : IOperationFilter
     /// </summary>
     /// <param name="operation">The operation to apply the filter to.</param>
     /// <param name="context">The current operation filter context.</param>
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Swagger metadata generation requires reflection on API parameter types. This is expected for API documentation and types are preserved by ASP.NET Core.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IOperationFilter.Apply interface method doesn't have RequiresUnreferencedCode. Swagger metadata generation requires reflection on API parameter types which is expected for API documentation.")]
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         var apiDescription = context.ApiDescription;

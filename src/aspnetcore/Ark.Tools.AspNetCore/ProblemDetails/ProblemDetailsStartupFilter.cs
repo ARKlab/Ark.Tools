@@ -15,6 +15,7 @@ public class ProblemDetailsStartupFilter : IStartupFilter
         _routeProvider = routeProvider;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IStartupFilter.Configure interface method doesn't have RequiresUnreferencedCode. ProblemDetails router dynamically resolves type names for diagnostic purposes.")]
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
     {
         return app =>

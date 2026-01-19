@@ -4,6 +4,7 @@ namespace Ark.Tools.Core.BusinessRuleViolation;
 
 #pragma warning disable MA0049 // Type name should not match containing namespace
 #pragma warning disable CA1724 // Type names should not match namespaces
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 public class BusinessRuleViolation
 #pragma warning restore CA1724 // Type names should not match namespaces
 #pragma warning restore MA0049 // Type name should not match containing namespace

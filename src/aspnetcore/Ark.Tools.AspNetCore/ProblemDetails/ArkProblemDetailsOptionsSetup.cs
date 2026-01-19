@@ -39,6 +39,7 @@ public class ArkProblemDetailsOptionsSetup
     private readonly DynamicTypeAssembly _dynamicTypeAssembly;
     private readonly ConcurrentDictionary<Type, Type> _brvMap;
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IConfigureOptions<T>.Configure interface method doesn't have RequiresUnreferencedCode. ProblemDetails configuration requires reflection for BusinessRuleViolation serialization.")]
     public void Configure(ProblemDetailsOptions options)
     {
         // This is the default behavior; only include exception details in a development environment.
@@ -82,6 +83,7 @@ public class ArkProblemDetailsOptionsSetup
     }
 
     // This will map Exceptions to the corresponding Conflict status code.
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "BusinessRuleViolation serialization requires reflection. This is suppressed here as the Configure method already has the suppression.")]
     private void _configureExceptionProblemDetails(ProblemDetailsOptions options)
     {
 
@@ -106,8 +108,7 @@ public class ArkProblemDetailsOptionsSetup
         options.Map<BusinessRuleViolationException>(_toProblemDetails);
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2070:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' requirements", Justification = "BusinessRuleViolation types are known at compile time and preserved.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "BusinessRuleViolation serialization requires reflection on well-known domain types that are preserved.")]
+    [RequiresUnreferencedCode("BusinessRuleViolation serialization requires reflection and JSON serialization of domain types.")]
     private Microsoft.AspNetCore.Mvc.ProblemDetails _toProblemDetails(BusinessRuleViolationException arg)
     {
         var pdt = _brvMap.GetOrAdd(arg.BusinessRuleViolation.GetType(), t =>

@@ -15,6 +15,7 @@ public class ArkStartupNestedRoot
         _anotherBase = new ArkStartupBase(configuration);
     }
 
+    [RequiresUnreferencedCode("ConfigureServices uses configuration binding for Application Insights setup.")]
     public virtual void ConfigureServices(IServiceCollection services)
     {
         _anotherBase.ConfigureServices(services);
