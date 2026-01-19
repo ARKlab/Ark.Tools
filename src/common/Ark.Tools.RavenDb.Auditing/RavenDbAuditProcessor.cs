@@ -91,12 +91,13 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "RavenDB uses dynamic types for document revisions. Document types must be preserved.")]
     private async Task _processAuditChange(SubscriptionBatch<Revision<dynamic>> batch)
     {
         using var session = _store.OpenAsyncSession();
         foreach (var e in batch.Items)
         {
-            if (e.Result?.Current?.AuditId != null) //Delete does not have an audit 
+            if (e.Result?.Current?.AuditId != null) //Delete does not have an audit
             {
                 string? operation = default;
 

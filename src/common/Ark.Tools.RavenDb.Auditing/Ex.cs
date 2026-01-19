@@ -16,6 +16,7 @@ namespace Ark.Tools.RavenDb.Auditing;
 public static class Ex
 {
     //Hosted service Audit Processor
+    [RequiresUnreferencedCode("Uses assembly scanning to discover auditable entity types. Entity types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services)
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
@@ -23,6 +24,7 @@ public static class Ex
         services.AddHostedServiceAuditProcessor(assemblies);
     }
 
+    [RequiresUnreferencedCode("Uses assembly scanning to discover auditable entity types. Entity types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services, List<Assembly> assemblies)
     {
         var types = assemblies.SelectMany(x => x.GetTypes())

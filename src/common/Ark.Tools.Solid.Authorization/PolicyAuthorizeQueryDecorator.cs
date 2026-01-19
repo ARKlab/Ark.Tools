@@ -24,6 +24,7 @@ public class PolicyAuthorizeQueryDecorator<TQuery, TResult> : IQueryHandler<TQue
         _policies = typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Uses dynamic invocation for authorization resource handler dispatch. Handler types must be preserved.")]
     public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
     {
         if (_policies.Length != 0)

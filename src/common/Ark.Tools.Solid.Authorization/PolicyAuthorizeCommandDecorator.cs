@@ -24,6 +24,7 @@ public class PolicyAuthorizeCommandDecorator<TCommand> : ICommandHandler<TComman
         _policies = typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Uses dynamic invocation for authorization resource handler dispatch. Handler types must be preserved.")]
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
     {
         if (_policies.Length != 0)
