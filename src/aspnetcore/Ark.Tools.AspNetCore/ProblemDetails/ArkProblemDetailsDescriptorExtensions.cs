@@ -38,6 +38,7 @@ public static class ArkProblemDetailsDescriptorExtensions
         return services;
     }
 
+    [RequiresUnreferencedCode("ProblemDetails router dynamically resolves type names from route parameters for diagnostic purposes.")]
     public static IApplicationBuilder UseArkProblemDetailsDescriptor(this IApplicationBuilder app)
     {
         var markerService = app.ApplicationServices.GetService<ArkProblemDetailsDescriptorMarkerService>();
@@ -54,6 +55,7 @@ public static class ArkProblemDetailsDescriptorExtensions
         return app.UseRouter(provider.Router);
     }
 
+    [RequiresUnreferencedCode("ProblemDetails router dynamically resolves type names from route parameters for diagnostic purposes.")]
     public static IApplicationBuilder UseArkProblemDetails(this IApplicationBuilder app)
     {
         return app.UseArkProblemDetailsDescriptor().UseProblemDetails();

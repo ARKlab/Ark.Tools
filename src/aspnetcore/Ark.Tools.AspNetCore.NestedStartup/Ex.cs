@@ -12,7 +12,7 @@ namespace Ark.Tools.AspNetCore.NestedStartup;
 
 public static class Ex
 {
-    public static IApplicationBuilder UseBranchWithServices<TStartup>(this IApplicationBuilder app, string url, IConfiguration configuration) where TStartup : class
+    public static IApplicationBuilder UseBranchWithServices<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] TStartup>(this IApplicationBuilder app, string url, IConfiguration configuration) where TStartup : class
     {
         var feature = app.ServerFeatures;
 

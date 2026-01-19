@@ -81,6 +81,11 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
         public PolicyResult? Policy { get; set; }
     }
 
+    // NOTE: JwtBearerEvents.TokenValidated base method doesn't have RequiresUnreferencedCode, preventing proper annotation.
+    // This method uses Newtonsoft.Json reflection-based serialization for CacheEntry and PolicyResult internal types.
+    // These types should be preserved by the trimmer as they're internal to this library and have simple structures,
+    // but there's no guarantee. If trimmed, JSON serialization will fail at runtime with clear exceptions.
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "JwtBearerEvents.TokenValidated base method prevents RequiresUnreferencedCode. Uses Newtonsoft.Json for internal CacheEntry/PolicyResult types. No guarantee of trimming safety - will fail at runtime if types are trimmed.")]
     public override async Task TokenValidated(TokenValidatedContext context)
     {
         var cache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();

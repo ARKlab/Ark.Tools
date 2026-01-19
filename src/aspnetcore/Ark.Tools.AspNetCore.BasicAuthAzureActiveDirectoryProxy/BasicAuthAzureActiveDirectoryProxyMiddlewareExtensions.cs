@@ -6,6 +6,7 @@ namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy;
 
 public static class BasicAuthAzureActiveDirectoryProxyMiddlewareExtensions
 {
+    [RequiresUnreferencedCode("BasicAuthAzureActiveDirectoryProxyMiddleware uses Newtonsoft.Json reflection-based serialization for OAuthResult type.")]
     public static IApplicationBuilder UseBasicAuthAzureActiveDirectoryProxy(this IApplicationBuilder app, BasicAuthAzureActiveDirectoryProxyConfig config)
     {
         return app.UseMiddleware<BasicAuthAzureActiveDirectoryProxyMiddleware>(config);

@@ -35,6 +35,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         ((IDisposable)_client).Dispose();
     }
 
+    [RequiresUnreferencedCode("Invoke uses Newtonsoft.Json reflection-based serialization for OAuthResult type.")]
     public async Task Invoke(HttpContext context)
     {
         System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;

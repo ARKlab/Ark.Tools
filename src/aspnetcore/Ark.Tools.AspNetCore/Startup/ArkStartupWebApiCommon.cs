@@ -51,6 +51,7 @@ public abstract class ArkStartupWebApiCommon
         HostEnvironment = hostEnvironment;
     }
 
+    [RequiresUnreferencedCode("ConfigureServices uses MVC, JSON serialization, and Swagger which require reflection.")]
     public virtual void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpContextAccessor();
@@ -256,6 +257,7 @@ public abstract class ArkStartupWebApiCommon
 
     public abstract OpenApiInfo MakeInfo(ApiVersion version);
 
+    [RequiresUnreferencedCode("Configure uses ProblemDetails router which dynamically resolves types for diagnostic purposes.")]
     public virtual void Configure(IApplicationBuilder app)
     {
         app.UseSimpleInjector(Container);

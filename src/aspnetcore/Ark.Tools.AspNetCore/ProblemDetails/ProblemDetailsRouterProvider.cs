@@ -25,6 +25,7 @@ public class ProblemDetailsRouterProvider : IProblemDetailsRouterProvider
     public IRouter? Router { get; private set; }
 
     [MemberNotNull(nameof(Router))]
+    [RequiresUnreferencedCode("ProblemDetails router dynamically resolves type names from route parameters for diagnostic purposes.")]
     public void BuildRouter(IApplicationBuilder app)
     {
         var pageRouteHandler = new RouteHandler(context =>

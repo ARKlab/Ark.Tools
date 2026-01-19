@@ -18,6 +18,11 @@ public class SwaggerDefaultValues : IOperationFilter
     /// </summary>
     /// <param name="operation">The operation to apply the filter to.</param>
     /// <param name="context">The current operation filter context.</param>
+    // NOTE: IOperationFilter.Apply interface method cannot have RequiresUnreferencedCode without breaking Swashbuckle compatibility.
+    // Swagger requires reflection on API types for documentation generation. This is expected behavior for API documentation.
+    // Applications using Swagger in trimmed scenarios must preserve their API types through [DynamicallyAccessedMembers] or
+    // accept that Swagger documentation may be incomplete.
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IOperationFilter.Apply interface constraint prevents RequiresUnreferencedCode. Swagger inherently requires reflection for API documentation. Types must be preserved by application or documentation will be incomplete.")]
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         var apiDescription = context.ApiDescription;

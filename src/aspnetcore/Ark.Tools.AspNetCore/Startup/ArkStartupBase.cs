@@ -22,6 +22,8 @@ internal sealed class ArkStartupBase
     {
         Configuration = configuration;
     }
+    
+    [RequiresUnreferencedCode("ConfigureServices uses configuration binding for Application Insights setup.")]
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpContextAccessor();

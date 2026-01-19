@@ -19,6 +19,12 @@ jobs:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
+        options: >-
+          --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P IntegrationTestsDbPassword85! -C -Q 'SELECT 1' || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+          --health-start-period=30s
 
     steps:
     - name: 'Checkout'
@@ -39,14 +45,22 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         global-json-file: global.json
+    
+    - name: 'Wait for SQL Server to be ready'
+      run: |
+        for i in {1..30}; do
+          if /opt/mssql-tools18/bin/sqlcmd -S localhost,1433 -U sa -P 'IntegrationTestsDbPassword85!' -C -Q "SELECT 1" &>/dev/null; then
+            echo "SQL Server is ready"
+            break
+          fi
+          echo "Waiting for SQL Server... ($i/30)"
+          sleep 2
+        done
       
     - name: 'Restore packages'
       run: dotnet restore
 
     - name: 'Build project'
-      run: dotnet build --no-restore --configuration Debug
-
-    - name: 'Build project (dacpac copy issue)'
       run: dotnet build --no-restore --configuration Debug
 
     - name: Test

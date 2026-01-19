@@ -8,5 +8,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails;
 public interface IProblemDetailsRouterProvider
 {
     IRouter? Router { get; }
+    
+    [RequiresUnreferencedCode("ProblemDetails router dynamically resolves type names from route parameters for diagnostic purposes.")]
     void BuildRouter(IApplicationBuilder app);
 }
