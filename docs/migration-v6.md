@@ -1,6 +1,7 @@
 # Migration to Ark.Tools v6
 
 * [CQRS Handler Execute Methods Removed](#cqrs-handler-execute-methods-removed)
+* [Newtonsoft.Json Support Removed from AspNetCore](#newtonsoftjson-support-removed-from-aspnetcore)
 * [ResourceWatcher Type-Safe Extensions](#resourcewatcher-type-safe-extensions)
 * [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
 * [Remove Nito.AsyncEx.Coordination Dependency](#remove-nitoasyncexcoordination-dependency)
@@ -109,6 +110,102 @@ public async Task MyMethodAsync()
 - `ICommandProcessor` (Execute marked obsolete with error)
 - `IQueryProcessor` (Execute marked obsolete with error)
 - `IRequestProcessor` (Execute marked obsolete with error)
+
+## Newtonsoft.Json Support Removed from AspNetCore
+
+**⚠️ BREAKING CHANGE**: In Ark.Tools v6, Newtonsoft.Json support has been removed from the `Ark.Tools.AspNetCore` package and its base startup classes (`ArkStartupWebApiCommon`, `ArkStartupWebApi`, `ArkStartupNestedWebApi`). The package now uses **System.Text.Json** exclusively.
+
+### What Changed
+
+The `useNewtonsoftJson` constructor parameter has been removed from all base startup classes. The `Ark.Tools.AspNetCore` package no longer has dependencies on:
+- `Microsoft.AspNetCore.Mvc.NewtonsoftJson`
+- `Microsoft.AspNetCore.OData.NewtonsoftJson`
+- `Swashbuckle.AspNetCore.Newtonsoft`
+- `Ark.Tools.NewtonsoftJson`
+
+### Migration Guide
+
+If you need to continue using Newtonsoft.Json in your application, you must configure it explicitly in your Startup class.
+
+**Before (v5)**:
+```csharp
+public class Startup : ArkStartupWebApi
+{
+    public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
+        : base(config, webHostEnvironment, useNewtonsoftJson: true)  // ❌ No longer available
+    {
+    }
+}
+```
+
+**After (v6)** - Using System.Text.Json (Recommended):
+```csharp
+public class Startup : ArkStartupWebApi
+{
+    public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
+        : base(config, webHostEnvironment)  // ✅ Uses System.Text.Json by default
+    {
+    }
+    
+    // System.Text.Json is configured automatically by the base class
+    // Additional configuration can be done in ConfigureServices if needed
+}
+```
+
+**After (v6)** - Opt-in to Newtonsoft.Json if required:
+```csharp
+public class Startup : ArkStartupWebApi
+{
+    public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
+        : base(config, webHostEnvironment)
+    {
+    }
+    
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        // Configure MVC controllers first
+        base.ConfigureServices(services);
+        
+        // Add Newtonsoft.Json support
+        services.AddControllers()
+            .AddNewtonsoftJson(s =>
+            {
+                s.SerializerSettings.ConfigureArkDefaults();
+            });
+            
+        // Add OData Newtonsoft.Json support if using OData
+        services.AddMvc()
+            .AddODataNewtonsoftJson();
+            
+        // Add Swagger Newtonsoft.Json support if using Swagger
+        services.AddSwaggerGenNewtonsoftSupport();
+    }
+}
+```
+
+**Required Package References** if opting in to Newtonsoft.Json:
+```xml
+<ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
+    <PackageReference Include="Microsoft.AspNetCore.OData.NewtonsoftJson" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" />
+    <ProjectReference Include="path/to/Ark.Tools.NewtonsoftJson.csproj" />
+</ItemGroup>
+```
+
+### Benefits
+
+- **Reduced dependencies**: Smaller package footprint and fewer transitive dependencies
+- **Better performance**: System.Text.Json is faster and more memory-efficient than Newtonsoft.Json
+- **Native trimming support**: System.Text.Json has better support for native AOT and trimming
+- **Modern .NET**: Aligns with .NET's built-in serialization stack
+- **Source generation**: System.Text.Json supports source generation for optimal performance
+
+### Notes
+
+- The `Ark.Tools.NewtonsoftJson` package is still available for applications that need it
+- Most modern .NET applications should use System.Text.Json unless there's a specific requirement for Newtonsoft.Json
+- If you're using OData with custom types, test thoroughly as OData's Newtonsoft.Json and System.Text.Json implementations may have subtle differences
 
 ## ResourceWatcher Type-Safe Extensions
 

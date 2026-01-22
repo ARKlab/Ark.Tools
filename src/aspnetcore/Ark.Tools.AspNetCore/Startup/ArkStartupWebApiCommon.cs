@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.OData;
-using Microsoft.AspNetCore.OData.NewtonsoftJson;
+
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +22,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
 
-using Newtonsoft.Json;
+
 
 using SimpleInjector;
 
@@ -35,19 +35,12 @@ namespace Ark.Tools.AspNetCore.Startup;
 public abstract class ArkStartupWebApiCommon
 {
     public IConfiguration Configuration { get; }
-    public bool UseNewtonsoftJson { get; }
     public Container Container { get; } = new Container();
     public IHostEnvironment HostEnvironment { get; }
 
     protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
-        : this(configuration, hostEnvironment, false)
-    {
-    }
-
-    protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment, bool useNewtonsoftJson)
     {
         Configuration = configuration;
-        UseNewtonsoftJson = useNewtonsoftJson;
         HostEnvironment = hostEnvironment;
     }
 
@@ -201,22 +194,11 @@ public abstract class ArkStartupWebApiCommon
             c.EnableTryItOutByDefault();
         });
 
-        if (UseNewtonsoftJson)
+        // Configure System.Text.Json with Ark defaults
+        mvcBuilder.AddJsonOptions(options =>
         {
-            mvcBuilder.AddNewtonsoftJson(s =>
-            {
-                s.SerializerSettings.ConfigureArkDefaults();
-            });
-            mvcBuilder.AddODataNewtonsoftJson();
-            services.AddSwaggerGenNewtonsoftSupport();
-        }
-        else // STJ
-        {
-            mvcBuilder.AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.ConfigureArkDefaults();
-            });
-        }
+            options.JsonSerializerOptions.ConfigureArkDefaults();
+        });
 
         //	Api Behaviour override for disabling automatic Problem details
         services.ConfigureOptions<ApiBehaviourOptionsSetup>();

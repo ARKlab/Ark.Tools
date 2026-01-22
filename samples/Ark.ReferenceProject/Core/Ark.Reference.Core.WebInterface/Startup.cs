@@ -39,7 +39,7 @@ public class Startup : ArkStartupWebApi
             };
 
     public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
-    : base(config, webHostEnvironment, useNewtonsoftJson: false)
+    : base(config, webHostEnvironment)
     {
     }
 
