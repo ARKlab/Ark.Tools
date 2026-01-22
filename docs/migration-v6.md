@@ -125,7 +125,52 @@ The `useNewtonsoftJson` constructor parameter has been removed from all base sta
 
 ### Migration Guide
 
-If you need to continue using Newtonsoft.Json in your application, you must configure it explicitly in your Startup class.
+You have two options when migrating:
+
+#### Option 1: Migrate to System.Text.Json (Recommended)
+
+This is the recommended path for new and existing applications. System.Text.Json offers better performance and is the modern .NET standard.
+
+**Before (v5)**:
+```csharp
+public class Startup : ArkStartupWebApi
+{
+    public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
+        : base(config, webHostEnvironment, useNewtonsoftJson: false)  // or default
+    {
+    }
+}
+```
+
+**After (v6)**:
+```csharp
+public class Startup : ArkStartupWebApi
+{
+    public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
+        : base(config, webHostEnvironment)  // ✅ Uses System.Text.Json by default
+    {
+    }
+    
+    // System.Text.Json is configured automatically by the base class with ConfigureArkDefaults()
+    // Additional configuration can be done in ConfigureServices if needed:
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        base.ConfigureServices(services);
+        
+        // Optional: customize System.Text.Json settings
+        services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+        {
+            options.JsonSerializerOptions.PropertyNamingPolicy = null; // Example customization
+        });
+    }
+}
+```
+
+**No additional package references required** - System.Text.Json is included in the framework.
+
+#### Option 2: Continue Using Newtonsoft.Json
+
+If you're not ready to migrate to System.Text.Json (e.g., due to complex serialization requirements, legacy integrations, or time constraints), you can continue using Newtonsoft.Json by adding the configuration explicitly.
 
 **Before (v5)**:
 ```csharp
@@ -138,21 +183,7 @@ public class Startup : ArkStartupWebApi
 }
 ```
 
-**After (v6)** - Using System.Text.Json (Recommended):
-```csharp
-public class Startup : ArkStartupWebApi
-{
-    public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
-        : base(config, webHostEnvironment)  // ✅ Uses System.Text.Json by default
-    {
-    }
-    
-    // System.Text.Json is configured automatically by the base class
-    // Additional configuration can be done in ConfigureServices if needed
-}
-```
-
-**After (v6)** - Opt-in to Newtonsoft.Json if required:
+**After (v6)** - Continue using Newtonsoft.Json:
 ```csharp
 public class Startup : ArkStartupWebApi
 {
@@ -163,35 +194,50 @@ public class Startup : ArkStartupWebApi
     
     public override void ConfigureServices(IServiceCollection services)
     {
-        // Configure MVC controllers first
+        // Call base to configure standard services (this sets up System.Text.Json)
         base.ConfigureServices(services);
         
-        // Add Newtonsoft.Json support
+        // Replace System.Text.Json with Newtonsoft.Json
         services.AddControllers()
             .AddNewtonsoftJson(s =>
             {
                 s.SerializerSettings.ConfigureArkDefaults();
             });
             
-        // Add OData Newtonsoft.Json support if using OData
+        // Add OData Newtonsoft.Json support (if using OData)
         services.AddMvc()
             .AddODataNewtonsoftJson();
             
-        // Add Swagger Newtonsoft.Json support if using Swagger
+        // Add Swagger Newtonsoft.Json support (if using Swagger)
         services.AddSwaggerGenNewtonsoftSupport();
     }
 }
 ```
 
-**Required Package References** if opting in to Newtonsoft.Json:
+**Required Package References** for Newtonsoft.Json option:
 ```xml
 <ItemGroup>
+    <!-- Required for Newtonsoft.Json MVC support -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
+    
+    <!-- Required only if using OData -->
     <PackageReference Include="Microsoft.AspNetCore.OData.NewtonsoftJson" />
+    
+    <!-- Required only if using Swagger -->
     <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" />
+    
+    <!-- Required for ConfigureArkDefaults() extension method -->
     <ProjectReference Include="path/to/Ark.Tools.NewtonsoftJson.csproj" />
+    <!-- Or if using NuGet package: -->
+    <!-- <PackageReference Include="Ark.Tools.NewtonsoftJson" /> -->
 </ItemGroup>
 ```
+
+**Important Notes for Newtonsoft.Json Users**:
+- The calls to `.AddNewtonsoftJson()`, `.AddODataNewtonsoftJson()`, and `.AddSwaggerGenNewtonsoftSupport()` replace the System.Text.Json configuration set up by the base class
+- Make sure to call these **after** `base.ConfigureServices(services)`
+- You must add the required package references to your project file
+- This is a valid long-term solution if System.Text.Json doesn't meet your needs
 
 ### Benefits
 
