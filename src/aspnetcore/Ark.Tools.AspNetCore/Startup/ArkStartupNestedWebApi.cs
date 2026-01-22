@@ -13,12 +13,7 @@ public abstract class ArkStartupNestedWebApi<TArea>
 {
 
     protected ArkStartupNestedWebApi(IConfiguration configuration, IHostEnvironment environment)
-        : this(configuration, environment, true)
-    {
-    }
-
-    protected ArkStartupNestedWebApi(IConfiguration configuration, IHostEnvironment environment, bool useNewtonsoftJson)
-        : base(configuration, environment, useNewtonsoftJson)
+        : base(configuration, environment)
     {
     }
 

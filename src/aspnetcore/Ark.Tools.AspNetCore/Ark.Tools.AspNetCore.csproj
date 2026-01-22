@@ -34,9 +34,7 @@
     <PackageReference Include="Asp.Versioning.OData.ApiExplorer" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
     <PackageReference Include="Microsoft.AspNetCore.OData" />
-    <PackageReference Include="Microsoft.AspNetCore.OData.NewtonsoftJson" />
     <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders" />
     <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" />
   </ItemGroup>
@@ -51,7 +49,6 @@
     <ProjectReference Include="..\Ark.Tools.AspNetCore.Swashbuckle\Ark.Tools.AspNetCore.Swashbuckle.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Hosting\Ark.Tools.Hosting.csproj" />
-    <ProjectReference Include="..\..\common\Ark.Tools.NewtonsoftJson\Ark.Tools.NewtonsoftJson.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Nodatime.Json\Ark.Tools.Nodatime.Json.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Nodatime.SystemTextJson\Ark.Tools.Nodatime.SystemTextJson.csproj" />

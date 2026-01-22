@@ -30,7 +30,7 @@ namespace WebApplicationDemo;
 public class Startup : ArkStartupWebApi
 {
     public Startup(IConfiguration configuration, IHostEnvironment env)
-        : base(configuration, env, false)
+        : base(configuration, env)
     {
     }
 

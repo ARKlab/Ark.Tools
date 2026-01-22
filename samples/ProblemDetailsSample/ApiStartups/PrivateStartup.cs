@@ -17,7 +17,7 @@ namespace ProblemDetailsSample;
 public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
 {
     public PrivateStartup(IConfiguration config, IHostEnvironment env, IServiceProvider provider)
-        : base(config, env, true)
+        : base(config, env)
     {
         ServiceProvider = provider;
     }

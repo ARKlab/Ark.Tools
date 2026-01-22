@@ -3,9 +3,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-using Newtonsoft.Json;
-
 using Polly;
+
+using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy;
 
@@ -35,7 +35,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         ((IDisposable)_client).Dispose();
     }
 
-    [RequiresUnreferencedCode("Invoke uses Newtonsoft.Json reflection-based serialization for OAuthResult type.")]
+    [RequiresUnreferencedCode("Invoke uses System.Text.Json reflection-based serialization for OAuthResult type.")]
     public async Task Invoke(HttpContext context)
     {
         System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;
@@ -90,7 +90,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                                 res.EnsureSuccessStatusCode();
 
                                 var payload = await res.Content.ReadAsStringAsync(context.RequestAborted).ConfigureAwait(false);
-                                return JsonConvert.DeserializeObject<OAuthResult>(payload);
+                                return JsonSerializer.Deserialize<OAuthResult>(payload);
                             }, context.RequestAborted, true).ConfigureAwait(false);
 
                             context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";

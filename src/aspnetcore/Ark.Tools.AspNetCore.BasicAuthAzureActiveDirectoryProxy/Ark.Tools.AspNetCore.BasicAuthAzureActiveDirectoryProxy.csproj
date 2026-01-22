@@ -31,7 +31,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" />
     <PackageReference Include="Microsoft.Identity.Client" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Polly" />
   </ItemGroup>
     
