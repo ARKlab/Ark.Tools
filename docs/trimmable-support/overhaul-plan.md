@@ -1,43 +1,82 @@
 # Trimming Support Overhaul Plan
 
 **Created:** 2026-01-18  
-**Last Updated:** 2026-01-19  
-**Status:** ✅ **PHASE 1 COMPLETE - 95.2% ACHIEVEMENT**  
+**Last Updated:** 2026-01-22  
+**Status:** ✅ **PHASE 2 COMPLETE - 100% COMMON LIBRARIES TRIMMABLE**  
 **Goal:** Make ALL libraries under src/ Trimmable (100%)
 
 ---
 
-## Current Status (After Phase 1 Completion)
+## Current Status (After Phase 2 Completion)
 
-**59 out of 62 libraries (95.2%) are now trimmable with ZERO build warnings** ✅
+**🎉 ALL 42 COMMON LIBRARIES (100%) ARE NOW TRIMMABLE WITH ZERO BUILD WARNINGS** ✅
 
 ### Progress by Category
 
-- **Common Libraries:** 42/43 (97.7%) - 1 library deferred (Core.Reflection)
+- **Common Libraries:** 42/42 (100%) ✅ **COMPLETE**
 - **AspNetCore Libraries:** 9/11 (81.8%) ✅
 - **ResourceWatcher Libraries:** 8/8 (100%) ✅
 - **Total:** 59/62 (95.2%)
 
 ### Phase Results
 
-- ✅ **Phase 1:** Common Libraries (5/6) - COMPLETE
-- ⏳ **Phase 2:** Core.Reflection Merge - DEFERRED (88+ warnings - requires separate effort)
+- ✅ **Phase 1:** Common Libraries (5/6) - COMPLETE (2026-01-19)
+- ✅ **Phase 2:** Core.Reflection Merge - COMPLETE (2026-01-22) **NEW**
 - ✅ **Phase 3:** AspNetCore Libraries - COMPLETE (9/11 libraries)
 - ✅ **Phase 4:** Build & Test - COMPLETE (0 warnings, 147/147 tests passing)
 
-### Libraries Completed in This Session (5 libraries)
+### Phase 2 Completion - Core.Reflection Merge (2026-01-22)
 
-**Common Libraries:**
+**Objective:** Merge Ark.Tools.Core.Reflection back into Ark.Tools.Core achieving 100% trimmable common libraries
+
+**Achievement:** Successfully merged with zero build warnings and all tests passing ✅
+
+**Changes Made:**
+1. ✅ Moved 5 files from Core.Reflection to Core/Reflection/ subfolder
+2. ✅ Added RequiresUnreferencedCode attributes to all public reflection methods
+3. ✅ Added DynamicallyAccessedMembers attributes to generic type parameters
+4. ✅ Added UnconditionalSuppressMessage only where genuinely safe (with detailed justifications)
+5. ✅ Removed Core.Reflection project completely
+6. ✅ Updated 3 dependent projects (AspNetCore, Tests, ReferenceProject)
+7. ✅ Preserved 100% backward compatibility (same namespace)
+
+**Files Moved to Core/Reflection/:**
+- ReflectionHelper.cs - Reflection utilities with RequiresUnreferencedCode
+- DataTableExtensions.cs - Polymorphic ToDataTablePolymorphic methods
+- ShredObjectToDataTable.cs - Internal polymorphic DataTable shredder
+- EnumerableExtensions.cs - IQueryable OrderBy string-based extensions
+- DynamicTypeAssembly.cs - Dynamic type generation using Reflection.Emit
+
+**Before Phase 2:**
+- Core.Reflection: 88+ trim warnings, NOT trimmable
+- Common Libraries: 42/43 (97.7%) trimmable
+
+**After Phase 2:**
+- Core: 0 trim warnings, IS trimmable (includes all reflection code)
+- Common Libraries: 42/42 (100%) trimmable ✅
+
+**Test Results:**
+- Build: 0 errors, 0 warnings ✅
+- All Tests: 147/147 passing ✅
+- Core.Reflection Tests: 12/12 passing ✅
+
+**Backward Compatibility:**
+- No breaking changes ✅
+- Namespace preserved: `Ark.Tools.Core.Reflection` ✅
+- All existing code continues to work ✅
+- Users get appropriate warnings when using reflection features (expected behavior)
+
+### Libraries Completed Across All Phases
+
+**Phase 1 (2026-01-19) - 5 Common Libraries:**
 1. ✅ **Ark.Tools.Solid.SimpleInjector** - Added RequiresUnreferencedCode (12 warnings fixed)
 2. ✅ **Ark.Tools.Solid.Authorization** - Added RequiresUnreferencedCode + UnconditionalSuppressMessage (10 warnings fixed)
 3. ✅ **Ark.Tools.Reqnroll** - Added RequiresUnreferencedCode + DynamicallyAccessedMembers (22 warnings fixed)
 4. ✅ **Ark.Tools.EventSourcing.RavenDb** - Added RequiresUnreferencedCode + UnconditionalSuppressMessage (4 warnings fixed)
 5. ✅ **Ark.Tools.RavenDb.Auditing** - Added RequiresUnreferencedCode + UnconditionalSuppressMessage (4 warnings fixed)
 
-### Library Deferred
-
-**Common Libraries (1):**
-1. **Ark.Tools.Core.Reflection** - 88+ warnings (deferred to Phase 2 - requires merge back into Core)
+**Phase 2 (2026-01-22) - Core.Reflection Merge:**
+1. ✅ **Ark.Tools.Core** - Merged Core.Reflection with RequiresUnreferencedCode (88+ warnings fixed, project eliminated)
 
 ### AspNetCore Libraries Status
 

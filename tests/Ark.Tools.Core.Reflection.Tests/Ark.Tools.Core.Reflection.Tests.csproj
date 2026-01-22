@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/common/Ark.Tools.Core.Reflection/Ark.Tools.Core.Reflection.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
   </ItemGroup>
 
 </Project>

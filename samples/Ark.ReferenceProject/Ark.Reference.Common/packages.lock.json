@@ -920,13 +920,6 @@
           "NodaTime": "[3.3.0, )"
         }
       },
-      "ark.tools.core.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "NodaTime": "[3.3.0, )"
-        }
-      },
       "ark.tools.http": {
         "type": "Project",
         "dependencies": {

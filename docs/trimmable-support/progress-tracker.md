@@ -1,17 +1,16 @@
 # Trimming Progress Tracker
 
-**Last Updated:** 2026-01-19  
-**Status:** ✅ **PHASE 1 COMPLETE - 95.2% ACHIEVEMENT**  
-**Final Result:** 59/62 libraries (95.2%) trimmable - 1 library deferred (Core.Reflection), 2 not evaluated (AspNetCore with existing attributes)
+**Last Updated:** 2026-01-22  
+**Status:** ✅ **PHASE 2 COMPLETE - 100% COMMON LIBRARIES TRIMMABLE**  
+**Final Result:** 59/62 libraries (95.2%) trimmable - ALL 42 common libraries (100%) ✅, 2 AspNetCore libraries not evaluated
 
 ---
 
-## Current Status (After Phase 1 Completion)
+## Current Status (After Phase 2 Completion)
 
 ### Summary by Category
 
-- **Common Libraries:** 42/43 (97.7%) trimmable ✅
-  - 1 deferred (Core.Reflection - 88+ warnings, requires Phase 2)
+- **Common Libraries:** 42/42 (100%) trimmable ✅ **COMPLETE**
 - **ResourceWatcher Libraries:** 8/8 (100%) ✅
 - **AspNetCore Libraries:** 9/11 (81.8%) trimmable ✅
   - 2 not evaluated (already have attributes)
@@ -21,10 +20,41 @@
 
 - **Build Status:** 0 errors, 0 warnings ✅
 - **Test Results:** 147/147 passing ✅
-- **Warnings Fixed:** 52 total trim warnings
-- **Time to Complete:** ~2 hours
+- **Warnings Fixed (All Phases):** 140+ total trim warnings
+- **Time to Complete:** ~4 hours across 2 phases
 
-### Latest Updates (2026-01-19)
+### Latest Updates (2026-01-22)
+
+#### Phase 2 Completion - Core.Reflection Merge - 100% Common Libraries Trimmable! 🎉
+
+Successfully merged Ark.Tools.Core.Reflection back into Ark.Tools.Core, achieving 100% trimmable common libraries:
+
+**Achievement:**
+- ✅ Ark.Tools.Core - Merged Core.Reflection with RequiresUnreferencedCode (88+ warnings fixed)
+- ✅ Eliminated separate Core.Reflection project
+- ✅ Preserved 100% backward compatibility (same namespace)
+- ✅ All tests passing (12/12 Core.Reflection tests + 147/147 total)
+
+**Technical Details:**
+- Moved 5 files to Core/Reflection/ subfolder
+- Added RequiresUnreferencedCode to all public reflection methods
+- Added DynamicallyAccessedMembers to generic type parameters
+- Added UnconditionalSuppressMessage only where genuinely safe (with detailed justifications)
+- Updated 3 dependent projects (AspNetCore, Tests, ReferenceProject)
+
+**Files Moved:**
+- ReflectionHelper.cs - Reflection utilities
+- DataTableExtensions.cs - Polymorphic ToDataTablePolymorphic methods
+- ShredObjectToDataTable.cs - Internal polymorphic DataTable shredder
+- EnumerableExtensions.cs - IQueryable OrderBy string-based extensions
+- DynamicTypeAssembly.cs - Dynamic type generation
+
+**Before Phase 2:** Core.Reflection had 88+ warnings, was NOT trimmable
+**After Phase 2:** Core includes all reflection code, 0 warnings, IS trimmable ✅
+
+**Migration Path:** Users get appropriate IL2026 warnings when using reflection features (expected and correct behavior)
+
+### Previous Updates (2026-01-19)
 
 #### Phase 1 Completion - 5 Libraries Made Trimmable
 
@@ -67,9 +97,14 @@ After enabling trimming, 11 libraries were found to have actual trim warnings th
 
 ### Remaining Work
 
-To achieve 100% trimmable:
-1. **11 libraries with warnings** need RequiresUnreferencedCode or UnconditionalSuppressMessage
-2. **Core.Reflection** (76+ warnings) - deferred as optional
+✅ **100% Common Libraries Achieved!**
+
+**Remaining for 100% Overall:**
+1. **2 AspNetCore libraries** not yet evaluated (already have some attributes):
+   - Ark.Tools.AspNetCore.ApplicationInsights
+   - Ark.Tools.AspNetCore.Auth0
+
+These libraries already have RequiresUnreferencedCode or UnconditionalSuppressMessage attributes and are likely already trimmable but haven't been verified.
 
 ---
 

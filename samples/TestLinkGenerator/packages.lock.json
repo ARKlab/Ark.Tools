@@ -693,7 +693,6 @@
           "Ark.Tools.AspNetCore.NestedStartup": "[1.0.0, )",
           "Ark.Tools.AspNetCore.Swashbuckle": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Core.Reflection": "[1.0.0, )",
           "Ark.Tools.Hosting": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
@@ -783,13 +782,6 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "NodaTime": "[3.3.0, )"
-        }
-      },
-      "ark.tools.core.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
           "NodaTime": "[3.3.0, )"
         }
       },
