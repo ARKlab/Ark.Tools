@@ -100,7 +100,7 @@ public static partial class EnumerableExtensions
                 }
                 
                 if (partCount > 2)
-                    throw new ArgumentException(String.Format(CultureInfo.InvariantCulture, "Invalid OrderBy string '{0}'. Order By Format: Property, Property2 ASC, Property2 DESC", item.ToString()), orderByParam);
+                    throw new ArgumentException($"Invalid OrderBy string '{item}'. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
                 
                 if (propertySpan.IsEmpty)
                     throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
@@ -144,7 +144,7 @@ public static partial class EnumerableExtensions
                 string propName = propSpan.ToString();
                 PropertyInfo? pi = type.GetProperty(propName);
                 if (pi is null) 
-                    throw new InvalidOperationException($"Property '{propName}' not found in {propertyPath.ToString()}");
+                    throw new InvalidOperationException($"Property '{propName}' not found in {propertyPath}");
 
                 expr = Expression.Property(expr, pi);
                 type = pi.PropertyType;
