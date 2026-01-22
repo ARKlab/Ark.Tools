@@ -92,16 +92,6 @@
           "Swashbuckle.AspNetCore.SwaggerGen": "10.0.0"
         }
       },
-      "Swashbuckle.AspNetCore.Newtonsoft": {
-        "type": "Direct",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "Ehxz5/FxpR5GzjdAuNkH+PJZIkyDivPdZR7INGGOcnCV3Rp9HDufO8HZXl/6s7dpmOJkVpzWP9m8h4KUZcAmLQ==",
-        "dependencies": {
-          "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "10.0.0",
-          "Swashbuckle.AspNetCore.SwaggerGen": "10.1.0"
-        }
-      },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "Direct",
         "requested": "[10.1.0, )",
@@ -148,14 +138,6 @@
           "Microsoft.AspNetCore.OData": "[8.0.2, 10.0.0)"
         }
       },
-      "Microsoft.AspNetCore.JsonPatch": {
-        "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "AxRcJMoHvJ4NDVKiOas5Itd+uGhYcbkSqdtIWS49IQyJSwZuU4M9QCDt8anU3o4Dv5iDpkaLNWVmovH3x3E2ag==",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.3"
-        }
-      },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
         "resolved": "8.0.0",
@@ -200,14 +182,6 @@
         "type": "Transitive",
         "resolved": "8.4.0",
         "contentHash": "F/n0Bd8SHmMtCCaBngmeaopeALr9YuZn3ocWBsSKqDMmcOb8W8P1paSy7WPq1IRYQSK0SRlPWUCxxcRVjTFF7g=="
-      },
-      "Newtonsoft.Json.Bson": {
-        "type": "Transitive",
-        "resolved": "1.0.2",
-        "contentHash": "QYFyxhaABwmq3p/21VrZNYvCg3DaEoN/wUuw5nmfAf0X3HLjgupwhkEWdgfb9nvGAUIv3osmZoD3kKl4jxEmYQ==",
-        "dependencies": {
-          "Newtonsoft.Json": "12.0.1"
-        }
       },
       "Scrutor": {
         "type": "Transitive",
@@ -280,23 +254,6 @@
         "requested": "[3.0.0, )",
         "resolved": "3.0.0",
         "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
-      },
-      "Microsoft.AspNetCore.Mvc.NewtonsoftJson": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.2, )",
-        "resolved": "10.0.2",
-        "contentHash": "ori4kONmWIJsn8PbXIBVAp/mkY5S1tfNoOKEQi5AxyKoBNA0z7UTziPgTIcCq6rRFp5pF+7OliXwOXy8CBjpxA==",
-        "dependencies": {
-          "Microsoft.AspNetCore.JsonPatch": "10.0.2",
-          "Newtonsoft.Json": "13.0.3",
-          "Newtonsoft.Json.Bson": "1.0.2"
-        }
-      },
-      "Newtonsoft.Json": {
-        "type": "CentralTransitive",
-        "requested": "[13.0.4, )",
-        "resolved": "13.0.4",
-        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
       },
       "NodaTime": {
         "type": "CentralTransitive",

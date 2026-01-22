@@ -7,13 +7,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
-using Newtonsoft.Json;
-
 using Polly;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.Auth0;
 
@@ -82,10 +81,10 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
     }
 
     // NOTE: JwtBearerEvents.TokenValidated base method doesn't have RequiresUnreferencedCode, preventing proper annotation.
-    // This method uses Newtonsoft.Json reflection-based serialization for CacheEntry and PolicyResult internal types.
+    // This method uses System.Text.Json reflection-based serialization for CacheEntry and PolicyResult internal types.
     // These types should be preserved by the trimmer as they're internal to this library and have simple structures,
     // but there's no guarantee. If trimmed, JSON serialization will fail at runtime with clear exceptions.
-    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "JwtBearerEvents.TokenValidated base method prevents RequiresUnreferencedCode. Uses Newtonsoft.Json for internal CacheEntry/PolicyResult types. No guarantee of trimming safety - will fail at runtime if types are trimmed.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "JwtBearerEvents.TokenValidated base method prevents RequiresUnreferencedCode. Uses System.Text.Json for internal CacheEntry/PolicyResult types. No guarantee of trimming safety - will fail at runtime if types are trimmed.")]
     public override async Task TokenValidated(TokenValidatedContext context)
     {
         var cache = context.HttpContext.RequestServices.GetRequiredService<IDistributedCache>();
@@ -131,7 +130,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
                             if (policyRes.IsSuccessStatusCode)
                             {
                                 var policyJson = await policyRes.Content.ReadAsStringAsync(ctk).ConfigureAwait(false);
-                                var policy = JsonConvert.DeserializeObject<PolicyResult>(policyJson);
+                                var policy = JsonSerializer.Deserialize<PolicyResult>(policyJson);
                                 if (policy != null)
                                 {
                                     cacheEntry.Policy = policy;
@@ -152,7 +151,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
 
                     if (cacheEntry != null)
                     {
-                        await cache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(cacheEntry), new DistributedCacheEntryOptions
+                        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(cacheEntry), new DistributedCacheEntryOptions
                         {
                             AbsoluteExpiration = new DateTimeOffset(jwt.ValidTo - TimeSpan.FromMinutes(2), TimeSpan.Zero)
                         }, ctk).ConfigureAwait(false);
@@ -173,7 +172,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
 
                 if (res != null)
                 {
-                    cacheEntry = JsonConvert.DeserializeObject<CacheEntry>(res);
+                    cacheEntry = JsonSerializer.Deserialize<CacheEntry>(res);
                 }
 
                 if (cacheEntry != null)
