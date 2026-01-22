@@ -240,6 +240,8 @@ UPDATE SET
     public void EnsureTableAreCreated()
     {
         using var c = _connManager.Get(_config.DbConnectionString);
+        
+        // First create tables and other non-transactionable objects
         var q = @"
 IF OBJECT_ID('State', 'U') IS NULL
 BEGIN
@@ -355,6 +357,13 @@ IF EXISTS ( SELECT  1
 BEGIN 
     EXEC('ALTER TABLE State DROP CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson]')
 END
+";
+        c.Execute(q);
+
+        // Now recreate user-defined table types in a transaction to prevent race conditions
+        // Using BEGIN TRAN prevents parallel tests from interfering with DROP/CREATE
+        var typeQuery = @"
+BEGIN TRANSACTION
 
 IF TYPE_ID('udt_State_v2') IS NOT NULL
 BEGIN
@@ -379,7 +388,6 @@ PRIMARY KEY CLUSTERED
 )
 )
 
-
 IF TYPE_ID('udt_ResourceIdList') IS NULL
 BEGIN
 CREATE TYPE [udt_ResourceIdList] AS TABLE (
@@ -390,9 +398,10 @@ CREATE TYPE [udt_ResourceIdList] AS TABLE (
     )
 )
 END 
-";
 
-        c.Execute(q);
+COMMIT TRANSACTION
+";
+        c.Execute(typeQuery);
     }
 }
 

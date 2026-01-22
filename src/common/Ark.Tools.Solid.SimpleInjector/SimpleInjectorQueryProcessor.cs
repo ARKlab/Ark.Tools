@@ -33,6 +33,7 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
 #pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
+    [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
     {
         dynamic queryHandler = _getHandlerInstance(query);

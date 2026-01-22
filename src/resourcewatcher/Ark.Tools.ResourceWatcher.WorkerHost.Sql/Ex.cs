@@ -23,13 +23,14 @@ public static class Ex
     /// <typeparam name="TQueryFilter"></typeparam>
     /// <param name="host">The workerHost</param>
     /// <param name="connectionString">The SQL connectionString</param>
+    /// <param name="skipInit">If true, skips calling EnsureTableAreCreated on startup. Default is false.</param>
     public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter>
-        (this WorkerHost<TFile, TMetadata, TQueryFilter> host, string connectionString)
+        (this WorkerHost<TFile, TMetadata, TQueryFilter> host, string connectionString, bool skipInit = false)
         where TFile : class, IResource<TMetadata>
         where TMetadata : class, IResourceMetadata
         where TQueryFilter : class, new()
     {
-        host.UseSqlStateProvider(new SqlStateProviderConfig { DbConnectionString = connectionString });
+        host.UseSqlStateProvider(new SqlStateProviderConfig { DbConnectionString = connectionString }, skipInit);
     }
 
     /// <summary>
@@ -37,8 +38,9 @@ public static class Ex
     /// </summary>
     /// <param name="host">The workerHost</param>
     /// <param name="config">The config</param>
+    /// <param name="skipInit">If true, skips calling EnsureTableAreCreated on startup. Default is false.</param>
     public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter>
-        (this WorkerHost<TFile, TMetadata, TQueryFilter> host, ISqlStateProviderConfig config)
+        (this WorkerHost<TFile, TMetadata, TQueryFilter> host, ISqlStateProviderConfig config, bool skipInit = false)
         where TFile : class, IResource<TMetadata>
         where TMetadata : class, IResourceMetadata
         where TQueryFilter : class, new()
@@ -52,7 +54,10 @@ public static class Ex
         {
             r.Container.RegisterSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
             r.Container.RegisterInstance(config);
-            r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider>() as SqlStateProvider)!.EnsureTableAreCreated();
+            if (!skipInit)
+            {
+                r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider>() as SqlStateProvider)!.EnsureTableAreCreated();
+            }
         });
     }
 
@@ -65,14 +70,15 @@ public static class Ex
     /// <typeparam name="TExtensions"></typeparam>
     /// <param name="host">The workerHost</param>
     /// <param name="connectionString">The SQL connectionString</param>
+    /// <param name="skipInit">If true, skips calling EnsureTableAreCreated on startup. Default is false.</param>
     public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, TExtensions>
-        (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, string connectionString)
+        (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, string connectionString, bool skipInit = false)
         where TFile : class, IResource<TMetadata, TExtensions>
         where TMetadata : class, IResourceMetadata<TExtensions>
         where TQueryFilter : class, new()
         where TExtensions : class
     {
-        host.UseSqlStateProvider(new SqlStateProviderConfig { DbConnectionString = connectionString });
+        host.UseSqlStateProvider(new SqlStateProviderConfig { DbConnectionString = connectionString }, skipInit);
     }
 
     /// <summary>
@@ -80,8 +86,9 @@ public static class Ex
     /// </summary>
     /// <param name="host">The workerHost</param>
     /// <param name="config">The config</param>
+    /// <param name="skipInit">If true, skips calling EnsureTableAreCreated on startup. Default is false.</param>
     public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, TExtensions>
-        (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, ISqlStateProviderConfig config)
+        (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, ISqlStateProviderConfig config, bool skipInit = false)
         where TFile : class, IResource<TMetadata, TExtensions>
         where TMetadata : class, IResourceMetadata<TExtensions>
         where TQueryFilter : class, new()
@@ -96,7 +103,10 @@ public static class Ex
         {
             r.Container.RegisterSingleton<IDbConnectionManager, ReliableSqlConnectionManager>();
             r.Container.RegisterInstance(config);
-            r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider<TExtensions>>() as SqlStateProvider<TExtensions>)!.EnsureTableAreCreated();
+            if (!skipInit)
+            {
+                r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider<TExtensions>>() as SqlStateProvider<TExtensions>)!.EnsureTableAreCreated();
+            }
         });
     }
 }

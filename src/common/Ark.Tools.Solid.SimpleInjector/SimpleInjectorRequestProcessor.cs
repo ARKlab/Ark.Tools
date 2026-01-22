@@ -33,6 +33,7 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
 #pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
+    [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
     {
         dynamic requestHandler = _getHandlerInstance(request);

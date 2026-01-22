@@ -16,6 +16,7 @@ namespace Ark.Tools.RavenDb.Auditing;
 public static class Ex
 {
     //Hosted service Audit Processor
+    [RequiresUnreferencedCode("Uses assembly scanning to discover auditable entity types. Entity types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services)
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
@@ -23,6 +24,7 @@ public static class Ex
         services.AddHostedServiceAuditProcessor(assemblies);
     }
 
+    [RequiresUnreferencedCode("Uses assembly scanning to discover auditable entity types. Entity types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services, List<Assembly> assemblies)
     {
         var types = assemblies.SelectMany(x => x.GetTypes())
@@ -32,12 +34,14 @@ public static class Ex
         services.AddHostedServiceAuditProcessor(types);
     }
 
+    [RequiresUnreferencedCode("RavenDB audit processor uses dynamic types for document revisions. Document types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services, List<Type> types)
     {
         services.AddHostedService<RavenDbAuditProcessor>();
         services.AddSingleton<IAuditableTypeProvider>(ss => new AuditableTypeProvider(types));
     }
 
+    [RequiresUnreferencedCode("RavenDB audit processor uses dynamic types for document revisions. Document types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services, AuditableTypeProvider provider)
     {
         services.AddHostedService<RavenDbAuditProcessor>();

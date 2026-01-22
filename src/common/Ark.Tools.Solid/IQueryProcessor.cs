@@ -8,5 +8,6 @@ public interface IQueryProcessor
     [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     TResult Execute<TResult>(IQuery<TResult> query);
 
+    [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default);
 }

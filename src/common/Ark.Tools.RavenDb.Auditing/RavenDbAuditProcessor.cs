@@ -17,6 +17,7 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
     private readonly HashSet<string> _names = new(StringComparer.Ordinal);
     private const string _prefixName = "AuditProcessor";
 
+    [RequiresUnreferencedCode("RavenDB audit processor uses dynamic types for document revisions. Document types must be preserved.")]
     public RavenDbAuditProcessor(IDocumentStore store, IAuditableTypeProvider provider)
     {
         _store = store;
@@ -91,12 +92,13 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Constructor has RequiresUnreferencedCode. Dynamic type access is unavoidable with RavenDB revisions.")]
     private async Task _processAuditChange(SubscriptionBatch<Revision<dynamic>> batch)
     {
         using var session = _store.OpenAsyncSession();
         foreach (var e in batch.Items)
         {
-            if (e.Result?.Current?.AuditId != null) //Delete does not have an audit 
+            if (e.Result?.Current?.AuditId != null) //Delete does not have an audit
             {
                 string? operation = default;
 

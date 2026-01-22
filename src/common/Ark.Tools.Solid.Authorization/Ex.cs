@@ -56,6 +56,7 @@ public static class Ex
             container.Collection.Append(typeof(IAuthorizationPolicy), policyType);
     }
 
+    [RequiresUnreferencedCode("Uses dynamic invocation for authorization resource handler dispatch. Handler types must be preserved.")]
     public static async Task<object> GetResourceAsync<TQuery, TPolicy>(Container c, TQuery query, TPolicy policy, CancellationToken ctk = default)
         where TQuery : notnull
         where TPolicy : notnull

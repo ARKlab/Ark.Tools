@@ -8,5 +8,6 @@ public interface ICommandProcessor
     [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     void Execute(ICommand command);
 
+    [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     Task ExecuteAsync(ICommand command, CancellationToken ctk = default);
 }

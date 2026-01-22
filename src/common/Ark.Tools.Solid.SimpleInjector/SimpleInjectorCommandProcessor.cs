@@ -33,6 +33,7 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
 #pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
+    [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
     {
         dynamic commandHandler = _getHandlerInstance(command);

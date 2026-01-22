@@ -17,6 +17,7 @@ public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComp
 {
     private static readonly JsonSerializerSettings _settings;
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "JSON serialization for test data. Test types must be preserved.")]
     static NestedJsonRetrieverAndComparer()
     {
         var s = new ArkJsonSerializerSettings
@@ -34,6 +35,7 @@ public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComp
         _settings = s;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "JSON deserialization for test data. Test types must be preserved.")]
     public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
     {
         if (string.IsNullOrWhiteSpace(keyValuePair.Value)) return null;
@@ -51,6 +53,7 @@ public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComp
         return actualValue?.GetType() == typeof(TType);
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "JSON comparison for test data. Test types must be preserved.")]
     public bool Compare(string expectedValue, object actualValue)
     {
         if (actualValue == null ^ string.IsNullOrWhiteSpace(expectedValue)) return false;
