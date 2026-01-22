@@ -1,16 +1,16 @@
 # Migration to Ark.Tools v6
 
-## Ark.Tools.Core.Reflection Merged Back into Core (v6.1)
+## Ark.Tools.Core.Reflection Merged into Core
 
-In v5, reflection utilities were split into a separate `Ark.Tools.Core.Reflection` package to isolate trim-incompatible code. In v6.1, we've successfully merged them back into `Ark.Tools.Core` with proper trimming annotations, achieving 100% trimmable libraries.
+In v5, reflection utilities were split into a separate `Ark.Tools.Core.Reflection` package. In v6, this split has been reversed - the reflection utilities are now included directly in `Ark.Tools.Core` with proper trimming annotations.
 
 ### What Changed
 
-The `Ark.Tools.Core.Reflection` package has been **eliminated** and all its functionality merged back into `Ark.Tools.Core`. The reflection utilities are now located in the `Ark.Tools.Core.Reflection` namespace within the Core package.
+The separate `Ark.Tools.Core.Reflection` package no longer exists. All reflection utilities are now part of `Ark.Tools.Core` in the `Ark.Tools.Core.Reflection` namespace.
 
-**Key improvements:**
-- All reflection methods now use `[RequiresUnreferencedCode]` to properly warn users about trimming implications
-- The `Ark.Tools.Core` package is now fully trimmable (builds with zero warnings)
+**Key improvements in v6:**
+- All reflection methods use `[RequiresUnreferencedCode]` to warn about trimming implications
+- `Ark.Tools.Core` is fully trimmable (builds with zero warnings)
 - Simpler package structure (one package instead of two)
 - 100% backward compatible - same namespace, no code changes required
 
@@ -26,11 +26,11 @@ The `Ark.Tools.Core.Reflection` package has been **eliminated** and all its func
 </ItemGroup>
 ```
 
-**After (v6.1):**
+**After (v6):**
 ```xml
 <ItemGroup>
-  <PackageReference Include="Ark.Tools.Core" Version="6.1.x" />
-  <!-- Core.Reflection is no longer needed - functionality is in Core -->
+  <PackageReference Include="Ark.Tools.Core" Version="6.x.x" />
+  <!-- Core.Reflection is no longer a separate package - functionality is in Core -->
 </ItemGroup>
 ```
 
@@ -112,7 +112,7 @@ A: Yes, but you need to ensure the types you're reflecting on are preserved. Use
 
 **Q: What if I need the old Core.Reflection package?**
 
-A: The v5.x version of `Ark.Tools.Core.Reflection` remains available on NuGet. However, we recommend migrating to v6.1 for better trimming support and simpler package management.
+A: The v5.x version of `Ark.Tools.Core.Reflection` remains available on NuGet. However, we recommend migrating to v6 for better trimming support and simpler package management.
 
 ## .NET 10.0 Support
 
