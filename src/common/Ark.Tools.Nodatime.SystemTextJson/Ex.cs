@@ -1,6 +1,4 @@
 using NodaTime;
-using NodaTime.Serialization.SystemTextJson;
-using NodaTime.Text;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -28,35 +26,44 @@ public static class Ex
         _addDefaultConverters(@this.Converters, DateTimeZoneProviders.Tzdb);
 
         return @this
-            .WithIsoDateIntervalConverter()
-            .WithIsoIntervalConverter()
             .ConfigureForNodaTimeRanges()
             ;
     }
 
     private static void _addDefaultConverters(IList<JsonConverter> converters, IDateTimeZoneProvider provider)
     {
-        converters.Insert(0, NodaConverters.InstantConverter);
-        converters.Insert(0, NodaConverters.IntervalConverter);
-        converters.Insert(0, NodaConverters.LocalDateConverter);
-        converters.Insert(0, NodaConverters.LocalDateTimeConverter);
-        converters.Insert(0, NodaConverters.LocalTimeConverter);
-        converters.Insert(0, NodaConverters.AnnualDateConverter);
-        converters.Insert(0, NodaConverters.DateIntervalConverter);
-        converters.Insert(0, NodaConverters.OffsetConverter);
-        converters.Insert(0, NodaConverters.CreateDateTimeZoneConverter(provider));
-        converters.Insert(0, NodaConverters.DurationConverter);
-        converters.Insert(0, NodaConverters.RoundtripPeriodConverter);
-        converters.Insert(0, NodaConverters.OffsetDateTimeConverter);
-        converters.Insert(0, NodaConverters.OffsetDateConverter);
+        _ensureThis(converters, Converters.InstantConverter.Instance);
 
-        //converters.Insert(0, NodaConverters.OffsetTimeConverter); 
-        converters.Add(new NodaPatternConverter<OffsetDateTime>(
-            OffsetDateTimePattern.ExtendedIso, x =>
+        _ensureThis(converters, Converters.LocalDateConverter.Instance);
+        _ensureThis(converters, Converters.LocalDateTimeConverter.Instance);
+        _ensureThis(converters, Converters.LocalTimeConverter.Instance);
+
+        _ensureThis(converters, Converters.AnnualDateConverter.Instance);
+        
+        _ensureThis(converters, Converters.TzdbDateTimeZoneConverter.Instance);
+        _ensureThis(converters, Converters.TzdbZonedDateTimeConverter.Instance);
+
+        _ensureThis(converters, Converters.RoundtripDurationConverter.Instance);
+        _ensureThis(converters, Converters.RoundtripPeriodConverter.Instance);
+
+        _ensureThis(converters, Converters.IsoDateIntervalConverter.Instance);
+        _ensureThis(converters, Converters.IsoIntervalConverter.Instance);
+
+        _ensureThis(converters, Converters.OffsetTimeConverter.Instance);
+        _ensureThis(converters, Converters.OffsetDateConverter.Instance);
+        _ensureThis(converters, Converters.OffsetConverter.Instance);
+        _ensureThis(converters, Converters.ExtendedIsoOffsetDateTimeConverter.Instance);
+    }
+
+    private static void _ensureThis<T>(IList<JsonConverter> converters, JsonConverter<T> converter)
+    {
+        for (int i = converters.Count - 1; i >= 0; i--)
+        {
+            if (converters[i].CanConvert(typeof(T)))
             {
-                if (x.Calendar != CalendarSystem.Iso) throw new ArgumentException("Calendar must be Iso when serializing", typeof(OffsetDateTime).Name);
-            }));
-
-        converters.Insert(0, NodaConverters.CreateZonedDateTimeConverter(provider));
+                converters.RemoveAt(i);
+            }
+        }
+        converters.Insert(0, converter);
     }
 }

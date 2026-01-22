@@ -4,6 +4,8 @@ using Ark.Reference.Core.API.Messages;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Exceptions;
 using Ark.Tools.Core;
+using Ark.Tools.Nodatime.SystemTextJson;
+using Ark.Tools.Nodatime.SystemTextJson.Converters;
 
 using System.Text.Json.Serialization;
 
@@ -16,10 +18,50 @@ namespace Ark.Reference.Core.API.JsonContext;
 /// (e.g., Ping.V1.Output and Book.V1.Output both have "Output" as the type name).
 /// Configured with Ark default settings at compile-time via JsonSourceGenerationOptions attribute.
 /// </summary>
+/// <remarks>
+/// Is not possible to create a ArkDefaults for this due to the attribute being sealed
+/// </remarks>
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    DictionaryKeyPolicy = JsonKnownNamingPolicy.CamelCase,
+
+    AllowTrailingCommas = true,
+    AllowDuplicateProperties = false,
+    NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    WriteIndented = false)]
+    
+    WriteIndented = false,
+    PropertyNameCaseInsensitive = false,
+
+    RespectNullableAnnotations = true,
+    RespectRequiredConstructorParameters = true,
+    
+    Converters = new Type[]
+    {
+        typeof(JsonStringEnumMemberConverter),
+        typeof(JsonIPAddressConverter),
+        typeof(JsonIPEndPointConverter),
+
+        typeof(LocalDateTimeRangeConverter),
+        typeof(ZonedDateTimeRangeConverter),
+        typeof(LocalDateRangeConverter),
+
+        typeof(InstantConverter),
+        typeof(LocalDateConverter),
+        typeof(LocalDateTimeConverter),
+        typeof(LocalTimeConverter),
+        typeof(AnnualDateConverter),
+        typeof(TzdbDateTimeZoneConverter),
+        typeof(TzdbZonedDateTimeConverter),
+        typeof(RoundtripDurationConverter),
+        typeof(RoundtripPeriodConverter),
+        typeof(IsoDateIntervalConverter),
+        typeof(IsoIntervalConverter),
+        typeof(OffsetTimeConverter),
+        typeof(OffsetDateConverter),
+        typeof(OffsetConverter),
+        typeof(ExtendedIsoOffsetDateTimeConverter),
+    })]
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(bool))]
 [JsonSerializable(typeof(Ping.V1.Create), TypeInfoPropertyName = "PingV1Create")]
