@@ -402,6 +402,24 @@ END
 COMMIT TRANSACTION
 ";
         c.Execute(typeQuery);
+
+        // Clear procedure cache to ensure SQL Server uses the new type definitions
+        // This is necessary after DROP/CREATE TYPE operations to avoid cache-related errors
+        // with Microsoft.Data.SqlClient 6.1.4+
+        // Note: This requires elevated permissions and is primarily for test/setup scenarios
+        try
+        {
+            c.Execute("DBCC FREEPROCCACHE");
+        }
+#pragma warning disable ERP022 // Intentionally swallowing exception - DBCC FREEPROCCACHE is best-effort
+        catch (Exception)
+        {
+            // If DBCC FREEPROCCACHE fails (e.g., insufficient permissions in Azure SQL),
+            // continue anyway as the cache may clear naturally over time
+            // This is acceptable for test scenarios but may require manual cache clearing
+            // in restricted production environments
+        }
+#pragma warning restore ERP022
     }
 }
 

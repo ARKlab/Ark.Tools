@@ -23,8 +23,6 @@
     <AutoUpdateStatisticsAsynchronously>True</AutoUpdateStatisticsAsynchronously>
     <AllowSnapshotIsolation>True</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>True</ReadCommittedSnapshot>
-    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
-    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
     <IsPackable>false</IsPackable>
     <QueryStoreDesiredState>ReadWrite</QueryStoreDesiredState>
     <QueryStoreMaxStorageSize>1000</QueryStoreMaxStorageSize>
@@ -61,7 +59,6 @@
     <Folder Include="_Migrations\" />
   </ItemGroup>
   <Target Name="CopyDacpac" AfterTargets="Build">
-    <Exec Command="copy /y &quot;$(MSBuildThisFileDirectory)bin\$(Configuration)\*.dacpac&quot; &quot;$(MSBuildThisFileDirectory)..\Ark.Reference.Core.Tests\&quot;" Condition="'$(IsWindows)' == 'true'" />
-    <Exec Command="cp -f &quot;$(MSBuildThisFileDirectory)bin/$(Configuration)/$(Name).dacpac&quot; &quot;$(MSBuildThisFileDirectory)../Ark.Reference.Core.Tests/&quot;" Condition="'$(IsLinux)' == 'true'" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)bin\$(Configuration)\$(Name).dacpac" DestinationFolder="$(MSBuildThisFileDirectory)..\Ark.Reference.Core.Tests\" />
   </Target>
 </Project>

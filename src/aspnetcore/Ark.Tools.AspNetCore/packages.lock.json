@@ -50,9 +50,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.278, )",
-        "resolved": "2.0.278",
-        "contentHash": "TOCwbpgXahs7Y6TzobPyl3Nula2+WXKLpmbPVBeQouq/Qfu/2G2j5Me9209DofKouLpnKEK9z4fmhxAWgzZM1w=="
+        "requested": "[2.0.285, )",
+        "resolved": "2.0.285",
+        "contentHash": "4tOIGeAfpYsjccmKnA+rEXImeBd7waFotQoJH9MOXeQ+2vE+joitXaItH9hHt8zgKTx9J6ptvEYNF2kO8guSYw=="
       },
       "Microsoft.AspNetCore.OData": {
         "type": "Direct",
@@ -104,9 +104,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.7.3, )",
-        "resolved": "9.7.3",
-        "contentHash": "JusSMwuwJ7lDhzm8PYBnK1HbvYDs/LfcDasl+ryysBm02+fflOZnVRJkxKU1mhumnB1obaWz3hT1YqxfkwUVlA=="
+        "requested": "[9.7.5, )",
+        "resolved": "9.7.5",
+        "contentHash": "Nm5Mk0OXsRjiYFHGByNtXqPAYMsJUlJjPKH4HZptlkt0gXww9PbQZQooBCnyHCSlY5KZWVcKKfsps3pkYJAqkA=="
       },
       "SimpleInjector.Integration.AspNetCore.Mvc.Core": {
         "type": "Direct",
@@ -267,11 +267,6 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "3WA9q9yVqJp222P3x1wYIGDAkpjAku0TMUaaQV22g6L67AI0LdOIrVS7Ht2vJfLHGSPVuqN94vIr15qn+HEkHw=="
-      },
-      "Microsoft.Bcl.Cryptography": {
-        "type": "Transitive",
-        "resolved": "9.0.4",
-        "contentHash": "YgZYAWzyNuPVtPq6WNm0bqOWNjYaWgl5mBWTGZyNoXitYBUYSp6iUB9AwK0V1mo793qRJUXz2t6UZrWITZSvuQ=="
       },
       "Microsoft.CodeAnalysis.Analyzers": {
         "type": "Transitive",
@@ -642,8 +637,8 @@
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "Transitive",
-        "resolved": "9.0.4",
-        "contentHash": "cUFTcMlz/Qw9s90b2wnWSCvHdjv51Bau9FQqhsr4TlwSe1OX+7SoXUqphis5G74MLOvMOCghxPPlEqOdCrVVGA=="
+        "resolved": "9.0.11",
+        "contentHash": "YS2YqtN6fFjlTDIQI+ucjbbrEvwMn796r+VLTQRr/5Oy6g+i+m7nIou83KnJCnAcKna2I+5eVJRks6SoHSpetQ=="
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
@@ -661,7 +656,7 @@
           "Microsoft.ApplicationInsights": "[2.23.0, )",
           "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
           "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[6.1.3, )"
+          "Microsoft.Data.SqlClient": "[6.1.4, )"
         }
       },
       "ark.tools.aspnetcore.applicationinsights": {
@@ -740,7 +735,7 @@
         "dependencies": {
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.4.0, )",
           "Azure.Identity": "[1.17.1, )",
-          "DistributedLock.Core": "[1.0.8, )"
+          "DistributedLock.Core": "[1.0.9, )"
         }
       },
       "ark.tools.nlog": {
@@ -751,7 +746,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[6.1.3, )",
+          "Microsoft.Data.SqlClient": "[6.1.4, )",
           "NLog": "[6.0.7, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.3, )",
@@ -820,7 +815,7 @@
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.Nodatime.Dapper": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
-          "Microsoft.Data.SqlClient": "[6.1.3, )"
+          "Microsoft.Data.SqlClient": "[6.1.4, )"
         }
       },
       "ark.tools.systemtextjson": {
@@ -972,9 +967,9 @@
       },
       "DistributedLock.Core": {
         "type": "CentralTransitive",
-        "requested": "[1.0.8, )",
-        "resolved": "1.0.8",
-        "contentHash": "LAOsY8WxX8JU/n3lfXFz+f2pfnv0+4bHkCrOO3bwa28u9HrS3DlxSG6jf+u76SqesKs+KehZi0CndkfaUXBKvg=="
+        "requested": "[1.0.9, )",
+        "resolved": "1.0.9",
+        "contentHash": "y72z/Ta4xX3qKc+bsAJDsAZ+LuXz4xbCiAYgJwvOP2Xup63tdonTXmlKXU45Ds3GfEuMEHGrnVinhxyBZjRc2Q=="
       },
       "KubernetesClient": {
         "type": "CentralTransitive",
@@ -1065,19 +1060,20 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[6.1.3, )",
-        "resolved": "6.1.3",
-        "contentHash": "ys/z8Tx8074CDU20EilNvBRJuJdwKSthpHkzUpt3JghnjB6GjbZusoOcCtNbhPCCWsEJqN8bxaT7HnS3UZuUDQ==",
+        "requested": "[6.1.4, )",
+        "resolved": "6.1.4",
+        "contentHash": "lQcSog5LLImg4yNEuuG6ccvdzXnCvER8Rms9Ngk9zB4Q8na4f+S7/abSoC7gnEltBg4e5xTnLAWmMLIOtLg4pg==",
         "dependencies": {
-          "Azure.Core": "1.47.1",
-          "Azure.Identity": "1.14.2",
-          "Microsoft.Bcl.Cryptography": "9.0.4",
+          "Azure.Core": "1.50.0",
+          "Azure.Identity": "1.17.1",
           "Microsoft.Data.SqlClient.SNI.runtime": "6.0.2",
+          "Microsoft.Identity.Client": "4.80.0",
           "Microsoft.IdentityModel.JsonWebTokens": "7.7.1",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.7.1",
           "Microsoft.SqlServer.Server": "1.0.0",
-          "System.Configuration.ConfigurationManager": "9.0.4",
-          "System.Security.Cryptography.Pkcs": "9.0.4"
+          "System.Configuration.ConfigurationManager": "9.0.11",
+          "System.IdentityModel.Tokens.Jwt": "7.7.1",
+          "System.Security.Cryptography.Pkcs": "9.0.11"
         }
       },
       "Microsoft.Identity.Client": {
@@ -1184,9 +1180,9 @@
       },
       "Oracle.ManagedDataAccess.Core": {
         "type": "CentralTransitive",
-        "requested": "[23.26.0, )",
-        "resolved": "23.26.0",
-        "contentHash": "+F+d0hTbbqRll5A0T/8mPRy6erBvs3gnaBgktVTYHFZEJkjR+6wErh+4L34QMZIy9mP6osPbptcQJWweH6NrIg==",
+        "requested": "[23.26.100, )",
+        "resolved": "23.26.100",
+        "contentHash": "ObLgWXTEm1oy40uCVw6eBXSXbQHgpY+BNQN0lzO2GibSpIiCdvVi85DPmNLndprBC4fv2L+YV/xepzLXmv23eA==",
         "dependencies": {
           "System.Diagnostics.PerformanceCounter": "8.0.0",
           "System.DirectoryServices.Protocols": "8.0.2",
