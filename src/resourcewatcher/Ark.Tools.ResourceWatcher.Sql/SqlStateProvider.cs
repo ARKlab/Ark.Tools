@@ -400,6 +400,11 @@ CREATE TYPE [udt_ResourceIdList] AS TABLE (
 END 
 
 COMMIT TRANSACTION
+
+-- Clear procedure cache to ensure SQL Server uses the new type definitions
+-- This is necessary after DROP/CREATE TYPE operations to avoid cache-related errors
+-- with Microsoft.Data.SqlClient 6.1.4+
+DBCC FREEPROCCACHE
 ";
         c.Execute(typeQuery);
     }
