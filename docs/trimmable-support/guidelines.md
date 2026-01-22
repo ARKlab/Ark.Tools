@@ -6,23 +6,101 @@ This document provides guidelines and patterns for making Ark.Tools libraries tr
 
 ### Primary Goal: Make as Much as Possible Trimmable
 
-The goal of this initiative is to **make as many libraries trimmable as feasible**, not to force every library to be trim-compatible. It is perfectly acceptable—and sometimes the right decision—to leave certain libraries as not trimmable if:
+The goal of this initiative is to **make as many libraries trimmable as feasible**. 
 
-1. **The library fundamentally requires dynamic reflection** that cannot be expressed with trim annotations
-2. **The complexity/effort to make it trim-safe outweighs the benefits** for that particular library
-3. **Refactoring would break backward compatibility** in unacceptable ways
-4. **The library is rarely used in trim-sensitive scenarios** (e.g., development tools, build-time utilities)
+**Key Insight from 100% Achievement:** Libraries with reflection code CAN be trimmable by using `RequiresUnreferencedCode` to propagate warnings to users. A library is trimmable as long as it builds with zero warnings - even if methods are marked with `RequiresUnreferencedCode`.
 
-**When in doubt, document why a library is not trimmable** rather than forcing an inappropriate solution.
+### When to Mark a Library as NOT Trimmable
+
+It is acceptable to leave a library as not trimmable only in rare cases:
+
+1. **Third-party dependencies are fundamentally incompatible** with trimming and cannot be isolated
+2. **The complexity/effort to annotate outweighs the benefits** (use `RequiresUnreferencedCode` liberally instead)
+3. **The library is a development tool** rarely used in trim-sensitive deployment scenarios
+
+**Before marking as NOT trimmable:** Try using `RequiresUnreferencedCode` on public APIs. Most reflection-heavy code can be made trimmable this way.
+
+**When in doubt, make it trimmable with `RequiresUnreferencedCode`** rather than marking the entire library as not trimmable.
 
 ## Table of Contents
 
-1. [Quick Start](#quick-start)
-2. [Common Patterns](#common-patterns)
-3. [Warning Types and Solutions](#warning-types-and-solutions)
-4. [Testing Strategy](#testing-strategy)
-5. [When to Suppress (CRITICAL)](#when-to-suppress-critical)
-6. [Anti-Patterns](#anti-patterns)
+1. [Lessons Learned from 100% Achievement](#lessons-learned-from-100-achievement)
+2. [Quick Start](#quick-start)
+3. [Common Patterns](#common-patterns)
+4. [Warning Types and Solutions](#warning-types-and-solutions)
+5. [Testing Strategy](#testing-strategy)
+6. [When to Suppress (CRITICAL)](#when-to-suppress-critical)
+7. [Anti-Patterns](#anti-patterns)
+
+---
+
+## Lessons Learned from 100% Achievement
+
+In January 2026, we achieved 100% trimmable libraries (61/61) across all Ark.Tools packages. Here are the key lessons:
+
+### 1. Libraries with Reflection CAN Be Trimmable ✅
+
+**Misconception:** "If a library uses reflection, it cannot be trimmable."
+
+**Reality:** A library is trimmable as long as it builds with **zero warnings**. Methods can be marked with `[RequiresUnreferencedCode]` to propagate warnings to users.
+
+**Example:**
+```csharp
+// This library IS trimmable even though it uses reflection
+public static class ReflectionHelper
+{
+    [RequiresUnreferencedCode("Uses reflection to inspect type interfaces.")]
+    public static Type? GetEnumerableItemType(Type type)
+    {
+        return type.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && 
+                i.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            ?.GetGenericArguments()[0];
+    }
+}
+```
+
+### 2. Default to Propagating Warnings, Not Suppressing
+
+**Key Principle:** Use `RequiresUnreferencedCode` as the primary approach for reflection code.
+
+- ✅ **DO**: Use `[RequiresUnreferencedCode]` on public APIs that use reflection
+- ✅ **DO**: Let warnings propagate to users who can decide if trimming is suitable
+- ❌ **DON'T**: Use `UnconditionalSuppressMessage` to hide warnings unless genuinely safe
+
+### 3. Merging Is Better Than Splitting
+
+**Previous Approach:** Split reflection code into separate packages (e.g., Core vs Core.Reflection)
+
+**Better Approach:** Keep code together with `RequiresUnreferencedCode` annotations
+
+**Benefits:**
+- Simpler package structure for users
+- Same namespace, easier migration
+- Users get clear warnings about reflection usage
+- Backward compatible
+
+**When Learned:** Successfully merged Core.Reflection back into Core with zero warnings
+
+### 4. 100% Is Achievable with Proper Annotations
+
+**Achievement:** 61/61 libraries (100%) made trimmable in 4 hours
+
+**Keys to Success:**
+- Use `RequiresUnreferencedCode` liberally on public APIs
+- Use `DynamicallyAccessedMembers` on generic type parameters
+- Use `UnconditionalSuppressMessage` sparingly with detailed justifications
+- Test thoroughly after each change
+
+### 5. Follow Microsoft Guidelines Strictly
+
+**Critical Rules:**
+- Default to propagating warnings with `RequiresUnreferencedCode`
+- Only suppress with `UnconditionalSuppressMessage` when genuinely safe
+- Provide detailed justifications for all suppressions
+- Always run tests after enabling trimming
+
+**Reference:** [Microsoft's Prepare Libraries for Trimming](https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming)
 
 ---
 
@@ -592,56 +670,66 @@ Based on [Microsoft's official guidance](https://learn.microsoft.com/en-us/dotne
 
 ### When a Library Should NOT Be Trimmable
 
-**It's perfectly valid** to mark a library as not trimmable when:
+**UPDATED GUIDANCE (2026-01-22):** After achieving 100% trimmable libraries, this guidance has changed.
 
-- **The library fundamentally requires dynamic reflection** that cannot be expressed with trim annotations
-- **Making it trim-safe would require breaking changes** or major refactoring
-- **The complexity/effort outweighs the benefits** for that specific library
-- **The library is rarely used in trim-sensitive deployment scenarios** (e.g., development tools, build-time utilities)
-- **Third-party dependencies** are fundamentally not trim-compatible
+**It's rarely necessary** to mark a library as not trimmable. Most reflection code can be made trimmable using `RequiresUnreferencedCode`.
+
+**Only mark as NOT trimmable when:**
+- **Third-party dependencies** are fundamentally not trim-compatible and cannot be isolated
+- **The library is a development/build tool** never deployed in trim scenarios
 
 **Document the reason** clearly when deciding not to pursue trimming support.
 
 ## Library Splitting Guidance
 
-### When to Consider Splitting
+### ⚠️ UPDATED: Reconsider Before Splitting
 
-1. **Small trim-unsafe portion** of otherwise trim-safe library
-2. **Optional features** that require reflection
-3. **Clear separation** between core and advanced features
-4. **Majority of users don't need the reflection features**
+**Previous Approach:** Split reflection-heavy code into separate packages.
 
-### How to Split
+**Lesson Learned:** Keeping code together with `RequiresUnreferencedCode` is often better.
 
-1. Create new project for trim-unsafe code
-2. Move trim-unsafe types to new project
-3. Original library depends on new library (not vice versa)
-4. Document which package to use when
-5. **Ensure backward compatibility** - Existing code should continue to work
+### When Splitting MAY Be Appropriate
 
-### Example Structure
+Consider splitting only when **ALL** of these are true:
 
+1. **Third-party dependency conflict:** The reflection features require incompatible third-party packages
+2. **Massive code size:** The reflection portion is very large and most users don't need it
+3. **Clear user groups:** Distinct user bases with different needs
+4. **Cannot use RequiresUnreferencedCode:** The warnings cannot be expressed through attributes
+
+### Prefer Merging with Annotations
+
+**Instead of splitting, use this approach:**
+
+1. Keep all code in one package
+2. Mark reflection methods with `[RequiresUnreferencedCode]`
+3. Users get warnings when using reflection features
+4. Users can suppress warnings if they know types are preserved
+
+**Benefits of NOT Splitting:**
+- ✅ Simpler package structure (one package, not two)
+- ✅ Same namespace, easier to use
+- ✅ No migration needed for users
+- ✅ Clear warnings show which features require reflection
+- ✅ Backward compatible
+
+### Example: Core.Reflection Merge
+
+Previously split:
+```
+Ark.Tools.Core (trimmable) ✅
+Ark.Tools.Core.Reflection (not trimmable) ❌
+```
+
+Successfully merged:
 ```
 Ark.Tools.Core (trimmable) ✅
 ├── Basic utilities
-├── Extension methods
-├── Value objects
-└── Simple helpers
-→ 83% of applications use only these features
-
-Ark.Tools.Core.Reflection (not trimmable) ❌
-├── ShredObjectToDataTable
-├── IQueryable extensions
-├── ReflectionHelper utilities
-└── Assembly scanning
-→ Only needed by 17% of applications with specific requirements
+├── Reflection utilities (marked with RequiresUnreferencedCode)
+└── All features in one package
 ```
 
-**Benefits of Splitting:**
-- ✅ Most applications can achieve full trimming support
-- ✅ Clear choice between trimming vs reflection features
-- ✅ Backward compatible (no breaking changes)
-- ✅ Applications pay only for what they use
+**Result:** 100% trimmable, simpler for users, no breaking changes.
 
 ---
 
