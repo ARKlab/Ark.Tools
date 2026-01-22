@@ -244,13 +244,6 @@
           "NodaTime": "[3.3.0, )"
         }
       },
-      "ark.tools.core.reflection": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "NodaTime": "[3.3.0, )"
-        }
-      },
       "Microsoft.ApplicationInsights": {
         "type": "CentralTransitive",
         "requested": "[2.23.0, )",

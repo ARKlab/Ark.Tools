@@ -1,0 +1,281 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information. 
+using NodaTime;
+
+using System.Collections.Frozen;
+using System.Data;
+using System.Reflection;
+
+namespace Ark.Tools.Core.Reflection;
+
+//http://msdn.microsoft.com/en-us/library/bb669096.aspx
+internal sealed class ShredObjectToDataTable<T>
+{
+    private readonly FieldInfo[] _fi;
+    private readonly PropertyInfo[] _pi;
+    private readonly Dictionary<string, int> _ordinalMap;
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+    private readonly Type _type;
+
+    // ObjectShredder constructor. 
+    [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+        Justification = "The type T is provided through ToDataTablePolymorphic<T> which has RequiresUnreferencedCode. Callers are responsible for ensuring T's fields and properties are preserved.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2089:UnrecognizedReflectionPattern",
+        Justification = "The generic parameter T is constrained by the public API (ToDataTablePolymorphic) which has RequiresUnreferencedCode. The field _type is annotated with DynamicallyAccessedMembers to ensure the trimmer knows what to preserve.")]
+    public ShredObjectToDataTable()
+    {
+        _type = typeof(T);
+        _fi = _type.GetFields();
+        _pi = _type.GetProperties();
+        _ordinalMap = new(StringComparer.Ordinal);
+    }
+
+    /// <summary> 
+    /// Loads a DataTable from a sequence of objects. 
+    /// </summary> 
+    /// <param name="source">The sequence of objects to load into the DataTable.</param>
+    /// <param name="table">The input table. The schema of the table must match that 
+    /// the type T.  If the table is null, a new table is created with a schema  
+    /// created from the public properties and fields of the type T.</param> 
+    /// <param name="options">Specifies how values from the source sequence will be applied to 
+    /// existing rows in the table.</param> 
+    /// <returns>A DataTable created from the source sequence.</returns> 
+    [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+        Justification = "The type T is provided through ToDataTablePolymorphic<T> which has RequiresUnreferencedCode. Callers are responsible for ensuring T's fields and properties are preserved.")]
+    public DataTable Shred(IEnumerable<T> source, DataTable? table, LoadOption? options)
+    {
+        // Load the table from the scalar sequence if T is a primitive type. 
+        if (typeof(T).IsPrimitive)
+        {
+            return ShredPrimitive(source, table, options);
+        }
+
+        // Create a new table if the input table is null. 
+        if (table == null)
+        {
+            table = new DataTable(typeof(T).Name);
+        }
+
+        // Initialize the ordinal map and extend the table schema based on type T.
+        table = ExtendTable(table, typeof(T));
+
+        // Enumerate the source sequence and load the object values into rows.
+        table.BeginLoadData();
+        using (IEnumerator<T> e = source.GetEnumerator())
+        {
+            while (e.MoveNext())
+            {
+                if (options is not null)
+                {
+                    table.LoadDataRow(ShredObject(table, e.Current), options.Value);
+                }
+                else
+                {
+                    table.LoadDataRow(ShredObject(table, e.Current), true);
+                }
+            }
+        }
+        table.EndLoadData();
+
+        // Return the table. 
+        return table;
+    }
+
+#pragma warning disable CA1822 // Mark members as static
+    [UnconditionalSuppressMessage("Trimming", "IL2087:UnrecognizedReflectionPattern",
+        Justification = "For primitive types, typeof(T) is the actual type being used. This is safe because primitive types are always preserved. This method is only called when typeof(T).IsPrimitive is true.")]
+    public DataTable ShredPrimitive(IEnumerable<T> source, DataTable? table, LoadOption? options)
+#pragma warning restore CA1822 // Mark members as static
+    {
+        // Create a new table if the input table is null. 
+        if (table == null)
+        {
+            table = new DataTable(typeof(T).Name);
+        }
+
+        if (!table.Columns.Contains("Value"))
+        {
+            table.Columns.Add("Value", typeof(T));
+        }
+
+        // Enumerate the source sequence and load the scalar values into rows.
+        table.BeginLoadData();
+        using (IEnumerator<T> e = source.GetEnumerator())
+        {
+            var values = new object?[table.Columns.Count];
+            while (e.MoveNext())
+            {
+                values[table.Columns["Value"]!.Ordinal] = e.Current;
+
+                if (options is not null)
+                {
+                    table.LoadDataRow(values, (LoadOption)options);
+                }
+                else
+                {
+                    table.LoadDataRow(values, true);
+                }
+            }
+        }
+        table.EndLoadData();
+
+        // Return the table. 
+        return table;
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+        Justification = "This method supports polymorphic types (derived from T). The instance.GetType() call is necessary for polymorphic support. Callers using ToDataTablePolymorphic are warned via RequiresUnreferencedCode.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075:UnrecognizedReflectionPattern",
+        Justification = "This method supports polymorphic types (derived from T). The instance.GetType() call is necessary for polymorphic support. Callers using ToDataTablePolymorphic are warned via RequiresUnreferencedCode.")]
+    public object?[] ShredObject(DataTable table, T instance)
+    {
+
+        FieldInfo[] fi = _fi;
+        PropertyInfo[] pi = _pi;
+
+        if (instance is not null && instance.GetType() != typeof(T))
+        {
+            // If the instance is derived from T, extend the table schema 
+            // and get the properties and fields.
+            ExtendTable(table, instance.GetType());
+            fi = instance.GetType().GetFields();
+            pi = instance.GetType().GetProperties();
+        }
+
+        // Add the property and field values of the instance to an array.
+        var values = new object?[table.Columns.Count];
+        foreach (FieldInfo f in fi)
+        {
+            values[_ordinalMap[f.Name]] = _convertColumnValue(f.GetValue(instance));
+        }
+
+        foreach (PropertyInfo p in pi)
+        {
+            values[_ordinalMap[p.Name]] = _convertColumnValue(p.GetValue(instance, null));
+        }
+
+        // Return the property and field values of the instance. 
+        return values;
+    }
+
+    private static readonly FrozenSet<Type> _datetimeTypes = new[]
+    {
+        typeof(LocalDate),
+        typeof(LocalDateTime),
+        typeof(Instant),
+    }.ToFrozenSet();
+
+    private static readonly FrozenSet<Type> _datetimeOffsetTypes = new[]
+    {
+        typeof(OffsetDateTime),
+        typeof(OffsetDate)
+    }.ToFrozenSet();
+
+
+    private static readonly FrozenSet<Type> _timeTypes = new[]
+    {
+        typeof(LocalTime)
+    }.ToFrozenSet();
+
+    private static Type _deriveColumnType(Type elementType)
+    {
+        var nullableType = Nullable.GetUnderlyingType(elementType);
+        if (nullableType is not null)
+        {
+            elementType = nullableType;
+        }
+
+        if (_datetimeTypes.Contains(elementType))
+            elementType = typeof(DateTime);
+
+        if (_datetimeOffsetTypes.Contains(elementType))
+            elementType = typeof(DateTimeOffset);
+
+        if (_timeTypes.Contains(elementType))
+            elementType = typeof(TimeSpan);
+
+        if (elementType.IsEnum)
+            return typeof(string);
+
+        return elementType;
+    }
+
+    private static object? _convertColumnValue(object? value)
+    {
+        if (value == null) return value;
+
+        var elementType = value.GetType();
+
+        var nullableType = Nullable.GetUnderlyingType(elementType);
+        if (nullableType is not null)
+        {
+            elementType = nullableType;
+        }
+
+        if (elementType.IsEnum)
+            return value.ToString();
+
+        switch (value)
+        {
+            case LocalDate ld:
+                return ld.ToDateTimeUnspecified();
+            case LocalDateTime ldt:
+                return ldt.ToDateTimeUnspecified();
+            case Instant i:
+                return i.ToDateTimeUtc();
+            case OffsetDateTime odt:
+                return odt.ToDateTimeOffset();
+            case OffsetDate od:
+                return od.At(LocalTime.Midnight).ToDateTimeOffset();
+            case LocalTime lt:
+                return TimeSpan.FromTicks(lt.TickOfDay);
+        }
+
+        return value;
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+        Justification = "This method extends the table schema for polymorphic types (including derived types). The type parameter is runtime-determined for polymorphic support. Callers using ToDataTablePolymorphic are warned via RequiresUnreferencedCode.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
+        Justification = "_deriveColumnType returns safe types (DateTime, DateTimeOffset, TimeSpan, string, or the original type). These are either framework types that are preserved or types that are part of the fields/properties being reflected upon which are preserved through the DynamicallyAccessedMembers annotation.")]
+    public DataTable ExtendTable(DataTable table, Type type)
+    {
+        // Extend the table schema if the input table was null or if the value  
+        // in the sequence is derived from type T.             
+        foreach (FieldInfo f in type.GetFields())
+        {
+            if (!_ordinalMap.ContainsKey(f.Name))
+            {
+                var t = _deriveColumnType(f.FieldType);
+
+                // Add the field as a column in the table if it doesn't exist 
+                // already.
+                DataColumn dc = table.Columns.Contains(f.Name)
+                    ? table.Columns[f.Name]!
+                    : table.Columns.Add(f.Name, t);
+
+                // Add the field to the ordinal map.
+                _ordinalMap.Add(f.Name, dc.Ordinal);
+            }
+        }
+        foreach (PropertyInfo p in type.GetProperties())
+        {
+            if (!_ordinalMap.ContainsKey(p.Name))
+            {
+                var t = _deriveColumnType(p.PropertyType);
+
+                // Add the property as a column in the table if it doesn't exist 
+                // already.
+                DataColumn dc = table.Columns.Contains(p.Name)
+                    ? table.Columns[p.Name]!
+                    : table.Columns.Add(p.Name, t);
+
+                // Add the property to the ordinal map.
+                _ordinalMap.Add(p.Name, dc.Ordinal);
+            }
+        }
+
+        // Return the table. 
+        return table;
+    }
+}
