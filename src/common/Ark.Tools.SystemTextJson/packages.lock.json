@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.278, )",
-        "resolved": "2.0.278",
-        "contentHash": "TOCwbpgXahs7Y6TzobPyl3Nula2+WXKLpmbPVBeQouq/Qfu/2G2j5Me9209DofKouLpnKEK9z4fmhxAWgzZM1w=="
+        "requested": "[2.0.285, )",
+        "resolved": "2.0.285",
+        "contentHash": "4tOIGeAfpYsjccmKnA+rEXImeBd7waFotQoJH9MOXeQ+2vE+joitXaItH9hHt8zgKTx9J6ptvEYNF2kO8guSYw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -52,9 +52,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.7.3, )",
-        "resolved": "9.7.3",
-        "contentHash": "JusSMwuwJ7lDhzm8PYBnK1HbvYDs/LfcDasl+ryysBm02+fflOZnVRJkxKU1mhumnB1obaWz3hT1YqxfkwUVlA=="
+        "requested": "[9.7.5, )",
+        "resolved": "9.7.5",
+        "contentHash": "Nm5Mk0OXsRjiYFHGByNtXqPAYMsJUlJjPKH4HZptlkt0gXww9PbQZQooBCnyHCSlY5KZWVcKKfsps3pkYJAqkA=="
       },
       "ark.tools.core": {
         "type": "Project",
@@ -106,9 +106,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.278, )",
-        "resolved": "2.0.278",
-        "contentHash": "TOCwbpgXahs7Y6TzobPyl3Nula2+WXKLpmbPVBeQouq/Qfu/2G2j5Me9209DofKouLpnKEK9z4fmhxAWgzZM1w=="
+        "requested": "[2.0.285, )",
+        "resolved": "2.0.285",
+        "contentHash": "4tOIGeAfpYsjccmKnA+rEXImeBd7waFotQoJH9MOXeQ+2vE+joitXaItH9hHt8zgKTx9J6ptvEYNF2kO8guSYw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -142,9 +142,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.7.3, )",
-        "resolved": "9.7.3",
-        "contentHash": "JusSMwuwJ7lDhzm8PYBnK1HbvYDs/LfcDasl+ryysBm02+fflOZnVRJkxKU1mhumnB1obaWz3hT1YqxfkwUVlA=="
+        "requested": "[9.7.5, )",
+        "resolved": "9.7.5",
+        "contentHash": "Nm5Mk0OXsRjiYFHGByNtXqPAYMsJUlJjPKH4HZptlkt0gXww9PbQZQooBCnyHCSlY5KZWVcKKfsps3pkYJAqkA=="
       },
       "System.Interactive.Async": {
         "type": "Transitive",

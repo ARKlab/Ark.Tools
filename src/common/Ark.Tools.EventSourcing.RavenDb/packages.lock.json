@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.278, )",
-        "resolved": "2.0.278",
-        "contentHash": "TOCwbpgXahs7Y6TzobPyl3Nula2+WXKLpmbPVBeQouq/Qfu/2G2j5Me9209DofKouLpnKEK9z4fmhxAWgzZM1w=="
+        "requested": "[2.0.285, )",
+        "resolved": "2.0.285",
+        "contentHash": "4tOIGeAfpYsjccmKnA+rEXImeBd7waFotQoJH9MOXeQ+2vE+joitXaItH9hHt8zgKTx9J6ptvEYNF2kO8guSYw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -46,9 +46,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.7.3, )",
-        "resolved": "9.7.3",
-        "contentHash": "JusSMwuwJ7lDhzm8PYBnK1HbvYDs/LfcDasl+ryysBm02+fflOZnVRJkxKU1mhumnB1obaWz3hT1YqxfkwUVlA=="
+        "requested": "[9.7.5, )",
+        "resolved": "9.7.5",
+        "contentHash": "Nm5Mk0OXsRjiYFHGByNtXqPAYMsJUlJjPKH4HZptlkt0gXww9PbQZQooBCnyHCSlY5KZWVcKKfsps3pkYJAqkA=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -91,11 +91,6 @@
         "resolved": "8.0.0",
         "contentHash": "3WA9q9yVqJp222P3x1wYIGDAkpjAku0TMUaaQV22g6L67AI0LdOIrVS7Ht2vJfLHGSPVuqN94vIr15qn+HEkHw=="
       },
-      "Microsoft.Bcl.Cryptography": {
-        "type": "Transitive",
-        "resolved": "9.0.4",
-        "contentHash": "YgZYAWzyNuPVtPq6WNm0bqOWNjYaWgl5mBWTGZyNoXitYBUYSp6iUB9AwK0V1mo793qRJUXz2t6UZrWITZSvuQ=="
-      },
       "Microsoft.Data.SqlClient.SNI.runtime": {
         "type": "Transitive",
         "resolved": "6.0.2",
@@ -103,14 +98,14 @@
       },
       "Microsoft.Extensions.Caching.Memory": {
         "type": "Transitive",
-        "resolved": "9.0.4",
-        "contentHash": "G5rEq1Qez5VJDTEyRsRUnewAspKjaY57VGsdZ8g8Ja6sXXzoiI3PpTd1t43HjHqNWD5A06MQveb2lscn+2CU+w==",
+        "resolved": "9.0.11",
+        "contentHash": "J77oUeVZXdMoiUiCPkL4v13KrNRuMQnSHHw78cTh/2ZidyiMFm8jhu49OUKvNydMUX8ZcuM5g8uohW18YaglMw==",
         "dependencies": {
-          "Microsoft.Extensions.Caching.Abstractions": "9.0.4",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.4",
-          "Microsoft.Extensions.Logging.Abstractions": "9.0.4",
-          "Microsoft.Extensions.Options": "9.0.4",
-          "Microsoft.Extensions.Primitives": "9.0.4"
+          "Microsoft.Extensions.Caching.Abstractions": "9.0.11",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.11",
+          "Microsoft.Extensions.Logging.Abstractions": "9.0.11",
+          "Microsoft.Extensions.Options": "9.0.11",
+          "Microsoft.Extensions.Primitives": "9.0.11"
         }
       },
       "Microsoft.Extensions.Configuration.Binder": {
@@ -397,8 +392,8 @@
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "Transitive",
-        "resolved": "9.0.4",
-        "contentHash": "cUFTcMlz/Qw9s90b2wnWSCvHdjv51Bau9FQqhsr4TlwSe1OX+7SoXUqphis5G74MLOvMOCghxPPlEqOdCrVVGA=="
+        "resolved": "9.0.11",
+        "contentHash": "YS2YqtN6fFjlTDIQI+ucjbbrEvwMn796r+VLTQRr/5Oy6g+i+m7nIou83KnJCnAcKna2I+5eVJRks6SoHSpetQ=="
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
@@ -411,7 +406,7 @@
           "Microsoft.ApplicationInsights": "[2.23.0, )",
           "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
           "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[6.1.3, )",
+          "Microsoft.Data.SqlClient": "[6.1.4, )",
           "Microsoft.Extensions.Options": "[10.0.2, )"
         }
       },
@@ -442,7 +437,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[6.1.3, )",
+          "Microsoft.Data.SqlClient": "[6.1.4, )",
           "NLog": "[6.0.7, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.3, )",
@@ -563,20 +558,21 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[6.1.3, )",
-        "resolved": "6.1.3",
-        "contentHash": "ys/z8Tx8074CDU20EilNvBRJuJdwKSthpHkzUpt3JghnjB6GjbZusoOcCtNbhPCCWsEJqN8bxaT7HnS3UZuUDQ==",
+        "requested": "[6.1.4, )",
+        "resolved": "6.1.4",
+        "contentHash": "lQcSog5LLImg4yNEuuG6ccvdzXnCvER8Rms9Ngk9zB4Q8na4f+S7/abSoC7gnEltBg4e5xTnLAWmMLIOtLg4pg==",
         "dependencies": {
-          "Azure.Core": "1.47.1",
-          "Azure.Identity": "1.14.2",
-          "Microsoft.Bcl.Cryptography": "9.0.4",
+          "Azure.Core": "1.50.0",
+          "Azure.Identity": "1.17.1",
           "Microsoft.Data.SqlClient.SNI.runtime": "6.0.2",
-          "Microsoft.Extensions.Caching.Memory": "9.0.4",
+          "Microsoft.Extensions.Caching.Memory": "9.0.11",
+          "Microsoft.Identity.Client": "4.80.0",
           "Microsoft.IdentityModel.JsonWebTokens": "7.7.1",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.7.1",
           "Microsoft.SqlServer.Server": "1.0.0",
-          "System.Configuration.ConfigurationManager": "9.0.4",
-          "System.Security.Cryptography.Pkcs": "9.0.4"
+          "System.Configuration.ConfigurationManager": "9.0.11",
+          "System.IdentityModel.Tokens.Jwt": "7.7.1",
+          "System.Security.Cryptography.Pkcs": "9.0.11"
         }
       },
       "Microsoft.Extensions.Caching.Abstractions": {
@@ -859,9 +855,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.278, )",
-        "resolved": "2.0.278",
-        "contentHash": "TOCwbpgXahs7Y6TzobPyl3Nula2+WXKLpmbPVBeQouq/Qfu/2G2j5Me9209DofKouLpnKEK9z4fmhxAWgzZM1w=="
+        "requested": "[2.0.285, )",
+        "resolved": "2.0.285",
+        "contentHash": "4tOIGeAfpYsjccmKnA+rEXImeBd7waFotQoJH9MOXeQ+2vE+joitXaItH9hHt8zgKTx9J6ptvEYNF2kO8guSYw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -895,9 +891,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.7.3, )",
-        "resolved": "9.7.3",
-        "contentHash": "JusSMwuwJ7lDhzm8PYBnK1HbvYDs/LfcDasl+ryysBm02+fflOZnVRJkxKU1mhumnB1obaWz3hT1YqxfkwUVlA=="
+        "requested": "[9.7.5, )",
+        "resolved": "9.7.5",
+        "contentHash": "Nm5Mk0OXsRjiYFHGByNtXqPAYMsJUlJjPKH4HZptlkt0gXww9PbQZQooBCnyHCSlY5KZWVcKKfsps3pkYJAqkA=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -939,11 +935,6 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "3WA9q9yVqJp222P3x1wYIGDAkpjAku0TMUaaQV22g6L67AI0LdOIrVS7Ht2vJfLHGSPVuqN94vIr15qn+HEkHw=="
-      },
-      "Microsoft.Bcl.Cryptography": {
-        "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "Y3t/c7C5XHJGFDnohjf1/9SYF3ZOfEU1fkNQuKg/dGf9hN18yrQj2owHITGfNS3+lKJdW6J4vY98jYu57jCO8A=="
       },
       "Microsoft.Data.SqlClient.SNI.runtime": {
         "type": "Transitive",
@@ -1299,7 +1290,7 @@
           "Microsoft.ApplicationInsights": "[2.23.0, )",
           "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
           "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[6.1.3, )",
+          "Microsoft.Data.SqlClient": "[6.1.4, )",
           "Microsoft.Extensions.Options": "[10.0.2, )"
         }
       },
@@ -1331,7 +1322,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[6.1.3, )",
+          "Microsoft.Data.SqlClient": "[6.1.4, )",
           "NLog": "[6.0.7, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.3, )",
@@ -1450,19 +1441,20 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[6.1.3, )",
-        "resolved": "6.1.3",
-        "contentHash": "ys/z8Tx8074CDU20EilNvBRJuJdwKSthpHkzUpt3JghnjB6GjbZusoOcCtNbhPCCWsEJqN8bxaT7HnS3UZuUDQ==",
+        "requested": "[6.1.4, )",
+        "resolved": "6.1.4",
+        "contentHash": "lQcSog5LLImg4yNEuuG6ccvdzXnCvER8Rms9Ngk9zB4Q8na4f+S7/abSoC7gnEltBg4e5xTnLAWmMLIOtLg4pg==",
         "dependencies": {
-          "Azure.Core": "1.47.1",
-          "Azure.Identity": "1.14.2",
-          "Microsoft.Bcl.Cryptography": "8.0.0",
+          "Azure.Core": "1.50.0",
+          "Azure.Identity": "1.17.1",
           "Microsoft.Data.SqlClient.SNI.runtime": "6.0.2",
           "Microsoft.Extensions.Caching.Memory": "8.0.1",
+          "Microsoft.Identity.Client": "4.80.0",
           "Microsoft.IdentityModel.JsonWebTokens": "7.7.1",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.7.1",
           "Microsoft.SqlServer.Server": "1.0.0",
           "System.Configuration.ConfigurationManager": "8.0.1",
+          "System.IdentityModel.Tokens.Jwt": "7.7.1",
           "System.Security.Cryptography.Pkcs": "8.0.1"
         }
       },
