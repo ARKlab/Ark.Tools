@@ -61,7 +61,6 @@
     <Folder Include="_Migrations\" />
   </ItemGroup>
   <Target Name="CopyDacpac" AfterTargets="Build">
-    <Exec Command="copy /y &quot;$(MSBuildThisFileDirectory)bin\$(Configuration)\*.dacpac&quot; &quot;$(MSBuildThisFileDirectory)..\Ark.Reference.Core.Tests\&quot;" Condition="'$(IsWindows)' == 'true'" />
-    <Exec Command="cp -f &quot;$(MSBuildThisFileDirectory)bin/$(Configuration)/$(Name).dacpac&quot; &quot;$(MSBuildThisFileDirectory)../Ark.Reference.Core.Tests/&quot;" Condition="'$(IsLinux)' == 'true'" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)bin\$(Configuration)\$(Name).dacpac" DestinationFolder="$(MSBuildThisFileDirectory)..\Ark.Reference.Core.Tests\" SkipUnchangedFiles="false" />
   </Target>
 </Project>
