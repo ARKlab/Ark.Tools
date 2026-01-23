@@ -59,7 +59,8 @@ Documentation improvements are welcome!
 
 Upgrading from an older version? Check out our migration guides:
 
-- [Migration to v6](docs/migration-v6.md) - OpenAPI 3.1, AwesomeAssertions, SDK-based SQL Projects
+- **[Release Notes v6](docs/release-notes-v6.md)** - What's new in v6.0
+- [Migration to v6](docs/migration-v6.md) - Complete migration guide from v5 to v6
 - [Migration to v5](docs/migration-v5.md) - .NET 8.0, Reqnroll, Flurl v4, Rebus v8
 - [Migration to v4.5](docs/migration-v4.md) - NLog v5, Structured Logging, Slack integration
 - [Migration from v2 to v3](docs/migration-v3.md) - AspNetCore v5, Microsoft.Data.SqlClient, Flurl v3
