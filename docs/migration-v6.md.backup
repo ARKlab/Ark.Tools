@@ -1,38 +1,21 @@
 # Migration to Ark.Tools v6
 
-This guide helps you migrate from Ark.Tools v5 to v6. Changes are organized into **Breaking Changes** (mandatory) and **Features & Enhancements** (optional).
-
-## Table of Contents
-
-### 🔨 Breaking Changes (Mandatory)
-
-These changes **require code modifications** to upgrade from v5 to v6:
-
 * [CQRS Handler Execute Methods Removed](#cqrs-handler-execute-methods-removed)
 * [Newtonsoft.Json Support Removed from AspNetCore](#newtonsoftjson-support-removed-from-aspnetcore)
 * [ResourceWatcher Type-Safe Extensions](#resourcewatcher-type-safe-extensions)
-* [Oracle CommandTimeout Default Changed](#oracle-commandtimeout-default-changed)
-* [TypeConverter Registration for Dictionary Keys (.NET 9+ only)](#typeconverter-registration-for-dictionary-keys-with-custom-types-ark-tools-v6)
-
-### ✨ Features & Enhancements (Optional)
-
-These changes are **demonstrated in samples** but not required for library users:
-
 * [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
 * [Remove Nito.AsyncEx.Coordination Dependency](#remove-nitoasyncexcoordination-dependency)
+* [Oracle CommandTimeout Default Changed](#oracle-commandtimeout-default-changed)
+* [Migrate SQL Projects to SDK-based](#migrate-sql-projects-to-sdk-based)
 * [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbukle-10.x)
 * [Replace FluentAssertions with AwesomeAssertions](#replace-fluntasserion-with-awesomeassertion)
 * [Replace Specflow with Reqnroll](#replace-specflow-with-reqnroll)
+  * [(Optional) Rename "SpecFlow" to "IntegrationTests"](#optional-rename-specflow-to-integrationtests)
 * [Migrate tests to MTPv2](#migrate-tests-to-mtpv2)
 * [Migrate SLN to SLNX](#migrate-sln-to-slnx)
+* [TypeConverter Registration for Dictionary Keys](#typeconverter-registration-for-dictionary-keys-with-custom-types-ark-tools-v6)
 * [Adopt Central Package Management](#adopt-central-package-management)
 * [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
-* [Migrate SQL Projects to SDK-based](#migrate-sql-projects-to-sdk-based)
-* [Ark.Tools.Core.Reflection Split (Trimming Support)](#arktoolscorereflection-split-trimming-support)
-
----
-
-## 🔨 Breaking Changes
 
 ## CQRS Handler Execute Methods Removed
 
@@ -497,15 +480,7 @@ public record MyExtensions { public long LastOffset { get; init; } }
 // ✅ No database migration needed
 ```
 
----
-
-## ✨ Features & Enhancements (Optional)
-
-The following changes are **optional modernizations** demonstrated in the Ark.ReferenceProject samples. They represent best practices but are **not required** to upgrade from v5 to v6. You can adopt them at your own pace based on your project needs.
-
 ## Remove Ensure.That Dependency
-
-**📍 Context**: This change affects **your application code** if you were using `Ensure.That` library. Ark.Tools library itself no longer depends on it.
 
 The `Ensure.That` library has been removed from Ark.Tools as it is outdated and no longer maintained. Ark.Tools v6 uses built-in .NET guard clauses and standard exception throwing patterns instead.
 
@@ -617,8 +592,6 @@ ArgumentException.ThrowUnless(
 These extension members use `CallerArgumentExpression` to automatically capture the condition expression, providing meaningful error messages without manual string formatting.
 
 ## Remove Nito.AsyncEx.Coordination Dependency
-
-**📍 Context**: This change is **transparent for ResourceWatcher users**. Only affects your code if you directly used `Nito.AsyncEx.Coordination`.
 
 The `Nito.AsyncEx.Coordination` library has been removed from Ark.Tools as it is unmaintained (last update 5+ years ago). Ark.Tools v6 now includes a lightweight, built-in `AsyncLazy<T>` implementation in `Ark.Tools.Core` that provides the same functionality.
 
@@ -746,8 +719,6 @@ public class CustomOracleConnectionManager : OracleDbConnectionManager
 
 ## Migrate SQL Projects to SDK-based
 
-**📍 Context**: Only if you use **SQL Server Database Projects** (.sqlproj). Sample projects demonstrate SDK-based format (Visual Studio 2022 17.11+).
-
 If you are using SDK-based SQL projects in VS 2025+ you need to add
 the following to your csprojs that depends on the SQL Projects (generally Tests projects) to avoid build errors:
 
@@ -758,8 +729,6 @@ the following to your csprojs that depends on the SQL Projects (generally Tests 
 ```
 
 ## Upgrade to Swashbuckle 10.x
-
-**📍 Context**: Only applies if you use **Swashbuckle/Swagger in your application**. Sample projects use it, but it's optional for your apps.
 
 Refer to [Swashbuckle](https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/docs/migrating-to-v10.md) for issues related to OpenApi.
 
@@ -778,8 +747,6 @@ c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
 
 ## Replace FluentAssertions with AwesomeAssertions
 
-**📍 Context**: Only if you use **FluentAssertions in your tests**. Ark.Tools samples use AwesomeAssertions, but you can keep using FluentAssertions if you prefer.
-
 Replace the following:
 
 - `PackageReference` from `FluentAssertions` to `AwesomeAssertions >= 9.0.0`
@@ -788,8 +755,6 @@ Replace the following:
 - `using FluentAssertions` => `using AwesomeAssertions`
 
 ## Replace Specflow with Reqnroll
-
-**📍 Context**: Only if you use **Specflow for BDD tests**. This was already recommended in v5 migration.
 
 Follow the instructions in the [v5 migration](migration-v5.md) to replace Specflow with Reqnroll in your projects
 
@@ -806,8 +771,6 @@ If you were using `SpecFlow` in environment names, configuration files, or test 
    - Database connection strings in code
 
 ## Migrate tests to MTPv2
-
-**📍 Context**: Sample projects demonstrate **Microsoft Testing Platform v2** (modern test runner). You can continue using your existing test runner (e.g., VSTest).
 
 Refer to Ark.Reference project or to [official documentation](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-intro?tabs=dotnetcli).
 
@@ -863,8 +826,6 @@ Update the CI pipeline to use dotnet test instead of VSTest
 
 ## Migrate from SLN to SLNX
 
-**📍 Context**: Sample projects use the new **SLNX format** (Visual Studio 2022+). This is a modern solution file format but **not required** for using Ark.Tools libraries.
-
 Use `dotnet sln migrate` to migrate it.
 
 Update the CI Pipelines to reference the new SLNX file.
@@ -873,9 +834,7 @@ More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-
 
 ## TypeConverter Registration for Dictionary Keys with Custom Types (Ark.Tools v6)
 
-**📍 Context**: **Conditional breaking change** - only affects apps targeting **.NET 9+** that use custom types as dictionary keys in JSON. .NET 8 apps are unaffected.
-
-**⚠️ BREAKING CHANGE for .NET 9+ only**: Ark.Tools v6 uses `TypeDescriptor.GetConverterFromRegisteredType` for .NET 9+ targets, which requires explicit TypeConverter registration for types used as dictionary keys in JSON serialization.
+**⚠️ BREAKING CHANGE**: Ark.Tools v6 uses `TypeDescriptor.GetConverterFromRegisteredType` for .NET 9+ targets, which requires explicit TypeConverter registration for types used as dictionary keys in JSON serialization.
 
 ### What Changed
 
@@ -1012,15 +971,11 @@ No action required. The library handles TypeConverter discovery using the tradit
 
 ## Adopt Central Package Management
 
-**📍 Context**: Sample projects use **CPM** to manage NuGet versions centrally. This is a **best practice** but not required for using Ark.Tools.
-
 CPM helps ensuring dependencies are aligned across the solution and helps Bots (e.g. Renovate) to manage dependencies.
 
 Ask Copilot Agent to "modernize codebase: migrate to CPM" or refer to [MS guide](https://learn.microsoft.com/en-us/dotnet/azure/migration/appmod/quickstart)
 
 ## Update editorconfig and DirectoryBuild 
-
-**📍 Context**: Sample projects use **modern build configurations and analyzers**. This improves code quality but is **not required** for using Ark.Tools.
 
 Copy the following files from `samples/Ark.ReferenceProject` into your solution folder:
 
@@ -1040,8 +995,6 @@ That ensures code quality:
 - Nuget Audit
 
 ## Ark.Tools.Core.Reflection Split (Trimming Support)
-
-**📍 Context**: **Namespace change** - only affects code using reflection-based utilities. Most apps won't need these features.
 
 **⚠️ IMPORTANT**: In Ark.Tools v6, reflection-based utilities have been split from `Ark.Tools.Core` into a separate `Ark.Tools.Core.Reflection` namespace to enable trimming support for the base library.
 
