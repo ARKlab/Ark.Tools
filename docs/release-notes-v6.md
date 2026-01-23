@@ -130,7 +130,6 @@ Ark.Tools v6.0 is a major release focusing on modernization, performance, and tr
 4. **Handle Serialization**: Choose System.Text.Json or configure Newtonsoft.Json
 5. **Update Tests**: Migrate to AwesomeAssertions, Reqnroll, MTPv2
 6. **Adopt Modern Tooling** (Optional): CPM, SLNX, editorconfig updates
-7. **Enable Trimming** (Optional): Add `<IsTrimmable>true</IsTrimmable>` to your projects
 
 ### Optional Modernizations
 
@@ -140,7 +139,6 @@ The following changes are adopted in the Ark.ReferenceProject samples but are **
 - **SLNX Format**: New solution file format
 - **MTPv2**: Microsoft Testing Platform v2
 - **Updated Analyzers**: Latest code quality rules
-- **Trimming**: Enable trimming for your applications
 
 These are demonstrated in the samples as best practices but you can adopt them at your own pace.
 
@@ -154,6 +152,16 @@ These are demonstrated in the samples as best practices but you can adopt them a
 ## 🙏 Acknowledgments
 
 Special thanks to all contributors who helped with this major release, particularly in achieving 100% trimming support across all packages.
+
+### AI-Assisted Development
+
+This release showcases the power of AI-assisted development:
+- **GitHub Copilot** contributed 50 pull requests (2.7% of all commits)
+- **115,677 lines** of code added by Copilot agents (17.2% of total insertions)
+- **100,281 lines** of code refactored/removed by Copilot agents (28.8% of total deletions)
+- Major contributions include: trimming support implementation, performance optimizations, code modernization, and comprehensive testing
+
+The combination of human expertise and AI assistance enabled rapid delivery of this major release while maintaining high code quality.
 
 ## 📝 Version Information
 
