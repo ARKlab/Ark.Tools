@@ -296,6 +296,37 @@ public sealed class SqlStateProviderSteps : IDisposable
         state.Extensions.Metadata![key].Should().Be(expectedValue, $"Extension '{key}' should have expected value");
     }
 
+    [Given(@"a resource state with invalid Extensions JSON for tenant ""(.*)"" and resource ""(.*)""")]
+    public async Task GivenAResourceStateWithInvalidExtensionsJsonForTenantAndResource(string tenant, string resourceId, DataTable table)
+    {
+        var uniqueTenant = _dbContext.GetUniqueTenant(tenant);
+        _currentTenant = uniqueTenant;
+
+        // Create ResourceState from table using Reqnroll's table mapping
+        var state = table.CreateInstance<ResourceState<TestResourceExtensions>>();
+        state.Tenant = uniqueTenant;
+        state.ResourceId = resourceId;
+        state.LastEvent = _now;
+
+        // Save the state first without Extensions
+        _statesToSave.Add(state);
+        await _stateProvider!.SaveStateAsync([state]).ConfigureAwait(false);
+
+        // Now directly insert invalid JSON into the database for ExtensionsJson column
+        await using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
+        await conn.OpenAsync().ConfigureAwait(false);
+        await conn.ExecuteAsync(
+            "UPDATE [State] SET [ExtensionsJson] = @invalidJson WHERE [Tenant] = @tenant AND [ResourceId] = @resourceId",
+            new { invalidJson = "{invalid-json-structure}", tenant = uniqueTenant, resourceId = resourceId }).ConfigureAwait(false);
+    }
+
+    [Then(@"resource ""(.*)"" should have null Extensions")]
+    public void ThenResourceShouldHaveNullExtensions(string resourceId)
+    {
+        var state = _loadedStates.FindByResourceId(resourceId);
+        state.Extensions.Should().BeNull("Extensions should be null when deserialization fails");
+    }
+
     public void Dispose()
     {
         // Clean up test data using shared DB context

@@ -155,3 +155,15 @@ Feature: SqlStateProvider Integration Tests
         When I save all resource states
         And I load state for tenant "batch-tenant" with all 2500 resource IDs
         Then the loaded state should contain 2500 resources
+
+    # ===== EXTENSIONS DESERIALIZATION RESILIENCE =====
+    @extensions @error-handling
+    Scenario: Load state with invalid Extensions JSON returns null Extensions
+        Given a resource state with invalid Extensions JSON for tenant "test-tenant" and resource "res-invalid-json"
+            | Modified            | CheckSum      |
+            | 2024-06-15T10:00:00 | valid-checksum|
+        When I load state for tenant "test-tenant"
+        Then the loaded state should contain resource "res-invalid-json"
+        And resource "res-invalid-json" should have CheckSum "valid-checksum"
+        And resource "res-invalid-json" should have Modified "2024-06-15T10:00:00"
+        And resource "res-invalid-json" should have null Extensions
