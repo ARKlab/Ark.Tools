@@ -2,6 +2,38 @@
 
 This guide helps you migrate from Ark.Tools v5 to v6. Changes are organized into **Breaking Changes** (mandatory) and **Features & Enhancements** (optional).
 
+## Prerequisites and System Requirements
+
+### Required
+- **.NET SDK 10.0.102** or later (specified in `global.json`)
+- **Visual Studio 2022 17.11+** or **Rider 2024.3+** (for .NET 10 support)
+- **C# Language Version**: Latest (C# 14 features)
+- **Nullable Reference Types**: Must be enabled (`<Nullable>enable</Nullable>`)
+
+### Recommended
+- **Visual Studio 2022 17.13+** (for SLNX support)
+- **Docker Desktop** (for running integration tests with SQL Server/Azurite)
+
+### Target Framework Options
+
+Your application can target:
+- **.NET 8.0** (LTS) - Recommended for production
+- **.NET 10.0** - Latest features and performance
+- **Both** (multi-target) - Maximum compatibility
+
+**Example**:
+```xml
+<!-- Single target (recommended for applications) -->
+<TargetFramework>net8.0</TargetFramework>
+
+<!-- Multi-target (for libraries) -->
+<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+```
+
+**Note**: Ark.Tools packages multi-target net8.0 and net10.0, so your application can use either framework.
+
+---
+
 ## Table of Contents
 
 ### 🔨 Breaking Changes (Mandatory)
@@ -615,6 +647,68 @@ ArgumentException.ThrowUnless(
 ```
 
 These extension members use `CallerArgumentExpression` to automatically capture the condition expression, providing meaningful error messages without manual string formatting.
+
+## New Extension APIs in Ark.Tools.Core
+
+**📍 Context**: New convenience methods available in **Ark.Tools.Core** but **not required** for v6 migration.
+
+Ark.Tools v6 introduces C# 14 extension members for cleaner exception throwing patterns. These complement the removal of Ensure.That and provide modern .NET idioms.
+
+### InvalidOperationException Extensions
+
+```csharp
+using Ark.Tools.Core;
+
+// ThrowUnless - throws if condition is FALSE
+InvalidOperationException.ThrowUnless(user.IsValid);
+// Error message: "Condition failed: user.IsValid"
+
+// ThrowIf - throws if condition is TRUE
+InvalidOperationException.ThrowIf(cache.IsStale);
+// Error message: "Condition failed: cache.IsStale"
+
+// With custom message - condition is automatically appended
+InvalidOperationException.ThrowUnless(
+    order.Status == OrderStatus.Pending,
+    "Order must be in pending status");
+// Error message: "Order must be in pending status (condition: order.Status == OrderStatus.Pending)"
+```
+
+### ArgumentException Extensions
+
+```csharp
+// ThrowIf - throws if condition is TRUE
+ArgumentException.ThrowIf(value.Length > 100, nameof(value));
+// Error message: "value exceeds maximum length (condition: value.Length > 100)"
+
+// ThrowUnless - throws if condition is FALSE
+ArgumentException.ThrowUnless(items.Any(), nameof(items));
+// Error message: "items collection must not be empty (condition: items.Any())"
+```
+
+### Benefits
+
+- **Auto-Captured Conditions**: Uses `CallerArgumentExpression` to capture the failing condition automatically
+- **Better Error Messages**: No need to manually construct error messages with condition details
+- **Type-Safe**: Compile-time checking of parameter names
+- **Modern C#**: Leverages latest language features (C# 14 extension members)
+- **Clean Syntax**: More readable than traditional `if + throw` patterns
+
+### Example Migration
+
+```csharp
+// Old pattern (manual)
+if (!user.IsActive)
+{
+    throw new InvalidOperationException($"User {user.Id} is not active");
+}
+
+// New pattern (auto-captured)
+InvalidOperationException.ThrowUnless(user.IsActive, $"User {user.Id} is not active");
+// Error: "User 123 is not active (condition: user.IsActive)"
+```
+
+These extensions are optional but recommended for cleaner, more maintainable validation code.
 
 ## Remove Nito.AsyncEx.Coordination Dependency
 

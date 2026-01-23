@@ -66,6 +66,17 @@ Ark.Tools v6.0 is a major release focusing on modernization, performance, and tr
 - **Removed Nito.AsyncEx.Coordination**: Replaced with built-in `AsyncLazy<T>` in Core library
 - **Benefits**: Fewer dependencies, lighter footprint, modern .NET patterns
 
+### Performance Optimizations
+- **Span<T> Adoption**: String operations use `Span<T>` and `ReadOnlySpan<T>` for zero-allocation processing
+- **SearchValues<T>**: Efficient character/string searching in hot paths (leverages .NET 8 optimization)
+- **Reduced Allocations**: Internal hot path optimizations throughout the codebase
+- **Improved Throughput**: Measurable performance gains in serialization, validation, and parsing
+
+### New APIs in Ark.Tools.Core
+- **C# 14 Extension Members**: `InvalidOperationException.ThrowIf/ThrowUnless` with auto-captured condition expressions
+- **ArgumentException Extensions**: `ArgumentException.ThrowIf/ThrowUnless` for cleaner validation code
+- **CallerArgumentExpression**: Automatic condition capture in error messages for better debugging
+
 ### Testing Improvements
 - **AwesomeAssertions**: Replaces deprecated FluentAssertions
 - **Reqnroll**: Modern BDD framework (Specflow successor)
@@ -74,9 +85,18 @@ Ark.Tools v6.0 is a major release focusing on modernization, performance, and tr
 
 ### Code Quality Enhancements
 - **Updated .editorconfig**: Latest code style rules
-- **Enhanced Analyzers**: .NET analyzers, Meziantou analyzers
+- **Enhanced Analyzers**: .NET analyzers, Meziantou analyzers, VS Threading analyzers
+- **BannedApi Analyzer**: Prevents dangerous patterns like Task.Wait/Result (deadlock prevention)
+- **EnforceCodeStyleInBuild**: Code style violations now fail the build
+- **ErrorProne.NET**: Additional code quality and correctness checks
 - **NuGet Audit**: Automatic vulnerability scanning
 - **Deterministic Builds**: Reproducible build outputs
+
+### Modern C# Features
+- **Global Usings**: Common namespaces implicitly imported
+- **Implicit Usings**: Enabled by default for cleaner code
+- **Latest Language Version**: C# 14 features available
+- **Nullable Reference Types**: Required and enforced throughout
 
 ### Swashbuckle 10.x
 - Updated to latest OpenAPI 3.1 support
