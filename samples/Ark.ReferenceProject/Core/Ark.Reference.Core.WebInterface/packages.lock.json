@@ -401,11 +401,11 @@
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.5.1",
-        "contentHash": "afQ0HOE9X0yapUzX4XcsTkNyHn0Zk+yDB6xcCAj8bDQGETb96HFIky+lVR0skbP9X5fOhduPpV6RF5xk1UkpEg==",
+        "resolved": "3.5.2",
+        "contentHash": "VRw938zd+8O5dFxi9NAH4OEa7RDIu7t9kDcWrH/TCkqsxbNO9xbMX+Oi282dQ4bb+ug5dGopQFj1DNg9lIWYkw==",
         "dependencies": {
           "MessagePack": "3.1.4",
-          "NodaTime": "3.2.3"
+          "NodaTime": "3.3.0"
         }
       },
       "MessagePackAnalyzer": {
@@ -1479,7 +1479,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.5.1, )"
+          "MessagePack.NodaTime": "[3.5.2, )"
         }
       },
       "ark.tools.newtonsoftjson": {
