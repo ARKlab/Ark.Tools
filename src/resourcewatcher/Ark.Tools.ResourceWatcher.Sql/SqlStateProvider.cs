@@ -5,6 +5,8 @@ using Ark.Tools.Sql;
 
 using Dapper;
 
+using NLog;
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -26,6 +28,7 @@ public interface ISqlStateProviderConfig
 public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
     where TExtensions : class
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly ISqlStateProviderConfig _config;
     private readonly JsonSerializerOptions _internalJsonOptions;
     private readonly JsonSerializerContext? _extensionsJsonContext;
@@ -121,17 +124,27 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
             }
             else if (e?.ExtensionsJson != null)
             {
-                // Use external JsonSerializerContext if provided (trim-safe)
-                if (_extensionsJsonContext != null)
+                try
                 {
-                    result.Extensions = e.ExtensionsJson.Deserialize<TExtensions>(_extensionsJsonContext);
-                }
-                else
-                {
-                    // Fallback to reflection-based deserialization (not trim-safe)
+                    // Use external JsonSerializerContext if provided (trim-safe)
+                    if (_extensionsJsonContext != null)
+                    {
+                        result.Extensions = e.ExtensionsJson.Deserialize<TExtensions>(_extensionsJsonContext);
+                    }
+                    else
+                    {
+                        // Fallback to reflection-based deserialization (not trim-safe)
 #pragma warning disable IL2026 // Acceptable: arbitrary objects in Extensions require reflection when no context provided
-                    result.Extensions = JsonSerializer.Deserialize<TExtensions>(e.ExtensionsJson, _internalJsonOptions);
+                        result.Extensions = JsonSerializer.Deserialize<TExtensions>(e.ExtensionsJson, _internalJsonOptions);
 #pragma warning restore IL2026
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    // Log error and continue with null Extensions if deserialization fails
+                    // This handles cases where Extension type changed in a non-compatible way
+                    _logger.Error(ex, CultureInfo.InvariantCulture, "Failed to deserialize Extensions for Tenant={Tenant}, ResourceId={ResourceId}. Continuing with null Extensions.", r.Tenant, r.ResourceId);
+                    result.Extensions = null;
                 }
             }
 
