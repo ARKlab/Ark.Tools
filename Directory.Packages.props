@@ -45,7 +45,7 @@
 	  <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
 	  <PackageVersion Include="Flurl.Http" Version="4.0.2" />
 	  <PackageVersion Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
-	  <PackageVersion Include="MessagePack.NodaTime" Version="3.5.1" />
+	  <PackageVersion Include="MessagePack.NodaTime" Version="3.5.2" />
 	  <PackageVersion Include="Macross.Json.Extensions" Version="3.0.0" />
 	  
 	  <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.2" />
