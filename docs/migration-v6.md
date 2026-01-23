@@ -1,21 +1,72 @@
 # Migration to Ark.Tools v6
 
+This guide helps you migrate from Ark.Tools v5 to v6. Changes are organized into **Breaking Changes** (mandatory) and **Features & Enhancements** (optional).
+
+## Prerequisites and System Requirements
+
+### Required
+- **.NET SDK 10.0.102** or later (specified in `global.json`)
+- **Visual Studio 2022 17.11+** or **Rider 2024.3+** (for .NET 10 support)
+- **C# Language Version**: Latest (C# 14 features)
+- **Nullable Reference Types**: Must be enabled (`<Nullable>enable</Nullable>`)
+
+### Recommended
+- **Visual Studio 2022 17.13+** (for SLNX support)
+- **Docker Desktop** (for running integration tests with SQL Server/Azurite)
+
+### Target Framework Options
+
+Your application can target:
+- **.NET 8.0** (LTS) - Recommended for production
+- **.NET 10.0** - Latest features and performance
+- **Both** (multi-target) - Maximum compatibility
+
+**Example**:
+```xml
+<!-- Single target (recommended for applications) -->
+<TargetFramework>net8.0</TargetFramework>
+
+<!-- Multi-target (for libraries) -->
+<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+```
+
+**Note**: Ark.Tools packages multi-target net8.0 and net10.0, so your application can use either framework.
+
+---
+
+## Table of Contents
+
+### 🔨 Breaking Changes (Mandatory)
+
+These changes **require code modifications** to upgrade from v5 to v6:
+
 * [CQRS Handler Execute Methods Removed](#cqrs-handler-execute-methods-removed)
 * [Newtonsoft.Json Support Removed from AspNetCore](#newtonsoftjson-support-removed-from-aspnetcore)
 * [ResourceWatcher Type-Safe Extensions](#resourcewatcher-type-safe-extensions)
-* [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
-* [Remove Nito.AsyncEx.Coordination Dependency](#remove-nitoasyncexcoordination-dependency)
 * [Oracle CommandTimeout Default Changed](#oracle-commandtimeout-default-changed)
-* [Migrate SQL Projects to SDK-based](#migrate-sql-projects-to-sdk-based)
-* [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbukle-10.x)
-* [Replace FluentAssertions with AwesomeAssertions](#replace-fluntasserion-with-awesomeassertion)
+* [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbukle-10x)
+* [Replace FluentAssertions with AwesomeAssertions](#replace-fluentassertions-with-awesomeassertions)
 * [Replace Specflow with Reqnroll](#replace-specflow-with-reqnroll)
-  * [(Optional) Rename "SpecFlow" to "IntegrationTests"](#optional-rename-specflow-to-integrationtests)
+* [Ark.Tools.Core.Reflection Split (Trimming Support)](#arktoolscorereflection-split-trimming-support)
+* [TypeConverter Registration for Dictionary Keys (.NET 9+ only)](#typeconverter-registration-for-dictionary-keys-with-custom-types-ark-tools-v6)
+* [NuGet Package Versions](#nuget-package-versions)
+
+### ✨ Features & Enhancements (Optional)
+
+These changes are **demonstrated in samples** but not required for library users:
+
+* [Remove Ensure.That Dependency](#remove-ensurethat-dependency)
+* [New Extension APIs in Ark.Tools.Core](#new-extension-apis-in-arktoolscore)
+* [Remove Nito.AsyncEx.Coordination Dependency](#remove-nitoasyncexcoordination-dependency)
 * [Migrate tests to MTPv2](#migrate-tests-to-mtpv2)
 * [Migrate SLN to SLNX](#migrate-sln-to-slnx)
-* [TypeConverter Registration for Dictionary Keys](#typeconverter-registration-for-dictionary-keys-with-custom-types-ark-tools-v6)
 * [Adopt Central Package Management](#adopt-central-package-management)
 * [Update editorconfig and DirectoryBuild files](#update-editorconfig-and-directorybuild-files)
+* [Migrate SQL Projects to SDK-based](#migrate-sql-projects-to-sdk-based)
+
+---
+
+## 🔨 Breaking Changes
 
 ## CQRS Handler Execute Methods Removed
 
@@ -482,6 +533,8 @@ public record MyExtensions { public long LastOffset { get; init; } }
 
 ## Remove Ensure.That Dependency
 
+**📍 Context**: This change affects **your application code** if you were using `Ensure.That` library. Ark.Tools library itself no longer depends on it.
+
 The `Ensure.That` library has been removed from Ark.Tools as it is outdated and no longer maintained. Ark.Tools v6 uses built-in .NET guard clauses and standard exception throwing patterns instead.
 
 ### Migration Guide
@@ -591,7 +644,71 @@ ArgumentException.ThrowUnless(
 
 These extension members use `CallerArgumentExpression` to automatically capture the condition expression, providing meaningful error messages without manual string formatting.
 
+## New Extension APIs in Ark.Tools.Core
+
+**📍 Context**: New convenience methods available in **Ark.Tools.Core** but **not required** for v6 migration.
+
+Ark.Tools v6 introduces C# 14 extension members for cleaner exception throwing patterns. These complement the removal of Ensure.That and provide modern .NET idioms.
+
+### InvalidOperationException Extensions
+
+```csharp
+using Ark.Tools.Core;
+
+// ThrowUnless - throws if condition is FALSE
+InvalidOperationException.ThrowUnless(user.IsValid);
+// Error message: "Condition failed: user.IsValid"
+
+// ThrowIf - throws if condition is TRUE
+InvalidOperationException.ThrowIf(cache.IsStale);
+// Error message: "Condition failed: cache.IsStale"
+
+// With custom message - condition is automatically appended
+InvalidOperationException.ThrowUnless(
+    order.Status == OrderStatus.Pending,
+    "Order must be in pending status");
+// Error message: "Order must be in pending status (condition: order.Status == OrderStatus.Pending)"
+```
+
+### ArgumentException Extensions
+
+```csharp
+// ThrowIf - throws if condition is TRUE
+ArgumentException.ThrowIf(value.Length > 100, nameof(value));
+// Error message: "value exceeds maximum length (condition: value.Length > 100)"
+
+// ThrowUnless - throws if condition is FALSE
+ArgumentException.ThrowUnless(items.Any(), nameof(items));
+// Error message: "items collection must not be empty (condition: items.Any())"
+```
+
+### Benefits
+
+- **Auto-Captured Conditions**: Uses `CallerArgumentExpression` to capture the failing condition automatically
+- **Better Error Messages**: No need to manually construct error messages with condition details
+- **Type-Safe**: Compile-time checking of parameter names
+- **Modern C#**: Leverages latest language features (C# 14 extension members)
+- **Clean Syntax**: More readable than traditional `if + throw` patterns
+
+### Example Migration
+
+```csharp
+// Old pattern (manual)
+if (!user.IsActive)
+{
+    throw new InvalidOperationException($"User {user.Id} is not active");
+}
+
+// New pattern (auto-captured)
+InvalidOperationException.ThrowUnless(user.IsActive, $"User {user.Id} is not active");
+// Error: "User 123 is not active (condition: user.IsActive)"
+```
+
+These extensions are optional but recommended for cleaner, more maintainable validation code.
+
 ## Remove Nito.AsyncEx.Coordination Dependency
+
+**📍 Context**: This change is **transparent for ResourceWatcher users**. Only affects your code if you directly used `Nito.AsyncEx.Coordination`.
 
 The `Nito.AsyncEx.Coordination` library has been removed from Ark.Tools as it is unmaintained (last update 5+ years ago). Ark.Tools v6 now includes a lightweight, built-in `AsyncLazy<T>` implementation in `Ark.Tools.Core` that provides the same functionality.
 
@@ -717,27 +834,24 @@ public class CustomOracleConnectionManager : OracleDbConnectionManager
 - [Oracle Connection Properties](https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/ConnectionProperties.html)
 - [Oracle Command Properties](https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/CommandProperties.html)
 
-## Migrate SQL Projects to SDK-based
-
-If you are using SDK-based SQL projects in VS 2025+ you need to add
-the following to your csprojs that depends on the SQL Projects (generally Tests projects) to avoid build errors:
-
-```xml
-<ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
-    <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-</ProjectReference>
-```
-
 ## Upgrade to Swashbuckle 10.x
 
-Refer to [Swashbuckle](https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/docs/migrating-to-v10.md) for issues related to OpenApi.
+**⚠️ BREAKING CHANGE**: Ark.Tools.AspNetCore packages now depend on Swashbuckle 10.x, which includes breaking API changes. If your application uses Swashbuckle/Swagger, you must update your configuration.
 
-The most likely change is from:
+### What Changed
+
+Swashbuckle.AspNetCore has been upgraded from 6.x to 10.x, introducing OpenAPI 3.1 support and API changes for security requirements.
+
+### Migration Guide
+
+The most common change required is updating security requirement configuration:
+
+**Before (v5)**:
 ```csharp
 c.OperationFilter<SecurityRequirementsOperationFilter>();
 ```
 
-to:
+**After (v6)**:
 ```csharp
 c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
 {
@@ -745,18 +859,43 @@ c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
 });
 ```
 
+For other potential changes, refer to the [Swashbuckle migration guide](https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/docs/migrating-to-v10.md).
+
 ## Replace FluentAssertions with AwesomeAssertions
 
-Replace the following:
+**⚠️ BREAKING CHANGE**: FluentAssertions has been removed from Ark.Tools due to licensing changes. You must migrate to AwesomeAssertions.
+
+### What Changed
+
+FluentAssertions changed to a proprietary license (non-MIT), requiring migration to AwesomeAssertions which maintains MIT licensing.
+
+### Migration Guide
+
+Replace the following in your test projects:
 
 - `PackageReference` from `FluentAssertions` to `AwesomeAssertions >= 9.0.0`
 - `PackageReference` from `FluentAssertions.Web` to `AwesomeAssertions.Web`
 - `HaveStatusCode(...)` => `HaveHttpStatusCode`
 - `using FluentAssertions` => `using AwesomeAssertions`
 
+The API is largely compatible, so most assertions will work with minimal changes.
+
 ## Replace Specflow with Reqnroll
 
-Follow the instructions in the [v5 migration](migration-v5.md) to replace Specflow with Reqnroll in your projects
+**⚠️ BREAKING CHANGE**: Ark.Tools.Specflow package has been removed. If you were using it, you must migrate to Ark.Tools.Reqnroll.
+
+### What Changed
+
+Specflow support was deprecated in v5 and has been removed in v6. The replacement is Reqnroll, a community-driven fork of Specflow.
+
+### Migration Guide
+
+Follow the instructions in the [v5 migration guide](migration-v5.md) to migrate from Specflow to Reqnroll.
+
+**Key steps**:
+1. Replace `Ark.Tools.Specflow` with `Ark.Tools.Reqnroll` package references
+2. Update using statements from `Ark.Tools.Specflow` to `Ark.Tools.Reqnroll`
+3. Follow Reqnroll's migration guide for any Specflow-specific changes
 
 ### (Optional) Rename "SpecFlow" to "IntegrationTests"
 
@@ -770,75 +909,57 @@ If you were using `SpecFlow` in environment names, configuration files, or test 
    - Test configuration files
    - Database connection strings in code
 
-## Migrate tests to MTPv2
+## Ark.Tools.Core.Reflection Split (Trimming Support)
 
-Refer to Ark.Reference project or to [official documentation](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-intro?tabs=dotnetcli).
-
-Update `global.json` with
-
-```json
-    "test": {
-        "runner": "Microsoft.Testing.Platform"
-    }
-```
-
-Update `<test_project>.csproj` adding these new sections.
-
-```xml
-
-  <PropertyGroup Label="Test Settings">
-    <IsTestProject>true</IsTestProject>
-    
-    <OutputType>Exe</OutputType>
-
-    <EnableMSTestRunner>true</EnableMSTestRunner>
-
-    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
-
-  </PropertyGroup>
-
-  <ItemGroup Label="Testing Platform Settings">
-    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.1.0" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
-  </ItemGroup>
-
-
-```
-
-Update the CI pipeline to use dotnet test instead of VSTest
-
-```yaml
-      - task: DotNetCoreCLI@2
-        displayName: 'Run tests'
-        inputs:
-          command: 'test'
-          projects: ${{ variables.solutionPath }}
-          arguments: '--configuration $(BuildConfiguration) --no-build --no-restore --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1'
-          publishTestResults: true
-```
-
-## Migrate from SLN to SLNX
-
-Use `dotnet sln migrate` to migrate it.
-
-Update the CI Pipelines to reference the new SLNX file.
-
-More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/#getting-started)
-
-## TypeConverter Registration for Dictionary Keys with Custom Types (Ark.Tools v6)
-
-**⚠️ BREAKING CHANGE**: Ark.Tools v6 uses `TypeDescriptor.GetConverterFromRegisteredType` for .NET 9+ targets, which requires explicit TypeConverter registration for types used as dictionary keys in JSON serialization.
+**⚠️ BREAKING CHANGE**: Reflection-based utilities have been moved to a new namespace. If you use these utilities, you must update your using statements.
 
 ### What Changed
 
-**For ALL applications targeting .NET 9+** (regardless of trimming):
+In Ark.Tools v6, reflection-based utilities have been split from `Ark.Tools.Core` into a separate `Ark.Tools.Core.Reflection` namespace to enable trimming support for the base library.
+
+**Affected utilities**:
+- `ShredObjectToDataTable<T>` - Object to DataTable conversion
+- `IQueryable.AsQueryable()` extensions
+- `ReflectionHelper` utilities
+- Assembly scanning features
+
+### Migration Guide
+
+**If you use any of these features**, add the namespace import:
+
+```csharp
+using Ark.Tools.Core.Reflection;
+```
+
+**Specifically affected**:
+- `OrderBy()` with string-based sorting
+- `ToDataTablePolymorphic()` if you use ToDataTable on collections containing different types
+- Any use of `ReflectionHelper` or assembly scanning features
+
+**If you don't use these features**, no changes required.
+
+### Why This Change
+
+**Technical Reasons:**
+- Reflection-based utilities generated 88+ trim warnings across 9 warning types
+- These utilities are designed for runtime type discovery, which is incompatible with static analysis and trimming
+- No practical way to make them trim-safe without defeating their purpose
+- Microsoft explicitly marks some reflection APIs (like `AsQueryable`) as not trim-safe
+
+### Documentation
+
+For more details on trimming, see:
+- [docs/trimmable-support/guidelines.md](../trimmable-support/guidelines.md)
+
+## TypeConverter Registration for Dictionary Keys (.NET 9+ only)
+
+**⚠️ BREAKING CHANGE for .NET 9+ only**: Ark.Tools v6 uses `TypeDescriptor.GetConverterFromRegisteredType` for .NET 9+ targets, which requires explicit TypeConverter registration for types used as dictionary keys in JSON serialization.
+
+**Note**: .NET 8 applications are **not affected** by this change.
+
+### What Changed
+
+**For applications targeting .NET 9+** (regardless of trimming):
 - Ark.Tools.SystemTextJson uses `TypeDescriptor.GetConverterFromRegisteredType` when compiled for .NET 9+
 - This API requires types to be registered via `TypeDescriptor.RegisterType<T>()`
 - **Applications relying on TypeConverter attributes alone will break**
@@ -902,21 +1023,16 @@ Register a type when ALL of these are true:
 
 ### Common Types to Register
 
-**NodaTime types** (these are already handled by Ark.Tools.Nodatime, no registration needed):
+**NodaTime types** (already handled by Ark.Tools.Nodatime - no registration needed):
 - OffsetDateTime, LocalDate, LocalTime, Instant, etc.
 
 **Your custom domain types** (you MUST register these):
 ```csharp
-// Examples of types you need to register
 TypeDescriptor.RegisterType<ProductId>();
 TypeDescriptor.RegisterType<CustomerId>();
 TypeDescriptor.RegisterType<OrderNumber>();
 // ... register all custom types used as dictionary keys
 ```
-
-### For .NET 8 Applications
-
-No changes required. TypeConverter discovery continues to work via reflection as before.
 
 ### Testing Your Migration
 
@@ -925,57 +1041,148 @@ After migration, verify that:
 2. Deserialization produces the correct dictionary structure
 3. No runtime exceptions about missing TypeConverters
 
-```csharp
-// Test example
-var dto = new OrderDto 
-{ 
-    ProductQuantities = new Dictionary<ProductId, int>
-    {
-        { new ProductId("PROD-001"), 5 },
-        { new ProductId("PROD-002"), 3 }
-    }
-};
+## NuGet Package Versions
 
-var json = JsonSerializer.Serialize(dto, ArkSerializerOptions.JsonOptions);
-var deserialized = JsonSerializer.Deserialize<OrderDto>(json, ArkSerializerOptions.JsonOptions);
+**⚠️ BREAKING CHANGE**: All Ark.Tools packages have been upgraded to v6.0.0 with breaking dependency changes.
 
-// Verify both dictionaries have the same keys and values
+### Breaking Version Changes
+
+- **All Ark.Tools.* packages** bump to v6.0.0
+- You **must upgrade ALL** Ark.Tools packages together to v6.x
+- **Mixing v5 and v6 packages is NOT supported**
+
+### Third-Party Package Updates
+
+Major dependency updates in v6 that may affect your application:
+
+- **Swashbuckle.AspNetCore**: 10.x (from 6.x in v5) - requires code changes
+- **Reqnroll**: 2.x (replaces Specflow 3.x) - only if using BDD tests
+- **AwesomeAssertions**: 9.x (replaces FluentAssertions) - only if using test assertions
+- **Microsoft.Testing.Platform**: 2.x (optional, for MTPv2) - only if migrating to MTPv2
+
+### Migration Steps
+
+1. **Update all Ark.Tools.* package references** to v6.0.0 or later
+2. **Check for dependency conflicts** - ensure no v5 packages remain
+3. **Update third-party dependencies** as needed based on sections above
+4. **Test thoroughly** after the upgrade
+
+### Finding Package Versions
+
+See `Directory.Packages.props` in the [Ark.ReferenceProject](../samples/Ark.ReferenceProject/) for exact versions used in the samples.
+
+---
+
+## ✨ Features & Enhancements (Optional)
+
+The following changes are **optional modernizations** demonstrated in the Ark.ReferenceProject samples. They represent best practices but are **not required** to upgrade from v5 to v6. You can adopt them at your own pace based on your project needs.
+
+## Migrate SQL Projects to SDK-based
+
+**📍 Context**: Only if you use **SQL Server Database Projects** (.sqlproj). Sample projects demonstrate SDK-based format (Visual Studio 2022 17.11+).
+
+If you are using SDK-based SQL projects in VS 2025+ you need to add
+the following to your csprojs that depends on the SQL Projects (generally Tests projects) to avoid build errors:
+
+```xml
+<ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
+    <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+</ProjectReference>
 ```
-        
-        var builder = WebApplication.CreateSlimBuilder(args);
-        builder.Services.ConfigureHttpJsonOptions(options =>
-        {
-            options.SerializerOptions.ConfigureArkDefaults();
-        });
-        
-        var app = builder.Build();
-        app.Run();
+
+## Migrate tests to MTPv2
+
+**📍 Context**: Sample projects demonstrate **Microsoft Testing Platform v2** (modern test runner). You can continue using your existing test runner (e.g., VSTest).
+
+Refer to Ark.Reference project or to [official documentation](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-intro?tabs=dotnetcli).
+
+Update `global.json` with
+
+```json
+    "test": {
+        "runner": "Microsoft.Testing.Platform"
     }
-}
 ```
 
-### Why This is Required
+Update `<test_project>.csproj` adding these new sections.
 
-When using trimming (especially Native AOT), the trimmer removes unused code including TypeConverter metadata. By calling `TypeDescriptor.RegisterType<T>()`, you explicitly tell the trimmer to preserve the TypeConverter for that type, ensuring dictionary key serialization works correctly.
+```xml
 
-### When to Register Types
+  <PropertyGroup Label="Test Settings">
+    <IsTestProject>true</IsTestProject>
+    
+    <OutputType>Exe</OutputType>
 
-Register a type when:
-- It's used as a dictionary key in DTOs that will be serialized/deserialized
-- It has a `TypeConverter` attribute
-- You're using trimming/Native AOT deployment
+    <EnableMSTestRunner>true</EnableMSTestRunner>
 
-### For .NET 8 Applications
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
 
-No action required. The library handles TypeConverter discovery using the traditional reflection-based approach with appropriate trim warning suppressions.
+  </PropertyGroup>
+
+  <ItemGroup Label="Testing Platform Settings">
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.1.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.0.2" />
+  </ItemGroup>
+
+
+```
+
+### CI/CD Pipeline Changes
+
+Update the CI pipeline to use `dotnet test` instead of VSTest:
+
+**Azure DevOps**:
+```yaml
+# Before (VSTest)
+- task: VSTest@2
+  inputs:
+    testSelector: 'testAssemblies'
+    testAssemblyVer2: '**/*Tests.dll'
+
+# After (dotnet test with MTPv2)
+- task: DotNetCoreCLI@2
+  displayName: 'Run tests'
+  inputs:
+    command: 'test'
+    projects: ${{ variables.solutionPath }}
+    arguments: '--configuration $(BuildConfiguration) --no-build --no-restore --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1'
+    publishTestResults: true
+```
+
+**GitHub Actions**:
+```yaml
+- name: Test
+  run: dotnet test --configuration Release --no-build --no-restore --report-trx --coverage
+```
+
+## Migrate from SLN to SLNX
+
+**📍 Context**: Sample projects use the new **SLNX format** (Visual Studio 2022+). This is a modern solution file format but **not required** for using Ark.Tools libraries.
+
+Use `dotnet sln migrate` to migrate it.
+
+Update the CI Pipelines to reference the new SLNX file.
+
+More info [here](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/#getting-started)
 
 ## Adopt Central Package Management
+
+**📍 Context**: Sample projects use **CPM** to manage NuGet versions centrally. This is a **best practice** but not required for using Ark.Tools.
 
 CPM helps ensuring dependencies are aligned across the solution and helps Bots (e.g. Renovate) to manage dependencies.
 
 Ask Copilot Agent to "modernize codebase: migrate to CPM" or refer to [MS guide](https://learn.microsoft.com/en-us/dotnet/azure/migration/appmod/quickstart)
 
 ## Update editorconfig and DirectoryBuild 
+
+**📍 Context**: Sample projects use **modern build configurations and analyzers**. This improves code quality but is **not required** for using Ark.Tools.
 
 Copy the following files from `samples/Ark.ReferenceProject` into your solution folder:
 
@@ -995,6 +1202,8 @@ That ensures code quality:
 - Nuget Audit
 
 ## Ark.Tools.Core.Reflection Split (Trimming Support)
+
+**📍 Context**: **Namespace change** - only affects code using reflection-based utilities. Most apps won't need these features.
 
 **⚠️ IMPORTANT**: In Ark.Tools v6, reflection-based utilities have been split from `Ark.Tools.Core` into a separate `Ark.Tools.Core.Reflection` namespace to enable trimming support for the base library.
 
