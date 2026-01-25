@@ -156,9 +156,9 @@ Special thanks to all contributors who helped with this major release, particula
 ### AI-Assisted Development
 
 This release showcases the power of AI-assisted development:
-- **GitHub Copilot** contributed 50 pull requests (2.7% of all commits)
-- **115,677 lines** of code added by Copilot agents (17.2% of total insertions)
-- **100,281 lines** of code refactored/removed by Copilot agents (28.8% of total deletions)
+- **GitHub Copilot** contributed 425 commits (63.5% of all commits since v5.6.0)
+- **316,141 lines** of code added by Copilot agents (75.9% of total insertions)
+- **294,843 lines** of code refactored/removed by Copilot agents (86.5% of total deletions)
 - Major contributions include: trimming support implementation, performance optimizations, code modernization, and comprehensive testing
 
 The combination of human expertise and AI assistance enabled rapid delivery of this major release while maintaining high code quality.
