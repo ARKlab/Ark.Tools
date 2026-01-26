@@ -14,8 +14,10 @@ using NodaTime;
 using Reqnroll;
 #pragma warning restore IDE0005
 
-// Scenarios can run in parallel, but SQL integration tests must run sequentially
-[assembly: Parallelize(Scope = ExecutionScope.ClassLevel)]
+// Disable parallelization: EnsureTableAreCreated() drops/recreates UDT types
+// which causes "udt_State_v2 has changed" errors when other tests use the same DB in parallel
+// Workers = 0 means no parallelization
+[assembly: Parallelize(Workers = 0)]
 
 namespace Ark.Tools.ResourceWatcher.Tests.Init;
 

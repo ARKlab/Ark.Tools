@@ -38,13 +38,6 @@ public sealed class TestResourceExtensions
 [Scope(Tag = "sqlstateprovider")]
 public sealed class SqlStateProviderSteps : IDisposable
 {
-    /// <summary>
-    /// Delay in milliseconds to allow SQL Server to flush UDT caches after schema changes.
-    /// This prevents "The definition for user-defined data type has changed" errors
-    /// when tests run in parallel and connection pools cache old type definitions.
-    /// </summary>
-    private const int UdtCacheFlushDelayMs = 500;
-
     private readonly ScenarioContext _scenarioContext;
     private readonly SqlStateProviderContext _dbContext;
     private SqlStateProvider<TestResourceExtensions>? _stateProvider;
@@ -79,20 +72,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     [When(@"I call EnsureTableAreCreated")]
     public void WhenICallEnsureTableAreCreated()
     {
-        // Use lock to prevent parallel execution of EnsureTableAreCreated
-        // This prevents race conditions when DROP/CREATE TYPE runs concurrently
-        lock (DbSetupLock.Instance)
-        {
-            _stateProvider!.EnsureTableAreCreated();
-            
-            // Give SQL Server time to flush UDT caches after DROP/CREATE TYPE
-            // Even with DBCC FREEPROCCACHE, connection pools may cache old type definitions
-            // This delay ensures other tests don't hit "udt_State_v2 has changed" errors
-            // Using GetAwaiter().GetResult() for synchronous delay in test context
-#pragma warning disable VSTHRD002 // Synchronous wait in test infrastructure is acceptable
-            Task.Delay(TimeSpan.FromMilliseconds(UdtCacheFlushDelayMs)).GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002
-        }
+        _stateProvider!.EnsureTableAreCreated();
     }
 
     [Then(@"the State table should exist")]
