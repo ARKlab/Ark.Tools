@@ -72,7 +72,20 @@ public sealed class SqlStateProviderSteps : IDisposable
     [When(@"I call EnsureTableAreCreated")]
     public void WhenICallEnsureTableAreCreated()
     {
-        _stateProvider!.EnsureTableAreCreated();
+        // Use lock to prevent parallel execution of EnsureTableAreCreated
+        // This prevents race conditions when DROP/CREATE TYPE runs concurrently
+        lock (DbSetupLock.Instance)
+        {
+            _stateProvider!.EnsureTableAreCreated();
+            
+            // Give SQL Server time to flush UDT caches after DROP/CREATE TYPE
+            // Even with DBCC FREEPROCCACHE, connection pools may cache old type definitions
+            // This delay ensures other tests don't hit "udt_State_v2 has changed" errors
+            // Using GetAwaiter().GetResult() for synchronous delay in test context
+#pragma warning disable VSTHRD002 // Synchronous wait in test infrastructure is acceptable
+            Task.Delay(TimeSpan.FromMilliseconds(500)).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
+        }
     }
 
     [Then(@"the State table should exist")]
