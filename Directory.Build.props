@@ -21,7 +21,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Label="Common Build Settings">
-		<IsPackable>false</IsPackable>
+		<IsPackable>true</IsPackable>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
