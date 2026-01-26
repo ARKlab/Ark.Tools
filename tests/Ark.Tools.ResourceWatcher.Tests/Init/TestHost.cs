@@ -70,6 +70,8 @@ public sealed class TestHost
 
         try
         {
+            // Lock is defensive: protects schema initialization even though tests run sequentially
+            // If parallelization is re-enabled in the future, this prevents race conditions
             lock (DbSetupLock.Instance)
             {
                 // First, ensure the database exists by connecting to master
