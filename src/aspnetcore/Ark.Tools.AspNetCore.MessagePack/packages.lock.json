@@ -67,9 +67,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.7.6, )",
-        "resolved": "9.7.6",
-        "contentHash": "h5uXC27ngmWUwu8v2vCM/M634+9zxGRdV5fDlpCwK11vTB466sgdFxsEXStdkRZNq2+4r3ahTQYYD1SZY5mT3Q=="
+        "requested": "[9.7.7, )",
+        "resolved": "9.7.7",
+        "contentHash": "L4iI95ONeG95Wc5ViCGL5Z47yA53NCX1tP5W6ddlaF9h/C/tYR6i56GZkH/33d2H9+jwhF22nL4olnO5efmoFw=="
       },
       "MessagePack.Annotations": {
         "type": "Transitive",
