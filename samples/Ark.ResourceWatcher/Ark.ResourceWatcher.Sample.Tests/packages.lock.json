@@ -159,20 +159,20 @@
       },
       "Reqnroll.MSTest": {
         "type": "Direct",
-        "requested": "[3.3.2, )",
-        "resolved": "3.3.2",
-        "contentHash": "NdaMMkeDbi3buRogUwiG0Px0Tm7uAwTD/nKnUoaCXtEUPk0z8uptN+4pyPmSah3+0Rnfs0Zk7SeunHZ5SORFxw==",
+        "requested": "[3.3.3, )",
+        "resolved": "3.3.3",
+        "contentHash": "cnTrudlw3c55JUTzbJC6wvernkv9OZmsyi3iRcOMmBNsA/ZazPdm+jJr4OoFIzLlXdCgduSYuCXL4fV9taqRZA==",
         "dependencies": {
           "MSTest.TestFramework": "2.2.8",
-          "Reqnroll": "3.3.2",
-          "Reqnroll.Tools.MsBuild.Generation": "3.3.2"
+          "Reqnroll": "3.3.3",
+          "Reqnroll.Tools.MsBuild.Generation": "3.3.3"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[3.3.2, )",
-        "resolved": "3.3.2",
-        "contentHash": "nYG5sxsXDUTfEscIp2QeGhwchaQJi6fCIvJle4ayenNj6koq4KY5zawj80E3V/eaU9Uy7A82nMY3BhoyaLY6lg=="
+        "requested": "[3.3.3, )",
+        "resolved": "3.3.3",
+        "contentHash": "hKh06b4dKTy8YzcyCmtH3pH6dPZ5v4xhHvZ6Rq4AlDQgzvqtkqcgtAMYJEjMtvnaNfJVQcg6pZSi9s2w/zX50g=="
       },
       "AwesomeAssertions.Web": {
         "type": "Transitive",
@@ -1054,8 +1054,8 @@
       },
       "Reqnroll": {
         "type": "Transitive",
-        "resolved": "3.3.2",
-        "contentHash": "PVKVLPLCFtUlDjF12E8kwdoGEIWwFIlfYqFVFmcsA9/ylHhnOHWMgJoO4MoVH98VDZuhKoIYGZQY2NioBostoA==",
+        "resolved": "3.3.3",
+        "contentHash": "3f4zOQraEDna8x3yZ9sEuPz4eQ60XsVIyYCr9RnzgK9cfb6ykGxWxkYadj7tq3hP+Qy6ox3va8Ma2p18xzRlig==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
           "Cucumber.HtmlFormatter": "22.2.0",
@@ -1261,7 +1261,7 @@
           "AwesomeAssertions": "[9.3.0, )",
           "AwesomeAssertions.Web": "[1.9.6, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.15.0, )",
-          "Reqnroll": "[3.3.2, )"
+          "Reqnroll": "[3.3.3, )"
         }
       },
       "ark.tools.resourcewatcher": {
