@@ -35,10 +35,6 @@
 
   <ItemGroup>
 
-    <None Update="Ark.Reference.Core.Database.dacpac">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-
     <None Update="TestData\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -56,6 +52,20 @@
       <DacpacDestPath>$(MSBuildProjectDirectory)\Ark.Reference.Core.Database.dacpac</DacpacDestPath>
     </PropertyGroup>
     <Copy SourceFiles="$(DacpacSourcePath)" DestinationFiles="$(DacpacDestPath)" Condition="Exists('$(DacpacSourcePath)')" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- 
+    Add the copied dacpac file to the None item group dynamically.
+    This must run before AssignTargetPaths, which is the final opportunity to modify 
+    None and Content items before they are transformed for copying to output.
+    This ensures the dacpac is included in the output even when it's copied during build.
+  -->
+  <Target Name="IncludeDacpacInOutput" BeforeTargets="AssignTargetPaths" DependsOnTargets="CopyDacpacFromDatabaseProject">
+    <ItemGroup>
+      <None Include="Ark.Reference.Core.Database.dacpac" Condition="Exists('$(MSBuildProjectDirectory)\Ark.Reference.Core.Database.dacpac')">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
   </Target>
 
 </Project>
