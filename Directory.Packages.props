@@ -124,8 +124,8 @@
 	  <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.100" />
 
 	  <!-- AUTH -->
-	  <PackageVersion Include="Auth0.AuthenticationApi" Version="7.43.1" />
-	  <PackageVersion Include="Auth0.ManagementApi" Version="7.43.1" />
+	  <PackageVersion Include="Auth0.AuthenticationApi" Version="7.44.0" />
+	  <PackageVersion Include="Auth0.ManagementApi" Version="7.44.0" />
 	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.81.0" />
 	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.81.0" />
 	  <PackageVersion Include="JWT" Version="11.0.0" />
