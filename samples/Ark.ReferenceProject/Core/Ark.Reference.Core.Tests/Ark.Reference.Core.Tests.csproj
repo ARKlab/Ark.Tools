@@ -28,16 +28,14 @@
     <ProjectReference Include="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj" />
 	  <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
 		  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+		  <OutputItemType>Content</OutputItemType>
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </ProjectReference>
     <ProjectReference Include="..\Ark.Reference.Core.WebInterface\Ark.Reference.Core.WebInterface.csproj" />
   </ItemGroup>
 
 
   <ItemGroup>
-
-    <None Update="Ark.Reference.Core.Database.dacpac">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
 
     <None Update="TestData\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -48,14 +46,5 @@
   <PropertyGroup>
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
-
-  <!-- Copy dacpac from Database project output before build -->
-  <Target Name="CopyDacpacFromDatabaseProject" AfterTargets="ResolveProjectReferences">
-    <PropertyGroup>
-      <DacpacSourcePath>..\Ark.Reference.Core.Database\bin\$(Configuration)\Ark.Reference.Core.Database.dacpac</DacpacSourcePath>
-      <DacpacDestPath>$(MSBuildProjectDirectory)\Ark.Reference.Core.Database.dacpac</DacpacDestPath>
-    </PropertyGroup>
-    <Copy SourceFiles="$(DacpacSourcePath)" DestinationFiles="$(DacpacDestPath)" Condition="Exists('$(DacpacSourcePath)')" SkipUnchangedFiles="true" />
-  </Target>
 
 </Project>
