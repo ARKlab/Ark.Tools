@@ -58,7 +58,4 @@
     <Folder Include="Security\" />
     <Folder Include="_Migrations\" />
   </ItemGroup>
-  <Target Name="CopyDacpac" AfterTargets="Build">
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)bin\$(Configuration)\$(Name).dacpac" DestinationFolder="$(MSBuildThisFileDirectory)..\Ark.Reference.Core.Tests\" />
-  </Target>
 </Project>
