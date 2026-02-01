@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.286, )",
-        "resolved": "2.0.286",
-        "contentHash": "9JSl/zd+B7nOw3OLWJo+jIGGlKzAuBiPTYKdHEa3xJLpQ7aLk1KkVVaRNA+qeFQ72hLozKFOVWF30e9RbVpqKw=="
+        "requested": "[2.0.288, )",
+        "resolved": "2.0.288",
+        "contentHash": "k1TinGAOLU9wVHdN/GTPQolg+adsxMuJ8Qq2o5PnSTMB2Fhmrp7KUahZrDLcCuNBsgKytUezaNSYypL1OkpPxw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -62,9 +62,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.7.7, )",
-        "resolved": "9.7.7",
-        "contentHash": "L4iI95ONeG95Wc5ViCGL5Z47yA53NCX1tP5W6ddlaF9h/C/tYR6i56GZkH/33d2H9+jwhF22nL4olnO5efmoFw=="
+        "requested": "[9.8.0, )",
+        "resolved": "9.8.0",
+        "contentHash": "HftRelXr1/Bxagsn9uzG+hHAtwoXBYf3X6LjmxmNwulQqsMz2nB4hw3e2r2NxhrXPpapXekIa8yWBPdzJLgqLg=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -279,7 +279,7 @@
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
-          "NLog": "[6.0.7, )",
+          "NLog": "[6.1.0, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.3, )",
           "NLog.MailKit": "[6.0.5, )",
@@ -457,9 +457,9 @@
       },
       "NLog": {
         "type": "CentralTransitive",
-        "requested": "[6.0.7, )",
-        "resolved": "6.0.7",
-        "contentHash": "16kwDY6+/TCBToyXekpcl5mxprUWuXqltdOK26w44E0rTQTiRCjXv1VVLDtSbgMCR1RirVvr+V/9T+76cwuqnw=="
+        "requested": "[6.1.0, )",
+        "resolved": "6.1.0",
+        "contentHash": "K4UdxS4fuJeCM0sm+JTXWoJgOtcXX7X5kvE94bR07UB8JOB6A2+ski7q1tf2qdv+N0H3gsoWtteScJCHa3+zpw=="
       },
       "NLog.Database": {
         "type": "CentralTransitive",
@@ -549,9 +549,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.286, )",
-        "resolved": "2.0.286",
-        "contentHash": "9JSl/zd+B7nOw3OLWJo+jIGGlKzAuBiPTYKdHEa3xJLpQ7aLk1KkVVaRNA+qeFQ72hLozKFOVWF30e9RbVpqKw=="
+        "requested": "[2.0.288, )",
+        "resolved": "2.0.288",
+        "contentHash": "k1TinGAOLU9wVHdN/GTPQolg+adsxMuJ8Qq2o5PnSTMB2Fhmrp7KUahZrDLcCuNBsgKytUezaNSYypL1OkpPxw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -595,9 +595,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.7.7, )",
-        "resolved": "9.7.7",
-        "contentHash": "L4iI95ONeG95Wc5ViCGL5Z47yA53NCX1tP5W6ddlaF9h/C/tYR6i56GZkH/33d2H9+jwhF22nL4olnO5efmoFw=="
+        "requested": "[9.8.0, )",
+        "resolved": "9.8.0",
+        "contentHash": "HftRelXr1/Bxagsn9uzG+hHAtwoXBYf3X6LjmxmNwulQqsMz2nB4hw3e2r2NxhrXPpapXekIa8yWBPdzJLgqLg=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -826,7 +826,7 @@
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
-          "NLog": "[6.0.7, )",
+          "NLog": "[6.1.0, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.3, )",
           "NLog.MailKit": "[6.0.5, )",
@@ -1003,9 +1003,9 @@
       },
       "NLog": {
         "type": "CentralTransitive",
-        "requested": "[6.0.7, )",
-        "resolved": "6.0.7",
-        "contentHash": "16kwDY6+/TCBToyXekpcl5mxprUWuXqltdOK26w44E0rTQTiRCjXv1VVLDtSbgMCR1RirVvr+V/9T+76cwuqnw=="
+        "requested": "[6.1.0, )",
+        "resolved": "6.1.0",
+        "contentHash": "K4UdxS4fuJeCM0sm+JTXWoJgOtcXX7X5kvE94bR07UB8JOB6A2+ski7q1tf2qdv+N0H3gsoWtteScJCHa3+zpw=="
       },
       "NLog.Database": {
         "type": "CentralTransitive",
