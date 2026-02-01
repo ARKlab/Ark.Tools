@@ -80,10 +80,10 @@
 	  <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
 	  <PackageVersion Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.23.0" />
 	  <PackageVersion Include="Ben.Demystifier" Version="0.4.1" />
-	  <PackageVersion Include="NLog" Version="6.0.7" />
+	  <PackageVersion Include="NLog" Version="6.1.0" />
 	  <PackageVersion Include="NLog.Database" Version="6.0.3" />
 	  <PackageVersion Include="NLog.DiagnosticSource" Version="6.0.3" />
-	  <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.0" />
+	  <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.1" />
 	  <PackageVersion Include="NLog.MailKit" Version="6.0.5" />
 	  <PackageVersion Include="Slack.Webhooks" Version="1.1.5" />
 
@@ -148,7 +148,7 @@
 	  <PackageVersion Include="Polyfill" Version="9.7.7" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.102" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-	  <PackageVersion Include="Meziantou.Analyzer" Version="2.0.286" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="2.0.288" />
 	  <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15" />
 	  <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
 	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
