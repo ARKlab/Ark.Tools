@@ -102,4 +102,9 @@ public class AuditableAttachmentsSessionOperationsAsyncDecorator : IAttachmentsS
     {
         _inner.Store(entity, name, stream, contentType);
     }
+
+    public void Store(string documentId, StoreAttachmentParameters parameters)
+    {
+        _inner.Store(documentId, parameters);
+    }
 }
