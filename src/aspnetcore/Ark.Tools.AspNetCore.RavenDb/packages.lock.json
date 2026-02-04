@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.292, )",
-        "resolved": "2.0.292",
-        "contentHash": "4oKm7vorrBa2iS46DlwFZfIHDrIAV4YhC3jTTMyW+uF+3Lp0xb0K6Fm/UpRTWzkddTzfbd/tvdRdfC+G3Hkeaw=="
+        "requested": "[2.0.296, )",
+        "resolved": "2.0.296",
+        "contentHash": "KCLWP47wGWdJSnLC0tmwulnIvsj7tIFZYnj7ZLyTIoe/tsLbmx4ZdLuUJbgTjaCqfDL0APfgZMxOMu6B4qx5NQ=="
       },
       "Microsoft.AspNetCore.OData": {
         "type": "Direct",
@@ -68,9 +68,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.8.0, )",
-        "resolved": "9.8.0",
-        "contentHash": "HftRelXr1/Bxagsn9uzG+hHAtwoXBYf3X6LjmxmNwulQqsMz2nB4hw3e2r2NxhrXPpapXekIa8yWBPdzJLgqLg=="
+        "requested": "[9.8.1, )",
+        "resolved": "9.8.1",
+        "contentHash": "K5p8SViAcAMInRm67ZyPFhnIBAXfGz3gjQWOMhYz19rdDuN8B0F2wUsukXJRAuGpx6Tr2FJgzQHByqQwzmx3qQ=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -102,8 +102,8 @@
       },
       "Microsoft.AspNetCore.JsonPatch": {
         "type": "Transitive",
-        "resolved": "8.0.22",
-        "contentHash": "gquk+JFVSXMJSHP/wWBgF6gYrwk616T6uJPaXvdXxBTRe43KTzuW0M+eMVlJsDH/lHGvItdjv47Y6uJ7WQVoSg==",
+        "resolved": "10.0.2",
+        "contentHash": "AxRcJMoHvJ4NDVKiOas5Itd+uGhYcbkSqdtIWS49IQyJSwZuU4M9QCDt8anU3o4Dv5iDpkaLNWVmovH3x3E2ag==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3"
         }
@@ -347,7 +347,7 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "RavenDB.Client": "[7.1.5, )"
+          "RavenDB.Client": "[7.2.0, )"
         }
       },
       "ark.tools.solid": {
@@ -444,20 +444,20 @@
       },
       "Microsoft.Identity.Client": {
         "type": "CentralTransitive",
-        "requested": "[4.81.0, )",
-        "resolved": "4.81.0",
-        "contentHash": "xpIOopc3HFeF1JdKkQoAVQYEblqWJAUzAnuV9B9J3E+vPxtvbKcVabRd6rr2PA7yVLjTnCY8sytCpUsZhOBX5A==",
+        "requested": "[4.82.0, )",
+        "resolved": "4.82.0",
+        "contentHash": "cSAuWkH6CZljOG/tFn4OqIbTjhQB4dHl0gDGEuUvs+654yFvyr91DWceo9ZLPfVO6m5P5kn0EvszmjBBs3npIQ==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "8.14.0"
         }
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "CentralTransitive",
-        "requested": "[4.81.0, )",
-        "resolved": "4.81.0",
-        "contentHash": "Z4yS/OXEn8J/btGlLS8VNIjpQDRXjZEWzSMUguqDbwV5Jg+0qwJHCYzwQ+O89mOZVXU4C5EhuCcoRnkJlnPJQw==",
+        "requested": "[4.82.0, )",
+        "resolved": "4.82.0",
+        "contentHash": "uaPqVV8h3H5XHGvQD5tuD8yKc6PZKjAfsjcHwtDavg7RfWgK9PY9lg+xRt3dl/pTldkd3+oXglUUANqMzkNR9w==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.81.0",
+          "Microsoft.Identity.Client": "4.82.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
       },
@@ -527,12 +527,12 @@
       },
       "RavenDB.Client": {
         "type": "CentralTransitive",
-        "requested": "[7.1.5, )",
-        "resolved": "7.1.5",
-        "contentHash": "ElApA3mHSKpvqd57hqMXtZlLbf3+EFYm+RRAtP9OK5mtnXaChh3EZhu+71q4Y1fOkVOGA+SOwoz0oKKDGTBfig==",
+        "requested": "[7.2.0, )",
+        "resolved": "7.2.0",
+        "contentHash": "F7XOrr9BXBrw0qM11xwFvo8XLCKKN7evDgC2XTDWblY83PVSUj2dKJtZwgjfWqtdsBQuduVRC31+oPe6j80SOQ==",
         "dependencies": {
           "Lambda2Js.Signed": "3.1.4",
-          "Microsoft.AspNetCore.JsonPatch": "8.0.22",
+          "Microsoft.AspNetCore.JsonPatch": "10.0.2",
           "Microsoft.IO.RecyclableMemoryStream": "3.0.1",
           "Newtonsoft.Json": "13.0.3",
           "Nito.AsyncEx.Coordination": "5.1.2"
