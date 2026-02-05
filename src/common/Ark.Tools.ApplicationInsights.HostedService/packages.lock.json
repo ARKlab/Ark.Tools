@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.297, )",
-        "resolved": "2.0.297",
-        "contentHash": "N7OyHBovupgjjeJwg0VrGJKRTVpIe5PBpJiUOMrExZwc42yxhZ6ZL0XlwnjegunaUbDtZoF8qB0XgCukwGiv0A=="
+        "requested": "[2.0.298, )",
+        "resolved": "2.0.298",
+        "contentHash": "i5WbIWe20IEsEv12E9eWHrrzKCBC3YRvwJmAPtPphuqFmc9277x3Msc2QcBYo9+SqNu6/1kP4Xw/3Ms60JgmZg=="
       },
       "Microsoft.ApplicationInsights.WorkerService": {
         "type": "Direct",
@@ -899,9 +899,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[2.0.297, )",
-        "resolved": "2.0.297",
-        "contentHash": "N7OyHBovupgjjeJwg0VrGJKRTVpIe5PBpJiUOMrExZwc42yxhZ6ZL0XlwnjegunaUbDtZoF8qB0XgCukwGiv0A=="
+        "requested": "[2.0.298, )",
+        "resolved": "2.0.298",
+        "contentHash": "i5WbIWe20IEsEv12E9eWHrrzKCBC3YRvwJmAPtPphuqFmc9277x3Msc2QcBYo9+SqNu6/1kP4Xw/3Ms60JgmZg=="
       },
       "Microsoft.ApplicationInsights.WorkerService": {
         "type": "Direct",
