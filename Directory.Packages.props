@@ -126,8 +126,8 @@
 	  <!-- AUTH -->
 	  <PackageVersion Include="Auth0.AuthenticationApi" Version="7.44.0" />
 	  <PackageVersion Include="Auth0.ManagementApi" Version="7.44.0" />
-	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.82.0" />
-	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.82.0" />
+	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.82.1" />
+	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.82.1" />
 	  <PackageVersion Include="JWT" Version="11.0.0" />
 	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
 	  <PackageVersion Include="Azure.Identity" Version="1.17.1" />
