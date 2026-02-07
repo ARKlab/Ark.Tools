@@ -87,7 +87,7 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Newtonsoft.Json": "[13.0.4, )",
-          "NodaTime.Serialization.JsonNet": "[3.2.0, )"
+          "NodaTime.Serialization.JsonNet": "[3.2.1, )"
         }
       },
       "Newtonsoft.Json": {
@@ -104,9 +104,9 @@
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "CentralTransitive",
-        "requested": "[3.2.0, )",
-        "resolved": "3.2.0",
-        "contentHash": "zf4dQoRBaFxJ5Hf1SqVVHCPcMViKMZK/P0YnJUuhB8g58IxNGOkSxsPPX9jFp3fMjGrEER/ehyO+y86ubD4OKw==",
+        "requested": "[3.2.1, )",
+        "resolved": "3.2.1",
+        "contentHash": "/8eeaH/LNIcpIEiBTg/0M/hwsMis0cKVWPyLYnQhXrH2k+9zNrnsOin9Vym6OclSGGndOnNNa6EHUln4S70HKg==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3",
           "NodaTime": "[3.0.0, 4.0.0)"
@@ -213,7 +213,7 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Newtonsoft.Json": "[13.0.4, )",
-          "NodaTime.Serialization.JsonNet": "[3.2.0, )"
+          "NodaTime.Serialization.JsonNet": "[3.2.1, )"
         }
       },
       "Newtonsoft.Json": {
@@ -230,9 +230,9 @@
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "CentralTransitive",
-        "requested": "[3.2.0, )",
-        "resolved": "3.2.0",
-        "contentHash": "zf4dQoRBaFxJ5Hf1SqVVHCPcMViKMZK/P0YnJUuhB8g58IxNGOkSxsPPX9jFp3fMjGrEER/ehyO+y86ubD4OKw==",
+        "requested": "[3.2.1, )",
+        "resolved": "3.2.1",
+        "contentHash": "/8eeaH/LNIcpIEiBTg/0M/hwsMis0cKVWPyLYnQhXrH2k+9zNrnsOin9Vym6OclSGGndOnNNa6EHUln4S70HKg==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3",
           "NodaTime": "[3.0.0, 4.0.0)"

@@ -303,7 +303,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "NodaTime.Serialization.SystemTextJson": "[1.3.0, )"
+          "NodaTime.Serialization.SystemTextJson": "[1.3.1, )"
         }
       },
       "ark.tools.sql": {
@@ -490,9 +490,9 @@
       },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "CentralTransitive",
-        "requested": "[1.3.0, )",
-        "resolved": "1.3.0",
-        "contentHash": "Zf9sdKrfcId0rvZLOB7Yncy/cfCv20TdQ84IKE6CkcWW33u1wsRvmYUbfaP5MYUm+9vp9Yoi3G2vN1/9nZ/JCA==",
+        "requested": "[1.3.1, )",
+        "resolved": "1.3.1",
+        "contentHash": "Ndo6VK/TwyIjcppiHY3I3p1iFM+dkjIghiSR/eC3rzu0whoV2GY9F5xCERf5BZDmkI4HuExlA4UE/smDV46SkQ==",
         "dependencies": {
           "NodaTime": "[3.0.0, 4.0.0)"
         }
@@ -834,7 +834,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "NodaTime.Serialization.SystemTextJson": "[1.3.0, )"
+          "NodaTime.Serialization.SystemTextJson": "[1.3.1, )"
         }
       },
       "ark.tools.sql": {
@@ -1020,9 +1020,9 @@
       },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "CentralTransitive",
-        "requested": "[1.3.0, )",
-        "resolved": "1.3.0",
-        "contentHash": "Zf9sdKrfcId0rvZLOB7Yncy/cfCv20TdQ84IKE6CkcWW33u1wsRvmYUbfaP5MYUm+9vp9Yoi3G2vN1/9nZ/JCA==",
+        "requested": "[1.3.1, )",
+        "resolved": "1.3.1",
+        "contentHash": "Ndo6VK/TwyIjcppiHY3I3p1iFM+dkjIghiSR/eC3rzu0whoV2GY9F5xCERf5BZDmkI4HuExlA4UE/smDV46SkQ==",
         "dependencies": {
           "NodaTime": "[3.0.0, 4.0.0)"
         }
