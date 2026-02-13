@@ -19,7 +19,10 @@ public class Post_FileImportRequestHandler : IRequestHandler<Post_FileImportRequ
 
         using var buffer = new MemoryStream();
         // Copy source to destination.
-        request.File?.CopyToAsync(buffer, ctk);
+        if (request.File != null)
+        {
+            await request.File.CopyToAsync(buffer, ctk).ConfigureAwait(false);
+        }
         buffer.Seek(0, SeekOrigin.Begin);
 
         _logger.Info(CultureInfo.InvariantCulture, "FileImport_CreateRequestHandler - File Import created");
