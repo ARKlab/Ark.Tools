@@ -113,9 +113,9 @@
       },
       "Rebus.SqlServer": {
         "type": "Direct",
-        "requested": "[8.4.0, )",
-        "resolved": "8.4.0",
-        "contentHash": "QESsec+h/yW/GkPMHGfzrOKAGLKZ8QFRXdhjR+20AavrtIGhIg8voB2UIzQohXDJ0LP7G6wwRd/C7ttHHyOSAw==",
+        "requested": "[8.4.1, )",
+        "resolved": "8.4.1",
+        "contentHash": "Rdq0SoUy8smSYrIFM9KY3r0ygVMZ8PNTrLIQtSvo6zXb5f0jGwtw9cDx8jPbGJI6859jUyNms2eO2PCkIYclRA==",
         "dependencies": {
           "microsoft.data.sqlclient": "6.1.2",
           "rebus": "8.9.0"
@@ -727,9 +727,9 @@
       },
       "Rebus.SqlServer": {
         "type": "Direct",
-        "requested": "[8.4.0, )",
-        "resolved": "8.4.0",
-        "contentHash": "QESsec+h/yW/GkPMHGfzrOKAGLKZ8QFRXdhjR+20AavrtIGhIg8voB2UIzQohXDJ0LP7G6wwRd/C7ttHHyOSAw==",
+        "requested": "[8.4.1, )",
+        "resolved": "8.4.1",
+        "contentHash": "Rdq0SoUy8smSYrIFM9KY3r0ygVMZ8PNTrLIQtSvo6zXb5f0jGwtw9cDx8jPbGJI6859jUyNms2eO2PCkIYclRA==",
         "dependencies": {
           "microsoft.data.sqlclient": "6.1.2",
           "rebus": "8.9.0"

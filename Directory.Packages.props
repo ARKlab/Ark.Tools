@@ -136,7 +136,7 @@
 	  <PackageVersion Include="Rebus" Version="8.9.0" />
 	  <PackageVersion Include="Rebus.NLog" Version="6.0.0" />
 	  <PackageVersion Include="Rebus.AzureServiceBus" Version="10.5.1" />
-	  <PackageVersion Include="Rebus.SqlServer" Version="8.4.0" />
+	  <PackageVersion Include="Rebus.SqlServer" Version="8.4.1" />
 	  <PackageVersion Include="Rebus.AzureBlobs" Version="1.1.0" />
 	  <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
 	  
