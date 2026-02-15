@@ -73,11 +73,11 @@
 	  <PackageVersion Include="FluentValidation" Version="12.1.1" />
 
 	  <!-- MONITORING & LOGGING -->
-	  <PackageVersion Include="Microsoft.ApplicationInsights" Version="2.23.0" />
+	  <PackageVersion Include="Microsoft.ApplicationInsights" Version="3.0.0" />
 	  <PackageVersion Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" Version="2.23.0" />
 	  <PackageVersion Include="Microsoft.ApplicationInsights.SnapshotCollector" Version="1.4.6" />
-	  <PackageVersion Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
-	  <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
+	  <PackageVersion Include="Microsoft.ApplicationInsights.WorkerService" Version="3.0.0" />
+	  <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="3.0.0" />
 	  <PackageVersion Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.23.0" />
 	  <PackageVersion Include="Ben.Demystifier" Version="0.4.1" />
 	  <PackageVersion Include="NLog" Version="6.1.0" />
