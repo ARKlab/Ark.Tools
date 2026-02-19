@@ -51,7 +51,7 @@
 	  <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.3" />
 
 	  <!-- TESTING -->
-	  <PackageVersion Include="AwesomeAssertions" Version="9.3.0" />
+	  <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
 	  <PackageVersion Include="AwesomeAssertions.Web" Version="1.9.6" />
 	  <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.3" />
 	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
@@ -99,11 +99,11 @@
 	  <PackageVersion Include="NetEscapades.AspNetCore.SecurityHeaders" Version="1.3.1" />
 	  <PackageVersion Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="5.5.0" />
 	  <PackageVersion Include="Microsoft.Identity.Web" Version="4.3.0" />
-	  <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.3" />
-	  <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.3" />
-	  <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.3" />
-	  <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.3" />
-	  <PackageVersion Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.3" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.4" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.4" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.4" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.4" />
+	  <PackageVersion Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.4" />
 	  <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="10.0.1" />
 
 	  <!-- ASPNETCORE HEALTHCHECKS -->
@@ -148,7 +148,7 @@
 	  <PackageVersion Include="Polyfill" Version="9.9.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.103" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.1" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.7" />
 	  <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15" />
 	  <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
 	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />

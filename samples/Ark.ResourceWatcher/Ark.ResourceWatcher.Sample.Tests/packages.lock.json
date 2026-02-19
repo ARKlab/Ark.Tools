@@ -4,9 +4,9 @@
     "net10.0": {
       "AwesomeAssertions": {
         "type": "Direct",
-        "requested": "[9.3.0, )",
-        "resolved": "9.3.0",
-        "contentHash": "8lGLYap2ec2gNLgjf2xKZaKLpQ7j36oJvrYzBVVpNAumqnxRdevqqhEF66qxE92f8y2+zsbQ061DeHG61ZhzaQ=="
+        "requested": "[9.4.0, )",
+        "resolved": "9.4.0",
+        "contentHash": "dJxkWiQ8D+xT6Gr2sSL83+Mar+Vpy2JTcUPxFcckpPJ8VYBfSgnk+zqpS6t7kcGnjz8NLyF14qfuoL4bKzzoew=="
       },
       "ErrorProne.NET.CoreAnalyzers": {
         "type": "Direct",
@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.1, )",
-        "resolved": "3.0.1",
-        "contentHash": "Z/5cQIOTITr21tTod3rn4x/c5JKoWKnQrztOpQuzh4ieRGPEE2RkFB8ZF2V/ZTFqv2X3IudMwzaujIKYg4oegg=="
+        "requested": "[3.0.7, )",
+        "resolved": "3.0.7",
+        "contentHash": "VO1lrI9dL4zpYaREidRdysRhExUeFuk3FOcOj+iNl1meaVI5n4uOKQgQkanJp8vVSMtOZRmsxQ78K5fP9oDy5w=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -1252,7 +1252,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Http": "[1.0.0, )",
-          "AwesomeAssertions": "[9.3.0, )",
+          "AwesomeAssertions": "[9.4.0, )",
           "AwesomeAssertions.Web": "[1.9.6, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.16.0, )",
           "Reqnroll": "[3.3.3, )"
