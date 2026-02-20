@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.7, )",
-        "resolved": "3.0.7",
-        "contentHash": "VO1lrI9dL4zpYaREidRdysRhExUeFuk3FOcOj+iNl1meaVI5n4uOKQgQkanJp8vVSMtOZRmsxQ78K5fP9oDy5w=="
+        "requested": "[3.0.9, )",
+        "resolved": "3.0.9",
+        "contentHash": "kKAjqIOyEF3CVuBWXitueJscjoHWvqbriW4sMuJaoD6dhgLVqKtCeffzICpE9MVWc2Wo8L7wPOu96bZmrL5ZGg=="
       },
       "Microsoft.ApplicationInsights.AspNetCore": {
         "type": "Direct",
