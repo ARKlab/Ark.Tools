@@ -253,9 +253,15 @@ UPDATE SET
     public void EnsureTableAreCreated()
     {
         using var c = _connManager.Get(_config.DbConnectionString);
-        
-        // First create tables and other non-transactionable objects
+
+        // Single batch: table migration DDL + UDT diff-check and conditional recreation.
+        // Returns 1 when udt_State_v2 was recreated, 0 when already up-to-date.
+        // Unconditional DROP/CREATE TYPE would invalidate open pooled connections that hold
+        // a reference to the old user_type_id, so we skip the DDL if nothing changed.
         var q = @"
+-- =============================================
+-- Table migration (idempotent DDL)
+-- =============================================
 IF OBJECT_ID('State', 'U') IS NULL
 BEGIN
 CREATE TABLE [State](
@@ -370,36 +376,90 @@ IF EXISTS ( SELECT  1
 BEGIN 
     EXEC('ALTER TABLE State DROP CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson]')
 END
-";
-        c.Execute(q);
 
-        // Now recreate user-defined table types in a transaction to prevent race conditions
-        // Using BEGIN TRAN prevents parallel tests from interfering with DROP/CREATE
-        var typeQuery = @"
-BEGIN TRANSACTION
+-- =============================================
+-- User-defined table type maintenance
+-- Recreate only when columns or primary key differ from the expected definition.
+-- =============================================
+DECLARE @udt_state_v2_changed BIT = 0;
 
-IF TYPE_ID('udt_State_v2') IS NOT NULL
+-- Type is missing entirely: needs creation
+IF TYPE_ID('udt_State_v2') IS NULL
+    SET @udt_state_v2_changed = 1;
+
+-- Type exists: compare column definitions AND primary key against the expected schema
+IF @udt_state_v2_changed = 0
 BEGIN
-DROP TYPE [udt_State_v2]
+    SELECT @udt_state_v2_changed = CASE
+        WHEN
+            COUNT(*) = 10
+            AND SUM(CASE WHEN c.name = 'Tenant'              AND tp.name = 'varchar'   AND c.max_length = 128  AND c.is_nullable = 0 THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'ResourceId'          AND tp.name = 'nvarchar'  AND c.max_length = 600  AND c.is_nullable = 0 THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'Modified'            AND tp.name = 'datetime2' AND c.is_nullable = 1   THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'ModifiedSourcesJson' AND tp.name = 'nvarchar'  AND c.max_length = -1   AND c.is_nullable = 1 THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'LastEvent'           AND tp.name = 'datetime2' AND c.is_nullable = 0   THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'RetrievedAt'         AND tp.name = 'datetime2' AND c.is_nullable = 1   THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'RetryCount'          AND tp.name = 'int'       AND c.is_nullable = 0   THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'CheckSum'            AND tp.name = 'nvarchar'  AND c.max_length = 2048 AND c.is_nullable = 1 THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'ExtensionsJson'      AND tp.name = 'nvarchar'  AND c.max_length = -1   AND c.is_nullable = 1 THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'Exception'           AND tp.name = 'nvarchar'  AND c.max_length = -1   AND c.is_nullable = 1 THEN 1 ELSE 0 END) = 1
+            AND 2 = (
+                -- Exactly 2 key columns in the clustered PK
+                SELECT COUNT(*)
+                FROM sys.indexes i
+                INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                WHERE i.object_id = tt.type_table_object_id
+                  AND i.is_primary_key = 1
+                  AND i.type = 1 -- CLUSTERED
+                  AND ic.key_ordinal > 0
+            )
+            AND 2 = (
+                -- Both key columns are the expected ones at the correct ordinal positions
+                SELECT COUNT(*)
+                FROM sys.indexes i
+                INNER JOIN sys.index_columns ic  ON i.object_id = ic.object_id  AND i.index_id  = ic.index_id
+                INNER JOIN sys.columns      pkc  ON ic.object_id = pkc.object_id AND ic.column_id = pkc.column_id
+                WHERE i.object_id = tt.type_table_object_id
+                  AND i.is_primary_key = 1
+                  AND i.type = 1 -- CLUSTERED
+                  AND (   (ic.key_ordinal = 1 AND pkc.name = 'Tenant'     AND ic.is_descending_key = 0)
+                       OR (ic.key_ordinal = 2 AND pkc.name = 'ResourceId' AND ic.is_descending_key = 0))
+            )
+        THEN 0 ELSE 1 END
+    FROM sys.columns c
+    INNER JOIN sys.table_types tt ON c.object_id = tt.type_table_object_id
+    INNER JOIN sys.types        tp ON c.user_type_id = tp.user_type_id
+    WHERE tt.name = 'udt_State_v2';
 END
 
-CREATE TYPE [udt_State_v2] AS TABLE (
-[Tenant] [varchar](128) NOT NULL,
-[ResourceId] [nvarchar](300) NOT NULL,
-[Modified] [datetime2] NULL,
-[ModifiedSourcesJson] nvarchar(max) NULL,
-[LastEvent] [datetime2] NOT NULL,
-[RetrievedAt] [datetime2] NULL,
-[RetryCount] [int] NOT NULL,
-[CheckSum] nvarchar(1024) NULL,
-[ExtensionsJson] nvarchar(max) NULL,
-[Exception] nvarchar(max) NULL,
-PRIMARY KEY CLUSTERED
-(
-    [Tenant] ASC,
-    [ResourceId] ASC
-)
-)
+-- Only drop/recreate when the definition actually changed
+IF @udt_state_v2_changed = 1
+BEGIN
+    BEGIN TRANSACTION
+
+    IF TYPE_ID('udt_State_v2') IS NOT NULL
+        DROP TYPE [udt_State_v2]
+
+    CREATE TYPE [udt_State_v2] AS TABLE (
+    [Tenant] [varchar](128) NOT NULL,
+    [ResourceId] [nvarchar](300) NOT NULL,
+    [Modified] [datetime2] NULL,
+    [ModifiedSourcesJson] nvarchar(max) NULL,
+    [LastEvent] [datetime2] NOT NULL,
+    [RetrievedAt] [datetime2] NULL,
+    [RetryCount] [int] NOT NULL,
+    [CheckSum] nvarchar(1024) NULL,
+    [ExtensionsJson] nvarchar(max) NULL,
+    [Exception] nvarchar(max) NULL,
+    PRIMARY KEY CLUSTERED
+    (
+        [Tenant] ASC,
+        [ResourceId] ASC
+    )
+    )
+
+    COMMIT TRANSACTION
+END
 
 IF TYPE_ID('udt_ResourceIdList') IS NULL
 BEGIN
@@ -412,27 +472,28 @@ CREATE TYPE [udt_ResourceIdList] AS TABLE (
 )
 END 
 
-COMMIT TRANSACTION
+SELECT @udt_state_v2_changed;
 ";
-        c.Execute(typeQuery);
+        var typeChanged = c.ExecuteScalar<bool>(q);
 
-        // Clear procedure cache to ensure SQL Server uses the new type definitions
-        // This is necessary after DROP/CREATE TYPE operations to avoid cache-related errors
-        // with Microsoft.Data.SqlClient 6.1.4+
-        // Note: This requires elevated permissions and is primarily for test/setup scenarios
-        try
+        if (typeChanged)
         {
-            c.Execute("DBCC FREEPROCCACHE");
-        }
+            // Clear procedure cache to ensure SQL Server uses the new type definitions.
+            // This is necessary after DROP/CREATE TYPE operations to avoid cache-related errors
+            // with Microsoft.Data.SqlClient 6.1.4+.
+            // Note: This requires elevated permissions and is primarily for test/setup scenarios.
+            try
+            {
+                c.Execute("DBCC FREEPROCCACHE");
+            }
 #pragma warning disable ERP022 // Intentionally swallowing exception - DBCC FREEPROCCACHE is best-effort
-        catch (Exception)
-        {
-            // If DBCC FREEPROCCACHE fails (e.g., insufficient permissions in Azure SQL),
-            // continue anyway as the cache may clear naturally over time
-            // This is acceptable for test scenarios but may require manual cache clearing
-            // in restricted production environments
-        }
+            catch (Exception)
+            {
+                // If DBCC FREEPROCCACHE fails (e.g., insufficient permissions in Azure SQL),
+                // continue anyway as the cache may clear naturally over time.
+            }
 #pragma warning restore ERP022
+        }
     }
 }
 
