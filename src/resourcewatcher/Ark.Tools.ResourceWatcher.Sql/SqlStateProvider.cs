@@ -253,9 +253,15 @@ UPDATE SET
     public void EnsureTableAreCreated()
     {
         using var c = _connManager.Get(_config.DbConnectionString);
-        
-        // First create tables and other non-transactionable objects
+
+        // Single batch: table migration DDL + UDT diff-check and conditional recreation.
+        // Returns 1 when udt_State_v2 was recreated, 0 when already up-to-date.
+        // Unconditional DROP/CREATE TYPE would invalidate open pooled connections that hold
+        // a reference to the old user_type_id, so we skip the DDL if nothing changed.
         var q = @"
+-- =============================================
+-- Table migration (idempotent DDL)
+-- =============================================
 IF OBJECT_ID('State', 'U') IS NULL
 BEGIN
 CREATE TABLE [State](
@@ -370,20 +376,18 @@ IF EXISTS ( SELECT  1
 BEGIN 
     EXEC('ALTER TABLE State DROP CONSTRAINT [CHK_ModifiedOrModifiedSourcesJson]')
 END
-";
-        c.Execute(q);
 
-        // Recreate user-defined table types only when their column definitions have changed.
-        // Unconditional DROP/CREATE would invalidate open pooled connections that hold a
-        // reference to the old user_type_id, causing "The definition ... has changed" errors.
-        var typeQuery = @"
+-- =============================================
+-- User-defined table type maintenance
+-- Recreate only when columns or primary key differ from the expected definition.
+-- =============================================
 DECLARE @udt_state_v2_changed BIT = 0;
 
 -- Type is missing entirely: needs creation
 IF TYPE_ID('udt_State_v2') IS NULL
     SET @udt_state_v2_changed = 1;
 
--- Type exists: compare column definitions against the expected schema
+-- Type exists: compare column definitions AND primary key against the expected schema
 IF @udt_state_v2_changed = 0
 BEGIN
     SELECT @udt_state_v2_changed = CASE
@@ -395,14 +399,36 @@ BEGIN
             AND SUM(CASE WHEN c.name = 'ModifiedSourcesJson' AND tp.name = 'nvarchar'  AND c.max_length = -1   AND c.is_nullable = 1 THEN 1 ELSE 0 END) = 1
             AND SUM(CASE WHEN c.name = 'LastEvent'           AND tp.name = 'datetime2' AND c.is_nullable = 0   THEN 1 ELSE 0 END) = 1
             AND SUM(CASE WHEN c.name = 'RetrievedAt'         AND tp.name = 'datetime2' AND c.is_nullable = 1   THEN 1 ELSE 0 END) = 1
-            AND SUM(CASE WHEN c.name = 'RetryCount'          AND tp.name = 'int'        AND c.is_nullable = 0   THEN 1 ELSE 0 END) = 1
+            AND SUM(CASE WHEN c.name = 'RetryCount'          AND tp.name = 'int'       AND c.is_nullable = 0   THEN 1 ELSE 0 END) = 1
             AND SUM(CASE WHEN c.name = 'CheckSum'            AND tp.name = 'nvarchar'  AND c.max_length = 2048 AND c.is_nullable = 1 THEN 1 ELSE 0 END) = 1
             AND SUM(CASE WHEN c.name = 'ExtensionsJson'      AND tp.name = 'nvarchar'  AND c.max_length = -1   AND c.is_nullable = 1 THEN 1 ELSE 0 END) = 1
             AND SUM(CASE WHEN c.name = 'Exception'           AND tp.name = 'nvarchar'  AND c.max_length = -1   AND c.is_nullable = 1 THEN 1 ELSE 0 END) = 1
+            AND 2 = (
+                -- Exactly 2 key columns in the clustered PK
+                SELECT COUNT(*)
+                FROM sys.indexes i
+                INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                WHERE i.object_id = tt.type_table_object_id
+                  AND i.is_primary_key = 1
+                  AND i.type = 1 -- CLUSTERED
+                  AND ic.key_ordinal > 0
+            )
+            AND 2 = (
+                -- Both key columns are the expected ones at the correct ordinal positions
+                SELECT COUNT(*)
+                FROM sys.indexes i
+                INNER JOIN sys.index_columns ic  ON i.object_id = ic.object_id  AND i.index_id  = ic.index_id
+                INNER JOIN sys.columns      pkc  ON ic.object_id = pkc.object_id AND ic.column_id = pkc.column_id
+                WHERE i.object_id = tt.type_table_object_id
+                  AND i.is_primary_key = 1
+                  AND i.type = 1 -- CLUSTERED
+                  AND (   (ic.key_ordinal = 1 AND pkc.name = 'Tenant'     AND ic.is_descending_key = 0)
+                       OR (ic.key_ordinal = 2 AND pkc.name = 'ResourceId' AND ic.is_descending_key = 0))
+            )
         THEN 0 ELSE 1 END
     FROM sys.columns c
     INNER JOIN sys.table_types tt ON c.object_id = tt.type_table_object_id
-    INNER JOIN sys.types tp ON c.user_type_id = tp.user_type_id
+    INNER JOIN sys.types        tp ON c.user_type_id = tp.user_type_id
     WHERE tt.name = 'udt_State_v2';
 END
 
@@ -448,7 +474,7 @@ END
 
 SELECT @udt_state_v2_changed;
 ";
-        var typeChanged = c.ExecuteScalar<bool>(typeQuery);
+        var typeChanged = c.ExecuteScalar<bool>(q);
 
         if (typeChanged)
         {
