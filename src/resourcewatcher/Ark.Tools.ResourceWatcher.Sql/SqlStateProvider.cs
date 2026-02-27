@@ -5,6 +5,8 @@ using Ark.Tools.Sql;
 
 using Dapper;
 
+using Microsoft.Data.SqlClient;
+
 using NLog;
 
 using System.Text.Json;
@@ -433,6 +435,13 @@ COMMIT TRANSACTION
             // in restricted production environments
         }
 #pragma warning restore ERP022
+
+        // Clear the SqlClient connection pool to flush client-side TVP type metadata cache.
+        // After DROP/CREATE TYPE the server assigns a new user_type_id; pooled connections
+        // still hold the old id and will receive "The definition for user-defined data type
+        // '...' has changed" on the next TVP statement. Clearing all pools forces new
+        // connections to be established with up-to-date metadata.
+        SqlConnection.ClearAllPools();
     }
 }
 
