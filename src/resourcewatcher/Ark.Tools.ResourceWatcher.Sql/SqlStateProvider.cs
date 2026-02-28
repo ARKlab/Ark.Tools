@@ -429,7 +429,8 @@ BEGIN
     FROM sys.columns c
     INNER JOIN sys.table_types tt ON c.object_id = tt.type_table_object_id
     INNER JOIN sys.types        tp ON c.user_type_id = tp.user_type_id
-    WHERE tt.name = 'udt_State_v2';
+    WHERE tt.name = 'udt_State_v2'
+    GROUP BY tt.type_table_object_id;
 END
 
 -- Only drop/recreate when the definition actually changed
