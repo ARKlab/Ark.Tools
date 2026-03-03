@@ -191,11 +191,11 @@
       },
       "NodaTime.Testing": {
         "type": "Direct",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "lpF55aoG/ahPms00JFSxZSQA9mjiwjpDfFuYP6LJiUVSm7JJ0yyfsZG19Yi6BpA3DIoF9H1ACpIPonX4EgEOvg==",
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "2AZXzyDQG9ms4DKNf/s4h0alhtewkU/6CXeoEExKxfbQJpb2Zf9usRNWiE3W5P5MKkw/o0vtP+1jpvdTNvVNMA==",
         "dependencies": {
-          "NodaTime": "3.3.0"
+          "NodaTime": "3.3.1"
         }
       },
       "Polyfill": {
@@ -597,7 +597,7 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "NodaTime": "[3.3.0, )"
+          "NodaTime": "[3.3.1, )"
         }
       },
       "ark.tools.http": {
@@ -1023,9 +1023,9 @@
       },
       "NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "zmUEQPp9yXyGAqWSBhxfwdDhRh4EV04lvYn4P5bUb6dTz1m5AXTYaeSLQ447YLPI2Ge5VGFj20G2DWg5gtiXZg=="
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "7zkTEqmakybTTuDuifpnzl5s8MkmpAdyvoqIPIO2+M2ThF8ixavPcPt1afPfFyCI+A6t3ySujgpGq/5iWc4/RQ=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "CentralTransitive",
@@ -1278,11 +1278,11 @@
       },
       "NodaTime.Testing": {
         "type": "Direct",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "lpF55aoG/ahPms00JFSxZSQA9mjiwjpDfFuYP6LJiUVSm7JJ0yyfsZG19Yi6BpA3DIoF9H1ACpIPonX4EgEOvg==",
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "2AZXzyDQG9ms4DKNf/s4h0alhtewkU/6CXeoEExKxfbQJpb2Zf9usRNWiE3W5P5MKkw/o0vtP+1jpvdTNvVNMA==",
         "dependencies": {
-          "NodaTime": "3.3.0"
+          "NodaTime": "3.3.1"
         }
       },
       "Polyfill": {
@@ -1725,7 +1725,7 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
-          "NodaTime": "[3.3.0, )",
+          "NodaTime": "[3.3.1, )",
           "System.Linq.Async": "[7.0.0, )"
         }
       },
@@ -2151,9 +2151,9 @@
       },
       "NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "zmUEQPp9yXyGAqWSBhxfwdDhRh4EV04lvYn4P5bUb6dTz1m5AXTYaeSLQ447YLPI2Ge5VGFj20G2DWg5gtiXZg=="
+        "requested": "[3.3.1, )",
+        "resolved": "3.3.1",
+        "contentHash": "7zkTEqmakybTTuDuifpnzl5s8MkmpAdyvoqIPIO2+M2ThF8ixavPcPt1afPfFyCI+A6t3ySujgpGq/5iWc4/RQ=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "CentralTransitive",
