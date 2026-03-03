@@ -42,7 +42,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
     <PackageVersion Include="Microsoft.Testing.Platform" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.1.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.5.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.5.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.1.0" />
