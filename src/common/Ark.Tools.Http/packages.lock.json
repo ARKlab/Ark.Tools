@@ -97,9 +97,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.13.0, )",
-        "resolved": "9.13.0",
-        "contentHash": "h84pHJ6cB97XCEKjBX3FbtzVq+5gGb1yMPEsDX3GQ+bHMz73MiOhc61p04N+WEV8joXf4tzJ80z2pqRQHQ8lsA=="
+        "requested": "[9.15.0, )",
+        "resolved": "9.15.0",
+        "contentHash": "yRKqfGZulI2Ipl43VbaKU2e9GLSDGlNl8UZzsDbIRoNg+vDjJV8w4tBAXH0TH4+U99gIEUPHfzJfMFM0kQ9wnQ=="
       },
       "CacheCow.Common": {
         "type": "Transitive",
@@ -408,9 +408,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.13.0, )",
-        "resolved": "9.13.0",
-        "contentHash": "h84pHJ6cB97XCEKjBX3FbtzVq+5gGb1yMPEsDX3GQ+bHMz73MiOhc61p04N+WEV8joXf4tzJ80z2pqRQHQ8lsA=="
+        "requested": "[9.15.0, )",
+        "resolved": "9.15.0",
+        "contentHash": "yRKqfGZulI2Ipl43VbaKU2e9GLSDGlNl8UZzsDbIRoNg+vDjJV8w4tBAXH0TH4+U99gIEUPHfzJfMFM0kQ9wnQ=="
       },
       "CacheCow.Common": {
         "type": "Transitive",
