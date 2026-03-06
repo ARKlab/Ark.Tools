@@ -25,7 +25,7 @@
 	  <PackageVersion Include="System.Diagnostics.Tracing" Version="4.3.0" />
 	  <PackageVersion Include="DistributedLock.Core" Version="1.0.9" />
 	  <PackageVersion Include="DistributedLock.Azure" Version="1.0.2" />
-	  <PackageVersion Include="Polly" Version="8.6.5" />
+	  <PackageVersion Include="Polly" Version="8.6.6" />
 	  <PackageVersion Include="Polly.Caching.Memory" Version="3.0.2" />
 	  <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
 	  <PackageVersion Include="MessagePack" Version="3.1.4" />
@@ -145,7 +145,7 @@
 	  <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
 
 	  <!-- BUILD TOOLS -->
-	  <PackageVersion Include="Polyfill" Version="9.16.0" />
+	  <PackageVersion Include="Polyfill" Version="9.17.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.103" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
 	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.19" />
