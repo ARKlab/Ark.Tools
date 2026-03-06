@@ -12,6 +12,8 @@ jobs:
   build:
     name: 'Build'
     runs-on: 'ubuntu-latest'
+    permissions:
+      contents: write
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2025-latest
@@ -49,7 +51,14 @@ jobs:
         global-json-file: global.json
       
     - name: 'Restore packages'
-      run: dotnet restore
+      run: dotnet restore --force-evaluate
+
+    - name: 'Commit updated lock files'
+      run: |
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add -- '**/packages.lock.json'
+        git diff --staged --quiet || (git commit -m "chore: update packages.lock.json [skip ci]" && git push)
 
     - name: 'Build project'
       run: dotnet build --no-restore --configuration Debug
