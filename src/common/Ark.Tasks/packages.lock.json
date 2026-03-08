@@ -56,9 +56,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.17.0, )",
-        "resolved": "9.17.0",
-        "contentHash": "3Idy3tCyuDjjtm09IYQb0rKGC6P8ritPGj8OShbXkGsHIpckzUOSq/NJYJlczIzh2Tw0+9Lt1rSPlHtXaCwhcg=="
+        "requested": "[9.18.0, )",
+        "resolved": "9.18.0",
+        "contentHash": "jlgewzgbgEFIoplbpdWNPKo/+R9ELej0iL1sdKrVeMzQ0aZCvRCdi/X/4AjRaBqkXoDTWFrOjgVXRukZYSVO+w=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
@@ -168,9 +168,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.17.0, )",
-        "resolved": "9.17.0",
-        "contentHash": "3Idy3tCyuDjjtm09IYQb0rKGC6P8ritPGj8OShbXkGsHIpckzUOSq/NJYJlczIzh2Tw0+9Lt1rSPlHtXaCwhcg=="
+        "requested": "[9.18.0, )",
+        "resolved": "9.18.0",
+        "contentHash": "jlgewzgbgEFIoplbpdWNPKo/+R9ELej0iL1sdKrVeMzQ0aZCvRCdi/X/4AjRaBqkXoDTWFrOjgVXRukZYSVO+w=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
