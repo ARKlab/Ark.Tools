@@ -15,11 +15,11 @@
       },
       "Auth0.ManagementApi": {
         "type": "Direct",
-        "requested": "[7.45.0, )",
-        "resolved": "7.45.0",
-        "contentHash": "Ms6L2HgBtycH1Xays8whBNpYjF464CPwtkia/Od5zARZOftTLIzAU0T0RPvFkOl+bU7sz+P0R0KIWWsoPLO1eg==",
+        "requested": "[7.45.1, )",
+        "resolved": "7.45.1",
+        "contentHash": "yIIO1SLh9cFLhxv9Ff0G2fcxvRBKDH73oxSiRWHFD0HruuT9tBAkNQ6PuSoFuRzcgBC7HWX8ZxvBmy0W7lW8XA==",
         "dependencies": {
-          "Auth0.Core": "7.44.0"
+          "Auth0.Core": "7.45.0"
         }
       },
       "ErrorProne.NET.CoreAnalyzers": {
@@ -94,9 +94,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.17.0, )",
-        "resolved": "9.17.0",
-        "contentHash": "3Idy3tCyuDjjtm09IYQb0rKGC6P8ritPGj8OShbXkGsHIpckzUOSq/NJYJlczIzh2Tw0+9Lt1rSPlHtXaCwhcg=="
+        "requested": "[9.18.0, )",
+        "resolved": "9.18.0",
+        "contentHash": "jlgewzgbgEFIoplbpdWNPKo/+R9ELej0iL1sdKrVeMzQ0aZCvRCdi/X/4AjRaBqkXoDTWFrOjgVXRukZYSVO+w=="
       },
       "Auth0.Core": {
         "type": "Transitive",
