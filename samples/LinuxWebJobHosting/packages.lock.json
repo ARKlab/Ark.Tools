@@ -230,8 +230,8 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "10.0.3",
-        "contentHash": "JCKbH/CN5l0CSoJBILEvJmNQVp5vV+FY3q2ue4K9p4eDT4mFEv0bjTQCV+MD6Qk1b/qk9fWmZZKhG1TklbXw1Q=="
+        "resolved": "10.0.4",
+        "contentHash": "LmDnaYkcWkZSlZ07L7YcB6bH8sCiBZ7j28kPbYiXdF6f0iUiN7rxsRORlZGdj5saN/wZIqvF7lDBn/cpjU+e2g=="
       },
       "ark.tools.activity": {
         "type": "Project",
@@ -397,7 +397,7 @@
           "Ark.Tools.Hosting": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher.WorkerHost": "[1.0.0, )",
-          "Microsoft.Extensions.Logging.AzureAppServices": "[10.0.3, )"
+          "Microsoft.Extensions.Logging.AzureAppServices": "[10.0.4, )"
         }
       },
       "ark.tools.resourcewatcher.workerhost.sql": {
@@ -606,9 +606,9 @@
       },
       "Microsoft.Extensions.Logging.AzureAppServices": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "/zWStxsB7fL7KowrM/uQ1CaN5+W+udh9GNHgtjg+ED3DiUmRObTMMGFKi8ZAoDB8ToijfY0lHhPX+oQjAtO5jg=="
+        "requested": "[10.0.4, )",
+        "resolved": "10.0.4",
+        "contentHash": "9mPvWgzNE88iGmLi4IT7tXaCocc4b5YhAAaGAREjuRLhTPL/VONcB+5mc+HDtKpabCqH4R7nZOG55W3ihouLZA=="
       },
       "Microsoft.Identity.Client": {
         "type": "CentralTransitive",
@@ -780,11 +780,11 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "69ZT/MYxQSxwdiiHRtI08noXiG5drj/bXDDZISmeWkNUtbIfYgmTiof16tCVOLTdmSQY7W7gwxkMliKdreWHGQ==",
+        "requested": "[10.0.4, )",
+        "resolved": "10.0.4",
+        "contentHash": "4u3HLMYQqnTIF26VUiKhSuXtjFIvEfnwK9ZBUa4bXEc1koQCCkZx6ss5urKjqqimJMtuPHDKPHDchxkgoDNhjQ==",
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "10.0.3"
+          "System.Security.Cryptography.ProtectedData": "10.0.4"
         }
       }
     }
