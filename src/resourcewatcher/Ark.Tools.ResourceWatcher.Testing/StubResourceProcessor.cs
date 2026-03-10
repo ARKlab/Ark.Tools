@@ -14,11 +14,13 @@ public class StubResourceProcessor<TExtensions> : IResourceProcessor<StubResourc
     where TExtensions : class
 {
     private readonly HashSet<string> _failOnProcess = [];
+    private readonly Lock _lock = new();
+    private int _processCallCount;
 
     /// <summary>
     /// Gets the number of times Process was called.
     /// </summary>
-    public int ProcessCallCount { get; private set; }
+    public int ProcessCallCount => _processCallCount;
 
     /// <summary>
     /// Gets the list of resource IDs that were processed.
@@ -44,20 +46,28 @@ public class StubResourceProcessor<TExtensions> : IResourceProcessor<StubResourc
     /// </summary>
     public void Reset()
     {
-        _failOnProcess.Clear();
-        ProcessCallCount = 0;
-        ProcessedResourceIds.Clear();
-        ProcessedResources.Clear();
+        lock (_lock)
+        {
+            _failOnProcess.Clear();
+            _processCallCount = 0;
+            ProcessedResourceIds.Clear();
+            ProcessedResources.Clear();
+        }
     }
 
     /// <inheritdoc/>
     public Task Process(StubResource<TExtensions> file, CancellationToken ctk = default)
     {
-        ProcessCallCount++;
-        ProcessedResourceIds.Add(file.Metadata.ResourceId);
-        ProcessedResources.Add(file);
+        bool shouldFail;
+        lock (_lock)
+        {
+            _processCallCount++;
+            ProcessedResourceIds.Add(file.Metadata.ResourceId);
+            ProcessedResources.Add(file);
+            shouldFail = _failOnProcess.Contains(file.Metadata.ResourceId);
+        }
 
-        if (_failOnProcess.Contains(file.Metadata.ResourceId))
+        if (shouldFail)
         {
             throw new InvalidOperationException($"Simulated processing failure for resource: {file.Metadata.ResourceId}");
         }
