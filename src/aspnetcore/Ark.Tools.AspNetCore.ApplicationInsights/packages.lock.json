@@ -37,9 +37,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.103, )",
-        "resolved": "10.0.103",
-        "contentHash": "s2+qTvC9YUsor9PIlWZ6cNiyb17ze/UqrQDRHaFeyyxuEstYvzxYMklJPnVnDKuxK9Q75Xwzlq5XrLNMcyzgAQ=="
+        "requested": "[10.0.200, )",
+        "resolved": "10.0.200",
+        "contentHash": "XX6Ks670PQRtJgLQKa+WSC9c0ll4bZJgGa/J/3KPfnjieHLamMA/1qJov+WcD/4cfQA4fHjAebCcGGei4ibSbA=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
@@ -55,12 +55,13 @@
       },
       "Microsoft.SourceLink.GitHub": {
         "type": "Direct",
-        "requested": "[10.0.103, )",
-        "resolved": "10.0.103",
-        "contentHash": "qZk7r40ftpZY+/sO019sgWAWfNqC2CLSspDdAxNYCJU/bCi/8jVwvOMjzb/d5gjCRNzQ4OCYgBfhdpQyVwLTyw==",
+        "requested": "[10.0.200, )",
+        "resolved": "10.0.200",
+        "contentHash": "jZ34WRkUOZJX5V0FPhZJqtWSY+YB6/Vuuam1LGUwRzyYiRgs5qpAHHcrsckHCISjxXklGPwqh8j8t1g460PG1g==",
         "dependencies": {
-          "Microsoft.Build.Tasks.Git": "10.0.103",
-          "Microsoft.SourceLink.Common": "10.0.103"
+          "Microsoft.Build.Tasks.Git": "10.0.200",
+          "Microsoft.SourceLink.Common": "10.0.200",
+          "System.IO.Hashing": "10.0.4"
         }
       },
       "Microsoft.VisualStudio.Threading.Analyzers": {
@@ -141,8 +142,11 @@
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
-        "resolved": "10.0.103",
-        "contentHash": "QoiCMcPuxC6eqRQmrmF9zBY96ejIznXtve/lJJbonGD9I5Aygf2AUCOWslGiCEtBbfWRSuUnepBjuuVOdAl5ag=="
+        "resolved": "10.0.200",
+        "contentHash": "UvGsrIcmqICxi0OiQ3ekgXVM9DJQQG0dkhxvp0RNkv4aH5zAbjX0/LWgz64SrkQS2mme+1dz2pMnM/R4vOI1AQ==",
+        "dependencies": {
+          "System.IO.Hashing": "10.0.4"
+        }
       },
       "Microsoft.Data.SqlClient.SNI.runtime": {
         "type": "Transitive",
@@ -202,8 +206,8 @@
       },
       "Microsoft.SourceLink.Common": {
         "type": "Transitive",
-        "resolved": "10.0.103",
-        "contentHash": "cMtGW5/r0ck72Jg2QwZcNTX59z+iB/B1kW84VMa/eX8L19DhHIuIcQjfK0pgLLBxd60Jl0Bj9GUolcM0MnJnZA=="
+        "resolved": "10.0.200",
+        "contentHash": "FxaSq+pMA7BS5dA5DXs0FscrvYzi6Rtm/zcU/ZMHV22lMIk07jz0WZdrWERQ9TJNARkne+z1Coow/a0w5Wl4yQ=="
       },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
@@ -257,6 +261,11 @@
         "resolved": "4.7.0",
         "contentHash": "vMToiarpU81LR1/KZtnT7VDPvqAZfw9oOS5nY6pPP78nGYz3COLsQH3OfzbR+SjTgltd31R6KmKklz/zDpTmzw=="
       },
+      "System.IO.Hashing": {
+        "type": "Transitive",
+        "resolved": "10.0.4",
+        "contentHash": "D5nHu/rBFu2mUyqyWWCTPxqvQisJKIqK/GU3X6BQbYIFYBDHTvUXToyv0oSszS26/6oTghWiA+oGqhgwGgTefw=="
+      },
       "System.Memory.Data": {
         "type": "Transitive",
         "resolved": "10.0.1",
@@ -269,8 +278,8 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "10.0.3",
-        "contentHash": "JCKbH/CN5l0CSoJBILEvJmNQVp5vV+FY3q2ue4K9p4eDT4mFEv0bjTQCV+MD6Qk1b/qk9fWmZZKhG1TklbXw1Q=="
+        "resolved": "10.0.4",
+        "contentHash": "LmDnaYkcWkZSlZ07L7YcB6bH8sCiBZ7j28kPbYiXdF6f0iUiN7rxsRORlZGdj5saN/wZIqvF7lDBn/cpjU+e2g=="
       },
       "ark.tools.applicationinsights": {
         "type": "Project",
@@ -513,11 +522,11 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "69ZT/MYxQSxwdiiHRtI08noXiG5drj/bXDDZISmeWkNUtbIfYgmTiof16tCVOLTdmSQY7W7gwxkMliKdreWHGQ==",
+        "requested": "[10.0.4, )",
+        "resolved": "10.0.4",
+        "contentHash": "4u3HLMYQqnTIF26VUiKhSuXtjFIvEfnwK9ZBUa4bXEc1koQCCkZx6ss5urKjqqimJMtuPHDKPHDchxkgoDNhjQ==",
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "10.0.3"
+          "System.Security.Cryptography.ProtectedData": "10.0.4"
         }
       }
     }
