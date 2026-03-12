@@ -62,7 +62,7 @@ jobs:
         global-json-file: global.json
 
     - name: 'Restore packages'
-      run: dotnet restore
+      run: dotnet restore --locked-mode
 
     - name: 'Build project'
       run: dotnet build --configuration Release

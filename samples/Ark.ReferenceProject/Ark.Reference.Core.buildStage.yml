@@ -75,6 +75,7 @@ stages:
         inputs:
           command: 'restore'
           projects: ${{ variables.solutionPath }}
+          restoreArguments: '--locked-mode'
 
       - task: DotNetCoreCLI@2
         displayName: 'Build solution'
