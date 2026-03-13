@@ -16,15 +16,15 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.22, )",
-        "resolved": "3.0.22",
-        "contentHash": "90M4v6pWhG9X+4SKf6G+lUsk9D5PysTV2QhSCEyHmjbyOxjs6DxUjYxdLLWdPPO5k5+b67a8T+feWpZkno+h7g=="
+        "requested": "[3.0.23, )",
+        "resolved": "3.0.23",
+        "contentHash": "C3DKBO0TkDP01gb/RW7U4p5Tt0EF+++dpVb+ekewJcVlGYCgWz43tXcVYmfGwo6qaFhTiugbg94cJGEgsaK/4g=="
       },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
-        "requested": "[10.0.4, )",
-        "resolved": "10.0.4",
-        "contentHash": "+kBqWRfgforSlqlW+s8VotYy1OxdCbg20ZUVHcxjRcMHEtoMq7IJMbtc7jtacgWSMy+Ct154SLOYHCp7Azpp+w=="
+        "requested": "[10.0.5, )",
+        "resolved": "10.0.5",
+        "contentHash": "PJEdrZnnhvxIEXzDdvdZ38GvpdaiUfKkZ99kudS8riJwhowFb/Qh26Wjk9smrCWcYdMFQmpN5epGiL4o1s8LYA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -34,9 +34,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.200, )",
-        "resolved": "10.0.200",
-        "contentHash": "XX6Ks670PQRtJgLQKa+WSC9c0ll4bZJgGa/J/3KPfnjieHLamMA/1qJov+WcD/4cfQA4fHjAebCcGGei4ibSbA=="
+        "requested": "[10.0.201, )",
+        "resolved": "10.0.201",
+        "contentHash": "MTE+F0fj0N8dtfkEGIcX3/rEycMbOf54DXq/n6n8cE6ZfDIPEElY8lc4X5BpZ+c7DBoQDGLG0iBY/W0YZ3nhtw=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
@@ -917,8 +917,8 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "10.0.4",
-        "contentHash": "LmDnaYkcWkZSlZ07L7YcB6bH8sCiBZ7j28kPbYiXdF6f0iUiN7rxsRORlZGdj5saN/wZIqvF7lDBn/cpjU+e2g=="
+        "resolved": "10.0.5",
+        "contentHash": "kxR4O/8o32eNN3m4qbLe3UifYqeyEpallCyVAsLvL5ZFJVyT3JCb+9du/WHfC09VyJh1Q+p/Gd4+AwM7Rz4acg=="
       },
       "YamlDotNet": {
         "type": "Transitive",
@@ -976,7 +976,7 @@
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.45.0, )",
           "Auth0.ManagementApi": "[7.45.1, )",
-          "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.4, )",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.5, )",
           "Polly": "[8.6.6, )"
         }
       },
@@ -1049,7 +1049,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.5.2, )"
+          "MessagePack.NodaTime": "[3.5.3, )"
         }
       },
       "ark.tools.newtonsoftjson": {
@@ -1443,12 +1443,12 @@
       },
       "MessagePack.NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.5.2, )",
-        "resolved": "3.5.2",
-        "contentHash": "VRw938zd+8O5dFxi9NAH4OEa7RDIu7t9kDcWrH/TCkqsxbNO9xbMX+Oi282dQ4bb+ug5dGopQFj1DNg9lIWYkw==",
+        "requested": "[3.5.3, )",
+        "resolved": "3.5.3",
+        "contentHash": "HRPsrRQHoJx5JfZ/NqBk24DHkaYeAC0GMEe/68QO+rVuWWtOo7zPJ/U6uLvLueAFpc5MiHFCEijL9WmYaSSREw==",
         "dependencies": {
           "MessagePack": "3.1.4",
-          "NodaTime": "3.3.0"
+          "NodaTime": "3.3.1"
         }
       },
       "Microsoft.ApplicationInsights": {
@@ -1504,9 +1504,9 @@
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "CentralTransitive",
-        "requested": "[10.0.4, )",
-        "resolved": "10.0.4",
-        "contentHash": "1mUwGyeGrGETdhlU/ZzNZeN2J6ugqf9EztZyG+WQIZwkaH5+lFNza15+cNCXhXNA0MKo1iohr5vj60eqR2J44Q==",
+        "requested": "[10.0.5, )",
+        "resolved": "10.0.5",
+        "contentHash": "fZzXogChrwQ/SfifQJgeW7AtR8hUv5+LH9oLWjm5OqfnVt3N8MwcMHHMdawvqqdjP79lIZgetnSpj77BLsSI1g==",
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.0.1"
         }
@@ -1785,11 +1785,11 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "CentralTransitive",
-        "requested": "[10.0.4, )",
-        "resolved": "10.0.4",
-        "contentHash": "4u3HLMYQqnTIF26VUiKhSuXtjFIvEfnwK9ZBUa4bXEc1koQCCkZx6ss5urKjqqimJMtuPHDKPHDchxkgoDNhjQ==",
+        "requested": "[10.0.5, )",
+        "resolved": "10.0.5",
+        "contentHash": "9UHU7hldEOVgcOHUX7Pa+owDfpzhW+a1gshEvyknAoDA++G6FV+N1cPoUbtsXEO7GgPErGSg8MHrI/YqrLoiGA==",
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "10.0.4"
+          "System.Security.Cryptography.ProtectedData": "10.0.5"
         }
       }
     }
