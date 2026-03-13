@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.22, )",
-        "resolved": "3.0.22",
-        "contentHash": "90M4v6pWhG9X+4SKf6G+lUsk9D5PysTV2QhSCEyHmjbyOxjs6DxUjYxdLLWdPPO5k5+b67a8T+feWpZkno+h7g=="
+        "requested": "[3.0.23, )",
+        "resolved": "3.0.23",
+        "contentHash": "C3DKBO0TkDP01gb/RW7U4p5Tt0EF+++dpVb+ekewJcVlGYCgWz43tXcVYmfGwo6qaFhTiugbg94cJGEgsaK/4g=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -28,9 +28,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.200, )",
-        "resolved": "10.0.200",
-        "contentHash": "XX6Ks670PQRtJgLQKa+WSC9c0ll4bZJgGa/J/3KPfnjieHLamMA/1qJov+WcD/4cfQA4fHjAebCcGGei4ibSbA=="
+        "requested": "[10.0.201, )",
+        "resolved": "10.0.201",
+        "contentHash": "MTE+F0fj0N8dtfkEGIcX3/rEycMbOf54DXq/n6n8cE6ZfDIPEElY8lc4X5BpZ+c7DBoQDGLG0iBY/W0YZ3nhtw=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
@@ -174,8 +174,8 @@
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.4",
-        "contentHash": "SIe9zlVQJecnk/DTmevIcl6+aEDYhoVLc2eG2AKwVeNEC8CSyxHAbh4lf0xtHq9JUum0vVTEByGNTK+b6oihTQ=="
+        "resolved": "10.0.5",
+        "contentHash": "iVMtq9eRvzyhx8949EGT0OCYJfXi737SbRVzWXE5GrOgGj5AaZ9eUuxA/BSUfmOMALKn/g8KfFaNQw0eiB3lyA=="
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
@@ -246,11 +246,11 @@
       },
       "Microsoft.Extensions.Logging.Abstractions": {
         "type": "CentralTransitive",
-        "requested": "[10.0.4, )",
-        "resolved": "10.0.4",
-        "contentHash": "PDMMt7fvBatv6hcxxyJtXIzSwn7Dy00W6I2vDAOTYrQqNM2dF5A2L9n0uMzdPz2IPoNZWkAmYjoOCEdDLq0i4w==",
+        "requested": "[10.0.5, )",
+        "resolved": "10.0.5",
+        "contentHash": "9HOdqlDtPptVcmKAjsQ/Nr5Rxfq6FMYLdhvZh1lVmeKR738qeYecQD7+ldooXf+u2KzzR1kafSphWngIM3C6ug==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.4"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5"
         }
       },
       "Microsoft.Testing.Platform": {

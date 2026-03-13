@@ -526,8 +526,8 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "10.0.4",
-        "contentHash": "LmDnaYkcWkZSlZ07L7YcB6bH8sCiBZ7j28kPbYiXdF6f0iUiN7rxsRORlZGdj5saN/wZIqvF7lDBn/cpjU+e2g=="
+        "resolved": "10.0.5",
+        "contentHash": "kxR4O/8o32eNN3m4qbLe3UifYqeyEpallCyVAsLvL5ZFJVyT3JCb+9du/WHfC09VyJh1Q+p/Gd4+AwM7Rz4acg=="
       },
       "YamlDotNet": {
         "type": "Transitive",
@@ -585,7 +585,7 @@
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.45.0, )",
           "Auth0.ManagementApi": "[7.45.1, )",
-          "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.4, )",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.5, )",
           "Polly": "[8.6.6, )"
         }
       },
@@ -1018,9 +1018,9 @@
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "CentralTransitive",
-        "requested": "[10.0.4, )",
-        "resolved": "10.0.4",
-        "contentHash": "1mUwGyeGrGETdhlU/ZzNZeN2J6ugqf9EztZyG+WQIZwkaH5+lFNza15+cNCXhXNA0MKo1iohr5vj60eqR2J44Q==",
+        "requested": "[10.0.5, )",
+        "resolved": "10.0.5",
+        "contentHash": "fZzXogChrwQ/SfifQJgeW7AtR8hUv5+LH9oLWjm5OqfnVt3N8MwcMHHMdawvqqdjP79lIZgetnSpj77BLsSI1g==",
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.0.1"
         }
@@ -1264,11 +1264,11 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "CentralTransitive",
-        "requested": "[10.0.4, )",
-        "resolved": "10.0.4",
-        "contentHash": "4u3HLMYQqnTIF26VUiKhSuXtjFIvEfnwK9ZBUa4bXEc1koQCCkZx6ss5urKjqqimJMtuPHDKPHDchxkgoDNhjQ==",
+        "requested": "[10.0.5, )",
+        "resolved": "10.0.5",
+        "contentHash": "9UHU7hldEOVgcOHUX7Pa+owDfpzhW+a1gshEvyknAoDA++G6FV+N1cPoUbtsXEO7GgPErGSg8MHrI/YqrLoiGA==",
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "10.0.4"
+          "System.Security.Cryptography.ProtectedData": "10.0.5"
         }
       }
     }
