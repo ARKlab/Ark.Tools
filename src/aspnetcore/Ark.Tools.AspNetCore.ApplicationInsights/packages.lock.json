@@ -72,9 +72,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.18.0, )",
-        "resolved": "9.18.0",
-        "contentHash": "jlgewzgbgEFIoplbpdWNPKo/+R9ELej0iL1sdKrVeMzQ0aZCvRCdi/X/4AjRaBqkXoDTWFrOjgVXRukZYSVO+w=="
+        "requested": "[9.22.0, )",
+        "resolved": "9.22.0",
+        "contentHash": "kmELvtpt6ziHRHYHcMygLNElwdBGRIJN1jAIv5GVxCcAhECnmJEP6L9zIIividSt9tXl2DNoMcRqgOUS36rEZQ=="
       },
       "Azure.Core": {
         "type": "Transitive",
