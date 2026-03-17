@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.23, )",
-        "resolved": "3.0.23",
-        "contentHash": "C3DKBO0TkDP01gb/RW7U4p5Tt0EF+++dpVb+ekewJcVlGYCgWz43tXcVYmfGwo6qaFhTiugbg94cJGEgsaK/4g=="
+        "requested": "[3.0.25, )",
+        "resolved": "3.0.25",
+        "contentHash": "8mzoeC5EWI7E5gY5he3qLomGmIMT5EBFVdLRSOzwD2XikHTtVihIL+7YrrlJ1iWqshIrdmQnOxH/OIY1Bk98ww=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -57,9 +57,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.18.0, )",
-        "resolved": "9.18.0",
-        "contentHash": "jlgewzgbgEFIoplbpdWNPKo/+R9ELej0iL1sdKrVeMzQ0aZCvRCdi/X/4AjRaBqkXoDTWFrOjgVXRukZYSVO+w=="
+        "requested": "[9.22.0, )",
+        "resolved": "9.22.0",
+        "contentHash": "kmELvtpt6ziHRHYHcMygLNElwdBGRIJN1jAIv5GVxCcAhECnmJEP6L9zIIividSt9tXl2DNoMcRqgOUS36rEZQ=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -91,8 +91,8 @@
       },
       "Microsoft.AspNetCore.JsonPatch": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "AxRcJMoHvJ4NDVKiOas5Itd+uGhYcbkSqdtIWS49IQyJSwZuU4M9QCDt8anU3o4Dv5iDpkaLNWVmovH3x3E2ag==",
+        "resolved": "10.0.3",
+        "contentHash": "IHsqsECi1N2FJ0RmV73Cmp6qusu4vGBhUuWJFyJAC/LekFdwSa5zacZE80Sd8M2fD9ZXgEaA32y5qcj3jh3wlQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3"
         }
@@ -495,7 +495,7 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "RavenDB.Client": "[7.2.0, )"
+          "RavenDB.Client": "[7.2.1, )"
         }
       },
       "ark.tools.ravendb.auditing": {
@@ -841,12 +841,12 @@
       },
       "RavenDB.Client": {
         "type": "CentralTransitive",
-        "requested": "[7.2.0, )",
-        "resolved": "7.2.0",
-        "contentHash": "F7XOrr9BXBrw0qM11xwFvo8XLCKKN7evDgC2XTDWblY83PVSUj2dKJtZwgjfWqtdsBQuduVRC31+oPe6j80SOQ==",
+        "requested": "[7.2.1, )",
+        "resolved": "7.2.1",
+        "contentHash": "ZNWmdUrRF+dBuXHOzniwoNLRbhPBxZ0qYOZEO8C6zRInWsSfeKOdQyVAOKm3B/fnBHOJ6sJvZ9+Ktz79whuEhw==",
         "dependencies": {
           "Lambda2Js.Signed": "3.1.4",
-          "Microsoft.AspNetCore.JsonPatch": "10.0.2",
+          "Microsoft.AspNetCore.JsonPatch": "10.0.3",
           "Microsoft.IO.RecyclableMemoryStream": "3.0.1",
           "Newtonsoft.Json": "13.0.3",
           "Nito.AsyncEx.Coordination": "5.1.2"
@@ -888,9 +888,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.23, )",
-        "resolved": "3.0.23",
-        "contentHash": "C3DKBO0TkDP01gb/RW7U4p5Tt0EF+++dpVb+ekewJcVlGYCgWz43tXcVYmfGwo6qaFhTiugbg94cJGEgsaK/4g=="
+        "requested": "[3.0.25, )",
+        "resolved": "3.0.25",
+        "contentHash": "8mzoeC5EWI7E5gY5he3qLomGmIMT5EBFVdLRSOzwD2XikHTtVihIL+7YrrlJ1iWqshIrdmQnOxH/OIY1Bk98ww=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -935,9 +935,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.18.0, )",
-        "resolved": "9.18.0",
-        "contentHash": "jlgewzgbgEFIoplbpdWNPKo/+R9ELej0iL1sdKrVeMzQ0aZCvRCdi/X/4AjRaBqkXoDTWFrOjgVXRukZYSVO+w=="
+        "requested": "[9.22.0, )",
+        "resolved": "9.22.0",
+        "contentHash": "kmELvtpt6ziHRHYHcMygLNElwdBGRIJN1jAIv5GVxCcAhECnmJEP6L9zIIividSt9tXl2DNoMcRqgOUS36rEZQ=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -969,8 +969,8 @@
       },
       "Microsoft.AspNetCore.JsonPatch": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "AxRcJMoHvJ4NDVKiOas5Itd+uGhYcbkSqdtIWS49IQyJSwZuU4M9QCDt8anU3o4Dv5iDpkaLNWVmovH3x3E2ag==",
+        "resolved": "10.0.3",
+        "contentHash": "IHsqsECi1N2FJ0RmV73Cmp6qusu4vGBhUuWJFyJAC/LekFdwSa5zacZE80Sd8M2fD9ZXgEaA32y5qcj3jh3wlQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3"
         }
@@ -1411,7 +1411,7 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "RavenDB.Client": "[7.2.0, )"
+          "RavenDB.Client": "[7.2.1, )"
         }
       },
       "ark.tools.ravendb.auditing": {
@@ -1758,12 +1758,12 @@
       },
       "RavenDB.Client": {
         "type": "CentralTransitive",
-        "requested": "[7.2.0, )",
-        "resolved": "7.2.0",
-        "contentHash": "F7XOrr9BXBrw0qM11xwFvo8XLCKKN7evDgC2XTDWblY83PVSUj2dKJtZwgjfWqtdsBQuduVRC31+oPe6j80SOQ==",
+        "requested": "[7.2.1, )",
+        "resolved": "7.2.1",
+        "contentHash": "ZNWmdUrRF+dBuXHOzniwoNLRbhPBxZ0qYOZEO8C6zRInWsSfeKOdQyVAOKm3B/fnBHOJ6sJvZ9+Ktz79whuEhw==",
         "dependencies": {
           "Lambda2Js.Signed": "3.1.4",
-          "Microsoft.AspNetCore.JsonPatch": "10.0.2",
+          "Microsoft.AspNetCore.JsonPatch": "10.0.3",
           "Microsoft.IO.RecyclableMemoryStream": "3.0.1",
           "Newtonsoft.Json": "13.0.3",
           "Nito.AsyncEx.Coordination": "5.1.2"
