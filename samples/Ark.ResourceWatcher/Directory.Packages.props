@@ -18,6 +18,7 @@
   <ItemGroup>
     <!-- 3rd party packages used by this sample -->
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="1.0.0" />
     
     <!-- Testing packages -->
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />

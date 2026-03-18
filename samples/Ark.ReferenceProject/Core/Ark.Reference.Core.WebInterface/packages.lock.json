@@ -1358,7 +1358,8 @@
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
-          "Ark.Tools.Sql.SqlServer": "[1.0.0, )"
+          "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
+          "Microsoft.Data.SqlClient.Extensions.Azure": "[1.0.0, )"
         }
       },
       "ark.reference.core.common": {
@@ -1664,6 +1665,19 @@
         "dependencies": {
           "Azure.Core": "1.50.0",
           "Azure.Storage.Common": "12.26.0"
+        }
+      },
+      "Microsoft.Data.SqlClient.Extensions.Azure": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.0, )",
+        "resolved": "1.0.0",
+        "contentHash": "Q1yVUvxh1Xu2I0eyLkBUJ/OI+YAqjO+HEWWrAzv1cAdSbVbaoa54uJZbFX8q6jFc1VtrHxZuNonISq9SKFXPfA==",
+        "dependencies": {
+          "Azure.Core": "1.51.1",
+          "Azure.Identity": "1.18.0",
+          "Microsoft.Data.SqlClient.Extensions.Abstractions": "1.0.0",
+          "Microsoft.Data.SqlClient.Internal.Logging": "1.0.0",
+          "Microsoft.Identity.Client": "4.83.0"
         }
       },
       "Polly": {
