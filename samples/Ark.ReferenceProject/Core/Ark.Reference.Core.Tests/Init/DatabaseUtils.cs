@@ -1,11 +1,11 @@
 using Dapper;
 
 using Microsoft.Data.SqlClient;
-using Microsoft.SqlServer.Dac;
 
 using Reqnroll;
 
 using System.Data;
+using System.Diagnostics;
 
 namespace Ark.Reference.Core.Tests.Init;
 
@@ -26,15 +26,41 @@ sealed class DatabaseUtils
     }
 
     [BeforeTestRun(Order = -1)]
-    public static void DeployDB()
+    public static async Task DeployDB()
     {
-        var instance = new DacServices(DatabaseConnectionString);
-        using var dacpac = DacPackage.Load("Ark.Reference.Core.Database.dacpac");
-        instance.Deploy(dacpac, "Ark.Reference.Core.Database", true, new DacDeployOptions()
+        // Use sqlpackage CLI to deploy dacpac.
+        // DacFx programmatic API is incompatible with Microsoft.Data.SqlClient v7
+        // because SqlAuthenticationMethod was moved to Extensions.Abstractions assembly.
+        var dacpacPath = Path.GetFullPath("Ark.Reference.Core.Database.dacpac");
+        if (!File.Exists(dacpacPath))
+            throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Dacpac not found at {0}", dacpacPath));
+
+        var psi = new ProcessStartInfo("sqlpackage")
         {
-            CreateNewDatabase = true,
-            AllowIncompatiblePlatform = true // needed since Database project is AzureV12 and under tests 2022 is used
-        });
+            ArgumentList =
+            {
+                "/Action:Publish",
+                string.Format(CultureInfo.InvariantCulture, "/SourceFile:{0}", dacpacPath),
+                string.Format(CultureInfo.InvariantCulture, "/TargetConnectionString:{0}", DatabaseConnectionString),
+                "/TargetDatabaseName:Ark.Reference.Core.Database",
+                "/p:CreateNewDatabase=True",
+                "/p:AllowIncompatiblePlatform=True",
+            },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+        };
+
+        using var process = Process.Start(psi)
+            ?? throw new InvalidOperationException("Failed to start sqlpackage process");
+
+        var stdout = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
+        var stderr = await process.StandardError.ReadToEndAsync().ConfigureAwait(false);
+        await process.WaitForExitAsync().ConfigureAwait(false);
+
+        if (process.ExitCode != 0)
+            throw new InvalidOperationException(
+                string.Format(CultureInfo.InvariantCulture, "sqlpackage failed with exit code {0}.{1}StdOut: {2}{1}StdErr: {3}", process.ExitCode, Environment.NewLine, stdout, stderr));
     }
 
     [BeforeScenario]

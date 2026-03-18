@@ -9,7 +9,6 @@
 		<PackageReference Include="ExcelDataReader" />
 		<PackageReference Include="ExcelDataReader.DataSet" />
 		<PackageReference Include="Microsoft.AspNetCore.TestHost" />
-		<PackageReference Include="Microsoft.SqlServer.DacFx" />
 		<PackageReference Include="Moq" />
 		<PackageReference Include="netDumbster" />
 		<PackageReference Include="NodaTime.Testing" />

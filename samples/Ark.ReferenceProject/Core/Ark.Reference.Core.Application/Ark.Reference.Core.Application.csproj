@@ -8,6 +8,7 @@
 	 <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
 	 <PackageReference Include="Ark.Tools.Sql" />
 	 <PackageReference Include="Ark.Tools.Sql.SqlServer" />
+	 <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" />
   </ItemGroup>
 
   <ItemGroup>
