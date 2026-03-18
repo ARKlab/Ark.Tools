@@ -50,9 +50,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.23, )",
-        "resolved": "3.0.23",
-        "contentHash": "C3DKBO0TkDP01gb/RW7U4p5Tt0EF+++dpVb+ekewJcVlGYCgWz43tXcVYmfGwo6qaFhTiugbg94cJGEgsaK/4g=="
+        "requested": "[3.0.25, )",
+        "resolved": "3.0.25",
+        "contentHash": "8mzoeC5EWI7E5gY5he3qLomGmIMT5EBFVdLRSOzwD2XikHTtVihIL+7YrrlJ1iWqshIrdmQnOxH/OIY1Bk98ww=="
       },
       "Microsoft.AspNetCore.OData": {
         "type": "Direct",
@@ -115,9 +115,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.18.0, )",
-        "resolved": "9.18.0",
-        "contentHash": "jlgewzgbgEFIoplbpdWNPKo/+R9ELej0iL1sdKrVeMzQ0aZCvRCdi/X/4AjRaBqkXoDTWFrOjgVXRukZYSVO+w=="
+        "requested": "[9.22.0, )",
+        "resolved": "9.22.0",
+        "contentHash": "kmELvtpt6ziHRHYHcMygLNElwdBGRIJN1jAIv5GVxCcAhECnmJEP6L9zIIividSt9tXl2DNoMcRqgOUS36rEZQ=="
       },
       "SimpleInjector.Integration.AspNetCore.Mvc.Core": {
         "type": "Direct",
