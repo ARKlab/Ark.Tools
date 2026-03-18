@@ -59,7 +59,8 @@ sealed class DatabaseUtils
         await process.WaitForExitAsync().ConfigureAwait(false);
 
         if (process.ExitCode != 0)
-            throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "sqlpackage failed with exit code {0}.\nStdOut: {1}\nStdErr: {2}", process.ExitCode, stdout, stderr));
+            throw new InvalidOperationException(
+                string.Format(CultureInfo.InvariantCulture, "sqlpackage failed with exit code {0}.{1}StdOut: {2}{1}StdErr: {3}", process.ExitCode, Environment.NewLine, stdout, stderr));
     }
 
     [BeforeScenario]
