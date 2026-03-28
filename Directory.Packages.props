@@ -119,7 +119,7 @@
 	  <PackageVersion Include="KubernetesClient" Version="19.0.2" />
 	  
 	  <!-- SQL -->
-	  <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+	  <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0" />
 	  <PackageVersion Include="Dapper" Version="2.1.72" />
 	  <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.100" />
 
