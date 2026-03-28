@@ -40,7 +40,7 @@
 	  <PackageVersion Include="SimpleInjector" Version="5.5.0" />
 
 	  <PackageVersion Include="ArxOne.Ftp" Version="1.41.4" />
-	  <PackageVersion Include="FluentFTP" Version="54.0.2" />
+	  <PackageVersion Include="FluentFTP" Version="54.0.3" />
 
 	  <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
 	  <PackageVersion Include="Flurl.Http" Version="4.0.2" />
