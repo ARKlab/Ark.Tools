@@ -50,9 +50,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.27, )",
-        "resolved": "3.0.27",
-        "contentHash": "rlWM33Ldt8FJTai9F0KAhPEQrx9J7lX/lYgG2VJEnS7yoCoEEPTNgHN7M/Sigw02Kzv74NumxfH11UaPwbdJ8A=="
+        "requested": "[3.0.29, )",
+        "resolved": "3.0.29",
+        "contentHash": "oC1v3e0kWDV+lA5VcNIkY7e8/Cz1WcrxD9cP2JXzpjQC/iiwiGzqu8aGsVxyEyYFko1WuvvNENrCd24C60Yxhg=="
       },
       "Microsoft.AspNetCore.OData": {
         "type": "Direct",
@@ -167,8 +167,8 @@
       },
       "Auth0.Core": {
         "type": "Transitive",
-        "resolved": "7.45.0",
-        "contentHash": "EOLd/ALMe/63ChLDtJNaJ7dLIk5SL7KBqfMv+k0AAoX75M+2Dmxj2wcWZDCkoiw6Nzheylzubdp8+BjdQuN3lA==",
+        "resolved": "7.45.1",
+        "contentHash": "r9xlmQeiMk8idZBXBMJESSdVif1zLZNrrTXjvUqGY7t5ISgYPllteVy91zgTK1cQn1lRci8I4YhlwQSkwdutLA==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
@@ -410,19 +410,19 @@
       },
       "Microsoft.IdentityModel.Protocols": {
         "type": "Transitive",
-        "resolved": "8.16.0",
-        "contentHash": "UFrU7d46UTsPQTa2HIEIpB9H1uJe1BW9FLw5uhEJ2ZuKdur8bcUA/bO5caq5dlBt5gNJeRIB3QQXYNs5fCQCZA==",
+        "resolved": "8.17.0",
+        "contentHash": "TYbO2KMvWvu8bxbEDCgzggNckCGjwr6NxFf2VYW7PpmCRbsoMNNgVYlCiRvy748t6gj5MJ8v/jcqWrcLMg6PaQ==",
         "dependencies": {
-          "Microsoft.IdentityModel.Tokens": "8.16.0"
+          "Microsoft.IdentityModel.Tokens": "8.17.0"
         }
       },
       "Microsoft.IdentityModel.Protocols.OpenIdConnect": {
         "type": "Transitive",
-        "resolved": "8.16.0",
-        "contentHash": "h4yVXyJsEBBX5lg2G5ftMsi5JzcNEGAzrNphA6DQ6eOd8P0s+cDCOyPwVTYLePZvJL5unbPvYIvzrbTXzFjXnQ==",
+        "resolved": "8.17.0",
+        "contentHash": "8DuZM96o2epBioyp56Q+H8bdGwO8FnU4nQMa0c6pboe9+monH9PZGY+CHKmsdw90ObJ5OXtiKG1TWuLbJp2VvQ==",
         "dependencies": {
-          "Microsoft.IdentityModel.Protocols": "8.16.0",
-          "System.IdentityModel.Tokens.Jwt": "8.16.0"
+          "Microsoft.IdentityModel.Protocols": "8.17.0",
+          "System.IdentityModel.Tokens.Jwt": "8.17.0"
         }
       },
       "Microsoft.IdentityModel.Tokens": {
@@ -642,11 +642,11 @@
       },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "Transitive",
-        "resolved": "8.16.0",
-        "contentHash": "rrs2u7DRMXQG2yh0oVyF/vLwosfRv20Ld2iEpYcKwQWXHjfV+gFXNQsQ9p008kR9Ou4pxBs68Q6/9zC8Gi1wjg==",
+        "resolved": "8.17.0",
+        "contentHash": "nKikRYheDeSaXA3wGr2otwaiRFygBa25m+hc7MEomZVIEWZvKVqd8wgP9yn+8QpLRGgw//dUs4LErGx9gtVmAA==",
         "dependencies": {
-          "Microsoft.IdentityModel.JsonWebTokens": "8.16.0",
-          "Microsoft.IdentityModel.Tokens": "8.16.0"
+          "Microsoft.IdentityModel.JsonWebTokens": "8.17.0",
+          "Microsoft.IdentityModel.Tokens": "8.17.0"
         }
       },
       "System.IO.FileSystem.AccessControl": {
@@ -700,8 +700,8 @@
       "ark.tools.aspnetcore.auth0": {
         "type": "Project",
         "dependencies": {
-          "Auth0.AuthenticationApi": "[7.45.0, )",
-          "Auth0.ManagementApi": "[7.45.1, )",
+          "Auth0.AuthenticationApi": "[7.45.1, )",
+          "Auth0.ManagementApi": "[7.46.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.5, )",
           "Polly": "[8.6.6, )"
         }
@@ -932,22 +932,22 @@
       },
       "Auth0.AuthenticationApi": {
         "type": "CentralTransitive",
-        "requested": "[7.45.0, )",
-        "resolved": "7.45.0",
-        "contentHash": "nunqQ5F256M2nV08oXjziJyfd2aDg4wPpPGebSIlrerNhFfWmYZ3wNrEqiV20VAPy1PyNi8SyIuBhprffrd3+g==",
+        "requested": "[7.45.1, )",
+        "resolved": "7.45.1",
+        "contentHash": "XqkKbf/e5psKfCos/tJF+PgCe8nZlKTxB1fNzxdaqsPCo/9OjsQv/JR7ODdc63NeZ2934X4HZv9DBQHSSO9XQw==",
         "dependencies": {
-          "Auth0.Core": "7.45.0",
-          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.16.0",
-          "System.IdentityModel.Tokens.Jwt": "8.16.0"
+          "Auth0.Core": "7.45.1",
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.17.0",
+          "System.IdentityModel.Tokens.Jwt": "8.17.0"
         }
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[7.45.1, )",
-        "resolved": "7.45.1",
-        "contentHash": "yIIO1SLh9cFLhxv9Ff0G2fcxvRBKDH73oxSiRWHFD0HruuT9tBAkNQ6PuSoFuRzcgBC7HWX8ZxvBmy0W7lW8XA==",
+        "requested": "[7.46.0, )",
+        "resolved": "7.46.0",
+        "contentHash": "EEgZ2nSzPDveD24SIAS2v8PQv7vBKj1BC2wl6BJ1t1+3pqYTNM4+w3wmu3L3spRaYv2ihuPKOtsR1lrX5QdocQ==",
         "dependencies": {
-          "Auth0.Core": "7.45.0"
+          "Auth0.Core": "7.45.1"
         }
       },
       "Azure.Extensions.AspNetCore.Configuration.Secrets": {
