@@ -389,13 +389,13 @@ public static class OracleExceptionHandler
                 case 51006:
                 case 51007:
                 case 51008:
-                    logger.Error(logException, logMessage);
+                    logger.Error(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
 
                 //ERROR OR WARNING	
                 case 8157:
                 case 10021:
-                    logger.Error(logException, logMessage);
+                    logger.Error(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
 
                 //INFORMATIONAL
@@ -459,7 +459,7 @@ public static class OracleExceptionHandler
                 case 49039:
                 case 49041:
                 case 49042:
-                    logger.Info(logException, logMessage);
+                    logger.Info(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
 
                 //INTERNAL ERROR	
@@ -498,7 +498,7 @@ public static class OracleExceptionHandler
                 case 16309:
                 case 17016:
                 case 17017:
-                    logger.Error(logException, logMessage);
+                    logger.Error(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
 
 
@@ -726,7 +726,7 @@ public static class OracleExceptionHandler
                 case 48062:
                 case 48086:
                 case 48093:
-                    logger.Fatal(logException, logMessage);
+                    logger.Fatal(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
 
 
@@ -850,11 +850,11 @@ public static class OracleExceptionHandler
                 case 47161:
                 case 47166:
                 case 47171:
-                    logger.Info(logException, logMessage);
+                    logger.Info(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
 
                 default:
-                    logger.Error(logException, logMessage);
+                    logger.Error(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
             }
 

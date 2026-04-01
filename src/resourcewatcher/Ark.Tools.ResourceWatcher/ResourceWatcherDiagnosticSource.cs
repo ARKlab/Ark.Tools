@@ -36,7 +36,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
     public void RunTookTooLong(Activity activity)
     {
-        _logger.Fatal($"Check for tenant {_tenant} took too much:{activity.Duration}");
+        _logger.Fatal(CultureInfo.InvariantCulture, "Check for tenant {Tenant} took too much:{Duration}", _tenant, activity.Duration);
 
         ResourceWatcherDiagnosticSource._reportEvent("RunTookTooLong",
             () => new
@@ -48,7 +48,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
     public void ProcessResourceTookTooLong(string resourceId, Activity activity)
     {
-        _logger.Fatal($"Processing of ResourceId={resourceId} took too much: {activity.Duration}");
+        _logger.Fatal(CultureInfo.InvariantCulture, "Processing of ResourceId={ResourceId} took too much: {Duration}", resourceId, activity.Duration);
 
         ResourceWatcherDiagnosticSource._reportEvent("ProcessResourceTookTooLong",
             () => new
@@ -86,7 +86,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
         );
 
-        _logger.Error(ex, $"Check failed for tenant {_tenant} in {activity.Duration}");
+        _logger.Error(ex, CultureInfo.InvariantCulture, "Check failed for tenant {Tenant} in {Duration}", _tenant, activity.Duration);
     }
 
     public void RunSuccessful(Activity activity, Dictionary<ResultType, int> resultCounts)
@@ -372,7 +372,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     #region Exception
     public void ProcessResourceSaveFailed(string resourceId, Exception ex)
     {
-        _logger.Error(ex, $"Saving of ResourceId={resourceId} failed");
+        _logger.Error(ex, CultureInfo.InvariantCulture, "Saving of ResourceId={ResourceId} failed", resourceId);
 
         _reportException("ProcessResourceSaveFailed", ex, _tenant);
     }
@@ -388,7 +388,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
     public void ReportRunConsecutiveFailureLimitReached(Exception ex, int count)
     {
-        _logger.Fatal($"Failed {count} times consecutively");
+        _logger.Fatal(CultureInfo.InvariantCulture, "Failed {Count} times consecutively", count);
 
         _reportException("ReportRunConsecutiveFailureLimitReached", ex, _tenant);
     }

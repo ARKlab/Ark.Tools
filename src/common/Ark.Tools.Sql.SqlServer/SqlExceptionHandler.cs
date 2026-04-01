@@ -4,7 +4,6 @@ using Microsoft.Data.SqlClient;
 
 using NLog;
 
-
 namespace Ark.Tools.Sql.SqlServer;
 
 public static class SqlExceptionHandler
@@ -50,10 +49,10 @@ public static class SqlExceptionHandler
             {
                 case 0:
                 case 1: // Trace: RAISERROR('Trace Message', 1,  1) WITH NOWAIT; 
-                    logger.Trace(logException, logMessage);
+                    logger.Trace(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
                 case 2: // Debug: RAISERROR('Debug Message', 2,  1) WITH NOWAIT;
-                    logger.Debug(logException, logMessage);
+                    logger.Debug(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
                 case 3:
                 case 4:
@@ -63,7 +62,7 @@ public static class SqlExceptionHandler
                 case 8:
                 case 9:
                 case 10:
-                    logger.Info(logException, logMessage);
+                    logger.Info(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
                 case 11:
                 case 12:
@@ -74,7 +73,7 @@ public static class SqlExceptionHandler
                 case 17:
                 case 18:
                 case 19: // Error that users can't RAISE
-                    logger.Error(logException, logMessage);
+                    logger.Error(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
                 case 20: // from here the connection is forcefull closed
                 case 21:
@@ -83,7 +82,7 @@ public static class SqlExceptionHandler
                 case 24:
                 case 25:
                 default: // from 17 to 24 or unknown
-                    logger.Fatal(logException, logMessage);
+                    logger.Fatal(logException, global::System.Globalization.CultureInfo.InvariantCulture, "{LogMessage}", logMessage);
                     break;
 
 
