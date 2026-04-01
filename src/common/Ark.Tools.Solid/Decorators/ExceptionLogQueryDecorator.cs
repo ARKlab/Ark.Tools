@@ -24,7 +24,7 @@ public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, global::System.Globalization.CultureInfo.InvariantCulture, "Exception occured");
+            _logger.Error(ex, global::System.Globalization.CultureInfo.InvariantCulture, "Exception occurred");
             throw;
         }
     }

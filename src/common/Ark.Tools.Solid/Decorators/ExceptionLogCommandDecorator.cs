@@ -24,7 +24,7 @@ public sealed class ExceptionLogCommandDecorator<TCommand> : ICommandHandler<TCo
         catch (Exception ex)
         {
             Logger logger = LogManager.GetLogger(_decorated.GetType().ToString());
-            logger.Error(ex, global::System.Globalization.CultureInfo.InvariantCulture, "Exception occured");
+            logger.Error(ex, global::System.Globalization.CultureInfo.InvariantCulture, "Exception occurred");
             throw;
         }
     }
