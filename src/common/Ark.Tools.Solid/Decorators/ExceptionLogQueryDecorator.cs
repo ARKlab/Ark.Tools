@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 
-
-
 namespace Ark.Tools.Solid.Decorators;
 
 public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>, IDisposable
@@ -26,7 +24,7 @@ public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Exception occured");
+            _logger.Error(ex, global::System.Globalization.CultureInfo.InvariantCulture, "Exception occured");
             throw;
         }
     }

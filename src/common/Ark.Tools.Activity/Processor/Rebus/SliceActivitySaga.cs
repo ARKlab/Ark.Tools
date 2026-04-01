@@ -27,7 +27,7 @@ public sealed class SliceActivitySaga
 
     public async Task Handle(SliceReady message)
     {
-        _activity.Logger.Info("Slice {ActivitySlice} received dependency for resource {Resource}@{ResourceSlice}", message.ActivitySlice, message.Resource, message.ResourceSlice);
+        _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Slice {ActivitySlice} received dependency for resource {Resource}@{ResourceSlice}", message.ActivitySlice, message.Resource, message.ResourceSlice);
         var sourceDep = _activity.Dependencies.Single(x => x.Resource == message.Resource);
 
         if (IsNew)
@@ -52,12 +52,12 @@ public sealed class SliceActivitySaga
             }
             else
             {
-                _activity.Logger.Info("Nothing to do for Slice {ActivitySlice}", Data.ActivitySlice);
+                _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Nothing to do for Slice {ActivitySlice}", Data.ActivitySlice);
             }
         }
         else
         {
-            _activity.Logger.Info("Skipped materialization for slice {ActivitySlice}. Missing {MissingSlices}", Data.ActivitySlice, string.Join(",", Data.MissingSlices.Select(m => string.Format("{0}@{1}", m.Resource, m.ResourceSlice))));
+            _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Skipped materialization for slice {ActivitySlice}. Missing {MissingSlices}", Data.ActivitySlice, string.Join(",", Data.MissingSlices.Select(m => string.Format(global::System.Globalization.CultureInfo.InvariantCulture, "{0}@{1}", m.Resource, m.ResourceSlice))));
         }
     }
 
@@ -74,7 +74,7 @@ public sealed class SliceActivitySaga
 
     public async Task Handle(CoolDownMessage message)
     {
-        _activity.Logger.Info("Message Processed after CoolDown Time for Slice {ActivitySlice}", Data.ActivitySlice);
+        _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Message Processed after CoolDown Time for Slice {ActivitySlice}", Data.ActivitySlice);
         await _process().ConfigureAwait(false);
     }
 
@@ -86,7 +86,7 @@ public sealed class SliceActivitySaga
             Resource = _activity.Resource,
             Slice = Data.ActivitySlice
         }).ConfigureAwait(false);
-        _activity.Logger.Info("Completed materialization for slice {ActivitySlice}.", Data.ActivitySlice);
+        _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Completed materialization for slice {ActivitySlice}.", Data.ActivitySlice);
 
         // Reset CD
         Data.IsScheduled = false;
@@ -102,7 +102,7 @@ public sealed class SliceActivitySaga
 
         if (timeToWait != null && timeToWait.Value.TotalSeconds > 0)
         {
-            _activity.Logger.Info("Message Deferred after {TimeToWait}s seconds for Slice {ActivitySlice}", timeToWait.Value.TotalSeconds, Data.ActivitySlice);
+            _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Message Deferred after {TimeToWait}s seconds for Slice {ActivitySlice}", timeToWait.Value.TotalSeconds, Data.ActivitySlice);
 
             await _bus.DeferLocal(timeToWait.Value, new CoolDownMessage()
             {
