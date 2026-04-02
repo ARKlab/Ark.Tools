@@ -30,9 +30,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.43, )",
-        "resolved": "3.0.43",
-        "contentHash": "T7THuFRNsvDz4VM/fUvBPfAMWZrsdBosLeghRDp7DD7joMz+3IFJB0y8HQTm3XfpD569ftO4XBH2NKDaBKp0NA=="
+        "requested": "[3.0.44, )",
+        "resolved": "3.0.44",
+        "contentHash": "lUecKj+n4OtXMKzV5lPqIBgE22+9qTdAovT9nctyVSYfAr82UKuPPSS1XooSftwES4Cj8LULpEp7mamDlburYA=="
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Direct",
