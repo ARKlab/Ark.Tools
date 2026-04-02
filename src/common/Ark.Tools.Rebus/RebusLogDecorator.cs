@@ -22,7 +22,7 @@ public class RebusLogDecorator<T> : IHandleMessages<T>
         try
         {
             await _inner.Handle(message).ConfigureAwait(false);
-            _logger.Debug("Processed message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
+            _logger.Debug(global::System.Globalization.CultureInfo.InvariantCulture, "Processed message type {Type} in {Elapsed}ms", typeof(T).FullName, sw.ElapsedMilliseconds);
         }
         catch (Exception e)
         {

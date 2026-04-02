@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.39, )",
-        "resolved": "3.0.39",
-        "contentHash": "El6VDCzPsTnrVL2uVbRSmaNjGIEi4jFwpjwJChcS91G/OSr+vzVM2y/H6MxChwfZ5FH1zRIhB5b0o2uRscwfOA=="
+        "requested": "[3.0.43, )",
+        "resolved": "3.0.43",
+        "contentHash": "T7THuFRNsvDz4VM/fUvBPfAMWZrsdBosLeghRDp7DD7joMz+3IFJB0y8HQTm3XfpD569ftO4XBH2NKDaBKp0NA=="
       },
       "Microsoft.ApplicationInsights": {
         "type": "Direct",
@@ -384,9 +384,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.39, )",
-        "resolved": "3.0.39",
-        "contentHash": "El6VDCzPsTnrVL2uVbRSmaNjGIEi4jFwpjwJChcS91G/OSr+vzVM2y/H6MxChwfZ5FH1zRIhB5b0o2uRscwfOA=="
+        "requested": "[3.0.43, )",
+        "resolved": "3.0.43",
+        "contentHash": "T7THuFRNsvDz4VM/fUvBPfAMWZrsdBosLeghRDp7DD7joMz+3IFJB0y8HQTm3XfpD569ftO4XBH2NKDaBKp0NA=="
       },
       "Microsoft.ApplicationInsights": {
         "type": "Direct",

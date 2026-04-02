@@ -74,7 +74,7 @@ public static class NLogConfigurerConfiguration
 
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
-            global::NLog.LogManager.GetLogger("Main").Fatal(e.ExceptionObject as Exception, "UnhandledException");
+            global::NLog.LogManager.GetLogger("Main").Fatal(e.ExceptionObject as Exception, global::System.Globalization.CultureInfo.InvariantCulture, "UnhandledException");
             global::NLog.LogManager.Flush();
         };
 
