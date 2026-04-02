@@ -18,3 +18,4 @@ jobs:
         name: DotNET Tests
         path: "**/*.trx"                            
         reporter: dotnet-trx
+        use-actions-summary: 'false'      # create a Check Run on the PR instead of only writing to Actions Summary
