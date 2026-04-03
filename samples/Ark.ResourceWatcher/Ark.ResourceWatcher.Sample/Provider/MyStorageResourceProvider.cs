@@ -65,7 +65,7 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
             request = request.SetQueryParam("maxResults", filter.MaxResults.Value);
         }
 
-        var response = await request.GetJsonAsync<MyListResponse>(cancellationToken: ctk);
+        var response = await request.GetJsonAsync<MyListResponse>(cancellationToken: ctk).ConfigureAwait(false);
 
         return response.Blobs.Select(b => new MyMetadata
         {
@@ -112,7 +112,7 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
             request = request.WithHeader("Range", $"bytes={lastOffset}-");
         }
 
-        var response = await request.GetAsync(cancellationToken: ctk);
+        var response = await request.GetAsync(cancellationToken: ctk).ConfigureAwait(false);
 
         // If blob hasn't changed (304 Not Modified), return null to skip processing
         if (response.StatusCode == 304)
@@ -120,7 +120,7 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
             return null;
         }
 
-        var data = await response.GetBytesAsync();
+        var data = await response.GetBytesAsync().ConfigureAwait(false);
 
         // Get the current ETag from response for future conditional requests
         var currentETag = response.Headers.FirstOrDefault("ETag");

@@ -81,7 +81,7 @@ public sealed class BlobWorkerHostSteps
         System.Diagnostics.DiagnosticListener.AllListeners.Subscribe(_context.DiagnosticListener);
 
         // Run one cycle
-        await workerHost.RunOnceAsync(ctk: default);
+        await workerHost.RunOnceAsync(ctk: default).ConfigureAwait(false);
     }
 
     [Then(@"the blob ""(.*)"" should be processed")]
