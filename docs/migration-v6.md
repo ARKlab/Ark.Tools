@@ -1186,9 +1186,12 @@ Ask Copilot Agent to "modernize codebase: migrate to CPM" or refer to [MS guide]
 
 Copy the following files from `samples/Ark.ReferenceProject` into your solution folder:
 
-- `.editorconfig` - Code style and formatting rules
+- `.globalconfig` - for local project override, should be empty
+- `.editorconfig` - editorconfig
+- `.errorprone.globalconfig` - Code style and formatting rules
 - `.netanalyzers.globalconfig` - Microsoft .NET analyzer diagnostics (CA* rules)
 - `.meziantou.globalconfig` - Third-party analyzer diagnostics (MA* rules)
+- `BannedSymbols.txt` - Banned symbols config
 - `Directory.Build.props`
 - `Directory.Build.targets`
 
