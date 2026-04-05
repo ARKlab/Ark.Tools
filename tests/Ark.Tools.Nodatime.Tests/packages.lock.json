@@ -150,9 +150,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[9.23.0, )",
-        "resolved": "9.23.0",
-        "contentHash": "YOADCfBR/n7iZrI7RNsAl+XQuC7SPR7gtNiOAw9VkKbHtc7rWHhHWYVsaxA2mP6qmm2+C++BJsX3X9Q0ZP8GBQ=="
+        "requested": "[9.24.1, )",
+        "resolved": "9.24.1",
+        "contentHash": "JF5PONKFpIP49PHyUyxKQYx/tnPBu6MJ1rk37BRIxPXK8ancH0I/NEG341qAK4XoopniEociEdFS8zJEVfYjvA=="
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
