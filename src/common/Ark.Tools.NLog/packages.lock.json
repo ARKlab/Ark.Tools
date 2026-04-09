@@ -132,9 +132,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "7vzAiLPOpHooCHDEEVuLn16jxOkbhyhX6+qr2OzYfE0KBtSbzIQALUAJPUlGI9In0wIlxo3fUjqJCaEa67J1tA=="
+        "requested": "[10.1.1, )",
+        "resolved": "10.1.1",
+        "contentHash": "T8/L+QQ5XW3r43Sl5HQE1H0CWuSQTB6vuTmVvDyLOF6BGXoxkRHgekMHEB0zq3tcEMGOlME7ady+RhxrjbMlTg=="
       },
       "Slack.Webhooks": {
         "type": "Direct",
@@ -665,9 +665,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "7vzAiLPOpHooCHDEEVuLn16jxOkbhyhX6+qr2OzYfE0KBtSbzIQALUAJPUlGI9In0wIlxo3fUjqJCaEa67J1tA=="
+        "requested": "[10.1.1, )",
+        "resolved": "10.1.1",
+        "contentHash": "T8/L+QQ5XW3r43Sl5HQE1H0CWuSQTB6vuTmVvDyLOF6BGXoxkRHgekMHEB0zq3tcEMGOlME7ady+RhxrjbMlTg=="
       },
       "Slack.Webhooks": {
         "type": "Direct",
