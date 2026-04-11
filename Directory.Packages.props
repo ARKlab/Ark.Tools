@@ -40,7 +40,7 @@
 	  <PackageVersion Include="SimpleInjector" Version="5.5.0" />
 
 	  <PackageVersion Include="ArxOne.Ftp" Version="1.41.4" />
-	  <PackageVersion Include="FluentFTP" Version="54.1.0" />
+	  <PackageVersion Include="FluentFTP" Version="54.1.1" />
 
 	  <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
 	  <PackageVersion Include="Flurl.Http" Version="4.0.2" />
@@ -130,7 +130,7 @@
 	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.83.3" />
 	  <PackageVersion Include="JWT" Version="11.0.0" />
 	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.17.0" />
-	  <PackageVersion Include="Azure.Identity" Version="1.20.0" />
+	  <PackageVersion Include="Azure.Identity" Version="1.21.0" />
 	  
 	  <!-- REBUS -->
 	  <PackageVersion Include="Rebus" Version="8.9.0" />
@@ -145,7 +145,7 @@
 	  <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
 
 	  <!-- BUILD TOOLS -->
-	  <PackageVersion Include="Polyfill" Version="10.1.1" />
+	  <PackageVersion Include="Polyfill" Version="10.3.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.201" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
 	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.46" />
