@@ -21,9 +21,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.47, )",
-        "resolved": "3.0.47",
-        "contentHash": "82hyOsuk1RK34XLu1a5t52Fk2zTgKQGT2fqeeX3okyAjhvZQGxMgDg5DhNUpJAFvB4P432nQHPdvIgm85nwkpQ=="
+        "requested": "[3.0.48, )",
+        "resolved": "3.0.48",
+        "contentHash": "z+XqbAzJPBqTjn9NsLLcVgiArxmu+B2vx4GmSVCilnfrWQEtP9h4GiyiJy5Qg8/MbmJS6hSsMYSVY8k5wz9iEw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -33,9 +33,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.201, )",
-        "resolved": "10.0.201",
-        "contentHash": "MTE+F0fj0N8dtfkEGIcX3/rEycMbOf54DXq/n6n8cE6ZfDIPEElY8lc4X5BpZ+c7DBoQDGLG0iBY/W0YZ3nhtw=="
+        "requested": "[10.0.202, )",
+        "resolved": "10.0.202",
+        "contentHash": "ZC4WsiOnzyUHIZ3uGN4popaYPh2NgYcXZ/CpMpAb3mVF/HvBGlBtlredzZMKgcHqlm+ygqJh6qfhUSc/OJ0hWQ=="
       },
       "Microsoft.Identity.Web": {
         "type": "Direct",
@@ -507,8 +507,8 @@
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Transitive",
-        "resolved": "10.0.5",
-        "contentHash": "fZzXogChrwQ/SfifQJgeW7AtR8hUv5+LH9oLWjm5OqfnVt3N8MwcMHHMdawvqqdjP79lIZgetnSpj77BLsSI1g==",
+        "resolved": "10.0.6",
+        "contentHash": "JVPyTTr5J/Z5PikptDP2g8qwNJBJ09GZ7yHpaPDAMZ0qKeA2ZKqpZhUNJk1clBqZJeMj2T7gZ5o6oOrmLxuBdw==",
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.0.1"
         }
@@ -989,8 +989,8 @@
       },
       "Rebus": {
         "type": "Transitive",
-        "resolved": "8.9.0",
-        "contentHash": "UaPGZuXIL4J5GUDA05JzEEzuPMEXY0CoF92nC6bsFBPvwoYPQ0uKyH2vKqdV80CW7cjbwBgDlEZ7R9hO9b59XA==",
+        "resolved": "8.9.2",
+        "contentHash": "JyiO5vkH76wxLKcgXle7ewZ7rfIg+/L8/EFJY8npRsI1QwW8YprZTQX7EBbIuBqfeaqUra+2/TEPen4Nx+PU6A==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
@@ -1006,8 +1006,8 @@
       },
       "Rebus.AzureServiceBus": {
         "type": "Transitive",
-        "resolved": "10.5.1",
-        "contentHash": "8I1EV07gmvaIclkgcoAERn0uBgFto2s7KQQ9tn7dLVKcoH8HDzGxN1ds1gtBJX+BFB6AJ50nM17sbj76LjcoIw==",
+        "resolved": "10.6.0",
+        "contentHash": "6sLF/XcbCuiOdk34nUejjic7KUZBw1/2u/Xm+s2cNMuUuleyL7IxlJddjNwDpvmMzGFTjWw8gJtqF3081s+1FA==",
         "dependencies": {
           "Azure.Messaging.ServiceBus": "7.20.1",
           "Rebus": "8.9.0",
@@ -1042,8 +1042,8 @@
       },
       "SimpleInjector": {
         "type": "Transitive",
-        "resolved": "5.5.0",
-        "contentHash": "ybPs0RE2x3mmBdXD/ZsPUwKGNSa8bZnI2HWeO2irwVHvzBkvYb+KQRaK2dIcKIWPD8cBgxekZdIi3YhRLfq8Xw=="
+        "resolved": "5.5.1",
+        "contentHash": "GMNa78+tHkALr5mdrtcEovv+X9clUg/bzFvI7pFLjDbjTaP5z/brdJ+Yixw5JDF9dX+N/NKWu2AueA/HNyMtGQ=="
       },
       "SimpleInjector.Integration.AspNetCore": {
         "type": "Transitive",
@@ -1401,7 +1401,7 @@
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.45.1, )",
           "Auth0.ManagementApi": "[7.47.0, )",
-          "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.5, )",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.6, )",
           "Polly": "[8.6.6, )"
         }
       },
@@ -1575,9 +1575,9 @@
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.1, )",
-          "Rebus": "[8.9.0, )",
+          "Rebus": "[8.9.2, )",
           "Rebus.AzureBlobs": "[1.1.0, )",
-          "Rebus.AzureServiceBus": "[10.5.1, )",
+          "Rebus.AzureServiceBus": "[10.6.0, )",
           "Rebus.NLog": "[6.0.0, )",
           "Rebus.SqlServer": "[8.4.1, )"
         }
@@ -1585,7 +1585,7 @@
       "ark.tools.simpleinjector": {
         "type": "Project",
         "dependencies": {
-          "SimpleInjector": "[5.5.0, )"
+          "SimpleInjector": "[5.5.1, )"
         }
       },
       "ark.tools.solid": {

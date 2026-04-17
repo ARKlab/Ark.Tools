@@ -56,6 +56,9 @@
     <PackageVersion Include="Reqnroll.MsTest" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
     
+    <!-- Security patches for transitive dependencies -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.6" />
+
     <!-- Build tools -->
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.202" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
