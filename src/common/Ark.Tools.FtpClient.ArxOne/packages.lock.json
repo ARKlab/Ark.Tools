@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.49, )",
-        "resolved": "3.0.49",
-        "contentHash": "fIDKO+AKB7fWYjZgYrbjdxsgh7+bUDZqsHWGpKFNd3VbCC7Rfpy09NySb1WKHoWUtdmuT3TIDPwOm0WvCGbwEQ=="
+        "requested": "[3.0.50, )",
+        "resolved": "3.0.50",
+        "contentHash": "AGTYgndeBya47VP6NjVkK0gxNuJpDAtId9iAGOxXw0P4P0kSlALd+bETKJdP1uayiJUI3RG3s5Vbm50GYYmAXA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -85,14 +85,6 @@
         "type": "Transitive",
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
-      },
-      "MailKit": {
-        "type": "Transitive",
-        "resolved": "4.15.1",
-        "contentHash": "4mLbqTbH3ctd0NlukHjVQbU3ZnNDuCtB6ttNZDLPZLWMA2Dr31rh/eCSTqOwDojUX8zfDOVaxstMgJTE9PwZNA==",
-        "dependencies": {
-          "MimeKit": "4.15.1"
-        }
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
@@ -207,8 +199,8 @@
       },
       "MimeKit": {
         "type": "Transitive",
-        "resolved": "4.15.1",
-        "contentHash": "cxCcQhD0zhboFoG136jJuJtQjNRDJ+BxBm3f2vWn+53bff/CRo+K1mAkWjsW4Wuyy5O22F40MdMG2nRzQu1cJw==",
+        "resolved": "4.16.0",
+        "contentHash": "X0LFxeM4gPRIhODyY/HYS9b+zRZ7y//v59rFzgS6wLxcPuZThnMtNZHtrr0fjLyRRkg3gqJBtvW36XfUzZ7Djw==",
         "dependencies": {
           "BouncyCastle.Cryptography": "2.6.2",
           "System.Security.Cryptography.Pkcs": "10.0.0"
@@ -360,6 +352,15 @@
         "requested": "[3.0.0, )",
         "resolved": "3.0.0",
         "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
+      },
+      "MailKit": {
+        "type": "CentralTransitive",
+        "requested": "[4.16.0, )",
+        "resolved": "4.16.0",
+        "contentHash": "trJ82DOpAmo8i1jO1vNE+dGn4mPRyeYfy4swRcAGgMJhPoI1Kohf4OFJJf0+YIj4iUxgxPn8W+ht7e7KiYzSjg==",
+        "dependencies": {
+          "MimeKit": "4.16.0"
+        }
       },
       "Microsoft.ApplicationInsights": {
         "type": "CentralTransitive",
@@ -601,9 +602,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.49, )",
-        "resolved": "3.0.49",
-        "contentHash": "fIDKO+AKB7fWYjZgYrbjdxsgh7+bUDZqsHWGpKFNd3VbCC7Rfpy09NySb1WKHoWUtdmuT3TIDPwOm0WvCGbwEQ=="
+        "requested": "[3.0.50, )",
+        "resolved": "3.0.50",
+        "contentHash": "AGTYgndeBya47VP6NjVkK0gxNuJpDAtId9iAGOxXw0P4P0kSlALd+bETKJdP1uayiJUI3RG3s5Vbm50GYYmAXA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -673,14 +674,6 @@
         "type": "Transitive",
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
-      },
-      "MailKit": {
-        "type": "Transitive",
-        "resolved": "4.15.1",
-        "contentHash": "4mLbqTbH3ctd0NlukHjVQbU3ZnNDuCtB6ttNZDLPZLWMA2Dr31rh/eCSTqOwDojUX8zfDOVaxstMgJTE9PwZNA==",
-        "dependencies": {
-          "MimeKit": "4.15.1"
-        }
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
@@ -796,8 +789,8 @@
       },
       "MimeKit": {
         "type": "Transitive",
-        "resolved": "4.15.1",
-        "contentHash": "cxCcQhD0zhboFoG136jJuJtQjNRDJ+BxBm3f2vWn+53bff/CRo+K1mAkWjsW4Wuyy5O22F40MdMG2nRzQu1cJw==",
+        "resolved": "4.16.0",
+        "contentHash": "X0LFxeM4gPRIhODyY/HYS9b+zRZ7y//v59rFzgS6wLxcPuZThnMtNZHtrr0fjLyRRkg3gqJBtvW36XfUzZ7Djw==",
         "dependencies": {
           "BouncyCastle.Cryptography": "2.6.2",
           "System.Security.Cryptography.Pkcs": "8.0.1"
@@ -987,6 +980,15 @@
         "requested": "[3.0.0, )",
         "resolved": "3.0.0",
         "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
+      },
+      "MailKit": {
+        "type": "CentralTransitive",
+        "requested": "[4.16.0, )",
+        "resolved": "4.16.0",
+        "contentHash": "trJ82DOpAmo8i1jO1vNE+dGn4mPRyeYfy4swRcAGgMJhPoI1Kohf4OFJJf0+YIj4iUxgxPn8W+ht7e7KiYzSjg==",
+        "dependencies": {
+          "MimeKit": "4.16.0"
+        }
       },
       "Microsoft.ApplicationInsights": {
         "type": "CentralTransitive",
