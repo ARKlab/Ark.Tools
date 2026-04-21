@@ -58,6 +58,7 @@
     
     <!-- Security patches for transitive dependencies -->
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.6" />
+    <PackageVersion Include="MailKit" Version="4.16.0" />
 
     <!-- Build tools -->
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.202" />

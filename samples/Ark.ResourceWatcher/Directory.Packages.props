@@ -38,6 +38,10 @@
     <PackageVersion Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
     
     <!-- Build tools -->
+    
+    <!-- Security patches for transitive dependencies -->
+    <PackageVersion Include="MailKit" Version="4.16.0" />
+
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.202" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Meziantou.Analyzer" Version="3.0.50" />
