@@ -89,7 +89,7 @@
 	  <PackageVersion Include="Slack.Webhooks" Version="1.1.5" />
 
 	  <!-- ASPNETCORE -->
-	  <PackageVersion Include="Asp.Versioning.Http" Version="8.1.1" />
+	  <PackageVersion Include="Asp.Versioning.Http" Version="10.0.0" />
 	  <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1" />
 	  <PackageVersion Include="Asp.Versioning.OData.ApiExplorer" Version="8.2.1" />
 	  <PackageVersion Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
