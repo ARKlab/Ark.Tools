@@ -749,27 +749,13 @@
       },
       "Microsoft.AspNetCore.Cryptography.Internal": {
         "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "jGlm8BsWcN1IIxLaxcHP6s0u2OEiBMa0HPCiWkMK7xox/h4WP2CRMyk7tV0cJC5LdM3JoR5UUqU2cxat6ElwlA=="
-      },
-      "Microsoft.AspNetCore.DataProtection": {
-        "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "RKU345im2k3hqboK+2ZcBa6oReAUr1m4c/8kf/6/rATNjxVFvWmCMLIP4U1lHhYat+Zmv1TpOlCw+8/7xATRhA==",
-        "dependencies": {
-          "Microsoft.AspNetCore.Cryptography.Internal": "10.0.0",
-          "Microsoft.AspNetCore.DataProtection.Abstractions": "10.0.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Options": "10.0.0",
-          "System.Security.Cryptography.Xml": "10.0.0"
-        }
+        "resolved": "10.0.7",
+        "contentHash": "unTeI3bPmzsl5Xo2Irg7jW8osCjo/H2rBT5sTqopUUI0gbLyTYuTjDyxoKjykjS/nS2jUdAKVFWFoGF1s1g4HQ=="
       },
       "Microsoft.AspNetCore.DataProtection.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "MFwimSi2FH/CMGydm5EnoQFORoaArEX4QG1nijiRN05XUyJqzWwIlYT4AvnhoU1cGett/EvD416f7OnrDisbiA=="
+        "resolved": "10.0.7",
+        "contentHash": "SitkANPwiW0Z2w9bWAFwZ/MxFDDloBkNZCK+SfFJ+/IMUTMvrczBrHmy66+EdQTd2ybRzCm12aKAztQkDGyH6A=="
       },
       "Microsoft.AspNetCore.Hosting": {
         "type": "Transitive",
@@ -2525,6 +2511,21 @@
         "contentHash": "trJ82DOpAmo8i1jO1vNE+dGn4mPRyeYfy4swRcAGgMJhPoI1Kohf4OFJJf0+YIj4iUxgxPn8W+ht7e7KiYzSjg==",
         "dependencies": {
           "MimeKit": "4.16.0"
+        }
+      },
+      "Microsoft.AspNetCore.DataProtection": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "ETphwQ9b2gvTK0ET6cYQY77StbIvSmYHZJdsEOf5AY4YNmol5uIncdqLCJzFgE/KEH1ukRdXTkwSC27hNnltOw==",
+        "dependencies": {
+          "Microsoft.AspNetCore.Cryptography.Internal": "10.0.7",
+          "Microsoft.AspNetCore.DataProtection.Abstractions": "10.0.7",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.7",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.7",
+          "Microsoft.Extensions.Options": "10.0.7",
+          "System.Security.Cryptography.Xml": "10.0.7"
         }
       },
       "Microsoft.Identity.Web": {
