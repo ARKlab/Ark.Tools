@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.52, )",
-        "resolved": "3.0.52",
-        "contentHash": "hgDgjAG6uXslUO/Q5X+leh5Oqzo9iQyr4C+4qJUFfeyNH03AN3USo9mWhJX8nFgSM+CNLV6DCkY17dxcNZZ3FA=="
+        "requested": "[3.0.54, )",
+        "resolved": "3.0.54",
+        "contentHash": "fybpNsTg4ZT+oiQWkrkTvvy1dowdqjfkefFa/7OIPFPmTkHd9eSEjPCpoK1c5oYdp68QjpLTbeCDpZB2TOUQ4A=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -180,11 +180,11 @@
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.5.3",
-        "contentHash": "HRPsrRQHoJx5JfZ/NqBk24DHkaYeAC0GMEe/68QO+rVuWWtOo7zPJ/U6uLvLueAFpc5MiHFCEijL9WmYaSSREw==",
+        "resolved": "3.5.4",
+        "contentHash": "f5ygbxlMHz55Wjmy160m+58eRGhyOvQtFs7aU0a3/BucRkEX3eaEotBgtcKqJdbb/S4HfXP3kmZ/boHVvtr32A==",
         "dependencies": {
           "MessagePack": "3.1.4",
-          "NodaTime": "3.3.1"
+          "NodaTime": "3.3.2"
         }
       },
       "MessagePackAnalyzer": {
@@ -924,7 +924,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.5.3, )"
+          "MessagePack.NodaTime": "[3.5.4, )"
         }
       },
       "ark.tools.newtonsoftjson": {
