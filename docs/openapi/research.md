@@ -34,7 +34,7 @@ Key findings:
 - The Microsoft package does **not** ship a UI. Microsoft documentation shows using Swagger UI, Redoc, or Scalar as consumers of the generated document.
 - Build-time document generation is enabled by adding `Microsoft.Extensions.ApiDescription.Server` and setting `OpenApiGenerateDocuments=true`.
 - Build-time generation runs during `dotnet build` by launching the application entrypoint with a mock server. This is not purely static analysis; startup paths must avoid external side effects, database connections, migrations, `IHostedService` / `BackgroundService` execution, or third-party calls during document generation.
-- Runtime document endpoints regenerate the document per request unless cached. The modernization target is to generate the document continuously during build/development/test, then have the API host that generated JSON as a static artifact instead of generating it per anonymous request.
+- Runtime document endpoints regenerate the document per request unless cached. The modernization target is to generate the document continuously during build/development/test, then have the API host the generated JSON as a static artifact instead of generating it per anonymous request.
 - .NET 10 adds first-party OpenAPI 3.1 and JSON Schema draft 2020-12 support, YAML runtime output, `IOpenApiDocumentProvider`, stronger XML comment support, and `GetOrCreateSchemaAsync` for transformers.
 - Build-time YAML output is documented as not supported yet, so JSON should be the canonical generated artifact until this changes.
 - The Microsoft guidance is explicit that OpenAPI UI endpoints should only be enabled in development environments to limit information disclosure.
@@ -66,7 +66,7 @@ Trade-offs:
 
 - The app entrypoint still runs at build time with a mock server, so startup code must avoid external side effects during document generation.
 - Build-time generation can fail if configuration, secrets, hosted services, database migrations, or external clients are required during startup.
-- Runtime-only document customizations that depend on `HttpContext` or dynamic app state must be prohibited or replaced with deterministic configuration because the same generated file is used in development, tests, and production static hosting.
+- Runtime-only document customizations that depend on `HttpContext` or dynamic app state are not supported and must be replaced with deterministic configuration because the same generated file is used in development, tests, and production static hosting.
 - Build-time YAML output is not available yet; YAML should be created later by conversion if needed.
 
 Recommendation:

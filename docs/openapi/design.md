@@ -2,7 +2,7 @@
 
 ## Goals
 
-- Reduce production security surface by supporting always-on OpenAPI document generation and static server hosting.
+- Reduce production security surface by supporting always-on OpenAPI document generation and API-hosted static specs.
 - Introduce new OpenAPI generation support now with `Microsoft.AspNetCore.OpenApi` and `Asp.Versioning.OpenApi`.
 - Preserve current Swashbuckle, Swagger UI, and Redoc capabilities until the .NET 12 removal window in 2027.
 - Support OpenAPI 3.0 and 3.1 where the underlying generator supports them.
@@ -62,7 +62,7 @@ Define a single conceptual Ark.Tools OpenAPI options model that is independent o
 
 ## Always-on generation and static hosting design
 
-OpenAPI publication should use generated artifacts instead of anonymous runtime generation endpoints. Generation starts now and should run for development, test, CI, and production builds.
+OpenAPI publication should use generated artifacts instead of anonymous runtime generation endpoints. Generation should be enabled immediately and run for development, test, CI, and production builds.
 
 Required behavior:
 

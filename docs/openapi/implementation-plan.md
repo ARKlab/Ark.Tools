@@ -14,7 +14,7 @@
 
 - Publish modernization research, design, and migration guidance under `docs/openapi/`.
 - Document the current Swashbuckle extension inventory and the planned Microsoft OpenAPI equivalents.
-- Document always-on generation, static server hosting, and test validation guidance.
+- Document always-on generation, API-hosted static specs, and test validation guidance.
 - Add a compatibility matrix for .NET 10, .NET 11, and .NET 12.
 - Announce that `Ark.Tools.AspNetCore.Swashbuckle` is legacy and planned for removal in .NET 12, while still supported until then.
 - Add samples for controller APIs and minimal APIs if minimal APIs are supported by Ark.Tools consumers.
