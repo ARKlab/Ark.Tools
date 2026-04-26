@@ -33,8 +33,10 @@ Key findings:
 - The package supports runtime OpenAPI endpoints and transformer APIs for document, operation, and schema customizations.
 - The Microsoft package does **not** ship a UI. Microsoft documentation shows using Swagger UI, Redoc, or Scalar as consumers of the generated document.
 - Build-time document generation is enabled by adding `Microsoft.Extensions.ApiDescription.Server` and setting `OpenApiGenerateDocuments=true`.
-- Build-time generation runs during `dotnet build` by launching the application entrypoint with a mock server. This is not purely static analysis; startup paths must avoid external side effects, database connections, migrations, `IHostedService` / `BackgroundService` execution, or third-party calls during document generation.
-- Runtime document endpoints regenerate the document per request unless cached. The modernization target is to generate the document continuously during build/development/test, then have the API host the generated JSON as a static artifact instead of generating it per anonymous request.
+- Build-time generation runs during `dotnet build` by launching the application entrypoint with a mock server.
+- This is not purely static analysis; startup paths must avoid external side effects, database connections, migrations, `IHostedService` / `BackgroundService` execution, or third-party calls during document generation.
+- Runtime document endpoints regenerate the document per request unless cached.
+- The modernization target is to generate the document continuously during build/development/test, then have the API host the generated JSON as a static artifact instead of generating it per anonymous request.
 - .NET 10 adds first-party OpenAPI 3.1 and JSON Schema draft 2020-12 support, YAML runtime output, `IOpenApiDocumentProvider`, stronger XML comment support, and `GetOrCreateSchemaAsync` for transformers.
 - Build-time YAML output is documented as not supported yet, so JSON should be the canonical generated artifact until this changes.
 - The Microsoft guidance is explicit that OpenAPI UI endpoints should only be enabled in development environments to limit information disclosure.
@@ -66,7 +68,8 @@ Trade-offs:
 
 - The app entrypoint still runs at build time with a mock server, so startup code must avoid external side effects during document generation.
 - Build-time generation can fail if configuration, secrets, hosted services, database migrations, or external clients are required during startup.
-- Runtime-only document customizations that depend on `HttpContext` or dynamic app state are not supported and must be replaced with deterministic configuration because the same generated file is used in development, tests, and production static hosting.
+- Runtime-only document customizations that depend on `HttpContext` or dynamic app state are not supported.
+- Replace runtime-only customizations with deterministic configuration because the same generated file is used in development, tests, and production static hosting.
 - Build-time YAML output is not available yet; YAML should be created later by conversion if needed.
 
 Recommendation:
@@ -81,7 +84,9 @@ Recommendation:
 
 ### Swashbuckle status
 
-Swashbuckle remains maintained and v10 added support for ASP.NET Core 10, `Microsoft.OpenApi` v2, and opt-in OpenAPI 3.1 output. Its v10 migration guide states that the change helps users who may migrate from Swashbuckle to `Microsoft.AspNetCore.OpenApi`, especially for Native AOT, but Swashbuckle remains its own generator stack.
+Swashbuckle remains maintained and v10 added support for ASP.NET Core 10, `Microsoft.OpenApi` v2, and opt-in OpenAPI 3.1 output.
+Its v10 migration guide says the change helps users who may migrate to `Microsoft.AspNetCore.OpenApi`, especially for Native AOT.
+Swashbuckle remains its own generator stack.
 
 Swashbuckle v10 advantages:
 
@@ -136,11 +141,28 @@ Sources:
 
 ## Frontend comparison
 
-| Frontend | Maturity | Strengths | Weaknesses | Generator integration |
-| --- | --- | --- | --- | --- |
-| Swagger UI | Most established and widely recognized. Active project with OpenAPI 2.0, 3.0, 3.1, and 3.2 compatibility listed in its current README; verify OpenAPI 3.2 specification status before relying on it for contract governance. | Excellent interactive `try it out`, OAuth support, broad developer familiarity, plugin/customization APIs, packaged by Swashbuckle. | UI is utilitarian, production exposure is risky, customization often needs JS/CSS/plugins, package uses install analytics unless disabled. | `Swashbuckle.AspNetCore.SwaggerUI` exposes embedded `swagger-ui` assets and can point to API-hosted static JSON, so it can be retained as a UI package even when generation moves to Microsoft OpenAPI. |
-| Scalar | Newer but rapidly adopted in the .NET ecosystem. Microsoft docs show Scalar integration and `asp.versioning` examples use it. | Modern UX, built-in API client, dark mode/theme focus, strong ASP.NET Core package, multi-document/version integration. | Younger project than Swagger UI/Redoc; long-term enterprise maturity still developing. | `Scalar.AspNetCore` maps `/scalar`, serves embedded static assets, supports document route parameters, and can consume Microsoft OpenAPI endpoints/static specs. |
-| Redoc | Mature open-source reference documentation tool with strong public-docs adoption. | Excellent three-panel reference layout, search/navigation, strong support for vendor extensions (`x-logo`, `x-tagGroups`, `x-codeSamples`, `x-badges`, etc.), static HTML generation through Redocly CLI. | Open-source Redoc lacks built-in interactive try-it console; richer features are in Redocly commercial products. | `Swashbuckle.AspNetCore.ReDoc` exposes embedded Redoc assets and `Redoc.AspNetCore` is a Redoc-only alternative. Both can consume API-hosted static JSON. |
+### Swagger UI
+
+- Most established and widely recognized frontend.
+- Its current README lists OpenAPI 2.0, 3.0, 3.1, and 3.2 compatibility; verify OpenAPI 3.2 specification status before relying on it for contract governance.
+- Strengths: interactive `try it out`, OAuth support, broad developer familiarity, plugins, and Swashbuckle packaging.
+- Weaknesses: utilitarian UI, production exposure risk, customization often needs JS/CSS/plugins, and the package uses install analytics unless disabled.
+- Integration: `Swashbuckle.AspNetCore.SwaggerUI` exposes embedded `swagger-ui` assets and can point to API-hosted static JSON after generation moves to Microsoft OpenAPI.
+
+### Scalar
+
+- Newer frontend with growing .NET ecosystem adoption.
+- Microsoft docs show Scalar integration, and `asp.versioning` examples use it.
+- Strengths: modern UX, built-in API client, dark mode/theme focus, ASP.NET Core package, and multi-document/version integration.
+- Weakness: younger project than Swagger UI and Redoc; long-term enterprise maturity is still developing.
+- Integration: `Scalar.AspNetCore` maps `/scalar`, serves embedded static assets, supports document route parameters, and can consume Microsoft OpenAPI endpoints/static specs.
+
+### Redoc
+
+- Mature open-source reference documentation frontend with strong public-docs adoption.
+- Strengths: three-panel reference layout, search/navigation, Redoc vendor extensions, and static HTML generation through Redocly CLI.
+- Weakness: open-source Redoc lacks built-in interactive try-it console; richer features are in Redocly commercial products.
+- Integration: `Swashbuckle.AspNetCore.ReDoc` exposes embedded Redoc assets, and `Redoc.AspNetCore` is a Redoc-only alternative. Both can consume API-hosted static JSON.
 
 Sources:
 
@@ -155,9 +177,11 @@ Sources:
 The UIs should be exposed by the API directly, with their document URLs pointing to the API-hosted static OpenAPI JSON files. Research findings:
 
 - `Swashbuckle.AspNetCore.SwaggerUI` serves embedded `swagger-ui-dist` assets from its middleware and does not require Swashbuckle generation as long as it is configured with static document URLs.
-- `Swashbuckle.AspNetCore.ReDoc` serves embedded Redoc assets from its middleware and can point to a static spec URL. This is the lowest-friction Redoc option if Ark.Tools already keeps Swashbuckle UI packages during the compatibility window.
+- `Swashbuckle.AspNetCore.ReDoc` serves embedded Redoc assets from its middleware and can point to a static spec URL.
+- This is the lowest-friction Redoc option if Ark.Tools already keeps Swashbuckle UI packages during the compatibility window.
 - `Scalar.AspNetCore` serves embedded Scalar assets and supports multiple document names, which fits versioned specs hosted by the API.
-- `Redoc.AspNetCore` is a Redoc-only community package that also hosts Redoc from middleware. It can be considered after evaluating maintenance cadence, package ownership, and dependency policy, but it is less aligned with the existing Swashbuckle compatibility stack.
+- `Redoc.AspNetCore` is a Redoc-only community package that also hosts Redoc from middleware.
+- Consider it after evaluating maintenance cadence, package ownership, and dependency policy; it is less aligned with the existing Swashbuckle compatibility stack.
 
 Recommended UI hosting model now:
 
@@ -178,14 +202,17 @@ Sources:
 Ark.Tools currently references `Swashbuckle.AspNetCore.Annotations` and `Swashbuckle.AspNetCore.Filters` from `Ark.Tools.AspNetCore.Swashbuckle`. Repository usage observed in this branch:
 
 - `ArkStartupWebApiCommon` calls `EnableAnnotations()`, so the base startup enables Swashbuckle attributes globally.
-- No in-repository controllers or DTOs currently use `SwaggerOperation`, `SwaggerResponse`, `SwaggerParameter`, `SwaggerRequestBody`, `SwaggerSchema`, `SwaggerTag`, or `SwaggerSchemaFilter` attributes. External consumers may still rely on them because the package reference is public through the Swashbuckle integration.
+- No in-repository controllers or DTOs currently use `SwaggerOperation`, `SwaggerResponse`, `SwaggerParameter`, `SwaggerRequestBody`, `SwaggerSchema`, `SwaggerTag`, or `SwaggerSchemaFilter` attributes.
+- External consumers may still rely on those attributes because the package reference is public through the Swashbuckle integration.
 - The Reference Project sample uses `Swashbuckle.AspNetCore.Filters.IExamplesProvider<T>` inside `MultiPartJsonOperationFilter` to provide examples for multipart JSON form fields.
-- `Swashbuckle.AspNetCore.Filters` also provides request/response example attributes, response-header filters, security requirements filters, and authorization-summary filters; Ark.Tools has its own default response/security story but samples may still use the examples abstractions.
+- `Swashbuckle.AspNetCore.Filters` also provides request/response example attributes, response-header filters, security requirements filters, and authorization-summary filters.
+- Ark.Tools has its own default response/security story, but samples may still use the examples abstractions.
 
 Migration impact:
 
 - Microsoft OpenAPI does not automatically consume Swashbuckle-specific annotations or filters.
-- The enhanced path needs a compatibility decision for each annotation/filter category: map to native ASP.NET metadata/XML comments, implement Microsoft OpenAPI transformers that read the Swashbuckle attributes, or document as Swashbuckle-only until .NET 12.
+- The enhanced path needs a compatibility decision for each annotation/filter category.
+- Options are native ASP.NET metadata/XML comments, Microsoft OpenAPI transformers that read Swashbuckle attributes, or Swashbuckle-only support until .NET 12.
 - `IExamplesProvider<T>` usage in samples should be migrated either to a generator-neutral Ark.Tools example provider abstraction or to Microsoft OpenAPI transformers that can resolve registered example providers.
 
 Sources:

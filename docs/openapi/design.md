@@ -147,13 +147,19 @@ Ark.Tools should support emitting frontend extensions through generator-neutral 
 
 The compatibility window must include more than Swashbuckle's generator filters. It must also account for packages referenced by Ark.Tools and samples:
 
-| Package / feature | Current use | Enhanced-path requirement |
-| --- | --- | --- |
-| `Swashbuckle.AspNetCore.Annotations` | Referenced by `Ark.Tools.AspNetCore.Swashbuckle`; `EnableAnnotations()` is called in the base startup. | Decide whether each attribute is mapped to Microsoft OpenAPI transformers, replaced with native metadata/XML comments, or documented as Swashbuckle-only until .NET 12. |
-| `SwaggerOperation`, `SwaggerResponse`, `SwaggerParameter`, `SwaggerRequestBody`, `SwaggerSchema`, `SwaggerTag` | No direct in-repository attribute usage found, but external consumers may rely on them. | Provide a migration table and compatibility tests for any supported attribute mappings. |
-| `SwaggerSchemaFilter` | No direct in-repository usage found. | Prefer generator-neutral schema transformers; document Swashbuckle-only behavior if not mapped. |
-| `Swashbuckle.AspNetCore.Filters.IExamplesProvider<T>` | Used by the Reference Project `MultiPartJsonOperationFilter` sample. | Introduce or document a generator-neutral example provider model, or write Microsoft OpenAPI transformers that can resolve existing example providers during the compatibility window. |
-| Filters package security/example helpers | Package referenced by Ark.Tools; examples package provides request/response examples, response headers, security requirements, and authorization summary helpers. | Avoid taking a hard dependency in the enhanced package unless the feature is explicitly supported; prefer Ark.Tools-owned abstractions. |
+- `Swashbuckle.AspNetCore.Annotations` is referenced by `Ark.Tools.AspNetCore.Swashbuckle`, and `EnableAnnotations()` is called in the base startup.
+  - Map common metadata attributes to Microsoft OpenAPI transformers where behavior is deterministic.
+  - Prefer native ASP.NET metadata and XML comments for new code.
+- `SwaggerOperation`, `SwaggerResponse`, `SwaggerParameter`, `SwaggerRequestBody`, `SwaggerSchema`, and `SwaggerTag` are not used directly in this repository.
+  - External consumers may rely on them, so support compatibility mappings during the transition.
+  - Document native replacements for new code.
+- `SwaggerSchemaFilter` is not used directly in this repository.
+  - Treat it as Swashbuckle-only and migrate users to generator-neutral schema transformers.
+- `Swashbuckle.AspNetCore.Filters.IExamplesProvider<T>` is used by the Reference Project `MultiPartJsonOperationFilter` sample.
+  - Introduce a generator-neutral example provider model, or write transition transformers that resolve existing providers.
+- Filters package helpers cover examples, response headers, security requirements, and authorization summaries.
+  - Avoid a hard dependency in the enhanced package unless the feature is explicitly supported.
+  - Prefer Ark.Tools-owned abstractions.
 
 ## Compatibility and deprecation policy
 
@@ -166,4 +172,7 @@ The compatibility window must include more than Swashbuckle's generator filters.
 
 ## Recommended way forward
 
-Use Microsoft OpenAPI as the strategic generator starting now, always-on generated JSON as the testable artifact, API-hosted static JSON as the server contract endpoint, Scalar as the recommended enhanced interactive frontend, Swagger UI as the compatibility frontend, and Redoc as the preferred reference frontend. Keep Swashbuckle generation available for compatibility until .NET 12, but avoid adding net-new features that only work in Swashbuckle.
+Use Microsoft OpenAPI as the strategic generator starting now.
+Use always-on generated JSON as the testable artifact and API-hosted static JSON as the server contract endpoint.
+Use Scalar as the recommended enhanced interactive frontend, Swagger UI as the compatibility frontend, and Redoc as the preferred reference frontend.
+Keep Swashbuckle generation available for compatibility until .NET 12, but avoid adding net-new features that only work in Swashbuckle.

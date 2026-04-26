@@ -36,8 +36,8 @@
 
 - Add compatibility adapters only where they reduce migration cost.
 - Keep existing Swashbuckle filters functional.
-- Inventory `Swashbuckle.AspNetCore.Annotations` usage and define mappings for annotations that Ark.Tools will support in the enhanced generator.
-- Inventory `Swashbuckle.AspNetCore.Filters` usage, including sample use of `IExamplesProvider<T>`, and define a generator-neutral examples story.
+- Implement compatibility mappings for supported `Swashbuckle.AspNetCore.Annotations` attributes and document native replacements for new code.
+- Replace sample use of `Swashbuckle.AspNetCore.Filters.IExamplesProvider<T>` with a generator-neutral examples story, or add a transition transformer that resolves existing providers.
 - Add deprecation attributes to Swashbuckle-specific convenience APIs after the enhanced equivalent exists.
 - Keep obsolete no-op filters as-is until .NET 12 to avoid unexpected source breaks.
 - Ensure compatibility documentation clearly separates Swashbuckle-only APIs from generator-neutral APIs.
