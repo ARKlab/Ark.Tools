@@ -69,7 +69,8 @@ Required behavior:
 - Enable `OpenApiGenerateDocuments=true` for application projects that opt in.
 - Generate one JSON file per API version/document.
 - Store generated artifacts in a deterministic output path such as `artifacts/openapi` or a configured docs publishing folder.
-- Support OpenAPI 3.1 by default for .NET 10+ enhanced generation, with OpenAPI 3.0 available for clients that require it. The planned `docs/openapi/build-time-generation.md` and `docs/openapi/getting-started.md` guides should document both runtime `OpenApiVersion` configuration and build-time `OpenApiGenerateDocumentsOptions` configuration.
+- Support OpenAPI 3.1 by default for .NET 10+ enhanced generation, with OpenAPI 3.0 available for clients that require it.
+- Document runtime `OpenApiVersion` configuration and build-time `OpenApiGenerateDocumentsOptions` configuration in the planned `docs/openapi/build-time-generation.md` and `docs/openapi/getting-started.md` guides.
 - Keep runtime `MapOpenApi`, `MapScalarApiReference`, `UseSwaggerUI`, and Redoc endpoints development-only by default.
 - Provide guidance for guarding startup side effects when build-time generation invokes the app entrypoint.
 - Add optional Spectral linting guidance for CI.
