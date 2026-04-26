@@ -82,16 +82,10 @@ public sealed class SwaggerSpecSteps : IDisposable
         schema.TryGetProperty("allOf", out var allOf).Should().BeTrue("Entity.V1.Output should use allOf for inheritance");
 
         // The second allOf entry contains the output-specific properties
-        JsonElement? dateProperty = null;
-        foreach (var allOfEntry in allOf.EnumerateArray())
-        {
-            if (allOfEntry.TryGetProperty("properties", out var props)
-                && props.TryGetProperty("date", out var dateProp))
-            {
-                dateProperty = dateProp;
-                break;
-            }
-        }
+        var dateProperty = allOf.EnumerateArray()
+            .Where(e => e.TryGetProperty("properties", out var props) && props.TryGetProperty("date", out _))
+            .Select(e => { e.GetProperty("properties").TryGetProperty("date", out var d); return (JsonElement?)d; })
+            .FirstOrDefault();
 
         dateProperty.Should().NotBeNull("Entity.V1.Output allOf should have a 'date' property somewhere");
         dateProperty!.Value.TryGetProperty("format", out var format).Should().BeTrue("date property should have 'format'");
@@ -120,16 +114,8 @@ public sealed class SwaggerSpecSteps : IDisposable
         schema.TryGetProperty("allOf", out var allOf).Should().BeTrue(
             $"Schema {schemaName} should use allOf");
 
-        var found = false;
-        foreach (var allOfEntry in allOf.EnumerateArray())
-        {
-            if (allOfEntry.TryGetProperty("properties", out var props)
-                && props.TryGetProperty(propertyName, out _))
-            {
-                found = true;
-                break;
-            }
-        }
+        var found = allOf.EnumerateArray()
+            .Any(e => e.TryGetProperty("properties", out var props) && props.TryGetProperty(propertyName, out _));
 
         found.Should().BeTrue($"Schema {schemaName} allOf should contain property '{propertyName}'");
     }
@@ -149,12 +135,12 @@ public sealed class SwaggerSpecSteps : IDisposable
         entityPath.Value.ValueKind.Should().NotBe(JsonValueKind.Undefined,
             "should find an entity path in swagger");
 
-        foreach (var verb in entityPath.Value.EnumerateObject())
+        foreach (var verb in entityPath.Value.EnumerateObject().Where(v => v.Value.TryGetProperty("responses", out _)))
         {
-            if (!verb.Value.TryGetProperty("responses", out var responses)) continue;
-            foreach (var response in responses.EnumerateObject())
+            verb.Value.TryGetProperty("responses", out var responses);
+            foreach (var response in responses.EnumerateObject().Where(r => r.Value.TryGetProperty("content", out _)))
             {
-                if (!response.Value.TryGetProperty("content", out var content)) continue;
+                response.Value.TryGetProperty("content", out var content);
                 foreach (var mediaType in content.EnumerateObject())
                 {
                     mediaType.Name.Should().NotContain("odata",
