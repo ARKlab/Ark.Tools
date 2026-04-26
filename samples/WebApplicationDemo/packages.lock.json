@@ -793,7 +793,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.5.3, )"
+          "MessagePack.NodaTime": "[3.5.4, )"
         }
       },
       "ark.tools.newtonsoftjson": {
@@ -1157,12 +1157,12 @@
       },
       "MessagePack.NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.5.3, )",
-        "resolved": "3.5.3",
-        "contentHash": "HRPsrRQHoJx5JfZ/NqBk24DHkaYeAC0GMEe/68QO+rVuWWtOo7zPJ/U6uLvLueAFpc5MiHFCEijL9WmYaSSREw==",
+        "requested": "[3.5.4, )",
+        "resolved": "3.5.4",
+        "contentHash": "f5ygbxlMHz55Wjmy160m+58eRGhyOvQtFs7aU0a3/BucRkEX3eaEotBgtcKqJdbb/S4HfXP3kmZ/boHVvtr32A==",
         "dependencies": {
           "MessagePack": "3.1.4",
-          "NodaTime": "3.3.1"
+          "NodaTime": "3.3.2"
         }
       },
       "Microsoft.ApplicationInsights": {
