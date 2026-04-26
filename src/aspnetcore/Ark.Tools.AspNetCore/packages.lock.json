@@ -530,6 +530,11 @@
         "resolved": "8.6.6",
         "contentHash": "lCBL9mmhF9TZxHG3beVRkyjlLohkIC464xIAq7J7Y59C+z42hmsdUaeCKl2SIAYertOUU5TeBXyQDLDQGIKePQ=="
       },
+      "Portable.System.DateTimeOnly": {
+        "type": "Transitive",
+        "resolved": "9.0.1",
+        "contentHash": "DRzBx/EL1vE9U8Thucwu/oLxpVNH4UXLarAyQbTLOyr4x/X6RT5pEpTZtYAbqLjbrbB99e3YYJW+4pV4DkEn4g=="
+      },
       "Scrutor": {
         "type": "Transitive",
         "resolved": "3.3.0",
@@ -713,7 +718,7 @@
         "type": "Project",
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.45.1, )",
-          "Auth0.ManagementApi": "[7.47.0, )",
+          "Auth0.ManagementApi": "[8.1.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.7, )",
           "Polly": "[8.6.6, )"
         }
@@ -955,11 +960,12 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[7.47.0, )",
-        "resolved": "7.47.0",
-        "contentHash": "iBoq3ti2w3MyZUm7TIPEnP1S1NLBbe64cqrvjhuVx57bOLwFOu9LkY9a8ky8QK9O8ijBggNCXIP/55+Wljw91Q==",
+        "requested": "[8.1.0, )",
+        "resolved": "8.1.0",
+        "contentHash": "pm9Q5CCyu5L8uCRswJJfzgmwCY0VtFeFhBucdiRBhvWFECeUW0S7ngY75jCPpo9Uk4ttARBh3whxB0V9NC+cLw==",
         "dependencies": {
-          "Auth0.Core": "7.45.1"
+          "Auth0.AuthenticationApi": "7.45.1",
+          "Portable.System.DateTimeOnly": "9.0.1"
         }
       },
       "Azure.Extensions.AspNetCore.Configuration.Secrets": {
