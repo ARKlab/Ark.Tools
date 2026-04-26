@@ -33,7 +33,7 @@ Key findings:
 - The package supports runtime OpenAPI endpoints and transformer APIs for document, operation, and schema customizations.
 - The Microsoft package does **not** ship a UI. Microsoft documentation shows using Swagger UI, Redoc, or Scalar as consumers of the generated document.
 - Build-time document generation is enabled by adding `Microsoft.Extensions.ApiDescription.Server` and setting `OpenApiGenerateDocuments=true`.
-- Build-time generation runs during `dotnet build` by launching the application entrypoint with a mock server. This is not purely static analysis; startup paths must avoid external side effects, database connections, migrations, hosted-service startup, or third-party calls during document generation.
+- Build-time generation runs during `dotnet build` by launching the application entrypoint with a mock server. This is not purely static analysis; startup paths must avoid external side effects, database connections, migrations, `IHostedService` / `BackgroundService` execution, or third-party calls during document generation.
 - Runtime document endpoints regenerate the document per request unless cached. Removing those endpoints from production reduces anonymous reflection/document-generation surface.
 - .NET 10 adds first-party OpenAPI 3.1 and JSON Schema draft 2020-12 support, YAML runtime output, `IOpenApiDocumentProvider`, stronger XML comment support, and `GetOrCreateSchemaAsync` for transformers.
 - Build-time YAML output is documented as not supported yet, so JSON should be the canonical generated artifact until this changes.
