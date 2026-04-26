@@ -4,24 +4,24 @@
     "net10.0": {
       "Asp.Versioning.Abstractions": {
         "type": "Transitive",
-        "resolved": "8.1.0",
-        "contentHash": "mpeNZyMdvrHztJwR1sXIUQ+3iioEU97YMBnFA9WLbsPOYhGwDJnqJMmEd8ny7kcmS9OjTHoEuX/bSXXY3brIFA=="
+        "resolved": "10.0.0",
+        "contentHash": "cMRE5nvNMfBgfkb0XFWst/7UtyXCjoAXnV0L4Scx4P9fcf0idgrj1Z0c+3ylsy01K4cOib7dKhCBfpg5z3r0Kg=="
       },
       "Asp.Versioning.Mvc": {
         "type": "Transitive",
-        "resolved": "8.1.1",
-        "contentHash": "mkJv6eAdlbHbqTdrUcfEYFoZuGL6HoR7O+Lfsvivixp7N5BNhfCFPPOwsBzdIiH1qzdJXyJf+C+DZ08j27PMPg==",
+        "resolved": "10.0.0",
+        "contentHash": "W0wZ+0uZ0UK4KstjvEkNBZ0xxhBmxunwNg8582SVyyW7txQmSXibtm8fC4o82LaemPquYskms67bIbJOSrnlug==",
         "dependencies": {
-          "Asp.Versioning.Http": "8.1.1"
+          "Asp.Versioning.Http": "10.0.0"
         }
       },
       "Asp.Versioning.OData": {
         "type": "Transitive",
-        "resolved": "8.2.1",
-        "contentHash": "XLr3WZN+m8HLLu7jCWpqhfBSTjMXZ2PwIp4snBbwXKEIz47VebLwk4luImsZuIHKU6gbpQ5COSsD9YlnN3WJVQ==",
+        "resolved": "10.0.0-rc.1",
+        "contentHash": "T8J9JYsni3k3Qb2QNhysPKiMoO1uk7FFLbIT8tV2Tabvhw7gSaqTQoSiGMU2v7yqKnvUHpVxTH1MqDYte8CkxQ==",
         "dependencies": {
-          "Asp.Versioning.Mvc": "8.1.1",
-          "Microsoft.AspNetCore.OData": "[8.0.2, 10.0.0)"
+          "Asp.Versioning.Mvc": "10.0.0-rc.1",
+          "Microsoft.AspNetCore.OData": "10.0.0-preview.2"
         }
       },
       "AspNetCore.HealthChecks.UI.Core": {
@@ -322,26 +322,26 @@
       },
       "Microsoft.OData.Core": {
         "type": "Transitive",
-        "resolved": "8.4.0",
-        "contentHash": "gt/iiI1AJ7HyI2OZkw84lJxSedUxBdRqPUUlVrkObwolX4T278EBoYQ6ZdXgeb9hDwpUjFlGBYOlHnxnlXmpwQ==",
+        "resolved": "9.0.0-preview.4",
+        "contentHash": "4+5KPPqYfjVBcorvpuRJZ7VVa0up1rn2G1bQKkLRMOOpBIPlS+AlrB0owT8SEkB2zN5pmqo8+DdWaW+NiepyIA==",
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
-          "Microsoft.OData.Edm": "[8.4.0]",
-          "Microsoft.Spatial": "[8.4.0]"
+          "Microsoft.OData.Edm": "[9.0.0-preview.4]",
+          "Microsoft.Spatial": "[9.0.0-preview.4]"
         }
       },
       "Microsoft.OData.Edm": {
         "type": "Transitive",
-        "resolved": "8.4.0",
-        "contentHash": "7tqryp5v/XQ/NIKck6lT6jZBAQonv/+N305Xc4uMdT6nQyq/J3hdvx/wvQAeaRe9RjA44MD3wRqN4wECfYTShA=="
+        "resolved": "9.0.0-preview.4",
+        "contentHash": "cSpVYumHFT9I+6cexOlEzVDLBKy6akvOWmxsAgSNSvKD2/+XDW5clx/csWQvn0uz2pbBphAejnAn01rD0vY2LQ=="
       },
       "Microsoft.OData.ModelBuilder": {
         "type": "Transitive",
-        "resolved": "2.0.0",
-        "contentHash": "QzySAMGhLCMyLNHSTIYKFjJXetoDeGkRS/7JEjm7eMJlyu1Qv4MfL1CXQFg2uijizNu2jQojT0mdCpawXbyv8Q==",
+        "resolved": "3.0.0-preview.1",
+        "contentHash": "B+sbmhiiG3fhVa87mkwi/y9H04xLWLeAhCPYzqNVBo2IITFfX7KuC+IdpuRHEznM/PC4tiWpOw6FpPBV2eyTZA==",
         "dependencies": {
-          "Microsoft.OData.Edm": "[8.0.0, 9.0.0)",
-          "Microsoft.Spatial": "[8.0.0, 9.0.0)",
+          "Microsoft.OData.Edm": "[9.0.0-preview.3, 10.0.0)",
+          "Microsoft.Spatial": "[9.0.0-preview.3, 10.0.0)",
           "System.ComponentModel.Annotations": "4.6.0"
         }
       },
@@ -352,8 +352,8 @@
       },
       "Microsoft.Spatial": {
         "type": "Transitive",
-        "resolved": "8.4.0",
-        "contentHash": "F/n0Bd8SHmMtCCaBngmeaopeALr9YuZn3ocWBsSKqDMmcOb8W8P1paSy7WPq1IRYQSK0SRlPWUCxxcRVjTFF7g=="
+        "resolved": "9.0.0-preview.4",
+        "contentHash": "Aw/TXlcWeuPWIzc0N9WyRA31hI5JOfIzOmbaAQFmJYOcFtEPChkdqsyRRVnjGrBw+OKrqWAJ1fNvyT7yQ/GKNw=="
       },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
@@ -573,12 +573,12 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Asp.Versioning.Http": "[8.1.1, )",
-          "Asp.Versioning.Mvc.ApiExplorer": "[8.1.1, )",
-          "Asp.Versioning.OData.ApiExplorer": "[8.2.1, )",
+          "Asp.Versioning.Http": "[10.0.0, )",
+          "Asp.Versioning.Mvc.ApiExplorer": "[10.0.0, )",
+          "Asp.Versioning.OData.ApiExplorer": "[10.0.0-rc.1, )",
           "FluentValidation": "[12.1.1, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
-          "Microsoft.AspNetCore.OData": "[9.4.1, )",
+          "Microsoft.AspNetCore.OData": "[10.0.0-preview.2, )",
           "NetEscapades.AspNetCore.SecurityHeaders": "[1.3.1, )",
           "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )"
         }
@@ -639,8 +639,8 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Asp.Versioning.OData.ApiExplorer": "[8.2.1, )",
-          "Microsoft.AspNetCore.OData": "[9.4.1, )",
+          "Asp.Versioning.OData.ApiExplorer": "[10.0.0-rc.1, )",
+          "Microsoft.AspNetCore.OData": "[10.0.0-preview.2, )",
           "Swashbuckle.AspNetCore.Annotations": "[10.1.7, )",
           "Swashbuckle.AspNetCore.Filters": "[10.0.1, )",
           "Swashbuckle.AspNetCore.Swagger": "[10.1.7, )",
@@ -766,30 +766,30 @@
       },
       "Asp.Versioning.Http": {
         "type": "CentralTransitive",
-        "requested": "[8.1.1, )",
-        "resolved": "8.1.1",
-        "contentHash": "1D/Mzq1MSUSQe1eCY6GeEsu+tIlpzoWZxZkhlcw/uvtVoTrwO+BMl0fSj/XX8oZN1DutWTZqHDHgyDRq+IeSdQ==",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "xmNm9FM2d20NKy7i1osEQysf7pJ4iJjWnM6e8CoeIhUREqG8nugsfC82pGpmzlatjAJL5T52ieSpyW+GFdSsSQ==",
         "dependencies": {
-          "Asp.Versioning.Abstractions": "8.1.0"
+          "Asp.Versioning.Abstractions": "10.0.0"
         }
       },
       "Asp.Versioning.Mvc.ApiExplorer": {
         "type": "CentralTransitive",
-        "requested": "[8.1.1, )",
-        "resolved": "8.1.1",
-        "contentHash": "u8PrP6CjmurgIh0EDfg8Gc/GdpDHgkbv8OLKdxQcWb5W4sp0i9BcdbQlLvRcATjNIJUyr7ZmqXjmdsFfqnuy0g==",
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "H54UOpRoc4RmhQ4RA2lzDz43a/hAu/JN19Yyy/DNmH4XlRxhemfhifJyh9BaXNJOtGa2Dnu2xEeP4VSiTdUdAg==",
         "dependencies": {
-          "Asp.Versioning.Mvc": "8.1.1"
+          "Asp.Versioning.Mvc": "10.0.0"
         }
       },
       "Asp.Versioning.OData.ApiExplorer": {
         "type": "CentralTransitive",
-        "requested": "[8.2.1, )",
-        "resolved": "8.2.1",
-        "contentHash": "KeDgcYHWq7xkL+Fn8FBKIU0MrJ+UiaeYUZEIBqF7vJ3g0fCsnNjVm58ex6mxgSf0UZt6WyzJgEHxbRwV9jM1Hw==",
+        "requested": "[10.0.0-rc.1, )",
+        "resolved": "10.0.0-rc.1",
+        "contentHash": "SSNJ8EYGl3fDGi2EkpAPKu+4jrS+7ce4vCmcSaUJezIw6nHA+o17Fd1NCKcCWcZcZEVVOu590Cyfxs4HL4Bg+w==",
         "dependencies": {
-          "Asp.Versioning.Mvc.ApiExplorer": "8.1.1",
-          "Asp.Versioning.OData": "8.2.1"
+          "Asp.Versioning.Mvc.ApiExplorer": "10.0.0-rc.1",
+          "Asp.Versioning.OData": "10.0.0-rc.1"
         }
       },
       "AspNetCore.HealthChecks.AzureServiceBus": {
@@ -1046,14 +1046,14 @@
       },
       "Microsoft.AspNetCore.OData": {
         "type": "CentralTransitive",
-        "requested": "[9.4.1, )",
-        "resolved": "9.4.1",
-        "contentHash": "PXyuPnC7p3ic5sgO9ydNqpKd+hXRMErGXfBPeptTWjXfdBWec97cv1fDFLiCKR1Wm4LeG4Yjcap+xk7XNdfsNw==",
+        "requested": "[10.0.0-preview.2, )",
+        "resolved": "10.0.0-preview.2",
+        "contentHash": "ePiGmIvVTPPkhBvst6//5odNpJIf5DL8e3lQjr+ktv+8PcbWLtaS2keANADgPXW3T7XocOkNhYOp1CDTZplIVQ==",
         "dependencies": {
-          "Microsoft.OData.Core": "[8.4.0, 9.0.0)",
-          "Microsoft.OData.Edm": "[8.4.0, 9.0.0)",
-          "Microsoft.OData.ModelBuilder": "[2.0.0, 3.0.0)",
-          "Microsoft.Spatial": "[8.4.0, 9.0.0)"
+          "Microsoft.OData.Core": "[9.0.0-preview.4, 10.0.0)",
+          "Microsoft.OData.Edm": "[9.0.0-preview.4, 10.0.0)",
+          "Microsoft.OData.ModelBuilder": "[3.0.0-preview.1, 4.0.0)",
+          "Microsoft.Spatial": "[9.0.0-preview.4, 10.0.0)"
         }
       },
       "Microsoft.Data.SqlClient": {
