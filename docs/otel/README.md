@@ -1,144 +1,101 @@
-# OpenTelemetry Migration Documentation
+# Ark.Tools OpenTelemetry Integration
 
-This directory contains comprehensive documentation for migrating Ark.Tools from Application Insights v2.x to v3.x (OpenTelemetry-based).
-
----
-
-## Quick Start
-
-**👉 Start here:** [executive-summary.md](executive-summary.md)
-
-The executive summary provides:
-- Situation overview
-- Cost-benefit analysis
-- Decision matrix
-- Recommendation
-- Investment requirements
+Ark.Tools uses **OpenTelemetry** (via Application Insights v3.x) for distributed tracing and telemetry. This document describes the features, configuration, and migration guidance.
 
 ---
 
-## Document Overview
+## Contents
 
-### 1. Executive Summary
-**File:** [executive-summary.md](executive-summary.md)  
-**Audience:** Decision makers, technical leads, product owners  
-**Length:** ~12KB / 390 lines
-
-**Contents:**
-- Situation and current state
-- Critical business impact (cost analysis)
-- Options comparison with decision matrix
-- Recommendation and next steps
-- Investment requirements and ROI
-
-**Read this if:** You need to make a go/no-go decision on the migration
+- [Overview](#overview)
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Configuration Reference](#configuration-reference)
+- [Sampling Strategy](#sampling-strategy) → see [sampling.md](sampling.md)
+- [Migration from Application Insights v2.x](#migration) → see [applicationinsights-migration/](applicationinsights-migration/)
 
 ---
 
-### 2. Migration Analysis
-**File:** [migration-analysis.md](migration-analysis.md)  
-**Audience:** Architects, senior developers  
-**Length:** ~18KB / 600 lines
+## Overview
 
-**Contents:**
-- Current Ark.Tools sampling architecture (detailed)
-- Sampling goals and requirements
-- OpenTelemetry v3.x architecture changes
-- Available packages evaluation
-- Migration strategy and recommendations
-- Cost impact analysis (detailed)
-- Risk assessment
+Ark.Tools provides an opinionated, cost-efficient telemetry setup built on top of Application Insights SDK v3 (OpenTelemetry-based). The main goals are:
 
-**Read this if:** You need deep technical understanding of the migration requirements
+- **Cost efficiency**: Adaptive sampling keeps telemetry costs predictable
+- **Complete error visibility**: Failures are always captured, never dropped
+- **Noise reduction**: High-frequency low-value spans are filtered before sampling
+- **Per-operation fairness**: Rare code paths get sampled fairly vs. high-frequency ones
 
 ---
 
-### 3. NuGet Package Research
-**File:** [nuget-research.md](nuget-research.md)  
-**Audience:** Developers, architects  
-**Length:** ~10KB / 320 lines
+## Features
 
-**Contents:**
-- Detailed evaluation of OpenTelemetry sampler packages
-- Comparison matrix with scores
-- Dependency analysis
-- Performance benchmarks (projected)
-- Why custom implementation is needed
+### Adaptive Sampling
 
-**Read this if:** You want to understand why we can't use existing packages
+The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 
----
+- **Adaptive rate control**: Dynamically adjusts sampling percentage to hit a target telemetry rate (default: 1 trace/second)
+- **Per-operation token buckets**: Each operation (HTTP route, message handler, etc.) gets its own rate budget, ensuring fair representation
+- **Failure preservation**: All spans with errors, exceptions, or failed HTTP status codes are **always sampled** regardless of the rate limit
 
-### 4. Implementation Plan
-**File:** [implementation-plan.md](implementation-plan.md)  
-**Audience:** Development team, project managers  
-**Length:** ~26KB / 850 lines
+### Pre-filtering (Noise Reduction)
 
-**Contents:**
-- Phase-by-phase implementation plan
-- Technical implementation details
-- Testing strategy (unit, integration, load)
-- Timeline and effort estimates (14 weeks, 25-30 days)
-- Success criteria and monitoring
-- Risk mitigation strategies
+`ArkPreFilterProcessor` drops known-noisy, low-value spans before the sampler sees them:
 
-**Read this if:** You're implementing the migration or planning the project
+- `OPTIONS` requests (CORS preflight) – successful only
+- Azure Service Bus `Receive` operations – successful only  
+- SQL `Commit` operations – successful only
+- Optional: specific SQL server/database combinations (for NLog database)
+
+### Telemetry Enrichment
+
+`ArkTelemetryEnrichmentProcessor` adds context to every span:
+
+- `ProcessName`: The entry assembly name (for multi-process environments)
 
 ---
 
-### 5. Code Examples
-**File:** [implementation-plan-code-examples.md](implementation-plan-code-examples.md)  
-**Audience:** Developers  
-**Length:** ~33KB / 1,100 lines
+## Getting Started
 
-**Contents:**
-- Complete, runnable code for all components
-- `ArkAdaptiveSampler` implementation
-- Token bucket and adaptive controller
-- All processors (pre-filter, enrichment, SQL filtering)
-- Configuration extensions
-- Unit test examples
-- Migration checklist
+### ASP.NET Core
 
-**Read this if:** You're writing code for the migration
+```csharp
+// Program.cs or Startup.cs
+builder.Host.AddApplicationInsithsTelemetryForWebHostArk();
 
----
+// Or via services:
+services.ArkApplicationInsightsTelemetry(configuration);
+```
 
-## Quick Reference
+### Worker Service / Hosted Service
 
-### Current Sampling Behavior (v2.x)
+```csharp
+builder.AddApplicationInsightsForHostedService();
+```
 
-**Key Features:**
-- ✅ Adaptive sampling (dynamic rate adjustment)
-- ✅ 100% error preservation (never sample out failures)
-- ✅ Pre-filtering (removes noise)
-- ✅ Configurable via `SamplingPercentageEstimatorSettings`
+### Required Configuration
 
-**Configuration:**
 ```json
 {
   "ApplicationInsights": {
-    "EstimatorSettings": {
-      "MovingAverageRatio": 0.5,
-      "MaxTelemetryItemsPerSecond": 1,
-      "SamplingPercentageDecreaseTimeout": "00:01:00"
-    }
+    "ConnectionString": "InstrumentationKey=...;IngestionEndpoint=https://..."
   }
 }
 ```
 
-### Target Sampling Behavior (v3.x)
+Or via environment variable:
+```
+APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=https://...
+```
 
-**Preserved Features:**
-- ✅ Adaptive sampling (via custom implementation)
-- ✅ 100% error preservation
-- ✅ Pre-filtering
-- ✅ **NEW:** Per-operation bucketing (fairness improvement)
+---
 
-**Configuration:**
+## Configuration Reference
+
+### Sampling Configuration
+
 ```json
 {
   "ApplicationInsights": {
+    "ConnectionString": "...",
     "ArkAdaptiveSampler": {
       "TracesPerSecond": 1.0,
       "MovingAverageRatio": 0.5,
@@ -150,77 +107,79 @@ The executive summary provides:
 }
 ```
 
----
+| Option | Default | Description |
+|--------|---------|-------------|
+| `TracesPerSecond` | `1.0` | Target number of traces to export per second (per operation bucket when bucketing is enabled) |
+| `MovingAverageRatio` | `0.5` | Smoothing factor for rate adjustment (0 = no smoothing, 1 = no adjustment) |
+| `SamplingPercentageDecreaseTimeout` | `00:01:00` | How often to evaluate and adjust the sampling rate |
+| `EnablePerOperationBucketing` | `true` | Whether each operation gets its own token bucket |
+| `MaxOperationBuckets` | `100` | Maximum distinct operations to track (prevents memory unbounded growth) |
 
-## Decision Tree
+### Snapshot Collector
 
-```
-Start: Should we migrate to ApplicationInsights v3.x?
-│
-├─ Can we lose adaptive sampling? (20-50% cost increase)
-│  ├─ YES → Use simple rate limiting (Option 2)
-│  └─ NO → Continue below
-│
-├─ Can we invest 25-30 developer days?
-│  ├─ NO → Can we accept 10-20% cost increase?
-│  │  ├─ YES → Fast-track simplified sampler (2-3 weeks)
-│  │  └─ NO → Stay on v2.x temporarily (Option 3)
-│  └─ YES → Continue below
-│
-├─ Accept 14-week timeline?
-│  ├─ NO → Fast-track simplified sampler (2-3 weeks)
-│  └─ YES → Continue below
-│
-└─ Result: Implement custom sampler (Option 1/4) ✅ RECOMMENDED
+```json
+{
+  "SnapshotCollectorConfiguration": {
+    "IsEnabled": true,
+    "IsEnabledInDeveloperMode": false
+  }
+}
 ```
 
 ---
 
-## Key Metrics
+## How Sampling Works
 
-| Metric | Value |
-|--------|-------|
-| **Total Documentation** | 99 KB / 3,224 lines |
-| **Documents Created** | 6 comprehensive documents |
-| **Implementation Effort** | 25-30 developer days |
-| **Timeline** | 14 weeks (including rollout) |
-| **Investment** | $22,000-$27,000 |
-| **Annual Savings** | $2,000-$5,000 |
-| **Payback Period** | 4-5 years |
-| **Lines of Code** | ~2,000-2,500 LOC |
-| **Test Coverage Target** | >90% |
+See [sampling.md](sampling.md) for a detailed explanation of the adaptive sampling algorithm.
+
+**Short version:**
+1. Spans for errors/exceptions → **always exported** (RecordAndSample)
+2. Spans matching noise filters → **dropped immediately** (processor returns before sampler)
+3. Successful spans → token bucket per operation; if bucket has capacity → export; else → drop
+4. Token buckets refill at `TracesPerSecond` rate and adjust adaptively to observed traffic
 
 ---
 
-## Status
+## Migration
 
-✅ **Analysis Phase:** Complete  
-⏳ **Decision Phase:** Awaiting stakeholder input  
-⏸️ **Implementation Phase:** Not started  
+Migrating from Application Insights SDK v2.x? See the [applicationinsights-migration](applicationinsights-migration/) folder for:
 
-**Current Build Status:** ❌ Failing (expected until migration implemented or reverted to v2.x)
-
----
-
-## Contributing
-
-If you have questions or feedback on this migration:
-
-1. **Technical questions:** Review detailed documents, then discuss with tech lead
-2. **Timeline/effort concerns:** Review implementation-plan.md
-3. **Cost concerns:** Review cost-benefit analysis in executive-summary.md
-4. **Alternative approaches:** Review options in migration-analysis.md
+- [Migration Analysis](applicationinsights-migration/migration-analysis.md) – architectural changes and impact
+- [Implementation Plan](applicationinsights-migration/implementation-plan.md) – what was built and why
+- [NuGet Research](applicationinsights-migration/nuget-research.md) – packages considered
 
 ---
 
-## Version History
+## Architecture
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2026-04-27 | GitHub Copilot | Initial comprehensive documentation |
-
----
-
-**Last Updated:** 2026-04-27  
-**Status:** Ready for Decision  
-**Next Review:** After stakeholder decision
+```
+HTTP Request / Message / SQL / etc.
+          │
+          ▼
+  [OpenTelemetry SDK - ActivitySource]
+          │ Activity started
+          ▼
+  [ArkPreFilterProcessor.OnStart]
+  Filter noise (OPTIONS, SB Receive, SQL Commit)
+          │ (not filtered)
+          ▼
+  [ArkAdaptiveSampler.ShouldSample]
+  • Check: is parent already sampled? → propagate
+  • Check: is it pre-filtered? (span tag set by processor) → Drop
+  • Check: error/exception? → RecordAndSample (always)
+  • Check: per-op token bucket → RecordAndSample or Drop
+          │
+          ▼
+  [ArkTelemetryEnrichmentProcessor.OnStart]
+  Add ProcessName, etc.
+          │
+          ▼
+  [... activity executes ...]
+          │
+          ▼
+  [ArkAdaptiveSampler: OnEnd via ParentBased wrapper]
+  Force RecordAndSample on completed failures even if sampler said Drop
+          │
+          ▼
+  [Azure Monitor Exporter → Application Insights]
+```

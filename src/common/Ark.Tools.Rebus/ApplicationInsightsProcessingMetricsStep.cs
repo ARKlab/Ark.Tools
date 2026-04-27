@@ -56,17 +56,13 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
     }
     sealed class Metrics
     {
-        private static readonly MetricConfigurationForMeasurement _defaultConfigForMeasurement = new(
-                                                                10000,
-                                                                10000,
-                                                                new MetricSeriesConfigurationForMeasurement(restrictToUInt32Values: true));
         private readonly Metric _timeInQueue;
         private readonly Metric _messageProcessing;
 
         internal Metrics(TelemetryClient client)
         {
-            _timeInQueue = client.GetMetric(new MetricIdentifier("Rebus", "Message TimeInQueue (Success)", "MessageType"), _defaultConfigForMeasurement);
-            _messageProcessing = client.GetMetric(new MetricIdentifier("Rebus", "Message ProcessingTime", "MessageType", "OperationResult"), _defaultConfigForMeasurement);
+            _timeInQueue = client.GetMetric(new MetricIdentifier("Rebus", "Message TimeInQueue (Success)", "MessageType"));
+            _messageProcessing = client.GetMetric(new MetricIdentifier("Rebus", "Message ProcessingTime", "MessageType", "OperationResult"));
         }
 
         internal void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)

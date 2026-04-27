@@ -1,9 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.AspNetCore.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -27,9 +25,6 @@ internal sealed class ArkStartupBase
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpContextAccessor();
-
-        services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
-        services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
 
         services.ArkApplicationInsightsTelemetry(Configuration);
 

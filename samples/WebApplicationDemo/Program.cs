@@ -40,7 +40,6 @@ public static class Program
                         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                         .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                         .AddArkEnvironmentVariables()
-                        .AddApplicationInsightsSettings(null, developerMode: env.IsDevelopment())
                         .AddCommandLine(args)
                         ;
                 })

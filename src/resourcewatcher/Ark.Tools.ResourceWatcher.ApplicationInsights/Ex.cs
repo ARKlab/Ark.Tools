@@ -1,7 +1,5 @@
 using Ark.Tools.ApplicationInsights.HostedService;
 
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -10,37 +8,18 @@ namespace Ark.Tools.ResourceWatcher.ApplicationInsights;
 
 public static partial class Ex
 {
+    /// <summary>
+    /// Registers Application Insights for a worker host, including the
+    /// <see cref="ResourceWatcherTelemetryModule"/> DiagnosticSource listener.
+    /// </summary>
+    [RequiresUnreferencedCode("Application Insights configuration binding uses reflection.")]
     public static IHostBuilder AddApplicationInsightsForWorkerHost(this IHostBuilder builder)
     {
         return builder
             .AddApplicationInsightsForHostedService()
             .ConfigureServices((ctx, services) =>
             {
-                services.AddSingleton<ITelemetryModule, ResourceWatcherTelemetryModule>();
-                services.AddHostedService<StartTelemetryHack>();
+                services.AddHostedService<ResourceWatcherTelemetryModule>();
             });
-    }
-
-    private sealed class StartTelemetryHack : IHostedService
-    {
-#pragma warning disable IDE0052 // Remove unread private members
-        private readonly TelemetryClient _client;
-#pragma warning restore IDE0052 // Remove unread private members
-
-        public StartTelemetryHack(TelemetryClient client)
-        {
-            // only used to 'force' creation of the TelemetryClient which in turn triggers the ResourceWatcherTelemetryModule init and thus the subscription of the Listener.
-            _client = client;
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
     }
 }

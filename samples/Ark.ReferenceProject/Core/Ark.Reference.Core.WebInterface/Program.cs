@@ -41,7 +41,6 @@ public static class Program
                         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                         .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                         .AddEnvironmentVariables()
-                        .AddApplicationInsightsSettings(null, developerMode: env.IsDevelopment())
                         .AddCommandLine(args)// duplicated to let AKV url to be taken from CLI
                         .AddAzureKeyVaultMSI()
                         .AddCommandLine(args)

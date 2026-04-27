@@ -136,9 +136,9 @@ public static class NLogConfigurer
         return @this;
     }
 
-    public static Configurer WithApplicationInsightsTargetsAndRules(this Configurer @this, string instrumentationKey, bool async = true)
+    public static Configurer WithApplicationInsightsTargetsAndRules(this Configurer @this, string connectionString, bool async = true)
     {
-        @this.WithApplicationInsightsTarget(instrumentationKey, async)
+        @this.WithApplicationInsightsTarget(connectionString, async)
              .WithApplicationInsightsDefaultRules();
         return @this;
     }
@@ -212,11 +212,11 @@ public static class NLogConfigurer
             _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) : slackTarget);
             return this;
         }
-        public Configurer WithApplicationInsightsTarget(string instrumentationKey, bool async = true)
+        public Configurer WithApplicationInsightsTarget(string connectionString, bool async = true)
         {
             var target = new ApplicationInsightsTarget()
             {
-                InstrumentationKey = instrumentationKey,
+                ConnectionString = connectionString,
                 ContextProperties = {
                     new TargetPropertyWithContext("Properties", new JsonLayout() {
                         ExcludeEmptyProperties = true,

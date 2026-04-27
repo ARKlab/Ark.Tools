@@ -24,7 +24,8 @@
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.ApplicationInsights" />
     <PackageReference Include="Microsoft.ApplicationInsights.SnapshotCollector" />
-	<PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" />
+    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>
 
