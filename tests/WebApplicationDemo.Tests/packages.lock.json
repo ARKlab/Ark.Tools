@@ -1198,6 +1198,7 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Solid.FluentValidaton": "[1.0.0, )",
           "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.7, )",
           "Microsoft.Extensions.ApiDescription.Server": "[10.0.7, )",
           "Microsoft.Identity.Web": "[4.8.0, )"
         }

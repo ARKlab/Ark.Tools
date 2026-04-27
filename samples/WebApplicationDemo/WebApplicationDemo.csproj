@@ -32,7 +32,7 @@
 
   <Target Name="RemoveReferencedXmlCommentsFromOpenApi" AfterTargets="GenerateAdditionalXmlFilesForOpenApi">
     <ItemGroup>
-      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml' And '%(Filename)' != 'WebApplicationDemo'" />
+      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml' and '%(Filename)' != 'WebApplicationDemo'" />
     </ItemGroup>
   </Target>
 

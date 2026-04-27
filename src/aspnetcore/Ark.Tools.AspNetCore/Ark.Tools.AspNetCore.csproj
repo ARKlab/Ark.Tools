@@ -60,7 +60,7 @@
 
   <Target Name="RemoveReferencedXmlCommentsFromOpenApi" AfterTargets="GenerateAdditionalXmlFilesForOpenApi">
     <ItemGroup>
-      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml'" />
+      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml' and '%(Filename)' != 'Ark.Tools.AspNetCore'" />
     </ItemGroup>
   </Target>
 

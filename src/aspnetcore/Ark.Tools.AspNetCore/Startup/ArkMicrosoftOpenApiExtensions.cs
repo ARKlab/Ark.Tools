@@ -256,10 +256,10 @@ internal static class ArkMicrosoftOpenApiExtensions
         if (context.Description.ActionDescriptor is ControllerActionDescriptor)
         {
             operation.OperationId = $@"{context.Description.HttpMethod}{context.Description.RelativePath?
-                .Replace(@"v{api-version}", string.Empty, StringComparison.Ordinal)
-                .Replace(@"/", @"_", StringComparison.Ordinal)
-                .Replace(@"{", @"_", StringComparison.Ordinal)
-                .Replace(@"}", @"_", StringComparison.Ordinal)}";
+                .Replace("v{api-version}", string.Empty, StringComparison.Ordinal)
+                .Replace("/", "_", StringComparison.Ordinal)
+                .Replace("{", "_", StringComparison.Ordinal)
+                .Replace("}", "_", StringComparison.Ordinal)}";
         }
 
         return Task.CompletedTask;
