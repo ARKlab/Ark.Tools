@@ -36,6 +36,8 @@ public class Startup : ArkStartupWebApi
 
     public override IEnumerable<ApiVersion> Versions => ApiVersions.All;
 
+    public override bool UseSwashbuckleOpenApi => HostEnvironment.IsEnvironment("IntegrationTests");
+
     public override OpenApiInfo MakeInfo(ApiVersion version)
         => new()
         {

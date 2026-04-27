@@ -96,7 +96,8 @@ internal static class ArkMicrosoftOpenApiExtensions
 
         var document = await provider.GetOpenApiDocumentAsync(context.RequestAborted).ConfigureAwait(false);
         context.Response.ContentType = "application/json";
-        await document.SerializeAsJsonAsync(context.Response.Body, OpenApiSpecVersion.OpenApi3_1, context.RequestAborted).ConfigureAwait(false);
+        var json = await document.SerializeAsJsonAsync(OpenApiSpecVersion.OpenApi3_1, context.RequestAborted).ConfigureAwait(false);
+        await context.Response.WriteAsync(json, context.RequestAborted).ConfigureAwait(false);
     }
 
     private static string? FindBuildGeneratedDocument(string documentName)

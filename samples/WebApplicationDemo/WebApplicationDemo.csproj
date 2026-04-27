@@ -35,4 +35,11 @@
       <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml' And '%(Filename)' != 'WebApplicationDemo'" />
     </ItemGroup>
   </Target>
+
+  <Target Name="CopyGeneratedOpenApiDocumentsToOutput" AfterTargets="GenerateOpenApiDocuments">
+    <ItemGroup>
+      <GeneratedOpenApiDocument Include="$(BaseIntermediateOutputPath)$(MSBuildProjectName)*.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(GeneratedOpenApiDocument)" DestinationFolder="$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/" SkipUnchangedFiles="true" />
+  </Target>
 </Project>
