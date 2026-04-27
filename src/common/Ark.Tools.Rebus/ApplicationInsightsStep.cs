@@ -23,39 +23,71 @@ public class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
     public async Task Process(IncomingStepContext context, Func<Task> next)
     {
         var transportMessage = context.Load<TransportMessage>();
-        var client = _container.GetInstance<TelemetryClient>();
 
-        var messageId = transportMessage.Headers.GetValueOrNull(Headers.MessageId);
-        var messageType = transportMessage.Headers.GetValueOrNull(Headers.Type);
-        var correlationId = transportMessage.Headers.GetValueOrNull(Headers.CorrelationId);
+        TelemetryClient? client = null;
+        IOperationHolder<RequestTelemetry>? operation = null;
 
-        using var activity = new Activity(_activityName + " | " + messageType);
-        if (_tryExtractRequestId(transportMessage, out var id))
+        try
         {
-            activity.SetParentId(id);
+            client = _container.GetInstance<TelemetryClient>();
 
-            if (_tryExtractContext(transportMessage, out var ctx))
+            var messageId = transportMessage.Headers.GetValueOrNull(Headers.MessageId);
+            var messageType = transportMessage.Headers.GetValueOrNull(Headers.Type);
+            var correlationId = transportMessage.Headers.GetValueOrNull(Headers.CorrelationId);
+
+            using var activity = new Activity(_activityName + " | " + messageType);
+            if (_tryExtractRequestId(transportMessage, out var id))
             {
-                foreach (var kvp in ctx)
+                activity.SetParentId(id);
+
+                if (_tryExtractContext(transportMessage, out var ctx))
                 {
-                    activity.AddBaggage(kvp.Key, kvp.Value);
+                    foreach (var kvp in ctx)
+                    {
+                        activity.AddBaggage(kvp.Key, kvp.Value);
+                    }
                 }
             }
+
+            activity.AddBaggage(Headers.MessageId, messageId);
+            activity.AddBaggage(Headers.CorrelationId, correlationId);
+
+            operation = client.StartOperation<RequestTelemetry>(activity);
         }
+#pragma warning disable ERP022
+        catch
+        {
+            // Telemetry setup failed; continue without tracking so message processing is unaffected.
+        }
+#pragma warning restore ERP022
 
-        activity.AddBaggage(Headers.MessageId, messageId);
-        activity.AddBaggage(Headers.CorrelationId, correlationId);
-
-        using var operation = client.StartOperation<RequestTelemetry>(activity);
         try
         {
             await next().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            operation.Telemetry.Success = false;
-            client.TrackException(ex);
+            try
+            {
+                if (operation is not null)
+                    operation.Telemetry.Success = false;
+                client?.TrackException(ex);
+            }
+#pragma warning disable ERP022
+            catch
+            {
+                // Ignore telemetry errors so the original exception propagates cleanly.
+            }
+#pragma warning restore ERP022
+
             throw;
+        }
+        finally
+        {
+            try { operation?.Dispose(); }
+#pragma warning disable ERP022
+            catch { }
+#pragma warning restore ERP022
         }
     }
 

@@ -78,29 +78,37 @@ public static class ArkApplicationInsightsExtensions
 
             return new ConfigureNamedOptions<TelemetryConfiguration>(Options.DefaultName, tc =>
             {
-                tc.ConfigureOpenTelemetryBuilder(builder =>
+                try
                 {
-                    builder.WithTracing(tracerBuilder =>
+                    tc.ConfigureOpenTelemetryBuilder(builder =>
                     {
-                        // Pre-filter processor runs first to drop noisy spans before sampling.
-                        tracerBuilder.AddProcessor(new ArkPreFilterProcessor());
+                        builder.WithTracing(tracerBuilder =>
+                        {
+                            // Pre-filter processor runs first to drop noisy spans before sampling.
+                            tracerBuilder.AddProcessor(new ArkPreFilterProcessor());
 
-                        // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
-                        tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry));
+                            // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
+                            tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry));
 
-                        // Failure promotion: promotes rate-limited spans (and their parent chain /
-                        // in-flight siblings) to exported when a failure is detected anywhere in
-                        // the operation.
-                        tracerBuilder.AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry));
+                            // Failure promotion: promotes rate-limited spans (and their parent chain /
+                            // in-flight siblings) to exported when a failure is detected anywhere in
+                            // the operation.
+                            tracerBuilder.AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry));
 
-                        // Enrichment: adds ProcessName to all spans.
-                        tracerBuilder.AddProcessor(new ArkTelemetryEnrichmentProcessor());
+                            // Enrichment: adds ProcessName to all spans.
+                            tracerBuilder.AddProcessor(new ArkTelemetryEnrichmentProcessor());
 
-                        // Optional: SQL dependency filter for the NLog audit database.
-                        if (!string.IsNullOrWhiteSpace(sqlConnectionStringToFilter))
-                            tracerBuilder.AddProcessor(new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter));
+                            // Optional: SQL dependency filter for the NLog audit database.
+                            if (!string.IsNullOrWhiteSpace(sqlConnectionStringToFilter))
+                                tracerBuilder.AddProcessor(new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter));
+                        });
                     });
-                });
+                }
+                catch (InvalidOperationException)
+                {
+                    // The OTel builder may already be finalized when TelemetryConfiguration is
+                    // accessed lazily (e.g. after host startup). Silently skip in that case.
+                }
             });
         });
 

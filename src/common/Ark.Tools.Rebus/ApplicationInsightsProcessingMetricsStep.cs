@@ -42,15 +42,33 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
             var now = _time.Now;
             operationResult = "success";
 
-            var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime], CultureInfo.InvariantCulture);
-            var totalTime = now - enqueuedTime;
-            var timeInQueue = totalTime - TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+            try
+            {
+                var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime], CultureInfo.InvariantCulture);
+                var totalTime = now - enqueuedTime;
+                var timeInQueue = totalTime - TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
 
-            _metrics.Value.TrackTimeInQueue(timeInQueue, messageType);
+                _metrics.Value.TrackTimeInQueue(timeInQueue, messageType);
+            }
+#pragma warning disable ERP022
+            catch
+            {
+                // Ignore telemetry errors so message processing is unaffected.
+            }
+#pragma warning restore ERP022
         }
         finally
         {
-            _metrics.Value.TrackMessageProcessing(TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds), messageType, operationResult);
+            try
+            {
+                _metrics.Value.TrackMessageProcessing(TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds), messageType, operationResult);
+            }
+#pragma warning disable ERP022
+            catch
+            {
+                // Ignore telemetry errors so message processing is unaffected.
+            }
+#pragma warning restore ERP022
         }
 
     }
