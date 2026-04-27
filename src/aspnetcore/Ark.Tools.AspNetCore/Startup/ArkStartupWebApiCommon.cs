@@ -307,7 +307,9 @@ public abstract class ArkStartupWebApiCommon
             endpoints.MapControllers();
             if (!UseSwashbuckleOpenApi)
             {
+#if DEBUG
                 endpoints.MapOpenApi("/openapi/{documentName}.json");
+#endif
                 endpoints.MapGet("swagger/docs/{documentName}", ArkMicrosoftOpenApiExtensions.WriteOpenApiDocumentAsync);
             }
             endpoints.Redirect("/", "/swagger");

@@ -8,7 +8,7 @@ public override bool UseSwashbuckleOpenApi => true;
 ```
 
 Swagger UI and Redoc are still hosted by the API and read the same `/swagger/docs/{documentName}` specification route.
-The route first serves build-generated JSON when present and falls back to runtime generation for development and tests.
+The route serves build-generated JSON. In production builds, runtime document generation is not mapped and the route returns `404` if the generated file is missing.
 
 ## Build-time generation
 
@@ -34,8 +34,8 @@ Prefer ASP.NET Core metadata, XML comments, and Ark.Tools/Microsoft OpenAPI tran
 
 | Swashbuckle attribute | Recommended replacement | Notes |
 | --- | --- | --- |
-| `SwaggerOperationAttribute` | XML comments or endpoint metadata transformed by `IOpenApiOperationTransformer` | Use for summary, description, tags, and operation-specific metadata. |
-| `SwaggerResponseAttribute` | ASP.NET Core `ProducesResponseTypeAttribute` | Microsoft OpenAPI reads ApiExplorer response metadata. |
+| `SwaggerOperationAttribute` | Drop-in compatibility is registered by default. | Ark.Tools maps `Summary`, `Description`, `OperationId`, and `Tags` through a Microsoft OpenAPI operation transformer. Prefer XML comments or native endpoint metadata for new code. |
+| `SwaggerResponseAttribute` | Drop-in compatibility is registered by default; `ProducesResponseTypeAttribute` is preferred for new code. | Ark.Tools maps status code, description, response type/schema, and explicit content types through a Microsoft OpenAPI operation transformer. Use `ProducesResponseTypeAttribute` only when you do not need Swashbuckle's description/content-type metadata. |
 | `SwaggerParameterAttribute` | XML comments, `FromQuery`/`FromRoute` metadata, or an operation transformer | Use native binding metadata for required and source information. |
 | `SwaggerRequestBodyAttribute` | ASP.NET Core request metadata plus XML comments or an operation transformer | Prefer deterministic transformers for examples and descriptions. |
 | `SwaggerSchemaAttribute` | System.Text.Json metadata, XML comments, or `IOpenApiSchemaTransformer` | Swashbuckle schema filters remain legacy-only. |

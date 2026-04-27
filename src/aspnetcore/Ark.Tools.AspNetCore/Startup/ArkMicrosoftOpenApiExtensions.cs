@@ -20,6 +20,8 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
+using Swashbuckle.AspNetCore.Annotations;
+
 namespace Ark.Tools.AspNetCore.Startup;
 
 internal static class ArkMicrosoftOpenApiExtensions
@@ -43,6 +45,8 @@ internal static class ArkMicrosoftOpenApiExtensions
                     return Task.CompletedTask;
                 });
                 options.AddSchemaTransformer(ApplyNodaTimeSchema);
+                options.AddOperationTransformer(ApplySwaggerOperationAttribute);
+                options.AddOperationTransformer(ApplySwaggerResponseAttributes);
                 options.AddOperationTransformer(ApplySwaggerDefaultValues);
                 options.AddOperationTransformer(ApplyODataMediaTypeCleanup);
                 options.AddOperationTransformer(ApplyOperationId);
@@ -87,6 +91,16 @@ internal static class ArkMicrosoftOpenApiExtensions
             return;
         }
 
+#if DEBUG
+        await WriteRuntimeGeneratedOpenApiDocumentAsync(context, documentName).ConfigureAwait(false);
+#else
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+#endif
+    }
+
+#if DEBUG
+    private static async Task WriteRuntimeGeneratedOpenApiDocumentAsync(HttpContext context, string documentName)
+    {
         var provider = context.RequestServices.GetKeyedService<IOpenApiDocumentProvider>(documentName);
         if (provider is null)
         {
@@ -99,6 +113,7 @@ internal static class ArkMicrosoftOpenApiExtensions
         var json = await document.SerializeAsJsonAsync(OpenApiSpecVersion.OpenApi3_1, context.RequestAborted).ConfigureAwait(false);
         await context.Response.WriteAsync(json, context.RequestAborted).ConfigureAwait(false);
     }
+#endif
 
     private static string? FindBuildGeneratedDocument(string documentName)
     {
@@ -136,23 +151,96 @@ internal static class ArkMicrosoftOpenApiExtensions
     }
 
     private static (string? Format, string Example)? GetNodaTimeSchemaInfo(Type type)
-        => type == typeof(LocalDate)
-            ? ("date", "2016-01-21")
-            : type == typeof(LocalDateTime)
-                ? ("date-time", "2016-01-21T15:01:01.999999999")
-                : type == typeof(Instant)
-                    ? ("date-time", "2016-01-21T15:01:01.999999999Z")
-                    : type == typeof(OffsetDateTime)
-                        ? ("date-time", "2016-01-21T15:01:01.999999999+02:00")
-                        : type == typeof(ZonedDateTime)
-                            ? (null, "2016-01-21T15:01:01.999999999+02:00 Europe/Rome")
-                            : type == typeof(LocalTime)
-                                ? ("time", "14:01:00.999999999")
-                                : type == typeof(DateTimeZone)
-                                    ? (null, "Europe/Rome")
-                                    : type == typeof(Period)
-                                        ? ("duration", "P1Y2M-3DT4H")
-                                        : null;
+        => type switch
+        {
+            _ when type == typeof(LocalDate) => ("date", "2016-01-21"),
+            _ when type == typeof(LocalDateTime) => ("date-time", "2016-01-21T15:01:01.999999999"),
+            _ when type == typeof(Instant) => ("date-time", "2016-01-21T15:01:01.999999999Z"),
+            _ when type == typeof(OffsetDateTime) => ("date-time", "2016-01-21T15:01:01.999999999+02:00"),
+            _ when type == typeof(ZonedDateTime) => (null, "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"),
+            _ when type == typeof(LocalTime) => ("time", "14:01:00.999999999"),
+            _ when type == typeof(DateTimeZone) => (null, "Europe/Rome"),
+            _ when type == typeof(Period) => ("duration", "P1Y2M-3DT4H"),
+            _ => null
+        };
+
+    private static Task ApplySwaggerOperationAttribute(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    {
+        var attribute = GetLastActionMetadata<SwaggerOperationAttribute>(context);
+        if (attribute is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        operation.Summary = attribute.Summary ?? operation.Summary;
+        operation.Description = attribute.Description ?? operation.Description;
+        operation.OperationId = attribute.OperationId ?? operation.OperationId;
+
+        if (attribute.Tags is { Length: > 0 })
+        {
+            operation.Tags = attribute.Tags
+                .Select(tag => new OpenApiTagReference(tag, context.Document))
+                .ToHashSet();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static async Task ApplySwaggerResponseAttributes(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    {
+        var attributes = GetActionMetadata<SwaggerResponseAttribute>(context).ToArray();
+        if (attributes.Length == 0)
+        {
+            return;
+        }
+
+        operation.Responses ??= new OpenApiResponses();
+
+        foreach (var attribute in attributes)
+        {
+            var responseKey = attribute.StatusCode.ToString(CultureInfo.InvariantCulture);
+            if (!operation.Responses.TryGetValue(responseKey, out var response))
+            {
+                response = new OpenApiResponse();
+                operation.Responses.Add(responseKey, response);
+            }
+
+            response.Description = attribute.Description ?? response.Description;
+
+            if (attribute.Type is null || attribute.Type == typeof(void))
+            {
+                continue;
+            }
+
+            var schema = await context.GetOrCreateSchemaAsync(attribute.Type, null, cancellationToken).ConfigureAwait(false);
+            var contentTypes = attribute.ContentTypes is { Length: > 0 }
+                ? attribute.ContentTypes
+                : ["application/json"];
+
+            response.Content?.Clear();
+            foreach (var contentType in contentTypes)
+            {
+                response.Content?.Add(contentType, new OpenApiMediaType { Schema = schema });
+            }
+        }
+    }
+
+    private static TAttribute? GetLastActionMetadata<TAttribute>(OpenApiOperationTransformerContext context)
+        where TAttribute : Attribute
+        => context.Description.ActionDescriptor.EndpointMetadata.OfType<TAttribute>().LastOrDefault()
+            ?? (context.Description.ActionDescriptor is ControllerActionDescriptor cad ? cad.MethodInfo.GetCustomAttribute<TAttribute>() : null);
+
+    private static IEnumerable<TAttribute> GetActionMetadata<TAttribute>(OpenApiOperationTransformerContext context)
+        where TAttribute : Attribute
+    {
+        var metadata = context.Description.ActionDescriptor.EndpointMetadata.OfType<TAttribute>();
+        if (context.Description.ActionDescriptor is ControllerActionDescriptor cad)
+        {
+            metadata = metadata.Concat(cad.MethodInfo.GetCustomAttributes<TAttribute>());
+        }
+
+        return metadata.Distinct();
+    }
 
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Default parameter values are serialized only while generating OpenAPI metadata.")]
     private static Task ApplySwaggerDefaultValues(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)

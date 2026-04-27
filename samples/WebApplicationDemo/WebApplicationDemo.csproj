@@ -32,13 +32,15 @@
 
   <Target Name="RemoveReferencedXmlCommentsFromOpenApi" AfterTargets="GenerateAdditionalXmlFilesForOpenApi">
     <ItemGroup>
+      <!-- The Microsoft OpenAPI XML source generator receives referenced project XML files as AdditionalFiles.
+           Ark projects include shared Polyfill XML members, which currently produce duplicate XML comment keys. -->
       <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml' and '%(Filename)' != 'WebApplicationDemo'" />
     </ItemGroup>
   </Target>
 
   <Target Name="CopyGeneratedOpenApiDocumentsToOutput" AfterTargets="GenerateOpenApiDocuments">
     <ItemGroup>
-      <GeneratedOpenApiDocument Include="$(BaseIntermediateOutputPath)$(MSBuildProjectName)*.json" />
+      <GeneratedOpenApiDocument Include="$(BaseIntermediateOutputPath)$(MSBuildProjectName)_v*.json" />
     </ItemGroup>
     <Copy SourceFiles="@(GeneratedOpenApiDocument)" DestinationFolder="$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/" SkipUnchangedFiles="true" />
   </Target>
