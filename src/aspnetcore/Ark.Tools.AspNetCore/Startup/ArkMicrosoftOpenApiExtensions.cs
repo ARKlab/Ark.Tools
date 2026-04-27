@@ -151,18 +151,49 @@ internal static class ArkMicrosoftOpenApiExtensions
     }
 
     private static (string? Format, string Example)? GetNodaTimeSchemaInfo(Type type)
-        => type switch
+    {
+        if (type == typeof(LocalDate))
         {
-            _ when type == typeof(LocalDate) => ("date", "2016-01-21"),
-            _ when type == typeof(LocalDateTime) => ("date-time", "2016-01-21T15:01:01.999999999"),
-            _ when type == typeof(Instant) => ("date-time", "2016-01-21T15:01:01.999999999Z"),
-            _ when type == typeof(OffsetDateTime) => ("date-time", "2016-01-21T15:01:01.999999999+02:00"),
-            _ when type == typeof(ZonedDateTime) => (null, "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"),
-            _ when type == typeof(LocalTime) => ("time", "14:01:00.999999999"),
-            _ when type == typeof(DateTimeZone) => (null, "Europe/Rome"),
-            _ when type == typeof(Period) => ("duration", "P1Y2M-3DT4H"),
-            _ => null
-        };
+            return ("date", "2016-01-21");
+        }
+
+        if (type == typeof(LocalDateTime))
+        {
+            return ("date-time", "2016-01-21T15:01:01.999999999");
+        }
+
+        if (type == typeof(Instant))
+        {
+            return ("date-time", "2016-01-21T15:01:01.999999999Z");
+        }
+
+        if (type == typeof(OffsetDateTime))
+        {
+            return ("date-time", "2016-01-21T15:01:01.999999999+02:00");
+        }
+
+        if (type == typeof(ZonedDateTime))
+        {
+            return (null, "2016-01-21T15:01:01.999999999+02:00 Europe/Rome");
+        }
+
+        if (type == typeof(LocalTime))
+        {
+            return ("time", "14:01:00.999999999");
+        }
+
+        if (type == typeof(DateTimeZone))
+        {
+            return (null, "Europe/Rome");
+        }
+
+        if (type == typeof(Period))
+        {
+            return ("duration", "P1Y2M-3DT4H");
+        }
+
+        return null;
+    }
 
     private static Task ApplySwaggerOperationAttribute(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
     {
@@ -217,10 +248,22 @@ internal static class ArkMicrosoftOpenApiExtensions
                 ? attribute.ContentTypes
                 : ["application/json"];
 
-            response.Content?.Clear();
-            foreach (var contentType in contentTypes)
+            var content = contentTypes.ToDictionary(
+                contentType => contentType,
+                _ => new OpenApiMediaType { Schema = schema },
+                StringComparer.Ordinal);
+
+            if (response is OpenApiResponse openApiResponse)
             {
-                response.Content?.Add(contentType, new OpenApiMediaType { Schema = schema });
+                openApiResponse.Content = content;
+            }
+            else
+            {
+                operation.Responses[responseKey] = new OpenApiResponse
+                {
+                    Description = response.Description,
+                    Content = content
+                };
             }
         }
     }
