@@ -49,7 +49,7 @@ internal static class FtpPathExtensions
         if (tpath == null)
             return null;
 
-        lastslash = tpath.LastIndexOf('/');
+        lastslash = tpath.LastIndexOf('/', StringComparison.Ordinal);
         if (lastslash < 0)
             return tpath;
 

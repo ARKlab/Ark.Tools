@@ -49,7 +49,7 @@ jobs:
         global-json-file: global.json
       
     - name: 'Restore packages'
-      run: dotnet restore
+      run: dotnet restore --locked-mode
 
     - name: 'Build project'
       run: dotnet build --no-restore --configuration Debug
@@ -58,7 +58,7 @@ jobs:
       run: dotnet test --no-build --no-restore --configuration Debug --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1
       
     # see https://github.com/dorny/test-reporter?tab=readme-ov-file#recommended-setup-for-public-repositories
-    - uses: actions/upload-artifact@v6  # upload test results
+    - uses: actions/upload-artifact@v7  # upload test results
       if: success() || failure()        # run this step even if previous step failed
       with:
         name: test-results

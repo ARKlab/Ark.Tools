@@ -54,7 +54,7 @@ public class RebusResourceNotifier : IResourceNotifier, IDisposable
     public void Start()
     {
         _container.StartBus();
-        _logger.Debug("Bus started");
+        _logger.Debug(global::System.Globalization.CultureInfo.InvariantCulture, "Bus started");
     }
 
     protected Task _notify(string resourceId, Slice slice)

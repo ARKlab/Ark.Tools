@@ -12,9 +12,10 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-    - uses: dorny/test-reporter@v1
+    - uses: dorny/test-reporter@v3
       with:
         artifact: test-results            # artifact name
         name: DotNET Tests
         path: "**/*.trx"                            
         reporter: dotnet-trx
+        use-actions-summary: 'false'      # create a Check Run on the PR instead of only writing to Actions Summary

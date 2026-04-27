@@ -104,7 +104,7 @@ where startsWith(id(e), '{prefix}')
             }
             catch (Exception e)
             {
-                _logger.Error(e, "Failure in subscription: " + SubscriptionName);
+                _logger.Error(e, global::System.Globalization.CultureInfo.InvariantCulture, "Failure in subscription: {SubscriptionName}", SubscriptionName);
 
                 if (e is DatabaseDoesNotExistException ||
                     e is SubscriptionDoesNotExistException ||
@@ -140,7 +140,7 @@ where startsWith(id(e), '{prefix}')
 
     private async Task _exec(SubscriptionBatch<AggregateEventStore> batch)
     {
-        _logger.Trace($"Got a batch of {batch.NumberOfItemsInBatch} items");
+        _logger.Trace(global::System.Globalization.CultureInfo.InvariantCulture, "Got a batch of {BatchItemCount} items", batch.NumberOfItemsInBatch);
 
         var tasks = batch.Items.GroupBy(x => x.Result.AggregateId, StringComparer.Ordinal)
             .Select(async g =>

@@ -3,6 +3,13 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- 
+      IMPORTANT: SqlStateProvider integration tests require sequential framework execution.
+      The EnsureTableAreCreated() method drops/recreates UDT types, causing conflicts 
+      when net8.0 and net10.0 run in parallel against the same database.
+    -->
+    <TestTfmsInParallel>false</TestTfmsInParallel>
+    <TestingPlatformDisableParallel>true</TestingPlatformDisableParallel>
   </PropertyGroup>
 
 
