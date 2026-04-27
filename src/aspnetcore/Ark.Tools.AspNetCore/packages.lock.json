@@ -66,6 +66,15 @@
           "Microsoft.Spatial": "[9.0.0-preview.4, 10.0.0)"
         }
       },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "Direct",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "vKiAcGXG0BwNVw3bOjjWRLnp9tR18dR7MiwpvC94h0yFS+zfnzGHzS/JmmgwUdRixrGxrlIMRAWrVc+2DfAGlg==",
+        "dependencies": {
+          "Microsoft.OpenApi": "2.0.0"
+        }
+      },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
         "requested": "[4.14.0, )",
@@ -77,6 +86,12 @@
         "requested": "[10.0.203, )",
         "resolved": "10.0.203",
         "contentHash": "wAY0s+xokbBwVXxm6n7Q1kS4onWinN7qpV2RpkKXMQ0K1SGNsAy46mUFR5SReLQjy5ib9U8bfpnVUEiyZplA1A=="
+      },
+      "Microsoft.Extensions.ApiDescription.Server": {
+        "type": "Direct",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "VBNJzdInUkjhL/Habj16j3kMHIccjjuWg2zILcapH2QDq5GJF4bfQzJvt2gynuT98PkTpLUvPAsPeefKBDT/mg=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
@@ -760,6 +775,7 @@
           "Microsoft.AspNetCore.OData": "[10.0.0-preview.2, )",
           "Swashbuckle.AspNetCore.Annotations": "[10.1.7, )",
           "Swashbuckle.AspNetCore.Filters": "[10.0.1, )",
+          "Swashbuckle.AspNetCore.ReDoc": "[10.1.7, )",
           "Swashbuckle.AspNetCore.Swagger": "[10.1.7, )",
           "Swashbuckle.AspNetCore.SwaggerGen": "[10.1.7, )",
           "Swashbuckle.AspNetCore.SwaggerUI": "[10.1.7, )"
@@ -1290,6 +1306,12 @@
           "Swashbuckle.AspNetCore.Filters.Abstractions": "10.0.1",
           "Swashbuckle.AspNetCore.SwaggerGen": "10.0.0"
         }
+      },
+      "Swashbuckle.AspNetCore.ReDoc": {
+        "type": "CentralTransitive",
+        "requested": "[10.1.7, )",
+        "resolved": "10.1.7",
+        "contentHash": "aoVMCDlS4v6X6EgaowPxSSDwdvIP0NQNJR42lq+iQCVFaGRCN67wALoAZYddyxGQeBoiKSdATvP+psj7OVCuPw=="
       },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "CentralTransitive",

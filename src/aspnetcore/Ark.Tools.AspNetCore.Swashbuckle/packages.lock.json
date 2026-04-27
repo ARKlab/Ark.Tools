@@ -103,6 +103,12 @@
           "Swashbuckle.AspNetCore.SwaggerGen": "10.0.0"
         }
       },
+      "Swashbuckle.AspNetCore.ReDoc": {
+        "type": "Direct",
+        "requested": "[10.1.7, )",
+        "resolved": "10.1.7",
+        "contentHash": "aoVMCDlS4v6X6EgaowPxSSDwdvIP0NQNJR42lq+iQCVFaGRCN67wALoAZYddyxGQeBoiKSdATvP+psj7OVCuPw=="
+      },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "Direct",
         "requested": "[10.1.7, )",

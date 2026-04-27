@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.OpenApi;
 
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Routing;
@@ -26,6 +27,7 @@ using Microsoft.OpenApi;
 
 using SimpleInjector;
 
+using Swashbuckle.AspNetCore.ReDoc;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
 using System.Text.Json;
@@ -37,6 +39,11 @@ public abstract class ArkStartupWebApiCommon
     public IConfiguration Configuration { get; }
     public Container Container { get; } = new Container();
     public IHostEnvironment HostEnvironment { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the legacy Swashbuckle generator should be used instead of Microsoft OpenAPI.
+    /// </summary>
+    public virtual bool UseSwashbuckleOpenApi => false;
 
     protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
     {
@@ -134,42 +141,49 @@ public abstract class ArkStartupWebApiCommon
         })
         ;
 
-        services.AddSwaggerGen(c =>
+        if (UseSwashbuckleOpenApi)
         {
-            c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
-
-            c.MapNodaTimeTypes();
-
-            c.OperationFilter<SupportFlaggedEnums>();
-            c.OperationFilter<SwaggerDefaultValues>();
-            c.OperationFilter<FixODataMediaTypeOnNonOData>();
-            c.OperationFilter<PrettifyOperationIdOperationFilter>();
-
-
-            c.UseOneOfForPolymorphism();
-            c.UseAllOfForInheritance();
-            c.UseAllOfToExtendReferenceSchemas();
-
-            c.CustomOperationIds(x => x.HttpMethod + " " + x.RelativePath);
-            c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
-
-            c.OperationFilter<DefaultResponsesOperationFilter>();
-
-            c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
-
-            c.CustomSchemaIds((type) => Ark.Tools.Core.Reflection.ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @"", StringComparison.Ordinal));
-            c.SelectSubTypesUsing(t =>
+            services.AddSwaggerGen(c =>
             {
-                if (t.IsGenericTypeDefinition) return Enumerable.Empty<Type>();
-                return t.Assembly.GetTypes()
-                     .Where(subType => subType.IsSubclassOf(t) && !subType.IsGenericTypeDefinition);
+                c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
+
+                c.MapNodaTimeTypes();
+
+                c.OperationFilter<SupportFlaggedEnums>();
+                c.OperationFilter<SwaggerDefaultValues>();
+                c.OperationFilter<FixODataMediaTypeOnNonOData>();
+                c.OperationFilter<PrettifyOperationIdOperationFilter>();
+
+
+                c.UseOneOfForPolymorphism();
+                c.UseAllOfForInheritance();
+                c.UseAllOfToExtendReferenceSchemas();
+
+                c.CustomOperationIds(x => x.HttpMethod + " " + x.RelativePath);
+                c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+
+                c.OperationFilter<DefaultResponsesOperationFilter>();
+
+                c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
+
+                c.CustomSchemaIds((type) => Ark.Tools.Core.Reflection.ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @"", StringComparison.Ordinal));
+                c.SelectSubTypesUsing(t =>
+                {
+                    if (t.IsGenericTypeDefinition) return Enumerable.Empty<Type>();
+                    return t.Assembly.GetTypes()
+                         .Where(subType => subType.IsSubclassOf(t) && !subType.IsGenericTypeDefinition);
+                });
+                c.SupportNonNullableReferenceTypes();
+
+                c.EnableAnnotations();
             });
-            c.SupportNonNullableReferenceTypes();
 
-            c.EnableAnnotations();
-        });
-
-        services.ArkConfigureSwaggerVersions(Versions, MakeInfo);
+            services.ArkConfigureSwaggerVersions(Versions, MakeInfo);
+        }
+        else
+        {
+            services.AddArkMicrosoftOpenApiVersions(Versions, MakeInfo);
+        }
 
         services.ArkConfigureSwagger(c =>
         {
@@ -192,6 +206,13 @@ public abstract class ArkStartupWebApiCommon
             c.ShowExtensions();
             c.EnableValidator();
             c.EnableTryItOutByDefault();
+        });
+
+        services.Configure<ReDocOptions>(c =>
+        {
+            c.RoutePrefix = "redoc";
+            c.DocumentTitle = "API Docs";
+            c.SpecUrl = $"/swagger/docs/{ArkMicrosoftOpenApiExtensions.ToDocumentName(Versions.First())}";
         });
 
         // Configure System.Text.Json with Ark defaults
@@ -264,12 +285,16 @@ public abstract class ArkStartupWebApiCommon
             app.UseODataRouteDebug();
         }
 
-        app.UseSwagger(options =>
+        if (UseSwashbuckleOpenApi)
         {
-            options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
-        });
+            app.UseSwagger(options =>
+            {
+                options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
+            });
+        }
 
         app.UseSwaggerUI();
+        app.UseReDoc();
 
         app.UseAuthentication();
         app.UseAuthorization();
@@ -281,6 +306,10 @@ public abstract class ArkStartupWebApiCommon
 
             endpoints.MapArkHealthChecks();
             endpoints.MapControllers();
+            if (!UseSwashbuckleOpenApi)
+            {
+                endpoints.MapGet("swagger/docs/{documentName}", ArkMicrosoftOpenApiExtensions.WriteOpenApiDocumentAsync);
+            }
             endpoints.Redirect("/", "/swagger");
         });
 
