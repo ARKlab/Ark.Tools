@@ -9,6 +9,8 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
+using Ark.Tools.OTel;
+
 namespace Ark.Tools.ApplicationInsights;
 
 /// <summary>

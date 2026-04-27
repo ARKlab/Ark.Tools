@@ -4,7 +4,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
-namespace Ark.Tools.ApplicationInsights;
+namespace Ark.Tools.OTel;
 
 /// <summary>
 /// A thread-safe registry of <see cref="ActivityTraceId"/> values that belong to traces
@@ -20,7 +20,7 @@ namespace Ark.Tools.ApplicationInsights;
 /// Entries are kept for a configurable TTL (default 5 minutes) to bound memory growth.
 /// </para>
 /// </remarks>
-internal sealed class FailedTraceRegistry
+public sealed class FailedTraceRegistry
 {
     private readonly ConcurrentDictionary<ActivityTraceId, long> _failedTraces = new();
     private readonly TimeSpan _ttl;
