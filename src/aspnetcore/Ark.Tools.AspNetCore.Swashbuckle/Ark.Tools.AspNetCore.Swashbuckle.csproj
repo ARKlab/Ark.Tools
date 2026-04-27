@@ -41,6 +41,7 @@
 	  <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
 	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
 	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+	  <PackageReference Include="Swashbuckle.AspNetCore.ReDoc" />
 	  <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
   </ItemGroup>
       

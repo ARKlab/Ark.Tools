@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
@@ -135,6 +136,128 @@ public class MultiPartJsonOperationFilter : IOperationFilter
         var method = makeGenericType.GetMethod("GetExamples");
         var exampleProvider = _serviceProvider.GetService(makeGenericType);
         // Example do not exist. Use default.
+        if (exampleProvider == null)
+            return null;
+        var example = method?.Invoke(exampleProvider, null);
+        return example;
+    }
+
+    private static PropertyInfo? _getPropertyInfo(ParameterDescriptor descriptor) =>
+        descriptor.ParameterType.GetProperties()
+            .SingleOrDefault(f => f.GetCustomAttribute<FromJsonAttribute>() != null);
+}
+
+/// <summary>
+/// Aggregates form fields in Microsoft OpenAPI to one JSON field and add example.
+/// </summary>
+public class MultiPartJsonOperationTransformer : IOpenApiOperationTransformer
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IOptions<JsonOptions> _jsonOptions;
+
+    /// <summary>
+    /// Creates <see cref="MultiPartJsonOperationTransformer"/>
+    /// </summary>
+    public MultiPartJsonOperationTransformer(IServiceProvider serviceProvider, IOptions<JsonOptions> jsonOptions)
+    {
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _jsonOptions = jsonOptions;
+    }
+
+    /// <inheritdoc />
+    public async Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    {
+        var descriptors = context.Description.ActionDescriptor.Parameters.ToList();
+        foreach (var descriptor in descriptors)
+        {
+            var propertyInfo = _getPropertyInfo(descriptor);
+
+            if (propertyInfo is null || operation.RequestBody?.Content is null || operation.RequestBody.Content.Count == 0)
+            {
+                continue;
+            }
+
+            var mediaType = operation.RequestBody.Content.First().Value;
+
+            if (mediaType.Schema is not OpenApiSchema schema || schema.Properties is null)
+            {
+                continue;
+            }
+
+            var groupedProperties = schema.Properties
+                .GroupBy(pair => pair.Key.Split('.')[0], StringComparer.Ordinal);
+
+            var schemaProperties = new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal);
+
+            foreach (var property in groupedProperties)
+            {
+                if (property.Key == propertyInfo.Name)
+                {
+                    _addEncoding(mediaType, propertyInfo);
+
+                    var openApiSchema = await _getSchema(context, propertyInfo, cancellationToken).ConfigureAwait(false);
+                    schemaProperties.Add(property.Key, openApiSchema);
+                }
+                else
+                {
+                    schemaProperties.Add(property.Key, property.First().Value);
+                }
+            }
+
+            schema.Properties = schemaProperties;
+        }
+    }
+
+    private async Task<IOpenApiSchema> _getSchema(OpenApiOperationTransformerContext context, PropertyInfo propertyInfo, CancellationToken cancellationToken)
+    {
+        var schema = await context.GetOrCreateSchemaAsync(propertyInfo.PropertyType, null, cancellationToken).ConfigureAwait(false);
+
+        if (schema is OpenApiSchema openApiSchema)
+        {
+            _addDescription(openApiSchema, openApiSchema.Title);
+            _addExample(propertyInfo, openApiSchema);
+        }
+
+        return schema;
+    }
+
+    private static void _addDescription(OpenApiSchema openApiSchema, string? SchemaDisplayName)
+    {
+        openApiSchema.Description += $"\n See {SchemaDisplayName} model.";
+    }
+
+    private static void _addEncoding(OpenApiMediaType mediaType, PropertyInfo propertyInfo)
+    {
+        if (mediaType.Encoding == null)
+            mediaType.Encoding = new Dictionary<string, OpenApiEncoding>(StringComparer.Ordinal);
+
+        mediaType.Encoding = mediaType.Encoding
+            .Where(pair => !pair.Key.Contains(propertyInfo.Name, StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+
+        mediaType.Encoding.Add(propertyInfo.Name, new OpenApiEncoding()
+        {
+            ContentType = "application/json",
+            Explode = false
+        });
+    }
+
+    private void _addExample(PropertyInfo propertyInfo, OpenApiSchema openApiSchema)
+    {
+        var example = _getExampleFor(propertyInfo.PropertyType);
+
+        if (example == null)
+            return;
+
+        var json = JsonSerializer.SerializeToNode(example, _jsonOptions.Value.JsonSerializerOptions);
+        openApiSchema.Example = json;
+    }
+
+    private object? _getExampleFor(Type parameterType)
+    {
+        var makeGenericType = typeof(IExamplesProvider<>).MakeGenericType(parameterType);
+        var method = makeGenericType.GetMethod("GetExamples");
+        var exampleProvider = _serviceProvider.GetService(makeGenericType);
         if (exampleProvider == null)
             return null;
         var example = method?.Invoke(exampleProvider, null);

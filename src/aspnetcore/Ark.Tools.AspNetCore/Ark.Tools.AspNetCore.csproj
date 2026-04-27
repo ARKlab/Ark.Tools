@@ -35,6 +35,7 @@
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" />
     <PackageReference Include="Microsoft.AspNetCore.OData" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders" />
     <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" />
   </ItemGroup>

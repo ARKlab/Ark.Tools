@@ -49,7 +49,10 @@ public static class Program
                 })
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddSingleton<IHostedService, RebusProcessorService>();
+                    if (!IsRunningUnderOpenApiGenerator())
+                    {
+                        services.AddSingleton<IHostedService, RebusProcessorService>();
+                    }
 
                     // remember to add LOCAL_DEBUG to launchSetting.json when developing in local
                     if (Environment.GetEnvironmentVariable("LOCAL_DEBUG") == "True")
@@ -61,6 +64,15 @@ public static class Program
                 .UseIISIntegration()
                 .UseStartup<Startup>();
             });
+    }
+
+    private static bool IsRunningUnderOpenApiGenerator()
+    {
+        var entryAssemblyName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;
+        return string.Equals(entryAssemblyName, "GetDocument.Insider", StringComparison.Ordinal)
+            || string.Equals(entryAssemblyName, "dotnet-getdocument", StringComparison.OrdinalIgnoreCase)
+            || Environment.GetCommandLineArgs().Any(arg => arg.Contains("dotnet-getdocument", StringComparison.OrdinalIgnoreCase))
+            || AppDomain.CurrentDomain.GetAssemblies().Any(assembly => string.Equals(assembly.GetName().Name, "Microsoft.Extensions.ApiDescription.Tool", StringComparison.Ordinal));
     }
 
 

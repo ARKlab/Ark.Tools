@@ -36,6 +36,8 @@ public class Startup : ArkStartupWebApi
 
     public override IEnumerable<ApiVersion> Versions => ApiVersions.All;
 
+    public override bool UseSwashbuckleOpenApi => HostEnvironment.IsEnvironment("IntegrationTests");
+
     public override OpenApiInfo MakeInfo(ApiVersion version)
         => new()
         {
@@ -47,6 +49,11 @@ public class Startup : ArkStartupWebApi
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
+
+        foreach (var version in Versions)
+        {
+            services.AddOpenApi($"v{version.ToString("VVVV", CultureInfo.InvariantCulture)}");
+        }
 
         var auth0Scheme = "Auth0";
         var audience = "Audience";

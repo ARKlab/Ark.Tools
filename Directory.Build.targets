@@ -2,7 +2,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Polyfill" PrivateAssets="All" />
+		<PackageReference Include="Polyfill" PrivateAssets="All" Condition="'$(TargetFramework)' != 'net10.0'" />
 	</ItemGroup>
 
 	<ItemGroup Label="Settings Files">

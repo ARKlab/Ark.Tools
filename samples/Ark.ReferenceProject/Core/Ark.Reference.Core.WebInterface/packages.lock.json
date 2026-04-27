@@ -37,6 +37,12 @@
         "resolved": "10.0.203",
         "contentHash": "wAY0s+xokbBwVXxm6n7Q1kS4onWinN7qpV2RpkKXMQ0K1SGNsAy46mUFR5SReLQjy5ib9U8bfpnVUEiyZplA1A=="
       },
+      "Microsoft.Extensions.ApiDescription.Server": {
+        "type": "Direct",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "VBNJzdInUkjhL/Habj16j3kMHIccjjuWg2zILcapH2QDq5GJF4bfQzJvt2gynuT98PkTpLUvPAsPeefKBDT/mg=="
+      },
       "Microsoft.Identity.Web": {
         "type": "Direct",
         "requested": "[4.8.0, )",
@@ -522,6 +528,14 @@
           "Microsoft.OData.Edm": "[9.0.0-preview.4, 10.0.0)",
           "Microsoft.OData.ModelBuilder": "[3.0.0-preview.1, 4.0.0)",
           "Microsoft.Spatial": "[9.0.0-preview.4, 10.0.0)"
+        }
+      },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "Transitive",
+        "resolved": "10.0.7",
+        "contentHash": "vKiAcGXG0BwNVw3bOjjWRLnp9tR18dR7MiwpvC94h0yFS+zfnzGHzS/JmmgwUdRixrGxrlIMRAWrVc+2DfAGlg==",
+        "dependencies": {
+          "Microsoft.OpenApi": "2.0.0"
         }
       },
       "Microsoft.Azure.Amqp": {
@@ -1138,6 +1152,11 @@
           "Swashbuckle.AspNetCore.SwaggerGen": "10.0.0"
         }
       },
+      "Swashbuckle.AspNetCore.ReDoc": {
+        "type": "Transitive",
+        "resolved": "10.1.7",
+        "contentHash": "aoVMCDlS4v6X6EgaowPxSSDwdvIP0NQNJR42lq+iQCVFaGRCN67wALoAZYddyxGQeBoiKSdATvP+psj7OVCuPw=="
+      },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "Transitive",
         "resolved": "10.1.7",
@@ -1392,6 +1411,7 @@
           "FluentValidation": "[12.1.1, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "Microsoft.AspNetCore.OData": "[10.0.0-preview.2, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.7, )",
           "NetEscapades.AspNetCore.SecurityHeaders": "[1.3.1, )",
           "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )"
         }
@@ -1456,6 +1476,7 @@
           "Microsoft.AspNetCore.OData": "[10.0.0-preview.2, )",
           "Swashbuckle.AspNetCore.Annotations": "[10.1.7, )",
           "Swashbuckle.AspNetCore.Filters": "[10.0.1, )",
+          "Swashbuckle.AspNetCore.ReDoc": "[10.1.7, )",
           "Swashbuckle.AspNetCore.Swagger": "[10.1.7, )",
           "Swashbuckle.AspNetCore.SwaggerGen": "[10.1.7, )",
           "Swashbuckle.AspNetCore.SwaggerUI": "[10.1.7, )"

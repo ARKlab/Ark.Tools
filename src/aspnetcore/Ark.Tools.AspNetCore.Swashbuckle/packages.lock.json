@@ -77,12 +77,6 @@
         "resolved": "17.14.15",
         "contentHash": "mXQPJsbuUD2ydq4/ffd8h8tSOFCXec+2xJOVNCvXjuMOq/+5EKHq3D2m2MC2+nUaXeFMSt66VS/J4HdKBixgcw=="
       },
-      "Polyfill": {
-        "type": "Direct",
-        "requested": "[10.3.0, )",
-        "resolved": "10.3.0",
-        "contentHash": "5GDzIb+7qvrftxO+POQc2HAInFnQIw2NKdxjqmAVJ7l+P10djdmKW6dcjnHitUX59TTQZ/Ok0qcHUSasl/Cs1A=="
-      },
       "Swashbuckle.AspNetCore.Annotations": {
         "type": "Direct",
         "requested": "[10.1.7, )",
@@ -102,6 +96,12 @@
           "Swashbuckle.AspNetCore.Filters.Abstractions": "10.0.1",
           "Swashbuckle.AspNetCore.SwaggerGen": "10.0.0"
         }
+      },
+      "Swashbuckle.AspNetCore.ReDoc": {
+        "type": "Direct",
+        "requested": "[10.1.7, )",
+        "resolved": "10.1.7",
+        "contentHash": "aoVMCDlS4v6X6EgaowPxSSDwdvIP0NQNJR42lq+iQCVFaGRCN67wALoAZYddyxGQeBoiKSdATvP+psj7OVCuPw=="
       },
       "Swashbuckle.AspNetCore.Swagger": {
         "type": "Direct",
