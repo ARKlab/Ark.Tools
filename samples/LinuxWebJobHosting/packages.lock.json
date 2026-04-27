@@ -260,10 +260,9 @@
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.OTel": "[1.0.0, )",
           "Microsoft.ApplicationInsights": "[3.1.0, )",
           "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
-          "Microsoft.Data.SqlClient": "[7.0.1, )",
-          "OpenTelemetry": "[1.15.3, )",
           "OpenTelemetry.Extensions.Hosting": "[1.15.3, )"
         }
       },
@@ -357,6 +356,13 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.3.1, )"
+        }
+      },
+      "ark.tools.otel": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Data.SqlClient": "[7.0.1, )",
+          "OpenTelemetry": "[1.15.3, )"
         }
       },
       "ark.tools.rebus": {
