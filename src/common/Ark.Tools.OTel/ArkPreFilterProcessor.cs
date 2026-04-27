@@ -5,7 +5,7 @@ using OpenTelemetry;
 
 using System.Diagnostics;
 
-namespace Ark.Tools.ApplicationInsights;
+namespace Ark.Tools.OTel;
 
 /// <summary>
 /// An OpenTelemetry <see cref="BaseProcessor{T}"/> that filters out high-volume, low-value spans

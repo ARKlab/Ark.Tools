@@ -5,7 +5,7 @@ using OpenTelemetry;
 
 using System.Diagnostics;
 
-namespace Ark.Tools.ApplicationInsights;
+namespace Ark.Tools.OTel;
 
 /// <summary>
 /// An OpenTelemetry <see cref="BaseProcessor{T}"/> that promotes the entire operation to exported
@@ -57,7 +57,7 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
     /// the same registry can coordinate whole-operation failure promotion.
     /// </summary>
     /// <param name="registry">The shared registry of failed trace IDs.</param>
-    internal ArkFailurePromotionProcessor(FailedTraceRegistry registry)
+    public ArkFailurePromotionProcessor(FailedTraceRegistry registry)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }

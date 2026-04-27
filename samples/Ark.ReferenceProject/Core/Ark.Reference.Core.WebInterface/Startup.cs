@@ -8,7 +8,6 @@ using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
 
-using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -149,11 +148,6 @@ public class Startup : ArkStartupWebApi
                 // add custom model binders to beginning of collection
                 opt.ModelBinderProviders.Insert(0, new FormDataJsonBinderProvider(opt.InputFormatters));
             });
-
-        services.Configure<SnapshotCollectorConfiguration>(o =>
-        {
-            o.IsLowPrioritySnapshotUploader = false;
-        });
     }
 
     protected override void RegisterContainer(IServiceProvider services)

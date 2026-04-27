@@ -6,7 +6,7 @@ using OpenTelemetry.Trace;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
-namespace Ark.Tools.ApplicationInsights;
+namespace Ark.Tools.OTel;
 
 /// <summary>
 /// An OpenTelemetry <see cref="Sampler"/> that implements adaptive, cost-efficient sampling for Ark.Tools applications.
@@ -58,7 +58,7 @@ public sealed class ArkAdaptiveSampler : Sampler
     /// <see cref="ArkFailurePromotionProcessor"/> sharing the same registry can
     /// coordinate whole-operation failure promotion.
     /// </summary>
-    internal ArkAdaptiveSampler(ArkAdaptiveSamplerOptions options, FailedTraceRegistry failedTraceRegistry)
+    public ArkAdaptiveSampler(ArkAdaptiveSamplerOptions options, FailedTraceRegistry failedTraceRegistry)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _failedTraceRegistry = failedTraceRegistry ?? throw new ArgumentNullException(nameof(failedTraceRegistry));
@@ -113,7 +113,8 @@ public sealed class ArkAdaptiveSampler : Sampler
         return new SamplingResult(SamplingDecision.RecordOnly);
     }
 
-    internal static string FilteredTagName => _filteredTag;
+    /// <summary>Gets the tag name used to mark pre-filtered spans.</summary>
+    public static string FilteredTagName => _filteredTag;
 
     private OperationBucket GetOrCreateBucket(string operationName)
     {

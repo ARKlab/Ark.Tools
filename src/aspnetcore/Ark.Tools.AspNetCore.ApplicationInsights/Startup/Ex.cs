@@ -3,7 +3,6 @@
 using Ark.Tools.ApplicationInsights;
 using Ark.Tools.NLog;
 
-using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -46,12 +45,6 @@ public static partial class Ex
         // This MUST be after AddApplicationInsightsTelemetry to ensure ordering of IConfigureOptions.
         var sqlCs = configuration.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SqlConnStringName);
         services.AddArkApplicationInsightsCustomizations(configuration, sqlCs);
-
-        services.Configure<SnapshotCollectorConfiguration>(o =>
-        {
-        });
-        services.Configure<SnapshotCollectorConfiguration>(configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
-        services.AddSnapshotCollector();
 
         return services;
     }

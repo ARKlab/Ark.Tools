@@ -4,8 +4,8 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>Core utilities for ApplicationInsights.</Description>
-    <PackageTags>Ark;C#;.NET;Framework;ApplicationInsights</PackageTags>
+    <Description>OpenTelemetry sampling, filtering and enrichment utilities for Ark.Tools applications.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;OpenTelemetry;OTel;Sampling</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -21,13 +21,9 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ApplicationInsights" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="Microsoft.Extensions.Options" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="../Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
   </ItemGroup>
 
 </Project>

@@ -6,7 +6,7 @@ using OpenTelemetry;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace Ark.Tools.ApplicationInsights;
+namespace Ark.Tools.OTel;
 
 /// <summary>
 /// An OpenTelemetry <see cref="BaseProcessor{T}"/> that enriches spans with global properties
