@@ -16,7 +16,7 @@ namespace Ark.Reference.Core.WebInterface.Utils;
 /// <summary>
 /// Aggregates form fields in Swagger to one JSON field and add example.
 /// </summary>
-public class MultiPartJsonOperationFilter : IOperationFilter, IOpenApiOperationTransformer
+public class MultiPartJsonOperationFilter : IOperationFilter
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IOptions<JsonOptions> _jsonOptions;
@@ -74,6 +74,96 @@ public class MultiPartJsonOperationFilter : IOperationFilter, IOpenApiOperationT
         }
     }
 
+    /// <summary>
+    /// Generate schema for propertyInfo
+    /// </summary>
+    /// <returns></returns>
+    private IOpenApiSchema _getSchema(OperationFilterContext context, PropertyInfo propertyInfo)
+    {
+        if (context.SchemaRepository.TryLookupByType(propertyInfo.PropertyType, out var schema))
+        {
+            return schema;
+        }
+
+        _ = context.SchemaGenerator.GenerateSchema(propertyInfo.PropertyType, context.SchemaRepository);
+        _ = context.SchemaRepository.TryLookupByType(propertyInfo.PropertyType, out schema);
+
+        var s = schema.Target as OpenApiSchema;
+        if (s is null) return schema;
+
+        _addDescription(s, s.Title);
+        _addExample(propertyInfo, s);
+
+        return s;
+    }
+
+    private static void _addDescription(OpenApiSchema openApiSchema, string? SchemaDisplayName)
+    {
+        openApiSchema.Description += $"\n See {SchemaDisplayName} model.";
+    }
+
+    private static void _addEncoding(OpenApiMediaType mediaType, PropertyInfo propertyInfo)
+    {
+        if (mediaType.Encoding == null)
+            mediaType.Encoding = new Dictionary<string, OpenApiEncoding>(StringComparer.Ordinal);
+
+        mediaType.Encoding = mediaType.Encoding
+            .Where(pair => !pair.Key.Contains(propertyInfo.Name, StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+
+        mediaType.Encoding.Add(propertyInfo.Name, new OpenApiEncoding()
+        {
+            ContentType = "application/json",
+            Explode = false
+        });
+    }
+
+    private void _addExample(PropertyInfo propertyInfo, OpenApiSchema openApiSchema)
+    {
+        var example = _getExampleFor(propertyInfo.PropertyType);
+
+        // Example do not exist. Use default.
+        if (example == null)
+            return;
+
+        var json = JsonSerializer.SerializeToNode(example, _jsonOptions.Value.JsonSerializerOptions);
+        openApiSchema.Example = json;
+    }
+
+    private object? _getExampleFor(Type parameterType)
+    {
+        var makeGenericType = typeof(IExamplesProvider<>).MakeGenericType(parameterType);
+        var method = makeGenericType.GetMethod("GetExamples");
+        var exampleProvider = _serviceProvider.GetService(makeGenericType);
+        // Example do not exist. Use default.
+        if (exampleProvider == null)
+            return null;
+        var example = method?.Invoke(exampleProvider, null);
+        return example;
+    }
+
+    private static PropertyInfo? _getPropertyInfo(ParameterDescriptor descriptor) =>
+        descriptor.ParameterType.GetProperties()
+            .SingleOrDefault(f => f.GetCustomAttribute<FromJsonAttribute>() != null);
+}
+
+/// <summary>
+/// Aggregates form fields in Microsoft OpenAPI to one JSON field and add example.
+/// </summary>
+public class MultiPartJsonOperationTransformer : IOpenApiOperationTransformer
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IOptions<JsonOptions> _jsonOptions;
+
+    /// <summary>
+    /// Creates <see cref="MultiPartJsonOperationTransformer"/>
+    /// </summary>
+    public MultiPartJsonOperationTransformer(IServiceProvider serviceProvider, IOptions<JsonOptions> jsonOptions)
+    {
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _jsonOptions = jsonOptions;
+    }
+
     /// <inheritdoc />
     public async Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
     {
@@ -118,29 +208,6 @@ public class MultiPartJsonOperationFilter : IOperationFilter, IOpenApiOperationT
         }
     }
 
-    /// <summary>
-    /// Generate schema for propertyInfo
-    /// </summary>
-    /// <returns></returns>
-    private IOpenApiSchema _getSchema(OperationFilterContext context, PropertyInfo propertyInfo)
-    {
-        if (context.SchemaRepository.TryLookupByType(propertyInfo.PropertyType, out var schema))
-        {
-            return schema;
-        }
-
-        _ = context.SchemaGenerator.GenerateSchema(propertyInfo.PropertyType, context.SchemaRepository);
-        _ = context.SchemaRepository.TryLookupByType(propertyInfo.PropertyType, out schema);
-
-        var s = schema.Target as OpenApiSchema;
-        if (s is null) return schema;
-
-        _addDescription(s, s.Title);
-        _addExample(propertyInfo, s);
-
-        return s;
-    }
-
     private async Task<IOpenApiSchema> _getSchema(OpenApiOperationTransformerContext context, PropertyInfo propertyInfo, CancellationToken cancellationToken)
     {
         var schema = await context.GetOrCreateSchemaAsync(propertyInfo.PropertyType, null, cancellationToken).ConfigureAwait(false);
@@ -179,7 +246,6 @@ public class MultiPartJsonOperationFilter : IOperationFilter, IOpenApiOperationT
     {
         var example = _getExampleFor(propertyInfo.PropertyType);
 
-        // Example do not exist. Use default.
         if (example == null)
             return;
 
@@ -192,7 +258,6 @@ public class MultiPartJsonOperationFilter : IOperationFilter, IOpenApiOperationT
         var makeGenericType = typeof(IExamplesProvider<>).MakeGenericType(parameterType);
         var method = makeGenericType.GetMethod("GetExamples");
         var exampleProvider = _serviceProvider.GetService(makeGenericType);
-        // Example do not exist. Use default.
         if (exampleProvider == null)
             return null;
         var example = method?.Invoke(exampleProvider, null);

@@ -54,7 +54,7 @@ public class Startup : ArkStartupWebApi
             schema.Type = JsonSchemaType.Array;
             schema.Items = await context.GetOrCreateSchemaAsync(typeof(double?[]), null, cancellationToken).ConfigureAwait(false);
         });
-        options.AddOperationTransformer<MultiPartJsonOperationFilter>();
+        options.AddOperationTransformer<MultiPartJsonOperationTransformer>();
     }
 
     public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
@@ -66,6 +66,7 @@ public class Startup : ArkStartupWebApi
     {
         base.ConfigureServices(services);
 
+        // The Microsoft OpenAPI source generator requires application-level AddOpenApi calls to generate build-time documents.
         foreach (var version in Versions)
         {
             services.AddOpenApi($"v{version.ToString("VVVV", CultureInfo.InvariantCulture)}");

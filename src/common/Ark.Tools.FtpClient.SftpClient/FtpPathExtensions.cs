@@ -50,7 +50,7 @@ internal static class FtpPathExtensions
             return null;
 
 #if NET10_0_OR_GREATER
-#pragma warning disable MA0074 // .NET does not provide a LastIndexOf(char, StringComparison) overload.
+#pragma warning disable MA0074 // Polyfill supplies LastIndexOf(char, StringComparison) only for lower target frameworks.
         lastslash = tpath.LastIndexOf('/');
 #pragma warning restore MA0074
 #else

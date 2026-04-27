@@ -49,7 +49,7 @@ public static class Program
                 })
                 .ConfigureServices((ctx, services) =>
                 {
-                    if (!IsOpenApiDocumentGeneration())
+                    if (!IsRunningUnderOpenApiGenerator())
                     {
                         services.AddSingleton<IHostedService, RebusProcessorService>();
                     }
@@ -66,7 +66,7 @@ public static class Program
             });
     }
 
-    private static bool IsOpenApiDocumentGeneration()
+    private static bool IsRunningUnderOpenApiGenerator()
     {
         var entryAssemblyName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name;
         return string.Equals(entryAssemblyName, "GetDocument.Insider", StringComparison.Ordinal)

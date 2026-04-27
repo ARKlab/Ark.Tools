@@ -45,7 +45,7 @@ public abstract class ArkStartupWebApiCommon
     public virtual bool UseSwashbuckleOpenApi => false;
 
     /// <summary>
-    /// Gets a value indicating whether the Microsoft OpenAPI generator should be used.
+    /// Gets a value indicating whether the Microsoft OpenAPI generator should be used instead of the legacy Swashbuckle generator.
     /// </summary>
     protected bool UseMicrosoftOpenApi => !UseSwashbuckleOpenApi;
 
