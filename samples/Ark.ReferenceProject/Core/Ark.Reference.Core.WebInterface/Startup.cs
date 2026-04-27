@@ -12,6 +12,7 @@ using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
@@ -38,6 +39,24 @@ public class Startup : ArkStartupWebApi
                 Version = version.ToString("VVVV", CultureInfo.InvariantCulture),
             };
 
+    /// <inheritdoc />
+    protected override void ConfigureMicrosoftOpenApi(string documentName, OpenApiOptions options)
+    {
+        base.ConfigureMicrosoftOpenApi(documentName, options);
+
+        options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
+        {
+            if (context.JsonTypeInfo.Type != typeof(double?[,]))
+            {
+                return;
+            }
+
+            schema.Type = JsonSchemaType.Array;
+            schema.Items = await context.GetOrCreateSchemaAsync(typeof(double?[]), null, cancellationToken).ConfigureAwait(false);
+        });
+        options.AddOperationTransformer<MultiPartJsonOperationFilter>();
+    }
+
     public Startup(IConfiguration config, IWebHostEnvironment webHostEnvironment)
     : base(config, webHostEnvironment)
     {
@@ -46,6 +65,11 @@ public class Startup : ArkStartupWebApi
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
+
+        foreach (var version in Versions)
+        {
+            services.AddOpenApi($"v{version.ToString("VVVV", CultureInfo.InvariantCulture)}");
+        }
 
         // Configure System.Text.Json source generation with Ark defaults
         // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts

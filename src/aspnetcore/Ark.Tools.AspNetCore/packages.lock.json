@@ -122,12 +122,6 @@
         "resolved": "1.3.1",
         "contentHash": "wccVMVSGq9nQ43SjJl1s/VaAo+iWauJYWiZy/Hkvszk2vCQdq7aRn7GL3LTBMsnHuI13JRMfCi9Lk8747+njUg=="
       },
-      "Polyfill": {
-        "type": "Direct",
-        "requested": "[10.3.0, )",
-        "resolved": "10.3.0",
-        "contentHash": "5GDzIb+7qvrftxO+POQc2HAInFnQIw2NKdxjqmAVJ7l+P10djdmKW6dcjnHitUX59TTQZ/Ok0qcHUSasl/Cs1A=="
-      },
       "SimpleInjector.Integration.AspNetCore.Mvc.Core": {
         "type": "Direct",
         "requested": "[5.5.0, )",

@@ -44,6 +44,11 @@ public abstract class ArkStartupWebApiCommon
     /// </summary>
     public virtual bool UseSwashbuckleOpenApi => false;
 
+    /// <summary>
+    /// Gets a value indicating whether the Microsoft OpenAPI generator should be used.
+    /// </summary>
+    protected bool UseMicrosoftOpenApi => !UseSwashbuckleOpenApi;
+
     protected ArkStartupWebApiCommon(IConfiguration configuration, IHostEnvironment hostEnvironment)
     {
         Configuration = configuration;
@@ -181,7 +186,7 @@ public abstract class ArkStartupWebApiCommon
         }
         else
         {
-            services.AddArkMicrosoftOpenApiVersions(Versions, MakeInfo);
+            services.AddArkMicrosoftOpenApiVersions(Versions, MakeInfo, ConfigureMicrosoftOpenApi);
         }
 
         services.ArkConfigureSwagger(c =>
@@ -259,6 +264,15 @@ public abstract class ArkStartupWebApiCommon
 
     public abstract OpenApiInfo MakeInfo(ApiVersion version);
 
+    /// <summary>
+    /// Configures the Microsoft OpenAPI document generator for a specific document.
+    /// </summary>
+    /// <param name="documentName">The OpenAPI document name.</param>
+    /// <param name="options">The OpenAPI generator options.</param>
+    protected virtual void ConfigureMicrosoftOpenApi(string documentName, Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
+    {
+    }
+
     [RequiresUnreferencedCode("Configure uses ProblemDetails router which dynamically resolves types for diagnostic purposes.")]
     public virtual void Configure(IApplicationBuilder app)
     {
@@ -305,7 +319,7 @@ public abstract class ArkStartupWebApiCommon
 
             endpoints.MapArkHealthChecks();
             endpoints.MapControllers();
-            if (!UseSwashbuckleOpenApi)
+            if (UseMicrosoftOpenApi)
             {
 #if DEBUG
                 endpoints.MapOpenApi("/openapi/{documentName}.json");

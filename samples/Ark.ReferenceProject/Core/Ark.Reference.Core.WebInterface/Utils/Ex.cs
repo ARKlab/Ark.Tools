@@ -2,6 +2,7 @@ using Ark.Reference.Core.Common.Auth;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -133,33 +134,36 @@ public static class Ex
 
     public static IServiceCollection ArkConfigureSwaggerEntraId(this IServiceCollection services, string instance, string domain, string clientId, string tenantId)
     {
+        var oauthScheme = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.OAuth2,
+
+            Flows = new OpenApiOAuthFlows()
+            {
+                Implicit = new OpenApiOAuthFlow()
+                {
+                    AuthorizationUrl = new Uri($"{instance}/{tenantId}/oauth2/v2.0/authorize"),
+                    TokenUrl = new Uri($"{instance}/{tenantId}/oauth2/v2.0/token"),
+                    Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { "openid", "Grant access to user" },
+                        { $"api://{clientId}/access_as_user", "Default scope to retrieve user permissions" }
+                    }
+                }
+            },
+            Scheme = "oauth2"
+        };
+
         services.ConfigureSwaggerGen(c =>
         {
-            var oauthScheme = new OpenApiSecurityScheme
-            {
-                Type = SecuritySchemeType.OAuth2,
-
-                Flows = new OpenApiOAuthFlows()
-                {
-                    Implicit = new OpenApiOAuthFlow()
-                    {
-                        AuthorizationUrl = new Uri($"{instance}/{tenantId}/oauth2/v2.0/authorize"),
-                        TokenUrl = new Uri($"{instance}/{tenantId}/oauth2/v2.0/token"),
-                        Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
-                        {
-                            { "openid", "Grant access to user" },
-                            { $"api://{clientId}/access_as_user", "Default scope to retrieve user permissions" }
-                        }
-                    }
-                },
-                Scheme = "oauth2"
-            };
             c.AddSecurityDefinition("oauth2", oauthScheme);
             c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
             {
                 [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
             });
         });
+
+        services.ConfigureMicrosoftOpenApiOAuth2(oauthScheme);
 
         services.ArkConfigureSwaggerUI(c =>
         {
@@ -174,25 +178,25 @@ public static class Ex
 
     public static IServiceCollection ArkConfigureSwaggerIdentityServer(this IServiceCollection services, string domain, string clientId, string swaggerscope)
     {
+        var oauthScheme = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.OAuth2,
+            Flows = new OpenApiOAuthFlows()
+            {
+                Implicit = new OpenApiOAuthFlow()
+                {
+                    AuthorizationUrl = new Uri($"https://{domain}/connect/authorize"),
+                    Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        { swaggerscope, "Grant access to user" }
+                    }
+                }
+            },
+            Scheme = "oauth2"
+        };
+
         services.ConfigureSwaggerGen(c =>
         {
-            var oauthScheme = new OpenApiSecurityScheme
-            {
-                Type = SecuritySchemeType.OAuth2,
-                Flows = new OpenApiOAuthFlows()
-                {
-                    Implicit = new OpenApiOAuthFlow()
-                    {
-                        AuthorizationUrl = new Uri($"https://{domain}/connect/authorize"),
-                        Scopes = new Dictionary<string, string>(StringComparer.Ordinal)
-                        {
-                            { swaggerscope, "Grant access to user" }
-                        }
-                    }
-                },
-                Scheme = "oauth2"
-            };
-
             c.AddSecurityDefinition("oauth2", oauthScheme);
 
             c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
@@ -200,6 +204,8 @@ public static class Ex
                 [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
             });
         });
+
+        services.ConfigureMicrosoftOpenApiOAuth2(oauthScheme);
 
         services.ArkConfigureSwaggerUI(c =>
         {
@@ -211,5 +217,25 @@ public static class Ex
         });
 
         return services;
+    }
+
+    private static void ConfigureMicrosoftOpenApiOAuth2(this IServiceCollection services, OpenApiSecurityScheme oauthScheme)
+    {
+        services.ConfigureAll<OpenApiOptions>(options =>
+        {
+            options.AddDocumentTransformer((document, context, cancellationToken) =>
+            {
+                document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>(StringComparer.Ordinal);
+                document.Components.SecuritySchemes["oauth2"] = oauthScheme;
+                document.Security ??= [];
+                document.Security.Add(new OpenApiSecurityRequirement
+                {
+                    [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
+                });
+
+                return Task.CompletedTask;
+            });
+        });
     }
 }

@@ -148,12 +148,6 @@
           "MSTest.Analyzers": "4.2.1"
         }
       },
-      "Polyfill": {
-        "type": "Direct",
-        "requested": "[10.3.0, )",
-        "resolved": "10.3.0",
-        "contentHash": "5GDzIb+7qvrftxO+POQc2HAInFnQIw2NKdxjqmAVJ7l+P10djdmKW6dcjnHitUX59TTQZ/Ok0qcHUSasl/Cs1A=="
-      },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
         "resolved": "18.4.0",

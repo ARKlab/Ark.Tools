@@ -19,13 +19,31 @@ Recommended project settings:
 
 ```xml
 <PropertyGroup>
-  <OpenApiDocumentsDirectory>$(OutputPath)</OpenApiDocumentsDirectory>
+  <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/</OpenApiDocumentsDirectory>
   <OpenApiGenerateDocumentsOptions>--openapi-version OpenApi3_1</OpenApiGenerateDocumentsOptions>
 </PropertyGroup>
 ```
 
 Build-time generation starts the application entry point with a mock server.
 Guard startup code that performs external side effects, migrations, outbound calls, or hosted background work during document generation.
+
+## Step-by-step migration
+
+1. Remove any `UseSwashbuckleOpenApi` override, or leave it set to `false`, so `ArkStartupWebApiCommon` registers Microsoft OpenAPI.
+2. Add `Microsoft.Extensions.ApiDescription.Server` to the application project.
+3. Set `OpenApiDocumentsDirectory` to the application output directory and keep `OpenApiGenerateDocumentsOptions` on `OpenApi3_1` so production serves static, build-generated specs from `/swagger/docs/{documentName}`.
+4. Keep the build-time `AddOpenApi(...)` calls in the application project. The Microsoft source generator needs these calls in the application assembly, while Ark.Tools keeps the runtime serving path guarded by the generator selection in the base startup class.
+5. Move Swashbuckle `ISchemaFilter` and `IOperationFilter` customizations to `ConfigureMicrosoftOpenApi` with `IOpenApiSchemaTransformer` and `IOpenApiOperationTransformer`.
+6. Keep Swagger UI options and OAuth UI configuration. Add Microsoft OpenAPI document transformers for security schemes previously added with `ConfigureSwaggerGen`.
+7. Build the application and verify the expected `{ProjectName}_v*.json` files are generated in the application output directory.
+
+The `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.WebInterface` project demonstrates these steps by:
+
+- generating OpenAPI files at build time,
+- configuring schema and operation transformers in `ConfigureMicrosoftOpenApi`,
+- preserving Swagger UI OAuth setup, and
+- adding OAuth security schemes with Microsoft OpenAPI document transformers, and
+- skipping hosted background workers while `dotnet-getdocument` generates the specification.
 
 ## Swashbuckle attributes
 

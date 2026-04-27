@@ -26,7 +26,7 @@ namespace Ark.Tools.AspNetCore.Startup;
 
 internal static class ArkMicrosoftOpenApiExtensions
 {
-    public static IServiceCollection AddArkMicrosoftOpenApiVersions(this IServiceCollection services, IEnumerable<ApiVersion> versions, Func<ApiVersion, OpenApiInfo> infoBuilder)
+    public static IServiceCollection AddArkMicrosoftOpenApiVersions(this IServiceCollection services, IEnumerable<ApiVersion> versions, Func<ApiVersion, OpenApiInfo> infoBuilder, Action<string, OpenApiOptions>? configureOptions = null)
     {
         foreach (var version in versions)
         {
@@ -52,6 +52,7 @@ internal static class ArkMicrosoftOpenApiExtensions
                 options.AddOperationTransformer(ApplyOperationId);
                 options.AddOperationTransformer(ApplyFlaggedEnums);
                 options.AddOperationTransformer(ApplyDefaultResponses);
+                configureOptions?.Invoke(documentName, options);
             });
         }
 

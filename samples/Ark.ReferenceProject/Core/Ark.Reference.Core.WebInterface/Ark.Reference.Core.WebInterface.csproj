@@ -3,10 +3,13 @@
   <PropertyGroup>
     <AspNetCoreModuleName>AspNetCoreModuleV2</AspNetCoreModuleName>
     <AspNetCoreHostingModel>inprocess</AspNetCoreHostingModel>
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--openapi-version OpenApi3_1</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
 
   <ItemGroup>
 	<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
+	<PackageReference Include="Microsoft.Extensions.ApiDescription.Server" />
 	<PackageReference Include="Microsoft.Identity.Web" />
   </ItemGroup>
 

@@ -2200,6 +2200,7 @@
           "Ark.Reference.Core.Application": "[0.9.1, )",
           "Ark.Tools.AspNetCore": "[1.0.0, )",
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.0, )",
+          "Microsoft.Extensions.ApiDescription.Server": "[10.0.7, )",
           "Microsoft.Identity.Web": "[4.8.0, )"
         }
       },
@@ -2559,6 +2560,12 @@
           "Microsoft.Extensions.Options": "10.0.7",
           "System.Security.Cryptography.Xml": "10.0.7"
         }
+      },
+      "Microsoft.Extensions.ApiDescription.Server": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "VBNJzdInUkjhL/Habj16j3kMHIccjjuWg2zILcapH2QDq5GJF4bfQzJvt2gynuT98PkTpLUvPAsPeefKBDT/mg=="
       },
       "Microsoft.Identity.Web": {
         "type": "CentralTransitive",

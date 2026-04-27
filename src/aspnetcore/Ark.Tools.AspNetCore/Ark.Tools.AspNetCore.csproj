@@ -58,12 +58,4 @@
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
 
-  <Target Name="RemoveReferencedXmlCommentsFromOpenApi" AfterTargets="GenerateAdditionalXmlFilesForOpenApi">
-    <ItemGroup>
-      <!-- Keep only this project's XML comments for Microsoft OpenAPI source generation.
-           Referenced Ark project XML files include duplicate shared Polyfill members. -->
-      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml' and '%(Filename)' != 'Ark.Tools.AspNetCore'" />
-    </ItemGroup>
-  </Target>
-
 </Project>

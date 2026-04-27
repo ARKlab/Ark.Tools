@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
@@ -15,7 +16,7 @@ namespace Ark.Reference.Core.WebInterface.Utils;
 /// <summary>
 /// Aggregates form fields in Swagger to one JSON field and add example.
 /// </summary>
-public class MultiPartJsonOperationFilter : IOperationFilter
+public class MultiPartJsonOperationFilter : IOperationFilter, IOpenApiOperationTransformer
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IOptions<JsonOptions> _jsonOptions;
@@ -73,6 +74,50 @@ public class MultiPartJsonOperationFilter : IOperationFilter
         }
     }
 
+    /// <inheritdoc />
+    public async Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    {
+        var descriptors = context.Description.ActionDescriptor.Parameters.ToList();
+        foreach (var descriptor in descriptors)
+        {
+            var propertyInfo = _getPropertyInfo(descriptor);
+
+            if (propertyInfo is null || operation.RequestBody?.Content is null || operation.RequestBody.Content.Count == 0)
+            {
+                continue;
+            }
+
+            var mediaType = operation.RequestBody.Content.First().Value;
+
+            if (mediaType.Schema is not OpenApiSchema schema || schema.Properties is null)
+            {
+                continue;
+            }
+
+            var groupedProperties = schema.Properties
+                .GroupBy(pair => pair.Key.Split('.')[0], StringComparer.Ordinal);
+
+            var schemaProperties = new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal);
+
+            foreach (var property in groupedProperties)
+            {
+                if (property.Key == propertyInfo.Name)
+                {
+                    _addEncoding(mediaType, propertyInfo);
+
+                    var openApiSchema = await _getSchema(context, propertyInfo, cancellationToken).ConfigureAwait(false);
+                    schemaProperties.Add(property.Key, openApiSchema);
+                }
+                else
+                {
+                    schemaProperties.Add(property.Key, property.First().Value);
+                }
+            }
+
+            schema.Properties = schemaProperties;
+        }
+    }
+
     /// <summary>
     /// Generate schema for propertyInfo
     /// </summary>
@@ -94,6 +139,19 @@ public class MultiPartJsonOperationFilter : IOperationFilter
         _addExample(propertyInfo, s);
 
         return s;
+    }
+
+    private async Task<IOpenApiSchema> _getSchema(OpenApiOperationTransformerContext context, PropertyInfo propertyInfo, CancellationToken cancellationToken)
+    {
+        var schema = await context.GetOrCreateSchemaAsync(propertyInfo.PropertyType, null, cancellationToken).ConfigureAwait(false);
+
+        if (schema is OpenApiSchema openApiSchema)
+        {
+            _addDescription(openApiSchema, openApiSchema.Title);
+            _addExample(propertyInfo, openApiSchema);
+        }
+
+        return schema;
     }
 
     private static void _addDescription(OpenApiSchema openApiSchema, string? SchemaDisplayName)

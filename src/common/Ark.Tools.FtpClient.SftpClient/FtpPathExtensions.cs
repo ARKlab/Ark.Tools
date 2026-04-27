@@ -49,7 +49,13 @@ internal static class FtpPathExtensions
         if (tpath == null)
             return null;
 
+#if NET10_0_OR_GREATER
+#pragma warning disable MA0074 // .NET does not provide a LastIndexOf(char, StringComparison) overload.
+        lastslash = tpath.LastIndexOf('/');
+#pragma warning restore MA0074
+#else
         lastslash = tpath.LastIndexOf('/', StringComparison.Ordinal);
+#endif
         if (lastslash < 0)
             return tpath;
 

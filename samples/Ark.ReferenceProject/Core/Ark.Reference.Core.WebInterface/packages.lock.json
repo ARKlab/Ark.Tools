@@ -37,6 +37,12 @@
         "resolved": "10.0.203",
         "contentHash": "wAY0s+xokbBwVXxm6n7Q1kS4onWinN7qpV2RpkKXMQ0K1SGNsAy46mUFR5SReLQjy5ib9U8bfpnVUEiyZplA1A=="
       },
+      "Microsoft.Extensions.ApiDescription.Server": {
+        "type": "Direct",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "VBNJzdInUkjhL/Habj16j3kMHIccjjuWg2zILcapH2QDq5GJF4bfQzJvt2gynuT98PkTpLUvPAsPeefKBDT/mg=="
+      },
       "Microsoft.Identity.Web": {
         "type": "Direct",
         "requested": "[4.8.0, )",
