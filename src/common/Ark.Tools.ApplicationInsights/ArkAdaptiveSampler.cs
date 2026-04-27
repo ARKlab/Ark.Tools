@@ -33,6 +33,7 @@ public sealed class ArkAdaptiveSampler : Sampler
     private const string _filteredTag = "ark.filtered";
 
     private readonly ArkAdaptiveSamplerOptions _options;
+    private readonly FailedTraceRegistry _failedTraceRegistry;
     private readonly ConcurrentDictionary<string, OperationBucket> _buckets;
 
     // Stats for adaptive rate controller
@@ -43,11 +44,24 @@ public sealed class ArkAdaptiveSampler : Sampler
     private readonly Lock _adjustLock = new();
 
     /// <summary>
-    /// Initializes a new instance of <see cref="ArkAdaptiveSampler"/>.
+    /// Initializes a new instance of <see cref="ArkAdaptiveSampler"/> with a standalone
+    /// failure-trace registry (no coordination with an external processor).
     /// </summary>
     public ArkAdaptiveSampler(ArkAdaptiveSamplerOptions options)
+        : this(options, new FailedTraceRegistry())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="ArkAdaptiveSampler"/> using the supplied
+    /// <paramref name="failedTraceRegistry"/> so the sampler and an
+    /// <see cref="ArkFailurePromotionProcessor"/> sharing the same registry can
+    /// coordinate whole-operation failure promotion.
+    /// </summary>
+    internal ArkAdaptiveSampler(ArkAdaptiveSamplerOptions options, FailedTraceRegistry failedTraceRegistry)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _failedTraceRegistry = failedTraceRegistry ?? throw new ArgumentNullException(nameof(failedTraceRegistry));
         _currentRate = options.TracesPerSecond;
         _lastAdjustment = DateTime.UtcNow;
         _buckets = new ConcurrentDictionary<string, OperationBucket>(StringComparer.Ordinal);
@@ -75,6 +89,11 @@ public sealed class ArkAdaptiveSampler : Sampler
         // Propagate parent sampling decision (if parent was sampled, sample child too).
         var parentContext = samplingParameters.ParentContext;
         if (parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
+            return new SamplingResult(SamplingDecision.RecordAndSample);
+
+        // If any span in this trace has already been identified as a failure, always sample.
+        // This ensures that siblings starting after the failure is detected are fully captured.
+        if (_failedTraceRegistry.IsFailed(samplingParameters.TraceId))
             return new SamplingResult(SamplingDecision.RecordAndSample);
 
         // Get the operation bucket.

@@ -68,6 +68,12 @@ public static class ArkApplicationInsightsExtensions
         {
             var samplerOptions = sp.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value;
 
+            // Shared registry for whole-operation failure promotion. The sampler and the
+            // failure promotion processor both reference this instance so that a failure
+            // detected in one span can immediately influence sampling decisions for new sibling
+            // spans and promote in-flight sibling spans when they complete.
+            var failedTraceRegistry = new FailedTraceRegistry();
+
             return new ConfigureNamedOptions<TelemetryConfiguration>(Options.DefaultName, tc =>
             {
                 tc.ConfigureOpenTelemetryBuilder(builder =>
@@ -78,10 +84,12 @@ public static class ArkApplicationInsightsExtensions
                         tracerBuilder.AddProcessor(new ArkPreFilterProcessor());
 
                         // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
-                        tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions));
+                        tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry));
 
-                        // Failure promotion: upgrades rate-limited spans to exported if they fail.
-                        tracerBuilder.AddProcessor(new ArkFailurePromotionProcessor());
+                        // Failure promotion: promotes rate-limited spans (and their parent chain /
+                        // in-flight siblings) to exported when a failure is detected anywhere in
+                        // the operation.
+                        tracerBuilder.AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry));
 
                         // Enrichment: adds ProcessName to all spans.
                         tracerBuilder.AddProcessor(new ArkTelemetryEnrichmentProcessor());

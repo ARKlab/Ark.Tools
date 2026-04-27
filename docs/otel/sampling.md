@@ -53,16 +53,49 @@ Using `RecordOnly` (instead of `Drop`) for rate-limited spans is important: it m
 
 ### 3. Post-completion failure promotion (`OnEnd` via processor)
 
-`ArkAdaptiveSampler` also registers a `BaseProcessor<Activity>` companion (`ArkFailurePromotionProcessor`). In `OnEnd`:
+`ArkFailurePromotionProcessor` runs in the `OnEnd` pipeline (after the span is fully populated but before the exporter picks it up). It implements **whole-operation failure promotion**:
 
 ```
-if activity.Recorded == false  (was rate-limited / not sampled)
-    and IsFailure(activity)    (failed HTTP, exception, error status)
-    → set ActivityTraceFlags to include Recorded
-    → this forces the exporter to include this span
+for every span in OnEnd:
+  if span is already sampled (Recorded flag set):
+      if IsFailure(span) → register TraceId in FailedTraceRegistry
+      return (already going to be exported)
+
+  if IsFailure(span):
+      register TraceId in FailedTraceRegistry   ← sibling/future spans will see this
+      promote span to Recorded
+      walk activity.Parent chain upward:
+          for each in-process parent span (not yet ended):
+              if not Recorded → promote to Recorded
+              (parent spans are guaranteed to still be alive here because
+               children always end before their parent in a single-process trace)
+
+  else if FailedTraceRegistry.IsFailed(span.TraceId):
+      promote span to Recorded
+      (this catches in-flight siblings that complete after the failure was detected)
 ```
 
-This two-pass approach ensures **no failure is ever lost**, even during traffic spikes.
+The shared **`FailedTraceRegistry`** links the processor back to the sampler:
+
+```
+ArkAdaptiveSampler.ShouldSample():
+    ...
+    if FailedTraceRegistry.IsFailed(samplingParameters.TraceId):
+        return RecordAndSample   ← new child spans after failure detection always sampled
+```
+
+#### What gets captured when a span fails
+
+| Span | Captured? | How |
+|------|-----------|-----|
+| The failing span itself | ✅ Always | Promoted in `OnEnd` |
+| All in-process parent/ancestor spans | ✅ Always | Parent-chain walk in `OnEnd`; parents haven't ended yet |
+| Sibling/child spans that end **after** the failure is detected | ✅ Always | Registry check in `OnEnd` and `ShouldSample` |
+| Sibling spans that ended **before** the failure is detected | ❌ Not possible | Already processed by the export pipeline |
+
+In practice, the most important span to always capture is the **root operation span** (e.g., the top-level HTTP request handler). Because children always end before their parent, the root span is guaranteed to be in the parent chain and will always be promoted.
+
+Using `RecordOnly` (instead of `Drop`) for rate-limited spans is important: it means the Activity is still created and data is still collected, so the `OnEnd` processor can check if the span *ended* as a failure and promote it to `RecordAndSample`.
 
 ### 4. Token Bucket per Operation
 
