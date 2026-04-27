@@ -48,6 +48,11 @@ public class Startup : ArkStartupWebApi
     {
         base.ConfigureServices(services);
 
+        foreach (var version in Versions)
+        {
+            services.AddOpenApi($"v{version.ToString("VVVV", CultureInfo.InvariantCulture)}");
+        }
+
         var auth0Scheme = "Auth0";
         var audience = "Audience";
         var domain = "Domain";

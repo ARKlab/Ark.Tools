@@ -1,12 +1,14 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.Tools.Core.Reflection;
-using Ark.Tools.SystemTextJson;
+using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +18,7 @@ using NodaTime;
 
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Tools.AspNetCore.Startup;
 
@@ -32,7 +35,7 @@ internal static class ArkMicrosoftOpenApiExtensions
             {
                 options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
                 options.ShouldInclude = description => string.Equals(description.GroupName, documentName, StringComparison.Ordinal);
-                options.CreateSchemaReferenceId = jsonTypeInfo => ReflectionHelper.GetCSTypeName(jsonTypeInfo.Type).Replace($"{jsonTypeInfo.Type.Namespace}.", string.Empty, StringComparison.Ordinal);
+                options.CreateSchemaReferenceId = CreateSchemaReferenceId;
 
                 options.AddDocumentTransformer((document, context, cancellationToken) =>
                 {
@@ -62,6 +65,10 @@ internal static class ArkMicrosoftOpenApiExtensions
 
     public static string ToDocumentName(ApiVersion version)
         => $"v{version.ToString("VVVV", CultureInfo.InvariantCulture)}";
+
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "OpenAPI schema IDs are generated during document generation and follow the existing Swashbuckle naming policy.")]
+    private static string CreateSchemaReferenceId(JsonTypeInfo jsonTypeInfo)
+        => ReflectionHelper.GetCSTypeName(jsonTypeInfo.Type).Replace($"{jsonTypeInfo.Type.Namespace}.", string.Empty, StringComparison.Ordinal);
 
     public static async Task WriteOpenApiDocumentAsync(HttpContext context)
     {
@@ -146,6 +153,7 @@ internal static class ArkMicrosoftOpenApiExtensions
                                         ? ("duration", "P1Y2M-3DT4H")
                                         : null;
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Default parameter values are serialized only while generating OpenAPI metadata.")]
     private static Task ApplySwaggerDefaultValues(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
     {
         var apiDescription = context.Description;
@@ -295,7 +303,7 @@ internal static class ArkMicrosoftOpenApiExtensions
     {
         operation.Responses ??= new OpenApiResponses();
 
-        var problemDetailsSchema = await context.GetOrCreateSchemaAsync(typeof(ProblemDetails), null, cancellationToken).ConfigureAwait(false);
+        var problemDetailsSchema = await context.GetOrCreateSchemaAsync(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), null, cancellationToken).ConfigureAwait(false);
         var validationProblemDetailsSchema = await context.GetOrCreateSchemaAsync(typeof(ValidationProblemDetails), null, cancellationToken).ConfigureAwait(false);
 
         AddResponseIfMissing(operation, "401", "Unauthorized", problemDetailsSchema);

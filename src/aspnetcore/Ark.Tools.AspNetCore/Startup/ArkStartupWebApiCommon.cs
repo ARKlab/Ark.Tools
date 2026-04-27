@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.OData;
-using Microsoft.AspNetCore.OpenApi;
 
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Routing;
@@ -308,6 +307,7 @@ public abstract class ArkStartupWebApiCommon
             endpoints.MapControllers();
             if (!UseSwashbuckleOpenApi)
             {
+                endpoints.MapOpenApi("/openapi/{documentName}.json");
                 endpoints.MapGet("swagger/docs/{documentName}", ArkMicrosoftOpenApiExtensions.WriteOpenApiDocumentAsync);
             }
             endpoints.Redirect("/", "/swagger");

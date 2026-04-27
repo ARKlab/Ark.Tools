@@ -36,7 +36,6 @@
     <PackageReference Include="Hellang.Middleware.ProblemDetails" />
     <PackageReference Include="Microsoft.AspNetCore.OData" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" />
     <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders" />
     <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" />
   </ItemGroup>
@@ -58,5 +57,11 @@
     <ProjectReference Include="..\..\common\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
+
+  <Target Name="RemoveReferencedXmlCommentsFromOpenApi" AfterTargets="GenerateAdditionalXmlFilesForOpenApi">
+    <ItemGroup>
+      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml'" />
+    </ItemGroup>
+  </Target>
 
 </Project>

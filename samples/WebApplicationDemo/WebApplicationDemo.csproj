@@ -4,7 +4,6 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
 	  <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
-    <OpenApiDocumentsDirectory>$(OutputPath)</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocumentsOptions>--openapi-version OpenApi3_1</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
 
@@ -13,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" />
     <PackageReference Include="Microsoft.Identity.Web" />
   </ItemGroup>
@@ -29,4 +29,10 @@
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
   </ItemGroup>
+
+  <Target Name="RemoveReferencedXmlCommentsFromOpenApi" AfterTargets="GenerateAdditionalXmlFilesForOpenApi">
+    <ItemGroup>
+      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml' And '%(Filename)' != 'WebApplicationDemo'" />
+    </ItemGroup>
+  </Target>
 </Project>
