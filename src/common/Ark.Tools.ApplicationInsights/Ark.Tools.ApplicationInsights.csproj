@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights" />
-    <PackageReference Include="Microsoft.ApplicationInsights.SnapshotCollector" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>

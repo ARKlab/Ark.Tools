@@ -405,11 +405,6 @@
           "Microsoft.IdentityModel.Tokens": "8.16.0"
         }
       },
-      "System.IO.FileSystem.AccessControl": {
-        "type": "Transitive",
-        "resolved": "4.7.0",
-        "contentHash": "vMToiarpU81LR1/KZtnT7VDPvqAZfw9oOS5nY6pPP78nGYz3COLsQH3OfzbR+SjTgltd31R6KmKklz/zDpTmzw=="
-      },
       "System.IO.Hashing": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -435,7 +430,6 @@
         "dependencies": {
           "Ark.Tools.OTel": "[1.0.0, )",
           "Microsoft.ApplicationInsights": "[3.1.0, )",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
           "Microsoft.Extensions.Options": "[10.0.7, )",
           "OpenTelemetry.Extensions.Hosting": "[1.15.3, )"
         }
@@ -497,17 +491,6 @@
         "contentHash": "X6kvmOEnWxQjZgRJ/J8fdlA9xa2sJj6hhp09fL2AsgzC8SUFK8YVpsfZvu161FfD0zXe2Exgh4BC9hNze+W9hg==",
         "dependencies": {
           "Azure.Monitor.OpenTelemetry.Exporter": "1.7.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.SnapshotCollector": {
-        "type": "CentralTransitive",
-        "requested": "[1.4.6, )",
-        "resolved": "1.4.6",
-        "contentHash": "UGXpUjW3YFSFq+u4CXwJrU3Rf7Hc3dMrMVTBJ8E3LB0eV2MF8lOHnXc+kHEmLKO4gxHhvulaVIld7U5aDzLZ8A==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.15.0",
-          "Microsoft.Extensions.Options": "2.1.1",
-          "System.IO.FileSystem.AccessControl": "4.7.0"
         }
       },
       "Microsoft.Extensions.Caching.Abstractions": {
@@ -1120,7 +1103,6 @@
         "dependencies": {
           "Ark.Tools.OTel": "[1.0.0, )",
           "Microsoft.ApplicationInsights": "[3.1.0, )",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
           "Microsoft.Extensions.Options": "[10.0.7, )",
           "OpenTelemetry.Extensions.Hosting": "[1.15.3, )"
         }
@@ -1183,16 +1165,6 @@
         "contentHash": "X6kvmOEnWxQjZgRJ/J8fdlA9xa2sJj6hhp09fL2AsgzC8SUFK8YVpsfZvu161FfD0zXe2Exgh4BC9hNze+W9hg==",
         "dependencies": {
           "Azure.Monitor.OpenTelemetry.Exporter": "1.7.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.SnapshotCollector": {
-        "type": "CentralTransitive",
-        "requested": "[1.4.6, )",
-        "resolved": "1.4.6",
-        "contentHash": "UGXpUjW3YFSFq+u4CXwJrU3Rf7Hc3dMrMVTBJ8E3LB0eV2MF8lOHnXc+kHEmLKO4gxHhvulaVIld7U5aDzLZ8A==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.15.0",
-          "Microsoft.Extensions.Options": "2.1.1"
         }
       },
       "Microsoft.Extensions.Caching.Abstractions": {
