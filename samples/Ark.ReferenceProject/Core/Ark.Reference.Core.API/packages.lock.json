@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.54, )",
-        "resolved": "3.0.54",
-        "contentHash": "fybpNsTg4ZT+oiQWkrkTvvy1dowdqjfkefFa/7OIPFPmTkHd9eSEjPCpoK1c5oYdp68QjpLTbeCDpZB2TOUQ4A=="
+        "requested": "[3.0.56, )",
+        "resolved": "3.0.56",
+        "contentHash": "kh6dGYKqDkkcrqBFzsd/DWa6thojGSA3+7Ngoft5rkew4+Wyn0WB8K5qqR4IN2y5Jz60230mQpx25X83qBUllA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -807,8 +807,8 @@
       },
       "SimpleInjector": {
         "type": "Transitive",
-        "resolved": "5.5.1",
-        "contentHash": "GMNa78+tHkALr5mdrtcEovv+X9clUg/bzFvI7pFLjDbjTaP5z/brdJ+Yixw5JDF9dX+N/NKWu2AueA/HNyMtGQ=="
+        "resolved": "5.5.2",
+        "contentHash": "xjXvT+7jTZkpoeCZ9JQ830EV3E45cnWFA6PSgmP2ZQ21ySyaDj+GyUKWYOeztueefChrjkSwpcJ3L1kOIwnvQQ=="
       },
       "Slack.Webhooks": {
         "type": "Transitive",
@@ -1014,7 +1014,7 @@
       "ark.tools.simpleinjector": {
         "type": "Project",
         "dependencies": {
-          "SimpleInjector": "[5.5.1, )"
+          "SimpleInjector": "[5.5.2, )"
         }
       },
       "ark.tools.solid": {
