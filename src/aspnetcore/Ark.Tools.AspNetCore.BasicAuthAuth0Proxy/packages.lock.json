@@ -69,6 +69,11 @@
           "Newtonsoft.Json": "13.0.4"
         }
       },
+      "Microsoft.Bcl.AsyncInterfaces": {
+        "type": "Transitive",
+        "resolved": "9.0.14",
+        "contentHash": "H0Laf0wUWa+wKXWJR5NSv82gLuKX0tjwKTABEp21JoLGDvXtnWty6xbsvDC5Q7jncRXcBApRJn6mMBgdRir1nA=="
+      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.203",
@@ -125,6 +130,11 @@
         "resolved": "8.6.6",
         "contentHash": "lCBL9mmhF9TZxHG3beVRkyjlLohkIC464xIAq7J7Y59C+z42hmsdUaeCKl2SIAYertOUU5TeBXyQDLDQGIKePQ=="
       },
+      "Portable.System.DateTimeOnly": {
+        "type": "Transitive",
+        "resolved": "9.0.1",
+        "contentHash": "DRzBx/EL1vE9U8Thucwu/oLxpVNH4UXLarAyQbTLOyr4x/X6RT5pEpTZtYAbqLjbrbB99e3YYJW+4pV4DkEn4g=="
+      },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "Transitive",
         "resolved": "8.17.0",
@@ -143,7 +153,7 @@
         "type": "Project",
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.45.1, )",
-          "Auth0.ManagementApi": "[7.47.0, )",
+          "Auth0.ManagementApi": "[8.2.0, )",
           "JWT": "[11.0.0, )",
           "Polly": "[8.6.6, )",
           "Polly.Caching.Memory": "[3.0.2, )"
@@ -162,11 +172,13 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[7.47.0, )",
-        "resolved": "7.47.0",
-        "contentHash": "iBoq3ti2w3MyZUm7TIPEnP1S1NLBbe64cqrvjhuVx57bOLwFOu9LkY9a8ky8QK9O8ijBggNCXIP/55+Wljw91Q==",
+        "requested": "[8.2.0, )",
+        "resolved": "8.2.0",
+        "contentHash": "S6tg72V0GcD9n+mMaDfUBcT9XZtw+dwI8Oav0N2t6anNS2snxIKA6AMzcrHv2lBRmRXiE+aHMJyTTuWFj7c6+Q==",
         "dependencies": {
-          "Auth0.Core": "7.45.1"
+          "Auth0.AuthenticationApi": "7.45.1",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
+          "Portable.System.DateTimeOnly": "9.0.1"
         }
       },
       "JWT": {
