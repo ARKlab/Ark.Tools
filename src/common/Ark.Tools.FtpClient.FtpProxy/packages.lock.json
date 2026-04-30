@@ -137,6 +137,11 @@
           "Newtonsoft.Json.Bson": "1.0.1"
         }
       },
+      "Microsoft.Bcl.AsyncInterfaces": {
+        "type": "Transitive",
+        "resolved": "9.0.14",
+        "contentHash": "H0Laf0wUWa+wKXWJR5NSv82gLuKX0tjwKTABEp21JoLGDvXtnWty6xbsvDC5Q7jncRXcBApRJn6mMBgdRir1nA=="
+      },
       "Microsoft.Bcl.Cryptography": {
         "type": "Transitive",
         "resolved": "9.0.13",
@@ -280,6 +285,11 @@
         "resolved": "8.6.6",
         "contentHash": "lCBL9mmhF9TZxHG3beVRkyjlLohkIC464xIAq7J7Y59C+z42hmsdUaeCKl2SIAYertOUU5TeBXyQDLDQGIKePQ=="
       },
+      "Portable.System.DateTimeOnly": {
+        "type": "Transitive",
+        "resolved": "9.0.1",
+        "contentHash": "DRzBx/EL1vE9U8Thucwu/oLxpVNH4UXLarAyQbTLOyr4x/X6RT5pEpTZtYAbqLjbrbB99e3YYJW+4pV4DkEn4g=="
+      },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -328,7 +338,7 @@
         "type": "Project",
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.45.1, )",
-          "Auth0.ManagementApi": "[7.47.0, )",
+          "Auth0.ManagementApi": "[8.2.0, )",
           "JWT": "[11.0.0, )",
           "Polly": "[8.6.6, )",
           "Polly.Caching.Memory": "[3.0.2, )"
@@ -415,11 +425,13 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[7.47.0, )",
-        "resolved": "7.47.0",
-        "contentHash": "iBoq3ti2w3MyZUm7TIPEnP1S1NLBbe64cqrvjhuVx57bOLwFOu9LkY9a8ky8QK9O8ijBggNCXIP/55+Wljw91Q==",
+        "requested": "[8.2.0, )",
+        "resolved": "8.2.0",
+        "contentHash": "S6tg72V0GcD9n+mMaDfUBcT9XZtw+dwI8Oav0N2t6anNS2snxIKA6AMzcrHv2lBRmRXiE+aHMJyTTuWFj7c6+Q==",
         "dependencies": {
-          "Auth0.Core": "7.45.1"
+          "Auth0.AuthenticationApi": "7.45.1",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
+          "Portable.System.DateTimeOnly": "9.0.1"
         }
       },
       "Ben.Demystifier": {
@@ -833,6 +845,11 @@
           "Newtonsoft.Json.Bson": "1.0.1"
         }
       },
+      "Microsoft.Bcl.AsyncInterfaces": {
+        "type": "Transitive",
+        "resolved": "9.0.14",
+        "contentHash": "H0Laf0wUWa+wKXWJR5NSv82gLuKX0tjwKTABEp21JoLGDvXtnWty6xbsvDC5Q7jncRXcBApRJn6mMBgdRir1nA=="
+      },
       "Microsoft.Bcl.Cryptography": {
         "type": "Transitive",
         "resolved": "8.0.0",
@@ -976,6 +993,11 @@
         "resolved": "8.6.6",
         "contentHash": "lCBL9mmhF9TZxHG3beVRkyjlLohkIC464xIAq7J7Y59C+z42hmsdUaeCKl2SIAYertOUU5TeBXyQDLDQGIKePQ=="
       },
+      "Portable.System.DateTimeOnly": {
+        "type": "Transitive",
+        "resolved": "9.0.1",
+        "contentHash": "DRzBx/EL1vE9U8Thucwu/oLxpVNH4UXLarAyQbTLOyr4x/X6RT5pEpTZtYAbqLjbrbB99e3YYJW+4pV4DkEn4g=="
+      },
       "System.Diagnostics.DiagnosticSource": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -1008,10 +1030,20 @@
         "resolved": "10.0.7",
         "contentHash": "6hsjdSr4VOXSOnhALkYplHpAxnTG1J33YN42IB6nH2fEg4QnJqrZ4Ft+qn7mkrKAOYC8pCSFYwVWw6rQbmwgLQ=="
       },
+      "System.IO.Pipelines": {
+        "type": "Transitive",
+        "resolved": "9.0.9",
+        "contentHash": "VySjpsCLprojvat550Flrm3NQB982CPuDzILajqjQihFmrQXZPdQyktIbcpVPJyaExFYtAfY1DpwMdWQuS0kbw=="
+      },
       "System.Linq.AsyncEnumerable": {
         "type": "Transitive",
         "resolved": "10.0.6",
         "contentHash": "1Ttf7dyLoKXks2bVBVULmDPOSjxaMEE3JRTe/KGEJl3rfepCc4ipUEGMIKa/iBKLSN8rjEedF8Qv3UCtiwaDBw=="
+      },
+      "System.Net.ServerSentEvents": {
+        "type": "Transitive",
+        "resolved": "9.0.14",
+        "contentHash": "b43SeoVE5G3M5APa7LsHCKS33YX42EP22TzxRMwnaB/mhCbOtFhuZ4vkkURD7+1uGEzIXOqwHHrO4+8G9uKdyw=="
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "Transitive",
@@ -1022,6 +1054,20 @@
         "type": "Transitive",
         "resolved": "10.0.7",
         "contentHash": "eqKW9wyPUhZi6pxy9Y0fQO/bdHROcwj0tYdmoGEPCPCtCJLFdVVAlzuuYYEnJI64HxhoXPYGhtx891g/jwN4rg=="
+      },
+      "System.Text.Encodings.Web": {
+        "type": "Transitive",
+        "resolved": "9.0.9",
+        "contentHash": "bzYTmAcmfelUOCBxvbgsfSr2tq94ydA2gJZAxZRcuNa0LlmlVz8JNHst6RG1qsDujyVYT4vjv06y8sCLbvCXdg=="
+      },
+      "System.Text.Json": {
+        "type": "Transitive",
+        "resolved": "9.0.9",
+        "contentHash": "NEnpppwq67fRz/OvQRxsEMgetDJsxlxpEsAFO/4PZYbAyAMd4Ol6KS7phc8uDoKPsnbdzRLKobpX303uQwCqdg==",
+        "dependencies": {
+          "System.IO.Pipelines": "9.0.9",
+          "System.Text.Encodings.Web": "9.0.9"
+        }
       },
       "ark.tools.applicationinsights": {
         "type": "Project",
@@ -1037,7 +1083,7 @@
         "type": "Project",
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.45.1, )",
-          "Auth0.ManagementApi": "[7.47.0, )",
+          "Auth0.ManagementApi": "[8.2.0, )",
           "JWT": "[11.0.0, )",
           "Polly": "[8.6.6, )",
           "Polly.Caching.Memory": "[3.0.2, )"
@@ -1125,11 +1171,15 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[7.47.0, )",
-        "resolved": "7.47.0",
-        "contentHash": "iBoq3ti2w3MyZUm7TIPEnP1S1NLBbe64cqrvjhuVx57bOLwFOu9LkY9a8ky8QK9O8ijBggNCXIP/55+Wljw91Q==",
+        "requested": "[8.2.0, )",
+        "resolved": "8.2.0",
+        "contentHash": "S6tg72V0GcD9n+mMaDfUBcT9XZtw+dwI8Oav0N2t6anNS2snxIKA6AMzcrHv2lBRmRXiE+aHMJyTTuWFj7c6+Q==",
         "dependencies": {
-          "Auth0.Core": "7.45.1"
+          "Auth0.AuthenticationApi": "7.45.1",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
+          "Portable.System.DateTimeOnly": "9.0.1",
+          "System.Net.ServerSentEvents": "9.0.14",
+          "System.Text.Json": "9.0.9"
         }
       },
       "Ben.Demystifier": {
