@@ -20,7 +20,7 @@
 	  <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
 	  <PackageVersion Include="Microsoft.Extensions.Logging.AzureAppServices" Version="10.0.7" />
 	  <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.7" />
-	  <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.0" />
+	  <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.1" />
 	  
 	  <PackageVersion Include="System.Diagnostics.Tracing" Version="4.3.0" />
 	  <PackageVersion Include="DistributedLock.Core" Version="1.0.9" />
@@ -40,7 +40,7 @@
 	  <PackageVersion Include="SimpleInjector" Version="5.5.2" />
 
 	  <PackageVersion Include="ArxOne.Ftp" Version="1.41.4" />
-	  <PackageVersion Include="FluentFTP" Version="54.1.1" />
+	  <PackageVersion Include="FluentFTP" Version="54.1.2" />
 
 	  <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
 	  <PackageVersion Include="Flurl.Http" Version="4.0.2" />
@@ -54,18 +54,18 @@
 	  <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
 	  <PackageVersion Include="AwesomeAssertions.Web" Version="1.9.6" />
 	  <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.7" />
-	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
-	  <PackageVersion Include="Microsoft.Testing.Platform" Version="2.2.1" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.1" />
+	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+	  <PackageVersion Include="Microsoft.Testing.Platform" Version="2.2.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.2" />
 	  <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.6.2" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.1" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.2.1" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.2.1" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.2.1" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.2.1" />
-	  <PackageVersion Include="MSTest.TestAdapter" Version="4.2.1" />
-	  <PackageVersion Include="MSTest.TestFramework" Version="4.2.1" />
-	  <PackageVersion Include="MSTest.Analyzers" Version="4.2.1" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.2.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.2.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.2.2" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.2.2" />
+	  <PackageVersion Include="MSTest.TestAdapter" Version="4.2.2" />
+	  <PackageVersion Include="MSTest.TestFramework" Version="4.2.2" />
+	  <PackageVersion Include="MSTest.Analyzers" Version="4.2.2" />
 	  <PackageVersion Include="Moq" Version="4.20.72" />
 	  <PackageVersion Include="Reqnroll" Version="3.3.4" />
 	  <PackageVersion Include="Reqnroll.MsTest" Version="3.3.4" />
@@ -80,10 +80,10 @@
 	  <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
 	  <PackageVersion Include="Microsoft.ApplicationInsights.NLogTarget" Version="2.23.0" />
 	  <PackageVersion Include="Ben.Demystifier" Version="0.4.1" />
-	  <PackageVersion Include="NLog" Version="6.1.2" />
+	  <PackageVersion Include="NLog" Version="6.1.3" />
 	  <PackageVersion Include="NLog.Database" Version="6.0.3" />
 	  <PackageVersion Include="NLog.DiagnosticSource" Version="6.0.3" />
-	  <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.2" />
+	  <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.3" />
 	  <PackageVersion Include="NLog.MailKit" Version="6.1.3" />
 	  <PackageVersion Include="MailKit" Version="4.16.0" />
 	  <PackageVersion Include="Slack.Webhooks" Version="1.1.5" />
@@ -99,7 +99,7 @@
 	  <PackageVersion Include="Microsoft.AspNetCore.OData.NewtonsoftJson" Version="8.2.0" />
 	  <PackageVersion Include="NetEscapades.AspNetCore.SecurityHeaders" Version="1.3.1" />
 	  <PackageVersion Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="5.5.0" />
-	  <PackageVersion Include="Microsoft.Identity.Web" Version="4.8.0" />
+	  <PackageVersion Include="Microsoft.Identity.Web" Version="4.9.0" />
 	  <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.7" />
 	  <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.7" />
 	  <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.7" />
@@ -128,9 +128,9 @@
 	  <PackageVersion Include="Auth0.AuthenticationApi" Version="7.45.1" />
 	  <PackageVersion Include="Auth0.ManagementApi" Version="7.47.0" />
 	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.83.3" />
-	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.83.3" />
+	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.84.0" />
 	  <PackageVersion Include="JWT" Version="11.0.0" />
-	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.17.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.18.0" />
 	  <PackageVersion Include="Azure.Identity" Version="1.21.0" />
 	  
 	  <!-- REBUS -->
@@ -142,14 +142,14 @@
 	  <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
 	  
 	  <!-- RAVENDB - TOREMOVE -->
-	  <PackageVersion Include="RavenDB.Client" Version="7.2.1" />
+	  <PackageVersion Include="RavenDB.Client" Version="7.2.2" />
 	  <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
 
 	  <!-- BUILD TOOLS -->
-	  <PackageVersion Include="Polyfill" Version="10.3.0" />
+	  <PackageVersion Include="Polyfill" Version="10.4.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.203" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.56" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.63" />
 	  <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15" />
 	  <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
 	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
