@@ -4,6 +4,7 @@ using Ark.Tools.EventSourcing.Store;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Conventions;
 using Raven.Client.Documents.Operations.Revisions;
+using Raven.Client.Documents.Session;
 using Raven.Client.ServerWide.Operations;
 
 
@@ -28,7 +29,7 @@ public static class RavenDbStoreConfigurationExtensions
             return null;
         });
 
-        store.Conventions.UseOptimisticConcurrency = true;
+        store.Conventions.OptimisticConcurrencyMode = OptimisticConcurrencyMode.Writes;
 
         return store;
     }

@@ -24,7 +24,7 @@ public class RavenDbEventSourcingAggregateTransaction<TAggregateRoot, TAggregate
         )
         : base(aggregateId, aggregateRootFactory)
     {
-        session.Advanced.UseOptimisticConcurrency = false;
+        session.Advanced.OptimisticConcurrencyMode = OptimisticConcurrencyMode.None;
         _session = session;
 
         _chexKey = $"{AggregateHelper<TAggregate>.Name}/{aggregateId}/version";

@@ -51,7 +51,12 @@ public class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSe
 
     public string StoreIdentifier => _inner.StoreIdentifier;
 
+
+#pragma warning disable CS0618 // UseOptimisticConcurrency is obsolete in RavenDB 7.2.2+, use OptimisticConcurrencyMode instead
     public bool UseOptimisticConcurrency { get => _inner.UseOptimisticConcurrency; set => _inner.UseOptimisticConcurrency = value; }
+#pragma warning restore CS0618
+
+    public OptimisticConcurrencyMode OptimisticConcurrencyMode { get => _inner.OptimisticConcurrencyMode; set => _inner.OptimisticConcurrencyMode = value; }
 
     public SessionInfo SessionInfo => _inner.SessionInfo;
 
