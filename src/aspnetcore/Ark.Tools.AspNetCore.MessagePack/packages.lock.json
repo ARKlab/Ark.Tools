@@ -21,9 +21,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.72, )",
-        "resolved": "3.0.72",
-        "contentHash": "/rE/8nt28SQfV60lbrPZUjFYrhssdFB7VacZT5scvGGDa6AS9QrR+ZDzVJqTLmx06021Wh1KJ9PCAH6Gn52MSg=="
+        "requested": "[3.0.74, )",
+        "resolved": "3.0.74",
+        "contentHash": "A38FTVA/Yi2zzM5onvawg4pBo9p2nV5BPbV3bIkTN4onXyVeSTnlRJlj0FW+yC6fLIEYYOtEUebcBbLCULsyGA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -68,9 +68,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.4.0, )",
-        "resolved": "10.4.0",
-        "contentHash": "kCuTuDOYXlGcvZS7O6gz6DN6kVMLjTCmkqqT4bc4FIdWP3353bGM7YAkbHaXcRTZ1HEBrci8Hco4SrxbZuEKbw=="
+        "requested": "[10.5.0, )",
+        "resolved": "10.5.0",
+        "contentHash": "3f5YUAiVQt7VUCrUkHBr9nSXKVGXmJJRQGa14f6wj4o2pw9TPm3hQRZrJQIJ5c2ql62zHDnSZB/9Sc2gTUTYxQ=="
       },
       "MessagePack.Annotations": {
         "type": "Transitive",
