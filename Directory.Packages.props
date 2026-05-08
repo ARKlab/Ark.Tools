@@ -146,10 +146,10 @@
 	  <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
 
 	  <!-- BUILD TOOLS -->
-	  <PackageVersion Include="Polyfill" Version="10.4.0" />
+	  <PackageVersion Include="Polyfill" Version="10.5.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.203" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.72" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.74" />
 	  <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15" />
 	  <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
 	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
