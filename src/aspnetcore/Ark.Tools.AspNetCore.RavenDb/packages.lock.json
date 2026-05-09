@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.74, )",
-        "resolved": "3.0.74",
-        "contentHash": "A38FTVA/Yi2zzM5onvawg4pBo9p2nV5BPbV3bIkTN4onXyVeSTnlRJlj0FW+yC6fLIEYYOtEUebcBbLCULsyGA=="
+        "requested": "[3.0.77, )",
+        "resolved": "3.0.77",
+        "contentHash": "WjJXiTULm+6BF/DrZiTPr44+rsL8BFtW1zaRvNlNZkzE0Rky6LonfBjfQGdE1eLUggCbI8F1iYrHXckg7vt+Cw=="
       },
       "Microsoft.AspNetCore.OData": {
         "type": "Direct",
@@ -69,9 +69,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.5.0, )",
-        "resolved": "10.5.0",
-        "contentHash": "3f5YUAiVQt7VUCrUkHBr9nSXKVGXmJJRQGa14f6wj4o2pw9TPm3hQRZrJQIJ5c2ql62zHDnSZB/9Sc2gTUTYxQ=="
+        "requested": "[10.5.1, )",
+        "resolved": "10.5.1",
+        "contentHash": "DF5KHoVwE0496LDadwin55TLKtmwCXlCAxpFUYkXudIe9iJq09Dlbilxr46T0uP1g9RWHRwy1MPeKIa7b4WirA=="
       },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
@@ -320,7 +320,7 @@
           "NLog": "[6.1.3, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.0.3, )",
-          "NLog.MailKit": "[6.1.3, )",
+          "NLog.MailKit": "[6.1.4, )",
           "Newtonsoft.Json": "[13.0.4, )",
           "Slack.Webhooks": "[1.1.5, )"
         }
@@ -476,12 +476,12 @@
       },
       "NLog.MailKit": {
         "type": "CentralTransitive",
-        "requested": "[6.1.3, )",
-        "resolved": "6.1.3",
-        "contentHash": "y3NzV+KTnVXJ2oyR+CY37Z7V6rDR7Dwbnr9ENzA7swhOZxlKvzGSG8GZhhGPdt8OA5D79O/CZWxrXRH8QAjCAg==",
+        "requested": "[6.1.4, )",
+        "resolved": "6.1.4",
+        "contentHash": "lFsI61wqxD+U110oFn6dUTXbwR8IzGF/mgnRWzAKss4lGZ+XlIlBJJfdpUSPJWzYOSRsHh8pUdJOFMl9SLp2Fg==",
         "dependencies": {
-          "MailKit": "4.15.1",
-          "NLog": "6.1.1"
+          "MailKit": "4.16.0",
+          "NLog": "6.1.3"
         }
       },
       "NodaTime": {
