@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.74, )",
-        "resolved": "3.0.74",
-        "contentHash": "A38FTVA/Yi2zzM5onvawg4pBo9p2nV5BPbV3bIkTN4onXyVeSTnlRJlj0FW+yC6fLIEYYOtEUebcBbLCULsyGA=="
+        "requested": "[3.0.77, )",
+        "resolved": "3.0.77",
+        "contentHash": "WjJXiTULm+6BF/DrZiTPr44+rsL8BFtW1zaRvNlNZkzE0Rky6LonfBjfQGdE1eLUggCbI8F1iYrHXckg7vt+Cw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -57,9 +57,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.5.0, )",
-        "resolved": "10.5.0",
-        "contentHash": "3f5YUAiVQt7VUCrUkHBr9nSXKVGXmJJRQGa14f6wj4o2pw9TPm3hQRZrJQIJ5c2ql62zHDnSZB/9Sc2gTUTYxQ=="
+        "requested": "[10.5.1, )",
+        "resolved": "10.5.1",
+        "contentHash": "DF5KHoVwE0496LDadwin55TLKtmwCXlCAxpFUYkXudIe9iJq09Dlbilxr46T0uP1g9RWHRwy1MPeKIa7b4WirA=="
       },
       "SimpleInjector": {
         "type": "Direct",
@@ -95,9 +95,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.74, )",
-        "resolved": "3.0.74",
-        "contentHash": "A38FTVA/Yi2zzM5onvawg4pBo9p2nV5BPbV3bIkTN4onXyVeSTnlRJlj0FW+yC6fLIEYYOtEUebcBbLCULsyGA=="
+        "requested": "[3.0.77, )",
+        "resolved": "3.0.77",
+        "contentHash": "WjJXiTULm+6BF/DrZiTPr44+rsL8BFtW1zaRvNlNZkzE0Rky6LonfBjfQGdE1eLUggCbI8F1iYrHXckg7vt+Cw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -142,9 +142,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.5.0, )",
-        "resolved": "10.5.0",
-        "contentHash": "3f5YUAiVQt7VUCrUkHBr9nSXKVGXmJJRQGa14f6wj4o2pw9TPm3hQRZrJQIJ5c2ql62zHDnSZB/9Sc2gTUTYxQ=="
+        "requested": "[10.5.1, )",
+        "resolved": "10.5.1",
+        "contentHash": "DF5KHoVwE0496LDadwin55TLKtmwCXlCAxpFUYkXudIe9iJq09Dlbilxr46T0uP1g9RWHRwy1MPeKIa7b4WirA=="
       },
       "SimpleInjector": {
         "type": "Direct",
