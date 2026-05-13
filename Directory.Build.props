@@ -80,6 +80,14 @@
 		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
 	</PropertyGroup>
 
+	<PropertyGroup Label="Temporary NuGet Pack Workaround">
+		<!--
+		TODO: Remove NU5104 once Asp.Versioning.OData.ApiExplorer and Microsoft.AspNetCore.OData
+		no longer require prerelease package versions.
+		-->
+		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU5104;</WarningsNotAsErrors>
+	</PropertyGroup>
+
 	<PropertyGroup Label="Test Project" Condition="'$(IsTestProject)' == '' And ( $(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.UnitTests')) )">
     	<IsTestProject>true</IsTestProject>
 	</PropertyGroup>
