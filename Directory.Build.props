@@ -85,7 +85,7 @@
 		TODO: Remove NU5104 once Asp.Versioning.OData.ApiExplorer and Microsoft.AspNetCore.OData
 		no longer require prerelease package versions.
 		-->
-		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU5104;</WarningsNotAsErrors>
+		<NoWarn>$(NoWarn);NU5104</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup Label="Test Project" Condition="'$(IsTestProject)' == '' And ( $(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.UnitTests')) )">
