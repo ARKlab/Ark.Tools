@@ -80,9 +80,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.7, )",
-        "resolved": "10.0.7",
-        "contentHash": "AA/yhzFHNtQZXLdqjzujPy25G8EWwGWsAnxOE2zYSBoT/8QHP6ketN3CToD3DFreO653ipUwnKHo22B8AlBMCw=="
+        "requested": "[10.0.8, )",
+        "resolved": "10.0.8",
+        "contentHash": "dVbSXGIFNR5nZcv2tOLoWI+a9T4jtFd77IYjuND+QVe360qWgAF7H0WtoopYhRw/+SgpGUTyrkrh+65+ClNnfw=="
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
@@ -167,8 +167,8 @@
       },
       "Auth0.Core": {
         "type": "Transitive",
-        "resolved": "7.45.1",
-        "contentHash": "r9xlmQeiMk8idZBXBMJESSdVif1zLZNrrTXjvUqGY7t5ISgYPllteVy91zgTK1cQn1lRci8I4YhlwQSkwdutLA==",
+        "resolved": "7.46.0",
+        "contentHash": "1f4RUlmw/guN0dZSiHm7XzfuJ8j7OIlLECBnC6JjTGGXIJ3PJGm+niafjWsyUwGaZN308GL5MMwfMiNXNfWvOQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
@@ -422,19 +422,19 @@
       },
       "Microsoft.IdentityModel.Protocols": {
         "type": "Transitive",
-        "resolved": "8.17.0",
-        "contentHash": "TYbO2KMvWvu8bxbEDCgzggNckCGjwr6NxFf2VYW7PpmCRbsoMNNgVYlCiRvy748t6gj5MJ8v/jcqWrcLMg6PaQ==",
+        "resolved": "8.18.0",
+        "contentHash": "kKimlJy4j5m9ZkX/RTp12+gvxzM+QU5H3h7zzdroTt0v10/7AQsHG4tqi3ixvNjx5PPY0JnbpBsNXC/Xb1+sgQ==",
         "dependencies": {
-          "Microsoft.IdentityModel.Tokens": "8.17.0"
+          "Microsoft.IdentityModel.Tokens": "8.18.0"
         }
       },
       "Microsoft.IdentityModel.Protocols.OpenIdConnect": {
         "type": "Transitive",
-        "resolved": "8.17.0",
-        "contentHash": "8DuZM96o2epBioyp56Q+H8bdGwO8FnU4nQMa0c6pboe9+monH9PZGY+CHKmsdw90ObJ5OXtiKG1TWuLbJp2VvQ==",
+        "resolved": "8.18.0",
+        "contentHash": "suO9qM+gTjIMmHiEwZFitx1Z0BROQwTT3BYJJCDM/+djBAolhXHVpZzTzIFAxkjgakJRNCRlZi9ecZ2g68Pn5w==",
         "dependencies": {
-          "Microsoft.IdentityModel.Protocols": "8.17.0",
-          "System.IdentityModel.Tokens.Jwt": "8.17.0"
+          "Microsoft.IdentityModel.Protocols": "8.18.0",
+          "System.IdentityModel.Tokens.Jwt": "8.18.0"
         }
       },
       "Microsoft.IdentityModel.Tokens": {
@@ -654,11 +654,11 @@
       },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "Transitive",
-        "resolved": "8.17.0",
-        "contentHash": "nKikRYheDeSaXA3wGr2otwaiRFygBa25m+hc7MEomZVIEWZvKVqd8wgP9yn+8QpLRGgw//dUs4LErGx9gtVmAA==",
+        "resolved": "8.18.0",
+        "contentHash": "JxKlBca3/eXeH4koAGjEXOwrBdtwyDXwHXdYT5TQunp64TcVBl4wBCfmlGwhSG017Q/Qrz24leLxV6v2eknnJg==",
         "dependencies": {
-          "Microsoft.IdentityModel.JsonWebTokens": "8.17.0",
-          "Microsoft.IdentityModel.Tokens": "8.17.0"
+          "Microsoft.IdentityModel.JsonWebTokens": "8.18.0",
+          "Microsoft.IdentityModel.Tokens": "8.18.0"
         }
       },
       "System.IO.FileSystem.AccessControl": {
@@ -712,7 +712,7 @@
       "ark.tools.aspnetcore.auth0": {
         "type": "Project",
         "dependencies": {
-          "Auth0.AuthenticationApi": "[7.45.1, )",
+          "Auth0.AuthenticationApi": "[7.46.0, )",
           "Auth0.ManagementApi": "[7.47.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.8, )",
           "Polly": "[8.6.6, )"
@@ -944,13 +944,13 @@
       },
       "Auth0.AuthenticationApi": {
         "type": "CentralTransitive",
-        "requested": "[7.45.1, )",
-        "resolved": "7.45.1",
-        "contentHash": "XqkKbf/e5psKfCos/tJF+PgCe8nZlKTxB1fNzxdaqsPCo/9OjsQv/JR7ODdc63NeZ2934X4HZv9DBQHSSO9XQw==",
+        "requested": "[7.46.0, )",
+        "resolved": "7.46.0",
+        "contentHash": "zLMYV+UtSdUwTPeusMWd3833puGU5V4l3bnr/54XFUgX6nNfIgU27ZesH/PGHpDeA94Jkng6wtNlwuDZXRjZ9Q==",
         "dependencies": {
-          "Auth0.Core": "7.45.1",
-          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.17.0",
-          "System.IdentityModel.Tokens.Jwt": "8.17.0"
+          "Auth0.Core": "7.46.0",
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.18.0",
+          "System.IdentityModel.Tokens.Jwt": "8.18.0"
         }
       },
       "Auth0.ManagementApi": {
