@@ -526,8 +526,8 @@
       },
       "Dapper": {
         "type": "Transitive",
-        "resolved": "2.1.72",
-        "contentHash": "ns4mGqQd9a/MhP8m6w556vVlZIa0/MfUu03zrxjZC/jlr1uVCsUac8bkdB+Fs98Llbd56rRSo1eZH5VVmeGZyw=="
+        "resolved": "2.1.79",
+        "contentHash": "8YijbzgTfmqmQOnVNorYM6K++pxqnW3nJ4aC1sRHzxUA2CcuoJ9gsTem3kgBnPRMc38zZHl4Esb6hAezXIEEuw=="
       },
       "DistributedLock.Core": {
         "type": "Transitive",
@@ -2366,7 +2366,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Dapper": "[2.1.72, )"
+          "Dapper": "[2.1.79, )"
         }
       },
       "ark.tools.nodatime.json": {
@@ -2404,7 +2404,7 @@
           "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Dapper": "[2.1.72, )",
+          "Dapper": "[2.1.79, )",
           "Polly": "[8.6.6, )",
           "morelinq": "[4.4.0, )"
         }
