@@ -211,10 +211,12 @@
       },
       "Auth0.ManagementApi": {
         "type": "Transitive",
-        "resolved": "7.47.0",
-        "contentHash": "iBoq3ti2w3MyZUm7TIPEnP1S1NLBbe64cqrvjhuVx57bOLwFOu9LkY9a8ky8QK9O8ijBggNCXIP/55+Wljw91Q==",
+        "resolved": "8.3.0",
+        "contentHash": "ogVlP0HkH3piH3SBgOikCXpsLDL5wsJ8GD+FcwydxIMFXxm355Mh4L9a/C5dVXtwxaXp/X+ITkp7J1a16/NSqQ==",
         "dependencies": {
-          "Auth0.Core": "7.45.1"
+          "Auth0.AuthenticationApi": "7.45.1",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
+          "Portable.System.DateTimeOnly": "9.0.1"
         }
       },
       "Azure.Core": {
@@ -987,6 +989,11 @@
         "resolved": "8.6.6",
         "contentHash": "lCBL9mmhF9TZxHG3beVRkyjlLohkIC464xIAq7J7Y59C+z42hmsdUaeCKl2SIAYertOUU5TeBXyQDLDQGIKePQ=="
       },
+      "Portable.System.DateTimeOnly": {
+        "type": "Transitive",
+        "resolved": "9.0.1",
+        "contentHash": "DRzBx/EL1vE9U8Thucwu/oLxpVNH4UXLarAyQbTLOyr4x/X6RT5pEpTZtYAbqLjbrbB99e3YYJW+4pV4DkEn4g=="
+      },
       "Rebus": {
         "type": "Transitive",
         "resolved": "8.9.2",
@@ -1400,7 +1407,7 @@
         "type": "Project",
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.46.0, )",
-          "Auth0.ManagementApi": "[7.47.0, )",
+          "Auth0.ManagementApi": "[8.3.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.8, )",
           "Polly": "[8.6.6, )"
         }
