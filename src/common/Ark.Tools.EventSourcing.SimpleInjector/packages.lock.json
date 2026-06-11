@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.85, )",
-        "resolved": "3.0.85",
-        "contentHash": "GMTpPcWrTYxKu02P+/PoYsHbGO2/0u69UkpisTepd1Rwn3ToQrh2EorEXRsa0bW5ltX2LoOuryKKwQ4taxT8JA=="
+        "requested": "[3.0.102, )",
+        "resolved": "3.0.102",
+        "contentHash": "WhGaJ3QsULOtDUXqZIDMZqTnZ68wvl6UMvPjkdxcZVIe/n3sfJyd2rDRVO3Ea7KitP0xUn3M85L/t7+JGkt63w=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -22,9 +22,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.300, )",
-        "resolved": "10.0.300",
-        "contentHash": "WsPMVkfrmoZ0qKSasuVtYaxnd/MvqPOz7ZXld5NzyF8/kwwtPGjtmEKp4xDHG+pj4QqETpSVfkmKa0UFu/n1GQ=="
+        "requested": "[10.0.301, )",
+        "resolved": "10.0.301",
+        "contentHash": "QAHyooyQN0JB95pI8q/N/eAH7Bb0OWSDSSNFGlmuxC+b/fXUVQJJChOBE6ygJFNkRj42u7rCHCSCPQC5n30tNg=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
@@ -57,9 +57,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.5.1, )",
-        "resolved": "10.5.1",
-        "contentHash": "DF5KHoVwE0496LDadwin55TLKtmwCXlCAxpFUYkXudIe9iJq09Dlbilxr46T0uP1g9RWHRwy1MPeKIa7b4WirA=="
+        "requested": "[10.8.1, )",
+        "resolved": "10.8.1",
+        "contentHash": "zCmC6hnEKdHMFt1woGAq2oYZhx4EwELj8ArkBuGZBwX6Jg4M67eCa6YVmbMDSMwonCKZ9OGaKxOul60nVykTOw=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
@@ -119,9 +119,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.85, )",
-        "resolved": "3.0.85",
-        "contentHash": "GMTpPcWrTYxKu02P+/PoYsHbGO2/0u69UkpisTepd1Rwn3ToQrh2EorEXRsa0bW5ltX2LoOuryKKwQ4taxT8JA=="
+        "requested": "[3.0.102, )",
+        "resolved": "3.0.102",
+        "contentHash": "WhGaJ3QsULOtDUXqZIDMZqTnZ68wvl6UMvPjkdxcZVIe/n3sfJyd2rDRVO3Ea7KitP0xUn3M85L/t7+JGkt63w=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -131,9 +131,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.300, )",
-        "resolved": "10.0.300",
-        "contentHash": "WsPMVkfrmoZ0qKSasuVtYaxnd/MvqPOz7ZXld5NzyF8/kwwtPGjtmEKp4xDHG+pj4QqETpSVfkmKa0UFu/n1GQ=="
+        "requested": "[10.0.301, )",
+        "resolved": "10.0.301",
+        "contentHash": "QAHyooyQN0JB95pI8q/N/eAH7Bb0OWSDSSNFGlmuxC+b/fXUVQJJChOBE6ygJFNkRj42u7rCHCSCPQC5n30tNg=="
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
@@ -166,9 +166,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.5.1, )",
-        "resolved": "10.5.1",
-        "contentHash": "DF5KHoVwE0496LDadwin55TLKtmwCXlCAxpFUYkXudIe9iJq09Dlbilxr46T0uP1g9RWHRwy1MPeKIa7b4WirA=="
+        "requested": "[10.8.1, )",
+        "resolved": "10.8.1",
+        "contentHash": "zCmC6hnEKdHMFt1woGAq2oYZhx4EwELj8ArkBuGZBwX6Jg4M67eCa6YVmbMDSMwonCKZ9OGaKxOul60nVykTOw=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
