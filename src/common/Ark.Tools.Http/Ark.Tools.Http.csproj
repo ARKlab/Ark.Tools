@@ -28,6 +28,7 @@
     <PackageReference Include="CacheCow.Client" />
     <PackageReference Include="Flurl.Http" />
 	  <PackageReference Include="Flurl.Http.Newtonsoft" />
+    <PackageReference Include="MessagePack" />
     <PackageReference Include="MessagePack.NodaTime" />
   </ItemGroup>
  
