@@ -41,11 +41,11 @@
       },
       "MessagePack.NodaTime": {
         "type": "Direct",
-        "requested": "[3.5.4, )",
-        "resolved": "3.5.4",
-        "contentHash": "f5ygbxlMHz55Wjmy160m+58eRGhyOvQtFs7aU0a3/BucRkEX3eaEotBgtcKqJdbb/S4HfXP3kmZ/boHVvtr32A==",
+        "requested": "[3.5.5, )",
+        "resolved": "3.5.5",
+        "contentHash": "9DoE9+OQYbKbLtyJ1N92n55vv+RwrIV6dGpADLuHVeLvkfpxMBQY9oG0IkgGpL5t6D2PlWg8RA6ul/Qh1PF0Ww==",
         "dependencies": {
-          "MessagePack": "3.1.4",
+          "MessagePack": "3.1.7",
           "NodaTime": "3.3.2"
         }
       },
@@ -361,11 +361,11 @@
       },
       "MessagePack.NodaTime": {
         "type": "Direct",
-        "requested": "[3.5.4, )",
-        "resolved": "3.5.4",
-        "contentHash": "f5ygbxlMHz55Wjmy160m+58eRGhyOvQtFs7aU0a3/BucRkEX3eaEotBgtcKqJdbb/S4HfXP3kmZ/boHVvtr32A==",
+        "requested": "[3.5.5, )",
+        "resolved": "3.5.5",
+        "contentHash": "9DoE9+OQYbKbLtyJ1N92n55vv+RwrIV6dGpADLuHVeLvkfpxMBQY9oG0IkgGpL5t6D2PlWg8RA6ul/Qh1PF0Ww==",
         "dependencies": {
-          "MessagePack": "3.1.4",
+          "MessagePack": "3.1.7",
           "NodaTime": "3.3.2"
         }
       },
