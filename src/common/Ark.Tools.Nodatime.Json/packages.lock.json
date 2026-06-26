@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.103, )",
-        "resolved": "3.0.103",
-        "contentHash": "gOrfBIHMhpHUMao98VIC0n4gjj15fBX/kl2BMtHyEtFTZSmMks8smN/gScahNccMDOccdSWxIBUdz2hZVhhibA=="
+        "requested": "[3.0.114, )",
+        "resolved": "3.0.114",
+        "contentHash": "KjQ3a5uKkQyKQ+cJgXJFPlMr291rURIJJ/efBpDCyH04/usUxng2Iwv86iS7EfkArtFEAftUGedw1I2l2Nqcwg=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -73,9 +73,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.9.0, )",
-        "resolved": "10.9.0",
-        "contentHash": "ko+xiyr8mSsSuN0ZkJ8tzLYVI5izvvIgfmFf5e3FAaOe9BdPxxGUXoIoRozKrc1IHL/8EBQ9BURcM+3GIn8xrg=="
+        "requested": "[10.11.0, )",
+        "resolved": "10.11.0",
+        "contentHash": "zgg6kXicAZQmwcczhPZNBx6qj6fGH3s3d7RjLfjlQKb4D3EoLo6ZRb9YLQ7h58jbM7I853/bAxTJMSKfw1JSkQ=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
@@ -123,9 +123,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.103, )",
-        "resolved": "3.0.103",
-        "contentHash": "gOrfBIHMhpHUMao98VIC0n4gjj15fBX/kl2BMtHyEtFTZSmMks8smN/gScahNccMDOccdSWxIBUdz2hZVhhibA=="
+        "requested": "[3.0.114, )",
+        "resolved": "3.0.114",
+        "contentHash": "KjQ3a5uKkQyKQ+cJgXJFPlMr291rURIJJ/efBpDCyH04/usUxng2Iwv86iS7EfkArtFEAftUGedw1I2l2Nqcwg=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -186,9 +186,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.9.0, )",
-        "resolved": "10.9.0",
-        "contentHash": "ko+xiyr8mSsSuN0ZkJ8tzLYVI5izvvIgfmFf5e3FAaOe9BdPxxGUXoIoRozKrc1IHL/8EBQ9BURcM+3GIn8xrg=="
+        "requested": "[10.11.0, )",
+        "resolved": "10.11.0",
+        "contentHash": "zgg6kXicAZQmwcczhPZNBx6qj6fGH3s3d7RjLfjlQKb4D3EoLo6ZRb9YLQ7h58jbM7I853/bAxTJMSKfw1JSkQ=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
