@@ -424,20 +424,20 @@
       },
       "Microsoft.Identity.Client": {
         "type": "CentralTransitive",
-        "requested": "[4.84.2, )",
-        "resolved": "4.84.2",
-        "contentHash": "Va9FjmABSgj/lcUfHH0pBNQkmS7SNyepz2ERV7Yynp6QgEYpFdSqR6Vzy1WWipN8GS5pBHuXoZbqaDWuARCrHQ==",
+        "requested": "[4.85.1, )",
+        "resolved": "4.85.1",
+        "contentHash": "9QjTBf7ROf5u4LiR7jSSexOth5LbH1fNonwiuHeGJTi2xhpUj1m0hh7oFzKMXCYK4dobzKbKKf8CxDBsr9u6tw==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "8.14.0"
         }
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "CentralTransitive",
-        "requested": "[4.84.2, )",
-        "resolved": "4.84.2",
-        "contentHash": "+D98LaU3dOu/Nzs6kgbBJapMvH7iwYcAeC99XwSkpmEadsPv6rozecOl9P6m4A3RfpOuPt9e6J6TwwUUp3+M4w==",
+        "requested": "[4.85.1, )",
+        "resolved": "4.85.1",
+        "contentHash": "phmYyWrqiIWGIT/edvcjvzLRQ+HVxnv24B/nkUyKCA0uOzoil0N01Bda8NoAbmh56R9Oik9tj1TU5CAIPLWXHQ==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.84.2",
+          "Microsoft.Identity.Client": "4.85.1",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
       }
