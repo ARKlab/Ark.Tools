@@ -80,7 +80,6 @@ internal abstract class SocksHandler
     /// Reads number of received bytes and ensures that socket was not shut down
     /// </summary>
     /// <param name="ar">IAsyncResult for receive operation</param>
-    /// <returns></returns>
     protected void HandleEndReceive(IAsyncResult ar)
     {
         int recv = Server.EndReceive(ar);
@@ -93,7 +92,6 @@ internal abstract class SocksHandler
     /// </summary>
     /// <param name="ar">IAsyncResult for receive operation</param>
     /// <param name="expectedLength">Length of buffer that was sent</param>
-    /// <returns></returns>
     protected void HandleEndSend(IAsyncResult ar, int expectedLength)
     {
         if (Server.EndSend(ar) < expectedLength)
