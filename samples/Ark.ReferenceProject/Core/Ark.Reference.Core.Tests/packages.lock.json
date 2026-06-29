@@ -375,18 +375,18 @@
       },
       "Auth0.AuthenticationApi": {
         "type": "Transitive",
-        "resolved": "7.46.0",
-        "contentHash": "zLMYV+UtSdUwTPeusMWd3833puGU5V4l3bnr/54XFUgX6nNfIgU27ZesH/PGHpDeA94Jkng6wtNlwuDZXRjZ9Q==",
+        "resolved": "7.47.0",
+        "contentHash": "+m7PPKUAUatpQObtsaLtyn8ywsh1vt/DAcESkdRP1xitkSBfM4JIvnhPNAjeDgaiC5H2x2miNNPDqd6OUgW7NA==",
         "dependencies": {
-          "Auth0.Core": "7.46.0",
+          "Auth0.Core": "7.47.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.18.0",
           "System.IdentityModel.Tokens.Jwt": "8.18.0"
         }
       },
       "Auth0.Core": {
         "type": "Transitive",
-        "resolved": "7.46.0",
-        "contentHash": "1f4RUlmw/guN0dZSiHm7XzfuJ8j7OIlLECBnC6JjTGGXIJ3PJGm+niafjWsyUwGaZN308GL5MMwfMiNXNfWvOQ==",
+        "resolved": "7.47.0",
+        "contentHash": "GLoOg1Q3eROnOnjHtaZyw3UXiTbfysL5MiTHy+2Ki6XwuwELV2TYcDIkJw2E7CT84KhRFBwbJOJs5oX8KHE3jg==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
@@ -1853,8 +1853,8 @@
       },
       "SimpleInjector": {
         "type": "Transitive",
-        "resolved": "5.5.2",
-        "contentHash": "xjXvT+7jTZkpoeCZ9JQ830EV3E45cnWFA6PSgmP2ZQ21ySyaDj+GyUKWYOeztueefChrjkSwpcJ3L1kOIwnvQQ=="
+        "resolved": "5.6.0",
+        "contentHash": "6LAI0eDUtm57Ruvnoqf9FpZ7YXEHtUnsupIyYsPyeVKEDwGEsXWbNk/8z1HhI3YCiLvyPxcov4eqcs7Fb5bD1A=="
       },
       "SimpleInjector.Integration.AspNetCore": {
         "type": "Transitive",
@@ -2241,7 +2241,7 @@
       "ark.tools.aspnetcore.auth0": {
         "type": "Project",
         "dependencies": {
-          "Auth0.AuthenticationApi": "[7.46.0, )",
+          "Auth0.AuthenticationApi": "[7.47.0, )",
           "Auth0.ManagementApi": "[8.5.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.9, )",
           "Polly": "[8.7.0, )"
@@ -2446,7 +2446,7 @@
       "ark.tools.simpleinjector": {
         "type": "Project",
         "dependencies": {
-          "SimpleInjector": "[5.5.2, )"
+          "SimpleInjector": "[5.6.0, )"
         }
       },
       "ark.tools.solid": {

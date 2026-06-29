@@ -4,11 +4,11 @@
     "net10.0": {
       "Auth0.AuthenticationApi": {
         "type": "Direct",
-        "requested": "[7.46.0, )",
-        "resolved": "7.46.0",
-        "contentHash": "zLMYV+UtSdUwTPeusMWd3833puGU5V4l3bnr/54XFUgX6nNfIgU27ZesH/PGHpDeA94Jkng6wtNlwuDZXRjZ9Q==",
+        "requested": "[7.47.0, )",
+        "resolved": "7.47.0",
+        "contentHash": "+m7PPKUAUatpQObtsaLtyn8ywsh1vt/DAcESkdRP1xitkSBfM4JIvnhPNAjeDgaiC5H2x2miNNPDqd6OUgW7NA==",
         "dependencies": {
-          "Auth0.Core": "7.46.0",
+          "Auth0.Core": "7.47.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.18.0",
           "System.IdentityModel.Tokens.Jwt": "8.18.0"
         }
@@ -103,8 +103,8 @@
       },
       "Auth0.Core": {
         "type": "Transitive",
-        "resolved": "7.46.0",
-        "contentHash": "1f4RUlmw/guN0dZSiHm7XzfuJ8j7OIlLECBnC6JjTGGXIJ3PJGm+niafjWsyUwGaZN308GL5MMwfMiNXNfWvOQ==",
+        "resolved": "7.47.0",
+        "contentHash": "GLoOg1Q3eROnOnjHtaZyw3UXiTbfysL5MiTHy+2Ki6XwuwELV2TYcDIkJw2E7CT84KhRFBwbJOJs5oX8KHE3jg==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
