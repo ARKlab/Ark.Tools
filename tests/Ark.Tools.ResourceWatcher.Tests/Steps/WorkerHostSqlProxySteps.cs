@@ -60,7 +60,7 @@ public sealed class WorkerHostSqlProxySteps
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             await _workerHost!.RunOnceAsync(ctk: cts.Token);
         }
-        catch (Exception ex)
+        catch (OperationCanceledException ex)
         {
             _runException = ex;
         }
