@@ -63,9 +63,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.11.0, )",
-        "resolved": "10.11.0",
-        "contentHash": "zgg6kXicAZQmwcczhPZNBx6qj6fGH3s3d7RjLfjlQKb4D3EoLo6ZRb9YLQ7h58jbM7I853/bAxTJMSKfw1JSkQ=="
+        "requested": "[10.11.1, )",
+        "resolved": "10.11.1",
+        "contentHash": "SeryCUevv4WJc2QxLZKJJM8wfR7DLqvM10u01lkHXv0qhFuN0oPRIuujxpgUyBZozpnx92DF6weUEptEaupj4Q=="
       },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
@@ -558,9 +558,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.11.0, )",
-        "resolved": "10.11.0",
-        "contentHash": "zgg6kXicAZQmwcczhPZNBx6qj6fGH3s3d7RjLfjlQKb4D3EoLo6ZRb9YLQ7h58jbM7I853/bAxTJMSKfw1JSkQ=="
+        "requested": "[10.11.1, )",
+        "resolved": "10.11.1",
+        "contentHash": "SeryCUevv4WJc2QxLZKJJM8wfR7DLqvM10u01lkHXv0qhFuN0oPRIuujxpgUyBZozpnx92DF6weUEptEaupj4Q=="
       },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",

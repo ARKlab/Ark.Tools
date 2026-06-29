@@ -126,7 +126,7 @@
 
 	  <!-- AUTH -->
 	  <PackageVersion Include="Auth0.AuthenticationApi" Version="7.47.0" />
-	  <PackageVersion Include="Auth0.ManagementApi" Version="8.5.0" />
+	  <PackageVersion Include="Auth0.ManagementApi" Version="8.6.0" />
 	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.85.2" />
 	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.85.2" />
 	  <PackageVersion Include="JWT" Version="11.0.0" />
@@ -146,7 +146,7 @@
 	  <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
 
 	  <!-- BUILD TOOLS -->
-	  <PackageVersion Include="Polyfill" Version="10.11.0" />
+	  <PackageVersion Include="Polyfill" Version="10.11.1" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.301" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
 	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.117" />

@@ -759,7 +759,7 @@
         "type": "Project",
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.47.0, )",
-          "Auth0.ManagementApi": "[8.5.0, )",
+          "Auth0.ManagementApi": "[8.6.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.9, )",
           "Polly": "[8.7.0, )"
         }
@@ -1061,11 +1061,11 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[8.5.0, )",
-        "resolved": "8.5.0",
-        "contentHash": "zHheDKXLilpLaF3zwdKkff4Tj9fPZoqpr2jtvqLeNV6UGNeAw5XkJzVD4pB4nudxs/vF3h5KE818ZVPJvEG3Ng==",
+        "requested": "[8.6.0, )",
+        "resolved": "8.6.0",
+        "contentHash": "ECx7tepCVynS+8Zz+uwLUbnHt0wU2GnSei6zw7cvBg5Jcukt9GUJDMzHdkzOcqgGyKKAwLcxyDKzlLODv9jMig==",
         "dependencies": {
-          "Auth0.AuthenticationApi": "7.46.0",
+          "Auth0.AuthenticationApi": "7.47.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
           "Portable.System.DateTimeOnly": "9.0.1"
         }

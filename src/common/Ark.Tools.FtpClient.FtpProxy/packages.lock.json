@@ -87,9 +87,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.11.0, )",
-        "resolved": "10.11.0",
-        "contentHash": "zgg6kXicAZQmwcczhPZNBx6qj6fGH3s3d7RjLfjlQKb4D3EoLo6ZRb9YLQ7h58jbM7I853/bAxTJMSKfw1JSkQ=="
+        "requested": "[10.11.1, )",
+        "resolved": "10.11.1",
+        "contentHash": "SeryCUevv4WJc2QxLZKJJM8wfR7DLqvM10u01lkHXv0qhFuN0oPRIuujxpgUyBZozpnx92DF6weUEptEaupj4Q=="
       },
       "Auth0.Core": {
         "type": "Transitive",
@@ -339,7 +339,7 @@
         "type": "Project",
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.47.0, )",
-          "Auth0.ManagementApi": "[8.5.0, )",
+          "Auth0.ManagementApi": "[8.6.0, )",
           "JWT": "[11.0.0, )",
           "Polly": "[8.7.0, )",
           "Polly.Caching.Memory": "[3.0.2, )"
@@ -426,11 +426,11 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[8.5.0, )",
-        "resolved": "8.5.0",
-        "contentHash": "zHheDKXLilpLaF3zwdKkff4Tj9fPZoqpr2jtvqLeNV6UGNeAw5XkJzVD4pB4nudxs/vF3h5KE818ZVPJvEG3Ng==",
+        "requested": "[8.6.0, )",
+        "resolved": "8.6.0",
+        "contentHash": "ECx7tepCVynS+8Zz+uwLUbnHt0wU2GnSei6zw7cvBg5Jcukt9GUJDMzHdkzOcqgGyKKAwLcxyDKzlLODv9jMig==",
         "dependencies": {
-          "Auth0.AuthenticationApi": "7.46.0",
+          "Auth0.AuthenticationApi": "7.47.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
           "Portable.System.DateTimeOnly": "9.0.1"
         }
@@ -796,9 +796,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[10.11.0, )",
-        "resolved": "10.11.0",
-        "contentHash": "zgg6kXicAZQmwcczhPZNBx6qj6fGH3s3d7RjLfjlQKb4D3EoLo6ZRb9YLQ7h58jbM7I853/bAxTJMSKfw1JSkQ=="
+        "requested": "[10.11.1, )",
+        "resolved": "10.11.1",
+        "contentHash": "SeryCUevv4WJc2QxLZKJJM8wfR7DLqvM10u01lkHXv0qhFuN0oPRIuujxpgUyBZozpnx92DF6weUEptEaupj4Q=="
       },
       "Auth0.Core": {
         "type": "Transitive",
@@ -1093,7 +1093,7 @@
         "type": "Project",
         "dependencies": {
           "Auth0.AuthenticationApi": "[7.47.0, )",
-          "Auth0.ManagementApi": "[8.5.0, )",
+          "Auth0.ManagementApi": "[8.6.0, )",
           "JWT": "[11.0.0, )",
           "Polly": "[8.7.0, )",
           "Polly.Caching.Memory": "[3.0.2, )"
@@ -1181,11 +1181,11 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[8.5.0, )",
-        "resolved": "8.5.0",
-        "contentHash": "zHheDKXLilpLaF3zwdKkff4Tj9fPZoqpr2jtvqLeNV6UGNeAw5XkJzVD4pB4nudxs/vF3h5KE818ZVPJvEG3Ng==",
+        "requested": "[8.6.0, )",
+        "resolved": "8.6.0",
+        "contentHash": "ECx7tepCVynS+8Zz+uwLUbnHt0wU2GnSei6zw7cvBg5Jcukt9GUJDMzHdkzOcqgGyKKAwLcxyDKzlLODv9jMig==",
         "dependencies": {
-          "Auth0.AuthenticationApi": "7.46.0",
+          "Auth0.AuthenticationApi": "7.47.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
           "Portable.System.DateTimeOnly": "9.0.1",
           "System.Net.ServerSentEvents": "9.0.14",
