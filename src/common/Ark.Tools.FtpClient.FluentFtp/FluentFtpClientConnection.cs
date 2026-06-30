@@ -12,12 +12,19 @@ namespace Ark.Tools.FtpClient.FluentFtp;
 public sealed class FluentFtpClientConnection : FtpClientConnectionBase
 {
     private readonly IAsyncFtpClient _client;
+    private readonly Action<string, FluentFTP.FtpConfig>? _configureClient;
 
     private bool _isDisposed;
 
     public FluentFtpClientConnection(FtpConfig ftpConfig)
+        : this(ftpConfig, null)
+    {
+    }
+
+    public FluentFtpClientConnection(FtpConfig ftpConfig, Action<string, FluentFTP.FtpConfig>? configureClient)
         : base(ftpConfig)
     {
+        _configureClient = configureClient;
         _client = _getClient();
     }
 
@@ -89,13 +96,13 @@ public sealed class FluentFtpClientConnection : FtpClientConnectionBase
 
     private IAsyncFtpClient _getClient()
     {
-        AsyncFtpClient client;
-
-        client = new AsyncFtpClient(Uri.Host, Credentials, Uri.Port, new FluentFTP.FtpConfig
+        var clientConfig = new FluentFTP.FtpConfig
         {
             SocketKeepAlive = true,
-        });
+        };
 
-        return client;
+        _configureClient?.Invoke(Uri.Host, clientConfig);
+
+        return new AsyncFtpClient(Uri.Host, Credentials, Uri.Port, clientConfig);
     }
 }
