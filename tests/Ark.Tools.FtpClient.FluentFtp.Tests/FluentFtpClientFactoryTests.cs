@@ -2,10 +2,10 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.FtpClient.Core;
-using Ark.Tools.FtpClient.FluentFtp;
 
 using AwesomeAssertions;
 
+using System.Net;
 using System.Reflection;
 
 namespace Ark.Tools.FtpClient.FluentFtp.Tests;
@@ -23,8 +23,8 @@ public class FluentFtpClientFactoryTests
             config.SocketKeepAlive = false;
         });
 
-        using var connection = CreateConnectionFromFactory(ftpClientFactory, "ftp://client-factory.example.com");
-        var clientConfig = GetFluentFtpConfig(connection);
+        using var setup = CreateConnectionFromFactory(ftpClientFactory, "ftp://client-factory.example.com");
+        var clientConfig = GetFluentFtpConfig(setup.Connection);
 
         callbackHost.Should().Be("client-factory.example.com");
         clientConfig.SocketKeepAlive.Should().BeFalse();
@@ -40,8 +40,8 @@ public class FluentFtpClientFactoryTests
             config.SocketKeepAlive = false;
         });
 
-        using var connection = CreateConnectionFromFactory(ftpClientPoolFactory, "ftp://pool-factory.example.com");
-        var clientConfig = GetFluentFtpConfig(connection);
+        using var setup = CreateConnectionFromFactory(ftpClientPoolFactory, "ftp://pool-factory.example.com");
+        var clientConfig = GetFluentFtpConfig(setup.Connection);
 
         callbackHost.Should().Be("pool-factory.example.com");
         clientConfig.SocketKeepAlive.Should().BeFalse();
@@ -63,7 +63,7 @@ public class FluentFtpClientFactoryTests
         return config!;
     }
 
-    private static FluentFtpClientConnection CreateConnectionFromFactory(FluentFtpClientFactory ftpClientFactory, string uri)
+    private static ConnectionSetup CreateConnectionFromFactory(FluentFtpClientFactory ftpClientFactory, string uri)
     {
         var connectionFactoryField = typeof(DefaultFtpClientFactory).GetField("_connectionFactory", BindingFlags.Instance | BindingFlags.NonPublic);
         connectionFactoryField.Should().NotBeNull();
@@ -71,11 +71,12 @@ public class FluentFtpClientFactoryTests
         var connectionFactory = connectionFactoryField!.GetValue(ftpClientFactory) as IFtpClientConnectionFactory;
         connectionFactory.Should().NotBeNull();
 
-        var connection = connectionFactory!.Create(new FtpConfig(new Uri(uri), new NetworkCredential("user", "password")));
-        return connection.Should().BeOfType<FluentFtpClientConnection>().Subject;
+        var ftpConfig = new FtpConfig(new Uri(uri), new NetworkCredential("user", "password"));
+        var connection = connectionFactory!.Create(ftpConfig);
+        return new ConnectionSetup(connection.Should().BeOfType<FluentFtpClientConnection>().Subject, ftpConfig);
     }
 
-    private static FluentFtpClientConnection CreateConnectionFromFactory(FluentFtpClientPoolFactory ftpClientPoolFactory, string uri)
+    private static ConnectionSetup CreateConnectionFromFactory(FluentFtpClientPoolFactory ftpClientPoolFactory, string uri)
     {
         var connectionFactoryField = typeof(DefaultFtpClientPoolFactory).GetField("_connectionFactory", BindingFlags.Instance | BindingFlags.NonPublic);
         connectionFactoryField.Should().NotBeNull();
@@ -83,7 +84,27 @@ public class FluentFtpClientFactoryTests
         var connectionFactory = connectionFactoryField!.GetValue(ftpClientPoolFactory) as IFtpClientConnectionFactory;
         connectionFactory.Should().NotBeNull();
 
-        var connection = connectionFactory!.Create(new FtpConfig(new Uri(uri), new NetworkCredential("user", "password")));
-        return connection.Should().BeOfType<FluentFtpClientConnection>().Subject;
+        var ftpConfig = new FtpConfig(new Uri(uri), new NetworkCredential("user", "password"));
+        var connection = connectionFactory!.Create(ftpConfig);
+        return new ConnectionSetup(connection.Should().BeOfType<FluentFtpClientConnection>().Subject, ftpConfig);
+    }
+
+    private sealed class ConnectionSetup : IDisposable
+    {
+        public ConnectionSetup(FluentFtpClientConnection connection, FtpConfig ftpConfig)
+        {
+            Connection = connection;
+            _ftpConfig = ftpConfig;
+        }
+
+        public FluentFtpClientConnection Connection { get; }
+
+        private readonly FtpConfig _ftpConfig;
+
+        public void Dispose()
+        {
+            Connection.Dispose();
+            _ftpConfig.Dispose();
+        }
     }
 }

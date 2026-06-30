@@ -16,11 +16,22 @@ public sealed class FluentFtpClientConnection : FtpClientConnectionBase
 
     private bool _isDisposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FluentFtpClientConnection"/> class.
+    /// </summary>
+    /// <param name="ftpConfig">The FTP connection settings.</param>
     public FluentFtpClientConnection(FtpConfig ftpConfig)
         : this(ftpConfig, null)
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FluentFtpClientConnection"/> class.
+    /// </summary>
+    /// <param name="ftpConfig">The FTP connection settings.</param>
+    /// <param name="configureClient">
+    /// Callback used to customize the FluentFTP client configuration for the requested host before the client is created.
+    /// </param>
     public FluentFtpClientConnection(FtpConfig ftpConfig, Action<string, FluentFTP.FtpConfig>? configureClient)
         : base(ftpConfig)
     {
