@@ -73,7 +73,7 @@ project builds under the repo's strict settings and its self-tests pass with
 ## Epic 7 — Productization
 
 - [ ] **T7.1** Extract runtime + generator to `src/` packages with XML docs.
-- [ ] **T7.2** `packages.lock.json` committed for every new project
+- [x] **T7.2** `packages.lock.json` committed for every new project
   (CI `RestoreLockedMode`).
 - [ ] **T7.3** Migration guide from MVC controllers.
   - *Accept:* docs reviewed; package validation + SBOM succeed in CI.

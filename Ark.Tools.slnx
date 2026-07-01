@@ -78,6 +78,12 @@
     <Project Path="samples/TestWorker/TestWorker.csproj" />
     <Project Path="samples/WebApplicationDemo/WebApplicationDemo.csproj" />
   </Folder>
+  <Folder Name="/samples/Ark.MediatorFramework/">
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework/Ark.MediatorFramework.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Generators/Ark.MediatorFramework.Generators.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Api/Ark.MediatorFramework.Sample.Api.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj" />
+  </Folder>
   <Folder Name="/samples/Ark.Reference/">
     <Project Path="samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
     <File Path="samples/Ark.ReferenceProject/.editorconfig" />
