@@ -58,9 +58,14 @@ public class FluentFtpClientFactoryTests
         var configProperty = client!.GetType().GetProperty("Config", BindingFlags.Instance | BindingFlags.Public);
         configProperty.Should().NotBeNull();
 
-        var config = configProperty!.GetValue(client) as FluentFTP.FtpConfig;
-        config.Should().NotBeNull();
-        return config!;
+        var config = configProperty!.GetValue(client);
+        config.Should().BeOfType<FluentFTP.FtpConfig>();
+        if (config is not FluentFTP.FtpConfig ftpConfig)
+        {
+            throw new InvalidOperationException("Expected Config to be a non-null FluentFTP.FtpConfig.");
+        }
+
+        return ftpConfig;
     }
 
     private static ConnectionSetup CreateConnectionFromFactory(FluentFtpClientFactory ftpClientFactory, string uri)
