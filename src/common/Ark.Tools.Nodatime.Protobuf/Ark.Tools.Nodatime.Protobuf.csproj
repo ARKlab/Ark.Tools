@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>protobuf-net surrogates for NodaTime types (OffsetDateTime, LocalDate, LocalDateTime, Period)</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Nodatime;protobuf;protobuf-net;grpc</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="NodaTime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="protobuf-net" />
+  </ItemGroup>
+
+</Project>

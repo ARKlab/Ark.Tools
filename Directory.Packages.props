@@ -35,6 +35,7 @@
 	  <PackageVersion Include="NodaTime.Serialization.JsonNet" Version="3.3.0" />
 	  <PackageVersion Include="NodaTime.Serialization.SystemTextJson" Version="1.4.0" />
 	  <PackageVersion Include="NodaTime.Testing" Version="3.3.2" />
+	  <PackageVersion Include="protobuf-net" Version="3.2.56" />
 	  <PackageVersion Include="System.Reactive" Version="6.1.0" />
 	  <PackageVersion Include="SSH.NET" Version="2025.1.0" />
 	  <PackageVersion Include="SimpleInjector" Version="5.6.0" />
@@ -147,6 +148,7 @@
 
 	  <!-- BUILD TOOLS -->
 	  <PackageVersion Include="Polyfill" Version="10.11.2" />
+	  <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.301" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
 	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.117" />
