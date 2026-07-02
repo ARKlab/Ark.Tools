@@ -60,10 +60,18 @@ public sealed class CreateOrderHandler : IRequestHandler<CreateOrderRequest, Ord
 }
 ```
 
-Routing/metadata is expressed with attributes on the request type (e.g.
-`[ArkEndpoint("POST", "/api/v1/orders")]`, `[ServiceGroup("Orders")]`,
-`[FromRoute]`, `[FromQuery]`). These attributes are the only transport hint the
-developer writes; the generator turns them into concrete hosting code.
+Routing/metadata is expressed with **explicit, per-transport** attributes on the
+request type. Each transport is opt-in and declared independently:
+
+- `[HttpEndpoint("POST", "/api/v1/orders")]` — expose over Minimal API.
+- `[GrpcMethod]` (optionally `[GrpcMethod("CreateOrder")]`) — expose as a
+  code-first gRPC method; `[ServiceGroup("Orders")]` groups the service.
+- `[RebusMessage]` — expose as a Rebus message.
+
+`[FromRoute]`/`[FromQuery]` refine the HTTP binding. These attributes are the
+only transport hint the developer writes; the generator turns each *declared*
+transport into concrete hosting code. A request/query with **no** transport
+attribute is not hosted — the developer wires it by hand.
 
 ## The Roslyn incremental generator
 
@@ -75,8 +83,16 @@ re-runs only for changed syntax nodes) performs three phases:
 2. **Semantic analysis** — resolves the symbol, response type, routing
    attributes and parameter sources against the compilation's semantic model for
    type safety.
-3. **Transport emission** — emits partial extension methods that wire the pure
-   handler to each enabled transport.
+3. **Transport emission** — for each transport the contract explicitly opted into
+   (`[HttpEndpoint]`, `[GrpcMethod]`, `[RebusMessage]`), emits partial extension
+   methods/services that wire the pure handler to that transport.
+
+Emission is **opt-in and additive**: nothing is generated for a transport a
+contract did not declare. When the framework is too limited for a single
+request/query, the developer omits the attribute and hand-writes that transport
+directly — the gRPC method inside the generated service `partial`, the Minimal
+API `Map*` call, or the Rebus `IHandleMessages<>` — while still letting the
+generator handle every other contract/transport.
 
 ### Emitted Minimal API
 
@@ -84,8 +100,10 @@ re-runs only for changed syntax nodes) performs three phases:
 app.MapPost("/api/v1/orders", async (
     CreateOrderRequest request, HttpContext ctx, CancellationToken ctk) =>
 {
+    // The SimpleInjector async scope is established once for the whole request by the
+    // hosting pipeline (SimpleInjector integration middleware); the endpoint just resolves
+    // the handler from that ambient scope — other middlewares share the same scope.
     var container = ctx.RequestServices.GetRequiredService<SimpleInjector.Container>();
-    await using var scope = AsyncScopedLifestyle.BeginScope(container);
     // the caller identity flows through IContextProvider<ClaimsPrincipal> (HttpContext.User)
     var handler = container.GetInstance<IRequestHandler<CreateOrderRequest, OrderResponse>>();
     var result = await handler.ExecuteAsync(request, ctk).ConfigureAwait(false);
@@ -99,10 +117,12 @@ parameters and reconstructs the request object before dispatch.
 ### Emitted gRPC (code-first)
 
 `protobuf-net.Grpc` hosts a `[ServiceContract]` interface. The generator groups
-requests/queries (by namespace or `[ServiceGroup("Orders")]`) into one generated
-`[ServiceContract]` interface plus an implementation that opens a SimpleInjector
-scope and calls the same pure handler. Startup uses
-`AddCodeFirstGrpc()` + `MapGrpcService<OrdersService>()`.
+the `[GrpcMethod]`-declared requests/queries (by namespace or
+`[ServiceGroup("Orders")]`) into one generated `[ServiceContract]` interface plus
+a `partial` implementation that resolves the pure handler from the ambient
+request scope (opened by the SimpleInjector integration in the pipeline). The
+`partial` lets a developer hand-write any method the generator cannot express.
+Startup uses `AddCodeFirstGrpc()` + `MapGrpcService<OrdersService>()`.
 
 NodaTime members on contracts serialize over protobuf via the surrogates in
 [`Ark.Tools.Nodatime.Protobuf`](../../src/common/Ark.Tools.Nodatime.Protobuf)
@@ -112,19 +132,23 @@ carried as its ISO-8601 round-trip string.
 
 ### Emitted Rebus handler
 
-For request/command types marked as messages, the generator emits
-`IHandleMessages<CreateOrderRequest>` whose `Handle` opens the SimpleInjector
-scope (seeded from `MessageContext.Current.Headers`) and invokes the pure
-handler. The message is the unit of work / transaction boundary via the Rebus
-unit-of-work integration.
+For request/command types marked `[RebusMessage]`, the generator emits
+`IHandleMessages<CreateOrderRequest>` that invokes the pure handler. The
+SimpleInjector scope is **not** opened by the wrapper: the Rebus pipeline already
+establishes a per-message scope (`RebusScopeDecorator<>` over
+`IHandleMessages<>`), which the wrapper and its dependencies resolve within. The
+message/transport context is the unit of work / transaction boundary — no
+`Rebus.UnitOfWork` is used.
 
 ### Why resolve from SimpleInjector explicitly
 
 Native Minimal API / gRPC parameter injection uses the conforming container.
 To keep the domain graph in SimpleInjector (lifestyle scoping, decorators,
 startup verification, no captive dependencies), generated adapters fetch the
-`SimpleInjector.Container` from `RequestServices` and resolve the handler
-themselves inside an `AsyncScopedLifestyle` scope.
+`SimpleInjector.Container` from `RequestServices` and resolve the handler from
+the ambient request scope. That scope is opened once per request by the
+SimpleInjector integration in the pipeline (and per message by the Rebus
+pipeline), so adapters never open their own scope.
 
 ## Error handling
 
@@ -132,7 +156,7 @@ themselves inside an `AsyncScopedLifestyle` scope.
 | --- | --- | --- |
 | Minimal API | global exception handler / endpoint filter → `IProblemDetailsService` | `EntityNotFoundException`→404; `ValidationException`→400 + `extensions` field violations |
 | gRPC | server interceptor → `Google.Rpc.Status` rich error model | field violations packed as `BadRequest` details in trailing metadata; thrown as `RpcException` |
-| Rebus | unit-of-work rollback + native retry | exhausted → error/dead-letter queue with serialized exception headers |
+| Rebus | scope disposal + native retry | exhausted → error/dead-letter queue with serialized exception headers |
 
 Handlers only throw semantic domain exceptions; they never format transport
 errors.

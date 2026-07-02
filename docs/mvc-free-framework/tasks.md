@@ -19,27 +19,32 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Epic 2 — Minimal API transport
 
-- [x] **T2.1** Minimal API endpoints dispatch to pure handlers through a
-  per-request SimpleInjector async scope.
+- [x] **T2.1** Minimal API endpoints dispatch to pure handlers through the
+  per-request SimpleInjector async scope established once in the hosting pipeline
+  (not re-opened per endpoint).
   - *Accept:* an HTTP self-test (`TestServer`) posts a request and asserts the
     handler result.
-- [x] **T2.2** Roslyn incremental generator discovers handlers and emits the
-  endpoint-registration extension method.
+- [x] **T2.2** Roslyn incremental generator discovers handlers marked with the
+  explicit, opt-in `[HttpEndpoint]` attribute and emits the endpoint-registration
+  extension method.
   - *Accept:* the registration invoked at runtime is generated code
     (`[GeneratedCode]`); a generator test asserts expected `MapPost/MapGet`
     output; the HTTP self-test still passes using the generated registration.
 
 ## Epic 3 — Rebus transport
 
-- [x] **T3.1** Generated/adapter `IHandleMessages<T>` wrapper invokes the same
-  pure handler within a SimpleInjector scope over the in-memory transport.
+- [x] **T3.1** Generated/adapter `IHandleMessages<T>` wrapper (opt-in via
+  `[RebusMessage]`) invokes the same pure handler within the SimpleInjector scope
+  opened by the Rebus pipeline (`RebusScopeDecorator<>`, no `Rebus.UnitOfWork`)
+  over the in-memory transport.
   - *Accept:* a self-test sends a Rebus message and asserts the handler produced
     the same result as the HTTP path.
 
 ## Epic 4 — Code-first gRPC transport
 
 - [ ] **T4.1** `[ProtoContract]` contracts + generated `[ServiceContract]` service
-  grouped by `[ServiceGroup]`, hosted with `AddCodeFirstGrpc()`.
+  (opt-in via `[GrpcMethod]`, grouped by `[ServiceGroup]`), hosted with
+  `AddCodeFirstGrpc()`; the generated service is `partial` for manual methods.
   - *Accept:* an in-process `Grpc.Net.Client` self-test calls the service and
     gets the same result as the HTTP path.
 - [ ] **T4.2** `.proto` emission MSBuild target.

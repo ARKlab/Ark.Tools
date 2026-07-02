@@ -69,7 +69,7 @@ address Rebus at all.
 | Compile-time codegen | `Microsoft.CodeAnalysis.CSharp` (Roslyn `IIncrementalGenerator`) | Cached, AST-based generation without IDE lag; no runtime reflection. |
 | C# as IDL | `protobuf-net` + `protobuf-net.Grpc` | Strict binary schema from C# attributes (`[ProtoContract]`/`[ProtoMember]`); no hand-authored `.proto`. |
 | `.proto` emission for polyglot consumers | `protobuf-net.Grpc.Reflection` / `SchemaGenerator` in an MSBuild target | Keeps published `.proto` in sync with C#; no drift. |
-| Async messaging | `Rebus` + Rebus unit-of-work | Reuses existing infrastructure; native serde, routing, transaction scopes. |
+| Async messaging | `Rebus` + per-message SimpleInjector scope | Reuses existing infrastructure; native serde, routing, scope-per-message (no `Rebus.UnitOfWork`). |
 | OpenAPI | `Microsoft.AspNetCore.OpenApi` | First-party spec generation from Minimal API metadata. |
 | DI + decorators | `SimpleInjector` | Cross-cutting concerns independent of the conforming container; startup graph validation. |
 
@@ -95,9 +95,9 @@ Handlers throw semantic domain exceptions (`ValidationException`,
 - **gRPC** — a server interceptor builds the **gRPC rich error model**
   (`Google.Rpc.Status`), packing `BadRequest` field violations into trailing
   metadata, and throws `RpcException`.
-- **Rebus** — no status codes; the unit-of-work rolls back, native retry
-  (exponential backoff) runs, and exhausted messages go to the error/dead-letter
-  queue with the serialized exception in the headers.
+- **Rebus** — no status codes; the per-message SimpleInjector scope is disposed,
+  native retry (exponential backoff) runs, and exhausted messages go to the
+  error/dead-letter queue with the serialized exception in the headers.
 
 ## Cross-cutting concerns
 

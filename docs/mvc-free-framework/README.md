@@ -38,5 +38,6 @@ new abstractions:
 - **`Ark.Tools.SimpleInjector`** / **`Ark.Tools.Solid.SimpleInjector`** provide
   the non-conforming container and decorator registration used for cross-cutting
   concerns.
-- **`Ark.Tools.Rebus`** / **`Ark.Tools.Outbox.Rebus`** provide the messaging and
-  unit-of-work infrastructure the generated Rebus wrappers plug into.
+- **`Ark.Tools.Rebus`** / **`Ark.Tools.Outbox.Rebus`** provide the messaging
+  infrastructure the generated Rebus wrappers plug into, including the
+  per-message SimpleInjector scope (`RebusScopeDecorator<>`).

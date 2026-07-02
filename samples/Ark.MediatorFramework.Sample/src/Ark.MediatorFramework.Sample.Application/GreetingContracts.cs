@@ -16,10 +16,12 @@ public sealed record GreetingResponse
 }
 
 /// <summary>
-/// Pure transport-agnostic request (mutation). Decorated with <see cref="ArkEndpointAttribute"/>
-/// so the hosting assembly can expose it as an HTTP POST and a Rebus message via the generator.
+/// Pure transport-agnostic request (mutation). Transport is declared explicitly and per-transport:
+/// <see cref="HttpEndpointAttribute"/> exposes it as an HTTP POST and <see cref="RebusMessageAttribute"/>
+/// exposes it as a Rebus message; the generator emits the wiring for each declared transport.
 /// </summary>
-[ArkEndpoint("POST", "/api/v1/greetings")]
+[HttpEndpoint("POST", "/api/v1/greetings")]
+[RebusMessage]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 {
     /// <summary>Gets the name to greet.</summary>
@@ -27,8 +29,8 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 }
 
 /// <summary>
-/// Pure transport-agnostic query (read). Decorated with <see cref="ArkEndpointAttribute"/>
-/// so the hosting assembly can expose it as an HTTP GET via the generator.
+/// Pure transport-agnostic query (read). Declared with <see cref="HttpEndpointAttribute"/> only,
+/// so the generator exposes it as an HTTP GET (a query is a read, not a bus message).
 /// </summary>
-[ArkEndpoint("GET", "/api/v1/greetings/{id}")]
+[HttpEndpoint("GET", "/api/v1/greetings/{id}")]
 public sealed record GetGreetingQuery(Guid Id) : IQuery<GreetingResponse>;

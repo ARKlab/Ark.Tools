@@ -45,9 +45,19 @@ public sealed class SampleStartup
         ArgumentNullException.ThrowIfNull(app);
 
         app.UseRouting();
+
+        // The SimpleInjector async scope is established once for the whole request, in the pipeline:
+        // every endpoint (and any other middleware) resolves from this ambient scope, so the scope is
+        // never re-opened per endpoint.
+        app.Use(async (context, next) =>
+        {
+            await using var scope = AsyncScopedLifestyle.BeginScope(_container).ConfigureAwait(false);
+            await next().ConfigureAwait(false);
+        });
+
         app.UseEndpoints(endpoints =>
         {
-            // Source-generated endpoints for the selected [ArkEndpoint] contracts.
+            // Source-generated endpoints for the selected [HttpEndpoint] contracts.
             endpoints.MapArkEndpoints();
 
             // Hand-written multipart endpoint mapping IFormFile -> IArkAttachment.
@@ -65,7 +75,6 @@ public sealed class SampleStartup
         var attachment = new ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream);
 
         var container = httpContext.RequestServices.GetRequiredService<Container>();
-        await using var scope = AsyncScopedLifestyle.BeginScope(container);
         var handler = container.GetInstance<IRequestHandler<UploadGreetingCardRequest, UploadResponse>>();
         var result = await handler
             .ExecuteAsync(new UploadGreetingCardRequest { Attachment = attachment }, cancellationToken)

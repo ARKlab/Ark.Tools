@@ -14,17 +14,23 @@ using Microsoft.CodeAnalysis.Text;
 namespace Ark.MediatorFramework.Generators
 {
     /// <summary>
-    /// Incremental generator that discovers pure <c>Ark.Tools.Solid</c> requests/queries
-    /// decorated with <c>[ArkEndpoint]</c> and emits the transport hosting code
-    /// (ASP.NET Core Minimal API mappings and Rebus message-handler wrappers) at compile time.
-    /// This removes the MVC runtime-reflection tax while keeping handlers transport-agnostic.
+    /// Incremental generator that discovers pure <c>Ark.Tools.Solid</c> requests/queries and emits
+    /// the transport hosting code (ASP.NET Core Minimal API mappings and Rebus message-handler
+    /// wrappers) at compile time. This removes the MVC runtime-reflection tax while keeping handlers
+    /// transport-agnostic.
     /// </summary>
+    /// <remarks>
+    /// Transport declaration is explicit and opt-in per transport: a Minimal API endpoint is emitted
+    /// only for types marked <c>[HttpEndpoint]</c>, a Rebus wrapper only for <c>[RebusMessage]</c>,
+    /// and a gRPC method only for <c>[GrpcMethod]</c>. A request/query with no transport attribute is
+    /// ignored, letting a developer hand-write the mapping when the framework is too limited.
+    /// </remarks>
     [Generator(LanguageNames.CSharp)]
     public sealed class ArkEndpointGenerator : IIncrementalGenerator
     {
-        private const string EndpointAttribute = "Ark.MediatorFramework.ArkEndpointAttribute";
-        private const string RequestInterface = "Ark.Tools.Solid.IRequest`1";
-        private const string QueryInterface = "Ark.Tools.Solid.IQuery`1";
+        private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
+        private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
+        private const string GrpcMethodAttribute = "Ark.MediatorFramework.GrpcMethodAttribute";
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -43,23 +49,27 @@ namespace Ark.MediatorFramework.Generators
 
         private static ImmutableArray<EndpointModel> GetEndpoints(Compilation compilation)
         {
-            var attribute = compilation.GetTypeByMetadataName(EndpointAttribute);
-            if (attribute is null)
+            var httpAttr = compilation.GetTypeByMetadataName(HttpEndpointAttribute);
+            var rebusAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
+            var grpcAttr = compilation.GetTypeByMetadataName(GrpcMethodAttribute);
+            if (httpAttr is null && rebusAttr is null && grpcAttr is null)
                 return ImmutableArray<EndpointModel>.Empty;
 
-            var runtimeAssembly = attribute.ContainingAssembly;
+            var runtimeAssembly = (httpAttr ?? rebusAttr ?? grpcAttr)!.ContainingAssembly;
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _relevantAssemblies(compilation, runtimeAssembly))
             {
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
-                    var attr = type.GetAttributes().FirstOrDefault(
-                        a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, attribute));
-                    if (attr is null)
+                    var attrs = type.GetAttributes();
+                    var http = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, httpAttr));
+                    var rebus = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, rebusAttr));
+                    var grpc = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, grpcAttr));
+                    if (http is null && rebus is null && grpc is null)
                         continue;
 
-                    var model = Extract(type, attr);
+                    var model = Extract(type, http, rebus is not null, grpc is not null);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -102,16 +112,8 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData attr)
+        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData? http, bool hasRebus, bool hasGrpc)
         {
-            if (attr.ConstructorArguments.Length != 2)
-                return null;
-
-            var verb = attr.ConstructorArguments[0].Value as string;
-            var template = attr.ConstructorArguments[1].Value as string;
-            if (string.IsNullOrWhiteSpace(verb) || string.IsNullOrWhiteSpace(template))
-                return null;
-
             string? response = null;
             var kind = HandlerKind.None;
 
@@ -136,13 +138,36 @@ namespace Ark.MediatorFramework.Generators
             if (kind == HandlerKind.None || response is null)
                 return null;
 
+            string? verb = null;
+            string? template = null;
+            if (http is not null && http.ConstructorArguments.Length == 2)
+            {
+                verb = http.ConstructorArguments[0].Value as string;
+                template = http.ConstructorArguments[1].Value as string;
+                if (string.IsNullOrWhiteSpace(verb) || string.IsNullOrWhiteSpace(template))
+                {
+                    verb = null;
+                    template = null;
+                }
+                else
+                {
+                    verb = verb!.ToUpperInvariant();
+                }
+            }
+
+            var hasHttp = verb is not null && template is not null;
+            if (!hasHttp && !hasRebus && !hasGrpc)
+                return null;
+
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 type.Name,
-                verb!.ToUpperInvariant(),
-                template!,
+                verb,
+                template,
                 response,
-                kind);
+                kind,
+                hasRebus,
+                hasGrpc);
         }
 
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
@@ -160,13 +185,13 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("    public static class ArkGeneratedEndpoints");
             sb.AppendLine("    {");
 
-            // Minimal API registration.
-            sb.AppendLine("        /// <summary>Maps every discovered handler to a Minimal API endpoint.</summary>");
+            // Minimal API registration (opt-in via [HttpEndpoint]).
+            sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
-            foreach (var e in items)
+            foreach (var e in items.Where(static x => x.Verb is not null))
             {
-                var map = MapMethod(e.Verb);
+                var map = MapMethod(e.Verb!);
                 var handlerService = e.Kind == HandlerKind.Query
                     ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
                     : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
@@ -174,13 +199,14 @@ namespace Ark.MediatorFramework.Generators
                     ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                     : string.Empty;
 
-                sb.AppendLine("            app." + map + "(" + Literal(e.Template) + ", static async (");
+                sb.AppendLine("            app." + map + "(" + Literal(e.Template!) + ", static async (");
                 sb.AppendLine("                " + bind + e.TypeFullName + " request,");
                 sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
                 sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
                 sb.AppendLine("            {");
+                // The SimpleInjector async scope spans the whole request (established by the hosting
+                // pipeline); the endpoint resolves the handler from that ambient scope.
                 sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                sb.AppendLine("                await using var scope = global::SimpleInjector.Lifestyles.AsyncScopedLifestyle.BeginScope(container);");
                 sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                 sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                 sb.AppendLine("                return global::Microsoft.AspNetCore.Http.Results.Ok(result);");
@@ -190,18 +216,18 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        }");
             sb.AppendLine();
 
-            // Rebus handler registration (requests only; queries are reads).
+            // Rebus handler registration (opt-in via [RebusMessage]; requests only, queries are reads).
             sb.AppendLine("        /// <summary>Registers the generated Rebus handler wrappers into the SimpleInjector collection resolved by the Rebus activator.</summary>");
             sb.AppendLine("        public static void RegisterArkRebusHandlers(global::SimpleInjector.Container container)");
             sb.AppendLine("        {");
-            foreach (var e in items.Where(static x => x.Kind == HandlerKind.Request))
+            foreach (var e in items.Where(static x => x.HasRebus && x.Kind == HandlerKind.Request))
             {
                 sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">), typeof(" + e.TypeName + "RebusHandler));");
             }
             sb.AppendLine("        }");
 
             // Generated Rebus wrappers.
-            foreach (var e in items.Where(static x => x.Kind == HandlerKind.Request))
+            foreach (var e in items.Where(static x => x.HasRebus && x.Kind == HandlerKind.Request))
             {
                 var handlerService = "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
                 sb.AppendLine();
@@ -246,7 +272,7 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string verb, string template, string response, HandlerKind kind)
+            public EndpointModel(string typeFullName, string typeName, string? verb, string? template, string response, HandlerKind kind, bool hasRebus, bool hasGrpc)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -254,14 +280,18 @@ namespace Ark.MediatorFramework.Generators
                 Template = template;
                 Response = response;
                 Kind = kind;
+                HasRebus = hasRebus;
+                HasGrpc = hasGrpc;
             }
 
             public string TypeFullName { get; }
             public string TypeName { get; }
-            public string Verb { get; }
-            public string Template { get; }
+            public string? Verb { get; }
+            public string? Template { get; }
             public string Response { get; }
             public HandlerKind Kind { get; }
+            public bool HasRebus { get; }
+            public bool HasGrpc { get; }
         }
     }
 }
