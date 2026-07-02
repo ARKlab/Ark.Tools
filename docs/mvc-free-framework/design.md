@@ -86,7 +86,7 @@ app.MapPost("/api/v1/orders", async (
 {
     var container = ctx.RequestServices.GetRequiredService<SimpleInjector.Container>();
     await using var scope = AsyncScopedLifestyle.BeginScope(container);
-    // seed IUserContext from ctx.User here
+    // the caller identity flows through IContextProvider<ClaimsPrincipal> (HttpContext.User)
     var handler = container.GetInstance<IRequestHandler<CreateOrderRequest, OrderResponse>>();
     var result = await handler.ExecuteAsync(request, ctk).ConfigureAwait(false);
     return Results.Ok(result);
@@ -103,6 +103,12 @@ requests/queries (by namespace or `[ServiceGroup("Orders")]`) into one generated
 `[ServiceContract]` interface plus an implementation that opens a SimpleInjector
 scope and calls the same pure handler. Startup uses
 `AddCodeFirstGrpc()` + `MapGrpcService<OrdersService>()`.
+
+NodaTime members on contracts serialize over protobuf via the surrogates in
+[`Ark.Tools.Nodatime.Protobuf`](../../src/common/Ark.Tools.Nodatime.Protobuf)
+(`RuntimeTypeModel.AddNodaTimeSurrogates()`): `OffsetDateTime` preserves the
+offset, `LocalDate` is date-only, `LocalDateTime` is zoneless and `Period` is
+carried as its ISO-8601 round-trip string.
 
 ### Emitted Rebus handler
 
@@ -133,20 +139,30 @@ errors.
 
 ## User context
 
-`IUserContext` (identity, tenant, claims) is seeded before the handler runs and
-registered in the async scope:
+The caller identity is exposed to handlers through the existing
+`IContextProvider<ClaimsPrincipal>` abstraction (`Ark.Tools.Solid`), reusing the
+implementations already shipped in the repo — no new `IUserContext` type is
+introduced:
 
-- Minimal API: from `HttpContext.User` (`ClaimsPrincipal`).
+- Minimal API: `AspNetCoreUserContextProvider` reads `HttpContext.User`
+  (`ClaimsPrincipal`) via `IHttpContextAccessor`.
 - gRPC: interceptor reads JWT/metadata from the HTTP/2 stream.
-- Rebus: read a serialized context from `MessageContext.Current.Headers`
-  (the publisher injects it into outgoing headers).
+- Rebus: `RebusPrincipalContextProvider` reads the principal serialized in
+  `MessageContext.Current.Headers`; the publisher injects it via `UserFlowStep`
+  (`AutomaticallyFlowUserContext`), and
+  `RebusPrincipalContextWithFallbackProvider` falls back when absent.
+
+Handlers depend only on `IContextProvider<ClaimsPrincipal>` (e.g. via
+`Ex.GetUserId()`); the hosting layer selects the transport-appropriate provider.
 
 ## Attachments and streaming
 
-Pure requests reference an Ark.Tools stream abstraction (`IProxyStream`):
+Pure requests reference the `IArkAttachment` abstraction (name, content type and
+an `OpenRead()` stream) — a non-generic Attachment contract, not a generic
+stream proxy:
 
-- Minimal API: endpoint accepts `[FromForm] IFormFile`; generator maps
-  `OpenReadStream()` into the abstraction.
+- Minimal API: endpoint accepts `IFormFile`; the hosting maps
+  `OpenReadStream()` into `ArkAttachment`.
 - gRPC: emitted as `IAsyncEnumerable<>` streaming methods.
 
 ## Sample mapping to this design
@@ -154,6 +170,10 @@ Pure requests reference an Ark.Tools stream abstraction (`IProxyStream`):
 The verifiable sample (`samples/Ark.MediatorFramework.Sample`) implements the
 core of this design using dependencies already approved in the repo where
 possible, and demonstrates the source generator on the Minimal API transport.
+Mirroring the ReferenceProject, it separates the transport-agnostic
+**Application** assembly (pure contracts/handlers, store, decorator) from the
+**WebInterface** hosting assembly, where the selected requests/queries are
+exposed via endpoints and the transports (user context, Rebus) are wired.
 See [`implementation-plan.md`](implementation-plan.md) for exactly which pieces
 are proven in code versus specified for follow-up, and [`tasks.md`](tasks.md)
 for acceptance criteria.

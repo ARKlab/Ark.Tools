@@ -63,10 +63,12 @@ results; error interceptor maps `ValidationException` to `Google.Rpc.Status`.
 
 ## Phase 4 — Cross-cutting, errors, OpenAPI, attachments
 
-- `IUserContext` seeding per transport + tests.
+- `IContextProvider<ClaimsPrincipal>` wiring per transport (AspNetCore auth +
+  Rebus propagation) + tests.
 - `ProblemDetails` (Minimal API) and dead-letter behavior (Rebus) tests.
 - `Microsoft.AspNetCore.OpenApi` document generation + snapshot test.
-- `IFormFile`/`IProxyStream` attachment mapping + streaming test.
+- `IFormFile`/`IArkAttachment` attachment mapping + streaming test.
+- `Ark.Tools.Nodatime.Protobuf` surrogates for NodaTime types on gRPC contracts.
 
 **Verifiable:** each concern has a dedicated passing self-test.
 

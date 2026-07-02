@@ -101,14 +101,20 @@ Handlers throw semantic domain exceptions (`ValidationException`,
 
 ## Cross-cutting concerns
 
-- **User context** — a unified `IUserContext` abstraction is seeded *before* the
-  pure handler runs: Minimal API reads `ClaimsPrincipal` from `HttpContext`;
-  gRPC reads JWT/metadata in an interceptor; Rebus reads a serialized context
-  from message headers. In all cases it is registered into the SimpleInjector
-  async scope.
-- **Attachments/streaming** — pure requests use an Ark.Tools stream abstraction
-  (`IProxyStream`). Minimal API maps `[FromForm] IFormFile.OpenReadStream()`
-  into it; gRPC uses `IAsyncEnumerable` streaming.
+- **User context** — the existing `IContextProvider<ClaimsPrincipal>` abstraction
+  (`Ark.Tools.Solid`) exposes the caller identity *before* the pure handler runs,
+  reusing the shipped implementations: Minimal API via
+  `AspNetCoreUserContextProvider` (`HttpContext.User`); gRPC reads JWT/metadata in
+  an interceptor; Rebus via `RebusPrincipalContextProvider` fed by the
+  `UserFlowStep` header propagation. In all cases it is resolved from the
+  SimpleInjector async scope.
+- **Attachments/streaming** — pure requests use the non-generic `IArkAttachment`
+  abstraction (name, content type, `OpenRead()` stream). Minimal API maps
+  `IFormFile.OpenReadStream()` into it; gRPC uses `IAsyncEnumerable` streaming.
+- **NodaTime over protobuf** — `Ark.Tools.Nodatime.Protobuf` registers protobuf-net
+  surrogates so contracts can carry `OffsetDateTime` (offset preserved),
+  `LocalDate` (date only), `LocalDateTime` (zoneless) and `Period` (ISO string)
+  across the gRPC transport.
 
 ## Findings that shape the design
 

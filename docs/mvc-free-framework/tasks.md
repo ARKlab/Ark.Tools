@@ -48,12 +48,18 @@ project builds under the repo's strict settings and its self-tests pass with
 - [ ] **T4.3** gRPC rich-error-model interceptor.
   - *Accept:* a self-test throws `ValidationException` and asserts the client
     receives a `Google.Rpc.Status` with `BadRequest` field violations.
+- [x] **T4.4** NodaTime protobuf surrogates for contracts crossing the gRPC wire.
+  - *Accept:* `Ark.Tools.Nodatime.Protobuf` round-trips `OffsetDateTime` (offset
+    preserved), `LocalDate` (date only), `LocalDateTime` (zoneless) and `Period`
+    (ISO string) through protobuf-net, asserted by tests.
 
 ## Epic 5 — Cross-cutting concerns
 
-- [ ] **T5.1** `IUserContext` seeded per transport and injected into handlers.
-  - *Accept:* a self-test authenticates on each transport and asserts the handler
-    observed the expected identity/tenant.
+- [x] **T5.1** Caller identity exposed via `IContextProvider<ClaimsPrincipal>`
+  per transport and injected into handlers.
+  - *Accept:* the Minimal API self-test dispatches through the handler which reads
+    the identity via `IContextProvider<ClaimsPrincipal>` (AspNetCore auth, with
+    Rebus propagation on the bus transport).
 - [ ] **T5.2** Minimal API `ProblemDetails` (RFC 7807) mapping.
   - *Accept:* `EntityNotFoundException`→404 and `ValidationException`→400 with
     field violations in `extensions`, asserted over HTTP.
@@ -66,7 +72,7 @@ project builds under the repo's strict settings and its self-tests pass with
 - [ ] **T6.1** `Microsoft.AspNetCore.OpenApi` document generated from endpoints.
   - *Accept:* a snapshot test validates the generated document contains the
     expected paths/schemas.
-- [ ] **T6.2** `IFormFile` → `IProxyStream` attachment mapping.
+- [x] **T6.2** `IFormFile` → `IArkAttachment` attachment mapping.
   - *Accept:* a multipart upload self-test asserts the handler received the
     stream content.
 
