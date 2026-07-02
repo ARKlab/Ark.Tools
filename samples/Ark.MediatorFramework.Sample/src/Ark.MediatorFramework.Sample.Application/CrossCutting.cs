@@ -3,7 +3,7 @@
 
 using Ark.Tools.Solid;
 
-namespace Ark.MediatorFramework.Sample.Api;
+namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Singleton counter proving the cross-cutting decorator runs on every transport.</summary>
 public sealed class AuditCounter
@@ -41,14 +41,4 @@ public sealed class AuditRequestDecorator<TRequest, TResponse> : IRequestHandler
         _counter.Increment();
         return await _inner.ExecuteAsync(Request, ctk).ConfigureAwait(false);
     }
-}
-
-/// <summary>Minimal default <see cref="IUserContext"/> for the sample.</summary>
-public sealed class DefaultUserContext : IUserContext
-{
-    /// <inheritdoc />
-    public string? UserId => "anonymous";
-
-    /// <inheritdoc />
-    public string? Tenant => null;
 }

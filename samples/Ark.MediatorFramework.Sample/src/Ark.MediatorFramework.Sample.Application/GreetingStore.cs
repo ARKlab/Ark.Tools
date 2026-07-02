@@ -3,7 +3,7 @@
 
 using System.Collections.Concurrent;
 
-namespace Ark.MediatorFramework.Sample.Api;
+namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>In-memory store shared by every transport, proving they hit the same state.</summary>
 public interface IGreetingStore

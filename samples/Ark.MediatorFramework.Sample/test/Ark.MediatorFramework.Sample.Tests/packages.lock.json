@@ -299,10 +299,18 @@
       "ark.mediatorframework": {
         "type": "Project"
       },
-      "ark.mediatorframework.sample.api": {
+      "ark.mediatorframework.sample.application": {
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework": "[999.9.9, )",
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "SimpleInjector": "[5.6.0, )"
+        }
+      },
+      "ark.mediatorframework.sample.webinterface": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.MediatorFramework.Sample.Application": "[999.9.9, )",
           "Ark.Tools.Rebus": "[1.0.0, )"
         }
       },

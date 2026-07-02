@@ -3,7 +3,7 @@
 
 using Ark.Tools.Solid;
 
-namespace Ark.MediatorFramework.Sample.Api;
+namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Response returned by the greeting operations.</summary>
 public sealed record GreetingResponse
@@ -17,7 +17,7 @@ public sealed record GreetingResponse
 
 /// <summary>
 /// Pure transport-agnostic request (mutation). Decorated with <see cref="ArkEndpointAttribute"/>
-/// so the generator emits an HTTP POST and a Rebus handler for it.
+/// so the hosting assembly can expose it as an HTTP POST and a Rebus message via the generator.
 /// </summary>
 [ArkEndpoint("POST", "/api/v1/greetings")]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
@@ -28,7 +28,7 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 
 /// <summary>
 /// Pure transport-agnostic query (read). Decorated with <see cref="ArkEndpointAttribute"/>
-/// so the generator emits an HTTP GET for it.
+/// so the hosting assembly can expose it as an HTTP GET via the generator.
 /// </summary>
 [ArkEndpoint("GET", "/api/v1/greetings/{id}")]
 public sealed record GetGreetingQuery(Guid Id) : IQuery<GreetingResponse>;

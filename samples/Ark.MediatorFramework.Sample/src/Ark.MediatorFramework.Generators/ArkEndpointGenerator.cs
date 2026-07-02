@@ -1,13 +1,14 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Ark.MediatorFramework.Generators
@@ -28,25 +29,81 @@ namespace Ark.MediatorFramework.Generators
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var endpoints = context.SyntaxProvider
-                .ForAttributeWithMetadataName(
-                    EndpointAttribute,
-                    predicate: static (node, _) => node is TypeDeclarationSyntax,
-                    transform: static (ctx, _) => Extract(ctx))
-                .Where(static e => e is not null)
-                .Select(static (e, _) => e!.Value);
+            // ponytail: discovery walks the current assembly plus any referenced assembly that
+            // references the runtime (attribute) assembly, on every compilation. This lets the
+            // *hosting* assembly emit endpoints for contracts declared in the *application* assembly.
+            // Upgrade path: cache per metadata-reference if generation cost ever matters.
+            var endpoints = context.CompilationProvider
+                .SelectMany(static (compilation, _) => GetEndpoints(compilation));
 
             var collected = endpoints.Collect();
 
             context.RegisterSourceOutput(collected, static (spc, items) => Emit(spc, items));
         }
 
-        private static EndpointModel? Extract(GeneratorAttributeSyntaxContext ctx)
+        private static ImmutableArray<EndpointModel> GetEndpoints(Compilation compilation)
         {
-            if (ctx.TargetSymbol is not INamedTypeSymbol type)
-                return null;
+            var attribute = compilation.GetTypeByMetadataName(EndpointAttribute);
+            if (attribute is null)
+                return ImmutableArray<EndpointModel>.Empty;
 
-            var attr = ctx.Attributes[0];
+            var runtimeAssembly = attribute.ContainingAssembly;
+            var builder = ImmutableArray.CreateBuilder<EndpointModel>();
+
+            foreach (var assembly in _relevantAssemblies(compilation, runtimeAssembly))
+            {
+                foreach (var type in _allTypes(assembly.GlobalNamespace))
+                {
+                    var attr = type.GetAttributes().FirstOrDefault(
+                        a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, attribute));
+                    if (attr is null)
+                        continue;
+
+                    var model = Extract(type, attr);
+                    if (model is not null)
+                        builder.Add(model.Value);
+                }
+            }
+
+            return builder.ToImmutable();
+        }
+
+        private static IEnumerable<IAssemblySymbol> _relevantAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
+        {
+            yield return compilation.Assembly;
+
+            foreach (var reference in compilation.SourceModule.ReferencedAssemblySymbols)
+            {
+                if (SymbolEqualityComparer.Default.Equals(reference, runtimeAssembly))
+                    continue;
+
+                var referencesRuntime = reference.Modules.Any(
+                    m => m.ReferencedAssemblies.Any(
+                        id => string.Equals(id.Name, runtimeAssembly.Name, StringComparison.Ordinal)));
+
+                if (referencesRuntime)
+                    yield return reference;
+            }
+        }
+
+        private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol ns)
+        {
+            foreach (var member in ns.GetMembers())
+            {
+                if (member is INamespaceSymbol childNs)
+                {
+                    foreach (var type in _allTypes(childNs))
+                        yield return type;
+                }
+                else if (member is INamedTypeSymbol type)
+                {
+                    yield return type;
+                }
+            }
+        }
+
+        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData attr)
+        {
             if (attr.ConstructorArguments.Length != 2)
                 return null;
 

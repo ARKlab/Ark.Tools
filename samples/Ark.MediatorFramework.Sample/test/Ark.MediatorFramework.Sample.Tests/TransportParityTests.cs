@@ -2,11 +2,13 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.CodeDom.Compiler;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Reflection;
 
 using Ark.MediatorFramework.Generated;
-using Ark.MediatorFramework.Sample.Api;
+using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.WebInterface;
 
 using AwesomeAssertions;
 
@@ -135,6 +137,25 @@ public sealed class TransportParityTests
 
         generated.GetNestedType("CreateGreetingRequestRebusHandler")
             .Should().NotBeNull("a Rebus wrapper must be generated for each request");
+    }
+
+    [TestMethod]
+    public async Task Attachment_endpoint_streams_the_uploaded_file_to_the_handler()
+    {
+        var payload = "Happy Birthday!"u8.ToArray();
+        using var content = new MultipartFormDataContent();
+        using var fileContent = new ByteArrayContent(payload);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        content.Add(fileContent, "file", "card.png");
+
+        var post = await _client.PostAsync(new Uri("/api/v1/greeting-cards", UriKind.Relative), content).ConfigureAwait(false);
+        post.EnsureSuccessStatusCode();
+
+        var result = await post.Content.ReadFromJsonAsync<UploadResponse>().ConfigureAwait(false);
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("card.png");
+        result.ContentType.Should().Be("image/png");
+        result.Length.Should().Be(payload.Length, "the handler must read the full attachment stream");
     }
 
     private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)

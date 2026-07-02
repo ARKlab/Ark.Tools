@@ -3,16 +3,18 @@
 
 using Ark.Tools.Solid;
 
-namespace Ark.MediatorFramework.Sample.Api;
+using System.Security.Claims;
+
+namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Pure handler for <see cref="CreateGreetingRequest"/> — no transport types.</summary>
 public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingRequest, GreetingResponse>
 {
     private readonly IGreetingStore _store;
-    private readonly IUserContext _user;
+    private readonly IContextProvider<ClaimsPrincipal> _user;
 
     /// <summary>Initializes a new instance of the <see cref="CreateGreetingHandler"/> class.</summary>
-    public CreateGreetingHandler(IGreetingStore store, IUserContext user)
+    public CreateGreetingHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user)
     {
         _store = store;
         _user = user;
@@ -26,7 +28,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
         var response = new GreetingResponse
         {
             Id = Guid.NewGuid(),
-            Message = $"Hello, {Request.Name}! (by {_user.UserId ?? "anonymous"})",
+            Message = $"Hello, {Request.Name}! (by {_user.GetUserId() ?? "anonymous"})",
         };
 
         _store.Save(response);
@@ -50,5 +52,26 @@ public sealed class GetGreetingHandler : IQueryHandler<GetGreetingQuery, Greetin
     {
         ArgumentNullException.ThrowIfNull(query);
         return Task.FromResult(_store.Get(query.Id));
+    }
+}
+
+/// <summary>Pure handler for <see cref="UploadGreetingCardRequest"/> reading the attachment stream.</summary>
+public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCardRequest, UploadResponse>
+{
+    /// <inheritdoc />
+    public async Task<UploadResponse> ExecuteAsync(UploadGreetingCardRequest Request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(Request);
+
+        await using var stream = Request.Attachment.OpenRead();
+        using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer, ctk).ConfigureAwait(false);
+
+        return new UploadResponse
+        {
+            Name = Request.Attachment.Name,
+            ContentType = Request.Attachment.ContentType,
+            Length = buffer.Length,
+        };
     }
 }

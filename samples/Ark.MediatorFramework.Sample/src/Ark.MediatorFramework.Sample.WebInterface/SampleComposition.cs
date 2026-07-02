@@ -2,20 +2,25 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Generated;
+using Ark.MediatorFramework.Sample.Application;
 
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
+
 
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
-namespace Ark.MediatorFramework.Sample.Api;
+using System.Security.Claims;
+
+namespace Ark.MediatorFramework.Sample.WebInterface;
 
 /// <summary>
-/// Composition root. Wires the pure handlers, the cross-cutting decorator, the in-memory
-/// store and the Rebus in-memory transport into a single SimpleInjector container.
+/// Hosting composition root. It layers the transport concerns (user context, Rebus, the
+/// source-generated wrappers) on top of the transport-agnostic
+/// <see cref="ApplicationComposition"/> domain graph, and starts the bus.
 /// </summary>
 public static class SampleComposition
 {
@@ -29,22 +34,23 @@ public static class SampleComposition
         var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
 
-        container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
-        container.RegisterSingleton<AuditCounter>();
-        container.RegisterSingleton<IUserContext, DefaultUserContext>();
+        // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
+        ApplicationComposition.Register(container);
 
-        container.Register<IRequestHandler<CreateGreetingRequest, GreetingResponse>, CreateGreetingHandler>();
-        container.Register<IQueryHandler<GetGreetingQuery, GreetingResponse>, GetGreetingHandler>();
+        // Transport user context: AspNetCore auth (HttpContext.User) with Rebus fallback.
+        container.RegisterInstance<IHttpContextAccessor>(new HttpContextAccessor());
+        container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, HostUserContextProvider>();
 
-        // Cross-cutting concern applied transport-agnostically.
-        container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(AuditRequestDecorator<,>));
-
-        // Source-generated Rebus message-handler wrappers.
+        // Source-generated Rebus message-handler wrappers for the selected requests.
         ArkGeneratedEndpoints.RegisterArkRebusHandlers(container);
 
         container.ConfigureRebus(cfg => cfg
             .Transport(t => t.UseInMemoryTransport(network, "ark.mediator.sample"))
-            .Options(o => o.SetNumberOfWorkers(1)));
+            .Options(o =>
+            {
+                o.SetNumberOfWorkers(1);
+                o.AutomaticallyFlowUserContext(container);
+            }));
 
         container.Verify();
         container.StartBus();
