@@ -30,8 +30,8 @@ that preserves the SimpleInjector feature-set Ark.Tools and its samples rely upo
 | Clarifications on §8 questions | ✅ received 2026-07-02 (Q3 still open, expanded in §8.3) | §8 |
 | Decision on recommended approach | ✅ **Pure.DI primary, MEDI-native fallback** | §7 |
 | ASP.NET Core cross-wiring PoC on Pure.DI (`Pure.DI.MS`): controller activation, minimal APIs, health checks | ✅ done — cross-wiring works; **MVC itself cannot run trimmed** (§6.7) | `evaluations/PureDiWeb.Evaluation` |
-| Rebus `IHandlerActivator` PoC on Pure.DI | ⬜ not started | — |
-| Ark source-generator prototype for handler scanning/binding emission (per Q6) | ⬜ not started | — |
+| Ark source-generator prototype for handler scanning/binding emission (per Q6 + Q3 follow-up: zero manual registration, guaranteed open-generic decoration) | ✅ done — warning-free on trimmed + NativeAOT | `evaluations/HandlerGen.*`, §6.8 |
+| Rebus `IHandlerActivator` PoC | ⬜ not started | — |
 | Migration plan for `Ark.Tools.Solid.SimpleInjector` / `Ark.Tools.SimpleInjector` / `Ark.Tools.AspNetCore` | ⏸ blocked on Q3 answer | §8.3 |
 
 Environment notes for whoever resumes:
@@ -156,6 +156,11 @@ Key empirical findings:
 7. **ASP.NET Core cross-wiring on Pure.DI (F10)** — `evaluations/PureDiWeb.Evaluation`, a Kestrel app that self-checks over real HTTP:
    * `Pure.DI.MS` `ServiceProviderFactory<Composition>` works as advertised: **controller activation from the composition** (`.Roots<ControllerBase>()` + `AddControllersAsServices()`), health checks resolving composition services, minimal-API endpoints resolving the decorated handler pipeline via `IServiceProvider`, and two-way wiring (framework `ILogger<T>` injected into composition-managed handlers). All pass on CoreCLR.
    * **Hard container-independent finding: MVC controllers cannot run trimmed at all.** `AddControllers()` is `[RequiresUnreferencedCode]` ("MVC does not currently support trimming or native AOT"); discovery uses `Assembly.DefinedTypes` (trimmed → 404); even rooting the app assembly, `MapControllers()` throws `NotSupportedException` ("`IsConvertibleType` is not initialized when `Microsoft.AspNetCore.Mvc.ApiExplorer.IsEnhancedModelMetadataSupported` is false") under `TrimMode=full` on .NET 10. **The trimmed web story is Minimal APIs** — the trimmed PoC path (minimal API + health checks + composition pipeline) passes with 0.92 s including full HTTP self-checks. Consequence: `Ark.Tools.AspNetCore`'s controller-based `ArkStartupWebApi*` cannot be the trimmed-deployment surface regardless of container choice; a minimal-API-based startup flavour is a prerequisite and belongs in the migration plan (§7).
+8. **Zero-manual-registration open-generic decoration is proven with an Ark-owned generator (§8.4 requirement)** — `evaluations/HandlerGen.Generator` + `evaluations/HandlerGen.Evaluation`:
+   * A ~150-LOC Roslyn incremental generator scans the compilation for `IQueryHandler<,>` implementations and emits one `AddDiscoveredHandlers()` extension: each handler registration is **already wrapped in every `[HandlerDecorator]`-marked open-generic decorator**, closed at compile time, plus closed `NullValidator<Q>` fallbacks for queries without a specific validator, plus a `Query → closed-service-type` dispatch map for the mediator. Output is plain constructor calls: **zero reflection, zero `MakeGenericType`**.
+   * The PoC's `NewFeatureHandler` simulates feature development: a handler class with **no registration attribute or call anywhere** is asserted registered and fully decorated. The guarantee is structural — the generator closes every decorator over every discovered handler, so a handler cannot exist un-decorated. A generated `KnownHandlers` manifest makes the guarantee assertable at startup.
+   * Result: **warning-free** on CoreCLR, `TrimMode=full` and NativeAOT (the generated dispatch map also removes the `IL3050` the earlier PoCs' `MakeGenericType` mediator carried). AoT binary 2.3 MB, full self-check in ~4 ms.
+   * **Structural constraint discovered: Roslyn source generators cannot see each other's output.** The Ark scanner therefore *cannot* emit Pure.DI `DI.Setup(...)` bindings — Pure.DI's generator runs on the same original compilation and never sees them. Consequences: on the Pure.DI path, handler-pipeline bindings must either be hand-listed in the setup (**rejected by §8.4**) or emitted by the Ark generator *outside* Pure.DI (hybrid: Ark generator owns the handler pipeline, Pure.DI owns the rest of the graph via `Pure.DI.MS` over the same `IServiceCollection`). On the MEDI path there is no conflict: the Ark generator emits `IServiceCollection` registrations directly — Injectio is not needed for handlers, and none of its `IL2026`/rooting problems (§6.3) apply.
 
 ---
 
@@ -172,13 +177,13 @@ Key empirical findings:
    * *Trimmed deployment, low startup* (Q1): Pure.DI is the only candidate that trims **warning-free** — generated constructor calls leave nothing for the trimmer to guess about (§6.6). The MEDI+Injectio path is trim-unsafe by declaration (`IL2026`) and only survives via Ark-generated `DynamicDependency` roots — a permanent correctness liability exactly where trimming bugs are hardest to detect. Startup is also measurably faster (no runtime call-site graph construction).
    * *Verification* (Q2): runtime validation suffices, and Pure.DI delivers the compile-time nice-to-have for free.
    * *Fallback is mandatory* (Q7): proven in the PoC (exact-match binding beats `TT`-marker binding — the `RegisterConditional(..., !c.Handled)` equivalent). On MEDI, open-generic `TryAdd` fallback also works but interacts with the decorator rooting problem above.
-   * *Scanning via source generator* (Q6): approved — Ark owns a small generator that emits Pure.DI bindings for handlers/validators found at compile time, replacing `GetTypesToRegister`. This generator is needed on **either** path; on Pure.DI it emits only bindings, on MEDI it must also emit trim roots.
+   * *Scanning via source generator* (Q6): approved — Ark owns a small generator that discovers handlers/validators at compile time, replacing `GetTypesToRegister`. **Prototyped and proven in §6.8** with a hard twist: Roslyn generators cannot chain, so the Ark generator cannot feed Pure.DI's setup DSL. Per the §8.4 requirement (no manual handler registration, guaranteed decoration), the handler pipeline is therefore **owned by the Ark generator on either path** — it emits closed decorator chains as `IServiceCollection` registrations (warning-free on trim/AoT); Pure.DI's role narrows to the rest of the object graph.
    * *`Func<T>`* (Q7): supported natively by Pure.DI anyway; explicit registration remains the guideline.
 3. **MEDI-native remains the integration fallback.** ASP.NET Core hosting resolves framework services from MEDI regardless; `Pure.DI.MS` bridges the two. The cross-wiring PoC (§6.7) proved controller activation, health checks and minimal APIs all resolve from the Pure.DI composition — no blocking friction found. It also proved that **MVC itself cannot run trimmed** (container-independent), so the trimmed-deployment surface of `Ark.Tools.AspNetCore` must be a minimal-API startup flavour; the existing controller-based `ArkStartupWebApi*` stays CoreCLR-only.
 
 Explicitly rejected: forking SimpleInjector (§5.6), StrongInject (Q4: no), Jab (missing critical features).
 
-Next steps, in order: (a) Rebus `IHandlerActivator` PoC; (b) Ark scanning-generator prototype; (c) minimal-API `ArkStartup` flavour design (per §6.7); (d) migration plan — needs the Q3 answer (§8.3).
+Next steps, in order: (a) Rebus `IHandlerActivator` PoC; (b) ~~Ark scanning-generator prototype~~ done (§6.8); (c) minimal-API `ArkStartup` flavour design (per §6.7); (d) migration plan — needs the Q3 answer (§8.3).
 
 ---
 
@@ -210,6 +215,17 @@ Every source-generated container needs the registrations to be *statically analy
 * **(b) Near-source-compatible facade (costlier for Ark, near-zero app diff).** Ark ships an API that *looks like* today's `container.Register*` calls, but is actually a compile-time DSL interpreted by an Ark-owned generator (calls must be literal — no loops/conditionals around registrations). Preserves muscle memory and keeps diffs tiny, but Ark owns a mini-language + analyzer forever, and the "looks imperative, is actually compile-time" duality is itself a source of magic/confusion.
 
 Recommendation embedded in §7 assumes **(a)** — new declarative surface with an Ark scanning generator to keep per-app boilerplate minimal. **Please confirm (a) is acceptable, or state that (b)-style source compatibility is required.**
+
+### 8.4 Q3 follow-up (2026-07-02): open-generic decoration is a hard requirement
+
+> *"OpenGeneric Decorator support is maintained. It is not acceptable that each Handler needs to be manually registered (use source generators) and that all matching are decorated. The goal is that during feature development, new Handlers are created and those must be guaranteed to be Decorated with all registered decorators."*
+
+Constraints this adds to the decision:
+
+1. **No per-handler registration code** — not even a per-class attribute is the spirit of the ask: implementing `IQueryHandler<,>` must be sufficient. This disqualifies both the hand-listed Pure.DI `.Bind<...>()` style of `PureDi.Evaluation` and the `[RegisterSingleton]`-per-class style of `MediInjectio.Evaluation` as final shapes; both were feature probes, not the proposed surface.
+2. **Decoration must be guaranteed, not conventional** — every discovered handler is wrapped by *all* registered decorators by construction.
+
+Addressed by the Ark-owned scanning generator PoC (§6.8, `evaluations/HandlerGen.*`): compile-time discovery of every `IQueryHandler<,>` implementation, registrations emitted pre-wrapped in the full decorator chain, structural guarantee assertable via the generated manifest, warning-free on trimmed and NativeAOT deployments.
 
 ---
 
