@@ -34,3 +34,24 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 /// </summary>
 [HttpEndpoint("GET", "/api/v1/greetings/{id}")]
 public sealed record GetGreetingQuery(Guid Id) : IQuery<GreetingResponse>;
+
+/// <summary>Version 2 of the greeting response, evolving the contract with the message length.</summary>
+public sealed record GreetingResponseV2
+{
+    /// <summary>Gets the greeting identifier.</summary>
+    public required Guid Id { get; init; }
+
+    /// <summary>Gets the greeting message.</summary>
+    public required string Message { get; init; }
+
+    /// <summary>Gets the message length (added in v2).</summary>
+    public required int MessageLength { get; init; }
+}
+
+/// <summary>
+/// Version 2 read exposed under the <c>/api/v2</c> route. The generator infers the API version group
+/// from the route template, so this endpoint lands in the <c>v2</c> OpenAPI document while the v1
+/// endpoints stay in <c>v1</c>, demonstrating route-based API versioning.
+/// </summary>
+[HttpEndpoint("GET", "/api/v2/greetings/{id}")]
+public sealed record GetGreetingV2Query(Guid Id) : IQuery<GreetingResponseV2>;

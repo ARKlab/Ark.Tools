@@ -2,6 +2,15 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "Direct",
+        "requested": "[10.0.9, )",
+        "resolved": "10.0.9",
+        "contentHash": "1ihb8FO9cGgEK1/m3CTtT/SfnynwmiZib0W2pcDVj3KSWk/Sca4VOXEtaptKQc582zpFrzTFiwkGRCglt6H+WQ==",
+        "dependencies": {
+          "Microsoft.OpenApi": "2.0.0"
+        }
+      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.53.0",
@@ -181,6 +190,7 @@
         "dependencies": {
           "Ark.MediatorFramework": "[999.9.9, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "SimpleInjector": "[5.6.0, )"
         }
       },
@@ -387,6 +397,12 @@
           "Microsoft.IdentityModel.Tokens": "8.19.1"
         }
       },
+      "Microsoft.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[2.7.5, )",
+        "resolved": "2.7.5",
+        "contentHash": "0FA67RSnRM4tcBKqiqVu/HPdZ9+QOKbmeRjxRUGTCjPU4C0bmUhd97Dso7Yild5P7nOV6GxJ2xrK0Kv/O9xp0w=="
+      },
       "Newtonsoft.Json": {
         "type": "CentralTransitive",
         "requested": "[13.0.4, )",
@@ -518,6 +534,12 @@
       }
     },
     "net8.0": {
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "Direct",
+        "requested": "[10.0.9, )",
+        "resolved": "10.0.9",
+        "contentHash": "1ihb8FO9cGgEK1/m3CTtT/SfnynwmiZib0W2pcDVj3KSWk/Sca4VOXEtaptKQc582zpFrzTFiwkGRCglt6H+WQ=="
+      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.53.0",
@@ -783,6 +805,7 @@
         "dependencies": {
           "Ark.MediatorFramework": "[999.9.9, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "SimpleInjector": "[5.6.0, )"
         }
       },

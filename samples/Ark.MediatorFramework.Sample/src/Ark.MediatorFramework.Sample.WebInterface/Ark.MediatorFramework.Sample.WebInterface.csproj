@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Generators\Ark.MediatorFramework.Generators.csproj"

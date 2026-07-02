@@ -10,6 +10,8 @@ using Ark.Tools.Solid;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
+using System.Text.Json;
+
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
 /// <summary>
@@ -37,6 +39,15 @@ public sealed class SampleStartup
         services.AddSingleton(_container);
         services.AddHttpContextAccessor();
         services.AddRouting();
+
+        // Minimal API JSON: the Ark System.Text.Json defaults (camelCase, NodaTime, enum-as-member)
+        // so the polymorphic [JsonConverter]-annotated contracts round-trip over the wire.
+        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.ConfigureArkDefaults());
+
+        // OpenAPI: one document per API version. Endpoints are partitioned by the group name the
+        // generator infers from the route template ("v1"/"v2"); ungrouped endpoints appear in both.
+        services.AddOpenApi("v1");
+        services.AddOpenApi("v2");
     }
 
     /// <summary>Builds the request pipeline and maps the exposed endpoints.</summary>
@@ -62,6 +73,9 @@ public sealed class SampleStartup
 
             // Hand-written multipart endpoint mapping IFormFile -> IArkAttachment.
             endpoints.MapPost("/api/v1/greeting-cards", _uploadGreetingCard);
+
+            // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
+            endpoints.MapOpenApi();
         });
     }
 
@@ -80,6 +94,6 @@ public sealed class SampleStartup
             .ExecuteAsync(new UploadGreetingCardRequest { Attachment = attachment }, cancellationToken)
             .ConfigureAwait(false);
 
-        return Results.Ok(result);
+        return TypedResults.Ok(result);
     }
 }

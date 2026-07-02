@@ -11,6 +11,7 @@
     <PackageReference Include="SimpleInjector" />
     <ProjectReference Include="..\Ark.MediatorFramework\Ark.MediatorFramework.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
 
 </Project>

@@ -74,9 +74,14 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Epic 6 — OpenAPI & attachments
 
-- [ ] **T6.1** `Microsoft.AspNetCore.OpenApi` document generated from endpoints.
+- [x] **T6.1** `Microsoft.AspNetCore.OpenApi` document generated from endpoints.
   - *Accept:* a snapshot test validates the generated document contains the
     expected paths/schemas.
+  - *Also:* per-version OpenAPI documents (`/openapi/v1.json`, `/openapi/v2.json`)
+    partition endpoints by the API version the generator infers from the route
+    template, and System.Text.Json polymorphic contracts (via the shared
+    `Ark.Tools.SystemTextJson.JsonPolymorphicConverter`) round-trip through a
+    generated endpoint — both asserted by tests.
 - [x] **T6.2** `IFormFile` → `IArkAttachment` attachment mapping.
   - *Accept:* a multipart upload self-test asserts the handler received the
     stream content.

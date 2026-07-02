@@ -209,8 +209,17 @@ namespace Ark.MediatorFramework.Generators
                 sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                 sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                 sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
-                sb.AppendLine("                return global::Microsoft.AspNetCore.Http.Results.Ok(result);");
-                sb.AppendLine("            });");
+                sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
+
+                // Route-based API versioning: the version segment of the template (for example
+                // "/api/v2/...") becomes the endpoint group name, so multiple OpenAPI documents
+                // (one per version) can partition the endpoints. Endpoints with no version segment
+                // stay ungrouped and therefore appear in every document.
+                var group = ApiVersionGroup(e.Template!);
+                if (group is not null)
+                    sb.AppendLine("            }).WithGroupName(" + Literal(group) + ");");
+                else
+                    sb.AppendLine("            });");
             }
             sb.AppendLine("            return app;");
             sb.AppendLine("        }");
@@ -259,6 +268,24 @@ namespace Ark.MediatorFramework.Generators
             "PATCH" => "MapPatch",
             _ => "MapPost",
         };
+
+        // ponytail: version is inferred from a "/v{number}" route segment (matching the sample's
+        // "/api/v1/..." convention). Upgrade path: read an explicit version off the attribute if a
+        // richer versioning scheme is ever needed.
+        private static string? ApiVersionGroup(string template)
+        {
+            foreach (var segment in template.Split('/'))
+            {
+                if (segment.Length >= 2
+                    && (segment[0] == 'v' || segment[0] == 'V')
+                    && segment.Skip(1).All(char.IsDigit))
+                {
+                    return "v" + segment.Substring(1);
+                }
+            }
+
+            return null;
+        }
 
         private static string Literal(string value)
             => SyntaxFactory.Literal(value).ToFullString();

@@ -55,7 +55,54 @@ public sealed class GetGreetingHandler : IQueryHandler<GetGreetingQuery, Greetin
     }
 }
 
-/// <summary>Pure handler for <see cref="UploadGreetingCardRequest"/> reading the attachment stream.</summary>
+/// <summary>Pure handler for <see cref="GetGreetingV2Query"/> — no transport types.</summary>
+public sealed class GetGreetingV2Handler : IQueryHandler<GetGreetingV2Query, GreetingResponseV2>
+{
+    private readonly IGreetingStore _store;
+
+    /// <summary>Initializes a new instance of the <see cref="GetGreetingV2Handler"/> class.</summary>
+    public GetGreetingV2Handler(IGreetingStore store)
+    {
+        _store = store;
+    }
+
+    /// <inheritdoc />
+    public Task<GreetingResponseV2> ExecuteAsync(GetGreetingV2Query query, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        var greeting = _store.Get(query.Id);
+        return Task.FromResult(new GreetingResponseV2
+        {
+            Id = greeting.Id,
+            Message = greeting.Message,
+            MessageLength = greeting.Message.Length,
+        });
+    }
+}
+
+/// <summary>Pure handler describing a polymorphic <see cref="Shape"/> — no transport types.</summary>
+public sealed class DescribeShapeHandler : IRequestHandler<DescribeShapeRequest, ShapeDescription>
+{
+    /// <inheritdoc />
+    public Task<ShapeDescription> ExecuteAsync(DescribeShapeRequest Request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(Request);
+
+        var area = Request.Shape switch
+        {
+            Circle circle => Math.PI * circle.Radius * circle.Radius,
+            Square square => square.Side * square.Side,
+            _ => throw new NotSupportedException($"Unknown shape '{Request.Shape.GetType().Name}'."),
+        };
+
+        return Task.FromResult(new ShapeDescription
+        {
+            Shape = Request.Shape,
+            Area = area,
+        });
+    }
+}
 public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCardRequest, UploadResponse>
 {
     /// <inheritdoc />
