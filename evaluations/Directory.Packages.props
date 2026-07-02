@@ -1,0 +1,6 @@
+<Project>
+  <!-- Opt-out from repo Central Package Management for isolated evaluation projects -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>
