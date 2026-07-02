@@ -1,6 +1,6 @@
 # Research: AoT-ready DI container to replace SimpleInjector
 
-Status: **research phase — recommendation pending clarifications** (see [Open questions](#8-open-questions--assumptions-to-clarify)).
+Status: **clarifications received — recommendation issued** (see [§8](#8-clarifications-received-2026-07-02) for the answers and [§7](#7-recommended-solution) for the resulting decision). One question (Q3, migration tolerance) is still open — expanded with examples in §8.3.
 Last updated: 2026-07-02.
 
 ---
@@ -26,11 +26,13 @@ that preserves the SimpleInjector feature-set Ark.Tools and its samples rely upo
 | Survey of source-generated AoT-ready DI containers | ✅ done | §5 |
 | Feasibility PoC: MEDI + Injectio | ✅ done, passing on CoreCLR + NativeAOT | `evaluations/MediInjectio.Evaluation` |
 | Feasibility PoC: Pure.DI | ✅ done, passing on CoreCLR + NativeAOT | `evaluations/PureDi.Evaluation` |
-| ASP.NET Core cross-wiring PoC (controller activation, health checks) | ⬜ not started | — |
-| Rebus `IHandlerActivator` PoC on candidate container | ⬜ not started | — |
-| StrongInject fork viability assessment (if chosen) | ⬜ not started | — |
-| Decision on recommended approach | ⏸ **blocked on clarifications** | §8 |
-| Migration plan for `Ark.Tools.Solid.SimpleInjector` / `Ark.Tools.SimpleInjector` / `Ark.Tools.AspNetCore` | ⬜ not started | — |
+| Trimmed self-contained deployment proof (`PublishTrimmed=true`, `TrimMode=full`) + startup timing | ✅ done, both PoCs pass | §6.6 |
+| Clarifications on §8 questions | ✅ received 2026-07-02 (Q3 still open, expanded in §8.3) | §8 |
+| Decision on recommended approach | ✅ **Pure.DI primary, MEDI-native fallback** | §7 |
+| ASP.NET Core cross-wiring PoC on Pure.DI (`Pure.DI.MS`): controller activation, minimal APIs, health checks | ✅ done — cross-wiring works; **MVC itself cannot run trimmed** (§6.7) | `evaluations/PureDiWeb.Evaluation` |
+| Rebus `IHandlerActivator` PoC on Pure.DI | ⬜ not started | — |
+| Ark source-generator prototype for handler scanning/binding emission (per Q6) | ⬜ not started | — |
+| Migration plan for `Ark.Tools.Solid.SimpleInjector` / `Ark.Tools.SimpleInjector` / `Ark.Tools.AspNetCore` | ⏸ blocked on Q3 answer | §8.3 |
 
 Environment notes for whoever resumes:
 * PoCs run with SDK 10.0.301 (repo `global.json`); AOT publish verified on `linux-x64` with `PublishAot=true`.
@@ -129,7 +131,7 @@ No open generics, no decorators, no conditional registration; dormant since Sep 
 | F7 verification/diagnostics | ✅✅ compile-time graph | ⚠️ runtime `ValidateOnBuild` only | ✅ compile-time | ✅ |
 | F8 scopes | ✅ proven (child composition) | ✅ proven (`IServiceScope`) | ⚠️ `Owned<T>` model differs | ✅ |
 | F9 Func/Lazy | ✅ proven | ❌ (needs Ark shim) | ✅ | ✅ |
-| F10 ASP.NET Core integration | ⚠️ `Pure.DI.MS` bridge (PoC pending) | ✅✅ native (no cross-wiring at all) | ⚠️ stale sample | ⚠️ port needed |
+| F10 ASP.NET Core integration | ✅ proven (`Pure.DI.MS`, §6.7; MVC-trimming limit is container-independent) | ✅✅ native (no cross-wiring at all) | ⚠️ stale sample | ⚠️ port needed |
 | AoT proof | ✅ our PoC + upstream samples | ✅ our PoC (with rooting fix) | ❌ unverified | ❌ |
 | Maintenance risk | low (active, single-org) | lowest (MS + active Injectio; Injectio replaceable by Ark generator) | **highest** (adopt abandonware) | **highest** (own a container) |
 | "No magic" philosophy fit | ✅✅ | ⚠️ runtime graph, best-effort | ✅ | ✅ |
@@ -147,38 +149,67 @@ Key empirical findings:
 3. **MEDI+Injectio on AoT fails out-of-the-box** for open-generic decorators (`ActivatorUtilities` cannot find ctor of `ValidationDecorator<PingQuery,string>`): metadata was trimmed. Proven fix (what an Ark generator must emit): `[DynamicDependency(PublicConstructors, typeof(Decorator<Q,R>))]` per closed pair, **plus** an explicit construction for value-type generic arguments (`int` results) since those need real native instantiations, not just metadata.
 4. **Pure.DI handles the generic constraint `TQuery : IQuery<TResult>`** only via a custom marker (`[GenericTypeArgument] interface TTQuery : IQuery<TT>`); the stock `TT1/TT2` markers fail to compile against constrained interfaces. Works, but must be codified in guidelines.
 5. Pure.DI compile-time verification caught every deliberately-broken graph during PoC development (missing validator binding = build error) — behaviour equivalent to `Verify()` but earlier.
+6. **Trimmed self-contained deployment** (the actual ambition per §8.1: `PublishTrimmed=true`, `TrimMode=full`, self-contained linux-x64, .NET 10) — both PoCs **pass all checks**:
+   * **Pure.DI: zero trim warnings** — the generated composition is plain constructor calls, nothing for the trimmer to break. Startup 0.09 s / ~20 MB RSS.
+   * **MEDI+Injectio: works only thanks to our generated roots** (§6.3) and still emits `IL2026` from Injectio's `DecorateOpenGeneric` (`RequiresUnreferencedCode`) — i.e. trim-*unsafe by declaration*, kept alive by side-channel annotations an Ark generator must always emit correctly. Startup 0.20 s / ~22 MB RSS.
+   * Output size is equal (~23 MB, dominated by the runtime); the differentiator for the "trimmed + fast startup" goal is warning-free trimming and startup time, both favouring Pure.DI.
+7. **ASP.NET Core cross-wiring on Pure.DI (F10)** — `evaluations/PureDiWeb.Evaluation`, a Kestrel app that self-checks over real HTTP:
+   * `Pure.DI.MS` `ServiceProviderFactory<Composition>` works as advertised: **controller activation from the composition** (`.Roots<ControllerBase>()` + `AddControllersAsServices()`), health checks resolving composition services, minimal-API endpoints resolving the decorated handler pipeline via `IServiceProvider`, and two-way wiring (framework `ILogger<T>` injected into composition-managed handlers). All pass on CoreCLR.
+   * **Hard container-independent finding: MVC controllers cannot run trimmed at all.** `AddControllers()` is `[RequiresUnreferencedCode]` ("MVC does not currently support trimming or native AOT"); discovery uses `Assembly.DefinedTypes` (trimmed → 404); even rooting the app assembly, `MapControllers()` throws `NotSupportedException` ("`IsConvertibleType` is not initialized when `Microsoft.AspNetCore.Mvc.ApiExplorer.IsEnhancedModelMetadataSupported` is false") under `TrimMode=full` on .NET 10. **The trimmed web story is Minimal APIs** — the trimmed PoC path (minimal API + health checks + composition pipeline) passes with 0.92 s including full HTTP self-checks. Consequence: `Ark.Tools.AspNetCore`'s controller-based `ArkStartupWebApi*` cannot be the trimmed-deployment surface regardless of container choice; a minimal-API-based startup flavour is a prerequisite and belongs in the migration plan (§7).
 
 ---
 
-## 7. Recommended solution approach (proposal — pending §8 clarifications)
+## 7. Recommended solution
 
-All assumptions are **not** yet clarified, so per the task constraints this is a *proposed* direction, not a final recommendation.
+§8 clarifications (2026-07-02) resolved the decision inputs: the ambition is **trimmed deployment with very low startup times** (AoT is just one vehicle), runtime startup validation is sufficient (compile-time is a nice-to-have), StrongInject adoption is out, dual-container transition is fine, compile-time source-generated scanning is fine (no runtime plugin loading), `Func<T>` auto-factories may be dropped for explicit registration but **fallback registration (F3) is non-negotiable**.
 
-**Proposal: two-layer strategy.**
+**Decision: two-layer strategy with Pure.DI as the primary AoT/trimming container.**
 
 1. **Decouple Ark.Tools from the container now (container-agnostic core).**
-   * Replace `dynamic` dispatch in `Ark.Tools.Solid.SimpleInjector` processors with the DIM-bridge pattern (proven in PoCs) — benefits SimpleInjector users immediately and is a prerequisite for any AoT container.
-   * Introduce an `Ark.Tools.Solid.<NewContainer>` package side-by-side; keep `Ark.Tools.Solid.SimpleInjector` for non-AoT users (SimpleInjector is alive and fine on CoreCLR).
-2. **Adopt a source-generated container for AoT scenarios**, decided by §8:
-   * If compile-time verification (F7) is the non-negotiable axis → **Pure.DI** (strongest "no magic" fit; needs a small Ark generator for handler-binding emission replacing `GetTypesToRegister`, and an ASP.NET Core bridge PoC).
-   * If ecosystem integration (F10) and lowest maintenance are the axis → **MEDI + Ark-owned source generator** (generator emits: closed handler registrations, decorator application, AoT roots per §6.3, `Func<T>` shims; verification stays runtime-`ValidateOnBuild` + a custom Roslyn analyzer could recover part of the compile-time guarantees).
-   * In both cases the generator surface Ark must own is small (~registration emission + rooting), unlike forking a container engine.
+   * Replace `dynamic` dispatch in `Ark.Tools.Solid.SimpleInjector` processors with the DIM-bridge pattern (proven in PoCs) — benefits SimpleInjector users immediately and is a prerequisite for any trimmed deployment.
+   * Keep `Ark.Tools.Solid.SimpleInjector` for existing CoreCLR users (Q5: side-by-side transition approved); introduce `Ark.Tools.Solid.PureDI` (name TBD) alongside.
+2. **Pure.DI as the trimming/AoT container.** Rationale against the clarified goals:
+   * *Trimmed deployment, low startup* (Q1): Pure.DI is the only candidate that trims **warning-free** — generated constructor calls leave nothing for the trimmer to guess about (§6.6). The MEDI+Injectio path is trim-unsafe by declaration (`IL2026`) and only survives via Ark-generated `DynamicDependency` roots — a permanent correctness liability exactly where trimming bugs are hardest to detect. Startup is also measurably faster (no runtime call-site graph construction).
+   * *Verification* (Q2): runtime validation suffices, and Pure.DI delivers the compile-time nice-to-have for free.
+   * *Fallback is mandatory* (Q7): proven in the PoC (exact-match binding beats `TT`-marker binding — the `RegisterConditional(..., !c.Handled)` equivalent). On MEDI, open-generic `TryAdd` fallback also works but interacts with the decorator rooting problem above.
+   * *Scanning via source generator* (Q6): approved — Ark owns a small generator that emits Pure.DI bindings for handlers/validators found at compile time, replacing `GetTypesToRegister`. This generator is needed on **either** path; on Pure.DI it emits only bindings, on MEDI it must also emit trim roots.
+   * *`Func<T>`* (Q7): supported natively by Pure.DI anyway; explicit registration remains the guideline.
+3. **MEDI-native remains the integration fallback.** ASP.NET Core hosting resolves framework services from MEDI regardless; `Pure.DI.MS` bridges the two. The cross-wiring PoC (§6.7) proved controller activation, health checks and minimal APIs all resolve from the Pure.DI composition — no blocking friction found. It also proved that **MVC itself cannot run trimmed** (container-independent), so the trimmed-deployment surface of `Ark.Tools.AspNetCore` must be a minimal-API startup flavour; the existing controller-based `ArkStartupWebApi*` stays CoreCLR-only.
 
-Explicitly **not** recommended: forking SimpleInjector (§5.6), adopting StrongInject as-is (abandonware), Jab (missing critical features).
+Explicitly rejected: forking SimpleInjector (§5.6), StrongInject (Q4: no), Jab (missing critical features).
+
+Next steps, in order: (a) Rebus `IHandlerActivator` PoC; (b) Ark scanning-generator prototype; (c) minimal-API `ArkStartup` flavour design (per §6.7); (d) migration plan — needs the Q3 answer (§8.3).
 
 ---
 
-## 8. Open questions / assumptions to clarify
+## 8. Clarifications received (2026-07-02)
 
-Answers to these determine the §7 choice; please answer in the PR:
+Answers from @AndreaCuneo on the PR; recorded here so the decision trail is self-contained.
 
-1. **Scope of AoT ambition**: is the goal (a) full NativeAOT for API hosts + ResourceWatcher workers, or (b) trimmed self-contained deployment only, or (c) just removing the AoT-blocking container so applications *can* opt in? MEDI is unavoidable in path (a) for ASP.NET Core hosting anyway — does that change the appetite for a second container?
-2. **Compile-time verification**: is SimpleInjector-style startup `Verify()` acceptable as runtime `ValidateOnBuild` (MEDI path), or is *compile-time* graph validation (Pure.DI) a hard requirement given the "no magic" philosophy?
-3. **Migration tolerance**: may application `ApiHost` composition roots change API (attributes or a new fluent DSL instead of `container.Register*`), or must Ark provide a near-source-compatible facade over the new container?
-4. **StrongInject adoption**: is adopting/forking an unmaintained but feature-perfect codebase (~StrongInject) acceptable as a middle path? (We assumed no.)
-5. **Dual-container transition**: is shipping `Ark.Tools.Solid.SimpleInjector` (CoreCLR) and a new AoT package side-by-side for several versions acceptable, or is a single-container cutover required?
-6. **Rebus/Activity/EventSourcing packages**: these resolve handlers at runtime by `Type` (F4/F6). Confirm that requiring message/handler types to be statically visible at compile time (a source-generated registry) is acceptable — dynamic assembly loading of handlers would be out of scope.
-7. **`Func<T>`/`Lazy<T>`/variance extensions** (F9, `Ark.Tools.SimpleInjector/Ex.cs`): are the variance helpers (`AllowToResolveVariantTypes`) actually used by downstream apps, or can they be dropped in the new model? (Not used inside this repo's samples.)
+1. **Scope of AoT ambition** → *"ambition is trimmed deployment with very low startup times. AoT is just a way to achieve it."* Target is `PublishTrimmed` + fast startup; NativeAOT is optional. Both PoCs re-verified under `TrimMode=full` (§6.6).
+2. **Compile-time verification** → *"runtime at-startup validation is sufficient, but compile-time verification is a much interesting nice-to-have addition."* Not a hard requirement; Pure.DI provides it anyway.
+3. **Migration tolerance** → *"unclear, explain"* — **still open**, expanded below (§8.3).
+4. **StrongInject adoption** → **no**. Ruled out.
+5. **Dual-container transition** → **yes**. `Ark.Tools.Solid.SimpleInjector` (CoreCLR) and the new trimming-ready package ship side-by-side for several versions.
+6. **Compile-time-visible handlers** → **yes**. *"source generator can be used for scanning helpers at compile time. there is no need for runtime plugin-load."* Runtime assembly loading of handlers is out of scope.
+7. **`Func<T>`/variance extensions** → used, but replaceable via source generation. *"auto `Func` factory registration can be dropped for explicit registration; Fallback cannot be dropped."* → F3 (fallback/conditional registration) is **non-negotiable**; F9 auto-factories are droppable.
+
+### 8.3 Q3 expanded: what "migration tolerance" means
+
+Today an application's composition root looks like this (imperative, runtime registration — `samples/.../ApiHost.cs`):
+
+```csharp
+container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(PolicyAuthorizeQueryDecorator<,>));
+container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), c => !c.Handled);
+container.Register(typeof(IQueryHandler<,>), Assembly.GetExecutingAssembly());
+```
+
+Every source-generated container needs the registrations to be *statically analyzable*, so this exact API shape cannot survive. The question is **how different the replacement is allowed to look** in application code. Two ends of the spectrum:
+
+* **(a) New declarative surface (cheaper for Ark, bigger app diff).** Applications rewrite their composition root into whatever the chosen tool dictates — a Pure.DI `partial class` + fluent `DI.Setup(...)` DSL, and/or attributes on handlers (`[QueryHandler]`). Migration = rewrite of each app's `ApiHost` registration section (typically 50–150 lines per app), mechanical but manual.
+* **(b) Near-source-compatible facade (costlier for Ark, near-zero app diff).** Ark ships an API that *looks like* today's `container.Register*` calls, but is actually a compile-time DSL interpreted by an Ark-owned generator (calls must be literal — no loops/conditionals around registrations). Preserves muscle memory and keeps diffs tiny, but Ark owns a mini-language + analyzer forever, and the "looks imperative, is actually compile-time" duality is itself a source of magic/confusion.
+
+Recommendation embedded in §7 assumes **(a)** — new declarative surface with an Ark scanning generator to keep per-app boilerplate minimal. **Please confirm (a) is acceptable, or state that (b)-style source compatibility is required.**
 
 ---
 
