@@ -5,6 +5,7 @@ using Ark.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.Application;
 
 using Ark.Tools.Rebus;
+using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Solid;
 
 
@@ -55,6 +56,8 @@ public static class SampleComposition
             {
                 o.SetNumberOfWorkers(1);
                 o.AutomaticallyFlowUserContext(container);
+                // Fail fast to the dead-letter (error) queue: one delivery attempt, then forward with headers.
+                o.ArkRetryStrategy(maxDeliveryAttempts: 1);
             }));
 
         container.Verify();

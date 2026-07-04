@@ -3,6 +3,9 @@
 
 using Ark.Tools.Solid;
 
+using FluentValidation;
+using FluentValidation.Results;
+
 using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -24,6 +27,11 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
     public Task<GreetingResponse> ExecuteAsync(CreateGreetingRequest Request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(Request);
+
+        // Semantic domain validation: the handler throws a transport-agnostic ValidationException;
+        // each transport maps it to its own error shape (Minimal API -> ProblemDetails 400).
+        if (string.IsNullOrWhiteSpace(Request.Name))
+            throw new ValidationException([new ValidationFailure(nameof(Request.Name), "Name must not be empty.")]);
 
         var response = new GreetingResponse
         {

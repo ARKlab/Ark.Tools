@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Core;
+
 using System.Collections.Concurrent;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -43,7 +45,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     public GreetingResponse Get(Guid id)
         => _items.TryGetValue(id, out var g)
             ? g
-            : throw new KeyNotFoundException($"Greeting '{id}' was not found.");
+            : throw new EntityNotFoundException($"Greeting '{id}' was not found.");
 
     /// <inheritdoc />
     public bool TryGet(Guid id, out GreetingResponse? greeting)

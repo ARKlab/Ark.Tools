@@ -44,6 +44,11 @@ public sealed class SampleStartup
         // so the polymorphic [JsonConverter]-annotated contracts round-trip over the wire.
         services.ConfigureHttpJsonOptions(options => options.SerializerOptions.ConfigureArkDefaults());
 
+        // RFC 7807 ProblemDetails: the exception handler maps semantic domain exceptions
+        // (EntityNotFoundException -> 404, ValidationException -> 400 + field violations).
+        services.AddProblemDetails();
+        services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
+
         // OpenAPI: one document per API version. Endpoints are partitioned by the group name the
         // generator infers from the route template ("v1"/"v2"); ungrouped endpoints appear in both.
         services.AddOpenApi("v1");
@@ -54,6 +59,9 @@ public sealed class SampleStartup
     public void Configure(IApplicationBuilder app)
     {
         ArgumentNullException.ThrowIfNull(app);
+
+        // Outermost middleware: map unhandled domain exceptions to RFC 7807 ProblemDetails responses.
+        app.UseExceptionHandler();
 
         app.UseRouting();
 
