@@ -55,14 +55,14 @@
 	  <PackageVersion Include="AwesomeAssertions.Web" Version="1.9.6" />
 	  <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.9" />
 	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
-	  <PackageVersion Include="Microsoft.Testing.Platform" Version="2.2.3" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.3" />
+	  <PackageVersion Include="Microsoft.Testing.Platform" Version="2.3.0" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.3.0" />
 	  <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.8.0" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.3" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.2.3" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.2.3" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.2.3" />
-	  <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.2.3" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.3.0" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.3.0" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.3.0" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.0" />
+	  <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.3.0" />
 	  <PackageVersion Include="MSTest.TestAdapter" Version="4.2.3" />
 	  <PackageVersion Include="MSTest.TestFramework" Version="4.2.3" />
 	  <PackageVersion Include="MSTest.Analyzers" Version="4.2.3" />
@@ -129,7 +129,7 @@
 	  <PackageVersion Include="Auth0.ManagementApi" Version="8.6.0" />
 	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.85.2" />
 	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.85.2" />
-	  <PackageVersion Include="JWT" Version="11.0.0" />
+	  <PackageVersion Include="JWT" Version="11.1.0" />
 	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.1" />
 	  <PackageVersion Include="Azure.Identity" Version="1.21.0" />
 	  
@@ -149,7 +149,7 @@
 	  <PackageVersion Include="Polyfill" Version="10.11.2" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.301" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.121" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.122" />
 	  <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" />
 	  <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
 	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
