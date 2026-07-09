@@ -13,8 +13,8 @@ namespace Ark.Tools.ResourceWatcher.Testing;
 public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
 {
     private readonly ConcurrentDictionary<string, ResourceProcessingResult> _results = new(StringComparer.Ordinal);
-    private readonly ConcurrentBag<RunResult> _runResults = new();
-    private readonly ConcurrentBag<CheckStateResult> _checkStateResults = new();
+    private readonly ConcurrentQueue<RunResult> _runResults = new();
+    private readonly ConcurrentQueue<CheckStateResult> _checkStateResults = new();
 
     /// <summary>
     /// Gets all captured processing results by resource ID.
@@ -32,13 +32,23 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     public CheckStateResult? LatestCheckStateResult => _checkStateResults.LastOrDefault();
 
     /// <summary>
+    /// Gets the latest check state result for the specified tenant.
+    /// </summary>
+    /// <param name="tenant">The tenant to match.</param>
+    /// <returns>The latest matching check state result, or null when none was captured.</returns>
+    public CheckStateResult? FindLatestCheckStateResultForTenant(string tenant)
+    {
+        return _checkStateResults.LastOrDefault(x => string.Equals(x.Tenant, tenant, StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// Clears all captured results.
     /// </summary>
     public void Clear()
     {
         _results.Clear();
         _runResults.Clear();
-        while (_checkStateResults.TryTake(out _)) { }
+        while (_checkStateResults.TryDequeue(out _)) { }
     }
 
     /// <summary>
@@ -117,7 +127,7 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
         string tenant,
         Exception exception)
     {
-        _checkStateResults.Add(new CheckStateResult
+        _checkStateResults.Enqueue(new CheckStateResult
         {
             Tenant = tenant,
             ResourcesNew = resourcesNew,
@@ -158,7 +168,7 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
         string tenant,
         Exception exception)
     {
-        _runResults.Add(new RunResult
+        _runResults.Enqueue(new RunResult
         {
             Tenant = tenant,
             ResourcesFound = resourcesFound,
