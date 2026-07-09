@@ -36,7 +36,7 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     /// </summary>
     /// <param name="tenant">The tenant to match.</param>
     /// <returns>The latest matching check state result, or null when none was captured.</returns>
-    public CheckStateResult? GetLatestCheckStateResult(string tenant)
+    public CheckStateResult? FindLatestCheckStateResultForTenant(string tenant)
     {
         return _checkStateResults.LastOrDefault(x => string.Equals(x.Tenant, tenant, StringComparison.Ordinal));
     }

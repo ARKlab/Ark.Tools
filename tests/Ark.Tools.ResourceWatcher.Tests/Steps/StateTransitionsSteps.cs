@@ -355,13 +355,13 @@ public sealed class StateTransitionsSteps : IDisposable
         // so we check the aggregate counts from CheckState instead
         if (expectedProcessType == ProcessType.NothingToDo)
         {
-            var checkStateResult = _diagnosticListener.GetLatestCheckStateResult(_config.WorkerName);
+            var checkStateResult = _diagnosticListener.FindLatestCheckStateResultForTenant(_config.WorkerName);
             checkStateResult.Should().NotBeNull("CheckState should have completed");
             checkStateResult!.ResourcesNothingToDo.Should().BeGreaterThan(0, $"Resource {resourceId} should be marked as NothingToDo");
         }
         else if (expectedProcessType == ProcessType.Banned)
         {
-            var checkStateResult = _diagnosticListener.GetLatestCheckStateResult(_config.WorkerName);
+            var checkStateResult = _diagnosticListener.FindLatestCheckStateResultForTenant(_config.WorkerName);
             checkStateResult.Should().NotBeNull("CheckState should have completed");
             checkStateResult!.ResourcesBanned.Should().BeGreaterThan(0, $"Resource {resourceId} should be marked as Banned");
         }
