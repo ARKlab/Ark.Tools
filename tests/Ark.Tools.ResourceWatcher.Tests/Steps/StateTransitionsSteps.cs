@@ -36,7 +36,7 @@ public sealed class StateTransitionsSteps : IDisposable
     public StateTransitionsSteps(ScenarioContext scenarioContext)
     {
         _scenarioContext = scenarioContext;
-        _config.WorkerName = "TestWorker";
+        _config.WorkerName = $"TestWorker-{Guid.NewGuid():N}";
         _config.Sleep = TimeSpan.FromMilliseconds(100);
     }
 
@@ -277,9 +277,6 @@ public sealed class StateTransitionsSteps : IDisposable
         _provider.SetMetadata(_metadata);
         _provider.SetResources(_resources.Values);
 
-        // Subscribe to diagnostics before creating the worker host
-        System.Diagnostics.DiagnosticListener.AllListeners.Subscribe(_diagnosticListener);
-
         _workerHost = new WorkerHost<StubResource<VoidExtensions>, StubResourceMetadata<VoidExtensions>, StubQueryFilter, VoidExtensions>(_config);
         _workerHost.UseDataProvider<TestableDataProvider>(d =>
         {
@@ -358,13 +355,13 @@ public sealed class StateTransitionsSteps : IDisposable
         // so we check the aggregate counts from CheckState instead
         if (expectedProcessType == ProcessType.NothingToDo)
         {
-            var checkStateResult = _diagnosticListener.LatestCheckStateResult;
+            var checkStateResult = _diagnosticListener.GetLatestCheckStateResult(_config.WorkerName);
             checkStateResult.Should().NotBeNull("CheckState should have completed");
             checkStateResult!.ResourcesNothingToDo.Should().BeGreaterThan(0, $"Resource {resourceId} should be marked as NothingToDo");
         }
         else if (expectedProcessType == ProcessType.Banned)
         {
-            var checkStateResult = _diagnosticListener.LatestCheckStateResult;
+            var checkStateResult = _diagnosticListener.GetLatestCheckStateResult(_config.WorkerName);
             checkStateResult.Should().NotBeNull("CheckState should have completed");
             checkStateResult!.ResourcesBanned.Should().BeGreaterThan(0, $"Resource {resourceId} should be marked as Banned");
         }
