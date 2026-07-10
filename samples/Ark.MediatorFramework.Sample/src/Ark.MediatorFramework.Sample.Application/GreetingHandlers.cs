@@ -112,6 +112,11 @@ public sealed class DescribeShapeHandler : IRequestHandler<DescribeShapeRequest,
         {
             Shape = Request.Shape,
             Area = area,
+            Metadata = new ShapeEnvelope
+            {
+                Label = "nested",
+                FeaturedShape = Request.Shape,
+            },
         });
     }
 }

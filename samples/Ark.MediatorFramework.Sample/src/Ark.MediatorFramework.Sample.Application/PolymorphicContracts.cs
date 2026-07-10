@@ -57,6 +57,19 @@ public sealed record ShapeDescription
 
     /// <summary>Gets the computed area of the shape.</summary>
     public required double Area { get; init; }
+
+    /// <summary>Gets nested metadata containing another polymorphic shape reference.</summary>
+    public required ShapeEnvelope Metadata { get; init; }
+}
+
+/// <summary>Nested object carrying a polymorphic shape.</summary>
+public sealed record ShapeEnvelope
+{
+    /// <summary>Gets the envelope label.</summary>
+    public required string Label { get; init; }
+
+    /// <summary>Gets the nested polymorphic shape.</summary>
+    public required Shape FeaturedShape { get; init; }
 }
 
 /// <summary>

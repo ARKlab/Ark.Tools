@@ -10,6 +10,8 @@ using Ark.Tools.AspNetCore.MessagePackFormatter;
 
 using MessagePack.Resolvers;
 
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -67,8 +69,8 @@ public sealed class SampleStartup
 
         // OpenAPI: one document per API version. Endpoints are partitioned by the group name the
         // generator infers from the route template ("v1"/"v2"); ungrouped endpoints appear in both.
-        services.AddOpenApi("v1");
-        services.AddOpenApi("v2");
+        services.AddOpenApi("v1", ConfigureOpenApi);
+        services.AddOpenApi("v2", ConfigureOpenApi);
     }
 
     /// <summary>Builds the request pipeline and maps the exposed endpoints.</summary>
@@ -121,5 +123,53 @@ public sealed class SampleStartup
             .ConfigureAwait(false);
 
         return TypedResults.Ok(result);
+    }
+
+    private static void ConfigureOpenApi(OpenApiOptions options)
+    {
+        options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
+        {
+            var format = context.JsonTypeInfo.Type == typeof(NodaTime.LocalDate) ? "date"
+                : context.JsonTypeInfo.Type == typeof(NodaTime.LocalDateTime) ? "local-date-time"
+                : context.JsonTypeInfo.Type == typeof(NodaTime.OffsetDateTime) ? "date-time"
+                : context.JsonTypeInfo.Type == typeof(NodaTime.Period) ? "nodatime-period"
+                : null;
+
+            if (format is not null)
+            {
+                schema.Type = JsonSchemaType.String;
+                schema.Format = format;
+            }
+
+            if (context.JsonTypeInfo.Type == typeof(Shape))
+            {
+                var document = context.Document
+                    ?? throw new InvalidOperationException("OpenAPI schema transformer requires a document.");
+                var circleSchema = await context.GetOrCreateSchemaAsync(
+                    typeof(Circle),
+                    null,
+                    cancellationToken).ConfigureAwait(false);
+                var squareSchema = await context.GetOrCreateSchemaAsync(
+                    typeof(Square),
+                    null,
+                    cancellationToken).ConfigureAwait(false);
+
+                document.AddComponent(nameof(Circle), circleSchema);
+                document.AddComponent(nameof(Square), squareSchema);
+
+                var circleReference = new OpenApiSchemaReference(nameof(Circle), document);
+                var squareReference = new OpenApiSchemaReference(nameof(Square), document);
+                schema.OneOf = [circleReference, squareReference];
+                schema.Discriminator = new OpenApiDiscriminator
+                {
+                    PropertyName = "kind",
+                    Mapping = new Dictionary<string, OpenApiSchemaReference>(StringComparer.Ordinal)
+                    {
+                        [nameof(ShapeKind.Circle)] = circleReference,
+                        [nameof(ShapeKind.Square)] = squareReference,
+                    },
+                };
+            }
+        });
     }
 }

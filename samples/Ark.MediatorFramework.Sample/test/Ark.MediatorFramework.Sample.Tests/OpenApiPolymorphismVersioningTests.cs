@@ -80,16 +80,71 @@ public sealed class OpenApiPolymorphismVersioningTests
     }
 
     [TestMethod]
-    public async Task OpenApi_v1_document_exposes_the_polymorphic_shape_schema()
+    public async Task OpenApi_v1_document_describes_greeting_request_response_and_NodaTime_strings()
+    {
+        using var document = await GetDocumentAsync("v1").ConfigureAwait(false);
+        var root = document.RootElement;
+        var operation = root.GetProperty("paths").GetProperty("/api/v1/greetings").GetProperty("post");
+        var requestSchema = operation.GetProperty("requestBody")
+            .GetProperty("content")
+            .GetProperty("application/json")
+            .GetProperty("schema");
+        var responseSchema = operation.GetProperty("responses")
+            .GetProperty("200")
+            .GetProperty("content")
+            .GetProperty("application/json")
+            .GetProperty("schema");
+
+        requestSchema.GetProperty("$ref").GetString().Should().Be("#/components/schemas/CreateGreetingRequest");
+        responseSchema.GetProperty("$ref").GetString().Should().Be("#/components/schemas/GreetingResponse");
+
+        var schemas = root.GetProperty("components").GetProperty("schemas");
+        var expectedFormats = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["LocalDate"] = "date",
+            ["LocalDateTime"] = "local-date-time",
+            ["OffsetDateTime"] = "date-time",
+            ["Period"] = "nodatime-period",
+        };
+
+        foreach (var (schemaName, format) in expectedFormats)
+        {
+            var schema = schemas.GetProperty(schemaName);
+            schema.GetProperty("type").GetString().Should().Be("string");
+            schema.GetProperty("format").GetString().Should().Be(format);
+        }
+    }
+
+    [TestMethod]
+    public async Task OpenApi_v1_document_exposes_polymorphic_discriminator_and_nested_references()
     {
         using var document = await GetDocumentAsync("v1").ConfigureAwait(false);
 
         var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
-        var schemaNames = schemas.EnumerateObject().Select(p => p.Name).ToList();
+        var shape = schemas.GetProperty("Shape");
+        var discriminator = shape.GetProperty("discriminator");
 
-        // The polymorphic base and the response wrapping it must both surface in the document.
-        schemaNames.Should().Contain(n => n.Contains("Shape", StringComparison.Ordinal));
-        schemaNames.Should().Contain(n => n.Contains("ShapeDescription", StringComparison.Ordinal));
+        shape.GetProperty("oneOf").GetArrayLength().Should().Be(2);
+        discriminator.GetProperty("propertyName").GetString().Should().Be("kind");
+        discriminator.GetProperty("mapping").GetProperty("Circle").GetString()
+            .Should().Be("#/components/schemas/Circle");
+        discriminator.GetProperty("mapping").GetProperty("Square").GetString()
+            .Should().Be("#/components/schemas/Square");
+        schemas.GetProperty("Circle").GetProperty("properties").TryGetProperty("radius", out _).Should().BeTrue();
+        schemas.GetProperty("Square").GetProperty("properties").TryGetProperty("side", out _).Should().BeTrue();
+
+        schemas.GetProperty("ShapeDescription")
+            .GetProperty("properties")
+            .GetProperty("metadata")
+            .GetProperty("$ref")
+            .GetString()
+            .Should().Be("#/components/schemas/ShapeEnvelope");
+        schemas.GetProperty("ShapeEnvelope")
+            .GetProperty("properties")
+            .GetProperty("featuredShape")
+            .GetProperty("$ref")
+            .GetString()
+            .Should().Be("#/components/schemas/Shape");
     }
 
     [TestMethod]
@@ -106,6 +161,7 @@ public sealed class OpenApiPolymorphismVersioningTests
         description!.Shape.Should().BeOfType<Circle>("the discriminator must select the concrete subtype");
         ((Circle)description.Shape).Radius.Should().Be(2.0);
         description.Area.Should().BeApproximately(Math.PI * 2.0 * 2.0, 1e-9);
+        description.Metadata.FeaturedShape.Should().BeOfType<Circle>();
     }
 
     [TestMethod]
@@ -122,6 +178,7 @@ public sealed class OpenApiPolymorphismVersioningTests
         description!.Shape.Should().BeOfType<Square>();
         ((Square)description.Shape).Side.Should().Be(3.0);
         description.Area.Should().Be(9.0);
+        description.Metadata.FeaturedShape.Should().BeOfType<Square>();
     }
 
     [TestMethod]
