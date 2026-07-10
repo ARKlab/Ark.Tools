@@ -5,17 +5,20 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-
-    <!-- Generator infrastructure project: keep the analyzer footprint minimal. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RunAnalyzers>false</RunAnalyzers>
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateSBOM>false</GenerateSBOM>
+    <Description>Source generator for Ark.Tools mediator transport registrations</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mediator;Source Generator;Roslyn</PackageTags>
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
   </PropertyGroup>
 
   <ItemGroup>

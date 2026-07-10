@@ -16,7 +16,7 @@
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
     <ProjectReference Include="..\..\..\..\src\aspnetcore\Ark.Tools.AspNetCore.MessagePack\Ark.Tools.AspNetCore.MessagePack.csproj" />
-    <ProjectReference Include="..\Ark.MediatorFramework.Generators\Ark.MediatorFramework.Generators.csproj"
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Generators\Ark.Tools.MediatorFramework.Generators.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Ark.MediatorFramework.ProtoGenerator\Ark.MediatorFramework.ProtoGenerator.csproj"
                       ReferenceOutputAssembly="false" />
