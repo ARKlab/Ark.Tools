@@ -139,7 +139,7 @@
 	  <PackageVersion Include="Rebus.AzureServiceBus" Version="10.7.0" />
 	  <PackageVersion Include="Rebus.SqlServer" Version="8.4.1" />
 	  <PackageVersion Include="Rebus.AzureBlobs" Version="1.1.0" />
-	  <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
+	  <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
 	  
 	  <!-- RAVENDB - TOREMOVE -->
 	  <PackageVersion Include="RavenDB.Client" Version="7.2.4" />
