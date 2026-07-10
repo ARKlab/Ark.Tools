@@ -85,7 +85,9 @@ results; error interceptor maps `ValidationException` to `Google.Rpc.Status`.
 - **Phase 1** is implemented and self-tested in the sample.
 - **Phase 2** ships a working incremental generator emitting the Minimal API
   registration, exercised by the sample.
-- **Phases 3–5** are specified here and in `tasks.md`; the gRPC transport is
-  included in the sample where it can build green, otherwise tracked as the next
-  task. Each remaining task carries explicit acceptance criteria so completion is
-  verifiable.
+- **Phase 3** now includes generated code-first gRPC unary dispatch, exercised by
+  an in-process `Grpc.Net.Client` self-test. `.proto` emission and rich error
+  handling remain tracked separately.
+- **Phase 4** includes identity, RFC 7807 and Rebus dead-letter behavior, OpenAPI,
+  attachments and NodaTime protobuf support. Each remaining task carries explicit
+  acceptance criteria so completion is verifiable.

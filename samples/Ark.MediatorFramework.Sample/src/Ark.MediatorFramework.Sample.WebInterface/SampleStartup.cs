@@ -10,6 +10,8 @@ using Ark.Tools.Solid;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
+using ProtoBuf.Grpc.Server;
+
 using System.Text.Json;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
@@ -48,6 +50,7 @@ public sealed class SampleStartup
         // (EntityNotFoundException -> 404, ValidationException -> 400 + field violations).
         services.AddProblemDetails();
         services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
+        services.AddCodeFirstGrpc();
 
         // OpenAPI: one document per API version. Endpoints are partitioned by the group name the
         // generator infers from the route template ("v1"/"v2"); ungrouped endpoints appear in both.
@@ -78,6 +81,7 @@ public sealed class SampleStartup
         {
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
             endpoints.MapArkEndpoints();
+            endpoints.MapArkGrpcServices();
 
             // Hand-written multipart endpoint mapping IFormFile -> IArkAttachment.
             endpoints.MapPost("/api/v1/greeting-cards", _uploadGreetingCard);

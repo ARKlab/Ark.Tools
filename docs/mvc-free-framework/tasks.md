@@ -42,7 +42,7 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Epic 4 — Code-first gRPC transport
 
-- [ ] **T4.1** `[ProtoContract]` contracts + generated `[ServiceContract]` service
+- [x] **T4.1** `[ProtoContract]` contracts + generated `[ServiceContract]` service
   (opt-in via `[GrpcMethod]`, grouped by `[ServiceGroup]`), hosted with
   `AddCodeFirstGrpc()`; the generated service is `partial` for manual methods.
   - *Accept:* an in-process `Grpc.Net.Client` self-test calls the service and
@@ -65,10 +65,10 @@ project builds under the repo's strict settings and its self-tests pass with
   - *Accept:* the Minimal API self-test dispatches through the handler which reads
     the identity via `IContextProvider<ClaimsPrincipal>` (AspNetCore auth, with
     Rebus propagation on the bus transport).
-- [ ] **T5.2** Minimal API `ProblemDetails` (RFC 7807) mapping.
+- [x] **T5.2** Minimal API `ProblemDetails` (RFC 7807) mapping.
   - *Accept:* `EntityNotFoundException`→404 and `ValidationException`→400 with
     field violations in `extensions`, asserted over HTTP.
-- [ ] **T5.3** Rebus dead-letter behavior on exhausted retries.
+- [x] **T5.3** Rebus dead-letter behavior on exhausted retries.
   - *Accept:* a self-test forces a failing handler and asserts the message lands
     in the error queue with the exception in headers.
 

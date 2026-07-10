@@ -31,6 +31,7 @@ namespace Ark.MediatorFramework.Generators
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
         private const string GrpcMethodAttribute = "Ark.MediatorFramework.GrpcMethodAttribute";
+        private const string ServiceGroupAttribute = "Ark.MediatorFramework.ServiceGroupAttribute";
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -52,6 +53,7 @@ namespace Ark.MediatorFramework.Generators
             var httpAttr = compilation.GetTypeByMetadataName(HttpEndpointAttribute);
             var rebusAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             var grpcAttr = compilation.GetTypeByMetadataName(GrpcMethodAttribute);
+            var serviceGroupAttr = compilation.GetTypeByMetadataName(ServiceGroupAttribute);
             if (httpAttr is null && rebusAttr is null && grpcAttr is null)
                 return ImmutableArray<EndpointModel>.Empty;
 
@@ -69,7 +71,8 @@ namespace Ark.MediatorFramework.Generators
                     if (http is null && rebus is null && grpc is null)
                         continue;
 
-                    var model = Extract(type, http, rebus is not null, grpc is not null);
+                    var serviceGroup = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, serviceGroupAttr));
+                    var model = Extract(type, http, rebus is not null, grpc, serviceGroup);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -112,7 +115,7 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData? http, bool hasRebus, bool hasGrpc)
+        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData? http, bool hasRebus, AttributeData? grpc, AttributeData? serviceGroup)
         {
             string? response = null;
             var kind = HandlerKind.None;
@@ -156,7 +159,9 @@ namespace Ark.MediatorFramework.Generators
             }
 
             var hasHttp = verb is not null && template is not null;
-            if (!hasHttp && !hasRebus && !hasGrpc)
+            var grpcMethod = grpc?.ConstructorArguments.FirstOrDefault().Value as string ?? (grpc is null ? null : type.Name);
+            var group = serviceGroup?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
+            if (!hasHttp && !hasRebus && grpcMethod is null)
                 return null;
 
             return new EndpointModel(
@@ -167,7 +172,8 @@ namespace Ark.MediatorFramework.Generators
                 response,
                 kind,
                 hasRebus,
-                hasGrpc);
+                grpcMethod,
+                group);
         }
 
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
@@ -182,7 +188,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("{");
             sb.AppendLine("    /// <summary>Source-generated transport hosting for pure Ark.Tools.Solid handlers.</summary>");
             sb.AppendLine("    [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.MediatorFramework.Generators\", \"1.0.0\")]");
-            sb.AppendLine("    public static class ArkGeneratedEndpoints");
+            sb.AppendLine("    public static partial class ArkGeneratedEndpoints");
             sb.AppendLine("    {");
 
             // Minimal API registration (opt-in via [HttpEndpoint]).
@@ -221,6 +227,54 @@ namespace Ark.MediatorFramework.Generators
                 else
                     sb.AppendLine("            });");
             }
+            sb.AppendLine("            return app;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+
+            // Code-first gRPC services (opt-in via [GrpcMethod]).
+            foreach (var group in items.Where(static x => x.GrpcMethod is not null).GroupBy(static x => x.ServiceGroup))
+            {
+                var identifier = Identifier(group.Key);
+                sb.AppendLine("        /// <summary>Generated code-first gRPC service contract for the " + Escape(group.Key) + " group.</summary>");
+                sb.AppendLine("        [global::System.ServiceModel.ServiceContract(Name = " + Literal(group.Key) + ")]");
+                sb.AppendLine("        public interface I" + identifier + "GrpcService");
+                sb.AppendLine("        {");
+                foreach (var e in group)
+                {
+                    sb.AppendLine("            /// <summary>Dispatches " + e.TypeName + " to its pure handler.</summary>");
+                    sb.AppendLine("            [global::System.ServiceModel.OperationContract(Name = " + Literal(e.GrpcMethod!) + ")]");
+                    sb.AppendLine("            global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default);");
+                }
+                sb.AppendLine("        }");
+                sb.AppendLine();
+                sb.AppendLine("        /// <summary>Generated partial gRPC implementation for the " + Escape(group.Key) + " group.</summary>");
+                sb.AppendLine("        [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.MediatorFramework.Generators\", \"1.0.0\")]");
+                sb.AppendLine("        public sealed partial class " + identifier + "GrpcService : I" + identifier + "GrpcService");
+                sb.AppendLine("        {");
+                sb.AppendLine("            private readonly global::SimpleInjector.Container _container;");
+                sb.AppendLine("            /// <summary>Initializes a new instance.</summary>");
+                sb.AppendLine("            public " + identifier + "GrpcService(global::SimpleInjector.Container container) { _container = container; }");
+                foreach (var e in group)
+                {
+                    var handlerService = e.Kind == HandlerKind.Query
+                        ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
+                        : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
+                    sb.AppendLine("            /// <inheritdoc />");
+                    sb.AppendLine("            public async global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default)");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                var handler = _container.GetInstance<" + handlerService + ">();");
+                    sb.AppendLine("                return await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                    sb.AppendLine("            }");
+                }
+                sb.AppendLine("        }");
+                sb.AppendLine();
+            }
+
+            sb.AppendLine("        /// <summary>Maps every generated code-first gRPC service.</summary>");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServices(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
+            sb.AppendLine("        {");
+            foreach (var group in items.Where(static x => x.GrpcMethod is not null).GroupBy(static x => x.ServiceGroup))
+                sb.AppendLine("            global::Microsoft.AspNetCore.Builder.GrpcEndpointRouteBuilderExtensions.MapGrpcService<" + Identifier(group.Key) + "GrpcService>(app);");
             sb.AppendLine("            return app;");
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -290,6 +344,17 @@ namespace Ark.MediatorFramework.Generators
         private static string Literal(string value)
             => SyntaxFactory.Literal(value).ToFullString();
 
+        private static string Identifier(string value)
+        {
+            var sb = new StringBuilder(value.Length);
+            foreach (var character in value)
+                sb.Append(char.IsLetterOrDigit(character) ? character : '_');
+            return sb.Length == 0 ? "Ark" : sb.ToString();
+        }
+
+        private static string Escape(string value)
+            => value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+
         private enum HandlerKind
         {
             None = 0,
@@ -299,7 +364,7 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string? verb, string? template, string response, HandlerKind kind, bool hasRebus, bool hasGrpc)
+            public EndpointModel(string typeFullName, string typeName, string? verb, string? template, string response, HandlerKind kind, bool hasRebus, string? grpcMethod, string serviceGroup)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -308,7 +373,8 @@ namespace Ark.MediatorFramework.Generators
                 Response = response;
                 Kind = kind;
                 HasRebus = hasRebus;
-                HasGrpc = hasGrpc;
+                GrpcMethod = grpcMethod;
+                ServiceGroup = serviceGroup;
             }
 
             public string TypeFullName { get; }
@@ -318,7 +384,8 @@ namespace Ark.MediatorFramework.Generators
             public string Response { get; }
             public HandlerKind Kind { get; }
             public bool HasRebus { get; }
-            public bool HasGrpc { get; }
+            public string? GrpcMethod { get; }
+            public string ServiceGroup { get; }
         }
     }
 }

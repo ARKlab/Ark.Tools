@@ -36,6 +36,10 @@
 	  <PackageVersion Include="NodaTime.Serialization.SystemTextJson" Version="1.4.0" />
 	  <PackageVersion Include="NodaTime.Testing" Version="3.3.2" />
 	  <PackageVersion Include="protobuf-net" Version="3.2.56" />
+	  <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
+	  <PackageVersion Include="Grpc.Net.Client" Version="2.80.0" />
+	  <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
+	  <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.9" />
 	  <PackageVersion Include="System.Reactive" Version="6.1.0" />
 	  <PackageVersion Include="SSH.NET" Version="2025.1.0" />
 	  <PackageVersion Include="SimpleInjector" Version="5.6.0" />

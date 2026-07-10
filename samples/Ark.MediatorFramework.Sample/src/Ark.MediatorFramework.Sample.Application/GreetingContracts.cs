@@ -3,15 +3,20 @@
 
 using Ark.Tools.Solid;
 
+using ProtoBuf;
+
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Response returned by the greeting operations.</summary>
+[ProtoContract]
 public sealed record GreetingResponse
 {
     /// <summary>Gets the greeting identifier.</summary>
+    [ProtoMember(1)]
     public required Guid Id { get; init; }
 
     /// <summary>Gets the greeting message.</summary>
+    [ProtoMember(2)]
     public required string Message { get; init; }
 }
 
@@ -22,9 +27,13 @@ public sealed record GreetingResponse
 /// </summary>
 [HttpEndpoint("POST", "/api/v1/greetings")]
 [RebusMessage]
+[GrpcMethod]
+[ServiceGroup("Greetings")]
+[ProtoContract]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 {
     /// <summary>Gets the name to greet.</summary>
+    [ProtoMember(1)]
     public string Name { get; init; } = string.Empty;
 }
 

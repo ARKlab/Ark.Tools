@@ -20,9 +20,9 @@ isolated from HTTP translation, serialization and routing.
 
 A runnable proof-of-concept lives in
 [`samples/Ark.MediatorFramework.Sample`](../../samples/Ark.MediatorFramework.Sample).
-It demonstrates the same pure handler being invoked over Minimal API, gRPC and
-Rebus, wired through SimpleInjector, and **self-tests every transport** so the
-outcome is verifiable with `dotnet test`.
+It demonstrates the same pure handler being invoked over Minimal API, generated
+code-first gRPC and Rebus, wired through SimpleInjector, and **self-tests every
+transport** so the outcome is verifiable with `dotnet test`.
 
 ## Relationship with existing Ark.Tools building blocks
 

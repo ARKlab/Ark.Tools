@@ -14,6 +14,8 @@ using Ark.MediatorFramework.Sample.WebInterface;
 
 using AwesomeAssertions;
 
+using Grpc.Net.Client;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
@@ -22,6 +24,8 @@ using Rebus.Bus;
 using Rebus.Messages;
 using Rebus.Retry.Simple;
 using Rebus.Transport.InMem;
+
+using ProtoBuf.Grpc.Client;
 
 using SimpleInjector;
 
@@ -111,6 +115,21 @@ public sealed class TransportParityTests
     }
 
     [TestMethod]
+    public async Task Grpc_dispatches_to_the_same_pure_handler()
+    {
+        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+        {
+            HttpHandler = _host.GetTestServer().CreateHandler(),
+        });
+        var client = channel.CreateGrpcService<ArkGeneratedEndpoints.IGreetingsGrpcService>();
+
+        var result = await client.CreateGreetingRequestAsync(new CreateGreetingRequest { Name = "Grpc" }).ConfigureAwait(false);
+
+        result.Message.Should().Contain("Grpc");
+        _container.GetInstance<IGreetingStore>().TryGet(result.Id, out _).Should().BeTrue();
+    }
+
+    [TestMethod]
     public void Handlers_are_transport_agnostic()
     {
         var handlerTypes = new[] { typeof(CreateGreetingHandler), typeof(GetGreetingHandler) };
@@ -141,6 +160,9 @@ public sealed class TransportParityTests
 
         generated.GetNestedType("CreateGreetingRequestRebusHandler")
             .Should().NotBeNull("a Rebus wrapper must be generated for each request");
+
+        generated.GetNestedType("GreetingsGrpcService")
+            .Should().NotBeNull("a code-first gRPC service must be generated for each service group");
     }
 
     [TestMethod]
@@ -206,7 +228,8 @@ public sealed class TransportParityTests
         dead.Headers[Headers.ErrorDetails].Should().Contain("kaboom", "the exception must be serialized into the error headers");
     }
 
-    private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)    {
+    private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
         var deadline = DateTime.UtcNow + timeout;
         while (DateTime.UtcNow < deadline)
         {

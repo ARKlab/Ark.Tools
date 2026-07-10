@@ -71,3 +71,18 @@ public sealed class GrpcMethodAttribute : Attribute
     /// <summary>Gets the explicit gRPC method name, or <see langword="null"/> to use the type name.</summary>
     public string? Name { get; }
 }
+
+/// <summary>Assigns opt-in gRPC methods to a generated code-first service.</summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class ServiceGroupAttribute : Attribute
+{
+    /// <summary>Initializes a new instance of the <see cref="ServiceGroupAttribute"/> class.</summary>
+    /// <param name="name">The generated service group name.</param>
+    public ServiceGroupAttribute(string name)
+    {
+        Name = name;
+    }
+
+    /// <summary>Gets the generated service group name.</summary>
+    public string Name { get; }
+}
