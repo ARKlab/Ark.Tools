@@ -539,53 +539,53 @@
       },
       "Microsoft.Identity.Client.KeyAttestation": {
         "type": "Transitive",
-        "resolved": "4.85.2",
-        "contentHash": "sRP0LD2VKEaIspS8GSwrd9hG4ao/ev4eB7+ITOhRoybtvHi5f3EXZ0bnfqfEyErvXGkD6RB1HXVYaGCFiUJdIg==",
+        "resolved": "4.86.0",
+        "contentHash": "NMHOQBaYihPKcqAiO/4F3adswok/jdshMgRu1pIcf2+sq7xyHo5Yvt9JkT4gmvogMuE+Zhg9MqtYbemFk5C27Q==",
         "dependencies": {
           "Microsoft.Azure.Security.KeyGuardAttestation": "1.1.5",
-          "Microsoft.Identity.Client": "4.85.2"
+          "Microsoft.Identity.Client": "4.86.0"
         }
       },
       "Microsoft.Identity.Web.Certificate": {
         "type": "Transitive",
-        "resolved": "4.12.2",
-        "contentHash": "w4c4dJF140nXfMOAlmRrfxDI8CG9P++1FvgvtDhVDo6/oCV9UkDklHqA1f02azLxpoLiOm8eUP20sD4uK6oS3g==",
+        "resolved": "4.13.0",
+        "contentHash": "0wcwDC7ROCct+B7xd3EmMcFs6YaIHs4HdYJmnNnmgCWK7OZMfFEU0kmby6fIYXGGYHzm7/TfbOn/HIR2LX5zGA==",
         "dependencies": {
           "Azure.Identity": "1.17.2",
           "Azure.Security.KeyVault.Certificates": "4.6.0",
           "Azure.Security.KeyVault.Secrets": "4.6.0",
           "Microsoft.Identity.Abstractions": "12.4.0",
-          "Microsoft.Identity.Web.Certificateless": "4.12.2",
-          "Microsoft.Identity.Web.Diagnostics": "4.12.2"
+          "Microsoft.Identity.Web.Certificateless": "4.13.0",
+          "Microsoft.Identity.Web.Diagnostics": "4.13.0"
         }
       },
       "Microsoft.Identity.Web.Certificateless": {
         "type": "Transitive",
-        "resolved": "4.12.2",
-        "contentHash": "ICc4tS9e2UcbXEgcj+OZqkCmmjJaktGvCj2HG6VJ84y0XbWRwKoA1KCTrZZQ3yB+qSlZmjhq9hpiV6pT6iDRKQ==",
+        "resolved": "4.13.0",
+        "contentHash": "szkv+AWkyiH+VI2z4ytX4KZTCv+YC3fOhtQxSJyplKETZgZSQdAynBqRHiZusz0YTSplUr0UI+GW2IykeBTe0Q==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.85.2",
-          "Microsoft.Identity.Client.KeyAttestation": "4.85.2",
+          "Microsoft.Identity.Client": "4.86.0",
+          "Microsoft.Identity.Client.KeyAttestation": "4.86.0",
           "Microsoft.IdentityModel.JsonWebTokens": "8.19.1",
           "Microsoft.IdentityModel.LoggingExtensions": "8.19.1"
         }
       },
       "Microsoft.Identity.Web.Diagnostics": {
         "type": "Transitive",
-        "resolved": "4.12.2",
-        "contentHash": "TA1ztd1+G8y8fJC1UHaPc9WpeHVkGMHG8bGim3z8tIb6OqCfEptRSp64GUtwbMcvdigSk/aIzNSZ4YUD+/wwgw=="
+        "resolved": "4.13.0",
+        "contentHash": "LzgVUewldNPH3603LHQjxbJEbP956HPi0rcUov0ERZe9pt6f6OiLAF/1TEzj+xoPaSgpy5QPn0R2DbW1zBRo4w=="
       },
       "Microsoft.Identity.Web.TokenAcquisition": {
         "type": "Transitive",
-        "resolved": "4.12.2",
-        "contentHash": "BiOniuZTzt2f2NZLVcu6EQyMTxXE/uhUS0NQv+aiyBBJZ5FIMTDMpZdOVaFjgtcugMEyH+K9T8/70anFQy7Png==",
+        "resolved": "4.13.0",
+        "contentHash": "IO3tjWWedczD9ZCbGAX/pGnGX92lMS/LY1fCgy1Zw5oaCdlfLfdNq+K7sy3tF3rDqWZI6MGUprYMuXth3WZ4Sw==",
         "dependencies": {
           "Microsoft.AspNetCore.Authentication.JwtBearer": "10.0.0",
           "Microsoft.AspNetCore.Authentication.OpenIdConnect": "10.0.0",
           "Microsoft.Identity.Abstractions": "12.4.0",
-          "Microsoft.Identity.Web.Certificate": "4.12.2",
-          "Microsoft.Identity.Web.Certificateless": "4.12.2",
-          "Microsoft.Identity.Web.TokenCache": "4.12.2",
+          "Microsoft.Identity.Web.Certificate": "4.13.0",
+          "Microsoft.Identity.Web.Certificateless": "4.13.0",
+          "Microsoft.Identity.Web.TokenCache": "4.13.0",
           "Microsoft.IdentityModel.Logging": "8.19.1",
           "Microsoft.IdentityModel.LoggingExtensions": "8.19.1",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.1",
@@ -594,11 +594,11 @@
       },
       "Microsoft.Identity.Web.TokenCache": {
         "type": "Transitive",
-        "resolved": "4.12.2",
-        "contentHash": "rBvhV67ZKqVhbBGrmIA2FJ0GRhBMsph2MkpdxzWl8AsKYC4vIEHDzXMkiw4qkgQqwHZM2IzKHbfsMAABysBnyg==",
+        "resolved": "4.13.0",
+        "contentHash": "se09iKy9na+Sy7KM987tB/wHceg2EUodOsKwiI/arEMWrFBh6hgB0yZcJwxVeXgXO4UUHwBGh4fAguF0PRt9nA==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.85.2",
-          "Microsoft.Identity.Web.Diagnostics": "4.12.2",
+          "Microsoft.Identity.Client": "4.86.0",
+          "Microsoft.Identity.Web.Diagnostics": "4.13.0",
           "System.Security.Cryptography.Pkcs": "10.0.7"
         }
       },
@@ -1205,7 +1205,7 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Solid.FluentValidaton": "[1.0.0, )",
           "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
-          "Microsoft.Identity.Web": "[4.12.2, )"
+          "Microsoft.Identity.Web": "[4.13.0, )"
         }
       },
       "Asp.Versioning.Http": {
@@ -1590,14 +1590,14 @@
       },
       "Microsoft.Identity.Web": {
         "type": "CentralTransitive",
-        "requested": "[4.12.2, )",
-        "resolved": "4.12.2",
-        "contentHash": "JojG0bJ0eeFz+uopZXFon0yic1LEgpOg3RuAKjfBJBFEXqMOJzlm+GJYcRNLU+ntmikeufbW6xAC4Kp+ilGu3A==",
+        "requested": "[4.13.0, )",
+        "resolved": "4.13.0",
+        "contentHash": "J+tmT42tfUmtLjMTll+NjLf3i5SkT7CzqYtNQGLf4mbWNTrN1PKTt4+GM4UCQnyB2j7LFg8Xlh77f4zLi+1T+A==",
         "dependencies": {
-          "Microsoft.Identity.Web.Certificate": "4.12.2",
-          "Microsoft.Identity.Web.Certificateless": "4.12.2",
-          "Microsoft.Identity.Web.TokenAcquisition": "4.12.2",
-          "Microsoft.Identity.Web.TokenCache": "4.12.2",
+          "Microsoft.Identity.Web.Certificate": "4.13.0",
+          "Microsoft.Identity.Web.Certificateless": "4.13.0",
+          "Microsoft.Identity.Web.TokenAcquisition": "4.13.0",
+          "Microsoft.Identity.Web.TokenCache": "4.13.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.1",
           "Microsoft.IdentityModel.Validators": "8.19.1",
           "System.IdentityModel.Tokens.Jwt": "8.19.1"
