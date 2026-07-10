@@ -15,6 +15,7 @@ isolated from HTTP translation, serialization and routing.
 | [`design.md`](design.md) | Target architecture: pure handlers, Roslyn incremental generator, the three transports, DI, error handling, user context, attachments. |
 | [`implementation-plan.md`](implementation-plan.md) | Phased delivery plan with the packages to introduce. |
 | [`tasks.md`](tasks.md) | Verifiable task breakdown with explicit acceptance criteria. |
+| [`migration-from-mvc.md`](migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
 
 ## Verifiable sample
 
