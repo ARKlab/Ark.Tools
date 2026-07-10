@@ -50,6 +50,10 @@ project builds under the repo's strict settings and its self-tests pass with
 - [x] **T4.2** `.proto` emission MSBuild target.
   - *Accept:* `dotnet build` writes a proto3 file whose service/messages match
     the C# contracts (asserted by a test reading the emitted file).
+- [x] **T4.2a** Generate a client assembly from the emitted `.proto` for the
+  behavioral tests.
+  - *Accept:* the gRPC behavioral test uses the generated client stub and
+    generated message types rather than the code-first client contract.
 - [ ] **T4.3** gRPC rich-error-model interceptor.
   - *Accept:* a self-test throws `ValidationException` and asserts the client
     receives a `Google.Rpc.Status` with `BadRequest` field violations.
@@ -101,7 +105,8 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Next implementation order
 
-1. **T4.3** Add and test the gRPC rich-error interceptor.
+1. **T4.3** Add and test the gRPC rich-error interceptor, using the generated
+   proto client for behavioral coverage.
 2. **T7.1** Extract the proven sample runtime and generator into `src/`
    packages, retaining generated registration and transport parity tests.
 3. **T7.3** Document migration from MVC, including when to retain a

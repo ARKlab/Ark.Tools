@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.GrpcClient\Ark.MediatorFramework.Sample.GrpcClient.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />
   </ItemGroup>
 

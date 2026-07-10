@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.proto"
+              GrpcServices="Client"
+              Link="Ark.MediatorFramework.Sample.WebInterface.proto" />
+  </ItemGroup>
+
+</Project>

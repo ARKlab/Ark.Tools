@@ -16,6 +16,7 @@ minimizes these):
 | `protobuf-net.Grpc.AspNetCore` | Code-first gRPC hosting | 3 |
 | `protobuf-net.Grpc.Reflection` | `.proto` emission for polyglot consumers | 3 |
 | `Grpc.Net.Client` | In-process gRPC client for self-tests | 3 |
+| `Grpc.Tools` | Generate a client assembly from the emitted `.proto` for behavioral tests | 3 |
 | `Microsoft.AspNetCore.OpenApi` | OpenAPI from Minimal API metadata | 4 |
 
 Already available in the repo: `SimpleInjector`, `Rebus`, `Ark.Tools.Solid*`,
@@ -55,8 +56,11 @@ generator tests + transport tests green.
 - Generate the `[ServiceContract]` interface + implementation per
   `[ServiceGroup]`, resolving handlers from SimpleInjector.
 - Add a `.proto` emission MSBuild target for polyglot consumers.
-- Self-test with an in-process `Grpc.Net.Client` channel hitting the same
-  handler; add the gRPC rich-error-model interceptor and test the mapping.
+- Generate a client assembly from the emitted `.proto` and use it from the
+  behavioral tests, so the gRPC test exercises the published wire contract.
+- Self-test with the generated client over an in-process `Grpc.Net.Client`
+  channel hitting the same handler; add the gRPC rich-error-model interceptor
+  and test the mapping.
 
 **Verifiable:** gRPC call and HTTP call to the same handler return identical
 results; error interceptor maps `ValidationException` to `Google.Rpc.Status`.
