@@ -82,12 +82,20 @@ results; error interceptor maps `ValidationException` to `Google.Rpc.Status`.
 
 ## Delivery status in this PR
 
-- **Phase 1** is implemented and self-tested in the sample.
-- **Phase 2** ships a working incremental generator emitting the Minimal API
-  registration, exercised by the sample.
-- **Phase 3** now includes generated code-first gRPC unary dispatch, exercised by
-  an in-process `Grpc.Net.Client` self-test. `.proto` emission and rich error
-  handling remain tracked separately.
-- **Phase 4** includes identity, RFC 7807 and Rebus dead-letter behavior, OpenAPI,
-  attachments and NodaTime protobuf support. Each remaining task carries explicit
-  acceptance criteria so completion is verifiable.
+- **Phases 1–4** are implemented and self-tested in the sample: pure handlers,
+  generated Minimal API/Rebus/code-first gRPC dispatch, identity propagation,
+  RFC 7807 responses, Rebus dead letters, OpenAPI versioning, JSON
+  polymorphism, attachments and NodaTime protobuf support.
+- The latest increment also proves an explicit MVC compatibility escape hatch:
+  a hand-written controller negotiates MessagePack without changing the pure
+  handler or generated endpoints. This is deliberately not counted as a new
+  source-generated transport.
+- **Phase 3** still has two open deliverables: `.proto` emission and the gRPC
+  rich-error interceptor.
+- **Phase 5** remains open: extract the runtime/generator into `src/` packages,
+  add package validation/SBOM coverage, and write the MVC migration guide.
+
+The first build attempt on a fresh checkout failed because `--no-restore` was
+used before assets existed. The verified sequence is `dotnet restore
+Ark.Tools.slnx` (use `--force-evaluate` when central package versions changed),
+then `dotnet build Ark.Tools.slnx --configuration Debug --no-restore`.

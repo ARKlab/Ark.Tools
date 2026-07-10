@@ -21,7 +21,8 @@ isolated from HTTP translation, serialization and routing.
 A runnable proof-of-concept lives in
 [`samples/Ark.MediatorFramework.Sample`](../../samples/Ark.MediatorFramework.Sample).
 It demonstrates the same pure handler being invoked over Minimal API, generated
-code-first gRPC and Rebus, wired through SimpleInjector, and **self-tests every
+code-first gRPC and Rebus, plus a hand-written MessagePack compatibility
+endpoint, wired through SimpleInjector, and **self-tests every implemented
 transport** so the outcome is verifiable with `dotnet test`.
 
 ## Relationship with existing Ark.Tools building blocks

@@ -29,10 +29,13 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 - **Attachments**: a multipart upload is mapped (`IFormFile` → `IArkAttachment`)
   and streamed into the pure handler.
 - **OpenAPI**: per-version documents (`/openapi/v1.json`, `/openapi/v2.json`) are
-  generated from the endpoint metadata.
+  generated from the endpoint metadata, including NodaTime and polymorphic
+  schemas.
 - **Polymorphism**: a `[JsonConverter]`-annotated polymorphic contract (via the
   shared `Ark.Tools.SystemTextJson.JsonPolymorphicConverter`) round-trips through
   a generated endpoint.
+- **MessagePack**: a hand-written MVC compatibility endpoint negotiates
+  `application/x-msgpack` for an existing pure handler.
 - **Versioning**: the generator infers the API version from the route template
   (`/api/v{n}/…`) and groups each endpoint into the matching OpenAPI document.
 
@@ -44,11 +47,10 @@ dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Samp
 
 ## Documented follow-ups
 
-gRPC (code-first `protobuf-net.Grpc`) transport, `.proto` emission, gRPC
-rich-error interceptor, `ProblemDetails` mapping and Rebus dead-letter behavior
-are specified — with acceptance criteria —
-in [`docs/mvc-free-framework/tasks.md`](../../docs/mvc-free-framework/tasks.md).
+`.proto` emission and the gRPC rich-error interceptor remain specified — with
+acceptance criteria — in
+[`docs/mvc-free-framework/tasks.md`](../../docs/mvc-free-framework/tasks.md).
 The NodaTime protobuf surrogates those transports need are already provided by
 [`Ark.Tools.Nodatime.Protobuf`](../../src/common/Ark.Tools.Nodatime.Protobuf).
-The remaining transports require new third-party dependencies and are
-intentionally left as the next increments.
+The remaining planned work is tracked as T4.2, T4.3 and the productization
+tasks in the implementation plan.

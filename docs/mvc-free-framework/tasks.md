@@ -86,6 +86,11 @@ project builds under the repo's strict settings and its self-tests pass with
   - *Accept:* a multipart upload self-test asserts the handler received the
     stream content.
 
+- [x] **T6.3** MessagePack compatibility endpoint for an existing pure handler.
+  - *Accept:* a content-negotiated `application/x-msgpack` request and response
+    round-trip NodaTime values through the hand-written MVC adapter without
+    changing the handler.
+
 ## Epic 7 — Productization
 
 - [ ] **T7.1** Extract runtime + generator to `src/` packages with XML docs.
@@ -93,6 +98,15 @@ project builds under the repo's strict settings and its self-tests pass with
   (CI `RestoreLockedMode`).
 - [ ] **T7.3** Migration guide from MVC controllers.
   - *Accept:* docs reviewed; package validation + SBOM succeed in CI.
+
+## Next implementation order
+
+1. **T4.2** Emit and test `.proto` files from the code-first contracts.
+2. **T4.3** Add and test the gRPC rich-error interceptor.
+3. **T7.1** Extract the proven sample runtime and generator into `src/`
+   packages, retaining generated registration and transport parity tests.
+4. **T7.3** Document migration from MVC, including when to retain a
+   hand-written adapter such as the MessagePack endpoint.
 
 ## Status legend
 
