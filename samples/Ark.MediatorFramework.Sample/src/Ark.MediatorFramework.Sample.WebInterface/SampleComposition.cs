@@ -30,8 +30,9 @@ public static class SampleComposition
 {
     /// <summary>Builds and verifies the SimpleInjector container.</summary>
     /// <param name="network">The in-memory Rebus network to attach the transport to.</param>
+    /// <param name="useProtobufRebus">Whether Rebus messages use Protobuf instead of JSON.</param>
     /// <returns>A verified container with the bus started.</returns>
-    public static Container BuildContainer(InMemNetwork network)
+    public static Container BuildContainer(InMemNetwork network, bool useProtobufRebus = false)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -52,16 +53,23 @@ public static class SampleComposition
         // decorating the generated handlers gives each dispatched message its own request-equivalent scope.
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
 
-        container.ConfigureRebus(cfg => cfg
-            .Transport(t => t.UseInMemoryTransport(network, "ark.mediator.sample"))
-            .Serialization(s => s.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()))
-            .Options(o =>
+        container.ConfigureRebus(cfg =>
+        {
+            cfg.Transport(t => t.UseInMemoryTransport(network, "ark.mediator.sample"));
+
+            if (useProtobufRebus)
+                cfg.Serialization(s => s.Register(_ => new ProtobufRebusSerializer(typeof(CreateGreetingRequest))));
+            else
+                cfg.Serialization(s => s.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()));
+
+            cfg.Options(o =>
             {
                 o.SetNumberOfWorkers(1);
                 o.AutomaticallyFlowUserContext(container);
                 // Fail fast to the dead-letter (error) queue: one delivery attempt, then forward with headers.
                 o.ArkRetryStrategy(maxDeliveryAttempts: 1);
-            }));
+            });
+        });
 
         container.Verify();
         container.StartBus();

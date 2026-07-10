@@ -126,6 +126,25 @@ public sealed class TransportParityTests
     }
 
     [TestMethod]
+    public async Task Protobuf_Rebus_round_trips_NodaTime_values()
+    {
+        var network = new InMemNetwork();
+        using var container = SampleComposition.BuildContainer(network, useProtobufRebus: true);
+        var store = container.GetInstance<IGreetingStore>();
+        var request = NewNodaTimeRequest("ProtobufRebus");
+
+        await container.GetInstance<IBus>().SendLocal(request).ConfigureAwait(false);
+
+        var handled = await WaitUntilAsync(
+            () => store.All().Any(g => g.Message.Contains("ProtobufRebus", StringComparison.Ordinal)),
+            TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+
+        handled.Should().BeTrue("the Protobuf Rebus serializer must deserialize into the generated wrapper");
+        var result = store.All().Single(g => g.Message.Contains("ProtobufRebus", StringComparison.Ordinal));
+        AssertNodaTimeValues(result, request);
+    }
+
+    [TestMethod]
     public async Task Grpc_dispatches_to_the_same_pure_handler()
     {
         using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
