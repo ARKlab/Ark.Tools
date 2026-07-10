@@ -27,3 +27,4 @@ message GreetingResponse {
 service Greetings {
   rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);
 }
+

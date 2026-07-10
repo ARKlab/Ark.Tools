@@ -364,13 +364,10 @@
         "resolved": "10.0.9",
         "contentHash": "vXp+vBQbTkMrDzUiPCxo1KvzfaAvZWuSRS2P7e5orhtV7ZuePKAB3Cqc9dH2YHUavRJyA2uWd2yrL6hl2VoJ5g=="
       },
-      "ark.mediatorframework": {
-        "type": "Project"
-      },
       "ark.mediatorframework.sample.application": {
         "type": "Project",
         "dependencies": {
-          "Ark.MediatorFramework": "[999.9.9, )",
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
@@ -422,6 +419,9 @@
         "dependencies": {
           "NodaTime": "[3.3.2, )"
         }
+      },
+      "ark.tools.mediatorframework": {
+        "type": "Project"
       },
       "ark.tools.nlog": {
         "type": "Project",

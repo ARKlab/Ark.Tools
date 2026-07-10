@@ -98,7 +98,7 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Epic 7 — Productization
 
-- [ ] **T7.1** Extract runtime + generator to `src/` packages with XML docs.
+- [x] **T7.1** Extract runtime + generator to `src/` packages with XML docs.
 - [x] **T7.2** `packages.lock.json` committed for every new project
   (CI `RestoreLockedMode`).
 - [ ] **T7.3** Migration guide from MVC controllers.
@@ -106,9 +106,7 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Next implementation order
 
-1. **T7.1** Extract the proven sample runtime and generator into `src/`
-   packages, retaining generated registration and transport parity tests.
-3. **T7.3** Document migration from MVC, including when to retain a
+1. **T7.3** Document migration from MVC, including when to retain a
    hand-written adapter such as the MessagePack endpoint.
 
 ## Status legend

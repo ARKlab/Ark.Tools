@@ -13,8 +13,8 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 
 | Project | Purpose |
 |---|---|
-| `src/Ark.MediatorFramework` | Runtime primitives: the explicit, opt-in `[HttpEndpoint]` / `[RebusMessage]` / `[GrpcMethod]` transport markers and the `IArkAttachment` attachment abstraction. |
-| `src/Ark.MediatorFramework.Generators` | Incremental generator emitting the Minimal API endpoints and Rebus handler wrappers from the pure contracts (discovered cross-assembly). |
+| `src/common/Ark.Tools.MediatorFramework` | Runtime package containing the explicit, opt-in `[HttpEndpoint]` / `[RebusMessage]` / `[GrpcMethod]` transport markers and the `IArkAttachment` attachment abstraction. |
+| `src/common/Ark.Tools.MediatorFramework.Generators` | Analyzer package containing the incremental generator that emits Minimal API endpoints and Rebus handler wrappers from pure contracts (discovered cross-assembly). |
 | `src/Ark.MediatorFramework.Sample.Application` | Pure, transport-agnostic contracts/handlers, in-memory store and cross-cutting decorator. Uses `IContextProvider<ClaimsPrincipal>` for the caller identity. |
 | `src/Ark.MediatorFramework.Sample.WebInterface` | Hosting: composition root, ASP.NET Core startup and the endpoints exposing the selected requests/queries. Wires the user context (AspNetCore auth + Rebus propagation) and starts the bus. |
 | `test/Ark.MediatorFramework.Sample.Tests` | Self-tests proving transport parity and attachment streaming. |
