@@ -26,6 +26,7 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class OpenApiPolymorphismVersioningTests
 {
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
     private static InMemNetwork _network = null!;
     private static IHost _host = null!;
     private static HttpClient _client = null!;
@@ -129,7 +130,7 @@ public sealed class OpenApiPolymorphismVersioningTests
         // Seed a greeting through the v1 create endpoint, then read it back through the v2 contract.
         var post = await _client.PostAsJsonAsync("/api/v1/greetings", new { name = "Versioning" }).ConfigureAwait(false);
         post.EnsureSuccessStatusCode();
-        var greeting = await post.Content.ReadFromJsonAsync<GreetingResponse>().ConfigureAwait(false);
+        var greeting = await post.Content.ReadFromJsonAsync<GreetingResponse>(JsonOptions).ConfigureAwait(false);
         greeting.Should().NotBeNull();
 
         var v2 = await _client.GetFromJsonAsync<GreetingResponseV2>($"/api/v2/greetings/{greeting!.Id}").ConfigureAwait(false);

@@ -203,6 +203,13 @@
           "Ark.Tools.Core": "[1.0.0, )"
         }
       },
+      "ark.tools.nodatime.protobuf": {
+        "type": "Project",
+        "dependencies": {
+          "NodaTime": "[3.3.2, )",
+          "protobuf-net": "[3.2.56, )"
+        }
+      },
       "ark.tools.nodatime.systemtextjson": {
         "type": "Project",
         "dependencies": {
@@ -635,6 +642,13 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )"
+        }
+      },
+      "ark.tools.nodatime.protobuf": {
+        "type": "Project",
+        "dependencies": {
+          "NodaTime": "[3.3.2, )",
+          "protobuf-net": "[3.2.56, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {

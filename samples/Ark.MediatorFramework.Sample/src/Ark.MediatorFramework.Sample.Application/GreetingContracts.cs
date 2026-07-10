@@ -3,6 +3,8 @@
 
 using Ark.Tools.Solid;
 
+using NodaTime;
+
 using ProtoBuf;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -18,6 +20,22 @@ public sealed record GreetingResponse
     /// <summary>Gets the greeting message.</summary>
     [ProtoMember(2)]
     public required string Message { get; init; }
+
+    /// <summary>Gets the representative local date.</summary>
+    [ProtoMember(3)]
+    public LocalDate Date { get; init; }
+
+    /// <summary>Gets the representative local date and time.</summary>
+    [ProtoMember(4)]
+    public LocalDateTime DateTime { get; init; }
+
+    /// <summary>Gets the representative offset date and time.</summary>
+    [ProtoMember(5)]
+    public OffsetDateTime OffsetDateTime { get; init; }
+
+    /// <summary>Gets the representative period.</summary>
+    [ProtoMember(6)]
+    public Period Period { get; init; } = Period.Zero;
 }
 
 /// <summary>
@@ -35,6 +53,22 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
     /// <summary>Gets the name to greet.</summary>
     [ProtoMember(1)]
     public string Name { get; init; } = string.Empty;
+
+    /// <summary>Gets the representative local date.</summary>
+    [ProtoMember(2)]
+    public LocalDate Date { get; init; }
+
+    /// <summary>Gets the representative local date and time.</summary>
+    [ProtoMember(3)]
+    public LocalDateTime DateTime { get; init; }
+
+    /// <summary>Gets the representative offset date and time.</summary>
+    [ProtoMember(4)]
+    public OffsetDateTime OffsetDateTime { get; init; }
+
+    /// <summary>Gets the representative period.</summary>
+    [ProtoMember(5)]
+    public Period Period { get; init; } = Period.Zero;
 }
 
 /// <summary>

@@ -14,6 +14,7 @@
     <ProjectReference Include="..\Ark.MediatorFramework\Ark.MediatorFramework.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Nodatime.Protobuf\Ark.Tools.Nodatime.Protobuf.csproj" />
   </ItemGroup>
 
 </Project>

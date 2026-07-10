@@ -10,12 +10,14 @@ using Ark.Tools.Solid;
 
 
 using Rebus.Handlers;
+using Rebus.Serialization.Json;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -52,6 +54,7 @@ public static class SampleComposition
 
         container.ConfigureRebus(cfg => cfg
             .Transport(t => t.UseInMemoryTransport(network, "ark.mediator.sample"))
+            .Serialization(s => s.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()))
             .Options(o =>
             {
                 o.SetNumberOfWorkers(1);

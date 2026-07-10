@@ -5,12 +5,14 @@ using Ark.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.Application;
 
 using Ark.Tools.Solid;
+using Ark.Tools.Nodatime.Protobuf;
 
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 using ProtoBuf.Grpc.Server;
+using ProtoBuf.Meta;
 
 using System.Text.Json;
 
@@ -50,6 +52,7 @@ public sealed class SampleStartup
         // (EntityNotFoundException -> 404, ValidationException -> 400 + field violations).
         services.AddProblemDetails();
         services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
+        RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         services.AddCodeFirstGrpc();
 
         // OpenAPI: one document per API version. Endpoints are partitioned by the group name the

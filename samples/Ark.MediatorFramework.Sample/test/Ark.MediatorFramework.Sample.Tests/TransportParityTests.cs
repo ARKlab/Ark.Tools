@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
 
+using NodaTime;
+
 using Rebus.Bus;
 using Rebus.Messages;
 using Rebus.Retry.Simple;
@@ -38,6 +40,7 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class TransportParityTests
 {
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
     private static InMemNetwork _network = null!;
     private static IHost _host = null!;
     private static HttpClient _client = null!;
@@ -77,17 +80,22 @@ public sealed class TransportParityTests
         var audit = _container.GetInstance<AuditCounter>();
         var auditBefore = audit.Count;
 
-        var post = await _client.PostAsJsonAsync("/api/v1/greetings", new { name = "Http" }).ConfigureAwait(false);
+        var request = NewNodaTimeRequest("Http");
+        var post = await _client.PostAsJsonAsync("/api/v1/greetings", request, JsonOptions).ConfigureAwait(false);
         post.EnsureSuccessStatusCode();
 
-        var created = await post.Content.ReadFromJsonAsync<GreetingResponse>().ConfigureAwait(false);
+        var created = await post.Content.ReadFromJsonAsync<GreetingResponse>(JsonOptions).ConfigureAwait(false);
         created.Should().NotBeNull();
         created!.Message.Should().Contain("Http");
+        AssertNodaTimeValues(created, request);
 
-        var fetched = await _client.GetFromJsonAsync<GreetingResponse>($"/api/v1/greetings/{created.Id}").ConfigureAwait(false);
+        var fetched = await _client.GetFromJsonAsync<GreetingResponse>(
+            $"/api/v1/greetings/{created.Id}",
+            JsonOptions).ConfigureAwait(false);
         fetched.Should().NotBeNull();
         fetched!.Id.Should().Be(created.Id);
         fetched.Message.Should().Be(created.Message);
+        AssertNodaTimeValues(fetched, request);
 
         store.TryGet(created.Id, out _).Should().BeTrue();
         audit.Count.Should().BeGreaterThan(auditBefore, "the cross-cutting decorator must run on the HTTP transport");
@@ -103,7 +111,8 @@ public sealed class TransportParityTests
         var countBefore = store.Count;
         var auditBefore = audit.Count;
 
-        await bus.SendLocal(new CreateGreetingRequest { Name = "RebusMsg" }).ConfigureAwait(false);
+        var request = NewNodaTimeRequest("RebusMsg");
+        await bus.SendLocal(request).ConfigureAwait(false);
 
         var handled = await WaitUntilAsync(
             () => store.All().Any(g => g.Message.Contains("RebusMsg", StringComparison.Ordinal)),
@@ -112,6 +121,8 @@ public sealed class TransportParityTests
         handled.Should().BeTrue("the Rebus wrapper must invoke the pure handler");
         store.Count.Should().Be(countBefore + 1);
         audit.Count.Should().BeGreaterThan(auditBefore, "the cross-cutting decorator must run on the Rebus transport");
+        var result = store.All().Single(g => g.Message.Contains("RebusMsg", StringComparison.Ordinal));
+        AssertNodaTimeValues(result, request);
     }
 
     [TestMethod]
@@ -123,9 +134,11 @@ public sealed class TransportParityTests
         });
         var client = channel.CreateGrpcService<ArkGeneratedEndpoints.IGreetingsGrpcService>();
 
-        var result = await client.CreateGreetingRequestAsync(new CreateGreetingRequest { Name = "Grpc" }).ConfigureAwait(false);
+        var request = NewNodaTimeRequest("Grpc");
+        var result = await client.CreateGreetingRequestAsync(request).ConfigureAwait(false);
 
         result.Message.Should().Contain("Grpc");
+        AssertNodaTimeValues(result, request);
         _container.GetInstance<IGreetingStore>().TryGet(result.Id, out _).Should().BeTrue();
     }
 
@@ -240,5 +253,29 @@ public sealed class TransportParityTests
         }
 
         return condition();
+    }
+
+    private static CreateGreetingRequest NewNodaTimeRequest(string name)
+    {
+        return new CreateGreetingRequest
+        {
+            Name = name,
+            Date = new LocalDate(2024, 2, 29),
+            DateTime = new LocalDateTime(2024, 2, 29, 13, 45, 30).PlusNanoseconds(123_456_700),
+            OffsetDateTime = new OffsetDateTime(
+                new LocalDateTime(2024, 2, 29, 13, 45, 30).PlusNanoseconds(987_654_300),
+                Offset.FromHoursAndMinutes(5, 30)),
+            Period = Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(10)
+                + Period.FromHours(2) + Period.FromMinutes(30),
+        };
+    }
+
+    private static void AssertNodaTimeValues(GreetingResponse actual, CreateGreetingRequest expected)
+    {
+        actual.Date.Should().Be(expected.Date);
+        actual.DateTime.Should().Be(expected.DateTime);
+        actual.OffsetDateTime.Should().Be(expected.OffsetDateTime);
+        actual.OffsetDateTime.Offset.Should().Be(Offset.FromHoursAndMinutes(5, 30));
+        actual.Period.Should().Be(expected.Period);
     }
 }

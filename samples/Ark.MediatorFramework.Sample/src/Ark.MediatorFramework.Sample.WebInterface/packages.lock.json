@@ -240,6 +240,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework": "[999.9.9, )",
+          "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
@@ -283,6 +284,13 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )"
+        }
+      },
+      "ark.tools.nodatime.protobuf": {
+        "type": "Project",
+        "dependencies": {
+          "NodaTime": "[3.3.2, )",
+          "protobuf-net": "[3.2.56, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
@@ -923,6 +931,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework": "[999.9.9, )",
+          "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
@@ -968,6 +977,13 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )"
+        }
+      },
+      "ark.tools.nodatime.protobuf": {
+        "type": "Project",
+        "dependencies": {
+          "NodaTime": "[3.3.2, )",
+          "protobuf-net": "[3.2.56, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {

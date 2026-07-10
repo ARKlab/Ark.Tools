@@ -37,6 +37,10 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
         {
             Id = Guid.NewGuid(),
             Message = $"Hello, {Request.Name}! (by {_user.GetUserId() ?? "anonymous"})",
+            Date = Request.Date,
+            DateTime = Request.DateTime,
+            OffsetDateTime = Request.OffsetDateTime,
+            Period = Request.Period,
         };
 
         _store.Save(response);
