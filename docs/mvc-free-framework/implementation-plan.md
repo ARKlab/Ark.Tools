@@ -94,8 +94,9 @@ results; error interceptor maps `ValidationException` to `Google.Rpc.Status`.
   a hand-written controller negotiates MessagePack without changing the pure
   handler or generated endpoints. This is deliberately not counted as a new
   source-generated transport.
-- **Phase 5** remains open: add package validation/SBOM coverage and write the MVC
-  migration guide. The runtime and generator now live in `src/common` packages.
+- **Phase 5** is complete: package validation/SBOM coverage runs in CI and the
+  MVC migration guide is documented. The runtime and generator now live in
+  `src/common` packages.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore
