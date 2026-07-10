@@ -90,8 +90,7 @@ results; error interceptor maps `ValidationException` to `Google.Rpc.Status`.
   a hand-written controller negotiates MessagePack without changing the pure
   handler or generated endpoints. This is deliberately not counted as a new
   source-generated transport.
-- **Phase 3** still has two open deliverables: `.proto` emission and the gRPC
-  rich-error interceptor.
+- **Phase 3** still has one open deliverable: the gRPC rich-error interceptor.
 - **Phase 5** remains open: extract the runtime/generator into `src/` packages,
   add package validation/SBOM coverage, and write the MVC migration guide.
 
