@@ -5,12 +5,15 @@ using Ark.Tools.Solid;
 
 using NodaTime;
 
+using MessagePack;
+
 using ProtoBuf;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Response returned by the greeting operations.</summary>
 [ProtoContract]
+[MessagePackObject(true)]
 public sealed record GreetingResponse
 {
     /// <summary>Gets the greeting identifier.</summary>
@@ -48,6 +51,7 @@ public sealed record GreetingResponse
 [GrpcMethod]
 [ServiceGroup("Greetings")]
 [ProtoContract]
+[MessagePackObject(true)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 {
     /// <summary>Gets the name to greet.</summary>

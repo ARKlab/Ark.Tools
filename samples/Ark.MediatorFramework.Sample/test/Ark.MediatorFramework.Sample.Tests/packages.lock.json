@@ -110,6 +110,16 @@
           "Grpc.Core.Api": "2.80.0"
         }
       },
+      "MessagePack.Annotations": {
+        "type": "Transitive",
+        "resolved": "3.1.7",
+        "contentHash": "IW1yX9viarFl/Dsio5G+pM90JkOSW4xhAiJcKxPPF5rzyp2/yCpieWju8G99QLEmaQeze2uQMEskUBA59YZmkw=="
+      },
+      "MessagePackAnalyzer": {
+        "type": "Transitive",
+        "resolved": "3.1.7",
+        "contentHash": "ZF+OOJTRS7Ogzb4gG36hPKVQk3kEbp6kkUcdRjhddDq/uSGcV4BKIdYiyJipExXyE/zsqYb0ic215O9kI+fjPA=="
+      },
       "Microsoft.Azure.Amqp": {
         "type": "Transitive",
         "resolved": "2.7.0",
@@ -221,6 +231,11 @@
           "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
           "Microsoft.IdentityModel.Logging": "8.19.1"
         }
+      },
+      "Microsoft.NET.StringTools": {
+        "type": "Transitive",
+        "resolved": "17.11.4",
+        "contentHash": "mudqUHhNpeqIdJoUx2YDWZO/I9uEDYVowan89R6wsomfnUJQk6HteoQTlNjZDixhT2B4IXMkMtgZtoceIjLRmA=="
       },
       "Microsoft.SqlServer.Server": {
         "type": "Transitive",
@@ -352,6 +367,7 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
+          "MessagePack": "[3.1.7, )",
           "SimpleInjector": "[5.6.0, )",
           "protobuf-net": "[3.2.56, )"
         }
@@ -360,7 +376,9 @@
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework.Sample.Application": "[999.9.9, )",
+          "Ark.Tools.AspNetCore.MessagePack": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
+          "MessagePack.NodaTime": "[3.5.5, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
           "System.ServiceModel.Primitives": "[10.0.652802, )",
           "protobuf-net.Grpc.AspNetCore": "[1.2.2, )"
@@ -374,6 +392,13 @@
           "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
           "Microsoft.Extensions.Options": "[10.0.9, )"
+        }
+      },
+      "ark.tools.aspnetcore.messagepack": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "MessagePack": "[3.1.7, )"
         }
       },
       "ark.tools.core": {
@@ -500,6 +525,27 @@
         "contentHash": "1nUAVLxM9fhT/78we6/AGsCesnpn5dRNLLeRqOfr52Wnk87pzVwo5YMTMyqnmoXrYc7piGhmayiMA/OgDluIjg==",
         "dependencies": {
           "MimeKit": "4.17.0"
+        }
+      },
+      "MessagePack": {
+        "type": "CentralTransitive",
+        "requested": "[3.1.7, )",
+        "resolved": "3.1.7",
+        "contentHash": "gXpifaxbhfBqh8bVToQn9j+OgCnhXWMbRCV7RQIbCVa9CNJG1fY6oHAYYl+ER3Tb9uUIHiQ5QbGiGwwFhoagbA==",
+        "dependencies": {
+          "MessagePack.Annotations": "3.1.7",
+          "MessagePackAnalyzer": "3.1.7",
+          "Microsoft.NET.StringTools": "17.11.4"
+        }
+      },
+      "MessagePack.NodaTime": {
+        "type": "CentralTransitive",
+        "requested": "[3.5.5, )",
+        "resolved": "3.5.5",
+        "contentHash": "9DoE9+OQYbKbLtyJ1N92n55vv+RwrIV6dGpADLuHVeLvkfpxMBQY9oG0IkgGpL5t6D2PlWg8RA6ul/Qh1PF0Ww==",
+        "dependencies": {
+          "MessagePack": "3.1.7",
+          "NodaTime": "3.3.2"
         }
       },
       "Microsoft.ApplicationInsights": {

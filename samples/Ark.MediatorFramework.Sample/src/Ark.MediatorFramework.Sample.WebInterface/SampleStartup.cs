@@ -6,6 +6,9 @@ using Ark.MediatorFramework.Sample.Application;
 
 using Ark.Tools.Solid;
 using Ark.Tools.Nodatime.Protobuf;
+using Ark.Tools.AspNetCore.MessagePackFormatter;
+
+using MessagePack.Resolvers;
 
 
 using SimpleInjector;
@@ -43,6 +46,13 @@ public sealed class SampleStartup
         services.AddSingleton(_container);
         services.AddHttpContextAccessor();
         services.AddRouting();
+        services.AddControllers();
+
+        var messagePackResolver = CompositeResolver.Create(
+            MessagePack.NodaTime.NodatimeResolver.Instance,
+            DynamicEnumAsStringResolver.Instance,
+            StandardResolver.Instance);
+        services.AddMessagePackFormatter(messagePackResolver);
 
         // Minimal API JSON: the Ark System.Text.Json defaults (camelCase, NodaTime, enum-as-member)
         // so the polymorphic [JsonConverter]-annotated contracts round-trip over the wire.
@@ -85,6 +95,7 @@ public sealed class SampleStartup
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
             endpoints.MapArkEndpoints();
             endpoints.MapArkGrpcServices();
+            endpoints.MapControllers();
 
             // Hand-written multipart endpoint mapping IFormFile -> IArkAttachment.
             endpoints.MapPost("/api/v1/greeting-cards", _uploadGreetingCard);

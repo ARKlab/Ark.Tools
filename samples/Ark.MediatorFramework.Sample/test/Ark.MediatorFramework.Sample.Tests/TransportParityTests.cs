@@ -16,6 +16,9 @@ using AwesomeAssertions;
 
 using Grpc.Net.Client;
 
+using MessagePack;
+using MessagePack.Resolvers;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
@@ -41,6 +44,11 @@ namespace Ark.MediatorFramework.Sample.Tests;
 public sealed class TransportParityTests
 {
     private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+    private static readonly MessagePackSerializerOptions MessagePackOptions = MessagePackSerializer.DefaultOptions.WithResolver(
+        CompositeResolver.Create(
+            MessagePack.NodaTime.NodatimeResolver.Instance,
+            DynamicEnumAsStringResolver.Instance,
+            StandardResolver.Instance));
     private static InMemNetwork _network = null!;
     private static IHost _host = null!;
     private static HttpClient _client = null!;
@@ -141,6 +149,28 @@ public sealed class TransportParityTests
 
         handled.Should().BeTrue("the Protobuf Rebus serializer must deserialize into the generated wrapper");
         var result = store.All().Single(g => g.Message.Contains("ProtobufRebus", StringComparison.Ordinal));
+        AssertNodaTimeValues(result, request);
+    }
+
+    [TestMethod]
+    public async Task MessagePack_endpoint_negotiates_and_round_trips_NodaTime_values()
+    {
+        var request = NewNodaTimeRequest("MessagePack");
+        using var content = new ByteArrayContent(MessagePackSerializer.Serialize(request, MessagePackOptions));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/x-msgpack");
+        using var message = new HttpRequestMessage(HttpMethod.Post, "/api/v1/messagepack/greetings")
+        {
+            Content = content,
+        };
+        message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-msgpack"));
+
+        using var response = await _client.SendAsync(message).ConfigureAwait(false);
+
+        response.EnsureSuccessStatusCode();
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/x-msgpack");
+        var bytes = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+        var result = MessagePackSerializer.Deserialize<GreetingResponse>(bytes, MessagePackOptions);
+        result.Message.Should().Contain("MessagePack");
         AssertNodaTimeValues(result, request);
     }
 

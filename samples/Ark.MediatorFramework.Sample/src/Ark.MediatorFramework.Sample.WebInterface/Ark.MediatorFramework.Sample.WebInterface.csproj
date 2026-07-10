@@ -9,10 +9,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="MessagePack.NodaTime" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
     <PackageReference Include="System.ServiceModel.Primitives" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
+    <ProjectReference Include="..\..\..\..\src\aspnetcore\Ark.Tools.AspNetCore.MessagePack\Ark.Tools.AspNetCore.MessagePack.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Generators\Ark.MediatorFramework.Generators.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>

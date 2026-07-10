@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="SimpleInjector" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="MessagePack" />
     <PackageReference Include="protobuf-net" />
     <ProjectReference Include="..\Ark.MediatorFramework\Ark.MediatorFramework.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
