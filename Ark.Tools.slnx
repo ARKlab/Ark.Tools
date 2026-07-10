@@ -82,6 +82,7 @@
   <Folder Name="/samples/Ark.MediatorFramework/">
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework/Ark.MediatorFramework.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Generators/Ark.MediatorFramework.Generators.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.ProtoGenerator/Ark.MediatorFramework.ProtoGenerator.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj" />

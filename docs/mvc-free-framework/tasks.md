@@ -47,7 +47,7 @@ project builds under the repo's strict settings and its self-tests pass with
   `AddCodeFirstGrpc()`; the generated service is `partial` for manual methods.
   - *Accept:* an in-process `Grpc.Net.Client` self-test calls the service and
     gets the same result as the HTTP path.
-- [ ] **T4.2** `.proto` emission MSBuild target.
+- [x] **T4.2** `.proto` emission MSBuild target.
   - *Accept:* `dotnet build` writes a proto3 file whose service/messages match
     the C# contracts (asserted by a test reading the emitted file).
 - [ ] **T4.3** gRPC rich-error-model interceptor.
@@ -101,11 +101,10 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Next implementation order
 
-1. **T4.2** Emit and test `.proto` files from the code-first contracts.
-2. **T4.3** Add and test the gRPC rich-error interceptor.
-3. **T7.1** Extract the proven sample runtime and generator into `src/`
+1. **T4.3** Add and test the gRPC rich-error interceptor.
+2. **T7.1** Extract the proven sample runtime and generator into `src/`
    packages, retaining generated registration and transport parity tests.
-4. **T7.3** Document migration from MVC, including when to retain a
+3. **T7.3** Document migration from MVC, including when to retain a
    hand-written adapter such as the MessagePack endpoint.
 
 ## Status legend

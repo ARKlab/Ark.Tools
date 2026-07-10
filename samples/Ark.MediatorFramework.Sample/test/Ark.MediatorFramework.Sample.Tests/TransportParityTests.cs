@@ -228,6 +228,21 @@ public sealed class TransportParityTests
     }
 
     [TestMethod]
+    public void Build_emits_proto_schema_for_generated_grpc_contracts()
+    {
+        var assemblyDirectory = Path.GetDirectoryName(typeof(SampleStartup).Assembly.Location)!;
+        var protoPath = Path.Combine(assemblyDirectory, "Ark.MediatorFramework.Sample.WebInterface.proto");
+        File.Exists(protoPath).Should().BeTrue("the MSBuild target must emit the code-first schema");
+
+        var proto = File.ReadAllText(protoPath);
+        proto.Should().Contain("syntax = \"proto3\";");
+        proto.Should().Contain("message CreateGreetingRequest");
+        proto.Should().Contain("message GreetingResponse");
+        proto.Should().Contain("service Greetings");
+        proto.Should().Contain("rpc CreateGreetingRequest(CreateGreetingRequest) returns (GreetingResponse);");
+    }
+
+    [TestMethod]
     public async Task Attachment_endpoint_streams_the_uploaded_file_to_the_handler()
     {
         var payload = "Happy Birthday!"u8.ToArray();
