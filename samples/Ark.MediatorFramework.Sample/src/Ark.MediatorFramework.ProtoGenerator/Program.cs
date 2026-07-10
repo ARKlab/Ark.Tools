@@ -23,7 +23,12 @@ var grpcMethods = assembly.GetTypes()
 var schema = new StringBuilder();
 schema.AppendLine("syntax = \"proto3\";");
 schema.AppendLine();
-schema.AppendLine("package ark.mediator;");
+schema.AppendLine("option csharp_namespace = \"Ark.MediatorFramework.Sample.GrpcClient\";");
+schema.AppendLine();
+schema.AppendLine("message LocalDate { int32 year = 1; int32 month = 2; int32 day = 3; }");
+schema.AppendLine("message LocalDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 nanosecond_of_day = 4; }");
+schema.AppendLine("message OffsetDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 nanosecond_of_day = 4; int32 offset_seconds = 5; }");
+schema.AppendLine("message Period { string value = 1; }");
 schema.AppendLine();
 
 foreach (var contract in contracts.OrderBy(static pair => pair.Value, StringComparer.Ordinal))
@@ -101,8 +106,18 @@ static string ProtoTypeName(Type type, IReadOnlyDictionary<Type, string> contrac
     if (contracts.TryGetValue(type, out var contractName))
         return contractName;
 
-    if (type == typeof(string) || type == typeof(Guid) || type.FullName?.StartsWith("NodaTime.", StringComparison.Ordinal) == true)
+    if (type == typeof(string))
         return "string";
+    if (type == typeof(Guid))
+        return "bytes";
+    if (type.FullName == "NodaTime.LocalDate")
+        return "LocalDate";
+    if (type.FullName == "NodaTime.LocalDateTime")
+        return "LocalDateTime";
+    if (type.FullName == "NodaTime.OffsetDateTime")
+        return "OffsetDateTime";
+    if (type.FullName == "NodaTime.Period")
+        return "Period";
     if (type == typeof(bool))
         return "bool";
     if (type == typeof(long) || type == typeof(ulong))

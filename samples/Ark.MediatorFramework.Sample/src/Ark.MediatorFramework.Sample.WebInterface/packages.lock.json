@@ -2,6 +2,16 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "Grpc.StatusProto": {
+        "type": "Direct",
+        "requested": "[2.66.0, )",
+        "resolved": "2.66.0",
+        "contentHash": "TcP8Qgg8lOFAr2AFepYifGB731lCI8pwjOkksQ6Z505nVTO6Ze4gN2hXj+G1sCmy6i7uIPBolD/IheCZkAGYRA==",
+        "dependencies": {
+          "Google.Api.CommonProtos": "2.15.0",
+          "Grpc.Core.Api": "2.66.0"
+        }
+      },
       "MessagePack.NodaTime": {
         "type": "Direct",
         "requested": "[3.5.5, )",
@@ -79,6 +89,14 @@
         "type": "Transitive",
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
+      },
+      "Google.Api.CommonProtos": {
+        "type": "Transitive",
+        "resolved": "2.15.0",
+        "contentHash": "k+43CTEgMbT4C2JjcIJon3GvMNFJ3kLMjPTedOkXUAt0D5cFfrlee+M4oieueAVhbXktR89yoj5O/kVmC/AKJw==",
+        "dependencies": {
+          "Google.Protobuf": "[3.25.0, 4.0.0)"
+        }
       },
       "Grpc.AspNetCore.Server": {
         "type": "Transitive",
@@ -401,6 +419,12 @@
         "resolved": "12.1.1",
         "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
       },
+      "Google.Protobuf": {
+        "type": "CentralTransitive",
+        "requested": "[3.25.5, )",
+        "resolved": "3.25.5",
+        "contentHash": "c15SLmjoS7GUWFoRIYp3TTS5OS+1loPk1K6kTLxw2k35qGGMpthQxKmouw9OmSIHpaJ6BJfv0VLqBDgk1VDpmg=="
+      },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",
         "requested": "[3.0.0, )",
@@ -654,6 +678,16 @@
       }
     },
     "net8.0": {
+      "Grpc.StatusProto": {
+        "type": "Direct",
+        "requested": "[2.66.0, )",
+        "resolved": "2.66.0",
+        "contentHash": "TcP8Qgg8lOFAr2AFepYifGB731lCI8pwjOkksQ6Z505nVTO6Ze4gN2hXj+G1sCmy6i7uIPBolD/IheCZkAGYRA==",
+        "dependencies": {
+          "Google.Api.CommonProtos": "2.15.0",
+          "Grpc.Core.Api": "2.66.0"
+        }
+      },
       "MessagePack.NodaTime": {
         "type": "Direct",
         "requested": "[3.5.5, )",
@@ -733,6 +767,14 @@
         "type": "Transitive",
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
+      },
+      "Google.Api.CommonProtos": {
+        "type": "Transitive",
+        "resolved": "2.15.0",
+        "contentHash": "k+43CTEgMbT4C2JjcIJon3GvMNFJ3kLMjPTedOkXUAt0D5cFfrlee+M4oieueAVhbXktR89yoj5O/kVmC/AKJw==",
+        "dependencies": {
+          "Google.Protobuf": "[3.25.0, 4.0.0)"
+        }
       },
       "Grpc.AspNetCore.Server": {
         "type": "Transitive",
@@ -1137,6 +1179,12 @@
         "requested": "[12.1.1, )",
         "resolved": "12.1.1",
         "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
+      },
+      "Google.Protobuf": {
+        "type": "CentralTransitive",
+        "requested": "[3.25.5, )",
+        "resolved": "3.25.5",
+        "contentHash": "c15SLmjoS7GUWFoRIYp3TTS5OS+1loPk1K6kTLxw2k35qGGMpthQxKmouw9OmSIHpaJ6BJfv0VLqBDgk1VDpmg=="
       },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",

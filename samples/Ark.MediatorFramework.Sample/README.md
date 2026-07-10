@@ -47,10 +47,11 @@ dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Samp
 
 ## Documented follow-ups
 
-`.proto` emission and the gRPC rich-error interceptor remain specified — with
-acceptance criteria — in
+The emitted `.proto` now generates a dedicated client assembly used by the
+behavioral tests, and the gRPC rich-error interceptor is covered there. Further
+work remains specified — with acceptance criteria — in
 [`docs/mvc-free-framework/tasks.md`](../../docs/mvc-free-framework/tasks.md).
 The NodaTime protobuf surrogates those transports need are already provided by
 [`Ark.Tools.Nodatime.Protobuf`](../../src/common/Ark.Tools.Nodatime.Protobuf).
-The remaining planned work is tracked as T4.2, T4.3 and the productization
-tasks in the implementation plan.
+The remaining planned work is tracked as the productization tasks in the
+implementation plan.

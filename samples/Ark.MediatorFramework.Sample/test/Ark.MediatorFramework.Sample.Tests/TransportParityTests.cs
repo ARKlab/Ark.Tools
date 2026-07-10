@@ -9,12 +9,14 @@ using System.Reflection;
 using System.Text.Json;
 
 using Ark.MediatorFramework.Generated;
-using Ark.MediatorFramework.Sample.GrpcClient;
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.WebInterface;
 
 using AwesomeAssertions;
 
+using Google.Rpc;
+
+using Grpc.Core;
 using Grpc.Net.Client;
 
 using MessagePack;
@@ -31,9 +33,14 @@ using Rebus.Messages;
 using Rebus.Retry.Simple;
 using Rebus.Transport.InMem;
 
-using ProtoBuf.Grpc.Client;
-
 using SimpleInjector;
+
+using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
+using GrpcGreetings = Ark.MediatorFramework.Sample.GrpcClient.Greetings;
+using GrpcLocalDate = Ark.MediatorFramework.Sample.GrpcClient.LocalDate;
+using GrpcLocalDateTime = Ark.MediatorFramework.Sample.GrpcClient.LocalDateTime;
+using GrpcOffsetDateTime = Ark.MediatorFramework.Sample.GrpcClient.OffsetDateTime;
+using GrpcPeriod = Ark.MediatorFramework.Sample.GrpcClient.Period;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
@@ -182,21 +189,62 @@ public sealed class TransportParityTests
         {
             HttpHandler = _host.GetTestServer().CreateHandler(),
         });
-        var client = new Greetings.GreetingsClient(channel);
+        var client = new GrpcGreetings.GreetingsClient(channel);
 
         var request = NewNodaTimeRequest("Grpc");
-        var result = await client.CreateGreetingRequestAsync(new CreateGreetingRequest
+        var result = await client.CreateGreetingAsync(new GrpcCreateGreetingRequest
         {
             Name = request.Name,
-            Date = request.Date.ToString(),
-            DateTime = request.DateTime.ToString(),
-            OffsetDateTime = request.OffsetDateTime.ToString(),
-            Period = request.Period.ToString(),
+            Date = new GrpcLocalDate
+            {
+                Year = request.Date.Year,
+                Month = request.Date.Month,
+                Day = request.Date.Day,
+            },
+            DateTime = new GrpcLocalDateTime
+            {
+                Year = request.DateTime.Year,
+                Month = request.DateTime.Month,
+                Day = request.DateTime.Day,
+                NanosecondOfDay = request.DateTime.NanosecondOfDay,
+            },
+            OffsetDateTime = new GrpcOffsetDateTime
+            {
+                Year = request.OffsetDateTime.Year,
+                Month = request.OffsetDateTime.Month,
+                Day = request.OffsetDateTime.Day,
+                NanosecondOfDay = request.OffsetDateTime.NanosecondOfDay,
+                OffsetSeconds = request.OffsetDateTime.Offset.Seconds,
+            },
+            Period = new GrpcPeriod { Value = request.Period.ToString() },
         }).ResponseAsync.ConfigureAwait(false);
 
         result.Message.Should().Contain("Grpc");
         _container.GetInstance<IGreetingStore>().All()
             .Any(g => g.Message.Contains("Grpc", StringComparison.Ordinal))
+            .Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task Grpc_maps_validation_failures_to_rich_error_status()
+    {
+        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+        {
+            HttpHandler = _host.GetTestServer().CreateHandler(),
+        });
+        var client = new GrpcGreetings.GreetingsClient(channel);
+
+        var exception = await Assert.ThrowsAsync<RpcException>(
+            async () => await client.CreateGreetingAsync(new GrpcCreateGreetingRequest()).ResponseAsync.ConfigureAwait(false))
+            .ConfigureAwait(false);
+
+        exception.StatusCode.Should().Be(StatusCode.InvalidArgument);
+        var status = exception.GetRpcStatus();
+        status.Should().NotBeNull();
+        status!.Code.Should().Be((int)Code.InvalidArgument);
+        status.Details.Count.Should().BeGreaterThan(0);
+        BadRequest.Parser.ParseFrom(status.Details[0].Value).FieldViolations
+            .Any(violation => violation.Field == nameof(CreateGreetingRequest.Name))
             .Should().BeTrue();
     }
 
@@ -248,7 +296,7 @@ public sealed class TransportParityTests
         proto.Should().Contain("message CreateGreetingRequest");
         proto.Should().Contain("message GreetingResponse");
         proto.Should().Contain("service Greetings");
-        proto.Should().Contain("rpc CreateGreetingRequest(CreateGreetingRequest) returns (GreetingResponse);");
+        proto.Should().Contain("rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);");
     }
 
     [TestMethod]

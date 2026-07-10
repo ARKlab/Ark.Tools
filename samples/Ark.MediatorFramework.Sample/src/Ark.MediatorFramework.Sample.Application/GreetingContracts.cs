@@ -48,7 +48,7 @@ public sealed record GreetingResponse
 /// </summary>
 [HttpEndpoint("POST", "/api/v1/greetings")]
 [RebusMessage]
-[GrpcMethod]
+[GrpcMethod("CreateGreeting")]
 [ServiceGroup("Greetings")]
 [ProtoContract]
 [MessagePackObject(true)]

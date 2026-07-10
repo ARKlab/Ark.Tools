@@ -1,25 +1,29 @@
 syntax = "proto3";
 
-package ark.mediator;
+option csharp_namespace = "Ark.MediatorFramework.Sample.GrpcClient";
+
+message LocalDate { int32 year = 1; int32 month = 2; int32 day = 3; }
+message LocalDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 nanosecond_of_day = 4; }
+message OffsetDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 nanosecond_of_day = 4; int32 offset_seconds = 5; }
+message Period { string value = 1; }
 
 message CreateGreetingRequest {
   string name = 1;
-  string date = 2;
-  string date_time = 3;
-  string offset_date_time = 4;
-  string period = 5;
+  LocalDate date = 2;
+  LocalDateTime date_time = 3;
+  OffsetDateTime offset_date_time = 4;
+  Period period = 5;
 }
 
 message GreetingResponse {
-  string id = 1;
+  bytes id = 1;
   string message = 2;
-  string date = 3;
-  string date_time = 4;
-  string offset_date_time = 5;
-  string period = 6;
+  LocalDate date = 3;
+  LocalDateTime date_time = 4;
+  OffsetDateTime offset_date_time = 5;
+  Period period = 6;
 }
 
 service Greetings {
-  rpc CreateGreetingRequest(CreateGreetingRequest) returns (GreetingResponse);
+  rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);
 }
-
