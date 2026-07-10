@@ -22,15 +22,16 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <ProtoOutputFile>$(ProjectDir)$(AssemblyName).proto</ProtoOutputFile>
-    <ProtoGeneratorAssembly>$(ProjectDir)..\Ark.MediatorFramework.ProtoGenerator\bin\$(Configuration)\net10.0\Ark.MediatorFramework.ProtoGenerator.dll</ProtoGeneratorAssembly>
+    <ProtoOutputFile>$(MSBuildProjectDirectory)/$(AssemblyName).proto</ProtoOutputFile>
+    <ProtoGeneratorAssembly>$(MSBuildProjectDirectory)/../Ark.MediatorFramework.ProtoGenerator/bin/$(Configuration)/net10.0/Ark.MediatorFramework.ProtoGenerator.dll</ProtoGeneratorAssembly>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="$(ProtoOutputFile)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <Target Name="EmitMediatorProto" AfterTargets="CoreCompile" BeforeTargets="CopyFilesToOutputDirectory">
-    <Exec Command="dotnet &quot;$(ProtoGeneratorAssembly)&quot; &quot;$(ProjectDir)..\Ark.MediatorFramework.Sample.Application\bin\$(Configuration)\net10.0\Ark.MediatorFramework.Sample.Application.dll&quot; &quot;$(ProtoOutputFile)&quot;" />
-    <ItemGroup>
-      <None Include="$(ProtoOutputFile)" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
+    <Exec Command="dotnet &quot;$(ProtoGeneratorAssembly)&quot; &quot;$(MSBuildProjectDirectory)/../Ark.MediatorFramework.Sample.Application/bin/$(Configuration)/net10.0/Ark.MediatorFramework.Sample.Application.dll&quot; &quot;$(ProtoOutputFile)&quot;" />
   </Target>
 
 </Project>

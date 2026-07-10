@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package ark.mediator;
+
+message CreateGreetingRequest {
+  string name = 1;
+  string date = 2;
+  string date_time = 3;
+  string offset_date_time = 4;
+  string period = 5;
+}
+
+message GreetingResponse {
+  string id = 1;
+  string message = 2;
+  string date = 3;
+  string date_time = 4;
+  string offset_date_time = 5;
+  string period = 6;
+}
+
+service Greetings {
+  rpc CreateGreetingRequest(CreateGreetingRequest) returns (GreetingResponse);
+}
+
