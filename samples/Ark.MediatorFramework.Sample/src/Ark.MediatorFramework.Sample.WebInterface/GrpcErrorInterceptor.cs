@@ -5,7 +5,6 @@ using FluentValidation;
 
 using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.MediatorFramework;
-using Ark.Tools.SystemTextJson;
 
 using Google.Protobuf.WellKnownTypes;
 using Google.Rpc;
@@ -14,6 +13,7 @@ using Grpc.Core;
 using Grpc.Core.Interceptors;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -44,7 +44,7 @@ public sealed class GrpcErrorInterceptor : Interceptor
                 Type = violation.GetType().Name,
                 Title = violation.Title,
                 Status = violation.Status,
-                PayloadJson = Convert.ToBase64String(SerializeViolation(violation)),
+                PayloadJson = System.Text.Encoding.UTF8.GetString(SerializeViolation(violation)),
             };
             using var stream = new MemoryStream();
             ProtoBuf.Serializer.Serialize(stream, detail);
@@ -83,16 +83,17 @@ public sealed class GrpcErrorInterceptor : Interceptor
             throw status.ToRpcException();
         }
 
-        [SuppressMessage(
-            "Trimming",
-            "IL2026",
-            Justification = "Business rule payloads are application-defined and intentionally serialized using the shared Ark JSON options.")]
-        private static byte[] SerializeViolation(BusinessRuleViolation violation)
-        {
-            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
-                violation,
-                violation.GetType(),
-                ArkSerializerOptions.JsonOptions);
-        }
+    }
+
+    [SuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Business rule payloads are application-defined and intentionally serialized using the shared Ark JSON options.")]
+    private static byte[] SerializeViolation(BusinessRuleViolation violation)
+    {
+        return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
+            violation,
+            violation.GetType(),
+            ArkSerializerOptions.JsonOptions);
     }
 }

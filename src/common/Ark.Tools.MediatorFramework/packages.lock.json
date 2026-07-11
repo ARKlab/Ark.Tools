@@ -61,6 +61,15 @@
         "resolved": "10.11.2",
         "contentHash": "UpCgr4Fp/wUpmUCX+Lgr5k6OIWpayaze1dYGfnTLqfga9HtnE7qqxyKFf8MCNUWZ7XO+sG7mE5BY9N63Kyu/jQ=="
       },
+      "protobuf-net": {
+        "type": "Direct",
+        "requested": "[3.2.56, )",
+        "resolved": "3.2.56",
+        "contentHash": "4IPJeTYAMNewlN8MDaFkcmR/9hLhJeo9eARnTh104zh7mf+vXT2gu5MUfUnkSQU+CH578Q6vcdU7LQDQPG6eaw==",
+        "dependencies": {
+          "protobuf-net.Core": "3.2.56"
+        }
+      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.300",
@@ -73,6 +82,11 @@
         "type": "Transitive",
         "resolved": "10.0.300",
         "contentHash": "0jlkXaUGjYlWTIVPve5MftjKHnT3SlAtq9BCLV4J9IjdPrxV/+4rMlBSjfr1khG8/GC6KGojjola8E1VvWF0qQ=="
+      },
+      "protobuf-net.Core": {
+        "type": "Transitive",
+        "resolved": "3.2.56",
+        "contentHash": "d6QOukTpDzs7zZv9tPnBZMtvHDNeHJQXUhMx54g4urUQsXK3oo9U70H9HvklYq7hlQ4A7AHJl7EVEqyCXXIl8Q=="
       },
       "System.IO.Hashing": {
         "type": "Transitive",
@@ -140,6 +154,15 @@
         "resolved": "10.11.2",
         "contentHash": "UpCgr4Fp/wUpmUCX+Lgr5k6OIWpayaze1dYGfnTLqfga9HtnE7qqxyKFf8MCNUWZ7XO+sG7mE5BY9N63Kyu/jQ=="
       },
+      "protobuf-net": {
+        "type": "Direct",
+        "requested": "[3.2.56, )",
+        "resolved": "3.2.56",
+        "contentHash": "4IPJeTYAMNewlN8MDaFkcmR/9hLhJeo9eARnTh104zh7mf+vXT2gu5MUfUnkSQU+CH578Q6vcdU7LQDQPG6eaw==",
+        "dependencies": {
+          "protobuf-net.Core": "3.2.56"
+        }
+      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.300",
@@ -152,6 +175,11 @@
         "type": "Transitive",
         "resolved": "10.0.300",
         "contentHash": "0jlkXaUGjYlWTIVPve5MftjKHnT3SlAtq9BCLV4J9IjdPrxV/+4rMlBSjfr1khG8/GC6KGojjola8E1VvWF0qQ=="
+      },
+      "protobuf-net.Core": {
+        "type": "Transitive",
+        "resolved": "3.2.56",
+        "contentHash": "d6QOukTpDzs7zZv9tPnBZMtvHDNeHJQXUhMx54g4urUQsXK3oo9U70H9HvklYq7hlQ4A7AHJl7EVEqyCXXIl8Q=="
       },
       "System.IO.Hashing": {
         "type": "Transitive",

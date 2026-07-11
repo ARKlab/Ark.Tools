@@ -204,7 +204,10 @@
         }
       },
       "ark.tools.mediatorframework": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "protobuf-net": "[3.2.56, )"
+        }
       },
       "ark.tools.nlog": {
         "type": "Project",
@@ -698,7 +701,10 @@
         }
       },
       "ark.tools.mediatorframework": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "protobuf-net": "[3.2.56, )"
+        }
       },
       "ark.tools.nlog": {
         "type": "Project",

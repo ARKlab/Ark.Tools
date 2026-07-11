@@ -122,7 +122,7 @@ project builds under the repo's strict settings and its self-tests pass with
     `BusinessRuleViolationException` from a pure handler and asserts a 400
     whose `extensions` contains the derived violation payload (same shape as
     existing MVC hosts).
-- [ ] **T8.3** gRPC `BusinessRuleViolation` mapping.
+- [x] **T8.3** gRPC `BusinessRuleViolation` mapping.
   - *Accept:* the interceptor maps `BusinessRuleViolationException` to
     `RpcException` (`FailedPrecondition`) carrying a `Google.Rpc.Status` with
     an `ArkBusinessRuleViolation` detail (`type`, `title`, `status`,
