@@ -104,10 +104,67 @@ project builds under the repo's strict settings and its self-tests pass with
 - [x] **T7.3** Migration guide from MVC controllers.
   - *Accept:* docs reviewed; package validation + SBOM succeed in CI.
 
+## Epic 8 — Review revisions (2026-07 review)
+
+- [ ] **T8.1** NodaTime protobuf: adopt `NodaTime.Serialization.Protobuf` for
+  natively supported types; keep custom surrogates only for the rest.
+  - *Accept:* `Instant`, `Duration`, `LocalDate`, `LocalTime` and
+    `IsoDayOfWeek` round-trip through protobuf-net using the library's
+    conversions with well-known/common-proto wire shapes
+    (`google.protobuf.Timestamp`, `google.protobuf.Duration`,
+    `google.type.Date`, `google.type.TimeOfDay`, `google.type.DayOfWeek`);
+    `OffsetDateTime`, `LocalDateTime` and `Period` round-trip via the custom
+    surrogates; tests cover **both** categories.
+- [ ] **T8.2** Minimal API errors via Hellang ProblemDetails, including
+  `BusinessRuleViolation`.
+  - *Accept:* the sample host uses `Hellang.Middleware.ProblemDetails` with
+    the `Ark.Tools.AspNetCore` mappings; an HTTP self-test throws
+    `BusinessRuleViolationException` from a pure handler and asserts a 400
+    whose `extensions` contains the derived violation payload (same shape as
+    existing MVC hosts).
+- [ ] **T8.3** gRPC `BusinessRuleViolation` mapping.
+  - *Accept:* the interceptor maps `BusinessRuleViolationException` to
+    `RpcException` (`FailedPrecondition`) carrying a `Google.Rpc.Status` with
+    an `ArkBusinessRuleViolation` detail (`type`, `title`, `status`,
+    `payload_json`); a generated-proto client test reads the detail and
+    deserializes the payload JSON.
+- [ ] **T8.4** gRPC file upload (client streaming).
+  - *Accept:* a client-streaming method (metadata-first chunked messages) is
+    generated/hosted; a self-test streams a payload larger than one chunk and
+    asserts the *same* pure attachment handler received the full content via
+    `IArkAttachment.OpenRead()`.
+- [ ] **T8.5** Version lifetime (introduced/retired) with `{version}` route
+  placeholder.
+  - *Accept:* `[HttpEndpoint]` routes declare only `/api/v{version}/…`;
+    `IntroducedIn`/`RetiredIn` on the attribute drive generation of one route
+    per active version; self-tests call the same contract on two versions and
+    assert a retired contract is absent from later versions; a route-parameter
+    (`{id}`) test passes on every generated version; gRPC generates one
+    service per active version per `[ServiceGroup]`.
+- [ ] **T8.6** Split the framework into per-transport packages, each with its
+  own generator.
+  - *Accept:* `Ark.Tools.MediatorFramework` (core) plus
+    `…MediatorFramework.MinimalApi`, `…MediatorFramework.Rebus` and
+    `…MediatorFramework.Grpc`, each bundling its own analyzer; the sample
+    references only the packages for the transports it hosts; solution builds
+    with locked-mode restore (lock files updated).
+- [ ] **T8.7** Framework capability tests under `tests/`.
+  - *Accept:* `tests/Ark.Tools.MediatorFramework.Tests` exercises the
+    generators (snapshot tests) and runtime pieces independent of the sample;
+    the sample `…Sample.Tests` remains the "how to test an application"
+    demonstration.
+
 ## Next implementation order
 
-1. **T7.3** Document migration from MVC, including when to retain a
-   hand-written adapter such as the MessagePack endpoint.
+1. **T8.1** NodaTime protobuf revision (isolated, no framework coupling).
+2. **T8.2** Hellang ProblemDetails + BusinessRuleViolation over HTTP.
+3. **T8.3** gRPC BusinessRuleViolation detail.
+4. **T8.4** gRPC client-streaming upload.
+5. **T8.5** Version lifetime + `{version}` placeholder expansion.
+6. **T8.6** Package split per transport (do after the generators stabilize in
+   T8.4/T8.5 to avoid splitting twice).
+7. **T8.7** Framework test project (moves/extends generator tests as part of
+   the split).
 
 ## Status legend
 

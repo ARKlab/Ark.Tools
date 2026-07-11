@@ -22,13 +22,23 @@ controller until the new endpoint has equivalent integration coverage.
 ## 2. Move the application contract and handler
 
 Define the request/query and handler in the application assembly. Add an
-explicit `[HttpEndpoint]` marker to the contract and keep the route and verb
-stable during the migration:
+explicit `[HttpEndpoint]` marker to the contract. The route contains only the
+`{version}` placeholder — the concrete version segment is **not** part of the
+route; declare when the contract was introduced (and, if ever, retired)
+instead:
 
 ```csharp
-[HttpEndpoint("POST", "/api/v1/greetings")]
+[HttpEndpoint("POST", "/api/v{version}/greetings", IntroducedIn = 1)]
 public sealed record CreateGreeting(string Name) : IRequest<GreetingResponse>;
+
+[HttpEndpoint("GET", "/api/v{version}/greetings/{id}", IntroducedIn = 1, RetiredIn = 3)]
+public sealed record GetGreeting(Guid Id) : IQuery<GreetingResponse>;
 ```
+
+The generator registers the route for **every version the contract is active
+in** (`/api/v1/…`, `/api/v2/…`), as `Asp.Versioning` does for controllers, so
+the same request/query serves all its versions from one declaration. Route
+parameters such as `{id}` bind via `[FromRoute]` on every generated version.
 
 The source generator emits the endpoint registration. The handler must not
 depend on `HttpContext`, MVC model binding, `ServerCallContext` or Rebus
@@ -51,8 +61,11 @@ scope. Do not open a second SimpleInjector scope in an endpoint or handler.
 Keep authorization and other endpoint metadata on the generated contract or
 registration according to the hosting application's existing policy.
 
-For API versions, use a route such as `/api/v1/...` or `/api/v2/...`. The
-generator uses that route segment when partitioning OpenAPI documents.
+For API versions, declare the contract's lifetime (`IntroducedIn`/`RetiredIn`)
+and use the `/api/v{version}/...` placeholder route. The generator emits one
+route per active version and partitions the OpenAPI documents accordingly;
+retiring an action in a new version is a contract-lifetime change, not a route
+change.
 
 ## 4. Preserve MVC where it is the right adapter
 

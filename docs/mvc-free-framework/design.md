@@ -124,11 +124,34 @@ request scope (opened by the SimpleInjector integration in the pipeline). The
 `partial` lets a developer hand-write any method the generator cannot express.
 Startup uses `AddCodeFirstGrpc()` + `MapGrpcService<OrdersService>()`.
 
-NodaTime members on contracts serialize over protobuf via the surrogates in
+NodaTime members on contracts serialize over protobuf via
 [`Ark.Tools.Nodatime.Protobuf`](../../src/common/Ark.Tools.Nodatime.Protobuf)
-(`RuntimeTypeModel.AddNodaTimeSurrogates()`): `OffsetDateTime` preserves the
-offset, `LocalDate` is date-only, `LocalDateTime` is zoneless and `Period` is
-carried as its ISO-8601 round-trip string.
+(`RuntimeTypeModel.AddNodaTimeSurrogates()`). The wire mapping is layered:
+
+- **Types natively supported by `NodaTime.Serialization.Protobuf`** use that
+  library's conversions so the wire format is the corresponding Google
+  well-known/common protobuf message. Hand-written encodings are **not** used
+  for these types.
+- **Custom surrogates exist only for types the library does not support.**
+
+| NodaTime type | Wire representation | Provided by |
+| --- | --- | --- |
+| `Instant` | `google.protobuf.Timestamp` | `NodaTime.Serialization.Protobuf` (`ToTimestamp`/`ToInstant`) |
+| `Duration` | `google.protobuf.Duration` | `NodaTime.Serialization.Protobuf` (`ToProtobufDuration`/`ToNodaDuration`) |
+| `LocalDate` | `google.type.Date` | `NodaTime.Serialization.Protobuf` (`ToDate`/`ToLocalDate`) |
+| `LocalTime` | `google.type.TimeOfDay` | `NodaTime.Serialization.Protobuf` (`ToTimeOfDay`/`ToLocalTime`) |
+| `IsoDayOfWeek` | `google.type.DayOfWeek` | `NodaTime.Serialization.Protobuf` (`ToProtobufDayOfWeek`/`ToIsoDayOfWeek`) |
+| `OffsetDateTime` | custom surrogate: local date-time + offset seconds | Ark surrogate |
+| `LocalDateTime` | custom surrogate: date + nanosecond-of-day | Ark surrogate |
+| `Period` | custom surrogate: ISO-8601 round-trip string | Ark surrogate |
+
+protobuf-net does not serialize `Google.Protobuf` message classes directly, so
+the surrogate structs for the natively-supported types mirror the well-known
+message layout (same proto name and field numbers/types) and delegate the
+semantic conversion to the `NodaTime.Serialization.Protobuf` extension methods.
+Tests must cover **both** categories: the native mappings (`Instant`,
+`Duration`, `LocalDate`, `LocalTime`, `IsoDayOfWeek`) and the custom surrogates
+(`OffsetDateTime`, `LocalDateTime`, `Period`).
 
 ### Emitted Rebus handler
 
@@ -154,12 +177,51 @@ pipeline), so adapters never open their own scope.
 
 | Transport | Mechanism | Mapping |
 | --- | --- | --- |
-| Minimal API | global exception handler / endpoint filter → `IProblemDetailsService` | `EntityNotFoundException`→404; `ValidationException`→400 + `extensions` field violations |
-| gRPC | server interceptor → `Google.Rpc.Status` rich error model | field violations packed as `BadRequest` details in trailing metadata; thrown as `RpcException` |
+| Minimal API | `Hellang.Middleware.ProblemDetails` configured by the same `ArkProblemDetailsOptionsSetup` used in `Ark.Tools.AspNetCore` | `EntityNotFoundException`→404; `ValidationException`→400 + `extensions` field violations; `BusinessRuleViolationException`→400 with the violation payload in `extensions` |
+| gRPC | server interceptor → `Google.Rpc.Status` rich error model | field violations packed as `BadRequest` details in trailing metadata; business rule violations packed as an `ArkBusinessRuleViolation` detail; thrown as `RpcException` |
 | Rebus | scope disposal + native retry | exhausted → error/dead-letter queue with serialized exception headers |
 
 Handlers only throw semantic domain exceptions; they never format transport
 errors.
+
+### HTTP: Hellang ProblemDetails + BusinessRuleViolation
+
+The Minimal API host does **not** reimplement RFC 7807 mapping. It registers
+`Hellang.Middleware.ProblemDetails` and reuses the mappings that
+`Ark.Tools.AspNetCore` already ships (`ArkProblemDetailsOptionsSetup`):
+
+- `EntityNotFoundException` → 404, `OptimisticConcurrencyException` → 409,
+  `UnauthorizedAccessException` → 403, `ValidationException` → 400 with field
+  violations.
+- `BusinessRuleViolationException` → 400: the `BusinessRuleViolation`-derived
+  object (class name = error code; extra public properties = structured data)
+  is serialized into the ProblemDetails `extensions`, exactly as existing MVC
+  hosts do. This behavior is preserved by the MVC-free host — clients observe
+  the same payload.
+
+### gRPC: BusinessRuleViolation over `Google.Rpc.Status`
+
+Protobuf has no polymorphism, so a `BusinessRuleViolation`-derived object
+cannot cross the wire as its concrete protobuf message. The design carries it
+as a dedicated detail message inside the standard rich error model:
+
+```proto
+message ArkBusinessRuleViolation {
+  string type = 1;         // violation class name (the error code)
+  string title = 2;        // BusinessRuleViolation.Title
+  int32 status = 3;        // HTTP-equivalent status (400)
+  string payload_json = 4; // canonical JSON of the derived violation (ArkSerializerOptions)
+}
+```
+
+- The server interceptor maps `BusinessRuleViolationException` to an
+  `RpcException` with `StatusCode.FailedPrecondition` and a `Google.Rpc.Status`
+  whose `details` contain one `ArkBusinessRuleViolation` (packed as `Any`).
+- `payload_json` is the same JSON the HTTP ProblemDetails path produces, so a
+  client can deserialize the derived violation when it knows the type, and can
+  always read `type`/`title` generically.
+- Polyglot clients that cannot parse the JSON still get `type` + `title` as
+  plain strings — the JSON payload is additive, never required.
 
 ## User context
 
@@ -187,7 +249,89 @@ stream proxy:
 
 - Minimal API: endpoint accepts `IFormFile`; the hosting maps
   `OpenReadStream()` into `ArkAttachment`.
-- gRPC: emitted as `IAsyncEnumerable<>` streaming methods.
+- gRPC: an `IFormFile`-style single message **cannot** represent a file upload —
+  a protobuf `bytes` field buffers the whole payload in memory and is capped by
+  the max message size. Uploads use a **client-streaming** method instead:
+
+```proto
+service Documents {
+  rpc Upload (stream UploadDocumentChunk) returns (UploadDocumentReply);
+}
+
+message UploadDocumentChunk {
+  oneof content {
+    UploadDocumentMetadata metadata = 1; // first message only
+    bytes data = 2;                      // subsequent messages, ≤64KiB each
+  }
+}
+
+message UploadDocumentMetadata {
+  string name = 1;
+  string content_type = 2;
+}
+```
+
+  The generated service implementation consumes the
+  `IAsyncEnumerable<UploadDocumentChunk>`: the first message must carry the
+  metadata, every following message carries a data chunk. The chunks are
+  exposed to the pure handler as an `IArkAttachment` whose `OpenRead()` returns
+  a forward-only stream over the incoming sequence, so the handler code is
+  identical for the HTTP multipart and the gRPC streaming path.
+
+## API versioning
+
+The version is part of the contract's **lifetime**, not of its route. A
+request/query is available in every version from its introduction until its
+retirement, mirroring how `Asp.Versioning` treats versions:
+
+- The HTTP route template contains only the **placeholder**:
+  `[HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]`.
+- The lifetime is declared on the transport attribute:
+  `IntroducedIn` (int, required, e.g. `1`) and `RetiredIn` (int, optional,
+  exclusive: the first version the contract is *not* part of).
+- The host declares the set of versions it serves. For each hosted version `v`
+  where `IntroducedIn <= v` and (`RetiredIn` unset or `v < RetiredIn`), the
+  generator registers the route with `{version}` substituted (e.g.
+  `/api/v1/greetings/{id}` **and** `/api/v2/greetings/{id}` from a single
+  contract).
+- OpenAPI documents are still partitioned per version; an endpoint appears in
+  every document of a version it is active in.
+- gRPC mirrors the same rule per `[ServiceGroup]`: one `[ServiceContract]`
+  service is generated per active version (`GreetingsV1`, `GreetingsV2`, …),
+  each containing the methods active in that version.
+- Route parameters (`{id}` etc.) are ordinary `[FromRoute]` bindings and remain
+  independent of the `{version}` placeholder; the sample must demonstrate and
+  test both together.
+
+Superseding a contract in a later version = retire the old contract at version
+`n` and introduce the replacement with `IntroducedIn = n`.
+
+## Packaging: one package per transport
+
+The framework ships as small packages, each dedicated to a single transport and
+carrying **its own** incremental generator (bundled as an analyzer asset of the
+same package):
+
+| Package | Contents |
+| --- | --- |
+| `Ark.Tools.MediatorFramework` | transport-neutral core: `IArkAttachment`/`ArkAttachment`, shared versioning primitives |
+| `Ark.Tools.MediatorFramework.MinimalApi` | `[HttpEndpoint]`, HTTP runtime helpers + the Minimal API endpoint generator |
+| `Ark.Tools.MediatorFramework.Rebus` | `[RebusMessage]`, Rebus runtime helpers + the Rebus wrapper generator |
+| `Ark.Tools.MediatorFramework.Grpc` | `[GrpcMethod]`/`[ServiceGroup]`, gRPC runtime helpers (interceptor, upload adapter) + the gRPC service generator |
+
+An application references only the transports it hosts; each generator reacts
+only to its own attribute, so adding a transport never re-runs the others.
+
+## Testing strategy
+
+- `samples/Ark.MediatorFramework.Sample/test/…Sample.Tests` demonstrates **how
+  an application built on the framework is tested**: in-process `TestServer` /
+  in-memory bus / in-process gRPC channel against the sample host — the pattern
+  an adopting team copies.
+- `tests/Ark.Tools.MediatorFramework.Tests` (repository `tests/` folder) tests
+  the **framework capabilities themselves**: generator snapshot tests, attribute
+  semantics (opt-in, versioning expansion), error-model mapping, attachment
+  adapters — independent of the sample application.
 
 ## Sample mapping to this design
 

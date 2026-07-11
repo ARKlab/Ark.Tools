@@ -17,7 +17,7 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 | `src/common/Ark.Tools.MediatorFramework.Generators` | Analyzer package containing the incremental generator that emits Minimal API endpoints and Rebus handler wrappers from pure contracts (discovered cross-assembly). |
 | `src/Ark.MediatorFramework.Sample.Application` | Pure, transport-agnostic contracts/handlers, in-memory store and cross-cutting decorator. Uses `IContextProvider<ClaimsPrincipal>` for the caller identity. |
 | `src/Ark.MediatorFramework.Sample.WebInterface` | Hosting: composition root, ASP.NET Core startup and the endpoints exposing the selected requests/queries. Wires the user context (AspNetCore auth + Rebus propagation) and starts the bus. |
-| `test/Ark.MediatorFramework.Sample.Tests` | Self-tests proving transport parity and attachment streaming. |
+| `test/Ark.MediatorFramework.Sample.Tests` | Demonstrates **how to test an application built on the framework**: in-process `TestServer`, in-memory bus and in-process gRPC channel against the sample host. Framework-capability tests (generators, runtime adapters) belong in `tests/Ark.Tools.MediatorFramework.Tests` instead. |
 
 ## What the self-tests prove
 
@@ -48,10 +48,13 @@ dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Samp
 ## Documented follow-ups
 
 The emitted `.proto` now generates a dedicated client assembly used by the
-behavioral tests, and the gRPC rich-error interceptor is covered there. Further
-work remains specified — with acceptance criteria — in
-[`docs/mvc-free-framework/tasks.md`](../../docs/mvc-free-framework/tasks.md).
-The NodaTime protobuf surrogates those transports need are already provided by
-[`Ark.Tools.Nodatime.Protobuf`](../../src/common/Ark.Tools.Nodatime.Protobuf).
-The remaining planned work is tracked as the productization tasks in the
-implementation plan.
+behavioral tests, and the gRPC rich-error interceptor is covered there. The
+2026-07 review revisions — NodaTime via `NodaTime.Serialization.Protobuf`,
+Hellang ProblemDetails with `BusinessRuleViolation` (HTTP and gRPC), gRPC
+client-streaming upload, version lifetime (`IntroducedIn`/`RetiredIn`) with the
+`/api/v{version}/…` placeholder, the per-transport package split and the
+framework test project under `tests/` — are specified with acceptance criteria
+in [`docs/mvc-free-framework/tasks.md`](../../docs/mvc-free-framework/tasks.md)
+(Epic 8) and step-by-step in
+[`docs/mvc-free-framework/implementation-plan.md`](../../docs/mvc-free-framework/implementation-plan.md)
+(Phase 6).
