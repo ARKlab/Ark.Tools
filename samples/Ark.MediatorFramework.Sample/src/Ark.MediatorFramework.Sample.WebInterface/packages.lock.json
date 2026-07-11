@@ -12,6 +12,12 @@
           "Grpc.Core.Api": "2.66.0"
         }
       },
+      "Hellang.Middleware.ProblemDetails": {
+        "type": "Direct",
+        "requested": "[6.5.1, )",
+        "resolved": "6.5.1",
+        "contentHash": "LgceF4mPguB/q3NWs6T3bitOFnYIANSRvfhASMgVb8ks7fSqY8jbdBHoVEuUDmxg3T7+kF21qSE0jQv9hdpLng=="
+      },
       "MessagePack.NodaTime": {
         "type": "Direct",
         "requested": "[3.5.5, )",
@@ -700,6 +706,12 @@
           "Google.Api.CommonProtos": "2.15.0",
           "Grpc.Core.Api": "2.66.0"
         }
+      },
+      "Hellang.Middleware.ProblemDetails": {
+        "type": "Direct",
+        "requested": "[6.5.1, )",
+        "resolved": "6.5.1",
+        "contentHash": "LgceF4mPguB/q3NWs6T3bitOFnYIANSRvfhASMgVb8ks7fSqY8jbdBHoVEuUDmxg3T7+kF21qSE0jQv9hdpLng=="
       },
       "MessagePack.NodaTime": {
         "type": "Direct",

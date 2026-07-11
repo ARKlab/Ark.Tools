@@ -383,6 +383,7 @@
           "Ark.Tools.AspNetCore.MessagePack": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Grpc.StatusProto": "[2.66.0, )",
+          "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "MessagePack.NodaTime": "[3.5.5, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
           "System.ServiceModel.Primitives": "[10.0.652802, )",
@@ -546,6 +547,12 @@
           "Google.Api.CommonProtos": "2.15.0",
           "Grpc.Core.Api": "2.66.0"
         }
+      },
+      "Hellang.Middleware.ProblemDetails": {
+        "type": "CentralTransitive",
+        "requested": "[6.5.1, )",
+        "resolved": "6.5.1",
+        "contentHash": "LgceF4mPguB/q3NWs6T3bitOFnYIANSRvfhASMgVb8ks7fSqY8jbdBHoVEuUDmxg3T7+kF21qSE0jQv9hdpLng=="
       },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",

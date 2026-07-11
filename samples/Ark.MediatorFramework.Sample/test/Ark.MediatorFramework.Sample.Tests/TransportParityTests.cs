@@ -346,6 +346,24 @@ public sealed class TransportParityTests
     }
 
     [TestMethod]
+    public async Task MinimalApi_maps_business_rule_violation_to_400_with_payload()
+    {
+        var request = new { name = "Duplicate" };
+        (await _client.PostAsJsonAsync("/api/v1/greetings", request).ConfigureAwait(false))
+            .EnsureSuccessStatusCode();
+
+        var response = await _client.PostAsJsonAsync("/api/v1/greetings", request).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+        var violation = doc.RootElement.GetProperty("businessRuleViolation");
+        violation.GetProperty("type").GetString().Should().Be(nameof(GreetingAlreadyExistsViolation));
+        violation.GetProperty("Name").GetString().Should().Be("Duplicate");
+    }
+
+    [TestMethod]
     public async Task Rebus_forwards_failing_message_to_dead_letter_with_exception_headers()
     {
         var bus = _container.GetInstance<IBus>();

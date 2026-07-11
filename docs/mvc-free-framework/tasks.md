@@ -115,7 +115,7 @@ project builds under the repo's strict settings and its self-tests pass with
     `google.type.Date`, `google.type.TimeOfDay`, `google.type.DayOfWeek`);
     `OffsetDateTime`, `LocalDateTime` and `Period` round-trip via the custom
     surrogates; tests cover **both** categories.
-- [ ] **T8.2** Minimal API errors via Hellang ProblemDetails, including
+- [x] **T8.2** Minimal API errors via Hellang ProblemDetails, including
   `BusinessRuleViolation`.
   - *Accept:* the sample host uses `Hellang.Middleware.ProblemDetails` with
     the `Ark.Tools.AspNetCore` mappings; an HTTP self-test throws

@@ -10,7 +10,10 @@ using Ark.Tools.AspNetCore.MessagePackFormatter;
 
 using MessagePack.Resolvers;
 
+using Hellang.Middleware.ProblemDetails;
+
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
 using SimpleInjector;
@@ -20,6 +23,8 @@ using ProtoBuf.Grpc.Server;
 using ProtoBuf.Meta;
 
 using System.Text.Json;
+
+using HellangProblemDetailsOptions = Hellang.Middleware.ProblemDetails.ProblemDetailsOptions;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -60,10 +65,10 @@ public sealed class SampleStartup
         // so the polymorphic [JsonConverter]-annotated contracts round-trip over the wire.
         services.ConfigureHttpJsonOptions(options => options.SerializerOptions.ConfigureArkDefaults());
 
-        // RFC 7807 ProblemDetails: the exception handler maps semantic domain exceptions
+        // RFC 7807 ProblemDetails: Hellang maps semantic domain exceptions
         // (EntityNotFoundException -> 404, ValidationException -> 400 + field violations).
-        services.AddProblemDetails();
-        services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
+        Hellang.Middleware.ProblemDetails.ProblemDetailsExtensions.AddProblemDetails(services);
+        services.AddSingleton<IConfigureOptions<HellangProblemDetailsOptions>, SampleProblemDetailsOptionsSetup>();
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         services.AddCodeFirstGrpc(options => options.Interceptors.Add<GrpcErrorInterceptor>());
 
@@ -79,7 +84,7 @@ public sealed class SampleStartup
         ArgumentNullException.ThrowIfNull(app);
 
         // Outermost middleware: map unhandled domain exceptions to RFC 7807 ProblemDetails responses.
-        app.UseExceptionHandler();
+        app.UseProblemDetails();
 
         app.UseRouting();
 
