@@ -36,6 +36,7 @@ using Rebus.Transport.InMem;
 using SimpleInjector;
 
 using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
+using GrpcArkBusinessRuleViolation = Ark.MediatorFramework.Sample.GrpcClient.ArkBusinessRuleViolation;
 using GrpcGreetings = Ark.MediatorFramework.Sample.GrpcClient.Greetings;
 using GrpcLocalDate = Ark.MediatorFramework.Sample.GrpcClient.LocalDate;
 using GrpcLocalDateTime = Ark.MediatorFramework.Sample.GrpcClient.LocalDateTime;
@@ -246,6 +247,54 @@ public sealed class TransportParityTests
         BadRequest.Parser.ParseFrom(status.Details[0].Value).FieldViolations
             .Any(violation => violation.Field == nameof(CreateGreetingRequest.Name))
             .Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task Grpc_maps_business_rule_violations_to_rich_error_status()
+    {
+        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+        {
+            HttpHandler = _host.GetTestServer().CreateHandler(),
+        });
+        var client = new GrpcGreetings.GreetingsClient(channel);
+        var request = NewNodaTimeRequest("GrpcDuplicate");
+
+        await client.CreateGreetingAsync(new GrpcCreateGreetingRequest
+        {
+            Name = request.Name,
+            Date = new GrpcLocalDate { Year = request.Date.Year, Month = request.Date.Month, Day = request.Date.Day },
+            DateTime = new GrpcLocalDateTime
+            {
+                Year = request.DateTime.Year,
+                Month = request.DateTime.Month,
+                Day = request.DateTime.Day,
+                NanosecondOfDay = request.DateTime.NanosecondOfDay,
+            },
+            OffsetDateTime = new GrpcOffsetDateTime
+            {
+                Year = request.OffsetDateTime.Year,
+                Month = request.OffsetDateTime.Month,
+                Day = request.OffsetDateTime.Day,
+                NanosecondOfDay = request.OffsetDateTime.NanosecondOfDay,
+                OffsetSeconds = request.OffsetDateTime.Offset.Seconds,
+            },
+            Period = new GrpcPeriod { Value = request.Period.ToString() },
+        }).ResponseAsync.ConfigureAwait(false);
+
+        var exception = await Assert.ThrowsAsync<RpcException>(
+            async () => await client.CreateGreetingAsync(new GrpcCreateGreetingRequest
+            {
+                Name = request.Name,
+            }).ResponseAsync.ConfigureAwait(false)).ConfigureAwait(false);
+
+        exception.StatusCode.Should().Be(StatusCode.FailedPrecondition);
+        var status = exception.GetRpcStatus();
+        status.Should().NotBeNull();
+        var detail = GrpcArkBusinessRuleViolation.Parser.ParseFrom(status!.Details[0].Value);
+        detail.Type.Should().Be(nameof(GreetingAlreadyExistsViolation));
+        detail.Title.Should().Be("Greeting already exists");
+        detail.Status.Should().Be(400);
+        detail.PayloadJson.Should().Contain("\"name\":\"GrpcDuplicate\"");
     }
 
     [TestMethod]

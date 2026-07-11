@@ -3,11 +3,17 @@
 
 using FluentValidation;
 
+using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.MediatorFramework;
+using Ark.Tools.SystemTextJson;
+
 using Google.Protobuf.WellKnownTypes;
 using Google.Rpc;
 
 using Grpc.Core;
 using Grpc.Core.Interceptors;
+
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -30,6 +36,31 @@ public sealed class GrpcErrorInterceptor : Interceptor
         {
             return await continuation(request, context).ConfigureAwait(false);
         }
+        catch (BusinessRuleViolationException exception)
+        {
+            var violation = exception.BusinessRuleViolation;
+            var detail = new ArkBusinessRuleViolation
+            {
+                Type = violation.GetType().Name,
+                Title = violation.Title,
+                Status = violation.Status,
+                PayloadJson = Convert.ToBase64String(SerializeViolation(violation)),
+            };
+            using var stream = new MemoryStream();
+            ProtoBuf.Serializer.Serialize(stream, detail);
+
+            var status = new Google.Rpc.Status
+            {
+                Code = (int)Code.FailedPrecondition,
+                Message = violation.Title,
+            };
+            status.Details.Add(new Any
+            {
+                TypeUrl = "type.googleapis.com/ark.mediator.ArkBusinessRuleViolation",
+                Value = Google.Protobuf.ByteString.CopyFrom(stream.ToArray()),
+            });
+            throw status.ToRpcException();
+        }
         catch (ValidationException exception)
         {
             var status = new Google.Rpc.Status
@@ -50,6 +81,18 @@ public sealed class GrpcErrorInterceptor : Interceptor
 
             status.Details.Add(Any.Pack(badRequest));
             throw status.ToRpcException();
+        }
+
+        [SuppressMessage(
+            "Trimming",
+            "IL2026",
+            Justification = "Business rule payloads are application-defined and intentionally serialized using the shared Ark JSON options.")]
+        private static byte[] SerializeViolation(BusinessRuleViolation violation)
+        {
+            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
+                violation,
+                violation.GetType(),
+                ArkSerializerOptions.JsonOptions);
         }
     }
 }

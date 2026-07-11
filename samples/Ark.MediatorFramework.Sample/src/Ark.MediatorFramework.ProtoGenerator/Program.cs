@@ -29,6 +29,7 @@ schema.AppendLine("message LocalDate { int32 year = 1; int32 month = 2; int32 da
 schema.AppendLine("message LocalDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 nanosecond_of_day = 4; }");
 schema.AppendLine("message OffsetDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 nanosecond_of_day = 4; int32 offset_seconds = 5; }");
 schema.AppendLine("message Period { string value = 1; }");
+schema.AppendLine("message ArkBusinessRuleViolation { string type = 1; string title = 2; int32 status = 3; string payload_json = 4; }");
 schema.AppendLine();
 
 foreach (var contract in contracts.OrderBy(static pair => pair.Value, StringComparer.Ordinal))

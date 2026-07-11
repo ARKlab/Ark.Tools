@@ -10,4 +10,8 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="protobuf-net" />
+  </ItemGroup>
+
 </Project>
