@@ -89,14 +89,6 @@
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
       },
-      "Google.Api.CommonProtos": {
-        "type": "Transitive",
-        "resolved": "2.15.0",
-        "contentHash": "k+43CTEgMbT4C2JjcIJon3GvMNFJ3kLMjPTedOkXUAt0D5cFfrlee+M4oieueAVhbXktR89yoj5O/kVmC/AKJw==",
-        "dependencies": {
-          "Google.Protobuf": "[3.25.0, 4.0.0)"
-        }
-      },
       "Grpc.AspNetCore.Server": {
         "type": "Transitive",
         "resolved": "2.66.0",
@@ -380,7 +372,7 @@
       "ark.mediatorframework.sample.grpcclient": {
         "type": "Project",
         "dependencies": {
-          "Google.Protobuf": "[3.25.5, )",
+          "Google.Protobuf": "[3.31.1, )",
           "Grpc.Net.Client": "[2.80.0, )"
         }
       },
@@ -449,7 +441,9 @@
       "ark.tools.nodatime.protobuf": {
         "type": "Project",
         "dependencies": {
+          "Google.Api.CommonProtos": "[2.17.0, )",
           "NodaTime": "[3.3.2, )",
+          "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.2.56, )"
         }
       },
@@ -528,11 +522,20 @@
         "resolved": "12.1.1",
         "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
       },
+      "Google.Api.CommonProtos": {
+        "type": "CentralTransitive",
+        "requested": "[2.17.0, )",
+        "resolved": "2.17.0",
+        "contentHash": "elfQPknFr495hm7vdy6ZlgyQh6yzZq9TU7sS35L/Fj/fqjM/mUGau9gVJLhvQEtUlPjtR80hpn/m9HvBMyCXIw==",
+        "dependencies": {
+          "Google.Protobuf": "[3.31.1, 4.0.0]"
+        }
+      },
       "Google.Protobuf": {
         "type": "CentralTransitive",
-        "requested": "[3.25.5, )",
-        "resolved": "3.25.5",
-        "contentHash": "c15SLmjoS7GUWFoRIYp3TTS5OS+1loPk1K6kTLxw2k35qGGMpthQxKmouw9OmSIHpaJ6BJfv0VLqBDgk1VDpmg=="
+        "requested": "[3.31.1, )",
+        "resolved": "3.31.1",
+        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
       },
       "Grpc.StatusProto": {
         "type": "CentralTransitive",
@@ -791,6 +794,16 @@
         "requested": "[3.3.2, )",
         "resolved": "3.3.2",
         "contentHash": "8hI5b1ENTKQCaPyU6YHpYiMwj5aJKZ4Mnv0bLbhk65Dd44gQsXenUohMzyiIphANa8LdW6vcOvpY/l1urvx4dw=="
+      },
+      "NodaTime.Serialization.Protobuf": {
+        "type": "CentralTransitive",
+        "requested": "[2.0.2, )",
+        "resolved": "2.0.2",
+        "contentHash": "yjwzq6ueTY0xy7IGzuMIrfNky0fGx96EdOEFEV4WaY/IkhMto4MxZWiUdPJnCQFzR/iSDhQE0rrlVKlRyEV5Sw==",
+        "dependencies": {
+          "Google.Api.CommonProtos": "[2.1.0, 3.0.0)",
+          "NodaTime": "[3.0.0, 4.0.0)"
+        }
       },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "CentralTransitive",

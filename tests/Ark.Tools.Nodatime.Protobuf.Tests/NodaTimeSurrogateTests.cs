@@ -13,9 +13,7 @@ using ProtoBuf.Meta;
 namespace Ark.Tools.Nodatime.Protobuf.Tests;
 
 /// <summary>
-/// Round-trip tests proving the NodaTime protobuf surrogates preserve the semantics of each type:
-/// the offset of <see cref="OffsetDateTime"/>, the date-only nature of <see cref="LocalDate"/>,
-/// the zoneless <see cref="LocalDateTime"/> and the ISO encoding of <see cref="Period"/>.
+/// Round-trip tests proving the NodaTime protobuf surrogates preserve the semantics of each type.
 /// </summary>
 [TestClass]
 public sealed class NodaTimeSurrogateTests
@@ -34,6 +32,18 @@ public sealed class NodaTimeSurrogateTests
 
         [ProtoMember(4)]
         public Period? Period { get; set; }
+
+        [ProtoMember(5)]
+        public Instant Instant { get; set; }
+
+        [ProtoMember(6)]
+        public Duration Duration { get; set; }
+
+        [ProtoMember(7)]
+        public LocalTime LocalTime { get; set; }
+
+        [ProtoMember(8)]
+        public IsoDayOfWeek IsoDayOfWeek { get; set; }
     }
 
     private static RuntimeTypeModel _newModel()
@@ -59,6 +69,10 @@ public sealed class NodaTimeSurrogateTests
                 Offset.FromHoursAndMinutes(5, 30)),
             Period = Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(10)
                 + Period.FromHours(2) + Period.FromMinutes(30),
+            Instant = Instant.FromUtc(2024, 2, 29, 13, 45, 30).PlusNanoseconds(123_456_789),
+            Duration = Duration.FromDays(2) + Duration.FromNanoseconds(987_654_321),
+            LocalTime = new LocalTime(13, 45, 30).PlusNanoseconds(123_456_789),
+            IsoDayOfWeek = IsoDayOfWeek.Thursday,
         };
 
         var clone = _protoRoundtrip(model, original);
@@ -68,6 +82,22 @@ public sealed class NodaTimeSurrogateTests
         clone.OffsetDateTime.Should().Be(original.OffsetDateTime);
         clone.OffsetDateTime.Offset.Should().Be(Offset.FromHoursAndMinutes(5, 30), "the offset must be preserved");
         clone.Period.Should().Be(original.Period);
+        clone.Instant.Should().Be(original.Instant);
+        clone.Duration.Should().Be(original.Duration);
+        clone.LocalTime.Should().Be(original.LocalTime);
+        clone.IsoDayOfWeek.Should().Be(original.IsoDayOfWeek);
+    }
+
+    [TestMethod]
+    public void Native_types_use_common_proto_shapes()
+    {
+        var schema = _newModel().GetSchema(typeof(Wrapper));
+
+        schema.Should().Contain("Timestamp");
+        schema.Should().Contain("Duration");
+        schema.Should().Contain("Date");
+        schema.Should().Contain("TimeOfDay");
+        schema.Should().Contain("DayOfWeek");
     }
 
     [TestMethod]

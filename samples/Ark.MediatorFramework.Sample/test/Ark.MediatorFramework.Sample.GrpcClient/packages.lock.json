@@ -4,9 +4,9 @@
     "net10.0": {
       "Google.Protobuf": {
         "type": "Direct",
-        "requested": "[3.25.5, )",
-        "resolved": "3.25.5",
-        "contentHash": "c15SLmjoS7GUWFoRIYp3TTS5OS+1loPk1K6kTLxw2k35qGGMpthQxKmouw9OmSIHpaJ6BJfv0VLqBDgk1VDpmg=="
+        "requested": "[3.31.1, )",
+        "resolved": "3.31.1",
+        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
       },
       "Grpc.Net.Client": {
         "type": "Direct",
@@ -55,9 +55,9 @@
     "net8.0": {
       "Google.Protobuf": {
         "type": "Direct",
-        "requested": "[3.25.5, )",
-        "resolved": "3.25.5",
-        "contentHash": "c15SLmjoS7GUWFoRIYp3TTS5OS+1loPk1K6kTLxw2k35qGGMpthQxKmouw9OmSIHpaJ6BJfv0VLqBDgk1VDpmg=="
+        "requested": "[3.31.1, )",
+        "resolved": "3.31.1",
+        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
       },
       "Grpc.Net.Client": {
         "type": "Direct",

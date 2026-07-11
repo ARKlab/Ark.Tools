@@ -106,7 +106,7 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Epic 8 — Review revisions (2026-07 review)
 
-- [ ] **T8.1** NodaTime protobuf: adopt `NodaTime.Serialization.Protobuf` for
+- [x] **T8.1** NodaTime protobuf: adopt `NodaTime.Serialization.Protobuf` for
   natively supported types; keep custom surrogates only for the rest.
   - *Accept:* `Instant`, `Duration`, `LocalDate`, `LocalTime` and
     `IsoDayOfWeek` round-trip through protobuf-net using the library's
@@ -156,14 +156,13 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Next implementation order
 
-1. **T8.1** NodaTime protobuf revision (isolated, no framework coupling).
-2. **T8.2** Hellang ProblemDetails + BusinessRuleViolation over HTTP.
-3. **T8.3** gRPC BusinessRuleViolation detail.
-4. **T8.4** gRPC client-streaming upload.
-5. **T8.5** Version lifetime + `{version}` placeholder expansion.
-6. **T8.6** Package split per transport (do after the generators stabilize in
+1. **T8.2** Hellang ProblemDetails + BusinessRuleViolation over HTTP.
+2. **T8.3** gRPC BusinessRuleViolation detail.
+3. **T8.4** gRPC client-streaming upload.
+4. **T8.5** Version lifetime + `{version}` placeholder expansion.
+5. **T8.6** Package split per transport (do after the generators stabilize in
    T8.4/T8.5 to avoid splitting twice).
-7. **T8.7** Framework test project (moves/extends generator tests as part of
+6. **T8.7** Framework test project (moves/extends generator tests as part of
    the split).
 
 ## Status legend

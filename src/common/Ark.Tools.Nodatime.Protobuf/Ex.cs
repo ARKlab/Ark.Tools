@@ -12,8 +12,7 @@ namespace Ark.Tools.Nodatime.Protobuf;
 public static class Ex
 {
     /// <summary>
-    /// Registers the NodaTime surrogates (<see cref="OffsetDateTime"/>, <see cref="LocalDate"/>,
-    /// <see cref="LocalDateTime"/> and <see cref="Period"/>) on the given protobuf-net model.
+    /// Registers the NodaTime surrogates on the given protobuf-net model.
     /// Calling it more than once is a no-op for already-registered types.
     /// </summary>
     /// <param name="model">The protobuf-net runtime type model to configure.</param>
@@ -23,6 +22,10 @@ public static class Ex
         ArgumentNullException.ThrowIfNull(model);
 
         _setSurrogate<LocalDate, LocalDateSurrogate>(model);
+        _setSurrogate<Instant, InstantSurrogate>(model);
+        _setSurrogate<Duration, DurationSurrogate>(model);
+        _setSurrogate<LocalTime, LocalTimeSurrogate>(model);
+        _setSurrogate<IsoDayOfWeek, IsoDayOfWeekSurrogate>(model);
         _setSurrogate<LocalDateTime, LocalDateTimeSurrogate>(model);
         _setSurrogate<OffsetDateTime, OffsetDateTimeSurrogate>(model);
         _setSurrogate<Period, PeriodSurrogate>(model);

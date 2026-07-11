@@ -3,6 +3,12 @@
 
 using ProtoBuf;
 
+using Google.Type;
+
+using NodaTime.Serialization.Protobuf;
+
+using System.Runtime.InteropServices;
+
 namespace Ark.Tools.Nodatime.Protobuf;
 
 /// <summary>
@@ -10,8 +16,11 @@ namespace Ark.Tools.Nodatime.Protobuf;
 /// The date components are stored explicitly so the ISO calendar value round-trips exactly.
 /// </summary>
 [SuppressMessage("Design", "CA2225:Operator overloads have named alternates", Justification = "The implicit conversions are the protobuf-net surrogate contract; named alternates would be unused API surface.")]
-[ProtoContract]
-public sealed class LocalDateSurrogate
+[SuppressMessage("Design", "CA2225:Operator overloads have named alternates", Justification = "The implicit conversions are the protobuf-net surrogate contract; named alternates would be unused API surface.")]
+[SuppressMessage("Design", "CA1815:Override equals and operator equals on value types", Justification = "The surrogate is a serialization shape, not a value object.")]
+[StructLayout(LayoutKind.Auto)]
+[ProtoContract(Name = "Date")]
+public struct LocalDateSurrogate
 {
     /// <summary>Gets or sets the ISO year.</summary>
     [ProtoMember(1)]
@@ -28,10 +37,15 @@ public sealed class LocalDateSurrogate
     /// <summary>Converts a <see cref="LocalDate"/> into its surrogate.</summary>
     /// <param name="value">The value to convert.</param>
     public static implicit operator LocalDateSurrogate(LocalDate value)
-        => new() { Year = value.Year, Month = value.Month, Day = value.Day };
+    {
+        var date = value.ToDate();
+        return new LocalDateSurrogate { Year = date.Year, Month = date.Month, Day = date.Day };
+    }
 
     /// <summary>Converts a surrogate back into a <see cref="LocalDate"/>.</summary>
     /// <param name="value">The surrogate to convert.</param>
-    public static implicit operator LocalDate(LocalDateSurrogate? value)
-        => value is null ? default : new LocalDate(value.Year, value.Month, value.Day);
+    public static implicit operator LocalDate(LocalDateSurrogate value)
+    {
+        return new Date { Year = value.Year, Month = value.Month, Day = value.Day }.ToLocalDate();
+    }
 }

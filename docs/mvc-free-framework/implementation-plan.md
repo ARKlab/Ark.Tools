@@ -249,8 +249,8 @@ Design first (already specified in `design.md` §"API versioning"), then:
   MVC migration guide is documented. The runtime and generator now live in
   `src/common` packages.
 - **Phase 6** (review revisions) is specified above with per-step instructions
-  and tracked as Epic 8 in [`tasks.md`](tasks.md); implementation follows in
-  the listed order.
+  and tracked as Epic 8 in [`tasks.md`](tasks.md); T8.1 is implemented and
+  self-tested, and implementation continues with T8.2.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore

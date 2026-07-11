@@ -23,7 +23,9 @@
 
   <ItemGroup>
     <PackageReference Include="NodaTime" />
+    <PackageReference Include="NodaTime.Serialization.Protobuf" />
     <PackageReference Include="protobuf-net" />
+    <PackageReference Include="Google.Api.CommonProtos" />
   </ItemGroup>
 
 </Project>
