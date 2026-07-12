@@ -2,6 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+using Ark.Tools.Solid;
+
+using Grpc.Core;
 
 using ProtoBuf.Grpc;
 
@@ -39,8 +42,15 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
     {
         var attachment = new StreamingArkAttachment(chunks);
         var handler = _container.GetInstance<IRequestHandler<UploadGreetingCardRequest, UploadResponse>>();
-        return await handler.ExecuteAsync(
-            new UploadGreetingCardRequest { Attachment = attachment },
-            context.CancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await handler.ExecuteAsync(
+                new UploadGreetingCardRequest { Attachment = attachment },
+                context.CancellationToken).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new RpcException(new Status(StatusCode.InvalidArgument, exception.Message));
+        }
     }
 }

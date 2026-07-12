@@ -25,7 +25,21 @@ message GreetingResponse {
   Period period = 6;
 }
 
+message UploadResponse {
+  string name = 1;
+  string content_type = 2;
+  int64 length = 3;
+}
+
 service Greetings {
   rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);
+}
+
+message UploadDocumentMetadata { string name = 1; string content_type = 2; }
+message UploadDocumentChunk {
+  oneof content { UploadDocumentMetadata metadata = 1; bytes data = 2; }
+}
+service Documents {
+  rpc Upload(stream UploadDocumentChunk) returns (UploadResponse);
 }
 

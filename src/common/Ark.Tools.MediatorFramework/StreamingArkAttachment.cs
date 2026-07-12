@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Collections.Generic;
-
 namespace Ark.MediatorFramework;
 
 /// <summary>
@@ -63,20 +61,18 @@ public sealed class StreamingArkAttachment : IArkAttachment
         public override async ValueTask DisposeAsync()
         {
             await _enumerator.DisposeAsync().ConfigureAwait(false);
+            await base.DisposeAsync().ConfigureAwait(false);
             GC.SuppressFinalize(this);
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return ReadAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
+            throw new NotSupportedException("Synchronous reads are not supported for streamed uploads.");
         }
 
         public override int Read(Span<byte> buffer)
         {
-            var temporary = new byte[buffer.Length];
-            var count = ReadAsync(temporary).AsTask().GetAwaiter().GetResult();
-            temporary.AsSpan(0, count).CopyTo(buffer);
-            return count;
+            throw new NotSupportedException("Synchronous reads are not supported for streamed uploads.");
         }
 
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)

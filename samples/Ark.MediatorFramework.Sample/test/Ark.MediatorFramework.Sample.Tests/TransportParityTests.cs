@@ -37,11 +37,14 @@ using SimpleInjector;
 
 using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
 using GrpcArkBusinessRuleViolation = Ark.MediatorFramework.Sample.GrpcClient.ArkBusinessRuleViolation;
+using GrpcDocuments = Ark.MediatorFramework.Sample.GrpcClient.Documents;
 using GrpcGreetings = Ark.MediatorFramework.Sample.GrpcClient.Greetings;
 using GrpcLocalDate = Ark.MediatorFramework.Sample.GrpcClient.LocalDate;
 using GrpcLocalDateTime = Ark.MediatorFramework.Sample.GrpcClient.LocalDateTime;
 using GrpcOffsetDateTime = Ark.MediatorFramework.Sample.GrpcClient.OffsetDateTime;
 using GrpcPeriod = Ark.MediatorFramework.Sample.GrpcClient.Period;
+using GrpcUploadDocumentChunk = Ark.MediatorFramework.Sample.GrpcClient.UploadDocumentChunk;
+using GrpcUploadDocumentMetadata = Ark.MediatorFramework.Sample.GrpcClient.UploadDocumentMetadata;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
@@ -224,6 +227,62 @@ public sealed class TransportParityTests
         _container.GetInstance<IGreetingStore>().All()
             .Any(g => g.Message.Contains("Grpc", StringComparison.Ordinal))
             .Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task Grpc_streaming_upload_dispatches_to_the_same_attachment_handler()
+    {
+        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+        {
+            HttpHandler = _host.GetTestServer().CreateHandler(),
+        });
+        var client = new GrpcDocuments.DocumentsClient(channel);
+        var payload = Enumerable.Range(0, 128 * 1024).Select(static value => (byte)(value % 251)).ToArray();
+        using var call = client.Upload();
+
+        await call.RequestStream.WriteAsync(new GrpcUploadDocumentChunk
+        {
+            Metadata = new GrpcUploadDocumentMetadata
+            {
+                Name = "greeting-card.bin",
+                ContentType = "application/octet-stream",
+            },
+        }).ConfigureAwait(false);
+        await call.RequestStream.WriteAsync(new GrpcUploadDocumentChunk
+        {
+            Data = Google.Protobuf.ByteString.CopyFrom(payload, 0, 64 * 1024),
+        }).ConfigureAwait(false);
+        await call.RequestStream.WriteAsync(new GrpcUploadDocumentChunk
+        {
+            Data = Google.Protobuf.ByteString.CopyFrom(payload, 64 * 1024, payload.Length - 64 * 1024),
+        }).ConfigureAwait(false);
+        await call.RequestStream.CompleteAsync().ConfigureAwait(false);
+
+        var result = await call.ResponseAsync.ConfigureAwait(false);
+        result.Name.Should().Be("greeting-card.bin");
+        result.ContentType.Should().Be("application/octet-stream");
+        result.Length.Should().Be(payload.Length);
+    }
+
+    [TestMethod]
+    public async Task Grpc_streaming_upload_requires_metadata_first()
+    {
+        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+        {
+            HttpHandler = _host.GetTestServer().CreateHandler(),
+        });
+        var client = new GrpcDocuments.DocumentsClient(channel);
+        using var call = client.Upload();
+
+        await call.RequestStream.WriteAsync(new GrpcUploadDocumentChunk
+        {
+            Data = Google.Protobuf.ByteString.CopyFrom([1, 2, 3]),
+        }).ConfigureAwait(false);
+        await call.RequestStream.CompleteAsync().ConfigureAwait(false);
+
+        var exception = await Assert.ThrowsAsync<RpcException>(
+            async () => await call.ResponseAsync.ConfigureAwait(false)).ConfigureAwait(false);
+        exception.StatusCode.Should().Be(StatusCode.InvalidArgument);
     }
 
     [TestMethod]
