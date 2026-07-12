@@ -13,6 +13,7 @@
     <PackageReference Include="Grpc.StatusProto" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
+    <PackageReference Include="Rebus.Protobuf" />
     <PackageReference Include="System.ServiceModel.Primitives" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.MinimalApi\Ark.Tools.MediatorFramework.MinimalApi.csproj" />

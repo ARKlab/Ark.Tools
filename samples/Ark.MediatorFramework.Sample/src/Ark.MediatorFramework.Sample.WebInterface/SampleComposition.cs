@@ -7,11 +7,14 @@ using Ark.MediatorFramework.Sample.Application;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Solid;
-
+using Ark.Tools.Nodatime.Protobuf;
 
 using Rebus.Handlers;
+using Rebus.Serialization.Protobuf;
 using Rebus.Serialization.Json;
 using Rebus.Transport.InMem;
+
+using ProtoBuf.Meta;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -58,7 +61,10 @@ public static class SampleComposition
             cfg.Transport(t => t.UseInMemoryTransport(network, "ark.mediator.sample"));
 
             if (useProtobufRebus)
-                cfg.Serialization(s => s.Register(_ => new ProtobufRebusSerializer(typeof(CreateGreetingRequest))));
+            {
+                var model = RuntimeTypeModel.Create().AddNodaTimeSurrogates();
+                cfg.Serialization(s => s.UseProtobuf(model));
+            }
             else
                 cfg.Serialization(s => s.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()));
 
