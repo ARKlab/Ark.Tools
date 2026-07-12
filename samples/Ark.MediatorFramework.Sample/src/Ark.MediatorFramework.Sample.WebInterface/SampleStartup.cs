@@ -6,7 +6,6 @@ using Ark.MediatorFramework.Sample.Application;
 
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
-using Ark.Tools.Solid;
 using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 

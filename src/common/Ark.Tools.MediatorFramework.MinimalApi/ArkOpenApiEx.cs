@@ -8,6 +8,7 @@ using Microsoft.OpenApi;
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
 /// <summary>OpenAPI conventions used by Ark Minimal API hosts.</summary>
+[SuppressMessage("Naming", "CA1711", Justification = "The Ex suffix is part of the public Ark extension API naming convention.")]
 public static class ArkOpenApiEx
 {
     /// <summary>Adds Ark schema formats for supported NodaTime types.</summary>
@@ -82,7 +83,7 @@ public static class ArkOpenApiEx
                     new OpenApiSchemaReference(componentName, document)));
             }
 
-            schema.OneOf = references.Select(item => item.Reference).ToList();
+            schema.OneOf = new List<IOpenApiSchema>(references.Select(item => (IOpenApiSchema)item.Reference));
             schema.Discriminator = new OpenApiDiscriminator
             {
                 PropertyName = discriminatorProperty,

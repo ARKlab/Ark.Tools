@@ -300,7 +300,10 @@
       "ark.tools.mediatorframework.minimalapi": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
+          "SimpleInjector": "[5.6.0, )"
         }
       },
       "ark.tools.mediatorframework.rebus": {
@@ -505,6 +508,15 @@
           "System.IO.FileSystem.AccessControl": "4.7.0"
         }
       },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.9, )",
+        "resolved": "10.0.9",
+        "contentHash": "1ihb8FO9cGgEK1/m3CTtT/SfnynwmiZib0W2pcDVj3KSWk/Sca4VOXEtaptKQc582zpFrzTFiwkGRCglt6H+WQ==",
+        "dependencies": {
+          "Microsoft.OpenApi": "2.0.0"
+        }
+      },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
         "requested": "[7.0.2, )",
@@ -600,6 +612,12 @@
         "dependencies": {
           "Microsoft.IdentityModel.Tokens": "8.19.1"
         }
+      },
+      "Microsoft.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[2.7.5, )",
+        "resolved": "2.7.5",
+        "contentHash": "0FA67RSnRM4tcBKqiqVu/HPdZ9+QOKbmeRjxRUGTCjPU4C0bmUhd97Dso7Yild5P7nOV6GxJ2xrK0Kv/O9xp0w=="
       },
       "Newtonsoft.Json": {
         "type": "CentralTransitive",
@@ -1100,7 +1118,10 @@
       "ark.tools.mediatorframework.minimalapi": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
+          "SimpleInjector": "[5.6.0, )"
         }
       },
       "ark.tools.mediatorframework.rebus": {
@@ -1302,6 +1323,12 @@
         "dependencies": {
           "Microsoft.ApplicationInsights": "2.23.0"
         }
+      },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.9, )",
+        "resolved": "10.0.9",
+        "contentHash": "1ihb8FO9cGgEK1/m3CTtT/SfnynwmiZib0W2pcDVj3KSWk/Sca4VOXEtaptKQc582zpFrzTFiwkGRCglt6H+WQ=="
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",

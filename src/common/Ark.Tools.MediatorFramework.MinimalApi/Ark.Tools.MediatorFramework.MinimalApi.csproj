@@ -12,8 +12,11 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="SimpleInjector" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
     <!-- The generator is applied as an analyzer when this package is project-referenced in
          development. When consumed via NuGet the generator DLL lives in analyzers/dotnet/cs/
          inside this package (see IncludeGeneratorInPackage target below). -->

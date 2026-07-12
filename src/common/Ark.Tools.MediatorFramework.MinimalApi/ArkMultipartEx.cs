@@ -2,17 +2,19 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework;
+using Ark.Tools.Solid;
 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 using SimpleInjector;
-
-using Ark.Tools.Solid;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
 /// <summary>Minimal API helpers for mapping multipart attachment uploads.</summary>
+[SuppressMessage("Naming", "CA1711", Justification = "The Ex suffix is part of the public Ark extension API naming convention.")]
 public static class ArkMultipartEx
 {
     /// <summary>
@@ -24,10 +26,15 @@ public static class ArkMultipartEx
     /// <param name="pattern">The route pattern.</param>
     /// <param name="factory">Creates a request from the uploaded attachment.</param>
     /// <returns>The route handler builder.</returns>
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
     public static RouteHandlerBuilder MapArkAttachmentUpload<TRequest, TResponse>(
         this IEndpointRouteBuilder endpoints,
         string pattern,
         Func<IArkAttachment, TRequest> factory)
+        where TRequest : IRequest<TResponse>
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
@@ -47,7 +54,7 @@ public static class ArkMultipartEx
                 .ExecuteAsync(factory(attachment), cancellationToken)
                 .ConfigureAwait(false);
 
-            return TypedResults.Ok(response);
+            return (IResult)TypedResults.Ok(response);
         });
     }
 }
