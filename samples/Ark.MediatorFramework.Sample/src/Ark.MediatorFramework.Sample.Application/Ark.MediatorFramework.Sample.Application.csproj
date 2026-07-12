@@ -8,14 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="SimpleInjector" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="MessagePack" />
     <PackageReference Include="protobuf-net" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.MinimalApi\Ark.Tools.MediatorFramework.MinimalApi.csproj" />
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Rebus\Ark.Tools.MediatorFramework.Rebus.csproj" />
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\Ark.Tools.MediatorFramework.Grpc.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Nodatime.Protobuf\Ark.Tools.Nodatime.Protobuf.csproj" />
