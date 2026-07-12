@@ -163,6 +163,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("namespace Ark.MediatorFramework.Generated");
             sb.AppendLine("{");
             sb.AppendLine("    /// <summary>Source-generated Minimal API transport hosting for pure Ark.Tools.Solid handlers.</summary>");
+            sb.AppendLine("    [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.MediatorFramework.MinimalApi.Generators\", \"1.0.0\")]");
             sb.AppendLine("    public static partial class ArkGeneratedEndpoints");
             sb.AppendLine("    {");
 
