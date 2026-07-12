@@ -239,6 +239,163 @@ Design first (already specified in `design.md` §"API versioning"), then:
 3. Keep `…Sample.Tests` as the end-to-end "how to test an application built on
    the framework" demonstration; its README section should say exactly that.
 
+## Phase 7 — Second review revisions (step-by-step, executable)
+
+Same general rules as Phase 6: execute in order; build with `dotnet build
+Ark.Tools.slnx --configuration Debug`; test the affected project with
+`dotnet test <project> -f net10.0`; on any `PackageReference` change add the
+version to `Directory.Packages.props` and run `dotnet restore Ark.Tools.slnx
+--force-evaluate` to refresh lock files; one Conventional Commit per step.
+
+### Step 7.1 — gRPC error interceptor into the library (T9.1)
+
+1. Move `GrpcErrorInterceptor.cs` from
+   `samples/…/Ark.MediatorFramework.Sample.WebInterface` to
+   `src/common/Ark.Tools.MediatorFramework.Grpc/ArkGrpcErrorInterceptor.cs`
+   (rename class to `ArkGrpcErrorInterceptor`, namespace
+   `Ark.Tools.MediatorFramework.Grpc`, XML docs on all public members). Add the
+   needed `Google.Api.CommonProtos`/`Grpc.StatusProto`/`FluentValidation`
+   references to the Grpc runtime csproj (already centrally versioned).
+2. Reshape `ArkBusinessRuleViolation`
+   (`src/common/Ark.Tools.MediatorFramework/ArkBusinessRuleViolation.cs`, move
+   it into the Grpc package with the interceptor): fields `type`=1, `title`=2,
+   `status`=3, `detail`=4 (string, optional), `instance`=5 (string, optional),
+   `extensions`=6 `map<string,string>`. Remove `payload_json`.
+3. Interceptor mapping: `detail` ← `BusinessRuleViolation.Detail`-equivalent
+   (empty when absent), `instance` ← empty (reserved), `extensions` ← one entry
+   per extra public property of the derived violation, each **value**
+   serialized with `ArkSerializerOptions.JsonOptions`
+   (`JsonSerializer.Serialize(value, property.PropertyType, options)`).
+4. Sample: delete the local interceptor, register
+   `ArkGrpcErrorInterceptor` from the library in `SampleStartup`.
+5. Tests: unit tests in `tests/Ark.Tools.MediatorFramework.Tests` for both
+   exception mappings and the map encoding; update
+   `…Sample.Tests` gRPC violation test + the emitted proto snapshot to the new
+   fields.
+
+### Step 7.2 — Rebus.Protobuf (T9.2)
+
+1. Add `Rebus.Protobuf` to `Directory.Packages.props` and to the sample
+   WebInterface csproj (run the advisory check first).
+2. Replace `ProtobufRebusSerializer` usage in the Rebus configuration with
+   `.Serialization(s => s.UseProtobuf(model))` where `model =
+   RuntimeTypeModel.Create().AddNodaTimeSurrogates()`; delete
+   `ProtobufRebusSerializer.cs`.
+3. Run the existing protobuf-over-Rebus test; refresh lock files.
+
+### Step 7.3 — MinimalApi hosting helpers (T9.3)
+
+1. In `src/common/Ark.Tools.MediatorFramework.MinimalApi` add:
+   - `ArkOpenApiEx.AddArkNodaTimeSchemas(this OpenApiOptions)` — port the
+     NodaTime branch of `SampleStartup.ConfigureOpenApi` 1:1;
+   - `ArkOpenApiEx.AddArkPolymorphism<TBase, TDiscriminator>(this
+     OpenApiOptions, string discriminatorProperty,
+     params (TDiscriminator Value, Type DerivedType)[] mapping)` — port the
+     `Shape` branch, generalized (component registration, `oneOf`,
+     `discriminator` mapping);
+   - `ArkMultipartEx.MapArkAttachmentUpload<TRequest, TResponse>(this
+     IEndpointRouteBuilder, string pattern, Func<IArkAttachment, TRequest>
+     factory)` — port `_uploadGreetingCard` (read form, map `IFormFile` →
+     `ArkAttachment`, resolve `IRequestHandler<TRequest,TResponse>` from the
+     `Container`, return `TypedResults.Ok`).
+2. Rewrite `SampleStartup` to consume the three helpers; delete the ported
+   private code.
+3. Unit tests in `tests/Ark.Tools.MediatorFramework.Tests` (schema transformer
+   output via `OpenApiOptions` harness; multipart mapping via `TestServer`);
+   sample tests must stay green unchanged.
+
+### Step 7.4 — Cross-transport polymorphism (T9.4)
+
+1. Annotate `Shape`/`Circle`/`Square`
+   (`…Sample.Application/PolymorphicContracts.cs`) with
+   `[ProtoContract]` + `[ProtoInclude(10, typeof(Circle))]` /
+   `[ProtoInclude(11, typeof(Square))]` and `[MessagePack.Union(10,
+   typeof(Circle))]` / `[Union(11, typeof(Square))]` (same numbers; keep the
+   STJ converter). Add `MessagePack` reference to Application if missing.
+2. Expose `DescribeShapeRequest` over gRPC (`[GrpcMethod]`, `[ServiceGroup]`)
+   and over MessagePack (reuse Step 7.5's serde or the MVC controller until
+   then).
+3. Tests: gRPC round-trip using the proto-generated client (`oneof`-style
+   subtype fields), MessagePack round-trip, and a three-wire parity assertion;
+   comment in the contract file records the JSON-stays-discriminator decision.
+
+### Step 7.5 — MessagePack serde on Minimal API (T9.5)
+
+1. In `Ark.Tools.MediatorFramework.MinimalApi` add an endpoint filter/helper
+   (`ArkMessagePackEx`) that, when the request `Content-Type` is
+   `application/x-msgpack`, deserializes the body with
+   `MessagePackSerializer` (options with NodaTime resolver, as the MVC
+   formatter does) and, when `Accept` prefers msgpack, serializes the response
+   likewise; JSON behavior unchanged otherwise.
+2. Apply it to the generated endpoints in the sample
+   (`MapArkEndpoints().AddEndpointFilter(…)` or an opt-in extension) and add a
+   msgpack round-trip self-test including NodaTime values; keep the MVC
+   controller as the escape-hatch demo with a README note.
+
+### Step 7.6 — Proto-on-build + shared proto assets (T9.6)
+
+1. Grpc generator (`GrpcEndpointGenerator.cs`): from the discovered contracts
+   also emit `ArkGeneratedProtos` — a static class with one
+   `(string FileName, string Content)` entry per `[ServiceGroup]`; each file
+   starts with `syntax = "proto3";`, `import "ark/nodatime.proto";`,
+   `import "ark/mediator.proto";` and contains only that group's messages and
+   per-version services (reuse the emission logic currently in
+   `samples/…/Ark.MediatorFramework.ProtoGenerator/Program.cs`, including the
+   NodaTime/common-type name mapping, minus the shared messages).
+2. Author the shared files as package content:
+   `src/common/Ark.Tools.Nodatime.Protobuf/proto/ark/nodatime.proto`
+   (surrogate messages) packed with
+   `Pack="true" PackagePath="content/proto/ark;contentFiles/any/any/proto/ark"`;
+   `src/common/Ark.Tools.MediatorFramework.Grpc/proto/ark/mediator.proto`
+   (`ArkBusinessRuleViolation` with the Step 7.1 shape, `UploadDocumentChunk`,
+   `UploadDocumentMetadata`) packed the same way.
+3. Runtime export: add `ArkProtoExport.TryHandle(string[] args)` to the Grpc
+   runtime (writes `ArkGeneratedProtos` + copies of the shared files into the
+   `--ark-export-proto <dir>` argument, returns `true` when it handled the
+   invocation); call it first thing in the sample `Program`.
+4. Ship `buildTransitive/Ark.Tools.MediatorFramework.Grpc.targets` with target
+   `ArkExportProto` (`AfterTargets="Build"`,
+   `Condition="'$(ArkExportProtoDir)' != ''"`) executing
+   `dotnet "$(TargetPath)" --ark-export-proto "$(ArkExportProtoDir)"`; wire the
+   sample WebInterface with
+   `<ArkExportProtoDir>$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>`.
+5. Point `…Sample.GrpcClient`'s `<Protobuf>` items at the exported directory;
+   delete `samples/…/Ark.MediatorFramework.ProtoGenerator` (project + slnx
+   entry + any invoking target); add a proto snapshot test in
+   `tests/Ark.Tools.MediatorFramework.Tests`; full build + tests + lock files.
+
+### Step 7.7 — HTTP→Rebus composition (T9.7)
+
+1. Add `GreetingFollowUpRequested` (`[RebusMessage]`) to the Application; make
+   the HTTP-exposed create-greeting handler send it via an injected `IBus`
+   after the synchronous work; its Rebus handler records the follow-up in the
+   store (queryable via an existing/new query endpoint).
+2. Test: POST over HTTP, then poll the query endpoint (bounded retry) until
+   the async effect appears.
+
+### Step 7.8 — Reqnroll behavioral tests (T9.8)
+
+1. Add `Reqnroll.MsTest` + `Reqnroll.Tools.MsBuild.Generation` (already
+   centrally versioned) to `…Sample.Tests`; create `Features/` with Gherkin
+   scenarios: greeting create+query (HTTP), create via gRPC + query via HTTP,
+   business-rule violation (400 problem+json), versioning (v1 vs v2), HTTP→Rebus
+   composition.
+2. Step definitions use only the `TestServer` HTTP client and the generated
+   gRPC client — no direct container/handler/store access; share host setup
+   with the existing fixture. Keep plain MSTest classes for transport plumbing
+   assertions.
+3. Update the sample README testing section.
+
+### Step 7.9 — Refinement sweep (T9.9)
+
+1. Re-read `design.md` end-to-end and diff against the implementation; move any
+   remaining reusable piece out of the sample into its `src/` package with unit
+   tests in `tests/Ark.Tools.MediatorFramework.Tests`.
+2. Verify: `WebInterface` = wiring + escape hatches only; every `src/` feature
+   unit-tested; sample behavior tests interface-only; protos generated on
+   build and consumed by the client project. Update docs where reality
+   diverged.
+
 
 
 - **Phases 1–4** are implemented and self-tested in the sample: pure handlers,
@@ -252,9 +409,11 @@ Design first (already specified in `design.md` §"API versioning"), then:
 - **Phase 5** is complete: package validation/SBOM coverage runs in CI and the
   MVC migration guide is documented. The runtime and generator now live in
   `src/common` packages.
-- **Phase 6** (review revisions) is specified above with per-step instructions
-  and tracked as Epic 8 in [`tasks.md`](tasks.md); T8.1–T8.3 are implemented
-  and self-tested, and implementation continues with T8.4.
+- **Phase 6** (review revisions) is complete: T8.1–T8.7 are implemented and
+  self-tested, tracked as Epic 8 in [`tasks.md`](tasks.md).
+- **Phase 7** (second review revisions) is specified above with per-step
+  instructions and tracked as Epic 9 in [`tasks.md`](tasks.md); implementation
+  starts with Step 7.1.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore

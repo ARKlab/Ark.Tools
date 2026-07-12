@@ -208,25 +208,36 @@ The Minimal API host does **not** reimplement RFC 7807 mapping. It registers
 
 Protobuf has no polymorphism, so a `BusinessRuleViolation`-derived object
 cannot cross the wire as its concrete protobuf message. The design carries it
-as a dedicated detail message inside the standard rich error model:
+as a dedicated detail message inside the standard rich error model. The detail
+message **mimics the RFC 7807 ProblemDetails base structure** — `type`,
+`title`, `status`, plus the optional `detail` and `instance` — and carries the
+violation's extra public properties in an `extensions` map whose **values only**
+are JSON-encoded (no whole-object JSON blob):
 
 ```proto
 message ArkBusinessRuleViolation {
-  string type = 1;         // violation class name (the error code)
-  string title = 2;        // BusinessRuleViolation.Title
-  int32 status = 3;        // HTTP-equivalent status (400)
-  string payload_json = 4; // canonical JSON of the derived violation (ArkSerializerOptions)
+  string type = 1;                    // violation class name (the error code)
+  string title = 2;                   // BusinessRuleViolation.Title
+  int32 status = 3;                   // HTTP-equivalent status (400)
+  string detail = 4;                  // optional human-readable detail
+  string instance = 5;                // optional occurrence URI/identifier
+  map<string, string> extensions = 6; // extra public properties; each value JSON-encoded (ArkSerializerOptions)
 }
 ```
 
-- The server interceptor maps `BusinessRuleViolationException` to an
-  `RpcException` with `StatusCode.FailedPrecondition` and a `Google.Rpc.Status`
-  whose `details` contain one `ArkBusinessRuleViolation` (packed as `Any`).
-- `payload_json` is the same JSON the HTTP ProblemDetails path produces, so a
-  client can deserialize the derived violation when it knows the type, and can
-  always read `type`/`title` generically.
-- Polyglot clients that cannot parse the JSON still get `type` + `title` as
-  plain strings — the JSON payload is additive, never required.
+- The mapping lives in the **library** (`Ark.Tools.MediatorFramework.Grpc`), as
+  `ArkGrpcErrorInterceptor`, not in application code: the interceptor maps
+  `BusinessRuleViolationException` to an `RpcException` with
+  `StatusCode.FailedPrecondition` and a `Google.Rpc.Status` whose `details`
+  contain one `ArkBusinessRuleViolation` (packed as `Any`), and
+  `ValidationException` to `InvalidArgument` + `BadRequest` field violations.
+- Each `extensions` entry is the JSON encoding of one derived-violation
+  property (same `ArkSerializerOptions` JSON the HTTP ProblemDetails path
+  emits per property), so a client can rebuild the derived violation when it
+  knows the type and can always read `type`/`title`/`detail` generically.
+- Polyglot clients that cannot parse the JSON values still get
+  `type`/`title`/`detail`/`instance` as plain strings — the extension values
+  are additive, never required.
 
 ## User context
 
@@ -311,6 +322,95 @@ retirement, mirroring how `Asp.Versioning` treats versions:
 Superseding a contract in a later version = retire the old contract at version
 `n` and introduce the replacement with `IntroducedIn = n`.
 
+## Polymorphism across transports
+
+Each wire protocol has a native polymorphism mechanism; the design annotates
+**one** contract hierarchy with all of them so a single pure handler serves
+every transport:
+
+| Protocol | Mechanism | Notes |
+| --- | --- | --- |
+| HTTP JSON | named discriminator property (`Ark.Tools.SystemTextJson.JsonPolymorphicConverter<TBase, TEnum>`) | human-readable; matches existing MVC hosts and OpenAPI `discriminator` |
+| protobuf / gRPC | `[ProtoInclude(fieldNumber, typeof(Derived))]` on the base `[ProtoContract]` | protobuf-net inheritance: the base message embeds each subtype as a numbered optional sub-message (a de-facto `oneof`) |
+| MessagePack | `[MessagePack.Union(key, typeof(Derived))]` on the base | key-numbered union — structurally the **same** approach as `ProtoInclude` |
+
+Evaluation of the "protobuf way" (numbered subtype envelope) outside protobuf:
+
+- **MessagePack: applicable.** `[Union]` is the idiomatic MessagePack
+  equivalent — an integer key selects the subtype, exactly like a
+  `ProtoInclude` field number. The sample uses matching numbers.
+- **HTTP JSON: not adopted.** A numbered envelope (`{"1": {…}}`) is legal JSON
+  but breaks human readability, OpenAPI `discriminator` support and existing
+  Ark client conventions. JSON stays on the named discriminator property.
+
+The sample's `Shape` hierarchy carries all three attribute sets and is
+round-tripped through a generated Minimal API endpoint (JSON), a gRPC method
+(`ProtoInclude`) and a MessagePack endpoint (`Union`), with a parity test
+asserting the same handler result on each wire.
+
+## `.proto` generation on build
+
+The service IDL is C#; the `.proto` files are **build outputs**, produced by
+the gRPC generator/package — no hand-maintained schema program:
+
+- The gRPC incremental generator (which already knows every `[GrpcMethod]`
+  contract and `[ProtoContract]` message) additionally emits the proto text as
+  generated C# (`ArkGeneratedProtos`: per-`[ServiceGroup]` `(fileName, content)`
+  pairs plus a `WriteTo(directory)` helper).
+- `Ark.Tools.MediatorFramework.Grpc` ships a `buildTransitive` `.targets` file
+  with an `ArkExportProto` target (`AfterTargets="Build"`, opt-in via
+  `$(ArkExportProtoDir)`) that runs the built host with `--ark-export-proto
+  <dir>`; the runtime helper `ArkProtoExport.TryHandle(args)` writes the files
+  and short-circuits `Program`.
+- Common messages are **shared, not repeated**, split over multiple files and
+  `import`-ed by the per-service files:
+  - `ark/nodatime.proto` (`LocalDate`, `LocalDateTime`, `OffsetDateTime`,
+    `Period` surrogate messages) ships as a content asset of
+    `Ark.Tools.Nodatime.Protobuf`;
+  - `ark/mediator.proto` (`ArkBusinessRuleViolation`, `UploadDocumentChunk`,
+    `UploadDocumentMetadata`) ships as a content asset of
+    `Ark.Tools.MediatorFramework.Grpc`.
+- Test/client projects consume the exported files with `Grpc.Tools`
+  (`<Protobuf Include="…/*.proto" GrpcServices="Client" />`): the **client is
+  generated from `.proto`**, never from the code-first C# contracts, proving
+  wire compatibility for polyglot consumers.
+
+## Rebus serialization
+
+Protobuf over the bus uses the official `Rebus.Protobuf` package
+(`.Serialization(s => s.UseProtobuf(typeModel))`) with a `RuntimeTypeModel`
+pre-configured via `AddNodaTimeSurrogates()` — no bespoke `ISerializer`
+implementation.
+
+## HTTP hosting helpers
+
+Recurring Minimal API hosting concerns are **library features**
+(`Ark.Tools.MediatorFramework.MinimalApi`), not sample code:
+
+- `AddArkNodaTimeSchemas()` — OpenAPI schema transformer mapping NodaTime
+  types to `string` schemas with the Ark formats.
+- `AddArkPolymorphism(...)` — registers a polymorphic hierarchy once
+  (base type, discriminator property, `(discriminator value, derived type)`
+  mapping — the same information Swashbuckle's
+  `UseOneOfForPolymorphism`/`SelectSubTypesUsing` consume) and emits the
+  OpenAPI `oneOf` + `discriminator` schema for it, so application developers
+  never hand-write schema transformers.
+- Multipart mapping: an extension that maps `IFormFile` → `ArkAttachment` and
+  dispatches to the pure attachment handler, replacing the hand-written sample
+  endpoint.
+- MessagePack serde: `application/x-msgpack` request/response support for
+  generated `[HttpEndpoint]` endpoints via content negotiation, demonstrated in
+  the sample alongside the (escape-hatch) MVC controller.
+
+## Composition: HTTP delegating to async Rebus work
+
+The sample demonstrates transport composition, not just parity: an HTTP
+handler completes the synchronous part of a workflow and **defers the rest to
+the bus** by publishing a Rebus message from the handler (`IBus` injected into
+the pure handler via the container); a `[RebusMessage]` handler completes the
+workflow asynchronously. A behavioral test mutates over HTTP and polls a query
+endpoint until the async effect is observable.
+
 ## Packaging: one package per transport
 
 The framework ships as small packages, each dedicated to a single transport and
@@ -330,13 +430,16 @@ only to its own attribute, so adding a transport never re-runs the others.
 ## Testing strategy
 
 - `samples/Ark.MediatorFramework.Sample/test/…Sample.Tests` demonstrates **how
-  an application built on the framework is tested**: in-process `TestServer` /
-  in-memory bus / in-process gRPC channel against the sample host — the pattern
-  an adopting team copies.
+  an application built on the framework is tested**: behavioral (BDD) tests
+  written with **Reqnroll** (Gherkin feature files), exercising **only the
+  public interfaces** — scenarios mutate and query state through the HTTP or
+  gRPC endpoints (in-process `TestServer`/gRPC channel), never by reaching into
+  handlers or stores — the pattern an adopting team copies.
 - `tests/Ark.Tools.MediatorFramework.Tests` (repository `tests/` folder) tests
   the **framework capabilities themselves**: generator snapshot tests, attribute
   semantics (opt-in, versioning expansion), error-model mapping, attachment
-  adapters — independent of the sample application.
+  adapters — independent of the sample application. Every feature that lives in
+  a `src/` library must be unit-tested here.
 
 ## Sample mapping to this design
 

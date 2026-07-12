@@ -154,12 +154,90 @@ project builds under the repo's strict settings and its self-tests pass with
     the sample `…Sample.Tests` remains the "how to test an application"
     demonstration.
 
+## Epic 9 — Review revisions (2026-07 second review)
+
+- [ ] **T9.1** Move the gRPC error interceptor into
+  `Ark.Tools.MediatorFramework.Grpc` and reshape `ArkBusinessRuleViolation`
+  after ProblemDetails.
+  - *Accept:* `ArkGrpcErrorInterceptor` lives in the Grpc library (sample only
+    registers it); `ArkBusinessRuleViolation` has `type`=1, `title`=2,
+    `status`=3, `detail`=4, `instance`=5 and `map<string,string> extensions`=6
+    where **only** the extension values are JSON-encoded (no whole-object
+    `payload_json`); unit tests in `tests/Ark.Tools.MediatorFramework.Tests`
+    cover the wire shape and both exception mappings; the sample gRPC client
+    test reads `detail`/`instance`/`extensions`.
+- [ ] **T9.2** Adopt the official `Rebus.Protobuf` serializer.
+  - *Accept:* the sample's hand-written `ProtobufRebusSerializer` is deleted;
+    Rebus is configured with `.Serialization(s => s.UseProtobuf(typeModel))`
+    where the `RuntimeTypeModel` has `AddNodaTimeSurrogates()` applied; the
+    existing protobuf-over-Rebus test still passes.
+- [ ] **T9.3** HTTP hosting helpers in `Ark.Tools.MediatorFramework.MinimalApi`.
+  - *Accept:* `AddArkNodaTimeSchemas()` (OpenAPI NodaTime schema transformer),
+    `AddArkPolymorphism(...)` (one registration per hierarchy → OpenAPI
+    `oneOf` + `discriminator`, modeled on Swashbuckle's
+    `UseOneOfForPolymorphism`/`SelectSubTypesUsing` inputs) and the
+    `IFormFile`→`ArkAttachment` multipart mapping extension are library APIs
+    with XML docs; the sample startup uses them and contains no hand-written
+    schema transformer or multipart endpoint; unit tests in `tests/` cover the
+    helpers.
+- [ ] **T9.4** Cross-transport polymorphism demonstration.
+  - *Accept:* the `Shape` hierarchy carries `[ProtoContract]`+`[ProtoInclude]`
+    (gRPC), `[MessagePack.Union]` (MessagePack) and the existing STJ
+    discriminator converter (JSON) with matching subtype numbers; a gRPC method
+    and a MessagePack round-trip exercise the polymorphic contract; a parity
+    test asserts the same handler result on all three wires; `design.md`'s
+    applicability evaluation (protobuf-way OK for MessagePack, rejected for
+    JSON) is reflected in sample comments.
+- [ ] **T9.5** MessagePack serde on a generated Minimal API endpoint.
+  - *Accept:* a `[HttpEndpoint]` contract round-trips
+    `application/x-msgpack` request **and** response (content negotiation)
+    through the Minimal API pipeline using the MinimalApi library helper; the
+    MVC `MessagePackGreetingController` remains only as the documented
+    escape-hatch demo; a self-test covers msgpack-in/msgpack-out including
+    NodaTime values.
+- [ ] **T9.6** `.proto` generated on build as assets; shared protos split per
+  package; delete `ProtoGenerator`.
+  - *Accept:* the gRPC generator emits `ArkGeneratedProtos` (per
+    `[ServiceGroup]` file content importing `ark/nodatime.proto` and
+    `ark/mediator.proto`); `Ark.Tools.Nodatime.Protobuf` packs
+    `ark/nodatime.proto` and `Ark.Tools.MediatorFramework.Grpc` packs
+    `ark/mediator.proto` as content assets; the Grpc package ships a
+    `buildTransitive` target exporting the files after `Build` (opt-in
+    `$(ArkExportProtoDir)`, `ArkProtoExport.TryHandle(args)` runtime helper);
+    `samples/…/Ark.MediatorFramework.ProtoGenerator` is deleted;
+    `…Sample.GrpcClient` generates the client from the **exported** `.proto`
+    via `Grpc.Tools` and all gRPC tests pass; a snapshot test in `tests/`
+    validates the emitted proto text.
+- [ ] **T9.7** Sample composition: HTTP handler delegating async work to Rebus.
+  - *Accept:* an HTTP-exposed handler publishes a `[RebusMessage]` message
+    (`IBus` injected into the pure handler) whose Rebus handler completes the
+    workflow; a test mutates over HTTP and polls a query endpoint until the
+    async effect is visible.
+- [ ] **T9.8** Reqnroll behavioral tests for the sample.
+  - *Accept:* `…Sample.Tests` gains Gherkin feature files (Reqnroll.MsTest)
+    covering create/query greetings, the business-rule violation, versioning
+    and the HTTP→Rebus composition; step definitions call only HTTP/gRPC
+    interfaces (no direct handler/store access); existing capability tests may
+    remain as plain MSTest where they test transport plumbing.
+- [ ] **T9.9** Refinement sweep: framework features out of the sample.
+  - *Accept:* after T9.1–T9.8 the sample's `WebInterface` contains only
+    composition/wiring and hand-written escape-hatch demos; every reusable
+    piece (interceptor, upload adapter, OpenAPI helpers, multipart mapping,
+    proto export) lives in a `src/` package and has unit tests in
+    `tests/Ark.Tools.MediatorFramework.Tests`; docs updated.
+
 ## Next implementation order
 
-1. **T8.6** Package split per transport (do after the generators stabilize in
-   T8.4/T8.5 to avoid splitting twice).
-2. **T8.7** Framework test project (moves/extends generator tests as part of
-   the split).
+1. **T9.1** gRPC interceptor to library + ProblemDetails-shaped detail.
+2. **T9.2** `Rebus.Protobuf` adoption.
+3. **T9.3** MinimalApi hosting helpers.
+4. **T9.4** Cross-transport polymorphism.
+5. **T9.5** MessagePack serde on Minimal API.
+6. **T9.6** Proto-on-build + shared proto assets (after T9.1 so
+   `ark/mediator.proto` matches the final detail shape).
+7. **T9.7** HTTP→Rebus composition.
+8. **T9.8** Reqnroll behavioral tests.
+9. **T9.9** Refinement sweep.
 
 ## Status legend
 
