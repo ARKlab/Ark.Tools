@@ -455,12 +455,6 @@
         "resolved": "3.0.117",
         "contentHash": "22L/6jjjhTwOpGqN+3A4EMCWc8Kc0dAd49zINAlxjLYDxERnD1qPKDkE9Z6cZPjiOs32J9nsieyya1FO+kXHCw=="
       },
-      "Microsoft.AspNetCore.OpenApi": {
-        "type": "Direct",
-        "requested": "[10.0.9, )",
-        "resolved": "10.0.9",
-        "contentHash": "1ihb8FO9cGgEK1/m3CTtT/SfnynwmiZib0W2pcDVj3KSWk/Sca4VOXEtaptKQc582zpFrzTFiwkGRCglt6H+WQ=="
-      },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
         "requested": "[4.14.0, )",

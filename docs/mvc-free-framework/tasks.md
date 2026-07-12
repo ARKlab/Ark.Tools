@@ -171,7 +171,7 @@ project builds under the repo's strict settings and its self-tests pass with
     Rebus is configured with `.Serialization(s => s.UseProtobuf(typeModel))`
     where the `RuntimeTypeModel` has `AddNodaTimeSurrogates()` applied; the
     existing protobuf-over-Rebus test still passes.
-- [ ] **T9.3** HTTP hosting helpers in `Ark.Tools.MediatorFramework.MinimalApi`.
+- [x] **T9.3** HTTP hosting helpers in `Ark.Tools.MediatorFramework.MinimalApi`.
   - *Accept:* `AddArkNodaTimeSchemas()` (OpenAPI NodaTime schema transformer),
     `AddArkPolymorphism(...)` (one registration per hierarchy → OpenAPI
     `oneOf` + `discriminator`, modeled on Swashbuckle's

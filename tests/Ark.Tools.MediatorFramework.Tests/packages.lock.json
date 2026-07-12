@@ -1204,7 +1204,6 @@
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
           "SimpleInjector": "[5.6.0, )"
         }
       },
@@ -1342,12 +1341,6 @@
         "dependencies": {
           "Microsoft.ApplicationInsights": "2.23.0"
         }
-      },
-      "Microsoft.AspNetCore.OpenApi": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.9, )",
-        "resolved": "10.0.9",
-        "contentHash": "1ihb8FO9cGgEK1/m3CTtT/SfnynwmiZib0W2pcDVj3KSWk/Sca4VOXEtaptKQc582zpFrzTFiwkGRCglt6H+WQ=="
       },
       "Microsoft.CodeAnalysis.Common": {
         "type": "CentralTransitive",
