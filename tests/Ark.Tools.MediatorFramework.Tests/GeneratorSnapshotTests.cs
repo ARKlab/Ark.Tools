@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Reflection;
-
 using Ark.MediatorFramework;
 using Ark.MediatorFramework.Generators;
 using Ark.Tools.Solid;
@@ -59,8 +57,9 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("interface IGreetingsV2GrpcService");
         generated.Should().Contain("GetGreetingAsync");
         generated.Should().Contain("CreateGreetingAsync");
-        generated.IndexOf("interface IGreetingsV2GrpcService", StringComparison.Ordinal)
-            .Should().BeGreaterThan(generated.IndexOf("CreateGreetingAsync", StringComparison.Ordinal) - 200);
+        var versionTwo = generated[generated.IndexOf("interface IGreetingsV2GrpcService", StringComparison.Ordinal)..];
+        versionTwo.Should().Contain("CreateGreetingAsync");
+        versionTwo.Should().NotContain("GetGreetingAsync");
     }
 
     private static string RunGenerator<TGenerator>(string source)
@@ -68,7 +67,7 @@ public sealed class GeneratorSnapshotTests
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(MetadataReference.CreateFromFile)
+            .Select(path => MetadataReference.CreateFromFile(path))
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),

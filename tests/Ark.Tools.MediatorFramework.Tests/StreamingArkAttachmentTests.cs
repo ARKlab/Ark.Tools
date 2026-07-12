@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Text;
-
 using Ark.MediatorFramework;
 
 using AwesomeAssertions;
@@ -19,7 +17,7 @@ public sealed class StreamingArkAttachmentTests
         await using var stream = attachment.OpenRead();
         using var reader = new StreamReader(stream, Encoding.UTF8);
 
-        var content = await reader.ReadToEndAsync();
+        var content = await reader.ReadToEndAsync().ConfigureAwait(false);
 
         attachment.Name.Should().Be("document.txt");
         attachment.ContentType.Should().Be("text/plain");
@@ -32,9 +30,9 @@ public sealed class StreamingArkAttachmentTests
         var attachment = new StreamingArkAttachment(MissingMetadataAsync());
         await using var stream = attachment.OpenRead();
 
-        var action = async () => await stream.ReadAsync(new byte[8]);
+        var action = async () => await stream.ReadAsync(new byte[8]).ConfigureAwait(false);
 
-        await action.Should().ThrowAsync<InvalidOperationException>();
+        await action.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
     }
 
     private static async IAsyncEnumerable<UploadDocumentChunk> ChunksAsync()
@@ -45,12 +43,12 @@ public sealed class StreamingArkAttachmentTests
         };
         yield return new UploadDocumentChunk { Data = Encoding.UTF8.GetBytes("first-") };
         yield return new UploadDocumentChunk { Data = Encoding.UTF8.GetBytes("second") };
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     private static async IAsyncEnumerable<UploadDocumentChunk> MissingMetadataAsync()
     {
         yield return new UploadDocumentChunk { Data = Encoding.UTF8.GetBytes("invalid") };
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }
