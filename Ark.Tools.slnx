@@ -120,6 +120,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ark.Tools.Core.Tests/Ark.Tools.Core.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.MediatorFramework.Tests/Ark.Tools.MediatorFramework.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Protobuf.Tests/Ark.Tools.Nodatime.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Tests/Ark.Tools.Nodatime.Tests.csproj" />
     <Project Path="tests/Ark.Tools.ResourceWatcher.Tests/Ark.Tools.ResourceWatcher.Tests.csproj" />

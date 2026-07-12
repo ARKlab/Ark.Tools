@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <ProjectReference Include="../../src/common/Ark.Tools.MediatorFramework/Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.MediatorFramework.MinimalApi.Generators/Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.Tools.MediatorFramework.Grpc.Generators.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -148,7 +148,7 @@ project builds under the repo's strict settings and its self-tests pass with
     `…MediatorFramework.Grpc`, each bundling its own analyzer; the sample
     references only the packages for the transports it hosts; solution builds
     with locked-mode restore (lock files updated).
-- [ ] **T8.7** Framework capability tests under `tests/`.
+- [x] **T8.7** Framework capability tests under `tests/`.
   - *Accept:* `tests/Ark.Tools.MediatorFramework.Tests` exercises the
     generators (snapshot tests) and runtime pieces independent of the sample;
     the sample `…Sample.Tests` remains the "how to test an application"
