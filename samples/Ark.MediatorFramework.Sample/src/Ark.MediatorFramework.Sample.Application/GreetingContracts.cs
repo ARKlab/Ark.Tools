@@ -46,7 +46,7 @@ public sealed record GreetingResponse
 /// <see cref="HttpEndpointAttribute"/> exposes it as an HTTP POST and <see cref="RebusMessageAttribute"/>
 /// exposes it as a Rebus message; the generator emits the wiring for each declared transport.
 /// </summary>
-[HttpEndpoint("POST", "/api/v1/greetings")]
+[HttpEndpoint("POST", "/api/v{version}/greetings")]
 [RebusMessage]
 [GrpcMethod("CreateGreeting")]
 [ServiceGroup("Greetings")]
@@ -79,7 +79,7 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 /// Pure transport-agnostic query (read). Declared with <see cref="HttpEndpointAttribute"/> only,
 /// so the generator exposes it as an HTTP GET (a query is a read, not a bus message).
 /// </summary>
-[HttpEndpoint("GET", "/api/v1/greetings/{id}")]
+[HttpEndpoint("GET", "/api/v{version}/greetings/{id}", RetiredIn = 2)]
 public sealed record GetGreetingQuery(Guid Id) : IQuery<GreetingResponse>;
 
 /// <summary>Version 2 of the greeting response, evolving the contract with the message length.</summary>
@@ -100,5 +100,5 @@ public sealed record GreetingResponseV2
 /// from the route template, so this endpoint lands in the <c>v2</c> OpenAPI document while the v1
 /// endpoints stay in <c>v1</c>, demonstrating route-based API versioning.
 /// </summary>
-[HttpEndpoint("GET", "/api/v2/greetings/{id}")]
+[HttpEndpoint("GET", "/api/v{version}/greetings-v2/{id}", IntroducedIn = 2)]
 public sealed record GetGreetingV2Query(Guid Id) : IQuery<GreetingResponseV2>;

@@ -143,6 +143,8 @@ namespace Ark.MediatorFramework.Generators
 
             string? verb = null;
             string? template = null;
+            var introducedIn = 1;
+            var retiredIn = 0;
             if (http is not null && http.ConstructorArguments.Length == 2)
             {
                 verb = http.ConstructorArguments[0].Value as string;
@@ -155,11 +157,18 @@ namespace Ark.MediatorFramework.Generators
                 else
                 {
                     verb = verb!.ToUpperInvariant();
+                    introducedIn = NamedInt(http, "IntroducedIn", 1);
+                    retiredIn = NamedInt(http, "RetiredIn", 0);
                 }
             }
 
             var hasHttp = verb is not null && template is not null;
             var grpcMethod = grpc?.ConstructorArguments.FirstOrDefault().Value as string ?? (grpc is null ? null : type.Name);
+            if (grpc is not null)
+            {
+                introducedIn = NamedInt(grpc, "IntroducedIn", 1);
+                retiredIn = NamedInt(grpc, "RetiredIn", 0);
+            }
             var group = serviceGroup?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
             if (!hasHttp && !hasRebus && grpcMethod is null)
                 return null;
@@ -173,7 +182,15 @@ namespace Ark.MediatorFramework.Generators
                 kind,
                 hasRebus,
                 grpcMethod,
-                group);
+                group,
+                introducedIn,
+                retiredIn);
+        }
+
+        private static int NamedInt(AttributeData attribute, string name, int defaultValue)
+        {
+            var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
+            return argument.Value.Value is int value ? value : defaultValue;
         }
 
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
@@ -195,9 +212,11 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
+            var maxVersion = items.Length == 0
+                ? 1
+                : items.Max(static x => Math.Max(x.IntroducedIn, x.RetiredIn > 0 ? x.RetiredIn - 1 : 1));
             foreach (var e in items.Where(static x => x.Verb is not null))
             {
-                var map = MapMethod(e.Verb!);
                 var handlerService = e.Kind == HandlerKind.Query
                     ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
                     : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
@@ -205,11 +224,15 @@ namespace Ark.MediatorFramework.Generators
                     ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                     : string.Empty;
 
-                sb.AppendLine("            app." + map + "(" + Literal(e.Template!) + ", static async (");
-                sb.AppendLine("                " + bind + e.TypeFullName + " request,");
-                sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
-                sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
-                sb.AppendLine("            {");
+                foreach (var version in ActiveVersions(e, maxVersion))
+                {
+                    var map = MapMethod(e.Verb!);
+                    var template = e.Template!.Replace("{version}", version.ToString());
+                    sb.AppendLine("            app." + map + "(" + Literal(template) + ", static async (");
+                    sb.AppendLine("                " + bind + e.TypeFullName + " request,");
+                    sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
+                    sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
+                    sb.AppendLine("            {");
                 // The SimpleInjector async scope spans the whole request (established by the hosting
                 // pipeline); the endpoint resolves the handler from that ambient scope.
                 sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
@@ -221,11 +244,8 @@ namespace Ark.MediatorFramework.Generators
                 // "/api/v2/...") becomes the endpoint group name, so multiple OpenAPI documents
                 // (one per version) can partition the endpoints. Endpoints with no version segment
                 // stay ungrouped and therefore appear in every document.
-                var group = ApiVersionGroup(e.Template!);
-                if (group is not null)
-                    sb.AppendLine("            }).WithGroupName(" + Literal(group) + ");");
-                else
-                    sb.AppendLine("            });");
+                    sb.AppendLine("            }).WithGroupName(" + Literal("v" + version) + ");");
+                }
             }
             sb.AppendLine("            return app;");
             sb.AppendLine("        }");
@@ -234,27 +254,32 @@ namespace Ark.MediatorFramework.Generators
             // Code-first gRPC services (opt-in via [GrpcMethod]).
             foreach (var group in items.Where(static x => x.GrpcMethod is not null).GroupBy(static x => x.ServiceGroup))
             {
-                var identifier = Identifier(group.Key);
-                sb.AppendLine("        /// <summary>Generated code-first gRPC service contract for the " + Escape(group.Key) + " group.</summary>");
-                sb.AppendLine("        [global::System.ServiceModel.ServiceContract(Name = " + Literal(group.Key) + ")]");
-                sb.AppendLine("        public interface I" + identifier + "GrpcService");
+                for (var version = 1; version <= maxVersion; version++)
+                {
+                    var active = group.Where(e => IsActive(e, version)).ToArray();
+                    if (active.Length == 0)
+                        continue;
+                    var identifier = Identifier(group.Key) + "V" + version;
+                    sb.AppendLine("        /// <summary>Generated code-first gRPC service contract for the " + Escape(group.Key) + " v" + version + " group.</summary>");
+                    sb.AppendLine("        [global::System.ServiceModel.ServiceContract(Name = " + Literal(group.Key + "V" + version) + ")]");
+                    sb.AppendLine("        public interface I" + identifier + "GrpcService");
                 sb.AppendLine("        {");
-                foreach (var e in group)
+                    foreach (var e in active)
                 {
                     sb.AppendLine("            /// <summary>Dispatches " + e.TypeName + " to its pure handler.</summary>");
                     sb.AppendLine("            [global::System.ServiceModel.OperationContract(Name = " + Literal(e.GrpcMethod!) + ")]");
                     sb.AppendLine("            global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default);");
                 }
-                sb.AppendLine("        }");
+                    sb.AppendLine("        }");
                 sb.AppendLine();
-                sb.AppendLine("        /// <summary>Generated partial gRPC implementation for the " + Escape(group.Key) + " group.</summary>");
+                    sb.AppendLine("        /// <summary>Generated partial gRPC implementation for the " + Escape(group.Key) + " v" + version + " group.</summary>");
                 sb.AppendLine("        [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.MediatorFramework.Generators\", \"1.0.0\")]");
-                sb.AppendLine("        public sealed partial class " + identifier + "GrpcService : I" + identifier + "GrpcService");
+                    sb.AppendLine("        public sealed partial class " + identifier + "GrpcService : I" + identifier + "GrpcService");
                 sb.AppendLine("        {");
                 sb.AppendLine("            private readonly global::SimpleInjector.Container _container;");
                 sb.AppendLine("            /// <summary>Initializes a new instance.</summary>");
                 sb.AppendLine("            public " + identifier + "GrpcService(global::SimpleInjector.Container container) { _container = container; }");
-                foreach (var e in group)
+                    foreach (var e in active)
                 {
                     var handlerService = e.Kind == HandlerKind.Query
                         ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
@@ -266,15 +291,18 @@ namespace Ark.MediatorFramework.Generators
                     sb.AppendLine("                return await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
                     sb.AppendLine("            }");
                 }
-                sb.AppendLine("        }");
-                sb.AppendLine();
+                    sb.AppendLine("        }");
+                    sb.AppendLine();
+                }
             }
 
             sb.AppendLine("        /// <summary>Maps every generated code-first gRPC service.</summary>");
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServices(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
             foreach (var group in items.Where(static x => x.GrpcMethod is not null).GroupBy(static x => x.ServiceGroup))
-                sb.AppendLine("            global::Microsoft.AspNetCore.Builder.GrpcEndpointRouteBuilderExtensions.MapGrpcService<" + Identifier(group.Key) + "GrpcService>(app);");
+                for (var version = 1; version <= maxVersion; version++)
+                    if (group.Any(e => IsActive(e, version)))
+                        sb.AppendLine("            global::Microsoft.AspNetCore.Builder.GrpcEndpointRouteBuilderExtensions.MapGrpcService<" + Identifier(group.Key) + "V" + version + "GrpcService>(app);");
             sb.AppendLine("            return app;");
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -323,22 +351,17 @@ namespace Ark.MediatorFramework.Generators
             _ => "MapPost",
         };
 
-        // ponytail: version is inferred from a "/v{number}" route segment (matching the sample's
-        // "/api/v1/..." convention). Upgrade path: read an explicit version off the attribute if a
-        // richer versioning scheme is ever needed.
-        private static string? ApiVersionGroup(string template)
+        private static IEnumerable<int> ActiveVersions(EndpointModel endpoint, int maxVersion)
         {
-            foreach (var segment in template.Split('/'))
-            {
-                if (segment.Length >= 2
-                    && (segment[0] == 'v' || segment[0] == 'V')
-                    && segment.Skip(1).All(char.IsDigit))
-                {
-                    return "v" + segment.Substring(1);
-                }
-            }
+            for (var version = 1; version <= maxVersion; version++)
+                if (IsActive(endpoint, version))
+                    yield return version;
+        }
 
-            return null;
+        private static bool IsActive(EndpointModel endpoint, int version)
+        {
+            return version >= endpoint.IntroducedIn
+                && (endpoint.RetiredIn == 0 || version < endpoint.RetiredIn);
         }
 
         private static string Literal(string value)
@@ -364,7 +387,7 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string? verb, string? template, string response, HandlerKind kind, bool hasRebus, string? grpcMethod, string serviceGroup)
+            public EndpointModel(string typeFullName, string typeName, string? verb, string? template, string response, HandlerKind kind, bool hasRebus, string? grpcMethod, string serviceGroup, int introducedIn, int retiredIn)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -375,6 +398,8 @@ namespace Ark.MediatorFramework.Generators
                 HasRebus = hasRebus;
                 GrpcMethod = grpcMethod;
                 ServiceGroup = serviceGroup;
+                IntroducedIn = introducedIn;
+                RetiredIn = retiredIn;
             }
 
             public string TypeFullName { get; }
@@ -386,6 +411,8 @@ namespace Ark.MediatorFramework.Generators
             public bool HasRebus { get; }
             public string? GrpcMethod { get; }
             public string ServiceGroup { get; }
+            public int IntroducedIn { get; }
+            public int RetiredIn { get; }
         }
     }
 }

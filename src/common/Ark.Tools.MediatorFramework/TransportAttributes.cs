@@ -20,7 +20,7 @@ public sealed class HttpEndpointAttribute : Attribute
 {
     /// <summary>Initializes a new instance of the <see cref="HttpEndpointAttribute"/> class.</summary>
     /// <param name="verb">The HTTP verb, for example <c>GET</c> or <c>POST</c>.</param>
-    /// <param name="template">The route template, for example <c>/api/v1/greetings</c>.</param>
+    /// <param name="template">The route template, for example <c>/api/v{version}/greetings</c>.</param>
     public HttpEndpointAttribute(string verb, string template)
     {
         Verb = verb;
@@ -32,6 +32,12 @@ public sealed class HttpEndpointAttribute : Attribute
 
     /// <summary>Gets the route template.</summary>
     public string Template { get; }
+
+    /// <summary>Gets or sets the first API version in which the endpoint is available.</summary>
+    public int IntroducedIn { get; set; } = 1;
+
+    /// <summary>Gets or sets the exclusive API version in which the endpoint is retired, or zero if never.</summary>
+    public int RetiredIn { get; set; }
 }
 
 /// <summary>
@@ -70,6 +76,12 @@ public sealed class GrpcMethodAttribute : Attribute
 
     /// <summary>Gets the explicit gRPC method name, or <see langword="null"/> to use the type name.</summary>
     public string? Name { get; }
+
+    /// <summary>Gets or sets the first API version in which the method is available.</summary>
+    public int IntroducedIn { get; set; } = 1;
+
+    /// <summary>Gets or sets the exclusive API version in which the method is retired, or zero if never.</summary>
+    public int RetiredIn { get; set; }
 }
 
 /// <summary>Assigns opt-in gRPC methods to a generated code-first service.</summary>

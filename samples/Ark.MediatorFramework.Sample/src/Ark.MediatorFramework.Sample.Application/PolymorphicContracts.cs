@@ -77,7 +77,7 @@ public sealed record ShapeEnvelope
 /// response, proving polymorphism works on both the request and response wire through a single
 /// generated Minimal API endpoint.
 /// </summary>
-[HttpEndpoint("POST", "/api/v1/shapes/describe")]
+[HttpEndpoint("POST", "/api/v{version}/shapes/describe")]
 public sealed record DescribeShapeRequest : IRequest<ShapeDescription>
 {
     /// <summary>Gets the shape to describe.</summary>

@@ -65,24 +65,42 @@ foreach (var contract in contracts.OrderBy(static pair => pair.Value, StringComp
     schema.AppendLine();
 }
 
+var maxVersion = grpcMethods
+    .SelectMany(static group => group)
+    .Select(static item => new
+    {
+        IntroducedIn = GetNamedInt(item.Grpc!, "IntroducedIn", 1),
+        RetiredIn = GetNamedInt(item.Grpc!, "RetiredIn", 0),
+    })
+    .Select(static item => Math.Max(item.IntroducedIn, item.RetiredIn > 0 ? item.RetiredIn - 1 : 1))
+    .DefaultIfEmpty(1)
+    .Max();
+
 foreach (var group in grpcMethods.OrderBy(static group => group.Key, StringComparer.Ordinal))
 {
-    schema.Append("service ").Append(group.Key).AppendLine(" {");
-    foreach (var method in group.OrderBy(static item => item.Type.Name, StringComparer.Ordinal))
+    for (var version = 1; version <= maxVersion; version++)
     {
-        var response = method.Type.GetInterfaces()
-            .FirstOrDefault(static item => item.IsGenericType && item.GetGenericTypeDefinition().Name is "IRequest`1" or "IQuery`1")
-            ?.GetGenericArguments()[0];
-        if (response is null)
+        var active = group.Where(method => IsActive(method.Grpc!, version)).ToArray();
+        if (active.Length == 0)
             continue;
 
-        var name = method.Grpc!.ConstructorArguments.FirstOrDefault().Value?.ToString() ?? method.Type.Name;
-        schema.Append("  rpc ").Append(name).Append('(').Append(method.Type.Name).Append(") returns (")
-            .Append(response.Name).AppendLine(");");
-    }
+        schema.Append("service ").Append(group.Key).Append('V').Append(version).AppendLine(" {");
+        foreach (var method in active.OrderBy(static item => item.Type.Name, StringComparer.Ordinal))
+        {
+            var response = method.Type.GetInterfaces()
+                .FirstOrDefault(static item => item.IsGenericType && item.GetGenericTypeDefinition().Name is "IRequest`1" or "IQuery`1")
+                ?.GetGenericArguments()[0];
+            if (response is null)
+                continue;
 
-    schema.AppendLine("}");
-    schema.AppendLine();
+            var name = method.Grpc!.ConstructorArguments.FirstOrDefault().Value?.ToString() ?? method.Type.Name;
+            schema.Append("  rpc ").Append(name).Append('(').Append(method.Type.Name).Append(") returns (")
+                .Append(response.Name).AppendLine(");");
+        }
+
+        schema.AppendLine("}");
+        schema.AppendLine();
+    }
 }
 
 schema.AppendLine("message UploadDocumentMetadata { string name = 1; string content_type = 2; }");
@@ -157,4 +175,17 @@ static string ToSnakeCase(string value)
     }
 
     return builder.ToString();
+}
+
+static int GetNamedInt(CustomAttributeData attribute, string name, int defaultValue)
+{
+    var argument = attribute.NamedArguments.FirstOrDefault(item => item.MemberName == name);
+    return argument.TypedValue.Value is int value ? value : defaultValue;
+}
+
+static bool IsActive(CustomAttributeData attribute, int version)
+{
+    var introducedIn = GetNamedInt(attribute, "IntroducedIn", 1);
+    var retiredIn = GetNamedInt(attribute, "RetiredIn", 0);
+    return version >= introducedIn && (retiredIn == 0 || version < retiredIn);
 }

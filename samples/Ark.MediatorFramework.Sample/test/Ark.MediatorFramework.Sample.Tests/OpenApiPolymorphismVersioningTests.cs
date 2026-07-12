@@ -75,7 +75,7 @@ public sealed class OpenApiPolymorphismVersioningTests
     {
         var paths = await GetDocumentPathsAsync("v2").ConfigureAwait(false);
 
-        paths.Should().Contain("/api/v2/greetings/{id}");
+        paths.Should().Contain("/api/v2/greetings-v2/{id}");
         paths.Should().NotContain("/api/v1/greetings", "v1 endpoints belong to the v1 document");
     }
 
@@ -190,12 +190,20 @@ public sealed class OpenApiPolymorphismVersioningTests
         var greeting = await post.Content.ReadFromJsonAsync<GreetingResponse>(JsonOptions).ConfigureAwait(false);
         greeting.Should().NotBeNull();
 
-        var v2 = await _client.GetFromJsonAsync<GreetingResponseV2>($"/api/v2/greetings/{greeting!.Id}").ConfigureAwait(false);
+        var v2 = await _client.GetFromJsonAsync<GreetingResponseV2>($"/api/v2/greetings-v2/{greeting!.Id}").ConfigureAwait(false);
 
         v2.Should().NotBeNull();
         v2!.Id.Should().Be(greeting.Id);
         v2.Message.Should().Be(greeting.Message);
         v2.MessageLength.Should().Be(greeting.Message.Length, "v2 adds the message length to the response");
+    }
+
+    [TestMethod]
+    public async Task Retired_v1_route_is_not_available_in_v2()
+    {
+        var response = await _client.GetAsync($"/api/v2/greetings/{Guid.NewGuid()}").ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
     }
 
     private static async Task<JsonDocument> GetDocumentAsync(string documentName)

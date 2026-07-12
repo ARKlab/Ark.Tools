@@ -72,8 +72,8 @@ public sealed class SampleStartup
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         services.AddCodeFirstGrpc(options => options.Interceptors.Add<GrpcErrorInterceptor>());
 
-        // OpenAPI: one document per API version. Endpoints are partitioned by the group name the
-        // generator infers from the route template ("v1"/"v2"); ungrouped endpoints appear in both.
+        // OpenAPI: one document per API version. The generator tags expanded versioned routes
+        // with their concrete group name ("v1"/"v2").
         services.AddOpenApi("v1", ConfigureOpenApi);
         services.AddOpenApi("v2", ConfigureOpenApi);
     }
