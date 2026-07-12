@@ -13,8 +13,10 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 
 | Project | Purpose |
 |---|---|
-| `src/common/Ark.Tools.MediatorFramework` | Runtime package containing the explicit, opt-in `[HttpEndpoint]` / `[RebusMessage]` / `[GrpcMethod]` transport markers and the `IArkAttachment` attachment abstraction. |
-| `src/common/Ark.Tools.MediatorFramework.Generators` | Analyzer package containing the incremental generator that emits Minimal API endpoints and Rebus handler wrappers from pure contracts (discovered cross-assembly). |
+| `src/common/Ark.Tools.MediatorFramework` | Core runtime package containing shared versioning primitives and the `IArkAttachment` attachment abstraction. |
+| `src/common/Ark.Tools.MediatorFramework.MinimalApi` | Minimal API runtime package containing `[HttpEndpoint]` and its transport-specific analyzer. |
+| `src/common/Ark.Tools.MediatorFramework.Rebus` | Rebus runtime package containing `[RebusMessage]` and its transport-specific analyzer. |
+| `src/common/Ark.Tools.MediatorFramework.Grpc` | gRPC runtime package containing `[GrpcMethod]`, `[ServiceGroup]` and its transport-specific analyzer. |
 | `src/Ark.MediatorFramework.Sample.Application` | Pure, transport-agnostic contracts/handlers, in-memory store and cross-cutting decorator. Uses `IContextProvider<ClaimsPrincipal>` for the caller identity. |
 | `src/Ark.MediatorFramework.Sample.WebInterface` | Hosting: composition root, ASP.NET Core startup and the endpoints exposing the selected requests/queries. Wires the user context (AspNetCore auth + Rebus propagation) and starts the bus. |
 | `test/Ark.MediatorFramework.Sample.Tests` | Demonstrates **how to test an application built on the framework**: in-process `TestServer`, in-memory bus and in-process gRPC channel against the sample host. Framework-capability tests (generators, runtime adapters) belong in `tests/Ark.Tools.MediatorFramework.Tests` instead. |

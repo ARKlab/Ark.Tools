@@ -8,6 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="SimpleInjector" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="MessagePack" />

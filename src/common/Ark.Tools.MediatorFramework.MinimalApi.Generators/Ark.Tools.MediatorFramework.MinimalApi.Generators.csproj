@@ -14,8 +14,8 @@
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateSBOM>false</GenerateSBOM>
-    <Description>Source generator for Ark.Tools mediator transport registrations</Description>
-    <PackageTags>Ark;C#;.NET;Framework;Mediator;Source Generator;Roslyn</PackageTags>
+    <Description>Source generator for Ark.Tools MediatorFramework Minimal API (ASP.NET Core) transport endpoint registration</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mediator;MinimalAPI;Source Generator;Roslyn</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
     <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>

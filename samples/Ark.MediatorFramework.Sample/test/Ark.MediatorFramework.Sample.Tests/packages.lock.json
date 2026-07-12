@@ -360,6 +360,9 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
@@ -381,6 +384,9 @@
         "dependencies": {
           "Ark.MediatorFramework.Sample.Application": "[999.9.9, )",
           "Ark.Tools.AspNetCore.MessagePack": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Grpc.StatusProto": "[2.66.0, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
@@ -417,6 +423,24 @@
         "type": "Project",
         "dependencies": {
           "protobuf-net": "[3.2.56, )"
+        }
+      },
+      "ark.tools.mediatorframework.grpc": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+        }
+      },
+      "ark.tools.mediatorframework.minimalapi": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+        }
+      },
+      "ark.tools.mediatorframework.rebus": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )"
         }
       },
       "ark.tools.nlog": {

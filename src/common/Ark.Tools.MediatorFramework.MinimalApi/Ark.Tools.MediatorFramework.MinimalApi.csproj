@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Minimal API (ASP.NET Core) transport runtime package for Ark.Tools MediatorFramework. Bundles the source generator that emits MapArkEndpoints for [HttpEndpoint]-annotated contracts.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mediator;MinimalAPI;Source Generator</PackageTags>
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core transport-agnostic attributes and attachment abstractions. -->
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <!-- The generator is applied as an analyzer when this package is project-referenced in
+         development. When consumed via NuGet the generator DLL lives in analyzers/dotnet/cs/
+         inside this package (see IncludeGeneratorInPackage target below). -->
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- Pack the generator DLL into this NuGet package so that a PackageReference to
+       Ark.Tools.MediatorFramework.MinimalApi automatically applies the analyzer. -->
+  <Target Name="IncludeGeneratorInPackage" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.MinimalApi.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.MinimalApi.Generators.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false"
+            Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.MinimalApi.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.MinimalApi.Generators.dll')" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -14,11 +14,12 @@
     <PackageReference Include="Hellang.Middleware.ProblemDetails" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
     <PackageReference Include="System.ServiceModel.Primitives" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
     <ProjectReference Include="..\..\..\..\src\aspnetcore\Ark.Tools.AspNetCore.MessagePack\Ark.Tools.AspNetCore.MessagePack.csproj" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Generators\Ark.Tools.MediatorFramework.Generators.csproj"
-                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Ark.MediatorFramework.ProtoGenerator\Ark.MediatorFramework.ProtoGenerator.csproj"
                       ReferenceOutputAssembly="false" />
   </ItemGroup>

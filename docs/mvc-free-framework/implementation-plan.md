@@ -81,8 +81,8 @@ results; error interceptor maps `ValidationException` to `Google.Rpc.Status`.
 
 ## Phase 5 — Productization
 
-- Extract the runtime support + generator into `src/` packages
-  (`Ark.Tools.MediatorFramework`, `Ark.Tools.MediatorFramework.Generators`).
+- Extract the runtime support + per-transport generators into `src/` packages
+  (`Ark.Tools.MediatorFramework` and the Minimal API, Rebus and gRPC packages).
 - Add `packages.lock.json` for all new projects (CI runs `RestoreLockedMode`).
 - Package validation, SBOM, XML docs on all public APIs.
 - Migration guidance for existing MVC controllers.
@@ -213,8 +213,7 @@ Design first (already specified in `design.md` §"API versioning"), then:
 1. Create `src/common/Ark.Tools.MediatorFramework.MinimalApi`,
    `…MediatorFramework.Rebus`, `…MediatorFramework.Grpc` (runtime) and a
    sibling `netstandard2.0` generator project for each
-   (`…MinimalApi.Generators` etc., modeled on the existing
-   `Ark.Tools.MediatorFramework.Generators.csproj` analyzer packaging); the
+   (`…MinimalApi.Generators` etc., modeled on the existing analyzer packaging); the
    transport attribute moves into its transport runtime package;
    `Ark.Tools.MediatorFramework` keeps only `IArkAttachment`/`ArkAttachment`
    and shared versioning primitives.

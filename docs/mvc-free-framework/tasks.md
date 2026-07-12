@@ -141,8 +141,8 @@ project builds under the repo's strict settings and its self-tests pass with
     assert a retired contract is absent from later versions; a route-parameter
     (`{id}`) test passes on every generated version; gRPC generates one
     service per active version per `[ServiceGroup]`.
-- [ ] **T8.6** Split the framework into per-transport packages, each with its
-  own generator.
+- [x] **T8.6** Split the framework into per-transport packages, each with its
+  own `netstandard2.0` analyzer and transport-only generator output.
   - *Accept:* `Ark.Tools.MediatorFramework` (core) plus
     `…MediatorFramework.MinimalApi`, `…MediatorFramework.Rebus` and
     `…MediatorFramework.Grpc`, each bundling its own analyzer; the sample
