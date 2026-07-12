@@ -6,7 +6,7 @@ message LocalDate { int32 year = 1; int32 month = 2; int32 day = 3; }
 message LocalDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 nanosecond_of_day = 4; }
 message OffsetDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 nanosecond_of_day = 4; int32 offset_seconds = 5; }
 message Period { string value = 1; }
-message ArkBusinessRuleViolation { string type = 1; string title = 2; int32 status = 3; string payload_json = 4; }
+message ArkBusinessRuleViolation { string type = 1; string title = 2; int32 status = 3; string detail = 4; string instance = 5; map<string, string> extensions = 6; }
 
 message CreateGreetingRequest {
   string name = 1;

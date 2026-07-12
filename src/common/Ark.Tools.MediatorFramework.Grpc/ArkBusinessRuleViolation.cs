@@ -3,7 +3,7 @@
 
 using ProtoBuf;
 
-namespace Ark.Tools.MediatorFramework;
+namespace Ark.Tools.MediatorFramework.Grpc;
 
 /// <summary>Wire detail carried by gRPC rich error statuses for business rule violations.</summary>
 [ProtoContract(Name = "ArkBusinessRuleViolation")]
@@ -21,7 +21,15 @@ public sealed class ArkBusinessRuleViolation
     [ProtoMember(3)]
     public int Status { get; set; }
 
-    /// <summary>Gets or sets the JSON-serialized derived violation payload.</summary>
+    /// <summary>Gets or sets the optional violation detail.</summary>
     [ProtoMember(4)]
-    public string PayloadJson { get; set; } = string.Empty;
+    public string Detail { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the optional violation instance.</summary>
+    [ProtoMember(5)]
+    public string Instance { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets JSON-encoded values for derived violation properties.</summary>
+    [ProtoMember(6)]
+    public Dictionary<string, string> Extensions { get; set; } = [];
 }

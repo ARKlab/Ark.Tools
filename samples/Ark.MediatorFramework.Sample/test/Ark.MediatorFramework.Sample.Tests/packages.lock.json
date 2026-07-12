@@ -428,7 +428,12 @@
       "ark.tools.mediatorframework.grpc": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "FluentValidation": "[12.1.1, )",
+          "Google.Api.CommonProtos": "[2.17.0, )",
+          "Grpc.StatusProto": "[2.66.0, )"
         }
       },
       "ark.tools.mediatorframework.minimalapi": {

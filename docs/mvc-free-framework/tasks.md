@@ -156,7 +156,7 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Epic 9 — Review revisions (2026-07 second review)
 
-- [ ] **T9.1** Move the gRPC error interceptor into
+- [x] **T9.1** Move the gRPC error interceptor into
   `Ark.Tools.MediatorFramework.Grpc` and reshape `ArkBusinessRuleViolation`
   after ProblemDetails.
   - *Accept:* `ArkGrpcErrorInterceptor` lives in the Grpc library (sample only

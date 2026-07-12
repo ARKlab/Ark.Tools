@@ -412,8 +412,8 @@ version to `Directory.Packages.props` and run `dotnet restore Ark.Tools.slnx
 - **Phase 6** (review revisions) is complete: T8.1–T8.7 are implemented and
   self-tested, tracked as Epic 8 in [`tasks.md`](tasks.md).
 - **Phase 7** (second review revisions) is specified above with per-step
-  instructions and tracked as Epic 9 in [`tasks.md`](tasks.md); implementation
-  starts with Step 7.1.
+  instructions and tracked as Epic 9 in [`tasks.md`](tasks.md); Step 7.1 is
+  complete and implementation continues with Step 7.2.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore

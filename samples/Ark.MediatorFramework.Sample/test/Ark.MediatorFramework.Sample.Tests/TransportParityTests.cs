@@ -353,7 +353,9 @@ public sealed class TransportParityTests
         detail.Type.Should().Be(nameof(GreetingAlreadyExistsViolation));
         detail.Title.Should().Be("Greeting already exists");
         detail.Status.Should().Be(400);
-        detail.PayloadJson.Should().Contain("\"name\":\"GrpcDuplicate\"");
+        detail.Detail.Should().Contain("GrpcDuplicate");
+        detail.Instance.Should().BeEmpty();
+        detail.Extensions["Name"].Should().Be("\"GrpcDuplicate\"");
     }
 
     [TestMethod]

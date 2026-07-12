@@ -3,6 +3,8 @@
 
 using AwesomeAssertions;
 
+using Ark.Tools.MediatorFramework.Grpc;
+
 using ProtoBuf;
 
 namespace Ark.Tools.MediatorFramework.Tests;
@@ -18,7 +20,9 @@ public sealed class BusinessRuleViolationWireTests
             Type = "GreetingAlreadyExistsViolation",
             Title = "Greeting already exists",
             Status = 400,
-            PayloadJson = "{\"Greeting\":\"hello\"}",
+            Detail = "A greeting already exists.",
+            Instance = string.Empty,
+            Extensions = new Dictionary<string, string>(StringComparer.Ordinal) { ["Name"] = "\"hello\"" },
         };
         using var stream = new MemoryStream();
 
@@ -29,6 +33,9 @@ public sealed class BusinessRuleViolationWireTests
         actual.Type.Should().Be(expected.Type);
         actual.Title.Should().Be(expected.Title);
         actual.Status.Should().Be(expected.Status);
-        Encoding.UTF8.GetBytes(actual.PayloadJson).Should().Equal(Encoding.UTF8.GetBytes(expected.PayloadJson));
+        actual.Detail.Should().Be(expected.Detail);
+        actual.Instance.Should().BeEmpty();
+        actual.Extensions.Should().ContainKey("Name");
+        actual.Extensions["Name"].Should().Be(expected.Extensions["Name"]);
     }
 }

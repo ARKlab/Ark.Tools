@@ -1,10 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using FluentValidation;
-
 using Ark.Tools.Core.BusinessRuleViolation;
-using Ark.Tools.MediatorFramework;
+
+using FluentValidation;
 
 using Google.Protobuf.WellKnownTypes;
 using Google.Rpc;
@@ -12,15 +11,15 @@ using Google.Rpc;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 
-using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text.Json;
 
-namespace Ark.MediatorFramework.Sample.WebInterface;
+namespace Ark.Tools.MediatorFramework.Grpc;
 
-/// <summary>Maps transport-agnostic validation failures to the gRPC rich error model.</summary>
-public sealed class GrpcErrorInterceptor : Interceptor
+/// <summary>Maps transport-agnostic failures to the gRPC rich error model.</summary>
+public sealed class ArkGrpcErrorInterceptor : Interceptor
 {
-    /// <summary>Executes a unary call and adds field violations to validation failures.</summary>
+    /// <summary>Executes a unary call and maps known application failures to rich statuses.</summary>
     /// <typeparam name="TRequest">The request message type.</typeparam>
     /// <typeparam name="TResponse">The response message type.</typeparam>
     /// <param name="request">The request message.</param>
@@ -44,8 +43,10 @@ public sealed class GrpcErrorInterceptor : Interceptor
                 Type = violation.GetType().Name,
                 Title = violation.Title,
                 Status = violation.Status,
-                PayloadJson = System.Text.Encoding.UTF8.GetString(SerializeViolation(violation)),
+                Detail = violation.Detail ?? string.Empty,
+                Extensions = GetExtensions(violation),
             };
+
             using var stream = new MemoryStream();
             ProtoBuf.Serializer.Serialize(stream, detail);
 
@@ -82,18 +83,24 @@ public sealed class GrpcErrorInterceptor : Interceptor
             status.Details.Add(Any.Pack(badRequest));
             throw status.ToRpcException();
         }
-
     }
 
     [SuppressMessage(
         "Trimming",
         "IL2026",
         Justification = "Business rule payloads are application-defined and intentionally serialized using the shared Ark JSON options.")]
-    private static byte[] SerializeViolation(BusinessRuleViolation violation)
+    private static Dictionary<string, string> GetExtensions(BusinessRuleViolation violation)
     {
-        return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
-            violation,
-            violation.GetType(),
-            ArkSerializerOptions.JsonOptions);
+        var properties = violation.GetType()
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(property => property.Name is not nameof(BusinessRuleViolation.Status)
+                and not nameof(BusinessRuleViolation.Title)
+                and not nameof(BusinessRuleViolation.Detail)
+                && property.GetMethod is not null);
+
+        return properties.ToDictionary(
+            property => property.Name,
+            property => JsonSerializer.Serialize(property.GetValue(violation), property.PropertyType, ArkSerializerOptions.JsonOptions),
+            StringComparer.Ordinal);
     }
 }

@@ -169,6 +169,11 @@
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
       },
+      "Grpc.Core.Api": {
+        "type": "Transitive",
+        "resolved": "2.66.0",
+        "contentHash": "HsjsQVAHe4hqP4t4rpUnmq+MZvPdyrlPsWF4T5fbMvyP3o/lMV+KVJfDlaNH8+v0aGQTVT3EsDFufbhaWb52cw=="
+      },
       "Microsoft.Bcl.Cryptography": {
         "type": "Transitive",
         "resolved": "10.0.2",
@@ -405,7 +410,12 @@
       "ark.tools.mediatorframework.grpc": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "FluentValidation": "[12.1.1, )",
+          "Google.Api.CommonProtos": "[2.17.0, )",
+          "Grpc.StatusProto": "[2.66.0, )"
         }
       },
       "ark.tools.mediatorframework.grpc.generators": {
@@ -470,6 +480,37 @@
         "requested": "[0.4.1, )",
         "resolved": "0.4.1",
         "contentHash": "axFeEMfmEORy3ipAzOXG/lE+KcNptRbei3F0C4kQCdeiQtW+qJW90K5iIovITGrdLt8AjhNCwk5qLSX9/rFpoA=="
+      },
+      "FluentValidation": {
+        "type": "CentralTransitive",
+        "requested": "[12.1.1, )",
+        "resolved": "12.1.1",
+        "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
+      },
+      "Google.Api.CommonProtos": {
+        "type": "CentralTransitive",
+        "requested": "[2.17.0, )",
+        "resolved": "2.17.0",
+        "contentHash": "elfQPknFr495hm7vdy6ZlgyQh6yzZq9TU7sS35L/Fj/fqjM/mUGau9gVJLhvQEtUlPjtR80hpn/m9HvBMyCXIw==",
+        "dependencies": {
+          "Google.Protobuf": "[3.31.1, 4.0.0]"
+        }
+      },
+      "Google.Protobuf": {
+        "type": "CentralTransitive",
+        "requested": "[3.31.1, )",
+        "resolved": "3.31.1",
+        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
+      },
+      "Grpc.StatusProto": {
+        "type": "CentralTransitive",
+        "requested": "[2.66.0, )",
+        "resolved": "2.66.0",
+        "contentHash": "TcP8Qgg8lOFAr2AFepYifGB731lCI8pwjOkksQ6Z505nVTO6Ze4gN2hXj+G1sCmy6i7uIPBolD/IheCZkAGYRA==",
+        "dependencies": {
+          "Google.Api.CommonProtos": "2.15.0",
+          "Grpc.Core.Api": "2.66.0"
+        }
       },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",
@@ -847,6 +888,11 @@
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
       },
+      "Grpc.Core.Api": {
+        "type": "Transitive",
+        "resolved": "2.66.0",
+        "contentHash": "HsjsQVAHe4hqP4t4rpUnmq+MZvPdyrlPsWF4T5fbMvyP3o/lMV+KVJfDlaNH8+v0aGQTVT3EsDFufbhaWb52cw=="
+      },
       "Microsoft.Bcl.Cryptography": {
         "type": "Transitive",
         "resolved": "10.0.2",
@@ -1118,7 +1164,12 @@
       "ark.tools.mediatorframework.grpc": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "FluentValidation": "[12.1.1, )",
+          "Google.Api.CommonProtos": "[2.17.0, )",
+          "Grpc.StatusProto": "[2.66.0, )"
         }
       },
       "ark.tools.mediatorframework.grpc.generators": {
@@ -1183,6 +1234,37 @@
         "requested": "[0.4.1, )",
         "resolved": "0.4.1",
         "contentHash": "axFeEMfmEORy3ipAzOXG/lE+KcNptRbei3F0C4kQCdeiQtW+qJW90K5iIovITGrdLt8AjhNCwk5qLSX9/rFpoA=="
+      },
+      "FluentValidation": {
+        "type": "CentralTransitive",
+        "requested": "[12.1.1, )",
+        "resolved": "12.1.1",
+        "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
+      },
+      "Google.Api.CommonProtos": {
+        "type": "CentralTransitive",
+        "requested": "[2.17.0, )",
+        "resolved": "2.17.0",
+        "contentHash": "elfQPknFr495hm7vdy6ZlgyQh6yzZq9TU7sS35L/Fj/fqjM/mUGau9gVJLhvQEtUlPjtR80hpn/m9HvBMyCXIw==",
+        "dependencies": {
+          "Google.Protobuf": "[3.31.1, 4.0.0]"
+        }
+      },
+      "Google.Protobuf": {
+        "type": "CentralTransitive",
+        "requested": "[3.31.1, )",
+        "resolved": "3.31.1",
+        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
+      },
+      "Grpc.StatusProto": {
+        "type": "CentralTransitive",
+        "requested": "[2.66.0, )",
+        "resolved": "2.66.0",
+        "contentHash": "TcP8Qgg8lOFAr2AFepYifGB731lCI8pwjOkksQ6Z505nVTO6Ze4gN2hXj+G1sCmy6i7uIPBolD/IheCZkAGYRA==",
+        "dependencies": {
+          "Google.Api.CommonProtos": "2.15.0",
+          "Grpc.Core.Api": "2.66.0"
+        }
       },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",

@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.Application;
 
+using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.Solid;
 using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
@@ -70,7 +71,7 @@ public sealed class SampleStartup
         Hellang.Middleware.ProblemDetails.ProblemDetailsExtensions.AddProblemDetails(services);
         services.AddSingleton<IConfigureOptions<HellangProblemDetailsOptions>, SampleProblemDetailsOptionsSetup>();
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
-        services.AddCodeFirstGrpc(options => options.Interceptors.Add<GrpcErrorInterceptor>());
+        services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
 
         // OpenAPI: one document per API version. The generator tags expanded versioned routes
         // with their concrete group name ("v1"/"v2").
