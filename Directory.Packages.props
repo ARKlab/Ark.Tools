@@ -82,7 +82,7 @@
 	  <PackageVersion Include="Ben.Demystifier" Version="0.4.1" />
 	  <PackageVersion Include="NLog" Version="6.1.4" />
 	  <PackageVersion Include="NLog.Database" Version="6.0.3" />
-	  <PackageVersion Include="NLog.DiagnosticSource" Version="6.0.3" />
+	  <PackageVersion Include="NLog.DiagnosticSource" Version="6.1.4" />
 	  <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.4" />
 	  <PackageVersion Include="NLog.MailKit" Version="6.1.5" />
 	  <PackageVersion Include="MailKit" Version="4.17.0" />
