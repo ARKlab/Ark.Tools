@@ -85,6 +85,15 @@ foreach (var group in grpcMethods.OrderBy(static group => group.Key, StringCompa
     schema.AppendLine();
 }
 
+schema.AppendLine("message UploadDocumentMetadata { string name = 1; string content_type = 2; }");
+schema.AppendLine("message UploadDocumentChunk {");
+schema.AppendLine("  oneof content { UploadDocumentMetadata metadata = 1; bytes data = 2; }");
+schema.AppendLine("}");
+schema.AppendLine("service Documents {");
+schema.AppendLine("  rpc Upload(stream UploadDocumentChunk) returns (UploadResponse);");
+schema.AppendLine("}");
+schema.AppendLine();
+
 Directory.CreateDirectory(Path.GetDirectoryName(output)!);
 File.WriteAllText(output, schema.ToString(), new UTF8Encoding(false));
 

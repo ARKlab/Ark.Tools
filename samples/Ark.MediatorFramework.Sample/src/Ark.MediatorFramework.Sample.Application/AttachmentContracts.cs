@@ -3,18 +3,24 @@
 
 using Ark.Tools.Solid;
 
+using ProtoBuf;
+
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Response returned after storing an uploaded attachment.</summary>
+[ProtoContract]
 public sealed record UploadResponse
 {
     /// <summary>Gets the attachment file name.</summary>
+    [ProtoMember(1)]
     public required string Name { get; init; }
 
     /// <summary>Gets the attachment content type.</summary>
+    [ProtoMember(2)]
     public required string ContentType { get; init; }
 
     /// <summary>Gets the number of bytes received.</summary>
+    [ProtoMember(3)]
     public required long Length { get; init; }
 }
 

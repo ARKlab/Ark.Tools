@@ -102,6 +102,7 @@ public sealed class SampleStartup
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
             endpoints.MapArkEndpoints();
             endpoints.MapArkGrpcServices();
+            endpoints.MapGrpcService<DocumentsGrpcService>();
             endpoints.MapControllers();
 
             // Hand-written multipart endpoint mapping IFormFile -> IArkAttachment.
