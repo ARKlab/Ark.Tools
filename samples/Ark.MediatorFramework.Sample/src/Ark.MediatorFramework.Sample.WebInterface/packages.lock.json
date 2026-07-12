@@ -47,6 +47,16 @@
           "protobuf-net.Grpc": "1.2.2"
         }
       },
+      "Rebus.Protobuf": {
+        "type": "Direct",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "q1W2lTHkZba6dVY7KbpSbf95/g0DDtC45j6tkZYovfJJKuuwoVTsGPioxOTCpuxRi60R0ZkEM9gvdHOvHBfzlw==",
+        "dependencies": {
+          "protobuf-net": "3.2.26",
+          "rebus": "8.0.1"
+        }
+      },
       "System.ServiceModel.Primitives": {
         "type": "Direct",
         "requested": "[10.0.652802, )",
@@ -767,6 +777,16 @@
         "dependencies": {
           "Grpc.AspNetCore.Server": "2.66.0",
           "protobuf-net.Grpc": "1.2.2"
+        }
+      },
+      "Rebus.Protobuf": {
+        "type": "Direct",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "q1W2lTHkZba6dVY7KbpSbf95/g0DDtC45j6tkZYovfJJKuuwoVTsGPioxOTCpuxRi60R0ZkEM9gvdHOvHBfzlw==",
+        "dependencies": {
+          "protobuf-net": "3.2.26",
+          "rebus": "8.0.1"
         }
       },
       "System.ServiceModel.Primitives": {

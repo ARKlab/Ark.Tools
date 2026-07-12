@@ -10,7 +10,7 @@ using Ark.Tools.Solid;
 using Ark.Tools.Nodatime.Protobuf;
 
 using Rebus.Handlers;
-using Rebus.Serialization.Protobuf;
+using Rebus.Config;
 using Rebus.Serialization.Json;
 using Rebus.Transport.InMem;
 

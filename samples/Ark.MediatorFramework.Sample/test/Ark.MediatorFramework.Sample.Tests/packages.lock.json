@@ -392,6 +392,7 @@
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "MessagePack.NodaTime": "[3.5.5, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
+          "Rebus.Protobuf": "[5.0.0, )",
           "System.ServiceModel.Primitives": "[10.0.652802, )",
           "protobuf-net.Grpc.AspNetCore": "[1.2.2, )"
         }
@@ -910,6 +911,16 @@
         "contentHash": "4cJjk1W0TAgQn1/tEMyca3Xvn4p8Z+Gqku3IYRWFH4RW3Pzdr84daqwDpPB1juIibwTP7HRcTs11OQ6DmPJSuw==",
         "dependencies": {
           "nlog": "5.2.5",
+          "rebus": "8.0.1"
+        }
+      },
+      "Rebus.Protobuf": {
+        "type": "CentralTransitive",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "q1W2lTHkZba6dVY7KbpSbf95/g0DDtC45j6tkZYovfJJKuuwoVTsGPioxOTCpuxRi60R0ZkEM9gvdHOvHBfzlw==",
+        "dependencies": {
+          "protobuf-net": "3.2.26",
           "rebus": "8.0.1"
         }
       },
