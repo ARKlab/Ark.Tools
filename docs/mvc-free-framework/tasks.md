@@ -166,7 +166,7 @@ project builds under the repo's strict settings and its self-tests pass with
     `payload_json`); unit tests in `tests/Ark.Tools.MediatorFramework.Tests`
     cover the wire shape and both exception mappings; the sample gRPC client
     test reads `detail`/`instance`/`extensions`.
-- [ ] **T9.2** Adopt the official `Rebus.Protobuf` serializer.
+- [x] **T9.2** Adopt the official `Rebus.Protobuf` serializer.
   - *Accept:* the sample's hand-written `ProtobufRebusSerializer` is deleted;
     Rebus is configured with `.Serialization(s => s.UseProtobuf(typeModel))`
     where the `RuntimeTypeModel` has `AddNodaTimeSurrogates()` applied; the
