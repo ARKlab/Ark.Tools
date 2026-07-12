@@ -201,7 +201,8 @@ public sealed class OpenApiPolymorphismVersioningTests
     [TestMethod]
     public async Task Retired_v1_route_is_not_available_in_v2()
     {
-        var response = await _client.GetAsync($"/api/v2/greetings/{Guid.NewGuid()}").ConfigureAwait(false);
+        var response = await _client.GetAsync(
+            new Uri($"/api/v2/greetings/{Guid.NewGuid()}", UriKind.Relative)).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
     }

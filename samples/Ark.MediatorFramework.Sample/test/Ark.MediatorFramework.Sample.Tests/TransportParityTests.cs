@@ -38,7 +38,7 @@ using SimpleInjector;
 using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
 using GrpcArkBusinessRuleViolation = Ark.MediatorFramework.Sample.GrpcClient.ArkBusinessRuleViolation;
 using GrpcDocuments = Ark.MediatorFramework.Sample.GrpcClient.Documents;
-using GrpcGreetings = Ark.MediatorFramework.Sample.GrpcClient.Greetings;
+using GrpcGreetingsV1Client = Ark.MediatorFramework.Sample.GrpcClient.GreetingsV1.GreetingsV1Client;
 using GrpcLocalDate = Ark.MediatorFramework.Sample.GrpcClient.LocalDate;
 using GrpcLocalDateTime = Ark.MediatorFramework.Sample.GrpcClient.LocalDateTime;
 using GrpcOffsetDateTime = Ark.MediatorFramework.Sample.GrpcClient.OffsetDateTime;
@@ -193,7 +193,7 @@ public sealed class TransportParityTests
         {
             HttpHandler = _host.GetTestServer().CreateHandler(),
         });
-        var client = new GrpcGreetings.GreetingsClient(channel);
+        var client = new GrpcGreetingsV1Client(channel);
 
         var request = NewNodaTimeRequest("Grpc");
         var result = await client.CreateGreetingAsync(new GrpcCreateGreetingRequest
@@ -292,7 +292,7 @@ public sealed class TransportParityTests
         {
             HttpHandler = _host.GetTestServer().CreateHandler(),
         });
-        var client = new GrpcGreetings.GreetingsClient(channel);
+        var client = new GrpcGreetingsV1Client(channel);
 
         var exception = await Assert.ThrowsAsync<RpcException>(
             async () => await client.CreateGreetingAsync(new GrpcCreateGreetingRequest()).ResponseAsync.ConfigureAwait(false))
@@ -315,7 +315,7 @@ public sealed class TransportParityTests
         {
             HttpHandler = _host.GetTestServer().CreateHandler(),
         });
-        var client = new GrpcGreetings.GreetingsClient(channel);
+        var client = new GrpcGreetingsV1Client(channel);
         var request = NewNodaTimeRequest("GrpcDuplicate");
 
         await client.CreateGreetingAsync(new GrpcCreateGreetingRequest
@@ -388,8 +388,10 @@ public sealed class TransportParityTests
         generated.GetNestedType("CreateGreetingRequestRebusHandler")
             .Should().NotBeNull("a Rebus wrapper must be generated for each request");
 
-        generated.GetNestedType("GreetingsGrpcService")
-            .Should().NotBeNull("a code-first gRPC service must be generated for each service group");
+        generated.GetNestedType("GreetingsV1GrpcService")
+            .Should().NotBeNull("a code-first gRPC service must be generated for each active service version");
+        generated.GetNestedType("GreetingsV2GrpcService")
+            .Should().NotBeNull("a code-first gRPC service must be generated for each active service version");
     }
 
     [TestMethod]
@@ -403,7 +405,8 @@ public sealed class TransportParityTests
         proto.Should().Contain("syntax = \"proto3\";");
         proto.Should().Contain("message CreateGreetingRequest");
         proto.Should().Contain("message GreetingResponse");
-        proto.Should().Contain("service Greetings");
+        proto.Should().Contain("service GreetingsV1");
+        proto.Should().Contain("service GreetingsV2");
         proto.Should().Contain("rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);");
     }
 

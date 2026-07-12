@@ -63,7 +63,7 @@ public sealed class CreateOrderHandler : IRequestHandler<CreateOrderRequest, Ord
 Routing/metadata is expressed with **explicit, per-transport** attributes on the
 request type. Each transport is opt-in and declared independently:
 
-- `[HttpEndpoint("POST", "/api/v1/orders")]` — expose over Minimal API.
+- `[HttpEndpoint("POST", "/api/v{version}/orders")]` — expose over Minimal API for each active version.
 - `[GrpcMethod]` (optionally `[GrpcMethod("CreateOrder")]`) — expose as a
   code-first gRPC method; `[ServiceGroup("Orders")]` groups the service.
 - `[RebusMessage]` — expose as a Rebus message.
@@ -110,6 +110,11 @@ app.MapPost("/api/v1/orders", async (
     return Results.Ok(result);
 });
 ```
+
+The `IntroducedIn` and exclusive `RetiredIn` properties on `HttpEndpointAttribute`
+expand a `{version}` route once per active version. The generator applies the
+same lifetime rules to `[GrpcMethod]`, emitting one version-suffixed service per
+`[ServiceGroup]` and retaining only methods active in that version.
 
 For route/query-bound queries the generator emits `[FromRoute]`/`[FromQuery]`
 parameters and reconstructs the request object before dispatch.

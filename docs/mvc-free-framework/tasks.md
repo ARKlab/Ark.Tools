@@ -133,7 +133,7 @@ project builds under the repo's strict settings and its self-tests pass with
     generated/hosted; a self-test streams a payload larger than one chunk and
     asserts the *same* pure attachment handler received the full content via
     `IArkAttachment.OpenRead()`.
-- [ ] **T8.5** Version lifetime (introduced/retired) with `{version}` route
+- [x] **T8.5** Version lifetime (introduced/retired) with `{version}` route
   placeholder.
   - *Accept:* `[HttpEndpoint]` routes declare only `/api/v{version}/…`;
     `IntroducedIn`/`RetiredIn` on the attribute drive generation of one route
@@ -156,13 +156,9 @@ project builds under the repo's strict settings and its self-tests pass with
 
 ## Next implementation order
 
-1. **T8.2** Hellang ProblemDetails + BusinessRuleViolation over HTTP.
-2. **T8.3** gRPC BusinessRuleViolation detail.
-3. **T8.4** gRPC client-streaming upload.
-4. **T8.5** Version lifetime + `{version}` placeholder expansion.
-5. **T8.6** Package split per transport (do after the generators stabilize in
+1. **T8.6** Package split per transport (do after the generators stabilize in
    T8.4/T8.5 to avoid splitting twice).
-6. **T8.7** Framework test project (moves/extends generator tests as part of
+2. **T8.7** Framework test project (moves/extends generator tests as part of
    the split).
 
 ## Status legend

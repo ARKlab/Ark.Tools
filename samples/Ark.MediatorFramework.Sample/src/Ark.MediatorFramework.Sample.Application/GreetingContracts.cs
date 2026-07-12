@@ -80,25 +80,34 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 /// so the generator exposes it as an HTTP GET (a query is a read, not a bus message).
 /// </summary>
 [HttpEndpoint("GET", "/api/v{version}/greetings/{id}", RetiredIn = 2)]
-public sealed record GetGreetingQuery(Guid Id) : IQuery<GreetingResponse>;
+[GrpcMethod("GetGreeting", RetiredIn = 2)]
+[ServiceGroup("Greetings")]
+[ProtoContract]
+public sealed record GetGreetingQuery([property: ProtoMember(1)] Guid Id) : IQuery<GreetingResponse>;
 
 /// <summary>Version 2 of the greeting response, evolving the contract with the message length.</summary>
+[ProtoContract]
 public sealed record GreetingResponseV2
 {
     /// <summary>Gets the greeting identifier.</summary>
+    [ProtoMember(1)]
     public required Guid Id { get; init; }
 
     /// <summary>Gets the greeting message.</summary>
+    [ProtoMember(2)]
     public required string Message { get; init; }
 
     /// <summary>Gets the message length (added in v2).</summary>
+    [ProtoMember(3)]
     public required int MessageLength { get; init; }
 }
 
 /// <summary>
-/// Version 2 read exposed under the <c>/api/v2</c> route. The generator infers the API version group
-/// from the route template, so this endpoint lands in the <c>v2</c> OpenAPI document while the v1
-/// endpoints stay in <c>v1</c>, demonstrating route-based API versioning.
+/// Version 2 read exposed under the versioned replacement route. The generator expands the route
+/// once for each active API version and places it in the corresponding OpenAPI document.
 /// </summary>
 [HttpEndpoint("GET", "/api/v{version}/greetings-v2/{id}", IntroducedIn = 2)]
-public sealed record GetGreetingV2Query(Guid Id) : IQuery<GreetingResponseV2>;
+[GrpcMethod("GetGreeting", IntroducedIn = 2)]
+[ServiceGroup("Greetings")]
+[ProtoContract]
+public sealed record GetGreetingV2Query([property: ProtoMember(1)] Guid Id) : IQuery<GreetingResponseV2>;

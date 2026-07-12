@@ -143,8 +143,8 @@ namespace Ark.MediatorFramework.Generators
 
             string? verb = null;
             string? template = null;
-            var introducedIn = 1;
-            var retiredIn = 0;
+            var httpIntroducedIn = 1;
+            var httpRetiredIn = 0;
             if (http is not null && http.ConstructorArguments.Length == 2)
             {
                 verb = http.ConstructorArguments[0].Value as string;
@@ -157,18 +157,15 @@ namespace Ark.MediatorFramework.Generators
                 else
                 {
                     verb = verb!.ToUpperInvariant();
-                    introducedIn = NamedInt(http, "IntroducedIn", 1);
-                    retiredIn = NamedInt(http, "RetiredIn", 0);
+                    httpIntroducedIn = NamedInt(http, "IntroducedIn", 1);
+                    httpRetiredIn = NamedInt(http, "RetiredIn", 0);
                 }
             }
 
             var hasHttp = verb is not null && template is not null;
             var grpcMethod = grpc?.ConstructorArguments.FirstOrDefault().Value as string ?? (grpc is null ? null : type.Name);
-            if (grpc is not null)
-            {
-                introducedIn = NamedInt(grpc, "IntroducedIn", 1);
-                retiredIn = NamedInt(grpc, "RetiredIn", 0);
-            }
+            var grpcIntroducedIn = grpc is null ? 1 : NamedInt(grpc, "IntroducedIn", 1);
+            var grpcRetiredIn = grpc is null ? 0 : NamedInt(grpc, "RetiredIn", 0);
             var group = serviceGroup?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
             if (!hasHttp && !hasRebus && grpcMethod is null)
                 return null;
@@ -183,8 +180,10 @@ namespace Ark.MediatorFramework.Generators
                 hasRebus,
                 grpcMethod,
                 group,
-                introducedIn,
-                retiredIn);
+                httpIntroducedIn,
+                httpRetiredIn,
+                grpcIntroducedIn,
+                grpcRetiredIn);
         }
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
@@ -214,7 +213,9 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        {");
             var maxVersion = items.Length == 0
                 ? 1
-                : items.Max(static x => Math.Max(x.IntroducedIn, x.RetiredIn > 0 ? x.RetiredIn - 1 : 1));
+                : items.Max(static x => Math.Max(
+                    Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1),
+                    Math.Max(x.GrpcIntroducedIn, x.GrpcRetiredIn > 0 ? x.GrpcRetiredIn - 1 : 1)));
             foreach (var e in items.Where(static x => x.Verb is not null))
             {
                 var handlerService = e.Kind == HandlerKind.Query
@@ -256,7 +257,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 for (var version = 1; version <= maxVersion; version++)
                 {
-                    var active = group.Where(e => IsActive(e, version)).ToArray();
+                    var active = group.Where(e => IsGrpcActive(e, version)).ToArray();
                     if (active.Length == 0)
                         continue;
                     var identifier = Identifier(group.Key) + "V" + version;
@@ -301,7 +302,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        {");
             foreach (var group in items.Where(static x => x.GrpcMethod is not null).GroupBy(static x => x.ServiceGroup))
                 for (var version = 1; version <= maxVersion; version++)
-                    if (group.Any(e => IsActive(e, version)))
+                    if (group.Any(e => IsGrpcActive(e, version)))
                         sb.AppendLine("            global::Microsoft.AspNetCore.Builder.GrpcEndpointRouteBuilderExtensions.MapGrpcService<" + Identifier(group.Key) + "V" + version + "GrpcService>(app);");
             sb.AppendLine("            return app;");
             sb.AppendLine("        }");
@@ -354,14 +355,15 @@ namespace Ark.MediatorFramework.Generators
         private static IEnumerable<int> ActiveVersions(EndpointModel endpoint, int maxVersion)
         {
             for (var version = 1; version <= maxVersion; version++)
-                if (IsActive(endpoint, version))
+                if (version >= endpoint.HttpIntroducedIn
+                    && (endpoint.HttpRetiredIn == 0 || version < endpoint.HttpRetiredIn))
                     yield return version;
         }
 
-        private static bool IsActive(EndpointModel endpoint, int version)
+        private static bool IsGrpcActive(EndpointModel endpoint, int version)
         {
-            return version >= endpoint.IntroducedIn
-                && (endpoint.RetiredIn == 0 || version < endpoint.RetiredIn);
+            return version >= endpoint.GrpcIntroducedIn
+                && (endpoint.GrpcRetiredIn == 0 || version < endpoint.GrpcRetiredIn);
         }
 
         private static string Literal(string value)
@@ -387,7 +389,7 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string? verb, string? template, string response, HandlerKind kind, bool hasRebus, string? grpcMethod, string serviceGroup, int introducedIn, int retiredIn)
+            public EndpointModel(string typeFullName, string typeName, string? verb, string? template, string response, HandlerKind kind, bool hasRebus, string? grpcMethod, string serviceGroup, int httpIntroducedIn, int httpRetiredIn, int grpcIntroducedIn, int grpcRetiredIn)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -398,8 +400,10 @@ namespace Ark.MediatorFramework.Generators
                 HasRebus = hasRebus;
                 GrpcMethod = grpcMethod;
                 ServiceGroup = serviceGroup;
-                IntroducedIn = introducedIn;
-                RetiredIn = retiredIn;
+                HttpIntroducedIn = httpIntroducedIn;
+                HttpRetiredIn = httpRetiredIn;
+                GrpcIntroducedIn = grpcIntroducedIn;
+                GrpcRetiredIn = grpcRetiredIn;
             }
 
             public string TypeFullName { get; }
@@ -411,8 +415,10 @@ namespace Ark.MediatorFramework.Generators
             public bool HasRebus { get; }
             public string? GrpcMethod { get; }
             public string ServiceGroup { get; }
-            public int IntroducedIn { get; }
-            public int RetiredIn { get; }
+            public int HttpIntroducedIn { get; }
+            public int HttpRetiredIn { get; }
+            public int GrpcIntroducedIn { get; }
+            public int GrpcRetiredIn { get; }
         }
     }
 }

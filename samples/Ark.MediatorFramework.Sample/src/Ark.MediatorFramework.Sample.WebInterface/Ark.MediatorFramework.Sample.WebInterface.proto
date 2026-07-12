@@ -16,6 +16,14 @@ message CreateGreetingRequest {
   Period period = 5;
 }
 
+message GetGreetingQuery {
+  bytes id = 1;
+}
+
+message GetGreetingV2Query {
+  bytes id = 1;
+}
+
 message GreetingResponse {
   bytes id = 1;
   string message = 2;
@@ -25,14 +33,26 @@ message GreetingResponse {
   Period period = 6;
 }
 
+message GreetingResponseV2 {
+  bytes id = 1;
+  string message = 2;
+  int32 message_length = 3;
+}
+
 message UploadResponse {
   string name = 1;
   string content_type = 2;
   int64 length = 3;
 }
 
-service Greetings {
+service GreetingsV1 {
   rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);
+  rpc GetGreeting(GetGreetingQuery) returns (GreetingResponse);
+}
+
+service GreetingsV2 {
+  rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);
+  rpc GetGreeting(GetGreetingV2Query) returns (GreetingResponseV2);
 }
 
 message UploadDocumentMetadata { string name = 1; string content_type = 2; }
