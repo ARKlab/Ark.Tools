@@ -440,7 +440,8 @@
       "ark.tools.mediatorframework.rebus": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.Rebus": "[1.0.0, )"
         }
       },
       "ark.tools.nlog": {
