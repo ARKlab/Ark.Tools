@@ -5,6 +5,7 @@ using Ark.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.Application;
 
 using Ark.Tools.MediatorFramework.Grpc;
+using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
 using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
@@ -13,9 +14,7 @@ using MessagePack.Resolvers;
 
 using Hellang.Middleware.ProblemDetails;
 
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -106,77 +105,22 @@ public sealed class SampleStartup
             endpoints.MapGrpcService<DocumentsGrpcService>();
             endpoints.MapControllers();
 
-            // Hand-written multipart endpoint mapping IFormFile -> IArkAttachment.
-            endpoints.MapPost("/api/v1/greeting-cards", _uploadGreetingCard);
+            endpoints.MapArkAttachmentUpload<UploadGreetingCardRequest, UploadResponse>(
+                "/api/v1/greeting-cards",
+                attachment => new UploadGreetingCardRequest { Attachment = attachment });
 
             // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
             endpoints.MapOpenApi();
         });
     }
 
-    private static async Task<IResult> _uploadGreetingCard(HttpContext httpContext, CancellationToken cancellationToken)
+    private static void ConfigureOpenApi(Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
     {
-        var form = await httpContext.Request.ReadFormAsync(cancellationToken).ConfigureAwait(false);
-        var file = form.Files["file"];
-        if (file is null)
-            return Results.BadRequest("Missing 'file' part.");
-
-        var attachment = new ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream);
-
-        var container = httpContext.RequestServices.GetRequiredService<Container>();
-        var handler = container.GetInstance<IRequestHandler<UploadGreetingCardRequest, UploadResponse>>();
-        var result = await handler
-            .ExecuteAsync(new UploadGreetingCardRequest { Attachment = attachment }, cancellationToken)
-            .ConfigureAwait(false);
-
-        return TypedResults.Ok(result);
-    }
-
-    private static void ConfigureOpenApi(OpenApiOptions options)
-    {
-        options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
-        {
-            var format = context.JsonTypeInfo.Type == typeof(NodaTime.LocalDate) ? "date"
-                : context.JsonTypeInfo.Type == typeof(NodaTime.LocalDateTime) ? "local-date-time"
-                : context.JsonTypeInfo.Type == typeof(NodaTime.OffsetDateTime) ? "date-time"
-                : context.JsonTypeInfo.Type == typeof(NodaTime.Period) ? "nodatime-period"
-                : null;
-
-            if (format is not null)
-            {
-                schema.Type = JsonSchemaType.String;
-                schema.Format = format;
-            }
-
-            if (context.JsonTypeInfo.Type == typeof(Shape))
-            {
-                var document = context.Document
-                    ?? throw new InvalidOperationException("OpenAPI schema transformer requires a document.");
-                var circleSchema = await context.GetOrCreateSchemaAsync(
-                    typeof(Circle),
-                    null,
-                    cancellationToken).ConfigureAwait(false);
-                var squareSchema = await context.GetOrCreateSchemaAsync(
-                    typeof(Square),
-                    null,
-                    cancellationToken).ConfigureAwait(false);
-
-                document.AddComponent(nameof(Circle), circleSchema);
-                document.AddComponent(nameof(Square), squareSchema);
-
-                var circleReference = new OpenApiSchemaReference(nameof(Circle), document);
-                var squareReference = new OpenApiSchemaReference(nameof(Square), document);
-                schema.OneOf = [circleReference, squareReference];
-                schema.Discriminator = new OpenApiDiscriminator
-                {
-                    PropertyName = "kind",
-                    Mapping = new Dictionary<string, OpenApiSchemaReference>(StringComparer.Ordinal)
-                    {
-                        [nameof(ShapeKind.Circle)] = circleReference,
-                        [nameof(ShapeKind.Square)] = squareReference,
-                    },
-                };
-            }
-        });
+        options
+            .AddArkNodaTimeSchemas()
+            .AddArkPolymorphism<Shape, ShapeKind>(
+                "kind",
+                (ShapeKind.Circle, typeof(Circle)),
+                (ShapeKind.Square, typeof(Square)));
     }
 }
