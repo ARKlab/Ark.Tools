@@ -165,6 +165,11 @@ Conventional Commit message.
 
 ### Step 6.4 — gRPC client-streaming upload (T8.4)
 
+**Status: complete.** The shared runtime now provides metadata-first upload
+contracts and `StreamingArkAttachment`, the sample hosts the `Documents.Upload`
+client-streaming service through the existing `UploadGreetingHandler`, and the
+generated client tests cover a two-chunk payload plus missing metadata.
+
 1. Add the chunked upload contracts (`UploadDocumentChunk` with `oneof`
    metadata/data, `UploadDocumentMetadata`) per `design.md` §"Attachments and
    streaming"; chunk size 64KiB.

@@ -128,7 +128,7 @@ project builds under the repo's strict settings and its self-tests pass with
     an `ArkBusinessRuleViolation` detail (`type`, `title`, `status`,
     `payload_json`); a generated-proto client test reads the detail and
     deserializes the payload JSON.
-- [ ] **T8.4** gRPC file upload (client streaming).
+- [x] **T8.4** gRPC file upload (client streaming).
   - *Accept:* a client-streaming method (metadata-first chunked messages) is
     generated/hosted; a self-test streams a payload larger than one chunk and
     asserts the *same* pure attachment handler received the full content via
