@@ -172,7 +172,7 @@ public sealed class TransportParityTests
         var request = NewNodaTimeRequest("MessagePack");
         using var content = new ByteArrayContent(MessagePackSerializer.Serialize(request, MessagePackOptions));
         content.Headers.ContentType = new MediaTypeHeaderValue("application/x-msgpack");
-        using var message = new HttpRequestMessage(HttpMethod.Post, "/api/v1/messagepack/greetings")
+        using var message = new HttpRequestMessage(HttpMethod.Post, "/api/v1/greetings")
         {
             Content = content,
         };
@@ -247,7 +247,7 @@ public sealed class TransportParityTests
         };
         using var content = new ByteArrayContent(MessagePackSerializer.Serialize(messagePackRequest, MessagePackOptions));
         content.Headers.ContentType = new MediaTypeHeaderValue("application/x-msgpack");
-        using var message = new HttpRequestMessage(HttpMethod.Post, "/api/v1/messagepack/shapes/describe")
+        using var message = new HttpRequestMessage(HttpMethod.Post, "/api/v1/shapes/describe")
         {
             Content = content,
         };

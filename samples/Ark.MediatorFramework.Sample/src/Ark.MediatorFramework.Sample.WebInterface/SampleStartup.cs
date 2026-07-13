@@ -99,7 +99,7 @@ public sealed class SampleStartup
         app.UseEndpoints(endpoints =>
         {
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
-            endpoints.MapArkEndpoints();
+            endpoints.MapArkEndpoints(useMessagePack: true);
             endpoints.MapArkGrpcServices();
             endpoints.MapGrpcService<DocumentsGrpcService>();
             endpoints.MapControllers();

@@ -169,7 +169,7 @@ namespace Ark.MediatorFramework.Generators
 
             // MapArkEndpoints is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, bool useMessagePack = false)");
             sb.AppendLine("        {");
 
             if (!items.IsDefaultOrEmpty)
@@ -188,21 +188,32 @@ namespace Ark.MediatorFramework.Generators
                     {
                         var map = MapMethod(e.Verb);
                         var template = e.Template.Replace("{version}", version.ToString());
+                        if (e.Verb == "POST")
+                        {
+                            sb.AppendLine("            if (useMessagePack)");
+                            sb.AppendLine("            {");
+                            sb.AppendLine("                global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.MapArkMessagePackPost<" + e.TypeFullName + ", " + e.Response + ">(app, " + Literal(template) + ", static async (httpContext, request, cancellationToken) =>");
+                            sb.AppendLine("                {");
+                            sb.AppendLine("                    var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+                            sb.AppendLine("                    var handler = container.GetInstance<" + handlerService + ">();");
+                            sb.AppendLine("                    return await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+                            sb.AppendLine("                }).WithGroupName(" + Literal("v" + version) + ");");
+                            sb.AppendLine("            }");
+                            sb.AppendLine("            else");
+                            sb.AppendLine("            {");
+                        }
                         sb.AppendLine("            app." + map + "(" + Literal(template) + ", static async (");
                         sb.AppendLine("                " + bind + e.TypeFullName + " request,");
                         sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
                         sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
                         sb.AppendLine("            {");
-                        // The SimpleInjector async scope spans the whole request (established by the hosting
-                        // pipeline); the endpoint resolves the handler from that ambient scope.
                         sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                         sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                         sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
-                        // Route-based API versioning: the version segment of the template (for example
-                        // "/api/v2/...") becomes the endpoint group name, so multiple OpenAPI documents
-                        // (one per version) can partition the endpoints.
                         sb.AppendLine("            }).WithGroupName(" + Literal("v" + version) + ");");
+                        if (e.Verb == "POST")
+                            sb.AppendLine("            }");
                     }
                 }
             }

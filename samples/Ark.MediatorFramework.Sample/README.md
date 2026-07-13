@@ -36,8 +36,9 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 - **Polymorphism**: a `[JsonConverter]`-annotated polymorphic contract (via the
   shared `Ark.Tools.SystemTextJson.JsonPolymorphicConverter`) round-trips through
   a generated endpoint.
-- **MessagePack**: a hand-written MVC compatibility endpoint negotiates
-  `application/x-msgpack` for an existing pure handler.
+- **MessagePack**: generated Minimal API endpoints negotiate
+  `application/x-msgpack` for existing pure handlers. The hand-written MVC
+  controller remains as an escape-hatch compatibility example.
 - **Versioning**: the generator infers the API version from the route template
   (`/api/v{n}/…`) and groups each endpoint into the matching OpenAPI document.
 
