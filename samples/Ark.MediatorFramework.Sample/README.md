@@ -21,26 +21,20 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 | `src/Ark.MediatorFramework.Sample.WebInterface` | Hosting: composition root, ASP.NET Core startup and the endpoints exposing the selected requests/queries. Wires the user context (AspNetCore auth + Rebus propagation) and starts the bus. |
 | `test/Ark.MediatorFramework.Sample.Tests` | Demonstrates **how to test an application built on the framework**: in-process `TestServer`, in-memory bus and in-process gRPC channel against the sample host. Framework-capability tests (generators, runtime adapters) belong in `tests/Ark.Tools.MediatorFramework.Tests` instead. |
 
-## What the self-tests prove
+## Behavioral tests
 
-- **Minimal API** posts/gets a greeting and hits the pure handler.
-- **Rebus** sends the same request message and hits the *same* pure handler and store.
-- **Purity**: the handler constructors reference no `Microsoft.AspNetCore`,
-  `Rebus`, or `Grpc` types.
-- **Source generation**: the endpoint/Rebus registration is `[GeneratedCode]`.
-- **Attachments**: a multipart upload is mapped (`IFormFile` → `IArkAttachment`)
-  and streamed into the pure handler.
-- **OpenAPI**: per-version documents (`/openapi/v1.json`, `/openapi/v2.json`) are
-  generated from the endpoint metadata, including NodaTime and polymorphic
-  schemas.
-- **Polymorphism**: a `[JsonConverter]`-annotated polymorphic contract (via the
-  shared `Ark.Tools.SystemTextJson.JsonPolymorphicConverter`) round-trips through
-  a generated endpoint.
-- **MessagePack**: generated Minimal API endpoints negotiate
-  `application/x-msgpack` for existing pure handlers. The hand-written MVC
-  controller remains as an escape-hatch compatibility example.
-- **Versioning**: the generator infers the API version from the route template
-  (`/api/v{n}/…`) and groups each endpoint into the matching OpenAPI document.
+The Reqnroll scenarios exercise the sample as a real application through its
+public HTTP and gRPC interfaces:
+
+- create and query greetings over HTTP;
+- create over gRPC and query over HTTP;
+- reject duplicate greetings with an HTTP business-rule response;
+- read the evolved version-two greeting contract; and
+- queue an HTTP composition request and poll until Rebus completes it.
+
+Framework capabilities such as source generation, transport serialization,
+OpenAPI schema generation, attachments and rich gRPC errors are covered by
+unit tests in `tests/Ark.Tools.MediatorFramework.Tests`.
 
 ## Run
 

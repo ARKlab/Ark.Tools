@@ -208,12 +208,12 @@ project builds under the repo's strict settings and its self-tests pass with
     `…Sample.GrpcClient` generates the client from the **exported** `.proto`
     via `Grpc.Tools` and all gRPC tests pass; a snapshot test in `tests/`
     validates the emitted proto text.
-- [ ] **T9.7** Sample composition: HTTP handler delegating async work to Rebus.
+- [x] **T9.7** Sample composition: HTTP handler delegating async work to Rebus.
   - *Accept:* an HTTP-exposed handler publishes a `[RebusMessage]` message
     (`IBus` injected into the pure handler) whose Rebus handler completes the
     workflow; a test mutates over HTTP and polls a query endpoint until the
     async effect is visible.
-- [ ] **T9.8** Reqnroll behavioral tests for the sample.
+- [x] **T9.8** Reqnroll behavioral tests for the sample.
   - *Accept:* `…Sample.Tests` gains Gherkin feature files (Reqnroll.MsTest)
     covering create/query greetings, the business-rule violation, versioning
     and the HTTP→Rebus composition; step definitions call only HTTP/gRPC

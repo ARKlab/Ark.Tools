@@ -3,9 +3,8 @@
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 
-using Ark.MediatorFramework.Sample.Application;
-using Ark.MediatorFramework.Sample.GrpcClient;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using AwesomeAssertions;
@@ -14,15 +13,24 @@ using Grpc.Net.Client;
 
 using Reqnroll;
 
+using AppComposeGreetingRequest = Ark.MediatorFramework.Sample.Application.ComposeGreetingRequest;
+using AppComposeGreetingResponse = Ark.MediatorFramework.Sample.Application.ComposeGreetingResponse;
+using AppCreateGreetingRequest = Ark.MediatorFramework.Sample.Application.CreateGreetingRequest;
+using AppGreetingResponse = Ark.MediatorFramework.Sample.Application.GreetingResponse;
+using AppGreetingResponseV2 = Ark.MediatorFramework.Sample.Application.GreetingResponseV2;
+using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
+using GrpcGreetingsV1Client = Ark.MediatorFramework.Sample.GrpcClient.GreetingsV1.GreetingsV1Client;
+
 namespace Ark.MediatorFramework.Sample.Tests.Steps;
 
 /// <summary>Defines public-transport behavioral steps for the greeting sample.</summary>
 [Binding]
 public sealed class GreetingSteps
 {
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
     private readonly SampleTestContext _context;
-    private GreetingResponse? _greeting;
-    private GreetingResponseV2? _versionTwoGreeting;
+    private AppGreetingResponse? _greeting;
+    private AppGreetingResponseV2? _versionTwoGreeting;
     private HttpResponseMessage? _response;
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
@@ -38,10 +46,11 @@ public sealed class GreetingSteps
     {
         _response = await _context.Client.PostAsJsonAsync(
             "/api/v1/greetings",
-            new CreateGreetingRequest { Name = name }).ConfigureAwait(false);
+            new AppCreateGreetingRequest { Name = name },
+            JsonOptions).ConfigureAwait(false);
 
         if (_response.IsSuccessStatusCode)
-            _greeting = await _response.Content.ReadFromJsonAsync<GreetingResponse>().ConfigureAwait(false);
+            _greeting = await _response.Content.ReadFromJsonAsync<AppGreetingResponse>(JsonOptions).ConfigureAwait(false);
     }
 
     [When(@"I create the greeting ""(.*)"" over gRPC")]
@@ -51,12 +60,12 @@ public sealed class GreetingSteps
         {
             HttpHandler = _context.CreateGrpcHandler(),
         });
-        var result = await new GreetingsV1.GreetingsV1Client(channel).CreateGreetingAsync(
-            new CreateGreetingRequest { Name = name }).ResponseAsync.ConfigureAwait(false);
+        var result = await new GrpcGreetingsV1Client(channel).CreateGreetingAsync(
+            new GrpcCreateGreetingRequest { Name = name }).ResponseAsync.ConfigureAwait(false);
 
-        _greeting = new GreetingResponse
+        _greeting = new AppGreetingResponse
         {
-            Id = Guid.Parse(result.Id),
+            Id = ParseGrpcGuid(result.Id),
             Message = result.Message,
         };
     }
@@ -65,8 +74,9 @@ public sealed class GreetingSteps
     public async Task WhenIQueryTheGreetingThroughVersionTwo()
     {
         _greeting.Should().NotBeNull();
-        _versionTwoGreeting = await _context.Client.GetFromJsonAsync<GreetingResponseV2>(
-            $"/api/v2/greetings-v2/{_greeting!.Id}").ConfigureAwait(false);
+        _versionTwoGreeting = await _context.Client.GetFromJsonAsync<AppGreetingResponseV2>(
+            $"/api/v2/greetings-v2/{_greeting!.Id}",
+            JsonOptions).ConfigureAwait(false);
     }
 
     [When(@"I compose the greeting ""(.*)"" over HTTP")]
@@ -74,10 +84,11 @@ public sealed class GreetingSteps
     {
         _response = await _context.Client.PostAsJsonAsync(
             "/api/v1/greetings/compose",
-            new ComposeGreetingRequest { Name = name }).ConfigureAwait(false);
+            new AppComposeGreetingRequest { Name = name },
+            JsonOptions).ConfigureAwait(false);
         _response.EnsureSuccessStatusCode();
-        var composition = await _response.Content.ReadFromJsonAsync<ComposeGreetingResponse>().ConfigureAwait(false);
-        _greeting = new GreetingResponse
+        var composition = await _response.Content.ReadFromJsonAsync<AppComposeGreetingResponse>(JsonOptions).ConfigureAwait(false);
+        _greeting = new AppGreetingResponse
         {
             Id = composition!.Id,
             Message = string.Empty,
@@ -92,7 +103,7 @@ public sealed class GreetingSteps
             new Uri($"/api/v1/greetings/{_greeting!.Id}", UriKind.Relative)).ConfigureAwait(false);
 
         response.EnsureSuccessStatusCode();
-        var greeting = await response.Content.ReadFromJsonAsync<GreetingResponse>().ConfigureAwait(false);
+        var greeting = await response.Content.ReadFromJsonAsync<AppGreetingResponse>(JsonOptions).ConfigureAwait(false);
         greeting.Should().NotBeNull();
         greeting!.Id.Should().Be(_greeting.Id);
     }
@@ -134,5 +145,17 @@ public sealed class GreetingSteps
         while (DateTime.UtcNow < deadline);
 
         throw new TimeoutException("The composed greeting was not completed within 10 seconds.");
+    }
+
+    private static Guid ParseGrpcGuid(Google.Protobuf.ByteString value)
+    {
+        var source = value.Span;
+        if (source.Length != 18 || source[0] != 9 || source[9] != 17)
+            throw new InvalidOperationException("The gRPC GUID response has an unsupported wire format.");
+
+        Span<byte> bytes = stackalloc byte[16];
+        source[1..9].CopyTo(bytes);
+        source[10..18].CopyTo(bytes[8..]);
+        return new Guid(bytes);
     }
 }
