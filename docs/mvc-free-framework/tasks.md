@@ -275,7 +275,7 @@ Debug`) before the task is marked complete.
     requires a DI-registered `IFormatterResolver` with **no fallback default**
     (missing registration throws); tests cover json-in/msgpack-out,
     msgpack-in/json-out, msgpack round-trip and the missing-resolver failure.
-- [ ] **T10.6** `Ark.Tools.MediatorFramework.MinimalApi` targets `net10.0` only.
+- [x] **T10.6** `Ark.Tools.MediatorFramework.MinimalApi` targets `net10.0` only.
   - *Accept:* the MinimalApi runtime csproj has a single `net10.0` TFM (no
     `net8.0` conditions); core/Rebus/Grpc packages keep their current TFMs;
     lock files refreshed; solution builds.
@@ -317,16 +317,15 @@ the final contracts:
 
 1. **T10.1** NodaTime `google.type.DateTime` mappings.
 2. **T10.2** Shared proto namespaces (regenerates the sample gRPC client).
-3. **T10.6** MinimalApi `net10.0`-only.
-4. **T10.3** HTTP envelope binding.
-5. **T10.4** Generated multipart upload.
-6. **T10.5** MessagePack content negotiation.
-7. **T10.7** OpenAPI NodaTime parity.
-8. **T10.8** Package-shaped consumption (buildTransitive assets, transitive
+3. **T10.3** HTTP envelope binding.
+4. **T10.4** Generated multipart upload.
+5. **T10.5** MessagePack content negotiation.
+6. **T10.7** OpenAPI NodaTime parity.
+7. **T10.8** Package-shaped consumption (buildTransitive assets, transitive
    deps, `999.9.9` references, `.gitignore` cleanup).
-9. **T9.7** HTTP→Rebus composition.
-10. **T9.8** Reqnroll behavioral tests.
-11. **T9.9 + T10.9** Refinement/design-conformance sweep.
+8. **T9.7** HTTP→Rebus composition.
+9. **T9.8** Reqnroll behavioral tests.
+10. **T9.9 + T10.9** Refinement/design-conformance sweep.
 
 ## Status legend
 

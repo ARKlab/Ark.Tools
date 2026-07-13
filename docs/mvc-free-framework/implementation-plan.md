@@ -475,6 +475,10 @@ zoned type and the existing native mappings.
 
 ### Step 8.3 — MinimalApi net10.0 only (T10.6)
 
+**Status: complete.** `Ark.Tools.MediatorFramework.MinimalApi` now targets only
+`net10.0`; its OpenAPI reference and source set no longer contain net8-specific
+conditions. The refreshed lock files and full solution validation are green.
+
 1. `src/common/Ark.Tools.MediatorFramework.MinimalApi/…csproj`: single
    `<TargetFramework>net10.0</TargetFramework>`; delete every
    `Condition="'$(TargetFramework)' == 'net8.0'"` group and net8-only
