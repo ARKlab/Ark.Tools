@@ -259,7 +259,7 @@ Debug`) before the task is marked complete.
     same request**; a body-only contract needs no annotations; a sample
     contract demonstrates all three sources combined and tests assert each
     source landed in the handler's envelope.
-- [ ] **T10.4** Generator-emitted multipart upload endpoint.
+- [x] **T10.4** Generator-emitted multipart upload endpoint.
   - *Accept:* a `[HttpEndpoint]` contract with exactly one `IArkAttachment`
     property gets a generated `multipart/form-data` endpoint (form file →
     `ArkAttachment`, route/query members bound per T10.3); two attachment
