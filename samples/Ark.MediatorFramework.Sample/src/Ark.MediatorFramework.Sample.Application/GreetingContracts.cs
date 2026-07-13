@@ -75,6 +75,35 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
     public Period Period { get; init; } = Period.Zero;
 }
 
+/// <summary>HTTP-only request that publishes work to Rebus and returns immediately.</summary>
+[HttpEndpoint("POST", "/api/v{version}/greetings/compose")]
+public sealed record ComposeGreetingRequest : IRequest<ComposeGreetingResponse>
+{
+    /// <summary>Gets the name to greet.</summary>
+    public string Name { get; init; } = string.Empty;
+}
+
+/// <summary>Response returned when a composition request has been queued.</summary>
+public sealed record ComposeGreetingResponse
+{
+    /// <summary>Gets the greeting identifier assigned to the queued workflow.</summary>
+    public Guid Id { get; init; }
+
+    /// <summary>Gets the workflow state.</summary>
+    public string Status { get; init; } = string.Empty;
+}
+
+/// <summary>Rebus-only request completed asynchronously by the composition workflow.</summary>
+[RebusMessage]
+public sealed record CompleteGreetingCompositionRequest : IRequest<GreetingResponse>
+{
+    /// <summary>Gets the greeting identifier.</summary>
+    public Guid Id { get; init; }
+
+    /// <summary>Gets the name to greet.</summary>
+    public string Name { get; init; } = string.Empty;
+}
+
 /// <summary>
 /// Pure transport-agnostic query (read). Declared with <see cref="HttpEndpointAttribute"/> only,
 /// so the generator exposes it as an HTTP GET (a query is a read, not a bus message).

@@ -7,6 +7,8 @@ using Ark.Tools.Core.BusinessRuleViolation;
 using FluentValidation;
 using FluentValidation.Results;
 
+using Rebus.Bus;
+
 using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -45,6 +47,67 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             DateTime = Request.DateTime,
             OffsetDateTime = Request.OffsetDateTime,
             Period = Request.Period,
+        };
+
+        _store.Save(response);
+        return Task.FromResult(response);
+    }
+}
+
+/// <summary>Pure handler for <see cref="ComposeGreetingRequest"/> that publishes work to Rebus.</summary>
+public sealed class ComposeGreetingHandler : IRequestHandler<ComposeGreetingRequest, ComposeGreetingResponse>
+{
+    private readonly IBus _bus;
+
+    /// <summary>Initializes a new instance of the <see cref="ComposeGreetingHandler"/> class.</summary>
+    public ComposeGreetingHandler(IBus bus)
+    {
+        _bus = bus;
+    }
+
+    /// <inheritdoc />
+    public async Task<ComposeGreetingResponse> ExecuteAsync(ComposeGreetingRequest Request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(Request);
+
+        if (string.IsNullOrWhiteSpace(Request.Name))
+            throw new ValidationException([new ValidationFailure(nameof(Request.Name), "Name must not be empty.")]);
+
+        var id = Guid.NewGuid();
+        await _bus.SendLocal(new CompleteGreetingCompositionRequest
+        {
+            Id = id,
+            Name = Request.Name,
+        }).ConfigureAwait(false);
+
+        return new ComposeGreetingResponse
+        {
+            Id = id,
+            Status = "queued",
+        };
+    }
+}
+
+/// <summary>Pure handler for <see cref="CompleteGreetingCompositionRequest"/> that completes the workflow.</summary>
+public sealed class CompleteGreetingCompositionHandler : IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>
+{
+    private readonly IGreetingStore _store;
+
+    /// <summary>Initializes a new instance of the <see cref="CompleteGreetingCompositionHandler"/> class.</summary>
+    public CompleteGreetingCompositionHandler(IGreetingStore store)
+    {
+        _store = store;
+    }
+
+    /// <inheritdoc />
+    public Task<GreetingResponse> ExecuteAsync(CompleteGreetingCompositionRequest Request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(Request);
+
+        var response = new GreetingResponse
+        {
+            Id = Request.Id,
+            Message = $"Hello, {Request.Name}! (async)",
         };
 
         _store.Save(response);
