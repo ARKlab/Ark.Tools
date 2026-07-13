@@ -23,6 +23,7 @@
 	  <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.1" />
 	  
 	  <PackageVersion Include="System.Diagnostics.Tracing" Version="4.3.0" />
+	  <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.9" />
 	  <PackageVersion Include="DistributedLock.Core" Version="1.0.9" />
 	  <PackageVersion Include="DistributedLock.Azure" Version="1.0.2" />
 	  <PackageVersion Include="Polly" Version="8.7.0" />

@@ -4,8 +4,6 @@ package ark.nodatime;
 
 option csharp_namespace = "Ark.Tools.Nodatime.Protobuf";
 
-import "google/type/datetime.proto";
-
 message Period {
   string value = 1;
 }

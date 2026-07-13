@@ -87,10 +87,10 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().Contain("public static class ArkGeneratedProtos");
-        generated.Should().Contain("import \"google/type/date.proto\";");
-        generated.Should().Contain("import \"google/type/datetime.proto\";");
-        generated.Should().Contain("import \"ark/nodatime.proto\";");
-        generated.Should().Contain("import \"ark/mediator.proto\";");
+        generated.Should().Contain("import \\\"google/type/date.proto\\\";");
+        generated.Should().Contain("import \\\"google/type/datetime.proto\\\";");
+        generated.Should().Contain("import \\\"ark/nodatime.proto\\\";");
+        generated.Should().Contain("import \\\"ark/mediator.proto\\\";");
         generated.Should().Contain("message Greeting");
         generated.Should().Contain("service GreetingsV1");
     }
