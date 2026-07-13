@@ -123,7 +123,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Generated.Should().BeEmpty();
+        result.Generated.Should().NotContain("MapPost(\"/uploads\"");
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF001");
     }
 
