@@ -412,6 +412,177 @@ support, and the sample client compiles against the exported files.
    build and consumed by the client project. Update docs where reality
    diverged.
 
+## Phase 8 — Third review revisions (step-by-step, executable)
+
+Same general rules as Phases 6–7, plus one hard gate added by this review:
+**every step ends with a full-solution build** — `dotnet build Ark.Tools.slnx
+--configuration Debug` must succeed (all projects, not only the touched ones)
+before the step's commit. Execute in the order of `tasks.md` ("Next
+implementation order").
+
+### Step 8.1 — NodaTime `google.type.DateTime` mappings (T10.1)
+
+1. In `src/common/Ark.Tools.Nodatime.Protobuf/Surrogates/` replace
+   `LocalDateTimeSurrogate` and `OffsetDateTimeSurrogate` and add
+   `ZonedDateTimeSurrogate`, all three mirroring
+   `google.type.DateTime` exactly: `[ProtoContract(Name = "DateTime")]`
+   fields `year`=1, `month`=2, `day`=3, `hours`=4, `minutes`=5, `seconds`=6,
+   `nanos`=7 (all int32) plus the `time_offset` oneof — `utc_offset`=8
+   (Duration-shaped sub-message: `seconds` int64=1, `nanos` int32=2) and
+   `time_zone`=9 (TimeZone-shaped sub-message: `id` string=1, `version`
+   string=2). protobuf-net has no oneof on surrogates: model it as two
+   optional fields where exactly zero or one is populated.
+   - `LocalDateTime` ↔ neither field set;
+   - `OffsetDateTime` ↔ `utc_offset` set (offset → Duration seconds/nanos);
+   - `ZonedDateTime` ↔ `time_zone` set (`id` = `Zone.Id`), converting via
+     `LocalDateTime` + zone (use `DateTimeZoneProviders.Tzdb`; unknown id on
+     decode → `DateTimeZoneNotFoundException`).
+2. Register the `ZonedDateTime` surrogate in `Ex.AddNodaTimeSurrogates`.
+3. Update `tests/Ark.Tools.Nodatime.Protobuf.Tests`: round-trips for all
+   three (`LocalDateTime` zoneless, `OffsetDateTime` offset preserved,
+   `ZonedDateTime` zone id preserved), schema/wire-shape assertions against
+   the google.type field numbers, and keep the existing native-mapping tests.
+4. `dotnet test tests/Ark.Tools.Nodatime.Protobuf.Tests -f net10.0`; **full
+   solution build**.
+
+### Step 8.2 — Shared proto namespaces (T10.2)
+
+1. `src/common/Ark.Tools.Nodatime.Protobuf/proto/ark/nodatime.proto`: add
+   `package ark.nodatime;`, set
+   `option csharp_namespace = "Ark.Tools.Nodatime.Protobuf";`, add
+   `import "google/type/datetime.proto";` and delete the `LocalDate`,
+   `LocalDateTime` and `OffsetDateTime` messages — only `Period` remains
+   (date/time members in generated files reference `google.type.Date` /
+   `google.type.DateTime` directly).
+2. `src/common/Ark.Tools.MediatorFramework.Grpc/proto/ark/mediator.proto`:
+   add `package ark.mediator;`, set
+   `option csharp_namespace = "Ark.Tools.MediatorFramework.Grpc";`.
+3. Update the Grpc generator's proto emission (type-name mapping now emits
+   `google.type.DateTime`/`google.type.Date` and the `ark.nodatime.Period` /
+   `ark.mediator.*` qualified names) and the proto snapshot test in
+   `tests/Ark.Tools.MediatorFramework.Tests`.
+4. `…Sample.GrpcClient`: ensure `google/type/*.proto` are importable
+   (`Grpc.Tools` ships the well-known types; add
+   `Google.Api.CommonProtos`-provided protos to `<Protobuf>` includes or
+   `AdditionalImportDirs` as needed); regenerate; fix the client-side
+   namespaces in `…Sample.Tests`.
+5. All gRPC tests + snapshot green; **full solution build**.
+
+### Step 8.3 — MinimalApi net10.0 only (T10.6)
+
+1. `src/common/Ark.Tools.MediatorFramework.MinimalApi/…csproj`: single
+   `<TargetFramework>net10.0</TargetFramework>`; delete every
+   `Condition="'$(TargetFramework)' == 'net8.0'"` group and net8-only
+   package references.
+2. `dotnet restore Ark.Tools.slnx --force-evaluate` (lock files shrink);
+   **full solution build** + affected tests.
+
+### Step 8.4 — HTTP envelope binding (T10.3)
+
+1. `src/common/Ark.Tools.MediatorFramework/`: add
+   `BindFromQueryAttribute` (property-level, transport-metadata only, XML
+   docs) next to the existing transport attributes.
+2. `MinimalApiEndpointGenerator`: per contract compute the binding plan —
+   route properties = case-insensitive match with template placeholders
+   (excluding `{version}`); query properties = `[BindFromQuery]` (body verbs)
+   or all remaining (GET/DELETE); body = the envelope itself for body verbs.
+   Emit a lambda taking `[FromRoute]`/`[FromQuery]` parameters plus (for body
+   verbs) the deserialized envelope, then rebuild the envelope with an object
+   initializer/`with` expression overwriting the bound members before
+   dispatch. GET/DELETE keep `[AsParameters]` only when no explicit plan is
+   needed.
+3. Sample: extend one contract (e.g. `UpdateGreetingRequest`) to combine a
+   `{id}` route member, a `[BindFromQuery]` member and body members; add
+   generator snapshot coverage in `tests/Ark.Tools.MediatorFramework.Tests`
+   and a behavioral test asserting all three sources arrive in the handler.
+4. **Full solution build** + tests.
+
+### Step 8.5 — Generated multipart upload (T10.4)
+
+1. `MinimalApiEndpointGenerator`: when a `[HttpEndpoint]` contract has exactly
+   one `IArkAttachment`-typed property, emit a multipart endpoint instead of
+   the JSON body binding: `Accepts("multipart/form-data")`, read
+   `httpContext.Request.Form.Files` (require exactly one file), map to
+   `new ArkAttachment(...)`, bind route/query members per Step 8.4, assign the
+   attachment property, dispatch. Two or more attachment properties → report
+   a generator error diagnostic (`ARKMF00x`).
+2. Sample: put `[HttpEndpoint]` (with a route/query member) on
+   `UploadGreetingCardRequest`; delete the `MapArkAttachmentUpload` call from
+   `SampleStartup` (keep the helper + one escape-hatch mention in README).
+3. Tests: generator snapshot + diagnostic test; upload behavioral test now
+   hits the generated route and asserts the bound route/query member.
+4. **Full solution build** + tests.
+
+### Step 8.6 — MessagePack content negotiation (T10.5)
+
+1. `HttpEndpointAttribute`: add a serialization opt-in (e.g.
+   `bool AcceptsMessagePack` or a `[Flags] HttpSerde` property, JSON always
+   on). Remove the `useMessagePack` parameter from the generated
+   `MapArkEndpoints`.
+2. Replace `ArkMessagePackEx.MapArkMessagePackPost` with an endpoint filter /
+   inline negotiation used by the generated endpoint when the contract opted
+   in: `Content-Type: application/x-msgpack` → deserialize body with
+   `MessagePackSerializer`; `Accept` preferring msgpack → serialize response
+   likewise; JSON otherwise. Delete `MapArkMessagePackPost`.
+3. `GetOptions`: resolve `IFormatterResolver` with
+   `GetRequiredService<IFormatterResolver>()` — **delete the
+   `CompositeResolver` fallback**; sample registers its resolver in DI.
+4. Tests: msgpack round-trip, mixed-negotiation (json-in/msgpack-out and
+   inverse), and missing-resolver → exception. Update generator snapshots.
+5. **Full solution build** + tests.
+
+### Step 8.7 — OpenAPI NodaTime parity (T10.7)
+
+1. Extend `ArkOpenApiEx.AddArkNodaTimeSchemas` to cover `Instant`,
+   `ZonedDateTime`, `LocalTime`, `DateTimeZone` (and keep `LocalDate`,
+   `LocalDateTime`, `OffsetDateTime`, `Period`), mirroring
+   `SupportNodaTimeExtensions`' formats/examples; nullable forms follow the
+   underlying type automatically in STJ-based OpenAPI — assert they do.
+2. Unit test: one schema assertion per type in
+   `tests/Ark.Tools.MediatorFramework.Tests`.
+3. **Full solution build** + tests.
+
+### Step 8.8 — Package-shaped consumption (T10.8)
+
+1. Grpc MSBuild assets: move the `ArkExportProtoDir` opt-in documentation and
+   the export/copy wiring fully into
+   `src/common/Ark.Tools.MediatorFramework.Grpc/buildTransitive/` (`.props`
+   for defaults + existing `.targets`), packed via
+   `<None Pack="true" PackagePath="buildTransitive" />`. Verify a packed
+   `dotnet pack` layout contains them; if csproj packing can't express the
+   layout, create `Ark.Tools.MediatorFramework.Grpc.MsBuild`
+   (nuspec-authored) and make the Grpc package depend on it.
+2. Move the transport stack dependencies into the framework csprojs with
+   default (transitive) assets: `protobuf-net.Grpc.AspNetCore`,
+   `Grpc.StatusProto`, `System.ServiceModel.Primitives` → Grpc;
+   `Rebus.Protobuf` → Rebus; `Hellang.Middleware.ProblemDetails`,
+   `MessagePack`, `Microsoft.AspNetCore.OpenApi` → MinimalApi. Delete them
+   from the sample WebInterface csproj.
+3. Analyzer flow: make each runtime package carry its generator as an
+   analyzer asset (`analyzers/dotnet/cs` on pack; for the in-repo
+   project-resolution path add a `buildTransitive` `.props` adding the
+   generator dll as an `Analyzer` item) so consumers need one reference per
+   transport.
+4. Sample references via the ReferenceProject trick: add
+   `Ark.Tools.MediatorFramework*`, `Ark.Tools.Rebus`,
+   `Ark.Tools.AspNetCore.MessagePack` etc. as `PackageVersion 999.9.9`
+   in a sample-level `Directory.Packages.props` (or the root one) and switch
+   the sample csprojs from `ProjectReference` to `PackageReference`; confirm
+   the lock file records them as `"type": "Project"`.
+5. Delete the sample-specific `proto/*.proto` line from the root `.gitignore`;
+   add a local `samples/…/WebInterface/proto/.gitignore` (or ignore `proto/`
+   in the sample folder) instead. Remove the manual `Import` +
+   `CopyExportedProto` target from the sample csproj.
+6. `dotnet restore Ark.Tools.slnx --force-evaluate`; **full solution build** +
+   all tests; lock files committed.
+
+### Step 8.9 — Design-conformance sweep (T10.9, merged with T9.9)
+
+1. Diff the PR against `design.md` section by section; fix drift or amend the
+   design with rationale.
+2. Confirm the always-build gate ran for every step (CI green on
+   locked-mode restore, build, tests).
+
 
 
 - **Phases 1–4** are implemented and self-tested in the sample: pure handlers,
@@ -427,10 +598,13 @@ support, and the sample client compiles against the exported files.
   `src/common` packages.
 - **Phase 6** (review revisions) is complete: T8.1–T8.7 are implemented and
   self-tested, tracked as Epic 8 in [`tasks.md`](tasks.md).
-- **Phase 7** (second review revisions) is specified above with per-step
-  instructions and tracked as Epic 9 in [`tasks.md`](tasks.md); Step 7.1 is
-  complete, Step 7.2 is complete, Step 7.3 is complete, and implementation
-  continues with Step 7.4.
+- **Phase 7** (second review revisions) is tracked as Epic 9 in
+  [`tasks.md`](tasks.md); Steps 7.1–7.6 are complete, Steps 7.7–7.9 remain.
+- **Phase 8** (third review revisions) is specified above with per-step
+  instructions and tracked as Epic 10 in [`tasks.md`](tasks.md); execution
+  follows the "Next implementation order" in `tasks.md` (Phase 8 wire-shape
+  and packaging steps before the remaining Phase 7 behavioral steps), with the
+  full-solution build gate on every step.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore

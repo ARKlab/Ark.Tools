@@ -226,18 +226,107 @@ project builds under the repo's strict settings and its self-tests pass with
     proto export) lives in a `src/` package and has unit tests in
     `tests/Ark.Tools.MediatorFramework.Tests`; docs updated.
 
+## Epic 10 — Review revisions (2026-07 third review)
+
+Every task in this epic (and from now on, in general) additionally requires:
+**the entire solution builds** (`dotnet build Ark.Tools.slnx --configuration
+Debug`) before the task is marked complete.
+
+- [ ] **T10.1** NodaTime protobuf: map all remaining date/time types to
+  `google.type.DateTime`.
+  - *Accept:* `LocalDateTime` encodes as `google.type.DateTime` with neither
+    `utc_offset` nor `time_zone`; `OffsetDateTime` with `utc_offset` set;
+    `ZonedDateTime` (new) with `time_zone` set — surrogates mirror the
+    google.type layout exactly (`year`..`nanos` = 1..7, oneof
+    `utc_offset` = 8 `google.protobuf.Duration` / `time_zone` = 9
+    `google.type.TimeZone`); the old bespoke `LocalDateTime`/`OffsetDateTime`
+    encodings are gone; round-trip tests cover all three plus the existing
+    native mappings and `Period`.
+- [ ] **T10.2** Shared `.proto` namespaces fixed to their owning libraries.
+  - *Accept:* `ark/nodatime.proto` declares `package ark.nodatime;` and
+    `option csharp_namespace = "Ark.Tools.Nodatime.Protobuf"`; it defines
+    **no** `LocalDate` message (native `google.type.Date` is imported/used)
+    and only `Period` plus what `google/type/datetime.proto` doesn't cover;
+    `ark/mediator.proto` declares `package ark.mediator;` and
+    `option csharp_namespace = "Ark.Tools.MediatorFramework.Grpc"`; the
+    per-service generated files import the google.type protos; the
+    proto-generated sample client still compiles and all gRPC tests pass.
+- [ ] **T10.3** HTTP envelope binding: route + query + body combinable.
+  - *Accept:* a `[HttpEndpoint]` contract can bind members from the route
+    (name matches placeholder), the query string (`[BindFromQuery]` on
+    body-verbs; all remaining members on GET/DELETE) and the body
+    (deserialized into the envelope, then bound members overwritten) **in the
+    same request**; a body-only contract needs no annotations; a sample
+    contract demonstrates all three sources combined and tests assert each
+    source landed in the handler's envelope.
+- [ ] **T10.4** Generator-emitted multipart upload endpoint.
+  - *Accept:* a `[HttpEndpoint]` contract with exactly one `IArkAttachment`
+    property gets a generated `multipart/form-data` endpoint (form file →
+    `ArkAttachment`, route/query members bound per T10.3); two attachment
+    properties produce a generator error diagnostic; the sample's
+    hand-written `MapArkAttachmentUpload` call is deleted (helper stays as
+    escape hatch); the upload test passes against the generated endpoint,
+    including a route/query parameter.
+- [ ] **T10.5** MessagePack by content negotiation, no specialized map.
+  - *Accept:* `MapArkMessagePackPost` is removed; `[HttpEndpoint]` declares
+    the supported serializations (JSON default, MessagePack opt-in); one
+    generated endpoint per contract negotiates `application/json` vs
+    `application/x-msgpack` on `Content-Type` and `Accept`; MessagePack use
+    requires a DI-registered `IFormatterResolver` with **no fallback default**
+    (missing registration throws); tests cover json-in/msgpack-out,
+    msgpack-in/json-out, msgpack round-trip and the missing-resolver failure.
+- [ ] **T10.6** `Ark.Tools.MediatorFramework.MinimalApi` targets `net10.0` only.
+  - *Accept:* the MinimalApi runtime csproj has a single `net10.0` TFM (no
+    `net8.0` conditions); core/Rebus/Grpc packages keep their current TFMs;
+    lock files refreshed; solution builds.
+- [ ] **T10.7** OpenAPI NodaTime coverage parity with Swashbuckle.
+  - *Accept:* `AddArkNodaTimeSchemas()` maps every type
+    `SupportNodaTimeExtensions` maps (`LocalDate`, `LocalDateTime`, `Instant`,
+    `OffsetDateTime`, `ZonedDateTime`, `LocalTime`, `DateTimeZone`, `Period`,
+    nullables included) with equivalent format/example metadata; a unit test
+    asserts the schema for each type.
+- [ ] **T10.8** Package-shaped consumption: MSBuild assets in the package,
+  transitive dependencies, version-replacement references.
+  - *Accept:* the proto-export `.props`/`.targets` are delivered by the
+    `Ark.Tools.MediatorFramework.Grpc` package manifest (`buildTransitive`) —
+    or by a dedicated `…Grpc.MsBuild` package if csproj packing can't express
+    it — and the sample csproj contains **no** `Import`/`ArkExportProto`
+    wiring of its own; the transport stack packages
+    (`protobuf-net.Grpc.AspNetCore`, `Grpc.StatusProto`,
+    `System.ServiceModel.Primitives`, `Rebus.Protobuf`,
+    `Hellang.Middleware.ProblemDetails`, `MessagePack`,
+    `Microsoft.AspNetCore.OpenApi`, …) are dependencies of the framework
+    packages and disappear from the sample host csproj; the sample references
+    `Ark.Tools.MediatorFramework.*` (and other Ark.Tools libs) via
+    `PackageReference` + central `999.9.9` `PackageVersion` (ReferenceProject
+    trick, resolving to projects in-repo), analyzers included; the
+    over-specific `samples/…/WebInterface/proto/*.proto` line is removed from
+    the root `.gitignore` (replaced by an ignore local to the sample);
+    locked-mode restore and full build + tests pass.
+- [ ] **T10.9** Design-conformance sweep + always-build gate.
+  - *Accept:* the PR diff is re-reviewed against `design.md`; any drift is
+    fixed or the design amended; every remaining task/step description
+    carries the full-solution build requirement; `dotnet build
+    Ark.Tools.slnx` and `dotnet test` are green at the end of the epic.
+
 ## Next implementation order
 
-1. **T9.1** gRPC interceptor to library + ProblemDetails-shaped detail.
-2. **T9.2** `Rebus.Protobuf` adoption.
-3. **T9.3** MinimalApi hosting helpers.
-4. **T9.4** Cross-transport polymorphism.
-5. **T9.5** MessagePack serde on Minimal API.
-6. **T9.6** Proto-on-build + shared proto assets (after T9.1 so
-   `ark/mediator.proto` matches the final detail shape).
-7. **T9.7** HTTP→Rebus composition.
-8. **T9.8** Reqnroll behavioral tests.
-9. **T9.9** Refinement sweep.
+T9.1–T9.6 are complete. Wire-shape and packaging refinements run **before**
+the behavioral-test epic so the Reqnroll scenarios are written once against
+the final contracts:
+
+1. **T10.1** NodaTime `google.type.DateTime` mappings.
+2. **T10.2** Shared proto namespaces (regenerates the sample gRPC client).
+3. **T10.6** MinimalApi `net10.0`-only.
+4. **T10.3** HTTP envelope binding.
+5. **T10.4** Generated multipart upload.
+6. **T10.5** MessagePack content negotiation.
+7. **T10.7** OpenAPI NodaTime parity.
+8. **T10.8** Package-shaped consumption (buildTransitive assets, transitive
+   deps, `999.9.9` references, `.gitignore` cleanup).
+9. **T9.7** HTTP→Rebus composition.
+10. **T9.8** Reqnroll behavioral tests.
+11. **T9.9 + T10.9** Refinement/design-conformance sweep.
 
 ## Status legend
 

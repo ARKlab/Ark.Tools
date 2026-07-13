@@ -68,8 +68,9 @@ request type. Each transport is opt-in and declared independently:
   code-first gRPC method; `[ServiceGroup("Orders")]` groups the service.
 - `[RebusMessage]` — expose as a Rebus message.
 
-`[FromRoute]`/`[FromQuery]` refine the HTTP binding. These attributes are the
-only transport hint the developer writes; the generator turns each *declared*
+HTTP binding treats the request as an **envelope** whose members may combine
+route, query and body sources (see *HTTP binding* below). These attributes are
+the only transport hint the developer writes; the generator turns each *declared*
 transport into concrete hosting code. A request/query with **no** transport
 attribute is not hosted — the developer wires it by hand.
 
@@ -116,8 +117,44 @@ expand a `{version}` route once per active version. The generator applies the
 same lifetime rules to `[GrpcMethod]`, emitting one version-suffixed service per
 `[ServiceGroup]` and retaining only methods active in that version.
 
-For route/query-bound queries the generator emits `[FromRoute]`/`[FromQuery]`
-parameters and reconstructs the request object before dispatch.
+### HTTP binding: the request is always the envelope
+
+A request/query is an **envelope**: its members can be sourced from the
+**route**, the **query string** and the **body** *simultaneously*, mirroring
+MVC model binding — and the contract stays a single pure type even when only a
+body is present.
+
+Binding rules applied by the generator, per property of the contract:
+
+1. **Route** — a property whose name matches a route-template placeholder
+   (`{id}` → `Id`) binds from the route. `{version}` is reserved for the
+   version placeholder and never binds a property.
+2. **Query** — for body-less verbs (GET/DELETE), every remaining property
+   binds from the query string. For verbs with a body, a property opts into
+   the query string with `[BindFromQuery]` (a transport-metadata attribute in
+   the core package so Application assemblies don't reference ASP.NET).
+3. **Body** — for verbs with a body, the payload deserializes into the
+   envelope type itself (JSON or MessagePack per content negotiation); the
+   route/query-bound properties are then **overwritten** from their sources.
+   A body-only contract is therefore just the degenerate case where no
+   property matched a placeholder or opted into the query.
+
+The generator emits one lambda per endpoint whose parameters carry the
+appropriate `[FromRoute]`/`[FromQuery]` sources plus the (optional) body, and
+reconstructs the envelope (`init`-only members via object initializer /
+`with`) before dispatching to the pure handler. All three sources are
+demonstrated combined on a single sample contract and covered by tests.
+
+### Generated multipart upload (single attachment)
+
+Attachment uploads are ordinary envelopes too: a `[HttpEndpoint]` contract may
+declare **at most one** `IArkAttachment` property. The generator (not
+hand-written startup code) emits a `multipart/form-data` endpoint for it:
+route and query properties bind per the envelope rules above, the single form
+file maps to `ArkAttachment` and is assigned to the attachment property. More
+than one `IArkAttachment` property is a generator diagnostic (error). The
+`MapArkAttachmentUpload` runtime helper remains as the manual escape hatch
+only.
 
 ### Emitted gRPC (code-first)
 
@@ -137,7 +174,12 @@ NodaTime members on contracts serialize over protobuf via
   library's conversions so the wire format is the corresponding Google
   well-known/common protobuf message. Hand-written encodings are **not** used
   for these types.
-- **Custom surrogates exist only for types the library does not support.**
+- **All remaining date/time types map to `google.type.DateTime`**
+  ([google/type/datetime.proto](https://github.com/googleapis/googleapis/blob/master/google/type/datetime.proto)),
+  discriminated by its `time_offset` oneof — no bespoke wire shapes.
+  `NodaTime.Serialization.Protobuf` does not cover `google.type.DateTime`, so
+  the Ark surrogates implement that mapping themselves while keeping the exact
+  common-proto layout.
 
 | NodaTime type | Wire representation | Provided by |
 | --- | --- | --- |
@@ -146,17 +188,24 @@ NodaTime members on contracts serialize over protobuf via
 | `LocalDate` | `google.type.Date` | `NodaTime.Serialization.Protobuf` (`ToDate`/`ToLocalDate`) |
 | `LocalTime` | `google.type.TimeOfDay` | `NodaTime.Serialization.Protobuf` (`ToTimeOfDay`/`ToLocalTime`) |
 | `IsoDayOfWeek` | `google.type.DayOfWeek` | `NodaTime.Serialization.Protobuf` (`ToProtobufDayOfWeek`/`ToIsoDayOfWeek`) |
-| `OffsetDateTime` | custom surrogate: local date-time + offset seconds | Ark surrogate |
-| `LocalDateTime` | custom surrogate: date + nanosecond-of-day | Ark surrogate |
-| `Period` | custom surrogate: ISO-8601 round-trip string | Ark surrogate |
+| `LocalDateTime` | `google.type.DateTime` with **neither** `utc_offset` nor `time_zone` set | Ark surrogate (google.type layout) |
+| `OffsetDateTime` | `google.type.DateTime` with `utc_offset` set | Ark surrogate (google.type layout) |
+| `ZonedDateTime` | `google.type.DateTime` with `time_zone` set | Ark surrogate (google.type layout) |
+| `Period` | custom surrogate: ISO-8601 round-trip string | Ark surrogate (no google.type equivalent) |
 
 protobuf-net does not serialize `Google.Protobuf` message classes directly, so
-the surrogate structs for the natively-supported types mirror the well-known
-message layout (same proto name and field numbers/types) and delegate the
-semantic conversion to the `NodaTime.Serialization.Protobuf` extension methods.
-Tests must cover **both** categories: the native mappings (`Instant`,
-`Duration`, `LocalDate`, `LocalTime`, `IsoDayOfWeek`) and the custom surrogates
-(`OffsetDateTime`, `LocalDateTime`, `Period`).
+every surrogate struct mirrors the well-known/common message layout exactly —
+same proto package (`google.protobuf`/`google.type`), message name and field
+numbers/types — and, where a `NodaTime.Serialization.Protobuf` conversion
+exists, delegates the semantics to it. The `google.type.DateTime` surrogate
+carries `year`..`nanos` (fields 1–7) and the `time_offset` oneof
+(`utc_offset` = 8 as `google.protobuf.Duration`, `time_zone` = 9 as
+`google.type.TimeZone`); which member of the oneof is populated (or none)
+selects the NodaTime type on decode. Tests must cover **both** categories: the
+native mappings (`Instant`, `Duration`, `LocalDate`, `LocalTime`,
+`IsoDayOfWeek`) and the `google.type.DateTime`/`Period` surrogates
+(`LocalDateTime` zoneless, `OffsetDateTime` offset preserved, `ZonedDateTime`
+zone preserved, `Period` ISO string).
 
 ### Emitted Rebus handler
 
@@ -263,8 +312,9 @@ Pure requests reference the `IArkAttachment` abstraction (name, content type and
 an `OpenRead()` stream) — a non-generic Attachment contract, not a generic
 stream proxy:
 
-- Minimal API: endpoint accepts `IFormFile`; the hosting maps
-  `OpenReadStream()` into `ArkAttachment`.
+- Minimal API: the **generated** multipart endpoint accepts `IFormFile` and
+  maps it into `ArkAttachment`, binding route/query envelope members alongside
+  the single attachment (see *Generated multipart upload*).
 - gRPC: an `IFormFile`-style single message **cannot** represent a file upload —
   a protobuf `bytes` field buffers the whole payload in memory and is capped by
   the max message size. Uploads use a **client-streaming** method instead:
@@ -363,13 +413,30 @@ the gRPC generator/package — no hand-maintained schema program:
   <dir>`; the runtime helper `ArkProtoExport.TryHandle(args)` writes the files
   and short-circuits `Program`.
 - Common messages are **shared, not repeated**, split over multiple files and
-  `import`-ed by the per-service files:
-  - `ark/nodatime.proto` (`LocalDate`, `LocalDateTime`, `OffsetDateTime`,
-    `Period` surrogate messages) ships as a content asset of
-    `Ark.Tools.Nodatime.Protobuf`;
-  - `ark/mediator.proto` (`ArkBusinessRuleViolation`, `UploadDocumentChunk`,
-    `UploadDocumentMetadata`) ships as a content asset of
+  `import`-ed by the per-service files. Shared files declare the proto
+  `package` and `option csharp_namespace` of their **owning library** — never
+  an application namespace:
+  - `ark/nodatime.proto` (`package ark.nodatime;`,
+    `option csharp_namespace = "Ark.Tools.Nodatime.Protobuf"`) ships as a
+    content asset of `Ark.Tools.Nodatime.Protobuf`. It contains **only** the
+    types without a Google common proto: the `Period` message and the
+    `google.type.DateTime`-based mappings are expressed by importing
+    `google/type/datetime.proto` (and `google/type/date.proto` etc. where
+    referenced) — a `LocalDate` message must **not** be redefined, the native
+    `google.type.Date` is used.
+  - `ark/mediator.proto` (`package ark.mediator;`,
+    `option csharp_namespace = "Ark.Tools.MediatorFramework.Grpc"`) with
+    `ArkBusinessRuleViolation`, `UploadDocumentChunk`,
+    `UploadDocumentMetadata` ships as a content asset of
     `Ark.Tools.MediatorFramework.Grpc`.
+- The export target and `$(ArkExportProtoDir)` wiring are **not** authored in
+  the consuming csproj: `Ark.Tools.MediatorFramework.Grpc` delivers them via
+  `buildTransitive` `.props`/`.targets` that NuGet imports automatically from
+  the package manifest (project-reference consumers inside this repo get the
+  same import through the package's MSBuild assets). If csproj-driven packing
+  cannot express the layout, a dedicated
+  `Ark.Tools.MediatorFramework.Grpc.MsBuild` package (nuspec-authored) carries
+  the MSBuild assets instead.
 - Test/client projects consume the exported files with `Grpc.Tools`
   (`<Protobuf Include="…/*.proto" GrpcServices="Client" />`): the **client is
   generated from `.proto`**, never from the code-first C# contracts, proving
@@ -387,20 +454,34 @@ implementation.
 Recurring Minimal API hosting concerns are **library features**
 (`Ark.Tools.MediatorFramework.MinimalApi`), not sample code:
 
-- `AddArkNodaTimeSchemas()` — OpenAPI schema transformer mapping NodaTime
-  types to `string` schemas with the Ark formats.
+- `AddArkNodaTimeSchemas()` — OpenAPI schema transformer covering **every**
+  NodaTime type that `Ark.Tools.AspNetCore.Swashbuckle`'s
+  `SupportNodaTimeExtensions` maps today: `LocalDate`, `LocalDateTime`,
+  `Instant`, `OffsetDateTime`, `ZonedDateTime`, `LocalTime`, `DateTimeZone`
+  and `Period` (nullable forms included), with the same formats/examples.
 - `AddArkPolymorphism(...)` — registers a polymorphic hierarchy once
   (base type, discriminator property, `(discriminator value, derived type)`
   mapping — the same information Swashbuckle's
   `UseOneOfForPolymorphism`/`SelectSubTypesUsing` consume) and emits the
   OpenAPI `oneOf` + `discriminator` schema for it, so application developers
   never hand-write schema transformers.
-- Multipart mapping: an extension that maps `IFormFile` → `ArkAttachment` and
-  dispatches to the pure attachment handler, replacing the hand-written sample
-  endpoint.
-- MessagePack serde: `application/x-msgpack` request/response support for
-  generated `[HttpEndpoint]` endpoints via content negotiation, demonstrated in
-  the sample alongside the (escape-hatch) MVC controller.
+- Multipart mapping: generated from the contract (see *Generated multipart
+  upload*); `MapArkAttachmentUpload` stays as the manual escape hatch.
+- MessagePack serde: **no specialized `Map*` method.** The `[HttpEndpoint]`
+  attribute declares which serializations the endpoint supports (JSON and/or
+  MessagePack, JSON being the default); the generator emits a single mapped
+  endpoint that **content-negotiates** between `application/json` and
+  `application/x-msgpack` on both the request `Content-Type` and the `Accept`
+  header. When MessagePack is enabled, an `IFormatterResolver` **must** be
+  registered in DI and configured explicitly — there is **no** built-in
+  fallback resolver; a missing registration fails fast at the first msgpack
+  request (and is surfaced by a startup-time check where possible).
+
+The HTTP hosting stack tracks the current ASP.NET Core release only:
+`Ark.Tools.MediatorFramework.MinimalApi` (runtime and generator output)
+targets **`net10.0` exclusively** — `[HttpEndpoint]` hosting has no `net8.0`
+support. The transport-neutral core and the Rebus/gRPC packages keep the
+repo-wide multi-targeting.
 
 ## Composition: HTTP delegating to async Rebus work
 
@@ -427,6 +508,26 @@ same package):
 An application references only the transports it hosts; each generator reacts
 only to its own attribute, so adding a transport never re-runs the others.
 
+### Dependency flow and sample consumption
+
+- **Transitive dependencies stay in the packages.** Everything a transport
+  needs (`protobuf-net.Grpc.AspNetCore`, `Grpc.StatusProto`,
+  `System.ServiceModel.Primitives`, `Rebus.Protobuf`,
+  `Hellang.Middleware.ProblemDetails`, `MessagePack`,
+  `Microsoft.AspNetCore.OpenApi`, …) is a dependency of the corresponding
+  `Ark.Tools.MediatorFramework.*` package and flows transitively; the
+  application host csproj lists **only** the `Ark.Tools.MediatorFramework.*`
+  packages (plus app-specific packages), never the underlying stack.
+- **The sample consumes the framework like an application would.** Mirroring
+  `Ark.ReferenceProject`'s version-replacement trick, the sample references
+  the framework via `PackageReference` with a central `PackageVersion` of
+  `999.9.9` (the local development `$(Version)` from the root
+  `Directory.Build.props`): inside the repo solution NuGet resolves these to
+  the sibling projects (`"type": "Project"` in the lock file); on eject the
+  same csproj resolves to the published packages. No relative
+  `ProjectReference` paths — including the analyzers, which reach the sample
+  as analyzer assets of their runtime package.
+
 ## Testing strategy
 
 - `samples/Ark.MediatorFramework.Sample/test/…Sample.Tests` demonstrates **how
@@ -440,6 +541,13 @@ only to its own attribute, so adding a transport never re-runs the others.
   semantics (opt-in, versioning expansion), error-model mapping, attachment
   adapters — independent of the sample application. Every feature that lives in
   a `src/` library must be unit-tested here.
+
+## Build discipline
+
+Every implementation step — regardless of how small — ends by building the
+**entire solution** (`dotnet build Ark.Tools.slnx --configuration Debug`) and
+running the affected tests before committing. A step is not complete while any
+project in the solution fails to build.
 
 ## Sample mapping to this design
 
