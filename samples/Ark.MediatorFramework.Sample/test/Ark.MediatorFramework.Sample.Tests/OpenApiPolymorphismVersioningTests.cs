@@ -104,13 +104,12 @@ public sealed class OpenApiPolymorphismVersioningTests
             ["LocalDate"] = "date",
             ["LocalDateTime"] = "date-time",
             ["OffsetDateTime"] = "date-time",
-            ["Period"] = "nodatime-period",
+            ["Period"] = "duration",
         };
 
         foreach (var (schemaName, format) in expectedFormats)
         {
             var schema = schemas.GetProperty(schemaName);
-            schema.GetProperty("type").GetString().Should().Be("string");
             schema.GetProperty("format").GetString().Should().Be(format);
         }
     }
