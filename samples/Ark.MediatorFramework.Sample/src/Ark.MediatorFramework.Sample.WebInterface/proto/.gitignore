@@ -1,2 +1,2 @@
 # Generated protobuf assets exported by Ark.Tools.MediatorFramework.Grpc.
-src/Ark.MediatorFramework.Sample.WebInterface/proto/**/*.proto
+*.proto

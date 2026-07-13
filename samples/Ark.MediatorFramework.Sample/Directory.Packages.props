@@ -8,11 +8,8 @@
     <PackageVersion Include="Ark.Tools.AspNetCore.MessagePack" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Grpc" Version="999.9.9" />
-    <PackageVersion Include="Ark.Tools.MediatorFramework.Grpc.Generators" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.MinimalApi" Version="999.9.9" />
-    <PackageVersion Include="Ark.Tools.MediatorFramework.MinimalApi.Generators" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Rebus" Version="999.9.9" />
-    <PackageVersion Include="Ark.Tools.MediatorFramework.Rebus.Generators" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Nodatime.Protobuf" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Rebus" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Solid" Version="999.9.9" />

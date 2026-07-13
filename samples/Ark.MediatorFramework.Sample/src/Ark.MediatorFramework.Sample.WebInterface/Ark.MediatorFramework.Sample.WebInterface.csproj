@@ -10,17 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi.Generators"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus.Generators"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc.Generators"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
     <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.AspNetCore.MessagePack" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
