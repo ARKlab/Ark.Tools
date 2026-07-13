@@ -279,7 +279,7 @@ Debug`) before the task is marked complete.
   - *Accept:* the MinimalApi runtime csproj has a single `net10.0` TFM (no
     `net8.0` conditions); core/Rebus/Grpc packages keep their current TFMs;
     lock files refreshed; solution builds.
-- [ ] **T10.7** OpenAPI NodaTime coverage parity with Swashbuckle.
+- [x] **T10.7** OpenAPI NodaTime coverage parity with Swashbuckle.
   - *Accept:* `AddArkNodaTimeSchemas()` maps every type
     `SupportNodaTimeExtensions` maps (`LocalDate`, `LocalDateTime`, `Instant`,
     `OffsetDateTime`, `ZonedDateTime`, `LocalTime`, `DateTimeZone`, `Period`,

@@ -20,6 +20,12 @@
         "resolved": "3.0.117",
         "contentHash": "22L/6jjjhTwOpGqN+3A4EMCWc8Kc0dAd49zINAlxjLYDxERnD1qPKDkE9Z6cZPjiOs32J9nsieyya1FO+kXHCw=="
       },
+      "Microsoft.AspNetCore.TestHost": {
+        "type": "Direct",
+        "requested": "[10.0.9, )",
+        "resolved": "10.0.9",
+        "contentHash": "mR4y30XFsVbn7EwV3Ic5/KMBO5QGwukTJE2ztGmpAST5ACX+Z+9r+Y6D1eibJojsOIW5KHpM4myo9/aRALJOyg=="
+      },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
         "requested": "[4.14.0, )",

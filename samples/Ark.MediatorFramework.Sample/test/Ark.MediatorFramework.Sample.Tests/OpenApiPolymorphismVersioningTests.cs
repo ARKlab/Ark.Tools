@@ -102,7 +102,7 @@ public sealed class OpenApiPolymorphismVersioningTests
         var expectedFormats = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["LocalDate"] = "date",
-            ["LocalDateTime"] = "local-date-time",
+            ["LocalDateTime"] = "date-time",
             ["OffsetDateTime"] = "date-time",
             ["Period"] = "nodatime-period",
         };
