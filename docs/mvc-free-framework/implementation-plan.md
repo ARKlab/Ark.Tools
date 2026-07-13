@@ -484,6 +484,11 @@ zoned type and the existing native mappings.
 
 ### Step 8.4 — HTTP envelope binding (T10.3)
 
+**Status: complete.** Generated body endpoints now bind route and opted-in query
+properties separately, then overwrite those values on the deserialized request
+envelope before dispatch. The sample and generator tests cover the combined
+route/query/body case.
+
 1. `src/common/Ark.Tools.MediatorFramework/`: add
    `BindFromQueryAttribute` (property-level, transport-metadata only, XML
    docs) next to the existing transport attributes.

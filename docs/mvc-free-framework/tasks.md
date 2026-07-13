@@ -251,7 +251,7 @@ Debug`) before the task is marked complete.
     `option csharp_namespace = "Ark.Tools.MediatorFramework.Grpc"`; the
     per-service generated files import the google.type protos; the
     proto-generated sample client still compiles and all gRPC tests pass.
-- [ ] **T10.3** HTTP envelope binding: route + query + body combinable.
+- [x] **T10.3** HTTP envelope binding: route + query + body combinable.
   - *Accept:* a `[HttpEndpoint]` contract can bind members from the route
     (name matches placeholder), the query string (`[BindFromQuery]` on
     body-verbs; all remaining members on GET/DELETE) and the body
