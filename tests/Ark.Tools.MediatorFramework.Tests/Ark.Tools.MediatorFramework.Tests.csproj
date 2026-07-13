@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- MSTest.TestAdapter does not contribute its hook for net10.0; register it explicitly, after removing any transitive copy, so MTP v2 discovers MSTest exactly once. -->
     <TestingPlatformBuilderHook Remove="031F8871-2660-4208-8F6B-FC142B40ABFF" />
     <TestingPlatformBuilderHook Include="031F8871-2660-4208-8F6B-FC142B40ABFF">
       <DisplayName>MSTest</DisplayName>
