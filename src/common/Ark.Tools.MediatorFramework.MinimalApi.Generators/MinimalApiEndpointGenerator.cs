@@ -148,6 +148,7 @@ namespace Ark.MediatorFramework.Generators
                     property.Name,
                     property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     routeNames.Contains(property.Name),
+                    routeNames.FirstOrDefault(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase)) ?? property.Name,
                     bindFromQueryAttr is not null && property.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindFromQueryAttr))))
                 .ToImmutableArray();
@@ -210,7 +211,7 @@ namespace Ark.MediatorFramework.Generators
                         var template = e.Template.Replace("{version}", version.ToString());
                         if (e.Verb == "POST")
                         {
-                            sb.AppendLine("            if (useMessagePack)");
+                            sb.AppendLine("            if (useMessagePack && " + (!explicitBindings ? "true" : "false") + ")");
                             sb.AppendLine("            {");
                             sb.AppendLine("                global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.MapArkMessagePackPost<" + e.TypeFullName + ", " + e.Response + ">(app, " + Literal(template) + ", static async (httpContext, request, cancellationToken) =>");
                             sb.AppendLine("                {");
@@ -228,7 +229,8 @@ namespace Ark.MediatorFramework.Generators
                             foreach (var property in e.Properties.Where(property => property.IsRoute || property.IsQuery))
                             {
                                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
-                                sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(property.Name) + ")] " + property.TypeFullName + " " + property.Name + ",");
+                                var bindingName = property.IsRoute ? property.BindingName : property.Name;
+                                sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + property.TypeFullName + " " + property.Name + ",");
                             }
 
                             sb.AppendLine("                " + e.TypeFullName + " body,");
@@ -322,17 +324,19 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct PropertyModel
         {
-            public PropertyModel(string name, string typeFullName, bool isRoute, bool isQuery)
+            public PropertyModel(string name, string typeFullName, bool isRoute, string bindingName, bool isQuery)
             {
                 Name = name;
                 TypeFullName = typeFullName;
                 IsRoute = isRoute;
+                BindingName = bindingName;
                 IsQuery = isQuery;
             }
 
             public string Name { get; }
             public string TypeFullName { get; }
             public bool IsRoute { get; }
+            public string BindingName { get; }
             public bool IsQuery { get; }
         }
     }
