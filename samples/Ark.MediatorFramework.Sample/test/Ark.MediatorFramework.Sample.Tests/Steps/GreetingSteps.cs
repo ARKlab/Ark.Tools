@@ -118,7 +118,7 @@ public sealed class GreetingSteps
         var greeting = await new GrpcGreetingsV1Client(channel).GetGreetingAsync(
             new GrpcGetGreetingQuery { Id = _grpcGreeting!.Id }).ResponseAsync.ConfigureAwait(false);
 
-        greeting.Id.Should().Be(_grpcGreeting.Id);
+        greeting.Id.Should().Equal(_grpcGreeting.Id);
         greeting.Message.Should().Be(_grpcGreeting.Message);
     }
 

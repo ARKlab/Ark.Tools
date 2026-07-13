@@ -112,7 +112,12 @@ public sealed record CompleteGreetingCompositionRequest : IRequest<GreetingRespo
 [GrpcMethod("GetGreeting", RetiredIn = 2)]
 [ServiceGroup("Greetings")]
 [ProtoContract]
-public sealed record GetGreetingQuery([property: ProtoMember(1)] Guid Id) : IQuery<GreetingResponse>;
+public sealed record GetGreetingQuery : IQuery<GreetingResponse>
+{
+    /// <summary>Gets the greeting identifier.</summary>
+    [ProtoMember(1)]
+    public Guid Id { get; init; }
+}
 
 /// <summary>Version 2 of the greeting response, evolving the contract with the message length.</summary>
 [ProtoContract]
@@ -139,7 +144,12 @@ public sealed record GreetingResponseV2
 [GrpcMethod("GetGreeting", IntroducedIn = 2)]
 [ServiceGroup("Greetings")]
 [ProtoContract]
-public sealed record GetGreetingV2Query([property: ProtoMember(1)] Guid Id) : IQuery<GreetingResponseV2>;
+public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>
+{
+    /// <summary>Gets the greeting identifier.</summary>
+    [ProtoMember(1)]
+    public Guid Id { get; init; }
+}
 
 /// <summary>Response proving route, query and body values were combined.</summary>
 public sealed record EnvelopeBindingResponse

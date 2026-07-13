@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package ark.nodatime;
-
-option csharp_namespace = "Ark.Tools.Nodatime.Protobuf";
-
-message Period {
-  string value = 1;
-}

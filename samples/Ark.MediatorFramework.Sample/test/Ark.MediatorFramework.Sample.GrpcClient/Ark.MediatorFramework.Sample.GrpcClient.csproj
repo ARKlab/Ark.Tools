@@ -27,7 +27,7 @@
               GrpcServices="Client"
               Link="Documents.proto" />
     <Protobuf Update="@(Protobuf)"
-              AdditionalImportDirs="$(NuGetPackageRoot)google.api.commonprotos\2.17.0\content\protos;$(NuGetPackageRoot)grpc.tools\2.66.0\build\native\include;..\..\..\..\src\common\Ark.Tools.Nodatime.Protobuf\proto;..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\proto" />
+              AdditionalImportDirs="$(NuGetPackageRoot)google.api.commonprotos\2.17.0\content\protos;$(NuGetPackageRoot)grpc.tools\2.66.0\build\native\include;..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto" />
   </ItemGroup>
 
 </Project>
