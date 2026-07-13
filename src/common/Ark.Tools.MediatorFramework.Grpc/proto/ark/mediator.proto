@@ -1,6 +1,8 @@
 syntax = "proto3";
 
-option csharp_namespace = "Ark.MediatorFramework.Sample.GrpcClient";
+package ark.mediator;
+
+option csharp_namespace = "Ark.Tools.MediatorFramework.Grpc";
 
 message ArkBusinessRuleViolation {
   string type = 1;

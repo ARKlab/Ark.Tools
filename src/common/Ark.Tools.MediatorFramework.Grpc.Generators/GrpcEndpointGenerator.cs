@@ -268,6 +268,8 @@ namespace Ark.MediatorFramework.Generators
                     .Append(Literal(GetProtoNamespace(compilation)))
                     .AppendLine(";");
                 content.AppendLine();
+                content.AppendLine("import \"google/type/date.proto\";");
+                content.AppendLine("import \"google/type/datetime.proto\";");
                 content.AppendLine("import \"ark/nodatime.proto\";");
                 content.AppendLine("import \"ark/mediator.proto\";");
                 content.AppendLine();
@@ -290,9 +292,9 @@ namespace Ark.MediatorFramework.Generators
                     content.Append("service ").Append(Identifier(group.Key)).Append('V').Append(version).AppendLine(" {");
                     foreach (var item in versionItems)
                     {
-                        content.Append("  rpc ").Append(item.GrpcMethod)
+                                content.Append("  rpc ").Append(item.GrpcMethod)
                             .Append('(').Append(item.TypeName).Append(") returns (")
-                            .Append(SimpleName(item.Response)).AppendLine(");");
+                                    .Append(ProtoTypeName(item.Response, contracts)).AppendLine(");");
                     }
                     content.AppendLine("}");
                     content.AppendLine();
@@ -319,7 +321,7 @@ namespace Ark.MediatorFramework.Generators
             upload.AppendLine("}");
             upload.AppendLine();
             upload.AppendLine("service Documents {");
-            upload.AppendLine("  rpc Upload(stream UploadDocumentChunk) returns (UploadResponse);");
+            upload.AppendLine("  rpc Upload(stream ark.mediator.UploadDocumentChunk) returns (UploadResponse);");
             upload.AppendLine("}");
             upload.AppendLine();
             EmitProtoEntry(sb, "Documents.proto", upload.ToString());
@@ -493,10 +495,11 @@ namespace Ark.MediatorFramework.Generators
                 "global::System.UInt32" or "global::System.UInt16" => "uint32",
                 "global::System.Single" => "float",
                 "global::System.Double" => "double",
-                "global::NodaTime.LocalDate" => "LocalDate",
-                "global::NodaTime.LocalDateTime" => "LocalDateTime",
-                "global::NodaTime.OffsetDateTime" => "OffsetDateTime",
-                "global::NodaTime.Period" => "Period",
+                "global::NodaTime.LocalDate" => "google.type.Date",
+                "global::NodaTime.LocalDateTime" => "google.type.DateTime",
+                "global::NodaTime.OffsetDateTime" => "google.type.DateTime",
+                "global::NodaTime.ZonedDateTime" => "google.type.DateTime",
+                "global::NodaTime.Period" => "ark.nodatime.Period",
                 _ when type.TypeKind == TypeKind.Enum => type.Name,
                 _ => "bytes",
             };
