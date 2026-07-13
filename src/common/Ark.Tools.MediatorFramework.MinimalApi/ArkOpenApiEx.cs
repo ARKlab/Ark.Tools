@@ -4,6 +4,7 @@
 using Microsoft.AspNetCore.OpenApi;
 
 using Microsoft.OpenApi;
+using System.Text.Json.Nodes;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
@@ -20,19 +21,35 @@ public static class ArkOpenApiEx
 
         options.AddSchemaTransformer((schema, context, _) =>
         {
-            var format = context.JsonTypeInfo.Type switch
+            var type = Nullable.GetUnderlyingType(context.JsonTypeInfo.Type)
+                ?? context.JsonTypeInfo.Type;
+            var metadata = type switch
             {
-                var type when type == typeof(NodaTime.LocalDate) => "date",
-                var type when type == typeof(NodaTime.LocalDateTime) => "local-date-time",
-                var type when type == typeof(NodaTime.OffsetDateTime) => "date-time",
-                var type when type == typeof(NodaTime.Period) => "nodatime-period",
+                var value when value == typeof(NodaTime.LocalDate)
+                    => ("date", "2016-01-21"),
+                var value when value == typeof(NodaTime.LocalDateTime)
+                    => ("date-time", "2016-01-21T15:01:01.999999999"),
+                var value when value == typeof(NodaTime.Instant)
+                    => ("date-time", "2016-01-21T15:01:01.999999999Z"),
+                var value when value == typeof(NodaTime.OffsetDateTime)
+                    => ("date-time", "2016-01-21T15:01:01.999999999+02:00"),
+                var value when value == typeof(NodaTime.ZonedDateTime)
+                    => ((string Format, string Example)?)("",
+                        "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"),
+                var value when value == typeof(NodaTime.LocalTime)
+                    => ("time", "14:01:00.999999999"),
+                var value when value == typeof(NodaTime.DateTimeZone)
+                    => ((string Format, string Example)?)("", "Europe/Rome"),
+                var value when value == typeof(NodaTime.Period)
+                    => ("duration", "P1Y2M-3DT4H"),
                 _ => null,
             };
 
-            if (format is not null)
+            if (metadata is not null)
             {
-                schema.Type = JsonSchemaType.String;
-                schema.Format = format;
+                schema.Type = JsonSchemaType.String | (schema.Type & JsonSchemaType.Null);
+                schema.Format = metadata.Value.Format.Length == 0 ? null : metadata.Value.Format;
+                schema.Example = JsonValue.Create(metadata.Value.Example);
             }
 
             return Task.CompletedTask;

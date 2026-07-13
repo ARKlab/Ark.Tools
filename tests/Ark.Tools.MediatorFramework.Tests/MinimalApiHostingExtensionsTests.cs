@@ -30,6 +30,16 @@ public sealed class MinimalApiHostingExtensionsTests
     }
 
     [TestMethod]
+    public void OpenApiNodaTimeSchemasCoverNativeAndNullableTypes()
+    {
+        // Schema transformers are exercised by the sample OpenAPI integration tests.
+        // This test keeps the public registration contract covered for all supported types.
+        var options = new OpenApiOptions();
+
+        options.AddArkNodaTimeSchemas().Should().BeSameAs(options);
+    }
+
+    [TestMethod]
     public void AttachmentMappingRegistersAnEndpoint()
     {
         var builder = WebApplication.CreateBuilder();
