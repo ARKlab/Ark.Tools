@@ -33,20 +33,20 @@
         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
-                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.MinimalApi'" />
+                          Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.MinimalApi'" />
         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
-                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Rebus'" />
+                          Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Rebus'" />
         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
-                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
+                          Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
       </ItemGroup>
 
       <ItemGroup>
         <_ArkToolsProtoExports Include="true"
-                               Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
+                               Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
       </ItemGroup>
 
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
