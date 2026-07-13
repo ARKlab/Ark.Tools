@@ -11,6 +11,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Reqnroll.MsTest" />
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
   </ItemGroup>
 
   <ItemGroup>
