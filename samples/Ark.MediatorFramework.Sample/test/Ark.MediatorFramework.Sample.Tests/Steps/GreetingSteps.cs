@@ -19,6 +19,8 @@ using AppCreateGreetingRequest = Ark.MediatorFramework.Sample.Application.Create
 using AppGreetingResponse = Ark.MediatorFramework.Sample.Application.GreetingResponse;
 using AppGreetingResponseV2 = Ark.MediatorFramework.Sample.Application.GreetingResponseV2;
 using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
+using GrpcGetGreetingQuery = Ark.MediatorFramework.Sample.GrpcClient.GetGreetingQuery;
+using GrpcGreetingResponse = Ark.MediatorFramework.Sample.GrpcClient.GreetingResponse;
 using GrpcGreetingsV1Client = Ark.MediatorFramework.Sample.GrpcClient.GreetingsV1.GreetingsV1Client;
 
 namespace Ark.MediatorFramework.Sample.Tests.Steps;
@@ -30,6 +32,7 @@ public sealed class GreetingSteps
     private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
     private readonly SampleTestContext _context;
     private AppGreetingResponse? _greeting;
+    private GrpcGreetingResponse? _grpcGreeting;
     private AppGreetingResponseV2? _versionTwoGreeting;
     private HttpResponseMessage? _response;
 
@@ -63,11 +66,7 @@ public sealed class GreetingSteps
         var result = await new GrpcGreetingsV1Client(channel).CreateGreetingAsync(
             new GrpcCreateGreetingRequest { Name = name }).ResponseAsync.ConfigureAwait(false);
 
-        _greeting = new AppGreetingResponse
-        {
-            Id = ParseGrpcGuid(result.Id),
-            Message = result.Message,
-        };
+        _grpcGreeting = result;
     }
 
     [When(@"I query the greeting through version two")]
@@ -108,6 +107,21 @@ public sealed class GreetingSteps
         greeting!.Id.Should().Be(_greeting.Id);
     }
 
+    [Then(@"the greeting is available over gRPC")]
+    public async Task ThenTheGreetingIsAvailableOverGrpc()
+    {
+        _grpcGreeting.Should().NotBeNull();
+        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+        {
+            HttpHandler = _context.CreateGrpcHandler(),
+        });
+        var greeting = await new GrpcGreetingsV1Client(channel).GetGreetingAsync(
+            new GrpcGetGreetingQuery { Id = _grpcGreeting!.Id }).ResponseAsync.ConfigureAwait(false);
+
+        greeting.Id.Should().Be(_grpcGreeting.Id);
+        greeting.Message.Should().Be(_grpcGreeting.Message);
+    }
+
     [Then(@"the request returns a business rule violation")]
     public void ThenTheRequestReturnsABusinessRuleViolation()
     {
@@ -145,17 +159,5 @@ public sealed class GreetingSteps
         while (DateTime.UtcNow < deadline);
 
         throw new TimeoutException("The composed greeting was not completed within 10 seconds.");
-    }
-
-    private static Guid ParseGrpcGuid(Google.Protobuf.ByteString value)
-    {
-        var source = value.Span;
-        if (source.Length != 18 || source[0] != 9 || source[9] != 17)
-            throw new InvalidOperationException("The gRPC GUID response has an unsupported wire format.");
-
-        Span<byte> bytes = stackalloc byte[16];
-        source[1..9].CopyTo(bytes);
-        source[10..18].CopyTo(bytes[8..]);
-        return new Guid(bytes);
     }
 }

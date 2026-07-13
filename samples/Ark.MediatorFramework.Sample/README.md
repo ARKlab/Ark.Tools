@@ -27,7 +27,7 @@ The Reqnroll scenarios exercise the sample as a real application through its
 public HTTP and gRPC interfaces:
 
 - create and query greetings over HTTP;
-- create over gRPC and query over HTTP;
+- create and query greetings over gRPC using the client generated from the server's `.proto` files;
 - reject duplicate greetings with an HTTP business-rule response;
 - read the evolved version-two greeting contract; and
 - queue an HTTP composition request and poll until Rebus completes it.

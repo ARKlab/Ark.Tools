@@ -5,9 +5,9 @@ Feature: Greetings
         When I create the greeting "HTTP greeting" over HTTP
         Then the greeting is available over HTTP
 
-    Scenario: Create a greeting over gRPC and query it over HTTP
+    Scenario: Create and query a greeting over gRPC
         When I create the greeting "gRPC greeting" over gRPC
-        Then the greeting is available over HTTP
+        Then the greeting is available over gRPC
 
     Scenario: Duplicate greetings violate the business rule
         Given I create the greeting "Duplicate greeting" over HTTP
