@@ -2,11 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using MessagePack;
-using MessagePack.Resolvers;
-
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
@@ -17,61 +13,54 @@ public static class ArkMessagePackEx
 {
     private const string MessagePackMediaType = "application/x-msgpack";
 
-    /// <summary>
-    /// Maps a POST endpoint that negotiates MessagePack while retaining JSON support.
-    /// </summary>
+    /// <summary>Reads a request using MessagePack or JSON content negotiation.</summary>
     /// <typeparam name="TRequest">The request type accepted by the handler.</typeparam>
     /// <typeparam name="TResponse">The response type returned by the handler.</typeparam>
-    /// <param name="endpoints">The endpoint route builder.</param>
-    /// <param name="pattern">The route pattern.</param>
-    /// <param name="handler">The pure handler delegate.</param>
-    /// <returns>The route handler builder.</returns>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <returns>The deserialized request, or <see langword="null"/> for an empty body.</returns>
     [UnconditionalSuppressMessage(
         "Trimming",
         "IL2026",
         Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
-    public static RouteHandlerBuilder MapArkMessagePackPost<TRequest, TResponse>(
-        this IEndpointRouteBuilder endpoints,
-        string pattern,
-        Func<HttpContext, TRequest, CancellationToken, Task<TResponse>> handler)
+    public static async Task<TRequest?> ReadRequestAsync<TRequest>(
+        HttpContext context,
+        CancellationToken cancellationToken)
         where TRequest : notnull
     {
-        ArgumentNullException.ThrowIfNull(endpoints);
-        ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
-        ArgumentNullException.ThrowIfNull(handler);
+        ArgumentNullException.ThrowIfNull(context);
 
-        var builder = endpoints.MapPost(pattern, async (HttpContext context, CancellationToken cancellationToken) =>
-        {
-            var request = IsMessagePack(context.Request.ContentType)
-                ? await MessagePackSerializer.DeserializeAsync<TRequest>(
-                    context.Request.Body,
-                    GetOptions(context),
-                    cancellationToken).ConfigureAwait(false)
-                : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
+        return IsMessagePack(context.Request.ContentType)
+            ? await MessagePackSerializer.DeserializeAsync<TRequest>(
+                context.Request.Body,
+                GetOptions(context),
+                cancellationToken).ConfigureAwait(false)
+            : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
+    }
 
-            if (request is null)
-                return Results.BadRequest();
+    /// <summary>Writes a response using the client's preferred JSON or MessagePack format.</summary>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="response">The response value.</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <returns>An HTTP result using the negotiated response format.</returns>
+    public static IResult WriteResponse<TResponse>(
+        HttpContext context,
+        TResponse response,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
 
-            var response = await handler(context, request, cancellationToken).ConfigureAwait(false);
-            if (!PrefersMessagePack(context.Request.Headers.Accept))
-                return Results.Json(response);
+        if (!PrefersMessagePack(context.Request.Headers.Accept))
+            return Results.Json(response);
 
-            var bytes = MessagePackSerializer.Serialize(response, GetOptions(context), cancellationToken);
-            return Results.Bytes(bytes, MessagePackMediaType);
-        });
-
-        return builder
-            .Accepts<TRequest>("application/json", MessagePackMediaType)
-            .Produces<TResponse>(StatusCodes.Status200OK, "application/json", MessagePackMediaType);
+        var bytes = MessagePackSerializer.Serialize(response, GetOptions(context), cancellationToken);
+        return Results.Bytes(bytes, MessagePackMediaType);
     }
 
     private static MessagePackSerializerOptions GetOptions(HttpContext context)
     {
-        var resolver = context.RequestServices.GetService<IFormatterResolver>()
-            ?? CompositeResolver.Create(
-                MessagePack.NodaTime.NodatimeResolver.Instance,
-                DynamicEnumAsStringResolver.Instance,
-                StandardResolver.Instance);
+        var resolver = context.RequestServices.GetRequiredService<IFormatterResolver>();
         return MessagePackSerializerOptions.Standard.WithResolver(resolver);
     }
 

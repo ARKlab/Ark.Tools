@@ -148,6 +148,7 @@ namespace Ark.MediatorFramework.Generators
             verb = verb!.ToUpperInvariant();
             var httpIntroducedIn = NamedInt(http, "IntroducedIn", 1);
             var httpRetiredIn = NamedInt(http, "RetiredIn", 0);
+            var acceptsMessagePack = NamedBool(http, "AcceptsMessagePack");
             var routeNames = new HashSet<string>(
                 Regex.Matches(template!, "\\{([^}:]+)(?::[^}]+)?\\}")
                 .Cast<Match>()
@@ -178,6 +179,7 @@ namespace Ark.MediatorFramework.Generators
                 kind,
                 httpIntroducedIn,
                 httpRetiredIn,
+                acceptsMessagePack,
                 properties,
                 attachmentProperties.Length,
                 type.Locations.FirstOrDefault());
@@ -187,6 +189,12 @@ namespace Ark.MediatorFramework.Generators
         {
             var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
             return argument.Value.Value is int value ? value : defaultValue;
+        }
+
+        private static bool NamedBool(AttributeData attribute, string name)
+        {
+            var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
+            return argument.Value.Value is true;
         }
 
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
@@ -206,7 +214,7 @@ namespace Ark.MediatorFramework.Generators
 
             // MapArkEndpoints is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, bool useMessagePack = false)");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
 
             if (!items.IsDefaultOrEmpty)
@@ -242,19 +250,41 @@ namespace Ark.MediatorFramework.Generators
                             continue;
                         }
 
-                        if (e.Verb == "POST")
+                        if (e.AcceptsMessagePack)
                         {
-                            sb.AppendLine("            if (useMessagePack && " + (!explicitBindings ? "true" : "false") + ")");
+                            sb.AppendLine("            app." + map + "(" + Literal(template) + ", static async (");
+                            if (explicitBindings)
+                            {
+                                foreach (var property in e.Properties.Where(property => property.IsRoute || property.IsQuery))
+                                {
+                                    var source = property.IsRoute ? "FromRoute" : "FromQuery";
+                                    var bindingName = property.IsRoute ? property.BindingName : property.Name;
+                                    sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + property.TypeFullName + " " + property.Name + ",");
+                                }
+                            }
+                            sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
+                            sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
                             sb.AppendLine("            {");
-                            sb.AppendLine("                global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.MapArkMessagePackPost<" + e.TypeFullName + ", " + e.Response + ">(app, " + Literal(template) + ", static async (httpContext, request, cancellationToken) =>");
-                            sb.AppendLine("                {");
-                            sb.AppendLine("                    var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                            sb.AppendLine("                    var handler = container.GetInstance<" + handlerService + ">();");
-                            sb.AppendLine("                    return await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
-                            sb.AppendLine("                }).WithGroupName(" + Literal("v" + version) + ");");
-                            sb.AppendLine("            }");
-                            sb.AppendLine("            else");
-                            sb.AppendLine("            {");
+                            sb.AppendLine("                var body = await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ReadRequestAsync<" + e.TypeFullName + ">(httpContext, cancellationToken).ConfigureAwait(false);");
+                            sb.AppendLine("                if (body is null)");
+                            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.BadRequest();");
+                            if (explicitBindings)
+                            {
+                                var assignments = string.Join(", ", e.Properties
+                                    .Where(property => property.IsRoute || property.IsQuery)
+                                    .Select(property => property.Name + " = " + property.Name));
+                                sb.AppendLine("                var request = body with { " + assignments + " };");
+                            }
+                            else
+                            {
+                                sb.AppendLine("                var request = body;");
+                            }
+                            sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+                            sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
+                            sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+                            sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken);");
+                            sb.AppendLine("            }).Accepts<" + e.TypeFullName + ">(\"application/json\", \"application/x-msgpack\").Produces<" + e.Response + ">(200, \"application/json\", \"application/x-msgpack\").WithGroupName(" + Literal("v" + version) + ");");
+                            continue;
                         }
                         sb.AppendLine("            app." + map + "(" + Literal(template) + ", static async (");
                         if (explicitBindings)
@@ -287,8 +317,6 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                         sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
                         sb.AppendLine("            }).WithGroupName(" + Literal("v" + version) + ");");
-                        if (e.Verb == "POST")
-                            sb.AppendLine("            }");
                     }
                 }
             }
@@ -381,6 +409,7 @@ namespace Ark.MediatorFramework.Generators
                 HandlerKind kind,
                 int httpIntroducedIn,
                 int httpRetiredIn,
+                bool acceptsMessagePack,
                 ImmutableArray<PropertyModel> properties,
                 int attachmentCount,
                 Location? location)
@@ -393,6 +422,7 @@ namespace Ark.MediatorFramework.Generators
                 Kind = kind;
                 HttpIntroducedIn = httpIntroducedIn;
                 HttpRetiredIn = httpRetiredIn;
+                AcceptsMessagePack = acceptsMessagePack;
                 Properties = properties;
                 AttachmentCount = attachmentCount;
                 Location = location;
@@ -406,6 +436,7 @@ namespace Ark.MediatorFramework.Generators
             public HandlerKind Kind { get; }
             public int HttpIntroducedIn { get; }
             public int HttpRetiredIn { get; }
+            public bool AcceptsMessagePack { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
             public int AttachmentCount { get; }
             public Location? Location { get; }

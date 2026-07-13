@@ -79,6 +79,25 @@ public sealed class GeneratorSnapshotTests
                 public string Audit { get; init; } = string.Empty;
                 public string Message { get; init; } = string.Empty;
             }
+
+            [TestMethod]
+            public void MinimalApiGeneratorEmitsNegotiationOnlyForOptedInEndpoints()
+            {
+                var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+                    """
+                    using Ark.MediatorFramework;
+                    using Ark.Tools.Solid;
+                    [HttpEndpoint("POST", "/messages", AcceptsMessagePack = true)]
+                    public sealed record Message : IRequest<string>
+                    {
+                        public string Value { get; init; } = string.Empty;
+                    }
+                    """);
+
+                generated.Should().Contain("ReadRequestAsync<global::Message>");
+                generated.Should().Contain("application/x-msgpack");
+                generated.Should().NotContain("MapArkMessagePackPost");
+            }
             """);
 
         generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"id\")]");

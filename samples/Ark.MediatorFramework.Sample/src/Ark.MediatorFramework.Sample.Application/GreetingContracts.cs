@@ -46,7 +46,7 @@ public sealed record GreetingResponse
 /// <see cref="HttpEndpointAttribute"/> exposes it as an HTTP POST and <see cref="RebusMessageAttribute"/>
 /// exposes it as a Rebus message; the generator emits the wiring for each declared transport.
 /// </summary>
-[HttpEndpoint("POST", "/api/v{version}/greetings")]
+[HttpEndpoint("POST", "/api/v{version}/greetings", AcceptsMessagePack = true)]
 [RebusMessage]
 [GrpcMethod("CreateGreeting")]
 [ServiceGroup("Greetings")]

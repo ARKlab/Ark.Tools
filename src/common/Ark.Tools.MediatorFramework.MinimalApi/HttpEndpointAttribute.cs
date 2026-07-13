@@ -30,6 +30,9 @@ public sealed class HttpEndpointAttribute : Attribute
 
     /// <summary>Gets or sets the exclusive API version in which the endpoint is retired, or zero if never.</summary>
     public int RetiredIn { get; set; }
+
+    /// <summary>Gets or sets whether the endpoint negotiates MessagePack in addition to JSON.</summary>
+    public bool AcceptsMessagePack { get; set; }
 }
 
 /// <summary>
