@@ -171,7 +171,7 @@ public sealed class TransportParityTests
     public async Task Protobuf_Rebus_round_trips_NodaTime_values()
     {
         var network = new InMemNetwork();
-        using var container = SampleComposition.BuildContainer(network, useProtobufRebus: true);
+        await using var container = SampleComposition.BuildContainer(network, useProtobufRebus: true);
         var store = container.GetInstance<IGreetingStore>();
         var request = NewNodaTimeRequest("ProtobufRebus");
 
@@ -358,8 +358,10 @@ public sealed class TransportParityTests
         }).ConfigureAwait(false);
         await call.RequestStream.CompleteAsync().ConfigureAwait(false);
 
+#pragma warning disable VSTHRD003 // The test must await the RPC response created by the client call.
         var exception = await Assert.ThrowsAsync<RpcException>(
             async () => await call.ResponseAsync.ConfigureAwait(false)).ConfigureAwait(false);
+#pragma warning restore VSTHRD003
         exception.StatusCode.Should().Be(StatusCode.InvalidArgument);
     }
 

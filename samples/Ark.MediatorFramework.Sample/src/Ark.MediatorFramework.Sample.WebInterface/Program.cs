@@ -20,10 +20,10 @@ startup.ConfigureServices(builder.Services);
 var app = builder.Build();
 startup.Configure(app);
 
-app.Run();
+await app.RunAsync().ConfigureAwait(false);
 
 /// <summary>Entry-point marker so the sample host type is discoverable.</summary>
-public partial class Program
+public sealed partial class Program
 {
     private Program()
     {

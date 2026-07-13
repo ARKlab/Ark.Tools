@@ -42,7 +42,10 @@ public sealed class SampleProblemDetailsOptionsSetup : IConfigureOptions<Hellang
             var payload = violation.GetType()
                 .GetProperties()
                 .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
-                .ToDictionary(property => property.Name, property => property.GetValue(violation));
+                .ToDictionary(
+                    property => property.Name,
+                    property => property.GetValue(violation),
+                    StringComparer.Ordinal);
             payload["type"] = violation.GetType().Name;
             payload["title"] = violation.Title;
             payload["status"] = violation.Status;
