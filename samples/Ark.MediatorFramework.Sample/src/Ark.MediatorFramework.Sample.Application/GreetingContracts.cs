@@ -111,3 +111,31 @@ public sealed record GreetingResponseV2
 [ServiceGroup("Greetings")]
 [ProtoContract]
 public sealed record GetGreetingV2Query([property: ProtoMember(1)] Guid Id) : IQuery<GreetingResponseV2>;
+
+/// <summary>Response proving route, query and body values were combined.</summary>
+public sealed record EnvelopeBindingResponse
+{
+    /// <summary>Gets the route identifier.</summary>
+    public required Guid Id { get; init; }
+
+    /// <summary>Gets the query value.</summary>
+    public required string Audit { get; init; }
+
+    /// <summary>Gets the body value.</summary>
+    public required string Message { get; init; }
+}
+
+/// <summary>Request demonstrating combined Minimal API envelope binding.</summary>
+[HttpEndpoint("POST", "/api/v{version}/greetings/{id}/envelope")]
+public sealed record UpdateGreetingRequest : IRequest<EnvelopeBindingResponse>
+{
+    /// <summary>Gets the route identifier.</summary>
+    public Guid Id { get; init; }
+
+    /// <summary>Gets the query value.</summary>
+    [BindFromQuery]
+    public string Audit { get; init; } = string.Empty;
+
+    /// <summary>Gets the body value.</summary>
+    public string Message { get; init; } = string.Empty;
+}

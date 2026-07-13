@@ -125,6 +125,25 @@ public sealed class TransportParityTests
     }
 
     [TestMethod]
+    public async Task MinimalApi_combines_route_query_and_body_into_one_envelope()
+    {
+        var routeId = Guid.NewGuid();
+        var body = new { Id = Guid.Empty, Audit = "body-value", Message = "body-message" };
+
+        using var post = await _client.PostAsJsonAsync(
+            $"/api/v1/greetings/{routeId}/envelope?Audit=query-value",
+            body,
+            JsonOptions).ConfigureAwait(false);
+        post.EnsureSuccessStatusCode();
+
+        var result = await post.Content.ReadFromJsonAsync<EnvelopeBindingResponse>(JsonOptions).ConfigureAwait(false);
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(routeId);
+        result.Audit.Should().Be("query-value");
+        result.Message.Should().Be("body-message");
+    }
+
+    [TestMethod]
     public async Task Rebus_dispatches_to_the_same_pure_handler()
     {
         var store = _container.GetInstance<IGreetingStore>();

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
@@ -24,6 +25,7 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
+        private const string BindFromQueryAttribute = "Ark.MediatorFramework.BindFromQueryAttribute";
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -43,6 +45,7 @@ namespace Ark.MediatorFramework.Generators
                 return ImmutableArray<EndpointModel>.Empty;
 
             var runtimeAssembly = httpAttr.ContainingAssembly;
+            var bindFromQueryAttr = compilation.GetTypeByMetadataName(BindFromQueryAttribute);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _relevantAssemblies(compilation, runtimeAssembly))
@@ -54,7 +57,7 @@ namespace Ark.MediatorFramework.Generators
                     if (http is null)
                         continue;
 
-                    var model = Extract(type, http);
+                    var model = Extract(type, http, bindFromQueryAttr);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -95,7 +98,7 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData http)
+        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData http, INamedTypeSymbol? bindFromQueryAttr)
         {
             string? response = null;
             var kind = HandlerKind.None;
@@ -132,6 +135,22 @@ namespace Ark.MediatorFramework.Generators
             verb = verb!.ToUpperInvariant();
             var httpIntroducedIn = NamedInt(http, "IntroducedIn", 1);
             var httpRetiredIn = NamedInt(http, "RetiredIn", 0);
+            var routeNames = new HashSet<string>(
+                Regex.Matches(template!, "\\{([^}:]+)(?::[^}]+)?\\}")
+                .Cast<Match>()
+                .Select(match => match.Groups[1].Value)
+                .Where(name => !string.Equals(name, "version", StringComparison.OrdinalIgnoreCase))
+                , StringComparer.OrdinalIgnoreCase);
+            var properties = type.GetMembers()
+                .OfType<IPropertySymbol>()
+                .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
+                .Select(property => new PropertyModel(
+                    property.Name,
+                    property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    routeNames.Contains(property.Name),
+                    bindFromQueryAttr is not null && property.GetAttributes().Any(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindFromQueryAttr))))
+                .ToImmutableArray();
 
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -141,7 +160,8 @@ namespace Ark.MediatorFramework.Generators
                 response,
                 kind,
                 httpIntroducedIn,
-                httpRetiredIn);
+                httpRetiredIn,
+                properties);
         }
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
@@ -181,6 +201,8 @@ namespace Ark.MediatorFramework.Generators
                     var bind = e.Verb == "GET" || e.Verb == "DELETE"
                         ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                         : string.Empty;
+                    var bodyVerb = e.Verb != "GET" && e.Verb != "DELETE";
+                    var explicitBindings = bodyVerb && e.Properties.Any(property => property.IsRoute || property.IsQuery);
 
                     foreach (var version in ActiveVersions(e, maxVersion))
                     {
@@ -201,10 +223,30 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("            {");
                         }
                         sb.AppendLine("            app." + map + "(" + Literal(template) + ", static async (");
-                        sb.AppendLine("                " + bind + e.TypeFullName + " request,");
+                        if (explicitBindings)
+                        {
+                            foreach (var property in e.Properties.Where(property => property.IsRoute || property.IsQuery))
+                            {
+                                var source = property.IsRoute ? "FromRoute" : "FromQuery";
+                                sb.AppendLine("                [global::Microsoft.AspNetCore.Http." + source + "(Name = " + Literal(property.Name) + ")] " + property.TypeFullName + " " + property.Name + ",");
+                            }
+
+                            sb.AppendLine("                " + e.TypeFullName + " body,");
+                        }
+                        else
+                        {
+                            sb.AppendLine("                " + bind + e.TypeFullName + " request,");
+                        }
                         sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
                         sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
                         sb.AppendLine("            {");
+                        if (explicitBindings)
+                        {
+                            var assignments = string.Join(", ", e.Properties
+                                .Where(property => property.IsRoute || property.IsQuery)
+                                .Select(property => property.Name + " = " + property.Name));
+                            sb.AppendLine("                var request = body with { " + assignments + " };");
+                        }
                         sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                         sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
@@ -254,7 +296,7 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string verb, string template, string response, HandlerKind kind, int httpIntroducedIn, int httpRetiredIn)
+            public EndpointModel(string typeFullName, string typeName, string verb, string template, string response, HandlerKind kind, int httpIntroducedIn, int httpRetiredIn, ImmutableArray<PropertyModel> properties)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -264,6 +306,7 @@ namespace Ark.MediatorFramework.Generators
                 Kind = kind;
                 HttpIntroducedIn = httpIntroducedIn;
                 HttpRetiredIn = httpRetiredIn;
+                Properties = properties;
             }
 
             public string TypeFullName { get; }
@@ -274,6 +317,23 @@ namespace Ark.MediatorFramework.Generators
             public HandlerKind Kind { get; }
             public int HttpIntroducedIn { get; }
             public int HttpRetiredIn { get; }
+            public ImmutableArray<PropertyModel> Properties { get; }
+        }
+
+        private readonly struct PropertyModel
+        {
+            public PropertyModel(string name, string typeFullName, bool isRoute, bool isQuery)
+            {
+                Name = name;
+                TypeFullName = typeFullName;
+                IsRoute = isRoute;
+                IsQuery = isQuery;
+            }
+
+            public string Name { get; }
+            public string TypeFullName { get; }
+            public bool IsRoute { get; }
+            public bool IsQuery { get; }
         }
     }
 }

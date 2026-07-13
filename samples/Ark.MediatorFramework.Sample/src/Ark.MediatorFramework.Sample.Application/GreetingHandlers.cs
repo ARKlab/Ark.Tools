@@ -97,6 +97,23 @@ public sealed class GetGreetingV2Handler : IQueryHandler<GetGreetingV2Query, Gre
     }
 }
 
+/// <summary>Pure handler for <see cref="UpdateGreetingRequest"/>.</summary>
+public sealed class UpdateGreetingHandler : IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>
+{
+    /// <inheritdoc />
+    public async Task<EnvelopeBindingResponse> ExecuteAsync(UpdateGreetingRequest Request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(Request);
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new EnvelopeBindingResponse
+        {
+            Id = Request.Id,
+            Audit = Request.Audit,
+            Message = Request.Message,
+        };
+    }
+}
+
 /// <summary>Pure handler describing a polymorphic <see cref="Shape"/> — no transport types.</summary>
 public sealed class DescribeShapeHandler : IRequestHandler<DescribeShapeRequest, ShapeDescription>
 {

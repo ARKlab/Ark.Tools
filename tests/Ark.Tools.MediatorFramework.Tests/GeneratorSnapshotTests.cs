@@ -63,6 +63,28 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorCombinesRouteQueryAndBody()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/api/v{version}/greetings/{id}")]
+            public sealed record UpdateGreeting : IRequest<string>
+            {
+                public System.Guid Id { get; init; }
+                [BindFromQuery]
+                public string Audit { get; init; } = string.Empty;
+                public string Message { get; init; } = string.Empty;
+            }
+            """);
+
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Http.FromRoute(Name = \"Id\")]");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Http.FromQuery(Name = \"Audit\")]");
+        generated.Should().Contain("var request = body with { Id = Id, Audit = Audit };");
+    }
+
+    [TestMethod]
     public void GrpcGeneratorEmitsImportedProtoAsset()
     {
         var generated = RunGenerator<ArkGrpcEndpointGenerator>(

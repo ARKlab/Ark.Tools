@@ -31,3 +31,12 @@ public sealed class HttpEndpointAttribute : Attribute
     /// <summary>Gets or sets the exclusive API version in which the endpoint is retired, or zero if never.</summary>
     public int RetiredIn { get; set; }
 }
+
+/// <summary>
+/// Marks a request property that must be read from the query string when the
+/// endpoint also has a request body.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class BindFromQueryAttribute : Attribute
+{
+}
