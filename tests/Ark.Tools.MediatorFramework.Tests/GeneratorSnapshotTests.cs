@@ -7,6 +7,8 @@ using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
+using System.Collections.Immutable;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -109,7 +111,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorReportsMultipleAttachments()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -121,7 +123,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().BeEmpty();
+        result.Generated.Should().BeEmpty();
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF001");
     }
 
     [TestMethod]
@@ -157,6 +160,10 @@ public sealed class GeneratorSnapshotTests
 
     private static string RunGenerator<TGenerator>(string source)
         where TGenerator : IIncrementalGenerator, new()
+        => RunGeneratorResult<TGenerator>(source).Generated;
+
+    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) RunGeneratorResult<TGenerator>(string source)
+        where TGenerator : IIncrementalGenerator, new()
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
@@ -175,8 +182,11 @@ public sealed class GeneratorSnapshotTests
         GeneratorDriver driver = CSharpGeneratorDriver.Create(new TGenerator());
 
         driver = driver.RunGenerators(compilation);
-        return string.Join(
+        var result = driver.GetRunResult();
+        return (
+            string.Join(
             Environment.NewLine,
-            driver.GetRunResult().Results.SelectMany(result => result.GeneratedSources).Select(result => result.SourceText.ToString()));
+            result.Results.SelectMany(generator => generator.GeneratedSources).Select(generator => generator.SourceText.ToString())),
+            result.Diagnostics);
     }
 }
