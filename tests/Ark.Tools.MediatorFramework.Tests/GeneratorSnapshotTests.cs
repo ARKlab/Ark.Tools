@@ -11,12 +11,31 @@ using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
 [TestClass]
 public sealed class GeneratorSnapshotTests
 {
+    [TestMethod]
+    public void MessagePackResponseRequiresARegisteredResolver()
+    {
+        var context = new DefaultHttpContext
+        {
+            RequestServices = new ServiceCollection().BuildServiceProvider(),
+        };
+        context.Request.Headers.Accept = "application/x-msgpack";
+
+        Action action = () => Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(
+            context,
+            "value",
+            CancellationToken.None);
+
+        action.Should().Throw<InvalidOperationException>();
+    }
+
     [TestMethod]
     public void MinimalApiGeneratorExpandsVersionedRoutes()
     {
@@ -79,30 +98,30 @@ public sealed class GeneratorSnapshotTests
                 public string Audit { get; init; } = string.Empty;
                 public string Message { get; init; } = string.Empty;
             }
-
-            [TestMethod]
-            public void MinimalApiGeneratorEmitsNegotiationOnlyForOptedInEndpoints()
-            {
-                var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
-                    """
-                    using Ark.MediatorFramework;
-                    using Ark.Tools.Solid;
-                    [HttpEndpoint("POST", "/messages", AcceptsMessagePack = true)]
-                    public sealed record Message : IRequest<string>
-                    {
-                        public string Value { get; init; } = string.Empty;
-                    }
-                    """);
-
-                generated.Should().Contain("ReadRequestAsync<global::Message>");
-                generated.Should().Contain("application/x-msgpack");
-                generated.Should().NotContain("MapArkMessagePackPost");
-            }
             """);
 
         generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"id\")]");
         generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Audit\")]");
         generated.Should().Contain("var request = body with { Id = Id, Audit = Audit };");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorEmitsNegotiationOnlyForOptedInEndpoints()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/messages", AcceptsMessagePack = true)]
+            public sealed record Message : IRequest<string>
+            {
+                public string Value { get; init; } = string.Empty;
+            }
+            """);
+
+        generated.Should().Contain("ReadRequestAsync<global::Message>");
+        generated.Should().Contain("application/x-msgpack");
+        generated.Should().NotContain("MapArkMessagePackPost");
     }
 
     [TestMethod]

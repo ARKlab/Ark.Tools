@@ -267,7 +267,7 @@ Debug`) before the task is marked complete.
     hand-written `MapArkAttachmentUpload` call is deleted (helper stays as
     escape hatch); the upload test passes against the generated endpoint,
     including a route/query parameter.
-- [ ] **T10.5** MessagePack by content negotiation, no specialized map.
+- [x] **T10.5** MessagePack by content negotiation, no specialized map.
   - *Accept:* `MapArkMessagePackPost` is removed; `[HttpEndpoint]` declares
     the supported serializations (JSON default, MessagePack opt-in); one
     generated endpoint per contract negotiates `application/json` vs

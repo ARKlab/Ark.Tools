@@ -15,7 +15,6 @@ public static class ArkMessagePackEx
 
     /// <summary>Reads a request using MessagePack or JSON content negotiation.</summary>
     /// <typeparam name="TRequest">The request type accepted by the handler.</typeparam>
-    /// <typeparam name="TResponse">The response type returned by the handler.</typeparam>
     /// <param name="context">The current HTTP context.</param>
     /// <param name="cancellationToken">The request cancellation token.</param>
     /// <returns>The deserialized request, or <see langword="null"/> for an empty body.</returns>

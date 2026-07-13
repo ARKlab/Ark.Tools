@@ -112,7 +112,7 @@ public sealed record ShapeEnvelope
 /// response, proving polymorphism works on both the request and response wire through a single
 /// generated Minimal API endpoint.
 /// </summary>
-[HttpEndpoint("POST", "/api/v{version}/shapes/describe")]
+[HttpEndpoint("POST", "/api/v{version}/shapes/describe", AcceptsMessagePack = true)]
 [GrpcMethod("DescribeShape")]
 [ServiceGroup("Greetings")]
 [ProtoContract]

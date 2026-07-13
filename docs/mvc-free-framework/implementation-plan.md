@@ -529,6 +529,11 @@ route/query/body case.
 
 ### Step 8.6 — MessagePack content negotiation (T10.5)
 
+**Status: complete.** MessagePack is now an explicit `[HttpEndpoint]` opt-in;
+generated endpoints negotiate JSON and MessagePack directly, and a missing
+`IFormatterResolver` fails instead of selecting a fallback resolver. Sample and
+generator tests cover round-trips, mixed negotiation, and resolver enforcement.
+
 1. `HttpEndpointAttribute`: add a serialization opt-in (e.g.
    `bool AcceptsMessagePack` or a `[Flags] HttpSerde` property, JSON always
    on). Remove the `useMessagePack` parameter from the generated
