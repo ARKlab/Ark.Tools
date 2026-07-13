@@ -31,6 +31,8 @@ public static class ArkProtoExport
             foreach (var file in files)
             {
                 var fileName = (string)file.GetType().GetField("Item1")!.GetValue(file)!;
+                if (Path.IsPathRooted(fileName))
+                    throw new InvalidOperationException($"Generated protobuf asset path '{fileName}' must be relative.");
                 var content = (string)file.GetType().GetField("Item2")!.GetValue(file)!;
                 File.WriteAllText(Path.Combine(directory, fileName), content);
             }
@@ -51,7 +53,11 @@ public static class ArkProtoExport
 
         using var stream = assembly.GetManifestResourceStream(resourceName)
             ?? throw new InvalidOperationException($"Embedded protobuf asset '{relativePath}' was not found.");
-        var output = Path.Combine(directory, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        var relativeOutputPath = relativePath.Replace('/', Path.DirectorySeparatorChar);
+        if (Path.IsPathRooted(relativeOutputPath))
+            throw new ArgumentException("Path must be relative.", nameof(relativePath));
+
+        var output = Path.Combine(directory, relativeOutputPath);
         Directory.CreateDirectory(Path.GetDirectoryName(output)!);
         using var file = File.Create(output);
         stream.CopyTo(file);

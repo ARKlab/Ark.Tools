@@ -73,11 +73,9 @@ namespace Ark.MediatorFramework.Generators
         {
             yield return compilation.Assembly;
 
-            foreach (var reference in compilation.SourceModule.ReferencedAssemblySymbols)
+            foreach (var reference in compilation.SourceModule.ReferencedAssemblySymbols
+                         .Where(reference => !SymbolEqualityComparer.Default.Equals(reference, runtimeAssembly)))
             {
-                if (SymbolEqualityComparer.Default.Equals(reference, runtimeAssembly))
-                    continue;
-
                 var referencesRuntime = reference.Modules.Any(
                     m => m.ReferencedAssemblies.Any(
                         id => string.Equals(id.Name, runtimeAssembly.Name, StringComparison.Ordinal)));
@@ -252,6 +250,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("    {");
             var contracts = GetProtoContracts(compilation);
             var entries = new List<string>();
+            var content = new StringBuilder();
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
             {
                 var active = group.ToArray();
@@ -262,7 +261,7 @@ namespace Ark.MediatorFramework.Generators
                     AddReachable(endpoint.Response, contracts, reachable);
                 }
 
-                var content = new StringBuilder();
+                content.Clear();
                 content.AppendLine("syntax = \"proto3\";");
                 content.AppendLine();
                 content.Append("option csharp_namespace = ")
@@ -385,12 +384,10 @@ namespace Ark.MediatorFramework.Generators
             var result = new List<ProtoContractModel>();
             foreach (var assembly in _relevantAssemblies(compilation, protoAttribute.ContainingAssembly))
             {
-                foreach (var type in _allTypes(assembly.GlobalNamespace))
+                foreach (var type in _allTypes(assembly.GlobalNamespace)
+                    .Where(type => type.GetAttributes().Any(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute))))
                 {
-                    if (!type.GetAttributes().Any(attribute =>
-                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute)))
-                        continue;
-
                     var members = type.GetMembers()
                         .OfType<IPropertySymbol>()
                         .Select(property => new

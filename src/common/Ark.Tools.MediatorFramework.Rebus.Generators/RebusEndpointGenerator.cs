@@ -67,11 +67,9 @@ namespace Ark.MediatorFramework.Generators
         {
             yield return compilation.Assembly;
 
-            foreach (var reference in compilation.SourceModule.ReferencedAssemblySymbols)
+            foreach (var reference in compilation.SourceModule.ReferencedAssemblySymbols
+                .Where(reference => !SymbolEqualityComparer.Default.Equals(reference, runtimeAssembly)))
             {
-                if (SymbolEqualityComparer.Default.Equals(reference, runtimeAssembly))
-                    continue;
-
                 var referencesRuntime = reference.Modules.Any(
                     m => m.ReferencedAssemblies.Any(
                         id => string.Equals(id.Name, runtimeAssembly.Name, StringComparison.Ordinal)));
