@@ -31,7 +31,7 @@ public sealed record UploadResponse
 public sealed record UploadGreetingCardRequest : IRequest<UploadResponse>
 {
     /// <summary>Gets the upload correlation identifier.</summary>
-    public required Guid Id { get; init; }
+    public Guid Id { get; init; }
 
     /// <summary>Gets the upload label supplied in the query string.</summary>
     [BindFromQuery]
