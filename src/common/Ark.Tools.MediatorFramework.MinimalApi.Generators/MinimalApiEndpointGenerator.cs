@@ -228,7 +228,7 @@ namespace Ark.MediatorFramework.Generators
                             foreach (var property in e.Properties.Where(property => property.IsRoute || property.IsQuery))
                             {
                                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
-                                sb.AppendLine("                [global::Microsoft.AspNetCore.Http." + source + "(Name = " + Literal(property.Name) + ")] " + property.TypeFullName + " " + property.Name + ",");
+                                sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(property.Name) + ")] " + property.TypeFullName + " " + property.Name + ",");
                             }
 
                             sb.AppendLine("                " + e.TypeFullName + " body,");

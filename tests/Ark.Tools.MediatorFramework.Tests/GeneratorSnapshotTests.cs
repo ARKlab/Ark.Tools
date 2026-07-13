@@ -79,8 +79,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("[global::Microsoft.AspNetCore.Http.FromRoute(Name = \"Id\")]");
-        generated.Should().Contain("[global::Microsoft.AspNetCore.Http.FromQuery(Name = \"Audit\")]");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"Id\")]");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Audit\")]");
         generated.Should().Contain("var request = body with { Id = Id, Audit = Audit };");
     }
 
