@@ -26,6 +26,14 @@ namespace Ark.MediatorFramework.Generators
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
         private const string BindFromQueryAttribute = "Ark.MediatorFramework.BindFromQueryAttribute";
+        private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
+        private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
+            "ARKMF001",
+            "Only one attachment is supported",
+            "HTTP endpoint '{0}' declares more than one IArkAttachment property",
+            "Ark.MediatorFramework",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -46,6 +54,7 @@ namespace Ark.MediatorFramework.Generators
 
             var runtimeAssembly = httpAttr.ContainingAssembly;
             var bindFromQueryAttr = compilation.GetTypeByMetadataName(BindFromQueryAttribute);
+            var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _relevantAssemblies(compilation, runtimeAssembly))
@@ -57,7 +66,7 @@ namespace Ark.MediatorFramework.Generators
                     if (http is null)
                         continue;
 
-                    var model = Extract(type, http, bindFromQueryAttr);
+                    var model = Extract(type, http, bindFromQueryAttr, attachmentType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -98,7 +107,11 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData http, INamedTypeSymbol? bindFromQueryAttr)
+        private static EndpointModel? Extract(
+            INamedTypeSymbol type,
+            AttributeData http,
+            INamedTypeSymbol? bindFromQueryAttr,
+            INamedTypeSymbol? attachmentType)
         {
             string? response = null;
             var kind = HandlerKind.None;
@@ -152,6 +165,9 @@ namespace Ark.MediatorFramework.Generators
                     bindFromQueryAttr is not null && property.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindFromQueryAttr))))
                 .ToImmutableArray();
+            var attachmentProperties = attachmentType is null
+                ? ImmutableArray<PropertyModel>.Empty
+                : properties.Where(property => property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment").ToImmutableArray();
 
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -162,7 +178,9 @@ namespace Ark.MediatorFramework.Generators
                 kind,
                 httpIntroducedIn,
                 httpRetiredIn,
-                properties);
+                properties,
+                attachmentProperties.Length,
+                type.Locations.FirstOrDefault());
         }
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
@@ -196,6 +214,15 @@ namespace Ark.MediatorFramework.Generators
                 var maxVersion = items.Max(static x => Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1));
                 foreach (var e in items)
                 {
+                    if (e.AttachmentCount > 1)
+                    {
+                        spc.ReportDiagnostic(Diagnostic.Create(
+                            MultipleAttachments,
+                            e.Location,
+                            e.TypeName));
+                        continue;
+                    }
+
                     var handlerService = e.Kind == HandlerKind.Query
                         ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
                         : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
@@ -209,6 +236,12 @@ namespace Ark.MediatorFramework.Generators
                     {
                         var map = MapMethod(e.Verb);
                         var template = e.Template.Replace("{version}", version.ToString());
+                        if (e.AttachmentCount == 1)
+                        {
+                            EmitMultipartEndpoint(sb, e, handlerService, map, template, version);
+                            continue;
+                        }
+
                         if (e.Verb == "POST")
                         {
                             sb.AppendLine("            if (useMessagePack && " + (!explicitBindings ? "true" : "false") + ")");
@@ -268,6 +301,47 @@ namespace Ark.MediatorFramework.Generators
             spc.AddSource("ArkGeneratedEndpoints.MinimalApi.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
         }
 
+        private static void EmitMultipartEndpoint(
+            StringBuilder sb,
+            EndpointModel endpoint,
+            string handlerService,
+            string map,
+            string template,
+            int version)
+        {
+            var attachment = endpoint.Properties.Single(property =>
+                property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment");
+            var bindings = endpoint.Properties.Where(property => property.IsRoute || property.IsQuery).ToArray();
+            sb.Append("            app.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            foreach (var property in bindings)
+            {
+                var source = property.IsRoute ? "FromRoute" : "FromQuery";
+                var bindingName = property.IsRoute ? property.BindingName : property.Name;
+                sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
+                    .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
+                    .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+            }
+
+            sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
+            sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
+            sb.AppendLine("            {");
+            sb.AppendLine("                var form = await httpContext.Request.ReadFormAsync(cancellationToken).ConfigureAwait(false);");
+            sb.AppendLine("                if (form.Files.Count != 1)");
+            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.BadRequest(\"Exactly one file is required.\");");
+            sb.AppendLine("                var file = form.Files[0];");
+            sb.AppendLine("                var request = new " + endpoint.TypeFullName + " {");
+            foreach (var property in bindings)
+                sb.Append("                    ").Append(property.Name).Append(" = ").Append(property.Name).AppendLine(",");
+            sb.AppendLine("                    " + attachment.Name + " = new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream),");
+            sb.AppendLine("                };");
+            sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+            sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
+            sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
+            sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\").WithGroupName(")
+                .Append(Literal("v" + version)).AppendLine(");");
+        }
+
         private static string MapMethod(string verb) => verb switch
         {
             "GET" => "MapGet",
@@ -298,7 +372,18 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string verb, string template, string response, HandlerKind kind, int httpIntroducedIn, int httpRetiredIn, ImmutableArray<PropertyModel> properties)
+            public EndpointModel(
+                string typeFullName,
+                string typeName,
+                string verb,
+                string template,
+                string response,
+                HandlerKind kind,
+                int httpIntroducedIn,
+                int httpRetiredIn,
+                ImmutableArray<PropertyModel> properties,
+                int attachmentCount,
+                Location? location)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -309,6 +394,8 @@ namespace Ark.MediatorFramework.Generators
                 HttpIntroducedIn = httpIntroducedIn;
                 HttpRetiredIn = httpRetiredIn;
                 Properties = properties;
+                AttachmentCount = attachmentCount;
+                Location = location;
             }
 
             public string TypeFullName { get; }
@@ -320,6 +407,8 @@ namespace Ark.MediatorFramework.Generators
             public int HttpIntroducedIn { get; }
             public int HttpRetiredIn { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
+            public int AttachmentCount { get; }
+            public Location? Location { get; }
         }
 
         private readonly struct PropertyModel

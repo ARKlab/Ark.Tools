@@ -104,10 +104,6 @@ public sealed class SampleStartup
             endpoints.MapGrpcService<DocumentsGrpcService>();
             endpoints.MapControllers();
 
-            endpoints.MapArkAttachmentUpload<UploadGreetingCardRequest, UploadResponse>(
-                "/api/v1/greeting-cards",
-                attachment => new UploadGreetingCardRequest { Attachment = attachment });
-
             // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
             endpoints.MapOpenApi();
         });

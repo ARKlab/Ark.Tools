@@ -505,7 +505,9 @@ public sealed class TransportParityTests
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         content.Add(fileContent, "file", "card.png");
 
-        var post = await _client.PostAsync(new Uri("/api/v1/greeting-cards", UriKind.Relative), content).ConfigureAwait(false);
+        var post = await _client.PostAsync(
+            new Uri($"/api/v1/greeting-cards/{Guid.NewGuid()}?Label=holiday", UriKind.Relative),
+            content).ConfigureAwait(false);
         post.EnsureSuccessStatusCode();
 
         var result = await post.Content.ReadFromJsonAsync<UploadResponse>().ConfigureAwait(false);

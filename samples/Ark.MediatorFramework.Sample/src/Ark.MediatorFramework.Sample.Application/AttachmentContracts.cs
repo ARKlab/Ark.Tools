@@ -25,12 +25,18 @@ public sealed record UploadResponse
 }
 
 /// <summary>
-/// Pure transport-agnostic request carrying an <see cref="IArkAttachment"/>. It is intentionally
-/// not source-generated (attachments require a multipart binding); the hosting assembly exposes it
-/// through a hand-written endpoint that maps the uploaded file into the attachment abstraction.
+/// Pure transport-agnostic request carrying an <see cref="IArkAttachment"/>.
 /// </summary>
+[HttpEndpoint("POST", "/api/v{version}/greeting-cards/{id}")]
 public sealed record UploadGreetingCardRequest : IRequest<UploadResponse>
 {
+    /// <summary>Gets the upload correlation identifier.</summary>
+    public required Guid Id { get; init; }
+
+    /// <summary>Gets the upload label supplied in the query string.</summary>
+    [BindFromQuery]
+    public string Label { get; init; } = string.Empty;
+
     /// <summary>Gets the uploaded attachment.</summary>
     public required IArkAttachment Attachment { get; init; }
 }

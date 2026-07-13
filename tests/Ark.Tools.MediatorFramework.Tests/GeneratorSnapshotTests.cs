@@ -85,6 +85,46 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorEmitsMultipartBinding()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/api/v{version}/uploads/{id}")]
+            public sealed record Upload : IRequest<string>
+            {
+                public System.Guid Id { get; init; }
+                [BindFromQuery]
+                public string Label { get; init; } = string.Empty;
+                public IArkAttachment Attachment { get; init; } = null!;
+            }
+            """);
+
+        generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\")");
+        generated.Should().Contain("form.Files.Count != 1");
+        generated.Should().Contain("Attachment = new global::Ark.MediatorFramework.ArkAttachment");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsMultipleAttachments()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/uploads")]
+            public sealed record Upload : IRequest<string>
+            {
+                public IArkAttachment First { get; init; } = null!;
+                public IArkAttachment Second { get; init; } = null!;
+            }
+            """);
+
+        generated.Should().BeEmpty();
+    }
+
+    [TestMethod]
     public void GrpcGeneratorEmitsImportedProtoAsset()
     {
         var generated = RunGenerator<ArkGrpcEndpointGenerator>(
