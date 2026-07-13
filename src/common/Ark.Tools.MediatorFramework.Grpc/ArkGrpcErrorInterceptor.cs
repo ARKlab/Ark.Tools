@@ -5,6 +5,7 @@ using Ark.Tools.Core.BusinessRuleViolation;
 
 using FluentValidation;
 
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Google.Rpc;
 
@@ -44,11 +45,8 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
                 Title = violation.Title,
                 Status = violation.Status,
                 Detail = violation.Detail ?? string.Empty,
-                Extensions = GetExtensions(violation),
             };
-
-            using var stream = new MemoryStream();
-            ProtoBuf.Serializer.Serialize(stream, detail);
+            detail.Extensions.Add(GetExtensions(violation));
 
             var status = new Google.Rpc.Status
             {
@@ -58,7 +56,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
             status.Details.Add(new Any
             {
                 TypeUrl = "type.googleapis.com/ark.mediator.ArkBusinessRuleViolation",
-                Value = Google.Protobuf.ByteString.CopyFrom(stream.ToArray()),
+                Value = detail.ToByteString(),
             });
             throw status.ToRpcException();
         }

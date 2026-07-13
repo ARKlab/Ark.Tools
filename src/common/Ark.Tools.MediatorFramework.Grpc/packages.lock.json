@@ -23,6 +23,12 @@
           "Google.Protobuf": "[3.31.1, 4.0.0]"
         }
       },
+      "Google.Protobuf": {
+        "type": "Direct",
+        "requested": "[3.31.1, )",
+        "resolved": "3.31.1",
+        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
+      },
       "Grpc.StatusProto": {
         "type": "Direct",
         "requested": "[2.66.0, )",
@@ -32,6 +38,12 @@
           "Google.Api.CommonProtos": "2.15.0",
           "Grpc.Core.Api": "2.66.0"
         }
+      },
+      "Grpc.Tools": {
+        "type": "Direct",
+        "requested": "[2.66.0, )",
+        "resolved": "2.66.0",
+        "contentHash": "URTltx2E0aTGQqVW+H09AZiGR/qyQ3naHPymSG1/Ytgm8bPdjSltnsIFanbxb7rXxdYwGzLFGy82R82M1UktXg=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
@@ -147,12 +159,6 @@
           "Macross.Json.Extensions": "[3.0.0, )"
         }
       },
-      "Google.Protobuf": {
-        "type": "CentralTransitive",
-        "requested": "[3.31.1, )",
-        "resolved": "3.31.1",
-        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
-      },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",
         "requested": "[3.0.0, )",
@@ -206,6 +212,12 @@
           "Google.Protobuf": "[3.31.1, 4.0.0]"
         }
       },
+      "Google.Protobuf": {
+        "type": "Direct",
+        "requested": "[3.31.1, )",
+        "resolved": "3.31.1",
+        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
+      },
       "Grpc.StatusProto": {
         "type": "Direct",
         "requested": "[2.66.0, )",
@@ -215,6 +227,12 @@
           "Google.Api.CommonProtos": "2.15.0",
           "Grpc.Core.Api": "2.66.0"
         }
+      },
+      "Grpc.Tools": {
+        "type": "Direct",
+        "requested": "[2.66.0, )",
+        "resolved": "2.66.0",
+        "contentHash": "URTltx2E0aTGQqVW+H09AZiGR/qyQ3naHPymSG1/Ytgm8bPdjSltnsIFanbxb7rXxdYwGzLFGy82R82M1UktXg=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
@@ -343,12 +361,6 @@
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
-      },
-      "Google.Protobuf": {
-        "type": "CentralTransitive",
-        "requested": "[3.31.1, )",
-        "resolved": "3.31.1",
-        "contentHash": "gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A=="
       },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",

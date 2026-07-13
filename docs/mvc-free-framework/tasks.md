@@ -242,7 +242,7 @@ Debug`) before the task is marked complete.
     `google.type.TimeZone`); the old bespoke `LocalDateTime`/`OffsetDateTime`
     encodings are gone; round-trip tests cover all three plus the existing
     native mappings and `Period`.
-- [ ] **T10.2** Shared `.proto` namespaces fixed to their owning libraries.
+- [x] **T10.2** Shared `.proto` namespaces fixed to their owning libraries.
   - *Accept:* `ark/nodatime.proto` declares `package ark.nodatime;` and
     `option csharp_namespace = "Ark.Tools.Nodatime.Protobuf"`; it defines
     **no** `LocalDate` message (native `google.type.Date` is imported/used)

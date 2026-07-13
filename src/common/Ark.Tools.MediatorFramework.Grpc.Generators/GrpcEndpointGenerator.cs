@@ -505,6 +505,24 @@ namespace Ark.MediatorFramework.Generators
             };
         }
 
+        private static string ProtoTypeName(string typeName, IReadOnlyList<ProtoContractModel> contracts)
+        {
+            var name = typeName switch
+            {
+                "global::NodaTime.LocalDate" => "google.type.Date",
+                "global::NodaTime.LocalDateTime" => "google.type.DateTime",
+                "global::NodaTime.OffsetDateTime" => "google.type.DateTime",
+                "global::NodaTime.ZonedDateTime" => "google.type.DateTime",
+                "global::NodaTime.Period" => "ark.nodatime.Period",
+                _ => null,
+            };
+            if (name is not null)
+                return name;
+
+            var contract = contracts.FirstOrDefault(item => item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == typeName);
+            return contract?.Name ?? SimpleName(typeName);
+        }
+
         private static string SimpleName(string value)
         {
             var separator = value.LastIndexOf('.');

@@ -430,6 +430,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Google.Api.CommonProtos": "[2.17.0, )",
+          "Google.Protobuf": "[3.31.1, )",
           "Grpc.StatusProto": "[2.66.0, )"
         }
       },
@@ -1246,6 +1247,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Google.Api.CommonProtos": "[2.17.0, )",
+          "Google.Protobuf": "[3.31.1, )",
           "Grpc.StatusProto": "[2.66.0, )"
         }
       },

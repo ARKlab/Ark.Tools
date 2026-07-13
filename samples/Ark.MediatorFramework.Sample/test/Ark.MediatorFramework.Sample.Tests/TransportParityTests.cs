@@ -38,16 +38,16 @@ using SimpleInjector;
 using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
 using GrpcCircle = Ark.MediatorFramework.Sample.GrpcClient.Circle;
 using GrpcDescribeShapeRequest = Ark.MediatorFramework.Sample.GrpcClient.DescribeShapeRequest;
-using GrpcArkBusinessRuleViolation = Ark.MediatorFramework.Sample.GrpcClient.ArkBusinessRuleViolation;
+using GrpcArkBusinessRuleViolation = Ark.Tools.MediatorFramework.Grpc.ArkBusinessRuleViolation;
 using GrpcDocuments = Ark.MediatorFramework.Sample.GrpcClient.Documents;
-using GrpcDuration = Ark.MediatorFramework.Sample.GrpcClient.Duration;
+using GrpcDuration = Google.Protobuf.WellKnownTypes.Duration;
 using GrpcGreetingsV1Client = Ark.MediatorFramework.Sample.GrpcClient.GreetingsV1.GreetingsV1Client;
-using GrpcLocalDate = Ark.MediatorFramework.Sample.GrpcClient.LocalDate;
-using GrpcLocalDateTime = Ark.MediatorFramework.Sample.GrpcClient.LocalDateTime;
-using GrpcOffsetDateTime = Ark.MediatorFramework.Sample.GrpcClient.OffsetDateTime;
-using GrpcPeriod = Ark.MediatorFramework.Sample.GrpcClient.Period;
-using GrpcUploadDocumentChunk = Ark.MediatorFramework.Sample.GrpcClient.UploadDocumentChunk;
-using GrpcUploadDocumentMetadata = Ark.MediatorFramework.Sample.GrpcClient.UploadDocumentMetadata;
+using GrpcLocalDate = Google.Type.Date;
+using GrpcLocalDateTime = Google.Type.DateTime;
+using GrpcOffsetDateTime = Google.Type.DateTime;
+using GrpcPeriod = Ark.Tools.Nodatime.Protobuf.Period;
+using GrpcUploadDocumentChunk = Ark.Tools.MediatorFramework.Grpc.UploadDocumentChunk;
+using GrpcUploadDocumentMetadata = Ark.Tools.MediatorFramework.Grpc.UploadDocumentMetadata;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 

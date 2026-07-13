@@ -11,24 +11,23 @@
   <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+    <PackageReference Include="Google.Api.CommonProtos" />
     <PackageReference Include="Google.Protobuf" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj"
                       ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Nodatime.Protobuf\Ark.Tools.Nodatime.Protobuf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\Ark.Tools.MediatorFramework.Grpc.csproj" />
     <Protobuf Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Greetings.proto"
               GrpcServices="Client"
               Link="Greetings.proto" />
     <Protobuf Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Documents.proto"
               GrpcServices="Client"
               Link="Documents.proto" />
-    <Protobuf Include="..\..\..\..\src\common\Ark.Tools.Nodatime.Protobuf\proto\ark\nodatime.proto"
-              GrpcServices="Client"
-              Link="ark/nodatime.proto" />
-    <Protobuf Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\proto\ark\mediator.proto"
-              GrpcServices="Client"
-              Link="ark/mediator.proto" />
+    <Protobuf Update="@(Protobuf)"
+              AdditionalImportDirs="$(NuGetPackageRoot)google.api.commonprotos\2.17.0\content\protos;$(NuGetPackageRoot)grpc.tools\2.66.0\build\native\include;..\..\..\..\src\common\Ark.Tools.Nodatime.Protobuf\proto;..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\proto" />
   </ItemGroup>
 
 </Project>

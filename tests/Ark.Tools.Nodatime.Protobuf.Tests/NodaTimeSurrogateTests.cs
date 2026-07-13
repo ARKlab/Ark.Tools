@@ -34,7 +34,7 @@ public sealed class NodaTimeSurrogateTests
         public ZonedDateTime ZonedDateTime { get; set; }
 
         [ProtoMember(4)]
-        public Period? Period { get; set; }
+        public NodaTime.Period? Period { get; set; }
 
         [ProtoMember(5)]
         public Instant Instant { get; set; }
@@ -72,8 +72,8 @@ public sealed class NodaTimeSurrogateTests
                 Offset.FromHoursAndMinutes(5, 30)),
             ZonedDateTime = new LocalDateTime(2024, 2, 29, 13, 45, 30)
                 .InZoneLeniently(DateTimeZoneProviders.Tzdb["Europe/Rome"]),
-            Period = Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(10)
-                + Period.FromHours(2) + Period.FromMinutes(30),
+            Period = NodaTime.Period.FromYears(1) + NodaTime.Period.FromMonths(2) + NodaTime.Period.FromDays(10)
+                + NodaTime.Period.FromHours(2) + NodaTime.Period.FromMinutes(30),
             Instant = Instant.FromUtc(2024, 2, 29, 13, 45, 30).PlusNanoseconds(123_456_789),
             Duration = Duration.FromDays(2) + Duration.FromNanoseconds(987_654_321),
             LocalTime = new LocalTime(13, 45, 30).PlusNanoseconds(123_456_789),
@@ -129,12 +129,12 @@ public sealed class NodaTimeSurrogateTests
     [TestMethod]
     public void Period_is_encoded_as_iso_string()
     {
-        PeriodSurrogate? surrogate = Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(10);
+        PeriodSurrogate? surrogate = NodaTime.Period.FromYears(1) + NodaTime.Period.FromMonths(2) + NodaTime.Period.FromDays(10);
 
         surrogate!.Value.Should().Be("P1Y2M10D");
 
-        Period? back = surrogate;
-        back.Should().Be(Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(10));
+        NodaTime.Period? back = surrogate;
+        back.Should().Be(NodaTime.Period.FromYears(1) + NodaTime.Period.FromMonths(2) + NodaTime.Period.FromDays(10));
     }
 
     [TestMethod]

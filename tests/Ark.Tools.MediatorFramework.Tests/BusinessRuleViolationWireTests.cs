@@ -5,7 +5,7 @@ using AwesomeAssertions;
 
 using Ark.Tools.MediatorFramework.Grpc;
 
-using ProtoBuf;
+using Google.Protobuf;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -22,13 +22,10 @@ public sealed class BusinessRuleViolationWireTests
             Status = 400,
             Detail = "A greeting already exists.",
             Instance = string.Empty,
-            Extensions = new Dictionary<string, string>(StringComparer.Ordinal) { ["Name"] = "\"hello\"" },
         };
-        using var stream = new MemoryStream();
+        expected.Extensions.Add("Name", "\"hello\"");
 
-        Serializer.Serialize(stream, expected);
-        stream.Position = 0;
-        var actual = Serializer.Deserialize<ArkBusinessRuleViolation>(stream);
+        var actual = ArkBusinessRuleViolation.Parser.ParseFrom(expected.ToByteArray());
 
         actual.Type.Should().Be(expected.Type);
         actual.Title.Should().Be(expected.Title);

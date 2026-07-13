@@ -21,11 +21,11 @@ public sealed class PeriodSurrogate
 
     /// <summary>Converts a <see cref="Period"/> into its surrogate.</summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator PeriodSurrogate?(Period? value)
+    public static implicit operator PeriodSurrogate?(NodaTime.Period? value)
         => value is null ? null : new PeriodSurrogate { Value = PeriodPattern.Roundtrip.Format(value) };
 
     /// <summary>Converts a surrogate back into a <see cref="Period"/>.</summary>
     /// <param name="value">The surrogate to convert.</param>
-    public static implicit operator Period?(PeriodSurrogate? value)
+    public static implicit operator NodaTime.Period?(PeriodSurrogate? value)
         => string.IsNullOrEmpty(value?.Value) ? null : PeriodPattern.Roundtrip.Parse(value.Value).Value;
 }

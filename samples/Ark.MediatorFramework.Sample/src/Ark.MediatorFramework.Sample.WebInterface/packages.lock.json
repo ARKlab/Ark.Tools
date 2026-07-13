@@ -336,6 +336,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Google.Api.CommonProtos": "[2.17.0, )",
+          "Google.Protobuf": "[3.31.1, )",
           "Grpc.StatusProto": "[2.66.0, )"
         }
       },
@@ -384,6 +385,7 @@
         "type": "Project",
         "dependencies": {
           "Google.Api.CommonProtos": "[2.17.0, )",
+          "Google.Protobuf": "[3.31.1, )",
           "NodaTime": "[3.3.2, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.2.56, )"
@@ -1161,6 +1163,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Google.Api.CommonProtos": "[2.17.0, )",
+          "Google.Protobuf": "[3.31.1, )",
           "Grpc.StatusProto": "[2.66.0, )"
         }
       },
@@ -1208,6 +1211,7 @@
         "type": "Project",
         "dependencies": {
           "Google.Api.CommonProtos": "[2.17.0, )",
+          "Google.Protobuf": "[3.31.1, )",
           "NodaTime": "[3.3.2, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.2.56, )"

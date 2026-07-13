@@ -241,6 +241,7 @@
         "type": "Project",
         "dependencies": {
           "Google.Api.CommonProtos": "[2.17.0, )",
+          "Google.Protobuf": "[3.31.1, )",
           "NodaTime": "[3.3.2, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.2.56, )"
@@ -559,6 +560,7 @@
         "type": "Project",
         "dependencies": {
           "Google.Api.CommonProtos": "[2.17.0, )",
+          "Google.Protobuf": "[3.31.1, )",
           "NodaTime": "[3.3.2, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.2.56, )"
