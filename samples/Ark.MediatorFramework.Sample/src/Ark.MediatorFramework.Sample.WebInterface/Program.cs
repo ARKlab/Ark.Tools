@@ -2,10 +2,14 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.WebInterface;
+using Ark.Tools.MediatorFramework.Grpc;
 
 using Rebus.Transport.InMem;
 
 var network = new InMemNetwork();
+if (ArkProtoExport.TryHandle(args))
+    return;
+
 var container = SampleComposition.BuildContainer(network);
 
 var startup = new SampleStartup(container);

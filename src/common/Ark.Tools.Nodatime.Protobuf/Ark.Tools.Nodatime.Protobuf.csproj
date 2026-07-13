@@ -28,4 +28,10 @@
     <PackageReference Include="Google.Api.CommonProtos" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="proto/ark/nodatime.proto" />
+    <None Include="proto/ark/nodatime.proto" Pack="true"
+          PackagePath="content/proto/ark;contentFiles/any/any/proto/ark" />
+  </ItemGroup>
+
 </Project>

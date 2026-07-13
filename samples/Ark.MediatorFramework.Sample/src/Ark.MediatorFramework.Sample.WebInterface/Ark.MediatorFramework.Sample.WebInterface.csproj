@@ -30,21 +30,12 @@
                       ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
     <ProjectReference Include="..\..\..\..\src\aspnetcore\Ark.Tools.AspNetCore.MessagePack\Ark.Tools.AspNetCore.MessagePack.csproj" />
-    <ProjectReference Include="..\Ark.MediatorFramework.ProtoGenerator\Ark.MediatorFramework.ProtoGenerator.csproj"
-                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <PropertyGroup>
-    <ProtoOutputFile>$(MSBuildProjectDirectory)/$(AssemblyName).proto</ProtoOutputFile>
-    <ProtoGeneratorAssembly>$(MSBuildProjectDirectory)/../Ark.MediatorFramework.ProtoGenerator/bin/$(Configuration)/net10.0/Ark.MediatorFramework.ProtoGenerator.dll</ProtoGeneratorAssembly>
+    <ArkExportProtoDir>$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="$(ProtoOutputFile)" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <Target Name="EmitMediatorProto" AfterTargets="CoreCompile" BeforeTargets="CopyFilesToOutputDirectory">
-    <Exec Command="dotnet &quot;$(ProtoGeneratorAssembly)&quot; &quot;$(MSBuildProjectDirectory)/../Ark.MediatorFramework.Sample.Application/bin/$(Configuration)/net10.0/Ark.MediatorFramework.Sample.Application.dll&quot; &quot;$(ProtoOutputFile)&quot;" />
-  </Target>
+  <Import Project="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets" />
 
 </Project>

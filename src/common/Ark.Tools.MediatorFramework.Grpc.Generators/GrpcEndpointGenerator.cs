@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -34,7 +35,9 @@ namespace Ark.MediatorFramework.Generators
 
             var collected = endpoints.Collect();
 
-            context.RegisterSourceOutput(collected, static (spc, items) => Emit(spc, items));
+            context.RegisterSourceOutput(
+                collected.Combine(context.CompilationProvider),
+                static (spc, pair) => Emit(spc, pair.Left, pair.Right));
         }
 
         private static ImmutableArray<EndpointModel> GetEndpoints(Compilation compilation)
@@ -148,7 +151,10 @@ namespace Ark.MediatorFramework.Generators
             return argument.Value.Value is int value ? value : defaultValue;
         }
 
-        private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
+        private static void Emit(
+            SourceProductionContext spc,
+            ImmutableArray<EndpointModel> items,
+            Compilation compilation)
         {
             if (items.IsDefaultOrEmpty)
                 return;
@@ -188,6 +194,7 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("            [global::System.ServiceModel.OperationContract(Name = " + Literal(e.GrpcMethod) + ")]");
                             sb.AppendLine("            global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default);");
                         }
+
                         sb.AppendLine("        }");
                         sb.AppendLine();
                         sb.AppendLine("        /// <summary>Generated partial gRPC implementation for the " + Escape(group.Key) + " v" + version + " group.</summary>");
@@ -229,9 +236,246 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            return app;");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
+            EmitProtoAssets(sb, items, compilation);
             sb.AppendLine("}");
 
             spc.AddSource("ArkGeneratedEndpoints.Grpc.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private static void EmitProtoAssets(
+            StringBuilder sb,
+            ImmutableArray<EndpointModel> items,
+            Compilation compilation)
+        {
+            sb.AppendLine("    /// <summary>Source-generated protobuf assets for the discovered gRPC contracts.</summary>");
+            sb.AppendLine("    public static class ArkGeneratedProtos");
+            sb.AppendLine("    {");
+            var contracts = GetProtoContracts(compilation);
+            var entries = new List<string>();
+            foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
+            {
+                var active = group.ToArray();
+                var reachable = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                foreach (var endpoint in active)
+                {
+                    AddReachable(endpoint.TypeFullName, contracts, reachable);
+                    AddReachable(endpoint.Response, contracts, reachable);
+                }
+
+                var content = new StringBuilder();
+                content.AppendLine("syntax = \"proto3\";");
+                content.AppendLine();
+                content.AppendLine("import \"ark/nodatime.proto\";");
+                content.AppendLine("import \"ark/mediator.proto\";");
+                content.AppendLine();
+                foreach (var contract in contracts
+                    .Where(contract => reachable.Contains(contract.Type))
+                    .OrderBy(static contract => contract.Name, StringComparer.Ordinal))
+                    EmitProtoMessage(content, contract, contracts);
+
+                var maxVersion = active.Max(static x => Math.Max(
+                    x.GrpcIntroducedIn,
+                    x.GrpcRetiredIn > 0 ? x.GrpcRetiredIn - 1 : 1));
+                for (var version = 1; version <= maxVersion; version++)
+                {
+                    var versionItems = active.Where(item => IsGrpcActive(item, version))
+                        .OrderBy(static item => item.TypeName, StringComparer.Ordinal)
+                        .ToArray();
+                    if (versionItems.Length == 0)
+                        continue;
+
+                    content.Append("service ").Append(Identifier(group.Key)).Append('V').Append(version).AppendLine(" {");
+                    foreach (var item in versionItems)
+                    {
+                        content.Append("  rpc ").Append(item.GrpcMethod).Append(' ')
+                            .Append('(').Append(item.TypeName).Append(") returns (")
+                            .Append(SimpleName(item.Response)).AppendLine(");");
+                    }
+                    content.AppendLine("}");
+                    content.AppendLine();
+                }
+
+                var fileName = Identifier(group.Key) + ".proto";
+                EmitProtoEntry(sb, fileName, content.ToString());
+                entries.Add("Get" + Identifier(Path.GetFileNameWithoutExtension(fileName)) + "()");
+            }
+
+            var upload = new StringBuilder();
+            upload.AppendLine("syntax = \"proto3\";");
+            upload.AppendLine();
+            upload.AppendLine("import \"ark/mediator.proto\";");
+            upload.AppendLine();
+            upload.AppendLine("service Documents {");
+            upload.AppendLine("  rpc Upload(stream UploadDocumentChunk) returns (UploadResponse);");
+            upload.AppendLine("}");
+            upload.AppendLine();
+            EmitProtoEntry(sb, "Documents.proto", upload.ToString());
+            entries.Add("GetDocuments()");
+            sb.AppendLine("        public static (string FileName, string Content)[] GetFiles() => new[]");
+            sb.AppendLine("        {");
+            foreach (var entry in entries)
+                sb.Append("            ").Append(entry).AppendLine(",");
+            sb.AppendLine("        };");
+            sb.AppendLine("    }");
+        }
+
+        private static void EmitProtoEntry(StringBuilder sb, string fileName, string content)
+        {
+            sb.Append("        public static (string FileName, string Content) ")
+                .Append("Get").Append(Identifier(Path.GetFileNameWithoutExtension(fileName)))
+                .AppendLine("() => (")
+                .Append("            ").Append(Literal(fileName)).AppendLine(",")
+                .Append("            ").Append(Literal(content)).AppendLine(");");
+        }
+
+        private static void EmitProtoMessage(
+            StringBuilder sb,
+            ProtoContractModel contract,
+            IReadOnlyList<ProtoContractModel> contracts)
+        {
+            sb.Append("message ").Append(contract.Name).AppendLine(" {");
+            foreach (var include in contract.Includes)
+            {
+                sb.Append("  ").Append(SimpleName(include.TypeName)).Append(' ')
+                    .Append(SnakeCase(SimpleName(include.TypeName))).Append(" = ")
+                    .Append(include.Number).AppendLine(";");
+            }
+
+            foreach (var member in contract.Members.OrderBy(static member => member.Number))
+            {
+                var type = ProtoTypeName(member.Type, contracts);
+                sb.Append("  ");
+                if (member.IsRepeated)
+                    sb.Append("repeated ");
+                sb.Append(type).Append(' ').Append(SnakeCase(member.Name)).Append(" = ")
+                    .Append(member.Number).AppendLine(";");
+            }
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
+
+        private static IReadOnlyList<ProtoContractModel> GetProtoContracts(Compilation compilation)
+        {
+            var protoAttribute = compilation.GetTypeByMetadataName("ProtoBuf.ProtoContractAttribute");
+            if (protoAttribute is null)
+                return Array.Empty<ProtoContractModel>();
+
+            var result = new List<ProtoContractModel>();
+            foreach (var assembly in _relevantAssemblies(compilation, protoAttribute.ContainingAssembly))
+            {
+                foreach (var type in _allTypes(assembly.GlobalNamespace))
+                {
+                    if (!type.GetAttributes().Any(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute)))
+                        continue;
+
+                    var members = type.GetMembers()
+                        .OfType<IPropertySymbol>()
+                        .Select(property => new
+                        {
+                            Property = property,
+                            Attribute = property.GetAttributes().FirstOrDefault(attribute =>
+                                attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoMemberAttribute"),
+                        })
+                        .Where(item => item.Attribute is not null)
+                        .Select(item => new ProtoMemberModel(
+                            item.Property.Name,
+                            item.Property.Type,
+                            item.Attribute!.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
+                            item.Property.Type is IArrayTypeSymbol
+                                || item.Property.Type is INamedTypeSymbol named
+                                    && named.IsGenericType
+                                    && named.Name == "IReadOnlyList"))
+                        .Where(member => member.Number > 0)
+                        .ToArray();
+
+                    var includes = type.GetAttributes()
+                        .Where(attribute => attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoIncludeAttribute")
+                        .Select(attribute => new ProtoIncludeModel(
+                            attribute.ConstructorArguments.ElementAtOrDefault(1).Value as INamedTypeSymbol,
+                            attribute.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0))
+                        .Where(include => include.Type is not null && include.Number > 0)
+                        .Select(include => new ProtoIncludeModel(
+                            include.Type!,
+                            include.Number))
+                        .ToArray();
+
+                    result.Add(new ProtoContractModel(type, type.Name, members, includes));
+                }
+            }
+            return result;
+        }
+
+        private static void AddReachable(
+            string displayName,
+            IReadOnlyList<ProtoContractModel> contracts,
+            ISet<INamedTypeSymbol> reachable)
+        {
+            var name = SimpleName(displayName);
+            var contract = contracts.FirstOrDefault(item => item.Name == name);
+            if (contract is null || !reachable.Add(contract.Type))
+                return;
+
+            foreach (var member in contract.Members)
+                AddReachable(member.Type, contracts, reachable);
+            foreach (var include in contract.Includes)
+                AddReachable(include.TypeName, contracts, reachable);
+        }
+
+        private static void AddReachable(
+            ITypeSymbol type,
+            IReadOnlyList<ProtoContractModel> contracts,
+            ISet<INamedTypeSymbol> reachable)
+            => AddReachable(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), contracts, reachable);
+
+        private static string ProtoTypeName(ITypeSymbol type, IReadOnlyList<ProtoContractModel> contracts)
+        {
+            if (type is IArrayTypeSymbol array)
+                return ProtoTypeName(array.ElementType, contracts);
+            if (type is INamedTypeSymbol named && named.IsGenericType && named.Name == "Nullable")
+                return ProtoTypeName(named.TypeArguments[0], contracts);
+
+            var contract = contracts.FirstOrDefault(item => SymbolEqualityComparer.Default.Equals(item.Type, type));
+            if (contract is not null)
+                return contract.Name;
+
+            var name = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            return name switch
+            {
+                "global::System.String" => "string",
+                "global::System.Guid" => "bytes",
+                "global::System.Boolean" => "bool",
+                "global::System.Int64" => "int64",
+                "global::System.UInt64" => "uint64",
+                "global::System.Int32" or "global::System.Int16" or "global::System.Byte" => "int32",
+                "global::System.UInt32" or "global::System.UInt16" => "uint32",
+                "global::System.Single" => "float",
+                "global::System.Double" => "double",
+                "global::NodaTime.LocalDate" => "LocalDate",
+                "global::NodaTime.LocalDateTime" => "LocalDateTime",
+                "global::NodaTime.OffsetDateTime" => "OffsetDateTime",
+                "global::NodaTime.Period" => "Period",
+                _ when type.TypeKind == TypeKind.Enum => type.Name,
+                _ => "bytes",
+            };
+        }
+
+        private static string SimpleName(string value)
+        {
+            var separator = value.LastIndexOf('.');
+            return separator < 0 ? value : value[(separator + 1)..];
+        }
+
+        private static string SnakeCase(string value)
+        {
+            var builder = new StringBuilder(value.Length + 4);
+            foreach (var character in value)
+            {
+                if (char.IsUpper(character) && builder.Length > 0)
+                    builder.Append('_');
+                builder.Append(char.ToLowerInvariant(character));
+            }
+            return builder.ToString();
         }
 
         private static bool IsGrpcActive(EndpointModel endpoint, int version)
@@ -283,6 +527,55 @@ namespace Ark.MediatorFramework.Generators
             public HandlerKind Kind { get; }
             public int GrpcIntroducedIn { get; }
             public int GrpcRetiredIn { get; }
+        }
+
+        private readonly struct ProtoContractModel
+        {
+            public ProtoContractModel(
+                INamedTypeSymbol type,
+                string name,
+                IReadOnlyList<ProtoMemberModel> members,
+                IReadOnlyList<ProtoIncludeModel> includes)
+            {
+                Type = type;
+                Name = name;
+                Members = members;
+                Includes = includes;
+            }
+
+            public INamedTypeSymbol Type { get; }
+            public string Name { get; }
+            public IReadOnlyList<ProtoMemberModel> Members { get; }
+            public IReadOnlyList<ProtoIncludeModel> Includes { get; }
+        }
+
+        private readonly struct ProtoMemberModel
+        {
+            public ProtoMemberModel(string name, ITypeSymbol type, int number, bool isRepeated)
+            {
+                Name = name;
+                Type = type;
+                Number = number;
+                IsRepeated = isRepeated;
+            }
+
+            public string Name { get; }
+            public ITypeSymbol Type { get; }
+            public int Number { get; }
+            public bool IsRepeated { get; }
+        }
+
+        private readonly struct ProtoIncludeModel
+        {
+            public ProtoIncludeModel(INamedTypeSymbol type, int number)
+            {
+                Type = type;
+                Number = number;
+            }
+
+            public INamedTypeSymbol Type { get; }
+            public int Number { get; }
+            public string TypeName => Type.Name;
         }
     }
 }

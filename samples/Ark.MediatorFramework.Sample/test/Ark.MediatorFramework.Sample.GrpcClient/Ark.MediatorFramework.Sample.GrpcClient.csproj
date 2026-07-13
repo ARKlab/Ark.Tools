@@ -15,9 +15,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.proto"
+    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj"
+                      ReferenceOutputAssembly="false" />
+    <Protobuf Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Greetings.proto"
               GrpcServices="Client"
-              Link="Ark.MediatorFramework.Sample.WebInterface.proto" />
+              Link="Greetings.proto" />
+    <Protobuf Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Documents.proto"
+              GrpcServices="Client"
+              Link="Documents.proto" />
+    <Protobuf Include="..\..\..\..\src\common\Ark.Tools.Nodatime.Protobuf\proto\ark\nodatime.proto"
+              GrpcServices="None"
+              Link="ark/nodatime.proto" />
+    <Protobuf Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\proto\ark\mediator.proto"
+              GrpcServices="None"
+              Link="ark/mediator.proto" />
   </ItemGroup>
 
 </Project>

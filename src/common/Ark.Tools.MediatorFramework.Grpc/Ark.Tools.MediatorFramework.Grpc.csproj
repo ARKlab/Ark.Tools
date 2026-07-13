@@ -27,6 +27,14 @@
                       ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="proto/ark/mediator.proto" />
+    <None Include="proto/ark/mediator.proto" Pack="true"
+          PackagePath="content/proto/ark;contentFiles/any/any/proto/ark" />
+    <None Include="buildTransitive/Ark.Tools.MediatorFramework.Grpc.targets" Pack="true"
+          PackagePath="buildTransitive" />
+  </ItemGroup>
+
   <!-- Pack the generator DLL into this NuGet package so that a PackageReference to
        Ark.Tools.MediatorFramework.Grpc automatically applies the analyzer. -->
   <Target Name="IncludeGeneratorInPackage" BeforeTargets="_GetPackageFiles">
