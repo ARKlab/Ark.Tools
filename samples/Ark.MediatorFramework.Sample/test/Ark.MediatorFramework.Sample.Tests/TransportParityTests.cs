@@ -36,6 +36,8 @@ using Rebus.Transport.InMem;
 using SimpleInjector;
 
 using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
+using GrpcCircle = Ark.MediatorFramework.Sample.GrpcClient.Circle;
+using GrpcDescribeShapeRequest = Ark.MediatorFramework.Sample.GrpcClient.DescribeShapeRequest;
 using GrpcArkBusinessRuleViolation = Ark.MediatorFramework.Sample.GrpcClient.ArkBusinessRuleViolation;
 using GrpcDocuments = Ark.MediatorFramework.Sample.GrpcClient.Documents;
 using GrpcGreetingsV1Client = Ark.MediatorFramework.Sample.GrpcClient.GreetingsV1.GreetingsV1Client;
@@ -227,6 +229,56 @@ public sealed class TransportParityTests
         _container.GetInstance<IGreetingStore>().All()
             .Any(g => g.Message.Contains("Grpc", StringComparison.Ordinal))
             .Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task Polymorphic_shape_matches_across_json_messagepack_and_grpc()
+    {
+        var jsonResponse = await _client.PostAsJsonAsync(
+            "/api/v1/shapes/describe",
+            new { shape = new { kind = "Circle", radius = 2.0 } },
+            JsonOptions).ConfigureAwait(false);
+        jsonResponse.EnsureSuccessStatusCode();
+        var jsonResult = await jsonResponse.Content.ReadFromJsonAsync<ShapeDescription>(JsonOptions).ConfigureAwait(false);
+
+        var messagePackRequest = new DescribeShapeRequest
+        {
+            Shape = new Circle { Radius = 2.0 },
+        };
+        using var content = new ByteArrayContent(MessagePackSerializer.Serialize(messagePackRequest, MessagePackOptions));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/x-msgpack");
+        using var message = new HttpRequestMessage(HttpMethod.Post, "/api/v1/messagepack/shapes/describe")
+        {
+            Content = content,
+        };
+        message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-msgpack"));
+        using var messagePackResponse = await _client.SendAsync(message).ConfigureAwait(false);
+        messagePackResponse.EnsureSuccessStatusCode();
+        var messagePackResult = MessagePackSerializer.Deserialize<ShapeDescription>(
+            await messagePackResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false),
+            MessagePackOptions);
+
+        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+        {
+            HttpHandler = _host.GetTestServer().CreateHandler(),
+        });
+        var grpcResult = await new GrpcGreetingsV1Client(channel).DescribeShapeAsync(
+            new GrpcDescribeShapeRequest
+            {
+                Shape = new Ark.MediatorFramework.Sample.GrpcClient.Shape
+                {
+                    Circle = new GrpcCircle { Radius = 2.0 },
+                },
+            }).ResponseAsync.ConfigureAwait(false);
+
+        jsonResult.Should().NotBeNull();
+        jsonResult!.Shape.Should().BeOfType<Circle>();
+        messagePackResult.Shape.Should().BeOfType<Circle>();
+        grpcResult.Shape.Circle.Radius.Should().Be(2.0);
+        messagePackResult.Area.Should().Be(jsonResult.Area);
+        grpcResult.Area.Should().Be(jsonResult.Area);
+        messagePackResult.Metadata.FeaturedShape.Should().BeOfType<Circle>();
+        grpcResult.Metadata.FeaturedShape.Circle.Radius.Should().Be(2.0);
     }
 
     [TestMethod]

@@ -306,6 +306,11 @@ version to `Directory.Packages.props` and run `dotnet restore Ark.Tools.slnx
 
 ### Step 7.4 — Cross-transport polymorphism (T9.4)
 
+**Status: complete.** The sample `Shape` hierarchy now uses matching
+`ProtoInclude`/MessagePack union keys alongside the existing JSON discriminator,
+is exposed by the generated gRPC service and the MessagePack controller, and has
+a three-wire parity test.
+
 1. Annotate `Shape`/`Circle`/`Square`
    (`…Sample.Application/PolymorphicContracts.cs`) with
    `[ProtoContract]` + `[ProtoInclude(10, typeof(Circle))]` /

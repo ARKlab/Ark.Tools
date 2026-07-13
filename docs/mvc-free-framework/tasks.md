@@ -180,7 +180,7 @@ project builds under the repo's strict settings and its self-tests pass with
     with XML docs; the sample startup uses them and contains no hand-written
     schema transformer or multipart endpoint; unit tests in `tests/` cover the
     helpers.
-- [ ] **T9.4** Cross-transport polymorphism demonstration.
+- [x] **T9.4** Cross-transport polymorphism demonstration.
   - *Accept:* the `Shape` hierarchy carries `[ProtoContract]`+`[ProtoInclude]`
     (gRPC), `[MessagePack.Union]` (MessagePack) and the existing STJ
     discriminator converter (JSON) with matching subtype numbers; a gRPC method

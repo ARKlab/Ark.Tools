@@ -8,12 +8,20 @@ message OffsetDateTime { int32 year = 1; int32 month = 2; int32 day = 3; int64 n
 message Period { string value = 1; }
 message ArkBusinessRuleViolation { string type = 1; string title = 2; int32 status = 3; string detail = 4; string instance = 5; map<string, string> extensions = 6; }
 
+message Circle {
+  double radius = 1;
+}
+
 message CreateGreetingRequest {
   string name = 1;
   LocalDate date = 2;
   LocalDateTime date_time = 3;
   OffsetDateTime offset_date_time = 4;
   Period period = 5;
+}
+
+message DescribeShapeRequest {
+  Shape shape = 1;
 }
 
 message GetGreetingQuery {
@@ -39,6 +47,26 @@ message GreetingResponseV2 {
   int32 message_length = 3;
 }
 
+message Shape {
+  Circle circle = 10;
+  Square square = 11;
+}
+
+message ShapeDescription {
+  Shape shape = 1;
+  double area = 2;
+  ShapeEnvelope metadata = 3;
+}
+
+message ShapeEnvelope {
+  string label = 1;
+  Shape featured_shape = 2;
+}
+
+message Square {
+  double side = 1;
+}
+
 message UploadResponse {
   string name = 1;
   string content_type = 2;
@@ -47,11 +75,13 @@ message UploadResponse {
 
 service GreetingsV1 {
   rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);
+  rpc DescribeShape(DescribeShapeRequest) returns (ShapeDescription);
   rpc GetGreeting(GetGreetingQuery) returns (GreetingResponse);
 }
 
 service GreetingsV2 {
   rpc CreateGreeting(CreateGreetingRequest) returns (GreetingResponse);
+  rpc DescribeShape(DescribeShapeRequest) returns (ShapeDescription);
   rpc GetGreeting(GetGreetingV2Query) returns (GreetingResponseV2);
 }
 

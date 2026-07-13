@@ -3,6 +3,10 @@
 
 using Ark.Tools.Solid;
 
+using MessagePack;
+
+using ProtoBuf;
+
 using System.Text.Json.Serialization;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -21,54 +25,85 @@ public enum ShapeKind
 /// Polymorphic base carried across the transport wire. Deserialization is driven by the
 /// <see cref="Kind"/> discriminator through <see cref="Ark.Tools.SystemTextJson.JsonPolymorphicConverter{TBase, TDiscriminatorEnum}"/>,
 /// mirroring the convention used by <c>WebApplicationDemo</c> and the reference project.
+/// Protobuf and MessagePack use matching numbered subtype envelopes; JSON keeps its named
+/// discriminator because the protobuf envelope is not its native wire representation.
 /// </summary>
 [JsonConverter(typeof(ShapePolymorphicConverter))]
+[ProtoContract]
+[ProtoInclude(10, typeof(Circle))]
+[ProtoInclude(11, typeof(Square))]
+[MessagePackObject]
+[Union(10, typeof(Circle))]
+[Union(11, typeof(Square))]
 public abstract record Shape
 {
     /// <summary>Gets the discriminator identifying the concrete shape.</summary>
+    [IgnoreMember]
     public abstract ShapeKind Kind { get; }
 }
 
 /// <summary>A circle shape.</summary>
+[ProtoContract]
+[MessagePackObject]
 public sealed record Circle : Shape
 {
     /// <inheritdoc />
     public override ShapeKind Kind => ShapeKind.Circle;
 
     /// <summary>Gets the circle radius.</summary>
+    [ProtoMember(1)]
+    [Key(0)]
     public required double Radius { get; init; }
 }
 
 /// <summary>A square shape.</summary>
+[ProtoContract]
+[MessagePackObject]
 public sealed record Square : Shape
 {
     /// <inheritdoc />
     public override ShapeKind Kind => ShapeKind.Square;
 
     /// <summary>Gets the square side length.</summary>
+    [ProtoMember(1)]
+    [Key(0)]
     public required double Side { get; init; }
 }
 
 /// <summary>Response echoing the polymorphic shape and its computed area.</summary>
+[ProtoContract]
+[MessagePackObject]
 public sealed record ShapeDescription
 {
     /// <summary>Gets the shape that was described (polymorphic on the wire).</summary>
+    [ProtoMember(1)]
+    [Key(0)]
     public required Shape Shape { get; init; }
 
     /// <summary>Gets the computed area of the shape.</summary>
+    [ProtoMember(2)]
+    [Key(1)]
     public required double Area { get; init; }
 
     /// <summary>Gets nested metadata containing another polymorphic shape reference.</summary>
+    [ProtoMember(3)]
+    [Key(2)]
     public required ShapeEnvelope Metadata { get; init; }
 }
 
 /// <summary>Nested object carrying a polymorphic shape.</summary>
+[ProtoContract]
+[MessagePackObject]
 public sealed record ShapeEnvelope
 {
     /// <summary>Gets the envelope label.</summary>
+    [ProtoMember(1)]
+    [Key(0)]
     public required string Label { get; init; }
 
     /// <summary>Gets the nested polymorphic shape.</summary>
+    [ProtoMember(2)]
+    [Key(1)]
     public required Shape FeaturedShape { get; init; }
 }
 
@@ -78,9 +113,15 @@ public sealed record ShapeEnvelope
 /// generated Minimal API endpoint.
 /// </summary>
 [HttpEndpoint("POST", "/api/v{version}/shapes/describe")]
+[GrpcMethod("DescribeShape")]
+[ServiceGroup("Greetings")]
+[ProtoContract]
+[MessagePackObject]
 public sealed record DescribeShapeRequest : IRequest<ShapeDescription>
 {
     /// <summary>Gets the shape to describe.</summary>
+    [ProtoMember(1)]
+    [Key(0)]
     public required Shape Shape { get; init; }
 }
 

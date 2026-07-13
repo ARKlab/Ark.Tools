@@ -50,6 +50,16 @@ foreach (var contract in contracts.OrderBy(static pair => pair.Value, StringComp
         .OrderBy(static item => item.Number);
 
     schema.Append("message ").Append(contract.Value).AppendLine(" {");
+    foreach (var include in contract.Key.GetCustomAttributesData()
+        .Where(static attribute => attribute.AttributeType.Name == "ProtoIncludeAttribute")
+        .OrderBy(static attribute => Convert.ToInt32(attribute.ConstructorArguments[0].Value)))
+    {
+        var derivedType = (Type)include.ConstructorArguments[1].Value!;
+        schema.Append("  ").Append(derivedType.Name).Append(' ')
+            .Append(ToSnakeCase(derivedType.Name)).Append(" = ")
+            .Append(Convert.ToInt32(include.ConstructorArguments[0].Value)).AppendLine(";");
+    }
+
     foreach (var member in members)
     {
         var repeated = TryGetElementType(member.Property.PropertyType, out var elementType);

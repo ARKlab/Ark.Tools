@@ -42,3 +42,35 @@ public sealed class MessagePackGreetingController : ControllerBase
         return Ok(result);
     }
 }
+
+/// <summary>Exposes the polymorphic shape handler through MessagePack formatters.</summary>
+[ApiController]
+[ApiExplorerSettings(GroupName = "v1")]
+[Route("api/v1/messagepack/shapes")]
+public sealed class MessagePackShapeController : ControllerBase
+{
+    private readonly Container _container;
+
+    /// <summary>Initializes a new instance of the <see cref="MessagePackShapeController"/> class.</summary>
+    /// <param name="container">The application container.</param>
+    public MessagePackShapeController(Container container)
+    {
+        _container = container;
+    }
+
+    /// <summary>Describes a polymorphic shape from a MessagePack request.</summary>
+    /// <param name="request">The shape request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The shape description.</returns>
+    [HttpPost("describe")]
+    [Produces("application/x-msgpack", "application/json")]
+    [Consumes("application/x-msgpack", "application/json")]
+    public async Task<ActionResult<ShapeDescription>> DescribeAsync(
+        DescribeShapeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var handler = _container.GetInstance<IRequestHandler<DescribeShapeRequest, ShapeDescription>>();
+        var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
+        return Ok(result);
+    }
+}
