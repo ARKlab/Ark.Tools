@@ -28,6 +28,7 @@ public static class Ex
         _setSurrogate<IsoDayOfWeek, IsoDayOfWeekSurrogate>(model);
         _setSurrogate<LocalDateTime, LocalDateTimeSurrogate>(model);
         _setSurrogate<OffsetDateTime, OffsetDateTimeSurrogate>(model);
+        _setSurrogate<ZonedDateTime, ZonedDateTimeSurrogate>(model);
         _setSurrogate<Period, PeriodSurrogate>(model);
 
         return model;

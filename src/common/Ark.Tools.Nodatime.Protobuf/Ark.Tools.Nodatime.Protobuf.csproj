@@ -4,7 +4,7 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>protobuf-net surrogates for NodaTime types (OffsetDateTime, LocalDate, LocalDateTime, Period)</Description>
+    <Description>protobuf-net surrogates for NodaTime types (OffsetDateTime, ZonedDateTime, LocalDate, LocalDateTime, Period)</Description>
     <PackageTags>Ark;C#;.NET;Framework;Nodatime;protobuf;protobuf-net;grpc</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->

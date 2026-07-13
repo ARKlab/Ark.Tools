@@ -6,22 +6,22 @@ using ProtoBuf;
 namespace Ark.Tools.Nodatime.Protobuf;
 
 /// <summary>
-/// protobuf-net surrogate for <see cref="OffsetDateTime"/>, using the
-/// <c>google.type.DateTime</c> wire shape with <c>utc_offset</c> populated.
+/// protobuf-net surrogate for <see cref="ZonedDateTime"/>, using the
+/// <c>google.type.DateTime</c> wire shape with <c>time_zone</c> populated.
 /// </summary>
 [SuppressMessage("Design", "CA2225:Operator overloads have named alternates", Justification = "The implicit conversions are the protobuf-net surrogate contract; named alternates would be unused API surface.")]
 [ProtoContract]
-public sealed class OffsetDateTimeSurrogate
+public sealed class ZonedDateTimeSurrogate
 {
     /// <summary>Gets or sets the ISO year.</summary>
     [ProtoMember(1)]
     public int Year { get; set; }
 
-    /// <summary>Gets or sets the month of year (1-12).</summary>
+    /// <summary>Gets or sets the month of year.</summary>
     [ProtoMember(2)]
     public int Month { get; set; }
 
-    /// <summary>Gets or sets the day of month (1-based).</summary>
+    /// <summary>Gets or sets the day of month.</summary>
     [ProtoMember(3)]
     public int Day { get; set; }
 
@@ -41,28 +41,29 @@ public sealed class OffsetDateTimeSurrogate
     [ProtoMember(7)]
     public int Nanos { get; set; }
 
-    /// <summary>Gets or sets the UTC offset.</summary>
-    [ProtoMember(8)]
-    public GoogleDurationSurrogate? UtcOffset { get; set; }
+    /// <summary>Gets or sets the time-zone identifier.</summary>
+    [ProtoMember(9)]
+    public GoogleTimeZoneSurrogate? TimeZone { get; set; }
 
-    /// <summary>Converts an <see cref="OffsetDateTime"/> into its surrogate.</summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator OffsetDateTimeSurrogate(OffsetDateTime value)
-        => new()
+    /// <summary>Converts a <see cref="ZonedDateTime"/> into its surrogate.</summary>
+    public static implicit operator ZonedDateTimeSurrogate(ZonedDateTime value)
+    {
+        var local = value.LocalDateTime;
+        return new ZonedDateTimeSurrogate
         {
-            Year = value.Year,
-            Month = value.Month,
-            Day = value.Day,
-            Hours = value.Hour,
-            Minutes = value.Minute,
-            Seconds = value.Second,
-            Nanos = value.NanosecondOfSecond,
-            UtcOffset = new GoogleDurationSurrogate { Seconds = value.Offset.Seconds },
+            Year = local.Year,
+            Month = local.Month,
+            Day = local.Day,
+            Hours = local.Hour,
+            Minutes = local.Minute,
+            Seconds = local.Second,
+            Nanos = local.NanosecondOfSecond,
+            TimeZone = new GoogleTimeZoneSurrogate { Id = value.Zone.Id },
         };
+    }
 
-    /// <summary>Converts a surrogate back into an <see cref="OffsetDateTime"/>.</summary>
-    /// <param name="value">The surrogate to convert.</param>
-    public static implicit operator OffsetDateTime(OffsetDateTimeSurrogate? value)
+    /// <summary>Converts a surrogate back into a <see cref="ZonedDateTime"/>.</summary>
+    public static implicit operator ZonedDateTime(ZonedDateTimeSurrogate? value)
     {
         if (value is null)
             return default;
@@ -70,7 +71,7 @@ public sealed class OffsetDateTimeSurrogate
         var local = new LocalDate(value.Year, value.Month, value.Day)
             .At(LocalTime.FromHourMinuteSecondNanosecond(
                 value.Hours, value.Minutes, value.Seconds, value.Nanos));
-
-        return new OffsetDateTime(local, Offset.FromSeconds((int)(value.UtcOffset?.Seconds ?? 0)));
+        var zone = DateTimeZoneProviders.Tzdb[value.TimeZone?.Id ?? "Etc/UTC"];
+        return local.InZoneLeniently(zone);
     }
 }

@@ -422,6 +422,11 @@ implementation order").
 
 ### Step 8.1 — NodaTime `google.type.DateTime` mappings (T10.1)
 
+**Status: complete.** `LocalDateTime`, `OffsetDateTime`, and `ZonedDateTime`
+now use the `google.type.DateTime` field layout; offset and zone data use the
+matching nested Google message shapes. Round-trip coverage includes the new
+zoned type and the existing native mappings.
+
 1. In `src/common/Ark.Tools.Nodatime.Protobuf/Surrogates/` replace
    `LocalDateTimeSurrogate` and `OffsetDateTimeSurrogate` and add
    `ZonedDateTimeSurrogate`, all three mirroring

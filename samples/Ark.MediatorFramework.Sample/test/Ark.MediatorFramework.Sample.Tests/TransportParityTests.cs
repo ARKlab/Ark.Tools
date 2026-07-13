@@ -40,6 +40,7 @@ using GrpcCircle = Ark.MediatorFramework.Sample.GrpcClient.Circle;
 using GrpcDescribeShapeRequest = Ark.MediatorFramework.Sample.GrpcClient.DescribeShapeRequest;
 using GrpcArkBusinessRuleViolation = Ark.MediatorFramework.Sample.GrpcClient.ArkBusinessRuleViolation;
 using GrpcDocuments = Ark.MediatorFramework.Sample.GrpcClient.Documents;
+using GrpcDuration = Ark.MediatorFramework.Sample.GrpcClient.Duration;
 using GrpcGreetingsV1Client = Ark.MediatorFramework.Sample.GrpcClient.GreetingsV1.GreetingsV1Client;
 using GrpcLocalDate = Ark.MediatorFramework.Sample.GrpcClient.LocalDate;
 using GrpcLocalDateTime = Ark.MediatorFramework.Sample.GrpcClient.LocalDateTime;
@@ -212,15 +213,21 @@ public sealed class TransportParityTests
                 Year = request.DateTime.Year,
                 Month = request.DateTime.Month,
                 Day = request.DateTime.Day,
-                NanosecondOfDay = request.DateTime.NanosecondOfDay,
+                Hours = request.DateTime.Hour,
+                Minutes = request.DateTime.Minute,
+                Seconds = request.DateTime.Second,
+                Nanos = request.DateTime.NanosecondOfSecond,
             },
             OffsetDateTime = new GrpcOffsetDateTime
             {
                 Year = request.OffsetDateTime.Year,
                 Month = request.OffsetDateTime.Month,
                 Day = request.OffsetDateTime.Day,
-                NanosecondOfDay = request.OffsetDateTime.NanosecondOfDay,
-                OffsetSeconds = request.OffsetDateTime.Offset.Seconds,
+                Hours = request.OffsetDateTime.Hour,
+                Minutes = request.OffsetDateTime.Minute,
+                Seconds = request.OffsetDateTime.Second,
+                Nanos = request.OffsetDateTime.NanosecondOfSecond,
+                UtcOffset = new GrpcDuration { Seconds = request.OffsetDateTime.Offset.Seconds },
             },
             Period = new GrpcPeriod { Value = request.Period.ToString() },
         }).ResponseAsync.ConfigureAwait(false);
@@ -379,15 +386,21 @@ public sealed class TransportParityTests
                 Year = request.DateTime.Year,
                 Month = request.DateTime.Month,
                 Day = request.DateTime.Day,
-                NanosecondOfDay = request.DateTime.NanosecondOfDay,
+                Hours = request.DateTime.Hour,
+                Minutes = request.DateTime.Minute,
+                Seconds = request.DateTime.Second,
+                Nanos = request.DateTime.NanosecondOfSecond,
             },
             OffsetDateTime = new GrpcOffsetDateTime
             {
                 Year = request.OffsetDateTime.Year,
                 Month = request.OffsetDateTime.Month,
                 Day = request.OffsetDateTime.Day,
-                NanosecondOfDay = request.OffsetDateTime.NanosecondOfDay,
-                OffsetSeconds = request.OffsetDateTime.Offset.Seconds,
+                Hours = request.OffsetDateTime.Hour,
+                Minutes = request.OffsetDateTime.Minute,
+                Seconds = request.OffsetDateTime.Second,
+                Nanos = request.OffsetDateTime.NanosecondOfSecond,
+                UtcOffset = new GrpcDuration { Seconds = request.OffsetDateTime.Offset.Seconds },
             },
             Period = new GrpcPeriod { Value = request.Period.ToString() },
         }).ResponseAsync.ConfigureAwait(false);

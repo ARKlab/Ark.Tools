@@ -6,8 +6,8 @@ using ProtoBuf;
 namespace Ark.Tools.Nodatime.Protobuf;
 
 /// <summary>
-/// protobuf-net surrogate for <see cref="LocalDateTime"/> (a zoneless date and time).
-/// The date components plus the nanosecond-of-day preserve the full NodaTime precision.
+/// protobuf-net surrogate for <see cref="LocalDateTime"/>, using the
+/// <c>google.type.DateTime</c> wire shape without a time offset.
 /// </summary>
 [SuppressMessage("Design", "CA2225:Operator overloads have named alternates", Justification = "The implicit conversions are the protobuf-net surrogate contract; named alternates would be unused API surface.")]
 [ProtoContract]
@@ -25,9 +25,21 @@ public sealed class LocalDateTimeSurrogate
     [ProtoMember(3)]
     public int Day { get; set; }
 
-    /// <summary>Gets or sets the number of nanoseconds elapsed since midnight.</summary>
+    /// <summary>Gets or sets the hour.</summary>
     [ProtoMember(4)]
-    public long NanosecondOfDay { get; set; }
+    public int Hours { get; set; }
+
+    /// <summary>Gets or sets the minute.</summary>
+    [ProtoMember(5)]
+    public int Minutes { get; set; }
+
+    /// <summary>Gets or sets the second.</summary>
+    [ProtoMember(6)]
+    public int Seconds { get; set; }
+
+    /// <summary>Gets or sets the nanosecond.</summary>
+    [ProtoMember(7)]
+    public int Nanos { get; set; }
 
     /// <summary>Converts a <see cref="LocalDateTime"/> into its surrogate.</summary>
     /// <param name="value">The value to convert.</param>
@@ -37,7 +49,10 @@ public sealed class LocalDateTimeSurrogate
             Year = value.Year,
             Month = value.Month,
             Day = value.Day,
-            NanosecondOfDay = value.NanosecondOfDay,
+            Hours = value.Hour,
+            Minutes = value.Minute,
+            Seconds = value.Second,
+            Nanos = value.NanosecondOfSecond,
         };
 
     /// <summary>Converts a surrogate back into a <see cref="LocalDateTime"/>.</summary>
@@ -46,5 +61,6 @@ public sealed class LocalDateTimeSurrogate
         => value is null
             ? default
             : new LocalDate(value.Year, value.Month, value.Day)
-                .At(LocalTime.FromNanosecondsSinceMidnight(value.NanosecondOfDay));
+                .At(LocalTime.FromHourMinuteSecondNanosecond(
+                    value.Hours, value.Minutes, value.Seconds, value.Nanos));
 }

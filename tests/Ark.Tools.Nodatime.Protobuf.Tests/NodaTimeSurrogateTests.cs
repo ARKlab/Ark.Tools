@@ -30,6 +30,9 @@ public sealed class NodaTimeSurrogateTests
         [ProtoMember(3)]
         public OffsetDateTime OffsetDateTime { get; set; }
 
+        [ProtoMember(9)]
+        public ZonedDateTime ZonedDateTime { get; set; }
+
         [ProtoMember(4)]
         public Period? Period { get; set; }
 
@@ -67,6 +70,8 @@ public sealed class NodaTimeSurrogateTests
             OffsetDateTime = new OffsetDateTime(
                 new LocalDateTime(2024, 2, 29, 13, 45, 30),
                 Offset.FromHoursAndMinutes(5, 30)),
+            ZonedDateTime = new LocalDateTime(2024, 2, 29, 13, 45, 30)
+                .InZoneLeniently(DateTimeZoneProviders.Tzdb["Europe/Rome"]),
             Period = Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(10)
                 + Period.FromHours(2) + Period.FromMinutes(30),
             Instant = Instant.FromUtc(2024, 2, 29, 13, 45, 30).PlusNanoseconds(123_456_789),
@@ -81,6 +86,8 @@ public sealed class NodaTimeSurrogateTests
         clone.DateTime.Should().Be(original.DateTime);
         clone.OffsetDateTime.Should().Be(original.OffsetDateTime);
         clone.OffsetDateTime.Offset.Should().Be(Offset.FromHoursAndMinutes(5, 30), "the offset must be preserved");
+        clone.ZonedDateTime.LocalDateTime.Should().Be(original.ZonedDateTime.LocalDateTime);
+        clone.ZonedDateTime.Zone.Id.Should().Be("Europe/Rome");
         clone.Period.Should().Be(original.Period);
         clone.Instant.Should().Be(original.Instant);
         clone.Duration.Should().Be(original.Duration);

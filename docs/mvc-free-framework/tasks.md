@@ -232,7 +232,7 @@ Every task in this epic (and from now on, in general) additionally requires:
 **the entire solution builds** (`dotnet build Ark.Tools.slnx --configuration
 Debug`) before the task is marked complete.
 
-- [ ] **T10.1** NodaTime protobuf: map all remaining date/time types to
+- [x] **T10.1** NodaTime protobuf: map all remaining date/time types to
   `google.type.DateTime`.
   - *Accept:* `LocalDateTime` encodes as `google.type.DateTime` with neither
     `utc_offset` nor `time_zone`; `OffsetDateTime` with `utc_offset` set;
