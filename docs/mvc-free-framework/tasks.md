@@ -188,7 +188,7 @@ project builds under the repo's strict settings and its self-tests pass with
     test asserts the same handler result on all three wires; `design.md`'s
     applicability evaluation (protobuf-way OK for MessagePack, rejected for
     JSON) is reflected in sample comments.
-- [ ] **T9.5** MessagePack serde on a generated Minimal API endpoint.
+- [x] **T9.5** MessagePack serde on a generated Minimal API endpoint.
   - *Accept:* a `[HttpEndpoint]` contract round-trips
     `application/x-msgpack` request **and** response (content negotiation)
     through the Minimal API pipeline using the MinimalApi library helper; the

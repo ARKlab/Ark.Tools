@@ -326,6 +326,13 @@ a three-wire parity test.
 
 ### Step 7.5 — MessagePack serde on Minimal API (T9.5)
 
+**Status: complete.** The Minimal API runtime now provides an opt-in
+MessagePack-aware POST mapper used by the generated endpoint registration.
+JSON remains supported, while MessagePack requests and responses use the
+configured NodaTime resolver. The sample's behavioral tests exercise greeting
+and polymorphic shape round-trips through the generated routes; the MVC
+controllers remain compatibility escape-hatch examples.
+
 1. In `Ark.Tools.MediatorFramework.MinimalApi` add an endpoint filter/helper
    (`ArkMessagePackEx`) that, when the request `Content-Type` is
    `application/x-msgpack`, deserializes the body with

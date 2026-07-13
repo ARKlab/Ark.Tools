@@ -344,6 +344,8 @@
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "MessagePack": "[3.1.7, )",
+          "MessagePack.NodaTime": "[3.5.5, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
           "SimpleInjector": "[5.6.0, )"
         }
@@ -1167,6 +1169,8 @@
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "MessagePack": "[3.1.7, )",
+          "MessagePack.NodaTime": "[3.5.5, )",
           "SimpleInjector": "[5.6.0, )"
         }
       },

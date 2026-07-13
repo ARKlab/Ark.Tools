@@ -302,6 +302,8 @@
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "MessagePack": "[3.1.7, )",
+          "MessagePack.NodaTime": "[3.5.5, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.9, )",
           "SimpleInjector": "[5.6.0, )"
         }
@@ -469,6 +471,16 @@
           "MessagePack.Annotations": "3.1.7",
           "MessagePackAnalyzer": "3.1.7",
           "Microsoft.NET.StringTools": "17.11.4"
+        }
+      },
+      "MessagePack.NodaTime": {
+        "type": "CentralTransitive",
+        "requested": "[3.5.5, )",
+        "resolved": "3.5.5",
+        "contentHash": "9DoE9+OQYbKbLtyJ1N92n55vv+RwrIV6dGpADLuHVeLvkfpxMBQY9oG0IkgGpL5t6D2PlWg8RA6ul/Qh1PF0Ww==",
+        "dependencies": {
+          "MessagePack": "3.1.7",
+          "NodaTime": "3.3.2"
         }
       },
       "Microsoft.ApplicationInsights": {
@@ -1120,6 +1132,8 @@
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "MessagePack": "[3.1.7, )",
+          "MessagePack.NodaTime": "[3.5.5, )",
           "SimpleInjector": "[5.6.0, )"
         }
       },
@@ -1286,6 +1300,16 @@
           "MessagePack.Annotations": "3.1.7",
           "MessagePackAnalyzer": "3.1.7",
           "Microsoft.NET.StringTools": "17.11.4"
+        }
+      },
+      "MessagePack.NodaTime": {
+        "type": "CentralTransitive",
+        "requested": "[3.5.5, )",
+        "resolved": "3.5.5",
+        "contentHash": "9DoE9+OQYbKbLtyJ1N92n55vv+RwrIV6dGpADLuHVeLvkfpxMBQY9oG0IkgGpL5t6D2PlWg8RA6ul/Qh1PF0Ww==",
+        "dependencies": {
+          "MessagePack": "3.1.7",
+          "NodaTime": "3.3.2"
         }
       },
       "Microsoft.ApplicationInsights": {
