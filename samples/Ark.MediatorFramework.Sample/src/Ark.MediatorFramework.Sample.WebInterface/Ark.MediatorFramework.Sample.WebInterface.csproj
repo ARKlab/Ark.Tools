@@ -5,44 +5,25 @@
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    <PackageReference Include="MessagePack.NodaTime" />
-    <PackageReference Include="Grpc.StatusProto" />
-    <PackageReference Include="Hellang.Middleware.ProblemDetails" />
-    <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
-    <PackageReference Include="Rebus.Protobuf" />
-    <PackageReference Include="System.ServiceModel.Primitives" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi.Generators"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus.Generators"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc.Generators"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.AspNetCore.MessagePack" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.MinimalApi\Ark.Tools.MediatorFramework.MinimalApi.csproj" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Rebus\Ark.Tools.MediatorFramework.Rebus.csproj" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\Ark.Tools.MediatorFramework.Grpc.csproj" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
-    <ProjectReference Include="..\..\..\..\src\aspnetcore\Ark.Tools.AspNetCore.MessagePack\Ark.Tools.AspNetCore.MessagePack.csproj" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <ArkExportProtoDir>$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
-  </PropertyGroup>
-
-  <Import Project="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets" />
-
-  <Target Name="CopyExportedProto" AfterTargets="ArkExportProto">
-    <ItemGroup>
-      <_ExportedProto Include="$(ArkExportProtoDir)/*.proto" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_ExportedProto)" DestinationFolder="$(TargetDir)" />
-  </Target>
 
 </Project>

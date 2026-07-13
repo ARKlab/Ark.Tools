@@ -27,10 +27,21 @@
 
       <ItemGroup>
         <PackageReference Remove="@(_ArkToolsToReplace)" />
-        <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')" />
+        <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')"
+                          OutputItemType="%(_ArkToolsToReplace.OutputItemType)"
+                          ReferenceOutputAssembly="%(_ArkToolsToReplace.ReferenceOutputAssembly)" />
       </ItemGroup>
 
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
+  </Target>
+
+  <Target Name="ArkExportProto"
+          AfterTargets="Build"
+          Condition="Exists('$(IntermediateOutputPath)generated/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.MediatorFramework.Generators.ArkGrpcEndpointGenerator/ArkGeneratedEndpoints.Grpc.g.cs')">
+    <PropertyGroup>
+      <ArkExportProtoDir Condition="'$(ArkExportProtoDir)' == ''">$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
+    </PropertyGroup>
+    <Exec Command="dotnet &quot;$(TargetPath)&quot; --ark-export-proto &quot;$(ArkExportProtoDir)&quot;" />
   </Target>
 
 </Project>

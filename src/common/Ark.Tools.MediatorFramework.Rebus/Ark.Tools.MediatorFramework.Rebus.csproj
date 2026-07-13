@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Rebus.Protobuf" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
     <!-- Runtime dependencies used by the generated Rebus handlers. -->
@@ -21,6 +22,8 @@
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <None Include="buildTransitive/Ark.Tools.MediatorFramework.Rebus.props" Pack="true"
+          PackagePath="buildTransitive" />
   </ItemGroup>
 
   <!-- Pack the generator DLL into this NuGet package so that a PackageReference to

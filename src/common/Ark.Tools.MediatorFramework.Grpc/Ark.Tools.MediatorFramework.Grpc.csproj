@@ -17,6 +17,8 @@
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.StatusProto" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
+    <PackageReference Include="System.ServiceModel.Primitives" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
@@ -35,6 +37,8 @@
     <None Include="proto/ark/mediator.proto" Pack="true"
           PackagePath="content/proto/ark;contentFiles/any/any/proto/ark" />
     <None Include="buildTransitive/Ark.Tools.MediatorFramework.Grpc.targets" Pack="true"
+          PackagePath="buildTransitive" />
+    <None Include="buildTransitive/Ark.Tools.MediatorFramework.Grpc.props" Pack="true"
           PackagePath="buildTransitive" />
   </ItemGroup>
 

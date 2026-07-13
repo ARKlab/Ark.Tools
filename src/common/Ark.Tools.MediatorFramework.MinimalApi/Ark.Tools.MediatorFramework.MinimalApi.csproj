@@ -15,6 +15,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Hellang.Middleware.ProblemDetails" />
     <PackageReference Include="MessagePack" />
     <PackageReference Include="MessagePack.NodaTime" />
     <PackageReference Include="SimpleInjector" />
@@ -27,6 +28,8 @@
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <None Include="buildTransitive/Ark.Tools.MediatorFramework.MinimalApi.props" Pack="true"
+          PackagePath="buildTransitive" />
   </ItemGroup>
 
   <!-- Pack the generator DLL into this NuGet package so that a PackageReference to
