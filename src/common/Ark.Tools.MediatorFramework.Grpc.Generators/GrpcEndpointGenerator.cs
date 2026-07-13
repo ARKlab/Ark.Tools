@@ -271,7 +271,6 @@ namespace Ark.MediatorFramework.Generators
                 content.AppendLine("import \"google/type/date.proto\";");
                 content.AppendLine("import \"google/type/datetime.proto\";");
                 content.AppendLine("import \"ark/nodatime.proto\";");
-                content.AppendLine("import \"ark/mediator.proto\";");
                 content.AppendLine();
                 foreach (var contract in contracts
                     .Where(contract => reachable.Contains(contract.Type))
