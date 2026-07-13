@@ -38,4 +38,11 @@
 
   <Import Project="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets" />
 
+  <Target Name="CopyExportedProto" AfterTargets="ArkExportProto">
+    <ItemGroup>
+      <_ExportedProto Include="$(ArkExportProtoDir)/*.proto" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ExportedProto)" DestinationFolder="$(TargetDir)" />
+  </Target>
+
 </Project>

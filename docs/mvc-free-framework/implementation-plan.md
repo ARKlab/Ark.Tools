@@ -346,6 +346,10 @@ controllers remain compatibility escape-hatch examples.
 
 ### Step 7.6 — Proto-on-build + shared proto assets (T9.6)
 
+**Status: complete.** The gRPC generator emits per-service-group proto assets,
+the transport packages ship shared proto content and build-transitive export
+support, and the sample client compiles against the exported files.
+
 1. Grpc generator (`GrpcEndpointGenerator.cs`): from the discovered contracts
    also emit `ArkGeneratedProtos` — a static class with one
    `(string FileName, string Content)` entry per `[ServiceGroup]`; each file

@@ -17,6 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Greetings.proto"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="Greetings.proto" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.GrpcClient\Ark.MediatorFramework.Sample.GrpcClient.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />
   </ItemGroup>

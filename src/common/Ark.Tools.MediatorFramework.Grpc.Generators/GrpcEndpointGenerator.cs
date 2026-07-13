@@ -265,6 +265,10 @@ namespace Ark.MediatorFramework.Generators
                 var content = new StringBuilder();
                 content.AppendLine("syntax = \"proto3\";");
                 content.AppendLine();
+                content.Append("option csharp_namespace = ")
+                    .Append(Literal(GetProtoNamespace(compilation)))
+                    .AppendLine(";");
+                content.AppendLine();
                 content.AppendLine("import \"ark/nodatime.proto\";");
                 content.AppendLine("import \"ark/mediator.proto\";");
                 content.AppendLine();
@@ -287,7 +291,7 @@ namespace Ark.MediatorFramework.Generators
                     content.Append("service ").Append(Identifier(group.Key)).Append('V').Append(version).AppendLine(" {");
                     foreach (var item in versionItems)
                     {
-                        content.Append("  rpc ").Append(item.GrpcMethod).Append(' ')
+                        content.Append("  rpc ").Append(item.GrpcMethod)
                             .Append('(').Append(item.TypeName).Append(") returns (")
                             .Append(SimpleName(item.Response)).AppendLine(");");
                     }
@@ -303,7 +307,17 @@ namespace Ark.MediatorFramework.Generators
             var upload = new StringBuilder();
             upload.AppendLine("syntax = \"proto3\";");
             upload.AppendLine();
+            upload.Append("option csharp_namespace = ")
+                .Append(Literal(GetProtoNamespace(compilation)))
+                .AppendLine(";");
+            upload.AppendLine();
             upload.AppendLine("import \"ark/mediator.proto\";");
+            upload.AppendLine();
+            upload.AppendLine("message UploadResponse {");
+            upload.AppendLine("  string name = 1;");
+            upload.AppendLine("  string content_type = 2;");
+            upload.AppendLine("  int64 length = 3;");
+            upload.AppendLine("}");
             upload.AppendLine();
             upload.AppendLine("service Documents {");
             upload.AppendLine("  rpc Upload(stream UploadDocumentChunk) returns (UploadResponse);");
@@ -317,6 +331,14 @@ namespace Ark.MediatorFramework.Generators
                 sb.Append("            ").Append(entry).AppendLine(",");
             sb.AppendLine("        };");
             sb.AppendLine("    }");
+        }
+
+        private static string GetProtoNamespace(Compilation compilation)
+        {
+            var assemblyName = compilation.AssemblyName ?? "Ark.MediatorFramework";
+            return assemblyName.EndsWith(".WebInterface", StringComparison.Ordinal)
+                ? assemblyName[..^".WebInterface".Length] + ".GrpcClient"
+                : assemblyName + ".GrpcClient";
         }
 
         private static void EmitProtoEntry(StringBuilder sb, string fileName, string content)
@@ -391,13 +413,13 @@ namespace Ark.MediatorFramework.Generators
 
                     var includes = type.GetAttributes()
                         .Where(attribute => attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoIncludeAttribute")
-                        .Select(attribute => new ProtoIncludeModel(
-                            attribute.ConstructorArguments.ElementAtOrDefault(1).Value as INamedTypeSymbol,
-                            attribute.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0))
+                        .Select(attribute => new
+                        {
+                            Type = attribute.ConstructorArguments.ElementAtOrDefault(1).Value as INamedTypeSymbol,
+                            Number = attribute.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
+                        })
                         .Where(include => include.Type is not null && include.Number > 0)
-                        .Select(include => new ProtoIncludeModel(
-                            include.Type!,
-                            include.Number))
+                        .Select(include => new ProtoIncludeModel(include.Type!, include.Number))
                         .ToArray();
 
                     result.Add(new ProtoContractModel(type, type.Name, members, includes));
@@ -438,6 +460,29 @@ namespace Ark.MediatorFramework.Generators
             var contract = contracts.FirstOrDefault(item => SymbolEqualityComparer.Default.Equals(item.Type, type));
             if (contract is not null)
                 return contract.Name;
+
+            switch (type.SpecialType)
+            {
+                case SpecialType.System_String:
+                    return "string";
+                case SpecialType.System_Boolean:
+                    return "bool";
+                case SpecialType.System_Int64:
+                    return "int64";
+                case SpecialType.System_UInt64:
+                    return "uint64";
+                case SpecialType.System_Int32:
+                case SpecialType.System_Int16:
+                case SpecialType.System_Byte:
+                    return "int32";
+                case SpecialType.System_UInt32:
+                case SpecialType.System_UInt16:
+                    return "uint32";
+                case SpecialType.System_Single:
+                    return "float";
+                case SpecialType.System_Double:
+                    return "double";
+            }
 
             var name = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             return name switch
@@ -529,7 +574,7 @@ namespace Ark.MediatorFramework.Generators
             public int GrpcRetiredIn { get; }
         }
 
-        private readonly struct ProtoContractModel
+        private sealed class ProtoContractModel
         {
             public ProtoContractModel(
                 INamedTypeSymbol type,

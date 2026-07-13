@@ -195,7 +195,7 @@ project builds under the repo's strict settings and its self-tests pass with
     MVC `MessagePackGreetingController` remains only as the documented
     escape-hatch demo; a self-test covers msgpack-in/msgpack-out including
     NodaTime values.
-- [ ] **T9.6** `.proto` generated on build as assets; shared protos split per
+- [x] **T9.6** `.proto` generated on build as assets; shared protos split per
   package; delete `ProtoGenerator`.
   - *Accept:* the gRPC generator emits `ArkGeneratedProtos` (per
     `[ServiceGroup]` file content importing `ark/nodatime.proto` and

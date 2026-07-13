@@ -24,10 +24,10 @@
               GrpcServices="Client"
               Link="Documents.proto" />
     <Protobuf Include="..\..\..\..\src\common\Ark.Tools.Nodatime.Protobuf\proto\ark\nodatime.proto"
-              GrpcServices="None"
+              GrpcServices="Client"
               Link="ark/nodatime.proto" />
     <Protobuf Include="..\..\..\..\src\common\Ark.Tools.MediatorFramework.Grpc\proto\ark\mediator.proto"
-              GrpcServices="None"
+              GrpcServices="Client"
               Link="ark/mediator.proto" />
   </ItemGroup>
 

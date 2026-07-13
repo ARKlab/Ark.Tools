@@ -11,6 +11,9 @@ public static class ArkProtoExport
     /// <summary>Handles the proto export command-line invocation.</summary>
     /// <param name="args">The process arguments.</param>
     /// <returns><see langword="true"/> when the invocation was handled.</returns>
+    [SuppressMessage("Usage", "MA0045", Justification = "The export command is synchronous by design.")]
+    [SuppressMessage("Trimming", "IL2026", Justification = "Export runs before the application starts and uses the generated type by its stable name.")]
+    [SuppressMessage("Trimming", "IL2075", Justification = "Export runs before the application starts and uses generated public members.")]
     public static bool TryHandle(string[] args)
     {
         var index = Array.IndexOf(args, "--ark-export-proto");
@@ -38,6 +41,7 @@ public static class ArkProtoExport
         return true;
     }
 
+    [SuppressMessage("Usage", "MA0045", Justification = "The export command is synchronous by design.")]
     private static void WriteSharedAsset(string relativePath, string directory, Assembly assembly)
     {
         var resourceName = assembly.GetManifestResourceNames()

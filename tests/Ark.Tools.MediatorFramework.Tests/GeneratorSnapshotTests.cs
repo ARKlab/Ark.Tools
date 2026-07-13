@@ -62,6 +62,37 @@ public sealed class GeneratorSnapshotTests
         versionTwo.Should().NotContain("GetGreetingAsync");
     }
 
+    [TestMethod]
+    public void GrpcGeneratorEmitsImportedProtoAsset()
+    {
+        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [ServiceGroup("Greetings")]
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string Name { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """);
+
+        generated.Should().Contain("public static class ArkGeneratedProtos");
+        generated.Should().Contain("import \"ark/nodatime.proto\";");
+        generated.Should().Contain("import \"ark/mediator.proto\";");
+        generated.Should().Contain("message Greeting");
+        generated.Should().Contain("service GreetingsV1");
+    }
+
     private static string RunGenerator<TGenerator>(string source)
         where TGenerator : IIncrementalGenerator, new()
     {
@@ -72,6 +103,7 @@ public sealed class GeneratorSnapshotTests
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "GeneratorSnapshot",
