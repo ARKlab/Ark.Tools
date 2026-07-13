@@ -219,7 +219,7 @@ project builds under the repo's strict settings and its self-tests pass with
     and the HTTP→Rebus composition; step definitions call only HTTP/gRPC
     interfaces (no direct handler/store access); existing capability tests may
     remain as plain MSTest where they test transport plumbing.
-- [ ] **T9.9** Refinement sweep: framework features out of the sample.
+- [x] **T9.9** Refinement sweep: framework features out of the sample.
   - *Accept:* after T9.1–T9.8 the sample's `WebInterface` contains only
     composition/wiring and hand-written escape-hatch demos; every reusable
     piece (interceptor, upload adapter, OpenAPI helpers, multipart mapping,
@@ -285,7 +285,7 @@ Debug`) before the task is marked complete.
     `OffsetDateTime`, `ZonedDateTime`, `LocalTime`, `DateTimeZone`, `Period`,
     nullables included) with equivalent format/example metadata; a unit test
     asserts the schema for each type.
-- [ ] **T10.8** Package-shaped consumption: MSBuild assets in the package,
+- [x] **T10.8** Package-shaped consumption: MSBuild assets in the package,
   transitive dependencies, version-replacement references.
   - *Accept:* the proto-export `.props`/`.targets` are delivered by the
     `Ark.Tools.MediatorFramework.Grpc` package manifest (`buildTransitive`) —
@@ -303,7 +303,7 @@ Debug`) before the task is marked complete.
     over-specific `samples/…/WebInterface/proto/*.proto` line is removed from
     the root `.gitignore` (replaced by an ignore local to the sample);
     locked-mode restore and full build + tests pass.
-- [ ] **T10.9** Design-conformance sweep + always-build gate.
+- [x] **T10.9** Design-conformance sweep + always-build gate.
   - *Accept:* the PR diff is re-reviewed against `design.md`; any drift is
     fixed or the design amended; every remaining task/step description
     carries the full-solution build requirement; `dotnet build

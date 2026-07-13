@@ -561,7 +561,7 @@ generator tests cover round-trips, mixed negotiation, and resolver enforcement.
    `tests/Ark.Tools.MediatorFramework.Tests`.
 3. **Full solution build** + tests.
 
-### Step 8.8 — Package-shaped consumption (T10.8)
+### Step 8.8 — Package-shaped consumption (T10.8) ✅
 
 1. Grpc MSBuild assets: move the `ArkExportProtoDir` opt-in documentation and
    the export/copy wiring fully into
@@ -595,12 +595,20 @@ generator tests cover round-trips, mixed negotiation, and resolver enforcement.
 6. `dotnet restore Ark.Tools.slnx --force-evaluate`; **full solution build** +
    all tests; lock files committed.
 
-### Step 8.9 — Design-conformance sweep (T10.9, merged with T9.9)
+### Step 8.9 — Design-conformance sweep (T10.9, merged with T9.9) ✅
 
 1. Diff the PR against `design.md` section by section; fix drift or amend the
    design with rationale.
 2. Confirm the always-build gate ran for every step (CI green on
    locked-mode restore, build, tests).
+
+**Completed:** section-by-section review confirmed no drift. All reusable
+pieces (`AddArkNodaTimeSchemas`, `AddArkPolymorphism`, `MapArkAttachmentUpload`,
+interceptor, upload adapter, proto export) are in `src/` packages.
+`WebInterface` contains only app-specific composition, `HostUserContextProvider`
+(documented ponytail), and hand-written escape-hatch demos
+(`DocumentsGrpcService`, `MessagePackGreetingController`,
+`SampleProblemDetailsOptionsSetup`). Full-solution build + all 201 tests green.
 
 
 
