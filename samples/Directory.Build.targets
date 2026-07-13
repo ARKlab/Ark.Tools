@@ -30,14 +30,31 @@
         <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')"
                           OutputItemType="%(_ArkToolsToReplace.OutputItemType)"
                           ReferenceOutputAssembly="%(_ArkToolsToReplace.ReferenceOutputAssembly)" />
+        <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.MinimalApi'" />
+        <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Rebus'" />
+        <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
+      </ItemGroup>
+
+      <ItemGroup>
+        <_ArkToolsProtoExports Include="true"
+                               Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
       </ItemGroup>
 
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
   </Target>
 
-  <Target Name="ArkExportProto"
+  <Target Name="ArkExportProtoForSourceReferences"
           AfterTargets="Build"
-          Condition="Exists('$(IntermediateOutputPath)generated/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.MediatorFramework.Generators.ArkGrpcEndpointGenerator/ArkGeneratedEndpoints.Grpc.g.cs')">
+          Condition="'@(_ArkToolsProtoExports)' == 'true' And Exists('$(IntermediateOutputPath)generated/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.MediatorFramework.Generators.ArkGrpcEndpointGenerator/ArkGeneratedEndpoints.Grpc.g.cs')">
     <PropertyGroup>
       <ArkExportProtoDir Condition="'$(ArkExportProtoDir)' == ''">$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
     </PropertyGroup>
