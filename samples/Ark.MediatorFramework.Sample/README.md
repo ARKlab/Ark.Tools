@@ -1,7 +1,7 @@
 # Ark.MediatorFramework.Sample
 
 A minimal, **verifiable** proof of the source-generated, MVC-free web-services
-architecture described in [`docs/mvc-free-framework`](../../docs/mvc-free-framework/README.md).
+architecture described in [`docs/mediator-framework`](../../docs/mediator-framework/README.md).
 
 It demonstrates the core thesis: a single **pure, transport-agnostic**
 `Ark.Tools.Solid` handler is dispatched identically over two transports —
@@ -51,7 +51,7 @@ Hellang ProblemDetails with `BusinessRuleViolation` (HTTP and gRPC), gRPC
 client-streaming upload, version lifetime (`IntroducedIn`/`RetiredIn`) with the
 `/api/v{version}/…` placeholder, the per-transport package split and the
 framework test project under `tests/` — are specified with acceptance criteria
-in [`docs/mvc-free-framework/tasks.md`](../../docs/mvc-free-framework/tasks.md)
+in [`docs/mediator-framework/tasks.md`](../../docs/mediator-framework/tasks.md)
 (Epic 8) and step-by-step in
-[`docs/mvc-free-framework/implementation-plan.md`](../../docs/mvc-free-framework/implementation-plan.md)
+[`docs/mediator-framework/implementation-plan.md`](../../docs/mediator-framework/implementation-plan.md)
 (Phase 6).
