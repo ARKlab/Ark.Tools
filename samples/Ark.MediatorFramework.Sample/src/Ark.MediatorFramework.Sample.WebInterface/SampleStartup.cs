@@ -8,7 +8,6 @@ using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
-using Ark.Tools.Rebus;
 
 using MessagePack.Resolvers;
 
@@ -47,8 +46,17 @@ public sealed class SampleStartup
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSimpleInjector(_container, options => options.AddAspNetCore());
+        services.AddSimpleInjector(_container, options =>
+        {
+            options.AddAspNetCore();
+            _container.Options.ContainerLocking += (_, _) =>
+            {
+                _container.RegisterInstance(
+                    options.ApplicationServices.GetRequiredService<IHttpContextAccessor>());
+            };
+        });
         services.AddHttpContextAccessor();
+        services.AddSingleton<IHostedService>(_ => new SampleBusHostedService(_container));
         services.AddRouting();
         services.AddControllers();
 
@@ -86,8 +94,6 @@ public sealed class SampleStartup
         app.UseRouting();
 
         app.UseSimpleInjector(_container);
-        _container.Verify();
-        _container.StartBus();
 
         app.UseEndpoints(endpoints =>
         {
