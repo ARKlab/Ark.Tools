@@ -31,10 +31,10 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 /// </summary>
 public static class SampleComposition
 {
-    /// <summary>Builds and verifies the SimpleInjector container.</summary>
+    /// <summary>Builds the SimpleInjector container before ASP.NET Core integration completes it.</summary>
     /// <param name="network">The in-memory Rebus network to attach the transport to.</param>
     /// <param name="useProtobufRebus">Whether Rebus messages use Protobuf instead of JSON.</param>
-    /// <returns>A verified container with the bus started.</returns>
+    /// <returns>The configured container. Hosting verifies it and starts the bus after integration.</returns>
     public static Container BuildContainer(InMemNetwork network, bool useProtobufRebus = false)
     {
         ArgumentNullException.ThrowIfNull(network);
@@ -76,9 +76,6 @@ public static class SampleComposition
                 o.ArkRetryStrategy(maxDeliveryAttempts: 1);
             });
         });
-
-        container.Verify();
-        container.StartBus();
 
         return container;
     }

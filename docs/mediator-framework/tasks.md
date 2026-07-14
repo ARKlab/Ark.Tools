@@ -309,23 +309,40 @@ Debug`) before the task is marked complete.
     carries the full-solution build requirement; `dotnet build
     Ark.Tools.slnx` and `dotnet test` are green at the end of the epic.
 
+## Epic 11 — Preview follow-ups
+
+- [ ] **T11.1** Add the gRPC developer UI experience.
+  - *Accept:* the sample documents or launches gRPCui against build-exported
+    protos; unary and streaming methods are discoverable and callable; optional
+    reflection is Development-only or authorization-protected; no HTTP
+    transcoding is introduced.
+- [ ] **T11.2** Demonstrate STJ source-generated metadata in the sample.
+  - *Accept:* a sample `JsonSerializerContext` covers all HTTP wire roots and
+    polymorphic subtypes, is composed with Ark defaults through
+    `HttpJsonOptions`, preserves existing JSON wire shapes, and behavioral tests
+    prove generated endpoints use the configured resolver.
+- [ ] **T11.3** Add authenticated OpenAPI UIs.
+  - *Accept:* Scalar serves both versioned documents in Development; Swagger UI
+    can be enabled as a compatibility option; OpenAPI contains tested OAuth2
+    authorization-code/PKCE and OpenID Connect schemes; no browser client secret
+    is configured.
+- [ ] **T11.4** Generate Rebus owner routing.
+  - *Accept:* `RebusMessageAttribute` accepts an optional owner queue; the
+    generator emits type-based `Map<TMessage>(queue)` routing configuration;
+    invalid/blank queues and conflicting mappings produce diagnostics; tests
+    cover generated routing and the sample sends through it without a manual
+    type map.
+
 ## Next implementation order
 
 T9.1–T9.6 are complete. Wire-shape and packaging refinements run **before**
 the behavioral-test epic so the Reqnroll scenarios are written once against
 the final contracts:
 
-1. **T10.1** NodaTime `google.type.DateTime` mappings.
-2. **T10.2** Shared proto namespaces (regenerates the sample gRPC client).
-3. **T10.3** HTTP envelope binding.
-4. **T10.4** Generated multipart upload.
-5. **T10.5** MessagePack content negotiation.
-6. **T10.7** OpenAPI NodaTime parity.
-7. **T10.8** Package-shaped consumption (buildTransitive assets, transitive
-   deps, `999.9.9` references, `.gitignore` cleanup).
-8. **T9.7** HTTP→Rebus composition.
-9. **T9.8** Reqnroll behavioral tests.
-10. **T9.9 + T10.9** Refinement/design-conformance sweep.
+1. **T11.4** Rebus owner routing (public contract and generator first).
+2. **T11.2** Sample STJ source-generated metadata.
+3. **T11.3** Scalar plus optional Swagger UI with OAuth2/OIDC.
+4. **T11.1** gRPCui development tooling.
 
 ## Status legend
 

@@ -8,6 +8,7 @@ using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
+using Ark.Tools.Rebus;
 
 using MessagePack.Resolvers;
 
@@ -16,7 +17,6 @@ using Hellang.Middleware.ProblemDetails;
 using Microsoft.Extensions.Options;
 
 using SimpleInjector;
-using SimpleInjector.Lifestyles;
 
 using ProtoBuf.Grpc.Server;
 using ProtoBuf.Meta;
@@ -47,9 +47,7 @@ public sealed class SampleStartup
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // The generated endpoints resolve the SimpleInjector container from RequestServices;
-        // HttpContextAccessor lets the SimpleInjector-side user context read HttpContext.User.
-        services.AddSingleton(_container);
+        services.AddSimpleInjector(_container, options => options.AddAspNetCore());
         services.AddHttpContextAccessor();
         services.AddRouting();
         services.AddControllers();
@@ -87,14 +85,9 @@ public sealed class SampleStartup
 
         app.UseRouting();
 
-        // The SimpleInjector async scope is established once for the whole request, in the pipeline:
-        // every endpoint (and any other middleware) resolves from this ambient scope, so the scope is
-        // never re-opened per endpoint.
-        app.Use(async (context, next) =>
-        {
-            await using var scope = AsyncScopedLifestyle.BeginScope(_container).ConfigureAwait(false);
-            await next().ConfigureAwait(false);
-        });
+        app.UseSimpleInjector(_container);
+        _container.Verify();
+        _container.StartBus();
 
         app.UseEndpoints(endpoints =>
         {

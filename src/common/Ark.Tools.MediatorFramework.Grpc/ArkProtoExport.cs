@@ -34,7 +34,7 @@ public static class ArkProtoExport
                 if (Path.IsPathRooted(fileName))
                     throw new InvalidOperationException($"Generated protobuf asset path '{fileName}' must be relative.");
                 var content = (string)file.GetType().GetField("Item2")!.GetValue(file)!;
-                File.WriteAllText(Path.Combine(directory, fileName), content);
+                File.WriteAllText(Path.Join(directory, fileName), content);
             }
         }
 
@@ -57,7 +57,7 @@ public static class ArkProtoExport
         if (Path.IsPathRooted(relativeOutputPath))
             throw new ArgumentException("Path must be relative.", nameof(relativePath));
 
-        var output = Path.Combine(directory, relativeOutputPath);
+        var output = Path.Join(directory, relativeOutputPath);
         Directory.CreateDirectory(Path.GetDirectoryName(output)!);
         using var file = File.Create(output);
         stream.CopyTo(file);

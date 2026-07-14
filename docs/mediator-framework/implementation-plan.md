@@ -610,6 +610,68 @@ interceptor, upload adapter, proto export) are in `src/` packages.
 (`DocumentsGrpcService`, `MessagePackGreetingController`,
 `SampleProblemDetailsOptionsSetup`). Full-solution build + all 201 tests green.
 
+## Phase 9 — Preview follow-ups
+
+### Step 9.1 — Rebus owner routing (T11.4)
+
+1. Add an optional `OwnerQueue` named argument to `RebusMessageAttribute`; reject
+   null, empty or whitespace values when supplied and document that it identifies
+   the queue owning the message type.
+2. Extend the Rebus incremental model to carry owner metadata and report stable
+   diagnostics for invalid queues and conflicting mappings.
+3. Emit a routing-registration API that applies all owned types to Rebus
+   `TypeBased()` routing. Keep handler registration separate so receive-only
+   messages do not require an owner.
+4. Move the sample's applicable manual route into the attribute and call the
+   generated routing API from composition.
+5. Add generator snapshots plus runtime routing tests under
+   `tests/Ark.Tools.MediatorFramework.Tests`; retain only behavioral workflow
+   coverage in the sample tests.
+6. Restore locked dependencies, build the full solution, and run all tests.
+
+### Step 9.2 — STJ source generation in the sample (T11.2)
+
+1. Add a sample `JsonSerializerContext` in WebInterface with
+   `JsonSerializable` entries for every HTTP request/response root and all
+   polymorphic `Shape` subtypes.
+2. Compose its resolver into `HttpJsonOptions` after `ConfigureArkDefaults`;
+   preserve Ark NodaTime, enum and discriminator converters and keep framework
+   serializers on the host-provided options.
+3. Add a guard test that enumerates the HTTP contract roots and requires
+   non-null generated `JsonTypeInfo`, plus behavioral JSON round-trips for a
+   normal and polymorphic endpoint.
+4. Build the full solution and run all tests.
+
+### Step 9.3 — OpenAPI UIs and authentication (T11.3)
+
+1. Add Scalar's ASP.NET Core integration to the MinimalApi package or sample
+   only after deciding whether UI hosting is a framework API; default to sample
+   composition to avoid coupling the runtime package to a renderer.
+2. Map Scalar only in Development and configure both `v1` and `v2` documents.
+   Add Swagger UI as a separately enabled compatibility option, not a second
+   mandatory renderer.
+3. Add reusable OpenAPI transformers for OAuth2 authorization-code with PKCE and
+   OpenID Connect security schemes. Keep authority, authorization endpoint,
+   token endpoint, client id and scopes in configuration; reject client secrets.
+4. Verify UI routes reference every versioned document. Snapshot-test security
+   schemes and operation requirements independently from UI HTML.
+5. Build the full solution and run all tests.
+
+### Step 9.4 — gRPCui development experience (T11.1)
+
+1. Use the generated proto export directory as gRPCui input and add a sample
+   development launch command/profile; do not embed the Go UI binary or add an
+   HTTP transcoding layer.
+2. Evaluate code-first reflection against every generated service, including
+   streaming. If descriptors are complete, add reflection as an opt-in hosting
+   helper; otherwise keep proto-file discovery as the supported path.
+3. Restrict reflection to Development by default and expose an authorization
+   convention for non-development use. Document bearer metadata for protected
+   calls.
+4. Add a smoke check that gRPCui/grpcurl can list the exported unary and
+   streaming methods from the proto set.
+5. Build the full solution and run all tests.
+
 
 
 - **Phases 1–4** are implemented and self-tested in the sample: pure handlers,
@@ -632,6 +694,8 @@ interceptor, upload adapter, proto export) are in `src/` packages.
   follows the "Next implementation order" in `tasks.md` (Phase 8 wire-shape
   and packaging steps before the remaining Phase 7 behavioral steps), with the
   full-solution build gate on every step.
+- **Phase 9** designs the preview follow-ups tracked as Epic 11: Rebus owner
+  routing, sample STJ source generation, authenticated OpenAPI UIs and gRPCui.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore

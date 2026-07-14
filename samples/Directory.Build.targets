@@ -30,6 +30,9 @@
         <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')"
                           OutputItemType="%(_ArkToolsToReplace.OutputItemType)"
                           ReferenceOutputAssembly="%(_ArkToolsToReplace.ReferenceOutputAssembly)" />
+        <!-- Package consumption gets these analyzers from analyzers/dotnet/cs. The sample's
+             local PackageReference-to-ProjectReference replacement bypasses NuGet assets,
+             and analyzer ProjectReferences are not transitive, so mirror those assets here. -->
         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"

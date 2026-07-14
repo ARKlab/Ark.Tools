@@ -66,7 +66,8 @@ request type. Each transport is opt-in and declared independently:
 - `[HttpEndpoint("POST", "/api/v{version}/orders")]` — expose over Minimal API for each active version.
 - `[GrpcMethod]` (optionally `[GrpcMethod("CreateOrder")]`) — expose as a
   code-first gRPC method; `[ServiceGroup("Orders")]` groups the service.
-- `[RebusMessage]` — expose as a Rebus message.
+- `[RebusMessage(OwnerQueue = "orders")]` — expose as a Rebus message and,
+  when an owner is declared, contribute a type-based outbound route.
 
 HTTP binding treats the request as an **envelope** whose members may combine
 route, query and body sources (see *HTTP binding* below). These attributes are
@@ -216,6 +217,17 @@ establishes a per-message scope (`RebusScopeDecorator<>` over
 `IHandleMessages<>`), which the wrapper and its dependencies resolve within. The
 message/transport context is the unit of work / transaction boundary — no
 `Rebus.UnitOfWork` is used.
+
+`RebusMessageAttribute.OwnerQueue` is an optional, non-empty queue name. The
+Rebus generator emits one deterministic routing-map registration method for all
+attributed message contracts that declare an owner. Hosting calls that method
+inside `Routing(r => r.TypeBased()...)`; each entry is equivalent to Rebus
+`Map<TMessage>(ownerQueue)`. Messages without an owner remain valid inbound-only
+contracts and require explicit application routing before they can be sent.
+Duplicate message mappings or conflicting owners are compile-time diagnostics;
+the generator never silently picks one. Queue ownership is routing metadata
+only: it does not create queues, configure a transport, or alter generated
+`IHandleMessages<T>` wrappers.
 
 ### Why resolve from SimpleInjector explicitly
 
@@ -482,6 +494,39 @@ The HTTP hosting stack tracks the current ASP.NET Core release only:
 targets **`net10.0` exclusively** — `[HttpEndpoint]` hosting has no `net8.0`
 support. The transport-neutral core and the Rebus/gRPC packages keep the
 repo-wide multi-targeting.
+
+## Developer-facing transport UIs
+
+The sample exposes the versioned OpenAPI documents as it does today and adds
+**Scalar as the primary UI**. Swagger UI remains an opt-in compatibility UI for
+teams needing its established OAuth2/OIDC configuration. Both consume the same
+generated documents, are enabled only in Development by default, and must model
+authentication in the OpenAPI document. Authorization-code with PKCE is the
+default interactive flow; client secrets are forbidden in browser
+configuration. A test verifies each UI route references both versioned
+documents, while OpenAPI snapshot tests verify the OAuth2/OpenID Connect
+security schemes independently of either renderer.
+
+For gRPC, the supported browser experience is **gRPCui**. The sample provides a
+development launch profile or documented command that points gRPCui at the
+build-exported `.proto` tree. Optional ASP.NET Core gRPC reflection may be
+enabled only in Development or behind an explicit authorization policy. The
+framework does not embed or proxy gRPCui and does not translate gRPC into HTTP,
+keeping gRPC wire behavior and streaming semantics authoritative.
+
+## System.Text.Json source generation
+
+The sample demonstrates STJ metadata source generation with a
+`JsonSerializerContext` covering every HTTP request/response root and reachable
+polymorphic subtype. Its generated resolver is inserted before the reflection
+resolver in the `HttpJsonOptions` resolver chain after applying Ark defaults, so
+custom NodaTime, enum and discriminator converters keep the existing wire
+shape. Framework code continues to consume the configured
+`JsonSerializerOptions`; it does not reference the sample context or create
+private serializer options. Behavioral tests exercise generated HTTP endpoints
+and fail if a contract falls back because it is missing from the context. This
+is sample-level Native AOT preparation, not a promise that the full host is yet
+trim-safe.
 
 ## Composition: HTTP delegating to async Rebus work
 

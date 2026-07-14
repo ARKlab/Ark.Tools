@@ -73,6 +73,42 @@ address Rebus at all.
 | OpenAPI | `Microsoft.AspNetCore.OpenApi` | First-party spec generation from Minimal API metadata. |
 | DI + decorators | `SimpleInjector` | Cross-cutting concerns independent of the conforming container; startup graph validation. |
 
+## Developer UI evaluation
+
+### gRPC
+
+Microsoft documents [gRPCui](https://learn.microsoft.com/aspnet/core/grpc/test-tools)
+as the browser UI companion to gRPCurl. It supports service discovery through
+server reflection or direct `.proto` input, unary and streaming calls, request
+metadata, and TLS. This fits the framework because its build already exports the
+authoritative generated `.proto` files. Reflection is convenient but discloses
+the service surface, so it must be development-only or protected by an explicit
+authorization policy.
+
+Desktop clients and gRPC-to-HTTP/Swagger bridges were rejected as the default:
+desktop clients do not provide an application-hosted browser experience, while
+bridges introduce a fourth transport contract and can drift from native gRPC
+semantics. The selected path is gRPCui, launched as development tooling against
+the exported protos; reflection is an optional discovery enhancement.
+
+### OpenAPI
+
+`Microsoft.AspNetCore.OpenApi` intentionally ships no UI. Microsoft Learn lists
+Swagger UI, ReDoc and Scalar and recommends exposing any UI only in development.
+
+| UI | Interactive calls | OAuth2 / OpenID Connect | Decision |
+| --- | --- | --- | --- |
+| Scalar | Yes | Reads OpenAPI security schemes and supports OAuth2/OIDC credentials | **Primary**: current ASP.NET Core integration and modern multi-document UI. |
+| Swagger UI | Yes | Mature authorization-code/PKCE, client credentials and OpenID Connect support | **Compatibility option** for teams already standardizing its OAuth configuration. |
+| ReDoc | Documentation-first | Security schemes are documented; interactive authentication is not its core OSS experience | Not selected for ad-hoc authenticated calls. |
+| RapiDoc / Stoplight Elements | Yes | OAuth2/OIDC capable | Viable, but add another integration surface without an advantage over Scalar plus Swagger UI. |
+
+Authentication behavior must come from the generated OpenAPI security schemes,
+not UI-only configuration. UI configuration supplies public client settings
+(client id, redirect URI, scopes and PKCE); it must never contain a client
+secret. Both selected UIs point at `/openapi/{documentName}.json`, support the
+versioned documents, and are mapped only when explicitly enabled.
+
 ## `protobuf-net` as the code-first IDL
 
 Developers decorate pure records with `[ProtoContract]`/`[ProtoMember]`. This
