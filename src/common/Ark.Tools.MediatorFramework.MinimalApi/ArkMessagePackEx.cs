@@ -43,6 +43,10 @@ public static class ArkMessagePackEx
     /// <param name="response">The response value.</param>
     /// <param name="cancellationToken">The request cancellation token.</param>
     /// <returns>An HTTP result using the negotiated response format.</returns>
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
     public static IResult WriteResponse<TResponse>(
         HttpContext context,
         TResponse response,
