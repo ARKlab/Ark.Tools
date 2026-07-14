@@ -610,6 +610,34 @@ interceptor, upload adapter, proto export) are in `src/` packages.
 (`DocumentsGrpcService`, `MessagePackGreetingController`,
 `SampleProblemDetailsOptionsSetup`). Full-solution build + all 201 tests green.
 
+- **Phases 1–4** are implemented and self-tested in the sample: pure handlers,
+  generated Minimal API/Rebus/code-first gRPC dispatch, identity propagation,
+  RFC 7807 responses, Rebus dead letters, OpenAPI versioning, JSON
+  polymorphism, attachments and NodaTime protobuf support.
+- The latest increment also proves an explicit MVC compatibility escape hatch:
+  a hand-written controller negotiates MessagePack without changing the pure
+  handler or generated endpoints. This is deliberately not counted as a new
+  source-generated transport.
+- **Phase 5** is complete: package validation/SBOM coverage runs in CI and the
+  MVC migration guide is documented. The runtime and generator now live in
+  `src/common` packages.
+- **Phase 6** (review revisions) is complete: T8.1–T8.7 are implemented and
+  self-tested, tracked as Epic 8 in [`tasks.md`](tasks.md).
+- **Phase 7** (second review revisions) is tracked as Epic 9 in
+  [`tasks.md`](tasks.md); Steps 7.1–7.6 are complete, Steps 7.7–7.9 remain.
+- **Phase 8** (third review revisions) is specified above with per-step
+  instructions and tracked as Epic 10 in [`tasks.md`](tasks.md); execution
+  follows the "Next implementation order" in `tasks.md` (Phase 8 wire-shape
+  and packaging steps before the remaining Phase 7 behavioral steps), with the
+  full-solution build gate on every step.
+- **Phase 9** designs the preview follow-ups tracked as Epic 11: Rebus owner
+  routing, sample STJ source generation, authenticated OpenAPI UIs and gRPCui.
+
+The first build attempt on a fresh checkout failed because `--no-restore` was
+used before assets existed. The verified sequence is `dotnet restore
+Ark.Tools.slnx` (use `--force-evaluate` when central package versions changed),
+then `dotnet build Ark.Tools.slnx --configuration Debug --no-restore`.
+
 ## Phase 9 — Preview follow-ups
 
 ### Step 9.1 — Rebus owner routing (T11.4)
@@ -671,33 +699,3 @@ interceptor, upload adapter, proto export) are in `src/` packages.
 4. Add a smoke check that gRPCui/grpcurl can list the exported unary and
    streaming methods from the proto set.
 5. Build the full solution and run all tests.
-
-
-
-- **Phases 1–4** are implemented and self-tested in the sample: pure handlers,
-  generated Minimal API/Rebus/code-first gRPC dispatch, identity propagation,
-  RFC 7807 responses, Rebus dead letters, OpenAPI versioning, JSON
-  polymorphism, attachments and NodaTime protobuf support.
-- The latest increment also proves an explicit MVC compatibility escape hatch:
-  a hand-written controller negotiates MessagePack without changing the pure
-  handler or generated endpoints. This is deliberately not counted as a new
-  source-generated transport.
-- **Phase 5** is complete: package validation/SBOM coverage runs in CI and the
-  MVC migration guide is documented. The runtime and generator now live in
-  `src/common` packages.
-- **Phase 6** (review revisions) is complete: T8.1–T8.7 are implemented and
-  self-tested, tracked as Epic 8 in [`tasks.md`](tasks.md).
-- **Phase 7** (second review revisions) is tracked as Epic 9 in
-  [`tasks.md`](tasks.md); Steps 7.1–7.6 are complete, Steps 7.7–7.9 remain.
-- **Phase 8** (third review revisions) is specified above with per-step
-  instructions and tracked as Epic 10 in [`tasks.md`](tasks.md); execution
-  follows the "Next implementation order" in `tasks.md` (Phase 8 wire-shape
-  and packaging steps before the remaining Phase 7 behavioral steps), with the
-  full-solution build gate on every step.
-- **Phase 9** designs the preview follow-ups tracked as Epic 11: Rebus owner
-  routing, sample STJ source generation, authenticated OpenAPI UIs and gRPCui.
-
-The first build attempt on a fresh checkout failed because `--no-restore` was
-used before assets existed. The verified sequence is `dotnet restore
-Ark.Tools.slnx` (use `--force-evaluate` when central package versions changed),
-then `dotnet build Ark.Tools.slnx --configuration Debug --no-restore`.
