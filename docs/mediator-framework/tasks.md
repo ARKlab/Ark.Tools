@@ -316,7 +316,7 @@ Debug`) before the task is marked complete.
     protos; unary and streaming methods are discoverable and callable; optional
     reflection is Development-only or authorization-protected; no HTTP
     transcoding is introduced.
-- [ ] **T11.2** Demonstrate STJ source-generated metadata in the sample.
+- [x] **T11.2** Demonstrate STJ source-generated metadata in the sample.
   - *Accept:* a sample `JsonSerializerContext` covers all HTTP wire roots and
     polymorphic subtypes, is composed with Ark defaults through
     `HttpJsonOptions`, preserves existing JSON wire shapes, and behavioral tests

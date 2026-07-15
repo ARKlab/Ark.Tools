@@ -631,8 +631,8 @@ interceptor, upload adapter, proto export) are in `src/` packages.
   and packaging steps before the remaining Phase 7 behavioral steps), with the
   full-solution build gate on every step.
 - **Phase 9** implements the first preview follow-up (T11.4 Rebus owner routing);
-  the remaining Epic 11 work is sample STJ source generation, authenticated
-  OpenAPI UIs and gRPCui.
+  T11.2 is complete; the remaining Epic 11 work is authenticated OpenAPI UIs
+  and gRPCui.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore
