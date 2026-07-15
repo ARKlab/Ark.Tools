@@ -94,7 +94,7 @@ public sealed record ComposeGreetingResponse
 }
 
 /// <summary>Rebus-only request completed asynchronously by the composition workflow.</summary>
-[RebusMessage]
+[RebusMessage(OwnerQueue = "ark.mediator.sample")]
 public sealed record CompleteGreetingCompositionRequest : IRequest<GreetingResponse>
 {
     /// <summary>Gets the greeting identifier.</summary>

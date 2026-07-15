@@ -47,12 +47,56 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetGreeting : IQuery<string>
             {
             }
+
             """);
 
         generated.Should().Contain("MapGet(\"/api/v1/greetings/{id}\"");
         generated.Should().Contain("MapGet(\"/api/v2/greetings/{id}\"");
         generated.Should().NotContain("MapGet(\"/api/v3/greetings/{id}\"");
         generated.Should().Contain("WithGroupName(\"v1\")");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorEmitsOwnerQueueRouting()
+    {
+        var generated = RunGenerator<ArkRebusEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = "orders")]
+            public sealed class CreateOrder : IRequest<string>
+            {
+            }
+            """);
+
+        generated.Should().Contain("ConfigureArkRebusRouting");
+        generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
+    }
+
+    [TestMethod]
+    public void RebusMessageAllowsOnlyOneDeclaration()
+    {
+        var usage = (AttributeUsageAttribute)typeof(RebusMessageAttribute)
+            .GetCustomAttributes(typeof(AttributeUsageAttribute), inherit: false)
+            .Single();
+
+        usage.AllowMultiple.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void RebusGeneratorReportsInvalidOwnerQueue()
+    {
+        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = " ")]
+            public sealed class CreateOrder : IRequest<string>
+            {
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF004");
     }
 
     [TestMethod]
@@ -209,6 +253,7 @@ public sealed class GeneratorSnapshotTests
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
             ]);
