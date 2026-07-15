@@ -28,11 +28,6 @@ namespace Ark.MediatorFramework.Generators
             "ARKMF004", "Invalid Rebus owner queue",
             "The Rebus owner queue for '{0}' must not be blank", "Rebus",
             DiagnosticSeverity.Error, isEnabledByDefault: true);
-        private static readonly DiagnosticDescriptor ConflictingOwnerQueues = new(
-            "ARKMF005", "Conflicting Rebus owner queues",
-            "The Rebus message type '{0}' declares conflicting owner queues: {1}", "Rebus",
-            DiagnosticSeverity.Error, isEnabledByDefault: true);
-
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -58,13 +53,12 @@ namespace Ark.MediatorFramework.Generators
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
                     var attrs = type.GetAttributes();
-                    var rebusAttributes = attrs
-                        .Where(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, rebusAttr))
-                        .ToArray();
-                    if (rebusAttributes.Length == 0)
+                    var rebus = attrs.FirstOrDefault(
+                        a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, rebusAttr));
+                    if (rebus is null)
                         continue;
 
-                    var model = Extract(type, rebusAttributes);
+                    var model = Extract(type, rebus);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -105,7 +99,7 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel? Extract(INamedTypeSymbol type, IReadOnlyList<AttributeData> rebusAttributes)
+        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData rebusAttribute)
         {
             // Rebus messages are dispatched via IRequestHandler; queries (reads) are not
             // meaningful as bus messages.
@@ -115,37 +109,21 @@ namespace Ark.MediatorFramework.Generators
                 if (def == "global::Ark.Tools.Solid.IRequest<TResponse>")
                 {
                     var response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                    var ownerQueues = rebusAttributes.Select(GetOwnerQueue).ToArray();
                     var diagnostics = new List<DiagnosticInfo>();
-                    for (var index = 0; index < ownerQueues.Length; index++)
-                    {
-                        if (ownerQueues[index] is null && HasOwnerQueueArgument(rebusAttributes[index]))
-                        {
-                            diagnostics.Add(new DiagnosticInfo(
-                                InvalidOwnerQueue,
-                                type.Name,
-                                GetLocation(rebusAttributes[index])));
-                        }
-                    }
-
-                    var distinctOwnerQueues = ownerQueues
-                        .Where(ownerQueue => !string.IsNullOrWhiteSpace(ownerQueue))
-                        .Distinct(StringComparer.Ordinal)
-                        .ToArray();
-                    if (distinctOwnerQueues.Length > 1)
+                    var ownerQueue = GetOwnerQueue(rebusAttribute);
+                    if (ownerQueue is null && HasOwnerQueueArgument(rebusAttribute))
                     {
                         diagnostics.Add(new DiagnosticInfo(
-                            ConflictingOwnerQueues,
+                            InvalidOwnerQueue,
                             type.Name,
-                            GetLocation(rebusAttributes[0]),
-                            string.Join(", ", distinctOwnerQueues)));
+                            GetLocation(rebusAttribute)));
                     }
 
                     return new EndpointModel(
                         type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         type.Name,
                         response,
-                        distinctOwnerQueues.Length == 1 && diagnostics.Count == 0 ? distinctOwnerQueues[0] : null,
+                        ownerQueue is not null && diagnostics.Count == 0 ? ownerQueue : null,
                         diagnostics);
                 }
             }

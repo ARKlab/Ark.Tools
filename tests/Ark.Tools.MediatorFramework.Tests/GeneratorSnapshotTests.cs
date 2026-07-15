@@ -74,6 +74,16 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void RebusMessageAllowsOnlyOneDeclaration()
+    {
+        var usage = (AttributeUsageAttribute)typeof(RebusMessageAttribute)
+            .GetCustomAttributes(typeof(AttributeUsageAttribute), inherit: false)
+            .Single();
+
+        usage.AllowMultiple.Should().BeFalse();
+    }
+
+    [TestMethod]
     public void RebusGeneratorReportsInvalidOwnerQueue()
     {
         var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
@@ -87,23 +97,6 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF004");
-    }
-
-    [TestMethod]
-    public void RebusGeneratorReportsConflictingOwnerQueues()
-    {
-        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
-            """
-            using Ark.MediatorFramework;
-            using Ark.Tools.Solid;
-            [RebusMessage(OwnerQueue = "orders")]
-            [RebusMessage(OwnerQueue = "billing")]
-            public sealed class CreateOrder : IRequest<string>
-            {
-            }
-            """);
-
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF005");
     }
 
     [TestMethod]
