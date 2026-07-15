@@ -6,20 +6,20 @@
   </PropertyGroup>
   <ItemGroup>
 	  <!-- COMMON -->
-	  <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Logging.AzureAppServices" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.9" />
+	  <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Logging.AzureAppServices" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.10" />
 	  <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.1" />
 	  
 	  <PackageVersion Include="System.Diagnostics.Tracing" Version="4.3.0" />
@@ -40,12 +40,12 @@
 	  <PackageVersion Include="Rebus.Protobuf" Version="5.0.0" />
 	  <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
 	  <PackageVersion Include="Grpc.Net.Client" Version="2.80.0" />
-	  <PackageVersion Include="Grpc.Tools" Version="2.66.0" />
-	  <PackageVersion Include="Google.Protobuf" Version="3.31.1" />
+	  <PackageVersion Include="Grpc.Tools" Version="2.82.0" />
+	  <PackageVersion Include="Google.Protobuf" Version="3.35.1" />
 	  <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0" />
-	  <PackageVersion Include="Grpc.StatusProto" Version="2.66.0" />
+	  <PackageVersion Include="Grpc.StatusProto" Version="2.80.0" />
 	  <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
-	  <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.9" />
+	  <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
 	  <PackageVersion Include="System.Reactive" Version="6.1.0" />
 	  <PackageVersion Include="SSH.NET" Version="2025.1.0" />
 	  <PackageVersion Include="SimpleInjector" Version="5.6.0" />
@@ -56,16 +56,16 @@
 	  <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
 	  <PackageVersion Include="Flurl.Http" Version="4.0.2" />
 	  <PackageVersion Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
-	  <PackageVersion Include="MessagePack.NodaTime" Version="3.5.5" />
+	  <PackageVersion Include="MessagePack.NodaTime" Version="3.5.6" />
 	  <PackageVersion Include="Macross.Json.Extensions" Version="3.0.0" />
 	  
-	  <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.9" />
+	  <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.10" />
 
 	  <!-- TESTING -->
 	  <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
 	  <PackageVersion Include="AwesomeAssertions.Web" Version="1.9.6" />
-	  <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+	  <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
 	  <PackageVersion Include="Microsoft.Testing.Platform" Version="2.3.2" />
 	  <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.3.2" />
 	  <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.9.0" />
@@ -104,17 +104,17 @@
 	  <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.0.0" />
 	  <PackageVersion Include="Asp.Versioning.OData.ApiExplorer" Version="10.0.0-rc.1" />
 	  <PackageVersion Include="Hellang.Middleware.ProblemDetails" Version="6.5.1" />
-	  <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.9" />
-	  <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+	  <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.10" />
+	  <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
 	  <!-- Transitively pin Microsoft.OpenApi above the vulnerable range (GHSA-v5pm-xwqc-g5wc);
 	       Microsoft.AspNetCore.OpenApi 10.0.9 otherwise drags in the vulnerable 2.0.0. -->
-	  <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
+	  <PackageVersion Include="Microsoft.OpenApi" Version="2.10.0" />
 	  <PackageVersion Include="Microsoft.AspNetCore.OData" Version="10.0.0-preview.2" />
 	  <PackageVersion Include="Microsoft.AspNetCore.OData.NewtonsoftJson" Version="8.2.0" />
 	  <PackageVersion Include="NetEscapades.AspNetCore.SecurityHeaders" Version="1.3.1" />
 	  <PackageVersion Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" Version="5.5.0" />
-	  <PackageVersion Include="Microsoft.Identity.Web" Version="4.13.0" />
+	  <PackageVersion Include="Microsoft.Identity.Web" Version="4.13.1" />
 	  <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="10.2.3" />
 	  <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="10.2.3" />
 	  <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.2.3" />
@@ -131,7 +131,7 @@
 	  <PackageVersion Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
 	  <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
 	  <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
-	  <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.9" />
+	  <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.10" />
 	  <PackageVersion Include="KubernetesClient" Version="19.0.2" />
 	  
 	  <!-- SQL -->
@@ -145,7 +145,7 @@
 	  <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.86.0" />
 	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.86.0" />
 	  <PackageVersion Include="JWT" Version="11.1.0" />
-	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.1" />
+	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.2" />
 	  <PackageVersion Include="Azure.Identity" Version="1.21.0" />
 	  
 	  <!-- REBUS -->
@@ -166,13 +166,13 @@
 	  <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.14.0" />
-	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.301" />
+	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.302" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.122" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.123" />
 	  <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" />
 	  <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
 	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
-	  <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
+	  <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
 
   </ItemGroup>
 
