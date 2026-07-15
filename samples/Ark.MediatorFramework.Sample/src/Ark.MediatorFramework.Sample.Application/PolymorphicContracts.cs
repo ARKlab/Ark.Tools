@@ -129,7 +129,8 @@ public sealed record DescribeShapeRequest : IRequest<ShapeDescription>
 /// System.Text.Json converter mapping the <see cref="ShapeKind"/> discriminator to the concrete
 /// <see cref="Shape"/> subtype, built on the shared Ark polymorphic converter.
 /// </summary>
-internal sealed class ShapePolymorphicConverter : Ark.Tools.SystemTextJson.JsonPolymorphicConverter<Shape, ShapeKind>
+/// <summary>Converts the shape hierarchy using its JSON discriminator.</summary>
+public sealed class ShapePolymorphicConverter : Ark.Tools.SystemTextJson.JsonPolymorphicConverter<Shape, ShapeKind>
 {
     public ShapePolymorphicConverter()
         : base(nameof(Shape.Kind))
