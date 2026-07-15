@@ -15,9 +15,9 @@
       },
       "Auth0.ManagementApi": {
         "type": "Direct",
-        "requested": "[8.6.0, )",
-        "resolved": "8.6.0",
-        "contentHash": "ECx7tepCVynS+8Zz+uwLUbnHt0wU2GnSei6zw7cvBg5Jcukt9GUJDMzHdkzOcqgGyKKAwLcxyDKzlLODv9jMig==",
+        "requested": "[9.0.0, )",
+        "resolved": "9.0.0",
+        "contentHash": "hyrz0yXuZiLojsManDiGaG5tcO4OPWiMDD/AiMDy7PD7Ig8gFK0d067vklCTBEqfYlWwlvUbL2PCT9g2JiJeDg==",
         "dependencies": {
           "Auth0.AuthenticationApi": "7.47.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
@@ -286,9 +286,9 @@
       },
       "Auth0.ManagementApi": {
         "type": "Direct",
-        "requested": "[8.6.0, )",
-        "resolved": "8.6.0",
-        "contentHash": "ECx7tepCVynS+8Zz+uwLUbnHt0wU2GnSei6zw7cvBg5Jcukt9GUJDMzHdkzOcqgGyKKAwLcxyDKzlLODv9jMig==",
+        "requested": "[9.0.0, )",
+        "resolved": "9.0.0",
+        "contentHash": "hyrz0yXuZiLojsManDiGaG5tcO4OPWiMDD/AiMDy7PD7Ig8gFK0d067vklCTBEqfYlWwlvUbL2PCT9g2JiJeDg==",
         "dependencies": {
           "Auth0.AuthenticationApi": "7.47.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
