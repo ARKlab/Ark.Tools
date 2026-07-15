@@ -24,6 +24,14 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkRebusEndpointGenerator : IIncrementalGenerator
     {
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
+        private static readonly DiagnosticDescriptor InvalidOwnerQueue = new(
+            "ARKMF004", "Invalid Rebus owner queue",
+            "The Rebus owner queue for '{0}' must not be blank", "Rebus",
+            DiagnosticSeverity.Error, isEnabledByDefault: true);
+        private static readonly DiagnosticDescriptor ConflictingOwnerQueues = new(
+            "ARKMF005", "Conflicting Rebus owner queues",
+            "The Rebus message type '{0}' declares conflicting owner queues: {1}", "Rebus",
+            DiagnosticSeverity.Error, isEnabledByDefault: true);
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -50,11 +58,13 @@ namespace Ark.MediatorFramework.Generators
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
                     var attrs = type.GetAttributes();
-                    var rebus = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, rebusAttr));
-                    if (rebus is null)
+                    var rebusAttributes = attrs
+                        .Where(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, rebusAttr))
+                        .ToArray();
+                    if (rebusAttributes.Length == 0)
                         continue;
 
-                    var model = Extract(type);
+                    var model = Extract(type, rebusAttributes);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -95,7 +105,7 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel? Extract(INamedTypeSymbol type)
+        private static EndpointModel? Extract(INamedTypeSymbol type, IReadOnlyList<AttributeData> rebusAttributes)
         {
             // Rebus messages are dispatched via IRequestHandler; queries (reads) are not
             // meaningful as bus messages.
@@ -105,20 +115,67 @@ namespace Ark.MediatorFramework.Generators
                 if (def == "global::Ark.Tools.Solid.IRequest<TResponse>")
                 {
                     var response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    var ownerQueues = rebusAttributes.Select(GetOwnerQueue).ToArray();
+                    var diagnostics = new List<DiagnosticInfo>();
+                    for (var index = 0; index < ownerQueues.Length; index++)
+                    {
+                        if (ownerQueues[index] is null && HasOwnerQueueArgument(rebusAttributes[index]))
+                        {
+                            diagnostics.Add(new DiagnosticInfo(
+                                InvalidOwnerQueue,
+                                type.Name,
+                                GetLocation(rebusAttributes[index])));
+                        }
+                    }
+
+                    var distinctOwnerQueues = ownerQueues
+                        .Where(ownerQueue => !string.IsNullOrWhiteSpace(ownerQueue))
+                        .Distinct(StringComparer.Ordinal)
+                        .ToArray();
+                    if (distinctOwnerQueues.Length > 1)
+                    {
+                        diagnostics.Add(new DiagnosticInfo(
+                            ConflictingOwnerQueues,
+                            type.Name,
+                            GetLocation(rebusAttributes[0]),
+                            string.Join(", ", distinctOwnerQueues)));
+                    }
+
                     return new EndpointModel(
                         type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         type.Name,
-                        response);
+                        response,
+                        distinctOwnerQueues.Length == 1 && diagnostics.Count == 0 ? distinctOwnerQueues[0] : null,
+                        diagnostics);
                 }
             }
 
             return null;
         }
 
+        private static string? GetOwnerQueue(AttributeData attribute)
+        {
+            var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == "OwnerQueue");
+            var ownerQueue = argument.Value.Value as string;
+            return string.IsNullOrWhiteSpace(ownerQueue) ? null : ownerQueue;
+        }
+
+        private static bool HasOwnerQueueArgument(AttributeData attribute)
+            => attribute.NamedArguments.Any(pair => pair.Key == "OwnerQueue");
+
+        private static Location GetLocation(AttributeData attribute)
+            => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
+
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
         {
             if (items.IsDefaultOrEmpty)
                 return;
+
+            foreach (var item in items)
+            {
+                foreach (var diagnostic in item.Diagnostics)
+                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
+            }
 
             var sb = new StringBuilder();
             sb.AppendLine("// <auto-generated/>");
@@ -139,6 +196,15 @@ namespace Ark.MediatorFramework.Generators
                 {
                     sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">), typeof(" + e.TypeName + "RebusHandler));");
                 }
+            }
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>Registers generated owner queues with Rebus type-based routing.</summary>");
+            sb.AppendLine("        public static void ConfigureArkRebusRouting(global::Rebus.Config.StandardConfigurer<global::Rebus.Routing.IRouter> routing)");
+            sb.AppendLine("        {");
+            foreach (var e in items.Where(item => item.OwnerQueue is not null))
+            {
+                sb.AppendLine("            global::Rebus.Routing.TypeBased.TypeBasedRouterConfigurationExtensions.TypeBased(routing).Map<" + e.TypeFullName + ">(" + StringLiteral(e.OwnerQueue!) + ");");
             }
             sb.AppendLine("        }");
 
@@ -171,16 +237,42 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string response)
+            public EndpointModel(
+                string typeFullName,
+                string typeName,
+                string response,
+                string? ownerQueue,
+                IReadOnlyList<DiagnosticInfo> diagnostics)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
                 Response = response;
+                OwnerQueue = ownerQueue;
+                Diagnostics = diagnostics;
             }
 
             public string TypeFullName { get; }
             public string TypeName { get; }
             public string Response { get; }
+            public string? OwnerQueue { get; }
+            public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
         }
+
+        private readonly struct DiagnosticInfo
+        {
+            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, string? queues = null)
+            {
+                Descriptor = descriptor;
+                Location = location;
+                Arguments = queues is null ? [typeName] : [typeName, queues];
+            }
+
+            public DiagnosticDescriptor Descriptor { get; }
+            public Location Location { get; }
+            public object[] Arguments { get; }
+        }
+
+        private static string StringLiteral(string value)
+            => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
     }
 }

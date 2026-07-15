@@ -13,7 +13,7 @@ public sealed record DeadLetterAck;
 /// demonstrating the Rebus dead-letter behavior: after the delivery attempts are exhausted the message is
 /// forwarded to the error queue with the exception serialized into its headers.
 /// </summary>
-[RebusMessage]
+[RebusMessage(OwnerQueue = "ark.mediator.sample")]
 public sealed record FailingRebusRequest : IRequest<DeadLetterAck>
 {
     /// <summary>Gets the reason surfaced in the thrown exception.</summary>

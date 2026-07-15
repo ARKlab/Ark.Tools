@@ -60,6 +60,7 @@ public static class SampleComposition
         container.ConfigureRebus(cfg =>
         {
             cfg.Transport(t => t.UseInMemoryTransport(network, "ark.mediator.sample"));
+            cfg.Routing(ArkGeneratedEndpoints.ConfigureArkRebusRouting);
 
             if (useProtobufRebus)
             {

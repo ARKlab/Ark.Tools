@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework;
+using Ark.MediatorFramework.Rebus;
 using Ark.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
@@ -46,6 +47,56 @@ public sealed class GeneratorSnapshotTests
             [HttpEndpoint("GET", "/api/v{version}/greetings/{id}", IntroducedIn = 1, RetiredIn = 3)]
             public sealed class GetGreeting : IQuery<string>
             {
+            }
+
+            [TestMethod]
+            public void RebusGeneratorEmitsOwnerQueueRouting()
+            {
+                var generated = RunGenerator<ArkRebusEndpointGenerator>(
+                    """
+                    using Ark.MediatorFramework.Rebus;
+                    using Ark.Tools.Solid;
+                    [RebusMessage(OwnerQueue = "orders")]
+                    public sealed class CreateOrder : IRequest<string>
+                    {
+                    }
+                    """);
+
+                generated.Should().Contain("ConfigureArkRebusRouting");
+                generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
+            }
+
+            [TestMethod]
+            public void RebusGeneratorReportsInvalidOwnerQueue()
+            {
+                var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+                    """
+                    using Ark.MediatorFramework.Rebus;
+                    using Ark.Tools.Solid;
+                    [RebusMessage(OwnerQueue = " ")]
+                    public sealed class CreateOrder : IRequest<string>
+                    {
+                    }
+                    """);
+
+                result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF004");
+            }
+
+            [TestMethod]
+            public void RebusGeneratorReportsConflictingOwnerQueues()
+            {
+                var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+                    """
+                    using Ark.MediatorFramework.Rebus;
+                    using Ark.Tools.Solid;
+                    [RebusMessage(OwnerQueue = "orders")]
+                    [RebusMessage(OwnerQueue = "billing")]
+                    public sealed class CreateOrder : IRequest<string>
+                    {
+                    }
+                    """);
+
+                result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF005");
             }
             """);
 
@@ -209,6 +260,7 @@ public sealed class GeneratorSnapshotTests
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
             ]);
