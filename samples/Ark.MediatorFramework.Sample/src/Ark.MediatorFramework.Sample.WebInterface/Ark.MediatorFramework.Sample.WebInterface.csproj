@@ -16,6 +16,7 @@
     <PackageReference Include="Ark.Tools.AspNetCore.MessagePack" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+    <PackageReference Include="Microsoft.Identity.Web" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
   </ItemGroup>
 

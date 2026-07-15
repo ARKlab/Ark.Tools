@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.Application;
 
+using Ark.MediatorFramework.Sample.WebInterface.Auth;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Nodatime.Protobuf;
@@ -38,21 +39,26 @@ public sealed class SampleStartup
 {
     private readonly Container _container;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
+    private readonly IConfiguration _configuration;
 
     /// <summary>Initializes a new instance of the <see cref="SampleStartup"/> class.</summary>
     public SampleStartup(Container container, IConfiguration? configuration = null)
     {
         _container = container;
-        var authority = configuration?["OpenApi:Authority"] ?? "https://login.example.test";
+        _configuration = configuration ?? new ConfigurationBuilder().Build();
+        var instance = _configuration["EntraId:Instance"] ?? "https://login.microsoftonline.com";
+        var tenantId = _configuration["EntraId:TenantId"] ?? "common";
+        var clientId = _configuration["EntraId:ClientId"] ?? "mediator-sample";
+        var authority = $"{instance}/{tenantId}";
         _openApiSecurity = new ArkOpenApiSecuritySettings(
-            new Uri(configuration?["OpenApi:AuthorizationUrl"] ?? $"{authority}/authorize"),
-            new Uri(configuration?["OpenApi:TokenUrl"] ?? $"{authority}/token"),
-            new Uri(configuration?["OpenApi:OpenIdConnectUrl"] ?? $"{authority}/.well-known/openid-configuration"),
-            configuration?["OpenApi:ClientId"] ?? "mediator-sample",
+            new Uri($"{authority}/oauth2/v2.0/authorize"),
+            new Uri($"{authority}/oauth2/v2.0/token"),
+            new Uri($"{authority}/v2.0/.well-known/openid-configuration"),
+            clientId,
             new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["openid"] = "Sign in",
-                ["profile"] = "Read profile",
+                [$"api://{clientId}/access_as_user"] = "Access the mediator API",
             }));
     }
 
@@ -60,6 +66,9 @@ public sealed class SampleStartup
     public void ConfigureServices(IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+
+        services.ConfigureAuthentication(_configuration);
+        services.AddAuthorization();
 
         services.AddSimpleInjector(_container, options =>
         {
