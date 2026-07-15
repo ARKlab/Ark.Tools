@@ -1224,9 +1224,9 @@
       },
       "Microsoft.OpenApi": {
         "type": "CentralTransitive",
-        "requested": "[2.7.5, )",
-        "resolved": "2.7.5",
-        "contentHash": "0FA67RSnRM4tcBKqiqVu/HPdZ9+QOKbmeRjxRUGTCjPU4C0bmUhd97Dso7Yild5P7nOV6GxJ2xrK0Kv/O9xp0w=="
+        "requested": "[3.8.0, )",
+        "resolved": "3.8.0",
+        "contentHash": "bF+KnfJSd9KLUOZxl07IdhmQcvz/adqU+GVub7+SVOydHpJGOGIWqwngZ3JxgtDpKYRA6vlk+0tv82G0KXRuhw=="
       },
       "NetEscapades.AspNetCore.SecurityHeaders": {
         "type": "CentralTransitive",
