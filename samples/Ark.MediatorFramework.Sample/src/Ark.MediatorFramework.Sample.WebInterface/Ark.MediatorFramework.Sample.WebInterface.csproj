@@ -14,6 +14,8 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.AspNetCore.MessagePack" />
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
   </ItemGroup>
 

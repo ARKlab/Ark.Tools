@@ -11,6 +11,8 @@ using Ark.Tools.AspNetCore.MessagePackFormatter;
 
 using MessagePack.Resolvers;
 
+using Scalar.AspNetCore;
+
 using Hellang.Middleware.ProblemDetails;
 
 using Microsoft.Extensions.Options;
@@ -21,6 +23,7 @@ using ProtoBuf.Grpc.Server;
 using ProtoBuf.Meta;
 
 using System.Text.Json;
+using System.Collections.ObjectModel;
 
 using HellangProblemDetailsOptions = Hellang.Middleware.ProblemDetails.ProblemDetailsOptions;
 
@@ -34,11 +37,23 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 public sealed class SampleStartup
 {
     private readonly Container _container;
+    private readonly ArkOpenApiSecuritySettings _openApiSecurity;
 
     /// <summary>Initializes a new instance of the <see cref="SampleStartup"/> class.</summary>
-    public SampleStartup(Container container)
+    public SampleStartup(Container container, IConfiguration? configuration = null)
     {
         _container = container;
+        var authority = configuration?["OpenApi:Authority"] ?? "https://login.example.test";
+        _openApiSecurity = new ArkOpenApiSecuritySettings(
+            new Uri(configuration?["OpenApi:AuthorizationUrl"] ?? $"{authority}/authorize"),
+            new Uri(configuration?["OpenApi:TokenUrl"] ?? $"{authority}/token"),
+            new Uri(configuration?["OpenApi:OpenIdConnectUrl"] ?? $"{authority}/.well-known/openid-configuration"),
+            configuration?["OpenApi:ClientId"] ?? "mediator-sample",
+            new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["openid"] = "Sign in",
+                ["profile"] = "Read profile",
+            }));
     }
 
     /// <summary>Registers the services the generated endpoints depend on.</summary>
@@ -101,6 +116,15 @@ public sealed class SampleStartup
 
         app.UseSimpleInjector(_container);
 
+        if (app.ApplicationServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        {
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/openapi/v1.json", "Mediator API v1");
+                options.SwaggerEndpoint("/openapi/v2.json", "Mediator API v2");
+            });
+        }
+
         app.UseEndpoints(endpoints =>
         {
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
@@ -111,13 +135,25 @@ public sealed class SampleStartup
 
             // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
             endpoints.MapOpenApi();
+            if (app.ApplicationServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+            {
+                endpoints.MapScalarApiReference(options =>
+                {
+                    options.AddAuthorizationCodeFlow("oauth2", flow => flow
+                        .WithClientId(_openApiSecurity.ClientId)
+                        .WithAuthorizationUrl(_openApiSecurity.AuthorizationUrl.ToString())
+                        .WithTokenUrl(_openApiSecurity.TokenUrl.ToString())
+                        .WithPkce(Pkce.Sha256));
+                });
+            }
         });
     }
 
-    private static void ConfigureOpenApi(Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
+    private void ConfigureOpenApi(Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
     {
         options
             .AddArkNodaTimeSchemas()
+            .AddArkOAuthSecurity(_openApiSecurity)
             .AddArkPolymorphism<Shape, ShapeKind>(
                 "kind",
                 (ShapeKind.Circle, typeof(Circle)),

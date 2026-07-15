@@ -14,6 +14,7 @@
     <PackageVersion Include="Ark.Tools.Rebus" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Solid" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.SystemTextJson" Version="999.9.9" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.12" />
   </ItemGroup>
   <ItemGroup Label="Sample dependencies">
     <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0" />
