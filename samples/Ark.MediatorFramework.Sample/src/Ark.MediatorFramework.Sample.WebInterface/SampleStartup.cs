@@ -17,6 +17,7 @@ using Scalar.AspNetCore;
 using Hellang.Middleware.ProblemDetails;
 
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 
 using SimpleInjector;
 
@@ -46,9 +47,9 @@ public sealed class SampleStartup
     {
         _container = container;
         _configuration = configuration ?? new ConfigurationBuilder().Build();
-        var instance = _configuration["EntraId:Instance"] ?? "https://login.microsoftonline.com";
-        var tenantId = _configuration["EntraId:TenantId"] ?? "common";
-        var clientId = _configuration["EntraId:ClientId"] ?? "mediator-sample";
+        var instance = _configuration["EntraId:Instance"]!;
+        var tenantId = _configuration["EntraId:TenantId"]!;
+        var clientId = _configuration["EntraId:ClientId"]!;
         var authority = $"{instance}/{tenantId}";
         _openApiSecurity = new ArkOpenApiSecuritySettings(
             new Uri($"{authority}/oauth2/v2.0/authorize"),
@@ -72,7 +73,12 @@ public sealed class SampleStartup
         {
             services.ConfigureAuthentication(_configuration);
         }
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+        });
 
         services.AddSimpleInjector(_container, options =>
         {
@@ -126,6 +132,10 @@ public sealed class SampleStartup
         app.UseProblemDetails();
 
         app.UseRouting();
+        app.UseAuthentication();
+        app.UseWhen(
+            context => context.Request.Path.StartsWithSegments("/api", StringComparison.Ordinal),
+            branch => branch.UseAuthorization());
 
         app.UseSimpleInjector(_container);
 

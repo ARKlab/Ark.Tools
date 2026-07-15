@@ -21,7 +21,8 @@ public static class AuthenticationEx
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests"
+            || configuration["ASPNETCORE_ENVIRONMENT"] == "IntegrationTests")
         {
             _ = services.AddAuthentication(options => options.DefaultScheme = "IntegrationTests")
                 .AddJwtBearer("IntegrationTests", options =>
@@ -30,6 +31,7 @@ public static class AuthenticationEx
                     options.TokenValidationParameters = TokenValidator();
 #pragma warning disable CA5404
                     options.TokenValidationParameters.ValidateIssuer = false;
+                    options.TokenValidationParameters.ValidateIssuerSigningKey = true;
                     options.TokenValidationParameters.IssuerSigningKey =
                         new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.IntegrationTestsEncryptionKey));
 #pragma warning restore CA5404

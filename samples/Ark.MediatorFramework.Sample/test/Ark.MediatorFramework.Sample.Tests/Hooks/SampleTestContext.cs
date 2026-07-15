@@ -6,6 +6,7 @@ using Ark.MediatorFramework.Sample.WebInterface;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 
 using Rebus.Transport.InMem;
 
@@ -19,8 +20,17 @@ public sealed class SampleTestContext : IDisposable
     /// <summary>Initializes a new instance of the <see cref="SampleTestContext"/> class.</summary>
     public SampleTestContext()
     {
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
         var container = SampleComposition.BuildContainer(new InMemNetwork());
-        var startup = new SampleStartup(container);
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["ASPNETCORE_ENVIRONMENT"] = "IntegrationTests",
+            })
+            .Build();
+        var startup = new SampleStartup(container, configuration);
         _host = new HostBuilder()
             .ConfigureWebHost(web => web
                 .UseTestServer()
