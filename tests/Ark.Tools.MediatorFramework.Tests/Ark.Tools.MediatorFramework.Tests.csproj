@@ -16,6 +16,8 @@
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.Tools.MediatorFramework.Grpc.Generators.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Rebus/Ark.Tools.MediatorFramework.Rebus.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Rebus.Generators/Ark.Tools.MediatorFramework.Rebus.Generators.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
   </ItemGroup>
 

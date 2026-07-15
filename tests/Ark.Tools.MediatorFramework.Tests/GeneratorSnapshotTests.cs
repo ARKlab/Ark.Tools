@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework;
-using Ark.MediatorFramework.Rebus;
 using Ark.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
@@ -49,61 +48,62 @@ public sealed class GeneratorSnapshotTests
             {
             }
 
-            [TestMethod]
-            public void RebusGeneratorEmitsOwnerQueueRouting()
-            {
-                var generated = RunGenerator<ArkRebusEndpointGenerator>(
-                    """
-                    using Ark.MediatorFramework.Rebus;
-                    using Ark.Tools.Solid;
-                    [RebusMessage(OwnerQueue = "orders")]
-                    public sealed class CreateOrder : IRequest<string>
-                    {
-                    }
-                    """);
-
-                generated.Should().Contain("ConfigureArkRebusRouting");
-                generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
-            }
-
-            [TestMethod]
-            public void RebusGeneratorReportsInvalidOwnerQueue()
-            {
-                var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
-                    """
-                    using Ark.MediatorFramework.Rebus;
-                    using Ark.Tools.Solid;
-                    [RebusMessage(OwnerQueue = " ")]
-                    public sealed class CreateOrder : IRequest<string>
-                    {
-                    }
-                    """);
-
-                result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF004");
-            }
-
-            [TestMethod]
-            public void RebusGeneratorReportsConflictingOwnerQueues()
-            {
-                var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
-                    """
-                    using Ark.MediatorFramework.Rebus;
-                    using Ark.Tools.Solid;
-                    [RebusMessage(OwnerQueue = "orders")]
-                    [RebusMessage(OwnerQueue = "billing")]
-                    public sealed class CreateOrder : IRequest<string>
-                    {
-                    }
-                    """);
-
-                result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF005");
-            }
             """);
 
         generated.Should().Contain("MapGet(\"/api/v1/greetings/{id}\"");
         generated.Should().Contain("MapGet(\"/api/v2/greetings/{id}\"");
         generated.Should().NotContain("MapGet(\"/api/v3/greetings/{id}\"");
         generated.Should().Contain("WithGroupName(\"v1\")");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorEmitsOwnerQueueRouting()
+    {
+        var generated = RunGenerator<ArkRebusEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = "orders")]
+            public sealed class CreateOrder : IRequest<string>
+            {
+            }
+            """);
+
+        generated.Should().Contain("ConfigureArkRebusRouting");
+        generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorReportsInvalidOwnerQueue()
+    {
+        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = " ")]
+            public sealed class CreateOrder : IRequest<string>
+            {
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF004");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorReportsConflictingOwnerQueues()
+    {
+        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = "orders")]
+            [RebusMessage(OwnerQueue = "billing")]
+            public sealed class CreateOrder : IRequest<string>
+            {
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF005");
     }
 
     [TestMethod]

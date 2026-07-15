@@ -326,7 +326,7 @@ Debug`) before the task is marked complete.
     can be enabled as a compatibility option; OpenAPI contains tested OAuth2
     authorization-code/PKCE and OpenID Connect schemes; no browser client secret
     is configured.
-- [ ] **T11.4** Generate Rebus owner routing.
+- [x] **T11.4** Generate Rebus owner routing.
   - *Accept:* `RebusMessageAttribute` accepts an optional owner queue; the
     generator emits type-based `Map<TMessage>(queue)` routing configuration;
     invalid/blank queues and conflicting mappings produce diagnostics; tests
@@ -339,10 +339,9 @@ T9.1–T9.6 are complete. Wire-shape and packaging refinements run **before**
 the behavioral-test epic so the Reqnroll scenarios are written once against
 the final contracts:
 
-1. **T11.4** Rebus owner routing (public contract and generator first).
-2. **T11.2** Sample STJ source-generated metadata.
-3. **T11.3** Scalar plus optional Swagger UI with OAuth2/OIDC.
-4. **T11.1** gRPCui development tooling.
+1. **T11.2** Sample STJ source-generated metadata.
+2. **T11.3** Scalar plus optional Swagger UI with OAuth2/OIDC.
+3. **T11.1** gRPCui development tooling.
 
 ## Status legend
 

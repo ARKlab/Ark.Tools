@@ -630,8 +630,9 @@ interceptor, upload adapter, proto export) are in `src/` packages.
   follows the "Next implementation order" in `tasks.md` (Phase 8 wire-shape
   and packaging steps before the remaining Phase 7 behavioral steps), with the
   full-solution build gate on every step.
-- **Phase 9** designs the preview follow-ups tracked as Epic 11: Rebus owner
-  routing, sample STJ source generation, authenticated OpenAPI UIs and gRPCui.
+- **Phase 9** implements the first preview follow-up (T11.4 Rebus owner routing);
+  the remaining Epic 11 work is sample STJ source generation, authenticated
+  OpenAPI UIs and gRPCui.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore
@@ -640,7 +641,7 @@ then `dotnet build Ark.Tools.slnx --configuration Debug --no-restore`.
 
 ## Phase 9 — Preview follow-ups
 
-### Step 9.1 — Rebus owner routing (T11.4)
+### Step 9.1 — Rebus owner routing (T11.4) ✅
 
 1. Add an optional `OwnerQueue` named argument to `RebusMessageAttribute`; reject
    null, empty or whitespace values when supplied and document that it identifies
@@ -655,7 +656,7 @@ then `dotnet build Ark.Tools.slnx --configuration Debug --no-restore`.
 5. Add generator snapshots plus runtime routing tests under
    `tests/Ark.Tools.MediatorFramework.Tests`; retain only behavioral workflow
    coverage in the sample tests.
-6. Restore locked dependencies, build the full solution, and run all tests.
+6. Restore locked dependencies, build the full solution, and run all tests. ✅
 
 ### Step 9.2 — STJ source generation in the sample (T11.2)
 

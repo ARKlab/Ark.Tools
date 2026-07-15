@@ -202,9 +202,10 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        /// <summary>Registers generated owner queues with Rebus type-based routing.</summary>");
             sb.AppendLine("        public static void ConfigureArkRebusRouting(global::Rebus.Config.StandardConfigurer<global::Rebus.Routing.IRouter> routing)");
             sb.AppendLine("        {");
+            sb.AppendLine("            var typeBased = global::Rebus.Routing.TypeBased.TypeBasedRouterConfigurationExtensions.TypeBased(routing);");
             foreach (var e in items.Where(item => item.OwnerQueue is not null))
             {
-                sb.AppendLine("            global::Rebus.Routing.TypeBased.TypeBasedRouterConfigurationExtensions.TypeBased(routing).Map<" + e.TypeFullName + ">(" + StringLiteral(e.OwnerQueue!) + ");");
+                sb.AppendLine("            typeBased.Map<" + e.TypeFullName + ">(" + StringLiteral(e.OwnerQueue!) + ");");
             }
             sb.AppendLine("        }");
 
