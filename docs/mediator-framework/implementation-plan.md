@@ -658,6 +658,18 @@ then `dotnet build Ark.Tools.slnx --configuration Debug --no-restore`.
    coverage in the sample tests.
 6. Restore locked dependencies, build the full solution, and run all tests. ✅
 
+### Step 9.2 — STJ source-generated metadata (T11.2) ✅
+
+1. Add one sample `JsonSerializerContext` covering every HTTP request/response
+   root and every `Shape` subtype used by the generated endpoints.
+2. Declare the Ark NodaTime converters in `JsonSourceGenerationOptions.Converters`
+   so source generation uses the same wire converters as runtime options.
+3. Construct the context with its own Ark-default-configured options, then assign
+   it as the `HttpJsonOptions.SerializerOptions.TypeInfoResolver`; keep a separate
+   HTTP options instance because constructing a context locks its options.
+4. The existing HTTP behavioral tests cover generated endpoint serialization,
+   NodaTime values and JSON polymorphism with the source-generated resolver. ✅
+
 ### Step 9.2 — STJ source generation in the sample (T11.2)
 
 1. Add a sample `JsonSerializerContext` in WebInterface with

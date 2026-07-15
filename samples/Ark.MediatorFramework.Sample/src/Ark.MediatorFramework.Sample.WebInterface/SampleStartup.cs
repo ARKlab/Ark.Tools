@@ -21,7 +21,6 @@ using ProtoBuf.Grpc.Server;
 using ProtoBuf.Meta;
 
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 using HellangProblemDetailsOptions = Hellang.Middleware.ProblemDetails.ProblemDetailsOptions;
 
@@ -71,9 +70,10 @@ public sealed class SampleStartup
         // defaults (camelCase, NodaTime, enum-as-member).
         services.ConfigureHttpJsonOptions(options =>
         {
+            var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+            var context = new SampleJsonSerializerContext(contextOptions);
             options.SerializerOptions.ConfigureArkDefaults();
-            options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(
-                new SampleJsonSerializerContext(options.SerializerOptions));
+            options.SerializerOptions.TypeInfoResolver = context;
         });
 
         // RFC 7807 ProblemDetails: Hellang maps semantic domain exceptions

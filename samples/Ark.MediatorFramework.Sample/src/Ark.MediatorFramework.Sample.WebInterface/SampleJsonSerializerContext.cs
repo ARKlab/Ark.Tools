@@ -2,14 +2,39 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+using Ark.Tools.Nodatime.SystemTextJson;
+using Ark.Tools.Nodatime.SystemTextJson.Converters;
 
 using System.Text.Json.Serialization;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
+/// <summary>Source-generated JSON metadata for all HTTP wire contracts in the sample.</summary>
 [JsonSourceGenerationOptions(
     GenerationMode = JsonSourceGenerationMode.Metadata,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    DictionaryKeyPolicy = JsonKnownNamingPolicy.CamelCase,
+    Converters = new Type[]
+    {
+        typeof(InstantConverter),
+        typeof(LocalDateConverter),
+        typeof(LocalDateTimeConverter),
+        typeof(LocalTimeConverter),
+        typeof(AnnualDateConverter),
+        typeof(TzdbDateTimeZoneConverter),
+        typeof(TzdbZonedDateTimeConverter),
+        typeof(RoundtripDurationConverter),
+        typeof(ExtendedIsoOffsetDateTimeConverter),
+        typeof(RoundtripPeriodConverter),
+        typeof(IsoDateIntervalConverter),
+        typeof(IsoIntervalConverter),
+        typeof(OffsetTimeConverter),
+        typeof(OffsetDateConverter),
+        typeof(OffsetConverter),
+        typeof(LocalDateRangeConverter),
+        typeof(LocalDateTimeRangeConverter),
+        typeof(ZonedDateTimeRangeConverter),
+    })]
 [JsonSerializable(typeof(CreateGreetingRequest))]
 [JsonSerializable(typeof(GreetingResponse))]
 [JsonSerializable(typeof(ComposeGreetingRequest))]

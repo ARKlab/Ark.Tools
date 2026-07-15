@@ -339,9 +339,8 @@ T9.1–T9.6 are complete. Wire-shape and packaging refinements run **before**
 the behavioral-test epic so the Reqnroll scenarios are written once against
 the final contracts:
 
-1. **T11.2** Sample STJ source-generated metadata.
-2. **T11.3** Scalar plus optional Swagger UI with OAuth2/OIDC.
-3. **T11.1** gRPCui development tooling.
+1. **T11.3** Scalar plus optional Swagger UI with OAuth2/OIDC.
+2. **T11.1** gRPCui development tooling.
 
 ## Status legend
 
