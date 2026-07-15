@@ -38,11 +38,14 @@ public sealed class SampleStartup
 {
     private readonly Container _container;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
+    private readonly bool _enableSwaggerUi;
 
     /// <summary>Initializes a new instance of the <see cref="SampleStartup"/> class.</summary>
     public SampleStartup(Container container, IConfiguration? configuration = null)
     {
         _container = container;
+        _enableSwaggerUi = bool.TryParse(configuration?["OpenApi:EnableSwaggerUi"], out var enableSwaggerUi)
+            && enableSwaggerUi;
         var authority = configuration?["OpenApi:Authority"] ?? "https://login.example.test";
         _openApiSecurity = new ArkOpenApiSecuritySettings(
             new Uri(configuration?["OpenApi:AuthorizationUrl"] ?? $"{authority}/authorize"),
@@ -116,7 +119,7 @@ public sealed class SampleStartup
 
         app.UseSimpleInjector(_container);
 
-        if (app.ApplicationServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        if (_enableSwaggerUi && app.ApplicationServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
         {
             app.UseSwaggerUI(options =>
             {
