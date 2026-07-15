@@ -316,7 +316,7 @@ Debug`) before the task is marked complete.
     protos; unary and streaming methods are discoverable and callable; optional
     reflection is Development-only or authorization-protected; no HTTP
     transcoding is introduced.
-- [ ] **T11.2** Demonstrate STJ source-generated metadata in the sample.
+- [x] **T11.2** Demonstrate STJ source-generated metadata in the sample.
   - *Accept:* a sample `JsonSerializerContext` covers all HTTP wire roots and
     polymorphic subtypes, is composed with Ark defaults through
     `HttpJsonOptions`, preserves existing JSON wire shapes, and behavioral tests
@@ -339,9 +339,8 @@ T9.1–T9.6 are complete. Wire-shape and packaging refinements run **before**
 the behavioral-test epic so the Reqnroll scenarios are written once against
 the final contracts:
 
-1. **T11.2** Sample STJ source-generated metadata.
-2. **T11.3** Scalar plus optional Swagger UI with OAuth2/OIDC.
-3. **T11.1** gRPCui development tooling.
+1. **T11.3** Scalar plus optional Swagger UI with OAuth2/OIDC.
+2. **T11.1** gRPCui development tooling.
 
 ## Status legend
 

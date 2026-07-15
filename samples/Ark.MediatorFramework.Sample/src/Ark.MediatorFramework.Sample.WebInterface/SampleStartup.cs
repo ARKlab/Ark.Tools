@@ -66,9 +66,15 @@ public sealed class SampleStartup
             StandardResolver.Instance);
         services.AddMessagePackFormatter(messagePackResolver);
 
-        // Minimal API JSON: the Ark System.Text.Json defaults (camelCase, NodaTime, enum-as-member)
-        // so the polymorphic [JsonConverter]-annotated contracts round-trip over the wire.
-        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.ConfigureArkDefaults());
+        // Minimal API JSON: compose the source-generated application metadata with the Ark
+        // defaults (camelCase, NodaTime, enum-as-member).
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+            var context = new SampleJsonSerializerContext(contextOptions);
+            options.SerializerOptions.ConfigureArkDefaults();
+            options.SerializerOptions.TypeInfoResolver = context;
+        });
 
         // RFC 7807 ProblemDetails: Hellang maps semantic domain exceptions
         // (EntityNotFoundException -> 404, ValidationException -> 400 + field violations).

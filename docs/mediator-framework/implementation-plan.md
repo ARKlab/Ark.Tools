@@ -631,8 +631,8 @@ interceptor, upload adapter, proto export) are in `src/` packages.
   and packaging steps before the remaining Phase 7 behavioral steps), with the
   full-solution build gate on every step.
 - **Phase 9** implements the first preview follow-up (T11.4 Rebus owner routing);
-  the remaining Epic 11 work is sample STJ source generation, authenticated
-  OpenAPI UIs and gRPCui.
+  T11.2 is complete; the remaining Epic 11 work is authenticated OpenAPI UIs
+  and gRPCui.
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore
@@ -657,6 +657,18 @@ then `dotnet build Ark.Tools.slnx --configuration Debug --no-restore`.
    `tests/Ark.Tools.MediatorFramework.Tests`; retain only behavioral workflow
    coverage in the sample tests.
 6. Restore locked dependencies, build the full solution, and run all tests. ✅
+
+### Step 9.2 — STJ source-generated metadata (T11.2) ✅
+
+1. Add one sample `JsonSerializerContext` covering every HTTP request/response
+   root and every `Shape` subtype used by the generated endpoints.
+2. Declare the Ark NodaTime converters in `JsonSourceGenerationOptions.Converters`
+   so source generation uses the same wire converters as runtime options.
+3. Construct the context with its own Ark-default-configured options, then assign
+   it as the `HttpJsonOptions.SerializerOptions.TypeInfoResolver`; keep a separate
+   HTTP options instance because constructing a context locks its options.
+4. The existing HTTP behavioral tests cover generated endpoint serialization,
+   NodaTime values and JSON polymorphism with the source-generated resolver. ✅
 
 ### Step 9.2 — STJ source generation in the sample (T11.2)
 
