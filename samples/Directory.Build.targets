@@ -8,6 +8,7 @@
       <ItemGroup>
          <_ArkToolsCandidates Include="@(PackageReference)" Condition="$([System.String]::Copy('%(Identity)').StartsWith('Ark.Tools'))">
             <CommonPath>$(ArkToolsSourceRoot)common\%(Identity)\%(Identity).csproj</CommonPath>
+            <MediatorFrameworkPath>$(ArkToolsSourceRoot)mediator-framework\%(Identity)\%(Identity).csproj</MediatorFrameworkPath>
             <AspNetCorePath>$(ArkToolsSourceRoot)aspnetcore\%(Identity)\%(Identity).csproj</AspNetCorePath>
             <ResourceWatcherPath>$(ArkToolsSourceRoot)resourcewatcher\%(Identity)\%(Identity).csproj</ResourceWatcherPath>
          </_ArkToolsCandidates>
@@ -16,6 +17,9 @@
       <ItemGroup>
          <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(CommonPath)')">
             <ProjectPath>%(CommonPath)</ProjectPath>
+         </_ArkToolsToReplace>
+         <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="$([System.String]::Copy('%(Identity)').StartsWith('Ark.Tools.MediatorFramework')) And Exists('%(MediatorFrameworkPath)')">
+            <ProjectPath>%(MediatorFrameworkPath)</ProjectPath>
          </_ArkToolsToReplace>
          <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(AspNetCorePath)')">
             <ProjectPath>%(AspNetCorePath)</ProjectPath>
@@ -33,15 +37,15 @@
         <!-- Package consumption gets these analyzers from analyzers/dotnet/cs. The sample's
              local PackageReference-to-ProjectReference replacement bypasses NuGet assets,
              and analyzer ProjectReferences are not transitive, so mirror those assets here. -->
-        <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
+        <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.MinimalApi'" />
-        <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
+        <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Rebus'" />
-        <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
+        <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />

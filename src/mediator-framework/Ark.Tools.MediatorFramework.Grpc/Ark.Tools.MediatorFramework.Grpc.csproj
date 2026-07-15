@@ -20,9 +20,9 @@
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
     <PackageReference Include="System.ServiceModel.Primitives" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
-    <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
-    <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
     <!-- The generator is applied as an analyzer when this package is project-referenced in
          development. When consumed via NuGet the generator DLL lives in analyzers/dotnet/cs/
          inside this package (see IncludeGeneratorInPackage target below). -->

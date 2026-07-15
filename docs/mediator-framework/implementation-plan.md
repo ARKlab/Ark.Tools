@@ -152,7 +152,7 @@ Conventional Commit message.
 
 1. Define the `ArkBusinessRuleViolation` protobuf contract (fields: `type`=1,
    `title`=2, `status`=3, `payload_json`=4) in the framework's gRPC runtime
-   (until the T8.6 split: `src/common/Ark.Tools.MediatorFramework`).
+   (until the T8.6 split: `src/mediator-framework/Ark.Tools.MediatorFramework`).
 2. Extend the server interceptor: catch `BusinessRuleViolationException`, build
    `Google.Rpc.Status` (`code = FailedPrecondition`, `message = Title`), pack
    the detail as `Any`, serialize the violation with
@@ -210,7 +210,7 @@ Design first (already specified in `design.md` §"API versioning"), then:
 
 ### Step 6.6 — Package split per transport (T8.6)
 
-1. Create `src/common/Ark.Tools.MediatorFramework.MinimalApi`,
+1. Create `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi`,
    `…MediatorFramework.Rebus`, `…MediatorFramework.Grpc` (runtime) and a
    sibling `netstandard2.0` generator project for each
    (`…MinimalApi.Generators` etc., modeled on the existing analyzer packaging); the
@@ -251,13 +251,13 @@ version to `Directory.Packages.props` and run `dotnet restore Ark.Tools.slnx
 
 1. Move `GrpcErrorInterceptor.cs` from
    `samples/…/Ark.MediatorFramework.Sample.WebInterface` to
-   `src/common/Ark.Tools.MediatorFramework.Grpc/ArkGrpcErrorInterceptor.cs`
+   `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/ArkGrpcErrorInterceptor.cs`
    (rename class to `ArkGrpcErrorInterceptor`, namespace
    `Ark.Tools.MediatorFramework.Grpc`, XML docs on all public members). Add the
    needed `Google.Api.CommonProtos`/`Grpc.StatusProto`/`FluentValidation`
    references to the Grpc runtime csproj (already centrally versioned).
 2. Reshape `ArkBusinessRuleViolation`
-   (`src/common/Ark.Tools.MediatorFramework/ArkBusinessRuleViolation.cs`, move
+   (`src/mediator-framework/Ark.Tools.MediatorFramework/ArkBusinessRuleViolation.cs`, move
    it into the Grpc package with the interceptor): fields `type`=1, `title`=2,
    `status`=3, `detail`=4 (string, optional), `instance`=5 (string, optional),
    `extensions`=6 `map<string,string>`. Remove `payload_json`.
@@ -285,7 +285,7 @@ version to `Directory.Packages.props` and run `dotnet restore Ark.Tools.slnx
 
 ### Step 7.3 — MinimalApi hosting helpers (T9.3)
 
-1. In `src/common/Ark.Tools.MediatorFramework.MinimalApi` add:
+1. In `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi` add:
    - `ArkOpenApiEx.AddArkNodaTimeSchemas(this OpenApiOptions)` — port the
      NodaTime branch of `SampleStartup.ConfigureOpenApi` 1:1;
    - `ArkOpenApiEx.AddArkPolymorphism<TBase, TDiscriminator>(this
@@ -362,7 +362,7 @@ support, and the sample client compiles against the exported files.
    `src/common/Ark.Tools.Nodatime.Protobuf/proto/ark/nodatime.proto`
    (surrogate messages) packed with
    `Pack="true" PackagePath="content/proto/ark;contentFiles/any/any/proto/ark"`;
-   `src/common/Ark.Tools.MediatorFramework.Grpc/proto/ark/mediator.proto`
+   `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/proto/ark/mediator.proto`
    (`ArkBusinessRuleViolation` with the Step 7.1 shape, `UploadDocumentChunk`,
    `UploadDocumentMetadata`) packed the same way.
 3. Runtime export: add `ArkProtoExport.TryHandle(string[] args)` to the Grpc
@@ -459,7 +459,7 @@ zoned type and the existing native mappings.
    `LocalDateTime` and `OffsetDateTime` messages — only `Period` remains
    (date/time members in generated files reference `google.type.Date` /
    `google.type.DateTime` directly).
-2. `src/common/Ark.Tools.MediatorFramework.Grpc/proto/ark/mediator.proto`:
+2. `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/proto/ark/mediator.proto`:
    add `package ark.mediator;`, set
    `option csharp_namespace = "Ark.Tools.MediatorFramework.Grpc";`.
 3. Update the Grpc generator's proto emission (type-name mapping now emits
@@ -479,7 +479,7 @@ zoned type and the existing native mappings.
 `net10.0`; its OpenAPI reference and source set no longer contain net8-specific
 conditions. The refreshed lock files and full solution validation are green.
 
-1. `src/common/Ark.Tools.MediatorFramework.MinimalApi/…csproj`: single
+1. `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/…csproj`: single
    `<TargetFramework>net10.0</TargetFramework>`; delete every
    `Condition="'$(TargetFramework)' == 'net8.0'"` group and net8-only
    package references.
@@ -493,7 +493,7 @@ properties separately, then overwrite those values on the deserialized request
 envelope before dispatch. The sample and generator tests cover the combined
 route/query/body case.
 
-1. `src/common/Ark.Tools.MediatorFramework/`: add
+1. `src/mediator-framework/Ark.Tools.MediatorFramework/`: add
    `BindFromQueryAttribute` (property-level, transport-metadata only, XML
    docs) next to the existing transport attributes.
 2. `MinimalApiEndpointGenerator`: per contract compute the binding plan —
@@ -565,7 +565,7 @@ generator tests cover round-trips, mixed negotiation, and resolver enforcement.
 
 1. Grpc MSBuild assets: move the `ArkExportProtoDir` opt-in documentation and
    the export/copy wiring fully into
-   `src/common/Ark.Tools.MediatorFramework.Grpc/buildTransitive/` (`.props`
+   `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/buildTransitive/` (`.props`
    for defaults + existing `.targets`), packed via
    `<None Pack="true" PackagePath="buildTransitive" />`. Verify a packed
    `dotnet pack` layout contains them; if csproj packing can't express the
