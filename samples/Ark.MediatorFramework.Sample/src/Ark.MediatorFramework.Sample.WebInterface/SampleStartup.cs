@@ -38,14 +38,11 @@ public sealed class SampleStartup
 {
     private readonly Container _container;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
-    private readonly bool _enableSwaggerUi;
 
     /// <summary>Initializes a new instance of the <see cref="SampleStartup"/> class.</summary>
     public SampleStartup(Container container, IConfiguration? configuration = null)
     {
         _container = container;
-        _enableSwaggerUi = bool.TryParse(configuration?["OpenApi:EnableSwaggerUi"], out var enableSwaggerUi)
-            && enableSwaggerUi;
         var authority = configuration?["OpenApi:Authority"] ?? "https://login.example.test";
         _openApiSecurity = new ArkOpenApiSecuritySettings(
             new Uri(configuration?["OpenApi:AuthorizationUrl"] ?? $"{authority}/authorize"),
@@ -119,14 +116,11 @@ public sealed class SampleStartup
 
         app.UseSimpleInjector(_container);
 
-        if (_enableSwaggerUi && app.ApplicationServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        app.UseSwaggerUI(options =>
         {
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/openapi/v1.json", "Mediator API v1");
-                options.SwaggerEndpoint("/openapi/v2.json", "Mediator API v2");
-            });
-        }
+            options.SwaggerEndpoint("/openapi/v1.json", "Mediator API v1");
+            options.SwaggerEndpoint("/openapi/v2.json", "Mediator API v2");
+        });
 
         app.UseEndpoints(endpoints =>
         {
@@ -138,17 +132,14 @@ public sealed class SampleStartup
 
             // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
             endpoints.MapOpenApi();
-            if (app.ApplicationServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+            endpoints.MapScalarApiReference(options =>
             {
-                endpoints.MapScalarApiReference(options =>
-                {
-                    options.AddAuthorizationCodeFlow("oauth2", flow => flow
-                        .WithClientId(_openApiSecurity.ClientId)
-                        .WithAuthorizationUrl(_openApiSecurity.AuthorizationUrl.ToString())
-                        .WithTokenUrl(_openApiSecurity.TokenUrl.ToString())
-                        .WithPkce(Pkce.Sha256));
-                });
-            }
+                options.AddAuthorizationCodeFlow("oauth2", flow => flow
+                    .WithClientId(_openApiSecurity.ClientId)
+                    .WithAuthorizationUrl(_openApiSecurity.AuthorizationUrl.ToString())
+                    .WithTokenUrl(_openApiSecurity.TokenUrl.ToString())
+                    .WithPkce(Pkce.Sha256));
+            });
         });
     }
 
