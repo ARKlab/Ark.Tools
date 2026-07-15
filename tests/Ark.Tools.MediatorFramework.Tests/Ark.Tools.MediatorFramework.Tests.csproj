@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks></TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework/Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.Tools.MediatorFramework.Grpc.Generators.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
+  </ItemGroup>
+
+  <!-- The repo-wide MSTest packages are injected through Directory.Build.targets.
+       For this project graph the adapter does not contribute its MTP builder hook:
+       removing this block builds successfully but runs zero tests with "test framework
+       adapter has not been registered". Remove any transitive copy before registering
+       the hook explicitly so MSTest is discovered exactly once. -->
+  <ItemGroup>
+    <TestingPlatformBuilderHook Remove="031F8871-2660-4208-8F6B-FC142B40ABFF" />
+    <TestingPlatformBuilderHook Include="031F8871-2660-4208-8F6B-FC142B40ABFF">
+      <DisplayName>MSTest</DisplayName>
+      <TypeFullName>Microsoft.VisualStudio.TestTools.UnitTesting.TestingPlatformBuilderHook</TypeFullName>
+    </TestingPlatformBuilderHook>
+  </ItemGroup>
+
+</Project>

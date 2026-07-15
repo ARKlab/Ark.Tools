@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>protobuf-net surrogates for NodaTime types (OffsetDateTime, ZonedDateTime, LocalDate, LocalDateTime, Period)</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Nodatime;protobuf;protobuf-net;grpc</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="NodaTime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="NodaTime.Serialization.Protobuf" />
+    <PackageReference Include="protobuf-net" />
+    <PackageReference Include="Google.Api.CommonProtos" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="proto/ark/nodatime.proto"
+              GrpcServices="None"
+              AdditionalImportDirs="$(NuGetPackageRoot)google.api.commonprotos\2.17.0\content\protos" />
+    <EmbeddedResource Include="proto/ark/nodatime.proto" />
+    <None Include="proto/ark/nodatime.proto" Pack="true"
+          PackagePath="content/proto/ark;contentFiles/any/any/proto/ark" />
+  </ItemGroup>
+
+</Project>

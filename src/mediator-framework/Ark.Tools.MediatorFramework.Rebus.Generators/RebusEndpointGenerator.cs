@@ -1,0 +1,186 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
+
+namespace Ark.MediatorFramework.Generators
+{
+    /// <summary>
+    /// Incremental generator that discovers <c>Ark.Tools.Solid</c> requests decorated with
+    /// <c>[RebusMessage]</c> and emits <c>RegisterArkRebusHandlers</c> plus the per-request
+    /// <c>IHandleMessages&lt;T&gt;</c> wrapper classes inside a <c>partial ArkGeneratedEndpoints</c>
+    /// class. Only the Rebus transport is emitted by this generator; add
+    /// <c>Ark.Tools.MediatorFramework.MinimalApi.Generators</c> for HTTP and
+    /// <c>Ark.Tools.MediatorFramework.Grpc.Generators</c> for gRPC.
+    /// </summary>
+    [Generator(LanguageNames.CSharp)]
+    public sealed class ArkRebusEndpointGenerator : IIncrementalGenerator
+    {
+        private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
+
+        /// <inheritdoc />
+        public void Initialize(IncrementalGeneratorInitializationContext context)
+        {
+            var endpoints = context.CompilationProvider
+                .SelectMany(static (compilation, _) => GetEndpoints(compilation));
+
+            var collected = endpoints.Collect();
+
+            context.RegisterSourceOutput(collected, static (spc, items) => Emit(spc, items));
+        }
+
+        private static ImmutableArray<EndpointModel> GetEndpoints(Compilation compilation)
+        {
+            var rebusAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
+            if (rebusAttr is null)
+                return ImmutableArray<EndpointModel>.Empty;
+
+            var runtimeAssembly = rebusAttr.ContainingAssembly;
+            var builder = ImmutableArray.CreateBuilder<EndpointModel>();
+
+            foreach (var assembly in _relevantAssemblies(compilation, runtimeAssembly))
+            {
+                foreach (var type in _allTypes(assembly.GlobalNamespace))
+                {
+                    var attrs = type.GetAttributes();
+                    var rebus = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, rebusAttr));
+                    if (rebus is null)
+                        continue;
+
+                    var model = Extract(type);
+                    if (model is not null)
+                        builder.Add(model.Value);
+                }
+            }
+
+            return builder.ToImmutable();
+        }
+
+        private static IEnumerable<IAssemblySymbol> _relevantAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
+        {
+            yield return compilation.Assembly;
+
+            foreach (var reference in compilation.SourceModule.ReferencedAssemblySymbols
+                .Where(reference => !SymbolEqualityComparer.Default.Equals(reference, runtimeAssembly)))
+            {
+                var referencesRuntime = reference.Modules.Any(
+                    m => m.ReferencedAssemblies.Any(
+                        id => string.Equals(id.Name, runtimeAssembly.Name, StringComparison.Ordinal)));
+
+                if (referencesRuntime)
+                    yield return reference;
+            }
+        }
+
+        private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol ns)
+        {
+            foreach (var member in ns.GetMembers())
+            {
+                if (member is INamespaceSymbol childNs)
+                {
+                    foreach (var type in _allTypes(childNs))
+                        yield return type;
+                }
+                else if (member is INamedTypeSymbol type)
+                {
+                    yield return type;
+                }
+            }
+        }
+
+        private static EndpointModel? Extract(INamedTypeSymbol type)
+        {
+            // Rebus messages are dispatched via IRequestHandler; queries (reads) are not
+            // meaningful as bus messages.
+            foreach (var iface in type.AllInterfaces)
+            {
+                var def = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                if (def == "global::Ark.Tools.Solid.IRequest<TResponse>")
+                {
+                    var response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    return new EndpointModel(
+                        type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        type.Name,
+                        response);
+                }
+            }
+
+            return null;
+        }
+
+        private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
+        {
+            if (items.IsDefaultOrEmpty)
+                return;
+
+            var sb = new StringBuilder();
+            sb.AppendLine("// <auto-generated/>");
+            sb.AppendLine("#nullable enable");
+            sb.AppendLine("namespace Ark.MediatorFramework.Generated");
+            sb.AppendLine("{");
+            sb.AppendLine("    /// <summary>Source-generated Rebus transport hosting for pure Ark.Tools.Solid handlers.</summary>");
+            sb.AppendLine("    public static partial class ArkGeneratedEndpoints");
+            sb.AppendLine("    {");
+
+            // RegisterArkRebusHandlers is always emitted so callers can unconditionally invoke it.
+            sb.AppendLine("        /// <summary>Registers the generated Rebus handler wrappers into the SimpleInjector collection resolved by the Rebus activator.</summary>");
+            sb.AppendLine("        public static void RegisterArkRebusHandlers(global::SimpleInjector.Container container)");
+            sb.AppendLine("        {");
+            if (!items.IsDefaultOrEmpty)
+            {
+                foreach (var e in items)
+                {
+                    sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">), typeof(" + e.TypeName + "RebusHandler));");
+                }
+            }
+            sb.AppendLine("        }");
+
+            // Generated Rebus IHandleMessages<T> wrappers.
+            if (!items.IsDefaultOrEmpty)
+            {
+                foreach (var e in items)
+                {
+                    var handlerService = "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
+                    sb.AppendLine();
+                    sb.AppendLine("        /// <summary>Generated Rebus wrapper dispatching to the pure handler for <c>" + e.TypeName + "</c>.</summary>");
+                    sb.AppendLine("        [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.MediatorFramework.Rebus.Generators\", \"1.0.0\")]");
+                    sb.AppendLine("        public sealed class " + e.TypeName + "RebusHandler : global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">");
+                    sb.AppendLine("        {");
+                    sb.AppendLine("            private readonly " + handlerService + " _handler;");
+                    sb.AppendLine("            /// <summary>Initializes a new instance.</summary>");
+                    sb.AppendLine("            public " + e.TypeName + "RebusHandler(" + handlerService + " handler) { _handler = handler; }");
+                    sb.AppendLine("            /// <inheritdoc />");
+                    sb.AppendLine("            public async global::System.Threading.Tasks.Task Handle(" + e.TypeFullName + " message)");
+                    sb.AppendLine("                => await _handler.ExecuteAsync(message).ConfigureAwait(false);");
+                    sb.AppendLine("        }");
+                }
+            }
+
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+
+            spc.AddSource("ArkGeneratedEndpoints.Rebus.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private readonly struct EndpointModel
+        {
+            public EndpointModel(string typeFullName, string typeName, string response)
+            {
+                TypeFullName = typeFullName;
+                TypeName = typeName;
+                Response = response;
+            }
+
+            public string TypeFullName { get; }
+            public string TypeName { get; }
+            public string Response { get; }
+        }
+    }
+}

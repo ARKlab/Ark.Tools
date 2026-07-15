@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Code-first gRPC transport runtime package for Ark.Tools MediatorFramework. Bundles the source generator that emits gRPC service contracts, implementations, and MapArkGrpcServices for [GrpcMethod]-annotated contracts.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mediator;gRPC;Source Generator</PackageTags>
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Google.Api.CommonProtos" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.StatusProto" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
+    <PackageReference Include="System.ServiceModel.Primitives" />
+    <!-- Core transport-agnostic attributes and attachment abstractions. -->
+    <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
+    <!-- The generator is applied as an analyzer when this package is project-referenced in
+         development. When consumed via NuGet the generator DLL lives in analyzers/dotnet/cs/
+         inside this package (see IncludeGeneratorInPackage target below). -->
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="proto/ark/mediator.proto" GrpcServices="None" />
+    <EmbeddedResource Include="proto/ark/mediator.proto" />
+    <None Include="proto/ark/mediator.proto" Pack="true"
+          PackagePath="content/proto/ark;contentFiles/any/any/proto/ark" />
+    <None Include="buildTransitive/Ark.Tools.MediatorFramework.Grpc.targets" Pack="true"
+          PackagePath="buildTransitive" />
+    <None Include="buildTransitive/Ark.Tools.MediatorFramework.Grpc.props" Pack="true"
+          PackagePath="buildTransitive" />
+  </ItemGroup>
+
+  <!-- Pack the generator DLL into this NuGet package so that a PackageReference to
+       Ark.Tools.MediatorFramework.Grpc automatically applies the analyzer. -->
+  <Target Name="IncludeGeneratorInPackage" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Grpc.Generators.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false"
+            Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Grpc.Generators.dll')" />
+    </ItemGroup>
+  </Target>
+
+</Project>

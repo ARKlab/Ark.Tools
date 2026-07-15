@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Reqnroll.MsTest" />
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Greetings.proto"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="Greetings.proto" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.GrpcClient\Ark.MediatorFramework.Sample.GrpcClient.csproj" />
+    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />
+  </ItemGroup>
+
+</Project>

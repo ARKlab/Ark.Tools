@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
+    <PackageReference Include="Ark.Tools.Solid" />
+    <PackageReference Include="Ark.Tools.SystemTextJson" />
+    <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
+  </ItemGroup>
+
+</Project>

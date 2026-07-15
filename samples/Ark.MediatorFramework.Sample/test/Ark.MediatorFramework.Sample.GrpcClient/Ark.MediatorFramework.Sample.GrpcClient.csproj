@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Protobuf_PackagedToolsPath>$(NuGetPackageRoot)grpc.tools/2.66.0/tools</Protobuf_PackagedToolsPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+    <PackageReference Include="Google.Api.CommonProtos" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj"
+                      ReferenceOutputAssembly="false" />
+    <Protobuf Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Greetings.proto"
+              GrpcServices="Client"
+              Link="Greetings.proto" />
+    <Protobuf Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Documents.proto"
+              GrpcServices="Client"
+              Link="Documents.proto" />
+    <Protobuf Update="@(Protobuf)"
+              AdditionalImportDirs="$(NuGetPackageRoot)google.api.commonprotos\2.17.0\content\protos;$(NuGetPackageRoot)grpc.tools\2.66.0\build\native\include;..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,6 @@
+<Project>
+  <ItemGroup>
+    <Analyzer Include="$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Rebus.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Rebus.Generators.dll"
+              Condition="Exists('$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Rebus.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Rebus.Generators.dll')" />
+  </ItemGroup>
+</Project>

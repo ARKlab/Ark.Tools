@@ -24,6 +24,7 @@
     <Project Path="src/common/Ark.Tools.NLog/Ark.Tools.NLog.csproj" />
     <Project Path="src/common/Ark.Tools.Nodatime.Dapper/Ark.Tools.Nodatime.Dapper.csproj" />
     <Project Path="src/common/Ark.Tools.Nodatime.Json/Ark.Tools.Nodatime.Json.csproj" />
+    <Project Path="src/common/Ark.Tools.Nodatime.Protobuf/Ark.Tools.Nodatime.Protobuf.csproj" />
     <Project Path="src/common/Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj" />
     <Project Path="src/common/Ark.Tools.Nodatime/Ark.Tools.Nodatime.csproj" />
     <Project Path="src/common/Ark.Tools.Outbox.Rebus/Ark.Tools.Outbox.Rebus.csproj" />
@@ -78,6 +79,19 @@
     <Project Path="samples/TestWorker/TestWorker.csproj" />
     <Project Path="samples/WebApplicationDemo/WebApplicationDemo.csproj" />
   </Folder>
+  <Folder Name="/samples/Ark.MediatorFramework/">
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework/Ark.Tools.MediatorFramework.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Rebus/Ark.Tools.MediatorFramework.Rebus.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Rebus.Generators/Ark.Tools.MediatorFramework.Rebus.Generators.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.Tools.MediatorFramework.Grpc.Generators.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient/Ark.MediatorFramework.Sample.GrpcClient.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj" />
+  </Folder>
   <Folder Name="/samples/Ark.Reference/">
     <Project Path="samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
     <File Path="samples/Ark.ReferenceProject/.editorconfig" />
@@ -105,6 +119,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ark.Tools.Core.Tests/Ark.Tools.Core.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.MediatorFramework.Tests/Ark.Tools.MediatorFramework.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Nodatime.Protobuf.Tests/Ark.Tools.Nodatime.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Tests/Ark.Tools.Nodatime.Tests.csproj" />
     <Project Path="tests/Ark.Tools.ResourceWatcher.Tests/Ark.Tools.ResourceWatcher.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Sql.Oracle.Tests/Ark.Tools.Sql.Oracle.Tests.csproj" />

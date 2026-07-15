@@ -1,0 +1,83 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using MessagePack;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Ark.Tools.MediatorFramework.MinimalApi;
+
+/// <summary>Minimal API helpers for MessagePack request and response serialization.</summary>
+[SuppressMessage("Naming", "CA1711", Justification = "The Ex suffix is part of the public Ark extension API naming convention.")]
+public static class ArkMessagePackEx
+{
+    private const string MessagePackMediaType = "application/x-msgpack";
+
+    /// <summary>Reads a request using MessagePack or JSON content negotiation.</summary>
+    /// <typeparam name="TRequest">The request type accepted by the handler.</typeparam>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <returns>The deserialized request, or <see langword="null"/> for an empty body.</returns>
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
+    public static async Task<TRequest?> ReadRequestAsync<TRequest>(
+        HttpContext context,
+        CancellationToken cancellationToken)
+        where TRequest : notnull
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return IsMessagePack(context.Request.ContentType)
+            ? await MessagePackSerializer.DeserializeAsync<TRequest>(
+                context.Request.Body,
+                GetOptions(context),
+                cancellationToken).ConfigureAwait(false)
+            : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Writes a response using the client's preferred JSON or MessagePack format.</summary>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="response">The response value.</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <returns>An HTTP result using the negotiated response format.</returns>
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
+    public static IResult WriteResponse<TResponse>(
+        HttpContext context,
+        TResponse response,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!PrefersMessagePack(context.Request.Headers.Accept))
+            return Results.Json(response);
+
+        var bytes = MessagePackSerializer.Serialize(response, GetOptions(context), cancellationToken);
+        return Results.Bytes(bytes, MessagePackMediaType);
+    }
+
+    private static MessagePackSerializerOptions GetOptions(HttpContext context)
+    {
+        var resolver = context.RequestServices.GetRequiredService<IFormatterResolver>();
+        return MessagePackSerializerOptions.Standard.WithResolver(resolver);
+    }
+
+    private static bool IsMessagePack(string? contentType)
+        => contentType?.StartsWith(MessagePackMediaType, StringComparison.OrdinalIgnoreCase) == true;
+
+    private static bool PrefersMessagePack(string? accept)
+    {
+        if (string.IsNullOrWhiteSpace(accept))
+            return false;
+
+        return accept.Split(',', StringSplitOptions.TrimEntries)
+            .Select(static value => value.Split(';', StringSplitOptions.TrimEntries))
+            .Any(static parts => string.Equals(parts[0], MessagePackMediaType, StringComparison.OrdinalIgnoreCase)
+                && !parts.Skip(1).Any(static parameter => parameter.StartsWith("q=0", StringComparison.OrdinalIgnoreCase)));
+    }
+}
