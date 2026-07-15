@@ -67,7 +67,11 @@ public sealed class SampleStartup
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.ConfigureAuthentication(_configuration);
+        if (_configuration.GetSection("EntraId").Exists()
+            || _configuration.GetSection("AzureAdB2C").Exists())
+        {
+            services.ConfigureAuthentication(_configuration);
+        }
         services.AddAuthorization();
 
         services.AddSimpleInjector(_container, options =>

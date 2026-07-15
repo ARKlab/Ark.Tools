@@ -1,19 +1,16 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace Ark.MediatorFramework.Sample.WebInterface.Auth;
 
 /// <summary>Authentication configuration extensions matching the ReferenceProject host.</summary>
+[SuppressMessage("Naming", "CA1711", Justification = "The Ex suffix matches the ReferenceProject extension convention.")]
 public static class AuthenticationEx
 {
     /// <summary>Registers the smart Entra ID and Azure AD B2C bearer authentication schemes.</summary>
@@ -23,6 +20,22 @@ public static class AuthenticationEx
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
+
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
+        {
+            _ = services.AddAuthentication(options => options.DefaultScheme = "IntegrationTests")
+                .AddJwtBearer("IntegrationTests", options =>
+                {
+                    options.Audience = AuthConstants.IntegrationTestsAudience;
+                    options.TokenValidationParameters = TokenValidator();
+#pragma warning disable CA5404
+                    options.TokenValidationParameters.ValidateIssuer = false;
+                    options.TokenValidationParameters.IssuerSigningKey =
+                        new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.IntegrationTestsEncryptionKey));
+#pragma warning restore CA5404
+                });
+            return;
+        }
 
         _ = services.AddAuthentication(options => options.DefaultScheme = "smart")
             .AddPolicyScheme("smart", "smart", options =>
@@ -51,23 +64,10 @@ public static class AuthenticationEx
                 var audience = section["ClientId"];
                 options.TokenValidationParameters = TokenValidator();
 
-                if (configuration["ASPNETCORE_ENVIRONMENT"] == "IntegrationTests")
-                {
-#pragma warning disable CA5404
-                    options.TokenValidationParameters.ValidateAudience = false;
-                    options.TokenValidationParameters.ValidateIssuer = false;
-                    options.TokenValidationParameters.ValidateIssuerSigningKey = false;
-#pragma warning restore CA5404
-                    options.TokenValidationParameters.IssuerSigningKey =
-                        new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.IntegrationTestsEncryptionKey));
-                }
-                else
-                {
-                    options.Audience = audience;
-                    options.Authority = $"https://login.microsoftonline.com/{tenantId}/v2.0";
-                    options.TokenValidationParameters.ValidAudience = audience;
-                    options.TokenValidationParameters.ValidIssuer = options.Authority;
-                }
+                options.Audience = audience;
+                options.Authority = $"https://login.microsoftonline.com/{tenantId}/v2.0";
+                options.TokenValidationParameters.ValidAudience = audience;
+                options.TokenValidationParameters.ValidIssuer = options.Authority;
             })
             .AddMicrosoftIdentityWebApi(options =>
             {
