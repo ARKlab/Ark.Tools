@@ -67,7 +67,12 @@ public static class ArkOpenApiSecurityEx
 
         options.AddDocumentTransformer((document, _, _) =>
         {
-            document.Components.SecuritySchemes["oauth2"] = new OpenApiSecurityScheme
+            var components = document.Components ?? new OpenApiComponents();
+            document.Components = components;
+            var securitySchemes = components.SecuritySchemes
+                ?? new Dictionary<string, IOpenApiSecurityScheme>(StringComparer.Ordinal);
+            components.SecuritySchemes = securitySchemes;
+            securitySchemes["oauth2"] = new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.OAuth2,
                 Flows = new OpenApiOAuthFlows
@@ -80,18 +85,20 @@ public static class ArkOpenApiSecurityEx
                     },
                 },
             };
-            document.Components.SecuritySchemes["oidc"] = new OpenApiSecurityScheme
+            securitySchemes["oidc"] = new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.OpenIdConnect,
                 OpenIdConnectUrl = settings.OpenIdConnectUrl,
             };
-            document.SecurityRequirements.Add(new OpenApiSecurityRequirement
+            var security = document.Security ?? new List<OpenApiSecurityRequirement>();
+            document.Security = security;
+            security.Add(new OpenApiSecurityRequirement
             {
-                [new OpenApiSecuritySchemeReference("oauth2", document)] = settings.Scopes.Keys.ToArray(),
+                [new OpenApiSecuritySchemeReference("oauth2", document)] = settings.Scopes.Keys.ToList(),
             });
-            document.SecurityRequirements.Add(new OpenApiSecurityRequirement
+            security.Add(new OpenApiSecurityRequirement
             {
-                [new OpenApiSecuritySchemeReference("oidc", document)] = settings.Scopes.Keys.ToArray(),
+                [new OpenApiSecuritySchemeReference("oidc", document)] = settings.Scopes.Keys.ToList(),
             });
 
             return Task.CompletedTask;

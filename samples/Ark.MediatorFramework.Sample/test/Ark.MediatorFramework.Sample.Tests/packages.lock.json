@@ -1011,7 +1011,9 @@
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
-          "Ark.Tools.Rebus": "[1.0.0, )"
+          "Ark.Tools.Rebus": "[1.0.0, )",
+          "Scalar.AspNetCore": "[2.16.12, )",
+          "Swashbuckle.AspNetCore.SwaggerUI": "[10.2.3, )"
         }
       },
       "ark.tools.applicationinsights": {
@@ -1180,6 +1182,18 @@
         "requested": "[2.3.2, )",
         "resolved": "2.3.2",
         "contentHash": "FuJgIEfNU+rFHJYGhuqA8uup+3cryJ1N67Tijqo01Jd5xAr28ptz0aXkFfSqK3MhAUmGsrPpgQ92+3+0oXv8AA=="
+      },
+      "Scalar.AspNetCore": {
+        "type": "CentralTransitive",
+        "requested": "[2.16.12, )",
+        "resolved": "2.16.12",
+        "contentHash": "XUNn40HQ2r9G9XdNfLu8tXI4e4JNaA15ZZt3GDx4CcZPwANJRtuZSMUPMpvEB/czIdMiCdTG+GeEzxVzzLdwdg=="
+      },
+      "Swashbuckle.AspNetCore.SwaggerUI": {
+        "type": "CentralTransitive",
+        "requested": "[10.2.3, )",
+        "resolved": "10.2.3",
+        "contentHash": "nthWONRs/FJ4yyG206g1cC52WEG8EqrjuMWjGdR+5XG7lbjFto6NqcI9EMICgVFom/UivIjUVwI76ZHbHwTPfQ=="
       },
       "System.Security.Cryptography.Xml": {
         "type": "CentralTransitive",

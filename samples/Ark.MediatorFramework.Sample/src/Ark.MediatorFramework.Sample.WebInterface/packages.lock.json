@@ -38,6 +38,18 @@
         "resolved": "18.7.23",
         "contentHash": "dyj6z8m+LFjpeH69hdnciCcRCmD0YgMlvuQEywiEshjqj/blgQ+PuWX8Vd5gkWQFoBN4e+TFxx6DvGNSv/gIKg=="
       },
+      "Scalar.AspNetCore": {
+        "type": "Direct",
+        "requested": "[2.16.12, )",
+        "resolved": "2.16.12",
+        "contentHash": "XUNn40HQ2r9G9XdNfLu8tXI4e4JNaA15ZZt3GDx4CcZPwANJRtuZSMUPMpvEB/czIdMiCdTG+GeEzxVzzLdwdg=="
+      },
+      "Swashbuckle.AspNetCore.SwaggerUI": {
+        "type": "Direct",
+        "requested": "[10.2.3, )",
+        "resolved": "10.2.3",
+        "contentHash": "nthWONRs/FJ4yyG206g1cC52WEG8EqrjuMWjGdR+5XG7lbjFto6NqcI9EMICgVFom/UivIjUVwI76ZHbHwTPfQ=="
+      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.60.0",

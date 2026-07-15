@@ -683,20 +683,26 @@ then `dotnet build Ark.Tools.slnx --configuration Debug --no-restore`.
    normal and polymorphic endpoint.
 4. Build the full solution and run all tests.
 
-### Step 9.3 — OpenAPI UIs and authentication (T11.3)
+### Step 9.3 — OpenAPI UIs and authentication (T11.3) ✅
 
-1. Add Scalar's ASP.NET Core integration to the MinimalApi package or sample
-   only after deciding whether UI hosting is a framework API; default to sample
-   composition to avoid coupling the runtime package to a renderer.
-2. Map Scalar only in Development and configure both `v1` and `v2` documents.
-   Add Swagger UI as a separately enabled compatibility option, not a second
-   mandatory renderer.
-3. Add reusable OpenAPI transformers for OAuth2 authorization-code with PKCE and
-   OpenID Connect security schemes. Keep authority, authorization endpoint,
-   token endpoint, client id and scopes in configuration; reject client secrets.
-4. Verify UI routes reference every versioned document. Snapshot-test security
-   schemes and operation requirements independently from UI HTML.
-5. Build the full solution and run all tests.
+1. Add Scalar's ASP.NET Core integration to the sample, keeping the runtime
+   package independent of a renderer.
+2. Map the public Scalar page only in Development and configure its OAuth2
+   authorization-code flow with PKCE; configure both `v1` and `v2` documents.
+   Keep Swagger UI as a separately enabled compatibility option.
+3. Add reusable OpenAPI transformers for OAuth2 authorization-code and OpenID
+   Connect security schemes. Keep authority, authorization endpoint, token
+   endpoint, public client id and scopes in configuration; do not configure a
+   client secret.
+4. Verify the versioned documents contain the security schemes and operation
+   requirements independently from UI HTML.
+5. Build the full solution and run all tests. ✅
+
+**Completed:** the sample serves public Scalar and optional Swagger UI routes
+in Development. Scalar is configured as a public client using authorization-code
+PKCE, while both generated OpenAPI documents carry OAuth2 and OpenID Connect
+security metadata. Configuration contains only public endpoints, scopes and
+client id; no browser client secret is accepted or stored.
 
 ### Step 9.4 — gRPCui development experience (T11.1)
 

@@ -36,6 +36,43 @@ public sealed class MinimalApiHostingExtensionsTests
 
 #if NET10_0_OR_GREATER
     [TestMethod]
+    public async Task OpenApiSecurityContainsPkceAndOpenIdConnectSchemes()
+    {
+        var settings = new ArkOpenApiSecuritySettings(
+            new Uri("https://login.example.test/authorize"),
+            new Uri("https://login.example.test/token"),
+            new Uri("https://login.example.test/.well-known/openid-configuration"),
+            "mediator-test",
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["openid"] = "Sign in",
+            });
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddOpenApi("v1", options => options.AddArkOAuthSecurity(settings));
+        await using var app = builder.Build();
+        app.MapGet("/secured", () => "ok");
+        app.MapOpenApi();
+        await app.StartAsync(app.Lifetime.ApplicationStarted);
+
+        using var client = app.GetTestServer().CreateClient();
+        using var document = JsonDocument.Parse(await client.GetStringAsync(
+            new Uri("http://localhost/openapi/v1.json"),
+            app.Lifetime.ApplicationStopping));
+        var components = document.RootElement.GetProperty("components").GetProperty("securitySchemes");
+        components.GetProperty("oauth2").GetProperty("flows")
+            .GetProperty("authorizationCode").GetProperty("authorizationUrl").GetString()
+            .Should().Be("https://login.example.test/authorize");
+        components.GetProperty("oauth2").GetProperty("flows")
+            .GetProperty("authorizationCode").GetProperty("tokenUrl").GetString()
+            .Should().Be("https://login.example.test/token");
+        components.GetProperty("oidc").GetProperty("openIdConnectUrl").GetString()
+            .Should().Be("https://login.example.test/.well-known/openid-configuration");
+        document.RootElement.GetProperty("security")[0].GetProperty("oauth2")[0].GetString()
+            .Should().Be("openid");
+    }
+
+    [TestMethod]
     public async Task OpenApiNodaTimeSchemasCoverNativeAndNullableTypes()
     {
         var builder = WebApplication.CreateBuilder();
