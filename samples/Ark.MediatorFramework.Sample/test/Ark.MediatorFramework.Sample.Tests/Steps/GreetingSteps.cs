@@ -11,7 +11,6 @@ using Ark.MediatorFramework.Sample.Tests.Auth;
 using AwesomeAssertions;
 
 using Grpc.Net.Client;
-using Grpc.Core;
 
 using Reqnroll;
 
@@ -66,11 +65,10 @@ public sealed class GreetingSteps
     {
         using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
         {
-            HttpHandler = _context.CreateGrpcHandler(),
+            HttpClient = _context.Client,
         });
         var result = await new GrpcGreetingsV1Client(channel).CreateGreetingAsync(
-            new GrpcCreateGreetingRequest { Name = name },
-            new Metadata { { "authorization", string.Concat("Bearer ", _authContext.Token) } }).ResponseAsync.ConfigureAwait(false);
+            new GrpcCreateGreetingRequest { Name = name }).ResponseAsync.ConfigureAwait(false);
 
         _grpcGreeting = result;
     }
@@ -119,11 +117,10 @@ public sealed class GreetingSteps
         _grpcGreeting.Should().NotBeNull();
         using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
         {
-            HttpHandler = _context.CreateGrpcHandler(),
+            HttpClient = _context.Client,
         });
         var greeting = await new GrpcGreetingsV1Client(channel).GetGreetingAsync(
-            new GrpcGetGreetingQuery { Id = _grpcGreeting!.Id },
-            new Metadata { { "authorization", string.Concat("Bearer ", _authContext.Token) } }).ResponseAsync.ConfigureAwait(false);
+            new GrpcGetGreetingQuery { Id = _grpcGreeting!.Id }).ResponseAsync.ConfigureAwait(false);
 
         greeting.Id.Should().Equal(_grpcGreeting.Id);
         greeting.Message.Should().Be(_grpcGreeting.Message);
