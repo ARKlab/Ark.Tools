@@ -8,11 +8,15 @@ using Ark.Tools.Solid;
 using AwesomeAssertions;
 
 using System.Collections.Immutable;
+using System.Reflection;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+
+using MessagePack;
+using MessagePack.Resolvers;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -34,6 +38,38 @@ public sealed class GeneratorSnapshotTests
             CancellationToken.None);
 
         action.Should().Throw<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public void MessagePackDeserializationUsesUntrustedSecurity()
+    {
+        var context = new DefaultHttpContext
+        {
+            RequestServices = new ServiceCollection()
+                .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+                .BuildServiceProvider(),
+        };
+        var method = typeof(Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx)
+            .GetMethod("GetDeserializationOptions", BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        var options = (MessagePackSerializerOptions)method.Invoke(null, [context])!;
+
+        options.Security.Should().BeSameAs(MessagePackSecurity.UntrustedData);
+    }
+
+    [TestMethod]
+    public void MessagePackFormatterValidationNamesUnformattableContracts()
+    {
+        var services = new ServiceCollection()
+            .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+            .BuildServiceProvider();
+
+        Action action = () => Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ValidateMessagePackContracts(
+            services,
+            static resolver => Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ValidateMessagePackFormatter<UnformattableMessage>(resolver));
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*UnformattableMessage*");
     }
 
     [TestMethod]
@@ -196,6 +232,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("ReadRequestAsync<global::Message>");
         generated.Should().Contain("application/x-msgpack");
+        generated.Should().Contain("ValidateMessagePackFormatter<global::Message>");
         generated.Should().NotContain("MapArkMessagePackPost");
     }
 
@@ -270,6 +307,8 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("import \\\"ark/nodatime.proto\\\";");
         generated.Should().Contain("service GreetingsV1");
     }
+
+    private sealed record UnformattableMessage;
 
     private static string RunGenerator<TGenerator>(string source)
         where TGenerator : IIncrementalGenerator, new()
