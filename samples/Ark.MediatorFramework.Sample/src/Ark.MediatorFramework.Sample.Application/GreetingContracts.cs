@@ -51,7 +51,7 @@ public sealed record GreetingResponse
 [RebusMessage]
 [GrpcMethod("CreateGreeting")]
 [ServiceGroup("Greetings")]
-[PolicyAuthorize("greeting.write")]
+[PolicyAuthorize(typeof(GreetingAuthorizationPolicy))]
 [ProtoContract]
 [MessagePackObject(true)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>

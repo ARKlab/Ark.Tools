@@ -19,6 +19,7 @@ public sealed class SampleProblemDetailsOptionsSetup : IConfigureOptions<Hellang
     /// <inheritdoc />
     public void Configure(Hellang.Middleware.ProblemDetails.ProblemDetailsOptions options)
     {
+        options.MapToStatusCode<UnauthorizedAccessException>(StatusCodes.Status403Forbidden);
         options.MapToStatusCode<EntityNotFoundException>(StatusCodes.Status404NotFound);
         options.Map<ValidationException>(exception =>
         {

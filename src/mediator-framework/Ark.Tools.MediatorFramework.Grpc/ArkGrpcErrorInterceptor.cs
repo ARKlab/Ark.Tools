@@ -81,6 +81,10 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
             status.Details.Add(Any.Pack(badRequest));
             throw status.ToRpcException();
         }
+        catch (UnauthorizedAccessException exception)
+        {
+            throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied, exception.Message));
+        }
     }
 
     [SuppressMessage(
