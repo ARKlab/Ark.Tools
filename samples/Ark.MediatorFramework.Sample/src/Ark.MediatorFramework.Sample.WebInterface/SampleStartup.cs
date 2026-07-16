@@ -116,6 +116,7 @@ public sealed class SampleStartup
         services.AddSingleton<IConfigureOptions<HellangProblemDetailsOptions>, SampleProblemDetailsOptionsSetup>();
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
+        services.AddCodeFirstGrpcReflection();
 
         // OpenAPI: one document per API version. The generator tags expanded versioned routes
         // with their concrete group name ("v1"/"v2").
@@ -152,6 +153,7 @@ public sealed class SampleStartup
             endpoints.MapArkEndpoints();
             endpoints.MapArkGrpcServices();
             endpoints.MapGrpcService<DocumentsGrpcService>();
+            endpoints.MapCodeFirstGrpcReflectionService();
             endpoints.MapControllers();
 
             // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
