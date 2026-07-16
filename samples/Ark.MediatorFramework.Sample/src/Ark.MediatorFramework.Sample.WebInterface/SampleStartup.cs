@@ -173,6 +173,7 @@ public sealed class SampleStartup
     {
         options
             .AddArkNodaTimeSchemas()
+            .AddArkServerSetProperties()
             .AddArkOAuthSecurity(_openApiSecurity)
             .AddArkPolymorphism<Shape, ShapeKind>(
                 "kind",

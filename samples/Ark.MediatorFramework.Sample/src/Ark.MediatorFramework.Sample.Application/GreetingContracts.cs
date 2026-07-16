@@ -73,6 +73,10 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
     /// <summary>Gets the representative period.</summary>
     [ProtoMember(5)]
     public Period Period { get; init; } = Period.Zero;
+
+    /// <summary>Gets the authenticated user populated by the server.</summary>
+    [ServerSet]
+    public string? UserId { get; init; }
 }
 
 /// <summary>HTTP-only request that publishes work to Rebus and returns immediately.</summary>

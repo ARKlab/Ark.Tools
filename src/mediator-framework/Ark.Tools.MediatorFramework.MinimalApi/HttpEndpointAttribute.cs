@@ -55,3 +55,12 @@ public sealed class HttpEndpointAttribute : Attribute
 public sealed class BindFromQueryAttribute : Attribute
 {
 }
+
+/// <summary>
+/// Marks a property as populated by the server rather than by client input.
+/// The property is excluded from HTTP route, query, body, and OpenAPI request binding.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class ServerSetAttribute : Attribute
+{
+}

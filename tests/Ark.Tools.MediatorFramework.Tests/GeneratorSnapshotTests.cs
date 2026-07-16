@@ -217,6 +217,43 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorProtectsServerSetProperties()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/messages")]
+            public sealed record Message : IRequest<string>
+            {
+                public string Value { get; init; } = string.Empty;
+                [ServerSet]
+                public string UserId { get; init; } = string.Empty;
+            }
+            """);
+
+        generated.Should().Contain("request = request with { UserId = default };");
+        generated.Should().NotContain("FromQuery(Name = \"UserId\")");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorWarnsOnSuspiciousProperties()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/messages")]
+            public sealed record Message : IQuery<string>
+            {
+                public string TenantId { get; init; } = string.Empty;
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF003");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorEmitsNegotiationOnlyForOptedInEndpoints()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
@@ -306,6 +343,35 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("import \\\"google/type/datetime.proto\\\";");
         generated.Should().Contain("import \\\"ark/nodatime.proto\\\";");
         generated.Should().Contain("service GreetingsV1");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorExcludesServerSetRequestMembers()
+    {
+        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string UserId { get; set; } = string.Empty;
+                [ServerSet]
+                [ProtoMember(2)]
+                public string TenantId { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """);
+
+        generated.Should().NotContain("tenant_id");
     }
 
     private sealed record UnformattableMessage;
