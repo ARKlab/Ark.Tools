@@ -16,7 +16,7 @@ Task breakdown: see [`tasks/README.md`](tasks/README.md).
 | A5 | gRPC user-context interceptor doesn't exist; sample substitutes an `IHttpContextAccessor` hack labeled "sample simplification" | `samples/.../Ark.MediatorFramework.Sample.WebInterface/HostUserContextProvider.cs` |
 | A6 | gRPC streaming upload hand-written, not generated; **sample-specific `Documents.proto` hardcoded into the framework generator** — leaks into every consumer's proto export | `GrpcEndpointGenerator.cs`, `DocumentsGrpcService.cs` |
 | A7 | `ICommand` in design but no generator handles it | all 3 generators match only `IRequest<>`/`IQuery<>` |
-| A8 | Dev-only gating for Swagger/Scalar/gRPC-reflection not implemented — mapped unconditionally | `SampleStartup.cs` |
+| ~~A8~~ | ~~Dev-only gating for Swagger/Scalar/gRPC-reflection not implemented — mapped unconditionally~~ **Struck (2026-07-16)**: mapping doc UIs unconditionally is accepted; endpoints are protected by default (SEC-01), doc UIs may stay anonymous. `design.md` updated. | `SampleStartup.cs` |
 | A9 | `migration-from-mvc.md` says "keep authorization metadata on the generated contract or registration" — impossible today: no policy member on `HttpEndpointAttribute`, no `RouteHandlerBuilder`/group hook exposed | `HttpEndpointAttribute.cs`, `MinimalApiEndpointGenerator.cs` |
 | A10 | Rebus wrapper drops `CancellationToken` — graceful shutdown never reaches handlers | `RebusEndpointGenerator.cs` |
 
@@ -34,7 +34,7 @@ Task breakdown: see [`tasks/README.md`](tasks/README.md).
 | # | Sev | Foot-gun | Mitigation |
 |---|---|---|---|
 | C1 | **Critical** | Generated endpoints are anonymous by default; sample survives only via a host `FallbackPolicy` nothing requires. | Both: attribute-level auth metadata with `AllowAnonymous` opt-out **and** route-group host policy hook. |
-| C2 | High | `UseAuthorization` gated by `UseWhen(path "/api" \|\| Content-Type "application/grpc")` — doc UIs anonymous everywhere; gRPC auth hangs on an attacker-controlled header. | Unconditional `UseAuthorization()`; gate doc UIs by environment/policy. |
+| C2 | High | `UseAuthorization` gated by `UseWhen(path "/api" \|\| Content-Type "application/grpc")` — gRPC auth hangs on an attacker-controlled header. | Unconditional `UseAuthorization()`. Doc UIs may remain anonymous: endpoints are protected by default (SEC-01) unless explicitly `AllowAnonymous`. |
 | C3 | High | MessagePack deserializes untrusted bodies without `MessagePackSecurity.UntrustedData`. | One-line fix in `ArkMessagePackEx.GetOptions`. |
 | C4 | High | Mass-assignment by design: contract = body envelope; server-owned properties are client-writable; GET/DELETE bind every property from query string. | `[ServerSet]`/`[NeverBind]` attribute honored by generator + OpenAPI schema. |
 | C5 | Med-High | Dual `[HttpEndpoint]`+`[RebusMessage]` contracts run the same handler from the bus with a header-supplied principal, no policy check. | Transport-agnostic authorization decorator. |

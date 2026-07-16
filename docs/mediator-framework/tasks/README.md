@@ -20,7 +20,7 @@ Source analysis and decisions: [`../pre-release-review.md`](../pre-release-revie
 | Task | Title | Category |
 |---|---|---|
 | [SEC-01](security/SEC-01-secure-by-default-endpoints.md) | Secure-by-default generated endpoints (attribute + route group) | security |
-| [SEC-02](security/SEC-02-unconditional-authorization-middleware.md) | Unconditional authorization middleware + environment-gated doc UIs | security |
+| [SEC-02](security/SEC-02-unconditional-authorization-middleware.md) | Unconditional authorization middleware | security |
 | [SEC-03](security/SEC-03-messagepack-untrusted-data.md) | MessagePack `UntrustedData` + startup resolver check | security |
 | [SEC-04](security/SEC-04-server-set-binding-protection.md) | `[ServerSet]` binding protection against mass assignment | security |
 | [SEC-05](security/SEC-05-transport-agnostic-authorization-decorator.md) | Transport-agnostic policy authorization decorator | security |

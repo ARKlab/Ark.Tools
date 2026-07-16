@@ -12,17 +12,15 @@ to in-flight handlers.
 
 ## Steps
 
-1. Rebus exposes cancellation via the message context: `MessageContext.GetCancellationToken()` /
-   `ITransactionContext` items (verify the exact API available in the Rebus version pinned in
+1. Wire cancellation via the **Rebus `MessageContext` in the generated handler wrapper**: the
+   emitted `IHandleMessages<T>.Handle` obtains the token from the ambient message context
+   (`MessageContext.Current.GetCancellationToken()` — via `ITransactionContext`/incoming-step
+   context items; verify the exact accessor against the Rebus version pinned in
    `Directory.Packages.props`; `Ark.Tools.Rebus` in `src/common/Ark.Tools.Rebus` may already have a
-   helper). Use it in the emitted wrapper and pass it to
-   `ExecuteAsync(message, cancellationToken)`.
-2. If the pinned Rebus version lacks a public token accessor, take the token from the hosted-service
-   stopping token via an injectable `IHostApplicationLifetime`-based provider — pick the simplest
-   approach that compiles against current pins; do **not** bump Rebus.
-3. Test: behavioral test where a long-running handler observes cancellation when the bus/host stops
+   helper) and passes it to `ExecuteAsync(message, cancellationToken)`. Do **not** bump Rebus.
+2. Test: behavioral test where a long-running handler observes cancellation when the bus/host stops
    (or, cheaper, a unit test on the emitted wrapper asserting the token passed to the handler is the
-   context token, using a fake `IMessageContext`).
+   message-context token, using a fake `IMessageContext`).
 
 ## Outcomes
 
