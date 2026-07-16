@@ -32,9 +32,51 @@ public static class ArkMessagePackEx
         return IsMessagePack(context.Request.ContentType)
             ? await MessagePackSerializer.DeserializeAsync<TRequest>(
                 context.Request.Body,
-                GetOptions(context),
+                GetDeserializationOptions(context),
                 cancellationToken).ConfigureAwait(false)
             : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Validates the MessagePack formatters required by generated endpoints.</summary>
+    /// <param name="services">The application service provider.</param>
+    /// <param name="validators">Formatter validations generated for MessagePack contracts.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when one or more contract formatters cannot be resolved.
+    /// </exception>
+    public static void ValidateMessagePackContracts(
+        IServiceProvider services,
+        params Action<IFormatterResolver>[] validators)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(validators);
+
+        var resolver = services.GetRequiredService<IFormatterResolver>();
+        var failures = new List<string>();
+        foreach (var validator in validators)
+        {
+            try
+            {
+                validator(resolver);
+            }
+            catch (Exception exception) when (exception is MessagePackSerializationException or InvalidOperationException)
+            {
+                failures.Add(exception.Message);
+            }
+        }
+
+        if (failures.Count > 0)
+            throw new InvalidOperationException(
+                "MessagePack formatter validation failed: " + string.Join("; ", failures));
+    }
+
+    /// <summary>Validates that the configured resolver has a formatter for a contract type.</summary>
+    /// <typeparam name="T">The MessagePack contract type.</typeparam>
+    /// <param name="resolver">The configured formatter resolver.</param>
+    public static void ValidateMessagePackFormatter<T>(IFormatterResolver resolver)
+        where T : notnull
+    {
+        ArgumentNullException.ThrowIfNull(resolver);
+        _ = resolver.GetFormatterWithVerify<T>();
     }
 
     /// <summary>Writes a response using the client's preferred JSON or MessagePack format.</summary>
@@ -66,6 +108,9 @@ public static class ArkMessagePackEx
         var resolver = context.RequestServices.GetRequiredService<IFormatterResolver>();
         return MessagePackSerializerOptions.Standard.WithResolver(resolver);
     }
+
+    private static MessagePackSerializerOptions GetDeserializationOptions(HttpContext context)
+        => GetOptions(context).WithSecurity(MessagePackSecurity.UntrustedData);
 
     private static bool IsMessagePack(string? contentType)
         => contentType?.StartsWith(MessagePackMediaType, StringComparison.OrdinalIgnoreCase) == true;

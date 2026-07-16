@@ -230,6 +230,22 @@ namespace Ark.MediatorFramework.Generators
 
             if (!items.IsDefaultOrEmpty)
             {
+                var messagePackEndpoints = items
+                    .Where(static endpoint => endpoint.AcceptsMessagePack)
+                    .Select(static endpoint => endpoint.TypeFullName)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+                if (messagePackEndpoints.Length > 0)
+                {
+                    sb.Append("            global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ValidateMessagePackContracts(endpoints.ServiceProvider, ");
+                    sb.Append(string.Join(
+                        ", ",
+                        messagePackEndpoints.Select(static type =>
+                            "static resolver => global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ValidateMessagePackFormatter<"
+                            + type + ">(resolver)")));
+                    sb.AppendLine(");");
+                }
+
                 var maxVersion = items.Max(static x => Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1));
                 foreach (var e in items)
                 {

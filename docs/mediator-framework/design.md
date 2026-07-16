@@ -493,8 +493,10 @@ Recurring Minimal API hosting concerns are **library features**
   `application/x-msgpack` on both the request `Content-Type` and the `Accept`
   header. When MessagePack is enabled, an `IFormatterResolver` **must** be
   registered in DI and configured explicitly — there is **no** built-in
-  fallback resolver; a missing registration fails fast at the first msgpack
-  request (and is surfaced by a startup-time check where possible).
+  fallback resolver; generated endpoint mapping validates every enabled contract
+  at startup and aggregates missing formatter failures. Request deserialization
+  uses `MessagePackSecurity.UntrustedData`; response serialization keeps the
+  configured resolver's normal security options.
 
 The HTTP hosting stack tracks the current ASP.NET Core release only:
 `Ark.Tools.MediatorFramework.MinimalApi` (runtime and generator output)
