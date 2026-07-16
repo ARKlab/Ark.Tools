@@ -224,9 +224,9 @@ namespace Ark.MediatorFramework.Generators
 
             // MapArkEndpoints is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Builder.RouteGroupBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Builder.RouteGroupBuilder>? configure = null)");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
             sb.AppendLine("        {");
-            sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
+            sb.AppendLine("            var group = global::Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapGroup(endpoints, string.Empty);");
 
             if (!items.IsDefaultOrEmpty)
             {
@@ -389,7 +389,7 @@ namespace Ark.MediatorFramework.Generators
 
             return string.IsNullOrWhiteSpace(endpoint.Policy)
                 ? ".RequireAuthorization()"
-                : ".RequireAuthorization(" + Literal(endpoint.Policy) + ")";
+                : ".RequireAuthorization(" + Literal(endpoint.Policy!) + ")";
         }
 
         private static string MapMethod(string verb) => verb switch
