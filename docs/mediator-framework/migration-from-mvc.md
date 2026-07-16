@@ -58,8 +58,11 @@ actions in that controller have moved.
 
 Generated endpoints preserve the route template and use the existing request
 scope. Do not open a second SimpleInjector scope in an endpoint or handler.
-Keep authorization and other endpoint metadata on the generated contract or
-registration according to the hosting application's existing policy.
+Generated HTTP endpoints require authorization by default. Set `Policy` on
+`[HttpEndpoint]` for a named policy, or explicitly set `AllowAnonymous = true`
+for public endpoints. `MapArkEndpoints` also accepts a group configuration
+callback for shared authorization and other endpoint metadata such as filters,
+rate limiting, CORS, or output caching.
 
 For API versions, declare the contract's lifetime (`IntroducedIn`/`RetiredIn`)
 and use the `/api/v{version}/...` placeholder route. The generator emits one

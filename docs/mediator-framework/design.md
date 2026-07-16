@@ -69,6 +69,13 @@ request type. Each transport is opt-in and declared independently:
 - `[RebusMessage(OwnerQueue = "orders")]` — expose as a Rebus message and,
   when an owner is declared, contribute a type-based outbound route.
 
+Generated HTTP endpoints require authorization by default. Set `Policy` on
+`[HttpEndpoint]` to select a named policy, or set `AllowAnonymous = true` for
+an intentionally public endpoint. `MapArkEndpoints` maps the generated routes
+into one `RouteGroupBuilder`, invokes its optional configuration callback, and
+returns the group so hosts can apply shared metadata such as authorization,
+filters, rate limiting, CORS, or output caching.
+
 HTTP binding treats the request as an **envelope** whose members may combine
 route, query and body sources (see *HTTP binding* below). These attributes are
 the only transport hint the developer writes; the generator turns each *declared*

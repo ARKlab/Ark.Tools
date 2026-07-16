@@ -33,6 +33,18 @@ public sealed class HttpEndpointAttribute : Attribute
 
     /// <summary>Gets or sets whether the endpoint negotiates MessagePack in addition to JSON.</summary>
     public bool AcceptsMessagePack { get; set; }
+
+    /// <summary>
+    /// Gets or sets the authorization policy required by this endpoint. Endpoints require
+    /// authorization by default when no policy or anonymous opt-out is specified.
+    /// </summary>
+    public string? Policy { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this endpoint explicitly permits anonymous access.
+    /// Endpoints are secure by default, so set this only for intentionally public endpoints.
+    /// </summary>
+    public bool AllowAnonymous { get; set; }
 }
 
 /// <summary>

@@ -57,6 +57,37 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorSecuresEndpointsAndSupportsOverrides()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/secure")]
+            public sealed class SecureEndpoint : IQuery<string>
+            {
+            }
+            [HttpEndpoint("GET", "/policy", Policy = "admin")]
+            public sealed class PolicyEndpoint : IQuery<string>
+            {
+            }
+            [HttpEndpoint("GET", "/public", AllowAnonymous = true)]
+            public sealed class PublicEndpoint : IQuery<string>
+            {
+            }
+            """);
+
+        generated.Should().Contain("RouteGroupBuilder MapArkEndpoints");
+        generated.Should().Contain("Action<global::Microsoft.AspNetCore.Builder.RouteGroupBuilder>? configure = null");
+        generated.Should().Contain("group.MapGet(\"/secure\"");
+        generated.Should().Contain(".RequireAuthorization()");
+        generated.Should().Contain(".RequireAuthorization(\"admin\")");
+        generated.Should().Contain(".AllowAnonymous()");
+        generated.Should().Contain("configure?.Invoke(group);");
+        generated.Should().Contain("return group;");
+    }
+
+    [TestMethod]
     public void RebusGeneratorEmitsOwnerQueueRouting()
     {
         var generated = RunGenerator<ArkRebusEndpointGenerator>(
