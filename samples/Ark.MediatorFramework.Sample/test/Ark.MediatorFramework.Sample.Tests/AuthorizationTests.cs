@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.GrpcClient;
-using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 using Ark.MediatorFramework.Sample.Tests.Auth;
 
@@ -13,6 +12,9 @@ using Grpc.Net.Client;
 using Google.Protobuf;
 
 using System.Net.Http.Json;
+
+using AppCreateGreetingRequest = Ark.MediatorFramework.Sample.Application.CreateGreetingRequest;
+using GrpcGetGreetingQuery = Ark.MediatorFramework.Sample.GrpcClient.GetGreetingQuery;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
@@ -31,7 +33,7 @@ public sealed class AuthorizationTests
         var client = new GreetingsV1.GreetingsV1Client(channel);
 
         var action = async () => await client.GetGreetingAsync(
-            new GetGreetingQuery { Id = ByteString.Empty }).ResponseAsync.ConfigureAwait(false);
+            new GrpcGetGreetingQuery { Id = ByteString.Empty }).ResponseAsync.ConfigureAwait(false);
 
         var exception = await action.Should().ThrowAsync<RpcException>();
         exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
@@ -48,7 +50,7 @@ public sealed class AuthorizationTests
 
         var response = await context.Client.PostAsJsonAsync(
             "/api/v1/greetings",
-            new CreateGreetingRequest { Name = "policy-test" }).ConfigureAwait(false);
+            new AppCreateGreetingRequest { Name = "policy-test" }).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
     }

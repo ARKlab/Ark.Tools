@@ -1216,6 +1216,7 @@
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "Ark.Tools.Solid.Authorization": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )"
         }
       },
@@ -1259,6 +1260,12 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "MessagePack": "[3.1.8, )"
+        }
+      },
+      "ark.tools.authorization": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.core": {
@@ -1374,6 +1381,20 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )"
+        }
+      },
+      "ark.tools.solid.authorization": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Authorization": "[1.0.0, )",
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )"
+        }
+      },
+      "ark.tools.solid.simpleinjector": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.SimpleInjector": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )"
         }
       },
       "ark.tools.systemtextjson": {
