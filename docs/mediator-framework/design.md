@@ -507,9 +507,13 @@ configuration. A test verifies each UI route references both versioned
 documents, while OpenAPI snapshot tests verify the OAuth2/OpenID Connect
 security schemes independently of either renderer.
 
-For gRPC, the supported browser experience is **gRPCui**. The sample provides a
-development launch profile or documented command that points gRPCui at the
-build-exported `.proto` tree. Optional ASP.NET Core gRPC reflection may be
+For gRPC, the supported browser experience is **gRPCui**, both as a development
+tool and as a production operations panel. The sample documents a launch command
+that points gRPCui at the build-exported `.proto` tree, so unary and streaming
+operations remain discoverable without enabling reflection. gRPC endpoints use
+the host's bearer authentication policy in every environment. Operators pass an
+OAuth2 access token as authorization metadata; gRPCui does not perform the OAuth2
+login or token refresh itself. Optional ASP.NET Core gRPC reflection may be
 enabled only in Development or behind an explicit authorization policy. The
 framework does not embed or proxy gRPCui and does not translate gRPC into HTTP,
 keeping gRPC wire behavior and streaming semantics authoritative.

@@ -42,6 +42,37 @@ unit tests in `tests/Ark.Tools.MediatorFramework.Tests`.
 dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
 ```
 
+## gRPC operations panel
+
+gRPCui is an external browser-based operations panel. It uses the same generated
+protobuf contracts in development and production; the sample does not embed the
+gRPCui binary or translate gRPC to HTTP.
+
+Export the contracts from the host build:
+
+```bash
+proto_dir="$PWD/samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/proto"
+dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface \
+  -- --ark-export-proto "$proto_dir"
+```
+
+Install gRPCui with `go install github.com/fullstorydev/grpcui/cmd/grpcui@latest`,
+then start the panel against the TLS endpoint:
+
+```bash
+proto_args=()
+while IFS= read -r proto; do proto_args+=(-proto "$proto"); done < <(find "$proto_dir" -name '*.proto' -print)
+grpcui -import-path "$proto_dir" "${proto_args[@]}" \
+  -H 'authorization: ******' -expand-headers \
+  https://localhost:5001
+```
+
+Set `GRPCUI_ACCESS_TOKEN` to an OAuth2 access token issued for the API before
+launching the panel. gRPCui forwards it as bearer metadata on reflection and
+operation requests; it does not handle OAuth2 login or token refresh. Do not
+put access tokens in source files or committed command history. Use the
+production certificate and endpoint in place of the sample values.
+
 ## Documented follow-ups
 
 The emitted `.proto` now generates a dedicated client assembly used by the

@@ -134,7 +134,8 @@ public sealed class SampleStartup
         app.UseRouting();
         app.UseAuthentication();
         app.UseWhen(
-            context => context.Request.Path.StartsWithSegments("/api", StringComparison.Ordinal),
+            context => context.Request.Path.StartsWithSegments("/api", StringComparison.Ordinal)
+                || context.Request.ContentType?.StartsWith("application/grpc", StringComparison.OrdinalIgnoreCase) == true,
             branch => branch.UseAuthorization());
 
         app.UseSimpleInjector(_container);
