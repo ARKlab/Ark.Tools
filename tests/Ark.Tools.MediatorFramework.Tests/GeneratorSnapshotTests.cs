@@ -124,6 +124,43 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorEmitsCommandStatusSemantics()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/commands/delete")]
+            public sealed record DeleteCommand : ICommand
+            {
+                public string Id { get; init; } = string.Empty;
+            }
+            """);
+
+        generated.Should().Contain("ICommandHandler<global::DeleteCommand>");
+        generated.Should().Contain("TypedResults.NoContent()");
+        generated.Should().Contain(".Produces(204)");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorEmitsCommandReturningEmpty()
+    {
+        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [GrpcMethod("Delete")]
+            public sealed class DeleteCommand : ICommand
+            {
+            }
+            """);
+
+        generated.Should().Contain("Google.Protobuf.WellKnownTypes.Empty");
+        generated.Should().Contain("google.protobuf.Empty");
+        generated.Should().Contain("await handler.ExecuteAsync");
+    }
+
+    [TestMethod]
     public void RebusGeneratorEmitsOwnerQueueRouting()
     {
         var generated = RunGenerator<ArkRebusEndpointGenerator>(

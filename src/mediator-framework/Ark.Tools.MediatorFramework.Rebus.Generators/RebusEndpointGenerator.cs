@@ -101,11 +101,32 @@ namespace Ark.MediatorFramework.Generators
 
         private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData rebusAttribute)
         {
-            // Rebus messages are dispatched via IRequestHandler; queries (reads) are not
+            // Rebus messages are dispatched via their matching Solid handler; queries (reads) are not
             // meaningful as bus messages.
             foreach (var iface in type.AllInterfaces)
             {
                 var def = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                if (def == "global::Ark.Tools.Solid.ICommand")
+                {
+                    var diagnostics = new List<DiagnosticInfo>();
+                    var ownerQueue = GetOwnerQueue(rebusAttribute);
+                    if (ownerQueue is null && HasOwnerQueueArgument(rebusAttribute))
+                    {
+                        diagnostics.Add(new DiagnosticInfo(
+                            InvalidOwnerQueue,
+                            type.Name,
+                            GetLocation(rebusAttribute)));
+                    }
+
+                    return new EndpointModel(
+                        type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        type.Name,
+                        null,
+                        ownerQueue is not null && diagnostics.Count == 0 ? ownerQueue : null,
+                        diagnostics,
+                        isCommand: true);
+                }
+
                 if (def == "global::Ark.Tools.Solid.IRequest<TResponse>")
                 {
                     var response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -124,7 +145,8 @@ namespace Ark.MediatorFramework.Generators
                         type.Name,
                         response,
                         ownerQueue is not null && diagnostics.Count == 0 ? ownerQueue : null,
-                        diagnostics);
+                        diagnostics,
+                        isCommand: false);
                 }
             }
 
@@ -192,7 +214,9 @@ namespace Ark.MediatorFramework.Generators
             {
                 foreach (var e in items)
                 {
-                    var handlerService = "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
+                    var handlerService = e.IsCommand
+                        ? "global::Ark.Tools.Solid.ICommandHandler<" + e.TypeFullName + ">"
+                        : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
                     sb.AppendLine();
                     sb.AppendLine("        /// <summary>Generated Rebus wrapper dispatching to the pure handler for <c>" + e.TypeName + "</c>.</summary>");
                     sb.AppendLine("        [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.MediatorFramework.Rebus.Generators\", \"1.0.0\")]");
@@ -219,22 +243,25 @@ namespace Ark.MediatorFramework.Generators
             public EndpointModel(
                 string typeFullName,
                 string typeName,
-                string response,
+                string? response,
                 string? ownerQueue,
-                IReadOnlyList<DiagnosticInfo> diagnostics)
+                IReadOnlyList<DiagnosticInfo> diagnostics,
+                bool isCommand)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
                 Response = response;
                 OwnerQueue = ownerQueue;
                 Diagnostics = diagnostics;
+                IsCommand = isCommand;
             }
 
             public string TypeFullName { get; }
             public string TypeName { get; }
-            public string Response { get; }
+            public string? Response { get; }
             public string? OwnerQueue { get; }
             public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
+            public bool IsCommand { get; }
         }
 
         private readonly struct DiagnosticInfo

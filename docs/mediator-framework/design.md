@@ -125,6 +125,12 @@ app.MapPost("/api/v1/orders", async (
 });
 ```
 
+Commands implement `ICommand` and are dispatched through `ICommandHandler<T>`.
+HTTP-only commands execute inline and return `204 No Content`; commands also
+marked with `[RebusMessage(OwnerQueue = "...")]` are sent to that queue and
+return `202 Accepted`. Generated gRPC command methods return
+`google.protobuf.Empty`, while Rebus wrappers invoke the command handler.
+
 The `IntroducedIn` and exclusive `RetiredIn` properties on `HttpEndpointAttribute`
 expand a `{version}` route once per active version. The generator applies the
 same lifetime rules to `[GrpcMethod]`, emitting one version-suffixed service per

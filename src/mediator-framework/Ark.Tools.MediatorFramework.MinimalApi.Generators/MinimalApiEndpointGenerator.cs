@@ -27,6 +27,7 @@ namespace Ark.MediatorFramework.Generators
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
         private const string BindFromQueryAttribute = "Ark.MediatorFramework.BindFromQueryAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
+        private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
             "ARKMF001",
@@ -70,6 +71,7 @@ namespace Ark.MediatorFramework.Generators
             var runtimeAssembly = httpAttr.ContainingAssembly;
             var bindFromQueryAttr = compilation.GetTypeByMetadataName(BindFromQueryAttribute);
             var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
+            var rebusMessageAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
@@ -82,7 +84,7 @@ namespace Ark.MediatorFramework.Generators
                     if (http is null)
                         continue;
 
-                    var model = Extract(type, http, bindFromQueryAttr, serverSetAttr, attachmentType);
+                    var model = Extract(type, http, bindFromQueryAttr, serverSetAttr, attachmentType, rebusMessageAttr);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -128,7 +130,8 @@ namespace Ark.MediatorFramework.Generators
             AttributeData http,
             INamedTypeSymbol? bindFromQueryAttr,
             INamedTypeSymbol? serverSetAttr,
-            INamedTypeSymbol? attachmentType)
+            INamedTypeSymbol? attachmentType,
+            INamedTypeSymbol? rebusMessageAttr)
         {
             string? response = null;
             var kind = HandlerKind.None;
@@ -149,9 +152,15 @@ namespace Ark.MediatorFramework.Generators
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     break;
                 }
+
+                if (def == "global::Ark.Tools.Solid.ICommand")
+                {
+                    kind = HandlerKind.Command;
+                    break;
+                }
             }
 
-            if (kind == HandlerKind.None || response is null)
+            if (kind == HandlerKind.None || (kind != HandlerKind.Command && response is null))
                 return null;
 
             if (http.ConstructorArguments.Length != 2)
@@ -171,6 +180,12 @@ namespace Ark.MediatorFramework.Generators
             var requireAntiforgery = NamedBool(http, "RequireAntiforgery");
             var maxRequestBodySizeBytes = NamedLong(http, "MaxRequestBodySizeBytes");
             var allowedContentTypes = NamedStringArray(http, "AllowedContentTypes");
+            var ownerQueue = rebusMessageAttr is null
+                ? null
+                : type.GetAttributes()
+                    .Where(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, rebusMessageAttr))
+                    .Select(attribute => NamedString(attribute, "OwnerQueue"))
+                    .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
             var routeNames = new HashSet<string>(
                 Regex.Matches(template!, "\\{([^}:]+)(?::[^}]+)?\\}")
                 .Cast<Match>()
@@ -200,7 +215,7 @@ namespace Ark.MediatorFramework.Generators
                 type.Name,
                 verb,
                 template!,
-                response,
+                response ?? "global::System.Void",
                 kind,
                 httpIntroducedIn,
                 httpRetiredIn,
@@ -210,6 +225,7 @@ namespace Ark.MediatorFramework.Generators
                 requireAntiforgery,
                 maxRequestBodySizeBytes,
                 allowedContentTypes,
+                ownerQueue,
                 properties,
                 type.IsRecord,
                 properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
@@ -328,6 +344,11 @@ namespace Ark.MediatorFramework.Generators
                     {
                         var map = MapMethod(e.Verb);
                         var template = e.Template.Replace("{version}", version.ToString());
+                        if (e.Kind == HandlerKind.Command)
+                        {
+                            EmitCommandEndpoint(sb, e, map, template, version);
+                            continue;
+                        }
                         if (e.AttachmentCount == 1)
                         {
                             EmitMultipartEndpoint(sb, e, handlerService, map, template, version);
@@ -456,6 +477,68 @@ namespace Ark.MediatorFramework.Generators
                     .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
             }
 
+            private static void EmitCommandEndpoint(
+                StringBuilder sb,
+                EndpointModel endpoint,
+                string map,
+                string template,
+                int version)
+            {
+                var bodyVerb = endpoint.Verb != "GET" && endpoint.Verb != "DELETE";
+                var explicitBindings = bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery);
+                sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+                if (explicitBindings)
+                {
+                    foreach (var property in endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
+                    {
+                        var source = property.IsRoute ? "FromRoute" : "FromQuery";
+                        var bindingName = property.IsRoute ? property.BindingName : property.Name;
+                        sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
+                            .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
+                            .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+                    }
+
+                    sb.AppendLine("                " + endpoint.TypeFullName + " body,");
+                }
+                else
+                {
+                    sb.AppendLine("                " + (bodyVerb ? string.Empty : "[global::Microsoft.AspNetCore.Http.AsParameters] ") + endpoint.TypeFullName + " request,");
+                }
+
+                sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
+                sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
+                sb.AppendLine("            {");
+                if (explicitBindings)
+                {
+                    var assignments = string.Join(", ", endpoint.Properties
+                        .Where(property => property.IsRoute || property.IsQuery)
+                        .Select(property => property.Name + " = " + property.Name)
+                        .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
+                    sb.AppendLine("                var request = body with { " + assignments + " };");
+                }
+                else if (endpoint.IsRecord && endpoint.ServerSetProperties.Length > 0)
+                {
+                    sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
+                }
+                EmitServerSetAssignments(sb, endpoint, "request");
+                if (endpoint.OwnerQueue is not null)
+                {
+                    sb.AppendLine("                var bus = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Rebus.IBus>(httpContext.RequestServices);");
+                    sb.AppendLine("                await bus.Advanced.Routing.Send(" + Literal(endpoint.OwnerQueue) + ", request).ConfigureAwait(false);");
+                    sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Accepted();");
+                }
+                else
+                {
+                    sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+                    sb.AppendLine("                var handler = container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<" + endpoint.TypeFullName + ">>();");
+                    sb.AppendLine("                await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+                    sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
+                }
+                sb.Append("            }).WithGroupName(").Append(Literal("v" + version)).Append(')');
+                sb.Append(endpoint.OwnerQueue is null ? ".Produces(204)" : ".Produces(202)");
+                sb.Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+            }
+
             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
             sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
             sb.AppendLine("            {");
@@ -533,6 +616,7 @@ namespace Ark.MediatorFramework.Generators
             None = 0,
             Request = 1,
             Query = 2,
+            Command = 3,
         }
 
         private readonly struct EndpointModel
@@ -552,6 +636,7 @@ namespace Ark.MediatorFramework.Generators
                 bool requireAntiforgery,
                 long maxRequestBodySizeBytes,
                 ImmutableArray<string> allowedContentTypes,
+                string? ownerQueue,
                 ImmutableArray<PropertyModel> properties,
                 bool isRecord,
                 ImmutableArray<string> invalidServerSetProperties,
@@ -573,6 +658,7 @@ namespace Ark.MediatorFramework.Generators
                 RequireAntiforgery = requireAntiforgery;
                 MaxRequestBodySizeBytes = maxRequestBodySizeBytes;
                 AllowedContentTypes = allowedContentTypes;
+                OwnerQueue = ownerQueue;
                 Properties = properties;
                 IsRecord = isRecord;
                 ServerSetProperties = properties.Where(property => property.IsServerSet).Select(property => property.Name).ToImmutableArray();
@@ -599,6 +685,7 @@ namespace Ark.MediatorFramework.Generators
             public long MaxRequestBodySizeBytes { get; }
 
             public ImmutableArray<string> AllowedContentTypes { get; }
+            public string? OwnerQueue { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
             public bool IsRecord { get; }
             public ImmutableArray<string> ServerSetProperties { get; }
