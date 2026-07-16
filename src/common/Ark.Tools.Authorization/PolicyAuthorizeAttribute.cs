@@ -4,7 +4,8 @@ namespace Ark.Tools.Authorization;
 /// Specifies that the class or method that this attribute is applied to requires the specified authorization.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
-public sealed class PolicyAuthorizeAttribute : Attribute
+#pragma warning disable CA1813 // Derived attributes allow policy-specific parameters.
+public class PolicyAuthorizeAttribute : Attribute
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PolicyAuthorizeAttribute"/> class. 
@@ -56,3 +57,4 @@ public sealed class PolicyAuthorizeAttribute : Attribute
     /// </summary>
     public IAuthorizationPolicy? Policy { get; }
 }
+#pragma warning restore CA1813

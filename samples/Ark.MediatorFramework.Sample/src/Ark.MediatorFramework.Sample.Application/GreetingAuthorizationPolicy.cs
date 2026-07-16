@@ -2,37 +2,83 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Authorization;
-using Ark.Tools.Authorization.Requirement;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
-/// <summary>Requires the greeting-write scope for the shared greeting mutation.</summary>
-public sealed class GreetingAuthorizationPolicy : AuthorizationPolicy
+/// <summary>Names the scopes used by the sample application.</summary>
+public static class ApplicationScopes
 {
-    /// <inheritdoc />
-    protected override void Build(AuthorizationPolicyBuilder builder)
+    /// <summary>Allows creating greetings.</summary>
+    public const string GreetingWrite = "greetings.write";
+}
+
+/// <summary>Requires a scope claim.</summary>
+public sealed class RequireScopePolicy : IAuthorizationPolicy
+{
+    /// <summary>Initializes a new instance of the <see cref="RequireScopePolicy"/> class.</summary>
+    /// <param name="scope">The required scope.</param>
+    public RequireScopePolicy(string scope)
     {
-        builder.RequireClaim("scope", "greetings.write");
+        Scope = scope;
+        var builder = new AuthorizationPolicyBuilder(nameof(RequireScopePolicy));
+        builder.AddRequirements(new ScopeAuthorizationRequirement(Scope));
+        var policy = builder.Build();
+        Name = policy.Name;
+        Requirements = policy.Requirements;
+    }
+
+    /// <summary>Gets the required scope.</summary>
+    public string Scope { get; }
+
+    /// <inheritdoc />
+    public string Name { get; }
+
+    /// <inheritdoc />
+    public IReadOnlyList<IAuthorizationRequirement> Requirements { get; }
+}
+
+/// <summary>Creates a policy requiring the specified scope.</summary>
+public sealed class RequireScopePolicyAttribute : PolicyAuthorizeAttribute
+{
+    /// <summary>Initializes a new instance of the <see cref="RequireScopePolicyAttribute"/> class.</summary>
+    /// <param name="scope">The required scope.</param>
+    public RequireScopePolicyAttribute(string scope)
+        : base(typeof(RequireScopePolicy), scope)
+    {
     }
 }
 
-/// <summary>Evaluates claim requirements used by the sample's greeting policy.</summary>
-public sealed class GreetingAuthorizationHandler : IAuthorizationHandler
+/// <summary>Evaluates scope requirements against the current user's claims.</summary>
+public sealed class ScopeAuthorizationHandler : AuthorizationHandler<ScopeAuthorizationRequirement>
 {
     /// <inheritdoc />
-    public Task HandleAsync(AuthorizationContext context, CancellationToken ctk = default)
+    protected override Task HandleRequirementAsync(
+        AuthorizationContext context,
+        ScopeAuthorizationRequirement requirement,
+        CancellationToken ctk = default)
     {
-        foreach (var requirement in context.Policy.Requirements.OfType<ClaimsAuthorizationRequirement>())
+        if (context.User.Claims.Any(claim =>
+            string.Equals(claim.Type, "scope", StringComparison.OrdinalIgnoreCase)
+            && claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Contains(requirement.Scope, StringComparer.Ordinal)))
         {
-            if (context.User.Claims.Any(claim =>
-                string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
-                && (requirement.AllowedValues is null
-                    || requirement.AllowedValues.Contains(claim.Value, StringComparer.Ordinal))))
-            {
-                context.Succeed(requirement);
-            }
+            context.Succeed(requirement);
         }
 
         return Task.CompletedTask;
     }
+}
+
+/// <summary>Represents a required application scope.</summary>
+public sealed class ScopeAuthorizationRequirement : IAuthorizationRequirement
+{
+    /// <summary>Initializes a new instance of the <see cref="ScopeAuthorizationRequirement"/> class.</summary>
+    /// <param name="scope">The required scope.</param>
+    public ScopeAuthorizationRequirement(string scope)
+    {
+        Scope = scope;
+    }
+
+    /// <summary>Gets the required scope.</summary>
+    public string Scope { get; }
 }

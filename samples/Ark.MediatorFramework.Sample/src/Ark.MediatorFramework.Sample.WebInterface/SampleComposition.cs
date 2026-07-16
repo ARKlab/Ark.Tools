@@ -46,8 +46,7 @@ public static class SampleComposition
         // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
         ApplicationComposition.Register(container);
         container.RegisterAuthorization();
-        container.RegisterAuthorizationPolicy<GreetingAuthorizationPolicy>();
-        container.RegisterAuthorizationHandler<GreetingAuthorizationHandler>();
+        container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 
         // Transport user context: AspNetCore auth (HttpContext.User) with Rebus fallback.
         // IHttpContextAccessor is forwarded from Microsoft DI by SampleStartup when the

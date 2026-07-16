@@ -4,7 +4,7 @@
 namespace Ark.Tools.Authorization;
 
 /// <summary>Indicates that a handler policy denied the current principal.</summary>
-public sealed class PolicyAuthorizationException : Exception
+public sealed class PolicyAuthorizationException : UnauthorizedAccessException
 {
     /// <summary>Initializes a new instance of the <see cref="PolicyAuthorizationException"/> class.</summary>
     public PolicyAuthorizationException()
