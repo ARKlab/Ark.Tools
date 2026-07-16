@@ -137,10 +137,7 @@ public sealed class SampleStartup
 
         app.UseRouting();
         app.UseAuthentication();
-        app.UseWhen(
-            context => context.Request.Path.StartsWithSegments("/api", StringComparison.Ordinal)
-                || context.Request.ContentType?.StartsWith("application/grpc", StringComparison.OrdinalIgnoreCase) == true,
-            branch => branch.UseAuthorization());
+        app.UseAuthorization();
 
         app.UseSimpleInjector(_container);
 
@@ -156,11 +153,11 @@ public sealed class SampleStartup
             endpoints.MapArkEndpoints();
             endpoints.MapArkGrpcServices();
             endpoints.MapGrpcService<DocumentsGrpcService>();
-            endpoints.MapCodeFirstGrpcReflectionService();
+            endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
             endpoints.MapControllers();
 
             // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
-            endpoints.MapOpenApi();
+            endpoints.MapOpenApi().AllowAnonymous();
             endpoints.MapScalarApiReference(options =>
             {
                 options.AddAuthorizationCodeFlow("oauth2", flow => flow
@@ -168,7 +165,7 @@ public sealed class SampleStartup
                     .WithAuthorizationUrl(_openApiSecurity.AuthorizationUrl.ToString())
                     .WithTokenUrl(_openApiSecurity.TokenUrl.ToString())
                     .WithPkce(Pkce.Sha256));
-            });
+            }).AllowAnonymous();
         });
     }
 
