@@ -321,7 +321,7 @@ Debug`) before the task is marked complete.
     polymorphic subtypes, is composed with Ark defaults through
     `HttpJsonOptions`, preserves existing JSON wire shapes, and behavioral tests
     prove generated endpoints use the configured resolver.
-- [ ] **T11.3** Add authenticated OpenAPI UIs.
+- [x] **T11.3** Add authenticated OpenAPI UIs.
   - *Accept:* Scalar serves both versioned documents in Development; Swagger UI
     can be enabled as a compatibility option; OpenAPI contains tested OAuth2
     authorization-code/PKCE and OpenID Connect schemes; no browser client secret
@@ -339,8 +339,7 @@ T9.1–T9.6 are complete. Wire-shape and packaging refinements run **before**
 the behavioral-test epic so the Reqnroll scenarios are written once against
 the final contracts:
 
-1. **T11.3** Scalar plus optional Swagger UI with OAuth2/OIDC.
-2. **T11.1** gRPCui development tooling.
+1. **T11.1** gRPCui development tooling.
 
 ## Status legend
 

@@ -6,10 +6,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 
 using Ark.MediatorFramework.Sample.Tests.Hooks;
+using Ark.MediatorFramework.Sample.Tests.Auth;
 
 using AwesomeAssertions;
 
 using Grpc.Net.Client;
+using Grpc.Core;
 
 using Reqnroll;
 
@@ -31,6 +33,7 @@ public sealed class GreetingSteps
 {
     private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
     private readonly SampleTestContext _context;
+    private readonly AuthTestContext _authContext;
     private AppGreetingResponse? _greeting;
     private GrpcGreetingResponse? _grpcGreeting;
     private AppGreetingResponseV2? _versionTwoGreeting;
@@ -38,9 +41,11 @@ public sealed class GreetingSteps
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
     /// <param name="context">The scenario's isolated sample host.</param>
-    public GreetingSteps(SampleTestContext context)
+    /// <param name="authContext">The scenario's authentication context.</param>
+    public GreetingSteps(SampleTestContext context, AuthTestContext authContext)
     {
         _context = context;
+        _authContext = authContext;
     }
 
     [Given(@"I create the greeting ""(.*)"" over HTTP")]
@@ -64,7 +69,8 @@ public sealed class GreetingSteps
             HttpHandler = _context.CreateGrpcHandler(),
         });
         var result = await new GrpcGreetingsV1Client(channel).CreateGreetingAsync(
-            new GrpcCreateGreetingRequest { Name = name }).ResponseAsync.ConfigureAwait(false);
+            new GrpcCreateGreetingRequest { Name = name },
+            new Metadata { { "authorization", string.Concat("Bearer ", _authContext.Token) } }).ResponseAsync.ConfigureAwait(false);
 
         _grpcGreeting = result;
     }
@@ -128,6 +134,13 @@ public sealed class GreetingSteps
         _response.Should().NotBeNull();
         _response!.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         _response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
+    }
+
+    [Then(@"the request is unauthorized")]
+    public void ThenTheRequestIsUnauthorized()
+    {
+        _response.Should().NotBeNull();
+        _response!.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Then(@"the version two greeting includes its message length")]

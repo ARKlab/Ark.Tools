@@ -12,9 +12,8 @@ if (ArkProtoExport.TryHandle(args))
 
 var container = SampleComposition.BuildContainer(network);
 
-var startup = new SampleStartup(container);
-
 var builder = WebApplication.CreateBuilder(args);
+var startup = new SampleStartup(container, builder.Configuration);
 startup.ConfigureServices(builder.Services);
 
 var app = builder.Build();

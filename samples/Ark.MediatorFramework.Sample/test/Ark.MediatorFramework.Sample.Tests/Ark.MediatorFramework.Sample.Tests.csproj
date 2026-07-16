@@ -16,6 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\appsettings.json"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="appsettings.json" />
     <None Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto\Greetings.proto"
           CopyToOutputDirectory="PreserveNewest"
           Link="Greetings.proto" />
