@@ -168,6 +168,9 @@ namespace Ark.MediatorFramework.Generators
             var acceptsMessagePack = NamedBool(http, "AcceptsMessagePack");
             var policy = NamedString(http, "Policy");
             var allowAnonymous = NamedBool(http, "AllowAnonymous");
+            var requireAntiforgery = NamedBool(http, "RequireAntiforgery");
+            var maxRequestBodySizeBytes = NamedLong(http, "MaxRequestBodySizeBytes");
+            var allowedContentTypes = NamedStringArray(http, "AllowedContentTypes");
             var routeNames = new HashSet<string>(
                 Regex.Matches(template!, "\\{([^}:]+)(?::[^}]+)?\\}")
                 .Cast<Match>()
@@ -204,6 +207,9 @@ namespace Ark.MediatorFramework.Generators
                 acceptsMessagePack,
                 policy,
                 allowAnonymous,
+                requireAntiforgery,
+                maxRequestBodySizeBytes,
+                allowedContentTypes,
                 properties,
                 type.IsRecord,
                 properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
@@ -233,6 +239,24 @@ namespace Ark.MediatorFramework.Generators
         {
             var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
             return argument.Value.Value as string;
+        }
+
+        private static long NamedLong(AttributeData attribute, string name)
+        {
+            var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
+            return argument.Value.Value is long value ? value : 0;
+        }
+
+        private static ImmutableArray<string> NamedStringArray(AttributeData attribute, string name)
+        {
+            var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
+            if (argument.Value.Kind != TypedConstantKind.Array)
+                return ImmutableArray<string>.Empty;
+
+            return argument.Value.Values
+                .Where(value => value.Value is string)
+                .Select(value => (string)value.Value!)
+                .ToImmutableArray();
         }
 
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
@@ -439,6 +463,14 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                if (form.Files.Count != 1)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.BadRequest(\"Exactly one file is required.\");");
             sb.AppendLine("                var file = form.Files[0];");
+            if (!endpoint.AllowedContentTypes.IsDefaultOrEmpty)
+            {
+                var allowedTypes = string.Join(", ", endpoint.AllowedContentTypes.Select(Literal));
+                sb.AppendLine("                if (!global::System.Linq.Enumerable.Contains(new[] { "
+                    + allowedTypes
+                    + " }, file.ContentType, global::System.StringComparer.OrdinalIgnoreCase))");
+                sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.StatusCode(415);");
+            }
             sb.AppendLine("                var request = new " + endpoint.TypeFullName + " {");
             foreach (var property in bindings)
                 sb.Append("                    ").Append(property.Name).Append(" = ").Append(property.Name).AppendLine(",");
@@ -450,7 +482,19 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
             sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\").WithGroupName(")
-                .Append(Literal("v" + version)).Append(')').Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+                .Append(Literal("v" + version)).Append(')').Append(MultipartMetadata(endpoint)).Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+        }
+
+        private static string MultipartMetadata(EndpointModel endpoint)
+        {
+            var metadata = new StringBuilder();
+            if (!endpoint.RequireAntiforgery)
+                metadata.Append(" /* Bearer-token API upload: antiforgery validation is intentionally disabled. */.DisableAntiforgery()");
+            if (endpoint.MaxRequestBodySizeBytes > 0)
+                metadata.Append(".WithMetadata(new global::Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(")
+                    .Append(endpoint.MaxRequestBodySizeBytes)
+                    .Append("L))");
+            return metadata.ToString();
         }
 
         private static string AuthorizationMetadata(EndpointModel endpoint)
@@ -505,6 +549,9 @@ namespace Ark.MediatorFramework.Generators
                 bool acceptsMessagePack,
                 string? policy,
                 bool allowAnonymous,
+                bool requireAntiforgery,
+                long maxRequestBodySizeBytes,
+                ImmutableArray<string> allowedContentTypes,
                 ImmutableArray<PropertyModel> properties,
                 bool isRecord,
                 ImmutableArray<string> invalidServerSetProperties,
@@ -523,6 +570,9 @@ namespace Ark.MediatorFramework.Generators
                 AcceptsMessagePack = acceptsMessagePack;
                 Policy = policy;
                 AllowAnonymous = allowAnonymous;
+                RequireAntiforgery = requireAntiforgery;
+                MaxRequestBodySizeBytes = maxRequestBodySizeBytes;
+                AllowedContentTypes = allowedContentTypes;
                 Properties = properties;
                 IsRecord = isRecord;
                 ServerSetProperties = properties.Where(property => property.IsServerSet).Select(property => property.Name).ToImmutableArray();
@@ -543,6 +593,12 @@ namespace Ark.MediatorFramework.Generators
             public bool AcceptsMessagePack { get; }
             public string? Policy { get; }
             public bool AllowAnonymous { get; }
+
+            public bool RequireAntiforgery { get; }
+
+            public long MaxRequestBodySizeBytes { get; }
+
+            public ImmutableArray<string> AllowedContentTypes { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
             public bool IsRecord { get; }
             public ImmutableArray<string> ServerSetProperties { get; }

@@ -64,6 +64,13 @@ for public endpoints. `MapArkEndpoints` also accepts a group configuration
 callback for shared authorization and other endpoint metadata such as filters,
 rate limiting, CORS, or output caching.
 
+For multipart endpoints, generated uploads disable antiforgery validation by
+default because they are designed for bearer-token APIs. Set
+`RequireAntiforgery = true` for cookie-authenticated hosts. Use
+`MaxRequestBodySizeBytes` and `AllowedContentTypes` on `[HttpEndpoint]` to
+declare upload limits and accepted file types. Uploaded names are sanitized to
+a leaf name before handlers receive them.
+
 For API versions, declare the contract's lifetime (`IntroducedIn`/`RetiredIn`)
 and use the `/api/v{version}/...` placeholder route. The generator emits one
 route per active version and partitions the OpenAPI documents accordingly;

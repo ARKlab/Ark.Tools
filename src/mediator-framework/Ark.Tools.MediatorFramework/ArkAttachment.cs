@@ -17,7 +17,7 @@ public sealed class ArkAttachment : IArkAttachment
     /// <param name="openRead">A factory returning a readable stream over the payload.</param>
     public ArkAttachment(string name, string contentType, Func<Stream> openRead)
     {
-        Name = name ?? throw new ArgumentNullException(nameof(name));
+        Name = ArkAttachmentName.Sanitize(name ?? throw new ArgumentNullException(nameof(name)));
         ContentType = contentType ?? throw new ArgumentNullException(nameof(contentType));
         _openRead = openRead ?? throw new ArgumentNullException(nameof(openRead));
     }
@@ -30,4 +30,16 @@ public sealed class ArkAttachment : IArkAttachment
 
     /// <inheritdoc />
     public Stream OpenRead() => _openRead();
+}
+
+internal static class ArkAttachmentName
+{
+    public static string Sanitize(string name)
+    {
+        var leafName = Path.GetFileName(name.Replace('\\', '/'));
+        var sanitized = new string(leafName.Where(character => !char.IsControl(character)).ToArray());
+        return string.IsNullOrWhiteSpace(sanitized)
+            ? Guid.NewGuid().ToString("N")
+            : sanitized;
+    }
 }
