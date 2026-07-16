@@ -8,6 +8,7 @@ using AwesomeAssertions;
 
 using Grpc.Core;
 using Grpc.Net.Client;
+using Google.Protobuf;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
@@ -26,7 +27,7 @@ public sealed class AuthorizationTests
         var client = new GreetingsV1.GreetingsV1Client(channel);
 
         var action = async () => await client.GetGreetingAsync(
-            new GetGreetingQuery { Id = 1 }).ResponseAsync.ConfigureAwait(false);
+            new GetGreetingQuery { Id = ByteString.Empty }).ResponseAsync.ConfigureAwait(false);
 
         var exception = await action.Should().ThrowAsync<RpcException>();
         exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
