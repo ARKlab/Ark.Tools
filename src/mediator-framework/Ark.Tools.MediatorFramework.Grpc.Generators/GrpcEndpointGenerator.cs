@@ -539,6 +539,7 @@ namespace Ark.MediatorFramework.Generators
                 "global::NodaTime.OffsetDateTime" => "google.type.DateTime",
                 "global::NodaTime.ZonedDateTime" => "google.type.DateTime",
                 "global::NodaTime.Period" => "ark.nodatime.Period",
+                "global::Google.Protobuf.WellKnownTypes.Empty" => "google.protobuf.Empty",
                 _ => null,
             };
             if (name is not null)

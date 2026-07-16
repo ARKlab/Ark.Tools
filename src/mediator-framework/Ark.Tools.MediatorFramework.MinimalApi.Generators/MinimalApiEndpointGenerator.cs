@@ -477,68 +477,6 @@ namespace Ark.MediatorFramework.Generators
                     .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
             }
 
-            private static void EmitCommandEndpoint(
-                StringBuilder sb,
-                EndpointModel endpoint,
-                string map,
-                string template,
-                int version)
-            {
-                var bodyVerb = endpoint.Verb != "GET" && endpoint.Verb != "DELETE";
-                var explicitBindings = bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery);
-                sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
-                if (explicitBindings)
-                {
-                    foreach (var property in endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
-                    {
-                        var source = property.IsRoute ? "FromRoute" : "FromQuery";
-                        var bindingName = property.IsRoute ? property.BindingName : property.Name;
-                        sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
-                            .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
-                            .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
-                    }
-
-                    sb.AppendLine("                " + endpoint.TypeFullName + " body,");
-                }
-                else
-                {
-                    sb.AppendLine("                " + (bodyVerb ? string.Empty : "[global::Microsoft.AspNetCore.Http.AsParameters] ") + endpoint.TypeFullName + " request,");
-                }
-
-                sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
-                sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
-                sb.AppendLine("            {");
-                if (explicitBindings)
-                {
-                    var assignments = string.Join(", ", endpoint.Properties
-                        .Where(property => property.IsRoute || property.IsQuery)
-                        .Select(property => property.Name + " = " + property.Name)
-                        .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
-                    sb.AppendLine("                var request = body with { " + assignments + " };");
-                }
-                else if (endpoint.IsRecord && endpoint.ServerSetProperties.Length > 0)
-                {
-                    sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
-                }
-                EmitServerSetAssignments(sb, endpoint, "request");
-                if (endpoint.OwnerQueue is not null)
-                {
-                    sb.AppendLine("                var bus = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Rebus.IBus>(httpContext.RequestServices);");
-                    sb.AppendLine("                await bus.Advanced.Routing.Send(" + Literal(endpoint.OwnerQueue) + ", request).ConfigureAwait(false);");
-                    sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Accepted();");
-                }
-                else
-                {
-                    sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                    sb.AppendLine("                var handler = container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<" + endpoint.TypeFullName + ">>();");
-                    sb.AppendLine("                await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
-                    sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
-                }
-                sb.Append("            }).WithGroupName(").Append(Literal("v" + version)).Append(')');
-                sb.Append(endpoint.OwnerQueue is null ? ".Produces(204)" : ".Produces(202)");
-                sb.Append(AuthorizationMetadata(endpoint)).AppendLine(";");
-            }
-
             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
             sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
             sb.AppendLine("            {");
@@ -566,6 +504,68 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
             sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\").WithGroupName(")
                 .Append(Literal("v" + version)).Append(')').Append(MultipartMetadata(endpoint)).Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+        }
+
+        private static void EmitCommandEndpoint(
+            StringBuilder sb,
+            EndpointModel endpoint,
+            string map,
+            string template,
+            int version)
+        {
+            var bodyVerb = endpoint.Verb != "GET" && endpoint.Verb != "DELETE";
+            var explicitBindings = bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery);
+            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            if (explicitBindings)
+            {
+                foreach (var property in endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
+                {
+                    var source = property.IsRoute ? "FromRoute" : "FromQuery";
+                    var bindingName = property.IsRoute ? property.BindingName : property.Name;
+                    sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
+                        .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
+                        .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+                }
+
+                sb.AppendLine("                " + endpoint.TypeFullName + " body,");
+            }
+            else
+            {
+                sb.AppendLine("                " + (bodyVerb ? string.Empty : "[global::Microsoft.AspNetCore.Http.AsParameters] ") + endpoint.TypeFullName + " request,");
+            }
+
+            sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
+            sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
+            sb.AppendLine("            {");
+            if (explicitBindings)
+            {
+                var assignments = string.Join(", ", endpoint.Properties
+                    .Where(property => property.IsRoute || property.IsQuery)
+                    .Select(property => property.Name + " = " + property.Name)
+                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
+                sb.AppendLine("                var request = body with { " + assignments + " };");
+            }
+            else if (endpoint.IsRecord && endpoint.ServerSetProperties.Length > 0)
+            {
+                sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
+            }
+            EmitServerSetAssignments(sb, endpoint, "request");
+            if (endpoint.OwnerQueue is not null)
+            {
+                sb.AppendLine("                var bus = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Rebus.IBus>(httpContext.RequestServices);");
+                sb.AppendLine("                await bus.Advanced.Routing.Send(" + Literal(endpoint.OwnerQueue) + ", request).ConfigureAwait(false);");
+                sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Accepted();");
+            }
+            else
+            {
+                sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+                sb.AppendLine("                var handler = container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<" + endpoint.TypeFullName + ">>();");
+                sb.AppendLine("                await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+                sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
+            }
+            sb.Append("            }).WithGroupName(").Append(Literal("v" + version)).Append(')');
+            sb.Append(endpoint.OwnerQueue is null ? ".Produces(204)" : ".Produces(202)");
+            sb.Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
 
         private static string MultipartMetadata(EndpointModel endpoint)

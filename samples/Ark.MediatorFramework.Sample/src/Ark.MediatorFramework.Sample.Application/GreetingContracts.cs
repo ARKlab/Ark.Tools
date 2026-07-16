@@ -41,6 +41,18 @@ public sealed record GreetingResponse
     public Period Period { get; init; } = Period.Zero;
 }
 
+/// <summary>Command used to exercise the synchronous command transport contract.</summary>
+[HttpEndpoint("POST", "/api/v{version}/greetings/refresh")]
+[GrpcMethod("RefreshGreeting")]
+[ServiceGroup("Greetings")]
+[ProtoContract]
+public sealed record RefreshGreetingCommand : ICommand
+{
+    /// <summary>Gets the greeting identifier to refresh.</summary>
+    [ProtoMember(1)]
+    public Guid Id { get; init; }
+}
+
 /// <summary>
 /// Pure transport-agnostic request (mutation). Transport is declared explicitly and per-transport:
 /// <see cref="HttpEndpointAttribute"/> exposes it as an HTTP POST and <see cref="RebusMessageAttribute"/>

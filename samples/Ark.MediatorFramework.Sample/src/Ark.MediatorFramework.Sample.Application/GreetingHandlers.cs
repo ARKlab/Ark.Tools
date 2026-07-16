@@ -13,6 +13,17 @@ using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
+/// <summary>Handles the synchronous refresh command.</summary>
+public sealed class RefreshGreetingHandler : ICommandHandler<RefreshGreetingCommand>
+{
+    /// <inheritdoc />
+    public async Task ExecuteAsync(RefreshGreetingCommand command, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+}
+
 /// <summary>Pure handler for <see cref="CreateGreetingRequest"/> — no transport types.</summary>
 public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingRequest, GreetingResponse>
 {

@@ -178,6 +178,23 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void RebusGeneratorEmitsCommandHandlerWrapper()
+    {
+        var generated = RunGenerator<ArkRebusEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = "orders")]
+            public sealed class RebuildOrder : ICommand
+            {
+            }
+            """);
+
+        generated.Should().Contain("ICommandHandler<global::RebuildOrder>");
+        generated.Should().Contain("RebuildOrderRebusHandler");
+    }
+
+    [TestMethod]
     public void RebusMessageAllowsOnlyOneDeclaration()
     {
         var usage = (AttributeUsageAttribute)typeof(RebusMessageAttribute)
