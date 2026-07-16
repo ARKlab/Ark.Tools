@@ -3,8 +3,6 @@
 
 using Ark.Tools.Solid;
 
-using Ark.MediatorFramework;
-
 using NodaTime;
 
 using MessagePack;
