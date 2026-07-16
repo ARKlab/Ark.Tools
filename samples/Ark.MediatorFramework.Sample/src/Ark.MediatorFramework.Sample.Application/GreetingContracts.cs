@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
+using Ark.Tools.Authorization;
 
 using NodaTime;
 
@@ -50,6 +51,7 @@ public sealed record GreetingResponse
 [RebusMessage]
 [GrpcMethod("CreateGreeting")]
 [ServiceGroup("Greetings")]
+[PolicyAuthorize("greeting.write")]
 [ProtoContract]
 [MessagePackObject(true)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>

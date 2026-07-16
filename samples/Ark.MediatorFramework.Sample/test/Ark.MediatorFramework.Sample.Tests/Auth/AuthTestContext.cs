@@ -38,7 +38,7 @@ public sealed class AuthTestContext
     [BeforeScenario]
     public void SetAuthenticatedUser()
     {
-        Token = _tokenBuilder.AddSubject("test-user").Build();
+        Token = _tokenBuilder.AddSubject("test-user").AddGreetingWriteScope().Build();
         _context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
     }
 

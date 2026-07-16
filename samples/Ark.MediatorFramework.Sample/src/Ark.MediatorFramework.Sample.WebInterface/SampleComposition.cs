@@ -7,6 +7,7 @@ using Ark.MediatorFramework.Sample.Application;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Solid;
+using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Nodatime.Protobuf;
 
 using Rebus.Handlers;
@@ -44,6 +45,8 @@ public static class SampleComposition
 
         // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
         ApplicationComposition.Register(container);
+        container.RegisterAuthorization();
+        container.RegisterAuthorizationPolicy<GreetingAuthorizationPolicy>();
 
         // Transport user context: AspNetCore auth (HttpContext.User) with Rebus fallback.
         // IHttpContextAccessor is forwarded from Microsoft DI by SampleStartup when the

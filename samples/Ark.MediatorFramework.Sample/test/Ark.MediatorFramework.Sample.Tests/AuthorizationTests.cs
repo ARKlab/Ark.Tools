@@ -2,13 +2,17 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.GrpcClient;
+using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
+using Ark.MediatorFramework.Sample.Tests.Auth;
 
 using AwesomeAssertions;
 
 using Grpc.Core;
 using Grpc.Net.Client;
 using Google.Protobuf;
+
+using System.Net.Http.Json;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
@@ -31,5 +35,21 @@ public sealed class AuthorizationTests
 
         var exception = await action.Should().ThrowAsync<RpcException>();
         exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
+    }
+
+    /// <summary>A bearer token without the contract policy claim cannot invoke the mutation.</summary>
+    [TestMethod]
+    public async Task HttpCallWithoutGreetingWriteScopeReturnsForbidden()
+    {
+        using var context = new SampleTestContext();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("test-user").Build());
+
+        var response = await context.Client.PostAsJsonAsync(
+            "/api/v1/greetings",
+            new CreateGreetingRequest { Name = "policy-test" }).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
     }
 }
