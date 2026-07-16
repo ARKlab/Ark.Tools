@@ -21,6 +21,7 @@
     <PackageReference Include="System.ServiceModel.Primitives" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Authorization\Ark.Tools.Authorization.csproj" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
     <!-- The generator is applied as an analyzer when this package is project-referenced in

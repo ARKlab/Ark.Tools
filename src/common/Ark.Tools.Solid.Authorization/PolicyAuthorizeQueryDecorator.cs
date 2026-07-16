@@ -39,7 +39,7 @@ public class PolicyAuthorizeQueryDecorator<TQuery, TResult> : IQueryHandler<TQue
                 {
                     (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk).ConfigureAwait(false);
                     if (!authorized)
-                        throw new UnauthorizedAccessException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
+                        throw new PolicyAuthorizationException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
                 }
             }
         }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Authorization;
 
 using FluentValidation;
 
@@ -81,7 +82,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
             status.Details.Add(Any.Pack(badRequest));
             throw status.ToRpcException();
         }
-        catch (UnauthorizedAccessException exception)
+        catch (PolicyAuthorizationException exception)
         {
             throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied, exception.Message));
         }

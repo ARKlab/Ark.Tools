@@ -4,16 +4,12 @@
 using Ark.MediatorFramework.Sample.GrpcClient;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 using Ark.MediatorFramework.Sample.Tests.Auth;
-
 using AwesomeAssertions;
 
 using Grpc.Core;
 using Grpc.Net.Client;
 using Google.Protobuf;
 
-using System.Net.Http.Json;
-
-using AppCreateGreetingRequest = Ark.MediatorFramework.Sample.Application.CreateGreetingRequest;
 using GrpcGetGreetingQuery = Ark.MediatorFramework.Sample.GrpcClient.GetGreetingQuery;
 
 namespace Ark.MediatorFramework.Sample.Tests;
@@ -48,9 +44,11 @@ public sealed class AuthorizationTests
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").Build());
 
-        var response = await context.Client.PostAsJsonAsync(
-            "/api/v1/greetings",
-            new AppCreateGreetingRequest { Name = "policy-test" }).ConfigureAwait(false);
+        using var content = new StringContent(
+            """{"name":"policy-test","date":"2024-01-01","dateTime":"2024-01-01T00:00:00","offsetDateTime":"2024-01-01T00:00:00Z","period":"P0D"}""",
+            System.Text.Encoding.UTF8,
+            "application/json");
+        var response = await context.Client.PostAsync(new Uri("/api/v1/greetings", UriKind.Relative), content).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
     }

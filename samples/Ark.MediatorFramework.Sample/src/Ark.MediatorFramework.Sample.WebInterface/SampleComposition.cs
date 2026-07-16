@@ -47,6 +47,7 @@ public static class SampleComposition
         ApplicationComposition.Register(container);
         container.RegisterAuthorization();
         container.RegisterAuthorizationPolicy<GreetingAuthorizationPolicy>();
+        container.RegisterAuthorizationHandler<GreetingAuthorizationHandler>();
 
         // Transport user context: AspNetCore auth (HttpContext.User) with Rebus fallback.
         // IHttpContextAccessor is forwarded from Microsoft DI by SampleStartup when the

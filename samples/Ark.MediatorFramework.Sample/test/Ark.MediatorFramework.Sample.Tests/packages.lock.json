@@ -1283,6 +1283,7 @@
       "ark.tools.mediatorframework.grpc": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Authorization": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
