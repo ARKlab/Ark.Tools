@@ -122,7 +122,8 @@ public sealed class GreetingSteps
             HttpHandler = _context.CreateGrpcHandler(),
         });
         var greeting = await new GrpcGreetingsV1Client(channel).GetGreetingAsync(
-            new GrpcGetGreetingQuery { Id = _grpcGreeting!.Id }).ResponseAsync.ConfigureAwait(false);
+            new GrpcGetGreetingQuery { Id = _grpcGreeting!.Id },
+            new Metadata { { "authorization", string.Concat("Bearer ", _authContext.Token) } }).ResponseAsync.ConfigureAwait(false);
 
         greeting.Id.Should().Equal(_grpcGreeting.Id);
         greeting.Message.Should().Be(_grpcGreeting.Message);
