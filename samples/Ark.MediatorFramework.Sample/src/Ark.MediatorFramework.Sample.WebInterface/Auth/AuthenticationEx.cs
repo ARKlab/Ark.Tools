@@ -52,10 +52,17 @@ public static class AuthenticationEx
                     if (token.Length == 0)
                         return null;
 
-                    var decoded = new JwtSecurityToken(token);
-                    return decoded.Issuer.StartsWith("https://login.microsoftonline.com/", StringComparison.Ordinal)
-                        ? AuthConstants.AzureAdSchema
-                        : AuthConstants.AzureAdB2CSchema;
+                    try
+                    {
+                        var decoded = new JwtSecurityToken(token);
+                        return decoded.Issuer.StartsWith("https://login.microsoftonline.com/", StringComparison.Ordinal)
+                            ? AuthConstants.AzureAdSchema
+                            : AuthConstants.AzureAdB2CSchema;
+                    }
+                    catch (ArgumentException)
+                    {
+                        return null;
+                    }
                 };
                 options.ForwardDefault = AuthConstants.AzureAdB2CSchema;
             })

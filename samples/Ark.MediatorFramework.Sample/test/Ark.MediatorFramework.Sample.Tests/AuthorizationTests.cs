@@ -18,6 +18,48 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class AuthorizationTests
 {
+    /// <summary>Malformed bearer credentials are rejected without exposing a server error.</summary>
+    [TestMethod]
+    public async Task HttpCallWithMalformedBearerReturnsUnauthorized()
+    {
+        using var context = new SampleTestContext();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            "not-a-jwt");
+
+        var response = await context.Client.GetAsync(
+            new Uri($"/api/v1/greetings/{Guid.Empty}", UriKind.Relative)).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>Unsupported authorization schemes are rejected.</summary>
+    [TestMethod]
+    public async Task HttpCallWithBasicCredentialsReturnsUnauthorized()
+    {
+        using var context = new SampleTestContext();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Basic",
+            "abc");
+
+        var response = await context.Client.GetAsync(
+            new Uri($"/api/v1/greetings/{Guid.Empty}", UriKind.Relative)).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>Requests without authorization credentials are rejected.</summary>
+    [TestMethod]
+    public async Task HttpCallWithoutCredentialsReturnsUnauthorized()
+    {
+        using var context = new SampleTestContext();
+
+        var response = await context.Client.GetAsync(
+            new Uri($"/api/v1/greetings/{Guid.Empty}", UriKind.Relative)).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+    }
+
     /// <summary>Generated gRPC endpoints reject calls without bearer metadata.</summary>
     [TestMethod]
     public async Task GrpcCallWithoutBearerMetadataReturnsUnauthenticated()
