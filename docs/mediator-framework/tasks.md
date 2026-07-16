@@ -311,11 +311,11 @@ Debug`) before the task is marked complete.
 
 ## Epic 11 — Preview follow-ups
 
-- [ ] **T11.1** Add the gRPC developer UI experience.
-  - *Accept:* the sample documents or launches gRPCui against build-exported
-    protos; unary and streaming methods are discoverable and callable; optional
-    reflection is Development-only or authorization-protected; no HTTP
-    transcoding is introduced.
+- [x] **T11.1** Add the gRPC operations-panel experience.
+  - *Accept:* the sample documents gRPCui against build-exported protos for
+    development and production operations; unary and streaming methods are
+    discoverable and callable; gRPC endpoints require the configured bearer
+    authentication policy; no HTTP transcoding is introduced.
 - [x] **T11.2** Demonstrate STJ source-generated metadata in the sample.
   - *Accept:* a sample `JsonSerializerContext` covers all HTTP wire roots and
     polymorphic subtypes, is composed with Ark defaults through
@@ -339,7 +339,7 @@ T9.1–T9.6 are complete. Wire-shape and packaging refinements run **before**
 the behavioral-test epic so the Reqnroll scenarios are written once against
 the final contracts:
 
-1. **T11.1** gRPCui development tooling.
+1. **T11.1** gRPCui operations-panel tooling.
 
 ## Status legend
 

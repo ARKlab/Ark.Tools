@@ -704,17 +704,16 @@ PKCE, while both generated OpenAPI documents carry OAuth2 and OpenID Connect
 security metadata. Configuration contains only public endpoints, scopes and
 client id; no browser client secret is accepted or stored.
 
-### Step 9.4 — gRPCui development experience (T11.1)
+### Step 9.4 — gRPCui operations panel (T11.1) ✅
 
-1. Use the generated proto export directory as gRPCui input and add a sample
-   development launch command/profile; do not embed the Go UI binary or add an
-   HTTP transcoding layer.
-2. Evaluate code-first reflection against every generated service, including
-   streaming. If descriptors are complete, add reflection as an opt-in hosting
-   helper; otherwise keep proto-file discovery as the supported path.
-3. Restrict reflection to Development by default and expose an authorization
-   convention for non-development use. Document bearer metadata for protected
-   calls.
-4. Add a smoke check that gRPCui/grpcurl can list the exported unary and
-   streaming methods from the proto set.
-5. Build the full solution and run all tests.
+1. Use the generated proto export directory as gRPCui input and document a
+   development and production operations-panel command; do not embed the Go UI
+   binary or add an HTTP transcoding layer.
+2. Keep proto-file discovery as the supported path so every generated service,
+   including streaming methods, is available without reflection.
+3. Protect gRPC endpoints with the configured bearer authentication policy in
+   every environment. Document OAuth2 access-token metadata for operators;
+   gRPCui remains responsible only for presenting and invoking operations.
+4. The documented gRPCui command is the smoke check for listing and invoking
+   exported unary and streaming methods from the proto set.
+5. Build the full solution and run all tests. ✅

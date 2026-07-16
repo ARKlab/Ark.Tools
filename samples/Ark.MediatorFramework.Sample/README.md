@@ -42,6 +42,38 @@ unit tests in `tests/Ark.Tools.MediatorFramework.Tests`.
 dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
 ```
 
+## gRPC operations panel
+
+gRPCui is an external browser-based operations panel. The host exposes the
+standard gRPC reflection service, so operations staff do not need access to the
+source repository or exported `.proto` files.
+
+Run the official gRPCui container. On Linux, host networking lets the
+container reach a locally running sample:
+
+```bash
+export GRPCUI_ACCESS_TOKEN='access-token-from-scalar'
+docker run --rm -it --network host fullstorydev/grpcui:latest \
+  -insecure \
+  -H 'authorization: Bearer '"$GRPCUI_ACCESS_TOKEN" -expand-headers \
+  localhost:5001
+```
+
+On Docker Desktop, replace `--network host` and `localhost` with
+`--add-host host.docker.internal:host-gateway` and
+`host.docker.internal:5001`. Open the URL printed by gRPCui. For a production
+certificate, omit `-insecure` and use the production endpoint.
+
+The sample also exposes Scalar at `/scalar/v1`. Select **Authorize**, choose
+the OAuth2 authorization-code flow, complete the PKCE sign-in, and copy the
+access token from the successful authorization response. Set it only in the
+shell environment:
+
+gRPCui forwards the token as bearer metadata on reflection and operation
+requests. It does not perform OAuth2 login or token refresh. Decode and inspect
+claims locally with a trusted JWT decoder such as `jwt.ms`; never paste
+production tokens into documentation, source files, or shell history.
+
 ## Documented follow-ups
 
 The emitted `.proto` now generates a dedicated client assembly used by the
