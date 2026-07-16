@@ -149,6 +149,8 @@ namespace Ark.MediatorFramework.Generators
             var httpIntroducedIn = NamedInt(http, "IntroducedIn", 1);
             var httpRetiredIn = NamedInt(http, "RetiredIn", 0);
             var acceptsMessagePack = NamedBool(http, "AcceptsMessagePack");
+            var policy = NamedString(http, "Policy");
+            var allowAnonymous = NamedBool(http, "AllowAnonymous");
             var routeNames = new HashSet<string>(
                 Regex.Matches(template!, "\\{([^}:]+)(?::[^}]+)?\\}")
                 .Cast<Match>()
@@ -180,6 +182,8 @@ namespace Ark.MediatorFramework.Generators
                 httpIntroducedIn,
                 httpRetiredIn,
                 acceptsMessagePack,
+                policy,
+                allowAnonymous,
                 properties,
                 attachmentProperties.Length,
                 type.Locations.FirstOrDefault());
@@ -195,6 +199,12 @@ namespace Ark.MediatorFramework.Generators
         {
             var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
             return argument.Value.Value is true;
+        }
+
+        private static string? NamedString(AttributeData attribute, string name)
+        {
+            var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
+            return argument.Value.Value as string;
         }
 
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
@@ -214,8 +224,9 @@ namespace Ark.MediatorFramework.Generators
 
             // MapArkEndpoints is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
             sb.AppendLine("        {");
+            sb.AppendLine("            var group = global::Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapGroup(endpoints, string.Empty);");
 
             if (!items.IsDefaultOrEmpty)
             {
@@ -252,7 +263,7 @@ namespace Ark.MediatorFramework.Generators
 
                         if (e.AcceptsMessagePack)
                         {
-                            sb.AppendLine("            app." + map + "(" + Literal(template) + ", static async (");
+                            sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
                             if (explicitBindings)
                             {
                                 foreach (var property in e.Properties.Where(property => property.IsRoute || property.IsQuery))
@@ -283,10 +294,10 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                             sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken);");
-                            sb.AppendLine("            }).Accepts<" + e.TypeFullName + ">(\"application/json\", \"application/x-msgpack\").Produces<" + e.Response + ">(200, \"application/json\", \"application/x-msgpack\").WithGroupName(" + Literal("v" + version) + ");");
+                            sb.AppendLine("            }).Accepts<" + e.TypeFullName + ">(\"application/json\", \"application/x-msgpack\").Produces<" + e.Response + ">(200, \"application/json\", \"application/x-msgpack\").WithGroupName(" + Literal("v" + version) + ")" + AuthorizationMetadata(e) + ";");
                             continue;
                         }
-                        sb.AppendLine("            app." + map + "(" + Literal(template) + ", static async (");
+                        sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
                         if (explicitBindings)
                         {
                             foreach (var property in e.Properties.Where(property => property.IsRoute || property.IsQuery))
@@ -316,12 +327,13 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                         sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
-                        sb.AppendLine("            }).WithGroupName(" + Literal("v" + version) + ");");
+                        sb.AppendLine("            }).WithGroupName(" + Literal("v" + version) + ")" + AuthorizationMetadata(e) + ";");
                     }
                 }
             }
 
-            sb.AppendLine("            return app;");
+            sb.AppendLine("            configure?.Invoke(group);");
+            sb.AppendLine("            return group;");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
             sb.AppendLine("}");
@@ -340,7 +352,7 @@ namespace Ark.MediatorFramework.Generators
             var attachment = endpoint.Properties.Single(property =>
                 property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment");
             var bindings = endpoint.Properties.Where(property => property.IsRoute || property.IsQuery).ToArray();
-            sb.Append("            app.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
             foreach (var property in bindings)
             {
                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
@@ -367,7 +379,17 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
             sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\").WithGroupName(")
-                .Append(Literal("v" + version)).AppendLine(");");
+                .Append(Literal("v" + version)).Append(')').Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+        }
+
+        private static string AuthorizationMetadata(EndpointModel endpoint)
+        {
+            if (endpoint.AllowAnonymous)
+                return ".AllowAnonymous()";
+
+            return string.IsNullOrWhiteSpace(endpoint.Policy)
+                ? ".RequireAuthorization()"
+                : ".RequireAuthorization(" + Literal(endpoint.Policy!) + ")";
         }
 
         private static string MapMethod(string verb) => verb switch
@@ -410,6 +432,8 @@ namespace Ark.MediatorFramework.Generators
                 int httpIntroducedIn,
                 int httpRetiredIn,
                 bool acceptsMessagePack,
+                string? policy,
+                bool allowAnonymous,
                 ImmutableArray<PropertyModel> properties,
                 int attachmentCount,
                 Location? location)
@@ -423,6 +447,8 @@ namespace Ark.MediatorFramework.Generators
                 HttpIntroducedIn = httpIntroducedIn;
                 HttpRetiredIn = httpRetiredIn;
                 AcceptsMessagePack = acceptsMessagePack;
+                Policy = policy;
+                AllowAnonymous = allowAnonymous;
                 Properties = properties;
                 AttachmentCount = attachmentCount;
                 Location = location;
@@ -437,6 +463,8 @@ namespace Ark.MediatorFramework.Generators
             public int HttpIntroducedIn { get; }
             public int HttpRetiredIn { get; }
             public bool AcceptsMessagePack { get; }
+            public string? Policy { get; }
+            public bool AllowAnonymous { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
             public int AttachmentCount { get; }
             public Location? Location { get; }
