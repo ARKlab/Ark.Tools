@@ -3,6 +3,7 @@
 
 using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Authorization;
 
 using FluentValidation;
 
@@ -19,6 +20,12 @@ public sealed class SampleProblemDetailsOptionsSetup : IConfigureOptions<Hellang
     /// <inheritdoc />
     public void Configure(Hellang.Middleware.ProblemDetails.ProblemDetailsOptions options)
     {
+        options.Map<PolicyAuthorizationException>(exception => new ProblemDetails
+        {
+            Status = StatusCodes.Status403Forbidden,
+            Title = "Forbidden",
+            Detail = exception.Message,
+        });
         options.MapToStatusCode<EntityNotFoundException>(StatusCodes.Status404NotFound);
         options.Map<ValidationException>(exception =>
         {

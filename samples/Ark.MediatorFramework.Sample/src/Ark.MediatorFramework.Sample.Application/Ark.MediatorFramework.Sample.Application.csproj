@@ -13,6 +13,7 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="Ark.Tools.Solid" />
+    <PackageReference Include="Ark.Tools.Solid.Authorization" />
     <PackageReference Include="Ark.Tools.SystemTextJson" />
     <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
   </ItemGroup>

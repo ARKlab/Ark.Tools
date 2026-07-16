@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using Reqnroll;
@@ -38,7 +39,7 @@ public sealed class AuthTestContext
     [BeforeScenario]
     public void SetAuthenticatedUser()
     {
-        Token = _tokenBuilder.AddSubject("test-user").Build();
+        Token = _tokenBuilder.AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build();
         _context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
     }
 

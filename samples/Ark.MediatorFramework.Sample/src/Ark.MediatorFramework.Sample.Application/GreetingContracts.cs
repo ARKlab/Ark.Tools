@@ -50,6 +50,7 @@ public sealed record GreetingResponse
 [RebusMessage]
 [GrpcMethod("CreateGreeting")]
 [ServiceGroup("Greetings")]
+[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
 [ProtoContract]
 [MessagePackObject(true)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>

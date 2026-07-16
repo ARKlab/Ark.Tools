@@ -557,6 +557,18 @@ the pure handler via the container); a `[RebusMessage]` handler completes the
 workflow asynchronously. A behavioral test mutates over HTTP and polls a query
 endpoint until the async effect is observable.
 
+## Transport-agnostic authorization
+
+HTTP and gRPC authorization metadata protects their respective edges, but it does
+not protect a handler reached through Rebus. Contracts exposed on more than one
+transport can declare a shared `PolicyAuthorizeAttribute`; the
+`Ark.Tools.Solid.Authorization` registration helper decorates query, request and
+command handlers with the policy check. The decorator resolves the current
+`ClaimsPrincipal` from `IContextProvider<ClaimsPrincipal>` and therefore applies
+the same policy to HTTP, gRPC and Rebus dispatch. Hosts must register the
+authorization services, policy provider and decorators once in the composition
+root, and register every named policy used by contracts.
+
 ## Packaging: one package per transport
 
 The framework ships as small packages, each dedicated to a single transport and

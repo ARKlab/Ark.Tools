@@ -41,7 +41,7 @@ public class PolicyAuthorizeCommandDecorator<TCommand> : ICommandHandler<TComman
 
                     (var authorized, var messages) = await _authSvc.AuthorizeAsync(user, resource, policy, ctk).ConfigureAwait(false);
                     if (!authorized)
-                        throw new UnauthorizedAccessException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
+                        throw new PolicyAuthorizationException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
                 }
             }
         }
