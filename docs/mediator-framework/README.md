@@ -16,6 +16,9 @@ isolated from HTTP translation, serialization and routing.
 | [`implementation-plan.md`](implementation-plan.md) | Phased delivery plan with the packages to introduce. |
 | [`tasks.md`](tasks.md) | Verifiable task breakdown with explicit acceptance criteria. |
 | [`migration-from-mvc.md`](migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
+| [`pre-release-review.md`](pre-release-review.md) | Adversarial pre-release review (DX + security), feature-gap analysis vs Ark.ReferenceProject, and recorded decisions. |
+| [`tasks/README.md`](tasks/README.md) | Pre-release task board: one self-contained task document per item, organized by category, with Outcomes and Acceptance criteria. |
+| [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 items. |
 
 ## Verifiable sample
 
