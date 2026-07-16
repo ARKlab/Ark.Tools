@@ -26,6 +26,7 @@ namespace Ark.MediatorFramework.Generators
     {
         private const string GrpcMethodAttribute = "Ark.MediatorFramework.GrpcMethodAttribute";
         private const string ServiceGroupAttribute = "Ark.MediatorFramework.ServiceGroupAttribute";
+        private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -254,6 +255,7 @@ namespace Ark.MediatorFramework.Generators
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
             {
                 var active = group.ToArray();
+                var requestNames = active.Select(static item => SimpleName(item.TypeFullName)).ToHashSet(StringComparer.Ordinal);
                 var reachable = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
                 foreach (var endpoint in active)
                 {
@@ -275,7 +277,7 @@ namespace Ark.MediatorFramework.Generators
                 foreach (var contract in contracts
                     .Where(contract => reachable.Contains(contract.Type))
                     .OrderBy(static contract => contract.Name, StringComparer.Ordinal))
-                    EmitProtoMessage(content, contract, contracts);
+                    EmitProtoMessage(content, contract, contracts, requestNames.Contains(contract.Name));
 
                 var maxVersion = active.Max(static x => Math.Max(
                     x.GrpcIntroducedIn,
@@ -353,7 +355,8 @@ namespace Ark.MediatorFramework.Generators
         private static void EmitProtoMessage(
             StringBuilder sb,
             ProtoContractModel contract,
-            IReadOnlyList<ProtoContractModel> contracts)
+            IReadOnlyList<ProtoContractModel> contracts,
+            bool isRequest)
         {
             sb.Append("message ").Append(contract.Name).AppendLine(" {");
             foreach (var include in contract.Includes)
@@ -363,7 +366,9 @@ namespace Ark.MediatorFramework.Generators
                     .Append(include.Number).AppendLine(";");
             }
 
-            foreach (var member in contract.Members.OrderBy(static member => member.Number))
+            foreach (var member in contract.Members
+                .Where(member => !isRequest || !member.IsServerSet)
+                .OrderBy(static member => member.Number))
             {
                 var type = ProtoTypeName(member.Type, contracts);
                 sb.Append("  ");
@@ -405,7 +410,9 @@ namespace Ark.MediatorFramework.Generators
                             item.Property.Type is IArrayTypeSymbol
                                 || item.Property.Type is INamedTypeSymbol named
                                     && named.IsGenericType
-                                    && named.Name == "IReadOnlyList"))
+                                && named.Name == "IReadOnlyList",
+                        item.Property.GetAttributes().Any(attribute =>
+                            attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute)))
                         .Where(member => member.Number > 0)
                         .ToArray();
 
@@ -613,18 +620,20 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly struct ProtoMemberModel
         {
-            public ProtoMemberModel(string name, ITypeSymbol type, int number, bool isRepeated)
+            public ProtoMemberModel(string name, ITypeSymbol type, int number, bool isRepeated, bool isServerSet)
             {
                 Name = name;
                 Type = type;
                 Number = number;
                 IsRepeated = isRepeated;
+                IsServerSet = isServerSet;
             }
 
             public string Name { get; }
             public ITypeSymbol Type { get; }
             public int Number { get; }
             public bool IsRepeated { get; }
+            public bool IsServerSet { get; }
         }
 
         private readonly struct ProtoIncludeModel

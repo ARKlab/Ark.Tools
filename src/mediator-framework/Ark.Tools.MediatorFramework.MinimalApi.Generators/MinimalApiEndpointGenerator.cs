@@ -26,6 +26,7 @@ namespace Ark.MediatorFramework.Generators
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
         private const string BindFromQueryAttribute = "Ark.MediatorFramework.BindFromQueryAttribute";
+        private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
             "ARKMF001",
@@ -33,6 +34,20 @@ namespace Ark.MediatorFramework.Generators
             "HTTP endpoint '{0}' declares more than one IArkAttachment property",
             "Ark.MediatorFramework",
             DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
+        private static readonly DiagnosticDescriptor ServerSetPropertyCannotBeReset = new DiagnosticDescriptor(
+            "ARKMF002",
+            "Server-set property cannot be reset",
+            "HTTP endpoint '{0}' has server-set property '{1}' without an accessible setter",
+            "Ark.MediatorFramework",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
+        private static readonly DiagnosticDescriptor PossibleMassAssignment = new DiagnosticDescriptor(
+            "ARKMF003",
+            "Possible mass assignment",
+            "HTTP endpoint '{0}' has property '{1}' that may be server-owned; mark it with [ServerSet] or suppress this warning",
+            "Ark.MediatorFramework",
+            DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
         /// <inheritdoc />
@@ -54,6 +69,7 @@ namespace Ark.MediatorFramework.Generators
 
             var runtimeAssembly = httpAttr.ContainingAssembly;
             var bindFromQueryAttr = compilation.GetTypeByMetadataName(BindFromQueryAttribute);
+            var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
@@ -66,7 +82,7 @@ namespace Ark.MediatorFramework.Generators
                     if (http is null)
                         continue;
 
-                    var model = Extract(type, http, bindFromQueryAttr, attachmentType);
+                    var model = Extract(type, http, bindFromQueryAttr, serverSetAttr, attachmentType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -111,6 +127,7 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol type,
             AttributeData http,
             INamedTypeSymbol? bindFromQueryAttr,
+            INamedTypeSymbol? serverSetAttr,
             INamedTypeSymbol? attachmentType)
         {
             string? response = null;
@@ -166,7 +183,10 @@ namespace Ark.MediatorFramework.Generators
                     routeNames.Contains(property.Name),
                     routeNames.FirstOrDefault(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase)) ?? property.Name,
                     bindFromQueryAttr is not null && property.GetAttributes().Any(attribute =>
-                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindFromQueryAttr))))
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindFromQueryAttr)),
+                    serverSetAttr is not null && property.GetAttributes().Any(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
+                    property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public))
                 .ToImmutableArray();
             var attachmentProperties = attachmentType is null
                 ? ImmutableArray<PropertyModel>.Empty
@@ -185,6 +205,14 @@ namespace Ark.MediatorFramework.Generators
                 policy,
                 allowAnonymous,
                 properties,
+                type.IsRecord,
+                properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
+                    .Select(property => property.Name)
+                    .ToImmutableArray(),
+                properties.Where(property => !property.IsServerSet
+                    && property.Name is "TenantId" or "UserId" or "IsAdmin" or "Role" or "Roles")
+                    .Select(property => property.Name)
+                    .ToImmutableArray(),
                 attachmentProperties.Length,
                 type.Locations.FirstOrDefault());
         }
@@ -249,6 +277,11 @@ namespace Ark.MediatorFramework.Generators
                 var maxVersion = items.Max(static x => Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1));
                 foreach (var e in items)
                 {
+                    foreach (var property in e.InvalidServerSetProperties)
+                        spc.ReportDiagnostic(Diagnostic.Create(ServerSetPropertyCannotBeReset, e.Location, e.TypeName, property));
+                    foreach (var property in e.SuspiciousProperties)
+                        spc.ReportDiagnostic(Diagnostic.Create(PossibleMassAssignment, e.Location, e.TypeName, property));
+
                     if (e.AttachmentCount > 1)
                     {
                         spc.ReportDiagnostic(Diagnostic.Create(
@@ -282,7 +315,7 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
                             if (explicitBindings)
                             {
-                                foreach (var property in e.Properties.Where(property => property.IsRoute || property.IsQuery))
+                                foreach (var property in e.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
                                 {
                                     var source = property.IsRoute ? "FromRoute" : "FromQuery";
                                     var bindingName = property.IsRoute ? property.BindingName : property.Name;
@@ -299,13 +332,19 @@ namespace Ark.MediatorFramework.Generators
                             {
                                 var assignments = string.Join(", ", e.Properties
                                     .Where(property => property.IsRoute || property.IsQuery)
-                                    .Select(property => property.Name + " = " + property.Name));
+                                    .Select(property => property.IsServerSet ? property.Name + " = default" : property.Name + " = " + property.Name)
+                                    .Concat(e.ServerSetProperties.Where(property => !e.Properties.Any(candidate => candidate.Name == property))
+                                        .Select(property => property + " = default")));
                                 sb.AppendLine("                var request = body with { " + assignments + " };");
                             }
                             else
                             {
-                                sb.AppendLine("                var request = body;");
+                                if (e.IsRecord && e.ServerSetProperties.Length > 0)
+                                    sb.AppendLine("                var request = body with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default")) + " };");
+                                else
+                                    sb.AppendLine("                var request = body;");
                             }
+                            EmitServerSetAssignments(sb, e, "request");
                             sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                             sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
@@ -316,7 +355,7 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
                         if (explicitBindings)
                         {
-                            foreach (var property in e.Properties.Where(property => property.IsRoute || property.IsQuery))
+                            foreach (var property in e.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
                             {
                                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
                                 var bindingName = property.IsRoute ? property.BindingName : property.Name;
@@ -336,9 +375,15 @@ namespace Ark.MediatorFramework.Generators
                         {
                             var assignments = string.Join(", ", e.Properties
                                 .Where(property => property.IsRoute || property.IsQuery)
-                                .Select(property => property.Name + " = " + property.Name));
+                                .Select(property => property.Name + " = " + property.Name)
+                                .Concat(e.ServerSetProperties.Select(property => property + " = default")));
                             sb.AppendLine("                var request = body with { " + assignments + " };");
                         }
+                        else if (e.IsRecord && e.ServerSetProperties.Length > 0)
+                        {
+                            sb.AppendLine("                request = request with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default")) + " };");
+                        }
+                        EmitServerSetAssignments(sb, e, "request");
                         sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                         sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
@@ -357,6 +402,15 @@ namespace Ark.MediatorFramework.Generators
             spc.AddSource("ArkGeneratedEndpoints.MinimalApi.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
         }
 
+        private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
+        {
+            if (endpoint.IsRecord)
+                return;
+
+            foreach (var property in endpoint.ServerSetProperties)
+                sb.Append("                ").Append(variable).Append('.').Append(property).AppendLine(" = default;");
+        }
+
         private static void EmitMultipartEndpoint(
             StringBuilder sb,
             EndpointModel endpoint,
@@ -367,7 +421,7 @@ namespace Ark.MediatorFramework.Generators
         {
             var attachment = endpoint.Properties.Single(property =>
                 property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment");
-            var bindings = endpoint.Properties.Where(property => property.IsRoute || property.IsQuery).ToArray();
+            var bindings = endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet).ToArray();
             sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
             foreach (var property in bindings)
             {
@@ -390,6 +444,7 @@ namespace Ark.MediatorFramework.Generators
                 sb.Append("                    ").Append(property.Name).Append(" = ").Append(property.Name).AppendLine(",");
             sb.AppendLine("                    " + attachment.Name + " = new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream),");
             sb.AppendLine("                };");
+            EmitServerSetAssignments(sb, endpoint, "request");
             sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
             sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
@@ -451,6 +506,9 @@ namespace Ark.MediatorFramework.Generators
                 string? policy,
                 bool allowAnonymous,
                 ImmutableArray<PropertyModel> properties,
+                bool isRecord,
+                ImmutableArray<string> invalidServerSetProperties,
+                ImmutableArray<string> suspiciousProperties,
                 int attachmentCount,
                 Location? location)
             {
@@ -466,6 +524,10 @@ namespace Ark.MediatorFramework.Generators
                 Policy = policy;
                 AllowAnonymous = allowAnonymous;
                 Properties = properties;
+                IsRecord = isRecord;
+                ServerSetProperties = properties.Where(property => property.IsServerSet).Select(property => property.Name).ToImmutableArray();
+                InvalidServerSetProperties = invalidServerSetProperties;
+                SuspiciousProperties = suspiciousProperties;
                 AttachmentCount = attachmentCount;
                 Location = location;
             }
@@ -482,19 +544,25 @@ namespace Ark.MediatorFramework.Generators
             public string? Policy { get; }
             public bool AllowAnonymous { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
+            public bool IsRecord { get; }
+            public ImmutableArray<string> ServerSetProperties { get; }
+            public ImmutableArray<string> InvalidServerSetProperties { get; }
+            public ImmutableArray<string> SuspiciousProperties { get; }
             public int AttachmentCount { get; }
             public Location? Location { get; }
         }
 
         private readonly struct PropertyModel
         {
-            public PropertyModel(string name, string typeFullName, bool isRoute, string bindingName, bool isQuery)
+            public PropertyModel(string name, string typeFullName, bool isRoute, string bindingName, bool isQuery, bool isServerSet, bool hasPublicSetter)
             {
                 Name = name;
                 TypeFullName = typeFullName;
                 IsRoute = isRoute;
                 BindingName = bindingName;
                 IsQuery = isQuery;
+                IsServerSet = isServerSet;
+                HasPublicSetter = hasPublicSetter;
             }
 
             public string Name { get; }
@@ -502,6 +570,8 @@ namespace Ark.MediatorFramework.Generators
             public bool IsRoute { get; }
             public string BindingName { get; }
             public bool IsQuery { get; }
+            public bool IsServerSet { get; }
+            public bool HasPublicSetter { get; }
         }
     }
 }

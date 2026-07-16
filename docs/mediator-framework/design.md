@@ -82,6 +82,11 @@ the only transport hint the developer writes; the generator turns each *declared
 transport into concrete hosting code. A request/query with **no** transport
 attribute is not hosted — the developer wires it by hand.
 
+Properties marked with `[ServerSet]` are never read from HTTP route, query, or
+body input. The Minimal API generator resets them after deserialization, the
+gRPC proto export omits them from request messages, and
+`AddArkServerSetProperties()` removes them from generated schemas.
+
 ## The Roslyn incremental generator
 
 An `IIncrementalGenerator` (superior to the legacy `ISourceGenerator`: cached,
