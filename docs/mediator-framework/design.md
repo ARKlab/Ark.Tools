@@ -167,7 +167,12 @@ route and query properties bind per the envelope rules above, the single form
 file maps to `ArkAttachment` and is assigned to the attachment property. More
 than one `IArkAttachment` property is a generator diagnostic (error). The
 `MapArkAttachmentUpload` runtime helper remains as the manual escape hatch
-only.
+only. Generated multipart endpoints disable antiforgery explicitly because they
+target bearer-token APIs; set `RequireAntiforgery = true` on the contract for a
+cookie-authenticated host. `MaxRequestBodySizeBytes` adds a per-endpoint request
+limit, and `AllowedContentTypes` rejects other file types with `415`. Filenames
+are reduced to a leaf name and control characters are removed before the
+attachment reaches a handler, including for streamed gRPC uploads.
 
 ### Emitted gRPC (code-first)
 

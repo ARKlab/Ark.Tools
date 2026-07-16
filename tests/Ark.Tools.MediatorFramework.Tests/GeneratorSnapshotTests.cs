@@ -280,7 +280,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
-            [HttpEndpoint("POST", "/api/v{version}/uploads/{id}")]
+            [HttpEndpoint("POST", "/api/v{version}/uploads/{id}", MaxRequestBodySizeBytes = 1024, AllowedContentTypes = new[] { "text/plain" })]
             public sealed record Upload : IRequest<string>
             {
                 public System.Guid Id { get; init; }
@@ -293,6 +293,17 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\")");
         generated.Should().Contain("form.Files.Count != 1");
         generated.Should().Contain("Attachment = new global::Ark.MediatorFramework.ArkAttachment");
+        generated.Should().Contain("DisableAntiforgery()");
+        generated.Should().Contain("RequestSizeLimitAttribute(1024L)");
+        generated.Should().Contain("Contains(new[] { \"text/plain\" }, file.ContentType");
+    }
+
+    [TestMethod]
+    public void AttachmentSanitizesClientFileNames()
+    {
+        var attachment = new ArkAttachment("..\\uploads/../evil\u0000.txt", "text/plain", static () => Stream.Null);
+
+        attachment.Name.Should().Be("evil.txt");
     }
 
     [TestMethod]

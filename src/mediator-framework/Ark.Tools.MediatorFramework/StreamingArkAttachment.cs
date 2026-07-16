@@ -105,7 +105,7 @@ public sealed class StreamingArkAttachment : IArkAttachment
                 if (chunk.Metadata is null)
                     throw new InvalidOperationException("The first upload chunk must contain metadata.");
 
-                _attachment.Name = chunk.Metadata.Name;
+                _attachment.Name = ArkAttachmentName.Sanitize(chunk.Metadata.Name);
                 _attachment.ContentType = chunk.Metadata.ContentType;
                 _started = true;
                 _buffer = [];

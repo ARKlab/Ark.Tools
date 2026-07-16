@@ -45,6 +45,22 @@ public sealed class HttpEndpointAttribute : Attribute
     /// Endpoints are secure by default, so set this only for intentionally public endpoints.
     /// </summary>
     public bool AllowAnonymous { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether multipart form binding requires antiforgery validation.
+    /// The default is <see langword="false"/> because generated uploads target bearer-token APIs.
+    /// </summary>
+    public bool RequireAntiforgery { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum multipart request body size in bytes, or zero to use the host default.
+    /// </summary>
+    public long MaxRequestBodySizeBytes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the allowed multipart file content types, or an empty array to allow all types.
+    /// </summary>
+    public string[] AllowedContentTypes { get; set; } = [];
 }
 
 /// <summary>
