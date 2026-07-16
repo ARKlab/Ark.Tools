@@ -507,9 +507,9 @@ repo-wide multi-targeting.
 The sample exposes the versioned OpenAPI documents as it does today and adds
 **Scalar as the primary UI**. Swagger UI remains an opt-in compatibility UI for
 teams needing its established OAuth2/OIDC configuration. Both consume the same
-generated documents, are mapped unconditionally in every environment and may be
-served anonymously — business endpoints are protected by default, so anonymous
-doc UIs expose no protected operation — and must model
+generated documents, are mapped unconditionally in every environment and are
+explicitly marked anonymous — business endpoints are protected by default, so
+anonymous doc UIs expose no protected operation — and must model
 authentication in the OpenAPI document. Authorization-code with PKCE is the
 default interactive flow; client secrets are forbidden in browser
 configuration. A test verifies each UI route references both versioned
@@ -522,8 +522,8 @@ that points gRPCui at the build-exported `.proto` tree, so unary and streaming
 operations remain discoverable without enabling reflection. gRPC endpoints use
 the host's bearer authentication policy in every environment. Operators pass an
 OAuth2 access token as authorization metadata; gRPCui does not perform the OAuth2
-login or token refresh itself. Optional ASP.NET Core gRPC reflection may be
-mapped unconditionally and served anonymously for the same reason. The
+login or token refresh itself. Optional ASP.NET Core gRPC reflection is mapped unconditionally and explicitly
+marked anonymous for the same reason. The
 framework does not embed or proxy gRPCui and does not translate gRPC into HTTP,
 keeping gRPC wire behavior and streaming semantics authoritative.
 
