@@ -276,6 +276,12 @@ the ambient request scope. That scope is opened once per request by the
 SimpleInjector integration in the pipeline (and per message by the Rebus
 pipeline), so adapters never open their own scope.
 
+Generated transport registration methods perform a separate, targeted
+handler-registration lookup at startup. Missing closed handler services are
+aggregated into one actionable exception naming each contract and interface;
+this check does not invoke or duplicate SimpleInjector's `Verify()` dependency
+graph validation.
+
 ## Error handling
 
 | Transport | Mechanism | Mapping |
