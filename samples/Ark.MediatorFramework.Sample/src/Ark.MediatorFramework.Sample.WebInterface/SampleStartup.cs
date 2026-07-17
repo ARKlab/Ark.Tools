@@ -5,11 +5,11 @@ using Ark.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.Application;
 
 using Ark.MediatorFramework.Sample.WebInterface.Auth;
+using Ark.Tools.AspNetCore.MessagePackFormatter;
+using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
-using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Nodatime.Protobuf;
-using Ark.Tools.AspNetCore.MessagePackFormatter;
 
 using MessagePack.Resolvers;
 

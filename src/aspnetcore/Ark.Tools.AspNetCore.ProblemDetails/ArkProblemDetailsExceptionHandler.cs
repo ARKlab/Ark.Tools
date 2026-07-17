@@ -31,15 +31,21 @@ public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
     }
 }
 
+/// <summary>Invokes the shared exception handler around the ASP.NET Core pipeline.</summary>
 internal sealed class ArkProblemDetailsExceptionMiddleware
 {
     private readonly RequestDelegate _next;
 
+    /// <summary>Initializes the middleware.</summary>
+    /// <param name="next">The next pipeline delegate.</param>
     public ArkProblemDetailsExceptionMiddleware(RequestDelegate next)
     {
         _next = next;
     }
 
+    /// <summary>Invokes the next pipeline delegate and maps unhandled exceptions.</summary>
+    /// <param name="httpContext">The current HTTP context.</param>
+    /// <param name="handler">The shared exception handler.</param>
     public async Task InvokeAsync(HttpContext httpContext, ArkProblemDetailsExceptionHandler handler)
     {
         try
@@ -59,6 +65,7 @@ internal sealed class ArkProblemDetailsExceptionMiddleware
     [System.Text.Json.Serialization.JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
     [System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, string[]>))]
     [System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, object?>))]
+    /// <summary>Source-generated JSON metadata for ProblemDetails responses.</summary>
     internal sealed partial class ProblemDetailsJsonSerializerContext : System.Text.Json.Serialization.JsonSerializerContext
     {
     }
