@@ -174,6 +174,8 @@ namespace Ark.MediatorFramework.Generators
             verb = verb!.ToUpperInvariant();
             var httpIntroducedIn = NamedInt(http, "IntroducedIn", 1);
             var httpRetiredIn = NamedInt(http, "RetiredIn", 0);
+            var successStatusCode = NamedInt(http, "SuccessStatusCode", 0);
+            var nullResultStatusCode = NamedInt(http, "NullResultStatusCode", 0);
             var acceptsMessagePack = NamedBool(http, "AcceptsMessagePack");
             var policy = NamedString(http, "Policy");
             var allowAnonymous = NamedBool(http, "AllowAnonymous");
@@ -219,6 +221,8 @@ namespace Ark.MediatorFramework.Generators
                 kind,
                 httpIntroducedIn,
                 httpRetiredIn,
+                successStatusCode,
+                nullResultStatusCode,
                 acceptsMessagePack,
                 policy,
                 allowAnonymous,
@@ -393,8 +397,11 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                             sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
-                            sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken);");
-                            sb.AppendLine("            }).Accepts<" + e.TypeFullName + ">(\"application/json\", \"application/x-msgpack\").Produces<" + e.Response + ">(200, \"application/json\", \"application/x-msgpack\").WithGroupName(" + Literal("v" + version) + ")" + AuthorizationMetadata(e) + ";");
+                            sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken, "
+                                + SuccessStatusCode(e) + ", " + NullResultStatusCode(e) + ");");
+                            sb.AppendLine("            }).Accepts<" + e.TypeFullName + ">(\"application/json\", \"application/x-msgpack\").Produces<" + e.Response + ">("
+                                + SuccessStatusCode(e) + ", \"application/json\", \"application/x-msgpack\").Produces(" + NullResultStatusCode(e)
+                                + ").WithGroupName(" + Literal("v" + version) + ")" + AuthorizationMetadata(e) + ";");
                             continue;
                         }
                         sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
@@ -432,8 +439,11 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                         sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
-                        sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
-                        sb.AppendLine("            }).WithGroupName(" + Literal("v" + version) + ")" + AuthorizationMetadata(e) + ";");
+                        sb.AppendLine("                if (result is null)");
+                        sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(e) + ";");
+                        sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(e) + ";");
+                        sb.AppendLine("            }).Produces<" + e.Response + ">(" + SuccessStatusCode(e) + ").Produces(" + NullResultStatusCode(e)
+                            + ").WithGroupName(" + Literal("v" + version) + ")" + AuthorizationMetadata(e) + ";");
                     }
                 }
             }
@@ -501,9 +511,14 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
             sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
-            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.Ok(result);");
+            sb.AppendLine("                if (result is null)");
+            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(endpoint) + ";");
+            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(endpoint) + ";");
             sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\").WithGroupName(")
-                .Append(Literal("v" + version)).Append(')').Append(MultipartMetadata(endpoint)).Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+                .Append(Literal("v" + version)).Append(')').Append(MultipartMetadata(endpoint))
+                .Append(".Produces<").Append(endpoint.Response).Append(">(").Append(SuccessStatusCode(endpoint))
+                .Append(").Produces(").Append(NullResultStatusCode(endpoint)).Append(')')
+                .Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
 
         private static void EmitCommandEndpoint(
@@ -580,6 +595,28 @@ namespace Ark.MediatorFramework.Generators
             return metadata.ToString();
         }
 
+        private static int SuccessStatusCode(EndpointModel endpoint)
+            => endpoint.SuccessStatusCode == 0 ? 200 : endpoint.SuccessStatusCode;
+
+        private static int NullResultStatusCode(EndpointModel endpoint)
+            => endpoint.NullResultStatusCode == 0
+                ? endpoint.Kind == HandlerKind.Query ? 404 : 204
+                : endpoint.NullResultStatusCode;
+
+        private static string NullResult(EndpointModel endpoint)
+            => NullResultStatusCode(endpoint) switch
+            {
+                200 => "global::Microsoft.AspNetCore.Http.TypedResults.Ok()",
+                204 => "global::Microsoft.AspNetCore.Http.TypedResults.NoContent()",
+                404 => "global::Microsoft.AspNetCore.Http.TypedResults.NotFound()",
+                var statusCode => "global::Microsoft.AspNetCore.Http.Results.StatusCode(" + statusCode + ")",
+            };
+
+        private static string SuccessResult(EndpointModel endpoint)
+            => SuccessStatusCode(endpoint) == 200
+                ? "global::Microsoft.AspNetCore.Http.TypedResults.Ok(result)"
+                : "global::Microsoft.AspNetCore.Http.Results.Json(result, statusCode: " + SuccessStatusCode(endpoint) + ")";
+
         private static string AuthorizationMetadata(EndpointModel endpoint)
         {
             if (endpoint.AllowAnonymous)
@@ -630,6 +667,8 @@ namespace Ark.MediatorFramework.Generators
                 HandlerKind kind,
                 int httpIntroducedIn,
                 int httpRetiredIn,
+                int successStatusCode,
+                int nullResultStatusCode,
                 bool acceptsMessagePack,
                 string? policy,
                 bool allowAnonymous,
@@ -652,6 +691,8 @@ namespace Ark.MediatorFramework.Generators
                 Kind = kind;
                 HttpIntroducedIn = httpIntroducedIn;
                 HttpRetiredIn = httpRetiredIn;
+                SuccessStatusCode = successStatusCode;
+                NullResultStatusCode = nullResultStatusCode;
                 AcceptsMessagePack = acceptsMessagePack;
                 Policy = policy;
                 AllowAnonymous = allowAnonymous;
@@ -676,6 +717,8 @@ namespace Ark.MediatorFramework.Generators
             public HandlerKind Kind { get; }
             public int HttpIntroducedIn { get; }
             public int HttpRetiredIn { get; }
+            public int SuccessStatusCode { get; }
+            public int NullResultStatusCode { get; }
             public bool AcceptsMessagePack { get; }
             public string? Policy { get; }
             public bool AllowAnonymous { get; }
