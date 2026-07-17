@@ -1,7 +1,7 @@
 <Project>
   <Target Name="ArkExportProto"
           AfterTargets="Build"
-          Condition="'$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true'">
+          Condition="'$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true' And Exists('$(TargetDir)$(TargetName).runtimeconfig.json')">
     <Exec Command="dotnet &quot;$(TargetPath)&quot; --ark-export-proto &quot;$(ArkExportProtoDir)&quot;" />
   </Target>
 
