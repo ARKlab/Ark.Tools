@@ -5,6 +5,7 @@ using Ark.Tools.Solid;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using FluentValidation;
+using FluentValidation.Results;
 
 using Rebus.Bus;
 
