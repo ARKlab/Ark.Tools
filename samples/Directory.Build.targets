@@ -51,24 +51,7 @@
                           Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
       </ItemGroup>
 
-      <ItemGroup>
-        <_ArkToolsProtoExports Include="true"
-                               Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
-      </ItemGroup>
-
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
-  </Target>
-
-  <Target Name="ArkExportProtoForSourceReferences"
-          AfterTargets="Build"
-          Condition="'@(_ArkToolsProtoExports)' == 'true' And Exists('$(IntermediateOutputPath)generated/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.MediatorFramework.Generators.ArkGrpcEndpointGenerator/ArkGeneratedEndpoints.Grpc.g.cs')">
-    <PropertyGroup>
-      <ArkExportProtoDir Condition="'$(ArkExportProtoDir)' == ''">$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
-    </PropertyGroup>
-    <Exec Command="dotnet &quot;$(TargetPath)&quot; --ark-export-proto &quot;$(ArkExportProtoDir)&quot;" />
-    <Copy SourceFiles="@(ArkAdditionalProto)"
-          DestinationFiles="@(ArkAdditionalProto->'$(ArkExportProtoDir)/%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

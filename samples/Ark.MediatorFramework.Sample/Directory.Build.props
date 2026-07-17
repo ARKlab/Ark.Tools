@@ -2,7 +2,15 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Version>0.9.1</Version>
+    <ArkExportProtoDir>$(MSBuildThisFileDirectory)src/Ark.MediatorFramework.Sample.WebInterface/proto</ArkExportProtoDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ArkAdditionalProto Include="$(MSBuildThisFileDirectory)src/Ark.MediatorFramework.Sample.WebInterface/proto/Documents.proto" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets')" />
 
   <PropertyGroup Label="Continuous Integration Build Detection">
     <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>

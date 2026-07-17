@@ -1,7 +1,7 @@
 <Project>
   <Target Name="ArkExportProto"
           AfterTargets="Build"
-          Condition="'$(ArkExportProtoDir)' != ''">
+          Condition="'$(ArkExportProtoDir)' != '' And Exists('$(IntermediateOutputPath)generated/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.MediatorFramework.Generators.ArkGrpcEndpointGenerator/ArkGeneratedEndpoints.Grpc.g.cs')">
     <Exec Command="dotnet &quot;$(TargetPath)&quot; --ark-export-proto &quot;$(ArkExportProtoDir)&quot;" />
   </Target>
 
