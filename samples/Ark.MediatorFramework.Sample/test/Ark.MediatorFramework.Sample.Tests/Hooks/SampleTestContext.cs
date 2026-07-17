@@ -49,7 +49,9 @@ public sealed class SampleTestContext : IDisposable
                 .ConfigureServices(startup.ConfigureServices)
                 .Configure(startup.Configure))
             .Build();
-        _host.StartAsync().GetAwaiter().GetResult();
+#pragma warning disable MA0045, VSTHRD002 // Reqnroll requires a synchronously constructible binding context.
+        _host.Start();
+#pragma warning restore MA0045, VSTHRD002
         Client = _host.GetTestServer().CreateClient();
     }
 
