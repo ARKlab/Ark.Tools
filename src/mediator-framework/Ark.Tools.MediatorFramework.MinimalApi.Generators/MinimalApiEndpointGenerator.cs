@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 
@@ -54,15 +55,59 @@ namespace Ark.MediatorFramework.Generators
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var endpoints = context.CompilationProvider
-                .SelectMany(static (compilation, _) => GetEndpoints(compilation));
+            var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
+                    static (node, _) => node is InvocationExpressionSyntax invocation
+                        && invocation.Expression.ToString().Contains("MapArkEndpoints", StringComparison.Ordinal),
+                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkEndpoints"))
+                .Where(static assemblyName => assemblyName is not null)
+                .Select(static (assemblyName, _) => assemblyName!)
+                .Collect();
+            var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
+                    HttpEndpointAttribute,
+                    static (_, _) => true,
+                    static (attributeContext, _) => ExtractSourceEndpoint(attributeContext))
+                .Where(static endpoint => endpoint is not null)
+                .Select(static (endpoint, _) => endpoint!.Value);
+            var referencedEndpoints = context.CompilationProvider
+                .Combine(endpointAssemblies)
+                .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
 
-            var collected = endpoints.Collect();
+            var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect());
 
-            context.RegisterSourceOutput(collected, static (spc, items) => Emit(spc, items));
+            context.RegisterSourceOutput(
+                collected,
+                static (spc, pair) => Emit(spc, pair.Left.AddRange(pair.Right)));
         }
 
-        private static ImmutableArray<EndpointModel> GetEndpoints(Compilation compilation)
+        private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
+        {
+            var type = (INamedTypeSymbol)context.TargetSymbol;
+            var http = context.Attributes[0];
+            var compilation = context.SemanticModel.Compilation;
+            return Extract(
+                type,
+                http,
+                compilation.GetTypeByMetadataName(BindFromQueryAttribute),
+                compilation.GetTypeByMetadataName(ServerSetAttribute),
+                compilation.GetTypeByMetadataName(ArkAttachment),
+                compilation.GetTypeByMetadataName(RebusMessageAttribute));
+        }
+
+        private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
+        {
+            var invocation = (InvocationExpressionSyntax)context.Node;
+            var genericName = invocation.Expression.DescendantNodesAndSelf()
+                .OfType<GenericNameSyntax>()
+                .FirstOrDefault(name => name.Identifier.ValueText == methodName);
+            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
+                return null;
+
+            return context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+        }
+
+        private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
+            Compilation compilation,
+            ImmutableArray<string> endpointAssemblies)
         {
             var httpAttr = compilation.GetTypeByMetadataName(HttpEndpointAttribute);
             if (httpAttr is null)
@@ -75,7 +120,8 @@ namespace Ark.MediatorFramework.Generators
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
-            foreach (var assembly in _relevantAssemblies(compilation, runtimeAssembly))
+            foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
+                .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
             {
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
@@ -93,10 +139,8 @@ namespace Ark.MediatorFramework.Generators
             return builder.ToImmutable();
         }
 
-        private static IEnumerable<IAssemblySymbol> _relevantAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
+        private static IEnumerable<IAssemblySymbol> _referencedAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
         {
-            yield return compilation.Assembly;
-
             foreach (var reference in compilation.SourceModule.ReferencedAssemblySymbols
                 .Where(reference => !SymbolEqualityComparer.Default.Equals(reference, runtimeAssembly)))
             {
@@ -296,7 +340,7 @@ namespace Ark.MediatorFramework.Generators
 
             // MapArkEndpoints is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
             sb.AppendLine("        {");
             sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
 
@@ -656,7 +700,7 @@ namespace Ark.MediatorFramework.Generators
             Command = 3,
         }
 
-        private readonly struct EndpointModel
+        private readonly record struct EndpointModel
         {
             public EndpointModel(
                 string typeFullName,
@@ -738,7 +782,7 @@ namespace Ark.MediatorFramework.Generators
             public Location? Location { get; }
         }
 
-        private readonly struct PropertyModel
+        private readonly record struct PropertyModel
         {
             public PropertyModel(string name, string typeFullName, bool isRoute, string bindingName, bool isQuery, bool isServerSet, bool hasPublicSetter)
             {

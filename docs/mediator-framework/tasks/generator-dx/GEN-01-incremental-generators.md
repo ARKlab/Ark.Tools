@@ -28,7 +28,7 @@ the full walk on every keystroke.
 
 ## Acceptance
 
-- [ ] No `ISymbol`/`Compilation` captured in cached pipeline stages (models are equatable records).
-- [ ] `GeneratorDriver` test proves cached/NotRun step reasons on unchanged recompilation.
-- [ ] Generated output identical before/after (snapshot test or diff of `.g.cs` in the sample obj).
-- [ ] Full solution build + tests green.
+- [x] No `ISymbol`/`Compilation` captured in cached pipeline stages (models are equatable records).
+- [x] `GeneratorDriver` test proves cached/NotRun step reasons on unchanged recompilation.
+- [x] Generated output identical before/after (snapshot test or diff of `.g.cs` in the sample obj).
+- [x] Full solution build + tests green.
