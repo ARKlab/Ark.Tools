@@ -162,8 +162,8 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("TypedResults.NotFound()");
         generated.Should().Contain("Results.Json(result, statusCode: 201)");
-        generated.Should().Contain(".Produces<global::System.String>(201).Produces(200)");
-        generated.Should().Contain(".Produces<global::System.String>(200).Produces(404)");
+        generated.Should().Contain(".Produces<string>(201).Produces(200)");
+        generated.Should().Contain(".Produces<string>(200).Produces(404)");
     }
 
     [TestMethod]
