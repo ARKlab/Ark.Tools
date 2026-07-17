@@ -288,7 +288,7 @@ graph validation.
 
 | Transport | Mechanism | Mapping |
 | --- | --- | --- |
-| Minimal API | `Hellang.Middleware.ProblemDetails` configured by the same `ArkProblemDetailsOptionsSetup` used in `Ark.Tools.AspNetCore` | `EntityNotFoundException`→404; `ValidationException`→400 + `extensions` field violations; `BusinessRuleViolationException`→400 with the violation payload in `extensions` |
+| Minimal API | `Ark.Tools.AspNetCore.ProblemDetails` registered with `AddArkProblemDetailsExceptionHandler` and `UseExceptionHandler` | `EntityNotFoundException`→404; `ValidationException`→400 + `extensions` field violations; `BusinessRuleViolationException`→400 with the violation payload in `extensions` |
 | gRPC | server interceptor → `Google.Rpc.Status` rich error model | field violations packed as `BadRequest` details in trailing metadata; business rule violations packed as an `ArkBusinessRuleViolation` detail; thrown as `RpcException` |
 | Rebus | scope disposal + native retry | exhausted → error/dead-letter queue with serialized exception headers |
 

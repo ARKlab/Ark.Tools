@@ -23,6 +23,7 @@
     <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\..\aspnetcore\Ark.Tools.AspNetCore.ProblemDetails\Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
     <!-- The generator is applied as an analyzer when this package is project-referenced in
          development. When consumed via NuGet the generator DLL lives in analyzers/dotnet/cs/

@@ -701,6 +701,15 @@
       "ark.tools.aspnetcore.nestedstartup": {
         "type": "Project"
       },
+      "ark.tools.aspnetcore.problemdetails": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Authorization": "[1.0.0, )",
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
+          "FluentValidation": "[12.1.1, )"
+        }
+      },
       "ark.tools.aspnetcore.swashbuckle": {
         "type": "Project",
         "dependencies": {
@@ -713,6 +722,12 @@
           "Swashbuckle.AspNetCore.Swagger": "[10.2.3, )",
           "Swashbuckle.AspNetCore.SwaggerGen": "[10.2.3, )",
           "Swashbuckle.AspNetCore.SwaggerUI": "[10.2.3, )"
+        }
+      },
+      "ark.tools.authorization": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.core": {
