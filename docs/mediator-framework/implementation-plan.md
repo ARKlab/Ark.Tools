@@ -605,8 +605,8 @@ generator tests cover round-trips, mixed negotiation, and resolver enforcement.
 **Completed:** section-by-section review confirmed no drift. All reusable
 pieces (`AddArkNodaTimeSchemas`, `AddArkPolymorphism`, `MapArkAttachmentUpload`,
 interceptor, upload adapter, proto export) are in `src/` packages.
-`WebInterface` contains only app-specific composition, `HostUserContextProvider`
-(documented ponytail), and hand-written escape-hatch demos
+`WebInterface` contains only app-specific composition, the framework-provided
+`ArkGrpcUserContextProvider`, and hand-written escape-hatch demos
 (`DocumentsGrpcService`, `MessagePackGreetingController`,
 `SampleProblemDetailsOptionsSetup`). Full-solution build + all 201 tests green.
 

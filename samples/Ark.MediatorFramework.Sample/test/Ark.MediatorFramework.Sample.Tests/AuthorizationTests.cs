@@ -102,15 +102,17 @@ public sealed class AuthorizationTests
     public async Task GrpcCallWithValidBearerFlowsUserContext()
     {
         using var context = new SampleTestContext();
+        var token = new JwtTokenBuilder().AddSubject("grpc-user").AddScope("greetings.write").Build();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
-            new JwtTokenBuilder().AddSubject("grpc-user").Build());
+            token);
         using var channel = GrpcChannel.ForAddress(
             "http://localhost",
             new GrpcChannelOptions { HttpClient = context.Client });
 
         var response = await new GreetingsV1.GreetingsV1Client(channel).CreateGreetingAsync(
-            new CreateGreetingRequest { Name = "grpc-context" }).ResponseAsync.ConfigureAwait(false);
+            new CreateGreetingRequest { Name = "grpc-context" },
+            new Metadata { { "Authorization", string.Concat("Bearer ", token) } }).ResponseAsync.ConfigureAwait(false);
 
         response.Message.Should().Contain("grpc-user");
     }
