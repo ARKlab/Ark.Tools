@@ -10,7 +10,6 @@ using Ark.Tools.Sql.SqlServer;
 using FluentValidation;
 
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;

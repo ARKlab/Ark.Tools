@@ -3,7 +3,7 @@
 
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails;
@@ -21,13 +21,47 @@ public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id
             ?? httpContext.TraceIdentifier;
         httpContext.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;
-        await httpContext.Response.WriteAsJsonAsync(
+        httpContext.Response.ContentType = "application/problem+json";
+        await System.Text.Json.JsonSerializer.SerializeAsync(
+            httpContext.Response.Body,
             problemDetails,
-            "application/problem+json",
+            ProblemDetailsJsonSerializerContext.Default.ProblemDetails,
             cancellationToken).ConfigureAwait(false);
         return true;
     }
 }
+
+internal sealed class ArkProblemDetailsExceptionMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public ArkProblemDetailsExceptionMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext httpContext, ArkProblemDetailsExceptionHandler handler)
+    {
+        try
+        {
+            await _next(httpContext).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            await handler.TryHandleAsync(httpContext, exception, httpContext.RequestAborted).ConfigureAwait(false);
+        }
+    }
+}
+
+    [System.Text.Json.Serialization.JsonSourceGenerationOptions(
+        PropertyNamingPolicy = System.Text.Json.Serialization.JsonKnownNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    [System.Text.Json.Serialization.JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
+    [System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, string[]>))]
+    [System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, object?>))]
+    internal sealed partial class ProblemDetailsJsonSerializerContext : System.Text.Json.Serialization.JsonSerializerContext
+    {
+    }
 
 /// <summary>Registers Ark's transport-neutral exception mapping for Minimal API hosts.</summary>
 public static class ArkProblemDetailsServiceCollectionExtensions
@@ -41,7 +75,17 @@ public static class ArkProblemDetailsServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddProblemDetails();
+        services.AddSingleton<ArkProblemDetailsExceptionHandler>();
         services.AddExceptionHandler<ArkProblemDetailsExceptionHandler>();
         return services;
+    }
+
+    /// <summary>Activates Ark's exception handler in the ASP.NET Core request pipeline.</summary>
+    /// <param name="application">The application builder.</param>
+    /// <returns>The same application builder.</returns>
+    public static IApplicationBuilder UseArkProblemDetailsExceptionHandler(this IApplicationBuilder application)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+        return application.UseMiddleware<ArkProblemDetailsExceptionMiddleware>();
     }
 }

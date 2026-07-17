@@ -15,7 +15,6 @@ using MessagePack.Resolvers;
 
 using Scalar.AspNetCore;
 
-using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authorization;
 
 using SimpleInjector;
@@ -139,7 +138,7 @@ public sealed class SampleStartup
         ArgumentNullException.ThrowIfNull(app);
 
         // Outermost middleware: map unhandled domain exceptions to RFC 7807 ProblemDetails responses.
-        app.UseExceptionHandler();
+        app.UseArkProblemDetailsExceptionHandler();
 
         app.UseRouting();
         app.UseAuthentication();
