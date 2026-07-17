@@ -108,6 +108,12 @@
           "protobuf-net.Grpc": "1.2.2"
         }
       },
+      "SimpleInjector": {
+        "type": "Direct",
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "6LAI0eDUtm57Ruvnoqf9FpZ7YXEHtUnsupIyYsPyeVKEDwGEsXWbNk/8z1HhI3YCiLvyPxcov4eqcs7Fb5bD1A=="
+      },
       "System.ServiceModel.Primitives": {
         "type": "Direct",
         "requested": "[10.0.652802, )",
@@ -327,6 +333,13 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
+        }
+      },
+      "ark.tools.solid": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.systemtextjson": {
@@ -610,6 +623,12 @@
           "protobuf-net.Grpc": "1.2.2"
         }
       },
+      "SimpleInjector": {
+        "type": "Direct",
+        "requested": "[5.6.0, )",
+        "resolved": "5.6.0",
+        "contentHash": "6LAI0eDUtm57Ruvnoqf9FpZ7YXEHtUnsupIyYsPyeVKEDwGEsXWbNk/8z1HhI3YCiLvyPxcov4eqcs7Fb5bD1A=="
+      },
       "System.ServiceModel.Primitives": {
         "type": "Direct",
         "requested": "[10.0.652802, )",
@@ -862,6 +881,13 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
+        }
+      },
+      "ark.tools.solid": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.systemtextjson": {

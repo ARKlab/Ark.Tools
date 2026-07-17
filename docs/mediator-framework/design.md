@@ -203,6 +203,11 @@ a `partial` implementation that resolves the pure handler from the ambient
 request scope (opened by the SimpleInjector integration in the pipeline). The
 `partial` lets a developer hand-write any method the generator cannot express.
 Startup uses `AddCodeFirstGrpc()` + `MapGrpcService<OrdersService>()`.
+`AddArkGrpc(container)` adds the framework's default user-context interceptor and
+registers `ArkGrpcUserContextProvider` for mediator handlers. The interceptor
+copies `ServerCallContext.GetHttpContext().User` into an `AsyncLocal` for the
+duration of each call; the provider uses that ambient principal and falls back
+to the current HTTP context for hosts that share HTTP and gRPC handlers.
 
 NodaTime members on contracts serialize over protobuf via
 [`Ark.Tools.Nodatime.Protobuf`](../../src/common/Ark.Tools.Nodatime.Protobuf)

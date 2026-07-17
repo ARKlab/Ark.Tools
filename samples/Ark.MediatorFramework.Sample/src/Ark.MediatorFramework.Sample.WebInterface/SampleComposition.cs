@@ -4,7 +4,6 @@
 using Ark.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.Application;
 
-using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Solid.Authorization;
