@@ -35,7 +35,7 @@ sample's Documents proto leaked into their proto export.
 
 ## Acceptance
 
-- [ ] No sample-specific string content remains in any framework generator.
-- [ ] Sample proto export unchanged (same files/services available to grpcui, per `samples/Ark.MediatorFramework.Sample/README.md` workflow).
-- [ ] Generator test proves a clean consumer exports no Documents proto.
-- [ ] Full solution build + tests green.
+- [x] No sample-specific string content remains in any framework generator.
+- [x] Sample proto export unchanged (same files/services available to grpcui, per `samples/Ark.MediatorFramework.Sample/README.md` workflow).
+- [x] Generator test proves a clean consumer exports no Documents proto.
+- [x] Full solution build + tests green.

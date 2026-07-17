@@ -324,27 +324,6 @@ namespace Ark.MediatorFramework.Generators
                 entries.Add("Get" + Identifier(Path.GetFileNameWithoutExtension(fileName)) + "()");
             }
 
-            var upload = new StringBuilder();
-            upload.AppendLine("syntax = \"proto3\";");
-            upload.AppendLine();
-            upload.Append("option csharp_namespace = ")
-                .Append(Literal(GetProtoNamespace(compilation)))
-                .AppendLine(";");
-            upload.AppendLine();
-            upload.AppendLine("import \"ark/mediator.proto\";");
-            upload.AppendLine();
-            upload.AppendLine("message UploadResponse {");
-            upload.AppendLine("  string name = 1;");
-            upload.AppendLine("  string content_type = 2;");
-            upload.AppendLine("  int64 length = 3;");
-            upload.AppendLine("}");
-            upload.AppendLine();
-            upload.AppendLine("service Documents {");
-            upload.AppendLine("  rpc Upload(stream ark.mediator.UploadDocumentChunk) returns (UploadResponse);");
-            upload.AppendLine("}");
-            upload.AppendLine();
-            EmitProtoEntry(sb, "Documents.proto", upload.ToString());
-            entries.Add("GetDocuments()");
             sb.AppendLine("        public static (string FileName, string Content)[] GetFiles() => new[]");
             sb.AppendLine("        {");
             foreach (var entry in entries)

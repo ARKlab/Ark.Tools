@@ -409,6 +409,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("import \\\"google/type/datetime.proto\\\";");
         generated.Should().Contain("import \\\"ark/nodatime.proto\\\";");
         generated.Should().Contain("service GreetingsV1");
+        generated.Should().NotContain("\"Documents.proto\"");
     }
 
     [TestMethod]

@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ArkAdditionalProto Include="proto/Documents.proto" />
     <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />

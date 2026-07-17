@@ -66,6 +66,9 @@
       <ArkExportProtoDir Condition="'$(ArkExportProtoDir)' == ''">$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
     </PropertyGroup>
     <Exec Command="dotnet &quot;$(TargetPath)&quot; --ark-export-proto &quot;$(ArkExportProtoDir)&quot;" />
+    <Copy SourceFiles="@(ArkAdditionalProto)"
+          DestinationFiles="@(ArkAdditionalProto->'$(ArkExportProtoDir)/%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
