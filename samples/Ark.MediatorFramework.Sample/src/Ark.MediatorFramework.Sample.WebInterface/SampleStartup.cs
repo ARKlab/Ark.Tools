@@ -161,8 +161,8 @@ public sealed class SampleStartup
         app.UseEndpoints(endpoints =>
         {
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
-            endpoints.MapArkEndpoints();
-            endpoints.MapArkGrpcServices();
+            endpoints.MapArkEndpoints<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>();
+            endpoints.MapArkGrpcServices<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>();
             endpoints.MapGrpcService<DocumentsGrpcService>();
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
             endpoints.MapControllers();

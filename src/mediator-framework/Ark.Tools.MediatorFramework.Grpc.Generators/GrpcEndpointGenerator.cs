@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 
@@ -31,6 +32,13 @@ namespace Ark.MediatorFramework.Generators
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
+            var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
+                    static (node, _) => node is InvocationExpressionSyntax invocation
+                        && invocation.Expression.ToString().Contains("MapArkGrpcServices", StringComparison.Ordinal),
+                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkGrpcServices"))
+                .Where(static assemblyName => assemblyName is not null)
+                .Select(static (assemblyName, _) => assemblyName!)
+                .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     GrpcMethodAttribute,
                     static (_, _) => true,
@@ -38,7 +46,8 @@ namespace Ark.MediatorFramework.Generators
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value);
             var referencedEndpoints = context.CompilationProvider
-                .SelectMany(static (compilation, _) => GetReferencedEndpoints(compilation));
+                .Combine(endpointAssemblies)
+                .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
 
             var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect());
 
@@ -59,7 +68,21 @@ namespace Ark.MediatorFramework.Generators
             return Extract(type, grpc, serviceGroup);
         }
 
-        private static ImmutableArray<EndpointModel> GetReferencedEndpoints(Compilation compilation)
+        private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
+        {
+            var invocation = (InvocationExpressionSyntax)context.Node;
+            var genericName = invocation.Expression.DescendantNodesAndSelf()
+                .OfType<GenericNameSyntax>()
+                .FirstOrDefault(name => name.Identifier.ValueText == methodName);
+            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
+                return null;
+
+            return context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+        }
+
+        private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
+            Compilation compilation,
+            ImmutableArray<string> endpointAssemblies)
         {
             var grpcAttr = compilation.GetTypeByMetadataName(GrpcMethodAttribute);
             var serviceGroupAttr = compilation.GetTypeByMetadataName(ServiceGroupAttribute);
@@ -69,7 +92,8 @@ namespace Ark.MediatorFramework.Generators
             var runtimeAssembly = grpcAttr.ContainingAssembly;
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
-            foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly))
+            foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
+                .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
             {
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
@@ -264,7 +288,7 @@ namespace Ark.MediatorFramework.Generators
 
             // MapArkGrpcServices is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Maps every generated code-first gRPC service.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServices(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServices<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
             if (!items.IsDefaultOrEmpty)
             {

@@ -54,7 +54,7 @@ public static class SampleComposition
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, HostUserContextProvider>();
 
         // Source-generated Rebus message-handler wrappers for the [RebusMessage] requests.
-        ArkGeneratedEndpoints.RegisterArkRebusHandlers(container);
+        ArkGeneratedEndpoints.RegisterArkRebusHandlers<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>(container);
 
         // The Rebus pipeline opens the SimpleInjector scope per message (no Rebus unit-of-work needed):
         // decorating the generated handlers gives each dispatched message its own request-equivalent scope.
@@ -63,7 +63,7 @@ public static class SampleComposition
         container.ConfigureRebus(cfg =>
         {
             cfg.Transport(t => t.UseInMemoryTransport(network, "ark.mediator.sample"));
-            cfg.Routing(ArkGeneratedEndpoints.ConfigureArkRebusRouting);
+            cfg.Routing(ArkGeneratedEndpoints.ConfigureArkRebusRouting<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>);
 
             if (useProtobufRebus)
             {

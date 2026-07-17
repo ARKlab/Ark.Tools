@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Ark.MediatorFramework.Generators
@@ -31,6 +32,13 @@ namespace Ark.MediatorFramework.Generators
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
+            var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
+                    static (node, _) => node is InvocationExpressionSyntax invocation
+                        && invocation.Expression.ToString().Contains("ArkRebus", StringComparison.Ordinal),
+                    static (syntaxContext, _) => GetAssemblyName(syntaxContext))
+                .Where(static assemblyName => assemblyName is not null)
+                .Select(static (assemblyName, _) => assemblyName!)
+                .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     RebusMessageAttribute,
                     static (_, _) => true,
@@ -38,7 +46,8 @@ namespace Ark.MediatorFramework.Generators
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value);
             var referencedEndpoints = context.CompilationProvider
-                .SelectMany(static (compilation, _) => GetReferencedEndpoints(compilation));
+                .Combine(endpointAssemblies)
+                .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
 
             var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect());
 
@@ -52,7 +61,21 @@ namespace Ark.MediatorFramework.Generators
             return Extract((INamedTypeSymbol)context.TargetSymbol, context.Attributes[0]);
         }
 
-        private static ImmutableArray<EndpointModel> GetReferencedEndpoints(Compilation compilation)
+        private static string? GetAssemblyName(GeneratorSyntaxContext context)
+        {
+            var invocation = (InvocationExpressionSyntax)context.Node;
+            var genericName = invocation.Expression.DescendantNodesAndSelf()
+                .OfType<GenericNameSyntax>()
+                .FirstOrDefault(name => name.Identifier.ValueText is "RegisterArkRebusHandlers" or "ConfigureArkRebusRouting");
+            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
+                return null;
+
+            return context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+        }
+
+        private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
+            Compilation compilation,
+            ImmutableArray<string> endpointAssemblies)
         {
             var rebusAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             if (rebusAttr is null)
@@ -61,7 +84,8 @@ namespace Ark.MediatorFramework.Generators
             var runtimeAssembly = rebusAttr.ContainingAssembly;
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
-            foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly))
+            foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
+                .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
             {
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
@@ -199,7 +223,7 @@ namespace Ark.MediatorFramework.Generators
 
             // RegisterArkRebusHandlers is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Registers the generated Rebus handler wrappers into the SimpleInjector collection resolved by the Rebus activator.</summary>");
-            sb.AppendLine("        public static void RegisterArkRebusHandlers(global::SimpleInjector.Container container)");
+            sb.AppendLine("        public static void RegisterArkRebusHandlers<TAssemblyMarker>(global::SimpleInjector.Container container)");
             sb.AppendLine("        {");
             if (!items.IsDefaultOrEmpty)
             {
@@ -211,7 +235,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        /// <summary>Registers generated owner queues with Rebus type-based routing.</summary>");
-            sb.AppendLine("        public static void ConfigureArkRebusRouting(global::Rebus.Config.StandardConfigurer<global::Rebus.Routing.IRouter> routing)");
+            sb.AppendLine("        public static void ConfigureArkRebusRouting<TAssemblyMarker>(global::Rebus.Config.StandardConfigurer<global::Rebus.Routing.IRouter> routing)");
             sb.AppendLine("        {");
             sb.AppendLine("            var typeBased = global::Rebus.Routing.TypeBased.TypeBasedRouterConfigurationExtensions.TypeBased(routing);");
             foreach (var e in items.Where(item => item.OwnerQueue is not null))
