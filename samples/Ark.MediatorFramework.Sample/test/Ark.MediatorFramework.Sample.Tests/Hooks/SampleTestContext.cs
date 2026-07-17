@@ -49,7 +49,7 @@ public sealed class SampleTestContext : IDisposable
                 .ConfigureServices(startup.ConfigureServices)
                 .Configure(startup.Configure))
             .Build();
-        _host.Start();
+        _host.StartAsync().GetAwaiter().GetResult();
         Client = _host.GetTestServer().CreateClient();
     }
 
