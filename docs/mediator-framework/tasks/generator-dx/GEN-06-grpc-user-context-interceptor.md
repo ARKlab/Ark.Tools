@@ -1,4 +1,4 @@
-# GEN-06 — gRPC user-context interceptor (A5)
+# GEN-06 — gRPC user-context interceptor (A5) — Cancelled
 
 **Category**: generator-dx · **Priority**: Non-blocking (pre-release if capacity) · **Scope**: FRAMEWORK + SAMPLE
 
@@ -29,11 +29,8 @@ This couples gRPC identity to ASP.NET Core's HttpContext bridging and breaks for
 
 ## Outcomes
 
-- First-class, framework-provided user context for gRPC calls; sample hack removed; design matches implementation.
+- **Cancelled:** The original ASP.NET Core `HttpContext.User` propagation already covers the sample's gRPC host. The framework interceptor/provider is not required.
 
 ## Acceptance
 
-- [ ] Interceptor + provider shipped and registered by default in the Grpc package.
-- [ ] Sample "simplification" comment/code removed.
-- [ ] gRPC handler observes the authenticated principal (test); anonymous call behavior unchanged (401 per SEC-02).
-- [ ] Full solution build + tests green; `design.md` reference now accurate.
+- [x] Reviewed and cancelled; the existing ASP.NET Core host approach is retained.
