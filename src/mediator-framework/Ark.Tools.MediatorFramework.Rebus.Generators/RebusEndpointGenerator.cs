@@ -68,12 +68,7 @@ namespace Ark.MediatorFramework.Generators
                 .OfType<GenericNameSyntax>()
                 .FirstOrDefault(name => name.Identifier.ValueText is "RegisterArkRebusHandlers" or "ConfigureArkRebusRouting");
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
-                return EndpointModel.Invalid(
-                    type,
-                    new DiagnosticInfo(
-                        DiagnosticDescriptors.UnsupportedHandlerKind,
-                        type.Name,
-                        GetLocation(rebusAttribute)));
+                return null;
 
             return context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
         }
@@ -192,7 +187,12 @@ namespace Ark.MediatorFramework.Generators
                 }
             }
 
-            return null;
+            return EndpointModel.Invalid(
+                type,
+                new DiagnosticInfo(
+                    DiagnosticDescriptors.UnsupportedHandlerKind,
+                    type.Name,
+                    GetLocation(rebusAttribute)));
         }
 
         private static string? GetOwnerQueue(AttributeData attribute)
@@ -349,11 +349,11 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly record struct DiagnosticInfo
         {
-            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, string? queues = null)
+            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, params object[] arguments)
             {
                 Descriptor = descriptor;
                 Location = location;
-                Arguments = queues is null ? [typeName] : [typeName, queues];
+                Arguments = new[] { (object)typeName }.Concat(arguments).ToArray();
             }
 
             public DiagnosticDescriptor Descriptor { get; }

@@ -169,7 +169,7 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel Extract(
+        private static EndpointModel? Extract(
             INamedTypeSymbol type,
             AttributeData http,
             INamedTypeSymbol? bindFromQueryAttr,

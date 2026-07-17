@@ -32,7 +32,7 @@ Only `ARKMF001` exists in the MinimalApi generator; IDs 002/003 are unaccounted.
 
 ## Acceptance
 
-- [ ] Verb typo now fails the build (no POST fallback remains).
-- [ ] All five failure modes above produce documented diagnostics (tests per diagnostic).
-- [ ] Sample builds clean (0 new diagnostics).
-- [ ] `docs/analyzers.md` lists the new IDs; full solution build + tests green.
+- [x] Verb typo now fails the build (no POST fallback remains).
+- [x] All five failure modes above produce documented diagnostics (tests per diagnostic).
+- [x] Sample builds clean (0 new diagnostics).
+- [x] `docs/analyzers.md` lists the new IDs; full solution build + tests green.

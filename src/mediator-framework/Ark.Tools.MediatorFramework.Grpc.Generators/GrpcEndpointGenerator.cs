@@ -150,7 +150,7 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel Extract(INamedTypeSymbol type, AttributeData grpc, AttributeData? serviceGroup)
+        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData grpc, AttributeData? serviceGroup)
         {
             string? response = null;
             var kind = HandlerKind.None;
