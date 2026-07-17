@@ -93,6 +93,48 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorCachesUnchangedInputs()
+    {
+        var source = """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/cached")]
+            public sealed class CachedEndpoint : IQuery<string>
+            {
+            }
+            """;
+        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(path => MetadataReference.CreateFromFile(path))
+            .Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            ]);
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [CSharpSyntaxTree.ParseText(source)],
+            references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var options = new GeneratorDriverOptions(
+            IncrementalGeneratorOutputKind.None,
+            trackIncrementalGeneratorSteps: true);
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ArkMinimalApiEndpointGenerator().AsSourceGenerator()],
+            driverOptions: options);
+
+        driver = driver.RunGenerators(compilation);
+        driver = driver.RunGenerators(compilation);
+
+        var reasons = driver.GetRunResult().Results
+            .SelectMany(result => result.TrackedSteps.Values)
+            .SelectMany(stepRuns => stepRuns)
+            .SelectMany(stepRun => stepRun.Outputs)
+            .Select(output => output.Reason);
+        reasons.Should().Contain(IncrementalStepRunReason.Cached);
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorSecuresEndpointsAndSupportsOverrides()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
