@@ -19,6 +19,18 @@ public sealed class SampleTestContext : IDisposable
 
     /// <summary>Initializes a new instance of the <see cref="SampleTestContext"/> class.</summary>
     public SampleTestContext()
+        : this(configureFallbackPolicy: true)
+    {
+    }
+
+    /// <summary>Creates a test context without the fallback authorization policy.</summary>
+    /// <returns>The configured test context.</returns>
+    public static SampleTestContext WithoutFallbackPolicy()
+    {
+        return new SampleTestContext(configureFallbackPolicy: false);
+    }
+
+    private SampleTestContext(bool configureFallbackPolicy)
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
         var container = SampleComposition.BuildContainer(new InMemNetwork());
@@ -30,14 +42,16 @@ public sealed class SampleTestContext : IDisposable
                 ["ASPNETCORE_ENVIRONMENT"] = "IntegrationTests",
             })
             .Build();
-        var startup = new SampleStartup(container, configuration);
+        var startup = new SampleStartup(container, configuration, configureFallbackPolicy);
         _host = new HostBuilder()
             .ConfigureWebHost(web => web
                 .UseTestServer()
                 .ConfigureServices(startup.ConfigureServices)
                 .Configure(startup.Configure))
             .Build();
+#pragma warning disable MA0045, VSTHRD002 // Reqnroll requires a synchronously constructible binding context.
         _host.Start();
+#pragma warning restore MA0045, VSTHRD002
         Client = _host.GetTestServer().CreateClient();
     }
 

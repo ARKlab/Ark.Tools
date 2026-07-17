@@ -294,7 +294,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
             sb.AppendLine("        {");
-            sb.AppendLine("            var group = global::Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapGroup(endpoints, string.Empty);");
+            sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
 
             if (!items.IsDefaultOrEmpty)
             {

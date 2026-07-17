@@ -52,12 +52,32 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCallWithoutCredentialsReturnsUnauthorized()
     {
-        using var context = new SampleTestContext();
+        using var context = SampleTestContext.WithoutFallbackPolicy();
 
         var response = await context.Client.GetAsync(
             new Uri($"/api/v1/greetings/{Guid.Empty}", UriKind.Relative)).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+    }
+
+    /// <summary>Authenticated callers can invoke a generated endpoint successfully.</summary>
+    [TestMethod]
+    public async Task HttpCallWithValidBearerReturnsSuccess()
+    {
+        using var context = SampleTestContext.WithoutFallbackPolicy();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("test-user").Build());
+
+        using var content = new StringContent(
+            """{"id":"00000000-0000-0000-0000-000000000000"}""",
+            System.Text.Encoding.UTF8,
+            "application/json");
+        var response = await context.Client.PostAsync(
+            new Uri("/api/v1/greetings/refresh", UriKind.Relative),
+            content).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NoContent);
     }
 
     /// <summary>Generated gRPC endpoints reject calls without bearer metadata.</summary>

@@ -115,6 +115,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("RouteGroupBuilder MapArkEndpoints");
         generated.Should().Contain("Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null");
+        generated.Should().Contain("var group = endpoints.MapGroup(string.Empty);");
         generated.Should().Contain("group.MapGet(\"/secure\"");
         generated.Should().Contain(".RequireAuthorization()");
         generated.Should().Contain(".RequireAuthorization(\"admin\")");
