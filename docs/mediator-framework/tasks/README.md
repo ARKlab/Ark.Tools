@@ -79,7 +79,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [GEN-03](generator-dx/GEN-03-startup-handler-verification.md)
    [x] [GEN-05](generator-dx/GEN-05-rebus-cancellation-token.md)
    [x] [GEN-06](generator-dx/GEN-06-grpc-user-context-interceptor.md) *(cancelled — existing ASP.NET Core host propagation retained)*
-4. [ ] [SMP-01](sample-parity/SMP-01-fluentvalidation.md)
+4. [x] [SMP-01](sample-parity/SMP-01-fluentvalidation.md)
    [x] [SEC-05](security/SEC-05-transport-agnostic-authorization-decorator.md)
 5. [ ] [FW-03](framework/FW-03-shared-problemdetails-package.md)
    [ ] [SEC-07](security/SEC-07-error-serialization-hardening.md)

@@ -3,6 +3,8 @@
 
 using Ark.Tools.Solid;
 
+using FluentValidation;
+
 using SimpleInjector;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -23,6 +25,14 @@ public static class ApplicationComposition
         container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
         container.RegisterSingleton<AuditCounter>();
 
+        var applicationAssembly = typeof(ApplicationComposition).Assembly;
+        container.Register(
+            typeof(IValidator<>),
+            container.GetTypesToRegister(typeof(IValidator<>), new[] { applicationAssembly })
+                .Where(type => type.IsPublic),
+            Lifestyle.Singleton);
+        container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, c => !c.Handled);
+
         container.Register<ICommandHandler<RefreshGreetingCommand>, RefreshGreetingHandler>();
         container.Register<IRequestHandler<CreateGreetingRequest, GreetingResponse>, CreateGreetingHandler>();
         container.Register<IRequestHandler<ComposeGreetingRequest, ComposeGreetingResponse>, ComposeGreetingHandler>();
@@ -36,5 +46,12 @@ public static class ApplicationComposition
 
         // Cross-cutting concern applied transport-agnostically.
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(AuditRequestDecorator<,>));
+        container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryFluentValidateDecorator<,>));
+        container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestFluentValidateDecorator<,>));
+        container.RegisterDecorator(typeof(ICommandHandler<>), typeof(CommandFluentValidateDecorator<>));
+    }
+
+    private sealed class NullValidator<T> : AbstractValidator<T>
+    {
     }
 }

@@ -5,7 +5,6 @@ using Ark.Tools.Solid;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using FluentValidation;
-using FluentValidation.Results;
 
 using Rebus.Bus;
 
@@ -41,11 +40,6 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
     public Task<GreetingResponse> ExecuteAsync(CreateGreetingRequest Request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(Request);
-
-        // Semantic domain validation: the handler throws a transport-agnostic ValidationException;
-        // each transport maps it to its own error shape (Minimal API -> ProblemDetails 400).
-        if (string.IsNullOrWhiteSpace(Request.Name))
-            throw new ValidationException([new ValidationFailure(nameof(Request.Name), "Name must not be empty.")]);
 
         if (_store.All().Any(g => g.Message.Contains($"Hello, {Request.Name}!", StringComparison.Ordinal)))
             throw new BusinessRuleViolationException(new GreetingAlreadyExistsViolation(Request.Name));

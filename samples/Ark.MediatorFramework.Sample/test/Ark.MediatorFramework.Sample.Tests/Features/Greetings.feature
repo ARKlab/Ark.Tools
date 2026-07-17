@@ -22,6 +22,16 @@ Feature: Greetings
         When I create the greeting "Duplicate greeting" over HTTP
         Then the request returns a business rule violation
 
+    Scenario: Invalid greeting is rejected over HTTP
+        Given I am an authenticated user
+        When I create the greeting "" over HTTP
+        Then the request returns validation errors
+
+    Scenario: Invalid greeting is rejected over gRPC
+        Given I am an authenticated user
+        When I create the greeting "" over gRPC
+        Then the gRPC request is invalid
+
     Scenario: Version two exposes the evolved greeting contract
         Given I am an authenticated user
         And I create the greeting "Versioned greeting" over HTTP

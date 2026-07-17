@@ -10,6 +10,7 @@ using Ark.MediatorFramework.Sample.Tests.Auth;
 
 using AwesomeAssertions;
 
+using Grpc.Core;
 using Grpc.Net.Client;
 
 using Reqnroll;
@@ -37,6 +38,7 @@ public sealed class GreetingSteps
     private GrpcGreetingResponse? _grpcGreeting;
     private AppGreetingResponseV2? _versionTwoGreeting;
     private HttpResponseMessage? _response;
+    private StatusCode? _grpcErrorStatus;
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
     /// <param name="context">The scenario's isolated sample host.</param>
@@ -67,10 +69,16 @@ public sealed class GreetingSteps
         {
             HttpClient = _context.Client,
         });
-        var result = await new GrpcGreetingsV1Client(channel).CreateGreetingAsync(
-            new GrpcCreateGreetingRequest { Name = name }).ResponseAsync.ConfigureAwait(false);
-
-        _grpcGreeting = result;
+        try
+        {
+            var result = await new GrpcGreetingsV1Client(channel).CreateGreetingAsync(
+                new GrpcCreateGreetingRequest { Name = name }).ResponseAsync.ConfigureAwait(false);
+            _grpcGreeting = result;
+        }
+        catch (RpcException exception)
+        {
+            _grpcErrorStatus = exception.StatusCode;
+        }
     }
 
     [When(@"I query the greeting through version two")]
@@ -132,6 +140,23 @@ public sealed class GreetingSteps
         _response.Should().NotBeNull();
         _response!.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         _response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
+    }
+
+    [Then(@"the request returns validation errors")]
+    public async Task ThenTheRequestReturnsValidationErrors()
+    {
+        _response.Should().NotBeNull();
+        _response!.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        _response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
+
+        var problemDetails = await _response.Content.ReadFromJsonAsync<JsonElement>().ConfigureAwait(false);
+        problemDetails.GetProperty("errors").GetProperty("Name")[0].GetString().Should().Be("Name must not be empty.");
+    }
+
+    [Then(@"the gRPC request is invalid")]
+    public void ThenTheGrpcRequestIsInvalid()
+    {
+        _grpcErrorStatus.Should().Be(StatusCode.InvalidArgument);
     }
 
     [Then(@"the request is unauthorized")]
