@@ -123,6 +123,13 @@ namespace Ark.MediatorFramework.Generators
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     break;
                 }
+
+                if (def == "global::Ark.Tools.Solid.ICommand")
+                {
+                    kind = HandlerKind.Command;
+                    response = "global::Google.Protobuf.WellKnownTypes.Empty";
+                    break;
+                }
             }
 
             if (kind == HandlerKind.None || response is null)
@@ -207,12 +214,22 @@ namespace Ark.MediatorFramework.Generators
                         {
                             var handlerService = e.Kind == HandlerKind.Query
                                 ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
-                                : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
+                                : e.Kind == HandlerKind.Command
+                                    ? "global::Ark.Tools.Solid.ICommandHandler<" + e.TypeFullName + ">"
+                                    : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
                             sb.AppendLine("            /// <inheritdoc />");
                             sb.AppendLine("            public async global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default)");
                             sb.AppendLine("            {");
                             sb.AppendLine("                var handler = _container.GetInstance<" + handlerService + ">();");
-                            sb.AppendLine("                return await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                            if (e.Kind == HandlerKind.Command)
+                            {
+                                sb.AppendLine("                await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                return new global::Google.Protobuf.WellKnownTypes.Empty();");
+                            }
+                            else
+                            {
+                                sb.AppendLine("                return await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                            }
                             sb.AppendLine("            }");
                         }
                         sb.AppendLine("        }");
@@ -272,6 +289,7 @@ namespace Ark.MediatorFramework.Generators
                 content.AppendLine();
                 content.AppendLine("import \"google/type/date.proto\";");
                 content.AppendLine("import \"google/type/datetime.proto\";");
+                content.AppendLine("import \"google/protobuf/empty.proto\";");
                 content.AppendLine("import \"ark/nodatime.proto\";");
                 content.AppendLine();
                 foreach (var contract in contracts
@@ -506,6 +524,7 @@ namespace Ark.MediatorFramework.Generators
                 "global::NodaTime.OffsetDateTime" => "google.type.DateTime",
                 "global::NodaTime.ZonedDateTime" => "google.type.DateTime",
                 "global::NodaTime.Period" => "ark.nodatime.Period",
+                "global::Google.Protobuf.WellKnownTypes.Empty" => "google.protobuf.Empty",
                 _ when type.TypeKind == TypeKind.Enum => type.Name,
                 _ => "bytes",
             };
@@ -520,6 +539,7 @@ namespace Ark.MediatorFramework.Generators
                 "global::NodaTime.OffsetDateTime" => "google.type.DateTime",
                 "global::NodaTime.ZonedDateTime" => "google.type.DateTime",
                 "global::NodaTime.Period" => "ark.nodatime.Period",
+                "global::Google.Protobuf.WellKnownTypes.Empty" => "google.protobuf.Empty",
                 _ => null,
             };
             if (name is not null)
@@ -572,6 +592,7 @@ namespace Ark.MediatorFramework.Generators
             None = 0,
             Request = 1,
             Query = 2,
+            Command = 3,
         }
 
         private readonly struct EndpointModel

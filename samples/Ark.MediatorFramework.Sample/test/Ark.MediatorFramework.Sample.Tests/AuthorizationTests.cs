@@ -94,4 +94,24 @@ public sealed class AuthorizationTests
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
     }
+
+    /// <summary>HTTP-only commands execute inline and return no content.</summary>
+    [TestMethod]
+    public async Task HttpCommandReturnsNoContent()
+    {
+        using var context = new SampleTestContext();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("test-user").Build());
+
+        using var content = new StringContent(
+            """{"id":"00000000-0000-0000-0000-000000000000"}""",
+            System.Text.Encoding.UTF8,
+            "application/json");
+        var response = await context.Client.PostAsync(
+            new Uri("/api/v1/greetings/refresh", UriKind.Relative),
+            content).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NoContent);
+    }
 }

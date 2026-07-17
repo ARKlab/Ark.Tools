@@ -23,6 +23,7 @@ public static class ApplicationComposition
         container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
         container.RegisterSingleton<AuditCounter>();
 
+        container.Register<ICommandHandler<RefreshGreetingCommand>, RefreshGreetingHandler>();
         container.Register<IRequestHandler<CreateGreetingRequest, GreetingResponse>, CreateGreetingHandler>();
         container.Register<IRequestHandler<ComposeGreetingRequest, ComposeGreetingResponse>, ComposeGreetingHandler>();
         container.Register<IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>, CompleteGreetingCompositionHandler>();
