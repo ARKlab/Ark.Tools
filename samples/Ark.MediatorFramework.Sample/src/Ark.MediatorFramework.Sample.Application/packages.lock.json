@@ -860,6 +860,13 @@
           "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )"
         }
       },
+      "ark.tools.solid.fluentvalidaton": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "FluentValidation": "[12.1.1, )"
+        }
+      },
       "ark.tools.solid.simpleinjector": {
         "type": "Project",
         "dependencies": {

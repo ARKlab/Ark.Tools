@@ -47,7 +47,7 @@ layer (covers HTTP, gRPC and Rebus uniformly — including the C5 bus path). Not
 
 ## Acceptance
 
-- [ ] `NullValidator` conditional fallback + decorators registered; handler-level inline validation removed.
-- [ ] HTTP 400 + gRPC InvalidArgument tests for the same invalid contract pass.
-- [ ] Valid-path scenarios unchanged.
-- [ ] Lockfiles updated; full solution build + tests green.
+- [x] `NullValidator` conditional fallback + decorators registered; handler-level inline validation removed.
+- [x] HTTP 400 + gRPC InvalidArgument tests for the same invalid contract pass.
+- [x] Valid-path scenarios unchanged.
+- [x] Lockfiles updated; full solution build + tests green.
