@@ -310,7 +310,7 @@ namespace Ark.MediatorFramework.Generators
                     sb.AppendLine("            public " + e.TypeName + "RebusHandler(" + handlerService + " handler) { _handler = handler; }");
                     sb.AppendLine("            /// <inheritdoc />");
                     sb.AppendLine("            public async global::System.Threading.Tasks.Task Handle(" + e.TypeFullName + " message)");
-                    sb.AppendLine("                => await _handler.ExecuteAsync(message).ConfigureAwait(false);");
+                    sb.AppendLine("                => await _handler.ExecuteAsync(message, global::Rebus.Extensions.MessageContextExtensions.GetCancellationToken(global::Rebus.Pipeline.MessageContext.Current)).ConfigureAwait(false);");
                     sb.AppendLine("        }");
                 }
             }

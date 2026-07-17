@@ -265,6 +265,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("ICommandHandler<global::RebuildOrder>");
         generated.Should().Contain("RebuildOrderRebusHandler");
+        generated.Should().Contain("MessageContextExtensions.GetCancellationToken(global::Rebus.Pipeline.MessageContext.Current)");
     }
 
     [TestMethod]

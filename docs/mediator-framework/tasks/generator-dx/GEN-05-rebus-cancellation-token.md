@@ -28,6 +28,6 @@ to in-flight handlers.
 
 ## Acceptance
 
-- [ ] Emitted wrapper passes a non-default, context-derived token (test).
-- [ ] No Rebus version bump; lockfiles unchanged unless strictly needed.
-- [ ] Full solution build + tests green.
+- [x] Emitted wrapper passes a non-default, context-derived token (test).
+- [x] No Rebus version bump; lockfiles unchanged unless strictly needed.
+- [x] Full solution build + tests green.
