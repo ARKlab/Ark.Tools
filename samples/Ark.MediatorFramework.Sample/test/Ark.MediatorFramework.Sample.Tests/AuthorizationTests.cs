@@ -103,12 +103,9 @@ public sealed class AuthorizationTests
     {
         using var context = new SampleTestContext();
         var token = new JwtTokenBuilder().AddSubject("grpc-user").AddScope("greetings.write").Build();
-        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-            "Bearer",
-            token);
         using var channel = GrpcChannel.ForAddress(
             "http://localhost",
-            new GrpcChannelOptions { HttpClient = context.Client });
+            new GrpcChannelOptions { HttpHandler = context.CreateGrpcHandler() });
 
         var response = await new GreetingsV1.GreetingsV1Client(channel).CreateGreetingAsync(
             new CreateGreetingRequest { Name = "grpc-context" },

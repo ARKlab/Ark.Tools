@@ -755,13 +755,11 @@
           "Ark.Tools.Authorization": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Google.Api.CommonProtos": "[2.17.0, )",
           "Google.Protobuf": "[3.35.1, )",
           "Grpc.StatusProto": "[2.80.0, )",
-          "SimpleInjector": "[5.6.0, )",
           "System.ServiceModel.Primitives": "[10.0.652802, )",
           "protobuf-net.Grpc.AspNetCore": "[1.2.2, )"
         }

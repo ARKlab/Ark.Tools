@@ -104,7 +104,6 @@ public sealed class SampleStartup
             };
         });
         services.AddHttpContextAccessor();
-        services.AddArkGrpc(_container);
         services.AddSingleton<IHostedService>(_ => new SampleBusHostedService(_container));
         services.AddRouting();
         services.AddControllers();

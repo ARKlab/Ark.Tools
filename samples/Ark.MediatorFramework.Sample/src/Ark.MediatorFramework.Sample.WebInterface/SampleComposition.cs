@@ -6,6 +6,7 @@ using Ark.MediatorFramework.Sample.Application;
 
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
+using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Nodatime.Protobuf;
 
@@ -19,6 +20,7 @@ using ProtoBuf.Meta;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
@@ -45,6 +47,11 @@ public static class SampleComposition
         ApplicationComposition.Register(container);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
+
+        // Transport user context: AspNetCore auth (HttpContext.User) with Rebus fallback.
+        // IHttpContextAccessor is forwarded from Microsoft DI by SampleStartup when the
+        // SimpleInjector container locks, after ASP.NET Core has built its service provider.
+        container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, HostUserContextProvider>();
 
         // Source-generated Rebus message-handler wrappers for the [RebusMessage] requests.
         ArkGeneratedEndpoints.RegisterArkRebusHandlers<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>(container);
