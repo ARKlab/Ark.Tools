@@ -67,7 +67,7 @@ Also see [`../future-improvements.md`](../future-improvements.md) (WebApplicatio
 Track completion in this order. `SEC-08` and `FW-01` are checked based on the recent commits
 `c0fc361` and `502be86`.
 
-1. [ ] [SEC-01](security/SEC-01-secure-by-default-endpoints.md)
+1. [x] [SEC-01](security/SEC-01-secure-by-default-endpoints.md)
    [ ] [SEC-02](security/SEC-02-unconditional-authorization-middleware.md)
    [ ] [SEC-03](security/SEC-03-messagepack-untrusted-data.md)
    [ ] [SEC-04](security/SEC-04-server-set-binding-protection.md)
