@@ -1386,6 +1386,7 @@
           "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
           "Ark.Tools.AspNetCore.MessagePack": "[1.0.0, )",
           "Ark.Tools.AspNetCore.NestedStartup": "[1.0.0, )",
+          "Ark.Tools.AspNetCore.ProblemDetails": "[1.0.0, )",
           "Ark.Tools.AspNetCore.Swashbuckle": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Hosting": "[1.0.0, )",
@@ -1455,6 +1456,15 @@
       },
       "ark.tools.aspnetcore.nestedstartup": {
         "type": "Project"
+      },
+      "ark.tools.aspnetcore.problemdetails": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Authorization": "[1.0.0, )",
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
+          "FluentValidation": "[12.1.1, )"
+        }
       },
       "ark.tools.aspnetcore.swashbuckle": {
         "type": "Project",

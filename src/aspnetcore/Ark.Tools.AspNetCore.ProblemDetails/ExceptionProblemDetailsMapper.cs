@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
+using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
+
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
 /// <summary>Maps application exceptions to RFC 7807 responses.</summary>
@@ -21,7 +23,7 @@ public static class ExceptionProblemDetailsMapper
     /// <summary>Creates a ProblemDetails response for an application exception.</summary>
     /// <param name="exception">The exception to map.</param>
     /// <returns>The mapped response.</returns>
-    public static ProblemDetails Map(Exception exception)
+    public static MvcProblemDetails Map(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
 
@@ -42,17 +44,17 @@ public static class ExceptionProblemDetailsMapper
         };
     }
 
-    private static ProblemDetails Create(int statusCode)
+    private static MvcProblemDetails Create(int statusCode)
     {
-        return new ProblemDetails
+        return new MvcProblemDetails
         {
             Status = statusCode,
         };
     }
 
-    private static ProblemDetails CreateValidation(ValidationException exception)
+    private static MvcProblemDetails CreateValidation(ValidationException exception)
     {
-        var problemDetails = new ProblemDetails
+        var problemDetails = new MvcProblemDetails
         {
             Status = StatusCodes.Status400BadRequest,
             Title = "Validation failed",
@@ -67,7 +69,7 @@ public static class ExceptionProblemDetailsMapper
         return problemDetails;
     }
 
-    private static ProblemDetails CreateBusinessRuleViolation(BusinessRuleViolationException exception)
+    private static MvcProblemDetails CreateBusinessRuleViolation(BusinessRuleViolationException exception)
     {
         var violation = exception.BusinessRuleViolation;
         var payload = violation.GetType()
@@ -81,7 +83,7 @@ public static class ExceptionProblemDetailsMapper
         payload["title"] = violation.Title;
         payload["status"] = violation.Status;
 
-        var problemDetails = new ProblemDetails
+        var problemDetails = new MvcProblemDetails
         {
             Status = violation.Status,
             Title = violation.Title,
