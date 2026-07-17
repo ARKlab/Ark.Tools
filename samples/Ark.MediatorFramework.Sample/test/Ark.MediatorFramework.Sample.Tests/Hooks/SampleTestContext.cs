@@ -18,7 +18,8 @@ public sealed class SampleTestContext : IDisposable
     private readonly IHost _host;
 
     /// <summary>Initializes a new instance of the <see cref="SampleTestContext"/> class.</summary>
-    public SampleTestContext()
+    /// <param name="configureFallbackPolicy">Whether to configure the host fallback policy.</param>
+    public SampleTestContext(bool configureFallbackPolicy = true)
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
         var container = SampleComposition.BuildContainer(new InMemNetwork());
@@ -30,7 +31,7 @@ public sealed class SampleTestContext : IDisposable
                 ["ASPNETCORE_ENVIRONMENT"] = "IntegrationTests",
             })
             .Build();
-        var startup = new SampleStartup(container, configuration);
+        var startup = new SampleStartup(container, configuration, configureFallbackPolicy);
         _host = new HostBuilder()
             .ConfigureWebHost(web => web
                 .UseTestServer()

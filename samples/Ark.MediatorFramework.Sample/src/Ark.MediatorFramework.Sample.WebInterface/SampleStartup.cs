@@ -41,12 +41,20 @@ public sealed class SampleStartup
     private readonly Container _container;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
     private readonly IConfiguration _configuration;
+    private readonly bool _configureFallbackPolicy;
 
     /// <summary>Initializes a new instance of the <see cref="SampleStartup"/> class.</summary>
-    public SampleStartup(Container container, IConfiguration? configuration = null)
+    /// <param name="container">The application dependency injection container.</param>
+    /// <param name="configuration">Optional application configuration.</param>
+    /// <param name="configureFallbackPolicy">Whether to configure the defense-in-depth fallback policy.</param>
+    public SampleStartup(
+        Container container,
+        IConfiguration? configuration = null,
+        bool configureFallbackPolicy = true)
     {
         _container = container;
         _configuration = configuration ?? new ConfigurationBuilder().Build();
+        _configureFallbackPolicy = configureFallbackPolicy;
         var instance = _configuration["EntraId:Instance"]!;
         var tenantId = _configuration["EntraId:TenantId"]!;
         var clientId = _configuration["EntraId:ClientId"]!;
@@ -78,9 +86,12 @@ public sealed class SampleStartup
             options.DefaultPolicy = new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .Build();
-            options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
+            if (_configureFallbackPolicy)
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            }
         });
 
         services.AddSimpleInjector(_container, options =>
