@@ -64,13 +64,13 @@ Also see [`../future-improvements.md`](../future-improvements.md) (WebApplicatio
 
 ## Recommended execution order
 
-Track completion in this order. `SEC-08` and `FW-01` are checked based on the recent commits
-`c0fc361` and `502be86`.
+Track completion in this order. `SEC-01` through `SEC-06` and `SEC-08` are checked based on the
+recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
 
 1. [x] [SEC-01](security/SEC-01-secure-by-default-endpoints.md)
-   [ ] [SEC-02](security/SEC-02-unconditional-authorization-middleware.md)
-   [ ] [SEC-03](security/SEC-03-messagepack-untrusted-data.md)
-   [ ] [SEC-04](security/SEC-04-server-set-binding-protection.md)
+   [x] [SEC-02](security/SEC-02-unconditional-authorization-middleware.md)
+   [x] [SEC-03](security/SEC-03-messagepack-untrusted-data.md)
+   [x] [SEC-04](security/SEC-04-server-set-binding-protection.md)
    [ ] [GEN-04](generator-dx/GEN-04-remove-hardcoded-documents-proto.md)
 2. [x] [FW-01](framework/FW-01-icommand-support.md)
    [ ] [FW-02](framework/FW-02-http-status-semantics.md)
@@ -80,10 +80,10 @@ Track completion in this order. `SEC-08` and `FW-01` are checked based on the re
    [ ] [GEN-05](generator-dx/GEN-05-rebus-cancellation-token.md)
    [ ] [GEN-06](generator-dx/GEN-06-grpc-user-context-interceptor.md)
 4. [ ] [SMP-01](sample-parity/SMP-01-fluentvalidation.md)
-   [ ] [SEC-05](security/SEC-05-transport-agnostic-authorization-decorator.md)
+   [x] [SEC-05](security/SEC-05-transport-agnostic-authorization-decorator.md)
 5. [ ] [FW-03](framework/FW-03-shared-problemdetails-package.md)
    [ ] [SEC-07](security/SEC-07-error-serialization-hardening.md)
-   [ ] [SEC-06](security/SEC-06-multipart-hardening.md)
+   [x] [SEC-06](security/SEC-06-multipart-hardening.md)
    [x] [SEC-08](security/SEC-08-test-auth-bearer-hardening.md)
    [ ] [FW-04](framework/FW-04-file-download.md)
 6. [ ] [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md)
