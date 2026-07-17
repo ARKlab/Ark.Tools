@@ -18,6 +18,7 @@
     <PackageReference Include="Grpc.StatusProto" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
+    <PackageReference Include="SimpleInjector" />
     <PackageReference Include="System.ServiceModel.Primitives" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />

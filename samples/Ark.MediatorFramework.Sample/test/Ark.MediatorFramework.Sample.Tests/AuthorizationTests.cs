@@ -97,6 +97,24 @@ public sealed class AuthorizationTests
         exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
     }
 
+    /// <summary>Authenticated gRPC calls expose the bearer principal to mediator handlers.</summary>
+    [TestMethod]
+    public async Task GrpcCallWithValidBearerFlowsUserContext()
+    {
+        using var context = new SampleTestContext();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("grpc-user").Build());
+        using var channel = GrpcChannel.ForAddress(
+            "http://localhost",
+            new GrpcChannelOptions { HttpClient = context.Client });
+
+        var response = await new GreetingsV1.GreetingsV1Client(channel).CreateGreetingAsync(
+            new CreateGreetingRequest { Name = "grpc-context" }).ResponseAsync.ConfigureAwait(false);
+
+        response.Message.Should().Contain("grpc-user");
+    }
+
     /// <summary>A bearer token without the contract policy claim cannot invoke the mutation.</summary>
     [TestMethod]
     public async Task HttpCallWithoutGreetingWriteScopeReturnsForbidden()
