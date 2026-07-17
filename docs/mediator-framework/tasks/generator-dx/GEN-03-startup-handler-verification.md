@@ -30,7 +30,7 @@ surfaces as a **500 at first request**.
 
 ## Acceptance
 
-- [ ] Unregistered handler → startup failure naming contract + interface (test).
-- [ ] All three transports verified (HTTP, gRPC, Rebus registration paths).
-- [ ] No behavioral change for correctly-registered hosts; sample tests green.
-- [ ] Full solution build + tests green; `design.md` claim now true.
+- [x] Unregistered handler → startup failure naming contract + interface (test).
+- [x] All three transports verified (HTTP, gRPC, Rebus registration paths).
+- [x] No behavioral change for correctly-registered hosts; sample tests green.
+- [x] Full solution build + tests green; `design.md` claim now true.

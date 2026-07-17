@@ -165,6 +165,8 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain(".AllowAnonymous()");
         generated.Should().Contain("configure?.Invoke(group);");
         generated.Should().Contain("return group;");
+        generated.Should().Contain("Missing mediator handler registrations");
+        generated.Should().Contain("GetRegistration(handlerType)");
     }
 
     [TestMethod]
@@ -225,6 +227,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("Google.Protobuf.WellKnownTypes.Empty");
         generated.Should().Contain("google.protobuf.Empty");
         generated.Should().Contain("await handler.ExecuteAsync");
+        generated.Should().Contain("Missing mediator handler registrations");
     }
 
     [TestMethod]
@@ -243,6 +246,8 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("ConfigureArkRebusRouting");
         generated.Should().Contain("RegisterArkRebusHandlers<TAssemblyMarker>");
         generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
+        generated.Should().Contain("GetRegistration(handlerType)");
+        generated.Should().Contain("Missing mediator handler registrations");
     }
 
     [TestMethod]

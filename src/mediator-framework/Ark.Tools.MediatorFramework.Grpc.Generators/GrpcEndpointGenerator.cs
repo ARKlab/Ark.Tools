@@ -303,6 +303,26 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        /// <summary>Maps every generated code-first gRPC service.</summary>");
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServices<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
+            sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
+            foreach (var handler in items
+                .Select(static item => item.Kind == HandlerKind.Query
+                    ? "global::Ark.Tools.Solid.IQueryHandler<" + item.TypeFullName + ", " + item.Response + ">"
+                    : item.Kind == HandlerKind.Command
+                        ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
+                        : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">")
+                .Distinct(StringComparer.Ordinal))
+            {
+                var contract = items
+                    .First(item => (item.Kind == HandlerKind.Query
+                        ? "global::Ark.Tools.Solid.IQueryHandler<" + item.TypeFullName + ", " + item.Response + ">"
+                        : item.Kind == HandlerKind.Command
+                            ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
+                            : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">") == handler)
+                    .TypeFullName;
+                sb.AppendLine("            VerifyGrpcHandlerRegistration(app.ServiceProvider, typeof(" + handler + "), " + Literal(contract) + ", missingHandlers);");
+            }
+            sb.AppendLine("            if (missingHandlers.Count > 0)");
+            sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
             if (!items.IsDefaultOrEmpty)
             {
                 foreach (var group in items.GroupBy(static x => x.ServiceGroup))
@@ -311,6 +331,13 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("            global::Microsoft.AspNetCore.Builder.GrpcEndpointRouteBuilderExtensions.MapGrpcService<" + Identifier(group.Key) + "V" + version + "GrpcService>(app);");
             }
             sb.AppendLine("            return app;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private static void VerifyGrpcHandlerRegistration(global::System.IServiceProvider services, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var container = services.GetService(typeof(global::SimpleInjector.Container)) as global::SimpleInjector.Container;");
+            sb.AppendLine("            if (container is not null ? container.GetRegistration(handlerType) is null : services.GetService(handlerType) is null)");
+            sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
             EmitProtoAssets(sb, items, compilation);

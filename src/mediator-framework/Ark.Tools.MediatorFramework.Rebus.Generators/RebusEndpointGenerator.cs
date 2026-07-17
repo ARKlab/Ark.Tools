@@ -262,6 +262,28 @@ namespace Ark.MediatorFramework.Generators
                     sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">), typeof(" + e.TypeName + "RebusHandler));");
                 }
             }
+            sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
+            foreach (var handler in items
+                .Select(static item => item.IsCommand
+                    ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
+                    : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">")
+                .Distinct(StringComparer.Ordinal))
+            {
+                var contract = items
+                    .First(item => (item.IsCommand
+                        ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
+                        : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">") == handler)
+                    .TypeFullName;
+                sb.AppendLine("            VerifyRebusHandlerRegistration(container, typeof(" + handler + "), " + StringLiteral(contract) + ", missingHandlers);");
+            }
+            sb.AppendLine("            if (missingHandlers.Count > 0)");
+            sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private static void VerifyRebusHandlerRegistration(global::SimpleInjector.Container container, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (container.GetRegistration(handlerType) is null)");
+            sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        /// <summary>Registers generated owner queues with Rebus type-based routing.</summary>");
