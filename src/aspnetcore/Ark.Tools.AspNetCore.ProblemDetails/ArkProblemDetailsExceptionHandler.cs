@@ -59,16 +59,16 @@ internal sealed class ArkProblemDetailsExceptionMiddleware
     }
 }
 
-    [System.Text.Json.Serialization.JsonSourceGenerationOptions(
-        PropertyNamingPolicy = System.Text.Json.Serialization.JsonKnownNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
-    [System.Text.Json.Serialization.JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
-    [System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, string[]>))]
-    [System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, object?>))]
-    /// <summary>Source-generated JSON metadata for ProblemDetails responses.</summary>
-    internal sealed partial class ProblemDetailsJsonSerializerContext : System.Text.Json.Serialization.JsonSerializerContext
-    {
-    }
+/// <summary>Source-generated JSON metadata for ProblemDetails responses.</summary>
+[System.Text.Json.Serialization.JsonSourceGenerationOptions(
+    PropertyNamingPolicy = System.Text.Json.Serialization.JsonKnownNamingPolicy.CamelCase,
+    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+[System.Text.Json.Serialization.JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
+[System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, string[]>))]
+[System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, object?>))]
+internal sealed partial class ProblemDetailsJsonSerializerContext : System.Text.Json.Serialization.JsonSerializerContext
+{
+}
 
 /// <summary>Registers Ark's transport-neutral exception mapping for Minimal API hosts.</summary>
 public static class ArkProblemDetailsServiceCollectionExtensions

@@ -47,6 +47,7 @@ public static class ExceptionProblemDetailsMapper
     {
         return new MvcProblemDetails
         {
+            Type = $"https://httpstatuses.com/{statusCode}",
             Status = statusCode,
         };
     }
@@ -55,6 +56,7 @@ public static class ExceptionProblemDetailsMapper
     {
         var problemDetails = new MvcProblemDetails
         {
+            Type = $"https://httpstatuses.com/{StatusCodes.Status400BadRequest}",
             Status = StatusCodes.Status400BadRequest,
             Title = "Validation failed",
             Detail = exception.Message,
@@ -84,6 +86,7 @@ public static class ExceptionProblemDetailsMapper
 
         var problemDetails = new MvcProblemDetails
         {
+            Type = $"https://httpstatuses.com/{violation.Status}",
             Status = violation.Status,
             Title = violation.Title,
             Detail = violation.Detail,

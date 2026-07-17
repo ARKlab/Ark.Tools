@@ -119,6 +119,7 @@
     <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample.Tests/Ark.ResourceWatcher.Sample.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/Ark.Tools.AspNetCore.ProblemDetails.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Core.Tests/Ark.Tools.Core.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Tests/Ark.Tools.MediatorFramework.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Protobuf.Tests/Ark.Tools.Nodatime.Protobuf.Tests.csproj" />
