@@ -31,15 +31,28 @@ namespace Ark.MediatorFramework.Generators
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var endpoints = context.CompilationProvider
-                .SelectMany(static (compilation, _) => GetEndpoints(compilation));
+            var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
+                    RebusMessageAttribute,
+                    static (_, _) => true,
+                    static (attributeContext, _) => ExtractSourceEndpoint(attributeContext))
+                .Where(static endpoint => endpoint is not null)
+                .Select(static (endpoint, _) => endpoint!.Value);
+            var referencedEndpoints = context.CompilationProvider
+                .SelectMany(static (compilation, _) => GetReferencedEndpoints(compilation));
 
-            var collected = endpoints.Collect();
+            var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect());
 
-            context.RegisterSourceOutput(collected, static (spc, items) => Emit(spc, items));
+            context.RegisterSourceOutput(
+                collected,
+                static (spc, pair) => Emit(spc, pair.Left.AddRange(pair.Right)));
         }
 
-        private static ImmutableArray<EndpointModel> GetEndpoints(Compilation compilation)
+        private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
+        {
+            return Extract((INamedTypeSymbol)context.TargetSymbol, context.Attributes[0]);
+        }
+
+        private static ImmutableArray<EndpointModel> GetReferencedEndpoints(Compilation compilation)
         {
             var rebusAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             if (rebusAttr is null)
@@ -48,7 +61,7 @@ namespace Ark.MediatorFramework.Generators
             var runtimeAssembly = rebusAttr.ContainingAssembly;
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
-            foreach (var assembly in _relevantAssemblies(compilation, runtimeAssembly))
+            foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly))
             {
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
@@ -67,10 +80,8 @@ namespace Ark.MediatorFramework.Generators
             return builder.ToImmutable();
         }
 
-        private static IEnumerable<IAssemblySymbol> _relevantAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
+        private static IEnumerable<IAssemblySymbol> _referencedAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
         {
-            yield return compilation.Assembly;
-
             foreach (var reference in compilation.SourceModule.ReferencedAssemblySymbols
                 .Where(reference => !SymbolEqualityComparer.Default.Equals(reference, runtimeAssembly)))
             {
@@ -238,7 +249,7 @@ namespace Ark.MediatorFramework.Generators
             spc.AddSource("ArkGeneratedEndpoints.Rebus.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
         }
 
-        private readonly struct EndpointModel
+        private readonly record struct EndpointModel
         {
             public EndpointModel(
                 string typeFullName,
@@ -264,7 +275,7 @@ namespace Ark.MediatorFramework.Generators
             public bool IsCommand { get; }
         }
 
-        private readonly struct DiagnosticInfo
+        private readonly record struct DiagnosticInfo
         {
             public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, string? queues = null)
             {
