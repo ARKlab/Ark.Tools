@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option csharp_namespace = "Ark.MediatorFramework.Sample.GrpcClient";
+
+import "ark/mediator.proto";
+
+message UploadResponse {
+  string name = 1;
+  string content_type = 2;
+  int64 length = 3;
+}
+
+service Documents {
+  rpc Upload(stream ark.mediator.UploadDocumentChunk) returns (UploadResponse);
+}

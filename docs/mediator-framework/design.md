@@ -442,6 +442,10 @@ the gRPC generator/package — no hand-maintained schema program:
   contract and `[ProtoContract]` message) additionally emits the proto text as
   generated C# (`ArkGeneratedProtos`: per-`[ServiceGroup]` `(fileName, content)`
   pairs plus a `WriteTo(directory)` helper).
+- Hosts with hand-written protobuf services can declare
+  `<ArkAdditionalProto Include="path/to/service.proto" />`; the export target
+  copies those files alongside generated service protos without making them
+  part of the framework generator.
 - `Ark.Tools.MediatorFramework.Grpc` ships a `buildTransitive` `.targets` file
   with an `ArkExportProto` target (`AfterTargets="Build"`, opt-in via
   `$(ArkExportProtoDir)`) that runs the built host with `--ark-export-proto
