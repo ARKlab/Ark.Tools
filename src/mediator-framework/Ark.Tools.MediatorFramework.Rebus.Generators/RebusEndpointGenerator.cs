@@ -264,15 +264,11 @@ namespace Ark.MediatorFramework.Generators
             }
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var handler in items
-                .Select(static item => item.IsCommand
-                    ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
-                    : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">")
+                .Select(HandlerService)
                 .Distinct(StringComparer.Ordinal))
             {
                 var contract = items
-                    .First(item => (item.IsCommand
-                        ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
-                        : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">") == handler)
+                    .First(item => HandlerService(item) == handler)
                     .TypeFullName;
                 sb.AppendLine("            VerifyRebusHandlerRegistration(container, typeof(" + handler + "), " + StringLiteral(contract) + ", missingHandlers);");
             }
@@ -323,6 +319,13 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("}");
 
             spc.AddSource("ArkGeneratedEndpoints.Rebus.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private static string HandlerService(EndpointModel item)
+        {
+            return item.IsCommand
+                ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
+                : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
         }
 
         private readonly record struct EndpointModel

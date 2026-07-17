@@ -362,19 +362,11 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var handler in items
                 .Where(static item => item.IsValid)
-                .Select(static item => item.Kind == HandlerKind.Query
-                    ? "global::Ark.Tools.Solid.IQueryHandler<" + item.TypeFullName + ", " + item.Response + ">"
-                    : item.Kind == HandlerKind.Command
-                        ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
-                        : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">")
+                .Select(HandlerService)
                 .Distinct(StringComparer.Ordinal))
             {
                 var contract = items
-                    .First(item => item.IsValid && (item.Kind == HandlerKind.Query
-                        ? "global::Ark.Tools.Solid.IQueryHandler<" + item.TypeFullName + ", " + item.Response + ">"
-                        : item.Kind == HandlerKind.Command
-                            ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
-                            : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">") == handler)
+                    .First(item => item.IsValid && HandlerService(item) == handler)
                     .TypeFullName;
                 sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + handler + "), " + Literal(contract) + ", missingHandlers);");
             }
@@ -547,6 +539,15 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("}");
 
             spc.AddSource("ArkGeneratedEndpoints.MinimalApi.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private static string HandlerService(EndpointModel item)
+        {
+            return item.Kind == HandlerKind.Query
+                ? "global::Ark.Tools.Solid.IQueryHandler<" + item.TypeFullName + ", " + item.Response + ">"
+                : item.Kind == HandlerKind.Command
+                    ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
+                    : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
