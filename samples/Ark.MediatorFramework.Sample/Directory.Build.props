@@ -9,6 +9,7 @@
     <ArkAdditionalProto Include="$(MSBuildThisFileDirectory)src/Ark.MediatorFramework.Sample.WebInterface/proto/Documents.proto" />
   </ItemGroup>
 
+  <!-- Remove this development-only import when ejecting the sample; the NuGet package supplies these targets transitively. -->
   <Import Project="$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
           Condition="Exists('$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets')" />
 
