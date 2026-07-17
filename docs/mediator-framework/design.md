@@ -249,6 +249,8 @@ zone preserved, `Period` ISO string).
 
 For request/command types marked `[RebusMessage]`, the generator emits
 `IHandleMessages<CreateOrderRequest>` that invokes the pure handler. The
+wrapper passes Rebus's ambient message-context cancellation token to the handler,
+so bus shutdown and message-abort cancellation can reach in-flight work. The
 SimpleInjector scope is **not** opened by the wrapper: the Rebus pipeline already
 establishes a per-message scope (`RebusScopeDecorator<>` over
 `IHandleMessages<>`), which the wrapper and its dependencies resolve within. The
