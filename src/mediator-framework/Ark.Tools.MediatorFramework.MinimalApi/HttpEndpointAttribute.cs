@@ -31,6 +31,19 @@ public sealed class HttpEndpointAttribute : Attribute
     /// <summary>Gets or sets the exclusive API version in which the endpoint is retired, or zero if never.</summary>
     public int RetiredIn { get; set; }
 
+    /// <summary>
+    /// Gets or sets the success status code. Zero selects the handler-kind default:
+    /// <c>200 OK</c> for requests and queries.
+    /// </summary>
+    public int SuccessStatusCode { get; set; }
+
+    /// <summary>
+    /// Gets or sets the status code used when a request or query returns
+    /// <see langword="null"/>. Zero selects <c>404 Not Found</c> for queries and
+    /// <c>204 No Content</c> for requests.
+    /// </summary>
+    public int NullResultStatusCode { get; set; }
+
     /// <summary>Gets or sets whether the endpoint negotiates MessagePack in addition to JSON.</summary>
     public bool AcceptsMessagePack { get; set; }
 

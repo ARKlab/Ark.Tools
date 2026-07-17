@@ -121,9 +121,17 @@ app.MapPost("/api/v1/orders", async (
     // the caller identity flows through IContextProvider<ClaimsPrincipal> (HttpContext.User)
     var handler = container.GetInstance<IRequestHandler<CreateOrderRequest, OrderResponse>>();
     var result = await handler.ExecuteAsync(request, ctk).ConfigureAwait(false);
+    if (result is null)
+        return Results.NotFound();
     return Results.Ok(result);
 });
 ```
+
+Generated HTTP responses use these defaults: non-null queries and requests return
+`200 OK`, null queries return `404 Not Found`, and null requests return
+`204 No Content`. Set `SuccessStatusCode` or `NullResultStatusCode` on
+`HttpEndpointAttribute` to override either code; the generated OpenAPI metadata
+lists both response statuses.
 
 Commands implement `ICommand` and are dispatched through `ICommandHandler<T>`.
 HTTP-only commands execute inline and return `204 No Content`; commands also

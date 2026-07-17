@@ -84,6 +84,8 @@ public static class ArkMessagePackEx
     /// <param name="context">The current HTTP context.</param>
     /// <param name="response">The response value.</param>
     /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <param name="successStatusCode">The status code for a non-null response.</param>
+    /// <param name="nullResultStatusCode">The status code for a null response.</param>
     /// <returns>An HTTP result using the negotiated response format.</returns>
     [UnconditionalSuppressMessage(
         "Trimming",
@@ -92,14 +94,20 @@ public static class ArkMessagePackEx
     public static IResult WriteResponse<TResponse>(
         HttpContext context,
         TResponse response,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int successStatusCode = StatusCodes.Status200OK,
+        int nullResultStatusCode = StatusCodes.Status204NoContent)
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        if (response is null)
+            return Results.StatusCode(nullResultStatusCode);
+
         if (!PrefersMessagePack(context.Request.Headers.Accept))
-            return Results.Json(response);
+            return Results.Json(response, statusCode: successStatusCode);
 
         var bytes = MessagePackSerializer.Serialize(response, GetOptions(context), cancellationToken);
+        context.Response.StatusCode = successStatusCode;
         return Results.Bytes(bytes, MessagePackMediaType);
     }
 

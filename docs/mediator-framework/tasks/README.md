@@ -73,7 +73,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [SEC-04](security/SEC-04-server-set-binding-protection.md)
    [x] [GEN-04](generator-dx/GEN-04-remove-hardcoded-documents-proto.md)
 2. [x] [FW-01](framework/FW-01-icommand-support.md)
-   [ ] [FW-02](framework/FW-02-http-status-semantics.md)
+   [x] [FW-02](framework/FW-02-http-status-semantics.md)
 3. [ ] [GEN-01](generator-dx/GEN-01-incremental-generators.md)
    [ ] [GEN-02](generator-dx/GEN-02-diagnostics-for-silent-failures.md)
    [ ] [GEN-03](generator-dx/GEN-03-startup-handler-verification.md)

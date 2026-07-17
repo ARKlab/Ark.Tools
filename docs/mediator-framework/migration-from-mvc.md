@@ -58,6 +58,11 @@ actions in that controller have moved.
 
 Generated endpoints preserve the route template and use the existing request
 scope. Do not open a second SimpleInjector scope in an endpoint or handler.
+Non-null query and request results return `200 OK` by default; null queries return
+`404 Not Found`, while null requests return `204 No Content`. Use
+`SuccessStatusCode` and `NullResultStatusCode` on `HttpEndpointAttribute` when
+the MVC action used a different result mapping. The generated OpenAPI document
+contains both the success and null-result responses.
 Generated HTTP endpoints require authorization by default. Set `Policy` on
 `[HttpEndpoint]` for a named policy, or explicitly set `AllowAnonymous = true`
 for public endpoints. `MapArkEndpoints` also accepts a group configuration

@@ -144,6 +144,29 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorEmitsNullAndCustomSuccessStatusSemantics()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/queries", AllowAnonymous = true)]
+            public sealed class Query : IQuery<string>
+            {
+            }
+            [HttpEndpoint("POST", "/requests", SuccessStatusCode = 201, NullResultStatusCode = 200, AllowAnonymous = true)]
+            public sealed class Request : IRequest<string>
+            {
+            }
+            """);
+
+        generated.Should().Contain("TypedResults.NotFound()");
+        generated.Should().Contain("Results.Json(result, statusCode: 201)");
+        generated.Should().Contain(".Produces<global::System.String>(201).Produces(200)");
+        generated.Should().Contain(".Produces<global::System.String>(200).Produces(404)");
+    }
+
+    [TestMethod]
     public void GrpcGeneratorEmitsCommandReturningEmpty()
     {
         var generated = RunGenerator<ArkGrpcEndpointGenerator>(
