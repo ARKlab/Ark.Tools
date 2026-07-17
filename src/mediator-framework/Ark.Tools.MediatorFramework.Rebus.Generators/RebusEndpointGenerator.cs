@@ -353,7 +353,9 @@ namespace Ark.MediatorFramework.Generators
             {
                 Descriptor = descriptor;
                 Location = location;
-                Arguments = new[] { (object)typeName }.Concat(arguments).ToArray();
+                Arguments = arguments.Length == 0
+                    ? new object[] { typeName }
+                    : new[] { (object)typeName }.Concat(arguments).ToArray();
             }
 
             public DiagnosticDescriptor Descriptor { get; }

@@ -264,7 +264,8 @@ namespace Ark.MediatorFramework.Generators
                     diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.MissingRouteProperty, type.Name, GetLocation(http), routeName));
             }
             var bodyBinding = verb is not ("GET" or "DELETE");
-            if (bodyBinding && (!type.IsRecord || properties.Any(property => !property.HasPublicSetter)))
+            var hasInvalidBodyShape = bodyBinding && (!type.IsRecord || properties.Any(property => !property.HasPublicSetter));
+            if (hasInvalidBodyShape)
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.InvalidContractShape, type.Name, GetLocation(http)));
             var attachmentProperties = attachmentType is null
                 ? ImmutableArray<PropertyModel>.Empty
