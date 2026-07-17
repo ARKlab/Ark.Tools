@@ -76,6 +76,12 @@ into one `RouteGroupBuilder`, invokes its optional configuration callback, and
 returns the group so hosts can apply shared metadata such as authorization,
 filters, rate limiting, CORS, or output caching.
 
+Generator contract errors are reported at the transport attribute location:
+`ARKMF010` (unknown HTTP verb), `ARKMF011` (unsupported handler kind),
+`ARKMF012` (missing route property), `ARKMF013` (invalid HTTP contract shape),
+`ARKMF014` (duplicate Rebus registration), and `ARKMF015` (conflicting Rebus
+owner queue). Invalid contracts are not emitted.
+
 HTTP binding treats the request as an **envelope** whose members may combine
 route, query and body sources (see *HTTP binding* below). These attributes are
 the only transport hint the developer writes; the generator turns each *declared*

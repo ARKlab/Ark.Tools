@@ -75,7 +75,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
 2. [x] [FW-01](framework/FW-01-icommand-support.md)
    [x] [FW-02](framework/FW-02-http-status-semantics.md)
 3. [x] [GEN-01](generator-dx/GEN-01-incremental-generators.md)
-   [ ] [GEN-02](generator-dx/GEN-02-diagnostics-for-silent-failures.md)
+   [x] [GEN-02](generator-dx/GEN-02-diagnostics-for-silent-failures.md)
    [ ] [GEN-03](generator-dx/GEN-03-startup-handler-verification.md)
    [ ] [GEN-05](generator-dx/GEN-05-rebus-cancellation-token.md)
    [ ] [GEN-06](generator-dx/GEN-06-grpc-user-context-interceptor.md)

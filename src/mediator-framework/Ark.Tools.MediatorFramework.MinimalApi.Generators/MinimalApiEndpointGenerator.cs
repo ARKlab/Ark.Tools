@@ -204,18 +204,24 @@ namespace Ark.MediatorFramework.Generators
                 }
             }
 
+            var diagnostics = new List<DiagnosticInfo>();
             if (kind == HandlerKind.None || (kind != HandlerKind.Command && response is null))
-                return null;
+            {
+                diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.UnsupportedHandlerKind, type.Name, GetLocation(http)));
+                return EndpointModel.Invalid(type, diagnostics);
+            }
 
             if (http.ConstructorArguments.Length != 2)
-                return null;
+                return EndpointModel.Invalid(type, diagnostics);
 
             var verb = http.ConstructorArguments[0].Value as string;
             var template = http.ConstructorArguments[1].Value as string;
             if (string.IsNullOrWhiteSpace(verb) || string.IsNullOrWhiteSpace(template))
-                return null;
+                return EndpointModel.Invalid(type, diagnostics);
 
             verb = verb!.ToUpperInvariant();
+            if (verb is not ("GET" or "POST" or "PUT" or "DELETE" or "PATCH"))
+                diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.UnknownHttpVerb, type.Name, GetLocation(http), verb));
             var httpIntroducedIn = NamedInt(http, "IntroducedIn", 1);
             var httpRetiredIn = NamedInt(http, "RetiredIn", 0);
             var successStatusCode = NamedInt(http, "SuccessStatusCode", 0);
@@ -252,6 +258,15 @@ namespace Ark.MediatorFramework.Generators
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
                     property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public))
                 .ToImmutableArray();
+            foreach (var routeName in routeNames)
+            {
+                if (!properties.Any(property => string.Equals(property.Name, routeName, StringComparison.OrdinalIgnoreCase)))
+                    diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.MissingRouteProperty, type.Name, GetLocation(http), routeName));
+            }
+            var bodyBinding = verb is not ("GET" or "DELETE");
+            var hasInvalidBodyShape = bodyBinding && (!type.IsRecord || properties.Any(property => !property.HasPublicSetter));
+            if (hasInvalidBodyShape)
+                diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.InvalidContractShape, type.Name, GetLocation(http)));
             var attachmentProperties = attachmentType is null
                 ? ImmutableArray<PropertyModel>.Empty
                 : properties.Where(property => property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment").ToImmutableArray();
@@ -284,7 +299,8 @@ namespace Ark.MediatorFramework.Generators
                     .Select(property => property.Name)
                     .ToImmutableArray(),
                 attachmentProperties.Length,
-                type.Locations.FirstOrDefault());
+                type.Locations.FirstOrDefault(),
+                diagnostics);
         }
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
@@ -365,6 +381,10 @@ namespace Ark.MediatorFramework.Generators
                 var maxVersion = items.Max(static x => Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1));
                 foreach (var e in items)
                 {
+                    foreach (var diagnostic in e.Diagnostics)
+                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
+                    if (!e.IsValid)
+                        continue;
                     foreach (var property in e.InvalidServerSetProperties)
                         spc.ReportDiagnostic(Diagnostic.Create(ServerSetPropertyCannotBeReset, e.Location, e.TypeName, property));
                     foreach (var property in e.SuspiciousProperties)
@@ -678,7 +698,7 @@ namespace Ark.MediatorFramework.Generators
             "PUT" => "MapPut",
             "DELETE" => "MapDelete",
             "PATCH" => "MapPatch",
-            _ => "MapPost",
+            _ => throw new InvalidOperationException("Unknown HTTP verb should have been diagnosed before emission"),
         };
 
         private static IEnumerable<int> ActiveVersions(EndpointModel endpoint, int maxVersion)
@@ -725,7 +745,8 @@ namespace Ark.MediatorFramework.Generators
                 ImmutableArray<string> invalidServerSetProperties,
                 ImmutableArray<string> suspiciousProperties,
                 int attachmentCount,
-                Location? location)
+                Location? location,
+                IReadOnlyList<DiagnosticInfo> diagnostics)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -751,7 +772,29 @@ namespace Ark.MediatorFramework.Generators
                 SuspiciousProperties = suspiciousProperties;
                 AttachmentCount = attachmentCount;
                 Location = location;
+                Diagnostics = diagnostics;
+                IsValid = diagnostics.Count == 0;
             }
+
+            private EndpointModel(string typeFullName, string typeName, IReadOnlyList<DiagnosticInfo> diagnostics)
+            {
+                TypeFullName = typeFullName;
+                TypeName = typeName;
+                Diagnostics = diagnostics;
+                IsValid = false;
+                Verb = string.Empty;
+                Template = string.Empty;
+                Response = string.Empty;
+                Kind = HandlerKind.None;
+                AllowedContentTypes = ImmutableArray<string>.Empty;
+                Properties = ImmutableArray<PropertyModel>.Empty;
+                ServerSetProperties = ImmutableArray<string>.Empty;
+                InvalidServerSetProperties = ImmutableArray<string>.Empty;
+                SuspiciousProperties = ImmutableArray<string>.Empty;
+            }
+
+            public static EndpointModel Invalid(INamedTypeSymbol type, IReadOnlyList<DiagnosticInfo> diagnostics)
+                => new(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), type.Name, diagnostics);
 
             public string TypeFullName { get; }
             public string TypeName { get; }
@@ -780,7 +823,26 @@ namespace Ark.MediatorFramework.Generators
             public ImmutableArray<string> SuspiciousProperties { get; }
             public int AttachmentCount { get; }
             public Location? Location { get; }
+            public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
+            public bool IsValid { get; }
         }
+
+        private readonly record struct DiagnosticInfo
+        {
+            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, params object[] arguments)
+            {
+                Descriptor = descriptor;
+                Location = location;
+                Arguments = arguments.Length == 0 ? new object[] { typeName } : new[] { (object)typeName }.Concat(arguments).ToArray();
+            }
+
+            public DiagnosticDescriptor Descriptor { get; }
+            public Location Location { get; }
+            public object[] Arguments { get; }
+        }
+
+        private static Location GetLocation(AttributeData attribute)
+            => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
 
         private readonly record struct PropertyModel
         {

@@ -188,6 +188,7 @@ Feature: Ping
       | Name             | Type  |
       | AuditPingUpdated | Ping2 |
     Then the request succeded
+    When I wait background bus to idle and outbox to be empty
     When I get the last audit for 'Ping'
     And I get the list of changes for this audit
     Then the previous Ping audit is
@@ -215,6 +216,7 @@ Feature: Ping
       | Type  |
       | Ping2 |
     Then the request succeded
+    When I wait background bus to idle and outbox to be empty
     When I get the last audit for 'Ping'
     And I get the list of changes for this audit
     Then the previous Ping audit is

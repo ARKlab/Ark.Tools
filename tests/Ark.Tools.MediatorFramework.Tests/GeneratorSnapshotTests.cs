@@ -82,6 +82,7 @@ public sealed class GeneratorSnapshotTests
             [HttpEndpoint("GET", "/api/v{version}/greetings/{id}", IntroducedIn = 1, RetiredIn = 3)]
             public sealed class GetGreeting : IQuery<string>
             {
+                public string Id { get; set; } = string.Empty;
             }
 
             """);
@@ -197,7 +198,7 @@ public sealed class GeneratorSnapshotTests
             {
             }
             [HttpEndpoint("POST", "/requests", SuccessStatusCode = 201, NullResultStatusCode = 200, AllowAnonymous = true)]
-            public sealed class Request : IRequest<string>
+            public sealed record Request : IRequest<string>;
             {
             }
             """);
@@ -505,6 +506,91 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().NotContain("tenant_id");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsUnknownVerb()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("OPTIONS", "/options")]
+            public sealed record OptionsRequest : IRequest<string>;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF010");
+        result.Generated.Should().NotContain("OptionsRequest");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsUnsupportedHandler()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            [HttpEndpoint("GET", "/invalid")]
+            public sealed class InvalidEndpoint;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF011");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsMissingRouteProperty()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class MissingRoute : IQuery<string>;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF012");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsInvalidBodyContract()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/invalid")]
+            public sealed class InvalidBody : IRequest<string>
+            {
+                public string Value { get; }
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF013");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorReportsUnsupportedHandler()
+    {
+        var result = RunGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            [GrpcMethod]
+            public sealed class InvalidGrpc;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF011");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorReportsUnsupportedHandler()
+    {
+        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            [RebusMessage]
+            public sealed class InvalidRebus;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF011");
     }
 
     private sealed record UnformattableMessage;

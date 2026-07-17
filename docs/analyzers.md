@@ -6,6 +6,20 @@ This document describes the NuGet analyzer packages used in Ark.Tools and the ra
 
 Ark.Tools uses multiple analyzer packages to maintain code quality, prevent bugs, and enforce best practices. The analyzers are configured to work together with minimal overlap while providing comprehensive coverage of common issues.
 
+## Mediator Framework generator diagnostics
+
+The mediator source generators report these contract errors at the transport
+attribute location:
+
+| ID | Severity | Meaning |
+|---|---|---|
+| ARKMF010 | Error | HTTP endpoint uses an unsupported verb |
+| ARKMF011 | Error | Attributed type does not implement a supported handler interface |
+| ARKMF012 | Error | HTTP route placeholder has no matching contract property |
+| ARKMF013 | Error | HTTP body or multipart contract is not a record with settable properties |
+| ARKMF014 | Error | Rebus contract is registered more than once |
+| ARKMF015 | Error | Rebus contract has conflicting owner queues |
+
 ## Installed Analyzers
 
 ### 1. Microsoft.CodeAnalysis.NetAnalyzers (Built-in)
