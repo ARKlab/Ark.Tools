@@ -14,6 +14,7 @@ Source analysis and decisions: [`../pre-release-review.md`](../pre-release-revie
 - CI uses `RestoreLockedMode=true`: any dependency change must include updated `packages.lock.json` files (`dotnet restore --force-evaluate`).
 - All public APIs need XML docs; NLog structured logging with `CultureInfo.InvariantCulture`; file-scoped namespaces; standard copyright header.
 - Update `docs/mediator-framework/design.md` when a task changes framework behavior described there.
+- Update the progress tracker below when a task is completed; check recent commits before starting the next pending task.
 
 ## Release blockers (decision D7)
 
@@ -63,10 +64,13 @@ Also see [`../future-improvements.md`](../future-improvements.md) (WebApplicatio
 
 ## Recommended execution order
 
-1. SEC-01 → SEC-02 → SEC-03 → SEC-04 → GEN-04 (security defaults; SEC-01 changes emission shape — do first)
-2. FW-01 → FW-02 (wire-shape)
-3. GEN-01 → GEN-02 → GEN-03 → GEN-05 → GEN-06
-4. SMP-01 → SEC-05 (validation + authorization cross-cutting)
-5. FW-03 → SEC-07 (ProblemDetails then hardening on top) → SEC-06 → SEC-08 → FW-04
-6. SMP-02 → SMP-03 → SMP-04 → SMP-05 → SMP-06 → NET-01
-7. Post-release NET-02..NET-05
+Track completion in this order. `SEC-08` and `FW-01` are checked based on the recent commits
+`c0fc361` and `502be86`.
+
+- [ ] [SEC-01](security/SEC-01-secure-by-default-endpoints.md) → [SEC-02](security/SEC-02-unconditional-authorization-middleware.md) → [SEC-03](security/SEC-03-messagepack-untrusted-data.md) → [SEC-04](security/SEC-04-server-set-binding-protection.md) → [GEN-04](generator-dx/GEN-04-remove-hardcoded-documents-proto.md)
+- [x] [FW-01](framework/FW-01-icommand-support.md) → [ ] [FW-02](framework/FW-02-http-status-semantics.md)
+- [ ] [GEN-01](generator-dx/GEN-01-incremental-generators.md) → [GEN-02](generator-dx/GEN-02-diagnostics-for-silent-failures.md) → [GEN-03](generator-dx/GEN-03-startup-handler-verification.md) → [GEN-05](generator-dx/GEN-05-rebus-cancellation-token.md) → [GEN-06](generator-dx/GEN-06-grpc-user-context-interceptor.md)
+- [ ] [SMP-01](sample-parity/SMP-01-fluentvalidation.md) → [SEC-05](security/SEC-05-transport-agnostic-authorization-decorator.md)
+- [ ] [FW-03](framework/FW-03-shared-problemdetails-package.md) → [SEC-07](security/SEC-07-error-serialization-hardening.md) → [SEC-06](security/SEC-06-multipart-hardening.md) → [x] [SEC-08](security/SEC-08-test-auth-bearer-hardening.md) → [FW-04](framework/FW-04-file-download.md)
+- [ ] [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) → [SMP-03](sample-parity/SMP-03-persisted-auditing.md) → [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md) → [SMP-05](sample-parity/SMP-05-paging.md) → [SMP-06](sample-parity/SMP-06-misc-parity.md) → [NET-01](aspnetcore/NET-01-openapi-xml-docs.md)
+- [ ] Post-release [NET-02](aspnetcore/NET-02-openapi-operation-transformers.md) → [NET-03](aspnetcore/NET-03-json-patch.md) → [NET-04](aspnetcore/NET-04-auth-metrics.md) → [NET-05](aspnetcore/NET-05-sse-transport-spike.md)
