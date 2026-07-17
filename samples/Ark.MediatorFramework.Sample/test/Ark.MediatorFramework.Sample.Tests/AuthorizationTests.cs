@@ -52,7 +52,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCallWithoutCredentialsReturnsUnauthorized()
     {
-        using var context = new SampleTestContext(configureFallbackPolicy: false);
+        using var context = SampleTestContext.WithoutFallbackPolicy();
 
         var response = await context.Client.GetAsync(
             new Uri($"/api/v1/greetings/{Guid.Empty}", UriKind.Relative)).ConfigureAwait(false);
@@ -64,7 +64,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCallWithValidBearerReturnsSuccess()
     {
-        using var context = new SampleTestContext(configureFallbackPolicy: false);
+        using var context = SampleTestContext.WithoutFallbackPolicy();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").Build());

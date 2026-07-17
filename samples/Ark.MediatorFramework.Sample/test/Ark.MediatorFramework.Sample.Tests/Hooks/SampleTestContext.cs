@@ -18,8 +18,19 @@ public sealed class SampleTestContext : IDisposable
     private readonly IHost _host;
 
     /// <summary>Initializes a new instance of the <see cref="SampleTestContext"/> class.</summary>
-    /// <param name="configureFallbackPolicy">Whether to configure the host fallback policy.</param>
-    public SampleTestContext(bool configureFallbackPolicy = true)
+    public SampleTestContext()
+        : this(configureFallbackPolicy: true)
+    {
+    }
+
+    /// <summary>Creates a test context without the fallback authorization policy.</summary>
+    /// <returns>The configured test context.</returns>
+    public static SampleTestContext WithoutFallbackPolicy()
+    {
+        return new SampleTestContext(configureFallbackPolicy: false);
+    }
+
+    private SampleTestContext(bool configureFallbackPolicy)
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
         var container = SampleComposition.BuildContainer(new InMemNetwork());
