@@ -1,8 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.AspNetCore.ProblemDetails;
-using Ark.Tools.Authorization;
+using Ark.Tools.Core;
 
 using AwesomeAssertions;
 
@@ -23,12 +22,12 @@ public sealed class ProblemDetailsShapeTests
 
         problemDetails.Status.Should().Be(StatusCodes.Status404NotFound);
         problemDetails.Type.Should().Be("https://httpstatuses.com/404");
-        Uri.TryCreate(problemDetails.Type, UriKind.Absolute, out var typeUri).Should().BeTrue();
-        typeUri.IsAbsoluteUri.Should().BeTrue();
+        Uri.TryCreate(problemDetails.Type!, UriKind.Absolute, out var typeUri).Should().BeTrue();
+        typeUri!.IsAbsoluteUri.Should().BeTrue();
     }
 
     [TestMethod]
-    public void SerializesProblemDetailsWithExpectedProperties()
+    public async Task SerializesProblemDetailsWithExpectedProperties()
     {
         var httpContext = new DefaultHttpContext
         {
@@ -36,18 +35,17 @@ public sealed class ProblemDetailsShapeTests
         };
         httpContext.Response.Body = new MemoryStream();
 
-        var handled = new ArkProblemDetailsExceptionHandler()
-            .TryHandleAsync(httpContext, new InvalidOperationException(), CancellationToken.None)
-            .AsTask()
-            .GetAwaiter()
-            .GetResult();
+        var handled = await new ArkProblemDetailsExceptionHandler()
+            .TryHandleAsync(httpContext, new InvalidOperationException(), CancellationToken.None);
 
         handled.Should().BeTrue();
         httpContext.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         httpContext.Response.ContentType.Should().Be("application/problem+json");
 
         httpContext.Response.Body.Position = 0;
-        using var document = JsonDocument.Parse(httpContext.Response.Body);
+        using var document = await JsonDocument.ParseAsync(
+            httpContext.Response.Body,
+            cancellationToken: httpContext.RequestAborted);
         var root = document.RootElement;
         root.GetProperty("type").GetString().Should().Be("https://httpstatuses.com/500");
         root.GetProperty("status").GetInt32().Should().Be(StatusCodes.Status500InternalServerError);
