@@ -359,6 +359,19 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
             sb.AppendLine("        {");
             sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
+            sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
+            foreach (var handler in items
+                .Where(static item => item.IsValid)
+                .Select(HandlerService)
+                .Distinct(StringComparer.Ordinal))
+            {
+                var contract = items
+                    .First(item => item.IsValid && HandlerService(item) == handler)
+                    .TypeFullName;
+                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + handler + "), " + Literal(contract) + ", missingHandlers);");
+            }
+            sb.AppendLine("            if (missingHandlers.Count > 0)");
+            sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
 
             if (!items.IsDefaultOrEmpty)
             {
@@ -515,10 +528,26 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            configure?.Invoke(group);");
             sb.AppendLine("            return group;");
             sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private static void VerifyMinimalApiHandlerRegistration(global::System.IServiceProvider services, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var container = services.GetService(typeof(global::SimpleInjector.Container)) as global::SimpleInjector.Container;");
+            sb.AppendLine("            if (container is not null ? container.GetRegistration(handlerType) is null : services.GetService(handlerType) is null)");
+            sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
+            sb.AppendLine("        }");
             sb.AppendLine("    }");
             sb.AppendLine("}");
 
             spc.AddSource("ArkGeneratedEndpoints.MinimalApi.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private static string HandlerService(EndpointModel item)
+        {
+            return item.Kind == HandlerKind.Query
+                ? "global::Ark.Tools.Solid.IQueryHandler<" + item.TypeFullName + ", " + item.Response + ">"
+                : item.Kind == HandlerKind.Command
+                    ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
+                    : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
