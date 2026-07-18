@@ -47,6 +47,8 @@ public sealed record UploadGreetingCardRequest : IRequest<UploadResponse>
 
 /// <summary>Queries a previously uploaded greeting-card attachment.</summary>
 [HttpEndpoint("GET", "/api/v{version}/greeting-cards/{id}/download")]
+[GrpcMethod("Download")]
+[ServiceGroup("GeneratedDocuments")]
 public sealed record GetDocumentQuery : IQuery<IArkAttachment>
 {
     /// <summary>Gets the upload correlation identifier.</summary>

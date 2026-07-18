@@ -36,4 +36,8 @@ message UploadDocumentChunk {
       bytes data = 2;
     }
   }
+
+  message DownloadDocumentQuery {
+    bytes id = 1;
+  }
 }

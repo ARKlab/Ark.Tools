@@ -5,6 +5,15 @@ using ProtoBuf;
 
 namespace Ark.MediatorFramework;
 
+/// <summary>Identifies an attachment for a streamed download.</summary>
+[ProtoContract]
+public sealed class DownloadDocumentQuery
+{
+    /// <summary>Gets or sets the attachment identifier.</summary>
+    [ProtoMember(1)]
+    public Guid Id { get; set; }
+}
+
 /// <summary>Metadata sent as the first message of a streamed document download.</summary>
 [ProtoContract]
 public sealed class DownloadDocumentMetadata

@@ -2,9 +2,10 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
-using GrpcDownloadChunk = Ark.Tools.MediatorFramework.Grpc.DownloadDocumentChunk;
-using GrpcDownloadMetadata = Ark.Tools.MediatorFramework.Grpc.DownloadDocumentMetadata;
-using GrpcGetDocumentQuery = Ark.MediatorFramework.Sample.GrpcClient.GetDocumentQuery;
+using GrpcDownloadChunk = Ark.MediatorFramework.DownloadDocumentChunk;
+using GrpcDownloadMetadata = Ark.MediatorFramework.DownloadDocumentMetadata;
+using GrpcGetDocumentQuery = Ark.MediatorFramework.DownloadDocumentQuery;
+using ApplicationGetDocumentQuery = Ark.MediatorFramework.Sample.Application.GetDocumentQuery;
 using Ark.Tools.Solid;
 
 using Grpc.Core;
@@ -66,15 +67,16 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
             Logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Document upload failed."));
         }
+    }
 
-        /// <inheritdoc />
-        public async IAsyncEnumerable<GrpcDownloadChunk> DownloadAsync(
+    /// <inheritdoc />
+    public async IAsyncEnumerable<GrpcDownloadChunk> DownloadAsync(
             GrpcGetDocumentQuery request,
             CallContext context = default)
         {
-            var handler = _container.GetInstance<IQueryHandler<Application.GetDocumentQuery, IArkAttachment>>();
+            var handler = _container.GetInstance<IQueryHandler<ApplicationGetDocumentQuery, IArkAttachment>>();
             var attachment = await handler.ExecuteAsync(
-                new Application.GetDocumentQuery { Id = new Guid(request.Id.ToByteArray()) },
+                new ApplicationGetDocumentQuery { Id = request.Id },
                 context.CancellationToken).ConfigureAwait(false);
             if (attachment is null)
                 yield break;
@@ -91,7 +93,6 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
             var buffer = new byte[64 * 1024];
             int bytesRead;
             while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(), context.CancellationToken).ConfigureAwait(false)) > 0)
-                yield return new GrpcDownloadChunk { Data = Google.Protobuf.ByteString.CopyFrom(buffer, 0, bytesRead) };
-        }
+                yield return new GrpcDownloadChunk { Data = buffer[..bytesRead] };
     }
 }

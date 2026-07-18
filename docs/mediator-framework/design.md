@@ -409,6 +409,12 @@ message UploadDocumentMetadata {
   a forward-only stream over the incoming sequence, so the handler code is
   identical for the HTTP multipart and the gRPC streaming path.
 
+Attachment downloads use the same `IArkAttachment` abstraction as a handler result.
+Generated Minimal API endpoints return `404` for a null result and otherwise emit the
+stream with its content type and sanitized leaf file name. Generated gRPC contracts
+expose a server stream of metadata-first `DownloadDocumentChunk` messages followed by
+byte chunks; the shared chunk contracts are included in exported proto assets.
+
 ## API versioning
 
 The version is part of the contract's **lifetime**, not of its route. A

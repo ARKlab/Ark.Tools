@@ -664,8 +664,8 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.NotFound();");
-            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.Stream(result.OpenRead(), result.ContentType, global::Ark.MediatorFramework.ArkAttachmentName.Sanitize(result.Name));");
-            sb.Append("            }).Produces(200, \"application/octet-stream\").Produces(404).WithGroupName(")
+            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.File(result.OpenRead(), result.ContentType, fileDownloadName: global::Ark.MediatorFramework.ArkAttachmentName.Sanitize(result.Name));");
+            sb.Append("            }).Produces(200, contentType: \"application/octet-stream\").Produces(404).WithGroupName(")
                 .Append(Literal("v" + version)).Append(')').Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
 

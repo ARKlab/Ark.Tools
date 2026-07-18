@@ -11,11 +11,24 @@ message UploadResponse {
   int64 length = 4;
 }
 
-message GetDocumentQuery {
+message DownloadDocumentQuery {
   bytes id = 1;
+}
+
+message DownloadDocumentMetadata {
+  string name = 1;
+  string content_type = 2;
+  int64 length = 3;
+}
+
+message DownloadDocumentChunk {
+  oneof content {
+    DownloadDocumentMetadata metadata = 1;
+    bytes data = 2;
+  }
 }
 
 service Documents {
   rpc Upload(stream ark.mediator.UploadDocumentChunk) returns (UploadResponse);
-  rpc Download(GetDocumentQuery) returns (stream ark.mediator.DownloadDocumentChunk);
+  rpc Download(DownloadDocumentQuery) returns (stream DownloadDocumentChunk);
 }

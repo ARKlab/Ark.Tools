@@ -721,7 +721,7 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly record struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, IReadOnlyList<DiagnosticInfo> diagnostics, Location? location)
+            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, IReadOnlyList<DiagnosticInfo> diagnostics, Location? location)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -731,6 +731,7 @@ namespace Ark.MediatorFramework.Generators
                 Kind = kind;
                 GrpcIntroducedIn = grpcIntroducedIn;
                 GrpcRetiredIn = grpcRetiredIn;
+                AttachmentResponse = attachmentResponse;
                 Diagnostics = diagnostics;
                 Location = location;
                 IsValid = diagnostics.Count == 0;
@@ -746,6 +747,7 @@ namespace Ark.MediatorFramework.Generators
                 GrpcMethod = string.Empty;
                 ServiceGroup = string.Empty;
                 Response = string.Empty;
+                AttachmentResponse = false;
             }
 
             public static EndpointModel Invalid(INamedTypeSymbol type, DiagnosticInfo diagnostic)
@@ -759,6 +761,7 @@ namespace Ark.MediatorFramework.Generators
             public HandlerKind Kind { get; }
             public int GrpcIntroducedIn { get; }
             public int GrpcRetiredIn { get; }
+            public bool AttachmentResponse { get; }
             public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
             public Location? Location { get; }
             public bool IsValid { get; }
