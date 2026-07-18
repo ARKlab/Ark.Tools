@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 using NLog;
 
@@ -14,6 +16,18 @@ namespace Ark.Tools.AspNetCore.ProblemDetails;
 public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private readonly bool _includeExceptionDetails;
+
+    /// <summary>Initializes the exception handler.</summary>
+    /// <param name="environment">The hosting environment.</param>
+    /// <param name="options">The exception detail options.</param>
+    public ArkProblemDetailsExceptionHandler(
+        IHostEnvironment? environment = null,
+        IOptions<ArkProblemDetailsOptions>? options = null)
+    {
+        _includeExceptionDetails = environment?.IsDevelopment() == true
+            || options?.Value.IncludeExceptionDetails == true;
+    }
 
     /// <inheritdoc />
     public async ValueTask<bool> TryHandleAsync(
@@ -23,6 +37,11 @@ public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
     {
         Logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an HTTP request.");
         var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
+        if (_includeExceptionDetails)
+        {
+            problemDetails.Detail = exception.Message;
+            problemDetails.Extensions["stackTrace"] = exception.StackTrace;
+        }
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id
             ?? httpContext.TraceIdentifier;
         httpContext.Response.StatusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;
@@ -82,10 +101,17 @@ public static class ArkProblemDetailsServiceCollectionExtensions
     /// Registers the exception handler and ASP.NET Core ProblemDetails services.
     /// </summary>
     /// <param name="services">The service collection.</param>
+    /// <param name="configure">Optional exception detail configuration.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkProblemDetailsExceptionHandler(this IServiceCollection services)
+    public static IServiceCollection AddArkProblemDetailsExceptionHandler(
+        this IServiceCollection services,
+        Action<ArkProblemDetailsOptions>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(services);
+        if (configure is not null)
+        {
+            services.Configure(configure);
+        }
         services.AddProblemDetails();
         services.AddSingleton<ArkProblemDetailsExceptionHandler>();
         services.AddExceptionHandler<ArkProblemDetailsExceptionHandler>();

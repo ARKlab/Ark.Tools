@@ -13,6 +13,9 @@ using Google.Rpc;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+
 using NLog;
 
 using System.Reflection;
@@ -24,6 +27,18 @@ namespace Ark.Tools.MediatorFramework.Grpc;
 public sealed class ArkGrpcErrorInterceptor : Interceptor
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private readonly bool _includeExceptionDetails;
+
+    /// <summary>Initializes the gRPC error interceptor.</summary>
+    /// <param name="environment">The hosting environment.</param>
+    /// <param name="options">The exception detail options.</param>
+    public ArkGrpcErrorInterceptor(
+        IHostEnvironment? environment = null,
+        IOptions<ArkGrpcErrorOptions>? options = null)
+    {
+        _includeExceptionDetails = environment?.IsDevelopment() == true
+            || options?.Value.IncludeExceptionDetails == true;
+    }
 
     /// <summary>Executes a unary call and maps known application failures to rich statuses.</summary>
     /// <typeparam name="TRequest">The request message type.</typeparam>
@@ -93,9 +108,21 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         catch (Exception exception) when (exception is not RpcException and not OperationCanceledException)
         {
             Logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
-            throw new RpcException(new global::Grpc.Core.Status(
-                StatusCode.Internal,
-                "An unexpected error occurred."));
+            var status = new Google.Rpc.Status
+            {
+                Code = (int)StatusCode.Internal,
+                Message = _includeExceptionDetails
+                    ? exception.Message
+                    : "An unexpected error occurred.",
+            };
+            if (_includeExceptionDetails)
+            {
+                status.Details.Add(Any.Pack(new DebugInfo
+                {
+                    Detail = exception.StackTrace ?? string.Empty,
+                }));
+            }
+            throw status.ToRpcException();
         }
     }
 

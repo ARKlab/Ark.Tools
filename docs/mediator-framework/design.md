@@ -309,9 +309,10 @@ The Minimal API host does **not** reimplement RFC 7807 mapping. It registers
   is serialized into the ProblemDetails `extensions`, exactly as existing MVC
   hosts do. This behavior is preserved by the MVC-free host — clients observe
   the same payload.
-- Unhandled exceptions are logged with the full exception server-side and
-  return only the generic 500 ProblemDetails payload; exception messages are
-  never exposed by the fallback mapping.
+- Unhandled exceptions are logged with the full exception server-side. In
+  development, the ProblemDetails payload also includes the exception message
+  and stack trace; production returns the generic 500 payload unless the host
+  explicitly opts in with `ArkProblemDetailsOptions.IncludeExceptionDetails`.
 
 ### gRPC: BusinessRuleViolation over `Google.Rpc.Status`
 
@@ -347,8 +348,10 @@ message ArkBusinessRuleViolation {
 - Polyglot clients that cannot parse the JSON values still get
   `type`/`title`/`detail`/`instance` as plain strings — the extension values
   are additive, never required.
-- Unhandled exceptions are logged server-side and return only the generic
-  `Internal` status message.
+- Unhandled exceptions are logged server-side. Development responses include
+  the exception message and a `google.rpc.DebugInfo` stack trace detail;
+  production returns only the generic `Internal` status message unless the
+  host opts in with `ArkGrpcErrorOptions.IncludeExceptionDetails`.
 
 ## User context
 

@@ -6,6 +6,9 @@ using Ark.Tools.Core;
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 using System.Text.Json;
 
@@ -57,5 +60,73 @@ public sealed class ProblemDetailsShapeTests
         root.TryGetProperty("title", out _).Should().BeFalse();
         root.TryGetProperty("detail", out _).Should().BeFalse();
         root.TryGetProperty("instance", out _).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task IncludesExceptionDetailsInDevelopment()
+    {
+        var httpContext = new DefaultHttpContext
+        {
+            TraceIdentifier = "trace-development",
+        };
+        httpContext.Response.Body = new MemoryStream();
+        Exception exception;
+        try
+        {
+            throw new InvalidOperationException("development exception detail");
+        }
+        catch (Exception caught)
+        {
+            exception = caught;
+        }
+
+        await new ArkProblemDetailsExceptionHandler(
+                new TestHostEnvironment(Environments.Development),
+                Options.Create(new ArkProblemDetailsOptions()))
+            .TryHandleAsync(
+                httpContext,
+                exception,
+                CancellationToken.None);
+
+        httpContext.Response.Body.Position = 0;
+        using var document = await JsonDocument.ParseAsync(
+            httpContext.Response.Body,
+            cancellationToken: httpContext.RequestAborted);
+        var root = document.RootElement;
+        root.GetProperty("detail").GetString().Should().Be("development exception detail");
+        root.GetProperty("stackTrace").GetString().Should().Contain("IncludesExceptionDetailsInDevelopment");
+    }
+
+    [TestMethod]
+    public async Task IncludesExceptionDetailsWhenExplicitlyEnabled()
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.Response.Body = new MemoryStream();
+
+        await new ArkProblemDetailsExceptionHandler(
+                options: Options.Create(new ArkProblemDetailsOptions { IncludeExceptionDetails = true }))
+            .TryHandleAsync(
+                httpContext,
+                new InvalidOperationException("opt-in exception detail"),
+                CancellationToken.None);
+
+        httpContext.Response.Body.Position = 0;
+        using var document = await JsonDocument.ParseAsync(
+            httpContext.Response.Body,
+            cancellationToken: httpContext.RequestAborted);
+        document.RootElement.GetProperty("detail").GetString().Should().Be("opt-in exception detail");
+    }
+
+    private sealed class TestHostEnvironment : IHostEnvironment
+    {
+        public TestHostEnvironment(string environmentName)
+        {
+            EnvironmentName = environmentName;
+        }
+
+        public string ApplicationName { get; set; } = "Tests";
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public string EnvironmentName { get; set; }
     }
 }
