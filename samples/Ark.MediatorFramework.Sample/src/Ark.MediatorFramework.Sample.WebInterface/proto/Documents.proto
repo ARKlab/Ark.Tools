@@ -5,11 +5,17 @@ option csharp_namespace = "Ark.MediatorFramework.Sample.GrpcClient";
 import "ark/mediator.proto";
 
 message UploadResponse {
-  string name = 1;
-  string content_type = 2;
-  int64 length = 3;
+  bytes id = 1;
+  string name = 2;
+  string content_type = 3;
+  int64 length = 4;
+}
+
+message GetDocumentQuery {
+  bytes id = 1;
 }
 
 service Documents {
   rpc Upload(stream ark.mediator.UploadDocumentChunk) returns (UploadResponse);
+  rpc Download(GetDocumentQuery) returns (stream ark.mediator.DownloadDocumentChunk);
 }

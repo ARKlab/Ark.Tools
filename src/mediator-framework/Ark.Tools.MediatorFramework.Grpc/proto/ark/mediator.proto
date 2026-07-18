@@ -23,4 +23,17 @@ message UploadDocumentChunk {
     UploadDocumentMetadata metadata = 1;
     bytes data = 2;
   }
+
+  message DownloadDocumentMetadata {
+    string name = 1;
+    string content_type = 2;
+    optional int64 length = 3;
+  }
+
+  message DownloadDocumentChunk {
+    oneof content {
+      DownloadDocumentMetadata metadata = 1;
+      bytes data = 2;
+    }
+  }
 }

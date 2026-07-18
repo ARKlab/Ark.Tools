@@ -11,16 +11,20 @@ namespace Ark.MediatorFramework.Sample.Application;
 [ProtoContract]
 public sealed record UploadResponse
 {
-    /// <summary>Gets the attachment file name.</summary>
+    /// <summary>Gets the upload correlation identifier.</summary>
     [ProtoMember(1)]
+    public required Guid Id { get; init; }
+
+    /// <summary>Gets the attachment file name.</summary>
+    [ProtoMember(2)]
     public required string Name { get; init; }
 
     /// <summary>Gets the attachment content type.</summary>
-    [ProtoMember(2)]
+    [ProtoMember(3)]
     public required string ContentType { get; init; }
 
     /// <summary>Gets the number of bytes received.</summary>
-    [ProtoMember(3)]
+    [ProtoMember(4)]
     public required long Length { get; init; }
 }
 
@@ -39,4 +43,12 @@ public sealed record UploadGreetingCardRequest : IRequest<UploadResponse>
 
     /// <summary>Gets the uploaded attachment.</summary>
     public required IArkAttachment Attachment { get; init; }
+}
+
+/// <summary>Queries a previously uploaded greeting-card attachment.</summary>
+[HttpEndpoint("GET", "/api/v{version}/greeting-cards/{id}/download")]
+public sealed record GetDocumentQuery : IQuery<IArkAttachment>
+{
+    /// <summary>Gets the upload correlation identifier.</summary>
+    public Guid Id { get; init; }
 }

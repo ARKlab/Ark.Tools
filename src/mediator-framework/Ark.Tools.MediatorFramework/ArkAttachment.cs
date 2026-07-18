@@ -32,8 +32,12 @@ public sealed class ArkAttachment : IArkAttachment
     public Stream OpenRead() => _openRead();
 }
 
-internal static class ArkAttachmentName
+/// <summary>Provides safe attachment file-name handling.</summary>
+public static class ArkAttachmentName
 {
+    /// <summary>Returns the leaf file name with control characters removed.</summary>
+    /// <param name="name">The untrusted file name.</param>
+    /// <returns>A safe leaf file name.</returns>
     public static string Sanitize(string name)
     {
         var leafName = Path.GetFileName(name.Replace('\\', '/'));

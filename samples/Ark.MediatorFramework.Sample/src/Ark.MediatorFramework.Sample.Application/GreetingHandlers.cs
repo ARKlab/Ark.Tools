@@ -212,6 +212,14 @@ public sealed class DescribeShapeHandler : IRequestHandler<DescribeShapeRequest,
 }
 public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCardRequest, UploadResponse>
 {
+    private readonly DocumentStore _documents;
+
+    /// <summary>Initializes a new instance of the <see cref="UploadGreetingCardHandler"/> class.</summary>
+    public UploadGreetingCardHandler(DocumentStore documents)
+    {
+        _documents = documents;
+    }
+
     /// <inheritdoc />
     public async Task<UploadResponse> ExecuteAsync(UploadGreetingCardRequest Request, CancellationToken ctk = default)
     {
@@ -220,12 +228,33 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
         await using var stream = Request.Attachment.OpenRead();
         using var buffer = new MemoryStream();
         await stream.CopyToAsync(buffer, ctk).ConfigureAwait(false);
+        _documents.Save(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, buffer.ToArray());
 
         return new UploadResponse
         {
+            Id = Request.Id,
             Name = Request.Attachment.Name,
             ContentType = Request.Attachment.ContentType,
             Length = buffer.Length,
         };
+    }
+}
+
+/// <summary>Loads previously uploaded attachments.</summary>
+public sealed class GetDocumentHandler : IQueryHandler<GetDocumentQuery, IArkAttachment>
+{
+    private readonly DocumentStore _documents;
+
+    /// <summary>Initializes a new instance of the <see cref="GetDocumentHandler"/> class.</summary>
+    public GetDocumentHandler(DocumentStore documents)
+    {
+        _documents = documents;
+    }
+
+    /// <inheritdoc />
+    public Task<IArkAttachment> ExecuteAsync(GetDocumentQuery query, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return Task.FromResult(_documents.Get(query.Id)!);
     }
 }
