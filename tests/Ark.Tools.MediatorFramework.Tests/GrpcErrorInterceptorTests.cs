@@ -13,6 +13,7 @@ using Grpc.Core;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.FileProviders;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -67,8 +68,7 @@ public sealed class GrpcErrorInterceptorTests
         }
 
         public string ApplicationName { get; set; } = "Tests";
-        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
-            new Microsoft.Extensions.FileProviders.NullFileProvider();
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
         public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
         public string EnvironmentName { get; set; }
     }

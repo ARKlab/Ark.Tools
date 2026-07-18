@@ -104,6 +104,7 @@ public sealed class ProblemDetailsShapeTests
         httpContext.Response.Body = new MemoryStream();
 
         await new ArkProblemDetailsExceptionHandler(
+                environment: null,
                 options: Options.Create(new ArkProblemDetailsOptions { IncludeExceptionDetails = true }))
             .TryHandleAsync(
                 httpContext,
