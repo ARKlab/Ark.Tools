@@ -71,15 +71,15 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
 
     /// <inheritdoc />
     public async IAsyncEnumerable<GrpcDownloadChunk> DownloadAsync(
-            GrpcGetDocumentQuery request,
-            CallContext context = default)
-        {
-            var handler = _container.GetInstance<IQueryHandler<ApplicationGetDocumentQuery, IArkAttachment>>();
-            var attachment = await handler.ExecuteAsync(
-                new ApplicationGetDocumentQuery { Id = request.Id },
-                context.CancellationToken).ConfigureAwait(false);
-            if (attachment is null)
-                yield break;
+        GrpcGetDocumentQuery request,
+        CallContext context = default)
+    {
+        var handler = _container.GetInstance<IQueryHandler<ApplicationGetDocumentQuery, IArkAttachment>>();
+        var attachment = await handler.ExecuteAsync(
+            new ApplicationGetDocumentQuery { Id = request.Id },
+            context.CancellationToken).ConfigureAwait(false);
+        if (attachment is null)
+            yield break;
 
             yield return new GrpcDownloadChunk
             {
