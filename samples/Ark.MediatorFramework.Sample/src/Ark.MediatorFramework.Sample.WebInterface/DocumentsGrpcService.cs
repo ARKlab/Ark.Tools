@@ -8,6 +8,8 @@ using Grpc.Core;
 
 using ProtoBuf.Grpc;
 
+using NLog;
+
 using System.ServiceModel;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
@@ -26,6 +28,7 @@ public interface IDocumentsGrpcService
 /// <summary>Hosts the client-streaming document upload endpoint.</summary>
 public sealed class DocumentsGrpcService : IDocumentsGrpcService
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly SimpleInjector.Container _container;
 
     /// <summary>Initializes a new instance of the <see cref="DocumentsGrpcService"/> class.</summary>
@@ -50,7 +53,8 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
         }
         catch (InvalidOperationException exception)
         {
-            throw new RpcException(new Status(StatusCode.InvalidArgument, exception.Message));
+            Logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Document upload failed."));
         }
     }
 }

@@ -13,6 +13,8 @@ using Google.Rpc;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 
+using NLog;
+
 using System.Reflection;
 using System.Text.Json;
 
@@ -21,6 +23,8 @@ namespace Ark.Tools.MediatorFramework.Grpc;
 /// <summary>Maps transport-agnostic failures to the gRPC rich error model.</summary>
 public sealed class ArkGrpcErrorInterceptor : Interceptor
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     /// <summary>Executes a unary call and maps known application failures to rich statuses.</summary>
     /// <typeparam name="TRequest">The request message type.</typeparam>
     /// <typeparam name="TResponse">The response message type.</typeparam>
@@ -85,6 +89,13 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         catch (PolicyAuthorizationException exception)
         {
             throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied, exception.Message));
+        }
+        catch (Exception exception) when (exception is not RpcException)
+        {
+            Logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
+            throw new RpcException(new global::Grpc.Core.Status(
+                StatusCode.Internal,
+                "An unexpected error occurred."));
         }
     }
 

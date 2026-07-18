@@ -34,7 +34,7 @@
 
 ## Acceptance
 
-- [ ] Opt-in serialization enforced for both transports (tests inspect payloads).
-- [ ] No raw `Exception.Message` reaches clients for unhandled exceptions outside Development (test).
-- [ ] Sample gRPC service no longer echoes exception messages.
+- [x] `BusinessRuleViolation` payload serialization remains unchanged; its documented public detail fields are client-visible.
+- [x] No raw `Exception.Message` reaches clients for unhandled exceptions (generic HTTP ProblemDetails and gRPC `Internal` status).
+- [x] Sample gRPC service no longer echoes exception messages.
 - [ ] Full solution build + tests green; `design.md` error-mapping section updated.

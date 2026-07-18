@@ -288,8 +288,8 @@ graph validation.
 
 | Transport | Mechanism | Mapping |
 | --- | --- | --- |
-| Minimal API | `Ark.Tools.AspNetCore.ProblemDetails` registered with `AddArkProblemDetailsExceptionHandler` and `UseExceptionHandler` | `EntityNotFoundException`→404; `ValidationException`→400 + `extensions` field violations; `BusinessRuleViolationException`→400 with the violation payload in `extensions` |
-| gRPC | server interceptor → `Google.Rpc.Status` rich error model | field violations packed as `BadRequest` details in trailing metadata; business rule violations packed as an `ArkBusinessRuleViolation` detail; thrown as `RpcException` |
+| Minimal API | `Ark.Tools.AspNetCore.ProblemDetails` registered with `AddArkProblemDetailsExceptionHandler` and `UseExceptionHandler` | `EntityNotFoundException`→404; `ValidationException`→400 + `extensions` field violations; `BusinessRuleViolationException`→400 with the violation payload in `extensions`; unhandled exceptions are logged server-side and return a generic 500 |
+| gRPC | server interceptor → `Google.Rpc.Status` rich error model | field violations packed as `BadRequest` details in trailing metadata; business rule violations packed as an `ArkBusinessRuleViolation` detail; unhandled exceptions are logged server-side and return a generic `Internal`; thrown as `RpcException` |
 | Rebus | scope disposal + native retry | exhausted → error/dead-letter queue with serialized exception headers |
 
 Handlers only throw semantic domain exceptions; they never format transport
@@ -309,6 +309,9 @@ The Minimal API host does **not** reimplement RFC 7807 mapping. It registers
   is serialized into the ProblemDetails `extensions`, exactly as existing MVC
   hosts do. This behavior is preserved by the MVC-free host — clients observe
   the same payload.
+- Unhandled exceptions are logged with the full exception server-side and
+  return only the generic 500 ProblemDetails payload; exception messages are
+  never exposed by the fallback mapping.
 
 ### gRPC: BusinessRuleViolation over `Google.Rpc.Status`
 
@@ -344,6 +347,8 @@ message ArkBusinessRuleViolation {
 - Polyglot clients that cannot parse the JSON values still get
   `type`/`title`/`detail`/`instance` as plain strings — the extension values
   are additive, never required.
+- Unhandled exceptions are logged server-side and return only the generic
+  `Internal` status message.
 
 ## User context
 

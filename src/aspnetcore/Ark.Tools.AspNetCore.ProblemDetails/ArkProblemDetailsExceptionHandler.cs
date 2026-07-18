@@ -6,17 +6,22 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
+using NLog;
+
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
 /// <summary>Writes mapped exceptions as RFC 7807 responses for Minimal API hosts.</summary>
 public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
     /// <inheritdoc />
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
         CancellationToken cancellationToken)
     {
+        Logger.Error(exception, System.Globalization.CultureInfo.InvariantCulture, "Unhandled exception while processing an HTTP request.");
         var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id
             ?? httpContext.TraceIdentifier;
