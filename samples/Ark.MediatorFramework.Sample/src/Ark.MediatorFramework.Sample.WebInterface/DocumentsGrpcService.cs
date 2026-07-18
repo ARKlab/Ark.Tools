@@ -10,7 +10,6 @@ using ProtoBuf.Grpc;
 
 using NLog;
 
-using System.Globalization;
 using System.ServiceModel;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
