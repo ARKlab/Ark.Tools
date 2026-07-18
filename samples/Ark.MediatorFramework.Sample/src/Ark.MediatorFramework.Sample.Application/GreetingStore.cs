@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.Core;
-
 using System.Collections.Concurrent;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -11,19 +9,19 @@ namespace Ark.MediatorFramework.Sample.Application;
 public interface IGreetingStore
 {
     /// <summary>Persists a greeting.</summary>
-    void Save(GreetingResponse greeting);
+    Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default);
 
     /// <summary>Reads a greeting by id or throws when missing.</summary>
-    GreetingResponse Get(Guid id);
+    Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Attempts to read a greeting by id.</summary>
-    bool TryGet(Guid id, out GreetingResponse? greeting);
+    Task<GreetingResponse?> TryGetAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Gets the number of stored greetings.</summary>
-    int Count { get; }
+    Task<int> CountAsync(CancellationToken ctk = default);
 
     /// <summary>Returns a snapshot of all stored greetings.</summary>
-    IReadOnlyCollection<GreetingResponse> All();
+    Task<IReadOnlyCollection<GreetingResponse>> AllAsync(CancellationToken ctk = default);
 }
 
 /// <summary>Thread-safe in-memory <see cref="IGreetingStore"/>.</summary>
@@ -32,26 +30,37 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _items = new();
 
     /// <inheritdoc />
-    public int Count => _items.Count;
-
-    /// <inheritdoc />
-    public void Save(GreetingResponse greeting)
+    public Task<int> CountAsync(CancellationToken ctk = default)
     {
-        ArgumentNullException.ThrowIfNull(greeting);
-        _items[greeting.Id] = greeting;
+        return Task.FromResult(_items.Count);
     }
 
     /// <inheritdoc />
-    public GreetingResponse Get(Guid id)
-        => _items.TryGetValue(id, out var g)
-            ? g
+    public Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(greeting);
+        _items[greeting.Id] = greeting;
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default)
+    {
+        return _items.TryGetValue(id, out var greeting)
+            ? Task.FromResult(greeting)
             : throw new EntityNotFoundException($"Greeting '{id}' was not found.");
+    }
 
     /// <inheritdoc />
-    public bool TryGet(Guid id, out GreetingResponse? greeting)
-        => _items.TryGetValue(id, out greeting);
+    public Task<GreetingResponse?> TryGetAsync(Guid id, CancellationToken ctk = default)
+    {
+        _items.TryGetValue(id, out var greeting);
+        return Task.FromResult(greeting);
+    }
 
     /// <inheritdoc />
-    public IReadOnlyCollection<GreetingResponse> All()
-        => _items.Values.ToArray();
+    public Task<IReadOnlyCollection<GreetingResponse>> AllAsync(CancellationToken ctk = default)
+    {
+        return Task.FromResult<IReadOnlyCollection<GreetingResponse>>(_items.Values.ToArray());
+    }
 }

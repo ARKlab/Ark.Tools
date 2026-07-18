@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
+using Ark.Tools.Sql;
+using Ark.Tools.Sql.SqlServer;
 
 using FluentValidation;
 
@@ -18,11 +20,22 @@ public static class ApplicationComposition
 {
     /// <summary>Registers the pure domain graph into the given container.</summary>
     /// <param name="container">The SimpleInjector container to register into.</param>
-    public static void Register(Container container)
+    public static void Register(Container container, bool useSqlStore = true, string? connectionString = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
-        container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
+        if (useSqlStore)
+        {
+            var config = new SampleDataContextConfig(
+                connectionString ?? "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;******;TrustServerCertificate=True;Encrypt=False");
+            container.RegisterSingleton(config);
+            container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
+            container.RegisterSingleton<SampleDataContextFactory>();
+            container.RegisterSingleton<IOutboxAsyncContextFactory, SampleDataContextFactory>();
+            container.RegisterSingleton<IGreetingStore, SqlGreetingStore>();
+        }
+        else
+            container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
         container.RegisterSingleton<DocumentStore>();
         container.RegisterSingleton<AuditCounter>();
 

@@ -33,7 +33,7 @@ public sealed class SampleTestContext : IDisposable
     private SampleTestContext(bool configureFallbackPolicy)
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
-        var container = SampleComposition.BuildContainer(new InMemNetwork());
+        var container = SampleComposition.BuildContainer(new InMemNetwork(), useSqlStore: false);
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
