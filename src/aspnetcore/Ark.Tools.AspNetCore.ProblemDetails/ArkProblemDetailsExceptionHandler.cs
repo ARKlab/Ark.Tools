@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NLog;
 
+using System.Globalization;
+
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
 /// <summary>Writes mapped exceptions as RFC 7807 responses for Minimal API hosts.</summary>
@@ -21,7 +23,7 @@ public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        Logger.Error(exception, System.Globalization.CultureInfo.InvariantCulture, "Unhandled exception while processing an HTTP request.");
+        Logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an HTTP request.");
         var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id
             ?? httpContext.TraceIdentifier;

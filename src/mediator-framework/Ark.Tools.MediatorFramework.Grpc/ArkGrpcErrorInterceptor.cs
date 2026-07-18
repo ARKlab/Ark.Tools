@@ -15,6 +15,7 @@ using Grpc.Core.Interceptors;
 
 using NLog;
 
+using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 
@@ -90,7 +91,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         {
             throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied, exception.Message));
         }
-        catch (Exception exception) when (exception is not RpcException)
+        catch (Exception exception) when (exception is not RpcException and not OperationCanceledException)
         {
             Logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
             throw new RpcException(new global::Grpc.Core.Status(
