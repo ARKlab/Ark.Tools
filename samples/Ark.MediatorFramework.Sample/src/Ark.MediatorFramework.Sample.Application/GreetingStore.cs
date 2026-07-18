@@ -3,6 +3,8 @@
 
 using System.Collections.Concurrent;
 
+using Ark.Tools.Core;
+
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>In-memory store shared by every transport, proving they hit the same state.</summary>
@@ -10,6 +12,9 @@ public interface IGreetingStore
 {
     /// <summary>Persists a greeting.</summary>
     Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default);
+
+    /// <summary>Persists a greeting and publishes its creation notification atomically.</summary>
+    Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default);
 
     /// <summary>Reads a greeting by id or throws when missing.</summary>
     Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default);
@@ -41,6 +46,12 @@ public sealed class InMemoryGreetingStore : IGreetingStore
         ArgumentNullException.ThrowIfNull(greeting);
         _items[greeting.Id] = greeting;
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    {
+        return SaveAsync(greeting, ctk);
     }
 
     /// <inheritdoc />

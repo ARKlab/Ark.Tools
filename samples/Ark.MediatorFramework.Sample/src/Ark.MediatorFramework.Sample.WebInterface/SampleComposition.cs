@@ -10,7 +10,6 @@ using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.Outbox;
-using Ark.Tools.Outbox.Rebus;
 
 using Rebus.Handlers;
 using Rebus.Config;
@@ -37,6 +36,8 @@ public static class SampleComposition
     /// <summary>Builds the SimpleInjector container before ASP.NET Core integration completes it.</summary>
     /// <param name="network">The in-memory Rebus network to attach the transport to.</param>
     /// <param name="useProtobufRebus">Whether Rebus messages use Protobuf instead of JSON.</param>
+    /// <param name="useSqlStore">Whether to use SQL persistence and the outbox.</param>
+    /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <returns>The configured container. Hosting verifies it and starts the bus after integration.</returns>
     public static Container BuildContainer(
         InMemNetwork network,

@@ -45,6 +45,8 @@ dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Samp
 
 The SQL-backed sample uses SQL Server on `localhost:1433`. Build the database project or deploy
 `Database/Ark.MediatorFramework.Sample.Database.sqlproj` before running SQL-backed scenarios.
+Greeting writes and their Rebus notifications share one SQL transaction; set
+`ARK_SAMPLE_SQL_TESTS=1` to run the SQL-backed Reqnroll path.
 
 ## gRPC operations panel
 

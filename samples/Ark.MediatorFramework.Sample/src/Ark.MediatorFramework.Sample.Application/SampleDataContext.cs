@@ -2,8 +2,13 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Outbox.SqlServer;
+using Ark.Tools.Outbox.Rebus;
 
 using Dapper;
+
+using NodaTime.Text;
+
+using Rebus.Bus;
 
 using System.Data.Common;
 
@@ -33,7 +38,7 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Ark.Tools
 }
 
 /// <summary>Transactional SQL context for greetings and Rebus outbox messages.</summary>
-public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>, IDisposable
+public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>
 {
     /// <summary>Initializes a new instance of the <see cref="SampleDataContext"/> class.</summary>
     /// <param name="transaction">The transaction to use.</param>
@@ -58,10 +63,10 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         {
             greeting.Id,
             greeting.Message,
-            Date = NodaTime.LocalDatePattern.Iso.Format(greeting.Date),
-            DateTime = NodaTime.LocalDateTimePattern.ExtendedIso.Format(greeting.DateTime),
-            OffsetDateTime = NodaTime.OffsetDateTimePattern.ExtendedIso.Format(greeting.OffsetDateTime),
-            Period = NodaTime.PeriodPattern.NormalizingIso.Format(greeting.Period),
+            Date = LocalDatePattern.Iso.Format(greeting.Date),
+            DateTime = LocalDateTimePattern.ExtendedIso.Format(greeting.DateTime),
+            OffsetDateTime = OffsetDateTimePattern.ExtendedIso.Format(greeting.OffsetDateTime),
+            Period = PeriodPattern.NormalizingIso.Format(greeting.Period),
         }, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
     }
@@ -99,10 +104,10 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             {
                 Id = Id,
                 Message = Message,
-                Date = NodaTime.LocalDatePattern.Iso.Parse(Date).Value,
-                DateTime = NodaTime.LocalDateTimePattern.ExtendedIso.Parse(DateTime).Value,
-                OffsetDateTime = NodaTime.OffsetDateTimePattern.ExtendedIso.Parse(OffsetDateTime).Value,
-                Period = NodaTime.PeriodPattern.NormalizingIso.Parse(Period).Value,
+                Date = LocalDatePattern.Iso.Parse(Date).Value,
+                DateTime = LocalDateTimePattern.ExtendedIso.Parse(DateTime).Value,
+                OffsetDateTime = OffsetDateTimePattern.ExtendedIso.Parse(OffsetDateTime).Value,
+                Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
             };
         }
     }
@@ -138,12 +143,26 @@ public sealed class SampleDataContextFactory : Ark.Tools.Sql.AbstractSqlAsyncCon
 public sealed class SqlGreetingStore : IGreetingStore
 {
     private readonly SampleDataContextFactory _factory;
+    private readonly IBus _bus;
 
     /// <summary>Initializes a new instance of the <see cref="SqlGreetingStore"/> class.</summary>
     /// <param name="factory">The sample context factory.</param>
-    public SqlGreetingStore(SampleDataContextFactory factory)
+    /// <param name="bus">The Rebus bus used by the transactional outbox.</param>
+    public SqlGreetingStore(SampleDataContextFactory factory, IBus bus)
     {
         _factory = factory;
+        _bus = bus;
+    }
+
+    /// <inheritdoc />
+    public async Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    {
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
+        using var scope = _bus.Enlist(context);
+        await _bus.SendLocal(new GreetingCreatedNotification { Greeting = greeting }).ConfigureAwait(false);
+        await scope.CompleteAsync().ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

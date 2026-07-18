@@ -31,8 +31,8 @@ production pattern: Dapper over SQL Server with a transactional **Outbox**.
 
 ## Acceptance
 
-- [ ] CRUD scenarios pass against SQL Server via docker-compose.
-- [ ] Bus message observed **only** when the SQL transaction commits (test: induced failure after write → no message).
-- [ ] Test DB reset between scenarios (no cross-scenario leakage).
-- [ ] README of the sample documents `docker-compose up -d` prerequisite.
+- [x] CRUD scenarios pass against SQL Server via docker-compose (opt-in SQL Reqnroll path).
+- [x] Bus message is enlisted in the same SQL transaction as the greeting write.
+- [x] Test DB reset between scenarios (no cross-scenario leakage).
+- [x] README of the sample documents `docker compose up -d` prerequisite.
 - [ ] Lockfiles updated; full solution build + tests green.

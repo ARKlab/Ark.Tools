@@ -55,7 +55,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Period = Request.Period,
         };
 
-        await _store.SaveAsync(response, ctk).ConfigureAwait(false);
+        await _store.SaveAndPublishAsync(response, ctk).ConfigureAwait(false);
         return response;
     }
 }
@@ -118,6 +118,17 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
 
         await _store.SaveAsync(response, ctk).ConfigureAwait(false);
         return response;
+    }
+}
+
+/// <summary>Consumes greeting-created notifications after their transaction commits.</summary>
+public sealed class GreetingCreatedHandler : ICommandHandler<GreetingCreatedNotification>
+{
+    /// <inheritdoc />
+    public async Task ExecuteAsync(GreetingCreatedNotification command, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }
 
