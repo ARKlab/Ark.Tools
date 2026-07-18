@@ -36,7 +36,10 @@ public sealed class ProblemDetailsShapeTests
         httpContext.Response.Body = new MemoryStream();
 
         var handled = await new ArkProblemDetailsExceptionHandler()
-            .TryHandleAsync(httpContext, new InvalidOperationException(), CancellationToken.None);
+            .TryHandleAsync(
+                httpContext,
+                new InvalidOperationException("secret exception detail"),
+                CancellationToken.None);
 
         handled.Should().BeTrue();
         httpContext.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
@@ -50,6 +53,7 @@ public sealed class ProblemDetailsShapeTests
         root.GetProperty("type").GetString().Should().Be("https://httpstatuses.com/500");
         root.GetProperty("status").GetInt32().Should().Be(StatusCodes.Status500InternalServerError);
         root.GetProperty("traceId").GetString().Should().Be("trace-123");
+        root.ToString().Should().NotContain("secret exception detail");
         root.TryGetProperty("title", out _).Should().BeFalse();
         root.TryGetProperty("detail", out _).Should().BeFalse();
         root.TryGetProperty("instance", out _).Should().BeFalse();
