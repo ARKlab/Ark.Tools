@@ -46,8 +46,8 @@ public class ArkProblemDetailsOptionsSetup
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IConfigureOptions<T>.Configure interface constraint prevents RequiresUnreferencedCode. BusinessRuleViolation base class has DynamicallyAccessedMembers for PublicProperties. Applications must preserve all BusinessRuleViolation-derived types.")]
     public void Configure(ProblemDetailsOptions options)
     {
-        // This is the default behavior; only include exception details in a development environment.
-        options.IncludeExceptionDetails = (ctx, ex) => true; // !Environment.IsProduction();
+        // Keep exception details to development by default. A configured delegate opts in explicitly.
+        options.IncludeExceptionDetails ??= (ctx, ex) => !_environment.IsProduction();
 
         options.ShouldLogUnhandledException = (ctx, e, d) => _isServerError(d.Status);
 
