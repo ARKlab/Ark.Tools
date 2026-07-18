@@ -28,6 +28,7 @@ namespace Ark.MediatorFramework.Generators
         private const string GrpcMethodAttribute = "Ark.MediatorFramework.GrpcMethodAttribute";
         private const string ServiceGroupAttribute = "Ark.MediatorFramework.ServiceGroupAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
+        private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -61,11 +62,12 @@ namespace Ark.MediatorFramework.Generators
             var type = (INamedTypeSymbol)context.TargetSymbol;
             var grpc = context.Attributes[0];
             var serviceGroupAttribute = context.SemanticModel.Compilation.GetTypeByMetadataName(ServiceGroupAttribute);
+            var attachmentType = context.SemanticModel.Compilation.GetTypeByMetadataName(ArkAttachment);
             var serviceGroup = serviceGroupAttribute is null
                 ? null
                 : type.GetAttributes().FirstOrDefault(
                     attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serviceGroupAttribute));
-            return Extract(type, grpc, serviceGroup);
+            return Extract(type, grpc, serviceGroup, attachmentType);
         }
 
         private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
@@ -86,6 +88,7 @@ namespace Ark.MediatorFramework.Generators
         {
             var grpcAttr = compilation.GetTypeByMetadataName(GrpcMethodAttribute);
             var serviceGroupAttr = compilation.GetTypeByMetadataName(ServiceGroupAttribute);
+            var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             if (grpcAttr is null)
                 return ImmutableArray<EndpointModel>.Empty;
 
@@ -103,7 +106,7 @@ namespace Ark.MediatorFramework.Generators
                         continue;
 
                     var serviceGroup = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, serviceGroupAttr));
-                    var model = Extract(type, grpc, serviceGroup);
+                    var model = Extract(type, grpc, serviceGroup, attachmentType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -150,10 +153,15 @@ namespace Ark.MediatorFramework.Generators
             }
         }
 
-        private static EndpointModel? Extract(INamedTypeSymbol type, AttributeData grpc, AttributeData? serviceGroup)
+        private static EndpointModel? Extract(
+            INamedTypeSymbol type,
+            AttributeData grpc,
+            AttributeData? serviceGroup,
+            INamedTypeSymbol? attachmentType)
         {
             string? response = null;
             var kind = HandlerKind.None;
+            var attachmentResponse = false;
 
             foreach (var iface in type.AllInterfaces)
             {
@@ -162,6 +170,7 @@ namespace Ark.MediatorFramework.Generators
                 {
                     kind = HandlerKind.Request;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
                     break;
                 }
 
@@ -169,6 +178,7 @@ namespace Ark.MediatorFramework.Generators
                 {
                     kind = HandlerKind.Query;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
                     break;
                 }
 
@@ -200,6 +210,7 @@ namespace Ark.MediatorFramework.Generators
                 kind,
                 grpcIntroducedIn,
                 grpcRetiredIn,
+                attachmentResponse,
                 Array.Empty<DiagnosticInfo>(),
                 type.Locations.FirstOrDefault());
         }
@@ -209,6 +220,11 @@ namespace Ark.MediatorFramework.Generators
             var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
             return argument.Value.Value is int value ? value : defaultValue;
         }
+
+        private static bool IsAttachmentType(ITypeSymbol type, INamedTypeSymbol? attachmentType)
+            => attachmentType is not null
+                && (SymbolEqualityComparer.Default.Equals(type, attachmentType)
+                    || type.AllInterfaces.Any(iface => SymbolEqualityComparer.Default.Equals(iface, attachmentType)));
 
         private static Location GetLocation(AttributeData attribute)
             => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
@@ -259,7 +275,10 @@ namespace Ark.MediatorFramework.Generators
                         {
                             sb.AppendLine("            /// <summary>Dispatches " + e.TypeName + " to its pure handler.</summary>");
                             sb.AppendLine("            [global::System.ServiceModel.OperationContract(Name = " + Literal(e.GrpcMethod) + ")]");
-                            sb.AppendLine("            global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default);");
+                            if (e.AttachmentResponse)
+                                sb.AppendLine("            global::System.Collections.Generic.IAsyncEnumerable<global::Ark.MediatorFramework.DownloadDocumentChunk> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default);");
+                            else
+                                sb.AppendLine("            global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default);");
                         }
 
                         sb.AppendLine("        }");
@@ -279,10 +298,25 @@ namespace Ark.MediatorFramework.Generators
                                     ? "global::Ark.Tools.Solid.ICommandHandler<" + e.TypeFullName + ">"
                                     : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
                             sb.AppendLine("            /// <inheritdoc />");
-                            sb.AppendLine("            public async global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default)");
+                            if (e.AttachmentResponse)
+                                sb.AppendLine("            public async global::System.Collections.Generic.IAsyncEnumerable<global::Ark.MediatorFramework.DownloadDocumentChunk> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default)");
+                            else
+                                sb.AppendLine("            public async global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default)");
                             sb.AppendLine("            {");
                             sb.AppendLine("                var handler = _container.GetInstance<" + handlerService + ">();");
-                            if (e.Kind == HandlerKind.Command)
+                            if (e.AttachmentResponse)
+                            {
+                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                if (result is null)");
+                                sb.AppendLine("                    yield break;");
+                                sb.AppendLine("                yield return new global::Ark.MediatorFramework.DownloadDocumentChunk { Metadata = new global::Ark.MediatorFramework.DownloadDocumentMetadata { Name = global::Ark.MediatorFramework.ArkAttachmentName.Sanitize(result.Name), ContentType = result.ContentType } };");
+                                sb.AppendLine("                await using var stream = result.OpenRead();");
+                                sb.AppendLine("                var buffer = new byte[64 * 1024];");
+                                sb.AppendLine("                int bytesRead;");
+                                sb.AppendLine("                while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(), context.CancellationToken).ConfigureAwait(false)) > 0)");
+                                sb.AppendLine("                    yield return new global::Ark.MediatorFramework.DownloadDocumentChunk { Data = buffer[..bytesRead] };");
+                            }
+                            else if (e.Kind == HandlerKind.Command)
                             {
                                 sb.AppendLine("                await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
                                 sb.AppendLine("                return new global::Google.Protobuf.WellKnownTypes.Empty();");
@@ -380,7 +414,25 @@ namespace Ark.MediatorFramework.Generators
                 content.AppendLine("import \"google/type/datetime.proto\";");
                 content.AppendLine("import \"google/protobuf/empty.proto\";");
                 content.AppendLine("import \"ark/nodatime.proto\";");
+                if (active.Any(item => item.AttachmentResponse))
+                    content.AppendLine("import \"ark/mediator.proto\";");
                 content.AppendLine();
+                if (active.Any(item => item.AttachmentResponse))
+                {
+                    content.AppendLine("message DownloadDocumentMetadata {");
+                    content.AppendLine("  string name = 1;");
+                    content.AppendLine("  string content_type = 2;");
+                    content.AppendLine("  optional int64 length = 3;");
+                    content.AppendLine("}");
+                    content.AppendLine();
+                    content.AppendLine("message DownloadDocumentChunk {");
+                    content.AppendLine("  oneof content {");
+                    content.AppendLine("    DownloadDocumentMetadata metadata = 1;");
+                    content.AppendLine("    bytes data = 2;");
+                    content.AppendLine("  }");
+                    content.AppendLine("}");
+                    content.AppendLine();
+                }
                 foreach (var contract in contracts
                     .Where(contract => reachable.Contains(contract.Type))
                     .OrderBy(static contract => contract.Name, StringComparer.Ordinal))
@@ -401,8 +453,12 @@ namespace Ark.MediatorFramework.Generators
                     foreach (var item in versionItems)
                     {
                                 content.Append("  rpc ").Append(item.GrpcMethod)
-                            .Append('(').Append(item.TypeName).Append(") returns (")
-                                    .Append(ProtoTypeName(item.Response, contracts)).AppendLine(");");
+                                    .Append('(').Append(item.TypeName).Append(") returns ");
+                                if (item.AttachmentResponse)
+                                    content.Append("(stream DownloadDocumentChunk);");
+                                else
+                                    content.Append('(').Append(ProtoTypeName(item.Response, contracts)).Append(");");
+                                content.AppendLine();
                     }
                     content.AppendLine("}");
                     content.AppendLine();
@@ -665,7 +721,7 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly record struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, IReadOnlyList<DiagnosticInfo> diagnostics, Location? location)
+            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, IReadOnlyList<DiagnosticInfo> diagnostics, Location? location)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -675,6 +731,7 @@ namespace Ark.MediatorFramework.Generators
                 Kind = kind;
                 GrpcIntroducedIn = grpcIntroducedIn;
                 GrpcRetiredIn = grpcRetiredIn;
+                AttachmentResponse = attachmentResponse;
                 Diagnostics = diagnostics;
                 Location = location;
                 IsValid = diagnostics.Count == 0;
@@ -690,6 +747,7 @@ namespace Ark.MediatorFramework.Generators
                 GrpcMethod = string.Empty;
                 ServiceGroup = string.Empty;
                 Response = string.Empty;
+                AttachmentResponse = false;
             }
 
             public static EndpointModel Invalid(INamedTypeSymbol type, DiagnosticInfo diagnostic)
@@ -703,6 +761,7 @@ namespace Ark.MediatorFramework.Generators
             public HandlerKind Kind { get; }
             public int GrpcIntroducedIn { get; }
             public int GrpcRetiredIn { get; }
+            public bool AttachmentResponse { get; }
             public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
             public Location? Location { get; }
             public bool IsValid { get; }

@@ -23,6 +23,7 @@ public static class ApplicationComposition
         ArgumentNullException.ThrowIfNull(container);
 
         container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
+        container.RegisterSingleton<DocumentStore>();
         container.RegisterSingleton<AuditCounter>();
 
         var applicationAssembly = typeof(ApplicationComposition).Assembly;
@@ -42,6 +43,7 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>, UpdateGreetingHandler>();
         container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();
+        container.Register<IQueryHandler<GetDocumentQuery, IArkAttachment>, GetDocumentHandler>();
         container.Register<IRequestHandler<FailingRebusRequest, DeadLetterAck>, FailingRebusRequestHandler>();
 
         // Cross-cutting concern applied transport-agnostically.

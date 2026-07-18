@@ -178,6 +178,7 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? rebusMessageAttr)
         {
             string? response = null;
+            var attachmentResponse = false;
             var kind = HandlerKind.None;
 
             foreach (var iface in type.AllInterfaces)
@@ -187,6 +188,7 @@ namespace Ark.MediatorFramework.Generators
                 {
                     kind = HandlerKind.Request;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
                     break;
                 }
 
@@ -194,6 +196,7 @@ namespace Ark.MediatorFramework.Generators
                 {
                     kind = HandlerKind.Query;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
                     break;
                 }
 
@@ -299,6 +302,7 @@ namespace Ark.MediatorFramework.Generators
                     .Select(property => property.Name)
                     .ToImmutableArray(),
                 attachmentProperties.Length,
+                attachmentResponse,
                 type.Locations.FirstOrDefault(),
                 diagnostics);
         }
@@ -338,6 +342,11 @@ namespace Ark.MediatorFramework.Generators
                 .Select(value => (string)value.Value!)
                 .ToImmutableArray();
         }
+
+        private static bool IsAttachmentType(ITypeSymbol type, INamedTypeSymbol? attachmentType)
+            => attachmentType is not null
+                && (SymbolEqualityComparer.Default.Equals(type, attachmentType)
+                    || type.AllInterfaces.Any(iface => SymbolEqualityComparer.Default.Equals(iface, attachmentType)));
 
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
         {
@@ -433,6 +442,12 @@ namespace Ark.MediatorFramework.Generators
                         if (e.AttachmentCount == 1)
                         {
                             EmitMultipartEndpoint(sb, e, handlerService, map, template, version);
+                            continue;
+                        }
+
+                        if (e.AttachmentResponse)
+                        {
+                            EmitDownloadEndpoint(sb, e, handlerService, map, template, version);
                             continue;
                         }
 
@@ -614,6 +629,46 @@ namespace Ark.MediatorFramework.Generators
                 .Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
 
+        private static void EmitDownloadEndpoint(
+            StringBuilder sb,
+            EndpointModel endpoint,
+            string handlerService,
+            string map,
+            string template,
+            int version)
+        {
+            var bindings = endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet).ToArray();
+            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            foreach (var property in bindings)
+            {
+                var source = property.IsRoute ? "FromRoute" : "FromQuery";
+                var bindingName = property.IsRoute ? property.BindingName : property.Name;
+                sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
+                    .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
+                    .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+            }
+
+            if (bindings.Length == 0)
+                sb.AppendLine("                [global::Microsoft.AspNetCore.Http.AsParameters] " + endpoint.TypeFullName + " request,");
+            sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
+            sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
+            sb.AppendLine("            {");
+            if (bindings.Length > 0)
+            {
+                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + property.Name));
+                sb.AppendLine("                var request = new " + endpoint.TypeFullName + " { " + assignments + " };");
+            }
+            EmitServerSetAssignments(sb, endpoint, "request");
+            sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+            sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
+            sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+            sb.AppendLine("                if (result is null)");
+            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.NotFound();");
+            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.File(result.OpenRead(), result.ContentType, fileDownloadName: global::Ark.MediatorFramework.ArkAttachmentName.Sanitize(result.Name));");
+            sb.Append("            }).Produces(200, contentType: \"application/octet-stream\").Produces(404).WithGroupName(")
+                .Append(Literal("v" + version)).Append(')').Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+        }
+
         private static void EmitCommandEndpoint(
             StringBuilder sb,
             EndpointModel endpoint,
@@ -774,6 +829,7 @@ namespace Ark.MediatorFramework.Generators
                 ImmutableArray<string> invalidServerSetProperties,
                 ImmutableArray<string> suspiciousProperties,
                 int attachmentCount,
+                bool attachmentResponse,
                 Location? location,
                 IReadOnlyList<DiagnosticInfo> diagnostics)
             {
@@ -800,6 +856,7 @@ namespace Ark.MediatorFramework.Generators
                 InvalidServerSetProperties = invalidServerSetProperties;
                 SuspiciousProperties = suspiciousProperties;
                 AttachmentCount = attachmentCount;
+                AttachmentResponse = attachmentResponse;
                 Location = location;
                 Diagnostics = diagnostics;
                 IsValid = diagnostics.Count == 0;
@@ -820,6 +877,7 @@ namespace Ark.MediatorFramework.Generators
                 ServerSetProperties = ImmutableArray<string>.Empty;
                 InvalidServerSetProperties = ImmutableArray<string>.Empty;
                 SuspiciousProperties = ImmutableArray<string>.Empty;
+                AttachmentResponse = false;
             }
 
             public static EndpointModel Invalid(INamedTypeSymbol type, IReadOnlyList<DiagnosticInfo> diagnostics)
@@ -851,6 +909,7 @@ namespace Ark.MediatorFramework.Generators
             public ImmutableArray<string> InvalidServerSetProperties { get; }
             public ImmutableArray<string> SuspiciousProperties { get; }
             public int AttachmentCount { get; }
+            public bool AttachmentResponse { get; }
             public Location? Location { get; }
             public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
             public bool IsValid { get; }

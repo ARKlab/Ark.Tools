@@ -85,7 +85,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [SEC-07](security/SEC-07-error-serialization-hardening.md)
    [x] [SEC-06](security/SEC-06-multipart-hardening.md)
    [x] [SEC-08](security/SEC-08-test-auth-bearer-hardening.md)
-   [ ] [FW-04](framework/FW-04-file-download.md)
+   [x] [FW-04](framework/FW-04-file-download.md)
 6. [ ] [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md)
    [ ] [SMP-03](sample-parity/SMP-03-persisted-auditing.md)
    [ ] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
