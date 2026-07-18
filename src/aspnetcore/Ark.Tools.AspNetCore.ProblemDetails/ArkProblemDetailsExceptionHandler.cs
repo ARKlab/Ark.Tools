@@ -8,8 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NLog;
 
-using System.Globalization;
-
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
 /// <summary>Writes mapped exceptions as RFC 7807 responses for Minimal API hosts.</summary>

@@ -15,7 +15,6 @@ using Grpc.Core.Interceptors;
 
 using NLog;
 
-using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 
