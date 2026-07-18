@@ -37,4 +37,4 @@
 - [x] `BusinessRuleViolation` payload serialization remains unchanged; its documented public detail fields are client-visible.
 - [x] No raw `Exception.Message` reaches clients for unhandled exceptions (generic HTTP ProblemDetails and gRPC `Internal` status).
 - [x] Sample gRPC service no longer echoes exception messages.
-- [ ] Full solution build + tests green; `design.md` error-mapping section updated.
+- [x] Full solution build + tests green; `design.md` error-mapping section updated.
