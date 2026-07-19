@@ -11,10 +11,13 @@ namespace Ark.MediatorFramework.Sample.Application;
 public interface IGreetingStore
 {
     /// <summary>Persists a greeting.</summary>
-    Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default);
+    Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Persists a greeting and publishes its creation notification atomically.</summary>
-    Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default);
+    Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default);
+
+    /// <summary>Returns a page of persisted audit records.</summary>
+    Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default);
 
     /// <summary>Reads a greeting by id or throws when missing.</summary>
     Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default);
@@ -33,6 +36,7 @@ public interface IGreetingStore
 public sealed class InMemoryGreetingStore : IGreetingStore
 {
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _items = new();
+    private readonly ConcurrentQueue<AuditRecord> _audits = new();
 
     /// <inheritdoc />
     public Task<int> CountAsync(CancellationToken ctk = default)
@@ -41,17 +45,35 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    public Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(greeting);
         _items[greeting.Id] = greeting;
+        AddAudit(audit);
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    public Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
-        return SaveAsync(greeting, ctk);
+        return SaveAsync(greeting, audit, ctk);
+    }
+
+    /// <inheritdoc />
+    public Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    {
+        var records = _audits
+            .OrderByDescending(record => record.Timestamp)
+            .Skip(query.Skip)
+            .Take(query.Limit)
+            .ToArray();
+        return Task.FromResult(new PagedResult<AuditRecord>
+        {
+            Count = _audits.Count,
+            Skip = query.Skip,
+            Limit = query.Limit,
+            Data = records,
+        });
     }
 
     /// <inheritdoc />
@@ -73,5 +95,19 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     public Task<IReadOnlyCollection<GreetingResponse>> AllAsync(CancellationToken ctk = default)
     {
         return Task.FromResult<IReadOnlyCollection<GreetingResponse>>(_items.Values.ToArray());
+    }
+
+    private void AddAudit(AuditEntry? audit)
+    {
+        if (audit is null)
+            return;
+
+        _audits.Enqueue(new AuditRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = audit.UserId,
+            Contract = audit.Contract,
+            Timestamp = audit.Timestamp,
+        });
     }
 }

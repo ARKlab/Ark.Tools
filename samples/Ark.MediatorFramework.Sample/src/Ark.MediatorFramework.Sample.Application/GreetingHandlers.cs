@@ -11,6 +11,8 @@ using Rebus.Bus;
 
 using System.Security.Claims;
 
+using NodaTime;
+
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Handles the synchronous refresh command.</summary>
@@ -29,12 +31,14 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
 {
     private readonly IGreetingStore _store;
     private readonly IContextProvider<ClaimsPrincipal> _user;
+    private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CreateGreetingHandler"/> class.</summary>
-    public CreateGreetingHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user)
+    public CreateGreetingHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
         _store = store;
         _user = user;
+        _clock = clock;
     }
 
     /// <inheritdoc />
@@ -55,7 +59,12 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Period = Request.Period,
         };
 
-        await _store.SaveAndPublishAsync(response, ctk).ConfigureAwait(false);
+        await _store.SaveAndPublishAsync(response, new AuditEntry
+        {
+            UserId = _user.GetUserId() ?? "anonymous",
+            Contract = nameof(CreateGreetingRequest),
+            Timestamp = _clock.GetCurrentInstant(),
+        }, ctk).ConfigureAwait(false);
         return response;
     }
 }
@@ -98,11 +107,15 @@ public sealed class ComposeGreetingHandler : IRequestHandler<ComposeGreetingRequ
 public sealed class CompleteGreetingCompositionHandler : IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>
 {
     private readonly IGreetingStore _store;
+    private readonly IContextProvider<ClaimsPrincipal> _user;
+    private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CompleteGreetingCompositionHandler"/> class.</summary>
-    public CompleteGreetingCompositionHandler(IGreetingStore store)
+    public CompleteGreetingCompositionHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
         _store = store;
+        _user = user;
+        _clock = clock;
     }
 
     /// <inheritdoc />
@@ -116,8 +129,32 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
             Message = $"Hello, {Request.Name}! (async)",
         };
 
-        await _store.SaveAsync(response, ctk).ConfigureAwait(false);
+        await _store.SaveAsync(response, new AuditEntry
+        {
+            UserId = _user.GetUserId() ?? "anonymous",
+            Contract = nameof(CompleteGreetingCompositionRequest),
+            Timestamp = _clock.GetCurrentInstant(),
+        }, ctk).ConfigureAwait(false);
         return response;
+    }
+
+    /// <summary>Handles paged reads of the persisted audit trail.</summary>
+    public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>
+    {
+        private readonly IGreetingStore _store;
+
+        /// <summary>Initializes a new instance of the <see cref="GetAuditsHandler"/> class.</summary>
+        public GetAuditsHandler(IGreetingStore store)
+        {
+            _store = store;
+        }
+
+        /// <inheritdoc />
+        public async Task<PagedResult<AuditRecord>> ExecuteAsync(GetAuditsQuery query, CancellationToken ctk = default)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            return await _store.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
+        }
     }
 }
 

@@ -20,6 +20,7 @@ using AppComposeGreetingResponse = Ark.MediatorFramework.Sample.Application.Comp
 using AppCreateGreetingRequest = Ark.MediatorFramework.Sample.Application.CreateGreetingRequest;
 using AppGreetingResponse = Ark.MediatorFramework.Sample.Application.GreetingResponse;
 using AppGreetingResponseV2 = Ark.MediatorFramework.Sample.Application.GreetingResponseV2;
+using AppAuditRecord = Ark.MediatorFramework.Sample.Application.AuditRecord;
 using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
 using GrpcGetGreetingQuery = Ark.MediatorFramework.Sample.GrpcClient.GetGreetingQuery;
 using GrpcGreetingResponse = Ark.MediatorFramework.Sample.GrpcClient.GreetingResponse;
@@ -39,6 +40,7 @@ public sealed class GreetingSteps
     private AppGreetingResponseV2? _versionTwoGreeting;
     private HttpResponseMessage? _response;
     private StatusCode? _grpcErrorStatus;
+    private AppAuditRecord? _audit;
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
     /// <param name="context">The scenario's isolated sample host.</param>
@@ -195,5 +197,15 @@ public sealed class GreetingSteps
         while (DateTime.UtcNow < deadline);
 
         throw new TimeoutException("The composed greeting was not completed within 10 seconds.");
+    }
+
+    [Then(@"the audit query contains a (.*) record for ""(.*)""")]
+    public async Task ThenTheAuditQueryContainsRecordFor(string contract, string userId)
+    {
+        var audits = await _context.Client.GetFromJsonAsync<Ark.Tools.Core.PagedResult<AppAuditRecord>>(
+            "/api/v1/audits?skip=0&limit=25",
+            JsonOptions).ConfigureAwait(false);
+        _audit = audits!.Data.Single(record => record.Contract == contract && record.UserId == userId);
+        _audit.Timestamp.Should().NotBe(default);
     }
 }

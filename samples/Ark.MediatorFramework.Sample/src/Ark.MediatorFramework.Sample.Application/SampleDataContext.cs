@@ -71,6 +71,23 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
     }
 
+    /// <summary>Saves an audit record in the current transaction.</summary>
+    public async Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[Audit] ([Id], [UserId], [Contract], [Timestamp])
+            VALUES (@Id, @UserId, @Contract, @Timestamp);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            Id = Guid.NewGuid(),
+            audit.UserId,
+            audit.Contract,
+            audit.Timestamp,
+        }, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
     /// <summary>Reads a greeting in the current transaction.</summary>
     public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
     {
@@ -87,6 +104,29 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         var command = new CommandDefinition(sql, transaction: Transaction, cancellationToken: ctk);
         var rows = await Connection.QueryAsync<GreetingRow>(command).ConfigureAwait(false);
         return rows.Select(row => row.ToResponse()).ToArray();
+    }
+
+    /// <summary>Reads a page of audit records in the current transaction.</summary>
+    public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [UserId], [Contract], [Timestamp]
+            FROM [dbo].[Audit]
+            ORDER BY [Timestamp] DESC
+            OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
+            SELECT COUNT_BIG(*) FROM [dbo].[Audit];
+            """;
+        var command = new CommandDefinition(sql, query, Transaction, cancellationToken: ctk);
+        await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        var records = await results.ReadAsync<AuditRecord>().ConfigureAwait(false);
+        var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
+        return new PagedResult<AuditRecord>
+        {
+            Count = count,
+            Skip = query.Skip,
+            Limit = query.Limit,
+            Data = records.ToArray(),
+        };
     }
 
     private sealed class GreetingRow
@@ -155,10 +195,12 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public async Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    public async Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
+        if (audit is not null)
+            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         using var scope = _bus.Enlist(context);
         await _bus.SendLocal(new GreetingCreatedNotification { Greeting = greeting }).ConfigureAwait(false);
         await scope.CompleteAsync().ConfigureAwait(false);
@@ -166,11 +208,22 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    public async Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
+        if (audit is not null)
+            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    {
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var result = await context.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return result;
     }
 
     /// <inheritdoc />
