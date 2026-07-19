@@ -29,6 +29,7 @@ public static class ApplicationComposition
 
         if (useSqlStore)
         {
+            NodaTimeDapperSqlServer.Setup();
             var config = new SampleDataContextConfig(
                 connectionString ?? "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;******;TrustServerCertificate=True;Encrypt=False");
             container.RegisterInstance(config);

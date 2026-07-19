@@ -63,9 +63,9 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         {
             greeting.Id,
             greeting.Message,
-            Date = LocalDatePattern.Iso.Format(greeting.Date),
-            DateTime = LocalDateTimePattern.ExtendedIso.Format(greeting.DateTime),
-            OffsetDateTime = OffsetDateTimePattern.ExtendedIso.Format(greeting.OffsetDateTime),
+            greeting.Date,
+            greeting.DateTime,
+            greeting.OffsetDateTime,
             Period = PeriodPattern.NormalizingIso.Format(greeting.Period),
         }, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
@@ -93,9 +93,9 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         public Guid Id { get; set; }
         public string Message { get; set; } = string.Empty;
-        public string Date { get; set; } = string.Empty;
-        public string DateTime { get; set; } = string.Empty;
-        public string OffsetDateTime { get; set; } = string.Empty;
+        public NodaTime.LocalDate Date { get; set; }
+        public NodaTime.LocalDateTime DateTime { get; set; }
+        public NodaTime.OffsetDateTime OffsetDateTime { get; set; }
         public string Period { get; set; } = string.Empty;
 
         public GreetingResponse ToResponse()
@@ -104,9 +104,9 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             {
                 Id = Id,
                 Message = Message,
-                Date = LocalDatePattern.Iso.Parse(Date).Value,
-                DateTime = LocalDateTimePattern.ExtendedIso.Parse(DateTime).Value,
-                OffsetDateTime = OffsetDateTimePattern.ExtendedIso.Parse(OffsetDateTime).Value,
+                Date = Date,
+                DateTime = DateTime,
+                OffsetDateTime = OffsetDateTime,
                 Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
             };
         }

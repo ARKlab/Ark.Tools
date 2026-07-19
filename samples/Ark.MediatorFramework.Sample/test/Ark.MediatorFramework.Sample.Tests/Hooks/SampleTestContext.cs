@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 
 using Microsoft.Data.SqlClient;
+using Microsoft.SqlServer.Dac;
 
 using Rebus.Transport.InMem;
 using Reqnroll;
@@ -77,39 +78,26 @@ public sealed class SampleTestContext : IDisposable
 
         /// <summary>Creates the sample schema when SQL integration tests are enabled.</summary>
         [BeforeTestRun(Order = -1)]
-        public static async Task EnsureDatabaseAsync()
+        public static void EnsureDatabase()
         {
             if (!SqlEnabled())
                 return;
 
-            var builder = new SqlConnectionStringBuilder(ConnectionString);
-            var databaseName = builder.InitialCatalog;
-            builder.InitialCatalog = "master";
-            await using (var master = new SqlConnection(builder.ConnectionString))
+            var builder = new SqlConnectionStringBuilder(ConnectionString)
             {
-                await master.OpenAsync().ConfigureAwait(false);
-                await using var command = master.CreateCommand();
-                command.CommandText = $"IF DB_ID(N'{databaseName.Replace("'", "''", StringComparison.Ordinal)}') IS NULL CREATE DATABASE [{databaseName.Replace("]", "]]", StringComparison.Ordinal)}]";
-                await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-            }
-            await using var connection = new SqlConnection(ConnectionString);
-            await connection.OpenAsync().ConfigureAwait(false);
-            await ExecuteAsync(connection, """
-                IF SCHEMA_ID(N'ops') IS NULL EXEC('CREATE SCHEMA [ops]');
-                IF OBJECT_ID(N'[dbo].[Greeting]', N'U') IS NULL
-                    CREATE TABLE [dbo].[Greeting] (
-                        [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
-                        [Message] NVARCHAR(4000) NOT NULL,
-                        [Date] NVARCHAR(32) NOT NULL,
-                        [DateTime] NVARCHAR(64) NOT NULL,
-                        [OffsetDateTime] NVARCHAR(64) NOT NULL,
-                        [Period] NVARCHAR(128) NOT NULL);
-                IF OBJECT_ID(N'[dbo].[Outbox]', N'U') IS NULL
-                    CREATE TABLE [dbo].[Outbox] (
-                        [Id] BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-                        [Headers] NVARCHAR(MAX) NOT NULL,
-                        [Body] VARBINARY(MAX) NOT NULL);
-                """).ConfigureAwait(false);
+                InitialCatalog = string.Empty,
+            };
+            using var dacpac = DacPackage.Load("Ark.MediatorFramework.Sample.Database.dacpac");
+            var instance = new DacServices(builder.ConnectionString);
+            instance.Deploy(
+                dacpac,
+                "Ark.MediatorFramework.Sample",
+                upgradeExisting: true,
+                new DacDeployOptions
+                {
+                    CreateNewDatabase = true,
+                    AllowIncompatiblePlatform = true,
+                });
         }
 
         /// <summary>Clears SQL state between scenarios when SQL integration tests are enabled.</summary>
@@ -121,7 +109,12 @@ public sealed class SampleTestContext : IDisposable
 
             await using var connection = new SqlConnection(ConnectionString);
             await connection.OpenAsync().ConfigureAwait(false);
-            await ExecuteAsync(connection, "DELETE FROM [dbo].[Outbox]; DELETE FROM [dbo].[Greeting];").ConfigureAwait(false);
+            await using var command = connection.CreateCommand();
+            command.CommandText = "[ops].[ResetFull_OnlyForTesting]";
+            command.CommandType = System.Data.CommandType.StoredProcedure;
+            var parameter = command.Parameters.Add("@areYouReallySure", System.Data.SqlDbType.Bit);
+            parameter.Value = true;
+            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
 
         private static bool SqlEnabled()
@@ -129,12 +122,6 @@ public sealed class SampleTestContext : IDisposable
             return string.Equals(Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_TESTS"), "1", StringComparison.Ordinal);
         }
 
-        private static async Task ExecuteAsync(SqlConnection connection, string commandText)
-        {
-            await using var command = connection.CreateCommand();
-            command.CommandText = commandText;
-            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-        }
     }
 #pragma warning restore CA2100
 

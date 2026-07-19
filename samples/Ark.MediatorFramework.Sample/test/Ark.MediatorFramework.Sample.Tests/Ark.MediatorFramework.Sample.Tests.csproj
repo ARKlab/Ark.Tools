@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Microsoft.SqlServer.DacFx" />
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Reqnroll.MsTest" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
@@ -23,6 +24,11 @@
           CopyToOutputDirectory="PreserveNewest"
           Link="Greetings.proto" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.GrpcClient\Ark.MediatorFramework.Sample.GrpcClient.csproj" />
+    <ProjectReference Include="..\..\Database\Ark.MediatorFramework.Sample.Database.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />
   </ItemGroup>
 
