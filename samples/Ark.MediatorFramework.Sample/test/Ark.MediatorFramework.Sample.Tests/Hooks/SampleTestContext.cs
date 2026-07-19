@@ -83,10 +83,8 @@ public sealed class SampleTestContext : IDisposable
             if (!SqlEnabled())
                 return;
 
-            var builder = new SqlConnectionStringBuilder(ConnectionString)
-            {
-                InitialCatalog = string.Empty,
-            };
+            var builder = new SqlConnectionStringBuilder(ConnectionString);
+            builder.Remove("Initial Catalog");
             using var dacpac = DacPackage.Load("Ark.MediatorFramework.Sample.Database.dacpac");
             var instance = new DacServices(builder.ConnectionString);
             instance.Deploy(
@@ -96,6 +94,7 @@ public sealed class SampleTestContext : IDisposable
                 new DacDeployOptions
                 {
                     CreateNewDatabase = true,
+                    // The test SQL Server version differs from the DACPAC target platform.
                     AllowIncompatiblePlatform = true,
                 });
         }
