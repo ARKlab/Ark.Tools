@@ -196,6 +196,7 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
+    /// <param name="audit">The optional audit entry to persist in the transaction.</param>
     public async Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -209,6 +210,7 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
+    /// <param name="audit">The optional audit entry to persist in the transaction.</param>
     public async Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);

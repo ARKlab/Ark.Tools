@@ -11,9 +11,15 @@ namespace Ark.MediatorFramework.Sample.Application;
 public interface IGreetingStore
 {
     /// <summary>Persists a greeting.</summary>
+    /// <param name="greeting">The greeting to persist.</param>
+    /// <param name="audit">The optional audit entry to persist with the greeting.</param>
+    /// <param name="ctk">The cancellation token.</param>
     Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Persists a greeting and publishes its creation notification atomically.</summary>
+    /// <param name="greeting">The greeting to persist.</param>
+    /// <param name="audit">The optional audit entry to persist with the greeting.</param>
+    /// <param name="ctk">The cancellation token.</param>
     Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Returns a page of persisted audit records.</summary>
