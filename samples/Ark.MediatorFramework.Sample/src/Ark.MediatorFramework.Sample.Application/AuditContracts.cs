@@ -45,17 +45,17 @@ public sealed record AuditRecord
     [ProtoMember(3)]
     public required string EntityType { get; init; }
 
-    /// <summary>Gets the operation timestamp.</summary>
-    [ProtoMember(4)]
-    public required Instant Timestamp { get; init; }
-
     /// <summary>Gets the identifier of the affected entity.</summary>
-    [ProtoMember(5)]
+    [ProtoMember(4)]
     public required string Identifier { get; init; }
 
     /// <summary>Gets the operation performed on the entity.</summary>
-    [ProtoMember(6)]
+    [ProtoMember(5)]
     public required string Operation { get; init; }
+
+    /// <summary>Gets the operation timestamp.</summary>
+    [ProtoMember(6)]
+    public required Instant Timestamp { get; init; }
 }
 
 /// <summary>Queries the persisted audit trail.</summary>
