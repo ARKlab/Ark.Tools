@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
+using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using FluentValidation;
@@ -138,24 +139,6 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
         return response;
     }
 
-    /// <summary>Handles paged reads of the persisted audit trail.</summary>
-    public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>
-    {
-        private readonly IGreetingStore _store;
-
-        /// <summary>Initializes a new instance of the <see cref="GetAuditsHandler"/> class.</summary>
-        public GetAuditsHandler(IGreetingStore store)
-        {
-            _store = store;
-        }
-
-        /// <inheritdoc />
-        public async Task<PagedResult<AuditRecord>> ExecuteAsync(GetAuditsQuery query, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(query);
-            return await _store.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
-        }
-    }
 }
 
 /// <summary>Consumes greeting-created notifications after their transaction commits.</summary>
@@ -166,6 +149,25 @@ public sealed class GreetingCreatedHandler : ICommandHandler<GreetingCreatedNoti
     {
         ArgumentNullException.ThrowIfNull(command);
         await Task.CompletedTask.ConfigureAwait(false);
+    }
+}
+
+/// <summary>Handles paged reads of the persisted audit trail.</summary>
+public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>
+{
+    private readonly IGreetingStore _store;
+
+    /// <summary>Initializes a new instance of the <see cref="GetAuditsHandler"/> class.</summary>
+    public GetAuditsHandler(IGreetingStore store)
+    {
+        _store = store;
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResult<AuditRecord>> ExecuteAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return await _store.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
     }
 }
 

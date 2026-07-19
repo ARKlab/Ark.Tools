@@ -3,6 +3,7 @@
 
 using Ark.Tools.Outbox.SqlServer;
 using Ark.Tools.Outbox.Rebus;
+using Ark.Tools.Core;
 
 using Dapper;
 

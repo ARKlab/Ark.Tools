@@ -87,7 +87,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [SEC-08](security/SEC-08-test-auth-bearer-hardening.md)
    [x] [FW-04](framework/FW-04-file-download.md)
 6. [x] [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md)
-   [ ] [SMP-03](sample-parity/SMP-03-persisted-auditing.md)
+   [x] [SMP-03](sample-parity/SMP-03-persisted-auditing.md)
    [ ] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
    [ ] [SMP-05](sample-parity/SMP-05-paging.md)
    [ ] [SMP-06](sample-parity/SMP-06-misc-parity.md)

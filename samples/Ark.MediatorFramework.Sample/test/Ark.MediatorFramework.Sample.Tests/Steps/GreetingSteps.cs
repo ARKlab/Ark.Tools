@@ -202,9 +202,11 @@ public sealed class GreetingSteps
     [Then(@"the audit query contains a (.*) record for ""(.*)""")]
     public async Task ThenTheAuditQueryContainsRecordFor(string contract, string userId)
     {
-        var audits = await _context.Client.GetFromJsonAsync<Ark.Tools.Core.PagedResult<AppAuditRecord>>(
-            "/api/v1/audits?skip=0&limit=25",
-            JsonOptions).ConfigureAwait(false);
+        var response = await _context.Client.GetAsync(
+            new Uri("/api/v1/audits?skip=0&limit=25", UriKind.Relative)).ConfigureAwait(false);
+        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        response.IsSuccessStatusCode.Should().BeTrue(body);
+        var audits = JsonSerializer.Deserialize<Ark.Tools.Core.PagedResult<AppAuditRecord>>(body, JsonOptions);
         _audit = audits!.Data.Single(record => record.Contract == contract && record.UserId == userId);
         _audit.Timestamp.Should().NotBe(default);
     }
