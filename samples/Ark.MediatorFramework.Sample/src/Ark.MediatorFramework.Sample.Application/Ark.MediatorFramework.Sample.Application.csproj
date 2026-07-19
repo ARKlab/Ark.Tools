@@ -17,6 +17,11 @@
     <PackageReference Include="Ark.Tools.Solid.Authorization" />
     <PackageReference Include="Ark.Tools.SystemTextJson" />
     <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
+    <PackageReference Include="Ark.Tools.Outbox" />
+    <PackageReference Include="Ark.Tools.Outbox.Rebus" />
+    <PackageReference Include="Ark.Tools.Outbox.SqlServer" />
+    <PackageReference Include="Ark.Tools.Sql" />
+    <PackageReference Include="Ark.Tools.Sql.SqlServer" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,10 @@
+CREATE TABLE [dbo].[Greeting]
+(
+    [Id] UNIQUEIDENTIFIER NOT NULL,
+    [Message] NVARCHAR(4000) NOT NULL,
+    [Date] DATE NOT NULL,
+    [DateTime] DATETIME2 NOT NULL,
+    [OffsetDateTime] DATETIMEOFFSET NOT NULL,
+    [Period] NVARCHAR(128) NOT NULL,
+    CONSTRAINT [PK_Greeting] PRIMARY KEY CLUSTERED ([Id])
+)

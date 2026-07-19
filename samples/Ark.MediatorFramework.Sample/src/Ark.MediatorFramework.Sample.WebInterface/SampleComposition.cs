@@ -9,6 +9,7 @@ using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Nodatime.Protobuf;
+using Ark.Tools.Outbox;
 
 using Rebus.Handlers;
 using Rebus.Config;
@@ -35,8 +36,14 @@ public static class SampleComposition
     /// <summary>Builds the SimpleInjector container before ASP.NET Core integration completes it.</summary>
     /// <param name="network">The in-memory Rebus network to attach the transport to.</param>
     /// <param name="useProtobufRebus">Whether Rebus messages use Protobuf instead of JSON.</param>
+    /// <param name="useSqlStore">Whether to use SQL persistence and the outbox.</param>
+    /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <returns>The configured container. Hosting verifies it and starts the bus after integration.</returns>
-    public static Container BuildContainer(InMemNetwork network, bool useProtobufRebus = false)
+    public static Container BuildContainer(
+        InMemNetwork network,
+        bool useProtobufRebus = false,
+        bool useSqlStore = true,
+        string? connectionString = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -44,7 +51,7 @@ public static class SampleComposition
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
 
         // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
-        ApplicationComposition.Register(container);
+        ApplicationComposition.Register(container, useSqlStore, connectionString);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 
@@ -62,7 +69,18 @@ public static class SampleComposition
 
         container.ConfigureRebus(cfg =>
         {
-            cfg.Transport(t => t.UseInMemoryTransport(network, "ark.mediator.sample"));
+            cfg.Transport(t =>
+            {
+                t.UseInMemoryTransport(network, "ark.mediator.sample");
+                if (useSqlStore)
+                {
+                    t.Outbox(outbox =>
+                    {
+                        outbox.OutboxAsyncContextFactory(factory => factory.Use(container.GetInstance<IOutboxAsyncContextFactory>()));
+                        outbox.OutboxOptions(options => options.StartProcessor = true);
+                    });
+                }
+            });
             cfg.Routing(ArkGeneratedEndpoints.ConfigureArkRebusRouting<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>);
 
             if (useProtobufRebus)

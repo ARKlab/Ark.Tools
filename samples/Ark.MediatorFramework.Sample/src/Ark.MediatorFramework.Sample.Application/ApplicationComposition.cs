@@ -2,6 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
+using Ark.Tools.Sql;
+using Ark.Tools.Sql.SqlServer;
+using Ark.Tools.Outbox;
 
 using FluentValidation;
 
@@ -18,11 +21,26 @@ public static class ApplicationComposition
 {
     /// <summary>Registers the pure domain graph into the given container.</summary>
     /// <param name="container">The SimpleInjector container to register into.</param>
-    public static void Register(Container container)
+    /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
+    /// <param name="connectionString">Optional SQL Server connection string.</param>
+    public static void Register(Container container, bool useSqlStore = true, string? connectionString = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
-        container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
+        if (useSqlStore)
+        {
+            // Register SQL Server mappings for LocalDate, LocalDateTime, and OffsetDateTime.
+            NodaTimeDapperSqlServer.Setup();
+            var config = new SampleDataContextConfig(
+                connectionString ?? "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;******;TrustServerCertificate=True;Encrypt=False");
+            container.RegisterInstance(config);
+            container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
+            container.RegisterSingleton<SampleDataContextFactory>();
+            container.RegisterSingleton<IOutboxAsyncContextFactory, SampleDataContextFactory>();
+            container.RegisterSingleton<IGreetingStore, SqlGreetingStore>();
+        }
+        else
+            container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
         container.RegisterSingleton<DocumentStore>();
         container.RegisterSingleton<AuditCounter>();
 
@@ -45,6 +63,7 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();
         container.Register<IQueryHandler<GetDocumentQuery, IArkAttachment>, GetDocumentHandler>();
         container.Register<IRequestHandler<FailingRebusRequest, DeadLetterAck>, FailingRebusRequestHandler>();
+        container.Register<ICommandHandler<GreetingCreatedNotification>, GreetingCreatedHandler>();
 
         // Cross-cutting concern applied transport-agnostically.
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(AuditRequestDecorator<,>));

@@ -121,6 +121,14 @@ public sealed record CompleteGreetingCompositionRequest : IRequest<GreetingRespo
     public string Name { get; init; } = string.Empty;
 }
 
+/// <summary>Notification emitted by the SQL transaction after a greeting is persisted.</summary>
+[RebusMessage(OwnerQueue = "ark.mediator.sample")]
+public sealed record GreetingCreatedNotification : ICommand
+{
+    /// <summary>Gets the persisted greeting.</summary>
+    public required GreetingResponse Greeting { get; init; }
+}
+
 /// <summary>
 /// Pure transport-agnostic query (read). Declared with <see cref="HttpEndpointAttribute"/> only,
 /// so the generator exposes it as an HTTP GET (a query is a read, not a bus message).

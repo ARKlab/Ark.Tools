@@ -38,11 +38,11 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
     }
 
     /// <inheritdoc />
-    public Task<GreetingResponse> ExecuteAsync(CreateGreetingRequest Request, CancellationToken ctk = default)
+    public async Task<GreetingResponse> ExecuteAsync(CreateGreetingRequest Request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(Request);
 
-        if (_store.All().Any(g => g.Message.Contains($"Hello, {Request.Name}!", StringComparison.Ordinal)))
+        if ((await _store.AllAsync(ctk).ConfigureAwait(false)).Any(g => g.Message.Contains($"Hello, {Request.Name}!", StringComparison.Ordinal)))
             throw new BusinessRuleViolationException(new GreetingAlreadyExistsViolation(Request.Name));
 
         var response = new GreetingResponse
@@ -55,8 +55,8 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Period = Request.Period,
         };
 
-        _store.Save(response);
-        return Task.FromResult(response);
+        await _store.SaveAndPublishAsync(response, ctk).ConfigureAwait(false);
+        return response;
     }
 }
 
@@ -106,7 +106,7 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
     }
 
     /// <inheritdoc />
-    public Task<GreetingResponse> ExecuteAsync(CompleteGreetingCompositionRequest Request, CancellationToken ctk = default)
+    public async Task<GreetingResponse> ExecuteAsync(CompleteGreetingCompositionRequest Request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(Request);
 
@@ -116,8 +116,19 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
             Message = $"Hello, {Request.Name}! (async)",
         };
 
-        _store.Save(response);
-        return Task.FromResult(response);
+        await _store.SaveAsync(response, ctk).ConfigureAwait(false);
+        return response;
+    }
+}
+
+/// <summary>Consumes greeting-created notifications after their transaction commits.</summary>
+public sealed class GreetingCreatedHandler : ICommandHandler<GreetingCreatedNotification>
+{
+    /// <inheritdoc />
+    public async Task ExecuteAsync(GreetingCreatedNotification command, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }
 
@@ -133,10 +144,10 @@ public sealed class GetGreetingHandler : IQueryHandler<GetGreetingQuery, Greetin
     }
 
     /// <inheritdoc />
-    public Task<GreetingResponse> ExecuteAsync(GetGreetingQuery query, CancellationToken ctk = default)
+    public async Task<GreetingResponse> ExecuteAsync(GetGreetingQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return Task.FromResult(_store.Get(query.Id));
+        return await _store.GetAsync(query.Id, ctk).ConfigureAwait(false);
     }
 }
 
@@ -152,17 +163,17 @@ public sealed class GetGreetingV2Handler : IQueryHandler<GetGreetingV2Query, Gre
     }
 
     /// <inheritdoc />
-    public Task<GreetingResponseV2> ExecuteAsync(GetGreetingV2Query query, CancellationToken ctk = default)
+    public async Task<GreetingResponseV2> ExecuteAsync(GetGreetingV2Query query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var greeting = _store.Get(query.Id);
-        return Task.FromResult(new GreetingResponseV2
+        var greeting = await _store.GetAsync(query.Id, ctk).ConfigureAwait(false);
+        return new GreetingResponseV2
         {
             Id = greeting.Id,
             Message = greeting.Message,
             MessageLength = greeting.Message.Length,
-        });
+        };
     }
 }
 
