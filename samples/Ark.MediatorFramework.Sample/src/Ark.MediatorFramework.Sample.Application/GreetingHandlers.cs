@@ -63,7 +63,9 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
         await _store.SaveAndPublishAsync(response, new AuditEntry
         {
             UserId = _user.GetUserId() ?? "anonymous",
-            Contract = nameof(CreateGreetingRequest),
+            EntityType = nameof(GreetingResponse),
+            Identifier = response.Id.ToString("D"),
+            Operation = nameof(CreateGreetingRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
         return response;
@@ -133,7 +135,9 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
         await _store.SaveAsync(response, new AuditEntry
         {
             UserId = _user.GetUserId() ?? "anonymous",
-            Contract = nameof(CompleteGreetingCompositionRequest),
+            EntityType = nameof(GreetingResponse),
+            Identifier = response.Id.ToString("D"),
+            Operation = nameof(CompleteGreetingCompositionRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
         return response;

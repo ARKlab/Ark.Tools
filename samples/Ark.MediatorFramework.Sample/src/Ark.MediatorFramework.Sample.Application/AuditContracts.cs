@@ -10,20 +10,26 @@ using ProtoBuf;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
-/// <summary>Describes a mutation to be persisted in the audit trail.</summary>
+/// <summary>Describes an operation to be persisted in the audit trail.</summary>
 public sealed record AuditEntry
 {
     /// <summary>Gets the authenticated user identifier.</summary>
     public string UserId { get; init; } = "anonymous";
 
-    /// <summary>Gets the name of the mutated contract.</summary>
-    public required string Contract { get; init; }
+    /// <summary>Gets the type of entity affected by the operation.</summary>
+    public required string EntityType { get; init; }
 
-    /// <summary>Gets the mutation timestamp.</summary>
+    /// <summary>Gets the identifier of the affected entity.</summary>
+    public required string Identifier { get; init; }
+
+    /// <summary>Gets the operation performed on the entity.</summary>
+    public required string Operation { get; init; }
+
+    /// <summary>Gets the operation timestamp.</summary>
     public required Instant Timestamp { get; init; }
 }
 
-/// <summary>Persisted audit record returned by the audit query.</summary>
+/// <summary>Persisted generic audit record returned by the audit query.</summary>
 [ProtoContract]
 public sealed record AuditRecord
 {
@@ -35,13 +41,21 @@ public sealed record AuditRecord
     [ProtoMember(2)]
     public string UserId { get; init; } = "anonymous";
 
-    /// <summary>Gets the mutated contract name.</summary>
+    /// <summary>Gets the type of entity affected by the operation.</summary>
     [ProtoMember(3)]
-    public required string Contract { get; init; }
+    public required string EntityType { get; init; }
 
-    /// <summary>Gets the mutation timestamp.</summary>
+    /// <summary>Gets the operation timestamp.</summary>
     [ProtoMember(4)]
     public required Instant Timestamp { get; init; }
+
+    /// <summary>Gets the identifier of the affected entity.</summary>
+    [ProtoMember(5)]
+    public required string Identifier { get; init; }
+
+    /// <summary>Gets the operation performed on the entity.</summary>
+    [ProtoMember(6)]
+    public required string Operation { get; init; }
 }
 
 /// <summary>Queries the persisted audit trail.</summary>

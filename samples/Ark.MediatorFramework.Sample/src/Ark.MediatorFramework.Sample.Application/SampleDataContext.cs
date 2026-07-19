@@ -76,14 +76,16 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     public async Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default)
     {
         const string sql = """
-            INSERT INTO [dbo].[Audit] ([Id], [UserId], [Contract], [Timestamp])
-            VALUES (@Id, @UserId, @Contract, @Timestamp);
+            INSERT INTO [dbo].[Audit] ([Id], [UserId], [EntityType], [Identifier], [Operation], [Timestamp])
+            VALUES (@Id, @UserId, @EntityType, @Identifier, @Operation, @Timestamp);
             """;
         var command = new CommandDefinition(sql, new
         {
             Id = Guid.NewGuid(),
             audit.UserId,
-            audit.Contract,
+            audit.EntityType,
+            audit.Identifier,
+            audit.Operation,
             audit.Timestamp,
         }, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
@@ -111,7 +113,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
     {
         const string sql = """
-            SELECT [Id], [UserId], [Contract], [Timestamp]
+            SELECT [Id], [UserId], [EntityType], [Identifier], [Operation], [Timestamp]
             FROM [dbo].[Audit]
             ORDER BY [Timestamp] DESC
             OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
@@ -196,7 +198,9 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
+    /// <param name="greeting">The greeting to persist.</param>
     /// <param name="audit">The optional audit entry to persist in the transaction.</param>
+    /// <param name="ctk">The cancellation token.</param>
     public async Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -210,7 +214,9 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
+    /// <param name="greeting">The greeting to persist.</param>
     /// <param name="audit">The optional audit entry to persist in the transaction.</param>
+    /// <param name="ctk">The cancellation token.</param>
     public async Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);

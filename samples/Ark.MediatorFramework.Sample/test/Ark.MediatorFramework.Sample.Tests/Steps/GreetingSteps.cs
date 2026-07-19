@@ -199,15 +199,17 @@ public sealed class GreetingSteps
         throw new TimeoutException("The composed greeting was not completed within 10 seconds.");
     }
 
-    [Then(@"the audit query contains a (.*) record for ""(.*)""")]
-    public async Task ThenTheAuditQueryContainsRecordFor(string contract, string userId)
+    [Then(@"the audit query contains a (.*) operation for ""(.*)""")]
+    public async Task ThenTheAuditQueryContainsRecordFor(string operation, string userId)
     {
         var response = await _context.Client.GetAsync(
             new Uri("/api/v1/audits?skip=0&limit=25", UriKind.Relative)).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         response.IsSuccessStatusCode.Should().BeTrue(body);
         var audits = JsonSerializer.Deserialize<Ark.Tools.Core.PagedResult<AppAuditRecord>>(body, JsonOptions);
-        _audit = audits!.Data.Single(record => record.Contract == contract && record.UserId == userId);
+        _audit = audits!.Data.Single(record => record.Operation == operation && record.UserId == userId);
+        _audit.EntityType.Should().Be(typeof(AppGreetingResponse).Name);
+        _audit.Identifier.Should().NotBeNullOrWhiteSpace();
         _audit.Timestamp.Should().NotBe(default);
     }
 }

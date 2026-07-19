@@ -112,7 +112,9 @@ public sealed class InMemoryGreetingStore : IGreetingStore
         {
             Id = Guid.NewGuid(),
             UserId = audit.UserId,
-            Contract = audit.Contract,
+            EntityType = audit.EntityType,
+            Identifier = audit.Identifier,
+            Operation = audit.Operation,
             Timestamp = audit.Timestamp,
         });
     }

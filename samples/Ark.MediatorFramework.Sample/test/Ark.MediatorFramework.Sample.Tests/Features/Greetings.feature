@@ -46,4 +46,4 @@ Feature: Greetings
     Scenario: Creating a greeting writes a queryable audit record
         Given I am an authenticated user
         When I create the greeting "Audited greeting" over HTTP
-        Then the audit query contains a CreateGreetingRequest record for "test-user"
+        Then the audit query contains a CreateGreetingRequest operation for "test-user"
