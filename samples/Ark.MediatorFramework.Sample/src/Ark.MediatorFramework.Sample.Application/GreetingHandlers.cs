@@ -50,9 +50,11 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
         if ((await _store.AllAsync(ctk).ConfigureAwait(false)).Any(g => g.Message.Contains($"Hello, {Request.Name}!", StringComparison.Ordinal)))
             throw new BusinessRuleViolationException(new GreetingAlreadyExistsViolation(Request.Name));
 
+        var auditId = Guid.NewGuid();
         var response = new GreetingResponse
         {
             Id = Guid.NewGuid(),
+            AuditId = auditId,
             Message = $"Hello, {Request.Name}! (by {_user.GetUserId() ?? "anonymous"})",
             Date = Request.Date,
             DateTime = Request.DateTime,
@@ -62,6 +64,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
 
         await _store.SaveAndPublishAsync(response, new AuditEntry
         {
+            Id = auditId,
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(GreetingResponse),
             Identifier = response.Id.ToString("D"),
@@ -126,14 +129,17 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
     {
         ArgumentNullException.ThrowIfNull(Request);
 
+        var auditId = Guid.NewGuid();
         var response = new GreetingResponse
         {
             Id = Request.Id,
+            AuditId = auditId,
             Message = $"Hello, {Request.Name}! (async)",
         };
 
         await _store.SaveAsync(response, new AuditEntry
         {
+            Id = auditId,
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(GreetingResponse),
             Identifier = response.Id.ToString("D"),

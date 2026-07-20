@@ -259,6 +259,7 @@ namespace Ark.MediatorFramework.Generators
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindFromQueryAttr)),
                     serverSetAttr is not null && property.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
+                    property.NullableAnnotation == NullableAnnotation.Annotated,
                     property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public))
                 .ToImmutableArray();
             foreach (var routeName in routeNames)
@@ -298,6 +299,7 @@ namespace Ark.MediatorFramework.Generators
                     .Select(property => property.Name)
                     .ToImmutableArray(),
                 properties.Where(property => !property.IsServerSet
+                    && !property.IsQuery
                     && property.Name is "TenantId" or "UserId" or "IsAdmin" or "Role" or "Roles")
                     .Select(property => property.Name)
                     .ToImmutableArray(),
@@ -428,7 +430,8 @@ namespace Ark.MediatorFramework.Generators
                         ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                         : string.Empty;
                     var bodyVerb = e.Verb != "GET" && e.Verb != "DELETE";
-                    var explicitBindings = bodyVerb && e.Properties.Any(property => property.IsRoute || property.IsQuery);
+                    var explicitBindings = e.Properties.Any(property => property.IsRoute || property.IsQuery)
+                        && (bodyVerb || e.Verb == "GET" || e.Verb == "DELETE");
 
                     foreach (var version in ActiveVersions(e, maxVersion))
                     {
@@ -460,7 +463,7 @@ namespace Ark.MediatorFramework.Generators
                                 {
                                     var source = property.IsRoute ? "FromRoute" : "FromQuery";
                                     var bindingName = property.IsRoute ? property.BindingName : property.Name;
-                                    sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + property.TypeFullName + " " + property.Name + ",");
+                                    sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + BindingType(property) + " " + property.Name + ",");
                                 }
                             }
                             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
@@ -503,10 +506,11 @@ namespace Ark.MediatorFramework.Generators
                             {
                                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
                                 var bindingName = property.IsRoute ? property.BindingName : property.Name;
-                                sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + property.TypeFullName + " " + property.Name + ",");
+                                sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + BindingType(property) + " " + property.Name + ",");
                             }
 
-                            sb.AppendLine("                " + e.TypeFullName + " body,");
+                            if (bodyVerb)
+                                sb.AppendLine("                " + e.TypeFullName + " body,");
                         }
                         else
                         {
@@ -521,7 +525,10 @@ namespace Ark.MediatorFramework.Generators
                                 .Where(property => property.IsRoute || property.IsQuery)
                                 .Select(property => property.Name + " = " + property.Name)
                                 .Concat(e.ServerSetProperties.Select(property => property + " = default")));
-                            sb.AppendLine("                var request = body with { " + assignments + " };");
+                            if (bodyVerb)
+                                sb.AppendLine("                var request = body with { " + assignments + " };");
+                            else
+                                sb.AppendLine("                var request = new " + e.TypeFullName + " { " + assignments + " };");
                         }
                         else if (e.IsRecord && e.ServerSetProperties.Length > 0)
                         {
@@ -565,6 +572,16 @@ namespace Ark.MediatorFramework.Generators
                     : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
         }
 
+        private static string BindingType(PropertyModel property)
+        {
+            return property.TypeFullName switch
+            {
+                "global::System.Collections.Generic.IEnumerable<string>" => "string[]",
+                _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
+                _ => property.TypeFullName,
+            };
+        }
+
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
         {
             if (endpoint.IsRecord)
@@ -592,7 +609,7 @@ namespace Ark.MediatorFramework.Generators
                 var bindingName = property.IsRoute ? property.BindingName : property.Name;
                 sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
                     .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
-                    .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+                    .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
             }
 
             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
@@ -645,7 +662,7 @@ namespace Ark.MediatorFramework.Generators
                 var bindingName = property.IsRoute ? property.BindingName : property.Name;
                 sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
                     .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
-                    .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+                    .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
             }
 
             if (bindings.Length == 0)
@@ -687,7 +704,7 @@ namespace Ark.MediatorFramework.Generators
                     var bindingName = property.IsRoute ? property.BindingName : property.Name;
                     sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
                         .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
-                        .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+                        .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
                 }
 
                 sb.AppendLine("                " + endpoint.TypeFullName + " body,");
@@ -934,7 +951,7 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly record struct PropertyModel
         {
-            public PropertyModel(string name, string typeFullName, bool isRoute, string bindingName, bool isQuery, bool isServerSet, bool hasPublicSetter)
+            public PropertyModel(string name, string typeFullName, bool isRoute, string bindingName, bool isQuery, bool isServerSet, bool isNullable, bool hasPublicSetter)
             {
                 Name = name;
                 TypeFullName = typeFullName;
@@ -942,6 +959,7 @@ namespace Ark.MediatorFramework.Generators
                 BindingName = bindingName;
                 IsQuery = isQuery;
                 IsServerSet = isServerSet;
+                IsNullable = isNullable;
                 HasPublicSetter = hasPublicSetter;
             }
 
@@ -951,6 +969,7 @@ namespace Ark.MediatorFramework.Generators
             public string BindingName { get; }
             public bool IsQuery { get; }
             public bool IsServerSet { get; }
+            public bool IsNullable { get; }
             public bool HasPublicSetter { get; }
         }
     }

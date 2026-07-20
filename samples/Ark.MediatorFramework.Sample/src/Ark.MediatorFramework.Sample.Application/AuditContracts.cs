@@ -13,6 +13,9 @@ namespace Ark.MediatorFramework.Sample.Application;
 /// <summary>Describes an operation to be persisted in the audit trail.</summary>
 public sealed record AuditEntry
 {
+    /// <summary>Gets the audit identifier.</summary>
+    public Guid Id { get; init; } = Guid.NewGuid();
+
     /// <summary>Gets the authenticated user identifier.</summary>
     public string UserId { get; init; } = "anonymous";
 
@@ -62,12 +65,35 @@ public sealed record AuditRecord
 [HttpEndpoint("GET", "/api/v{version}/audits")]
 public sealed record GetAuditsQuery : IQuery<PagedResult<AuditRecord>>, IQueryPaged
 {
+    /// <summary>Gets the user identifier filter.</summary>
+    [BindFromQuery]
+    public string? UserId { get; init; }
+
+    /// <summary>Gets the entity type filter.</summary>
+    [BindFromQuery]
+    public string? EntityType { get; init; }
+
+    /// <summary>Gets the entity identifier filter.</summary>
+    [BindFromQuery]
+    public string? Identifier { get; init; }
+
+    /// <summary>Gets the inclusive lower timestamp filter.</summary>
+    [BindFromQuery]
+    public string? FromTimestamp { get; init; }
+
+    /// <summary>Gets the inclusive upper timestamp filter.</summary>
+    [BindFromQuery]
+    public string? ToTimestamp { get; init; }
+
     /// <inheritdoc />
+    [BindFromQuery]
     public int Skip { get; set; }
 
     /// <inheritdoc />
+    [BindFromQuery]
     public int Limit { get; init; } = 25;
 
     /// <inheritdoc />
+    [BindFromQuery]
     public IEnumerable<string> Sort { get; init; } = [];
 }

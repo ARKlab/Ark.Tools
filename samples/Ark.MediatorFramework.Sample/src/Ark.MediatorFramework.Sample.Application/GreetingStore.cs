@@ -4,6 +4,10 @@
 using System.Collections.Concurrent;
 
 using Ark.Tools.Core;
+using Ark.Tools.Core.Reflection;
+
+using NodaTime;
+using NodaTime.Text;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
@@ -68,8 +72,19 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     /// <inheritdoc />
     public Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
     {
-        var records = _audits
-            .OrderByDescending(record => record.Timestamp)
+        var fromTimestamp = ParseTimestamp(query.FromTimestamp);
+        var toTimestamp = ParseTimestamp(query.ToTimestamp);
+        var filtered = _audits.Where(record =>
+            (query.UserId is null || record.UserId == query.UserId)
+            && (query.EntityType is null || record.EntityType == query.EntityType)
+            && (query.Identifier is null || record.Identifier == query.Identifier)
+            && (fromTimestamp is null || record.Timestamp >= fromTimestamp)
+            && (toTimestamp is null || record.Timestamp <= toTimestamp));
+        var sorts = query.Sort ?? [];
+        var sorted = sorts.Any()
+            ? filtered.OrderBy(string.Join(", ", sorts))
+            : filtered.OrderByDescending(record => record.Timestamp);
+        var records = sorted
             .Skip(query.Skip)
             .Take(query.Limit)
             .ToArray();
@@ -80,6 +95,13 @@ public sealed class InMemoryGreetingStore : IGreetingStore
             Limit = query.Limit,
             Data = records,
         });
+    }
+
+    private static Instant? ParseTimestamp(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : InstantPattern.ExtendedIso.Parse(value).Value;
     }
 
     /// <inheritdoc />
