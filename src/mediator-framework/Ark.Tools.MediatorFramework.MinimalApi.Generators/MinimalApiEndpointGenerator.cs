@@ -295,6 +295,9 @@ namespace Ark.MediatorFramework.Generators
                 ownerQueue,
                 properties,
                 type.IsRecord,
+                type.AllInterfaces.Any(iface =>
+                    iface.OriginalDefinition.MetadataName == "IBindableFromHttpContext`1"
+                    && iface.OriginalDefinition.ContainingNamespace.ToDisplayString() == "Microsoft.AspNetCore.Http"),
                 properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
                     .Select(property => property.Name)
                     .ToImmutableArray(),
@@ -426,11 +429,11 @@ namespace Ark.MediatorFramework.Generators
                     var handlerService = e.Kind == HandlerKind.Query
                         ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
                         : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
-                    var bind = e.Verb == "GET" || e.Verb == "DELETE"
+                    var bind = !e.HasCustomBinding && (e.Verb == "GET" || e.Verb == "DELETE")
                         ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                         : string.Empty;
                     var bodyVerb = e.Verb != "GET" && e.Verb != "DELETE";
-                    var explicitBindings = e.Properties.Any(property => property.IsRoute || property.IsQuery)
+                    var explicitBindings = !e.HasCustomBinding && e.Properties.Any(property => property.IsRoute || property.IsQuery)
                         && (bodyVerb || e.Verb == "GET" || e.Verb == "DELETE");
 
                     foreach (var version in ActiveVersions(e, maxVersion))
@@ -574,9 +577,6 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingType(PropertyModel property)
         {
-            if (property.IsNodaTime)
-                return property.IsNullable ? "string?" : "string";
-
             return property.TypeFullName switch
             {
                 "global::System.Collections.Generic.IEnumerable<string>" => "string[]",
@@ -587,13 +587,7 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingValue(PropertyModel property)
         {
-            if (!property.IsNodaTime)
-                return property.Name;
-
-            var converter = "global::System.ComponentModel.TypeDescriptor.GetConverter(typeof(" + property.TypeFullName + ")).ConvertFromInvariantString(" + property.Name + ")";
-            return property.IsNullable
-                ? property.Name + " is null ? null : (" + property.TypeFullName + ")" + converter
-                : "(" + property.TypeFullName + ")" + converter;
+            return property.Name;
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
@@ -857,6 +851,7 @@ namespace Ark.MediatorFramework.Generators
                 string? ownerQueue,
                 ImmutableArray<PropertyModel> properties,
                 bool isRecord,
+                bool hasCustomBinding,
                 ImmutableArray<string> invalidServerSetProperties,
                 ImmutableArray<string> suspiciousProperties,
                 int attachmentCount,
@@ -883,6 +878,7 @@ namespace Ark.MediatorFramework.Generators
                 OwnerQueue = ownerQueue;
                 Properties = properties;
                 IsRecord = isRecord;
+                HasCustomBinding = hasCustomBinding;
                 ServerSetProperties = properties.Where(property => property.IsServerSet).Select(property => property.Name).ToImmutableArray();
                 InvalidServerSetProperties = invalidServerSetProperties;
                 SuspiciousProperties = suspiciousProperties;
@@ -905,6 +901,7 @@ namespace Ark.MediatorFramework.Generators
                 Kind = HandlerKind.None;
                 AllowedContentTypes = ImmutableArray<string>.Empty;
                 Properties = ImmutableArray<PropertyModel>.Empty;
+                HasCustomBinding = false;
                 ServerSetProperties = ImmutableArray<string>.Empty;
                 InvalidServerSetProperties = ImmutableArray<string>.Empty;
                 SuspiciousProperties = ImmutableArray<string>.Empty;
@@ -936,6 +933,7 @@ namespace Ark.MediatorFramework.Generators
             public string? OwnerQueue { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
             public bool IsRecord { get; }
+            public bool HasCustomBinding { get; }
             public ImmutableArray<string> ServerSetProperties { get; }
             public ImmutableArray<string> InvalidServerSetProperties { get; }
             public ImmutableArray<string> SuspiciousProperties { get; }
@@ -985,7 +983,6 @@ namespace Ark.MediatorFramework.Generators
             public bool IsServerSet { get; }
             public bool IsNullable { get; }
             public bool HasPublicSetter { get; }
-            public bool IsNodaTime => TypeFullName.StartsWith("global::NodaTime.", StringComparison.Ordinal);
         }
     }
 }
