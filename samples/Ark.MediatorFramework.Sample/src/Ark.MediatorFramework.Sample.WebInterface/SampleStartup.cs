@@ -72,7 +72,7 @@ public sealed class SampleStartup
     public void ConfigureServices(IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        NodeTimeConverter.Register();
+        NodaTimeConverter.Register();
 
         if (_configuration.GetSection("EntraId").Exists()
             || _configuration.GetSection("AzureAdB2C").Exists())
