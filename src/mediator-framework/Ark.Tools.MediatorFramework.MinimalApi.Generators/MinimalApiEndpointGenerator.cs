@@ -476,7 +476,7 @@ namespace Ark.MediatorFramework.Generators
                             {
                                 var assignments = string.Join(", ", e.Properties
                                     .Where(property => property.IsRoute || property.IsQuery)
-                                    .Select(property => property.IsServerSet ? property.Name + " = default" : property.Name + " = " + property.Name)
+                                    .Select(property => property.IsServerSet ? property.Name + " = default" : property.Name + " = " + BindingValue(property))
                                     .Concat(e.ServerSetProperties.Where(property => !e.Properties.Any(candidate => candidate.Name == property))
                                         .Select(property => property + " = default")));
                                 sb.AppendLine("                var request = body with { " + assignments + " };");
@@ -523,7 +523,7 @@ namespace Ark.MediatorFramework.Generators
                         {
                             var assignments = string.Join(", ", e.Properties
                                 .Where(property => property.IsRoute || property.IsQuery)
-                                .Select(property => property.Name + " = " + property.Name)
+                                .Select(property => property.Name + " = " + BindingValue(property))
                                 .Concat(e.ServerSetProperties.Select(property => property + " = default")));
                             if (bodyVerb)
                                 sb.AppendLine("                var request = body with { " + assignments + " };");
@@ -574,12 +574,26 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingType(PropertyModel property)
         {
+            if (property.IsNodaTime)
+                return property.IsNullable ? "string?" : "string";
+
             return property.TypeFullName switch
             {
                 "global::System.Collections.Generic.IEnumerable<string>" => "string[]",
                 _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
                 _ => property.TypeFullName,
             };
+        }
+
+        private static string BindingValue(PropertyModel property)
+        {
+            if (!property.IsNodaTime)
+                return property.Name;
+
+            var converter = "global::System.ComponentModel.TypeDescriptor.GetConverter(typeof(" + property.TypeFullName + ")).ConvertFromInvariantString(" + property.Name + ")";
+            return property.IsNullable
+                ? property.Name + " is null ? null : (" + property.TypeFullName + ")" + converter
+                : "(" + property.TypeFullName + ")" + converter;
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
@@ -629,7 +643,7 @@ namespace Ark.MediatorFramework.Generators
             }
             sb.AppendLine("                var request = new " + endpoint.TypeFullName + " {");
             foreach (var property in bindings)
-                sb.Append("                    ").Append(property.Name).Append(" = ").Append(property.Name).AppendLine(",");
+                sb.Append("                    ").Append(property.Name).Append(" = ").Append(BindingValue(property)).AppendLine(",");
             sb.AppendLine("                    " + attachment.Name + " = new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream),");
             sb.AppendLine("                };");
             EmitServerSetAssignments(sb, endpoint, "request");
@@ -672,7 +686,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            {");
             if (bindings.Length > 0)
             {
-                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + property.Name));
+                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + BindingValue(property)));
                 sb.AppendLine("                var request = new " + endpoint.TypeFullName + " { " + assignments + " };");
             }
             EmitServerSetAssignments(sb, endpoint, "request");
@@ -721,7 +735,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 var assignments = string.Join(", ", endpoint.Properties
                     .Where(property => property.IsRoute || property.IsQuery)
-                    .Select(property => property.Name + " = " + property.Name)
+                    .Select(property => property.Name + " = " + BindingValue(property))
                     .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
                 sb.AppendLine("                var request = body with { " + assignments + " };");
             }
@@ -971,6 +985,7 @@ namespace Ark.MediatorFramework.Generators
             public bool IsServerSet { get; }
             public bool IsNullable { get; }
             public bool HasPublicSetter { get; }
+            public bool IsNodaTime => TypeFullName.StartsWith("global::NodaTime.", StringComparison.Ordinal);
         }
     }
 }

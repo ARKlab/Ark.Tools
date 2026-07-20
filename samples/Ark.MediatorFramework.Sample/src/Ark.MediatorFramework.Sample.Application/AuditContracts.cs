@@ -79,11 +79,11 @@ public sealed record GetAuditsQuery : IQuery<PagedResult<AuditRecord>>, IQueryPa
 
     /// <summary>Gets the inclusive lower timestamp filter.</summary>
     [BindFromQuery]
-    public string? FromTimestamp { get; init; }
+    public Instant? FromTimestamp { get; init; }
 
     /// <summary>Gets the inclusive upper timestamp filter.</summary>
     [BindFromQuery]
-    public string? ToTimestamp { get; init; }
+    public Instant? ToTimestamp { get; init; }
 
     /// <inheritdoc />
     [BindFromQuery]

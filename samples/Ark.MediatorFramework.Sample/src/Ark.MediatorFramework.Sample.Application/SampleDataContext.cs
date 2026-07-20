@@ -8,7 +8,6 @@ using Ark.Tools.Core;
 using Dapper;
 
 using NodaTime.Text;
-using NodaTime;
 
 using Rebus.Bus;
 
@@ -137,8 +136,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             query.UserId,
             query.EntityType,
             query.Identifier,
-            FromTimestamp = ParseTimestamp(query.FromTimestamp),
-            ToTimestamp = ParseTimestamp(query.ToTimestamp),
+            query.FromTimestamp,
+            query.ToTimestamp,
             query.Skip,
             query.Limit,
         };
@@ -185,20 +184,6 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             })
             .ToArray();
         return orderBy.Length == 0 ? "[Timestamp] DESC" : string.Join(", ", orderBy);
-    }
-
-    private static Instant? ParseTimestamp(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-        try
-        {
-            return InstantPattern.ExtendedIso.Parse(value).Value;
-        }
-        catch (UnparsableValueException exception)
-        {
-            throw new ArgumentException($"Invalid audit timestamp '{value}'.", nameof(value), exception);
-        }
     }
 
     private sealed class GreetingRow

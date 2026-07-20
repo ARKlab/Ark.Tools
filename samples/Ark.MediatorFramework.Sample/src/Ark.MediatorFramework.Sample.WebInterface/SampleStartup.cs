@@ -9,6 +9,7 @@ using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
+using Ark.Tools.Nodatime;
 using Ark.Tools.Nodatime.Protobuf;
 
 using MessagePack.Resolvers;
@@ -71,6 +72,7 @@ public sealed class SampleStartup
     public void ConfigureServices(IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        NodeTimeConverter.Register();
 
         if (_configuration.GetSection("EntraId").Exists()
             || _configuration.GetSection("AzureAdB2C").Exists())

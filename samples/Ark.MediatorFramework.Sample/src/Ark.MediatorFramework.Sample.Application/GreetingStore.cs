@@ -6,9 +6,6 @@ using System.Collections.Concurrent;
 using Ark.Tools.Core;
 using Ark.Tools.Core.Reflection;
 
-using NodaTime;
-using NodaTime.Text;
-
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>In-memory store shared by every transport, proving they hit the same state.</summary>
@@ -72,15 +69,13 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     /// <inheritdoc />
     public Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
     {
-        var fromTimestamp = ParseTimestamp(query.FromTimestamp);
-        var toTimestamp = ParseTimestamp(query.ToTimestamp);
         ValidateAuditSorts(query.Sort ?? []);
         var filtered = _audits.Where(record =>
             (query.UserId is null || record.UserId == query.UserId)
             && (query.EntityType is null || record.EntityType == query.EntityType)
             && (query.Identifier is null || record.Identifier == query.Identifier)
-            && (fromTimestamp is null || record.Timestamp >= fromTimestamp)
-            && (toTimestamp is null || record.Timestamp <= toTimestamp));
+            && (query.FromTimestamp is null || record.Timestamp >= query.FromTimestamp)
+            && (query.ToTimestamp is null || record.Timestamp <= query.ToTimestamp));
         var sorts = query.Sort ?? [];
         var sorted = sorts.Any()
             ? filtered.OrderBy(string.Join(", ", sorts))
@@ -96,20 +91,6 @@ public sealed class InMemoryGreetingStore : IGreetingStore
             Limit = query.Limit,
             Data = records,
         });
-    }
-
-    private static Instant? ParseTimestamp(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-        try
-        {
-            return InstantPattern.ExtendedIso.Parse(value).Value;
-        }
-        catch (UnparsableValueException exception)
-        {
-            throw new ArgumentException($"Invalid audit timestamp '{value}'.", nameof(value), exception);
-        }
     }
 
     private static void ValidateAuditSorts(IEnumerable<string> sorts)
