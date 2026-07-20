@@ -74,6 +74,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     {
         var fromTimestamp = ParseTimestamp(query.FromTimestamp);
         var toTimestamp = ParseTimestamp(query.ToTimestamp);
+        ValidateAuditSorts(query.Sort ?? []);
         var filtered = _audits.Where(record =>
             (query.UserId is null || record.UserId == query.UserId)
             && (query.EntityType is null || record.EntityType == query.EntityType)
@@ -99,9 +100,38 @@ public sealed class InMemoryGreetingStore : IGreetingStore
 
     private static Instant? ParseTimestamp(string? value)
     {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : InstantPattern.ExtendedIso.Parse(value).Value;
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        try
+        {
+            return InstantPattern.ExtendedIso.Parse(value).Value;
+        }
+        catch (UnparsableValueException exception)
+        {
+            throw new ArgumentException($"Invalid audit timestamp '{value}'.", nameof(value), exception);
+        }
+    }
+
+    private static void ValidateAuditSorts(IEnumerable<string> sorts)
+    {
+        var properties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            nameof(AuditRecord.Id),
+            nameof(AuditRecord.UserId),
+            nameof(AuditRecord.EntityType),
+            nameof(AuditRecord.Identifier),
+            nameof(AuditRecord.Operation),
+            nameof(AuditRecord.Timestamp),
+        };
+        foreach (var sort in sorts.Where(sort => !string.IsNullOrWhiteSpace(sort)))
+        {
+            var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 2 || !properties.Contains(parts[0]))
+                throw new ArgumentException($"Invalid audit sort '{sort}'.", nameof(sorts));
+            if (parts.Length == 2 && !parts[1].Equals("ASC", StringComparison.OrdinalIgnoreCase)
+                && !parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"Invalid audit sort direction '{parts[1]}'.", nameof(sorts));
+        }
     }
 
     /// <inheritdoc />

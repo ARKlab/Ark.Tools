@@ -189,9 +189,16 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 
     private static Instant? ParseTimestamp(string? value)
     {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : InstantPattern.ExtendedIso.Parse(value).Value;
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        try
+        {
+            return InstantPattern.ExtendedIso.Parse(value).Value;
+        }
+        catch (UnparsableValueException exception)
+        {
+            throw new ArgumentException($"Invalid audit timestamp '{value}'.", nameof(value), exception);
+        }
     }
 
     private sealed class GreetingRow
