@@ -30,6 +30,7 @@ namespace Ark.MediatorFramework.Generators
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
+        private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
             "ARKMF001",
             "Only one attachment is supported",
@@ -90,7 +91,8 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(BindFromQueryAttribute),
                 compilation.GetTypeByMetadataName(ServerSetAttribute),
                 compilation.GetTypeByMetadataName(ArkAttachment),
-                compilation.GetTypeByMetadataName(RebusMessageAttribute));
+                compilation.GetTypeByMetadataName(RebusMessageAttribute),
+                compilation.GetTypeByMetadataName(Enumerable));
         }
 
         private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
@@ -118,6 +120,7 @@ namespace Ark.MediatorFramework.Generators
             var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
             var rebusMessageAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
+            var enumerableType = compilation.GetTypeByMetadataName(Enumerable);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
@@ -136,7 +139,8 @@ namespace Ark.MediatorFramework.Generators
                         bindFromQueryAttr,
                         serverSetAttr,
                         attachmentType,
-                        rebusMessageAttr);
+                        rebusMessageAttr,
+                        enumerableType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -181,7 +185,8 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? bindFromQueryAttr,
             INamedTypeSymbol? serverSetAttr,
             INamedTypeSymbol? attachmentType,
-            INamedTypeSymbol? rebusMessageAttr)
+            INamedTypeSymbol? rebusMessageAttr,
+            INamedTypeSymbol? enumerableType)
         {
             string? response = null;
             var attachmentResponse = false;
@@ -266,7 +271,8 @@ namespace Ark.MediatorFramework.Generators
                     serverSetAttr is not null && property.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
                     property.NullableAnnotation == NullableAnnotation.Annotated,
-                    property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public))
+                    property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
+                    IsStringCollection(property.Type, enumerableType)))
                 .ToImmutableArray();
             foreach (var routeName in routeNames)
             {
@@ -580,7 +586,9 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingType(PropertyModel property)
         {
-            return property.TypeFullName switch
+            return property.IsStringCollection
+                ? "string[]"
+                : property.TypeFullName switch
             {
                 _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
                 _ => property.TypeFullName,
@@ -589,7 +597,34 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingValue(PropertyModel property)
         {
-            return property.Name;
+            if (!property.IsStringCollection)
+                return property.Name;
+
+            return property.TypeFullName switch
+            {
+                "global::System.Collections.Generic.List<string>"
+                    or "global::System.Collections.Generic.IList<string>"
+                    or "global::System.Collections.Generic.ICollection<string>"
+                    => "new global::System.Collections.Generic.List<string>(" + property.Name + ")",
+                "global::System.Collections.Generic.HashSet<string>"
+                    or "global::System.Collections.Generic.ISet<string>"
+                    => "new global::System.Collections.Generic.HashSet<string>(" + property.Name + ")",
+                "global::System.Collections.Immutable.ImmutableArray<string>"
+                    => "global::System.Collections.Immutable.ImmutableArray.CreateRange(" + property.Name + ")",
+                _ => property.Name,
+            };
+        }
+
+        private static bool IsStringCollection(ITypeSymbol type, INamedTypeSymbol? enumerableType)
+        {
+            return (type is IArrayTypeSymbol array && array.ElementType.SpecialType == SpecialType.System_String)
+                || (enumerableType is not null
+                    && ((type is INamedTypeSymbol named
+                        && SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, enumerableType)
+                        && named.TypeArguments[0].SpecialType == SpecialType.System_String)
+                        || type.AllInterfaces.Any(iface =>
+                            SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, enumerableType)
+                            && iface.TypeArguments[0].SpecialType == SpecialType.System_String)));
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
@@ -969,7 +1004,8 @@ namespace Ark.MediatorFramework.Generators
                 bool isQuery,
                 bool isServerSet,
                 bool isNullable,
-                bool hasPublicSetter)
+                bool hasPublicSetter,
+                bool isStringCollection)
             {
                 Name = name;
                 TypeFullName = typeFullName;
@@ -979,6 +1015,7 @@ namespace Ark.MediatorFramework.Generators
                 IsServerSet = isServerSet;
                 IsNullable = isNullable;
                 HasPublicSetter = hasPublicSetter;
+                IsStringCollection = isStringCollection;
             }
 
             public string Name { get; }
@@ -989,6 +1026,7 @@ namespace Ark.MediatorFramework.Generators
             public bool IsServerSet { get; }
             public bool IsNullable { get; }
             public bool HasPublicSetter { get; }
+            public bool IsStringCollection { get; }
         }
     }
 }

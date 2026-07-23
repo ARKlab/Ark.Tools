@@ -360,8 +360,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("global::System.Collections.Generic.List<string> Sort");
-        generated.Should().Contain("new global::GetAudits { Sort = Sort }");
+        generated.Should().Contain("string[] Sort");
+        generated.Should().Contain("new global::GetAudits { Sort = new global::System.Collections.Generic.List<string>(Sort) }");
     }
 
     [TestMethod]

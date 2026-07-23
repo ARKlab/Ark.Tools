@@ -13,6 +13,8 @@ using AwesomeAssertions;
 using Grpc.Core;
 using Grpc.Net.Client;
 
+using NodaTime.Text;
+
 using Reqnroll;
 
 using AppComposeGreetingRequest = Ark.MediatorFramework.Sample.Application.ComposeGreetingRequest;
@@ -211,5 +213,12 @@ public sealed class GreetingSteps
         _audit.EntityType.Should().Be(typeof(AppGreetingResponse).Name);
         _audit.Identifier.Should().NotBeNullOrWhiteSpace();
         _audit.Timestamp.Should().NotBe(default);
+
+        var timestamp = Uri.EscapeDataString(InstantPattern.ExtendedIso.Format(_audit.Timestamp));
+        var filteredResponse = await _context.Client.GetAsync(
+            new Uri("/api/v1/audits?skip=0&limit=25&fromTimestamp=" + timestamp, UriKind.Relative)).ConfigureAwait(false);
+        filteredResponse.EnsureSuccessStatusCode();
+        var filteredAudits = await filteredResponse.Content.ReadFromJsonAsync<Ark.Tools.Core.PagedResult<AppAuditRecord>>(JsonOptions).ConfigureAwait(false);
+        filteredAudits!.Data.Should().Contain(record => record.Id == _audit.Id);
     }
 }
