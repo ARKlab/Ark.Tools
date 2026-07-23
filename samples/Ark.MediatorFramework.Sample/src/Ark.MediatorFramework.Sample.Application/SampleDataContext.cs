@@ -136,8 +136,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             query.UserId,
             query.EntityType,
             query.Identifier,
-            FromTimestamp = query.FromTimestamp?.Value,
-            ToTimestamp = query.ToTimestamp?.Value,
+            query.FromTimestamp,
+            query.ToTimestamp,
             query.Skip,
             query.Limit,
         };

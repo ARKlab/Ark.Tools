@@ -92,7 +92,8 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(ServerSetAttribute),
                 compilation.GetTypeByMetadataName(ArkAttachment),
                 compilation.GetTypeByMetadataName(RebusMessageAttribute),
-                compilation.GetTypeByMetadataName(Enumerable));
+                compilation.GetTypeByMetadataName(Enumerable),
+                compilation.GetTypeByMetadataName("System.ComponentModel.TypeConverterAttribute"));
         }
 
         private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
@@ -121,6 +122,7 @@ namespace Ark.MediatorFramework.Generators
             var rebusMessageAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var enumerableType = compilation.GetTypeByMetadataName(Enumerable);
+            var typeConverterAttribute = compilation.GetTypeByMetadataName("System.ComponentModel.TypeConverterAttribute");
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
@@ -140,7 +142,8 @@ namespace Ark.MediatorFramework.Generators
                         serverSetAttr,
                         attachmentType,
                         rebusMessageAttr,
-                        enumerableType);
+                        enumerableType,
+                        typeConverterAttribute);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -186,7 +189,8 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? serverSetAttr,
             INamedTypeSymbol? attachmentType,
             INamedTypeSymbol? rebusMessageAttr,
-            INamedTypeSymbol? enumerableType)
+            INamedTypeSymbol? enumerableType,
+            INamedTypeSymbol? typeConverterAttribute)
         {
             string? response = null;
             var attachmentResponse = false;
@@ -272,7 +276,8 @@ namespace Ark.MediatorFramework.Generators
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
                     property.NullableAnnotation == NullableAnnotation.Annotated,
                     property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
-                    IsStringCollection(property.Type, enumerableType)))
+                    IsStringCollection(property.Type, enumerableType),
+                    BindsViaTypeConverter(property.Type, typeConverterAttribute)))
                 .ToImmutableArray();
             foreach (var routeName in routeNames)
             {
@@ -586,6 +591,9 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingType(PropertyModel property)
         {
+            if (property.BindsViaTypeConverter)
+                return property.IsNullable ? "string?" : "string";
+
             return property.IsStringCollection
                 ? "string[]"
                 : property.TypeFullName switch
@@ -597,6 +605,10 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingValue(PropertyModel property)
         {
+            if (property.BindsViaTypeConverter)
+                return "global::Ark.Tools.MediatorFramework.MinimalApi.ArkTypeConverterBinding.Convert<"
+                    + property.TypeFullName + ">(" + property.Name + ", " + Literal(property.BindingName) + ")";
+
             if (!property.IsStringCollection)
                 return property.Name;
 
@@ -625,6 +637,21 @@ namespace Ark.MediatorFramework.Generators
                         || type.AllInterfaces.Any(iface =>
                             SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, enumerableType)
                             && iface.TypeArguments[0].SpecialType == SpecialType.System_String)));
+        }
+
+        private static bool BindsViaTypeConverter(ITypeSymbol type, INamedTypeSymbol? typeConverterAttribute)
+        {
+            if (typeConverterAttribute is null)
+                return false;
+
+            var underlyingType = type is INamedTypeSymbol named
+                && named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+                ? named.TypeArguments[0]
+                : type;
+            return underlyingType.GetAttributes().Any(attribute =>
+                SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, typeConverterAttribute))
+                && !underlyingType.GetMembers("TryParse").OfType<IMethodSymbol>().Any()
+                && !underlyingType.GetMembers("BindAsync").OfType<IMethodSymbol>().Any();
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
@@ -1005,7 +1032,8 @@ namespace Ark.MediatorFramework.Generators
                 bool isServerSet,
                 bool isNullable,
                 bool hasPublicSetter,
-                bool isStringCollection)
+                bool isStringCollection,
+                bool bindsViaTypeConverter)
             {
                 Name = name;
                 TypeFullName = typeFullName;
@@ -1016,6 +1044,7 @@ namespace Ark.MediatorFramework.Generators
                 IsNullable = isNullable;
                 HasPublicSetter = hasPublicSetter;
                 IsStringCollection = isStringCollection;
+                BindsViaTypeConverter = bindsViaTypeConverter;
             }
 
             public string Name { get; }
@@ -1027,6 +1056,7 @@ namespace Ark.MediatorFramework.Generators
             public bool IsNullable { get; }
             public bool HasPublicSetter { get; }
             public bool IsStringCollection { get; }
+            public bool BindsViaTypeConverter { get; }
         }
     }
 }

@@ -5,7 +5,6 @@ using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
 using NodaTime;
-using NodaTime.Text;
 
 using ProtoBuf;
 
@@ -62,37 +61,6 @@ public sealed record AuditRecord
     public required Instant Timestamp { get; init; }
 }
 
-/// <summary>Represents an audit timestamp parsed from an ISO-8601 query value.</summary>
-public readonly record struct AuditTimestamp(Instant Value)
-{
-    /// <summary>Parses an ISO-8601 instant.</summary>
-    /// <param name="value">The value to parse.</param>
-    /// <param name="result">The parsed timestamp.</param>
-    /// <returns><see langword="true"/> when parsing succeeds; otherwise <see langword="false"/>.</returns>
-    public static bool TryParse(string? value, out AuditTimestamp result)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            result = default;
-            return false;
-        }
-
-        var parsed = InstantPattern.ExtendedIso.Parse(value);
-        result = parsed.Success ? new AuditTimestamp(parsed.Value) : default;
-        return parsed.Success;
-    }
-
-    /// <summary>Parses an ISO-8601 instant.</summary>
-    /// <param name="value">The value to parse.</param>
-    /// <param name="formatProvider">Ignored because ISO-8601 parsing is culture-invariant.</param>
-    /// <param name="result">The parsed timestamp.</param>
-    /// <returns><see langword="true"/> when parsing succeeds; otherwise <see langword="false"/>.</returns>
-    public static bool TryParse(string? value, IFormatProvider? formatProvider, out AuditTimestamp result)
-    {
-        return TryParse(value, out result);
-    }
-}
-
 /// <summary>Queries the persisted audit trail.</summary>
 [HttpEndpoint("GET", "/api/v{version}/audits")]
 public sealed record GetAuditsQuery : IQuery<PagedResult<AuditRecord>>, IQueryPaged
@@ -111,11 +79,11 @@ public sealed record GetAuditsQuery : IQuery<PagedResult<AuditRecord>>, IQueryPa
 
     /// <summary>Gets the inclusive lower timestamp filter.</summary>
     [BindFromQuery]
-    public AuditTimestamp? FromTimestamp { get; init; }
+    public Instant? FromTimestamp { get; init; }
 
     /// <summary>Gets the inclusive upper timestamp filter.</summary>
     [BindFromQuery]
-    public AuditTimestamp? ToTimestamp { get; init; }
+    public Instant? ToTimestamp { get; init; }
 
     /// <inheritdoc />
     [BindFromQuery]

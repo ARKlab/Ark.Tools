@@ -94,6 +94,29 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorBindsTypeConverterValues()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/filters")]
+            public sealed class GetFilters : IQuery<string>
+            {
+                [BindFromQuery]
+                public Filter? From { get; init; }
+            }
+            [TypeConverter(typeof(FilterConverter))]
+            public readonly struct Filter;
+            public sealed class FilterConverter : TypeConverter;
+            """);
+
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"From\")] string? From");
+        generated.Should().Contain("ArkTypeConverterBinding.Convert<global::Filter?>(From, \"From\")");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorCachesUnchangedInputs()
     {
         var source = """

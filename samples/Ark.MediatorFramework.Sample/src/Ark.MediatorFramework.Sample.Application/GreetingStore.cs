@@ -74,8 +74,8 @@ public sealed class InMemoryGreetingStore : IGreetingStore
             (query.UserId is null || record.UserId == query.UserId)
             && (query.EntityType is null || record.EntityType == query.EntityType)
             && (query.Identifier is null || record.Identifier == query.Identifier)
-            && (query.FromTimestamp is null || record.Timestamp >= query.FromTimestamp.Value.Value)
-            && (query.ToTimestamp is null || record.Timestamp <= query.ToTimestamp.Value.Value));
+            && (query.FromTimestamp is null || record.Timestamp >= query.FromTimestamp.Value)
+            && (query.ToTimestamp is null || record.Timestamp <= query.ToTimestamp.Value));
         var sorts = query.Sort ?? [];
         var sorted = sorts.Any()
             ? filtered.OrderBy(string.Join(", ", sorts))
