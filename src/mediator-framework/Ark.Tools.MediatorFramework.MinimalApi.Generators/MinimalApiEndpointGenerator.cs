@@ -648,6 +648,7 @@ namespace Ark.MediatorFramework.Generators
                 && named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
                 ? named.TypeArguments[0]
                 : type;
+            // Prefer ASP.NET Core's native TryParse or BindAsync mechanisms when available.
             return underlyingType.GetAttributes().Any(attribute =>
                 SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, typeConverterAttribute))
                 && !underlyingType.GetMembers("TryParse").OfType<IMethodSymbol>().Any()

@@ -27,7 +27,7 @@ public static class ArkTypeConverterBinding
         {
             return (T?)TypeDescriptor.GetConverter(typeof(T)).ConvertFromInvariantString(value);
         }
-        catch (Exception exception) when (exception is ArgumentException or NotSupportedException)
+        catch (Exception exception) when (exception is ArgumentException or FormatException or NotSupportedException)
         {
             throw new BadHttpRequestException($"The '{name}' value is invalid.", StatusCodes.Status400BadRequest);
         }

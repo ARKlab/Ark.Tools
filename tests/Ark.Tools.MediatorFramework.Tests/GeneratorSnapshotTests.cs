@@ -41,6 +41,15 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void TypeConverterBindingReportsInvalidValuesAsBadRequests()
+    {
+        Action action = () => Ark.Tools.MediatorFramework.MinimalApi.ArkTypeConverterBinding.Convert<Guid>("invalid", "id");
+
+        action.Should().Throw<BadHttpRequestException>()
+            .Which.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
+    [TestMethod]
     public void MessagePackDeserializationUsesUntrustedSecurity()
     {
         var context = new DefaultHttpContext
