@@ -84,7 +84,7 @@ public readonly record struct AuditTimestamp(Instant Value)
 
     /// <summary>Parses an ISO-8601 instant.</summary>
     /// <param name="value">The value to parse.</param>
-    /// <param name="formatProvider">The format provider.</param>
+    /// <param name="formatProvider">Ignored because ISO-8601 parsing is culture-invariant.</param>
     /// <param name="result">The parsed timestamp.</param>
     /// <returns><see langword="true"/> when parsing succeeds; otherwise <see langword="false"/>.</returns>
     public static bool TryParse(string? value, IFormatProvider? formatProvider, out AuditTimestamp result)
