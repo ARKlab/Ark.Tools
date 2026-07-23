@@ -345,7 +345,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MinimalApiGeneratorBindsStringCollections()
+    public void MinimalApiGeneratorBindsStringCollectionTypes()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
             """
@@ -356,11 +356,12 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetAudits : IQuery<string>
             {
                 [BindFromQuery]
-                public IReadOnlyList<string> Sort { get; init; } = [];
+                public List<string> Sort { get; init; } = [];
             }
             """);
 
-        generated.Should().Contain("string[] Sort");
+        generated.Should().Contain("global::System.Collections.Generic.List<string> Sort");
+        generated.Should().Contain("new global::GetAudits { Sort = Sort }");
     }
 
     [TestMethod]

@@ -80,13 +80,14 @@ public sealed class InMemoryGreetingStore : IGreetingStore
         var sorted = sorts.Any()
             ? filtered.OrderBy(string.Join(", ", sorts))
             : filtered.OrderByDescending(record => record.Timestamp);
-        var records = sorted
+        var filteredRecords = sorted.ToArray();
+        var records = filteredRecords
             .Skip(query.Skip)
             .Take(query.Limit)
             .ToArray();
         return Task.FromResult(new PagedResult<AuditRecord>
         {
-            Count = _audits.Count,
+            Count = filteredRecords.Length,
             Skip = query.Skip,
             Limit = query.Limit,
             Data = records,
