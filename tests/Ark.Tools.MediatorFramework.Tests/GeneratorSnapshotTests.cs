@@ -345,6 +345,25 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorBindsStringCollections()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using System.Collections.Generic;
+            [HttpEndpoint("GET", "/audits")]
+            public sealed class GetAudits : IQuery<string>
+            {
+                [BindFromQuery]
+                public IReadOnlyList<string> Sort { get; init; } = [];
+            }
+            """);
+
+        generated.Should().Contain("string[] Sort");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorProtectsServerSetProperties()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(

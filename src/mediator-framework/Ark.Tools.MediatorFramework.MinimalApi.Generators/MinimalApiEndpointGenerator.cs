@@ -30,6 +30,8 @@ namespace Ark.MediatorFramework.Generators
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
+        private const string BindableFromHttpContext = "Microsoft.AspNetCore.Http.IBindableFromHttpContext`1";
+        private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
             "ARKMF001",
             "Only one attachment is supported",
@@ -90,7 +92,9 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(BindFromQueryAttribute),
                 compilation.GetTypeByMetadataName(ServerSetAttribute),
                 compilation.GetTypeByMetadataName(ArkAttachment),
-                compilation.GetTypeByMetadataName(RebusMessageAttribute));
+                compilation.GetTypeByMetadataName(RebusMessageAttribute),
+                compilation.GetTypeByMetadataName(BindableFromHttpContext),
+                compilation.GetTypeByMetadataName(Enumerable));
         }
 
         private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
@@ -118,6 +122,8 @@ namespace Ark.MediatorFramework.Generators
             var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
             var rebusMessageAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
+            var bindableFromHttpContext = compilation.GetTypeByMetadataName(BindableFromHttpContext);
+            var enumerableType = compilation.GetTypeByMetadataName(Enumerable);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
@@ -130,7 +136,15 @@ namespace Ark.MediatorFramework.Generators
                     if (http is null)
                         continue;
 
-                    var model = Extract(type, http, bindFromQueryAttr, serverSetAttr, attachmentType, rebusMessageAttr);
+                    var model = Extract(
+                        type,
+                        http,
+                        bindFromQueryAttr,
+                        serverSetAttr,
+                        attachmentType,
+                        rebusMessageAttr,
+                        bindableFromHttpContext,
+                        enumerableType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -175,7 +189,9 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? bindFromQueryAttr,
             INamedTypeSymbol? serverSetAttr,
             INamedTypeSymbol? attachmentType,
-            INamedTypeSymbol? rebusMessageAttr)
+            INamedTypeSymbol? rebusMessageAttr,
+            INamedTypeSymbol? bindableFromHttpContext,
+            INamedTypeSymbol? enumerableType)
         {
             string? response = null;
             var attachmentResponse = false;
@@ -260,7 +276,8 @@ namespace Ark.MediatorFramework.Generators
                     serverSetAttr is not null && property.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
                     property.NullableAnnotation == NullableAnnotation.Annotated,
-                    property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public))
+                    property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
+                    IsStringCollection(property.Type, enumerableType)))
                 .ToImmutableArray();
             foreach (var routeName in routeNames)
             {
@@ -295,9 +312,9 @@ namespace Ark.MediatorFramework.Generators
                 ownerQueue,
                 properties,
                 type.IsRecord,
-                type.AllInterfaces.Any(iface =>
-                    iface.OriginalDefinition.MetadataName == "IBindableFromHttpContext`1"
-                    && iface.OriginalDefinition.ContainingNamespace.ToDisplayString() == "Microsoft.AspNetCore.Http"),
+                bindableFromHttpContext is not null
+                    && type.AllInterfaces.Any(iface =>
+                        SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, bindableFromHttpContext)),
                 properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
                     .Select(property => property.Name)
                     .ToImmutableArray(),
@@ -577,12 +594,25 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingType(PropertyModel property)
         {
-            return property.TypeFullName switch
+            return property.IsStringCollection
+                ? "string[]"
+                : property.TypeFullName switch
             {
-                "global::System.Collections.Generic.IEnumerable<string>" => "string[]",
                 _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
                 _ => property.TypeFullName,
             };
+        }
+
+        private static bool IsStringCollection(ITypeSymbol type, INamedTypeSymbol? enumerableType)
+        {
+            return (type is IArrayTypeSymbol array && array.ElementType.SpecialType == SpecialType.System_String)
+                || (enumerableType is not null
+                    && ((type is INamedTypeSymbol named
+                        && SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, enumerableType)
+                        && named.TypeArguments[0].SpecialType == SpecialType.System_String)
+                        || type.AllInterfaces.Any(iface =>
+                            SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, enumerableType)
+                            && iface.TypeArguments[0].SpecialType == SpecialType.System_String)));
         }
 
         private static string BindingValue(PropertyModel property)
@@ -963,7 +993,16 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly record struct PropertyModel
         {
-            public PropertyModel(string name, string typeFullName, bool isRoute, string bindingName, bool isQuery, bool isServerSet, bool isNullable, bool hasPublicSetter)
+            public PropertyModel(
+                string name,
+                string typeFullName,
+                bool isRoute,
+                string bindingName,
+                bool isQuery,
+                bool isServerSet,
+                bool isNullable,
+                bool hasPublicSetter,
+                bool isStringCollection)
             {
                 Name = name;
                 TypeFullName = typeFullName;
@@ -973,6 +1012,7 @@ namespace Ark.MediatorFramework.Generators
                 IsServerSet = isServerSet;
                 IsNullable = isNullable;
                 HasPublicSetter = hasPublicSetter;
+                IsStringCollection = isStringCollection;
             }
 
             public string Name { get; }
@@ -983,6 +1023,8 @@ namespace Ark.MediatorFramework.Generators
             public bool IsServerSet { get; }
             public bool IsNullable { get; }
             public bool HasPublicSetter { get; }
+
+            public bool IsStringCollection { get; }
         }
     }
 }
