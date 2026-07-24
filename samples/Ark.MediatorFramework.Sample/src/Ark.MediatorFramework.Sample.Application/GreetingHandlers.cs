@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
+using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using FluentValidation;
@@ -10,6 +11,8 @@ using FluentValidation.Results;
 using Rebus.Bus;
 
 using System.Security.Claims;
+
+using NodaTime;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
@@ -29,12 +32,14 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
 {
     private readonly IGreetingStore _store;
     private readonly IContextProvider<ClaimsPrincipal> _user;
+    private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CreateGreetingHandler"/> class.</summary>
-    public CreateGreetingHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user)
+    public CreateGreetingHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
         _store = store;
         _user = user;
+        _clock = clock;
     }
 
     /// <inheritdoc />
@@ -45,9 +50,11 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
         if ((await _store.AllAsync(ctk).ConfigureAwait(false)).Any(g => g.Message.Contains($"Hello, {Request.Name}!", StringComparison.Ordinal)))
             throw new BusinessRuleViolationException(new GreetingAlreadyExistsViolation(Request.Name));
 
+        var auditId = Guid.NewGuid();
         var response = new GreetingResponse
         {
             Id = Guid.NewGuid(),
+            AuditId = auditId,
             Message = $"Hello, {Request.Name}! (by {_user.GetUserId() ?? "anonymous"})",
             Date = Request.Date,
             DateTime = Request.DateTime,
@@ -55,7 +62,15 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Period = Request.Period,
         };
 
-        await _store.SaveAndPublishAsync(response, ctk).ConfigureAwait(false);
+        await _store.SaveAndPublishAsync(response, new AuditEntry
+        {
+            Id = auditId,
+            UserId = _user.GetUserId() ?? "anonymous",
+            EntityType = nameof(GreetingResponse),
+            Identifier = response.Id.ToString("D"),
+            Operation = nameof(CreateGreetingRequest),
+            Timestamp = _clock.GetCurrentInstant(),
+        }, ctk).ConfigureAwait(false);
         return response;
     }
 }
@@ -98,11 +113,15 @@ public sealed class ComposeGreetingHandler : IRequestHandler<ComposeGreetingRequ
 public sealed class CompleteGreetingCompositionHandler : IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>
 {
     private readonly IGreetingStore _store;
+    private readonly IContextProvider<ClaimsPrincipal> _user;
+    private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CompleteGreetingCompositionHandler"/> class.</summary>
-    public CompleteGreetingCompositionHandler(IGreetingStore store)
+    public CompleteGreetingCompositionHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
         _store = store;
+        _user = user;
+        _clock = clock;
     }
 
     /// <inheritdoc />
@@ -110,15 +129,26 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
     {
         ArgumentNullException.ThrowIfNull(Request);
 
+        var auditId = Guid.NewGuid();
         var response = new GreetingResponse
         {
             Id = Request.Id,
+            AuditId = auditId,
             Message = $"Hello, {Request.Name}! (async)",
         };
 
-        await _store.SaveAsync(response, ctk).ConfigureAwait(false);
+        await _store.SaveAsync(response, new AuditEntry
+        {
+            Id = auditId,
+            UserId = _user.GetUserId() ?? "anonymous",
+            EntityType = nameof(GreetingResponse),
+            Identifier = response.Id.ToString("D"),
+            Operation = nameof(CompleteGreetingCompositionRequest),
+            Timestamp = _clock.GetCurrentInstant(),
+        }, ctk).ConfigureAwait(false);
         return response;
     }
+
 }
 
 /// <summary>Consumes greeting-created notifications after their transaction commits.</summary>
@@ -129,6 +159,25 @@ public sealed class GreetingCreatedHandler : ICommandHandler<GreetingCreatedNoti
     {
         ArgumentNullException.ThrowIfNull(command);
         await Task.CompletedTask.ConfigureAwait(false);
+    }
+}
+
+/// <summary>Handles paged reads of the persisted audit trail.</summary>
+public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>
+{
+    private readonly IGreetingStore _store;
+
+    /// <summary>Initializes a new instance of the <see cref="GetAuditsHandler"/> class.</summary>
+    public GetAuditsHandler(IGreetingStore store)
+    {
+        _store = store;
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResult<AuditRecord>> ExecuteAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return await _store.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
     }
 }
 

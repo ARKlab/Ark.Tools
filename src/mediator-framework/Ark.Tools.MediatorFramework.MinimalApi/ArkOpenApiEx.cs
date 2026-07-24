@@ -90,6 +90,39 @@ public static class ArkOpenApiEx
         return options;
     }
 
+    /// <summary>Uses the wrapped CLR type for OpenAPI route and query parameter schemas.</summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkTypeConverterValueSchemas(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddOperationTransformer(async (operation, context, cancellationToken) =>
+        {
+            if (operation.Parameters is null)
+                return;
+
+            var metadata = context.Description.ActionDescriptor.EndpointMetadata
+                .OfType<ArkTypeConverterParameterMetadata>();
+            foreach (var item in metadata)
+            {
+                var parameter = operation.Parameters.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Name, item.Name, StringComparison.OrdinalIgnoreCase));
+                if (parameter is not OpenApiParameter mutableParameter)
+                    continue;
+
+                var description = context.Description.ParameterDescriptions.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Name, item.Name, StringComparison.OrdinalIgnoreCase));
+                mutableParameter.Schema = await context.GetOrCreateSchemaAsync(
+                    item.Type,
+                    description,
+                    cancellationToken).ConfigureAwait(false);
+            }
+        });
+
+        return options;
+    }
+
     /// <summary>
     /// Adds an OpenAPI <c>oneOf</c> schema and discriminator for a polymorphic hierarchy.
     /// </summary>

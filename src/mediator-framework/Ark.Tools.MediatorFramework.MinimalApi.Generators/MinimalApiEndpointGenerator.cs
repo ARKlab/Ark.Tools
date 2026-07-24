@@ -30,6 +30,7 @@ namespace Ark.MediatorFramework.Generators
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
+        private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
             "ARKMF001",
             "Only one attachment is supported",
@@ -90,7 +91,8 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(BindFromQueryAttribute),
                 compilation.GetTypeByMetadataName(ServerSetAttribute),
                 compilation.GetTypeByMetadataName(ArkAttachment),
-                compilation.GetTypeByMetadataName(RebusMessageAttribute));
+                compilation.GetTypeByMetadataName(RebusMessageAttribute),
+                compilation.GetTypeByMetadataName(Enumerable));
         }
 
         private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
@@ -118,6 +120,7 @@ namespace Ark.MediatorFramework.Generators
             var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
             var rebusMessageAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
+            var enumerableType = compilation.GetTypeByMetadataName(Enumerable);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
@@ -130,7 +133,14 @@ namespace Ark.MediatorFramework.Generators
                     if (http is null)
                         continue;
 
-                    var model = Extract(type, http, bindFromQueryAttr, serverSetAttr, attachmentType, rebusMessageAttr);
+                    var model = Extract(
+                        type,
+                        http,
+                        bindFromQueryAttr,
+                        serverSetAttr,
+                        attachmentType,
+                        rebusMessageAttr,
+                        enumerableType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -175,7 +185,8 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? bindFromQueryAttr,
             INamedTypeSymbol? serverSetAttr,
             INamedTypeSymbol? attachmentType,
-            INamedTypeSymbol? rebusMessageAttr)
+            INamedTypeSymbol? rebusMessageAttr,
+            INamedTypeSymbol? enumerableType)
         {
             string? response = null;
             var attachmentResponse = false;
@@ -259,7 +270,11 @@ namespace Ark.MediatorFramework.Generators
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindFromQueryAttr)),
                     serverSetAttr is not null && property.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
-                    property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public))
+                    property.NullableAnnotation == NullableAnnotation.Annotated
+                        || property.Type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
+                    property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
+                    IsStringCollection(property.Type, enumerableType),
+                    !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type)))
                 .ToImmutableArray();
             foreach (var routeName in routeNames)
             {
@@ -298,6 +313,7 @@ namespace Ark.MediatorFramework.Generators
                     .Select(property => property.Name)
                     .ToImmutableArray(),
                 properties.Where(property => !property.IsServerSet
+                    && !property.IsQuery
                     && property.Name is "TenantId" or "UserId" or "IsAdmin" or "Role" or "Roles")
                     .Select(property => property.Name)
                     .ToImmutableArray(),
@@ -424,11 +440,12 @@ namespace Ark.MediatorFramework.Generators
                     var handlerService = e.Kind == HandlerKind.Query
                         ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
                         : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
-                    var bind = e.Verb == "GET" || e.Verb == "DELETE"
+                    var bind = (e.Verb == "GET" || e.Verb == "DELETE")
                         ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                         : string.Empty;
                     var bodyVerb = e.Verb != "GET" && e.Verb != "DELETE";
-                    var explicitBindings = bodyVerb && e.Properties.Any(property => property.IsRoute || property.IsQuery);
+                    var explicitBindings = e.Properties.Any(property => property.IsRoute || property.IsQuery)
+                        && (bodyVerb || e.Verb == "GET" || e.Verb == "DELETE");
 
                     foreach (var version in ActiveVersions(e, maxVersion))
                     {
@@ -460,7 +477,7 @@ namespace Ark.MediatorFramework.Generators
                                 {
                                     var source = property.IsRoute ? "FromRoute" : "FromQuery";
                                     var bindingName = property.IsRoute ? property.BindingName : property.Name;
-                                    sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + property.TypeFullName + " " + property.Name + ",");
+                                    sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + BindingType(property) + " " + property.Name + ",");
                                 }
                             }
                             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
@@ -473,7 +490,7 @@ namespace Ark.MediatorFramework.Generators
                             {
                                 var assignments = string.Join(", ", e.Properties
                                     .Where(property => property.IsRoute || property.IsQuery)
-                                    .Select(property => property.IsServerSet ? property.Name + " = default" : property.Name + " = " + property.Name)
+                                    .Select(property => property.IsServerSet ? property.Name + " = default" : property.Name + " = " + BindingValue(property))
                                     .Concat(e.ServerSetProperties.Where(property => !e.Properties.Any(candidate => candidate.Name == property))
                                         .Select(property => property + " = default")));
                                 sb.AppendLine("                var request = body with { " + assignments + " };");
@@ -503,10 +520,11 @@ namespace Ark.MediatorFramework.Generators
                             {
                                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
                                 var bindingName = property.IsRoute ? property.BindingName : property.Name;
-                                sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + property.TypeFullName + " " + property.Name + ",");
+                                sb.AppendLine("                [global::Microsoft.AspNetCore.Mvc." + source + "(Name = " + Literal(bindingName) + ")] " + BindingType(property) + " " + property.Name + ",");
                             }
 
-                            sb.AppendLine("                " + e.TypeFullName + " body,");
+                            if (bodyVerb)
+                                sb.AppendLine("                " + e.TypeFullName + " body,");
                         }
                         else
                         {
@@ -519,9 +537,12 @@ namespace Ark.MediatorFramework.Generators
                         {
                             var assignments = string.Join(", ", e.Properties
                                 .Where(property => property.IsRoute || property.IsQuery)
-                                .Select(property => property.Name + " = " + property.Name)
+                                .Select(property => property.Name + " = " + BindingValue(property))
                                 .Concat(e.ServerSetProperties.Select(property => property + " = default")));
-                            sb.AppendLine("                var request = body with { " + assignments + " };");
+                            if (bodyVerb)
+                                sb.AppendLine("                var request = body with { " + assignments + " };");
+                            else
+                                sb.AppendLine("                var request = new " + e.TypeFullName + " { " + assignments + " };");
                         }
                         else if (e.IsRecord && e.ServerSetProperties.Length > 0)
                         {
@@ -565,6 +586,89 @@ namespace Ark.MediatorFramework.Generators
                     : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
         }
 
+        private static string BindingType(PropertyModel property)
+        {
+            if (property.RequiresTypeConverterBinding)
+            {
+                var wrapper = "global::Ark.Tools.MediatorFramework.MinimalApi.ArkTypeConverterValue<"
+                    + property.TypeFullName + ">";
+                return property.IsNullable ? wrapper + "?" : wrapper;
+            }
+
+            return property.IsStringCollection
+                ? "string[]"
+                : property.TypeFullName switch
+            {
+                _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
+                _ => property.TypeFullName,
+            };
+        }
+
+        private static string BindingValue(PropertyModel property)
+        {
+            if (property.RequiresTypeConverterBinding)
+            {
+                return property.IsNullable
+                    ? property.Name + " is { } " + property.Name + "Value ? " + property.Name + "Value.Value : default"
+                    : property.Name + ".Value";
+            }
+
+            if (!property.IsStringCollection)
+                return property.Name;
+
+            return property.TypeFullName switch
+            {
+                "global::System.Collections.Generic.List<string>"
+                    or "global::System.Collections.Generic.IList<string>"
+                    or "global::System.Collections.Generic.ICollection<string>"
+                    => "new global::System.Collections.Generic.List<string>(" + property.Name + ")",
+                "global::System.Collections.Generic.HashSet<string>"
+                    or "global::System.Collections.Generic.ISet<string>"
+                    => "new global::System.Collections.Generic.HashSet<string>(" + property.Name + ")",
+                "global::System.Collections.Immutable.ImmutableArray<string>"
+                    => "global::System.Collections.Immutable.ImmutableArray.CreateRange(" + property.Name + ")",
+                _ => property.Name,
+            };
+        }
+
+        private static bool IsStringCollection(ITypeSymbol type, INamedTypeSymbol? enumerableType)
+        {
+            return (type is IArrayTypeSymbol array && array.ElementType.SpecialType == SpecialType.System_String)
+                || (enumerableType is not null
+                    && ((type is INamedTypeSymbol named
+                        && SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, enumerableType)
+                        && named.TypeArguments[0].SpecialType == SpecialType.System_String)
+                        || type.AllInterfaces.Any(iface =>
+                            SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, enumerableType)
+                            && iface.TypeArguments[0].SpecialType == SpecialType.System_String)));
+        }
+
+        private static bool RequiresTypeConverterBinding(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol)
+                return false;
+
+            var targetType = type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
+                ? nullable.TypeArguments[0]
+                : type;
+            if (targetType.SpecialType == SpecialType.System_String
+                || targetType.TypeKind == TypeKind.Enum
+                || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
+                return false;
+
+            return !targetType.GetMembers("TryParse")
+                .OfType<IMethodSymbol>()
+                .Any(method => method.IsStatic
+                    && method.DeclaredAccessibility == Accessibility.Public
+                    && method.ReturnType.SpecialType == SpecialType.System_Boolean
+                    && method.Parameters.Length is 2 or 3
+                    && method.Parameters[0].Type.SpecialType == SpecialType.System_String
+                    && (method.Parameters.Length == 2
+                        || method.Parameters[1].Type.ToDisplayString() == "System.IFormatProvider")
+                    && method.Parameters[^1].RefKind == RefKind.Out
+                    && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, targetType));
+        }
+
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
         {
             if (endpoint.IsRecord)
@@ -592,7 +696,7 @@ namespace Ark.MediatorFramework.Generators
                 var bindingName = property.IsRoute ? property.BindingName : property.Name;
                 sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
                     .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
-                    .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+                    .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
             }
 
             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
@@ -612,7 +716,7 @@ namespace Ark.MediatorFramework.Generators
             }
             sb.AppendLine("                var request = new " + endpoint.TypeFullName + " {");
             foreach (var property in bindings)
-                sb.Append("                    ").Append(property.Name).Append(" = ").Append(property.Name).AppendLine(",");
+                sb.Append("                    ").Append(property.Name).Append(" = ").Append(BindingValue(property)).AppendLine(",");
             sb.AppendLine("                    " + attachment.Name + " = new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream),");
             sb.AppendLine("                };");
             EmitServerSetAssignments(sb, endpoint, "request");
@@ -645,7 +749,7 @@ namespace Ark.MediatorFramework.Generators
                 var bindingName = property.IsRoute ? property.BindingName : property.Name;
                 sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
                     .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
-                    .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+                    .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
             }
 
             if (bindings.Length == 0)
@@ -655,7 +759,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            {");
             if (bindings.Length > 0)
             {
-                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + property.Name));
+                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + BindingValue(property)));
                 sb.AppendLine("                var request = new " + endpoint.TypeFullName + " { " + assignments + " };");
             }
             EmitServerSetAssignments(sb, endpoint, "request");
@@ -687,7 +791,7 @@ namespace Ark.MediatorFramework.Generators
                     var bindingName = property.IsRoute ? property.BindingName : property.Name;
                     sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
                         .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
-                        .Append(property.TypeFullName).Append(' ').Append(property.Name).AppendLine(",");
+                        .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
                 }
 
                 sb.AppendLine("                " + endpoint.TypeFullName + " body,");
@@ -704,7 +808,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 var assignments = string.Join(", ", endpoint.Properties
                     .Where(property => property.IsRoute || property.IsQuery)
-                    .Select(property => property.Name + " = " + property.Name)
+                    .Select(property => property.Name + " = " + BindingValue(property))
                     .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
                 sb.AppendLine("                var request = body with { " + assignments + " };");
             }
@@ -934,7 +1038,17 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly record struct PropertyModel
         {
-            public PropertyModel(string name, string typeFullName, bool isRoute, string bindingName, bool isQuery, bool isServerSet, bool hasPublicSetter)
+            public PropertyModel(
+                string name,
+                string typeFullName,
+                bool isRoute,
+                string bindingName,
+                bool isQuery,
+                bool isServerSet,
+                bool isNullable,
+                bool hasPublicSetter,
+                bool isStringCollection,
+                bool requiresTypeConverterBinding)
             {
                 Name = name;
                 TypeFullName = typeFullName;
@@ -942,7 +1056,10 @@ namespace Ark.MediatorFramework.Generators
                 BindingName = bindingName;
                 IsQuery = isQuery;
                 IsServerSet = isServerSet;
+                IsNullable = isNullable;
                 HasPublicSetter = hasPublicSetter;
+                IsStringCollection = isStringCollection;
+                RequiresTypeConverterBinding = requiresTypeConverterBinding;
             }
 
             public string Name { get; }
@@ -951,7 +1068,10 @@ namespace Ark.MediatorFramework.Generators
             public string BindingName { get; }
             public bool IsQuery { get; }
             public bool IsServerSet { get; }
+            public bool IsNullable { get; }
             public bool HasPublicSetter { get; }
+            public bool IsStringCollection { get; }
+            public bool RequiresTypeConverterBinding { get; }
         }
     }
 }

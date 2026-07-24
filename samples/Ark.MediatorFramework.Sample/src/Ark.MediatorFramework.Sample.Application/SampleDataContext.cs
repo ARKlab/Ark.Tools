@@ -3,6 +3,7 @@
 
 using Ark.Tools.Outbox.SqlServer;
 using Ark.Tools.Outbox.Rebus;
+using Ark.Tools.Core;
 
 using Dapper;
 
@@ -55,9 +56,10 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             MERGE [dbo].[Greeting] AS target
             USING (SELECT @Id AS [Id]) AS source ON target.[Id] = source.[Id]
             WHEN MATCHED THEN UPDATE SET [Message] = @Message, [Date] = @Date,
-                [DateTime] = @DateTime, [OffsetDateTime] = @OffsetDateTime, [Period] = @Period
-            WHEN NOT MATCHED THEN INSERT ([Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period])
-                VALUES (@Id, @Message, @Date, @DateTime, @OffsetDateTime, @Period);
+                [DateTime] = @DateTime, [OffsetDateTime] = @OffsetDateTime, [Period] = @Period,
+                [AuditId] = @AuditId
+            WHEN NOT MATCHED THEN INSERT ([Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId])
+                VALUES (@Id, @Message, @Date, @DateTime, @OffsetDateTime, @Period, @AuditId);
             """;
         var command = new CommandDefinition(sql, new
         {
@@ -67,6 +69,26 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             greeting.DateTime,
             greeting.OffsetDateTime,
             Period = PeriodPattern.NormalizingIso.Format(greeting.Period),
+            greeting.AuditId,
+        }, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Saves an audit record in the current transaction.</summary>
+    public async Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[Audit] ([Id], [UserId], [EntityType], [Identifier], [Operation], [Timestamp])
+            VALUES (@Id, @UserId, @EntityType, @Identifier, @Operation, @Timestamp);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            audit.Id,
+            audit.UserId,
+            audit.EntityType,
+            audit.Identifier,
+            audit.Operation,
+            audit.Timestamp,
         }, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
     }
@@ -74,7 +96,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads a greeting in the current transaction.</summary>
     public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
     {
-        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period] FROM [dbo].[Greeting] WHERE [Id] = @Id";
+        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId] FROM [dbo].[Greeting] WHERE [Id] = @Id";
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
         return row?.ToResponse();
@@ -83,10 +105,85 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads all greetings in the current transaction.</summary>
     public async Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
     {
-        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period] FROM [dbo].[Greeting]";
+        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId] FROM [dbo].[Greeting]";
         var command = new CommandDefinition(sql, transaction: Transaction, cancellationToken: ctk);
         var rows = await Connection.QueryAsync<GreetingRow>(command).ConfigureAwait(false);
         return rows.Select(row => row.ToResponse()).ToArray();
+    }
+
+    /// <summary>Reads a page of audit records in the current transaction.</summary>
+    public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    {
+        var where = """
+            WHERE (@UserId IS NULL OR [UserId] = @UserId)
+              AND (@EntityType IS NULL OR [EntityType] = @EntityType)
+              AND (@Identifier IS NULL OR [Identifier] = @Identifier)
+              AND (@FromTimestamp IS NULL OR [Timestamp] >= @FromTimestamp)
+              AND (@ToTimestamp IS NULL OR [Timestamp] <= @ToTimestamp)
+            """;
+        var orderBy = BuildAuditOrderBy(query.Sort ?? []);
+        var sql = $"""
+            SELECT [Id], [UserId], [EntityType], [Identifier], [Operation], [Timestamp]
+            FROM [dbo].[Audit]
+            {where}
+            ORDER BY {orderBy}
+            OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
+            SELECT COUNT_BIG(*) FROM [dbo].[Audit]
+            {where};
+            """;
+        var parameters = new
+        {
+            query.UserId,
+            query.EntityType,
+            query.Identifier,
+            query.FromTimestamp,
+            query.ToTimestamp,
+            query.Skip,
+            query.Limit,
+        };
+        var command = new CommandDefinition(sql, parameters, Transaction, cancellationToken: ctk);
+        await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        var records = await results.ReadAsync<AuditRecord>().ConfigureAwait(false);
+        var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
+        return new PagedResult<AuditRecord>
+        {
+            Count = count,
+            Skip = query.Skip,
+            Limit = query.Limit,
+            Data = records.ToArray(),
+        };
+    }
+
+    private static string BuildAuditOrderBy(IEnumerable<string> sorts)
+    {
+        var columns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            [nameof(AuditRecord.Id)] = "[Id]",
+            [nameof(AuditRecord.UserId)] = "[UserId]",
+            [nameof(AuditRecord.EntityType)] = "[EntityType]",
+            [nameof(AuditRecord.Identifier)] = "[Identifier]",
+            [nameof(AuditRecord.Operation)] = "[Operation]",
+            [nameof(AuditRecord.Timestamp)] = "[Timestamp]",
+        };
+        var orderBy = sorts
+            .Where(sort => !string.IsNullOrWhiteSpace(sort))
+            .Select(sort =>
+            {
+                var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 2 || !columns.TryGetValue(parts[0], out var column))
+                    throw new ArgumentException($"Invalid audit sort '{sort}'.", nameof(sorts));
+                var direction = parts.Length == 2
+                    ? parts[1].ToUpperInvariant() switch
+                    {
+                        "ASC" => " ASC",
+                        "DESC" => " DESC",
+                        _ => throw new ArgumentException($"Invalid audit sort direction '{parts[1]}'.", nameof(sorts)),
+                    }
+                    : string.Empty;
+                return column + direction;
+            })
+            .ToArray();
+        return orderBy.Length == 0 ? "[Timestamp] DESC" : string.Join(", ", orderBy);
     }
 
     private sealed class GreetingRow
@@ -97,6 +194,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public NodaTime.LocalDateTime DateTime { get; set; }
         public NodaTime.OffsetDateTime OffsetDateTime { get; set; }
         public string Period { get; set; } = string.Empty;
+        public Guid AuditId { get; set; }
 
         public GreetingResponse ToResponse()
         {
@@ -108,6 +206,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 DateTime = DateTime,
                 OffsetDateTime = OffsetDateTime,
                 Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
+                AuditId = AuditId,
             };
         }
     }
@@ -155,9 +254,14 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public async Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    /// <param name="greeting">The greeting to persist.</param>
+    /// <param name="audit">The optional audit entry to persist in the transaction.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if (audit is not null)
+            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
         using var scope = _bus.Enlist(context);
         await _bus.SendLocal(new GreetingCreatedNotification { Greeting = greeting }).ConfigureAwait(false);
@@ -166,11 +270,25 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    /// <param name="greeting">The greeting to persist.</param>
+    /// <param name="audit">The optional audit entry to persist in the transaction.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if (audit is not null)
+            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    {
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var result = await context.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return result;
     }
 
     /// <inheritdoc />

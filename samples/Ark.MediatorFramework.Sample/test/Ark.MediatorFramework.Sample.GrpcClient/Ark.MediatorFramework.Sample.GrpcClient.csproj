@@ -26,7 +26,7 @@
               GrpcServices="Client"
               Link="Documents.proto" />
     <Protobuf Update="@(Protobuf)"
-              AdditionalImportDirs="$(NuGetPackageRoot)google.api.commonprotos\2.17.0\content\protos;..\..\src\Ark.MediatorFramework.Sample.WebInterface\proto" />
+              AdditionalImportDirs="$(NuGetPackageRoot)/google.api.commonprotos/2.17.0/content/protos;../../src/Ark.MediatorFramework.Sample.WebInterface/proto" />
   </ItemGroup>
 
 </Project>

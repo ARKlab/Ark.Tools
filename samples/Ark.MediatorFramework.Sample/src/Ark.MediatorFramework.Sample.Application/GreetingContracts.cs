@@ -39,6 +39,10 @@ public sealed record GreetingResponse
     /// <summary>Gets the representative period.</summary>
     [ProtoMember(6)]
     public Period Period { get; init; } = Period.Zero;
+
+    /// <summary>Gets the audit identifier associated with this entity version.</summary>
+    [ProtoMember(7)]
+    public Guid AuditId { get; init; }
 }
 
 /// <summary>Command used to exercise the synchronous command transport contract.</summary>

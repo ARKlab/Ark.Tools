@@ -6,5 +6,6 @@ CREATE TABLE [dbo].[Greeting]
     [DateTime] DATETIME2 NOT NULL,
     [OffsetDateTime] DATETIMEOFFSET NOT NULL,
     [Period] NVARCHAR(128) NOT NULL,
+    [AuditId] UNIQUEIDENTIFIER NOT NULL,
     CONSTRAINT [PK_Greeting] PRIMARY KEY CLUSTERED ([Id])
 )

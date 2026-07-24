@@ -42,3 +42,8 @@ Feature: Greetings
         Given I am an authenticated user
         When I compose the greeting "Asynchronous greeting" over HTTP
         Then the composed greeting is eventually available over HTTP
+
+    Scenario: Creating a greeting writes a queryable audit record
+        Given I am an authenticated user
+        When I create the greeting "Audited greeting" over HTTP
+        Then the audit query contains a CreateGreetingRequest operation for "test-user"

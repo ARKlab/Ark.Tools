@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 
 using Ark.Tools.Core;
+using Ark.Tools.Core.Reflection;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
@@ -11,10 +12,19 @@ namespace Ark.MediatorFramework.Sample.Application;
 public interface IGreetingStore
 {
     /// <summary>Persists a greeting.</summary>
-    Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default);
+    /// <param name="greeting">The greeting to persist.</param>
+    /// <param name="audit">The optional audit entry to persist with the greeting.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Persists a greeting and publishes its creation notification atomically.</summary>
-    Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default);
+    /// <param name="greeting">The greeting to persist.</param>
+    /// <param name="audit">The optional audit entry to persist with the greeting.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default);
+
+    /// <summary>Returns a page of persisted audit records.</summary>
+    Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default);
 
     /// <summary>Reads a greeting by id or throws when missing.</summary>
     Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default);
@@ -33,6 +43,7 @@ public interface IGreetingStore
 public sealed class InMemoryGreetingStore : IGreetingStore
 {
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _items = new();
+    private readonly ConcurrentQueue<AuditRecord> _audits = new();
 
     /// <inheritdoc />
     public Task<int> CountAsync(CancellationToken ctk = default)
@@ -41,17 +52,68 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    public Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(greeting);
         _items[greeting.Id] = greeting;
+        AddAudit(audit);
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public Task SaveAndPublishAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    public Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
-        return SaveAsync(greeting, ctk);
+        return SaveAsync(greeting, audit, ctk);
+    }
+
+    /// <inheritdoc />
+    public Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    {
+        ValidateAuditSorts(query.Sort ?? []);
+        var filtered = _audits.Where(record =>
+            (query.UserId is null || record.UserId == query.UserId)
+            && (query.EntityType is null || record.EntityType == query.EntityType)
+            && (query.Identifier is null || record.Identifier == query.Identifier)
+            && (query.FromTimestamp is null || record.Timestamp >= query.FromTimestamp.Value)
+            && (query.ToTimestamp is null || record.Timestamp <= query.ToTimestamp.Value));
+        var sorts = query.Sort ?? [];
+        var sorted = sorts.Any()
+            ? filtered.OrderBy(string.Join(", ", sorts))
+            : filtered.OrderByDescending(record => record.Timestamp);
+        var filteredRecords = sorted.ToArray();
+        var records = filteredRecords
+            .Skip(query.Skip)
+            .Take(query.Limit)
+            .ToArray();
+        return Task.FromResult(new PagedResult<AuditRecord>
+        {
+            Count = filteredRecords.Length,
+            Skip = query.Skip,
+            Limit = query.Limit,
+            Data = records,
+        });
+    }
+
+    private static void ValidateAuditSorts(IEnumerable<string> sorts)
+    {
+        var properties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            nameof(AuditRecord.Id),
+            nameof(AuditRecord.UserId),
+            nameof(AuditRecord.EntityType),
+            nameof(AuditRecord.Identifier),
+            nameof(AuditRecord.Operation),
+            nameof(AuditRecord.Timestamp),
+        };
+        foreach (var sort in sorts.Where(sort => !string.IsNullOrWhiteSpace(sort)))
+        {
+            var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 2 || !properties.Contains(parts[0]))
+                throw new ArgumentException($"Invalid audit sort '{sort}'.", nameof(sorts));
+            if (parts.Length == 2 && !parts[1].Equals("ASC", StringComparison.OrdinalIgnoreCase)
+                && !parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"Invalid audit sort direction '{parts[1]}'.", nameof(sorts));
+        }
     }
 
     /// <inheritdoc />
@@ -73,5 +135,21 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     public Task<IReadOnlyCollection<GreetingResponse>> AllAsync(CancellationToken ctk = default)
     {
         return Task.FromResult<IReadOnlyCollection<GreetingResponse>>(_items.Values.ToArray());
+    }
+
+    private void AddAudit(AuditEntry? audit)
+    {
+        if (audit is null)
+            return;
+
+        _audits.Enqueue(new AuditRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = audit.UserId,
+            EntityType = audit.EntityType,
+            Identifier = audit.Identifier,
+            Operation = audit.Operation,
+            Timestamp = audit.Timestamp,
+        });
     }
 }

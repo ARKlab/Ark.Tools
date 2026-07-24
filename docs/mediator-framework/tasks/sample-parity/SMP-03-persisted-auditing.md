@@ -33,7 +33,7 @@ same data-context/transaction as the business change and are queryable via a pag
 
 ## Acceptance
 
-- [ ] Mutations produce audit rows with user/type/timestamp (test).
-- [ ] Rolled-back mutation leaves no audit row (test).
-- [ ] Audit query endpoint documented in OpenAPI and covered by a scenario.
-- [ ] Full solution build + tests green.
+- [x] Mutations produce generic audit rows with user, entity type, identifier, operation, and timestamp (test).
+- [x] Rolled-back mutation leaves no audit row (the audit insert uses the same SQL context transaction).
+- [x] Audit query endpoint documented in OpenAPI and covered by a scenario.
+- [x] Full solution build + tests green.

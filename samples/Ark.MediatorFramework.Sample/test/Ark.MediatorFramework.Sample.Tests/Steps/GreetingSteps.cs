@@ -13,6 +13,8 @@ using AwesomeAssertions;
 using Grpc.Core;
 using Grpc.Net.Client;
 
+using NodaTime.Text;
+
 using Reqnroll;
 
 using AppComposeGreetingRequest = Ark.MediatorFramework.Sample.Application.ComposeGreetingRequest;
@@ -20,6 +22,7 @@ using AppComposeGreetingResponse = Ark.MediatorFramework.Sample.Application.Comp
 using AppCreateGreetingRequest = Ark.MediatorFramework.Sample.Application.CreateGreetingRequest;
 using AppGreetingResponse = Ark.MediatorFramework.Sample.Application.GreetingResponse;
 using AppGreetingResponseV2 = Ark.MediatorFramework.Sample.Application.GreetingResponseV2;
+using AppAuditRecord = Ark.MediatorFramework.Sample.Application.AuditRecord;
 using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
 using GrpcGetGreetingQuery = Ark.MediatorFramework.Sample.GrpcClient.GetGreetingQuery;
 using GrpcGreetingResponse = Ark.MediatorFramework.Sample.GrpcClient.GreetingResponse;
@@ -39,6 +42,7 @@ public sealed class GreetingSteps
     private AppGreetingResponseV2? _versionTwoGreeting;
     private HttpResponseMessage? _response;
     private StatusCode? _grpcErrorStatus;
+    private AppAuditRecord? _audit;
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
     /// <param name="context">The scenario's isolated sample host.</param>
@@ -195,5 +199,26 @@ public sealed class GreetingSteps
         while (DateTime.UtcNow < deadline);
 
         throw new TimeoutException("The composed greeting was not completed within 10 seconds.");
+    }
+
+    [Then(@"the audit query contains a (.*) operation for ""(.*)""")]
+    public async Task ThenTheAuditQueryContainsRecordFor(string operation, string userId)
+    {
+        var response = await _context.Client.GetAsync(
+            new Uri("/api/v1/audits?skip=0&limit=25", UriKind.Relative)).ConfigureAwait(false);
+        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        response.IsSuccessStatusCode.Should().BeTrue(body);
+        var audits = JsonSerializer.Deserialize<Ark.Tools.Core.PagedResult<AppAuditRecord>>(body, JsonOptions);
+        _audit = audits!.Data.Single(record => record.Operation == operation && record.UserId == userId);
+        _audit.EntityType.Should().Be(typeof(AppGreetingResponse).Name);
+        _audit.Identifier.Should().NotBeNullOrWhiteSpace();
+        _audit.Timestamp.Should().NotBe(default);
+
+        var timestamp = Uri.EscapeDataString(InstantPattern.ExtendedIso.Format(_audit.Timestamp));
+        var filteredResponse = await _context.Client.GetAsync(
+            new Uri("/api/v1/audits?skip=0&limit=25&fromTimestamp=" + timestamp, UriKind.Relative)).ConfigureAwait(false);
+        filteredResponse.EnsureSuccessStatusCode();
+        var filteredAudits = await filteredResponse.Content.ReadFromJsonAsync<Ark.Tools.Core.PagedResult<AppAuditRecord>>(JsonOptions).ConfigureAwait(false);
+        filteredAudits!.Data.Should().Contain(record => record.Id == _audit.Id);
     }
 }

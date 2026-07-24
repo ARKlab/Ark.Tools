@@ -11,6 +11,7 @@
     <CompatibilityMode>160</CompatibilityMode>
     <EnableDefaultSqlItems>false</EnableDefaultSqlItems>
     <IsPackable>false</IsPackable>
+    <ProjectGuid>{A3F7C251-8E14-4B9D-BE62-5D1F2C830947}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
     <Build Include="**/*.sql" />

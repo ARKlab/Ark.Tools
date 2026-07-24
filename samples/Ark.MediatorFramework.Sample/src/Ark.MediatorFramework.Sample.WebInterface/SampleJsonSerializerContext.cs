@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.Tools.Nodatime.SystemTextJson;
 using Ark.Tools.Nodatime.SystemTextJson.Converters;
+using Ark.Tools.Core;
 
 using System.Text.Json.Serialization;
 
@@ -51,6 +52,9 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 [JsonSerializable(typeof(Shape))]
 [JsonSerializable(typeof(Circle))]
 [JsonSerializable(typeof(Square))]
+[JsonSerializable(typeof(GetAuditsQuery))]
+[JsonSerializable(typeof(AuditRecord))]
+[JsonSerializable(typeof(PagedResult<AuditRecord>))]
 internal sealed partial class SampleJsonSerializerContext : JsonSerializerContext
 {
 }
