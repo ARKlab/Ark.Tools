@@ -46,7 +46,7 @@
 	  <PackageVersion Include="Grpc.StatusProto" Version="2.80.0" />
 	  <PackageVersion Include="System.ServiceModel.Primitives" Version="10.0.652802" />
 	  <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
-	  <PackageVersion Include="System.Reactive" Version="6.1.0" />
+	  <PackageVersion Include="System.Reactive" Version="7.0.0" />
 	  <PackageVersion Include="SSH.NET" Version="2025.1.0" />
 	  <PackageVersion Include="SimpleInjector" Version="5.6.0" />
 
