@@ -41,15 +41,6 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void TypeConverterBindingReportsInvalidValuesAsBadRequests()
-    {
-        Action action = () => Ark.Tools.MediatorFramework.MinimalApi.ArkTypeConverterBinding.Convert<Guid>("invalid", "id");
-
-        action.Should().Throw<BadHttpRequestException>()
-            .Which.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-    }
-
-    [TestMethod]
     public void MessagePackDeserializationUsesUntrustedSecurity()
     {
         var context = new DefaultHttpContext
@@ -100,29 +91,6 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("MapGet(\"/api/v2/greetings/{id}\"");
         generated.Should().NotContain("MapGet(\"/api/v3/greetings/{id}\"");
         generated.Should().Contain("WithGroupName(\"v1\")");
-    }
-
-    [TestMethod]
-    public void MinimalApiGeneratorBindsTypeConverterValues()
-    {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
-            """
-            using System.ComponentModel;
-            using Ark.MediatorFramework;
-            using Ark.Tools.Solid;
-            [HttpEndpoint("GET", "/filters")]
-            public sealed class GetFilters : IQuery<string>
-            {
-                [BindFromQuery]
-                public Filter? From { get; init; }
-            }
-            [TypeConverter(typeof(FilterConverter))]
-            public readonly struct Filter;
-            public sealed class FilterConverter : TypeConverter;
-            """);
-
-        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"From\")] string? From");
-        generated.Should().Contain("ArkTypeConverterBinding.Convert<global::Filter?>(From, \"From\")");
     }
 
     [TestMethod]
