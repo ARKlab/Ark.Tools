@@ -48,3 +48,4 @@ public sealed class GetAuditsValidator : AbstractValidator<GetAuditsQuery>
             || parts[1].Equals("ASC", StringComparison.OrdinalIgnoreCase)
             || parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase);
     }
+    }

@@ -273,7 +273,8 @@ namespace Ark.MediatorFramework.Generators
                     property.NullableAnnotation == NullableAnnotation.Annotated
                         || property.Type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
                     property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
-                    IsStringCollection(property.Type, enumerableType)))
+                    IsStringCollection(property.Type, enumerableType),
+                    !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type)))
                 .ToImmutableArray();
             foreach (var routeName in routeNames)
             {
@@ -587,6 +588,13 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingType(PropertyModel property)
         {
+            if (property.RequiresTypeConverterBinding)
+            {
+                var wrapper = "global::Ark.Tools.MediatorFramework.MinimalApi.ArkTypeConverterValue<"
+                    + property.TypeFullName + ">";
+                return property.IsNullable ? wrapper + "?" : wrapper;
+            }
+
             return property.IsStringCollection
                 ? "string[]"
                 : property.TypeFullName switch
@@ -598,6 +606,13 @@ namespace Ark.MediatorFramework.Generators
 
         private static string BindingValue(PropertyModel property)
         {
+            if (property.RequiresTypeConverterBinding)
+            {
+                return property.IsNullable
+                    ? property.Name + " is { } " + property.Name + "Value ? " + property.Name + "Value.Value : default"
+                    : property.Name + ".Value";
+            }
+
             if (!property.IsStringCollection)
                 return property.Name;
 
@@ -626,6 +641,32 @@ namespace Ark.MediatorFramework.Generators
                         || type.AllInterfaces.Any(iface =>
                             SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, enumerableType)
                             && iface.TypeArguments[0].SpecialType == SpecialType.System_String)));
+        }
+
+        private static bool RequiresTypeConverterBinding(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol)
+                return false;
+
+            var targetType = type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
+                ? nullable.TypeArguments[0]
+                : type;
+            if (targetType.SpecialType == SpecialType.System_String
+                || targetType.TypeKind == TypeKind.Enum
+                || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
+                return false;
+
+            return !targetType.GetMembers("TryParse")
+                .OfType<IMethodSymbol>()
+                .Any(method => method.IsStatic
+                    && method.DeclaredAccessibility == Accessibility.Public
+                    && method.ReturnType.SpecialType == SpecialType.System_Boolean
+                    && method.Parameters.Length is 2 or 3
+                    && method.Parameters[0].Type.SpecialType == SpecialType.System_String
+                    && (method.Parameters.Length == 2
+                        || method.Parameters[1].Type.ToDisplayString() == "System.IFormatProvider")
+                    && method.Parameters[^1].RefKind == RefKind.Out
+                    && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, targetType));
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
@@ -1006,7 +1047,8 @@ namespace Ark.MediatorFramework.Generators
                 bool isServerSet,
                 bool isNullable,
                 bool hasPublicSetter,
-                bool isStringCollection)
+                bool isStringCollection,
+                bool requiresTypeConverterBinding)
             {
                 Name = name;
                 TypeFullName = typeFullName;
@@ -1017,6 +1059,7 @@ namespace Ark.MediatorFramework.Generators
                 IsNullable = isNullable;
                 HasPublicSetter = hasPublicSetter;
                 IsStringCollection = isStringCollection;
+                RequiresTypeConverterBinding = requiresTypeConverterBinding;
             }
 
             public string Name { get; }
@@ -1028,6 +1071,7 @@ namespace Ark.MediatorFramework.Generators
             public bool IsNullable { get; }
             public bool HasPublicSetter { get; }
             public bool IsStringCollection { get; }
+            public bool RequiresTypeConverterBinding { get; }
         }
     }
 }
