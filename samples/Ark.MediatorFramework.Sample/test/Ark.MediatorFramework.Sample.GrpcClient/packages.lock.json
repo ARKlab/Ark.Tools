@@ -35,15 +35,15 @@
       },
       "Grpc.Tools": {
         "type": "Direct",
-        "requested": "[2.82.0, )",
-        "resolved": "2.82.0",
-        "contentHash": "jqD/u8PHvZLCwSu+kxYMjq+wlMYp6qN9Gk1FAjTvS/SDYafPgRwB2wQiKD0yDwX/5BWQnUG3IIOsNPcqgCLVtg=="
+        "requested": "[2.83.0, )",
+        "resolved": "2.83.0",
+        "contentHash": "vK2Go/83W0v2Nn7tTP9fGrX4IjmOa93s3M0SZeFimU1vIIr2wL9yNJlIyK21y85SGm3++JncB8IF751cjoLHuQ=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.123, )",
-        "resolved": "3.0.123",
-        "contentHash": "maXbWokGTRWiBGqxxN2J1vEVGHFc6yWSjbyc0KkrJ78PcjkeWm3Y4PrKUH0tMcknpJvQkM4twMKrgSYZmRNbcQ=="
+        "requested": "[3.0.125, )",
+        "resolved": "3.0.125",
+        "contentHash": "CexelZXr4mqLJGy9LGthGnAKUkz/Uh5U4Brh0FnbO+VAI7/TUoPoHKXA+8LLJ8kId7DagSWeuAP3KvCiTvPhgQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
