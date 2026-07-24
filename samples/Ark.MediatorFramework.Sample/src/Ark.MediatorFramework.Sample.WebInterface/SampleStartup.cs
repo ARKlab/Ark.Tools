@@ -179,6 +179,7 @@ public sealed class SampleStartup
     private void ConfigureOpenApi(Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
     {
         options
+            .AddArkTypeConverterValueSchemas()
             .AddArkNodaTimeSchemas()
             .AddArkServerSetProperties()
             .AddArkOAuthSecurity(_openApiSecurity)

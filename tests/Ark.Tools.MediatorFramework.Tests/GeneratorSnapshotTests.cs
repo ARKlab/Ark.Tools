@@ -365,6 +365,86 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorWrapsTypeConverterRouteAndQueryValues()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            public readonly struct ExternalTimestamp
+            {
+            }
+            [HttpEndpoint("GET", "/audits/{AtTimestamp}")]
+            public sealed class GetAudits : IQuery<string>
+            {
+                public ExternalTimestamp AtTimestamp { get; init; }
+                [BindFromQuery]
+                public ExternalTimestamp? FromTimestamp { get; init; }
+            }
+            """);
+
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"AtTimestamp\")] global::Ark.Tools.MediatorFramework.MinimalApi.ArkTypeConverterValue<global::ExternalTimestamp> AtTimestamp");
+        generated.Should().Contain("ArkTypeConverterValue<global::ExternalTimestamp?>? FromTimestamp");
+        generated.Should().Contain("AtTimestamp = AtTimestamp.Value");
+        generated.Should().Contain("FromTimestamp = FromTimestamp is { } FromTimestampValue ? FromTimestampValue.Value : default");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorDoesNotWrapBasicTypes()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/values/{Count}/{Ratio}")]
+            public sealed class GetValues : IQuery<string>
+            {
+                public int Count { get; init; }
+                public double Ratio { get; init; }
+                [BindFromQuery]
+                public bool Enabled { get; init; }
+                [BindFromQuery]
+                public decimal Amount { get; init; }
+                [BindFromQuery]
+                public System.Guid Id { get; init; }
+            }
+            """);
+
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"Count\")] int Count");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"Ratio\")] double Ratio");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Enabled\")] bool Enabled");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Amount\")] decimal Amount");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Id\")] global::System.Guid Id");
+        generated.Should().NotContain("ArkTypeConverterValue<");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsEnumsAsStringsWithoutWrappers()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            public enum Status
+            {
+                Pending,
+                Complete,
+            }
+            [HttpEndpoint("GET", "/items/{RouteStatus}")]
+            public sealed class GetItems : IQuery<string>
+            {
+                public Status RouteStatus { get; init; }
+                [BindFromQuery]
+                public Status? QueryStatus { get; init; }
+            }
+            """);
+
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"RouteStatus\")] global::Status RouteStatus");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"QueryStatus\")] global::Status? QueryStatus");
+        generated.Should().NotContain("ArkTypeConverterValue<global::Status");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorProtectsServerSetProperties()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
