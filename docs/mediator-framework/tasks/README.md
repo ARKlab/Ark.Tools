@@ -33,6 +33,8 @@ Source analysis and decisions: [`../pre-release-review.md`](../pre-release-revie
 | [FW-03](framework/FW-03-shared-problemdetails-package.md) | Shared ProblemDetails package (A4/D5) | framework |
 | [FW-04](framework/FW-04-file-download.md) | File download support (G10) | framework |
 | [GEN-04](generator-dx/GEN-04-remove-hardcoded-documents-proto.md) | Remove sample `Documents.proto` from framework generator (A6) | generator-dx |
+| [GEN-07](generator-dx/GEN-07-automatic-proto-export.md) | Automatic proto export without host entry-point wiring | generator-dx |
+| [GEN-08](generator-dx/GEN-08-from-assembly-api-names.md) | Name assembly-scanning APIs explicitly | generator-dx |
 | [SMP-01](sample-parity/SMP-01-fluentvalidation.md) | FluentValidation decorators in sample (G2) | sample-parity |
 | [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) | SQL/Dapper + transactional Outbox (G4) | sample-parity |
 | [SMP-03](sample-parity/SMP-03-persisted-auditing.md) | Persisted auditing (G5) | sample-parity |
@@ -88,6 +90,8 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [FW-04](framework/FW-04-file-download.md)
 6. [x] [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md)
    [x] [SMP-03](sample-parity/SMP-03-persisted-auditing.md)
+   [ ] [GEN-07](generator-dx/GEN-07-automatic-proto-export.md)
+   [ ] [GEN-08](generator-dx/GEN-08-from-assembly-api-names.md)
    [ ] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
    [ ] [SMP-05](sample-parity/SMP-05-paging.md)
    [ ] [SMP-06](sample-parity/SMP-06-misc-parity.md)
