@@ -365,7 +365,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MinimalApiGeneratorWrapsTypeConverterRouteAndQueryValues()
+    public void MinimalApiGeneratorBindsUnknownTypesDirectly()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
             """
@@ -383,10 +383,11 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"AtTimestamp\")] global::Ark.Tools.MediatorFramework.MinimalApi.ArkTypeConverterValue<global::ExternalTimestamp> AtTimestamp");
-        generated.Should().Contain("ArkTypeConverterValue<global::ExternalTimestamp?>? FromTimestamp");
-        generated.Should().Contain("AtTimestamp = AtTimestamp.Value");
-        generated.Should().Contain("FromTimestamp = FromTimestamp is { } FromTimestampValue ? FromTimestampValue.Value : default");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"AtTimestamp\")] global::ExternalTimestamp AtTimestamp");
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"FromTimestamp\")] global::ExternalTimestamp? FromTimestamp");
+        generated.Should().Contain("AtTimestamp = AtTimestamp");
+        generated.Should().Contain("FromTimestamp = FromTimestamp");
+        generated.Should().NotContain("ArkTypeConverterValue<");
     }
 
     [TestMethod]
