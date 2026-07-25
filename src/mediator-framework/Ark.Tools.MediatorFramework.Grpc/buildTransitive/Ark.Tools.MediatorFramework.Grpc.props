@@ -1,5 +1,6 @@
 <Project>
   <PropertyGroup>
+    <ArkExportProto Condition="'$(ArkExportProto)' == ''">true</ArkExportProto>
     <ArkExportProtoDir Condition="'$(ArkExportProtoDir)' == ''">$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
   </PropertyGroup>
   <ItemGroup>
