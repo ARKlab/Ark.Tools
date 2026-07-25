@@ -87,6 +87,7 @@
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Rebus/Ark.Tools.MediatorFramework.Rebus.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Rebus.Generators/Ark.Tools.MediatorFramework.Rebus.Generators.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Grpc.Export/Ark.Tools.MediatorFramework.Grpc.Export.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.Tools.MediatorFramework.Grpc.Generators.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj" />

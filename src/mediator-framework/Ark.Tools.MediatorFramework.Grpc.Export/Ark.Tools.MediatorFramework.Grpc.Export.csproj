@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Description>Build-time protobuf exporter for Ark.Tools MediatorFramework gRPC services</Description>
+  </PropertyGroup>
+</Project>

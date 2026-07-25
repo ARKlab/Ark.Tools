@@ -30,6 +30,8 @@
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework.Grpc.Export\Ark.Tools.MediatorFramework.Grpc.Export.csproj"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,6 +54,14 @@
             PackagePath="analyzers/dotnet/cs"
             Visible="false"
             Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Grpc.Generators.dll')" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll"
+            Pack="true" PackagePath="tools" Visible="false" />
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.runtimeconfig.json"
+            Pack="true" PackagePath="tools" Visible="false" />
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.deps.json"
+            Pack="true" PackagePath="tools" Visible="false" />
     </ItemGroup>
   </Target>
 
