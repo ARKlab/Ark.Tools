@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Code-first gRPC transport runtime package for Ark.Tools MediatorFramework. Bundles the source generator that emits gRPC service contracts, implementations, and MapArkGrpcServices for [GrpcMethod]-annotated contracts.</Description>
+    <Description>Code-first gRPC transport runtime package for Ark.Tools MediatorFramework. Bundles source generation and automatic build-time export of generated service contracts, shared assets, and MapArkGrpcServices for [GrpcMethod]-annotated contracts.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;gRPC;Source Generator</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
@@ -56,11 +56,11 @@
             Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Grpc.Generators.dll')" />
     </ItemGroup>
     <ItemGroup>
-      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll"
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.dll"
             Pack="true" PackagePath="tools" Visible="false" />
-      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.runtimeconfig.json"
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.runtimeconfig.json"
             Pack="true" PackagePath="tools" Visible="false" />
-      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.deps.json"
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.deps.json"
             Pack="true" PackagePath="tools" Visible="false" />
     </ItemGroup>
   </Target>
