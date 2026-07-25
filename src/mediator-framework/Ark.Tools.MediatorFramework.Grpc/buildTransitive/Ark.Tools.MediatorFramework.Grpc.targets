@@ -6,9 +6,11 @@
 
   <Target Name="ArkExportProto"
           AfterTargets="Build"
-          Condition="'$(ArkExportProto)' == 'true' And '$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true'">
+          Condition="'$(ArkExportProto)' == 'true' And '$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true' And Exists('$(TargetDir)$(TargetName).runtimeconfig.json')">
     <PropertyGroup>
-      <_ArkProtoExportRunner Condition="Exists('$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll')">$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
+      <_ArkProtoExportRunner Condition="'$(TargetFramework)' == 'net8.0' And Exists('$(MSBuildThisFileDirectory)..\tools\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll')">$(MSBuildThisFileDirectory)..\tools\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
+      <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == '' And Exists('$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll')">$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
+      <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == '' And '$(TargetFramework)' == 'net8.0'">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
       <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == ''">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
     </PropertyGroup>
     <Exec Command="dotnet &quot;$(_ArkProtoExportRunner)&quot; &quot;$(TargetPath)&quot; &quot;$(ArkExportProtoDir)&quot;" />
