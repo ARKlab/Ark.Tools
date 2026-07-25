@@ -62,7 +62,11 @@
             Pack="true" PackagePath="tools" Visible="false" />
       <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.deps.json"
             Pack="true" PackagePath="tools" Visible="false" />
-      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.*"
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll"
+            Pack="true" PackagePath="tools/net8.0" Visible="false" />
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.runtimeconfig.json"
+            Pack="true" PackagePath="tools/net8.0" Visible="false" />
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.deps.json"
             Pack="true" PackagePath="tools/net8.0" Visible="false" />
     </ItemGroup>
   </Target>

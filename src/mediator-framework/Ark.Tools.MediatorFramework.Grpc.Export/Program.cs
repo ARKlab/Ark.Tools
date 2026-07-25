@@ -67,7 +67,10 @@ static string GetSafeOutputPath(string destination, string relativePath)
 
     var fullDestination = Path.GetFullPath(destination);
     var output = Path.GetFullPath(Path.Combine(fullDestination, relativePath));
-    if (!output.StartsWith(fullDestination + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+    var relativeOutput = Path.GetRelativePath(fullDestination, output);
+    if (relativeOutput == ".."
+        || relativeOutput.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+        || Path.IsPathRooted(relativeOutput))
         throw new InvalidOperationException($"Generated protobuf asset path '{relativePath}' escapes the destination.");
     return output;
 }
