@@ -183,6 +183,16 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
+    public async Task<AccessTokenResponse> GetTokenAsync(TokenExchangeTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<AccessTokenResponse> GetTokenAsync(FederatedConnectionAccessTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
     private static string _getKey(RefreshTokenRequest r)
     {
         return $"RefreshTokenRequest{r.ClientId}{r.RefreshToken}{r.Audience}{r.Scope}";
