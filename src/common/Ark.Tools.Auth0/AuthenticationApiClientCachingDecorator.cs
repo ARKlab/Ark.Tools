@@ -183,6 +183,28 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         return _getToken(request, _getKey, _inner.GetTokenAsync, cancellationToken);
     }
 
+    /// <summary>
+    /// Exchanges a token using the OAuth 2.0 Token Exchange grant.
+    /// </summary>
+    /// <param name="request">The token exchange request.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <returns>The requested access token response.</returns>
+    public async Task<AccessTokenResponse> GetTokenAsync(TokenExchangeTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Exchanges an Auth0 token for an access token issued by a federated connection.
+    /// </summary>
+    /// <param name="request">The federated connection access token request.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <returns>The requested access token response.</returns>
+    public async Task<AccessTokenResponse> GetTokenAsync(FederatedConnectionAccessTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
     private static string _getKey(RefreshTokenRequest r)
     {
         return $"RefreshTokenRequest{r.ClientId}{r.RefreshToken}{r.Audience}{r.Scope}";
