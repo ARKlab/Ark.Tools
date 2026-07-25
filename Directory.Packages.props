@@ -63,7 +63,7 @@
 
 	  <!-- TESTING -->
 	  <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
-	  <PackageVersion Include="AwesomeAssertions.Web" Version="1.9.6" />
+	  <PackageVersion Include="AwesomeAssertions.Web" Version="2.0.0" />
 	  <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.10" />
 	  <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
 	  <PackageVersion Include="Microsoft.Testing.Platform" Version="2.3.2" />

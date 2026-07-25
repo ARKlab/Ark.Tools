@@ -404,10 +404,11 @@
       },
       "AwesomeAssertions.Web": {
         "type": "Transitive",
-        "resolved": "1.9.6",
-        "contentHash": "ZutEz9HYFa1Bv8e/RBi44qmzCBRI5chNZ3oyj1KqM8D9AN7PkXXzyFkckL4K6X6WYRBAHeQYmAzXBCbHGtuqZg==",
+        "resolved": "2.0.0",
+        "contentHash": "m6Te21M5v5aQ87gz3vo+exBIC0owZmV4em9/nkycVCXI1+6lXD1XFJBGNJ8hKwLMbuRD9A7WyCuW6G7IXzFKkQ==",
         "dependencies": {
           "AwesomeAssertions": "9.0.0",
+          "HttpMessageFormatter": "2.0.0",
           "Microsoft.AspNet.WebApi.Client": "6.0.0",
           "Newtonsoft.Json": "13.0.3"
         }
@@ -580,6 +581,15 @@
         "type": "Transitive",
         "resolved": "6.5.1",
         "contentHash": "LgceF4mPguB/q3NWs6T3bitOFnYIANSRvfhASMgVb8ks7fSqY8jbdBHoVEuUDmxg3T7+kF21qSE0jQv9hdpLng=="
+      },
+      "HttpMessageFormatter": {
+        "type": "Transitive",
+        "resolved": "2.0.0",
+        "contentHash": "qw1Y7r8zepP76Uz6Gx742wDrADjR5af5ih/kRsj3i1BKilrXCoNvOyPrMc9V2VswnNuVG5WwH+VsDxLbK2wk3w==",
+        "dependencies": {
+          "Microsoft.AspNet.WebApi.Client": "6.0.0",
+          "Newtonsoft.Json": "13.0.3"
+        }
       },
       "Humanizer.Core": {
         "type": "Transitive",
@@ -2443,7 +2453,7 @@
         "dependencies": {
           "Ark.Tools.Http": "[1.0.0, )",
           "AwesomeAssertions": "[9.4.0, )",
-          "AwesomeAssertions.Web": "[1.9.6, )",
+          "AwesomeAssertions.Web": "[2.0.0, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.19.2, )",
           "Reqnroll": "[3.3.4, )"
         }
