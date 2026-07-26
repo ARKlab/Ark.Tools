@@ -687,6 +687,6 @@ Mirroring the ReferenceProject, it separates the transport-agnostic
 **Application** assembly (pure contracts/handlers, store, decorator) from the
 **WebInterface** hosting assembly, where the selected requests/queries are
 exposed via endpoints and the transports (user context, Rebus) are wired.
-See [`implementation-plan.md`](implementation-plan.md) for exactly which pieces
-are proven in code versus specified for follow-up, and [`tasks.md`](tasks.md)
+See [`progress/implementation-plan.md`](progress/implementation-plan.md) for exactly which pieces
+are proven in code versus specified for follow-up, and [`progress/tasks.md`](progress/tasks.md)
 for acceptance criteria.
