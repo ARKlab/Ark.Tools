@@ -65,7 +65,7 @@ the MVC action used a different result mapping. The generated OpenAPI document
 contains both the success and null-result responses.
 Generated HTTP endpoints require authorization by default. Set `Policy` on
 `[HttpEndpoint]` for a named policy, or explicitly set `AllowAnonymous = true`
-for public endpoints. `MapArkEndpoints` also accepts a group configuration
+for public endpoints. `MapArkEndpointsFromAssembly` also accepts a group configuration
 callback for shared authorization and other endpoint metadata such as filters,
 rate limiting, CORS, or output caching.
 

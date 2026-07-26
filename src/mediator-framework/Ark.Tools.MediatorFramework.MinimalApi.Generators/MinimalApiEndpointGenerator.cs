@@ -17,7 +17,7 @@ namespace Ark.MediatorFramework.Generators
 {
     /// <summary>
     /// Incremental generator that discovers <c>Ark.Tools.Solid</c> requests/queries decorated with
-    /// <c>[HttpEndpoint]</c> and emits <c>MapArkEndpoints</c> inside a
+    /// <c>[HttpEndpoint]</c> and emits <c>MapArkEndpointsFromAssembly</c> inside a
     /// <c>partial ArkGeneratedEndpoints</c> class. Only the Minimal API transport is emitted by this
     /// generator; add <c>Ark.Tools.MediatorFramework.Rebus.Generators</c> for Rebus and
     /// <c>Ark.Tools.MediatorFramework.Grpc.Generators</c> for gRPC.
@@ -58,8 +58,8 @@ namespace Ark.MediatorFramework.Generators
         {
             var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax invocation
-                        && invocation.Expression.ToString().Contains("MapArkEndpoints", StringComparison.Ordinal),
-                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkEndpoints"))
+                        && invocation.Expression.ToString().Contains("MapArkEndpointsFromAssembly", StringComparison.Ordinal),
+                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkEndpointsFromAssembly"))
                 .Where(static assemblyName => assemblyName is not null)
                 .Select(static (assemblyName, _) => assemblyName!)
                 .Collect();
@@ -379,9 +379,9 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("    public static partial class ArkGeneratedEndpoints");
             sb.AppendLine("    {");
 
-            // MapArkEndpoints is always emitted so callers can unconditionally invoke it.
-            sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
+            // MapArkEndpointsFromAssembly is always emitted so callers can unconditionally invoke it.
+            sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint. TAssemblyMarker selects the assembly scanned for attributed contracts.</summary>");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
             sb.AppendLine("        {");
             sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");

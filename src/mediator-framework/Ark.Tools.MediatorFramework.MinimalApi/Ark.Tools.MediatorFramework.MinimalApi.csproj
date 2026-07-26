@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
-    <Description>Minimal API (ASP.NET Core) transport runtime package for Ark.Tools MediatorFramework. Bundles the source generator that emits MapArkEndpoints for [HttpEndpoint]-annotated contracts.</Description>
+    <Description>Minimal API (ASP.NET Core) transport runtime package for Ark.Tools MediatorFramework. Bundles the source generator that emits MapArkEndpointsFromAssembly for [HttpEndpoint]-annotated contracts.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;MinimalAPI;Source Generator</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
