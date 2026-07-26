@@ -12,12 +12,12 @@
 ## Steps
 
 1. In `ArkMessagePackEx` options construction (`GetOptions` or equivalent), apply `.WithSecurity(MessagePackSecurity.UntrustedData)` to the `MessagePackSerializerOptions` used for **deserialization** of request bodies. Keep serialization options unchanged if separate.
-2. Add a startup validation helper, e.g. `public static void ValidateMessagePackContracts(this IServiceProvider/IEndpointRouteBuilder ...)` (pick the shape that fits the existing `MapArkEndpoints` flow — best: run inside the generated `MapArkEndpoints` for each `AcceptsMessagePack` contract):
+2. Add a startup validation helper, e.g. `public static void ValidateMessagePackContracts(this IServiceProvider/IEndpointRouteBuilder ...)` (pick the shape that fits the existing `MapArkEndpointsFromAssembly` flow — best: run inside the generated `MapArkEndpointsFromAssembly` for each `AcceptsMessagePack` contract):
    - For each MessagePack-enabled contract type, call `options.Resolver.GetFormatterWithVerify<T>()` (via a small generic helper) inside a try/catch and throw a single aggregated `InvalidOperationException` listing all missing formatters with the contract type names.
-   - Generator change: emitted `MapArkEndpoints` collects the MessagePack contract types and invokes the validation helper once.
+   - Generator change: emitted `MapArkEndpointsFromAssembly` collects the MessagePack contract types and invokes the validation helper once.
 3. Tests:
    - A malicious-payload test is not required; assert the options instance has `Security == MessagePackSecurity.UntrustedData` via a unit test.
-   - Startup check: a test host with a MessagePack endpoint whose contract lacks a formatter must fail at `MapArkEndpoints` time with a message naming the type.
+   - Startup check: a test host with a MessagePack endpoint whose contract lacks a formatter must fail at `MapArkEndpointsFromAssembly` time with a message naming the type.
 4. Update `design.md` §MessagePack to describe the startup check as implemented.
 
 ## Outcomes

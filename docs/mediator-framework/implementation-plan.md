@@ -340,7 +340,7 @@ controllers remain compatibility escape-hatch examples.
    formatter does) and, when `Accept` prefers msgpack, serializes the response
    likewise; JSON behavior unchanged otherwise.
 2. Apply it to the generated endpoints in the sample
-   (`MapArkEndpoints().AddEndpointFilter(…)` or an opt-in extension) and add a
+   (`MapArkEndpointsFromAssembly().AddEndpointFilter(…)` or an opt-in extension) and add a
    msgpack round-trip self-test including NodaTime values; keep the MVC
    controller as the escape-hatch demo with a README note.
 
@@ -537,7 +537,7 @@ generator tests cover round-trips, mixed negotiation, and resolver enforcement.
 1. `HttpEndpointAttribute`: add a serialization opt-in (e.g.
    `bool AcceptsMessagePack` or a `[Flags] HttpSerde` property, JSON always
    on). Remove the `useMessagePack` parameter from the generated
-   `MapArkEndpoints`.
+   `MapArkEndpointsFromAssembly`.
 2. Replace `ArkMessagePackEx.MapArkMessagePackPost` with an endpoint filter /
    inline negotiation used by the generated endpoint when the contract opted
    in: `Content-Type: application/x-msgpack` → deserialize body with

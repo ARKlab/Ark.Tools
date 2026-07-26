@@ -7,7 +7,7 @@
 
 The MinimalApi generator emits endpoints with **zero authorization metadata**. The sample only stays
 authenticated because `SampleStartup.cs` sets an `AuthorizationOptions.FallbackPolicy`. Any consumer
-that copies `MapArkEndpoints()` into a plain host ships every contract — including mutations —
+that copies `MapArkEndpointsFromAssembly()` into a plain host ships every contract — including mutations —
 anonymous. There is also no way to attach a policy per endpoint (`HttpEndpointAttribute` has no
 policy member, and no `RouteHandlerBuilder`/group hook is exposed).
 
@@ -20,7 +20,7 @@ Files:
 
 Apply **both** mitigations:
 - (a) Attribute-level: generator emits `.RequireAuthorization(...)` per endpoint by default, with explicit opt-out and per-endpoint policy support on `HttpEndpointAttribute`.
-- (b) Group-level: `MapArkEndpoints` maps all endpoints into a single `RouteGroupBuilder` and exposes it (or a configuration callback) so the host can apply cross-cutting config (auth, filters, rate limiting, CORS, output caching).
+- (b) Group-level: `MapArkEndpointsFromAssembly` maps all endpoints into a single `RouteGroupBuilder` and exposes it (or a configuration callback) so the host can apply cross-cutting config (auth, filters, rate limiting, CORS, output caching).
 
 The sample must configure `RequireAuthenticatedUser` as the **default authorization policy** (`options.DefaultPolicy`), not only as fallback.
 
@@ -30,8 +30,8 @@ The sample must configure `RequireAuthenticatedUser` as the **default authorizat
    - `public string? Policy { get; set; }` — authorization policy name for this endpoint.
    - `public bool AllowAnonymous { get; set; }` — explicit opt-out; when `true` emit `.AllowAnonymous()`.
    - XML docs on both, stating the secure-by-default behavior.
-2. In `MinimalApiEndpointGenerator.cs`, change the emitted `MapArkEndpoints` extension:
-   - Signature: `public static RouteGroupBuilder MapArkEndpoints(this IEndpointRouteBuilder endpoints, Action<RouteGroupBuilder>? configure = null)`.
+2. In `MinimalApiEndpointGenerator.cs`, change the emitted `MapArkEndpointsFromAssembly` extension:
+   - Signature: `public static RouteGroupBuilder MapArkEndpointsFromAssembly(this IEndpointRouteBuilder endpoints, Action<RouteGroupBuilder>? configure = null)`.
    - Emit `var group = endpoints.MapGroup(string.Empty);` then map every endpoint on `group`, invoke `configure?.Invoke(group)`, and `return group;`.
    - Per endpoint: if `AllowAnonymous == true` → append `.AllowAnonymous()`; else if `Policy` set → `.RequireAuthorization("<policy>")`; else → `.RequireAuthorization()`.
 3. Update the sample:
@@ -50,7 +50,7 @@ The sample must configure `RequireAuthenticatedUser` as the **default authorizat
 ## Acceptance
 
 - [ ] `HttpEndpointAttribute` has `Policy` and `AllowAnonymous` with XML docs.
-- [ ] Emitted code: every endpoint carries `.RequireAuthorization()` / `.RequireAuthorization(policy)` / `.AllowAnonymous()`; `MapArkEndpoints` returns the `RouteGroupBuilder` and accepts an optional `configure` callback.
+- [ ] Emitted code: every endpoint carries `.RequireAuthorization()` / `.RequireAuthorization(policy)` / `.AllowAnonymous()`; `MapArkEndpointsFromAssembly` returns the `RouteGroupBuilder` and accepts an optional `configure` callback.
 - [ ] A host with **no** `FallbackPolicy` still returns `401` for unauthenticated calls to generated endpoints (covered by a test).
 - [ ] Sample sets `DefaultPolicy` = `RequireAuthenticatedUser`.
 - [ ] Unauthenticated request test → 401; authenticated → 2xx.

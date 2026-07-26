@@ -71,7 +71,7 @@ request type. Each transport is opt-in and declared independently:
 
 Generated HTTP endpoints require authorization by default. Set `Policy` on
 `[HttpEndpoint]` to select a named policy, or set `AllowAnonymous = true` for
-an intentionally public endpoint. `MapArkEndpoints` maps the generated routes
+an intentionally public endpoint. `MapArkEndpointsFromAssembly` maps the generated routes
 into one `RouteGroupBuilder`, invokes its optional configuration callback, and
 returns the group so hosts can apply shared metadata such as authorization,
 filters, rate limiting, CORS, or output caching.

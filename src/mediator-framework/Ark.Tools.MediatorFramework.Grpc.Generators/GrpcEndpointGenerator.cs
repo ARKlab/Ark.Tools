@@ -17,7 +17,7 @@ namespace Ark.MediatorFramework.Generators
 {
     /// <summary>
     /// Incremental generator that discovers <c>Ark.Tools.Solid</c> requests/queries decorated with
-    /// <c>[GrpcMethod]</c> and emits code-first gRPC service contracts plus <c>MapArkGrpcServices</c>
+    /// <c>[GrpcMethod]</c> and emits code-first gRPC service contracts plus <c>MapArkGrpcServicesFromAssembly</c>
     /// inside a <c>partial ArkGeneratedEndpoints</c> class. Only the gRPC transport is emitted by
     /// this generator; add <c>Ark.Tools.MediatorFramework.MinimalApi.Generators</c> for HTTP and
     /// <c>Ark.Tools.MediatorFramework.Rebus.Generators</c> for Rebus.
@@ -35,8 +35,8 @@ namespace Ark.MediatorFramework.Generators
         {
             var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax invocation
-                        && invocation.Expression.ToString().Contains("MapArkGrpcServices", StringComparison.Ordinal),
-                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkGrpcServices"))
+                        && invocation.Expression.ToString().Contains("MapArkGrpcServicesFromAssembly", StringComparison.Ordinal),
+                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkGrpcServicesFromAssembly"))
                 .Where(static assemblyName => assemblyName is not null)
                 .Select(static (assemblyName, _) => assemblyName!)
                 .Collect();
@@ -333,9 +333,9 @@ namespace Ark.MediatorFramework.Generators
                 }
             }
 
-            // MapArkGrpcServices is always emitted so callers can unconditionally invoke it.
-            sb.AppendLine("        /// <summary>Maps every generated code-first gRPC service.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServices<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
+            // MapArkGrpcServicesFromAssembly is always emitted so callers can unconditionally invoke it.
+            sb.AppendLine("        /// <summary>Maps every generated code-first gRPC service. TAssemblyMarker selects the assembly scanned for attributed contracts.</summary>");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServicesFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var handler in items

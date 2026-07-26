@@ -5,7 +5,7 @@
 ## Problem
 
 `design.md` claims handler wiring is "validated at startup", but a contract mapped by
-`MapArkEndpoints`/`MapArkGrpcServices`/`RegisterArkRebusHandlers` whose
+`MapArkEndpointsFromAssembly`/`MapArkGrpcServicesFromAssembly`/`RegisterArkRebusHandlersFromAssembly` whose
 `IQueryHandler<,>`/`IRequestHandler<,>`/`ICommandHandler<>` is not registered in the container
 surfaces as a **500 at first request**.
 
@@ -18,7 +18,7 @@ surfaces as a **500 at first request**.
 2. SimpleInjector hosts: prefer hooking `Container.Verify()` semantics — the sample uses SimpleInjector
    (`SampleComposition.cs`); ensure the generated registrations participate so `Verify()` catches
    misses. For the MinimalApi path (resolving via `IServiceProvider`), run the check inside
-   `MapArkEndpoints` (which runs at startup).
+   `MapArkEndpointsFromAssembly` (which runs at startup).
 3. Make the check O(registrations), no handler instantiation side effects (use registration lookup,
    not resolution, where the container supports it; SimpleInjector: `GetRegistration(type) is null`).
 4. Tests: host with one unregistered handler → startup throws naming the contract and interface;
