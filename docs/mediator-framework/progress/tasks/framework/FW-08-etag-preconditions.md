@@ -94,10 +94,10 @@ query:
   otherwise (mirror `EmitServerSetAssignments` for the non-record path).
 - Resolution order (implement as a **public static helper in the runtime package**, not as inline
   emitted logic — see step 5):
-  1. If `If-Match` is present and non-empty → the raw header value, unquoted (strip one leading and
-     one trailing `"`), preserving `*` as `*`. Multiple comma-separated values: pass the raw header
-     through as-is only when there is exactly one value; when there are several, pass the **first**
-     and let the application compare — document this ceiling in the helper XML docs.
+  1. If `If-Match` is present and non-empty → split the header on `,`, trim whitespace, take the
+     **first** entry, then unquote it (strip one leading and one trailing `"`); `*` stays `*`.
+     Order is: split → take first → unquote. Only the first entry is honored; document that ceiling
+     in the helper XML docs (upgrade path: return all entries and let the application match any).
   2. Else, if `If-None-Match` is present and its value is `*` → `"*"` (the "create only if absent"
      assertion, matching the MVC filter behavior).
   3. Else → `null` (no precondition supplied; the handler decides whether that is allowed).

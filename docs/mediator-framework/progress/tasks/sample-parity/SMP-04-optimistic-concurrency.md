@@ -115,7 +115,9 @@ with `container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(OptimisticC
   no Polly).
 - `EntityTagMismatchException` is **never** retried: it is a client precondition failure (412), not a
   server-detected race.
-- Log each retry with NLog structured logging and `CultureInfo.InvariantCulture`.
+- Log each retry at **Warn** with NLog structured logging and `CultureInfo.InvariantCulture`
+  (request type name + attempt number); the exhausted attempt is not logged here — it surfaces as the
+  409 ProblemDetails.
 - Decorator ordering: register it **outermost** relative to validation/audit decorators so a retry
   re-runs the whole handler pipeline; verify the registration order in `ApplicationComposition.cs`
   and state the chosen order in a code comment.

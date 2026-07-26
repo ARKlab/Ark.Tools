@@ -61,9 +61,10 @@ Behavior:
   position but **not** echoing raw control characters (mirrors the MVC filter, which throws on an
   empty/whitespace token). This is the header-injection guard.
 - Otherwise set `context.Response.Headers.ETag = "\"" + token + "\""` (strong validator, quoted).
-- When `conditionalGet` is `true` and the request `If-None-Match` header contains the token (unquoted
-  comparison, ordinal) or `*`, return `TypedResults.StatusCode(304)` so the caller returns 304 with
-  no body. The `ETag` header stays set on the 304 response, per RFC 9110.
+- When `conditionalGet` is `true`, compare **unquoted on both sides**: split the request
+  `If-None-Match` header on `,`, trim each entry and strip one leading and one trailing `"` from it,
+  then compare with the raw (unquoted) `token` using `StringComparer.Ordinal`. If any entry matches,
+  or an entry is `*`, return `TypedResults.StatusCode(304)` so the caller returns 304 with no body. The `ETag` header stays set on the 304 response, per RFC 9110.
 
 Generated code, in each endpoint emit path that has a non-null `ResponseETagProperty`, immediately
 before the success result is returned:
