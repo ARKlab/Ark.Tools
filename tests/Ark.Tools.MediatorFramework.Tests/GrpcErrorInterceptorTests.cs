@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.Grpc;
+using Ark.Tools.Core;
+using Ark.Tools.Core.EntityTag;
 
 using AwesomeAssertions;
 
@@ -60,6 +62,18 @@ public sealed class GrpcErrorInterceptorTests
             .Contain("AwaitUnexpectedException");
     }
 
+    [TestMethod]
+    public async Task MapsConcurrencyExceptions()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor();
+
+        var etag = await interceptor.AwaitException(new EntityTagMismatchException("etag"));
+        etag.Which.StatusCode.Should().Be(StatusCode.FailedPrecondition);
+
+        var optimistic = await interceptor.AwaitException(new OptimisticConcurrencyException("conflict"));
+        optimistic.Which.StatusCode.Should().Be(StatusCode.Aborted);
+    }
+
     private sealed class TestHostEnvironment : IHostEnvironment
     {
         public TestHostEnvironment(string environmentName)
@@ -92,6 +106,15 @@ internal static class GrpcErrorInterceptorTestExtensions
             new Empty(),
             new TestServerCallContext(),
             (_, _) => Task.FromException<Empty>(exception)).ConfigureAwait(false);
+    }
+
+    public static async Task<RpcException> AwaitException(this ArkGrpcErrorInterceptor interceptor, Exception exception)
+    {
+        Func<Task> action = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(),
+            (_, _) => Task.FromException<Empty>(exception));
+        return await action.Should().ThrowAsync<RpcException>().ConfigureAwait(false);
     }
 }
 

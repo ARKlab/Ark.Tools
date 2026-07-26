@@ -155,11 +155,10 @@ public static class ArkOpenApiEx
             if (metadata.ResponseETag)
             {
                 operation.Responses ??= new OpenApiResponses();
-                var success = operation.Responses.FirstOrDefault(response => response.Key.StartsWith("2", StringComparison.Ordinal)).Value;
+                var success = operation.Responses.FirstOrDefault(response => response.Key.StartsWith('2')).Value;
                 if (success is not null)
                 {
-                    success.Headers ??= new Dictionary<string, IOpenApiHeader>(StringComparer.OrdinalIgnoreCase);
-                    success.Headers.TryAdd("ETag", new OpenApiHeader
+                    success.Headers!.TryAdd("ETag", new OpenApiHeader
                     {
                         Description = "Opaque concurrency token.",
                         Schema = new OpenApiSchema { Type = JsonSchemaType.String },
