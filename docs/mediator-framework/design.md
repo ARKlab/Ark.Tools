@@ -84,7 +84,8 @@ Generator contract errors are reported at the transport attribute location:
 `ARKMF012` (missing route property), `ARKMF013` (invalid HTTP contract shape),
 `ARKMF014` (duplicate Rebus registration), and `ARKMF015` (conflicting Rebus
 owner queue), and `ARKMF016` (duplicate OpenAPI operation name within an API
-version). Invalid contracts are not emitted.
+version), `ARKMF017` (invalid `[ETag]` property type), and `ARKMF018` (duplicate
+`[ETag]` property). Invalid contracts are not emitted.
 
 HTTP binding treats the request as an **envelope** whose members may combine
 route, query and body sources (see *HTTP binding* below). These attributes are
