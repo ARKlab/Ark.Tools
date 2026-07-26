@@ -740,30 +740,64 @@ only to its own attribute, so adding a transport never re-runs the others.
 
 ## API surface snapshots
 
-The public wire surface must not change by accident. Mirroring
-`Microsoft.CodeAnalysis.PublicApiAnalyzers` (shipped/unshipped text files under
-source control), the framework ships an analyzer that snapshots the **transport
-surface**, which is richer than the C# public API:
+The public wire surface must not change by accident. The framework ships a
+generator that snapshots the **transport surface** — which is richer than the
+C# public API — on every build and fails the build when the snapshot differs
+from what is committed.
+
+**What is captured:**
 
 - HTTP: verb, expanded route template (per active version), parameter names and
-  sources, request/response schema shape, status codes, authorization policy.
+  sources, authorization policy, operation ID, tag.
 - gRPC: service name (per version), method name, request/response message names,
-  field numbers and streaming kind.
+  field numbers (recursively, including nested messages), streaming kind.
 - Rebus: message contract name and owner queue.
-- Contract members: name, type, nullability, `[ServerSet]`.
+- Contract members: name, fully-qualified type, nullability, `[ServerSet]` flag.
+  Nested types are expanded recursively so a change to any nested field produces
+  a visible diff.
 
-The snapshot lives next to the contracts as `ArkApiSurface.Shipped.txt` and
-`ArkApiSurface.Unshipped.txt` (`AdditionalFiles`). A surface entry that is not
-in either file is a build **error**; an entry in the files that no longer exists
-is a build **error**. A code fix regenerates the unshipped file, so an API change
-appears as an explicit, reviewable diff in the pull request — which is the point:
-reviewers see wire-breaking changes without reading generator output.
+**Workflow:**
 
-**Release gate.** When `$(ArkApiSurfaceEnforceRelease)` is `true` (set in CI
-on release branches / pack jobs), any non-empty `ArkApiSurface.Unshipped.txt`
-is a build **error** (`ARKAPI004`). Promoting entries from the unshipped file to
-the shipped file is the explicit, manual acceptance step that must land in the
-release PR; no unreviewed surface change can ship.
+1. During every build the generator computes the full sorted surface and writes
+   it to `$(IntermediateOutputPath)/ArkApiSurface.current.txt` (the `obj/`
+   folder — never committed).
+2. An MSBuild target compares that file byte-for-byte with the committed
+   `ArkApiSurface.txt` in the project directory.
+3. If the files differ, or if `ArkApiSurface.txt` does not exist, the build
+   fails with diagnostics `ARKAPI001` / `ARKAPI002` and a message pointing to
+   the generated file.
+4. The developer **accepts** the change by replacing the committed file with the
+   generated one:
+   ```
+   cp obj/…/ArkApiSurface.current.txt ArkApiSurface.txt
+   git add ArkApiSurface.txt
+   ```
+   The resulting diff is exactly the wire change, reviewable in the pull
+   request with no noise.
+
+**Diagnostics:**
+
+- `ARKAPI001` (error) — `ArkApiSurface.txt` is missing; create it by copying
+  from `obj/ArkApiSurface.current.txt`.
+- `ARKAPI002` (error) — `ArkApiSurface.txt` differs from the current surface;
+  accept by copying `obj/ArkApiSurface.current.txt` over it.
+
+**CI/CD gate.** Because `ArkApiSurface.txt` must exactly match the current
+surface to pass the build, CI fails automatically on any API change that has
+not been explicitly committed. No separate release flag is needed; the single
+snapshot is the gate at every stage of the pipeline.
+
+**Entry format** (deterministic, ordinal-sorted, one entry per line):
+
+```
+CONTRACT GreetingDto.Name : string? server-set=false
+CONTRACT GreetingDto.Tags[].Value : string server-set=false
+GRPC Greetings.V1/GetGreeting (GetGreetingQuery) returns (GreetingDto) unary
+GRPC-FIELD GetGreetingQuery.Id = 1 : bytes
+HTTP GET /api/v1/greetings/{id} -> GetGreetingQuery : GreetingDto [policy=RequireAuthenticatedUser] [op=GetGreetingQuery] [tag=Greetings]
+HTTP-PARAM GetGreetingQuery.Id : System.Guid route required
+REBUS RefreshGreetingCommand -> queue:greetings
+```
 
 ## Testing strategy
 
