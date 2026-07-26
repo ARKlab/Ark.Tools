@@ -29,7 +29,7 @@ namespace Ark.MediatorFramework.Generators
         private const string BindFromQueryAttribute = "Ark.MediatorFramework.BindFromQueryAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
-        private const string ApiTagAttribute = "Ark.MediatorFramework.ApiTagAttribute";
+        private const string ApiGroupAttribute = "Ark.MediatorFramework.ApiGroupAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
@@ -100,7 +100,7 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(ServerSetAttribute),
                 compilation.GetTypeByMetadataName(ArkAttachment),
                 compilation.GetTypeByMetadataName(RebusMessageAttribute),
-                compilation.GetTypeByMetadataName(ApiTagAttribute),
+                compilation.GetTypeByMetadataName(ApiGroupAttribute),
                 compilation.GetTypeByMetadataName(Enumerable));
         }
 
@@ -128,7 +128,7 @@ namespace Ark.MediatorFramework.Generators
             var bindFromQueryAttr = compilation.GetTypeByMetadataName(BindFromQueryAttribute);
             var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
             var rebusMessageAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
-            var apiTagAttr = compilation.GetTypeByMetadataName(ApiTagAttribute);
+            var apiGroupAttr = compilation.GetTypeByMetadataName(ApiGroupAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var enumerableType = compilation.GetTypeByMetadataName(Enumerable);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
@@ -150,7 +150,7 @@ namespace Ark.MediatorFramework.Generators
                         serverSetAttr,
                         attachmentType,
                         rebusMessageAttr,
-                        apiTagAttr,
+                        apiGroupAttr,
                         enumerableType);
                     if (model is not null)
                         builder.Add(model.Value);
@@ -197,7 +197,7 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? serverSetAttr,
             INamedTypeSymbol? attachmentType,
             INamedTypeSymbol? rebusMessageAttr,
-            INamedTypeSymbol? apiTagAttr,
+            INamedTypeSymbol? apiGroupAttr,
             INamedTypeSymbol? enumerableType)
         {
             string? response = null;
@@ -264,10 +264,10 @@ namespace Ark.MediatorFramework.Generators
                     .Where(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, rebusMessageAttr))
                     .Select(attribute => NamedString(attribute, "OwnerQueue"))
                     .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
-            var apiTag = apiTagAttr is null
+            var apiGroup = apiGroupAttr is null
                 ? null
                 : type.GetAttributes()
-                    .Where(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, apiTagAttr))
+                    .Where(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, apiGroupAttr))
                     .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as string)
                     .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
             var defaultTag = type.ContainingNamespace is { IsGlobalNamespace: false } ns
@@ -313,7 +313,7 @@ namespace Ark.MediatorFramework.Generators
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 type.Name,
-                apiTag ?? defaultTag,
+                apiGroup ?? defaultTag,
                 verb,
                 template!,
                 response ?? "global::System.Void",
@@ -453,8 +453,8 @@ namespace Ark.MediatorFramework.Generators
                             spc.ReportDiagnostic(Diagnostic.Create(
                                 DuplicateOperationName,
                                 endpoints[index].Location,
-                                endpoints[index].TypeName,
-                                other.TypeName,
+                                endpoints[index].TypeFullName,
+                                other.TypeFullName,
                                 duplicate.Key,
                                 version));
                         }
@@ -926,7 +926,7 @@ namespace Ark.MediatorFramework.Generators
 
         private static string OpenApiMetadata(EndpointModel endpoint, int version, int maxVersion)
             => ".WithGroupName(" + Literal("v" + version)
-                + ").WithTags(" + Literal(endpoint.ApiTag)
+                + ").WithTags(" + Literal(endpoint.ApiGroup)
                 + ").WithName(" + Literal(OperationName(endpoint, version, maxVersion)) + ")";
 
         private static string OperationName(EndpointModel endpoint, int version, int maxVersion)
@@ -968,7 +968,7 @@ namespace Ark.MediatorFramework.Generators
             public EndpointModel(
                 string typeFullName,
                 string typeName,
-                string apiTag,
+                string apiGroup,
                 string verb,
                 string template,
                 string response,
@@ -995,7 +995,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
-                ApiTag = apiTag;
+                ApiGroup = apiGroup;
                 Verb = verb;
                 Template = template;
                 Response = response;
@@ -1027,7 +1027,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
-                ApiTag = "Ark";
+                ApiGroup = "Ark";
                 Diagnostics = diagnostics;
                 IsValid = false;
                 Verb = string.Empty;
@@ -1047,7 +1047,7 @@ namespace Ark.MediatorFramework.Generators
 
             public string TypeFullName { get; }
             public string TypeName { get; }
-            public string ApiTag { get; }
+            public string ApiGroup { get; }
             public string Verb { get; }
             public string Template { get; }
             public string Response { get; }

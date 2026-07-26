@@ -65,11 +65,12 @@ request type. Each transport is opt-in and declared independently:
 
 - `[HttpEndpoint("POST", "/api/v{version}/orders")]` — expose over Minimal API for each active version.
 - `[GrpcMethod]` (optionally `[GrpcMethod("CreateOrder")]`) — expose as a
-  code-first gRPC method; `[ServiceGroup("Orders")]` groups the service.
+  code-first gRPC method; defaults to the contract type name. `[GrpcService("Orders")]` groups the service.
 - `[RebusMessage(OwnerQueue = "orders")]` — expose as a Rebus message and,
   when an owner is declared, contribute a type-based outbound route.
-- `[ApiTag("Orders")]` — override the namespace-derived OpenAPI tag and the
-  gRPC service-group fallback for the contract.
+- `[ApiGroup("Orders")]` — override the namespace-derived API group used as the
+  OpenAPI tag and the gRPC service-group fallback. `[GrpcService]` takes precedence
+  over `[ApiGroup]` for gRPC service grouping.
 
 Generated HTTP endpoints require authorization by default. Set `Policy` on
 `[HttpEndpoint]` to select a named policy, or set `AllowAnonymous = true` for
@@ -151,7 +152,7 @@ return `202 Accepted`. Generated gRPC command methods return
 The `IntroducedIn` and exclusive `RetiredIn` properties on `HttpEndpointAttribute`
 expand a `{version}` route once per active version. The generator applies the
 same lifetime rules to `[GrpcMethod]`, emitting one version-suffixed service per
-`[ServiceGroup]` and retaining only methods active in that version.
+`[GrpcService]` and retaining only methods active in that version.
 
 ### HTTP binding: the request is always the envelope
 
@@ -211,7 +212,7 @@ attachment reaches a handler, including for streamed gRPC uploads.
 
 `protobuf-net.Grpc` hosts a `[ServiceContract]` interface. The generator groups
 the `[GrpcMethod]`-declared requests/queries (by namespace or
-`[ServiceGroup("Orders")]`) into one generated `[ServiceContract]` interface plus
+`[GrpcService("Orders")]`) into one generated `[ServiceContract]` interface plus
 a `partial` implementation that resolves the pure handler from the ambient
 request scope (opened by the SimpleInjector integration in the pipeline). The
 `partial` lets a developer hand-write any method the generator cannot express.
@@ -491,7 +492,7 @@ retirement, mirroring how `Asp.Versioning` treats versions:
   contract).
 - OpenAPI documents are still partitioned per version; an endpoint appears in
   every document of a version it is active in.
-- gRPC mirrors the same rule per `[ServiceGroup]`: one `[ServiceContract]`
+- gRPC mirrors the same rule per `[GrpcService]`: one `[ServiceContract]`
   service is generated per active version (`GreetingsV1`, `GreetingsV2`, …),
   each containing the methods active in that version.
 - Route parameters (`{id}` etc.) are ordinary `[FromRoute]` bindings and remain
@@ -534,7 +535,7 @@ the gRPC generator/package — no hand-maintained schema program:
 
 - The gRPC incremental generator (which already knows every `[GrpcMethod]`
   contract and `[ProtoContract]` message) additionally emits the proto text as
-  generated C# (`ArkGeneratedProtos`: per-`[ServiceGroup]` `(fileName, content)`
+  generated C# (`ArkGeneratedProtos`: per-`[GrpcService]` `(fileName, content)`
   pairs plus a `WriteTo(directory)` helper).
 - Hosts with hand-written protobuf services can declare
   `<ArkAdditionalProto Include="path/to/service.proto" />`; the export target
@@ -626,9 +627,9 @@ writes only the handler still gets a navigable document:
 
 - **Tag** — defaults to the contract's **namespace** (the last namespace
   segment; `Ark.Sample.Application.Greetings.GetGreetingQuery` → `Greetings`).
-  Overridable per contract with `[ApiTag("...")]`, and per namespace/assembly by
+  Overridable per contract with `[ApiGroup("...")]`, and per namespace/assembly by
   a host-level default. The same value groups gRPC methods when no explicit
-  `[ServiceGroup]` is declared, so both transports present the same taxonomy.
+  `[GrpcService]` is declared, so both transports present the same taxonomy.
 - **Operation name** — defaults to the contract **class name** with any
   `Request`/`Query`/`Command` suffix preserved (`GetGreetingQuery` →
   `GetGreetingQuery`), emitted as the OpenAPI `operationId` and as the endpoint
@@ -716,7 +717,7 @@ same package):
 | `Ark.Tools.MediatorFramework` | transport-neutral core: `IArkAttachment`/`ArkAttachment`, shared versioning primitives |
 | `Ark.Tools.MediatorFramework.MinimalApi` | `[HttpEndpoint]`, HTTP runtime helpers + the Minimal API endpoint generator |
 | `Ark.Tools.MediatorFramework.Rebus` | `[RebusMessage]`, Rebus runtime helpers + the Rebus wrapper generator |
-| `Ark.Tools.MediatorFramework.Grpc` | `[GrpcMethod]`/`[ServiceGroup]`, gRPC runtime helpers (interceptor, upload adapter) + the gRPC service generator |
+| `Ark.Tools.MediatorFramework.Grpc` | `[GrpcMethod]`/`[GrpcService]`, gRPC runtime helpers (interceptor, upload adapter) + the gRPC service generator |
 
 An application references only the transports it hosts; each generator reacts
 only to its own attribute, so adding a transport never re-runs the others.

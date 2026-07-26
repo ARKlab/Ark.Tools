@@ -97,14 +97,14 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MinimalApiGeneratorUsesApiTagAndReportsDuplicateOperationNames()
+    public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
             namespace Api.Contracts;
-            [ApiTag("Public")]
+            [ApiGroup("Public")]
             [HttpEndpoint("GET", "/one")]
             public sealed class First : IQuery<string> { }
             [HttpEndpoint("GET", "/two")]
@@ -340,12 +340,12 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
-            [ServiceGroup("Greetings")]
+            [GrpcService("Greetings")]
             [GrpcMethod("GetGreeting", IntroducedIn = 1, RetiredIn = 2)]
             public sealed class GetGreeting : IQuery<string>
             {
             }
-            [ServiceGroup("Greetings")]
+            [GrpcService("Greetings")]
             [GrpcMethod("CreateGreeting", IntroducedIn = 2)]
             public sealed class CreateGreeting : IRequest<string>
             {
@@ -362,13 +362,13 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void GrpcGeneratorUsesApiTagWhenServiceGroupIsAbsent()
+    public void GrpcGeneratorUsesApiGroupWhenGrpcServiceIsAbsent()
     {
         var generated = RunGenerator<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
-            [ApiTag("Greetings")]
+            [ApiGroup("Greetings")]
             [GrpcMethod("GetGreeting")]
             public sealed class GetGreeting : IQuery<string>
             {
@@ -617,7 +617,7 @@ public sealed class GeneratorSnapshotTests
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
             using ProtoBuf;
-            [ServiceGroup("Greetings")]
+            [GrpcService("Greetings")]
             [GrpcMethod("GetGreeting")]
             [ProtoContract]
             public sealed class GetGreeting : IQuery<Greeting>

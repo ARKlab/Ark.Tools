@@ -43,7 +43,7 @@ project builds under the repo's strict settings and its self-tests pass with
 ## Epic 4 — Code-first gRPC transport
 
 - [x] **T4.1** `[ProtoContract]` contracts + generated `[ServiceContract]` service
-  (opt-in via `[GrpcMethod]`, grouped by `[ServiceGroup]`), hosted with
+  (opt-in via `[GrpcMethod]`, grouped by `[GrpcService]`), hosted with
   `AddCodeFirstGrpc()`; the generated service is `partial` for manual methods.
   - *Accept:* an in-process `Grpc.Net.Client` self-test calls the service and
     gets the same result as the HTTP path.
@@ -140,7 +140,7 @@ project builds under the repo's strict settings and its self-tests pass with
     per active version; self-tests call the same contract on two versions and
     assert a retired contract is absent from later versions; a route-parameter
     (`{id}`) test passes on every generated version; gRPC generates one
-    service per active version per `[ServiceGroup]`.
+    service per active version per `[GrpcService]`.
 - [x] **T8.6** Split the framework into per-transport packages, each with its
   own `netstandard2.0` analyzer and transport-only generator output.
   - *Accept:* `Ark.Tools.MediatorFramework` (core) plus
@@ -198,7 +198,7 @@ project builds under the repo's strict settings and its self-tests pass with
 - [x] **T9.6** `.proto` generated on build as assets; shared protos split per
   package; delete `ProtoGenerator`.
   - *Accept:* the gRPC generator emits `ArkGeneratedProtos` (per
-    `[ServiceGroup]` file content importing `ark/nodatime.proto` and
+    `[GrpcService]` file content importing `ark/nodatime.proto` and
     `ark/mediator.proto`); `Ark.Tools.Nodatime.Protobuf` packs
     `ark/nodatime.proto` and `Ark.Tools.MediatorFramework.Grpc` packs
     `ark/mediator.proto` as content assets; the Grpc package ships a
@@ -342,7 +342,7 @@ authoritative ones.
 - [x] **T12.1** OpenAPI tags and operation names from the contract
   ([NET-06](tasks/aspnetcore/NET-06-openapi-tags-operation-names.md)).
   - *Accept:* every generated operation carries a namespace-derived tag
-    (overridable with `[ApiTag]`) and a unique, contract-derived `operationId`;
+    (overridable with `[ApiGroup]`) and a unique, contract-derived `operationId`;
     gRPC grouping shares the taxonomy; duplicates are a diagnostic.
 - [ ] **T12.2** Standard 400/403/500 ProblemDetails responses
   ([FW-05](tasks/framework/FW-05-standard-problem-responses.md)).
