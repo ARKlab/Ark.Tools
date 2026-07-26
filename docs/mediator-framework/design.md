@@ -178,14 +178,24 @@ reconstructs the envelope (`init`-only members via object initializer /
 `with`) before dispatching to the pure handler. All three sources are
 demonstrated combined on a single sample contract and covered by tests.
 
-### Generated multipart upload (single attachment)
+### Generated multipart upload (single or multiple files)
 
 Attachment uploads are ordinary envelopes too: a `[HttpEndpoint]` contract may
-declare **at most one** `IArkAttachment` property. The generator (not
-hand-written startup code) emits a `multipart/form-data` endpoint for it:
-route and query properties bind per the envelope rules above, the single form
-file maps to `ArkAttachment` and is assigned to the attachment property. More
-than one `IArkAttachment` property is a generator diagnostic (error). The
+declare **at most one** attachment member, either a single `IArkAttachment`
+property or a **collection** property
+(`IReadOnlyList<IArkAttachment>`/`IEnumerable<IArkAttachment>`). The generator
+(not hand-written startup code) emits a `multipart/form-data` endpoint for it:
+route and query properties bind per the envelope rules above, and the form
+file(s) map to `ArkAttachment` instances assigned to the attachment member. A
+single-attachment contract binds the first form file and rejects a request
+carrying more than one file with `400`; a collection contract binds **every**
+uploaded file in form order, and an empty collection is allowed only when the
+property is not required. Per-endpoint limits apply to each file
+(`AllowedContentTypes`) and to the whole request (`MaxRequestBodySizeBytes`),
+plus `MaxFileCount` for collections. Declaring more than one attachment member
+is a generator diagnostic (error); the same rule and the same
+metadata-first chunk protocol apply to gRPC uploads, where a collection member
+is fed by a client stream whose metadata messages delimit the files. The
 `MapArkAttachmentUpload` runtime helper remains as the manual escape hatch
 only. Generated multipart endpoints disable antiforgery explicitly because they
 target bearer-token APIs; set `RequireAntiforgery = true` on the contract for a
@@ -295,15 +305,39 @@ graph validation.
 Handlers only throw semantic domain exceptions; they never format transport
 errors.
 
-### HTTP: Hellang ProblemDetails + BusinessRuleViolation
+### Standard error responses on every endpoint
 
-The Minimal API host does **not** reimplement RFC 7807 mapping. It registers
-`Hellang.Middleware.ProblemDetails` and reuses the mappings that
-`Ark.Tools.AspNetCore` already ships (`ArkProblemDetailsOptionsSetup`):
+Every generated HTTP endpoint advertises the error contract the host actually
+produces, so the OpenAPI document is complete without per-endpoint
+hand-written metadata:
+
+- `400 Bad Request` — binding, deserialization and `ValidationException`
+  failures, `application/problem+json`.
+- `403 Forbidden` — policy authorization failure, `application/problem+json`.
+  Emitted for every endpoint that is not `AllowAnonymous`; anonymous endpoints
+  omit it.
+- `500 Internal Server Error` — unhandled exception, `application/problem+json`.
+
+`401 Unauthorized` is contributed by the authorization metadata of the
+non-anonymous endpoints. The response type is the shared `ProblemDetails`
+schema from `Ark.Tools.AspNetCore.ProblemDetails`, referenced (not duplicated)
+by every operation. The generator emits this metadata; hosts do not repeat it,
+and an endpoint that overrides `SuccessStatusCode`/`NullResultStatusCode` keeps
+the standard error set.
+
+### HTTP: shared ProblemDetails package + BusinessRuleViolation
+
+The Minimal API host does **not** reimplement RFC 7807 mapping. Mapping lives in
+the shared `Ark.Tools.AspNetCore.ProblemDetails` package (referenced by
+`Ark.Tools.AspNetCore` so MVC hosts keep their existing behavior) and is wired
+into a Minimal API host with `AddArkProblemDetailsExceptionHandler()` plus
+`UseArkProblemDetailsExceptionHandler()` — an `IExceptionHandler`, not the
+legacy Hellang middleware:
 
 - `EntityNotFoundException` → 404, `OptimisticConcurrencyException` → 409,
-  `UnauthorizedAccessException` → 403, `ValidationException` → 400 with field
-  violations.
+  `EntityTagMismatchException` → 412, `PolicyAuthorizationException` → 403,
+  `NotImplementedException` → 501, `HttpRequestException` → 503,
+  `ValidationException` → 400 with field violations.
 - `BusinessRuleViolationException` → 400: the `BusinessRuleViolation`-derived
   object (class name = error code; extra public properties = structured data)
   is serialized into the ProblemDetails `extensions`, exactly as existing MVC
@@ -414,6 +448,27 @@ Generated Minimal API endpoints return `404` for a null result and otherwise emi
 stream with its content type and sanitized leaf file name. Generated gRPC contracts
 expose a server stream of metadata-first `DownloadDocumentChunk` messages followed by
 byte chunks; the shared chunk contracts are included in exported proto assets.
+
+### Streaming collection responses
+
+A query or request whose response type is `IAsyncEnumerable<T>` is a
+**streaming collection**: the handler yields items as they are produced and the
+framework never materializes the whole sequence unless the wire format forces
+it.
+
+| Transport | Shape |
+| --- | --- |
+| Minimal API + JSON | native System.Text.Json streaming of a JSON **array** (`application/json`); items are written as they are yielded, the response is not buffered and no Server-Sent Events framing is used |
+| Minimal API + MessagePack | the sequence is **buffered** and written as one MessagePack array; the format requires the element count in the array header, so an unknown-length top-level array cannot be streamed. The buffering ceiling and its upgrade path (a length-prefixed message stream negotiated with a distinct content type) are documented, not hidden |
+| gRPC | **server-streaming** method (`IAsyncEnumerable<T>` return in the code-first contract, `stream` in the exported `.proto`) |
+| Rebus | not applicable — streaming responses are a request/response concept; a `[RebusMessage]` contract must not declare a streaming response (generator diagnostic) |
+
+Cancellation flows to the handler's `CancellationToken` when the client
+disconnects or the gRPC call is cancelled, so producers stop early. Errors
+thrown **before** the first item map to the normal error model; errors thrown
+**after** streaming started cannot change the already-sent status code and are
+surfaced as a truncated response (HTTP) or a non-OK trailer (gRPC), and are
+always logged server-side.
 
 ## API versioning
 
@@ -561,6 +616,32 @@ targets **`net10.0` exclusively** — `[HttpEndpoint]` hosting has no `net8.0`
 support. The transport-neutral core and the Rebus/gRPC packages keep the
 repo-wide multi-targeting.
 
+## OpenAPI operation grouping, naming and documentation
+
+Operations are grouped and named from the contract itself, so a developer who
+writes only the handler still gets a navigable document:
+
+- **Tag** — defaults to the contract's **namespace** (the last namespace
+  segment; `Ark.Sample.Application.Greetings.GetGreetingQuery` → `Greetings`).
+  Overridable per contract with `[ApiTag("...")]`, and per namespace/assembly by
+  a host-level default. The same value groups gRPC methods when no explicit
+  `[ServiceGroup]` is declared, so both transports present the same taxonomy.
+- **Operation name** — defaults to the contract **class name** with any
+  `Request`/`Query`/`Command` suffix preserved (`GetGreetingQuery` →
+  `GetGreetingQuery`), emitted as the OpenAPI `operationId` and as the endpoint
+  name (`WithName`). Versioned expansions get the version appended so
+  `operationId` stays unique across per-version documents.
+- **Descriptions** — XML documentation is the single source of API prose. The
+  generators read the `<summary>`/`<remarks>` of the **contract type** and emit
+  them as the operation summary/description, and the `<summary>` of each
+  contract **property** as the description of the corresponding parameter,
+  request-schema property and response-schema property. The same XML text is
+  emitted as leading comments on the messages/fields/methods of the exported
+  `.proto` files. Because the generators read the documentation comments from
+  the Roslyn symbols at compile time, cross-assembly XML files, runtime
+  reflection over `.xml` documentation files and per-host wiring are all
+  unnecessary; `GenerateDocumentationFile` is not required at runtime.
+
 ## Developer-facing transport UIs
 
 The sample exposes the versioned OpenAPI documents as it does today and adds
@@ -657,6 +738,67 @@ only to its own attribute, so adding a transport never re-runs the others.
   `ProjectReference` paths — including the analyzers, which reach the sample
   as analyzer assets of their runtime package.
 
+## API surface snapshots
+
+The public wire surface must not change by accident. The framework ships a
+generator that snapshots the **transport surface** — which is richer than the
+C# public API — on every build and fails the build when the snapshot differs
+from what is committed.
+
+**What is captured:**
+
+- HTTP: verb, expanded route template (per active version), parameter names and
+  sources, authorization policy, operation ID, tag.
+- gRPC: service name (per version), method name, request/response message names,
+  field numbers (recursively, including nested messages), streaming kind.
+- Rebus: message contract name and owner queue.
+- Contract members: name, fully-qualified type, nullability, `[ServerSet]` flag.
+  Nested types are expanded recursively so a change to any nested field produces
+  a visible diff.
+
+**Workflow:**
+
+1. During every build the generator computes the full sorted surface and writes
+   it to `$(IntermediateOutputPath)/ArkApiSurface.current.txt` (the `obj/`
+   folder — never committed).
+2. An MSBuild target compares that file byte-for-byte with the committed
+   `ArkApiSurface.txt` in the project directory.
+3. If the files differ, or if `ArkApiSurface.txt` does not exist, the build
+   fails with diagnostics `ARKAPI001` / `ARKAPI002` and a message pointing to
+   the generated file.
+4. The developer **accepts** the change by replacing the committed file with the
+   generated one:
+   ```
+   cp obj/…/ArkApiSurface.current.txt ArkApiSurface.txt
+   git add ArkApiSurface.txt
+   ```
+   The resulting diff is exactly the wire change, reviewable in the pull
+   request with no noise.
+
+**Diagnostics:**
+
+- `ARKAPI001` (error) — `ArkApiSurface.txt` is missing; create it by copying
+  from `obj/ArkApiSurface.current.txt`.
+- `ARKAPI002` (error) — `ArkApiSurface.txt` differs from the current surface;
+  accept by copying `obj/ArkApiSurface.current.txt` over it.
+
+**CI/CD gate.** Because `ArkApiSurface.txt` must exactly match the current
+surface to pass the build, CI fails automatically on any API change that has
+not been explicitly committed. No separate release flag is needed; the single
+snapshot is the gate at every stage of the pipeline.
+
+**Entry format** (deterministic, ordinal-sorted, one entry per line):
+
+```
+CONTRACT GreetingDto.Name : string? server-set=false
+CONTRACT GreetingDto.Tags[].Value : string server-set=false
+GRPC Greetings.V1/GetGreeting (GetGreetingQuery) returns (GreetingDto) unary
+GRPC-FIELD GetGreetingQuery.Id = 1 : bytes
+HTTP GET /api/v1/greetings/{id} -> GetGreetingQuery : GreetingDto [policy=RequireAuthenticatedUser] [op=GetGreetingQuery] [tag=Greetings]
+HTTP-PARAM GetGreetingQuery.Id : System.Guid route required
+REBUS RefreshGreetingCommand -> queue:greetings
+```
+
 ## Testing strategy
 
 - `samples/Ark.MediatorFramework.Sample/test/…Sample.Tests` demonstrates **how
@@ -670,6 +812,18 @@ only to its own attribute, so adding a transport never re-runs the others.
   semantics (opt-in, versioning expansion), error-model mapping, attachment
   adapters — independent of the sample application. Every feature that lives in
   a `src/` library must be unit-tested here.
+
+## User documentation
+
+The framework ships a task-oriented guide under
+`docs/mediator-framework/guide/`: a getting-started walkthrough (first contract,
+first handler, hosting each transport) plus one page per supported feature,
+each with a short example and a link to the corresponding place in
+`samples/Ark.MediatorFramework.Sample`. The guide documents the supported
+happy paths **and** the escape hatches (hand-written endpoint, hand-written
+gRPC method, `MapArkAttachmentUpload`), and every code snippet in it is taken
+from — or verified against — sample code that is compiled by the solution
+build.
 
 ## Build discipline
 
@@ -687,6 +841,6 @@ Mirroring the ReferenceProject, it separates the transport-agnostic
 **Application** assembly (pure contracts/handlers, store, decorator) from the
 **WebInterface** hosting assembly, where the selected requests/queries are
 exposed via endpoints and the transports (user context, Rebus) are wired.
-See [`implementation-plan.md`](implementation-plan.md) for exactly which pieces
-are proven in code versus specified for follow-up, and [`tasks.md`](tasks.md)
+See [`progress/implementation-plan.md`](progress/implementation-plan.md) for exactly which pieces
+are proven in code versus specified for follow-up, and [`progress/tasks.md`](progress/tasks.md)
 for acceptance criteria.

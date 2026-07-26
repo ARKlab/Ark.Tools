@@ -92,11 +92,11 @@ hand-written proto files to copy alongside generated services.
 The emitted `.proto` now generates a dedicated client assembly used by the
 behavioral tests, and the gRPC rich-error interceptor is covered there. The
 2026-07 review revisions — NodaTime via `NodaTime.Serialization.Protobuf`,
-Hellang ProblemDetails with `BusinessRuleViolation` (HTTP and gRPC), gRPC
+ProblemDetails with `BusinessRuleViolation` (HTTP and gRPC), gRPC
 client-streaming upload, version lifetime (`IntroducedIn`/`RetiredIn`) with the
 `/api/v{version}/…` placeholder, the per-transport package split and the
 framework test project under `tests/` — are specified with acceptance criteria
-in [`docs/mediator-framework/tasks.md`](../../docs/mediator-framework/tasks.md)
+in [`docs/mediator-framework/progress/tasks.md`](../../docs/mediator-framework/progress/tasks.md)
 (Epic 8) and step-by-step in
-[`docs/mediator-framework/implementation-plan.md`](../../docs/mediator-framework/implementation-plan.md)
+[`docs/mediator-framework/progress/implementation-plan.md`](../../docs/mediator-framework/progress/implementation-plan.md)
 (Phase 6).

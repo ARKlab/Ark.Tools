@@ -630,9 +630,11 @@ interceptor, upload adapter, proto export) are in `src/` packages.
   follows the "Next implementation order" in `tasks.md` (Phase 8 wire-shape
   and packaging steps before the remaining Phase 7 behavioral steps), with the
   full-solution build gate on every step.
-- **Phase 9** implements the first preview follow-up (T11.4 Rebus owner routing);
-  T11.2 is complete; the remaining Epic 11 work is authenticated OpenAPI UIs
-  and gRPCui.
+- **Phase 9** (preview follow-ups, Epic 11) is complete: Rebus owner routing,
+  STJ source-generated metadata, authenticated OpenAPI UIs and the gRPCui
+  operations panel.
+- **Phase 10** (release-scope extension, Epic 12 / decision D8) is specified
+  below and tracked per task in [`tasks/README.md`](tasks/README.md).
 
 The first build attempt on a fresh checkout failed because `--no-restore` was
 used before assets existed. The verified sequence is `dotnet restore
@@ -717,3 +719,59 @@ client id; no browser client secret is accepted or stored.
 4. The documented gRPCui command is the smoke check for listing and invoking
    exported unary and streaming methods from the proto set.
 5. Build the full solution and run all tests. ✅
+
+## Phase 10 — Release-scope extension (Epic 12, decision D8)
+
+Each step has a self-contained task document under [`tasks/`](tasks/README.md);
+those documents hold the authoritative steps, test requirements and acceptance
+criteria. Every step ends with the full-solution build gate
+(`dotnet build Ark.Tools.slnx --configuration Debug`) and
+`dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`,
+and updates [`../design.md`](../design.md) if behavior diverges from it.
+
+Order matters: wire-shape changes first (they invalidate snapshots and
+documentation), the API-surface gate after them (so the first committed
+snapshot is the release surface), documentation last.
+
+### Step 10.1 — OpenAPI tags and operation names (T12.1)
+
+[NET-06](tasks/aspnetcore/NET-06-openapi-tags-operation-names.md). Adds
+`[ApiTag]` to the core package, emits `.WithTags`/`.WithName`, shares the
+taxonomy with gRPC service grouping, diagnoses duplicate operation names.
+
+### Step 10.2 — Standard problem responses (T12.2)
+
+[FW-05](tasks/framework/FW-05-standard-problem-responses.md). Emits
+400/403/500 `application/problem+json` on every generated endpoint kind and
+proves it with a test that enumerates every operation of every document.
+
+### Step 10.3 — `IAsyncEnumerable<T>` streaming (T12.3)
+
+[FW-06](tasks/framework/FW-06-async-enumerable-streaming.md). Streaming JSON
+array on Minimal API, server-streaming gRPC, deliberate MessagePack buffering
+with `MaxStreamedItems`, Rebus diagnostic, no SSE.
+
+### Step 10.4 — Multi-file uploads (T12.4)
+
+[FW-07](tasks/framework/FW-07-multifile-uploads.md). Attachment collection
+members on multipart and gRPC streaming with per-file hardening and
+`MaxFileCount`.
+
+### Step 10.5 — XML documentation into OpenAPI and protos (T12.5)
+
+[GEN-09](tasks/generator-dx/GEN-09-xml-documentation.md). Generators read
+documentation comments from Roslyn symbols and emit operation/parameter/schema
+descriptions plus proto leading comments. Runs after Steps 10.1–10.4 so the
+documented surface is final.
+
+### Step 10.6 — API-surface snapshot gate (T12.6)
+
+[GEN-10](tasks/generator-dx/GEN-10-api-surface-snapshots.md). New analyzer +
+code fix with `ArkApiSurface.Shipped.txt`/`ArkApiSurface.Unshipped.txt`; the
+sample opts in and commits its snapshot, which becomes the release baseline.
+
+### Step 10.7 — User documentation (T12.7)
+
+[DOC-01](tasks/docs/DOC-01-user-documentation.md). `docs/mediator-framework/guide/`
+with a getting-started walkthrough and one page per feature, snippets cited from
+compiled sample code, all relative links verified.
