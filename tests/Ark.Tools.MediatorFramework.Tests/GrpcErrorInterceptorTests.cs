@@ -67,10 +67,18 @@ public sealed class GrpcErrorInterceptorTests
     {
         var interceptor = new ArkGrpcErrorInterceptor();
 
-        var etag = await interceptor.AwaitException(new EntityTagMismatchException("etag"));
+        Func<Task> etagAction = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(),
+            (_, _) => Task.FromException<Empty>(new EntityTagMismatchException("etag")));
+        var etag = await etagAction.Should().ThrowAsync<RpcException>();
         etag.Which.StatusCode.Should().Be(StatusCode.FailedPrecondition);
 
-        var optimistic = await interceptor.AwaitException(new OptimisticConcurrencyException("conflict"));
+        Func<Task> optimisticAction = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(),
+            (_, _) => Task.FromException<Empty>(new OptimisticConcurrencyException("conflict")));
+        var optimistic = await optimisticAction.Should().ThrowAsync<RpcException>();
         optimistic.Which.StatusCode.Should().Be(StatusCode.Aborted);
     }
 
@@ -108,14 +116,6 @@ internal static class GrpcErrorInterceptorTestExtensions
             (_, _) => Task.FromException<Empty>(exception)).ConfigureAwait(false);
     }
 
-    public static async Task<RpcException> AwaitException(this ArkGrpcErrorInterceptor interceptor, Exception exception)
-    {
-        Func<Task> action = () => interceptor.UnaryServerHandler(
-            new Empty(),
-            new TestServerCallContext(),
-            (_, _) => Task.FromException<Empty>(exception));
-        return await action.Should().ThrowAsync<RpcException>().ConfigureAwait(false);
-    }
 }
 
 internal sealed class TestServerCallContext : ServerCallContext

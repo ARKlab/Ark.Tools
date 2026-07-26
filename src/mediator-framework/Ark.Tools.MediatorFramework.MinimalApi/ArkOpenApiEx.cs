@@ -139,7 +139,7 @@ public static class ArkOpenApiEx
                 return Task.CompletedTask;
 
             operation.Parameters ??= [];
-            if (!operation.Parameters.Any(parameter =>
+            if (metadata.RequestETag && !operation.Parameters.Any(parameter =>
                 string.Equals(parameter.Name, "If-Match", StringComparison.OrdinalIgnoreCase)))
             {
                 operation.Parameters.Add(new OpenApiParameter

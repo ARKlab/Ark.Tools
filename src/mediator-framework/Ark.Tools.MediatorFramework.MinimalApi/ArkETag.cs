@@ -81,11 +81,16 @@ public static class ArkETag
 public sealed class ArkETagParameterMetadata
 {
     /// <summary>Initializes metadata describing ETag request and response behavior.</summary>
+    /// <param name="requestETag">Whether the request carries an ETag precondition.</param>
     /// <param name="responseETag">Whether the response carries an ETag.</param>
-    public ArkETagParameterMetadata(bool responseETag = false)
+    public ArkETagParameterMetadata(bool requestETag = false, bool responseETag = false)
     {
+        RequestETag = requestETag;
         ResponseETag = responseETag;
     }
+
+    /// <summary>Gets whether the request carries an ETag precondition.</summary>
+    public bool RequestETag { get; }
 
     /// <summary>Gets whether the response carries an ETag.</summary>
     public bool ResponseETag { get; }

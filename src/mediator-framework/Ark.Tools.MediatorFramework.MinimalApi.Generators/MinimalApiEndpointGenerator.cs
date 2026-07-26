@@ -1011,6 +1011,7 @@ namespace Ark.MediatorFramework.Generators
                 + (endpoint.ETagProperty is null && endpoint.ResponseETagProperty is null
                     ? string.Empty
                     : ".WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkETagParameterMetadata("
+                        + (endpoint.ETagProperty is null ? "false" : "true") + ", "
                         + (endpoint.ResponseETagProperty is null ? "false" : "true") + "))");
 
         private static string OperationName(EndpointModel endpoint, int version, int maxVersion)
