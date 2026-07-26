@@ -927,11 +927,8 @@ namespace Ark.MediatorFramework.Generators
         private static string ProblemMetadata(EndpointModel endpoint)
         {
             var metadata = new StringBuilder();
-            var declaredStatuses = new HashSet<int>
-            {
-                SuccessStatusCode(endpoint),
-                NullResultStatusCode(endpoint),
-            };
+            var declaredStatuses = new HashSet<int>(
+                [SuccessStatusCode(endpoint), NullResultStatusCode(endpoint)]);
 
             AppendProblem(400);
             if (!endpoint.AllowAnonymous)

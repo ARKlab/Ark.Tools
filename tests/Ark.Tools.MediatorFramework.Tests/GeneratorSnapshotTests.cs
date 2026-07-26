@@ -227,8 +227,9 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(403, \"application/problem+json\")");
         generated.Should().Contain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\")");
-        generated.Split(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(400, \"application/problem+json\")").Length.Should().Be(2);
-        generated.Split(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\")").Length.Should().Be(2);
+        (generated.Split(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(400, \"application/problem+json\")").Length - 1).Should().Be(1);
+        (generated.Split(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\")").Length - 1).Should().Be(1);
+        generated.Should().NotContain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(400, \"application/problem+json\").Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(400");
         generated.Should().NotContain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\").Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500");
     }
 
