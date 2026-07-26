@@ -290,6 +290,7 @@ namespace Ark.MediatorFramework.Generators
                 .Select(property => new PropertyModel(
                     property.Name,
                     property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    property.Type.SpecialType == SpecialType.System_String,
                     routeNames.Contains(property.Name),
                     routeNames.FirstOrDefault(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase)) ?? property.Name,
                     bindFromQueryAttr is not null && property.GetAttributes().Any(attribute =>
@@ -307,7 +308,7 @@ namespace Ark.MediatorFramework.Generators
             var etagProperties = properties.Where(property => property.IsETag).ToArray();
             if (etagProperties.Length > 1)
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.DuplicateETagProperty, type.Name, GetLocation(http)));
-            foreach (var property in etagProperties.Where(property => property.TypeFullName != "global::System.String"))
+            foreach (var property in etagProperties.Where(property => !property.IsString))
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.InvalidETagProperty, type.Name, GetLocation(http), property.Name));
             foreach (var routeName in routeNames)
             {
@@ -1157,6 +1158,7 @@ namespace Ark.MediatorFramework.Generators
             public PropertyModel(
                 string name,
                 string typeFullName,
+                bool isString,
                 bool isRoute,
                 string bindingName,
                 bool isQuery,
@@ -1169,6 +1171,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 Name = name;
                 TypeFullName = typeFullName;
+                IsString = isString;
                 IsRoute = isRoute;
                 BindingName = bindingName;
                 IsQuery = isQuery;
@@ -1182,6 +1185,7 @@ namespace Ark.MediatorFramework.Generators
 
             public string Name { get; }
             public string TypeFullName { get; }
+            public bool IsString { get; }
             public bool IsRoute { get; }
             public string BindingName { get; }
             public bool IsQuery { get; }
