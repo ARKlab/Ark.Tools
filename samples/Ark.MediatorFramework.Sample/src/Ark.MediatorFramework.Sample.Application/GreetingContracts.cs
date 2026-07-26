@@ -48,7 +48,7 @@ public sealed record GreetingResponse
 /// <summary>Command used to exercise the synchronous command transport contract.</summary>
 [HttpEndpoint("POST", "/api/v{version}/greetings/refresh")]
 [GrpcMethod("RefreshGreeting")]
-[ServiceGroup("Greetings")]
+[GrpcService("Greetings")]
 [ProtoContract]
 public sealed record RefreshGreetingCommand : ICommand
 {
@@ -65,7 +65,7 @@ public sealed record RefreshGreetingCommand : ICommand
 [HttpEndpoint("POST", "/api/v{version}/greetings", AcceptsMessagePack = true, SuccessStatusCode = 201)]
 [RebusMessage]
 [GrpcMethod("CreateGreeting")]
-[ServiceGroup("Greetings")]
+[GrpcService("Greetings")]
 [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
 [ProtoContract]
 [MessagePackObject(true)]
@@ -97,6 +97,7 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 }
 
 /// <summary>HTTP-only request that publishes work to Rebus and returns immediately.</summary>
+[ApiGroup("Greetings")]
 [HttpEndpoint("POST", "/api/v{version}/greetings/compose")]
 public sealed record ComposeGreetingRequest : IRequest<ComposeGreetingResponse>
 {
@@ -139,7 +140,7 @@ public sealed record GreetingCreatedNotification : ICommand
 /// </summary>
 [HttpEndpoint("GET", "/api/v{version}/greetings/{id}", RetiredIn = 2)]
 [GrpcMethod("GetGreeting", RetiredIn = 2)]
-[ServiceGroup("Greetings")]
+[GrpcService("Greetings")]
 [ProtoContract]
 public sealed record GetGreetingQuery : IQuery<GreetingResponse>
 {
@@ -171,7 +172,7 @@ public sealed record GreetingResponseV2
 /// </summary>
 [HttpEndpoint("GET", "/api/v{version}/greetings-v2/{id}", IntroducedIn = 2)]
 [GrpcMethod("GetGreeting", IntroducedIn = 2)]
-[ServiceGroup("Greetings")]
+[GrpcService("Greetings")]
 [ProtoContract]
 public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>
 {

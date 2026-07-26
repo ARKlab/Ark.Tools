@@ -5,7 +5,7 @@ namespace Ark.MediatorFramework;
 
 /// <summary>
 /// Opt-in declaration that exposes a pure <c>Ark.Tools.Solid</c> request/query as a code-first
-/// gRPC method.
+/// gRPC method. When no name is specified the generator uses the contract type name as the gRPC method name.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class GrpcMethodAttribute : Attribute
@@ -17,7 +17,7 @@ public sealed class GrpcMethodAttribute : Attribute
         Name = name;
     }
 
-    /// <summary>Gets the explicit gRPC method name, or <see langword="null"/> to use the type name.</summary>
+    /// <summary>Gets the explicit gRPC method name, or <see langword="null"/> to use the contract type name.</summary>
     public string? Name { get; }
 
     /// <summary>Gets or sets the first API version in which the method is available.</summary>
@@ -27,17 +27,20 @@ public sealed class GrpcMethodAttribute : Attribute
     public int RetiredIn { get; set; }
 }
 
-/// <summary>Assigns opt-in gRPC methods to a generated code-first service.</summary>
+/// <summary>
+/// Assigns opt-in gRPC methods to a named generated code-first service.
+/// Takes precedence over <c>[ApiGroup]</c> for gRPC service grouping.
+/// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class ServiceGroupAttribute : Attribute
+public sealed class GrpcServiceAttribute : Attribute
 {
-    /// <summary>Initializes a new instance of the <see cref="ServiceGroupAttribute"/> class.</summary>
-    /// <param name="name">The generated service group name.</param>
-    public ServiceGroupAttribute(string name)
+    /// <summary>Initializes a new instance of the <see cref="GrpcServiceAttribute"/> class.</summary>
+    /// <param name="name">The generated gRPC service name.</param>
+    public GrpcServiceAttribute(string name)
     {
         Name = name;
     }
 
-    /// <summary>Gets the generated service group name.</summary>
+    /// <summary>Gets the generated gRPC service name.</summary>
     public string Name { get; }
 }
