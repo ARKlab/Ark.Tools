@@ -48,8 +48,8 @@ public sealed class OptimisticConcurrencyTests
 
         await store.SaveAsync(greeting).ConfigureAwait(false);
         var stale = greeting with { Message = "stale", Version = greeting.Version!.ToArray() };
-        greeting.Message = "current";
-        await store.SaveAsync(greeting).ConfigureAwait(false);
+        var current = greeting with { Message = "current", Version = greeting.Version!.ToArray() };
+        await store.SaveAsync(current).ConfigureAwait(false);
 
         var action = async () => await store.SaveAsync(stale).ConfigureAwait(false);
 
