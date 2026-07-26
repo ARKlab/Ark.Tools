@@ -39,7 +39,9 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [SMP-01](sample-parity/SMP-01-fluentvalidation.md) | FluentValidation decorators in sample (G2) | sample-parity |
 | [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) | SQL/Dapper + transactional Outbox (G4) | sample-parity |
 | [SMP-03](sample-parity/SMP-03-persisted-auditing.md) | Persisted auditing (G5) | sample-parity |
-| [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md) | Optimistic concurrency + ETag (G6) | sample-parity |
+| [FW-08](framework/FW-08-etag-preconditions.md) | `[ETag]` contract attribute + `If-Match` binding (G6) | framework |
+| [FW-09](framework/FW-09-etag-response-emission.md) | `ETag` response header + 304 + gRPC error parity (G6) | framework |
+| [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md) | Optimistic concurrency + opaque ETag in the sample (G6) | sample-parity |
 | [SMP-05](sample-parity/SMP-05-paging.md) | Paging (G7) | sample-parity |
 | [SMP-06](sample-parity/SMP-06-misc-parity.md) | App Insights, config layering, IClock, test infra (G9) | sample-parity |
 | [NET-01](aspnetcore/NET-01-openapi-xml-docs.md) | OpenAPI 3.1 verification, YAML, doc-UI decision (N3) | aspnetcore |
@@ -105,6 +107,8 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [SMP-03](sample-parity/SMP-03-persisted-auditing.md)
    [x] [GEN-07](generator-dx/GEN-07-automatic-proto-export.md)
    [x] [GEN-08](generator-dx/GEN-08-from-assembly-api-names.md)
+   [ ] [FW-08](framework/FW-08-etag-preconditions.md)
+   [ ] [FW-09](framework/FW-09-etag-response-emission.md)
    [ ] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
    [ ] [SMP-05](sample-parity/SMP-05-paging.md)
    [ ] [SMP-06](sample-parity/SMP-06-misc-parity.md)

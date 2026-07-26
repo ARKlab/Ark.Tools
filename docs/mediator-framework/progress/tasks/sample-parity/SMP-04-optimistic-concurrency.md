@@ -1,36 +1,182 @@
-# SMP-04 — Optimistic concurrency + ETag/If-Match (G6)
+# SMP-04 — Optimistic concurrency + opaque ETag in the sample (G6, part 3)
 
-**Category**: sample-parity · **Priority**: Release blocker · **Scope**: SAMPLE (framework only if ETag emission is generator-level)
-**Depends on**: SMP-02 (SQL persistence).
+**Category**: sample-parity · **Priority**: Release blocker · **Scope**: SAMPLE
+**Depends on**: SMP-02 (SQL/Dapper — shipped), FW-08 (`[ETag]` + `If-Match` binding), FW-09
+(`ETag` response header + 304 + gRPC error parity).
 
 ## Problem
 
-The mediator sample has no concurrency story. The ReferenceProject registers an
-`OptimisticConcurrencyRetrierDecorator`-style decorator and uses row versioning.
+The mediator sample has no concurrency story. FW-08/FW-09 give the framework an opaque, generator-
+driven ETag; nothing exercises it end-to-end. This task makes the sample the executable
+demonstration: **SQL `ROWVERSION` server-side, opaque `string` on the wire**, plus the Ark
+optimistic-concurrency retry pattern.
 
-## Steps
+Reference implementations to mirror (read them before starting):
 
-1. Add a rowversion/version column to the Greeting table (SMP-02 schema).
-2. Register the optimistic-concurrency retrier decorator around request/command handlers in
-   `ApplicationComposition.cs`, mirroring the ReferenceProject registration in
-   `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Application/Host/ApiHost.cs` (search
-   `OptimisticConcurrency`). The decorator lives in framework packages — reuse, don't reimplement.
-3. Update handlers/DAL to detect concurrent modification (`OptimisticConcurrencyException` from
-   `Ark.Tools.Core`) — the shared ProblemDetails mapping (FW-03) turns it into **409 Conflict** when
-   retries are exhausted.
-4. **Optional ETag demo** (only if achievable without generator changes): expose the version as a
-   response `ETag` and honor `If-Match` → 412 on mismatch. If this requires generator support for
-   response-header emission, do **not** build it here — record a follow-up note in the PR and skip.
-5. Tests: two concurrent updates → both succeed via retry (decorator) OR the loser gets 409 when
-   business-conflicting; scenario for exhausted retries → 409.
+- `samples/Ark.ReferenceProject/Ark.Reference.Common/Services/Decorators/OptimisticConcurrencyRetrierDecorator.cs`
+  and its registration in
+  `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Application/Host/ApiHost.cs` (search
+  `OptimisticConcurrency`) — the retry-on-optimistic-failure pattern. Note it uses Polly and
+  `Ex.IsOptimistic()` from `samples/Ark.ReferenceProject/Ark.Reference.Common/Ex.cs`.
+- `samples/WebApplicationDemo/Dto/Entity.cs` + `samples/ProblemDetailsSample/Common/Dto/Entity.cs` —
+  the legacy MVC ETag shape (`IEntityWithETag._ETag` + `ETagHeaderBasicSupportFilterAttribute`).
+  **The mediator sample does not use this**; it uses the `[ETag]` attribute from FW-08. Do not add
+  `IEntityWithETag` to any mediator contract.
+
+## Guardrails
+
+- **No new package dependency.** In particular the sample has no Polly reference: implement the
+  retrier as a small bounded loop, not by adding Polly. Any dependency change would also require
+  regenerated `packages.lock.json` files (CI runs `RestoreLockedMode=true`) — avoid it.
+- **The ETag is opaque on the contract.** The contract property is `string?`. Never expose `byte[]`,
+  never document the encoding in the contract XML docs, never let a client-visible type depend on
+  `ROWVERSION`. The base64 encoding lives only in the DAL.
+- **Do not change the framework.** All generator/runtime behavior comes from FW-08/FW-09. If
+  something is missing, stop and record it — do not patch the generator from this task.
+- **The default test run uses the in-memory store**: SQL tests are opt-in via `ARK_SAMPLE_SQL_TESTS=1`
+  (see `samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Hooks/SampleTestContext.cs`).
+  Every behavior below must therefore work identically on `InMemoryGreetingStore` and
+  `SqlGreetingStore`, and the tests must not require SQL.
+- **Do not rename or renumber existing `ProtoMember` numbers or MessagePack keys.** New fields get
+  new numbers (`GreetingResponse` currently uses 1–7 → the ETag is 8).
+- **Do not weaken existing endpoints**: `GetGreetingQuery`, `CreateGreetingRequest`,
+  `RefreshGreetingCommand`, `UpdateGreetingRequest` (envelope-binding demo) keep their current
+  routes, verbs, status codes and authorization.
+- **Do not use `TRUNCATE TABLE`** in test cleanup for FK-referenced tables; `ops.ResetFull_OnlyForTesting`
+  already handles the reset and needs no change for a `ROWVERSION` column.
+
+## Implementation details
+
+### 1. Database
+
+`samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Database/dbo/Tables/Greeting.sql`:
+add `[RowVersion] ROWVERSION NOT NULL`. It is maintained by SQL Server — never inserted or updated
+explicitly. `ops/ResetFull_OnlyForTesting.sql` needs no change.
+
+### 2. Contracts (`GreetingContracts.cs`)
+
+- `GreetingResponse`: add
+  `[ProtoMember(8)] [ETag] public string? ETag { get; init; }` with XML docs describing it as an
+  opaque concurrency token that must be echoed back in `If-Match` (HTTP) or in the request field
+  (gRPC).
+- New update contract, the actual ETag demo:
+
+  ```
+  [HttpEndpoint("PUT", "/api/v{version}/greetings/{id}")]
+  [GrpcMethod("UpdateGreetingMessage")] [GrpcService("Greetings")]
+  [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
+  [ProtoContract]
+  public sealed record UpdateGreetingMessageRequest : IRequest<GreetingResponse>
+  ```
+  with `Guid Id` (route), `string Message`, `[ETag] string? ETag`, and `[ServerSet] string? UserId`
+  (mirror `CreateGreetingRequest`). Follow the existing file's XML-doc and attribute style.
+- Add a FluentValidation validator for the new request in `GreetingValidators.cs` (non-empty
+  `Message`, non-empty `Id`), mirroring the existing validators.
+
+### 3. Store and DAL
+
+`IGreetingStore` gains
+`Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit, CancellationToken ctk)`.
+
+`SqlGreetingStore` / `SampleDataContext`:
+
+- Token encoding, DAL-private: `Convert.ToBase64String(rowVersionBytes)` on read;
+  `Convert.FromBase64String(token)` on write, wrapped so that a malformed token becomes
+  `EntityTagMismatchException` (never an unhandled `FormatException` → never a 500).
+- `SELECT` statements add `[RowVersion]`; `GreetingRow` gains `public byte[] RowVersion { get; set; }`
+  and `ToResponse()` sets `ETag`.
+- Conditional update:
+
+  ```
+  UPDATE [dbo].[Greeting] SET [Message] = @Message, [AuditId] = @AuditId
+  OUTPUT inserted.[RowVersion]
+  WHERE [Id] = @Id AND [RowVersion] = @RowVersion;
+  ```
+  Zero rows affected → re-read the row: if it no longer exists, throw `EntityNotFoundException`;
+  if it exists, the client token was stale → throw
+  `Ark.Tools.Core.EntityTag.EntityTagMismatchException` (→ 412). Return the response built from the
+  `OUTPUT`ed new `RowVersion`, so the caller immediately gets the new ETag.
+- A `null`/absent `expectedETag` on the update path throws `EntityTagMismatchException` — the sample
+  requires the precondition. (`428 Precondition Required` is deliberately out of scope; say so in the
+  handler XML docs.)
+- `InMemoryGreetingStore` must expose the same semantics with an in-memory monotonic version per id
+  (for example `Convert.ToBase64String(BitConverter.GetBytes(version))`), compared under the same
+  lock/`ConcurrentDictionary` update that stores the new value, so a stale token loses.
+
+### 4. Optimistic-concurrency retrier
+
+Add `OptimisticConcurrencyRetrierDecorator<TRequest, TResult> : IRequestHandler<TRequest, TResult>`
+to the sample Application project (new file), and register it in `ApplicationComposition.Register`
+with `container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(OptimisticConcurrencyRetrierDecorator<,>));`.
+
+- Retries at most **2** times, only when the exception (or any inner exception) is
+  `Ark.Tools.Core.OptimisticConcurrencyException` — mirror the `IsOptimistic()` walk from
+  `Ark.Reference.Common/Ex.cs`, but keep it private and dependency-free (a `while (ex != null)` loop,
+  no Polly).
+- `EntityTagMismatchException` is **never** retried: it is a client precondition failure (412), not a
+  server-detected race.
+- Log each retry with NLog structured logging and `CultureInfo.InvariantCulture`.
+- Decorator ordering: register it **outermost** relative to validation/audit decorators so a retry
+  re-runs the whole handler pipeline; verify the registration order in `ApplicationComposition.cs`
+  and state the chosen order in a code comment.
+
+### 5. Conflict test seam
+
+To exercise 409 deterministically on both stores, add a small singleton to the Application project,
+e.g. `ConcurrencyFaultInjector` with `int PendingFailures { get; set; }`, consulted at the start of
+`UpdateAsync` in both stores: when positive, decrement and throw
+`new OptimisticConcurrencyException(...)`. Register it as a singleton next to `AuditCounter` (which
+is the existing precedent for a test-observable singleton). Document in XML docs that it exists to
+demonstrate the retry/409 path.
+
+### 6. Tests
+
+`samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/` — Reqnroll feature +
+steps (follow `Features/Greetings.feature` and `Steps/GreetingSteps.cs`) or a dedicated MSTest class
+(follow `AuthorizationTests.cs`); use AwesomeAssertions.
+
+Required scenarios:
+
+1. `GET` a greeting → response carries a non-empty quoted `ETag` header and the same value in the
+   body property.
+2. `PUT` with the current `If-Match` → `200`, body contains a **different** ETag than before, and the
+   response `ETag` header equals it.
+3. `PUT` with a stale `If-Match` (the pre-update token) → `412` ProblemDetails.
+4. `PUT` with no `If-Match` → `412` ProblemDetails.
+5. `PUT` with a syntactically invalid token (not base64) → `412`, not `500`.
+6. `GET` with `If-None-Match` equal to the current ETag → `304` with an empty body; with a stale
+   value → `200`.
+7. `ConcurrencyFaultInjector.PendingFailures = 2` → `PUT` still succeeds (retrier); `= 3` → `409`
+   ProblemDetails (retries exhausted).
+8. gRPC parity: `GetGreeting` returns the ETag in the message; `UpdateGreetingMessage` with a stale
+   token fails with `StatusCode.FailedPrecondition`, and with the fault injector exhausted fails with
+   `StatusCode.Aborted` (use `Ark.MediatorFramework.Sample.GrpcClient`, as in the existing transport
+   parity tests).
+
+### 7. Documentation
+
+- `samples/Ark.MediatorFramework.Sample/README.md`: short "Optimistic concurrency" section showing
+  the `curl` round trip (read ETag → `If-Match` → 412 on stale).
+- `docs/mediator-framework/design.md`: extend the D9 section written by FW-08/FW-09 with the sample's
+  `ROWVERSION`-backed encoding, stating that the encoding is a DAL detail and the contract stays
+  opaque.
 
 ## Outcomes
 
-- Sample demonstrates the Ark optimistic-concurrency pattern end-to-end on the mediator stack.
+- The sample demonstrates the full Ark optimistic-concurrency pattern on the mediator stack: SQL
+  `ROWVERSION` server-side, opaque token on the contract, `If-Match`/`ETag` over HTTP, message field
+  over gRPC, retry decorator, and 412/409 ProblemDetails.
+- Both the in-memory and SQL stores behave identically, so the default (SQL-less) test run covers it.
 
 ## Acceptance
 
-- [ ] Retrier decorator registered and effective (test provoking a concurrency conflict).
-- [ ] Exhausted retries → 409 ProblemDetails (test).
-- [ ] ETag/If-Match either demonstrated with a 412 test **or** explicitly deferred with a recorded follow-up.
-- [ ] Full solution build + tests green.
+- [ ] `Greeting` table has `ROWVERSION`; no explicit writes to it anywhere.
+- [ ] `GreetingResponse.ETag` and `UpdateGreetingMessageRequest.ETag` are `string?` marked `[ETag]`;
+      no `IEntityWithETag`, no `byte[]` on any contract.
+- [ ] Retrier decorator registered outermost on `IRequestHandler<,>`; retries only
+      `OptimisticConcurrencyException`, never `EntityTagMismatchException`.
+- [ ] All eight scenarios above pass **without** `ARK_SAMPLE_SQL_TESTS=1`, and the SQL-backed run
+      (`ARK_SAMPLE_SQL_TESTS=1`) passes the same suite.
+- [ ] No new package references; no `packages.lock.json` churn.
+- [ ] Sample README and `design.md` updated.
+- [ ] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.

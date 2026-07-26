@@ -377,8 +377,11 @@ authoritative ones.
 
 Epics 1–11 are complete. The remaining release scope is the pre-release task
 board ([`tasks/README.md`](tasks/README.md)) plus **Epic 12**, executed in the
-board's recommended order: SMP-04, SMP-05, SMP-06, NET-01, then T12.1–T12.6 and
-finally T12.7 (documentation last, so it describes shipped behavior).
+board's recommended order: FW-08, FW-09, SMP-04, SMP-05, SMP-06, NET-01, then
+T12.1–T12.6 and finally T12.7 (documentation last, so it describes shipped
+behavior). FW-08/FW-09 were split out of the original SMP-04 when decision D9
+moved ETag support into the generator (opaque token via the `[ETag]` attribute,
+not `IEntityWithETag`).
 
 ## Status legend
 

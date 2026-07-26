@@ -51,7 +51,7 @@ Task breakdown: see [`tasks/README.md`](tasks/README.md).
 | G3 | HTTP status semantics (404/202/204) with host customization | FRAMEWORK |
 | G4 | SQL/Dapper + transactional Outbox | SAMPLE |
 | G5 | Persisted auditing | SAMPLE |
-| G6 | Optimistic concurrency + ETag | SAMPLE |
+| G6 | Optimistic concurrency + ETag | FRAMEWORK + SAMPLE (decision D9) |
 | G7 | Paging | SAMPLE |
 | G8 | Policy authorization decorators | SAMPLE + FRAMEWORK |
 | G9 | App Insights, config layering, IClock/NodaTime demo, richer test infra | SAMPLE |
@@ -86,6 +86,7 @@ Reverse gaps (sample > ReferenceProject, keep as-is): gRPC code-first + proto ex
 | D6 | C8 env-var auth scheme | Env var is acceptable for now; `WebApplicationFactory`-based scheme substitution recorded in [Future improvements](future-improvements.md). Malformed-bearer 401 handling is still fixed (SEC-08). |
 | D7 | Release gating | **All G1–G10 are release blockers.** All security items (SEC-01..SEC-08) are release blockers. **N3 (XML-docs to OpenAPI) is a release blocker.** Remaining N items are post-release. |
 | D8 | 2026-07 scope extension (recorded 2026-07-26) | Seven further items are **release blockers**: OpenAPI tags + operation names (NET-06), XML documentation into OpenAPI **and** exported `.proto` produced by the generators (GEN-09, superseding NET-01's XML step), standard 400/403/500 ProblemDetails responses on every endpoint (FW-05), `IAsyncEnumerable<T>` streaming responses on Minimal API + gRPC with deliberate MessagePack buffering and **no SSE** (FW-06), multi-file uploads bound to an attachment collection (FW-07), an API-surface snapshot gate modeled on `PublicApiAnalyzers` but covering routes/gRPC methods (GEN-10), and the user documentation guide (DOC-01). |
+| D9 | G6 ETag shape (recorded 2026-07-26) | **Generator-level, opaque token via a new `[ETag]` property attribute** — not `Ark.Tools.Core.EntityTag.IEntityWithETag`, whose mutable `_ETag` member is MVC-filter-bound and leaks into JSON/MessagePack/proto payloads. The Minimal API generator binds `If-Match` into the marked request property and emits the `ETag` response header plus `304`; gRPC and Rebus carry the same opaque `string` as a normal message field. The concurrency exceptions (`EntityTagMismatchException` → 412, `OptimisticConcurrencyException` → 409) are reused unchanged. Work split into FW-08 (preconditions), FW-09 (emission + gRPC error parity) and SMP-04 (sample, `ROWVERSION`-backed encoding confined to the DAL). |
 
 ## Priority order
 
@@ -93,7 +94,7 @@ Reverse gaps (sample > ReferenceProject, keep as-is): gRPC code-first + proto ex
 2. FW-01 ICommand + FW-02 status semantics — wire-shape changes; do before more consumers exist.
 3. Generator diagnostics (GEN-01..GEN-03, GEN-05, GEN-06).
 4. SMP-01 FluentValidation + SEC-05 authorization decorator — the transport-agnostic cross-cutting story.
-5. Sample parity (SMP-02..SMP-06), FW-03, FW-04 and NET-01 (blocker).
+5. Sample parity (SMP-02..SMP-06), FW-03, FW-04, FW-08/FW-09 (ETag, before SMP-04) and NET-01 (blocker).
 6. Scope extension (D8): NET-06, FW-05, FW-06, FW-07, GEN-09, GEN-10, then DOC-01 last so the guide
    documents shipped behavior.
 7. Post-release: NET-02..NET-05, future improvements.
