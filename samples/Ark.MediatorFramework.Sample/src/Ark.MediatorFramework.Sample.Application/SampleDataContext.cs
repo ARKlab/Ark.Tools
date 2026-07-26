@@ -59,7 +59,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 SET [Message] = @Message, [Date] = @Date, [DateTime] = @DateTime,
                     [OffsetDateTime] = @OffsetDateTime, [Period] = @Period, [AuditId] = @AuditId
                 WHERE [Id] = @Id AND [Version] = @Version;
-                SELECT [Version] FROM [dbo].[Greeting] WHERE [Id] = @Id;
+                IF @@ROWCOUNT = 1
+                    SELECT [Version] FROM [dbo].[Greeting] WHERE [Id] = @Id;
                 """;
             var updateCommand = new CommandDefinition(updateSql, new
             {

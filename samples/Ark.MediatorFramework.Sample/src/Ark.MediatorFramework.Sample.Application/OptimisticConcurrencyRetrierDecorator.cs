@@ -21,7 +21,7 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResult> : I
     /// <inheritdoc />
     public async Task<TResult> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
-        for (var attempt = 0; ; attempt++)
+        for (var attempt = 0; attempt < 3; attempt++)
         {
             try
             {
@@ -31,5 +31,7 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResult> : I
             {
             }
         }
+
+        throw new OptimisticConcurrencyException("Optimistic concurrency retries exhausted.");
     }
 }

@@ -58,7 +58,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
         ArgumentNullException.ThrowIfNull(greeting);
         if (_items.TryGetValue(greeting.Id, out var current))
         {
-            if (greeting.Version is null || !greeting.Version.SequenceEqual(current.Version))
+            if (greeting.Version is null || current.Version is null || !greeting.Version.SequenceEqual(current.Version))
                 throw new OptimisticConcurrencyException("Greeting '{0}' was modified concurrently.", greeting.Id);
         }
 
