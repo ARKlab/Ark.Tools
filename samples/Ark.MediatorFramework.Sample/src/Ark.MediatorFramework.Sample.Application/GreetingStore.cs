@@ -56,11 +56,9 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     public Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(greeting);
-        if (_items.TryGetValue(greeting.Id, out var current))
-        {
-            if (greeting.Version is null || current.Version is null || !greeting.Version.SequenceEqual(current.Version))
-                throw new OptimisticConcurrencyException("Greeting '{0}' was modified concurrently.", greeting.Id);
-        }
+        if (_items.TryGetValue(greeting.Id, out var current)
+            && (greeting.Version is null || current.Version is null || !greeting.Version.SequenceEqual(current.Version)))
+            throw new OptimisticConcurrencyException("Greeting '{0}' was modified concurrently.", greeting.Id);
 
         greeting.Version = BitConverter.GetBytes(Interlocked.Increment(ref _version));
         _items[greeting.Id] = greeting;
