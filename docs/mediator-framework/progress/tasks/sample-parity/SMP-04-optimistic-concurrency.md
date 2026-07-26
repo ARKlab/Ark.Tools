@@ -18,9 +18,9 @@ The mediator sample has no concurrency story. The ReferenceProject registers an
 3. Update handlers/DAL to detect concurrent modification (`OptimisticConcurrencyException` from
    `Ark.Tools.Core`) — the shared ProblemDetails mapping (FW-03) turns it into **409 Conflict** when
    retries are exhausted.
-4. **Optional ETag demo** (only if achievable without generator changes): expose the version as a
-   response `ETag` and honor `If-Match` → 412 on mismatch. If this requires generator support for
-   response-header emission, do **not** build it here — record a follow-up note in the PR and skip.
+4. **ETag demo deferred**: exposing the version as a response `ETag` and honoring `If-Match` → 412
+   requires generated response-header support, so it is explicitly deferred to a generator task.
+   The version remains part of the response contract for a future transport-level implementation.
 5. Tests: two concurrent updates → both succeed via retry (decorator) OR the loser gets 409 when
    business-conflicting; scenario for exhausted retries → 409.
 

@@ -43,6 +43,10 @@ public sealed record GreetingResponse
     /// <summary>Gets the audit identifier associated with this entity version.</summary>
     [ProtoMember(7)]
     public Guid AuditId { get; init; }
+
+    /// <summary>Gets or sets the database version used for optimistic concurrency.</summary>
+    [ProtoMember(8)]
+    public byte[]? Version { get; set; }
 }
 
 /// <summary>Command used to exercise the synchronous command transport contract.</summary>

@@ -44,6 +44,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
 {
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _items = new();
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
+    private long _version;
 
     /// <inheritdoc />
     public Task<int> CountAsync(CancellationToken ctk = default)
@@ -55,6 +56,13 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     public Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(greeting);
+        if (_items.TryGetValue(greeting.Id, out var current))
+        {
+            if (greeting.Version is null || !greeting.Version.SequenceEqual(current.Version))
+                throw new OptimisticConcurrencyException("Greeting '{0}' was modified concurrently.", greeting.Id);
+        }
+
+        greeting.Version = BitConverter.GetBytes(Interlocked.Increment(ref _version));
         _items[greeting.Id] = greeting;
         AddAudit(audit);
         return Task.CompletedTask;

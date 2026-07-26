@@ -52,6 +52,34 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Saves a greeting in the current transaction.</summary>
     public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
     {
+        if (greeting.Version is not null)
+        {
+            const string updateSql = """
+                UPDATE [dbo].[Greeting]
+                SET [Message] = @Message, [Date] = @Date, [DateTime] = @DateTime,
+                    [OffsetDateTime] = @OffsetDateTime, [Period] = @Period, [AuditId] = @AuditId
+                WHERE [Id] = @Id AND [Version] = @Version;
+                SELECT [Version] FROM [dbo].[Greeting] WHERE [Id] = @Id;
+                """;
+            var updateCommand = new CommandDefinition(updateSql, new
+            {
+                greeting.Id,
+                greeting.Message,
+                greeting.Date,
+                greeting.DateTime,
+                greeting.OffsetDateTime,
+                Period = PeriodPattern.NormalizingIso.Format(greeting.Period),
+                greeting.AuditId,
+                greeting.Version,
+            }, Transaction, cancellationToken: ctk);
+            var updatedVersion = await Connection.QuerySingleOrDefaultAsync<byte[]>(updateCommand).ConfigureAwait(false);
+            if (updatedVersion is null)
+                throw new OptimisticConcurrencyException("Greeting '{0}' was modified concurrently.", greeting.Id);
+
+            greeting.Version = updatedVersion;
+            return;
+        }
+
         const string sql = """
             MERGE [dbo].[Greeting] AS target
             USING (SELECT @Id AS [Id]) AS source ON target.[Id] = source.[Id]
@@ -60,6 +88,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 [AuditId] = @AuditId
             WHEN NOT MATCHED THEN INSERT ([Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId])
                 VALUES (@Id, @Message, @Date, @DateTime, @OffsetDateTime, @Period, @AuditId);
+            SELECT [Version] FROM [dbo].[Greeting] WHERE [Id] = @Id;
             """;
         var command = new CommandDefinition(sql, new
         {
@@ -71,7 +100,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             Period = PeriodPattern.NormalizingIso.Format(greeting.Period),
             greeting.AuditId,
         }, Transaction, cancellationToken: ctk);
-        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+        greeting.Version = await Connection.QuerySingleAsync<byte[]>(command).ConfigureAwait(false);
     }
 
     /// <summary>Saves an audit record in the current transaction.</summary>
@@ -96,7 +125,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads a greeting in the current transaction.</summary>
     public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
     {
-        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId] FROM [dbo].[Greeting] WHERE [Id] = @Id";
+        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId], [Version] FROM [dbo].[Greeting] WHERE [Id] = @Id";
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
         return row?.ToResponse();
@@ -105,7 +134,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads all greetings in the current transaction.</summary>
     public async Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
     {
-        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId] FROM [dbo].[Greeting]";
+        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId], [Version] FROM [dbo].[Greeting]";
         var command = new CommandDefinition(sql, transaction: Transaction, cancellationToken: ctk);
         var rows = await Connection.QueryAsync<GreetingRow>(command).ConfigureAwait(false);
         return rows.Select(row => row.ToResponse()).ToArray();
@@ -195,6 +224,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public NodaTime.OffsetDateTime OffsetDateTime { get; set; }
         public string Period { get; set; } = string.Empty;
         public Guid AuditId { get; set; }
+        public byte[] Version { get; set; } = [];
 
         public GreetingResponse ToResponse()
         {
@@ -207,6 +237,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 OffsetDateTime = OffsetDateTime,
                 Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
                 AuditId = AuditId,
+                Version = Version,
             };
         }
     }

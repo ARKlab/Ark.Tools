@@ -71,6 +71,7 @@ public static class ApplicationComposition
         container.Register<ICommandHandler<GreetingCreatedNotification>, GreetingCreatedHandler>();
 
         // Cross-cutting concern applied transport-agnostically.
+        container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(OptimisticConcurrencyRetrierDecorator<,>));
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(AuditRequestDecorator<,>));
         container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryFluentValidateDecorator<,>));
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestFluentValidateDecorator<,>));
