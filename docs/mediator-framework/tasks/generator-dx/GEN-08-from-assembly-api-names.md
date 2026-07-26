@@ -49,14 +49,14 @@ rule.
 
 ## Acceptance
 
-- [ ] Generated APIs are named `MapArkEndpointsFromAssembly<TAssemblyMarker>`,
+- [x] Generated APIs are named `MapArkEndpointsFromAssembly<TAssemblyMarker>`,
       `MapArkGrpcServicesFromAssembly<TAssemblyMarker>`, and
       `RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>`.
-- [ ] Generator call-site discovery and assembly selection work under the new names for all three
+- [x] Generator call-site discovery and assembly selection work under the new names for all three
       transports.
-- [ ] Cross-assembly generator/behavior tests prove the marker assembly, not the host assembly or
+- [x] Cross-assembly generator/behavior tests prove the marker assembly, not the host assembly or
       marker type itself, controls discovery.
-- [ ] No source, package description, test fixture, sample, or mediator-framework document references
+- [x] No source, package description, test fixture, sample, or mediator-framework document references
       the three old method names except migration/history text that explicitly identifies them as old.
-- [ ] No obsolete forwarding aliases are emitted.
-- [ ] Full solution build + tests green.
+- [x] No obsolete forwarding aliases are emitted.
+- [x] Full solution build + tests green.
