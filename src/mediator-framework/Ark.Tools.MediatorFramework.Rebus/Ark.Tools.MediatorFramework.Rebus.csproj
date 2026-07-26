@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Rebus message-bus transport runtime package for Ark.Tools MediatorFramework. Bundles the source generator that emits RegisterArkRebusHandlers and IHandleMessages wrappers for [RebusMessage]-annotated contracts.</Description>
+    <Description>Rebus message-bus transport runtime package for Ark.Tools MediatorFramework. Bundles the source generator that emits RegisterArkRebusHandlersFromAssembly and IHandleMessages wrappers for [RebusMessage]-annotated contracts.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;Rebus;Source Generator</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>

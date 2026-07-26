@@ -15,7 +15,7 @@ namespace Ark.MediatorFramework.Generators
 {
     /// <summary>
     /// Incremental generator that discovers <c>Ark.Tools.Solid</c> requests decorated with
-    /// <c>[RebusMessage]</c> and emits <c>RegisterArkRebusHandlers</c> plus the per-request
+    /// <c>[RebusMessage]</c> and emits <c>RegisterArkRebusHandlersFromAssembly</c> plus the per-request
     /// <c>IHandleMessages&lt;T&gt;</c> wrapper classes inside a <c>partial ArkGeneratedEndpoints</c>
     /// class. Only the Rebus transport is emitted by this generator; add
     /// <c>Ark.Tools.MediatorFramework.MinimalApi.Generators</c> for HTTP and
@@ -66,7 +66,7 @@ namespace Ark.MediatorFramework.Generators
             var invocation = (InvocationExpressionSyntax)context.Node;
             var genericName = invocation.Expression.DescendantNodesAndSelf()
                 .OfType<GenericNameSyntax>()
-                .FirstOrDefault(name => name.Identifier.ValueText is "RegisterArkRebusHandlers" or "ConfigureArkRebusRouting");
+                .FirstOrDefault(name => name.Identifier.ValueText is "RegisterArkRebusHandlersFromAssembly" or "ConfigureArkRebusRouting");
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
                 return null;
 
@@ -251,9 +251,9 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("    public static partial class ArkGeneratedEndpoints");
             sb.AppendLine("    {");
 
-            // RegisterArkRebusHandlers is always emitted so callers can unconditionally invoke it.
-            sb.AppendLine("        /// <summary>Registers the generated Rebus handler wrappers into the SimpleInjector collection resolved by the Rebus activator.</summary>");
-            sb.AppendLine("        public static void RegisterArkRebusHandlers<TAssemblyMarker>(global::SimpleInjector.Container container)");
+            // RegisterArkRebusHandlersFromAssembly is always emitted so callers can unconditionally invoke it.
+            sb.AppendLine("        /// <summary>Registers the generated Rebus handler wrappers into the SimpleInjector collection resolved by the Rebus activator. TAssemblyMarker selects the assembly scanned for attributed handlers.</summary>");
+            sb.AppendLine("        public static void RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>(global::SimpleInjector.Container container)");
             sb.AppendLine("        {");
             if (!items.IsDefaultOrEmpty)
             {

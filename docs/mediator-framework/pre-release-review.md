@@ -22,7 +22,7 @@ Task breakdown: see [`tasks/README.md`](tasks/README.md).
 
 ### 1b. Developer Experience issues (severity-ordered)
 
-- **High — No per-endpoint customization**: `MapArkEndpoints` is monolithic; can't add `RequireAuthorization`, filters, rate-limiting, output caching, CORS to a single endpoint.
+- **High — No per-endpoint customization**: `MapArkEndpointsFromAssembly` is monolithic; can't add `RequireAuthorization`, filters, rate-limiting, output caching, CORS to a single endpoint.
 - **High — Silent generator failures**: typo'd verb (`"GTE"`) silently maps to **POST**; non-`IRequest`/`IQuery` types with the attribute silently skipped; unmatched route placeholders silently dropped.
 - **High — Non-record contracts break compilation inside `.g.cs`**: `body with { }` requires records; multipart requires settable props. Cryptic CS errors in generated code; only `ARKMF001` exists in the whole MinimalApi generator.
 - **Medium — No startup handler verification**: missing handler registration = 500 at first request (contra design "validated at startup").
@@ -78,7 +78,7 @@ Reverse gaps (sample > ReferenceProject, keep as-is): gRPC code-first + proto ex
 
 | # | Question | Decision |
 |---|---|---|
-| D1 | C1 mitigation shape | **Both**: (a) generator emits `RequireAuthorization()` by default with per-attribute `AllowAnonymous` opt-out, **and** (b) `MapArkEndpoints` maps into a `RouteGroupBuilder` the host can configure. Sample must use `RequireAuthenticatedUser` as the default authorization policy. |
+| D1 | C1 mitigation shape | **Both**: (a) generator emits `RequireAuthorization()` by default with per-attribute `AllowAnonymous` opt-out, **and** (b) `MapArkEndpointsFromAssembly` maps into a `RouteGroupBuilder` the host can configure. Sample must use `RequireAuthenticatedUser` as the default authorization policy. |
 | D2 | Validation layer | Transport-agnostic **FluentValidation decorator** as recommended and demonstrated by `Ark.ReferenceProject` (`Query/Request/CommandFluentValidateDecorator` + conditional `NullValidator<>`). |
 | D3 | G3 customization point | **Attribute customizations** on `HttpEndpointAttribute` (compile-time hints, AoT/doc-friendly), not a runtime mapper service. |
 | D4 | ICommand HTTP semantics | **`[RebusMessage]`-based alternative**: commands that also carry `[RebusMessage]` (truly async) → `202 Accepted`; synchronously-completed commands → `204 No Content`. |

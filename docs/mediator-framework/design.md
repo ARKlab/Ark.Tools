@@ -71,7 +71,7 @@ request type. Each transport is opt-in and declared independently:
 
 Generated HTTP endpoints require authorization by default. Set `Policy` on
 `[HttpEndpoint]` to select a named policy, or set `AllowAnonymous = true` for
-an intentionally public endpoint. `MapArkEndpoints` maps the generated routes
+an intentionally public endpoint. `MapArkEndpointsFromAssembly` maps the generated routes
 into one `RouteGroupBuilder`, invokes its optional configuration callback, and
 returns the group so hosts can apply shared metadata such as authorization,
 filters, rate limiting, CORS, or output caching.
@@ -483,10 +483,11 @@ the gRPC generator/package — no hand-maintained schema program:
   copies those files alongside generated service protos without making them
   part of the framework generator.
 - `Ark.Tools.MediatorFramework.Grpc` ships a `buildTransitive` `.targets` file
-  with an `ArkExportProto` target (`AfterTargets="Build"`, opt-in via
-  `$(ArkExportProtoDir)`) that runs the built host with `--ark-export-proto
-  <dir>`; the runtime helper `ArkProtoExport.TryHandle(args)` writes the files
-  and short-circuits `Program`.
+  with an `ArkExportProto` target (`AfterTargets="Build"`) that invokes the
+  package-owned export runner. The runner loads the built assembly without
+  invoking its entry point, writes generated and shared assets, and is a
+  no-op when no gRPC service was generated. Set `$(ArkExportProtoDir)` to
+  override the destination or `$(ArkExportProto)=false` to opt out.
 - Common messages are **shared, not repeated**, split over multiple files and
   `import`-ed by the per-service files. Shared files declare the proto
   `package` and `option csharp_namespace` of their **owning library** — never

@@ -80,6 +80,13 @@ requests. It does not perform OAuth2 login or token refresh. Decode and inspect
 claims locally with a trusted JWT decoder such as `jwt.ms`; never paste
 production tokens into documentation, source files, or shell history.
 
+## Proto export
+
+The gRPC package exports generated and shared `.proto` files after a successful
+build without starting the sample host. `ArkExportProtoDir` overrides the
+destination, `ArkExportProto=false` opts out, and `ArkAdditionalProto` declares
+hand-written proto files to copy alongside generated services.
+
 ## Documented follow-ups
 
 The emitted `.proto` now generates a dedicated client assembly used by the
