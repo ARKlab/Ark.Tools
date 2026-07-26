@@ -528,7 +528,7 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("            {");
                             sb.AppendLine("                var body = await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ReadRequestAsync<" + e.TypeFullName + ">(httpContext, cancellationToken).ConfigureAwait(false);");
                             sb.AppendLine("                if (body is null)");
-                            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400);");
+                            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
                             if (explicitBindings)
                             {
                                 var assignments = string.Join(", ", e.Properties
@@ -748,7 +748,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            {");
             sb.AppendLine("                var form = await httpContext.Request.ReadFormAsync(cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (form.Files.Count != 1)");
-            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, detail: \"Exactly one file is required.\");");
+            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_FILE_COUNT\", detail: \"Exactly one file is required.\");");
             sb.AppendLine("                var file = form.Files[0];");
             if (!endpoint.AllowedContentTypes.IsDefaultOrEmpty)
             {
