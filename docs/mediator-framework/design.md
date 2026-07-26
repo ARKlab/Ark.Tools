@@ -304,6 +304,14 @@ graph validation.
 | --- | --- | --- |
 | Minimal API | `Ark.Tools.AspNetCore.ProblemDetails` registered with `AddArkProblemDetailsExceptionHandler` and `UseExceptionHandler` | `EntityNotFoundException`→404; `ValidationException`→400 + `extensions` field violations; `BusinessRuleViolationException`→400 with the violation payload in `extensions`; unhandled exceptions are logged server-side and return a generic 500 |
 | gRPC | server interceptor → `Google.Rpc.Status` rich error model | field violations packed as `BadRequest` details in trailing metadata; business rule violations packed as an `ArkBusinessRuleViolation` detail; unhandled exceptions are logged server-side and return a generic `Internal`; thrown as `RpcException` |
+
+HTTP standard problem responses map to the gRPC canonical status codes as follows:
+
+| HTTP | gRPC |
+| --- | --- |
+| 400 `application/problem+json` | `InvalidArgument` |
+| 403 `application/problem+json` | `PermissionDenied` |
+| 500 `application/problem+json` | `Internal` |
 | Rebus | scope disposal + native retry | exhausted → error/dead-letter queue with serialized exception headers |
 
 Handlers only throw semantic domain exceptions; they never format transport
