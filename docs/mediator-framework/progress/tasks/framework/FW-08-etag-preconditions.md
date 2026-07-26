@@ -13,14 +13,23 @@ filter `ETagHeaderBasicSupportFilterAttribute`
 approach cannot be reused as-is:
 
 - It is MVC-only (`ActionFilterAttribute`) — the mediator host is MVC-free.
-- `IEntityWithETag` forces a **mutable** member on contracts that are immutable `record`s, and the
-  member name `_ETag` leaks verbatim into JSON, MessagePack and `.proto` payloads.
+- `IEntityWithETag` forces a **mutable** member on contracts that are immutable `record`s.
 - It is HTTP-only: the mediator exposes the *same* contract over gRPC and Rebus, where the token must
   travel as a normal message field, not as a header.
 
-**Decision (D9)**: the framework does **not** adopt `IEntityWithETag` for mediator contracts. It
-introduces a declarative marker attribute, `[ETag]`, on a single `string?` contract property. The
-token is **opaque** — the framework never parses, derives, or interprets it; only the application
+**Decision (D9, revised)**: the framework introduces a declarative marker attribute, `[ETag]`, on a
+single `string?` contract property, because a *transport-agnostic* marker is needed and
+`IEntityWithETag` forces a mutable member. The attribute is a marker only: a contract that does
+implement `IEntityWithETag` (`string? _ETag { get; set; }`) is a perfectly valid carrier — just put
+`[ETag]` on that member.
+
+**The concurrency field is part of the model on every protocol.** It stays serialized in JSON,
+MessagePack and protobuf, on requests as well as responses, and it stays visible in the OpenAPI
+schemas: that is the only way optimistic concurrency works over transports without headers. The
+HTTP `If-Match` header is an *additional*, higher-priority source, not a replacement — nothing is
+hidden or stripped from a payload because of `[ETag]`.
+
+The token is **opaque** — the framework never parses, derives, or interprets it; only the application
 knows that it encodes (for example) a SQL `ROWVERSION`. `Ark.Tools.Core.EntityTag.IEntityWithETag`
 stays untouched and keeps serving MVC hosts. The exception types (`EntityTagMismatchException` →
 412, `OptimisticConcurrencyException` → 409) **are** reused from `Ark.Tools.Core`; they are already
@@ -39,6 +48,8 @@ This task covers the **request/precondition** direction only. FW-09 covers respo
   for them (it must keep its `ProtoMember` field and stay in the request message). Explicitly:
   `[ETag]` is **not** `[ServerSet]` — do not add `ETagAttribute` to any `ServerSet` filtering list in
   `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc.Generators/GrpcEndpointGenerator.cs`.
+- **Do not remove the `[ETag]` property from any payload or schema.** It stays bindable from the
+  request body and documented in the request schema; the header only overrides it.
 - **Do not touch the sample** (`samples/Ark.MediatorFramework.Sample`). SMP-04 consumes this feature.
 - **Do not implement** `428 Precondition Required`, weak validators (`W/"..."`),
   `If-Unmodified-Since`, or `If-Range`. Out of scope; record nothing, they are already deferred here.
@@ -57,10 +68,10 @@ same folder is the pattern to copy for file header, XML docs and style):
 
 - `[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]`
 - `public sealed class ETagAttribute : Attribute`
-- XML docs must state: the property carries an **opaque** concurrency token; on an HTTP request
-  contract it is bound from the `If-Match` request header (never from body, route or query); on a
-  response contract it is emitted as the `ETag` response header (FW-09); on gRPC and Rebus it travels
-  as a normal message field.
+- XML docs must state: the property carries an **opaque** concurrency token; it is a normal, fully
+  serialized member of the contract on every transport (JSON, MessagePack, protobuf, Rebus); on an
+  HTTP request contract the `If-Match` request header, when present, overrides the value bound from
+  the body; on a response contract it is also emitted as the `ETag` response header (FW-09).
 
 ### 2. Generator model (`MinimalApiEndpointGenerator.cs`)
 
@@ -81,17 +92,15 @@ In `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/Min
 
 ### 3. Binding rules
 
-An `[ETag]` property on the **request contract** is bound from headers, never from client body/route/
-query:
+An `[ETag]` property on the **request contract** binds normally (body, and route/query if the
+property is a route/query parameter — no exclusions anywhere: do **not** touch the `IsServerSet`
+exclusion sites). On HTTP the precondition headers additionally override it:
 
-- It is excluded from the body-shape mass-assignment scan and from route/query binding: treat it in
-  the same *exclusion* positions where `IsServerSet` is tested today (search `IsServerSet` in the
-  generator), but keep it out of `ServerSetProperties` (that list is also consumed by the gRPC
-  generator and by the OpenAPI schema filter for a different purpose).
 - For every emitted endpoint variant (plain, explicit-binding, multipart, download), after the
-  request instance is constructed and after `EmitServerSetAssignments`, assign the header value:
-  `request = request with { <Prop> = <resolved> };` for records, `request.<Prop> = <resolved>;`
-  otherwise (mirror `EmitServerSetAssignments` for the non-record path).
+  request instance is constructed and after `EmitServerSetAssignments`, assign the resolved header
+  value **only when a header precondition was supplied**:
+  `if (etag is not null) request = request with { <Prop> = etag };` for records,
+  `request.<Prop> = etag;` otherwise (mirror `EmitServerSetAssignments` for the non-record path).
 - Resolution order (implement as a **public static helper in the runtime package**, not as inline
   emitted logic — see step 5):
   1. If `If-Match` is present and non-empty → split the header on `,`, trim whitespace, take the
@@ -100,22 +109,19 @@ query:
      in the helper XML docs (upgrade path: return all entries and let the application match any).
   2. Else, if `If-None-Match` is present and its value is `*` → `"*"` (the "create only if absent"
      assertion, matching the MVC filter behavior).
-  3. Else → `null` (no precondition supplied; the handler decides whether that is allowed).
-- The property value that arrived in the request **body** must be discarded before the header
-  resolution assigns the final value, so a client cannot bypass the precondition by putting a token
-  in the body.
+  3. Else → `null` — **no header precondition; the value bound from the payload is kept as-is** (it
+     may itself be `null`, in which case the handler decides whether that is allowed).
+- Precedence is header-over-payload, and it is one-directional: an inbound header value is never
+  written back into a response header (FW-09 emits only handler-produced values).
 
 ### 4. OpenAPI
 
-- For endpoints whose request contract has an `[ETag]` property, the property must not appear in the
-  request schema. Extend `AddArkServerSetProperties` in
-  `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/ArkOpenApiEx.cs` — rename nothing;
-  add the `ETagAttribute` check alongside the `ServerSetAttribute` check inside the same schema
-  transformer and update its XML doc. (The response direction is FW-09; a response schema keeping
-  the property is correct and intended, because gRPC clients read it there. Filtering here applies to
-  request bodies only — if the same type is used for both, keep the property and rely on the header;
-  document that in the XML docs.)
-- The generator must add an `If-Match` header parameter to such endpoints. Emit
+- **Do not filter the property out of any schema.** `AddArkServerSetProperties` in
+  `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/ArkOpenApiEx.cs` stays as it is —
+  `[ETag]` is not `[ServerSet]`; the property is documented in both request and response schemas
+  because non-HTTP clients supply and read it there.
+- The generator must add an `If-Match` header parameter to such endpoints, documented as an optional
+  override of the payload value. Emit
   `.WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkETagParameterMetadata())` and
   add an operation transformer, `AddArkETagParameters()`, in `ArkOpenApiEx.cs` that appends an
   optional `If-Match` header parameter (`string`, description: opaque concurrency token) to every
@@ -140,13 +146,14 @@ Add `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/ArkETag.cs` (
 ## Outcomes
 
 - `[ETag]` exists in `Ark.Tools.MediatorFramework` and is documented as an opaque, transport-agnostic
-  concurrency token.
+  concurrency token that is a normal, serialized member of the contract on every protocol.
 - Minimal API endpoints whose contract declares `[ETag]` receive the `If-Match` (or `If-None-Match: *`)
-  value in that property, and clients cannot set it through body/route/query.
-- OpenAPI documents the `If-Match` parameter and hides the property from request schemas.
+  value in that property when a header is supplied, and the payload value otherwise.
+- OpenAPI documents the `If-Match` parameter; schemas keep the property.
 - gRPC and Rebus behavior is unchanged: the property remains a normal message field.
 - `docs/mediator-framework/design.md` gains an "Optimistic concurrency: opaque ETag tokens" section
-  recording decision D9 (attribute over `IEntityWithETag`, and why).
+  recording decision D9 (marker attribute over `IEntityWithETag`, token in the model on every
+  protocol, header as an override on HTTP).
 
 ## Acceptance
 
@@ -155,8 +162,9 @@ Add `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/ArkETag.cs` (
       (follow the existing `CSharpGeneratorDriver` harness):
       a contract with an `[ETag]` property emits the header-binding assignment; a non-`string`
       `[ETag]` property reports `ARKMF017`; two `[ETag]` properties report `ARKMF018`.
-- [ ] Test proving a token supplied in the **request body** is discarded and replaced by the
-      `If-Match` header value (no mass-assignment bypass).
+- [ ] Test proving the `If-Match` header wins over a token supplied in the request body, and that the
+      body token is used when no precondition header is present.
+- [ ] Test proving the `[ETag]` property is present in the generated request schema (not filtered).
 - [ ] Test for `ArkETag.ReadPrecondition`: `If-Match: "abc"` → `abc`; `If-None-Match: *` → `*`;
       neither header → `null`.
 - [ ] Test for `ArkETag.IsValidToken` rejecting a quote, a backslash and a control character.

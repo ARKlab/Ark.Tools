@@ -19,9 +19,10 @@ Reference implementations to mirror (read them before starting):
   `OptimisticConcurrency`) — the retry-on-optimistic-failure pattern. Note it uses Polly and
   `Ex.IsOptimistic()` from `samples/Ark.ReferenceProject/Ark.Reference.Common/Ex.cs`.
 - `samples/WebApplicationDemo/Dto/Entity.cs` + `samples/ProblemDetailsSample/Common/Dto/Entity.cs` —
-  the legacy MVC ETag shape (`IEntityWithETag._ETag` + `ETagHeaderBasicSupportFilterAttribute`).
-  **The mediator sample does not use this**; it uses the `[ETag]` attribute from FW-08. Do not add
-  `IEntityWithETag` to any mediator contract.
+  the MVC ETag shape (`IEntityWithETag._ETag` + `ETagHeaderBasicSupportFilterAttribute`). The
+  mediator sample uses the `[ETag]` attribute from FW-08 instead, because its contracts are
+  immutable `record`s and `IEntityWithETag` requires a settable member — implementing the interface
+  is allowed, just not needed here. Carrying the token in the model is intended in both shapes.
 
 ## Guardrails
 
@@ -31,6 +32,8 @@ Reference implementations to mirror (read them before starting):
 - **The ETag is opaque on the contract.** The contract property is `string?`. Never expose `byte[]`,
   never document the encoding in the contract XML docs, never let a client-visible type depend on
   `ROWVERSION`. The base64 encoding lives only in the DAL.
+- **The ETag property stays in every payload and schema** (request and response, HTTP/gRPC/Rebus).
+  The `If-Match` header is an HTTP-only override of the request field, per D9.
 - **Do not change the framework.** All generator/runtime behavior comes from FW-08/FW-09. If
   something is missing, stop and record it — do not patch the generator from this task.
 - **The default test run uses the in-memory store**: SQL tests are opt-in via `ARK_SAMPLE_SQL_TESTS=1`
@@ -68,8 +71,9 @@ explicitly. `ops/ResetFull_OnlyForTesting.sql` needs no change.
   [ProtoContract]
   public sealed record UpdateGreetingMessageRequest : IRequest<GreetingResponse>
   ```
-  with `Guid Id` (route), `string Message`, `[ETag] string? ETag`, and `[ServerSet] string? UserId`
-  (mirror `CreateGreetingRequest`). Follow the existing file's XML-doc and attribute style.
+  with `Guid Id` (route), `string Message`, `[ETag] string? ETag` (`[ProtoMember]`-numbered and
+  bindable from the body — it is a normal field), and `[ServerSet] string? UserId` (mirror
+  `CreateGreetingRequest`). Follow the existing file's XML-doc and attribute style.
 - Add a FluentValidation validator for the new request in `GreetingValidators.cs` (non-empty
   `Message`, non-empty `Id`), mirroring the existing validators.
 
@@ -96,8 +100,8 @@ explicitly. `ops/ResetFull_OnlyForTesting.sql` needs no change.
   if it exists, the client token was stale → throw
   `Ark.Tools.Core.EntityTag.EntityTagMismatchException` (→ 412). Return the response built from the
   `OUTPUT`ed new `RowVersion`, so the caller immediately gets the new ETag.
-- A `null`/absent `expectedETag` on the update path throws `EntityTagMismatchException` — the sample
-  requires the precondition. (`428 Precondition Required` is deliberately out of scope; say so in the
+- A `null`/absent `expectedETag` on the update path (neither header nor body field) throws
+  `EntityTagMismatchException` — the sample requires the precondition. (`428 Precondition Required` is deliberately out of scope; say so in the
   handler XML docs.)
 - `InMemoryGreetingStore` must expose the same semantics with an in-memory monotonic version per id
   (for example `Convert.ToBase64String(BitConverter.GetBytes(version))`), compared under the same
@@ -144,13 +148,15 @@ Required scenarios:
 2. `PUT` with the current `If-Match` → `200`, body contains a **different** ETag than before, and the
    response `ETag` header equals it.
 3. `PUT` with a stale `If-Match` (the pre-update token) → `412` ProblemDetails.
-4. `PUT` with no `If-Match` → `412` ProblemDetails.
-5. `PUT` with a syntactically invalid token (not base64) → `412`, not `500`.
-6. `GET` with `If-None-Match` equal to the current ETag → `304` with an empty body; with a stale
+4. `PUT` with no `If-Match` but the current token in the body `etag` field → `200` (the field is a
+   first-class source); `PUT` with a stale token in the body and no header → `412`.
+5. `PUT` with neither `If-Match` nor a body token → `412` ProblemDetails.
+6. `PUT` with a syntactically invalid token (not base64) → `412`, not `500`.
+7. `GET` with `If-None-Match` equal to the current ETag → `304` with an empty body; with a stale
    value → `200`.
-7. `ConcurrencyFaultInjector.PendingFailures = 2` → `PUT` still succeeds (retrier); `= 3` → `409`
+8. `ConcurrencyFaultInjector.PendingFailures = 2` → `PUT` still succeeds (retrier); `= 3` → `409`
    ProblemDetails (retries exhausted).
-8. gRPC parity: `GetGreeting` returns the ETag in the message; `UpdateGreetingMessage` with a stale
+9. gRPC parity: `GetGreeting` returns the ETag in the message; `UpdateGreetingMessage` with a stale
    token fails with `StatusCode.FailedPrecondition`, and with the fault injector exhausted fails with
    `StatusCode.Aborted` (use `Ark.MediatorFramework.Sample.GrpcClient`, as in the existing transport
    parity tests).
@@ -173,11 +179,12 @@ Required scenarios:
 ## Acceptance
 
 - [ ] `Greeting` table has `ROWVERSION`; no explicit writes to it anywhere.
-- [ ] `GreetingResponse.ETag` and `UpdateGreetingMessageRequest.ETag` are `string?` marked `[ETag]`;
-      no `IEntityWithETag`, no `byte[]` on any contract.
+- [ ] `GreetingResponse.ETag` and `UpdateGreetingMessageRequest.ETag` are `string?` marked `[ETag]`,
+      serialized in JSON/MessagePack/protobuf and present in the OpenAPI schemas; no `byte[]` on any
+      contract.
 - [ ] Retrier decorator registered outermost on `IRequestHandler<,>`; retries only
       `OptimisticConcurrencyException`, never `EntityTagMismatchException`.
-- [ ] All eight scenarios above pass **without** `ARK_SAMPLE_SQL_TESTS=1`, and the SQL-backed run
+- [ ] All nine scenarios above pass **without** `ARK_SAMPLE_SQL_TESTS=1`, and the SQL-backed run
       (`ARK_SAMPLE_SQL_TESTS=1`) passes the same suite.
 - [ ] No new package references; no `packages.lock.json` churn.
 - [ ] Sample README and `design.md` updated.

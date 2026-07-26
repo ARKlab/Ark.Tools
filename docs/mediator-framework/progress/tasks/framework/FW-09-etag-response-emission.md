@@ -25,7 +25,8 @@ never derives, hashes or parses it.
   code, not a generator.)
 - **Do not touch the sample** (`samples/Ark.MediatorFramework.Sample`). SMP-04 consumes this feature.
 - **Do not remove the `[ETag]` property from the response body.** It stays serialized in JSON,
-  MessagePack and protobuf; the header is an addition, not a replacement.
+  MessagePack and protobuf, and stays documented in the OpenAPI response schema (D9: the concurrency
+  field belongs to the model on every protocol); the header is an addition, not a replacement.
 - **Do not implement** weak validators (`W/"..."`), `If-Modified-Since`, `If-Unmodified-Since`,
   `If-Range`, or `412` on conditional `GET`. Out of scope.
 - Header injection is a security boundary: emitted values are validated (see step 2), never
