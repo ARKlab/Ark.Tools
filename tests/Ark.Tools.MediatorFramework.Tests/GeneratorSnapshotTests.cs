@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework;
+using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
@@ -75,7 +76,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorExpandsVersionedRoutes()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -87,19 +88,19 @@ public sealed class GeneratorSnapshotTests
 
             """);
 
-        generated.Should().Contain("MapGet(\"/api/v1/greetings/{id}\"");
-        generated.Should().Contain("MapGet(\"/api/v2/greetings/{id}\"");
-        generated.Should().NotContain("MapGet(\"/api/v3/greetings/{id}\"");
-        generated.Should().Contain("WithGroupName(\"v1\")");
-        generated.Should().Contain("WithTags(\"Ark\")");
-        generated.Should().Contain("WithName(\"GetGreeting_v1\")");
-        generated.Should().Contain("WithName(\"GetGreeting_v2\")");
+        result.Generated.Should().Contain("MapGet(\"/api/v1/greetings/{id}\"");
+        result.Generated.Should().Contain("MapGet(\"/api/v2/greetings/{id}\"");
+        result.Generated.Should().NotContain("MapGet(\"/api/v3/greetings/{id}\"");
+        result.Generated.Should().Contain("WithGroupName(\"v1\")");
+        result.Generated.Should().Contain("WithTags(\"Ark\")");
+        result.Generated.Should().Contain("WithName(\"GetGreeting_v1\")");
+        result.Generated.Should().Contain("WithName(\"GetGreeting_v2\")");
     }
 
     [TestMethod]
     public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -111,9 +112,9 @@ public sealed class GeneratorSnapshotTests
             public sealed class Second : IQuery<string> { }
             """);
 
-        generated.Should().Contain("WithTags(\"Public\")");
+        result.Generated.Should().Contain("WithTags(\"Public\")");
 
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result2 = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -129,7 +130,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF016");
+        result2.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF016");
     }
 
     [TestMethod]
@@ -250,6 +251,62 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("ICommandHandler<global::DeleteCommand>");
         generated.Should().Contain("TypedResults.NoContent()");
         generated.Should().Contain(".Produces(204)");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsETagPreconditions()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("PUT", "/items/{id}")]
+            public sealed record UpdateItem : IRequest<string>
+            {
+                public string Id { get; init; } = string.Empty;
+                [ETag] public string? ETag { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("ArkETag.ReadPrecondition(httpContext)");
+        result.Generated.Should().Contain("request = request with { ETag = etag }");
+        result.Generated.Should().Contain("ArkETagParameterMetadata");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsInvalidETagDeclarations()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("PUT", "/items")]
+            public sealed record InvalidETag : IRequest<string>
+            {
+                [ETag] public int Value { get; init; }
+                [ETag] public string? Other { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF017");
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF018");
+    }
+
+    [TestMethod]
+    public void ArkETagReadsAndValidatesPreconditions()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.IfMatch = "\"abc\", \"ignored\"";
+        ArkETag.ReadPrecondition(context).Should().Be("abc");
+        ArkETag.IsValidToken("abc").Should().BeTrue();
+        ArkETag.IsValidToken("a\"b").Should().BeFalse();
+        ArkETag.IsValidToken("a\\b").Should().BeFalse();
+        ArkETag.IsValidToken("a\nb").Should().BeFalse();
+
+        context.Request.Headers.Clear();
+        context.Request.Headers.IfNoneMatch = "*";
+        ArkETag.ReadPrecondition(context).Should().Be("*");
     }
 
     [TestMethod]

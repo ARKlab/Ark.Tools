@@ -31,6 +31,7 @@ public sealed class MinimalApiHostingExtensionsTests
         var configured = options
             .AddArkTypeConverterValueSchemas()
             .AddArkNodaTimeSchemas()
+            .AddArkETagParameters()
             .AddArkPolymorphism<TestShape, TestShapeKind>(
                 "kind",
                 (TestShapeKind.Circle, typeof(TestCircle)));

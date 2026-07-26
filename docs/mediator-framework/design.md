@@ -84,7 +84,8 @@ Generator contract errors are reported at the transport attribute location:
 `ARKMF012` (missing route property), `ARKMF013` (invalid HTTP contract shape),
 `ARKMF014` (duplicate Rebus registration), and `ARKMF015` (conflicting Rebus
 owner queue), and `ARKMF016` (duplicate OpenAPI operation name within an API
-version). Invalid contracts are not emitted.
+version), `ARKMF017` (invalid `[ETag]` property type), and `ARKMF018` (duplicate
+`[ETag]` property). Invalid contracts are not emitted.
 
 HTTP binding treats the request as an **envelope** whose members may combine
 route, query and body sources (see *HTTP binding* below). These attributes are
@@ -96,6 +97,16 @@ Properties marked with `[ServerSet]` are never read from HTTP route, query, or
 body input. The Minimal API generator resets them after deserialization, the
 gRPC proto export omits them from request messages, and
 `AddArkServerSetProperties()` removes them from generated schemas.
+
+### Optimistic concurrency: opaque ETag tokens
+
+Contracts may mark one `string?` property with `[ETag]`. The property is an opaque
+concurrency token and remains a normal serialized member of JSON, MessagePack,
+protobuf, and Rebus messages. On HTTP requests, `If-Match` (or
+`If-None-Match: *`) overrides the payload value when present; otherwise the
+payload value is preserved. Minimal API hosts may register
+`AddArkETagParameters()` to document the optional `If-Match` header. Response
+header emission is defined by the follow-up FW-09 task.
 
 ## The Roslyn incremental generator
 

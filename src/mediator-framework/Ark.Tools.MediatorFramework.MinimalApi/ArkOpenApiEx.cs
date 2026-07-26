@@ -123,6 +123,40 @@ public static class ArkOpenApiEx
         return options;
     }
 
+    /// <summary>Adds the optional <c>If-Match</c> header to ETag-enabled operations.</summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkETagParameters(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddOperationTransformer((operation, context, _) =>
+        {
+            if (!context.Description.ActionDescriptor.EndpointMetadata
+                .OfType<ArkETagParameterMetadata>()
+                .Any())
+                return Task.CompletedTask;
+
+            operation.Parameters ??= [];
+            if (!operation.Parameters.Any(parameter =>
+                string.Equals(parameter.Name, "If-Match", StringComparison.OrdinalIgnoreCase)))
+            {
+                operation.Parameters.Add(new OpenApiParameter
+                {
+                    Name = "If-Match",
+                    In = ParameterLocation.Header,
+                    Required = false,
+                    Description = "Opaque concurrency token override.",
+                    Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                });
+            }
+
+            return Task.CompletedTask;
+        });
+
+        return options;
+    }
+
     /// <summary>
     /// Adds an OpenAPI <c>oneOf</c> schema and discriminator for a polymorphic hierarchy.
     /// </summary>

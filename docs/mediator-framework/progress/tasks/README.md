@@ -107,7 +107,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [SMP-03](sample-parity/SMP-03-persisted-auditing.md)
    [x] [GEN-07](generator-dx/GEN-07-automatic-proto-export.md)
    [x] [GEN-08](generator-dx/GEN-08-from-assembly-api-names.md)
-   [ ] [FW-08](framework/FW-08-etag-preconditions.md)
+   [x] [FW-08](framework/FW-08-etag-preconditions.md)
    [ ] [FW-09](framework/FW-09-etag-response-emission.md)
    [ ] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
    [ ] [SMP-05](sample-parity/SMP-05-paging.md)

@@ -22,4 +22,12 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor InvalidContractShape = new(
         "ARKMF013", "Invalid contract shape", "HTTP endpoint '{0}' must be a record with settable properties for body or multipart binding",
         "Ark.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor InvalidETagProperty = new(
+        "ARKMF017", "Invalid ETag property", "HTTP endpoint '{0}' marks property '{1}' with [ETag], but the property type is not string",
+        "Ark.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor DuplicateETagProperty = new(
+        "ARKMF018", "Duplicate ETag property", "HTTP endpoint '{0}' has more than one property marked with [ETag]",
+        "Ark.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
 }
