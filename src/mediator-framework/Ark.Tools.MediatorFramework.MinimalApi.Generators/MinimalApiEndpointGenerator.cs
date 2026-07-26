@@ -89,6 +89,18 @@ namespace Ark.MediatorFramework.Generators
                 static (spc, pair) => Emit(spc, pair.Left.AddRange(pair.Right)));
         }
 
+        private static void EmitResponseETagAssignment(StringBuilder sb, EndpointModel endpoint)
+        {
+            if (endpoint.ResponseETagProperty is null)
+                return;
+
+            sb.AppendLine("                var etagResult = global::Ark.Tools.MediatorFramework.MinimalApi.ArkETag.ApplyResponseETag(");
+            sb.Append("                    httpContext, result.").Append(endpoint.ResponseETagProperty)
+                .Append(", ").Append(endpoint.Verb == "GET" ? "true" : "false").AppendLine(");");
+            sb.AppendLine("                if (etagResult is not null)");
+            sb.AppendLine("                    return etagResult;");
+        }
+
         private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
         {
             var type = (INamedTypeSymbol)context.TargetSymbol;
@@ -206,6 +218,7 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? enumerableType)
         {
             string? response = null;
+            ITypeSymbol? responseType = null;
             var attachmentResponse = false;
             var kind = HandlerKind.None;
 
@@ -216,6 +229,7 @@ namespace Ark.MediatorFramework.Generators
                 {
                     kind = HandlerKind.Request;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    responseType = iface.TypeArguments[0];
                     attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
                     break;
                 }
@@ -224,6 +238,7 @@ namespace Ark.MediatorFramework.Generators
                 {
                     kind = HandlerKind.Query;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    responseType = iface.TypeArguments[0];
                     attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
                     break;
                 }
@@ -306,9 +321,20 @@ namespace Ark.MediatorFramework.Generators
                     !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type)))
                 .ToImmutableArray();
             var etagProperties = properties.Where(property => property.IsETag).ToArray();
+            var responseETagProperties = responseType is INamedTypeSymbol namedResponse && etagAttr is not null
+                ? namedResponse.GetMembers().OfType<IPropertySymbol>()
+                    .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
+                    .Where(property => property.GetAttributes().Any(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, etagAttr)))
+                    .ToArray()
+                : Array.Empty<IPropertySymbol>();
             if (etagProperties.Length > 1)
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.DuplicateETagProperty, type.Name, GetLocation(http)));
             foreach (var property in etagProperties.Where(property => !property.IsString))
+                diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.InvalidETagProperty, type.Name, GetLocation(http), property.Name));
+            if (responseETagProperties.Length > 1)
+                diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.DuplicateETagProperty, type.Name, GetLocation(http)));
+            foreach (var property in responseETagProperties.Where(property => property.Type.SpecialType != SpecialType.System_String))
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.InvalidETagProperty, type.Name, GetLocation(http), property.Name));
             foreach (var routeName in routeNames)
             {
@@ -344,6 +370,7 @@ namespace Ark.MediatorFramework.Generators
                 ownerQueue,
                 properties,
                 etagProperties.Length == 0 ? null : etagProperties[0].Name,
+                responseETagProperties.Length == 0 ? null : responseETagProperties[0].Name,
                 type.IsRecord,
                 properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
                     .Select(property => property.Name)
@@ -613,6 +640,7 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                         sb.AppendLine("                if (result is null)");
                         sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(e) + ";");
+                        EmitResponseETagAssignment(sb, e);
                         sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(e) + ";");
                         sb.AppendLine("            }).Produces<" + e.Response + ">(" + SuccessStatusCode(e) + ").Produces(" + NullResultStatusCode(e)
                             + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
@@ -798,6 +826,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(endpoint) + ";");
+            EmitResponseETagAssignment(sb, endpoint);
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(endpoint) + ";");
             sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\")").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(MultipartMetadata(endpoint))
                 .Append(".Produces<").Append(endpoint.Response).Append(">(").Append(SuccessStatusCode(endpoint))
@@ -979,9 +1008,10 @@ namespace Ark.MediatorFramework.Generators
             => ".WithGroupName(" + Literal("v" + version)
                 + ").WithTags(" + Literal(endpoint.ApiGroup)
                 + ").WithName(" + Literal(OperationName(endpoint, version, maxVersion)) + ")"
-                + (endpoint.ETagProperty is null
+                + (endpoint.ETagProperty is null && endpoint.ResponseETagProperty is null
                     ? string.Empty
-                    : ".WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkETagParameterMetadata())");
+                    : ".WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkETagParameterMetadata("
+                        + (endpoint.ResponseETagProperty is null ? "false" : "true") + "))");
 
         private static string OperationName(EndpointModel endpoint, int version, int maxVersion)
             => ActiveVersions(endpoint, maxVersion).Count() > 1
@@ -1040,6 +1070,7 @@ namespace Ark.MediatorFramework.Generators
                 string? ownerQueue,
                 ImmutableArray<PropertyModel> properties,
                 string? etagProperty,
+                string? responseETagProperty,
                 bool isRecord,
                 ImmutableArray<string> invalidServerSetProperties,
                 ImmutableArray<string> suspiciousProperties,
@@ -1068,6 +1099,7 @@ namespace Ark.MediatorFramework.Generators
                 OwnerQueue = ownerQueue;
                 Properties = properties;
                 ETagProperty = etagProperty;
+                ResponseETagProperty = responseETagProperty;
                 IsRecord = isRecord;
                 ServerSetProperties = properties.Where(property => property.IsServerSet).Select(property => property.Name).ToImmutableArray();
                 InvalidServerSetProperties = invalidServerSetProperties;
@@ -1093,6 +1125,7 @@ namespace Ark.MediatorFramework.Generators
                 AllowedContentTypes = ImmutableArray<string>.Empty;
                 Properties = ImmutableArray<PropertyModel>.Empty;
                 ETagProperty = null;
+                ResponseETagProperty = null;
                 ServerSetProperties = ImmutableArray<string>.Empty;
                 InvalidServerSetProperties = ImmutableArray<string>.Empty;
                 SuspiciousProperties = ImmutableArray<string>.Empty;
@@ -1125,6 +1158,7 @@ namespace Ark.MediatorFramework.Generators
             public string? OwnerQueue { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
             public string? ETagProperty { get; }
+            public string? ResponseETagProperty { get; }
             public bool IsRecord { get; }
             public ImmutableArray<string> ServerSetProperties { get; }
             public ImmutableArray<string> InvalidServerSetProperties { get; }

@@ -37,6 +37,40 @@ public static class ArkETag
             && character >= '\u0020' && character != '\u007f');
     }
 
+    /// <summary>Applies a handler-produced ETag and handles a matching conditional GET.</summary>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="token">The opaque response token.</param>
+    /// <param name="conditionalGet">
+    /// Whether <c>If-None-Match</c> should be evaluated for this response.
+    /// </param>
+    /// <returns>A 304 result when the request matches; otherwise <see langword="null"/>.</returns>
+    public static IResult? ApplyResponseETag(HttpContext context, string? token, bool conditionalGet)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        if (string.IsNullOrEmpty(token))
+            return null;
+
+        if (!IsValidToken(token))
+        {
+            var position = token.Select((character, index) => (character, index))
+                .First(item => item.character == '"' || item.character == '\\'
+                    || item.character < '\u0020' || item.character == '\u007f')
+                .index;
+            throw new InvalidOperationException($"ETag token contains an invalid character at position {position}.");
+        }
+
+        context.Response.Headers.ETag = "\"" + token + "\"";
+        if (!conditionalGet)
+            return null;
+
+        var matches = context.Request.Headers.IfNoneMatch
+            .ToString()
+            .Split(',', StringSplitOptions.TrimEntries)
+            .Select(Unquote)
+            .Any(value => value == "*" || string.Equals(value, token, StringComparison.Ordinal));
+        return matches ? TypedResults.StatusCode(StatusCodes.Status304NotModified) : null;
+    }
+
     private static string Unquote(string value)
         => value.Length >= 2 && value[0] == '"' && value[^1] == '"'
             ? value[1..^1]
@@ -46,4 +80,13 @@ public static class ArkETag
 /// <summary>Marks a generated endpoint as carrying an ETag precondition parameter.</summary>
 public sealed class ArkETagParameterMetadata
 {
+    /// <summary>Initializes metadata describing ETag request and response behavior.</summary>
+    /// <param name="responseETag">Whether the response carries an ETag.</param>
+    public ArkETagParameterMetadata(bool responseETag = false)
+    {
+        ResponseETag = responseETag;
+    }
+
+    /// <summary>Gets whether the response carries an ETag.</summary>
+    public bool ResponseETag { get; }
 }

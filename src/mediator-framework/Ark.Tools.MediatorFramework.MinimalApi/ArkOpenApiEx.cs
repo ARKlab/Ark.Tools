@@ -132,9 +132,10 @@ public static class ArkOpenApiEx
 
         options.AddOperationTransformer((operation, context, _) =>
         {
-            if (!context.Description.ActionDescriptor.EndpointMetadata
+            var metadata = context.Description.ActionDescriptor.EndpointMetadata
                 .OfType<ArkETagParameterMetadata>()
-                .Any())
+                .FirstOrDefault();
+            if (metadata is null)
                 return Task.CompletedTask;
 
             operation.Parameters ??= [];
@@ -149,6 +150,34 @@ public static class ArkOpenApiEx
                     Description = "Opaque concurrency token override.",
                     Schema = new OpenApiSchema { Type = JsonSchemaType.String },
                 });
+            }
+
+            if (metadata.ResponseETag)
+            {
+                operation.Responses ??= new OpenApiResponses();
+                var success = operation.Responses.FirstOrDefault(response => response.Key.StartsWith("2", StringComparison.Ordinal)).Value;
+                if (success is not null)
+                {
+                    success.Headers ??= new Dictionary<string, IOpenApiHeader>(StringComparer.OrdinalIgnoreCase);
+                    success.Headers.TryAdd("ETag", new OpenApiHeader
+                    {
+                        Description = "Opaque concurrency token.",
+                        Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                    });
+                }
+
+                if (string.Equals(context.Description.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
+                {
+                    operation.Responses.TryAdd("304", new OpenApiResponse { Description = "Not Modified" });
+                    operation.Parameters.Add(new OpenApiParameter
+                    {
+                        Name = "If-None-Match",
+                        In = ParameterLocation.Header,
+                        Required = false,
+                        Description = "Return 304 when the opaque token matches.",
+                        Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                    });
+                }
             }
 
             return Task.CompletedTask;
