@@ -528,7 +528,7 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("            {");
                             sb.AppendLine("                var body = await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ReadRequestAsync<" + e.TypeFullName + ">(httpContext, cancellationToken).ConfigureAwait(false);");
                             sb.AppendLine("                if (body is null)");
-                            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.BadRequest();");
+                            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400);");
                             if (explicitBindings)
                             {
                                 var assignments = string.Join(", ", e.Properties
@@ -553,7 +553,7 @@ namespace Ark.MediatorFramework.Generators
                                 + SuccessStatusCode(e) + ", " + NullResultStatusCode(e) + ");");
                             sb.AppendLine("            }).Accepts<" + e.TypeFullName + ">(\"application/json\", \"application/x-msgpack\").Produces<" + e.Response + ">("
                                 + SuccessStatusCode(e) + ", \"application/json\", \"application/x-msgpack\").Produces(" + NullResultStatusCode(e)
-                                + ")" + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
+                                + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                             continue;
                         }
                         sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
@@ -599,7 +599,7 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(e) + ";");
                         sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(e) + ";");
                         sb.AppendLine("            }).Produces<" + e.Response + ">(" + SuccessStatusCode(e) + ").Produces(" + NullResultStatusCode(e)
-                            + ")" + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
+                            + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                     }
                 }
             }
@@ -748,7 +748,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            {");
             sb.AppendLine("                var form = await httpContext.Request.ReadFormAsync(cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (form.Files.Count != 1)");
-            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.BadRequest(\"Exactly one file is required.\");");
+            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, detail: \"Exactly one file is required.\");");
             sb.AppendLine("                var file = form.Files[0];");
             if (!endpoint.AllowedContentTypes.IsDefaultOrEmpty)
             {
@@ -770,7 +770,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(endpoint) + ";");
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(endpoint) + ";");
-            sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\")").Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(MultipartMetadata(endpoint))
+            sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\")").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(MultipartMetadata(endpoint))
                 .Append(".Produces<").Append(endpoint.Response).Append(">(").Append(SuccessStatusCode(endpoint))
                 .Append(").Produces(").Append(NullResultStatusCode(endpoint)).Append(')')
                 .Append(AuthorizationMetadata(endpoint)).AppendLine(";");
@@ -814,7 +814,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.NotFound();");
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.File(result.OpenRead(), result.ContentType, fileDownloadName: global::Ark.MediatorFramework.ArkAttachmentName.Sanitize(result.Name));");
             sb.Append("            }).Produces(200, contentType: \"application/octet-stream\").Produces(404)")
-                .Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+                .Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
 
         private static void EmitCommandEndpoint(
@@ -875,7 +875,7 @@ namespace Ark.MediatorFramework.Generators
                 sb.AppendLine("                await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                 sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
             }
-            sb.Append("            })").Append(OpenApiMetadata(endpoint, version, maxVersion));
+            sb.Append("            })").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion));
             sb.Append(endpoint.OwnerQueue is null ? ".Produces(204)" : ".Produces(202)");
             sb.Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
@@ -922,6 +922,30 @@ namespace Ark.MediatorFramework.Generators
             return string.IsNullOrWhiteSpace(endpoint.Policy)
                 ? ".RequireAuthorization()"
                 : ".RequireAuthorization(" + Literal(endpoint.Policy!) + ")";
+        }
+
+        private static string ProblemMetadata(EndpointModel endpoint)
+        {
+            var metadata = new StringBuilder();
+            var declaredStatuses = new HashSet<int>
+            {
+                SuccessStatusCode(endpoint),
+                NullResultStatusCode(endpoint),
+            };
+
+            AppendProblem(400);
+            if (!endpoint.AllowAnonymous)
+                AppendProblem(403);
+            AppendProblem(500);
+            return metadata.ToString();
+
+            void AppendProblem(int statusCode)
+            {
+                if (declaredStatuses.Add(statusCode))
+                    metadata.Append(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(")
+                        .Append(statusCode)
+                        .Append(", \"application/problem+json\")");
+            }
         }
 
         private static string OpenApiMetadata(EndpointModel endpoint, int version, int maxVersion)

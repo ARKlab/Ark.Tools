@@ -209,6 +209,30 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorAdvertisesStandardProblemResponsesWithoutDuplicates()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/secure", SuccessStatusCode = 400, NullResultStatusCode = 500)]
+            public sealed class SecureEndpoint : IQuery<string>
+            {
+            }
+            [HttpEndpoint("GET", "/public", AllowAnonymous = true)]
+            public sealed class PublicEndpoint : IQuery<string>
+            {
+            }
+            """);
+
+        generated.Should().Contain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(403, \"application/problem+json\")");
+        generated.Should().Contain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\")");
+        generated.Split(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(400, \"application/problem+json\")").Length.Should().Be(2);
+        generated.Split(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\")").Length.Should().Be(2);
+        generated.Should().NotContain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\").Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorEmitsCommandStatusSemantics()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
