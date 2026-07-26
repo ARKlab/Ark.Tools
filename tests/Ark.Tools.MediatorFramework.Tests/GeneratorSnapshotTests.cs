@@ -253,6 +253,61 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorBindsETagPreconditions()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("PUT", "/items/{id}")]
+            public sealed record UpdateItem : IRequest<string>
+            {
+                public string Id { get; init; } = string.Empty;
+                [ETag] public string? ETag { get; init; }
+            }
+            """);
+
+        generated.Should().Contain("ArkETag.ReadPrecondition(httpContext)");
+        generated.Should().Contain("request = request with { ETag = etag }");
+        generated.Should().Contain("ArkETagParameterMetadata");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsInvalidETagDeclarations()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("PUT", "/items")]
+            public sealed record InvalidETag : IRequest<string>
+            {
+                [ETag] public int Value { get; init; }
+                [ETag] public string? Other { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF017");
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF018");
+    }
+
+    [TestMethod]
+    public void ArkETagReadsAndValidatesPreconditions()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.IfMatch = "\"abc\", \"ignored\"";
+        ArkETag.ReadPrecondition(context).Should().Be("abc");
+        ArkETag.IsValidToken("abc").Should().BeTrue();
+        ArkETag.IsValidToken("a\"b").Should().BeFalse();
+        ArkETag.IsValidToken("a\\b").Should().BeFalse();
+        ArkETag.IsValidToken("a\nb").Should().BeFalse();
+
+        context.Request.Headers.Clear();
+        context.Request.Headers.IfNoneMatch = "*";
+        ArkETag.ReadPrecondition(context).Should().Be("*");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorEmitsNullAndCustomSuccessStatusSemantics()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(

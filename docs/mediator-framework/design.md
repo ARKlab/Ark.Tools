@@ -97,6 +97,16 @@ body input. The Minimal API generator resets them after deserialization, the
 gRPC proto export omits them from request messages, and
 `AddArkServerSetProperties()` removes them from generated schemas.
 
+### Optimistic concurrency: opaque ETag tokens
+
+Contracts may mark one `string?` property with `[ETag]`. The property is an opaque
+concurrency token and remains a normal serialized member of JSON, MessagePack,
+protobuf, and Rebus messages. On HTTP requests, `If-Match` (or
+`If-None-Match: *`) overrides the payload value when present; otherwise the
+payload value is preserved. Minimal API hosts may register
+`AddArkETagParameters()` to document the optional `If-Match` header. Response
+header emission is defined by the follow-up FW-09 task.
+
 ## The Roslyn incremental generator
 
 An `IIncrementalGenerator` (superior to the legacy `ISourceGenerator`: cached,
