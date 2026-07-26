@@ -36,6 +36,9 @@ Diagnostics:
 - `ARKAPI001` (error) — surface entry not declared in either file.
 - `ARKAPI002` (error) — entry present in a file but no longer produced.
 - `ARKAPI003` (warning) — entry present in both shipped and unshipped.
+- `ARKAPI004` (error) — `$(ArkApiSurfaceEnforceRelease)` is `true` and
+  `ArkApiSurface.Unshipped.txt` is non-empty; the release gate fires until all
+  pending entries are moved to `ArkApiSurface.Shipped.txt`.
 
 A code fix ("Add to unshipped API surface") writes the missing lines, so the developer's diff shows the
 API change explicitly and reviewers see it in the pull request.
@@ -58,15 +61,22 @@ API change explicitly and reviewers see it in the pull request.
    `AdditionalFiles` so consumers do not hand-wire item groups; the analyzer is a no-op (no diagnostics)
    when neither file exists **and** `$(ArkApiSurfaceRequired)` is not `true`, and errors when the files
    exist. Document how a project opts in (`ArkApiSurfaceRequired=true` + empty files).
-5. Enable it in the sample's Application assembly with committed `ArkApiSurface.Shipped.txt` /
+5. Wire the release gate: `$(ArkApiSurfaceEnforceRelease)` defaults to `false`; set it to `true` in CI
+   for pack/release jobs (e.g. `dotnet build -p:ArkApiSurfaceEnforceRelease=true`). When `true`,
+   `ARKAPI004` fires on a non-empty `Unshipped.txt`, blocking release until entries are manually
+   promoted to `Shipped.txt`. Document the promotion workflow in `design.md` and in the user guide.
+6. Enable it in the sample's Application assembly with committed `ArkApiSurface.Shipped.txt` /
    `ArkApiSurface.Unshipped.txt`, proving the whole loop in-repo.
-6. Document the workflow in `design.md` and in the user guide (DOC-01): change API → build fails →
-   apply the code fix → the snapshot diff is part of the PR.
+7. Document the workflow in `design.md` and in the user guide (DOC-01): change API → build fails →
+   apply the code fix → the snapshot diff is part of the PR → on release, promote unshipped to
+   shipped → `ARKAPI004` clears.
 
 ## Test coverage (required)
 
 - Analyzer unit tests (`tests/Ark.Tools.MediatorFramework.Tests`) using the Roslyn testing harness:
   - missing entry → `ARKAPI001`; stale entry → `ARKAPI002`; duplicated entry → `ARKAPI003`;
+  - non-empty unshipped + `ArkApiSurfaceEnforceRelease=true` → `ARKAPI004`; empty unshipped + same
+    flag → no diagnostic;
   - complete files → no diagnostics;
   - versioned contract produces one entry per active version;
   - `[ServerSet]`, policy, tag/operation name and proto field numbers are part of the entry, so changing
@@ -80,11 +90,15 @@ API change explicitly and reviewers see it in the pull request.
 - Any change to routes, operation names, contract members, proto messages/field numbers or Rebus queues
   fails the build until the developer regenerates the snapshot, making the wire-level diff explicit and
   reviewable in every pull request.
+- No unreviewed surface change can ship: CI/CD pack/release jobs set `ArkApiSurfaceEnforceRelease=true`
+  and fail until the developer explicitly promotes changes from `Unshipped.txt` to `Shipped.txt`.
 
 ## Acceptance
 
 - [ ] Analyzer + code fix implemented, packed as an analyzer asset, no-op when not opted in.
 - [ ] `ARKAPI001`/`ARKAPI002`/`ARKAPI003` behave as specified and are unit-tested.
+- [ ] `ARKAPI004` fires when `ArkApiSurfaceEnforceRelease=true` and `Unshipped.txt` is non-empty;
+      clears once the file is empty; unit-tested.
 - [ ] Surface entries cover HTTP routes/params/policy/op name/tag, gRPC service+method+fields+streaming
       kind, Rebus queues and contract members.
 - [ ] Sample Application assembly opts in with committed snapshot files; solution build is green with them.

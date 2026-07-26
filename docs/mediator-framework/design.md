@@ -759,6 +759,12 @@ is a build **error**. A code fix regenerates the unshipped file, so an API chang
 appears as an explicit, reviewable diff in the pull request — which is the point:
 reviewers see wire-breaking changes without reading generator output.
 
+**Release gate.** When `$(ArkApiSurfaceEnforceRelease)` is `true` (set in CI
+on release branches / pack jobs), any non-empty `ArkApiSurface.Unshipped.txt`
+is a build **error** (`ARKAPI004`). Promoting entries from the unshipped file to
+the shipped file is the explicit, manual acceptance step that must land in the
+release PR; no unreviewed surface change can ship.
+
 ## Testing strategy
 
 - `samples/Ark.MediatorFramework.Sample/test/…Sample.Tests` demonstrates **how
