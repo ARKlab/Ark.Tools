@@ -60,6 +60,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             DateTime = Request.DateTime,
             OffsetDateTime = Request.OffsetDateTime,
             Period = Request.Period,
+            ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
         await _store.SaveAndPublishAsync(response, new AuditEntry
@@ -72,6 +73,26 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
         return response;
+    }
+
+}
+
+/// <summary>Updates a greeting after validating its opaque concurrency token.</summary>
+public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>
+{
+    private readonly IGreetingStore _store;
+
+    /// <summary>Initializes a new instance of the <see cref="UpdateGreetingMessageHandler"/> class.</summary>
+    public UpdateGreetingMessageHandler(IGreetingStore store)
+    {
+        _store = store;
+    }
+
+    /// <inheritdoc />
+    public async Task<GreetingResponse> ExecuteAsync(UpdateGreetingMessageRequest request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return await _store.UpdateAsync(request.Id, request.Message, request.ETag, ctk: ctk).ConfigureAwait(false);
     }
 }
 

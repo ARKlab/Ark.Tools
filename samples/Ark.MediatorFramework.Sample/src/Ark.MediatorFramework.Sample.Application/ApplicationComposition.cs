@@ -58,6 +58,7 @@ public static class ApplicationComposition
 
         container.Register<ICommandHandler<RefreshGreetingCommand>, RefreshGreetingHandler>();
         container.Register<IRequestHandler<CreateGreetingRequest, GreetingResponse>, CreateGreetingHandler>();
+        container.Register<IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>, UpdateGreetingMessageHandler>();
         container.Register<IRequestHandler<ComposeGreetingRequest, ComposeGreetingResponse>, ComposeGreetingHandler>();
         container.Register<IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>, CompleteGreetingCompositionHandler>();
         container.Register<IQueryHandler<GetGreetingQuery, GreetingResponse>, GetGreetingHandler>();

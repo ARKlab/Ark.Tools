@@ -43,6 +43,33 @@ public sealed record GreetingResponse
     /// <summary>Gets the audit identifier associated with this entity version.</summary>
     [ProtoMember(7)]
     public Guid AuditId { get; init; }
+
+    /// <summary>Gets the opaque concurrency token echoed in update preconditions.</summary>
+    [ProtoMember(8)]
+    [ETag]
+    public string? ETag { get; init; }
+}
+
+/// <summary>Updates a greeting using an opaque ETag precondition.</summary>
+[HttpEndpoint("PUT", "/api/v{version}/greetings/{id}")]
+[GrpcMethod("UpdateGreetingMessage")]
+[GrpcService("Greetings")]
+[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
+[ProtoContract]
+public sealed record UpdateGreetingMessageRequest : IRequest<GreetingResponse>
+{
+    /// <summary>Gets the greeting identifier.</summary>
+    [ProtoMember(1)]
+    public Guid Id { get; init; }
+
+    /// <summary>Gets the replacement message.</summary>
+    [ProtoMember(2)]
+    public string Message { get; init; } = string.Empty;
+
+    /// <summary>Gets the opaque concurrency token.</summary>
+    [ProtoMember(3)]
+    [ETag]
+    public string? ETag { get; init; }
 }
 
 /// <summary>Command used to exercise the synchronous command transport contract.</summary>

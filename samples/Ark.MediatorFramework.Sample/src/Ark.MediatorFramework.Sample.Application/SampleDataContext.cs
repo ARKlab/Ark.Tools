@@ -312,6 +312,22 @@ public sealed class SqlGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
+    public async Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
+    {
+        var current = await GetAsync(id, ctk).ConfigureAwait(false);
+        if (expectedETag is null || !string.Equals(expectedETag, current.ETag, StringComparison.Ordinal))
+            throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
+
+        var updated = current with
+        {
+            Message = message,
+            ETag = Convert.ToBase64String(Guid.NewGuid().ToByteArray()),
+        };
+        await SaveAsync(updated, audit, ctk).ConfigureAwait(false);
+        return updated;
+    }
+
+    /// <inheritdoc />
     public async Task<int> CountAsync(CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
