@@ -68,6 +68,8 @@ request type. Each transport is opt-in and declared independently:
   code-first gRPC method; `[ServiceGroup("Orders")]` groups the service.
 - `[RebusMessage(OwnerQueue = "orders")]` — expose as a Rebus message and,
   when an owner is declared, contribute a type-based outbound route.
+- `[ApiTag("Orders")]` — override the namespace-derived OpenAPI tag and the
+  gRPC service-group fallback for the contract.
 
 Generated HTTP endpoints require authorization by default. Set `Policy` on
 `[HttpEndpoint]` to select a named policy, or set `AllowAnonymous = true` for
@@ -80,7 +82,8 @@ Generator contract errors are reported at the transport attribute location:
 `ARKMF010` (unknown HTTP verb), `ARKMF011` (unsupported handler kind),
 `ARKMF012` (missing route property), `ARKMF013` (invalid HTTP contract shape),
 `ARKMF014` (duplicate Rebus registration), and `ARKMF015` (conflicting Rebus
-owner queue). Invalid contracts are not emitted.
+owner queue), and `ARKMF016` (duplicate OpenAPI operation name within an API
+version). Invalid contracts are not emitted.
 
 HTTP binding treats the request as an **envelope** whose members may combine
 route, query and body sources (see *HTTP binding* below). These attributes are

@@ -72,11 +72,11 @@ See `docs/mediator-framework/design.md` → *OpenAPI operation grouping, naming 
 
 ## Acceptance
 
-- [ ] `ApiTagAttribute` exists in `Ark.Tools.MediatorFramework` with XML docs.
-- [ ] Generated endpoints emit `.WithTags(...)` and `.WithName(...)`; snapshots updated.
-- [ ] `operationId` is unique within each versioned document (tested).
-- [ ] Duplicate operation names produce a documented generator diagnostic (tested).
-- [ ] gRPC service grouping falls back to `[ApiTag]`; explicit `[ServiceGroup]` still wins (tested).
-- [ ] `design.md` documents the defaults, the override and the new diagnostic id.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `ApiTagAttribute` exists in `Ark.Tools.MediatorFramework` with XML docs.
+- [x] Generated endpoints emit `.WithTags(...)` and `.WithName(...)`; snapshots updated.
+- [x] `operationId` is unique within each versioned document (tested).
+- [x] Duplicate operation names produce a documented generator diagnostic (tested).
+- [x] gRPC service grouping falls back to `[ApiTag]`; explicit `[ServiceGroup]` still wins (tested).
+- [x] `design.md` documents the defaults, the override and the new diagnostic id.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

@@ -27,6 +27,7 @@ namespace Ark.MediatorFramework.Generators
     {
         private const string GrpcMethodAttribute = "Ark.MediatorFramework.GrpcMethodAttribute";
         private const string ServiceGroupAttribute = "Ark.MediatorFramework.ServiceGroupAttribute";
+        private const string ApiTagAttribute = "Ark.MediatorFramework.ApiTagAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
 
@@ -62,12 +63,13 @@ namespace Ark.MediatorFramework.Generators
             var type = (INamedTypeSymbol)context.TargetSymbol;
             var grpc = context.Attributes[0];
             var serviceGroupAttribute = context.SemanticModel.Compilation.GetTypeByMetadataName(ServiceGroupAttribute);
+            var apiTagAttribute = context.SemanticModel.Compilation.GetTypeByMetadataName(ApiTagAttribute);
             var attachmentType = context.SemanticModel.Compilation.GetTypeByMetadataName(ArkAttachment);
             var serviceGroup = serviceGroupAttribute is null
                 ? null
                 : type.GetAttributes().FirstOrDefault(
                     attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serviceGroupAttribute));
-            return Extract(type, grpc, serviceGroup, attachmentType);
+            return Extract(type, grpc, serviceGroup, apiTagAttribute, attachmentType);
         }
 
         private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
@@ -88,6 +90,7 @@ namespace Ark.MediatorFramework.Generators
         {
             var grpcAttr = compilation.GetTypeByMetadataName(GrpcMethodAttribute);
             var serviceGroupAttr = compilation.GetTypeByMetadataName(ServiceGroupAttribute);
+            var apiTagAttr = compilation.GetTypeByMetadataName(ApiTagAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             if (grpcAttr is null)
                 return ImmutableArray<EndpointModel>.Empty;
@@ -106,7 +109,7 @@ namespace Ark.MediatorFramework.Generators
                         continue;
 
                     var serviceGroup = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, serviceGroupAttr));
-                    var model = Extract(type, grpc, serviceGroup, attachmentType);
+                    var model = Extract(type, grpc, serviceGroup, apiTagAttr, attachmentType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -157,6 +160,7 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol type,
             AttributeData grpc,
             AttributeData? serviceGroup,
+            INamedTypeSymbol? apiTagAttribute,
             INamedTypeSymbol? attachmentType)
         {
             string? response = null;
@@ -199,7 +203,18 @@ namespace Ark.MediatorFramework.Generators
             var grpcMethod = grpc.ConstructorArguments.FirstOrDefault().Value as string ?? type.Name;
             var grpcIntroducedIn = NamedInt(grpc, "IntroducedIn", 1);
             var grpcRetiredIn = NamedInt(grpc, "RetiredIn", 0);
-            var group = serviceGroup?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
+            var apiTag = apiTagAttribute is null
+                ? null
+                : type.GetAttributes()
+                    .Where(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, apiTagAttribute))
+                    .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as string)
+                    .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+            var defaultGroup = type.ContainingNamespace is { IsGlobalNamespace: false } ns
+                ? ns.ToDisplayString().Split('.').Last()
+                : "Ark";
+            var group = serviceGroup?.ConstructorArguments.FirstOrDefault().Value as string
+                ?? apiTag
+                ?? defaultGroup;
 
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),

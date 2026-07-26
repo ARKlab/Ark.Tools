@@ -339,7 +339,7 @@ Each item has a self-contained task document under
 [`tasks/`](tasks/README.md); the acceptance criteria live there and are the
 authoritative ones.
 
-- [ ] **T12.1** OpenAPI tags and operation names from the contract
+- [x] **T12.1** OpenAPI tags and operation names from the contract
   ([NET-06](tasks/aspnetcore/NET-06-openapi-tags-operation-names.md)).
   - *Accept:* every generated operation carries a namespace-derived tag
     (overridable with `[ApiTag]`) and a unique, contract-derived `operationId`;

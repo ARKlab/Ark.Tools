@@ -97,6 +97,7 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 }
 
 /// <summary>HTTP-only request that publishes work to Rebus and returns immediately.</summary>
+[ApiTag("Greetings")]
 [HttpEndpoint("POST", "/api/v{version}/greetings/compose")]
 public sealed record ComposeGreetingRequest : IRequest<ComposeGreetingResponse>
 {

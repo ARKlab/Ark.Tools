@@ -91,6 +91,45 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("MapGet(\"/api/v2/greetings/{id}\"");
         generated.Should().NotContain("MapGet(\"/api/v3/greetings/{id}\"");
         generated.Should().Contain("WithGroupName(\"v1\")");
+        generated.Should().Contain("WithTags(\"Ark\")");
+        generated.Should().Contain("WithName(\"GetGreeting_v1\")");
+        generated.Should().Contain("WithName(\"GetGreeting_v2\")");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorUsesApiTagAndReportsDuplicateOperationNames()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace Api.Contracts;
+            [ApiTag("Public")]
+            [HttpEndpoint("GET", "/one")]
+            public sealed class First : IQuery<string> { }
+            [HttpEndpoint("GET", "/two")]
+            public sealed class Second : IQuery<string> { }
+            """);
+
+        generated.Should().Contain("WithTags(\"Public\")");
+
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace First
+            {
+                [HttpEndpoint("GET", "/one")]
+                public sealed class Same : IQuery<string> { }
+            }
+            namespace Second
+            {
+                [HttpEndpoint("GET", "/two")]
+                public sealed class Same : IQuery<string> { }
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF016");
     }
 
     [TestMethod]
@@ -320,6 +359,23 @@ public sealed class GeneratorSnapshotTests
         var versionTwo = generated[generated.IndexOf("interface IGreetingsV2GrpcService", StringComparison.Ordinal)..];
         versionTwo.Should().Contain("CreateGreetingAsync");
         versionTwo.Should().NotContain("GetGreetingAsync");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorUsesApiTagWhenServiceGroupIsAbsent()
+    {
+        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [ApiTag("Greetings")]
+            [GrpcMethod("GetGreeting")]
+            public sealed class GetGreeting : IQuery<string>
+            {
+            }
+            """);
+
+        generated.Should().Contain("IGreetingsV1GrpcService");
     }
 
     [TestMethod]
