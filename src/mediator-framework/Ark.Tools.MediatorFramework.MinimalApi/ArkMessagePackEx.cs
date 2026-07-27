@@ -41,11 +41,11 @@ public static class ArkMessagePackEx
         }
         catch (MessagePackSerializationException)
         {
-            return null;
+            return default;
         }
         catch (JsonException)
         {
-            return null;
+            return default;
         }
     }
 
