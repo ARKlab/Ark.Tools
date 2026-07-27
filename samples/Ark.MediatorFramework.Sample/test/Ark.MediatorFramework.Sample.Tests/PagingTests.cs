@@ -63,8 +63,10 @@ public sealed class PagingTests
             new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());
 
         var response = await context.Client.GetAsync(
-            new Uri("/api/v1/greetings?limit=101", UriKind.Relative)).ConfigureAwait(false);
+            new Uri("/api/v1/greetings?skip=0&limit=101", UriKind.Relative)).ConfigureAwait(false);
 
+        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        await File.WriteAllTextAsync("/tmp/test_response.txt", $"STATUS:{(int)response.StatusCode}\nBODY:\n{body}\nEND").ConfigureAwait(false);
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
