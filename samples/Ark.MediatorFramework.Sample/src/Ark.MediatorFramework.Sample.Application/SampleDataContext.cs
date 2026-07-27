@@ -96,7 +96,12 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads a greeting in the current transaction.</summary>
     public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
     {
-        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId] FROM [dbo].[Greeting] WHERE [Id] = @Id";
+        const string sql = """
+            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
+                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+            FROM [dbo].[Greeting]
+            WHERE [Id] = @Id
+            """;
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
         return row?.ToResponse();
@@ -105,10 +110,36 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads all greetings in the current transaction.</summary>
     public async Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
     {
-        const string sql = "SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId] FROM [dbo].[Greeting]";
+        const string sql = """
+            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
+                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+            FROM [dbo].[Greeting]
+            """;
         var command = new CommandDefinition(sql, transaction: Transaction, cancellationToken: ctk);
         var rows = await Connection.QueryAsync<GreetingRow>(command).ConfigureAwait(false);
         return rows.Select(row => row.ToResponse()).ToArray();
+    }
+
+    /// <summary>Updates a greeting conditionally and returns its new opaque ETag.</summary>
+    public async Task<GreetingResponse?> UpdateAsync(
+        Guid id,
+        string message,
+        string eTag,
+        Guid auditId,
+        CancellationToken ctk = default)
+    {
+        const string sql = """
+            MERGE [dbo].[Greeting] AS target
+            USING (SELECT @Id AS [Id]) AS source ON target.[Id] = source.[Id]
+            WHEN MATCHED AND target.[RowVersion] = CONVERT(VARBINARY(8), @ETag, 1) THEN
+                UPDATE SET [Message] = @Message, [AuditId] = @AuditId
+            OUTPUT inserted.[Id], inserted.[Message], inserted.[Date], inserted.[DateTime],
+                   inserted.[OffsetDateTime], inserted.[Period], inserted.[AuditId],
+                   CONVERT(VARCHAR(MAX), inserted.[RowVersion], 1) AS [ETag];
+            """;
+        var command = new CommandDefinition(sql, new { Id = id, Message = message, AuditId = auditId, ETag = eTag }, Transaction, cancellationToken: ctk);
+        var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
+        return row?.ToResponse();
     }
 
     /// <summary>Reads a page of audit records in the current transaction.</summary>
@@ -195,6 +226,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public NodaTime.OffsetDateTime OffsetDateTime { get; set; }
         public string Period { get; set; } = string.Empty;
         public Guid AuditId { get; set; }
+        public string ETag { get; set; } = string.Empty;
 
         public GreetingResponse ToResponse()
         {
@@ -207,6 +239,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 OffsetDateTime = OffsetDateTime,
                 Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
                 AuditId = AuditId,
+                ETag = ETag,
             };
         }
     }
@@ -314,16 +347,22 @@ public sealed class SqlGreetingStore : IGreetingStore
     /// <inheritdoc />
     public async Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
     {
-        var current = await GetAsync(id, ctk).ConfigureAwait(false);
-        if (expectedETag is null || !string.Equals(expectedETag, current.ETag, StringComparison.Ordinal))
+        if (expectedETag is null)
             throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
 
-        var updated = current with
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var auditId = audit?.Id ?? Guid.NewGuid();
+        var updated = await context.UpdateAsync(id, message, expectedETag, auditId, ctk).ConfigureAwait(false);
+        if (updated is null)
         {
-            Message = message,
-            ETag = Convert.ToBase64String(Guid.NewGuid().ToByteArray()),
-        };
-        await SaveAsync(updated, audit, ctk).ConfigureAwait(false);
+            var exists = await context.ReadAsync(id, ctk).ConfigureAwait(false);
+            if (exists is null)
+                throw new EntityNotFoundException($"Greeting '{id}' was not found.");
+            throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
+        }
+        if (audit is not null)
+            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
         return updated;
     }
 

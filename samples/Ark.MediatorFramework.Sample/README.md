@@ -101,6 +101,11 @@ curl -X PUT -H "Authorization: ******" -H "If-Match: \"$ETAG\"" \
   https://localhost:5001/api/v1/greetings/$ID
 ```
 
+The sample stores the version as SQL Server `ROWVERSION` (or a monotonic in-memory
+version), while clients only see the opaque base64 token. A stale token returns
+`412 Precondition Failed`; transient server concurrency failures are retried twice
+and then return `409 Conflict`.
+
 ## Documented follow-ups
 
 The emitted `.proto` now generates a dedicated client assembly used by the

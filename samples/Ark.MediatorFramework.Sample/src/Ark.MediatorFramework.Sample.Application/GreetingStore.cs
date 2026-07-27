@@ -53,6 +53,12 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _items = new();
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, long> _versions = new();
+    private readonly System.Threading.Lock _sync = new();
+
+    /// <summary>Initializes a new in-memory store.</summary>
+    public InMemoryGreetingStore()
+    {
+    }
 
     /// <inheritdoc />
     public Task<int> CountAsync(CancellationToken ctk = default)
@@ -67,7 +73,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
         var version = _versions.GetOrAdd(greeting.Id, 1);
         _items[greeting.Id] = greeting with
         {
-            ETag = Convert.ToBase64String(BitConverter.GetBytes(version)),
+            ETag = $"0x{version:X16}",
         };
         AddAudit(audit);
         return Task.CompletedTask;
@@ -147,22 +153,25 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     /// <inheritdoc />
     public Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
     {
-        if (expectedETag is null || !_items.TryGetValue(id, out var current))
-            throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
-        var version = _versions.GetOrAdd(id, 1);
-        var currentETag = Convert.ToBase64String(BitConverter.GetBytes(version));
-        if (!string.Equals(expectedETag, currentETag, StringComparison.Ordinal))
-            throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
-
-        var updated = current with
+        lock (_sync)
         {
-            Message = message,
-            ETag = Convert.ToBase64String(BitConverter.GetBytes(version + 1)),
-        };
-        _items[id] = updated;
-        _versions[id] = version + 1;
-        AddAudit(audit);
-        return Task.FromResult(updated);
+            if (expectedETag is null || !_items.TryGetValue(id, out var current))
+                throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
+            var version = _versions.GetOrAdd(id, 1);
+            var currentETag = $"0x{version:X16}";
+            if (!string.Equals(expectedETag, currentETag, StringComparison.Ordinal))
+                throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
+
+            var updated = current with
+            {
+                Message = message,
+                ETag = $"0x{version + 1:X16}",
+            };
+            _items[id] = updated;
+            _versions[id] = version + 1;
+            AddAudit(audit);
+            return Task.FromResult(updated);
+        }
     }
 
     /// <inheritdoc />

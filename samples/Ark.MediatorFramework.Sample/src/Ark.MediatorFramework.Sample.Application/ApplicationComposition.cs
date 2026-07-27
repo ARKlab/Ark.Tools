@@ -76,6 +76,8 @@ public static class ApplicationComposition
         container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryFluentValidateDecorator<,>));
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestFluentValidateDecorator<,>));
         container.RegisterDecorator(typeof(ICommandHandler<>), typeof(CommandFluentValidateDecorator<>));
+        // Register last so retries wrap validation and auditing and repeat the complete pipeline.
+        container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(OptimisticConcurrencyRetrierDecorator<,>));
     }
 
     private sealed class NullValidator<T> : AbstractValidator<T>

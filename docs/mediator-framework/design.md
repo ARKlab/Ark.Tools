@@ -112,6 +112,10 @@ the header. The token remains in the response body for every transport. gRPC
 maps `EntityTagMismatchException` to `FailedPrecondition` and
 `OptimisticConcurrencyException` to `Aborted`.
 
+The mediator sample demonstrates this contract with a SQL Server `ROWVERSION` column.
+The rowversion bytes are encoded as a base64 opaque string only in the data-access layer;
+the contract and every transport continue to expose only `string?`.
+
 ## The Roslyn incremental generator
 
 An `IIncrementalGenerator` (superior to the legacy `ISourceGenerator`: cached,

@@ -126,4 +126,49 @@ public sealed class ConcurrencyRoundtripTests
             }, metadata).ResponseAsync.ConfigureAwait(false);
         retried.Message.Should().Be("updated twice");
     }
+
+    /// <summary>Verifies body-token fallback, malformed preconditions, and bounded retries.</summary>
+    [TestMethod]
+    public async Task BodyTokenAndRetrySemanticsAreEnforced()
+    {
+        const int MaxRetries = 2;
+        const int ExhaustedRetries = MaxRetries + 1;
+        using var context = new SampleTestContext();
+        context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer", new JwtTokenBuilder().AddSubject("retry-user").AddScope("greetings.write").Build());
+        var created = await context.Client.PostAsJsonAsync("/api/v1/greetings", new { name = "retry" }).ConfigureAwait(false);
+        var greeting = await created.Content.ReadFromJsonAsync<GreetingResponse>(JsonOptions).ConfigureAwait(false);
+        var current = await context.Client.GetFromJsonAsync<GreetingResponse>(
+            $"/api/v1/greetings/{greeting!.Id}", JsonOptions).ConfigureAwait(false);
+
+        using var bodyOnly = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/greetings/{current!.Id}")
+        {
+            Content = JsonContent.Create(new { id = current.Id, message = "body", etag = current.ETag }),
+        };
+        (await context.Client.SendAsync(bodyOnly).ConfigureAwait(false)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        using var invalid = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/greetings/{current.Id}")
+        {
+            Content = JsonContent.Create(new { id = current.Id, message = "invalid", etag = "not-base64" }),
+        };
+        (await context.Client.SendAsync(invalid).ConfigureAwait(false)).StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
+
+        var latest = await context.Client.GetFromJsonAsync<GreetingResponse>(
+            $"/api/v1/greetings/{current.Id}", JsonOptions).ConfigureAwait(false);
+        context.FaultInjector.PendingFailures = MaxRetries;
+        using var retry = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/greetings/{latest!.Id}")
+        {
+            Content = JsonContent.Create(new { id = latest.Id, message = "retried", etag = latest.ETag }),
+        };
+        (await context.Client.SendAsync(retry).ConfigureAwait(false)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var afterRetry = await context.Client.GetFromJsonAsync<GreetingResponse>(
+            $"/api/v1/greetings/{latest.Id}", JsonOptions).ConfigureAwait(false);
+        context.FaultInjector.PendingFailures = ExhaustedRetries;
+        using var exhausted = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/greetings/{latest.Id}")
+        {
+            Content = JsonContent.Create(new { id = latest.Id, message = "exhausted", etag = afterRetry!.ETag }),
+        };
+        (await context.Client.SendAsync(exhausted).ConfigureAwait(false)).StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
 }

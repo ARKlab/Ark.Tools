@@ -109,7 +109,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [GEN-08](generator-dx/GEN-08-from-assembly-api-names.md)
    [x] [FW-08](framework/FW-08-etag-preconditions.md)
    [x] [FW-09](framework/FW-09-etag-response-emission.md)
-   [ ] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
+   [x] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
    [ ] [SMP-05](sample-parity/SMP-05-paging.md)
    [ ] [SMP-06](sample-parity/SMP-06-misc-parity.md)
    [ ] [NET-01](aspnetcore/NET-01-openapi-xml-docs.md)
