@@ -25,9 +25,8 @@ Files: `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.We
    endpoint. Fix framework transformers where the schema is wrong.
 2. YAML endpoint: expose the document in YAML too if trivially supported by `MapOpenApi` (it is:
    `/openapi/{documentName}.yaml`); document the route.
-3. UI decision: drop Swashbuckle.SwaggerUI from the sample in favor of **Scalar only**, unless
-   `AddAuthorizationCodeFlow` (see `SampleStartup.cs`) depends on SwaggerUI — in that case port the
-   OAuth flow config to Scalar. Remove the unused package reference + lockfile entries.
+3. UI decision: keep both Swashbuckle.SwaggerUI and Scalar. Swagger UI provides the familiar
+   version selector while Scalar provides the OAuth-enabled modern reference UI.
 4. Descriptions in OpenAPI and in the exported protos are GEN-09's responsibility; do not duplicate them here.
 
 ## Outcomes
@@ -38,5 +37,5 @@ Files: `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.We
 
 - [ ] 3.1 snapshot tests for nullable/NodaTime/polymorphic/versioned/multipart schemas pass.
 - [ ] YAML document reachable.
-- [ ] Single doc UI (Scalar) with working OAuth flow; Swashbuckle.SwaggerUI reference removed (or a recorded, deliberate decision to keep both).
+- [ ] Deliberate dual doc UI: Swagger UI and Scalar are both reachable, with Scalar's OAuth flow working.
 - [ ] Lockfiles updated; full solution build + tests green.

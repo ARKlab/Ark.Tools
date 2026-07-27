@@ -18,11 +18,11 @@ public sealed class OpenApiTests
     public async Task V1DocumentContainsRepresentativeSchemasAndOperations()
     {
         using var context = new SampleTestContext();
-        using var response = await context.Client.GetAsync("/openapi/v1.json").ConfigureAwait(false);
+        using var response = await context.Client.GetAsync(new Uri("/openapi/v1.json", UriKind.Relative)).ConfigureAwait(false);
         response.IsSuccessStatusCode.Should().BeTrue();
 
         var document = JsonNode.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))
-            .Should().NotBeNull().Subject;
+            ?? throw new InvalidOperationException("The OpenAPI document was not valid JSON.");
         document["openapi"]?.GetValue<string>().Should().Be("3.1.0");
 
         var schemas = document["components"]?["schemas"];
@@ -41,11 +41,11 @@ public sealed class OpenApiTests
     public async Task V2DocumentContainsIntroducedOperation()
     {
         using var context = new SampleTestContext();
-        using var response = await context.Client.GetAsync("/openapi/v2.json").ConfigureAwait(false);
+        using var response = await context.Client.GetAsync(new Uri("/openapi/v2.json", UriKind.Relative)).ConfigureAwait(false);
         response.IsSuccessStatusCode.Should().BeTrue();
 
         var document = JsonNode.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))
-            .Should().NotBeNull().Subject;
+            ?? throw new InvalidOperationException("The OpenAPI document was not valid JSON.");
         document["paths"]?["/api/v2/greetings-v2/{id}"]?["get"].Should().NotBeNull();
     }
 
@@ -54,7 +54,7 @@ public sealed class OpenApiTests
     public async Task YamlDocumentIsReachable()
     {
         using var context = new SampleTestContext();
-        using var response = await context.Client.GetAsync("/openapi/v1.yaml").ConfigureAwait(false);
+        using var response = await context.Client.GetAsync(new Uri("/openapi/v1.yaml", UriKind.Relative)).ConfigureAwait(false);
         response.IsSuccessStatusCode.Should().BeTrue();
 
         var yaml = await response.Content.ReadAsStringAsync().ConfigureAwait(false);

@@ -148,6 +148,12 @@ public sealed class SampleStartup
 
         app.UseSimpleInjector(_container);
 
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/openapi/v1.json", "Mediator API v1");
+            options.SwaggerEndpoint("/openapi/v2.json", "Mediator API v2");
+        });
+
         app.UseEndpoints(endpoints =>
         {
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
