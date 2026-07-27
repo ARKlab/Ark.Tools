@@ -78,7 +78,11 @@ public sealed class OpenApiTests
                         ?? throw new InvalidOperationException("An operation had no responses.");
                     responses["400"]?["content"]?["application/problem+json"].Should().NotBeNull();
                     responses["500"]?["content"]?["application/problem+json"].Should().NotBeNull();
-                    if (operation["security"] is not null)
+                    // An empty security array means "anonymous" (explicit override of document-level security).
+                    // Null means "inherits document-level security" → secured.
+                    var operationSecurity = operation["security"]?.AsArray();
+                    var isAnonymous = operationSecurity is not null && operationSecurity.Count == 0;
+                    if (!isAnonymous)
                         responses["403"]?["content"]?["application/problem+json"].Should().NotBeNull();
                 }
             }
