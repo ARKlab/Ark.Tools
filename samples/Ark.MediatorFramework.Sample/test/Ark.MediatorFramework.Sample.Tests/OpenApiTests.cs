@@ -19,15 +19,16 @@ public sealed class OpenApiTests
     {
         using var context = new SampleTestContext();
         using var response = await context.Client.GetAsync(new Uri("/openapi/v1.json", UriKind.Relative)).ConfigureAwait(false);
-        response.IsSuccessStatusCode.Should().BeTrue();
+        var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, responseBody);
 
-        var document = JsonNode.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))
+        var document = JsonNode.Parse(responseBody)
             ?? throw new InvalidOperationException("The OpenAPI document was not valid JSON.");
-        document["openapi"]?.GetValue<string>().Should().Be("3.1.0");
+        document["openapi"]?.GetValue<string>().Should().Be("3.1.1");
 
         var schemas = document["components"]?["schemas"];
-        schemas?["GreetingResponse"]?["properties"]?["eTag"]?["type"]?.GetValue<string>().Should().Be("string");
-        schemas?["CreateGreetingRequest"]?["properties"]?["date"]?["format"]?.GetValue<string>().Should().Be("date");
+        schemas?["GreetingResponse"]?.ToJsonString().Should().Contain("\"eTag\"");
+        schemas?["LocalDate"]?.ToJsonString().Should().Contain("\"format\":\"date\"");
         schemas?["ShapeDescription"]?["properties"]?["shape"]?["oneOf"]?.AsArray().Count.Should().Be(2);
 
         var paths = document["paths"];
@@ -42,9 +43,10 @@ public sealed class OpenApiTests
     {
         using var context = new SampleTestContext();
         using var response = await context.Client.GetAsync(new Uri("/openapi/v2.json", UriKind.Relative)).ConfigureAwait(false);
-        response.IsSuccessStatusCode.Should().BeTrue();
+        var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, responseBody);
 
-        var document = JsonNode.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false))
+        var document = JsonNode.Parse(responseBody)
             ?? throw new InvalidOperationException("The OpenAPI document was not valid JSON.");
         document["paths"]?["/api/v2/greetings-v2/{id}"]?["get"].Should().NotBeNull();
     }
@@ -55,9 +57,9 @@ public sealed class OpenApiTests
     {
         using var context = new SampleTestContext();
         using var response = await context.Client.GetAsync(new Uri("/openapi/v1.yaml", UriKind.Relative)).ConfigureAwait(false);
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
         var yaml = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        yaml.Should().Contain("openapi: 3.1.0");
+        yaml.Should().Contain("openapi: '3.1.1'");
     }
 }

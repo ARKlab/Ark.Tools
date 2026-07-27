@@ -35,7 +35,7 @@ Files: `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.We
 
 ## Acceptance
 
-- [ ] 3.1 snapshot tests for nullable/NodaTime/polymorphic/versioned/multipart schemas pass.
-- [ ] YAML document reachable.
-- [ ] Deliberate dual doc UI: Swagger UI and Scalar are both reachable, with Scalar's OAuth flow working.
-- [ ] Lockfiles updated; full solution build + tests green.
+- [x] 3.1 snapshot tests for nullable/NodaTime/polymorphic/versioned/multipart schemas pass.
+- [x] YAML document reachable.
+- [x] Deliberate dual doc UI: Swagger UI and Scalar are both reachable, with Scalar's OAuth flow working.
+- [x] Lockfiles updated; full solution build + tests green.
