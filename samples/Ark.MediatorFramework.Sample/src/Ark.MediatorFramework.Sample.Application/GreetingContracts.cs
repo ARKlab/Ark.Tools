@@ -253,7 +253,7 @@ public sealed record GreetingPage
 
     /// <summary>Gets the greetings on this page.</summary>
     [ProtoMember(4)]
-    public IReadOnlyList<GreetingResponse> Data { get; init; } = [];
+    public GreetingResponse[] Data { get; init; } = [];
 }
 
 /// <summary>Response proving route, query and body values were combined.</summary>
