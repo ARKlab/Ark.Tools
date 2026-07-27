@@ -567,7 +567,7 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
                             sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
                             sb.AppendLine("            {");
-                            sb.AppendLine("                " + e.TypeFullName + " body;");
+                            sb.AppendLine("                " + e.TypeFullName + "? body;");
                             sb.AppendLine("                try");
                             sb.AppendLine("                {");
                             sb.AppendLine("                    body = await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ReadRequestAsync<" + e.TypeFullName + ">(httpContext, cancellationToken).ConfigureAwait(false);");
