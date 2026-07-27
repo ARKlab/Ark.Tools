@@ -23,6 +23,7 @@ using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
 using System.Text.Json;
+using NodaTime;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -43,7 +44,8 @@ public static class SampleComposition
         InMemNetwork network,
         bool useProtobufRebus = false,
         bool useSqlStore = true,
-        string? connectionString = null)
+        string? connectionString = null,
+        IClock? clock = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -51,7 +53,7 @@ public static class SampleComposition
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
 
         // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
-        ApplicationComposition.Register(container, useSqlStore, connectionString);
+        ApplicationComposition.Register(container, useSqlStore, connectionString, clock);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 

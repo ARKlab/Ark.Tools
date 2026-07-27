@@ -26,7 +26,11 @@ public static class ApplicationComposition
     /// <param name="container">The SimpleInjector container to register into.</param>
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
-    public static void Register(Container container, bool useSqlStore = true, string? connectionString = null)
+    public static void Register(
+        Container container,
+        bool useSqlStore = true,
+        string? connectionString = null,
+        IClock? clock = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -45,7 +49,7 @@ public static class ApplicationComposition
         else
             container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
         container.RegisterSingleton<DocumentStore>();
-        container.RegisterSingleton<IClock>(() => SystemClock.Instance);
+        container.RegisterSingleton<IClock>(() => clock ?? SystemClock.Instance);
         container.RegisterSingleton<AuditCounter>();
 
         var applicationAssembly = typeof(ApplicationComposition).Assembly;

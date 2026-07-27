@@ -3,12 +3,24 @@
 
 using Ark.MediatorFramework.Sample.WebInterface;
 using Rebus.Transport.InMem;
+using Azure.Identity;
 
 var network = new InMemNetwork();
 
 var container = SampleComposition.BuildContainer(network);
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.ConfigureAppConfiguration((context, configuration) =>
+{
+    configuration
+        .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+        .AddEnvironmentVariables();
+
+    var keyVaultUri = configuration.Build()["KeyVault:Uri"];
+    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
+        configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
+});
+builder.Host.AddApplicationInsithsTelemetryForWebHostArk();
 var startup = new SampleStartup(container, builder.Configuration);
 startup.ConfigureServices(builder.Services);
 
