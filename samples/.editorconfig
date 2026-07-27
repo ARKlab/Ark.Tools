@@ -1,3 +1,5 @@
+dotnet_diagnostic.IDX00001.severity = error
+
 # C# files
 [*.cs]
 
