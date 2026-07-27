@@ -232,6 +232,8 @@ public sealed record SearchGreetingsQuery : IQuery<GreetingPage>, IQueryPaged
     public int Limit { get; init; } = 25;
 
     /// <inheritdoc />
+    [BindFromQuery]
+    [ProtoMember(4)]
     public IEnumerable<string> Sort { get; init; } = [];
 }
 
