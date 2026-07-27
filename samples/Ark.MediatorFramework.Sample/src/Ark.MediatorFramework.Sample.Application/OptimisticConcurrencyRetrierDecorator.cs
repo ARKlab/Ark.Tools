@@ -5,6 +5,8 @@ using Ark.Tools.Solid;
 
 using NLog;
 
+using Polly;
+
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Retries handlers when the server detects a transient optimistic-concurrency race.</summary>
@@ -12,6 +14,15 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResponse> :
     where TRequest : IRequest<TResponse>
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
+    private static readonly IAsyncPolicy RetryPolicy = Policy
+        .Handle<Exception>(static ex => IsOptimistic(ex))
+        .RetryAsync(2, onRetry: static (_, attempt) =>
+            Logger.Warn(CultureInfo.InvariantCulture,
+                "Retrying optimistic-concurrency request {RequestType}, attempt {Attempt}.",
+                typeof(TRequest).FullName,
+                attempt));
+
     private readonly IRequestHandler<TRequest, TResponse> _inner;
 
     /// <summary>Initializes a new instance of the <see cref="OptimisticConcurrencyRetrierDecorator{TRequest, TResponse}"/> class.</summary>
@@ -23,20 +34,9 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResponse> :
     /// <inheritdoc />
     public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
-        for (var attempt = 0; ; attempt++)
-        {
-            try
-            {
-                return await _inner.ExecuteAsync(request, ctk).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (attempt < 2 && IsOptimistic(ex))
-            {
-                Logger.Warn(System.Globalization.CultureInfo.InvariantCulture,
-                    "Retrying optimistic-concurrency request {0}, attempt {1}.",
-                    typeof(TRequest).FullName,
-                    attempt + 1);
-            }
-        }
+        return await RetryPolicy
+            .ExecuteAsync(ct => _inner.ExecuteAsync(request, ct), ctk)
+            .ConfigureAwait(false);
     }
 
     private static bool IsOptimistic(Exception? exception)
@@ -48,30 +48,5 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResponse> :
             exception = exception.InnerException;
         }
         return false;
-    }
-}
-
-/// <summary>Injects deterministic optimistic-concurrency failures for sample demonstrations.</summary>
-public sealed class ConcurrencyFaultInjector
-{
-    private int _pendingFailures;
-
-    /// <summary>Gets or sets the number of failures still to inject.</summary>
-    public int PendingFailures
-    {
-        get => Volatile.Read(ref _pendingFailures);
-        set => Volatile.Write(ref _pendingFailures, value);
-    }
-
-    /// <summary>Throws a synthetic optimistic-concurrency failure when one is pending.</summary>
-    public void ThrowIfPending()
-    {
-        while (true)
-        {
-            var pending = Volatile.Read(ref _pendingFailures);
-            if (pending <= 0 || Interlocked.CompareExchange(ref _pendingFailures, pending - 1, pending) != pending)
-                return;
-            throw new Ark.Tools.Core.OptimisticConcurrencyException("Synthetic optimistic-concurrency failure.");
-        }
     }
 }

@@ -47,7 +47,6 @@ public static class ApplicationComposition
         container.RegisterSingleton<DocumentStore>();
         container.RegisterSingleton<IClock>(() => SystemClock.Instance);
         container.RegisterSingleton<AuditCounter>();
-        container.RegisterSingleton<ConcurrencyFaultInjector>();
 
         var applicationAssembly = typeof(ApplicationComposition).Assembly;
         container.Register(

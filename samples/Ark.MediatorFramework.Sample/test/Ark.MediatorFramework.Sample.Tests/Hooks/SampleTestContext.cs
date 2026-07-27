@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.WebInterface;
 using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.Tests.Fakes;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -14,6 +15,8 @@ using Microsoft.SqlServer.Dac;
 
 using Rebus.Transport.InMem;
 using Reqnroll;
+
+using SimpleInjector;
 
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 
@@ -46,6 +49,9 @@ public sealed class SampleTestContext : IDisposable
             new InMemNetwork(),
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString);
+        // Test-only: inject deterministic concurrency failures via a store decorator.
+        container.RegisterSingleton<ConcurrencyFaultInjector>();
+        container.RegisterDecorator<IGreetingStore, FaultInjectingGreetingStoreDecorator>(Lifestyle.Singleton);
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
