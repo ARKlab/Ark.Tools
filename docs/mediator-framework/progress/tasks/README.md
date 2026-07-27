@@ -115,7 +115,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [NET-01](aspnetcore/NET-01-openapi-xml-docs.md)
 7. Scope extension (D8) — wire-shape items first, documentation last:
    [x] [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md)
-   [ ] [FW-05](framework/FW-05-standard-problem-responses.md)
+   [x] [FW-05](framework/FW-05-standard-problem-responses.md)
    [ ] [FW-06](framework/FW-06-async-enumerable-streaming.md)
    [ ] [FW-07](framework/FW-07-multifile-uploads.md)
    [ ] [GEN-09](generator-dx/GEN-09-xml-documentation.md)

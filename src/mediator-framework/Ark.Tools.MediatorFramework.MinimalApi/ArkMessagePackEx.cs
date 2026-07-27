@@ -4,6 +4,7 @@
 using MessagePack;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
@@ -29,12 +30,23 @@ public static class ArkMessagePackEx
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        return IsMessagePack(context.Request.ContentType)
-            ? await MessagePackSerializer.DeserializeAsync<TRequest>(
-                context.Request.Body,
-                GetDeserializationOptions(context),
-                cancellationToken).ConfigureAwait(false)
-            : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return IsMessagePack(context.Request.ContentType)
+                ? await MessagePackSerializer.DeserializeAsync<TRequest>(
+                    context.Request.Body,
+                    GetDeserializationOptions(context),
+                    cancellationToken).ConfigureAwait(false)
+                : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
+        }
+        catch (MessagePackSerializationException)
+        {
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Validates the MessagePack formatters required by generated endpoints.</summary>

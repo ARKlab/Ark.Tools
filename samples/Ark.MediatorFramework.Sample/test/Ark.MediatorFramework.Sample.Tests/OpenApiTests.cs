@@ -51,6 +51,40 @@ public sealed class OpenApiTests
         document["paths"]?["/api/v2/greetings-v2/{id}"]?["get"].Should().NotBeNull();
     }
 
+    /// <summary>Every generated operation advertises the standard problem responses.</summary>
+    [TestMethod]
+    public async Task EveryOperationAdvertisesStandardProblemResponses()
+    {
+        foreach (var version in new[] { "v1", "v2" })
+        {
+            using var context = new SampleTestContext();
+            using var response = await context.Client.GetAsync(new Uri($"/openapi/{version}.json", UriKind.Relative))
+                .ConfigureAwait(false);
+            var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, responseBody);
+
+            var document = JsonNode.Parse(responseBody)
+                ?? throw new InvalidOperationException("The OpenAPI document was not valid JSON.");
+            var paths = document["paths"]?.AsObject()
+                ?? throw new InvalidOperationException("The OpenAPI document had no paths.");
+            foreach (var path in paths)
+            {
+                foreach (var operation in path.Value?.AsObject()
+                    .Where(static item => item.Key is "get" or "post" or "put" or "patch" or "delete")
+                    .Select(static item => item.Value)
+                    .OfType<JsonObject>() ?? [])
+                {
+                    var responses = operation["responses"]?.AsObject()
+                        ?? throw new InvalidOperationException("An operation had no responses.");
+                    responses["400"]?["content"]?["application/problem+json"].Should().NotBeNull();
+                    responses["500"]?["content"]?["application/problem+json"].Should().NotBeNull();
+                    if (operation["security"] is not null)
+                        responses["403"]?["content"]?["application/problem+json"].Should().NotBeNull();
+                }
+            }
+        }
+    }
+
     /// <summary>The OpenAPI middleware exposes the same documents as YAML.</summary>
     [TestMethod]
     public async Task YamlDocumentIsReachable()
