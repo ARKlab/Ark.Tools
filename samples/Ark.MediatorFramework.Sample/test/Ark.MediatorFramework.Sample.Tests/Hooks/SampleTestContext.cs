@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.WebInterface;
+using Ark.MediatorFramework.Sample.Application;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -45,7 +46,6 @@ public sealed class SampleTestContext : IDisposable
             new InMemNetwork(),
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString);
-        FaultInjector = container.GetInstance<ConcurrencyFaultInjector>();
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
@@ -65,6 +65,7 @@ public sealed class SampleTestContext : IDisposable
         _host.Start();
 #pragma warning restore MA0045, VSTHRD002
         Client = _host.GetTestServer().CreateClient();
+        FaultInjector = container.GetInstance<ConcurrencyFaultInjector>();
     }
 
     /// <summary>Creates and resets the sample SQL database for opt-in integration runs.</summary>

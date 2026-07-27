@@ -53,7 +53,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _items = new();
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, long> _versions = new();
-    private readonly object _sync = new();
+    private readonly System.Threading.Lock _sync = new();
     private readonly ConcurrencyFaultInjector _faults;
 
     /// <summary>Initializes a new in-memory store.</summary>
