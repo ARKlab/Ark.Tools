@@ -106,6 +106,11 @@ version), while clients only see the opaque base64 token. A stale token returns
 `412 Precondition Failed`; transient server concurrency failures are retried twice
 and then return `409 Conflict`.
 
+## Paging
+
+`GET /api/v1/greetings?skip=0&limit=25` returns a validated page with `count`, `skip`,
+`limit`, and `data`. The same `SearchGreetings` contract is available through gRPC.
+
 ## Documented follow-ups
 
 The emitted `.proto` now generates a dedicated client assembly used by the

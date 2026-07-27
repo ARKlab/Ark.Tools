@@ -26,6 +26,9 @@ public interface IGreetingStore
     /// <summary>Returns a page of persisted audit records.</summary>
     Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default);
 
+    /// <summary>Returns a page of greetings.</summary>
+    Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default);
+
     /// <summary>Reads a greeting by id or throws when missing.</summary>
     Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default);
 
@@ -110,6 +113,23 @@ public sealed class InMemoryGreetingStore : IGreetingStore
             Skip = query.Skip,
             Limit = query.Limit,
             Data = records,
+        });
+    }
+
+    /// <inheritdoc />
+    public Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
+    {
+        var matching = _items.Values
+            .Where(greeting => query.MessageContains is null
+                || greeting.Message.Contains(query.MessageContains, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(greeting => greeting.Id)
+            .ToArray();
+        return Task.FromResult(new GreetingPage
+        {
+            Count = matching.Length,
+            Skip = query.Skip,
+            Limit = query.Limit,
+            Data = matching.Skip(query.Skip).Take(query.Limit).ToArray(),
         });
     }
 

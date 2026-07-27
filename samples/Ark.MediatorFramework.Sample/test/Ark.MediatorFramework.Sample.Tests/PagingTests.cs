@@ -1,0 +1,93 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Ark.MediatorFramework.Sample.Tests.Hooks;
+using Ark.MediatorFramework.Sample.Tests.Auth;
+using Ark.MediatorFramework.Sample.GrpcClient;
+
+using AwesomeAssertions;
+
+using Grpc.Net.Client;
+
+using System.Net;
+using System.Net.Http.Json;
+
+namespace Ark.MediatorFramework.Sample.Tests;
+
+/// <summary>Verifies paged greeting search across HTTP and gRPC.</summary>
+[TestClass]
+public sealed class PagingTests
+{
+    private static readonly JsonSerializerOptions JsonOptions = new().ConfigureArkDefaults();
+
+    /// <summary>Returns two HTTP pages with the expected total count and boundaries.</summary>
+    [TestMethod]
+    public async Task HttpSearchReturnsPagesAndTotalCount()
+    {
+        using var context = SampleTestContext.WithoutFallbackPolicy();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("test-user").Build());
+
+        await CreateGreetingAsync(context.Client, "page-one").ConfigureAwait(false);
+        await CreateGreetingAsync(context.Client, "page-two").ConfigureAwait(false);
+        await CreateGreetingAsync(context.Client, "page-three").ConfigureAwait(false);
+
+        var first = await context.Client.GetFromJsonAsync<GreetingPage>(
+            "/api/v1/greetings?skip=0&limit=2",
+            JsonOptions).ConfigureAwait(false);
+        var second = await context.Client.GetFromJsonAsync<GreetingPage>(
+            "/api/v1/greetings?skip=2&limit=2",
+            JsonOptions).ConfigureAwait(false);
+
+        first!.Count.Should().Be(3);
+        first.Data.Count.Should().Be(2);
+        second!.Count.Should().Be(3);
+        second.Data.Count.Should().Be(1);
+        first.Data.Select(greeting => greeting.Id).Should().NotContain(second.Data[0].Id);
+    }
+
+    /// <summary>Rejects a page size outside the supported range.</summary>
+    [TestMethod]
+    public async Task HttpSearchRejectsInvalidLimit()
+    {
+        using var context = SampleTestContext.WithoutFallbackPolicy();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("test-user").Build());
+
+        var response = await context.Client.GetAsync("/api/v1/greetings?limit=101").ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>Returns the same paged result over gRPC.</summary>
+    [TestMethod]
+    public async Task GrpcSearchReturnsPageAndTotalCount()
+    {
+        using var context = SampleTestContext.WithoutFallbackPolicy();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("test-user").Build());
+        await CreateGreetingAsync(context.Client, "grpc-page-one").ConfigureAwait(false);
+        await CreateGreetingAsync(context.Client, "grpc-page-two").ConfigureAwait(false);
+
+        using var channel = GrpcChannel.ForAddress(
+            "http://localhost",
+            new GrpcChannelOptions { HttpHandler = context.CreateGrpcHandler() });
+        var result = await new GreetingsV1.GreetingsV1Client(channel).SearchGreetingsAsync(
+            new SearchGreetingsQuery { Skip = 1, Limit = 1 }).ResponseAsync.ConfigureAwait(false);
+
+        result.Count.Should().Be(2);
+        result.Data.Count.Should().Be(1);
+    }
+
+    private static async Task CreateGreetingAsync(HttpClient client, string name)
+    {
+        var response = await client.PostAsJsonAsync(
+            "/api/v1/greetings",
+            new { name },
+            JsonOptions).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+    }
+}

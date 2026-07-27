@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
+using Ark.Tools.Core;
 
 using NodaTime;
 
@@ -206,6 +207,53 @@ public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>
     /// <summary>Gets the greeting identifier.</summary>
     [ProtoMember(1)]
     public Guid Id { get; init; }
+}
+
+/// <summary>Searches greetings using a validated offset and limit.</summary>
+[HttpEndpoint("GET", "/api/v{version}/greetings")]
+[GrpcMethod("SearchGreetings")]
+[GrpcService("Greetings")]
+[ProtoContract]
+public sealed record SearchGreetingsQuery : IQuery<GreetingPage>, IQueryPaged
+{
+    /// <summary>Gets the optional message filter.</summary>
+    [BindFromQuery]
+    [ProtoMember(1)]
+    public string? MessageContains { get; init; }
+
+    /// <inheritdoc />
+    [BindFromQuery]
+    [ProtoMember(2)]
+    public int Skip { get; set; }
+
+    /// <inheritdoc />
+    [BindFromQuery]
+    [ProtoMember(3)]
+    public int Limit { get; init; } = 25;
+
+    /// <inheritdoc />
+    public IEnumerable<string> Sort { get; init; } = [];
+}
+
+/// <summary>Page of greetings returned by <see cref="SearchGreetingsQuery"/>.</summary>
+[ProtoContract]
+public sealed record GreetingPage
+{
+    /// <summary>Gets the total number of matching greetings.</summary>
+    [ProtoMember(1)]
+    public long Count { get; init; }
+
+    /// <summary>Gets the requested offset.</summary>
+    [ProtoMember(2)]
+    public int Skip { get; init; }
+
+    /// <summary>Gets the requested page size.</summary>
+    [ProtoMember(3)]
+    public int Limit { get; init; }
+
+    /// <summary>Gets the greetings on this page.</summary>
+    [ProtoMember(4)]
+    public IReadOnlyList<GreetingResponse> Data { get; init; } = [];
 }
 
 /// <summary>Response proving route, query and body values were combined.</summary>
