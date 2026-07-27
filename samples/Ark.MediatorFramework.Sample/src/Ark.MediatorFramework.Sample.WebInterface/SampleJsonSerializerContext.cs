@@ -37,6 +37,7 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
         typeof(ZonedDateTimeRangeConverter),
     })]
 [JsonSerializable(typeof(CreateGreetingRequest))]
+[JsonSerializable(typeof(UpdateGreetingMessageRequest))]
 [JsonSerializable(typeof(RefreshGreetingCommand))]
 [JsonSerializable(typeof(GreetingResponse))]
 [JsonSerializable(typeof(ComposeGreetingRequest))]

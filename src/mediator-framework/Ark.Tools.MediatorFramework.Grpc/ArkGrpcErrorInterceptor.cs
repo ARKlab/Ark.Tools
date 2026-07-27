@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Core.EntityTag;
+using Ark.Tools.Core;
 using Ark.Tools.Authorization;
 
 using FluentValidation;
@@ -104,6 +106,14 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         catch (PolicyAuthorizationException exception)
         {
             throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied, exception.Message));
+        }
+        catch (EntityTagMismatchException exception)
+        {
+            throw new RpcException(new global::Grpc.Core.Status(StatusCode.FailedPrecondition, exception.Message));
+        }
+        catch (OptimisticConcurrencyException exception)
+        {
+            throw new RpcException(new global::Grpc.Core.Status(StatusCode.Aborted, exception.Message));
         }
         catch (Exception exception) when (exception is not RpcException and not OperationCanceledException)
         {

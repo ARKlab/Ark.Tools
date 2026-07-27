@@ -106,7 +106,11 @@ protobuf, and Rebus messages. On HTTP requests, `If-Match` (or
 `If-None-Match: *`) overrides the payload value when present; otherwise the
 payload value is preserved. Minimal API hosts may register
 `AddArkETagParameters()` to document the optional `If-Match` header. Response
-header emission is defined by the follow-up FW-09 task.
+contracts emit the opaque token as a quoted strong `ETag` header; conditional
+GET requests matching `If-None-Match` return `304 Not Modified` while retaining
+the header. The token remains in the response body for every transport. gRPC
+maps `EntityTagMismatchException` to `FailedPrecondition` and
+`OptimisticConcurrencyException` to `Aborted`.
 
 ## The Roslyn incremental generator
 

@@ -74,6 +74,49 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ResponseETagIsEmittedOnlyForMarkedResponses()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed record Response([property: ETag] string? Token);
+            [HttpEndpoint("GET", "/etag")]
+            public sealed class GetETag : IQuery<Response> { }
+            """);
+
+        generated.Should().Contain("ApplyResponseETag");
+        generated.Should().Contain("result.Token");
+
+        var withoutETag = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed record Response(string? Token);
+            [HttpEndpoint("GET", "/plain")]
+            public sealed class GetPlain : IQuery<Response> { }
+            """);
+
+        withoutETag.Should().NotContain("ApplyResponseETag");
+    }
+
+    [TestMethod]
+    public void ApplyResponseETagSetsHeaderAndHandlesConditionalRequests()
+    {
+        var context = new DefaultHttpContext();
+        ArkETag.ApplyResponseETag(context, "abc", conditionalGet: true).Should().BeNull();
+        context.Response.Headers.ETag.ToString().Should().Be("\"abc\"");
+
+        context.Request.Headers.IfNoneMatch = "\"abc\"";
+        ArkETag.ApplyResponseETag(context, "abc", conditionalGet: true)
+            .Should().NotBeNull();
+
+        ArkETag.ApplyResponseETag(context, null, conditionalGet: true).Should().BeNull();
+        Action invalid = () => ArkETag.ApplyResponseETag(new DefaultHttpContext(), "bad\r\n", false);
+        invalid.Should().Throw<InvalidOperationException>();
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorExpandsVersionedRoutes()
     {
         var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(

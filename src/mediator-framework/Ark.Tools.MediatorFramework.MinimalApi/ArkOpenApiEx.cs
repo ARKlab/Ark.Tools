@@ -123,7 +123,10 @@ public static class ArkOpenApiEx
         return options;
     }
 
-    /// <summary>Adds the optional <c>If-Match</c> header to ETag-enabled operations.</summary>
+    /// <summary>
+    /// Adds ETag request and response headers, conditional GET support, and <c>304 Not Modified</c>
+    /// responses to ETag-enabled operations.
+    /// </summary>
     /// <param name="options">The OpenAPI options to configure.</param>
     /// <returns>The same options instance.</returns>
     public static OpenApiOptions AddArkETagParameters(this OpenApiOptions options)
@@ -132,13 +135,14 @@ public static class ArkOpenApiEx
 
         options.AddOperationTransformer((operation, context, _) =>
         {
-            if (!context.Description.ActionDescriptor.EndpointMetadata
+            var metadata = context.Description.ActionDescriptor.EndpointMetadata
                 .OfType<ArkETagParameterMetadata>()
-                .Any())
+                .FirstOrDefault();
+            if (metadata is null)
                 return Task.CompletedTask;
 
             operation.Parameters ??= [];
-            if (!operation.Parameters.Any(parameter =>
+            if (metadata.RequestETag && !operation.Parameters.Any(parameter =>
                 string.Equals(parameter.Name, "If-Match", StringComparison.OrdinalIgnoreCase)))
             {
                 operation.Parameters.Add(new OpenApiParameter
@@ -149,6 +153,38 @@ public static class ArkOpenApiEx
                     Description = "Opaque concurrency token override.",
                     Schema = new OpenApiSchema { Type = JsonSchemaType.String },
                 });
+            }
+
+            if (metadata.ResponseETag)
+            {
+                operation.Responses ??= new OpenApiResponses();
+                var success = operation.Responses.FirstOrDefault(response => response.Key.StartsWith('2')).Value;
+                if (success is OpenApiResponse successResponse)
+                {
+                    successResponse.Headers ??= new Dictionary<string, IOpenApiHeader>(StringComparer.OrdinalIgnoreCase);
+                    successResponse.Headers.TryAdd("ETag", new OpenApiHeader
+                    {
+                        Description = "Opaque concurrency token.",
+                        Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                    });
+                }
+
+                if (string.Equals(context.Description.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
+                {
+                    operation.Responses.TryAdd("304", new OpenApiResponse { Description = "Not Modified" });
+                    if (!operation.Parameters.Any(parameter =>
+                        string.Equals(parameter.Name, "If-None-Match", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        operation.Parameters.Add(new OpenApiParameter
+                        {
+                            Name = "If-None-Match",
+                            In = ParameterLocation.Header,
+                            Required = false,
+                            Description = "Return 304 when the opaque token matches.",
+                            Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                        });
+                    }
+                }
             }
 
             return Task.CompletedTask;

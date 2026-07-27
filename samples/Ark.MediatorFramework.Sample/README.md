@@ -87,6 +87,20 @@ build without starting the sample host. `ArkExportProtoDir` overrides the
 destination, `ArkExportProto=false` opts out, and `ArkAdditionalProto` declares
 hand-written proto files to copy alongside generated services.
 
+## Optimistic concurrency
+
+Greeting responses carry an opaque ETag. Read it, echo it on the update, and
+reuse of the old token is rejected:
+
+```bash
+curl -H "Authorization: ******" \
+  https://localhost:5001/api/v1/greetings/$ID
+curl -X PUT -H "Authorization: ******" -H "If-Match: \"$ETAG\"" \
+  -H "Content-Type: application/json" \
+  -d "{\"id\":\"$ID\",\"message\":\"updated\"}" \
+  https://localhost:5001/api/v1/greetings/$ID
+```
+
 ## Documented follow-ups
 
 The emitted `.proto` now generates a dedicated client assembly used by the
