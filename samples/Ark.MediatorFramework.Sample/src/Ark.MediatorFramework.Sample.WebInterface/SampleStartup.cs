@@ -148,12 +148,6 @@ public sealed class SampleStartup
 
         app.UseSimpleInjector(_container);
 
-        app.UseSwaggerUI(options =>
-        {
-            options.SwaggerEndpoint("/openapi/v1.json", "Mediator API v1");
-            options.SwaggerEndpoint("/openapi/v2.json", "Mediator API v2");
-        });
-
         app.UseEndpoints(endpoints =>
         {
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
@@ -163,7 +157,7 @@ public sealed class SampleStartup
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
             endpoints.MapControllers();
 
-            // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
+            // Serves generated JSON and YAML documents at /openapi/{documentName}.{json|yaml}.
             endpoints.MapOpenApi().AllowAnonymous();
             endpoints.MapScalarApiReference(options =>
             {
