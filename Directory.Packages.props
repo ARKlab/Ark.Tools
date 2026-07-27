@@ -147,6 +147,14 @@
 	  <PackageVersion Include="Microsoft.Identity.Client" Version="4.87.0" />
 	  <PackageVersion Include="JWT" Version="11.1.0" />
 	  <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.21.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.Abstractions" Version="8.21.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.Logging" Version="8.21.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.LoggingExtensions" Version="8.21.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.Protocols" Version="8.21.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.21.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.21.0" />
+	  <PackageVersion Include="Microsoft.IdentityModel.Validators" Version="8.21.0" />
+	  <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.21.0" />
 	  <PackageVersion Include="Azure.Identity" Version="1.21.0" />
 	  
 	  <!-- REBUS -->
