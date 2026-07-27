@@ -26,7 +26,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
-		<NoWarn>NU1701;1591;CS1998;NU1605;MSB3277</NoWarn>
+		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
