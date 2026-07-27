@@ -131,6 +131,8 @@ public sealed class ConcurrencyRoundtripTests
     [TestMethod]
     public async Task BodyTokenAndRetrySemanticsAreEnforced()
     {
+        const int MaxRetries = 2;
+        const int ExhaustedRetries = MaxRetries + 1;
         using var context = new SampleTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer", new JwtTokenBuilder().AddSubject("retry-user").AddScope("greetings.write").Build());
@@ -153,7 +155,7 @@ public sealed class ConcurrencyRoundtripTests
 
         var latest = await context.Client.GetFromJsonAsync<GreetingResponse>(
             $"/api/v1/greetings/{current.Id}", JsonOptions).ConfigureAwait(false);
-        context.FaultInjector.PendingFailures = 2;
+        context.FaultInjector.PendingFailures = MaxRetries;
         using var retry = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/greetings/{latest!.Id}")
         {
             Content = JsonContent.Create(new { id = latest.Id, message = "retried", etag = latest.ETag }),
@@ -162,7 +164,7 @@ public sealed class ConcurrencyRoundtripTests
 
         var afterRetry = await context.Client.GetFromJsonAsync<GreetingResponse>(
             $"/api/v1/greetings/{latest.Id}", JsonOptions).ConfigureAwait(false);
-        context.FaultInjector.PendingFailures = 3;
+        context.FaultInjector.PendingFailures = ExhaustedRetries;
         using var exhausted = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/greetings/{latest.Id}")
         {
             Content = JsonContent.Create(new { id = latest.Id, message = "exhausted", etag = afterRetry!.ETag }),

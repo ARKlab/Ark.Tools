@@ -54,15 +54,23 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResponse> :
 /// <summary>Injects deterministic optimistic-concurrency failures for sample demonstrations.</summary>
 public sealed class ConcurrencyFaultInjector
 {
+    private int _pendingFailures;
+
     /// <summary>Gets or sets the number of failures still to inject.</summary>
-    public int PendingFailures { get; set; }
+    public int PendingFailures
+    {
+        get => Volatile.Read(ref _pendingFailures);
+        set => Volatile.Write(ref _pendingFailures, value);
+    }
 
     /// <summary>Throws a synthetic optimistic-concurrency failure when one is pending.</summary>
     public void ThrowIfPending()
     {
-        if (PendingFailures > 0)
+        while (true)
         {
-            PendingFailures--;
+            var pending = Volatile.Read(ref _pendingFailures);
+            if (pending <= 0 || Interlocked.CompareExchange(ref _pendingFailures, pending - 1, pending) != pending)
+                return;
             throw new Ark.Tools.Core.OptimisticConcurrencyException("Synthetic optimistic-concurrency failure.");
         }
     }
