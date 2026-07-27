@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup Label="Ark.Tools packages">
     <PackageVersion Include="Ark.Tools.AspNetCore.MessagePack" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.AspNetCore.ApplicationInsights" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Grpc" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.MinimalApi" Version="999.9.9" />
@@ -30,6 +31,8 @@
     <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="4.13.2" />
+    <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.1" />
+    <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="Microsoft.IdentityModel.LoggingExtensions" Version="8.21.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols" Version="8.21.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.21.0" />
@@ -52,6 +55,7 @@
     <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.3.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.3.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.2" />
+    <PackageVersion Include="NodaTime.Testing" Version="3.3.3" />
     <PackageVersion Include="MSTest.Analyzers" Version="4.3.2" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.3.2" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.3.2" />

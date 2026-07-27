@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.WebInterface;
+using Ark.Tools.AspNetCore.ApplicationInsights;
 using Rebus.Transport.InMem;
 using Azure.Identity;
 
@@ -10,16 +11,12 @@ var network = new InMemNetwork();
 var container = SampleComposition.BuildContainer(network);
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Host.ConfigureAppConfiguration((context, configuration) =>
-{
-    configuration
-        .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-        .AddEnvironmentVariables();
-
-    var keyVaultUri = configuration.Build()["KeyVault:Uri"];
-    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
-        configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
-});
+builder.Configuration
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
+    builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
 builder.Host.AddApplicationInsithsTelemetryForWebHostArk();
 var startup = new SampleStartup(container, builder.Configuration);
 startup.ConfigureServices(builder.Services);

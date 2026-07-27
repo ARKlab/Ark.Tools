@@ -39,6 +39,7 @@ public static class SampleComposition
     /// <param name="useProtobufRebus">Whether Rebus messages use Protobuf instead of JSON.</param>
     /// <param name="useSqlStore">Whether to use SQL persistence and the outbox.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
+    /// <param name="clock">Optional clock override used by tests.</param>
     /// <returns>The configured container. Hosting verifies it and starts the bus after integration.</returns>
     public static Container BuildContainer(
         InMemNetwork network,

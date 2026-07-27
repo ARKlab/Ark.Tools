@@ -18,6 +18,7 @@ using Reqnroll;
 
 using SimpleInjector;
 using NodaTime;
+using NodaTime.Testing;
 
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 

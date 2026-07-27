@@ -9,6 +9,7 @@ using AwesomeAssertions;
 
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
@@ -29,7 +30,8 @@ public sealed class ClockParityTests
         create.EnsureSuccessStatusCode();
 
         var audits = await context.Client.GetFromJsonAsync<Ark.Tools.Core.PagedResult<AuditRecord>>(
-            "/api/v1/audits?skip=0&limit=25").ConfigureAwait(false);
+            "/api/v1/audits?skip=0&limit=25",
+            new JsonSerializerOptions().ConfigureArkDefaults()).ConfigureAwait(false);
 
         audits!.Data.Single(audit => audit.Operation == nameof(CreateGreetingRequest))
             .Timestamp.Should().Be(context.Clock.GetCurrentInstant());

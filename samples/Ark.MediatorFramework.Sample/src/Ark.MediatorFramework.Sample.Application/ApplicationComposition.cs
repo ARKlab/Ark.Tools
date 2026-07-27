@@ -26,6 +26,7 @@ public static class ApplicationComposition
     /// <param name="container">The SimpleInjector container to register into.</param>
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
+    /// <param name="clock">Optional clock override used by tests.</param>
     public static void Register(
         Container container,
         bool useSqlStore = true,
