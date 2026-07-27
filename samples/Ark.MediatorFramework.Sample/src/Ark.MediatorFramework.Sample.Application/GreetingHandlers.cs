@@ -81,18 +81,30 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
 public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>
 {
     private readonly IGreetingStore _store;
+    private readonly IContextProvider<ClaimsPrincipal> _user;
+    private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="UpdateGreetingMessageHandler"/> class.</summary>
-    public UpdateGreetingMessageHandler(IGreetingStore store)
+    public UpdateGreetingMessageHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
         _store = store;
+        _user = user;
+        _clock = clock;
     }
 
     /// <inheritdoc />
     public async Task<GreetingResponse> ExecuteAsync(UpdateGreetingMessageRequest request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return await _store.UpdateAsync(request.Id, request.Message, request.ETag, ctk: ctk).ConfigureAwait(false);
+        return await _store.UpdateAsync(request.Id, request.Message, request.ETag, new AuditEntry
+        {
+            Id = Guid.NewGuid(),
+            UserId = _user.GetUserId() ?? "anonymous",
+            EntityType = nameof(GreetingResponse),
+            Identifier = request.Id.ToString("D"),
+            Operation = nameof(UpdateGreetingMessageRequest),
+            Timestamp = _clock.GetCurrentInstant(),
+        }, ctk).ConfigureAwait(false);
     }
 }
 

@@ -45,6 +45,7 @@ public sealed class SampleTestContext : IDisposable
             new InMemNetwork(),
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString);
+        FaultInjector = container.GetInstance<ConcurrencyFaultInjector>();
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
@@ -126,6 +127,9 @@ public sealed class SampleTestContext : IDisposable
 
     /// <summary>Gets the HTTP client for the sample's public API.</summary>
     public HttpClient Client { get; }
+
+    /// <summary>Gets the deterministic fault injector used by concurrency tests.</summary>
+    public ConcurrencyFaultInjector FaultInjector { get; }
 
     /// <summary>Creates a handler for an in-process gRPC client.</summary>
     public HttpMessageHandler CreateGrpcHandler()

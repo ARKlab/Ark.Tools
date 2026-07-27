@@ -270,6 +270,7 @@ public sealed class SqlGreetingStore : IGreetingStore
     /// <summary>Initializes a new instance of the <see cref="SqlGreetingStore"/> class.</summary>
     /// <param name="factory">The sample context factory.</param>
     /// <param name="bus">The Rebus bus used by the transactional outbox.</param>
+    /// <param name="faults">The deterministic concurrency fault injector.</param>
     public SqlGreetingStore(SampleDataContextFactory factory, IBus bus, ConcurrencyFaultInjector faults)
     {
         _factory = factory;
