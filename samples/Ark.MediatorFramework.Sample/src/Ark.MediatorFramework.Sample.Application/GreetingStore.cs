@@ -31,6 +31,13 @@ public interface IGreetingStore
 
     /// <summary>Attempts to read a greeting by id.</summary>
     Task<GreetingResponse?> TryGetAsync(Guid id, CancellationToken ctk = default);
+
+    /// <summary>Updates a greeting after validating its opaque concurrency token.</summary>
+    /// <param name="id">The greeting identifier.</param>
+    /// <param name="message">The replacement message.</param>
+    /// <param name="expectedETag">The expected current ETag.</param>
+    /// <param name="audit">The optional audit entry to persist with the update.</param>
+    /// <param name="ctk">The cancellation token.</param>
     Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Gets the number of stored greetings.</summary>
@@ -57,8 +64,11 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     public Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(greeting);
-        _items[greeting.Id] = greeting;
-        _versions.TryAdd(greeting.Id, 1);
+        var version = _versions.GetOrAdd(greeting.Id, 1);
+        _items[greeting.Id] = greeting with
+        {
+            ETag = Convert.ToBase64String(BitConverter.GetBytes(version)),
+        };
         AddAudit(audit);
         return Task.CompletedTask;
     }

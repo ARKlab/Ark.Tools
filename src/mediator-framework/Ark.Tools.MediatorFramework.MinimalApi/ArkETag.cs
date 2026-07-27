@@ -66,7 +66,9 @@ public static class ArkETag
         var matches = context.Request.Headers.IfNoneMatch
             .ToString()
             .Split(',', StringSplitOptions.TrimEntries)
-            .Select(Unquote)
+            .Select(value => value.StartsWith("W/", StringComparison.Ordinal)
+                ? Unquote(value[2..])
+                : Unquote(value))
             .Any(value => value == "*" || string.Equals(value, token, StringComparison.Ordinal));
         return matches ? TypedResults.StatusCode(StatusCodes.Status304NotModified) : null;
     }

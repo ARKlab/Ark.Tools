@@ -123,7 +123,10 @@ public static class ArkOpenApiEx
         return options;
     }
 
-    /// <summary>Adds the optional <c>If-Match</c> header to ETag-enabled operations.</summary>
+    /// <summary>
+    /// Adds ETag request and response headers, conditional GET support, and <c>304 Not Modified</c>
+    /// responses to ETag-enabled operations.
+    /// </summary>
     /// <param name="options">The OpenAPI options to configure.</param>
     /// <returns>The same options instance.</returns>
     public static OpenApiOptions AddArkETagParameters(this OpenApiOptions options)
@@ -156,9 +159,10 @@ public static class ArkOpenApiEx
             {
                 operation.Responses ??= new OpenApiResponses();
                 var success = operation.Responses.FirstOrDefault(response => response.Key.StartsWith('2')).Value;
-                if (success is not null)
+                if (success is OpenApiResponse successResponse)
                 {
-                    success.Headers!.TryAdd("ETag", new OpenApiHeader
+                    successResponse.Headers ??= new Dictionary<string, IOpenApiHeader>(StringComparer.OrdinalIgnoreCase);
+                    successResponse.Headers.TryAdd("ETag", new OpenApiHeader
                     {
                         Description = "Opaque concurrency token.",
                         Schema = new OpenApiSchema { Type = JsonSchemaType.String },
@@ -168,14 +172,18 @@ public static class ArkOpenApiEx
                 if (string.Equals(context.Description.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
                 {
                     operation.Responses.TryAdd("304", new OpenApiResponse { Description = "Not Modified" });
-                    operation.Parameters.Add(new OpenApiParameter
+                    if (!operation.Parameters.Any(parameter =>
+                        string.Equals(parameter.Name, "If-None-Match", StringComparison.OrdinalIgnoreCase)))
                     {
-                        Name = "If-None-Match",
-                        In = ParameterLocation.Header,
-                        Required = false,
-                        Description = "Return 304 when the opaque token matches.",
-                        Schema = new OpenApiSchema { Type = JsonSchemaType.String },
-                    });
+                        operation.Parameters.Add(new OpenApiParameter
+                        {
+                            Name = "If-None-Match",
+                            In = ParameterLocation.Header,
+                            Required = false,
+                            Description = "Return 304 when the opaque token matches.",
+                            Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                        });
+                    }
                 }
             }
 

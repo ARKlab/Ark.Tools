@@ -156,6 +156,7 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
             Id = Request.Id,
             AuditId = auditId,
             Message = $"Hello, {Request.Name}! (async)",
+            ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
         await _store.SaveAsync(response, new AuditEntry

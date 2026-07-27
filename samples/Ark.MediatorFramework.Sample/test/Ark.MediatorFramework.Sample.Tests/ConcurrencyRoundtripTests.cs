@@ -36,11 +36,18 @@ public sealed class ConcurrencyRoundtripTests
         var created = await create.Content.ReadFromJsonAsync<GreetingResponse>(JsonOptions).ConfigureAwait(false);
         created.Should().NotBeNull();
 
-        var read = await context.Client.GetFromJsonAsync<GreetingResponse>(
-            $"/api/v1/greetings/{created!.Id}", JsonOptions).ConfigureAwait(false);
+        var readResponse = await context.Client.GetAsync(
+            new Uri($"/api/v1/greetings/{created!.Id}", UriKind.Relative)).ConfigureAwait(false);
+        readResponse.Headers.ETag.Should().NotBeNull();
+        var read = await readResponse.Content.ReadFromJsonAsync<GreetingResponse>(JsonOptions).ConfigureAwait(false);
         read.Should().NotBeNull();
         var originalETag = read!.ETag;
         originalETag.Should().NotBeNullOrWhiteSpace();
+
+        using var conditional = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/greetings/{read.Id}");
+        conditional.Headers.IfNoneMatch.Add(new EntityTagHeaderValue($"\"{originalETag}\"", isWeak: true));
+        (await context.Client.SendAsync(conditional).ConfigureAwait(false)).StatusCode
+            .Should().Be(HttpStatusCode.NotModified);
 
         using var first = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/greetings/{read.Id}")
         {
