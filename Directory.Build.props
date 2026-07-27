@@ -74,6 +74,7 @@
 
 	</PropertyGroup>
 
+
 	<PropertyGroup Label="NuGet Audit">
 		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
 		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
