@@ -48,10 +48,6 @@ public sealed record GreetingResponse
     [ProtoMember(8)]
     [ETag]
     public string? ETag { get; init; }
-
-    /// <summary>Gets the authenticated user populated by the server.</summary>
-    [ServerSet]
-    public string? UserId { get; init; }
 }
 
 /// <summary>Updates a greeting using an opaque ETag precondition.</summary>
