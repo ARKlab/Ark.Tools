@@ -30,6 +30,10 @@
     <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="4.13.2" />
+    <PackageVersion Include="Microsoft.IdentityModel.LoggingExtensions" Version="8.21.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols" Version="8.21.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.21.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Validators" Version="8.21.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.21.0" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.11.0" />
     <PackageVersion Include="Microsoft.SqlServer.DacFx" Version="170.4.83" />
