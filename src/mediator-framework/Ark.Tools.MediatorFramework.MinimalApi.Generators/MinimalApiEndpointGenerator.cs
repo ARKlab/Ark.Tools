@@ -567,7 +567,19 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
                             sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
                             sb.AppendLine("            {");
-                            sb.AppendLine("                var body = await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ReadRequestAsync<" + e.TypeFullName + ">(httpContext, cancellationToken).ConfigureAwait(false);");
+                            sb.AppendLine("                " + e.TypeFullName + " body;");
+                            sb.AppendLine("                try");
+                            sb.AppendLine("                {");
+                            sb.AppendLine("                    body = await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ReadRequestAsync<" + e.TypeFullName + ">(httpContext, cancellationToken).ConfigureAwait(false);");
+                            sb.AppendLine("                }");
+                            sb.AppendLine("                catch (global::MessagePack.MessagePackSerializationException)");
+                            sb.AppendLine("                {");
+                            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
+                            sb.AppendLine("                }");
+                            sb.AppendLine("                catch (global::System.Text.Json.JsonException)");
+                            sb.AppendLine("                {");
+                            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
+                            sb.AppendLine("                }");
                             sb.AppendLine("                if (body is null)");
                             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
                             if (explicitBindings)
