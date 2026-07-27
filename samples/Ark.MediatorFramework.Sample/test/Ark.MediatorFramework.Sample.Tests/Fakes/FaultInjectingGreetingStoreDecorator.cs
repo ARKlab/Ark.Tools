@@ -66,6 +66,10 @@ public sealed class FaultInjectingGreetingStoreDecorator : IGreetingStore
         => _inner.ReadAuditsAsync(query, ctk);
 
     /// <inheritdoc />
+    public Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
+        => _inner.ReadGreetingsAsync(query, ctk);
+
+    /// <inheritdoc />
     public Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default)
         => _inner.GetAsync(id, ctk);
 

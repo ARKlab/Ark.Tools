@@ -215,6 +215,25 @@ public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult
     }
 }
 
+/// <summary>Handles paged reads of greetings.</summary>
+public sealed class SearchGreetingsHandler : IQueryHandler<SearchGreetingsQuery, GreetingPage>
+{
+    private readonly IGreetingStore _store;
+
+    /// <summary>Initializes a new instance of the <see cref="SearchGreetingsHandler"/> class.</summary>
+    public SearchGreetingsHandler(IGreetingStore store)
+    {
+        _store = store;
+    }
+
+    /// <inheritdoc />
+    public async Task<GreetingPage> ExecuteAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return await _store.ReadGreetingsAsync(query, ctk).ConfigureAwait(false);
+    }
+}
+
 /// <summary>Pure handler for <see cref="GetGreetingQuery"/> — no transport types.</summary>
 public sealed class GetGreetingHandler : IQueryHandler<GetGreetingQuery, GreetingResponse>
 {

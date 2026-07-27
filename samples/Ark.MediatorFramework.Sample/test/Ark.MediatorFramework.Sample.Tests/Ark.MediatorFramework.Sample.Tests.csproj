@@ -14,6 +14,7 @@
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Reqnroll.MsTest" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
+    <PackageReference Include="NodaTime.Testing" />
   </ItemGroup>
 
   <ItemGroup>

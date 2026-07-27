@@ -185,6 +185,47 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         };
     }
 
+    /// <summary>Reads a page of greetings in the current transaction.</summary>
+    public async Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
+                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+            FROM [dbo].[Greeting]
+            WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%' ESCAPE '\')
+            ORDER BY [Id]
+            OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
+            SELECT COUNT_BIG(*)
+            FROM [dbo].[Greeting]
+            WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%' ESCAPE '\');
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            MessageContains = query.MessageContains is null ? null : EscapeLikePattern(query.MessageContains),
+            query.Skip,
+            query.Limit,
+        }, Transaction, cancellationToken: ctk);
+        await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        var rows = await results.ReadAsync<GreetingRow>().ConfigureAwait(false);
+        var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
+        return new GreetingPage
+        {
+            Count = count,
+            Skip = query.Skip,
+            Limit = query.Limit,
+            Data = rows.Select(row => row.ToResponse()).ToArray(),
+        };
+    }
+
+    private static string EscapeLikePattern(string value)
+    {
+        return value
+            .Replace(@"\", @"\\", StringComparison.Ordinal)
+            .Replace("%", @"\%", StringComparison.Ordinal)
+            .Replace("_", @"\_", StringComparison.Ordinal)
+            .Replace("[", @"\[", StringComparison.Ordinal);
+    }
+
     private static string BuildAuditOrderBy(IEnumerable<string> sorts)
     {
         var columns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -320,6 +361,15 @@ public sealed class SqlGreetingStore : IGreetingStore
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         var result = await context.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
+    {
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var result = await context.ReadGreetingsAsync(query, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return result;
     }

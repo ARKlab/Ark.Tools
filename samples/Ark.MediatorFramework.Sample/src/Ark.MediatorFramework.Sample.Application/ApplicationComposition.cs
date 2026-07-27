@@ -26,7 +26,12 @@ public static class ApplicationComposition
     /// <param name="container">The SimpleInjector container to register into.</param>
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
-    public static void Register(Container container, bool useSqlStore = true, string? connectionString = null)
+    /// <param name="clock">Optional clock override used by tests.</param>
+    public static void Register(
+        Container container,
+        bool useSqlStore = true,
+        string? connectionString = null,
+        IClock? clock = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -45,7 +50,7 @@ public static class ApplicationComposition
         else
             container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
         container.RegisterSingleton<DocumentStore>();
-        container.RegisterSingleton<IClock>(() => SystemClock.Instance);
+        container.RegisterSingleton<IClock>(() => clock ?? SystemClock.Instance);
         container.RegisterSingleton<AuditCounter>();
 
         var applicationAssembly = typeof(ApplicationComposition).Assembly;
@@ -64,6 +69,7 @@ public static class ApplicationComposition
         container.Register<IQueryHandler<GetGreetingQuery, GreetingResponse>, GetGreetingHandler>();
         container.Register<IQueryHandler<GetGreetingV2Query, GreetingResponseV2>, GetGreetingV2Handler>();
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
+        container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();
         container.Register<IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>, UpdateGreetingHandler>();
         container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();

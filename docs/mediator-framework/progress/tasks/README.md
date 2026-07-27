@@ -110,8 +110,8 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [FW-08](framework/FW-08-etag-preconditions.md)
    [x] [FW-09](framework/FW-09-etag-response-emission.md)
    [x] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
-   [ ] [SMP-05](sample-parity/SMP-05-paging.md)
-   [ ] [SMP-06](sample-parity/SMP-06-misc-parity.md)
+   [x] [SMP-05](sample-parity/SMP-05-paging.md)
+   [x] [SMP-06](sample-parity/SMP-06-misc-parity.md)
    [ ] [NET-01](aspnetcore/NET-01-openapi-xml-docs.md)
 7. Scope extension (D8) — wire-shape items first, documentation last:
    [x] [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md)

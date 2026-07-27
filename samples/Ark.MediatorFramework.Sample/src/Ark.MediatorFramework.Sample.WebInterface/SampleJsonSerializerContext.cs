@@ -56,6 +56,8 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 [JsonSerializable(typeof(GetAuditsQuery))]
 [JsonSerializable(typeof(AuditRecord))]
 [JsonSerializable(typeof(PagedResult<AuditRecord>))]
+[JsonSerializable(typeof(SearchGreetingsQuery))]
+[JsonSerializable(typeof(GreetingPage))]
 internal sealed partial class SampleJsonSerializerContext : JsonSerializerContext
 {
 }

@@ -16,3 +16,14 @@ public sealed class CreateGreetingValidator : AbstractValidator<CreateGreetingRe
             .WithMessage("Name must not be empty.");
     }
 }
+
+/// <summary>Validates greeting paging parameters.</summary>
+public sealed class SearchGreetingsValidator : AbstractValidator<SearchGreetingsQuery>
+{
+    /// <summary>Initializes a new instance of the <see cref="SearchGreetingsValidator"/> class.</summary>
+    public SearchGreetingsValidator()
+    {
+        RuleFor(query => query.Skip).GreaterThanOrEqualTo(0);
+        RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+    }
+}

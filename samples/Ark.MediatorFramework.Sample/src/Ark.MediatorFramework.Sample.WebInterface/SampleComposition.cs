@@ -23,6 +23,7 @@ using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
 using System.Text.Json;
+using NodaTime;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -38,12 +39,14 @@ public static class SampleComposition
     /// <param name="useProtobufRebus">Whether Rebus messages use Protobuf instead of JSON.</param>
     /// <param name="useSqlStore">Whether to use SQL persistence and the outbox.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
+    /// <param name="clock">Optional clock override used by tests.</param>
     /// <returns>The configured container. Hosting verifies it and starts the bus after integration.</returns>
     public static Container BuildContainer(
         InMemNetwork network,
         bool useProtobufRebus = false,
         bool useSqlStore = true,
-        string? connectionString = null)
+        string? connectionString = null,
+        IClock? clock = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -51,7 +54,7 @@ public static class SampleComposition
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
 
         // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
-        ApplicationComposition.Register(container, useSqlStore, connectionString);
+        ApplicationComposition.Register(container, useSqlStore, connectionString, clock);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 

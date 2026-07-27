@@ -43,6 +43,12 @@ docker compose up -d
 dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
 ```
 
+Configuration layers are loaded in this order: `appsettings.json`,
+`appsettings.{ASPNETCORE_ENVIRONMENT}.json`, environment variables, and the
+optional Azure Key Vault named by `KeyVault:Uri`. The sample runs without Key Vault
+or telemetry configuration. Set `ApplicationInsights:ConnectionString` to enable
+Application Insights.
+
 The SQL-backed sample uses SQL Server on `localhost:1433`. Build the database project or deploy
 `src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj` before running SQL-backed scenarios.
 Greeting writes and their Rebus notifications share one SQL transaction; set
@@ -105,6 +111,11 @@ The sample stores the version as SQL Server `ROWVERSION` (or a monotonic in-memo
 version), while clients only see the opaque base64 token. A stale token returns
 `412 Precondition Failed`; transient server concurrency failures are retried twice
 and then return `409 Conflict`.
+
+## Paging
+
+`GET /api/v1/greetings?skip=0&limit=25` returns a validated page with `count`, `skip`,
+`limit`, and `data`. The same `SearchGreetings` contract is available through gRPC.
 
 ## Documented follow-ups
 

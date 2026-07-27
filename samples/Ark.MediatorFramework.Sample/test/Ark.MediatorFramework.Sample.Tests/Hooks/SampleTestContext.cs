@@ -17,6 +17,8 @@ using Rebus.Transport.InMem;
 using Reqnroll;
 
 using SimpleInjector;
+using NodaTime;
+using NodaTime.Testing;
 
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 
@@ -45,10 +47,12 @@ public sealed class SampleTestContext : IDisposable
             Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_TESTS"),
             "1",
             StringComparison.Ordinal);
+        Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
         var container = SampleComposition.BuildContainer(
             new InMemNetwork(),
             useSqlStore: useSqlStore,
-            connectionString: DatabaseHooks.ConnectionString);
+            connectionString: DatabaseHooks.ConnectionString,
+            clock: Clock);
         // Test-only: inject deterministic concurrency failures via a store decorator.
         container.RegisterSingleton<ConcurrencyFaultInjector>();
         container.RegisterDecorator<IGreetingStore, FaultInjectingGreetingStoreDecorator>(Lifestyle.Singleton);
@@ -134,6 +138,9 @@ public sealed class SampleTestContext : IDisposable
 
     /// <summary>Gets the HTTP client for the sample's public API.</summary>
     public HttpClient Client { get; }
+
+    /// <summary>Gets the deterministic clock used by the application graph.</summary>
+    public FakeClock Clock { get; }
 
     /// <summary>Gets the deterministic fault injector used by concurrency tests.</summary>
     public ConcurrencyFaultInjector FaultInjector { get; }
