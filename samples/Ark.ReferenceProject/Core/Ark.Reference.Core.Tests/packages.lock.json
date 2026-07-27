@@ -2080,15 +2080,6 @@
         "resolved": "6.0.2",
         "contentHash": "vDDPWwHn3/DNZ+kPkdXHoada+tKPEC9bVqDOr4hK6HBSP7hGCUTA0Zw6WU5qpGaqa5M1/V+axHMIv+DNEbIf6g=="
       },
-      "System.IdentityModel.Tokens.Jwt": {
-        "type": "Transitive",
-        "resolved": "8.20.0",
-        "contentHash": "ko0lxRtjOAczLXf5Ga3sQD6s6zW/7QgBUjTU3dVh64c7Xfruq3OiHZGAh/+bJjkd7xxUC1vExup0GuXKUQQqRw==",
-        "dependencies": {
-          "Microsoft.IdentityModel.JsonWebTokens": "8.20.0",
-          "Microsoft.IdentityModel.Tokens": "8.20.0"
-        }
-      },
       "System.IO.FileSystem.AccessControl": {
         "type": "Transitive",
         "resolved": "4.7.0",
@@ -2603,6 +2594,16 @@
         "contentHash": "0qR4f0OR8FeCAfLWcfwzAM7w6EmpUgwa22PgxKjcL25dEAto7sKpQQXbtxp38vVvK+V3RFkh/TeI7g/iUdoYIQ==",
         "dependencies": {
           "Polly.Core": "8.7.0"
+        }
+      },
+      "System.IdentityModel.Tokens.Jwt": {
+        "type": "CentralTransitive",
+        "requested": "[8.21.0, )",
+        "resolved": "8.21.0",
+        "contentHash": "dKsTkmlpUf/I6g1Aw9joWaZAahXvC0gWGQvkXW1IjZLSefC/4LhQI0tL0VIs64/NZQbl4XnQvLQyu6c7z1pMxg==",
+        "dependencies": {
+          "Microsoft.IdentityModel.JsonWebTokens": "8.21.0",
+          "Microsoft.IdentityModel.Tokens": "8.21.0"
         }
       },
       "System.Security.Cryptography.Xml": {
