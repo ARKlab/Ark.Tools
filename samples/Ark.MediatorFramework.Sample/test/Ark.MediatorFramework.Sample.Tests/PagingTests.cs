@@ -53,7 +53,7 @@ public sealed class PagingTests
         first.Data.Select(greeting => greeting.Id).Should().NotContain(second.Data[0].Id);
     }
 
-    /// <summary>Rejects a page size outside the supported range.</summary>
+    /// <summary>Rejects a page size outside the supported range over HTTP.</summary>
     [TestMethod]
     public async Task HttpSearchRejectsInvalidLimit()
     {
@@ -62,12 +62,63 @@ public sealed class PagingTests
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());
 
+        // skip=0 must be explicit: without it the missing int parameter triggers a binding-level 400
+        // before the validator runs, masking validator registration failures.
         var response = await context.Client.GetAsync(
             new Uri("/api/v1/greetings?skip=0&limit=101", UriKind.Relative)).ConfigureAwait(false);
 
-        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        await File.WriteAllTextAsync("/tmp/test_response.txt", $"STATUS:{(int)response.StatusCode}\nBODY:\n{body}\nEND").ConfigureAwait(false);
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>Rejects a negative skip value over HTTP.</summary>
+    [TestMethod]
+    public async Task HttpSearchRejectsNegativeSkip()
+    {
+        using var context = new SampleTestContext();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());
+
+        var response = await context.Client.GetAsync(
+            new Uri("/api/v1/greetings?skip=-1&limit=10", UriKind.Relative)).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>Rejects a page size of zero over HTTP.</summary>
+    [TestMethod]
+    public async Task HttpSearchRejectsZeroLimit()
+    {
+        using var context = new SampleTestContext();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer",
+            new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());
+
+        var response = await context.Client.GetAsync(
+            new Uri("/api/v1/greetings?skip=0&limit=0", UriKind.Relative)).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>Rejects a page size outside the supported range over gRPC.</summary>
+    [TestMethod]
+    public async Task GrpcSearchRejectsInvalidLimit()
+    {
+        using var context = new SampleTestContext();
+        var token = new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build();
+        context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        using var channel = GrpcChannel.ForAddress(
+            "http://localhost",
+            new GrpcChannelOptions { HttpHandler = context.CreateGrpcHandler() });
+        var client = new GreetingsV1.GreetingsV1Client(channel);
+
+        var call = async () => await client.SearchGreetingsAsync(
+            new GrpcSearchGreetingsQuery { Skip = 0, Limit = 101 },
+            new Metadata { { "authorization", "Bearer " + token } }).ResponseAsync.ConfigureAwait(false);
+
+        (await call.Should().ThrowAsync<RpcException>().ConfigureAwait(false))
+            .Which.StatusCode.Should().Be(StatusCode.InvalidArgument);
     }
 
     /// <summary>Returns the same paged result over gRPC.</summary>
