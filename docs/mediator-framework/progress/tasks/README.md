@@ -5,6 +5,7 @@ dedicated PR from the document alone. Every task defines **Outcomes** (what exis
 **Acceptance** (verifiable criteria; the PR is not mergeable until all pass).
 
 Source analysis and decisions: [`../pre-release-review.md`](../pre-release-review.md).
+Delivery-tracking index: [`../README.md`](../README.md).
 
 ## Conventions for every task PR
 
@@ -38,10 +39,24 @@ Source analysis and decisions: [`../pre-release-review.md`](../pre-release-revie
 | [SMP-01](sample-parity/SMP-01-fluentvalidation.md) | FluentValidation decorators in sample (G2) | sample-parity |
 | [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) | SQL/Dapper + transactional Outbox (G4) | sample-parity |
 | [SMP-03](sample-parity/SMP-03-persisted-auditing.md) | Persisted auditing (G5) | sample-parity |
-| [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md) | Optimistic concurrency + ETag (G6) | sample-parity |
+| [FW-08](framework/FW-08-etag-preconditions.md) | `[ETag]` contract attribute + `If-Match` binding (G6) | framework |
+| [FW-09](framework/FW-09-etag-response-emission.md) | `ETag` response header + 304 + gRPC error parity (G6) | framework |
+| [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md) | Optimistic concurrency + opaque ETag in the sample (G6) | sample-parity |
 | [SMP-05](sample-parity/SMP-05-paging.md) | Paging (G7) | sample-parity |
 | [SMP-06](sample-parity/SMP-06-misc-parity.md) | App Insights, config layering, IClock, test infra (G9) | sample-parity |
-| [NET-01](aspnetcore/NET-01-openapi-xml-docs.md) | XML-docs into OpenAPI + 3.1 verification (N3) | aspnetcore |
+| [NET-01](aspnetcore/NET-01-openapi-xml-docs.md) | OpenAPI 3.1 verification, YAML, doc-UI decision (N3) | aspnetcore |
+
+## Release blockers — 2026-07 scope extension (decision D8)
+
+| Task | Title | Category |
+|---|---|---|
+| [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md) | OpenAPI tags and operation names from the contract | aspnetcore |
+| [GEN-09](generator-dx/GEN-09-xml-documentation.md) | XML documentation into OpenAPI and exported `.proto` | generator-dx |
+| [FW-05](framework/FW-05-standard-problem-responses.md) | Standard 400/403/500 ProblemDetails responses on every endpoint | framework |
+| [FW-06](framework/FW-06-async-enumerable-streaming.md) | `IAsyncEnumerable<T>` streaming responses | framework |
+| [FW-07](framework/FW-07-multifile-uploads.md) | Multi-file uploads bound to an attachment collection | framework |
+| [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md) | API-surface snapshot gate (contracts, routes, gRPC methods) | generator-dx |
+| [DOC-01](docs/DOC-01-user-documentation.md) | User documentation: getting started + feature guide | docs |
 
 ## Non-blocking (do before release if capacity allows)
 
@@ -92,11 +107,21 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [SMP-03](sample-parity/SMP-03-persisted-auditing.md)
    [x] [GEN-07](generator-dx/GEN-07-automatic-proto-export.md)
    [x] [GEN-08](generator-dx/GEN-08-from-assembly-api-names.md)
-   [ ] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
+   [x] [FW-08](framework/FW-08-etag-preconditions.md)
+   [x] [FW-09](framework/FW-09-etag-response-emission.md)
+   [x] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
    [ ] [SMP-05](sample-parity/SMP-05-paging.md)
    [ ] [SMP-06](sample-parity/SMP-06-misc-parity.md)
    [ ] [NET-01](aspnetcore/NET-01-openapi-xml-docs.md)
-7. Post-release:
+7. Scope extension (D8) — wire-shape items first, documentation last:
+   [x] [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md)
+   [ ] [FW-05](framework/FW-05-standard-problem-responses.md)
+   [ ] [FW-06](framework/FW-06-async-enumerable-streaming.md)
+   [ ] [FW-07](framework/FW-07-multifile-uploads.md)
+   [ ] [GEN-09](generator-dx/GEN-09-xml-documentation.md)
+   [ ] [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md)
+   [ ] [DOC-01](docs/DOC-01-user-documentation.md)
+8. Post-release:
    [ ] [NET-02](aspnetcore/NET-02-openapi-operation-transformers.md)
    [ ] [NET-03](aspnetcore/NET-03-json-patch.md)
    [ ] [NET-04](aspnetcore/NET-04-auth-metrics.md)

@@ -588,14 +588,6 @@
           "NodaTime": "[3.0.0, 4.0.0)"
         }
       },
-      "Polly": {
-        "type": "Transitive",
-        "resolved": "8.7.0",
-        "contentHash": "0qR4f0OR8FeCAfLWcfwzAM7w6EmpUgwa22PgxKjcL25dEAto7sKpQQXbtxp38vVvK+V3RFkh/TeI7g/iUdoYIQ==",
-        "dependencies": {
-          "Polly.Core": "8.7.0"
-        }
-      },
       "Polly.Core": {
         "type": "Transitive",
         "resolved": "8.7.0",
@@ -825,7 +817,8 @@
           "Ark.Tools.Solid.FluentValidaton": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
-          "Ark.Tools.SystemTextJson": "[1.0.0, )"
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "Polly": "[8.7.0, )"
         }
       },
       "ark.tools.applicationinsights": {
@@ -1072,6 +1065,15 @@
         "requested": "[2.11.0, )",
         "resolved": "2.11.0",
         "contentHash": "/ignjfdeKT2SGLIR7QEv19KnI0rvoxRG/TYDOZdK9EsWLjKK9IK8i1Mo5NRm9PRV3i64DzlTqnIflWvoyfljLg=="
+      },
+      "Polly": {
+        "type": "CentralTransitive",
+        "requested": "[8.7.0, )",
+        "resolved": "8.7.0",
+        "contentHash": "0qR4f0OR8FeCAfLWcfwzAM7w6EmpUgwa22PgxKjcL25dEAto7sKpQQXbtxp38vVvK+V3RFkh/TeI7g/iUdoYIQ==",
+        "dependencies": {
+          "Polly.Core": "8.7.0"
+        }
       }
     }
   }

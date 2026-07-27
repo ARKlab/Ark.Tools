@@ -87,16 +87,35 @@ build without starting the sample host. `ArkExportProtoDir` overrides the
 destination, `ArkExportProto=false` opts out, and `ArkAdditionalProto` declares
 hand-written proto files to copy alongside generated services.
 
+## Optimistic concurrency
+
+Greeting responses carry an opaque ETag. Read it, echo it on the update, and
+reuse of the old token is rejected:
+
+```bash
+curl -H "Authorization: ******" \
+  https://localhost:5001/api/v1/greetings/$ID
+curl -X PUT -H "Authorization: ******" -H "If-Match: \"$ETAG\"" \
+  -H "Content-Type: application/json" \
+  -d "{\"id\":\"$ID\",\"message\":\"updated\"}" \
+  https://localhost:5001/api/v1/greetings/$ID
+```
+
+The sample stores the version as SQL Server `ROWVERSION` (or a monotonic in-memory
+version), while clients only see the opaque base64 token. A stale token returns
+`412 Precondition Failed`; transient server concurrency failures are retried twice
+and then return `409 Conflict`.
+
 ## Documented follow-ups
 
 The emitted `.proto` now generates a dedicated client assembly used by the
 behavioral tests, and the gRPC rich-error interceptor is covered there. The
 2026-07 review revisions — NodaTime via `NodaTime.Serialization.Protobuf`,
-Hellang ProblemDetails with `BusinessRuleViolation` (HTTP and gRPC), gRPC
+ProblemDetails with `BusinessRuleViolation` (HTTP and gRPC), gRPC
 client-streaming upload, version lifetime (`IntroducedIn`/`RetiredIn`) with the
 `/api/v{version}/…` placeholder, the per-transport package split and the
 framework test project under `tests/` — are specified with acceptance criteria
-in [`docs/mediator-framework/tasks.md`](../../docs/mediator-framework/tasks.md)
+in [`docs/mediator-framework/progress/tasks.md`](../../docs/mediator-framework/progress/tasks.md)
 (Epic 8) and step-by-step in
-[`docs/mediator-framework/implementation-plan.md`](../../docs/mediator-framework/implementation-plan.md)
+[`docs/mediator-framework/progress/implementation-plan.md`](../../docs/mediator-framework/progress/implementation-plan.md)
 (Phase 6).

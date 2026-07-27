@@ -32,6 +32,14 @@ public interface IGreetingStore
     /// <summary>Attempts to read a greeting by id.</summary>
     Task<GreetingResponse?> TryGetAsync(Guid id, CancellationToken ctk = default);
 
+    /// <summary>Updates a greeting after validating its opaque concurrency token.</summary>
+    /// <param name="id">The greeting identifier.</param>
+    /// <param name="message">The replacement message.</param>
+    /// <param name="expectedETag">The expected current ETag.</param>
+    /// <param name="audit">The optional audit entry to persist with the update.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default);
+
     /// <summary>Gets the number of stored greetings.</summary>
     Task<int> CountAsync(CancellationToken ctk = default);
 
@@ -44,6 +52,13 @@ public sealed class InMemoryGreetingStore : IGreetingStore
 {
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _items = new();
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
+    private readonly ConcurrentDictionary<Guid, long> _versions = new();
+    private readonly System.Threading.Lock _sync = new();
+
+    /// <summary>Initializes a new in-memory store.</summary>
+    public InMemoryGreetingStore()
+    {
+    }
 
     /// <inheritdoc />
     public Task<int> CountAsync(CancellationToken ctk = default)
@@ -55,7 +70,11 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     public Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(greeting);
-        _items[greeting.Id] = greeting;
+        var version = _versions.GetOrAdd(greeting.Id, 1);
+        _items[greeting.Id] = greeting with
+        {
+            ETag = $"0x{version:X16}",
+        };
         AddAudit(audit);
         return Task.CompletedTask;
     }
@@ -129,6 +148,30 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     {
         _items.TryGetValue(id, out var greeting);
         return Task.FromResult(greeting);
+    }
+
+    /// <inheritdoc />
+    public Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
+    {
+        lock (_sync)
+        {
+            if (expectedETag is null || !_items.TryGetValue(id, out var current))
+                throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
+            var version = _versions.GetOrAdd(id, 1);
+            var currentETag = $"0x{version:X16}";
+            if (!string.Equals(expectedETag, currentETag, StringComparison.Ordinal))
+                throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
+
+            var updated = current with
+            {
+                Message = message,
+                ETag = $"0x{version + 1:X16}",
+            };
+            _items[id] = updated;
+            _versions[id] = version + 1;
+            AddAudit(audit);
+            return Task.FromResult(updated);
+        }
     }
 
     /// <inheritdoc />

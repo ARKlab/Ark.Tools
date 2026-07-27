@@ -43,12 +43,39 @@ public sealed record GreetingResponse
     /// <summary>Gets the audit identifier associated with this entity version.</summary>
     [ProtoMember(7)]
     public Guid AuditId { get; init; }
+
+    /// <summary>Gets the opaque concurrency token echoed in update preconditions.</summary>
+    [ProtoMember(8)]
+    [ETag]
+    public string? ETag { get; init; }
+}
+
+/// <summary>Updates a greeting using an opaque ETag precondition.</summary>
+[HttpEndpoint("PUT", "/api/v{version}/greetings/{id}")]
+[GrpcMethod("UpdateGreetingMessage")]
+[GrpcService("Greetings")]
+[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
+[ProtoContract]
+public sealed record UpdateGreetingMessageRequest : IRequest<GreetingResponse>
+{
+    /// <summary>Gets the greeting identifier.</summary>
+    [ProtoMember(1)]
+    public Guid Id { get; init; }
+
+    /// <summary>Gets the replacement message.</summary>
+    [ProtoMember(2)]
+    public string Message { get; init; } = string.Empty;
+
+    /// <summary>Gets the opaque concurrency token.</summary>
+    [ProtoMember(3)]
+    [ETag]
+    public string? ETag { get; init; }
 }
 
 /// <summary>Command used to exercise the synchronous command transport contract.</summary>
 [HttpEndpoint("POST", "/api/v{version}/greetings/refresh")]
 [GrpcMethod("RefreshGreeting")]
-[ServiceGroup("Greetings")]
+[GrpcService("Greetings")]
 [ProtoContract]
 public sealed record RefreshGreetingCommand : ICommand
 {
@@ -65,7 +92,7 @@ public sealed record RefreshGreetingCommand : ICommand
 [HttpEndpoint("POST", "/api/v{version}/greetings", AcceptsMessagePack = true, SuccessStatusCode = 201)]
 [RebusMessage]
 [GrpcMethod("CreateGreeting")]
-[ServiceGroup("Greetings")]
+[GrpcService("Greetings")]
 [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
 [ProtoContract]
 [MessagePackObject(true)]
@@ -97,6 +124,7 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 }
 
 /// <summary>HTTP-only request that publishes work to Rebus and returns immediately.</summary>
+[ApiGroup("Greetings")]
 [HttpEndpoint("POST", "/api/v{version}/greetings/compose")]
 public sealed record ComposeGreetingRequest : IRequest<ComposeGreetingResponse>
 {
@@ -139,7 +167,7 @@ public sealed record GreetingCreatedNotification : ICommand
 /// </summary>
 [HttpEndpoint("GET", "/api/v{version}/greetings/{id}", RetiredIn = 2)]
 [GrpcMethod("GetGreeting", RetiredIn = 2)]
-[ServiceGroup("Greetings")]
+[GrpcService("Greetings")]
 [ProtoContract]
 public sealed record GetGreetingQuery : IQuery<GreetingResponse>
 {
@@ -171,7 +199,7 @@ public sealed record GreetingResponseV2
 /// </summary>
 [HttpEndpoint("GET", "/api/v{version}/greetings-v2/{id}", IntroducedIn = 2)]
 [GrpcMethod("GetGreeting", IntroducedIn = 2)]
-[ServiceGroup("Greetings")]
+[GrpcService("Greetings")]
 [ProtoContract]
 public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>
 {

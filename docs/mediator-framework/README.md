@@ -9,16 +9,32 @@ isolated from HTTP translation, serialization and routing.
 
 ## Documents
 
+Reference documentation (**what the framework is**) lives in this folder.
+Everything that tracks **how it is being built** — plans, task boards, progress,
+reviews — lives in [`progress/`](progress/README.md).
+
+### Reference
+
 | Document | Purpose |
 | --- | --- |
-| [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
 | [`design.md`](design.md) | Target architecture: pure handlers, Roslyn incremental generator, the three transports, DI, error handling, user context, attachments. |
-| [`implementation-plan.md`](implementation-plan.md) | Phased delivery plan with the packages to introduce. |
-| [`tasks.md`](tasks.md) | Verifiable task breakdown with explicit acceptance criteria. |
+| [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
 | [`migration-from-mvc.md`](migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
-| [`pre-release-review.md`](pre-release-review.md) | Adversarial pre-release review (DX + security), feature-gap analysis vs Ark.ReferenceProject, and recorded decisions. |
-| [`tasks/README.md`](tasks/README.md) | Pre-release task board: one self-contained task document per item, organized by category, with Outcomes and Acceptance criteria. |
-| [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 items. |
+
+The end-user guide (getting started + per-feature documentation) is delivered by
+task [`DOC-01`](progress/tasks/docs/DOC-01-user-documentation.md) and will live
+in `docs/mediator-framework/guide/`.
+
+### Progress and tracking
+
+| Document | Purpose |
+| --- | --- |
+| [`progress/README.md`](progress/README.md) | Index of all delivery tracking documents. |
+| [`progress/implementation-plan.md`](progress/implementation-plan.md) | Phased delivery plan with the packages to introduce. |
+| [`progress/tasks.md`](progress/tasks.md) | Verifiable task breakdown with explicit acceptance criteria (epics). |
+| [`progress/tasks/README.md`](progress/tasks/README.md) | Task board: one self-contained task document per item, organized by category, with Outcomes and Acceptance criteria. |
+| [`progress/pre-release-review.md`](progress/pre-release-review.md) | Adversarial pre-release review (DX + security), feature-gap analysis vs Ark.ReferenceProject, and recorded decisions. |
+| [`progress/future-improvements.md`](progress/future-improvements.md) | Explicitly deferred post-1.0 items. |
 
 ## Verifiable sample
 

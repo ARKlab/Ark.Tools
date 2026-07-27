@@ -60,6 +60,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             DateTime = Request.DateTime,
             OffsetDateTime = Request.OffsetDateTime,
             Period = Request.Period,
+            ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
         await _store.SaveAndPublishAsync(response, new AuditEntry
@@ -72,6 +73,38 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
         return response;
+    }
+
+}
+
+/// <summary>Updates a greeting after validating its opaque concurrency token.</summary>
+public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>
+{
+    private readonly IGreetingStore _store;
+    private readonly IContextProvider<ClaimsPrincipal> _user;
+    private readonly IClock _clock;
+
+    /// <summary>Initializes a new instance of the <see cref="UpdateGreetingMessageHandler"/> class.</summary>
+    public UpdateGreetingMessageHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
+    {
+        _store = store;
+        _user = user;
+        _clock = clock;
+    }
+
+    /// <inheritdoc />
+    public async Task<GreetingResponse> ExecuteAsync(UpdateGreetingMessageRequest request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return await _store.UpdateAsync(request.Id, request.Message, request.ETag, new AuditEntry
+        {
+            Id = Guid.NewGuid(),
+            UserId = _user.GetUserId() ?? "anonymous",
+            EntityType = nameof(GreetingResponse),
+            Identifier = request.Id.ToString("D"),
+            Operation = nameof(UpdateGreetingMessageRequest),
+            Timestamp = _clock.GetCurrentInstant(),
+        }, ctk).ConfigureAwait(false);
     }
 }
 
@@ -135,6 +168,7 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
             Id = Request.Id,
             AuditId = auditId,
             Message = $"Hello, {Request.Name}! (async)",
+            ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
         await _store.SaveAsync(response, new AuditEntry

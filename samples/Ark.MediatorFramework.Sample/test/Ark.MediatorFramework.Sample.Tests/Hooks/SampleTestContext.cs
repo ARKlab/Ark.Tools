@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.WebInterface;
+using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.Tests.Fakes;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -13,6 +15,8 @@ using Microsoft.SqlServer.Dac;
 
 using Rebus.Transport.InMem;
 using Reqnroll;
+
+using SimpleInjector;
 
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 
@@ -45,6 +49,9 @@ public sealed class SampleTestContext : IDisposable
             new InMemNetwork(),
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString);
+        // Test-only: inject deterministic concurrency failures via a store decorator.
+        container.RegisterSingleton<ConcurrencyFaultInjector>();
+        container.RegisterDecorator<IGreetingStore, FaultInjectingGreetingStoreDecorator>(Lifestyle.Singleton);
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
@@ -64,6 +71,7 @@ public sealed class SampleTestContext : IDisposable
         _host.Start();
 #pragma warning restore MA0045, VSTHRD002
         Client = _host.GetTestServer().CreateClient();
+        FaultInjector = container.GetInstance<ConcurrencyFaultInjector>();
     }
 
     /// <summary>Creates and resets the sample SQL database for opt-in integration runs.</summary>
@@ -126,6 +134,9 @@ public sealed class SampleTestContext : IDisposable
 
     /// <summary>Gets the HTTP client for the sample's public API.</summary>
     public HttpClient Client { get; }
+
+    /// <summary>Gets the deterministic fault injector used by concurrency tests.</summary>
+    public ConcurrencyFaultInjector FaultInjector { get; }
 
     /// <summary>Creates a handler for an in-process gRPC client.</summary>
     public HttpMessageHandler CreateGrpcHandler()
