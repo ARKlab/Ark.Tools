@@ -119,7 +119,9 @@ public sealed class SampleStartup
             var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
             var context = new SampleJsonSerializerContext(contextOptions);
             options.SerializerOptions.ConfigureArkDefaults();
-            options.SerializerOptions.TypeInfoResolver = context;
+            options.SerializerOptions.TypeInfoResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
+                context,
+                new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
         });
 
         // RFC 7807 ProblemDetails: map semantic domain exceptions consistently across hosts.
@@ -163,8 +165,9 @@ public sealed class SampleStartup
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
             endpoints.MapControllers();
 
-            // Serves the generated OpenAPI documents at /openapi/{documentName}.json.
+            // Serves generated JSON and YAML documents at /openapi/{documentName}.{json|yaml}.
             endpoints.MapOpenApi().AllowAnonymous();
+            endpoints.MapOpenApi("/openapi/{documentName}.yaml").AllowAnonymous();
             endpoints.MapScalarApiReference(options =>
             {
                 options.AddAuthorizationCodeFlow("oauth2", flow => flow

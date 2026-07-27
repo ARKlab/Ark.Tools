@@ -112,7 +112,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md)
    [x] [SMP-05](sample-parity/SMP-05-paging.md)
    [x] [SMP-06](sample-parity/SMP-06-misc-parity.md)
-   [ ] [NET-01](aspnetcore/NET-01-openapi-xml-docs.md)
+   [x] [NET-01](aspnetcore/NET-01-openapi-xml-docs.md)
 7. Scope extension (D8) — wire-shape items first, documentation last:
    [x] [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md)
    [ ] [FW-05](framework/FW-05-standard-problem-responses.md)

@@ -13,6 +13,7 @@ AS
 		BEGIN TRANSACTION
 		
 		-- Turn off system versioning for all tables first
+		ALTER TABLE [dbo].[Audit] SET (SYSTEM_VERSIONING = OFF)
 		ALTER TABLE [dbo].[BookPrintProcess] SET (SYSTEM_VERSIONING = OFF)
 		ALTER TABLE [dbo].[Ping] SET (SYSTEM_VERSIONING = OFF)
 		ALTER TABLE [dbo].[Book] SET (SYSTEM_VERSIONING = OFF)
@@ -34,10 +35,15 @@ AS
 		DELETE FROM [dbo].[Book]
 		TRUNCATE TABLE [dbo].[BookHistory]
 
+		-- Audit has no FK constraints so it can be cleaned directly
+		DELETE FROM [dbo].[Audit]
+		TRUNCATE TABLE [dbo].[AuditHistory]
+
 		-- Turn system versioning back on for all tables
 		ALTER TABLE [dbo].[BookPrintProcess] SET  ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[BookPrintProcessHistory], DATA_CONSISTENCY_CHECK = OFF ) )
 		ALTER TABLE [dbo].[Ping] SET  ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[PingHistory], DATA_CONSISTENCY_CHECK = OFF ) )
 		ALTER TABLE [dbo].[Book] SET  ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[BookHistory], DATA_CONSISTENCY_CHECK = OFF ) )
+		ALTER TABLE [dbo].[Audit] SET  ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = [dbo].[AuditHistory], DATA_CONSISTENCY_CHECK = OFF ) )
 
 		EXEC [ops].[InitConfig] @initConfig
 
