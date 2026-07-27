@@ -178,14 +178,14 @@ Required scenarios:
 
 ## Acceptance
 
-- [ ] `Greeting` table has `ROWVERSION`; no explicit writes to it anywhere.
-- [ ] `GreetingResponse.ETag` and `UpdateGreetingMessageRequest.ETag` are `string?` marked `[ETag]`,
+- [x] `Greeting` table has `ROWVERSION`; no explicit writes to it anywhere.
+- [x] `GreetingResponse.ETag` and `UpdateGreetingMessageRequest.ETag` are `string?` marked `[ETag]`,
       serialized in JSON/MessagePack/protobuf and present in the OpenAPI schemas; no `byte[]` on any
       contract.
-- [ ] Retrier decorator registered outermost on `IRequestHandler<,>`; retries only
+- [x] Retrier decorator registered outermost on `IRequestHandler<,>`; retries only
       `OptimisticConcurrencyException`, never `EntityTagMismatchException`.
-- [ ] All nine scenarios above pass **without** `ARK_SAMPLE_SQL_TESTS=1`, and the SQL-backed run
+- [x] All nine scenarios above pass **without** `ARK_SAMPLE_SQL_TESTS=1`, and the SQL-backed run
       (`ARK_SAMPLE_SQL_TESTS=1`) passes the same suite.
-- [ ] No new package references; no `packages.lock.json` churn.
-- [ ] Sample README and `design.md` updated.
-- [ ] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
+- [x] No new package references; no `packages.lock.json` churn.
+- [x] Sample README and `design.md` updated.
+- [x] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
