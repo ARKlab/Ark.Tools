@@ -192,16 +192,16 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
                    CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
             FROM [dbo].[Greeting]
-            WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%')
+            WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%' ESCAPE '\')
             ORDER BY [Id]
             OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
             SELECT COUNT_BIG(*)
             FROM [dbo].[Greeting]
-            WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%');
+            WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%' ESCAPE '\');
             """;
         var command = new CommandDefinition(sql, new
         {
-            query.MessageContains,
+            MessageContains = query.MessageContains is null ? null : EscapeLikePattern(query.MessageContains),
             query.Skip,
             query.Limit,
         }, Transaction, cancellationToken: ctk);
@@ -215,6 +215,15 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             Limit = query.Limit,
             Data = rows.Select(row => row.ToResponse()).ToArray(),
         };
+    }
+
+    private static string EscapeLikePattern(string value)
+    {
+        return value
+            .Replace(@"\", @"\\", StringComparison.Ordinal)
+            .Replace("%", @"\%", StringComparison.Ordinal)
+            .Replace("_", @"\_", StringComparison.Ordinal)
+            .Replace("[", @"\[", StringComparison.Ordinal);
     }
 
     private static string BuildAuditOrderBy(IEnumerable<string> sorts)
