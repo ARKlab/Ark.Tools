@@ -28,6 +28,12 @@ public interface IDocumentsGrpcService
         IAsyncEnumerable<UploadDocumentChunk> chunks,
         CallContext context = default);
 
+    /// <summary>Streams several attachments to the batch upload handler.</summary>
+    [OperationContract(Name = "UploadMany")]
+    ValueTask<UploadBatchResponse> UploadManyAsync(
+        IAsyncEnumerable<UploadDocumentChunk> chunks,
+        CallContext context = default);
+
     /// <summary>Streams a previously uploaded attachment.</summary>
     [OperationContract(Name = "Download")]
     IAsyncEnumerable<GrpcDownloadChunk> DownloadAsync(
@@ -66,6 +72,26 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
         {
             Logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Document upload failed."));
+        }
+
+        /// <inheritdoc />
+        public async ValueTask<UploadBatchResponse> UploadManyAsync(
+            IAsyncEnumerable<UploadDocumentChunk> chunks,
+            CallContext context = default)
+        {
+            try
+            {
+                var attachments = await StreamingArkAttachmentCollection.ReadAllAsync(chunks, context.CancellationToken).ConfigureAwait(false);
+                var handler = _container.GetInstance<IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>>();
+                return await handler.ExecuteAsync(
+                    new UploadGreetingCardsRequest { Id = Guid.NewGuid(), Attachments = attachments },
+                    context.CancellationToken).ConfigureAwait(false);
+            }
+            catch (InvalidOperationException exception)
+            {
+                Logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Document upload failed."));
+            }
         }
     }
 
