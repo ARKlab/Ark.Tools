@@ -3,6 +3,8 @@
 
 using System.Xml.Linq;
 using System.Threading;
+using System;
+using System.Linq;
 
 using Microsoft.CodeAnalysis;
 
@@ -18,7 +20,7 @@ internal static class XmlDocumentation
 
     private static string? Read(ISymbol symbol, string elementName, CancellationToken cancellationToken)
     {
-        var xml = symbol.GetDocumentationCommentXml(cancellationToken);
+        var xml = symbol.GetDocumentationCommentXml();
         if (string.IsNullOrWhiteSpace(xml))
             return null;
 
@@ -27,7 +29,7 @@ internal static class XmlDocumentation
             var element = XDocument.Parse(xml).Root?.Element(elementName);
             return element is null ? null : Normalize(element);
         }
-        catch (XmlException)
+        catch (System.Xml.XmlException)
         {
             return null;
         }

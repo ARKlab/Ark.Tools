@@ -633,8 +633,7 @@ namespace Ark.MediatorFramework.Generators
                     .Where(type => type.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute))))
                 {
-                    var members = type.GetMembers()
-                        .OfType<IPropertySymbol>()
+                    var members = AllProperties(type)
                         .Select(property => new
                         {
                             Property = property,
@@ -777,6 +776,13 @@ namespace Ark.MediatorFramework.Generators
             return separator < 0 ? value : value[(separator + 1)..];
         }
 
+        private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
+        {
+            for (var current = type; current is not null; current = current.BaseType)
+                foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
+                    yield return property;
+        }
+
         private static string SnakeCase(string value)
         {
             var builder = new StringBuilder(value.Length + 4);
@@ -802,8 +808,24 @@ namespace Ark.MediatorFramework.Generators
         {
             if (string.IsNullOrWhiteSpace(text))
                 return;
-            foreach (var line in text.Split('\n'))
-                builder.Append(indent).Append("// ").AppendLine(line.Trim());
+            foreach (var line in text!.Split('\n'))
+            {
+                var words = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var current = new StringBuilder();
+                foreach (var word in words)
+                {
+                    if (current.Length > 0 && current.Length + word.Length + 1 > 96)
+                    {
+                        builder.Append(indent).Append("// ").AppendLine(current.ToString());
+                        current.Clear();
+                    }
+                    if (current.Length > 0)
+                        current.Append(' ');
+                    current.Append(word);
+                }
+                if (current.Length > 0)
+                    builder.Append(indent).Append("// ").AppendLine(current.ToString());
+            }
         }
 
         private static string Identifier(string value)
@@ -920,7 +942,6 @@ namespace Ark.MediatorFramework.Generators
                 IReadOnlyList<ProtoIncludeModel> includes)
             {
                 Type = type;
-                Description = description;
                 Name = name;
                 Summary = summary;
                 Members = members;
@@ -940,6 +961,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 Name = name;
                 Type = type;
+                Description = description;
                 Number = number;
                 IsRepeated = isRepeated;
                 IsServerSet = isServerSet;

@@ -35,6 +35,14 @@ public sealed class OpenApiTests
         paths?["/api/v1/greetings/{id}"]?["get"].Should().NotBeNull();
         paths?["/api/v1/greeting-cards/{id}"]?["post"]?["requestBody"]?["content"]?["multipart/form-data"]
             .Should().NotBeNull();
+        paths?["/api/v1/greetings/{id}"]?["put"]?["summary"]?.GetValue<string>()
+            .Should().Be("Updates a greeting using an opaque ETag precondition.");
+        paths?["/api/v1/greetings/{id}"]?["put"]?["parameters"]?.AsArray()
+            .FirstOrDefault(parameter => parameter?["name"]?.GetValue<string>() == "id")?["description"]
+            ?.GetValue<string>().Should().Be("Gets the greeting identifier.");
+        document["components"]?["schemas"]?["UpdateGreetingMessageRequest"]?["properties"]?["message"]?["description"]
+            ?.GetValue<string>()
+            .Should().Be("Gets the replacement message.");
     }
 
     /// <summary>The v2 document contains the introduced versioned operation.</summary>

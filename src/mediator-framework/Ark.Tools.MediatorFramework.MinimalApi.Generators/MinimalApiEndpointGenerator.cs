@@ -331,8 +331,7 @@ namespace Ark.MediatorFramework.Generators
                 .Select(match => match.Groups[1].Value)
                 .Where(name => !string.Equals(name, "version", StringComparison.OrdinalIgnoreCase))
                 , StringComparer.OrdinalIgnoreCase);
-            var properties = type.GetMembers()
-                .OfType<IPropertySymbol>()
+            var properties = AllProperties(type)
                 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                 .Select(property => new PropertyModel(
                     property.Name,
@@ -357,7 +356,7 @@ namespace Ark.MediatorFramework.Generators
                 .ToImmutableArray();
             var etagProperties = properties.Where(property => property.IsETag).ToArray();
             var responseETagProperties = responseType is INamedTypeSymbol namedResponse && etagAttr is not null
-                ? namedResponse.GetMembers().OfType<IPropertySymbol>()
+                ? AllProperties(namedResponse)
                     .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                     .Where(property => property.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, etagAttr)))
@@ -848,6 +847,13 @@ namespace Ark.MediatorFramework.Generators
                         || type.AllInterfaces.Any(iface =>
                             SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, enumerableType)
                             && iface.TypeArguments[0].SpecialType == SpecialType.System_String)));
+        }
+
+        private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
+        {
+            for (var current = type; current is not null; current = current.BaseType)
+                foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
+                    yield return property;
         }
 
         private static bool RequiresTypeConverterBinding(ITypeSymbol type)

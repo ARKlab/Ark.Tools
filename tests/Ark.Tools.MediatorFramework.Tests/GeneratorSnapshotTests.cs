@@ -207,6 +207,39 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorPropagatesXmlDocumentation()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>Gets a documented value.</summary>
+            /// <remarks>The value is read from the contract.</remarks>
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>The route identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        generated.Should().Contain("WithSummary(\"Gets a documented value.\")");
+        generated.Should().Contain("WithDescription(\"The value is read from the contract.\")");
+        generated.Should().Contain("ArkDocumentationMetadata");
+        generated.Should().Contain("[\"Id\"] = \"The route identifier.\"");
+
+        var undocumented = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/undocumented")]
+            public sealed class GetUndocumented : IQuery<string> { }
+            """);
+        undocumented.Should().NotContain("WithSummary(");
+        undocumented.Should().NotContain("ArkDocumentationMetadata");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
         var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(

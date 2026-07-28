@@ -39,14 +39,15 @@ public static class ArkOpenApiEx
             {
                 foreach (var parameter in operation.Parameters.OfType<OpenApiParameter>())
                 {
-                    if (metadata.PropertyDescriptions.TryGetValue(parameter.Name, out var description)
+                    if (parameter.Name is { } parameterName
+                        && metadata.PropertyDescriptions.TryGetValue(parameterName, out var description)
                         && string.IsNullOrWhiteSpace(parameter.Description))
                         parameter.Description = description;
                 }
             }
 
-            ApplySchemaDescriptions(operation.RequestBody?.Content.Values.Select(content => content.Schema), metadata);
-            foreach (var response in operation.Responses.Values.OfType<OpenApiResponse>())
+            ApplySchemaDescriptions(operation.RequestBody?.Content?.Values.Select(content => content.Schema), metadata);
+            foreach (var response in operation.Responses?.Values.OfType<OpenApiResponse>() ?? [])
                 ApplySchemaDescriptions(response.Content?.Values.Select(content => content.Schema), metadata);
             return Task.CompletedTask;
         });
@@ -55,15 +56,15 @@ public static class ArkOpenApiEx
     }
 
     private static void ApplySchemaDescriptions(
-        IEnumerable<IOpenApiSchema>? schemas,
+        IEnumerable<IOpenApiSchema?>? schemas,
         ArkDocumentationMetadata metadata)
     {
         if (schemas is null)
             return;
 
-        foreach (var schema in schemas.OfType<OpenApiSchema>())
+        foreach (var schema in schemas.Select(ResolveSchema).OfType<OpenApiSchema>())
         {
-            foreach (var property in schema.Properties ?? new Dictionary<string, IOpenApiSchema>())
+            foreach (var property in schema.Properties ?? new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal))
             {
                 if (metadata.PropertyDescriptions.TryGetValue(property.Key, out var description)
                     && property.Value is OpenApiSchema mutable
@@ -71,7 +72,11 @@ public static class ArkOpenApiEx
                     mutable.Description = description;
             }
         }
+
     }
+
+    private static IOpenApiSchema? ResolveSchema(IOpenApiSchema? schema)
+        => schema is OpenApiSchemaReference reference ? reference.Target : schema;
 
     /// <summary>
     /// Excludes properties marked with <see cref="ServerSetAttribute"/> from generated schemas.
