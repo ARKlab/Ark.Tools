@@ -33,21 +33,11 @@ namespace Ark.MediatorFramework.Generators
         private const string ApiGroupAttribute = "Ark.MediatorFramework.ApiGroupAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
-        private const string List = "System.Collections.Generic.List`1";
-        private const string ReadOnlyList = "System.Collections.Generic.IReadOnlyList`1";
-        private const string ReadOnlyCollection = "System.Collections.Generic.IReadOnlyCollection`1";
         private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
         private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
             "ARKMF001",
             "Only one attachment is supported",
             "HTTP endpoint '{0}' declares more than one IArkAttachment property",
-            "Ark.MediatorFramework",
-            DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
-        private static readonly DiagnosticDescriptor UnsupportedAttachmentCollection = new DiagnosticDescriptor(
-            "ARKMF017",
-            "Unsupported attachment collection",
-            "HTTP endpoint '{0}' has attachment collection property '{1}' with an unsupported shape",
             "Ark.MediatorFramework",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -127,10 +117,7 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(RebusMessageAttribute),
                 compilation.GetTypeByMetadataName(ApiGroupAttribute),
                 compilation.GetTypeByMetadataName(Enumerable),
-                compilation.GetTypeByMetadataName(AsyncEnumerable),
-                compilation.GetTypeByMetadataName(List),
-                compilation.GetTypeByMetadataName(ReadOnlyList),
-                compilation.GetTypeByMetadataName(ReadOnlyCollection));
+                compilation.GetTypeByMetadataName(AsyncEnumerable));
         }
 
         private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
@@ -162,9 +149,6 @@ namespace Ark.MediatorFramework.Generators
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var enumerableType = compilation.GetTypeByMetadataName(Enumerable);
             var asyncEnumerableType = compilation.GetTypeByMetadataName(AsyncEnumerable);
-            var listType = compilation.GetTypeByMetadataName(List);
-            var readOnlyListType = compilation.GetTypeByMetadataName(ReadOnlyList);
-            var readOnlyCollectionType = compilation.GetTypeByMetadataName(ReadOnlyCollection);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
@@ -187,10 +171,7 @@ namespace Ark.MediatorFramework.Generators
                         rebusMessageAttr,
                         apiGroupAttr,
                         enumerableType,
-                        asyncEnumerableType,
-                        listType,
-                        readOnlyListType,
-                        readOnlyCollectionType);
+                        asyncEnumerableType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -239,10 +220,7 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? rebusMessageAttr,
             INamedTypeSymbol? apiGroupAttr,
             INamedTypeSymbol? enumerableType,
-            INamedTypeSymbol? asyncEnumerableType,
-            INamedTypeSymbol? listType,
-            INamedTypeSymbol? readOnlyListType,
-            INamedTypeSymbol? readOnlyCollectionType)
+            INamedTypeSymbol? asyncEnumerableType)
         {
             string? response = null;
             ITypeSymbol? responseType = null;
@@ -307,7 +285,6 @@ namespace Ark.MediatorFramework.Generators
             var allowAnonymous = NamedBool(http, "AllowAnonymous");
             var requireAntiforgery = NamedBool(http, "RequireAntiforgery");
             var maxRequestBodySizeBytes = NamedLong(http, "MaxRequestBodySizeBytes");
-            var maxFileCount = NamedInt(http, "MaxFileCount", 0);
             var maxStreamedItems = NamedInt(http, "MaxStreamedItems", 0);
             var allowedContentTypes = NamedStringArray(http, "AllowedContentTypes");
             var ownerQueue = rebusMessageAttr is null
@@ -350,9 +327,7 @@ namespace Ark.MediatorFramework.Generators
                         || property.Type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
                     property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
                     IsStringCollection(property.Type, enumerableType),
-                    !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type),
-                    IsAttachmentCollection(property.Type, attachmentType, enumerableType, listType, readOnlyListType, readOnlyCollectionType),
-                    IsAttachmentArray(property.Type, attachmentType)))
+                    !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type)))
                 .ToImmutableArray();
             var etagProperties = properties.Where(property => property.IsETag).ToArray();
             var responseETagProperties = responseType is INamedTypeSymbol namedResponse && etagAttr is not null
@@ -381,10 +356,7 @@ namespace Ark.MediatorFramework.Generators
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.InvalidContractShape, type.Name, GetLocation(http)));
             var attachmentProperties = attachmentType is null
                 ? ImmutableArray<PropertyModel>.Empty
-                : properties.Where(property => property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment" || property.IsAttachmentCollection).ToImmutableArray();
-            foreach (var property in properties.Where(property => IsPotentialAttachmentCollection(property.TypeFullName))
-                .Where(property => !property.IsAttachmentCollection))
-                diagnostics.Add(new DiagnosticInfo(UnsupportedAttachmentCollection, type.Name, GetLocation(http), property.Name));
+                : properties.Where(property => property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment").ToImmutableArray();
 
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -403,7 +375,6 @@ namespace Ark.MediatorFramework.Generators
                 allowAnonymous,
                 requireAntiforgery,
                 maxRequestBodySizeBytes,
-                maxFileCount,
                 maxStreamedItems,
                 allowedContentTypes,
                 ownerQueue,
@@ -420,10 +391,6 @@ namespace Ark.MediatorFramework.Generators
                     .Select(property => property.Name)
                     .ToImmutableArray(),
                 attachmentProperties.Length,
-                properties.Where(property => IsPotentialAttachmentCollection(property.TypeFullName))
-                    .Where(property => !property.IsAttachmentCollection)
-                    .Select(property => property.Name)
-                    .ToImmutableArray(),
                 attachmentResponse,
                 streamElement,
                 type.Locations.FirstOrDefault(),
@@ -470,32 +437,6 @@ namespace Ark.MediatorFramework.Generators
             => attachmentType is not null
                 && (SymbolEqualityComparer.Default.Equals(type, attachmentType)
                     || type.AllInterfaces.Any(iface => SymbolEqualityComparer.Default.Equals(iface, attachmentType)));
-
-        private static bool IsAttachmentArray(ITypeSymbol type, INamedTypeSymbol? attachmentType)
-            => type is IArrayTypeSymbol array && IsAttachmentType(array.ElementType, attachmentType);
-
-        private static bool IsAttachmentCollection(
-            ITypeSymbol type,
-            INamedTypeSymbol? attachmentType,
-            INamedTypeSymbol? enumerableType,
-            INamedTypeSymbol? listType,
-            INamedTypeSymbol? readOnlyListType,
-            INamedTypeSymbol? readOnlyCollectionType)
-        {
-            if (type is IArrayTypeSymbol)
-                return IsAttachmentArray(type, attachmentType);
-            if (type is not INamedTypeSymbol named || !named.IsGenericType
-                || !IsAttachmentType(named.TypeArguments[0], attachmentType))
-                return false;
-            return SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, enumerableType)
-                || SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, listType)
-                || SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, readOnlyListType)
-                || SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, readOnlyCollectionType);
-        }
-
-        private static bool IsPotentialAttachmentCollection(string typeName)
-            => typeName.Contains("IArkAttachment", StringComparison.Ordinal)
-                && !string.Equals(typeName, "global::Ark.MediatorFramework.IArkAttachment", StringComparison.Ordinal);
 
         private static string? GetAsyncEnumerableElement(ITypeSymbol type, INamedTypeSymbol? asyncEnumerableType)
         {
@@ -602,10 +543,6 @@ namespace Ark.MediatorFramework.Generators
                             e.TypeName));
                         continue;
                     }
-                    foreach (var property in e.UnsupportedAttachmentCollections)
-                        spc.ReportDiagnostic(Diagnostic.Create(UnsupportedAttachmentCollection, e.Location, e.TypeName, property));
-                    if (e.UnsupportedAttachmentCollections.Length > 0)
-                        continue;
 
                     var handlerService = e.Kind == HandlerKind.Query
                         ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
@@ -904,7 +841,7 @@ namespace Ark.MediatorFramework.Generators
             int maxVersion)
         {
             var attachment = endpoint.Properties.Single(property =>
-                property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment" || property.IsAttachmentCollection);
+                property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment");
             var bindings = endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet).ToArray();
             sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
             foreach (var property in bindings)
@@ -920,35 +857,21 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
             sb.AppendLine("            {");
             sb.AppendLine("                var form = await httpContext.Request.ReadFormAsync(cancellationToken).ConfigureAwait(false);");
-            if (attachment.IsAttachmentCollection)
+            sb.AppendLine("                if (form.Files.Count != 1)");
+            sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_FILE_COUNT\", detail: \"Exactly one file is required.\");");
+            sb.AppendLine("                var file = form.Files[0];");
+            if (!endpoint.AllowedContentTypes.IsDefaultOrEmpty)
             {
-                if (endpoint.MaxFileCount > 0)
-                    sb.AppendLine("                if (form.Files.Count > " + endpoint.MaxFileCount + ")");
-                else
-                    sb.AppendLine("                if (false)");
-                sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_FILE_COUNT\", detail: \"Too many files were uploaded.\");");
-                sb.AppendLine("                foreach (var file in form.Files)");
-                sb.AppendLine("                {");
-                EmitAllowedContentTypeCheck(sb, endpoint, "file");
-                sb.AppendLine("                }");
-            }
-            else
-            {
-                sb.AppendLine("                if (form.Files.Count != 1)");
-                sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_FILE_COUNT\", detail: \"Exactly one file is required.\");");
-                sb.AppendLine("                var file = form.Files[0];");
-                EmitAllowedContentTypeCheck(sb, endpoint, "file");
+                var allowedTypes = string.Join(", ", endpoint.AllowedContentTypes.Select(Literal));
+                sb.AppendLine("                if (!global::System.Linq.Enumerable.Contains(new[] { "
+                    + allowedTypes
+                    + " }, file.ContentType, global::System.StringComparer.OrdinalIgnoreCase))");
+                sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.StatusCode(415);");
             }
             sb.AppendLine("                var request = new " + endpoint.TypeFullName + " {");
             foreach (var property in bindings)
                 sb.Append("                    ").Append(property.Name).Append(" = ").Append(BindingValue(property)).AppendLine(",");
-            if (attachment.IsAttachmentCollection)
-            {
-                var conversion = attachment.IsAttachmentArray ? ".ToArray()" : attachment.TypeFullName.StartsWith("global::System.Collections.Generic.List<", StringComparison.Ordinal) ? ".ToList()" : string.Empty;
-                sb.AppendLine("                    " + attachment.Name + " = global::System.Linq.Enumerable.Select(form.Files, file => (global::Ark.MediatorFramework.IArkAttachment)new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream))" + conversion + ",");
-            }
-            else
-                sb.AppendLine("                    " + attachment.Name + " = new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream),");
+            sb.AppendLine("                    " + attachment.Name + " = new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream),");
             sb.AppendLine("                };");
             EmitServerSetAssignments(sb, endpoint, "request");
             EmitETagAssignment(sb, endpoint);
@@ -959,19 +882,10 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(endpoint) + ";");
             EmitResponseETagAssignment(sb, endpoint);
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(endpoint) + ";");
-            sb.Append("            }).Accepts<").Append(attachment.IsAttachmentCollection ? "global::Microsoft.AspNetCore.Http.IFormFileCollection" : "global::Microsoft.AspNetCore.Http.IFormFile").Append(">(\"multipart/form-data\")").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(MultipartMetadata(endpoint))
+            sb.Append("            }).Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\")").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(MultipartMetadata(endpoint))
                 .Append(".Produces<").Append(endpoint.Response).Append(">(").Append(SuccessStatusCode(endpoint))
                 .Append(").Produces(").Append(NullResultStatusCode(endpoint)).Append(')')
                 .Append(AuthorizationMetadata(endpoint)).AppendLine(";");
-        }
-
-        private static void EmitAllowedContentTypeCheck(StringBuilder sb, EndpointModel endpoint, string fileVariable)
-        {
-            if (endpoint.AllowedContentTypes.IsDefaultOrEmpty)
-                return;
-            var allowedTypes = string.Join(", ", endpoint.AllowedContentTypes.Select(Literal));
-            sb.AppendLine("                    if (!global::System.Linq.Enumerable.Contains(new[] { " + allowedTypes + " }, " + fileVariable + ".ContentType, global::System.StringComparer.OrdinalIgnoreCase))");
-            sb.AppendLine("                        return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.StatusCode(415);");
         }
 
         private static void EmitDownloadEndpoint(
@@ -1207,7 +1121,6 @@ namespace Ark.MediatorFramework.Generators
                 bool allowAnonymous,
                 bool requireAntiforgery,
                 long maxRequestBodySizeBytes,
-                int maxFileCount,
                 int maxStreamedItems,
                 ImmutableArray<string> allowedContentTypes,
                 string? ownerQueue,
@@ -1218,7 +1131,6 @@ namespace Ark.MediatorFramework.Generators
                 ImmutableArray<string> invalidServerSetProperties,
                 ImmutableArray<string> suspiciousProperties,
                 int attachmentCount,
-                ImmutableArray<string> unsupportedAttachmentCollections,
                 bool attachmentResponse,
                 string? streamElement,
                 Location? location,
@@ -1240,7 +1152,6 @@ namespace Ark.MediatorFramework.Generators
                 AllowAnonymous = allowAnonymous;
                 RequireAntiforgery = requireAntiforgery;
                 MaxRequestBodySizeBytes = maxRequestBodySizeBytes;
-                MaxFileCount = maxFileCount;
                 MaxStreamedItems = maxStreamedItems;
                 AllowedContentTypes = allowedContentTypes;
                 OwnerQueue = ownerQueue;
@@ -1252,7 +1163,6 @@ namespace Ark.MediatorFramework.Generators
                 InvalidServerSetProperties = invalidServerSetProperties;
                 SuspiciousProperties = suspiciousProperties;
                 AttachmentCount = attachmentCount;
-                UnsupportedAttachmentCollections = unsupportedAttachmentCollections;
                 AttachmentResponse = attachmentResponse;
                 StreamElement = streamElement;
                 Location = location;
@@ -1272,14 +1182,12 @@ namespace Ark.MediatorFramework.Generators
                 Response = string.Empty;
                 Kind = HandlerKind.None;
                 AllowedContentTypes = ImmutableArray<string>.Empty;
-                MaxFileCount = 0;
                 Properties = ImmutableArray<PropertyModel>.Empty;
                 ETagProperty = null;
                 ResponseETagProperty = null;
                 ServerSetProperties = ImmutableArray<string>.Empty;
                 InvalidServerSetProperties = ImmutableArray<string>.Empty;
                 SuspiciousProperties = ImmutableArray<string>.Empty;
-                UnsupportedAttachmentCollections = ImmutableArray<string>.Empty;
                 AttachmentResponse = false;
                 StreamElement = null;
             }
@@ -1305,7 +1213,6 @@ namespace Ark.MediatorFramework.Generators
             public bool RequireAntiforgery { get; }
 
             public long MaxRequestBodySizeBytes { get; }
-            public int MaxFileCount { get; }
             public int MaxStreamedItems { get; }
 
             public ImmutableArray<string> AllowedContentTypes { get; }
@@ -1318,7 +1225,6 @@ namespace Ark.MediatorFramework.Generators
             public ImmutableArray<string> InvalidServerSetProperties { get; }
             public ImmutableArray<string> SuspiciousProperties { get; }
             public int AttachmentCount { get; }
-            public ImmutableArray<string> UnsupportedAttachmentCollections { get; }
             public bool AttachmentResponse { get; }
             public string? StreamElement { get; }
             public bool IsStreaming => StreamElement is not null;
@@ -1358,9 +1264,7 @@ namespace Ark.MediatorFramework.Generators
                 bool isNullable,
                 bool hasPublicSetter,
                 bool isStringCollection,
-                bool requiresTypeConverterBinding,
-                bool isAttachmentCollection,
-                bool isAttachmentArray)
+                bool requiresTypeConverterBinding)
             {
                 Name = name;
                 TypeFullName = typeFullName;
@@ -1374,8 +1278,6 @@ namespace Ark.MediatorFramework.Generators
                 HasPublicSetter = hasPublicSetter;
                 IsStringCollection = isStringCollection;
                 RequiresTypeConverterBinding = requiresTypeConverterBinding;
-                IsAttachmentCollection = isAttachmentCollection;
-                IsAttachmentArray = isAttachmentArray;
             }
 
             public string Name { get; }
@@ -1390,8 +1292,6 @@ namespace Ark.MediatorFramework.Generators
             public bool HasPublicSetter { get; }
             public bool IsStringCollection { get; }
             public bool RequiresTypeConverterBinding { get; }
-            public bool IsAttachmentCollection { get; }
-            public bool IsAttachmentArray { get; }
         }
     }
 }

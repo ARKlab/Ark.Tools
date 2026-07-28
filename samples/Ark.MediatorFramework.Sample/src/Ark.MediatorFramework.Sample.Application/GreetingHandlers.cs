@@ -333,35 +333,6 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
         _documents = documents;
     }
 
-    /// <summary>Stores a batch of uploaded attachments.</summary>
-    public sealed class UploadGreetingCardsHandler : IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>
-    {
-        private readonly DocumentStore _documents;
-
-        /// <summary>Initializes a new instance.</summary>
-        public UploadGreetingCardsHandler(DocumentStore documents)
-        {
-            _documents = documents;
-        }
-
-        /// <inheritdoc />
-        public async Task<UploadBatchResponse> ExecuteAsync(UploadGreetingCardsRequest request, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(request);
-            var names = new List<string>();
-            foreach (var attachment in request.Attachments)
-            {
-                await using var stream = attachment.OpenRead();
-                using var buffer = new MemoryStream();
-                await stream.CopyToAsync(buffer, ctk).ConfigureAwait(false);
-                _documents.Save(Guid.NewGuid(), attachment.Name, attachment.ContentType, buffer.ToArray());
-                names.Add(attachment.Name);
-            }
-
-            return new UploadBatchResponse { Id = request.Id, Names = names };
-        }
-    }
-
     /// <inheritdoc />
     public async Task<UploadResponse> ExecuteAsync(UploadGreetingCardRequest Request, CancellationToken ctk = default)
     {
