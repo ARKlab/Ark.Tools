@@ -11,11 +11,11 @@ public sealed class DocumentStore
     private readonly ConcurrentDictionary<Guid, Document> _documents = new();
 
     /// <summary>Saves an attachment under its correlation identifier.</summary>
-    public void Save(Guid id, string name, string contentType, Stream content)
+    public async Task SaveAsync(Guid id, string name, string contentType, Stream content)
     {
         ArgumentNullException.ThrowIfNull(content);
         using var buffer = new MemoryStream();
-        content.CopyTo(buffer);
+        await content.CopyToAsync(buffer).ConfigureAwait(false);
         _documents[id] = new Document(name, contentType, buffer.ToArray());
     }
 

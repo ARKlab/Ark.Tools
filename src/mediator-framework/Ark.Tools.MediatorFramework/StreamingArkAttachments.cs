@@ -57,6 +57,8 @@ public static class StreamingArkAttachments
         private readonly IReadOnlyList<ReadOnlyMemory<byte>> _segments;
         private readonly long _length;
         private long _position;
+        private int _segmentIndex;
+        private int _segmentOffset;
 
         public ChunkedReadStream(IReadOnlyList<ReadOnlyMemory<byte>> segments)
         {
@@ -80,23 +82,21 @@ public static class StreamingArkAttachments
         public override int Read(Span<byte> buffer)
         {
             var copied = 0;
-            while (copied < buffer.Length && _position < _length)
+            while (copied < buffer.Length && _segmentIndex < _segments.Count)
             {
-                var segmentOffset = _position;
-                foreach (var segment in _segments)
+                var segment = _segments[_segmentIndex];
+                if (_segmentOffset >= segment.Length)
                 {
-                    if (segmentOffset >= segment.Length)
-                    {
-                        segmentOffset -= segment.Length;
-                        continue;
-                    }
-
-                    var amount = Math.Min(buffer.Length - copied, segment.Length - (int)segmentOffset);
-                    segment.Span.Slice((int)segmentOffset, amount).CopyTo(buffer[copied..]);
-                    copied += amount;
-                    _position += amount;
-                    break;
+                    _segmentIndex++;
+                    _segmentOffset = 0;
+                    continue;
                 }
+
+                var amount = Math.Min(buffer.Length - copied, segment.Length - _segmentOffset);
+                segment.Span.Slice(_segmentOffset, amount).CopyTo(buffer[copied..]);
+                copied += amount;
+                _position += amount;
+                _segmentOffset += amount;
             }
 
             return copied;
@@ -114,11 +114,20 @@ public static class StreamingArkAttachments
             if (position < 0 || position > _length)
                 throw new ArgumentOutOfRangeException(nameof(offset));
             _position = position;
+            _segmentIndex = 0;
+            var remaining = position;
+            while (_segmentIndex < _segments.Count && remaining > _segments[_segmentIndex].Length)
+            {
+                remaining -= _segments[_segmentIndex].Length;
+                _segmentIndex++;
+            }
+            _segmentOffset = (int)remaining;
             return _position;
         }
 
         public override void Flush()
         {
+            // No buffering occurs in this read-only stream.
         }
 
         public override void SetLength(long value) => throw new NotSupportedException();
