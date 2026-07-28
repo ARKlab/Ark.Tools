@@ -111,6 +111,52 @@ public static class ArkMessagePackEx
         return Results.Bytes(bytes, MessagePackMediaType);
     }
 
+    /// <summary>Buffers and writes a streaming response as one MessagePack array.</summary>
+    /// <typeparam name="T">The streamed element type.</typeparam>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="response">The response sequence.</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <param name="maxStreamedItems">The maximum number of items to buffer, or zero for unlimited.</param>
+    /// <param name="successStatusCode">The status code for the response.</param>
+    /// <returns>An HTTP result containing the buffered MessagePack array.</returns>
+    public static async Task<IResult> WriteStreamingResponseAsync<T>(
+        HttpContext context,
+        IAsyncEnumerable<T> response,
+        int maxStreamedItems,
+        CancellationToken cancellationToken,
+        int successStatusCode = StatusCodes.Status200OK)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(response);
+
+        var items = new List<T>();
+        // ponytail: MessagePack requires a top-level array length, so this is an intentionally
+        // bounded buffer. A length-prefixed message stream with a distinct content type is the
+        // upgrade path for genuinely unbounded MessagePack responses.
+        await foreach (var item in response.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            if (maxStreamedItems > 0 && items.Count >= maxStreamedItems)
+            {
+                return Results.Problem(
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "STREAM_ITEM_LIMIT_EXCEEDED",
+                    detail: "The streaming response exceeded its configured item limit.");
+            }
+
+            items.Add(item);
+        }
+
+        var bytes = MessagePackSerializer.Serialize(items, GetOptions(context), cancellationToken);
+        context.Response.StatusCode = successStatusCode;
+        return Results.Bytes(bytes, MessagePackMediaType);
+    }
+
+    /// <summary>Checks whether a generated endpoint should use MessagePack.</summary>
+    /// <param name="accept">The HTTP Accept header.</param>
+    /// <returns><see langword="true"/> when MessagePack is preferred.</returns>
+    public static bool PrefersMessagePackForGeneratedEndpoint(string? accept)
+        => PrefersMessagePack(accept);
+
     private static MessagePackSerializerOptions GetOptions(HttpContext context)
     {
         var resolver = context.RequestServices.GetRequiredService<IFormatterResolver>();

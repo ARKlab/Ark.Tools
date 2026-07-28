@@ -33,6 +33,7 @@ namespace Ark.MediatorFramework.Generators
         private const string ApiGroupAttribute = "Ark.MediatorFramework.ApiGroupAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
+        private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
         private static readonly DiagnosticDescriptor MultipleAttachments = new DiagnosticDescriptor(
             "ARKMF001",
             "Only one attachment is supported",
@@ -115,7 +116,8 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(ArkAttachment),
                 compilation.GetTypeByMetadataName(RebusMessageAttribute),
                 compilation.GetTypeByMetadataName(ApiGroupAttribute),
-                compilation.GetTypeByMetadataName(Enumerable));
+                compilation.GetTypeByMetadataName(Enumerable),
+                compilation.GetTypeByMetadataName(AsyncEnumerable));
         }
 
         private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
@@ -146,6 +148,7 @@ namespace Ark.MediatorFramework.Generators
             var apiGroupAttr = compilation.GetTypeByMetadataName(ApiGroupAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var enumerableType = compilation.GetTypeByMetadataName(Enumerable);
+            var asyncEnumerableType = compilation.GetTypeByMetadataName(AsyncEnumerable);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
 
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
@@ -167,7 +170,8 @@ namespace Ark.MediatorFramework.Generators
                         attachmentType,
                         rebusMessageAttr,
                         apiGroupAttr,
-                        enumerableType);
+                        enumerableType,
+                        asyncEnumerableType);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -215,10 +219,12 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? attachmentType,
             INamedTypeSymbol? rebusMessageAttr,
             INamedTypeSymbol? apiGroupAttr,
-            INamedTypeSymbol? enumerableType)
+            INamedTypeSymbol? enumerableType,
+            INamedTypeSymbol? asyncEnumerableType)
         {
             string? response = null;
             ITypeSymbol? responseType = null;
+            string? streamElement = null;
             var attachmentResponse = false;
             var kind = HandlerKind.None;
 
@@ -231,6 +237,7 @@ namespace Ark.MediatorFramework.Generators
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     responseType = iface.TypeArguments[0];
                     attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
+                    streamElement = GetAsyncEnumerableElement(iface.TypeArguments[0], asyncEnumerableType);
                     break;
                 }
 
@@ -240,6 +247,7 @@ namespace Ark.MediatorFramework.Generators
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     responseType = iface.TypeArguments[0];
                     attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
+                    streamElement = GetAsyncEnumerableElement(iface.TypeArguments[0], asyncEnumerableType);
                     break;
                 }
 
@@ -277,6 +285,7 @@ namespace Ark.MediatorFramework.Generators
             var allowAnonymous = NamedBool(http, "AllowAnonymous");
             var requireAntiforgery = NamedBool(http, "RequireAntiforgery");
             var maxRequestBodySizeBytes = NamedLong(http, "MaxRequestBodySizeBytes");
+            var maxStreamedItems = NamedInt(http, "MaxStreamedItems", 0);
             var allowedContentTypes = NamedStringArray(http, "AllowedContentTypes");
             var ownerQueue = rebusMessageAttr is null
                 ? null
@@ -366,6 +375,7 @@ namespace Ark.MediatorFramework.Generators
                 allowAnonymous,
                 requireAntiforgery,
                 maxRequestBodySizeBytes,
+                maxStreamedItems,
                 allowedContentTypes,
                 ownerQueue,
                 properties,
@@ -382,6 +392,7 @@ namespace Ark.MediatorFramework.Generators
                     .ToImmutableArray(),
                 attachmentProperties.Length,
                 attachmentResponse,
+                streamElement,
                 type.Locations.FirstOrDefault(),
                 diagnostics);
         }
@@ -426,6 +437,18 @@ namespace Ark.MediatorFramework.Generators
             => attachmentType is not null
                 && (SymbolEqualityComparer.Default.Equals(type, attachmentType)
                     || type.AllInterfaces.Any(iface => SymbolEqualityComparer.Default.Equals(iface, attachmentType)));
+
+        private static string? GetAsyncEnumerableElement(ITypeSymbol type, INamedTypeSymbol? asyncEnumerableType)
+        {
+            if (asyncEnumerableType is null || type is not INamedTypeSymbol named)
+                return null;
+
+            var match = named.AllInterfaces.Append(named)
+                .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(
+                    candidate.OriginalDefinition,
+                    asyncEnumerableType));
+            return match?.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        }
 
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
         {
@@ -603,9 +626,21 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                             sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
-                            sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken, "
-                                + SuccessStatusCode(e) + ", " + NullResultStatusCode(e) + ");");
-                            sb.AppendLine("            }).Accepts<" + e.TypeFullName + ">(\"application/json\", \"application/x-msgpack\").Produces<" + e.Response + ">("
+                            if (e.IsStreaming)
+                            {
+                                sb.AppendLine("                if (global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.PrefersMessagePackForGeneratedEndpoint(httpContext.Request.Headers.Accept))");
+                                sb.AppendLine("                    return await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteStreamingResponseAsync<" + e.StreamElement + ">(httpContext, result, " + e.MaxStreamedItems + ", cancellationToken, " + SuccessStatusCode(e) + ").ConfigureAwait(false);");
+                                sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), statusCode: " + SuccessStatusCode(e) + ");");
+                            }
+                            else
+                            {
+                                sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken, "
+                                    + SuccessStatusCode(e) + ", " + NullResultStatusCode(e) + ");");
+                            }
+                            var responseSchema = e.IsStreaming
+                                ? "global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">"
+                                : e.Response;
+                            sb.AppendLine("            }).Accepts<" + e.TypeFullName + ">(\"application/json\", \"application/x-msgpack\").Produces<" + responseSchema + ">("
                                 + SuccessStatusCode(e) + ", \"application/json\", \"application/x-msgpack\").Produces(" + NullResultStatusCode(e)
                                 + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                             continue;
@@ -650,6 +685,13 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
                         sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+                        if (e.IsStreaming)
+                        {
+                            sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken);");
+                            sb.AppendLine("            }).Produces<global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">>(" + SuccessStatusCode(e) + ")"
+                                + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
+                            continue;
+                        }
                         sb.AppendLine("                if (result is null)");
                         sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(e) + ";");
                         EmitResponseETagAssignment(sb, e);
@@ -1079,6 +1121,7 @@ namespace Ark.MediatorFramework.Generators
                 bool allowAnonymous,
                 bool requireAntiforgery,
                 long maxRequestBodySizeBytes,
+                int maxStreamedItems,
                 ImmutableArray<string> allowedContentTypes,
                 string? ownerQueue,
                 ImmutableArray<PropertyModel> properties,
@@ -1089,6 +1132,7 @@ namespace Ark.MediatorFramework.Generators
                 ImmutableArray<string> suspiciousProperties,
                 int attachmentCount,
                 bool attachmentResponse,
+                string? streamElement,
                 Location? location,
                 IReadOnlyList<DiagnosticInfo> diagnostics)
             {
@@ -1108,6 +1152,7 @@ namespace Ark.MediatorFramework.Generators
                 AllowAnonymous = allowAnonymous;
                 RequireAntiforgery = requireAntiforgery;
                 MaxRequestBodySizeBytes = maxRequestBodySizeBytes;
+                MaxStreamedItems = maxStreamedItems;
                 AllowedContentTypes = allowedContentTypes;
                 OwnerQueue = ownerQueue;
                 Properties = properties;
@@ -1119,6 +1164,7 @@ namespace Ark.MediatorFramework.Generators
                 SuspiciousProperties = suspiciousProperties;
                 AttachmentCount = attachmentCount;
                 AttachmentResponse = attachmentResponse;
+                StreamElement = streamElement;
                 Location = location;
                 Diagnostics = diagnostics;
                 IsValid = diagnostics.Count == 0;
@@ -1143,6 +1189,7 @@ namespace Ark.MediatorFramework.Generators
                 InvalidServerSetProperties = ImmutableArray<string>.Empty;
                 SuspiciousProperties = ImmutableArray<string>.Empty;
                 AttachmentResponse = false;
+                StreamElement = null;
             }
 
             public static EndpointModel Invalid(INamedTypeSymbol type, IReadOnlyList<DiagnosticInfo> diagnostics)
@@ -1166,6 +1213,7 @@ namespace Ark.MediatorFramework.Generators
             public bool RequireAntiforgery { get; }
 
             public long MaxRequestBodySizeBytes { get; }
+            public int MaxStreamedItems { get; }
 
             public ImmutableArray<string> AllowedContentTypes { get; }
             public string? OwnerQueue { get; }
@@ -1178,6 +1226,8 @@ namespace Ark.MediatorFramework.Generators
             public ImmutableArray<string> SuspiciousProperties { get; }
             public int AttachmentCount { get; }
             public bool AttachmentResponse { get; }
+            public string? StreamElement { get; }
+            public bool IsStreaming => StreamElement is not null;
             public Location? Location { get; }
             public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
             public bool IsValid { get; }

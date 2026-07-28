@@ -71,6 +71,12 @@ public sealed class HttpEndpointAttribute : Attribute
     public long MaxRequestBodySizeBytes { get; set; }
 
     /// <summary>
+    /// Gets or sets the maximum number of items buffered when a streaming response is
+    /// negotiated as MessagePack. Zero means unlimited.
+    /// </summary>
+    public int MaxStreamedItems { get; set; }
+
+    /// <summary>
     /// Gets or sets the allowed multipart file content types, or an empty array to allow all types.
     /// </summary>
     public string[] AllowedContentTypes { get; set; } = [];

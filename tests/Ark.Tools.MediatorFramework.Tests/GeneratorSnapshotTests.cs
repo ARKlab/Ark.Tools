@@ -74,6 +74,70 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public async Task MessagePackStreamingResponseBuffersAndEnforcesLimit()
+    {
+        var context = new DefaultHttpContext
+        {
+            RequestServices = new ServiceCollection()
+                .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+                .BuildServiceProvider(),
+        };
+        context.Request.Headers.Accept = "application/x-msgpack";
+
+        var result = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
+            .WriteStreamingResponseAsync(context, Values(), 2, CancellationToken.None);
+
+        result.GetType().Name.Should().Contain("FileContent");
+
+        var limited = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
+            .WriteStreamingResponseAsync(context, Values(), 1, CancellationToken.None);
+        limited.GetType().Name.Should().Contain("Problem");
+    }
+
+    [TestMethod]
+    public void GeneratorsRecognizeAsyncEnumerableResponses()
+    {
+        var minimal = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/stream", AcceptsMessagePack = true, MaxStreamedItems = 10)]
+            public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
+            """);
+        minimal.Should().Contain("ArkStreaming.WithCancellation");
+        minimal.Should().Contain("IEnumerable<string>");
+        minimal.Should().Contain("IAsyncEnumerable<string>");
+        minimal.Should().Contain("WriteStreamingResponseAsync");
+
+        var grpc = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [GrpcMethod("GetStream")]
+            public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
+            """);
+        grpc.Should().Contain("IAsyncEnumerable<string> GetStreamAsync");
+        grpc.Should().Contain("returns (stream string)");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorRejectsStreamingResponses()
+    {
+        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage]
+            public sealed class StreamMessage : IRequest<IAsyncEnumerable<string>> { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF019");
+    }
+
+    [TestMethod]
     public void ResponseETagIsEmittedOnlyForMarkedResponses()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
@@ -881,6 +945,12 @@ public sealed class GeneratorSnapshotTests
     }
 
     private sealed record UnformattableMessage;
+
+    private static async IAsyncEnumerable<int> Values()
+    {
+        yield return 1;
+        yield return 2;
+    }
 
     private static string RunGenerator<TGenerator>(string source)
         where TGenerator : IIncrementalGenerator, new()

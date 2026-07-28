@@ -167,6 +167,11 @@ namespace Ark.MediatorFramework.Generators
                 {
                     var response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     var diagnostics = new List<DiagnosticInfo>();
+                    if (IsAsyncEnumerable(iface.TypeArguments[0]))
+                        diagnostics.Add(new DiagnosticInfo(
+                            DiagnosticDescriptors.StreamingResponseNotSupported,
+                            type.Name,
+                            GetLocation(rebusAttribute)));
                     var ownerQueue = GetOwnerQueue(rebusAttribute);
                     if (ownerQueue is null && HasOwnerQueueArgument(rebusAttribute))
                     {
@@ -185,6 +190,7 @@ namespace Ark.MediatorFramework.Generators
                         isCommand: false,
                         location: GetLocation(rebusAttribute));
                 }
+
             }
 
             return EndpointModel.Invalid(
@@ -204,6 +210,11 @@ namespace Ark.MediatorFramework.Generators
 
         private static bool HasOwnerQueueArgument(AttributeData attribute)
             => attribute.NamedArguments.Any(pair => pair.Key == "OwnerQueue");
+
+        private static bool IsAsyncEnumerable(ITypeSymbol type)
+            => type is INamedTypeSymbol named
+                && (named.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IAsyncEnumerable<T>"
+                    || named.AllInterfaces.Any(iface => iface.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IAsyncEnumerable<T>"));
 
         private static Location GetLocation(AttributeData attribute)
             => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
