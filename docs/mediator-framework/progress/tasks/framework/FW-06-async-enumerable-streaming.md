@@ -79,11 +79,11 @@ sequence is an empty array / an empty stream with an OK trailer.
 ## Acceptance
 
 - [x] `IAsyncEnumerable<T>` responses generate streaming Minimal API and server-streaming gRPC paths.
-- [ ] Incremental delivery proven by tests on both HTTP JSON and gRPC (not just correct content).
+- [x] Incremental delivery proven by tests on both HTTP JSON and gRPC (not just correct content).
 - [x] No Server-Sent Events framing is introduced.
 - [x] MessagePack buffering documented in code + `design.md`, bounded by `MaxStreamedItems`.
 - [x] Cancellation reaches the handler through generated request/call cancellation-aware enumeration.
 - [x] Rebus + streaming response reports diagnostic `ARKMF019`.
 - [x] OpenAPI metadata uses an array-of-element schema for streaming operations.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

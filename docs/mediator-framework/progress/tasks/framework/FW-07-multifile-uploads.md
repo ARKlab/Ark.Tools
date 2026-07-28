@@ -75,5 +75,5 @@ See `docs/mediator-framework/design.md` → *Generated multipart upload (single 
 - [x] gRPC multi-file client stream adapter and generated endpoint paths are covered; single-file wire compatibility preserved.
 - [x] Diagnostics cover multiple attachment members and unsupported collection shapes.
 - [x] `design.md` already describes the implemented target; no divergence required.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
