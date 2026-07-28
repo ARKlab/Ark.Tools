@@ -21,6 +21,6 @@ internal static class DiagnosticDescriptors
 
     public static readonly DiagnosticDescriptor StreamingResponseNotSupported = new(
         "ARKMF019", "Streaming Rebus response is not supported",
-        "Rebus contract '{0}' cannot use an IAsyncEnumerable response",
+        "Rebus contract '{0}' cannot use an IAsyncEnumerable response because Rebus does not enumerate it; the sequence would be discarded and may or may not alter outcomes",
         "Ark.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
 }

@@ -308,7 +308,7 @@ namespace Ark.MediatorFramework.Generators
             var requireAntiforgery = NamedBool(http, "RequireAntiforgery");
             var maxRequestBodySizeBytes = NamedLong(http, "MaxRequestBodySizeBytes");
             var maxFileCount = NamedInt(http, "MaxFileCount", 0);
-            var maxStreamedItems = NamedInt(http, "MaxStreamedItems", 0);
+            var maxStreamedItems = NamedInt(http, "MaxMessagePackStreamedItems", 0);
             var allowedContentTypes = NamedStringArray(http, "AllowedContentTypes");
             var ownerQueue = rebusMessageAttr is null
                 ? null
@@ -692,7 +692,7 @@ namespace Ark.MediatorFramework.Generators
                             if (e.IsStreaming)
                             {
                                 sb.AppendLine("                if (global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.PrefersMessagePackForGeneratedEndpoint(httpContext.Request.Headers.Accept))");
-                                sb.AppendLine("                    return await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteStreamingResponseAsync<" + e.StreamElement + ">(httpContext, result, " + e.MaxStreamedItems + ", cancellationToken, " + SuccessStatusCode(e) + ").ConfigureAwait(false);");
+                                sb.AppendLine("                    return await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteStreamingResponseAsync<" + e.StreamElement + ">(httpContext, result, " + e.MaxMessagePackStreamedItems + ", cancellationToken, " + SuccessStatusCode(e) + ").ConfigureAwait(false);");
                                 sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), statusCode: " + SuccessStatusCode(e) + ");");
                             }
                             else
@@ -1241,7 +1241,7 @@ namespace Ark.MediatorFramework.Generators
                 RequireAntiforgery = requireAntiforgery;
                 MaxRequestBodySizeBytes = maxRequestBodySizeBytes;
                 MaxFileCount = maxFileCount;
-                MaxStreamedItems = maxStreamedItems;
+                MaxMessagePackStreamedItems = maxStreamedItems;
                 AllowedContentTypes = allowedContentTypes;
                 OwnerQueue = ownerQueue;
                 Properties = properties;
@@ -1306,7 +1306,7 @@ namespace Ark.MediatorFramework.Generators
 
             public long MaxRequestBodySizeBytes { get; }
             public int MaxFileCount { get; }
-            public int MaxStreamedItems { get; }
+            public int MaxMessagePackStreamedItems { get; }
 
             public ImmutableArray<string> AllowedContentTypes { get; }
             public string? OwnerQueue { get; }

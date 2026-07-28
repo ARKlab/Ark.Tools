@@ -389,9 +389,7 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
             foreach (var attachment in request.Attachments)
             {
                 await using var stream = attachment.OpenRead();
-                using var buffer = new MemoryStream();
-                await stream.CopyToAsync(buffer, ctk).ConfigureAwait(false);
-                _documents.Save(Guid.NewGuid(), attachment.Name, attachment.ContentType, buffer.ToArray());
+                _documents.Save(Guid.NewGuid(), attachment.Name, attachment.ContentType, stream);
                 names.Add(attachment.Name);
             }
 
@@ -405,16 +403,14 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
         ArgumentNullException.ThrowIfNull(Request);
 
         await using var stream = Request.Attachment.OpenRead();
-        using var buffer = new MemoryStream();
-        await stream.CopyToAsync(buffer, ctk).ConfigureAwait(false);
-        _documents.Save(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, buffer.ToArray());
+        _documents.Save(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, stream);
 
         return new UploadResponse
         {
             Id = Request.Id,
             Name = Request.Attachment.Name,
             ContentType = Request.Attachment.ContentType,
-            Length = buffer.Length,
+            Length = stream.Length,
         };
     }
 }

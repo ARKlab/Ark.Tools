@@ -87,7 +87,7 @@ public sealed class GeneratorSnapshotTests
         var result = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
             .WriteStreamingResponseAsync(context, Values(), 2, CancellationToken.None);
 
-        result.GetType().Name.Should().Contain("FileContent");
+        result.GetType().Name.Should().Contain("MessagePackResult");
 
         var limited = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
             .WriteStreamingResponseAsync(context, Values(), 1, CancellationToken.None);
@@ -102,7 +102,7 @@ public sealed class GeneratorSnapshotTests
             using System.Collections.Generic;
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
-            [HttpEndpoint("GET", "/stream", AcceptsMessagePack = true, MaxStreamedItems = 10)]
+            [HttpEndpoint("GET", "/stream", AcceptsMessagePack = true, MaxMessagePackStreamedItems = 10)]
             public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
             """);
         minimal.Should().Contain("ArkStreaming.WithCancellation");

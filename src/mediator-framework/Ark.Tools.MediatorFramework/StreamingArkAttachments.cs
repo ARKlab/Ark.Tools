@@ -18,7 +18,7 @@ public static class StreamingArkAttachments
     {
         ArgumentNullException.ThrowIfNull(chunks);
         var attachments = new List<IArkAttachment>();
-        MemoryStream? content = null;
+        List<ReadOnlyMemory<byte>>? content = null;
         UploadDocumentMetadata? metadata = null;
 
         await foreach (var chunk in chunks.WithCancellation(cancellationToken).ConfigureAwait(false))
@@ -26,28 +26,103 @@ public static class StreamingArkAttachments
             if (chunk.Metadata is not null)
             {
                 if (metadata is not null && content is not null)
-                    attachments.Add(await CreateAttachmentAsync(metadata, content).ConfigureAwait(false));
+                    attachments.Add(CreateAttachment(metadata, content));
                 metadata = chunk.Metadata;
-                content = new MemoryStream();
+                content = [];
                 continue;
             }
 
             if (metadata is null || chunk.Data is null)
                 throw new InvalidOperationException("Upload chunks must start with metadata and contain data.");
-            await content!.WriteAsync(chunk.Data.AsMemory(), cancellationToken).ConfigureAwait(false);
+            content!.Add(chunk.Data);
         }
 
         if (metadata is not null && content is not null)
-            attachments.Add(await CreateAttachmentAsync(metadata, content).ConfigureAwait(false));
+            attachments.Add(CreateAttachment(metadata, content));
         return attachments;
     }
 
-    private static async Task<IArkAttachment> CreateAttachmentAsync(
+    private static IArkAttachment CreateAttachment(
         UploadDocumentMetadata metadata,
-        MemoryStream content)
+        List<ReadOnlyMemory<byte>> content)
     {
-        var bytes = content.ToArray();
-        await content.DisposeAsync().ConfigureAwait(false);
-        return new ArkAttachment(metadata.Name, metadata.ContentType, () => new MemoryStream(bytes, writable: false));
+        return new ArkAttachment(
+            metadata.Name,
+            metadata.ContentType,
+            () => new ChunkedReadStream(content));
+    }
+
+    private sealed class ChunkedReadStream : Stream
+    {
+        private readonly IReadOnlyList<ReadOnlyMemory<byte>> _segments;
+        private readonly long _length;
+        private long _position;
+
+        public ChunkedReadStream(IReadOnlyList<ReadOnlyMemory<byte>> segments)
+        {
+            _segments = segments;
+            _length = segments.Sum(static segment => (long)segment.Length);
+        }
+
+        public override bool CanRead => true;
+        public override bool CanSeek => true;
+        public override bool CanWrite => false;
+        public override long Length => _length;
+        public override long Position
+        {
+            get => _position;
+            set => Seek(value, SeekOrigin.Begin);
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+            => Read(buffer.AsSpan(offset, count));
+
+        public override int Read(Span<byte> buffer)
+        {
+            var copied = 0;
+            while (copied < buffer.Length && _position < _length)
+            {
+                var segmentOffset = _position;
+                foreach (var segment in _segments)
+                {
+                    if (segmentOffset >= segment.Length)
+                    {
+                        segmentOffset -= segment.Length;
+                        continue;
+                    }
+
+                    var amount = Math.Min(buffer.Length - copied, segment.Length - (int)segmentOffset);
+                    segment.Span.Slice((int)segmentOffset, amount).CopyTo(buffer[copied..]);
+                    copied += amount;
+                    _position += amount;
+                    break;
+                }
+            }
+
+            return copied;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            var position = origin switch
+            {
+                SeekOrigin.Begin => offset,
+                SeekOrigin.Current => _position + offset,
+                SeekOrigin.End => _length + offset,
+                _ => throw new ArgumentOutOfRangeException(nameof(origin)),
+            };
+            if (position < 0 || position > _length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            _position = position;
+            return _position;
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 }

@@ -106,9 +106,7 @@ public static class ArkMessagePackEx
         if (!PrefersMessagePack(context.Request.Headers.Accept))
             return Results.Json(response, statusCode: successStatusCode);
 
-        var bytes = MessagePackSerializer.Serialize(response, GetOptions(context), cancellationToken);
-        context.Response.StatusCode = successStatusCode;
-        return Results.Bytes(bytes, MessagePackMediaType);
+        return new MessagePackResult<TResponse>(response, GetOptions(context), successStatusCode);
     }
 
     /// <summary>Buffers and writes a streaming response as one MessagePack array.</summary>
@@ -146,9 +144,7 @@ public static class ArkMessagePackEx
             items.Add(item);
         }
 
-        var bytes = MessagePackSerializer.Serialize(items, GetOptions(context), cancellationToken);
-        context.Response.StatusCode = successStatusCode;
-        return Results.Bytes(bytes, MessagePackMediaType);
+        return new MessagePackResult<List<T>>(items, GetOptions(context), successStatusCode);
     }
 
     /// <summary>Checks whether a generated endpoint should use MessagePack.</summary>
@@ -178,5 +174,30 @@ public static class ArkMessagePackEx
             .Select(static value => value.Split(';', StringSplitOptions.TrimEntries))
             .Any(static parts => string.Equals(parts[0], MessagePackMediaType, StringComparison.OrdinalIgnoreCase)
                 && !parts.Skip(1).Any(static parameter => parameter.StartsWith("q=0", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private sealed class MessagePackResult<T> : IResult
+    {
+        private readonly T _value;
+        private readonly MessagePackSerializerOptions _options;
+        private readonly int _statusCode;
+
+        public MessagePackResult(T value, MessagePackSerializerOptions options, int statusCode)
+        {
+            _value = value;
+            _options = options;
+            _statusCode = statusCode;
+        }
+
+        public async Task ExecuteAsync(HttpContext httpContext)
+        {
+            httpContext.Response.StatusCode = _statusCode;
+            httpContext.Response.ContentType = MessagePackMediaType;
+            await MessagePackSerializer.SerializeAsync(
+                httpContext.Response.Body,
+                _value,
+                _options,
+                httpContext.RequestAborted).ConfigureAwait(false);
+        }
     }
 }

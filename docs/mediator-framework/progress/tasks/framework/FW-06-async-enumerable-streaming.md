@@ -40,7 +40,7 @@ sequence is an empty array / an empty stream with an OK trailer.
    the list. Add a `ponytail:`-style comment naming the ceiling (unbounded buffer for very large
    sequences) and the upgrade path (a length-prefixed message stream under a distinct content type).
    Apply `MessagePackSecurity.UntrustedData` rules unchanged on the request side.
-4. Add a per-endpoint `MaxStreamedItems` guard on `HttpEndpointAttribute` (zero = unlimited) used by
+4. Add a per-endpoint `MaxMessagePackStreamedItems` guard on `HttpEndpointAttribute` (zero = unlimited) used by
    the MessagePack buffering path to fail fast with a 500 ProblemDetails instead of exhausting memory.
 5. gRPC generator: emit the method as server-streaming (`IAsyncEnumerable<T>` return on the
    `[ServiceContract]` method — `protobuf-net.Grpc` maps it to a server-streaming rpc) and emit
@@ -64,7 +64,7 @@ sequence is an empty array / an empty stream with an OK trailer.
   `HttpCompletionOption.ResponseHeadersRead`, with a bounded timeout).
 - Behavioral HTTP test asserting the JSON body is a plain array (no SSE `data:` framing, content type
   `application/json`).
-- MessagePack test asserting the buffered array round-trips and that `MaxStreamedItems` overflow
+- MessagePack test asserting the buffered array round-trips and that `MaxMessagePackStreamedItems` overflow
   produces a ProblemDetails 500.
 - gRPC test consuming the server stream through `Ark.MediatorFramework.Sample.GrpcClient` (generated
   from the exported proto) and asserting incremental delivery and cancellation.
@@ -81,7 +81,7 @@ sequence is an empty array / an empty stream with an OK trailer.
 - [x] `IAsyncEnumerable<T>` responses generate streaming Minimal API and server-streaming gRPC paths.
 - [x] Incremental delivery proven by tests on both HTTP JSON and gRPC (not just correct content).
 - [x] No Server-Sent Events framing is introduced.
-- [x] MessagePack buffering documented in code + `design.md`, bounded by `MaxStreamedItems`.
+- [x] MessagePack buffering documented in code + `design.md`, bounded by `MaxMessagePackStreamedItems`.
 - [x] Cancellation reaches the handler through generated request/call cancellation-aware enumeration.
 - [x] Rebus + streaming response reports diagnostic `ARKMF019`.
 - [x] OpenAPI metadata uses an array-of-element schema for streaming operations.

@@ -11,9 +11,12 @@ public sealed class DocumentStore
     private readonly ConcurrentDictionary<Guid, Document> _documents = new();
 
     /// <summary>Saves an attachment under its correlation identifier.</summary>
-    public void Save(Guid id, string name, string contentType, byte[] content)
+    public void Save(Guid id, string name, string contentType, Stream content)
     {
-        _documents[id] = new Document(name, contentType, content);
+        ArgumentNullException.ThrowIfNull(content);
+        using var buffer = new MemoryStream();
+        content.CopyTo(buffer);
+        _documents[id] = new Document(name, contentType, buffer.ToArray());
     }
 
     /// <summary>Gets an attachment, or <see langword="null"/> when it does not exist.</summary>
