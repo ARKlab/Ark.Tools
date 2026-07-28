@@ -238,6 +238,8 @@ namespace Ark.MediatorFramework.Generators
                 grpcMethod,
                 group,
                 response,
+                XmlDocumentation.Summary(type),
+                XmlDocumentation.Remarks(type),
                 kind,
                 grpcIntroducedIn,
                 grpcRetiredIn,
@@ -333,7 +335,10 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("        {");
                         foreach (var e in active)
                         {
-                            sb.AppendLine("            /// <summary>Dispatches " + e.TypeName + " to its pure handler.</summary>");
+                            if (e.Summary is not null)
+                                sb.AppendLine("            /// <summary>" + Escape(e.Summary) + "</summary>");
+                            else
+                                sb.AppendLine("            /// <summary>Dispatches " + e.TypeName + " to its pure handler.</summary>");
                             sb.AppendLine("            [global::System.ServiceModel.OperationContract(Name = " + Literal(e.GrpcMethod) + ")]");
                             if (e.AttachmentRequest != AttachmentRequestKind.None)
                                 sb.AppendLine("            global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(global::System.Collections.Generic.IAsyncEnumerable<global::Ark.MediatorFramework.UploadDocumentChunk> chunks, global::ProtoBuf.Grpc.CallContext context = default);");
@@ -536,6 +541,7 @@ namespace Ark.MediatorFramework.Generators
                     content.Append("service ").Append(Identifier(group.Key)).Append('V').Append(version).AppendLine(" {");
                     foreach (var item in versionItems)
                     {
+                                WriteComment(content, item.Summary, "  ");
                                 content.Append("  rpc ").Append(item.GrpcMethod)
                                     .Append(item.AttachmentRequest != AttachmentRequestKind.None
                                         ? "(stream ark.mediator.UploadDocumentChunk) returns "
@@ -588,6 +594,7 @@ namespace Ark.MediatorFramework.Generators
             IReadOnlyList<ProtoContractModel> contracts,
             bool isRequest)
         {
+            WriteComment(sb, contract.Summary);
             sb.Append("message ").Append(contract.Name).AppendLine(" {");
             foreach (var include in contract.Includes)
             {
@@ -601,6 +608,7 @@ namespace Ark.MediatorFramework.Generators
                     && !member.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Contains("IArkAttachment", StringComparison.Ordinal)))
                 .OrderBy(static member => member.Number))
             {
+                WriteComment(sb, member.Description);
                 var type = ProtoTypeName(member.Type, contracts);
                 sb.Append("  ");
                 if (member.IsRepeated)
@@ -637,6 +645,7 @@ namespace Ark.MediatorFramework.Generators
                         .Select(item => new ProtoMemberModel(
                             item.Property.Name,
                             item.Property.Type,
+                            XmlDocumentation.Summary(item.Property),
                             item.Attribute!.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
                             item.Property.Type is IArrayTypeSymbol
                                 || item.Property.Type is INamedTypeSymbol named
@@ -658,7 +667,7 @@ namespace Ark.MediatorFramework.Generators
                         .Select(include => new ProtoIncludeModel(include.Type!, include.Number))
                         .ToArray();
 
-                    result.Add(new ProtoContractModel(type, type.Name, members, includes));
+                    result.Add(new ProtoContractModel(type, type.Name, XmlDocumentation.Summary(type), members, includes));
                 }
             }
             return result;
@@ -789,6 +798,14 @@ namespace Ark.MediatorFramework.Generators
         private static string Literal(string value)
             => SyntaxFactory.Literal(value).ToFullString();
 
+        private static void WriteComment(StringBuilder builder, string? text, string indent = "")
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+            foreach (var line in text.Split('\n'))
+                builder.Append(indent).Append("// ").AppendLine(line.Trim());
+        }
+
         private static string Identifier(string value)
         {
             var sb = new StringBuilder(value.Length);
@@ -817,13 +834,15 @@ namespace Ark.MediatorFramework.Generators
 
         private readonly record struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, string? streamElement, AttachmentRequestKind attachmentRequest, string? attachmentPropertyName, IReadOnlyList<DiagnosticInfo> diagnostics, Location? location)
+            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, string? summary, string? remarks, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, string? streamElement, AttachmentRequestKind attachmentRequest, string? attachmentPropertyName, IReadOnlyList<DiagnosticInfo> diagnostics, Location? location)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
                 GrpcMethod = grpcMethod;
                 ServiceGroup = serviceGroup;
                 Response = response;
+                Summary = summary;
+                Remarks = remarks;
                 Kind = kind;
                 GrpcIntroducedIn = grpcIntroducedIn;
                 GrpcRetiredIn = grpcRetiredIn;
@@ -846,6 +865,8 @@ namespace Ark.MediatorFramework.Generators
                 GrpcMethod = string.Empty;
                 ServiceGroup = string.Empty;
                 Response = string.Empty;
+                Summary = null;
+                Remarks = null;
                 AttachmentResponse = false;
                 StreamElement = null;
                 AttachmentRequest = AttachmentRequestKind.None;
@@ -860,6 +881,8 @@ namespace Ark.MediatorFramework.Generators
             public string GrpcMethod { get; }
             public string ServiceGroup { get; }
             public string Response { get; }
+            public string? Summary { get; }
+            public string? Remarks { get; }
             public HandlerKind Kind { get; }
             public int GrpcIntroducedIn { get; }
             public int GrpcRetiredIn { get; }
@@ -892,24 +915,28 @@ namespace Ark.MediatorFramework.Generators
             public ProtoContractModel(
                 INamedTypeSymbol type,
                 string name,
+                string? summary,
                 IReadOnlyList<ProtoMemberModel> members,
                 IReadOnlyList<ProtoIncludeModel> includes)
             {
                 Type = type;
+                Description = description;
                 Name = name;
+                Summary = summary;
                 Members = members;
                 Includes = includes;
             }
 
             public INamedTypeSymbol Type { get; }
             public string Name { get; }
+            public string? Summary { get; }
             public IReadOnlyList<ProtoMemberModel> Members { get; }
             public IReadOnlyList<ProtoIncludeModel> Includes { get; }
         }
 
         private readonly struct ProtoMemberModel
         {
-            public ProtoMemberModel(string name, ITypeSymbol type, int number, bool isRepeated, bool isServerSet)
+            public ProtoMemberModel(string name, ITypeSymbol type, string? description, int number, bool isRepeated, bool isServerSet)
             {
                 Name = name;
                 Type = type;
@@ -920,6 +947,7 @@ namespace Ark.MediatorFramework.Generators
 
             public string Name { get; }
             public ITypeSymbol Type { get; }
+            public string? Description { get; }
             public int Number { get; }
             public bool IsRepeated { get; }
             public bool IsServerSet { get; }

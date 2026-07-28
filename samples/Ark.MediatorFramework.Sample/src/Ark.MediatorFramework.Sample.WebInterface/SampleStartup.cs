@@ -185,6 +185,7 @@ public sealed class SampleStartup
             .AddArkTypeConverterValueSchemas()
             .AddArkNodaTimeSchemas()
             .AddArkServerSetProperties()
+            .AddArkXmlDocumentation()
             .AddArkOAuthSecurity(_openApiSecurity)
             .AddArkPolymorphism<Shape, ShapeKind>(
                 "kind",

@@ -337,6 +337,7 @@ namespace Ark.MediatorFramework.Generators
                 .Select(property => new PropertyModel(
                     property.Name,
                     property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    XmlDocumentation.Summary(property),
                     property.Type.SpecialType == SpecialType.System_String,
                     routeNames.Contains(property.Name),
                     routeNames.FirstOrDefault(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase)) ?? property.Name,
@@ -389,6 +390,8 @@ namespace Ark.MediatorFramework.Generators
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 type.Name,
+                XmlDocumentation.Summary(type),
+                XmlDocumentation.Remarks(type),
                 apiGroup ?? defaultTag,
                 verb,
                 template!,
@@ -1145,7 +1148,20 @@ namespace Ark.MediatorFramework.Generators
         }
 
         private static string OpenApiMetadata(EndpointModel endpoint, int version, int maxVersion)
-            => ".WithGroupName(" + Literal("v" + version)
+            => (endpoint.Summary is null && endpoint.Remarks is null && endpoint.Properties.All(property => property.Description is null)
+                    ? string.Empty
+                    : ".WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkDocumentationMetadata("
+                        + (endpoint.Summary is null ? "null" : Literal(endpoint.Summary)) + ", "
+                        + (endpoint.Remarks is null ? "null" : Literal(endpoint.Remarks)) + ", "
+                        + "new global::System.Collections.Generic.Dictionary<string, string>(global::System.StringComparer.OrdinalIgnoreCase)"
+                        + " { "
+                        + string.Join(", ", endpoint.Properties
+                            .Where(property => property.Description is not null)
+                            .Select(property => " [" + Literal(property.Name) + "] = " + Literal(property.Description!)))
+                        + " }))")
+                + (endpoint.Summary is null ? string.Empty : ".WithSummary(" + Literal(endpoint.Summary) + ")")
+                + (endpoint.Remarks is null ? string.Empty : ".WithDescription(" + Literal(endpoint.Remarks) + ")")
+                + ".WithGroupName(" + Literal("v" + version)
                 + ").WithTags(" + Literal(endpoint.ApiGroup)
                 + ").WithName(" + Literal(OperationName(endpoint, version, maxVersion)) + ")"
                 + (endpoint.ETagProperty is null && endpoint.ResponseETagProperty is null
@@ -1193,6 +1209,8 @@ namespace Ark.MediatorFramework.Generators
             public EndpointModel(
                 string typeFullName,
                 string typeName,
+                string? summary,
+                string? remarks,
                 string apiGroup,
                 string verb,
                 string template,
@@ -1226,6 +1244,8 @@ namespace Ark.MediatorFramework.Generators
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
+                Summary = summary;
+                Remarks = remarks;
                 ApiGroup = apiGroup;
                 Verb = verb;
                 Template = template;
@@ -1265,6 +1285,8 @@ namespace Ark.MediatorFramework.Generators
                 TypeFullName = typeFullName;
                 TypeName = typeName;
                 ApiGroup = "Ark";
+                Summary = null;
+                Remarks = null;
                 Diagnostics = diagnostics;
                 IsValid = false;
                 Verb = string.Empty;
@@ -1289,6 +1311,8 @@ namespace Ark.MediatorFramework.Generators
 
             public string TypeFullName { get; }
             public string TypeName { get; }
+            public string? Summary { get; }
+            public string? Remarks { get; }
             public string ApiGroup { get; }
             public string Verb { get; }
             public string Template { get; }
@@ -1349,6 +1373,7 @@ namespace Ark.MediatorFramework.Generators
             public PropertyModel(
                 string name,
                 string typeFullName,
+                string? description,
                 bool isString,
                 bool isRoute,
                 string bindingName,
@@ -1364,6 +1389,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 Name = name;
                 TypeFullName = typeFullName;
+                Description = description;
                 IsString = isString;
                 IsRoute = isRoute;
                 BindingName = bindingName;
@@ -1380,6 +1406,7 @@ namespace Ark.MediatorFramework.Generators
 
             public string Name { get; }
             public string TypeFullName { get; }
+            public string? Description { get; }
             public bool IsString { get; }
             public bool IsRoute { get; }
             public string BindingName { get; }
