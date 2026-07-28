@@ -926,7 +926,7 @@ namespace Ark.MediatorFramework.Generators
                     sb.AppendLine("                if (form.Files.Count > " + endpoint.MaxFileCount + ")");
                 else
                     sb.AppendLine("                if (false)");
-                sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_FILE_COUNT\", detail: \"Too many files were uploaded.\");");
+                sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_FILE_COUNT\", detail: \"The number of uploaded files exceeds the configured limit of " + endpoint.MaxFileCount + ".\");");
                 sb.AppendLine("                foreach (var file in form.Files)");
                 sb.AppendLine("                {");
                 EmitAllowedContentTypeCheck(sb, endpoint, "file");

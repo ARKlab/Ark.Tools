@@ -92,6 +92,8 @@ public sealed class GeneratorSnapshotTests
         var limited = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
             .WriteStreamingResponseAsync(context, Values(), 1, CancellationToken.None);
         limited.GetType().Name.Should().Contain("Problem");
+        ((Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult)limited).ProblemDetails.Detail
+            .Should().Be("The streaming response exceeded the configured item limit of 1.");
     }
 
     [TestMethod]
@@ -787,6 +789,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFileCollection>(\"multipart/form-data\")");
         generated.Should().Contain("form.Files.Count > 3");
+        generated.Should().Contain("The number of uploaded files exceeds the configured limit of 3.");
         generated.Should().Contain("Enumerable.Select(form.Files");
     }
 

@@ -138,7 +138,7 @@ public static class ArkMessagePackEx
                 return Results.Problem(
                     statusCode: StatusCodes.Status500InternalServerError,
                     title: "STREAM_ITEM_LIMIT_EXCEEDED",
-                    detail: "The streaming response exceeded its configured item limit.");
+                    detail: "The streaming response exceeded the configured item limit of " + maxStreamedItems + ".");
             }
 
             items.Add(item);
