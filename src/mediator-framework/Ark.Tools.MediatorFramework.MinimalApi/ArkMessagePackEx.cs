@@ -113,8 +113,8 @@ public static class ArkMessagePackEx
     /// <typeparam name="T">The streamed element type.</typeparam>
     /// <param name="context">The current HTTP context.</param>
     /// <param name="response">The response sequence.</param>
-    /// <param name="cancellationToken">The request cancellation token.</param>
     /// <param name="maxStreamedItems">The maximum number of items to buffer, or zero for unlimited.</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
     /// <param name="successStatusCode">The status code for the response.</param>
     /// <returns>An HTTP result containing the buffered MessagePack array.</returns>
     public static async Task<IResult> WriteStreamingResponseAsync<T>(

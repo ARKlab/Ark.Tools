@@ -71,7 +71,8 @@ public sealed class HttpEndpointAttribute : Attribute
     public long MaxRequestBodySizeBytes { get; set; }
 
     /// <summary>
-    /// Gets or sets the maximum number of files accepted by a multipart upload, or zero to use the host default.
+    /// Gets or sets the maximum number of files accepted by a multipart upload.
+    /// Zero means unlimited.
     /// </summary>
     public int MaxFileCount { get; set; }
 
