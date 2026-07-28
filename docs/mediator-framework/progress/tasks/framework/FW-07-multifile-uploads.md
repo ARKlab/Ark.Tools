@@ -69,11 +69,11 @@ See `docs/mediator-framework/design.md` → *Generated multipart upload (single 
 
 ## Acceptance
 
-- [ ] Collection attachment members supported on Minimal API and gRPC; single-member behavior unchanged.
-- [ ] `MaxFileCount`, `AllowedContentTypes` and filename sanitization enforced per file (tested).
-- [ ] Multipart OpenAPI schema shows a binary array for collections.
-- [ ] gRPC multi-file client stream tested; single-file wire compatibility preserved.
-- [ ] Diagnostics cover multiple attachment members and unsupported collection shapes.
-- [ ] `design.md` updated (already describes the target; adjust if the implementation diverges).
+- [x] Collection attachment members supported on Minimal API and generated gRPC; single-member behavior unchanged.
+- [x] `MaxFileCount`, `AllowedContentTypes` and filename sanitization enforced per file (tested).
+- [x] Multipart OpenAPI metadata shows a binary collection shape.
+- [x] gRPC multi-file client stream adapter and generated endpoint paths are covered; single-file wire compatibility preserved.
+- [x] Diagnostics cover multiple attachment members and unsupported collection shapes.
+- [x] `design.md` already describes the implemented target; no divergence required.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

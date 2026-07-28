@@ -261,12 +261,12 @@ public sealed record GetGreetingsStreamQuery : IQuery<IAsyncEnumerable<GreetingS
     /// <summary>Gets the number of items to yield.</summary>
     [BindFromQuery]
     [ProtoMember(1)]
-    public int Count { get; init; } = 3;
+    public int Count { get; init; }
 
     /// <summary>Gets the delay between yielded items in milliseconds.</summary>
     [BindFromQuery]
     [ProtoMember(2)]
-    public int DelayMilliseconds { get; init; } = 100;
+    public int DelayMilliseconds { get; init; }
 }
 
 /// <summary>Page of greetings returned by <see cref="SearchGreetingsQuery"/>.</summary>

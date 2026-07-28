@@ -74,6 +74,7 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>, UpdateGreetingHandler>();
         container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();
+        container.Register<IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>, UploadGreetingCardHandler.UploadGreetingCardsHandler>();
         container.Register<IQueryHandler<GetDocumentQuery, IArkAttachment>, GetDocumentHandler>();
         container.Register<IRequestHandler<FailingRebusRequest, DeadLetterAck>, FailingRebusRequestHandler>();
         container.Register<ICommandHandler<GreetingCreatedNotification>, GreetingCreatedHandler>();

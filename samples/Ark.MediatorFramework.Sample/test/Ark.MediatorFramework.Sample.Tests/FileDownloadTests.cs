@@ -14,6 +14,52 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class FileDownloadTests
 {
+    /// <summary>Multipart collections preserve form order and metadata.</summary>
+    [TestMethod]
+    public async Task MultiFileUploadPreservesFormOrder()
+    {
+        using var context = SampleTestContext.WithoutFallbackPolicy();
+        context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer", new JwtTokenBuilder().AddSubject("file-user").Build());
+        using var form = new MultipartFormDataContent();
+        using var first = new StringContent("one");
+        using var second = new StringContent("two");
+        first.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+        second.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+        form.Add(first, "Attachments", "../../first.txt");
+        form.Add(second, "Attachments", "../../second.txt");
+
+        var response = await context.Client.PostAsync(new Uri($"/api/v1/greeting-cards/{Guid.NewGuid()}/batch", UriKind.Relative), form).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        body.Should().Contain("\"names\":[\"first.txt\",\"second.txt\"]");
+    }
+
+    /// <summary>Batch uploads reject files beyond the declared limit.</summary>
+    [TestMethod]
+    public async Task MultiFileUploadRejectsTooManyFiles()
+    {
+        using var context = SampleTestContext.WithoutFallbackPolicy();
+        context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer", new JwtTokenBuilder().AddSubject("file-user").Build());
+        using var form = new MultipartFormDataContent();
+        var files = new List<StringContent>();
+        for (var index = 0; index < 5; index++)
+        {
+            var file = new StringContent(index.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            files.Add(file);
+            file.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+            form.Add(file, "Attachments", $"file-{index}.txt");
+        }
+
+        var response = await context.Client.PostAsync(new Uri($"/api/v1/greeting-cards/{Guid.NewGuid()}/batch", UriKind.Relative), form).ConfigureAwait(false);
+        foreach (var file in files)
+            file.Dispose();
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     /// <summary>Uploaded bytes are returned with safe file metadata.</summary>
     [TestMethod]
     public async Task UploadThenDownloadReturnsSameBytes()

@@ -57,7 +57,7 @@ public sealed class AsyncEnumerableStreamingTests
         AddAuthorization(context.Client);
 
         using var response = await context.Client.GetAsync(
-            "/api/v1/greetings/stream?count=2&delayMilliseconds=0").ConfigureAwait(false);
+            new Uri("/api/v1/greetings/stream?count=2&delayMilliseconds=0", UriKind.Relative)).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -81,15 +81,16 @@ public sealed class AsyncEnumerableStreamingTests
         using var cancellation = new CancellationTokenSource();
         using var call = client.GetGreetingsStream(
             new GrpcGetGreetingsStreamQuery { Count = 100, DelayMilliseconds = 1500 },
-            new Metadata { { "authorization", "Bearer " + token } });
+            new Metadata { { "authorization", "Bearer " + token } },
+            cancellationToken: cancellation.Token);
 
         var stopwatch = Stopwatch.StartNew();
         (await call.ResponseStream.MoveNext(cancellation.Token).ConfigureAwait(false)).Should().BeTrue();
         stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(1200));
         call.ResponseStream.Current.Index.Should().Be(0);
-        cancellation.Cancel();
+        await cancellation.CancelAsync().ConfigureAwait(false);
 
-        var exception = await Assert.ThrowsExceptionAsync<RpcException>(
+        var exception = await Assert.ThrowsAsync<RpcException>(
             async () => await call.ResponseStream.MoveNext(cancellation.Token).ConfigureAwait(false));
         exception.StatusCode.Should().Be(StatusCode.Cancelled);
     }
@@ -101,7 +102,7 @@ public sealed class AsyncEnumerableStreamingTests
         using var context = new SampleTestContext();
         var token = AddAuthorization(context.Client);
         using var response = await context.Client.GetAsync(
-            "/api/v1/greetings/stream?count=0&delayMilliseconds=0").ConfigureAwait(false);
+            new Uri("/api/v1/greetings/stream?count=0&delayMilliseconds=0", UriKind.Relative)).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -114,7 +115,7 @@ public sealed class AsyncEnumerableStreamingTests
             new GrpcGetGreetingsStreamQuery { Count = 0 },
             new Metadata { { "authorization", "Bearer " + token } });
 
-        (await call.ResponseStream.MoveNext().ConfigureAwait(false)).Should().BeFalse();
+        (await call.ResponseStream.MoveNext(CancellationToken.None).ConfigureAwait(false)).Should().BeFalse();
     }
 
     private static string AddAuthorization(HttpClient client)
