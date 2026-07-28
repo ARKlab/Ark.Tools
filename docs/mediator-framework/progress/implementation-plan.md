@@ -749,7 +749,7 @@ proves it with a test that enumerates every operation of every document.
 
 [FW-06](tasks/framework/FW-06-async-enumerable-streaming.md). Streaming JSON
 array on Minimal API, server-streaming gRPC, deliberate MessagePack buffering
-with `MaxStreamedItems`, Rebus diagnostic, no SSE.
+with `MaxMessagePackStreamedItems`, Rebus diagnostic, no SSE.
 
 ### Step 10.4 — Multi-file uploads (T12.4)
 

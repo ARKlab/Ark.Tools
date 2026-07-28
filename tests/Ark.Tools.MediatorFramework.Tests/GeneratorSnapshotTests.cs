@@ -74,6 +74,72 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public async Task MessagePackStreamingResponseBuffersAndEnforcesLimit()
+    {
+        var context = new DefaultHttpContext
+        {
+            RequestServices = new ServiceCollection()
+                .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+                .BuildServiceProvider(),
+        };
+        context.Request.Headers.Accept = "application/x-msgpack";
+
+        var result = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
+            .WriteStreamingResponseAsync(context, Values(), 2, CancellationToken.None);
+
+        result.GetType().Name.Should().Contain("MessagePackResult");
+
+        var limited = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
+            .WriteStreamingResponseAsync(context, Values(), 1, CancellationToken.None);
+        limited.GetType().Name.Should().Contain("Problem");
+        ((Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult)limited).ProblemDetails.Detail
+            .Should().Be("The streaming response exceeded the configured item limit of 1.");
+    }
+
+    [TestMethod]
+    public void GeneratorsRecognizeAsyncEnumerableResponses()
+    {
+        var minimal = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/stream", AcceptsMessagePack = true, MaxMessagePackStreamedItems = 10)]
+            public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
+            """);
+        minimal.Should().Contain("ArkStreaming.WithCancellation");
+        minimal.Should().Contain("IEnumerable<string>");
+        minimal.Should().Contain("IAsyncEnumerable<string>");
+        minimal.Should().Contain("WriteStreamingResponseAsync");
+
+        var grpc = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [GrpcMethod("GetStream")]
+            public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
+            """);
+        grpc.Should().Contain("IAsyncEnumerable<string> GetStreamAsync");
+        grpc.Should().Contain("returns (stream string)");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorRejectsStreamingResponses()
+    {
+        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage]
+            public sealed class StreamMessage : IRequest<IAsyncEnumerable<string>> { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF019");
+    }
+
+    [TestMethod]
     public void ResponseETagIsEmittedOnlyForMarkedResponses()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
@@ -708,6 +774,26 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorEmitsCollectionMultipartSchemaMetadata()
+    {
+        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/uploads", MaxFileCount = 3)]
+            public sealed record Upload : IRequest<string>
+            {
+                public System.Collections.Generic.IReadOnlyList<IArkAttachment> Attachments { get; init; } = [];
+            }
+            """);
+
+        generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFileCollection>(\"multipart/form-data\")");
+        generated.Should().Contain("form.Files.Count > 3");
+        generated.Should().Contain("The number of uploaded files exceeds the configured limit of 3.");
+        generated.Should().Contain("Enumerable.Select(form.Files");
+    }
+
+    [TestMethod]
     public void AttachmentSanitizesClientFileNames()
     {
         var attachment = new ArkAttachment("..\\uploads/../evil\u0000.txt", "text/plain", static () => Stream.Null);
@@ -732,6 +818,23 @@ public sealed class GeneratorSnapshotTests
 
         result.Generated.Should().NotContain("MapPost(\"/uploads\"");
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF001");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsUnsupportedAttachmentCollection()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/uploads")]
+            public sealed record Upload : IRequest<string>
+            {
+                public System.Collections.Generic.HashSet<IArkAttachment> Attachments { get; init; } = [];
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF017");
     }
 
     [TestMethod]
@@ -784,6 +887,7 @@ public sealed class GeneratorSnapshotTests
                 [ProtoMember(2)]
                 public string TenantId { get; set; } = string.Empty;
             }
+
             [ProtoContract]
             public sealed class Greeting
             {
@@ -793,6 +897,36 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().NotContain("tenant_id");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorEmitsStreamingAttachmentCollectionUpload()
+    {
+        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcService("Documents")]
+            [GrpcMethod("UploadMany")]
+            [ProtoContract]
+            public sealed class UploadMany : IRequest<UploadResult>
+            {
+                [ProtoMember(1)]
+                public string Label { get; set; } = string.Empty;
+                public System.Collections.Generic.IReadOnlyList<IArkAttachment> Attachments { get; set; } = [];
+            }
+            [ProtoContract]
+            public sealed class UploadResult
+            {
+                [ProtoMember(1)]
+                public string Name { get; set; } = string.Empty;
+            }
+            """);
+
+        generated.Should().Contain("rpc UploadMany(stream ark.mediator.UploadDocumentChunk) returns (UploadResult);");
+        generated.Should().Contain("IAsyncEnumerable<global::Ark.MediatorFramework.UploadDocumentChunk> chunks");
+        generated.Should().Contain("StreamingArkAttachments.ReadAllAsync");
     }
 
     [TestMethod]
@@ -881,6 +1015,12 @@ public sealed class GeneratorSnapshotTests
     }
 
     private sealed record UnformattableMessage;
+
+    private static async IAsyncEnumerable<int> Values()
+    {
+        yield return 1;
+        yield return 2;
+    }
 
     private static string RunGenerator<TGenerator>(string source)
         where TGenerator : IIncrementalGenerator, new()

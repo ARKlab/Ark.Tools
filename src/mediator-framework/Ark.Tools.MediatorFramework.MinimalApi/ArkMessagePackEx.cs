@@ -106,10 +106,52 @@ public static class ArkMessagePackEx
         if (!PrefersMessagePack(context.Request.Headers.Accept))
             return Results.Json(response, statusCode: successStatusCode);
 
-        var bytes = MessagePackSerializer.Serialize(response, GetOptions(context), cancellationToken);
-        context.Response.StatusCode = successStatusCode;
-        return Results.Bytes(bytes, MessagePackMediaType);
+        return new MessagePackResult<TResponse>(response, GetOptions(context), successStatusCode, cancellationToken);
     }
+
+    /// <summary>Buffers and writes a streaming response as one MessagePack array.</summary>
+    /// <typeparam name="T">The streamed element type.</typeparam>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="response">The response sequence.</param>
+    /// <param name="maxStreamedItems">The maximum number of items to buffer, or zero for unlimited.</param>
+    /// <param name="cancellationToken">The request cancellation token.</param>
+    /// <param name="successStatusCode">The status code for the response.</param>
+    /// <returns>An HTTP result containing the buffered MessagePack array.</returns>
+    public static async Task<IResult> WriteStreamingResponseAsync<T>(
+        HttpContext context,
+        IAsyncEnumerable<T> response,
+        int maxStreamedItems,
+        CancellationToken cancellationToken,
+        int successStatusCode = StatusCodes.Status200OK)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(response);
+
+        var items = new List<T>();
+        // ponytail: MessagePack requires a top-level array length, so this is an intentionally
+        // bounded buffer. A length-prefixed message stream with a distinct content type is the
+        // upgrade path for genuinely unbounded MessagePack responses.
+        await foreach (var item in response.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            if (maxStreamedItems > 0 && items.Count >= maxStreamedItems)
+            {
+                return Results.Problem(
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "STREAM_ITEM_LIMIT_EXCEEDED",
+                    detail: "The streaming response exceeded the configured item limit of " + maxStreamedItems + ".");
+            }
+
+            items.Add(item);
+        }
+
+        return new MessagePackResult<List<T>>(items, GetOptions(context), successStatusCode, cancellationToken);
+    }
+
+    /// <summary>Checks whether a generated endpoint should use MessagePack.</summary>
+    /// <param name="accept">The HTTP Accept header.</param>
+    /// <returns><see langword="true"/> when MessagePack is preferred.</returns>
+    public static bool PrefersMessagePackForGeneratedEndpoint(string? accept)
+        => PrefersMessagePack(accept);
 
     private static MessagePackSerializerOptions GetOptions(HttpContext context)
     {
@@ -132,5 +174,33 @@ public static class ArkMessagePackEx
             .Select(static value => value.Split(';', StringSplitOptions.TrimEntries))
             .Any(static parts => string.Equals(parts[0], MessagePackMediaType, StringComparison.OrdinalIgnoreCase)
                 && !parts.Skip(1).Any(static parameter => parameter.StartsWith("q=0", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private sealed class MessagePackResult<T> : IResult
+    {
+        private readonly T _value;
+        private readonly MessagePackSerializerOptions _options;
+        private readonly int _statusCode;
+        private readonly CancellationToken _cancellationToken;
+
+        public MessagePackResult(T value, MessagePackSerializerOptions options, int statusCode, CancellationToken cancellationToken = default)
+        {
+            _value = value;
+            _options = options;
+            _statusCode = statusCode;
+            _cancellationToken = cancellationToken;
+        }
+
+        public async Task ExecuteAsync(HttpContext httpContext)
+        {
+            httpContext.Response.StatusCode = _statusCode;
+            httpContext.Response.ContentType = MessagePackMediaType;
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, httpContext.RequestAborted);
+            await MessagePackSerializer.SerializeAsync(
+                httpContext.Response.Body,
+                _value,
+                _options,
+                cts.Token).ConfigureAwait(false);
+        }
     }
 }

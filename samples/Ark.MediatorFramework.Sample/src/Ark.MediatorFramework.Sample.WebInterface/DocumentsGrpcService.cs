@@ -28,6 +28,12 @@ public interface IDocumentsGrpcService
         IAsyncEnumerable<UploadDocumentChunk> chunks,
         CallContext context = default);
 
+    /// <summary>Streams several attachments to the batch upload handler.</summary>
+    [OperationContract(Name = "UploadMany")]
+    ValueTask<UploadBatchResponse> UploadManyAsync(
+        IAsyncEnumerable<UploadDocumentChunk> chunks,
+        CallContext context = default);
+
     /// <summary>Streams a previously uploaded attachment.</summary>
     [OperationContract(Name = "Download")]
     IAsyncEnumerable<GrpcDownloadChunk> DownloadAsync(
@@ -70,6 +76,26 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
     }
 
     /// <inheritdoc />
+    public async ValueTask<UploadBatchResponse> UploadManyAsync(
+        IAsyncEnumerable<UploadDocumentChunk> chunks,
+        CallContext context = default)
+    {
+        try
+        {
+            var attachments = await StreamingArkAttachments.ReadAllAsync(chunks, context.CancellationToken).ConfigureAwait(false);
+            var handler = _container.GetInstance<IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>>();
+            return await handler.ExecuteAsync(
+                new UploadGreetingCardsRequest { Id = Guid.NewGuid(), Attachments = attachments },
+                context.CancellationToken).ConfigureAwait(false);
+        }
+        catch (InvalidOperationException exception)
+        {
+            Logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Document upload failed."));
+        }
+    }
+
+    /// <inheritdoc />
     public async IAsyncEnumerable<GrpcDownloadChunk> DownloadAsync(
         GrpcGetDocumentQuery request,
         CallContext context = default)
@@ -81,18 +107,18 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
         if (attachment is null)
             yield break;
 
-            yield return new GrpcDownloadChunk
+        yield return new GrpcDownloadChunk
+        {
+            Metadata = new GrpcDownloadMetadata
             {
-                Metadata = new GrpcDownloadMetadata
-                {
-                    Name = ArkAttachmentName.Sanitize(attachment.Name),
-                    ContentType = attachment.ContentType,
-                },
-            };
-            await using var stream = attachment.OpenRead();
-            var buffer = new byte[64 * 1024];
-            int bytesRead;
-            while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(), context.CancellationToken).ConfigureAwait(false)) > 0)
-                yield return new GrpcDownloadChunk { Data = buffer[..bytesRead] };
+                Name = ArkAttachmentName.Sanitize(attachment.Name),
+                ContentType = attachment.ContentType,
+            },
+        };
+        await using var stream = attachment.OpenRead();
+        var buffer = new byte[64 * 1024];
+        int bytesRead;
+        while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(), context.CancellationToken).ConfigureAwait(false)) > 0)
+            yield return new GrpcDownloadChunk { Data = buffer[..bytesRead] };
     }
 }

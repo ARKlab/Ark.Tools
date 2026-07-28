@@ -234,6 +234,43 @@ public sealed class SearchGreetingsHandler : IQueryHandler<SearchGreetingsQuery,
     }
 }
 
+/// <summary>Produces greeting items incrementally for HTTP JSON and gRPC streaming.</summary>
+public sealed class GetGreetingsStreamHandler : IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>
+{
+    /// <inheritdoc />
+    public async Task<IAsyncEnumerable<GreetingStreamItem>> ExecuteAsync(
+        GetGreetingsStreamQuery query,
+        CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        if (query.Count < 0)
+            throw new ArgumentOutOfRangeException(nameof(query), query.Count, "Count must not be negative.");
+        if (query.DelayMilliseconds < 0)
+            throw new ArgumentOutOfRangeException(nameof(query), query.DelayMilliseconds, "DelayMilliseconds must not be negative.");
+
+        await Task.CompletedTask.ConfigureAwait(false);
+        return StreamAsync(query, ctk);
+    }
+
+    private static async IAsyncEnumerable<GreetingStreamItem> StreamAsync(
+        GetGreetingsStreamQuery query,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk)
+    {
+        for (var index = 0; index < query.Count; index++)
+        {
+            ctk.ThrowIfCancellationRequested();
+            yield return new GreetingStreamItem
+            {
+                Index = index,
+                Message = $"Hello, stream item {index}!",
+            };
+
+            if (index + 1 < query.Count)
+                await Task.Delay(query.DelayMilliseconds, ctk).ConfigureAwait(false);
+        }
+    }
+}
+
 /// <summary>Pure handler for <see cref="GetGreetingQuery"/> — no transport types.</summary>
 public sealed class GetGreetingHandler : IQueryHandler<GetGreetingQuery, GreetingResponse>
 {
@@ -333,22 +370,47 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
         _documents = documents;
     }
 
+    /// <summary>Stores a batch of uploaded attachments.</summary>
+    public sealed class UploadGreetingCardsHandler : IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>
+    {
+        private readonly DocumentStore _documents;
+
+        /// <summary>Initializes a new instance.</summary>
+        public UploadGreetingCardsHandler(DocumentStore documents)
+        {
+            _documents = documents;
+        }
+
+        /// <inheritdoc />
+        public async Task<UploadBatchResponse> ExecuteAsync(UploadGreetingCardsRequest request, CancellationToken ctk = default)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            var names = new List<string>();
+            foreach (var attachment in request.Attachments)
+            {
+                await using var stream = attachment.OpenRead();
+                await _documents.SaveAsync(Guid.NewGuid(), attachment.Name, attachment.ContentType, stream).ConfigureAwait(false);
+                names.Add(attachment.Name);
+            }
+
+            return new UploadBatchResponse { Id = request.Id, Names = names };
+        }
+    }
+
     /// <inheritdoc />
     public async Task<UploadResponse> ExecuteAsync(UploadGreetingCardRequest Request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(Request);
 
         await using var stream = Request.Attachment.OpenRead();
-        using var buffer = new MemoryStream();
-        await stream.CopyToAsync(buffer, ctk).ConfigureAwait(false);
-        _documents.Save(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, buffer.ToArray());
+        var length = await _documents.SaveAsync(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, stream).ConfigureAwait(false);
 
         return new UploadResponse
         {
             Id = Request.Id,
             Name = Request.Attachment.Name,
             ContentType = Request.Attachment.ContentType,
-            Length = buffer.Length,
+            Length = length,
         };
     }
 }

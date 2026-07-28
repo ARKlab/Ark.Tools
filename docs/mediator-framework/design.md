@@ -490,7 +490,7 @@ it.
 | Transport | Shape |
 | --- | --- |
 | Minimal API + JSON | native System.Text.Json streaming of a JSON **array** (`application/json`); items are written as they are yielded, the response is not buffered and no Server-Sent Events framing is used |
-| Minimal API + MessagePack | the sequence is **buffered** and written as one MessagePack array; the format requires the element count in the array header, so an unknown-length top-level array cannot be streamed. The buffering ceiling and its upgrade path (a length-prefixed message stream negotiated with a distinct content type) are documented, not hidden |
+| Minimal API + MessagePack | the sequence is **buffered** and written as one MessagePack array; the format requires the element count in the array header, so an unknown-length top-level array cannot be streamed. `HttpEndpointAttribute.MaxMessagePackStreamedItems` bounds that buffer (zero means unlimited); the upgrade path is a length-prefixed message stream negotiated with a distinct content type |
 | gRPC | **server-streaming** method (`IAsyncEnumerable<T>` return in the code-first contract, `stream` in the exported `.proto`) |
 | Rebus | not applicable — streaming responses are a request/response concept; a `[RebusMessage]` contract must not declare a streaming response (generator diagnostic) |
 
