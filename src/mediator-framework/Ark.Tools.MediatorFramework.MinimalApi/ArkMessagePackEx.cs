@@ -106,7 +106,7 @@ public static class ArkMessagePackEx
         if (!PrefersMessagePack(context.Request.Headers.Accept))
             return Results.Json(response, statusCode: successStatusCode);
 
-        return new MessagePackResult<TResponse>(response, GetOptions(context), successStatusCode);
+        return new MessagePackResult<TResponse>(response, GetOptions(context), successStatusCode, cancellationToken);
     }
 
     /// <summary>Buffers and writes a streaming response as one MessagePack array.</summary>
@@ -144,7 +144,7 @@ public static class ArkMessagePackEx
             items.Add(item);
         }
 
-        return new MessagePackResult<List<T>>(items, GetOptions(context), successStatusCode);
+        return new MessagePackResult<List<T>>(items, GetOptions(context), successStatusCode, cancellationToken);
     }
 
     /// <summary>Checks whether a generated endpoint should use MessagePack.</summary>
@@ -181,23 +181,26 @@ public static class ArkMessagePackEx
         private readonly T _value;
         private readonly MessagePackSerializerOptions _options;
         private readonly int _statusCode;
+        private readonly CancellationToken _cancellationToken;
 
-        public MessagePackResult(T value, MessagePackSerializerOptions options, int statusCode)
+        public MessagePackResult(T value, MessagePackSerializerOptions options, int statusCode, CancellationToken cancellationToken = default)
         {
             _value = value;
             _options = options;
             _statusCode = statusCode;
+            _cancellationToken = cancellationToken;
         }
 
         public async Task ExecuteAsync(HttpContext httpContext)
         {
             httpContext.Response.StatusCode = _statusCode;
             httpContext.Response.ContentType = MessagePackMediaType;
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, httpContext.RequestAborted);
             await MessagePackSerializer.SerializeAsync(
                 httpContext.Response.Body,
                 _value,
                 _options,
-                httpContext.RequestAborted).ConfigureAwait(false);
+                cts.Token).ConfigureAwait(false);
         }
     }
 }

@@ -403,14 +403,14 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
         ArgumentNullException.ThrowIfNull(Request);
 
         await using var stream = Request.Attachment.OpenRead();
-        await _documents.SaveAsync(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, stream).ConfigureAwait(false);
+        var length = await _documents.SaveAsync(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, stream).ConfigureAwait(false);
 
         return new UploadResponse
         {
             Id = Request.Id,
             Name = Request.Attachment.Name,
             ContentType = Request.Attachment.ContentType,
-            Length = stream.Length,
+            Length = length,
         };
     }
 }
