@@ -240,6 +240,68 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsNormalizeMultilineAndEntityEncodedXmlDocumentation()
+    {
+        var minimalApi = RunGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>
+            /// First line
+            /// second line where left &gt; right.
+            /// </summary>
+            /// <remarks>
+            /// A multiline explanation
+            /// with an entity &gt; 0.
+            /// </remarks>
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>
+                /// The documented
+                /// identifier.
+                /// </summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"First line second line where left > right.\")");
+        minimalApi.Should().Contain("WithDescription(\"A multiline explanation with an entity > 0.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"The documented identifier.\"");
+
+        var grpc = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>
+            /// First line
+            /// second line where left &gt; right.
+            /// </summary>
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse>
+            {
+                /// <summary>
+                /// A documented
+                /// identifier &gt; zero.
+                /// </summary>
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class DocumentedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        grpc.Should().Contain("// First line second line where left > right.");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
         var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
