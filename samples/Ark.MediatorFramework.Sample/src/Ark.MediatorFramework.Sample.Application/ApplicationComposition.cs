@@ -70,6 +70,7 @@ public static class ApplicationComposition
         container.Register<IQueryHandler<GetGreetingV2Query, GreetingResponseV2>, GetGreetingV2Handler>();
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();
+        container.Register<IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>, GetGreetingsStreamHandler>();
         container.Register<IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>, UpdateGreetingHandler>();
         container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();

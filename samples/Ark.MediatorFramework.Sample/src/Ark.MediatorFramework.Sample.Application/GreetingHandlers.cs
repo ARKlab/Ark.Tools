@@ -234,6 +234,43 @@ public sealed class SearchGreetingsHandler : IQueryHandler<SearchGreetingsQuery,
     }
 }
 
+/// <summary>Produces greeting items incrementally for HTTP JSON and gRPC streaming.</summary>
+public sealed class GetGreetingsStreamHandler : IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>
+{
+    /// <inheritdoc />
+    public async Task<IAsyncEnumerable<GreetingStreamItem>> ExecuteAsync(
+        GetGreetingsStreamQuery query,
+        CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        if (query.Count < 0)
+            throw new ArgumentOutOfRangeException(nameof(query.Count));
+        if (query.DelayMilliseconds < 0)
+            throw new ArgumentOutOfRangeException(nameof(query.DelayMilliseconds));
+
+        await Task.CompletedTask.ConfigureAwait(false);
+        return StreamAsync(query, ctk);
+    }
+
+    private static async IAsyncEnumerable<GreetingStreamItem> StreamAsync(
+        GetGreetingsStreamQuery query,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk)
+    {
+        for (var index = 0; index < query.Count; index++)
+        {
+            ctk.ThrowIfCancellationRequested();
+            yield return new GreetingStreamItem
+            {
+                Index = index,
+                Message = $"Hello, stream item {index}!",
+            };
+
+            if (index + 1 < query.Count)
+                await Task.Delay(query.DelayMilliseconds, ctk).ConfigureAwait(false);
+        }
+    }
+}
+
 /// <summary>Pure handler for <see cref="GetGreetingQuery"/> — no transport types.</summary>
 public sealed class GetGreetingHandler : IQueryHandler<GetGreetingQuery, GreetingResponse>
 {

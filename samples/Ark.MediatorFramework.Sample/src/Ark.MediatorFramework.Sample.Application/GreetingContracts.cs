@@ -237,6 +237,38 @@ public sealed record SearchGreetingsQuery : IQuery<GreetingPage>, IQueryPaged
     public IEnumerable<string> Sort { get; init; } = [];
 }
 
+/// <summary>Item yielded by the incremental greeting stream.</summary>
+[ProtoContract]
+public sealed record GreetingStreamItem
+{
+    /// <summary>Gets the zero-based item index.</summary>
+    [ProtoMember(1)]
+    public int Index { get; init; }
+
+    /// <summary>Gets the greeting message.</summary>
+    [ProtoMember(2)]
+    public string Message { get; init; } = string.Empty;
+}
+
+/// <summary>Streams greetings without buffering the complete result.</summary>
+[HttpEndpoint("GET", "/api/v{version}/greetings/stream")]
+[GrpcMethod("GetGreetingsStream")]
+[GrpcService("Greetings")]
+[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
+[ProtoContract]
+public sealed record GetGreetingsStreamQuery : IQuery<IAsyncEnumerable<GreetingStreamItem>>
+{
+    /// <summary>Gets the number of items to yield.</summary>
+    [BindFromQuery]
+    [ProtoMember(1)]
+    public int Count { get; init; } = 3;
+
+    /// <summary>Gets the delay between yielded items in milliseconds.</summary>
+    [BindFromQuery]
+    [ProtoMember(2)]
+    public int DelayMilliseconds { get; init; } = 100;
+}
+
 /// <summary>Page of greetings returned by <see cref="SearchGreetingsQuery"/>.</summary>
 [ProtoContract]
 public sealed record GreetingPage
