@@ -117,7 +117,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         collection = type is IArrayTypeSymbol;
         if (type is IArrayTypeSymbol array)
             return array.ElementType;
-        if (type is INamedTypeSymbol named && named.IsGenericType
+        if (type is INamedTypeSymbol named && named.IsGenericType && named.TypeArguments.Length == 1
             && named.AllInterfaces.Any(x => x.OriginalDefinition.SpecialType == SpecialType.None && x.Name is "IEnumerable" or "IReadOnlyCollection" or "IReadOnlyList" or "List"))
         {
             collection = true;

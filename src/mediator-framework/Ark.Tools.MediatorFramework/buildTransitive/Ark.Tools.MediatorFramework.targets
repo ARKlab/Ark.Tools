@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <ArkApiSurfaceEnabled Condition="'$(ArkApiSurfaceEnabled)' == '' And Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">true</ArkApiSurfaceEnabled>
+    <ArkApiSurfaceEnabled Condition="'$(ArkApiSurfaceEnabled)' == ''">true</ArkApiSurfaceEnabled>
     <ArkApiSurfaceCurrentFile>$(IntermediateOutputPath)ArkApiSurface.current.txt</ArkApiSurfaceCurrentFile>
   </PropertyGroup>
 
@@ -18,8 +18,16 @@
     <Error Code="ARKAPI001"
            Text="ArkApiSurface.txt does not exist. Copy $(ArkApiSurfaceCurrentFile) to $(MSBuildProjectDirectory)/ArkApiSurface.txt."
            Condition="!Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')" />
+    <GetFileHash Files="$(MSBuildProjectDirectory)/ArkApiSurface.txt"
+                 Condition="Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">
+      <Output TaskParameter="Hash" PropertyName="_ArkApiSurfaceBaselineHash" />
+    </GetFileHash>
+    <GetFileHash Files="$(ArkApiSurfaceCurrentFile)"
+                 Condition="Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">
+      <Output TaskParameter="Hash" PropertyName="_ArkApiSurfaceCurrentHash" />
+    </GetFileHash>
     <Error Code="ARKAPI002"
            Text="ArkApiSurface.txt differs from $(ArkApiSurfaceCurrentFile). Copy the generated file to accept the API change."
-           Condition="Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt') And '$([System.IO.File]::ReadAllText(&quot;$(MSBuildProjectDirectory)/ArkApiSurface.txt&quot;))' != '$([System.IO.File]::ReadAllText(&quot;$(ArkApiSurfaceCurrentFile)&quot;))'" />
+           Condition="Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt') And '$(_ArkApiSurfaceBaselineHash)' != '$(_ArkApiSurfaceCurrentHash)'" />
   </Target>
 </Project>
