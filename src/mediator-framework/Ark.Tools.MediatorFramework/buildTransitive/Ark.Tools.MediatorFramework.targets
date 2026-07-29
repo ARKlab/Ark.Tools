@@ -1,14 +1,15 @@
 <Project>
   <PropertyGroup>
     <ArkApiSurfaceEnabled Condition="'$(ArkApiSurfaceEnabled)' == '' And Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">true</ArkApiSurfaceEnabled>
-    <ArkApiSurfaceGeneratedFile>$(CompilerGeneratedFilesOutputPath)/Ark.MediatorFramework.ApiSurface/ArkApiSurface.g.cs</ArkApiSurfaceGeneratedFile>
     <ArkApiSurfaceCurrentFile>$(IntermediateOutputPath)ArkApiSurface.current.txt</ArkApiSurfaceCurrentFile>
   </PropertyGroup>
 
   <Target Name="ArkApiSurfaceWriteCurrent"
           AfterTargets="CoreCompile"
-          Condition="'$(ArkApiSurfaceEnabled)' == 'true' And Exists('$(ArkApiSurfaceGeneratedFile)')">
-    <Copy SourceFiles="$(ArkApiSurfaceGeneratedFile)" DestinationFiles="$(ArkApiSurfaceCurrentFile)" />
+          Condition="'$(ArkApiSurfaceEnabled)' == 'true'">
+    <Copy SourceFiles="$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs"
+          DestinationFiles="$(ArkApiSurfaceCurrentFile)"
+          Condition="Exists('$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs')" />
   </Target>
 
   <Target Name="ArkApiSurfaceCompare"

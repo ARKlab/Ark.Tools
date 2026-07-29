@@ -33,7 +33,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
             lines.Sort(StringComparer.Ordinal);
             var text = string.Join("\n", lines) + (lines.Count == 0 ? string.Empty : "\n");
-            spc.AddSource("ArkApiSurface.g.cs", "/*\n" + text.Replace("*/", "* /", StringComparison.Ordinal) + "*/\n");
+            spc.AddSource("ArkApiSurface.g.cs", "/*\n" + text.Replace("*/", "* /") + "*/\n");
         });
     }
 
@@ -49,6 +49,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var result = ResultType(type);
         foreach (var member in type.GetMembers().OfType<IPropertySymbol>())
             AddContract(lines, request, member, string.Empty, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+        if (result is INamedTypeSymbol resultType && resultType.TypeKind == TypeKind.Class)
+            foreach (var member in resultType.GetMembers().OfType<IPropertySymbol>())
+                AddContract(lines, resultType.Name, member, string.Empty, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
 
         if (http is not null)
         {
@@ -56,9 +59,10 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             var template = StringArgument(http, 1) ?? string.Empty;
             var introduced = IntArgument(http, "IntroducedIn", 1);
             var retired = IntArgument(http, "RetiredIn", 0);
-            for (var version = introduced; retired == 0 || version < retired; version++)
+            var lastVersion = retired == 0 ? introduced : retired - 1;
+            for (var version = introduced; version <= lastVersion; version++)
             {
-                var route = template.Replace("{version}", version.ToString(), StringComparison.Ordinal);
+                var route = template.Replace("{version}", version.ToString());
                 var group = StringArgument(Attribute(type, ApiGroup), 0) ?? "Ark";
                 var policy = StringNamed(http, "Policy") ?? (BoolNamed(http, "AllowAnonymous") ? "Anonymous" : "RequireAuthenticatedUser");
                 lines.Add($"HTTP {verb} {route} -> {request} : {TypeName(result)} [policy={policy}] [op={type.Name}_{version}] [tag={group}]");
@@ -74,7 +78,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             var service = StringArgument(Attribute(type, GrpcService), 0) ?? StringArgument(Attribute(type, ApiGroup), 0) ?? "Ark";
             var introduced = IntArgument(grpc, "IntroducedIn", 1);
             var retired = IntArgument(grpc, "RetiredIn", 0);
-            for (var version = introduced; retired == 0 || version < retired; version++)
+            var lastVersion = retired == 0 ? introduced : retired - 1;
+            for (var version = introduced; version <= lastVersion; version++)
             {
                 lines.Add($"GRPC {service}.V{version}/{name} ({request}) returns ({TypeName(result)}) unary");
                 AddProtoFields(lines, request, type, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
@@ -87,10 +92,13 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static void AddContract(List<string> lines, string owner, IPropertySymbol property, string prefix, HashSet<ITypeSymbol> visited)
     {
+        if (property.Name == "EqualityContract")
+            return;
         var path = prefix + property.Name;
         var serverSet = Attribute(property, ServerSet) is not null;
         var type = Unwrap(property.Type, out var collection);
         if (type is INamedTypeSymbol named && named.TypeKind == TypeKind.Class && named.SpecialType == SpecialType.None
+            && named.ContainingAssembly.Name == property.ContainingAssembly.Name
             && visited.Add(named))
         {
             foreach (var child in named.GetMembers().OfType<IPropertySymbol>())
@@ -186,5 +194,5 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     }
 
     private static string TypeName(ITypeSymbol type) =>
-        type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).Replace(" ", string.Empty, StringComparison.Ordinal);
+        type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).Replace(" ", string.Empty);
 }

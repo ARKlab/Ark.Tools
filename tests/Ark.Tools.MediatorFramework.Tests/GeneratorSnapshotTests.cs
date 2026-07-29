@@ -140,6 +140,35 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorIsDeterministicAndIncludesNestedFields()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            public sealed record Response(Inner Value);
+            public sealed record Inner([property: ProtoMember(1)] string Name);
+            [HttpEndpoint("GET", "/v{version}/items", IntroducedIn = 1, RetiredIn = 3)]
+            [GrpcMethod("GetItem")]
+            public sealed class GetItem : IQuery<Response>
+            {
+                [ProtoMember(1)]
+                public int Id { get; set; }
+            }
+            """;
+
+        var first = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var second = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        first.Should().Be(second);
+        first.Should().Contain("CONTRACT Response.Value.Name");
+        first.Should().Contain("GRPC-FIELD GetItem.Id = 1");
+        first.Should().Contain("HTTP GET /v1/items");
+        first.Should().Contain("HTTP GET /v2/items");
+    }
+
+    [TestMethod]
     public void ResponseETagIsEmittedOnlyForMarkedResponses()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(

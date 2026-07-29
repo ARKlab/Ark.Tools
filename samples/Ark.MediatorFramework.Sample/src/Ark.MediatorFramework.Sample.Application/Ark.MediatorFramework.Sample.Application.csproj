@@ -23,6 +23,12 @@
     <PackageReference Include="Ark.Tools.Sql" />
     <PackageReference Include="Ark.Tools.Sql.SqlServer" />
     <PackageReference Include="Polly" />
+    <ProjectReference Include="../../../../src/mediator-framework/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.Tools.MediatorFramework.ApiSurface.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
+
+  <Import Project="../../../../src/mediator-framework/Ark.Tools.MediatorFramework/buildTransitive/Ark.Tools.MediatorFramework.props" />
+  <Import Project="../../../../src/mediator-framework/Ark.Tools.MediatorFramework/buildTransitive/Ark.Tools.MediatorFramework.targets" />
 
 </Project>

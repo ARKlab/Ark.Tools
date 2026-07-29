@@ -573,6 +573,9 @@
           "protobuf-net": "[3.2.56, )"
         }
       },
+      "ark.tools.mediatorframework.apisurface.generators": {
+        "type": "Project"
+      },
       "ark.tools.mediatorframework.grpc": {
         "type": "Project",
         "dependencies": {
