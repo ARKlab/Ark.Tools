@@ -177,7 +177,10 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static string DefaultValue(IPropertySymbol property)
     {
         var syntax = property.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-        var initializer = (syntax as Microsoft.CodeAnalysis.CSharp.Syntax.PropertyDeclarationSyntax)?.Initializer;
-        return initializer is null ? string.Empty : $" default={initializer.Value}";
+        if (syntax is not Microsoft.CodeAnalysis.CSharp.Syntax.PropertyDeclarationSyntax declaration
+            || declaration.Initializer is null)
+            return string.Empty;
+
+        return $" default={declaration.Initializer.Value}";
     }
 }
