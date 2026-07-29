@@ -49,6 +49,10 @@
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' And '%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
+        <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.ApiSurface.Generators\Ark.Tools.MediatorFramework.ApiSurface.Generators.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
       </ItemGroup>
 
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />

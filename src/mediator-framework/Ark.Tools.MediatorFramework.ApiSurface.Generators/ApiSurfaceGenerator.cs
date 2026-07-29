@@ -20,7 +20,6 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string Rebus = "Ark.MediatorFramework.RebusMessageAttribute";
     private const string ApiGroup = "Ark.MediatorFramework.ApiGroupAttribute";
     private const string ServerSet = "Ark.MediatorFramework.ServerSetAttribute";
-    private const string ProtoMember = "ProtoBuf.ProtoMemberAttribute";
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -47,45 +46,39 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
         var request = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var result = ResultType(type);
-        var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
-        foreach (var member in type.GetMembers().OfType<IPropertySymbol>())
-            AddContract(lines, request, member, string.Empty, visited);
-        if (result is INamedTypeSymbol resultType && resultType.TypeKind == TypeKind.Class)
-            foreach (var member in resultType.GetMembers().OfType<IPropertySymbol>())
-                AddContract(lines, resultType.Name, member, string.Empty, visited);
-
+        var metadata = new List<string>();
+        var group = StringArgument(Attribute(type, ApiGroup), 0) ?? "Ark";
+        var grpcGroup = StringArgument(Attribute(type, GrpcService), 0);
+        if (grpcGroup is not null)
+            metadata.Add($"grpc-group={grpcGroup}");
         if (http is not null)
         {
-            var verb = StringArgument(http, 0) ?? string.Empty;
-            var template = StringArgument(http, 1) ?? string.Empty;
             var introduced = IntArgument(http, "IntroducedIn", 1);
             var retired = IntArgument(http, "RetiredIn", 0);
-            var lastVersion = retired == 0 ? introduced : retired - 1;
-            for (var version = introduced; version <= lastVersion; version++)
-            {
-                var route = template.Replace("{version}", version.ToString());
-                var group = StringArgument(Attribute(type, ApiGroup), 0) ?? "Ark";
-                var policy = StringNamed(http, "Policy") ?? (BoolNamed(http, "AllowAnonymous") ? "Anonymous" : "RequireAuthenticatedUser");
-                lines.Add($"HTTP {verb} {route} -> {request} : {TypeName(result)} [policy={policy}] [op={type.Name}_{version}] [tag={group}]");
-                foreach (var parameter in type.GetMembers().OfType<IPropertySymbol>())
-                    if (route.Contains("{" + parameter.Name + "}", StringComparison.Ordinal) || Attribute(parameter, "Ark.MediatorFramework.BindFromQueryAttribute") is not null)
-                        lines.Add($"HTTP-PARAM {request}.{parameter.Name} : {TypeName(parameter.Type)} {(route.Contains("{" + parameter.Name + "}", StringComparison.Ordinal) ? "route" : "query")} required");
-            }
+            metadata.Add($"http={StringArgument(http, 0)} {StringArgument(http, 1)}");
+            metadata.Add($"version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
 
         if (grpc is not null)
         {
-            var name = StringArgument(grpc, 0) ?? type.Name;
-            var service = StringArgument(Attribute(type, GrpcService), 0) ?? StringArgument(Attribute(type, ApiGroup), 0) ?? "Ark";
             var introduced = IntArgument(grpc, "IntroducedIn", 1);
             var retired = IntArgument(grpc, "RetiredIn", 0);
-            var lastVersion = retired == 0 ? introduced : retired - 1;
-            var grpcVisited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
-            for (var version = introduced; version <= lastVersion; version++)
-            {
-                lines.Add($"GRPC {service}.V{version}/{name} ({request}) returns ({TypeName(result)}) unary");
-                AddProtoFields(lines, request, type, grpcVisited);
-            }
+            metadata.Add($"grpc={StringArgument(grpc, 0) ?? type.Name}");
+            metadata.Add($"grpc-version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
+        }
+
+        lines.Add($"CONTRACT {request} -> {TypeName(result)} [group={group}]"
+            + (metadata.Count == 0 ? string.Empty : " [" + string.Join("] [", metadata) + "]"));
+
+        var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
+        foreach (var member in type.GetMembers().OfType<IPropertySymbol>())
+            AddContract(lines, request, member, string.Empty, visited);
+        if (result is INamedTypeSymbol resultType && resultType.TypeKind == TypeKind.Class
+            && !SymbolEqualityComparer.Default.Equals(resultType, type))
+        {
+            lines.Add($"CONTRACT {resultType.Name}");
+            foreach (var member in resultType.GetMembers().OfType<IPropertySymbol>())
+                AddContract(lines, resultType.Name, member, string.Empty, visited);
         }
 
         if (rebus is not null)
@@ -108,26 +101,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             visited.Remove(named);
         }
         else
-            lines.Add($"CONTRACT {owner}.{path}{(collection ? "[]" : string.Empty)} : {TypeName(property.Type)} server-set={serverSet.ToString().ToLowerInvariant()}");
-    }
-
-    private static void AddProtoFields(List<string> lines, string owner, INamedTypeSymbol type, HashSet<ITypeSymbol> visited)
-    {
-        if (!visited.Add(type))
-            return;
-        foreach (var property in type.GetMembers().OfType<IPropertySymbol>())
-        {
-            var proto = Attribute(property, ProtoMember);
-            if (proto is null)
-                continue;
-            var number = IntArgument(proto, null, 0);
-            var nested = Unwrap(property.Type, out var collection);
-            if (nested is INamedTypeSymbol named && named.TypeKind == TypeKind.Class && named.SpecialType == SpecialType.None)
-                AddProtoFields(lines, owner + "." + property.Name + (collection ? "[]" : string.Empty), named, visited);
-            else
-                lines.Add($"GRPC-FIELD {owner}.{property.Name}{(collection ? "[]" : string.Empty)} = {number} : {TypeName(property.Type)}");
-        }
-        visited.Remove(type);
+            lines.Add($"CONTRACT {owner}.{path}{(collection ? "[]" : string.Empty)} : {TypeName(property.Type)}"
+                + (serverSet ? " server-set=true" : string.Empty)
+                + DefaultValue(property));
     }
 
     private static ITypeSymbol ResultType(INamedTypeSymbol type)
@@ -197,4 +173,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static string TypeName(ITypeSymbol type) =>
         type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).Replace(" ", string.Empty);
+
+    private static string DefaultValue(IPropertySymbol property)
+    {
+        var syntax = property.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+        var initializer = (syntax as Microsoft.CodeAnalysis.CSharp.Syntax.PropertyDeclarationSyntax)?.Initializer;
+        return initializer is null ? string.Empty : $" default={initializer.Value}";
+    }
 }

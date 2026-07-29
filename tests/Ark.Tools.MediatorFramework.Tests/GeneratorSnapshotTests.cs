@@ -163,9 +163,10 @@ public sealed class GeneratorSnapshotTests
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
-        first.Should().Contain("GRPC-FIELD GetItem.Id = 1");
-        first.Should().Contain("HTTP GET /v1/items");
-        first.Should().Contain("HTTP GET /v2/items");
+        first.Should().Contain("CONTRACT GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1+]");
+        first.Should().Contain("CONTRACT Response");
+        first.Should().NotContain("GRPC-FIELD");
+        first.Should().NotContain("HTTP GET");
     }
 
     [TestMethod]

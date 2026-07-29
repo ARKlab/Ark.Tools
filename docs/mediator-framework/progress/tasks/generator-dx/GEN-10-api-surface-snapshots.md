@@ -20,8 +20,8 @@ shipped/unshipped split.
 
 **On every build:**
 
-1. A Roslyn `IIncrementalGenerator` traverses the compilation, computes the full sorted transport
-   surface (HTTP, gRPC including nested fields, Rebus, contract members), and emits it as a
+1. A Roslyn `IIncrementalGenerator` traverses the compilation, computes the full sorted contract
+   surface (including response contracts, transport metadata and Rebus queues), and emits it as a
    well-known source hint file so the content is available to the build pipeline.
 2. A `buildTransitive` MSBuild target (running after `CoreCompile`) extracts the surface content
    from the generated output and writes `$(IntermediateOutputPath)/ArkApiSurface.current.txt`.
@@ -46,18 +46,16 @@ at every stage (PR builds, release builds), with no separate flag needed.
 **Entry format** (ordinal-sorted, deterministic, one entry per line):
 
 ```
-CONTRACT GreetingDto.Name : string? server-set=false
-CONTRACT GreetingDto.Tags[].Value : string server-set=false
-GRPC Greetings.V1/GetGreeting (GetGreetingQuery) returns (GreetingDto) unary
-GRPC-FIELD GetGreetingQuery.Id = 1 : bytes
-HTTP GET /api/v1/greetings/{id} -> GetGreetingQuery : GreetingDto [policy=RequireAuthenticatedUser] [op=GetGreetingQuery] [tag=Greetings]
-HTTP-PARAM GetGreetingQuery.Id : System.Guid route required
+CONTRACT GetGreetingQuery -> GreetingDto [group=Greetings] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/{id}] [version=1+] [grpc=GetGreeting] [grpc-version=1+]
+CONTRACT GetGreetingQuery.Id : Guid
+CONTRACT GreetingDto.Name : string?
+CONTRACT GreetingDto.Tags[].Value : string
 REBUS RefreshGreetingCommand -> queue:greetings
 ```
 
-**Nested field coverage.** `CONTRACT` entries and `GRPC-FIELD` entries recurse into embedded
-message types; every leaf field in the transitive closure of a contract type produces its own
-line. A rename anywhere in the graph produces a visible diff.
+**Nested field coverage.** `CONTRACT` entries recurse into embedded message types; every leaf
+field in the transitive closure of a contract type produces its own line. A rename anywhere in
+the graph produces a visible diff.
 
 **Diagnostics:**
 

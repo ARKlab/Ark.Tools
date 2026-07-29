@@ -775,18 +775,17 @@ only to its own attribute, so adding a transport never re-runs the others.
 ## API surface snapshots
 
 The public wire surface must not change by accident. The framework ships a
-generator that snapshots the **transport surface** — which is richer than the
-C# public API — on every build and fails the build when the snapshot differs
-from what is committed.
+generator that snapshots the contract surface — including the metadata consumed
+to generate each transport — on every build and fails the build when the
+snapshot differs from what is committed.
 
 **What is captured:**
 
-- HTTP: verb, expanded route template (per active version), parameter names and
-  sources, authorization policy, operation ID, tag.
-- gRPC: service name (per version), method name, request/response message names,
-  field numbers (recursively, including nested messages), streaming kind.
+- Contract metadata: API group, optional gRPC group override, HTTP routing and
+  active version range, and gRPC method/version metadata.
 - Rebus: message contract name and owner queue.
-- Contract members: name, fully-qualified type, nullability, `[ServerSet]` flag.
+- Contract members: name, fully-qualified type, nullability, `[ServerSet]` when
+  true, and source-level default values.
   Nested types are expanded recursively so a change to any nested field produces
   a visible diff.
 
@@ -824,12 +823,10 @@ snapshot is the gate at every stage of the pipeline.
 **Entry format** (deterministic, ordinal-sorted, one entry per line):
 
 ```
-CONTRACT GreetingDto.Name : string? server-set=false
-CONTRACT GreetingDto.Tags[].Value : string server-set=false
-GRPC Greetings.V1/GetGreeting (GetGreetingQuery) returns (GreetingDto) unary
-GRPC-FIELD GetGreetingQuery.Id = 1 : bytes
-HTTP GET /api/v1/greetings/{id} -> GetGreetingQuery : GreetingDto [policy=RequireAuthenticatedUser] [op=GetGreetingQuery] [tag=Greetings]
-HTTP-PARAM GetGreetingQuery.Id : System.Guid route required
+CONTRACT GetGreetingQuery -> GreetingDto [group=Greetings] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/{id}] [version=1+] [grpc=GetGreeting] [grpc-version=1+]
+CONTRACT GetGreetingQuery.Id : Guid
+CONTRACT GreetingDto.Name : string?
+CONTRACT GreetingDto.Tags[].Value : string
 REBUS RefreshGreetingCommand -> queue:greetings
 ```
 
