@@ -31,8 +31,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             foreach (var type in AllTypes(compilation.Assembly.GlobalNamespace))
                 AddType(lines, type);
 
-            lines.Sort(StringComparer.Ordinal);
-            var text = string.Join("\n", lines) + (lines.Count == 0 ? string.Empty : "\n");
+            var orderedLines = lines.Distinct(StringComparer.Ordinal).OrderBy(line => line, StringComparer.Ordinal).ToArray();
+            var text = string.Join("\n", orderedLines) + (orderedLines.Length == 0 ? string.Empty : "\n");
             spc.AddSource("ArkApiSurface.g.cs", "/*\n" + text.Replace("*/", "* /") + "*/\n");
         });
     }
@@ -47,11 +47,12 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
         var request = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var result = ResultType(type);
+        var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
         foreach (var member in type.GetMembers().OfType<IPropertySymbol>())
-            AddContract(lines, request, member, string.Empty, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+            AddContract(lines, request, member, string.Empty, visited);
         if (result is INamedTypeSymbol resultType && resultType.TypeKind == TypeKind.Class)
             foreach (var member in resultType.GetMembers().OfType<IPropertySymbol>())
-                AddContract(lines, resultType.Name, member, string.Empty, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+                AddContract(lines, resultType.Name, member, string.Empty, visited);
 
         if (http is not null)
         {
@@ -79,10 +80,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             var introduced = IntArgument(grpc, "IntroducedIn", 1);
             var retired = IntArgument(grpc, "RetiredIn", 0);
             var lastVersion = retired == 0 ? introduced : retired - 1;
+            var grpcVisited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
             for (var version = introduced; version <= lastVersion; version++)
             {
                 lines.Add($"GRPC {service}.V{version}/{name} ({request}) returns ({TypeName(result)}) unary");
-                AddProtoFields(lines, request, type, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+                AddProtoFields(lines, request, type, grpcVisited);
             }
         }
 
