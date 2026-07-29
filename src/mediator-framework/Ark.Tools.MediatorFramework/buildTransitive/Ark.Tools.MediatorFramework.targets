@@ -1,0 +1,24 @@
+<Project>
+  <PropertyGroup>
+    <ArkApiSurfaceEnabled Condition="'$(ArkApiSurfaceEnabled)' == '' And Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">true</ArkApiSurfaceEnabled>
+    <ArkApiSurfaceGeneratedFile>$(CompilerGeneratedFilesOutputPath)/Ark.MediatorFramework.ApiSurface/ArkApiSurface.g.cs</ArkApiSurfaceGeneratedFile>
+    <ArkApiSurfaceCurrentFile>$(IntermediateOutputPath)ArkApiSurface.current.txt</ArkApiSurfaceCurrentFile>
+  </PropertyGroup>
+
+  <Target Name="ArkApiSurfaceWriteCurrent"
+          AfterTargets="CoreCompile"
+          Condition="'$(ArkApiSurfaceEnabled)' == 'true' And Exists('$(ArkApiSurfaceGeneratedFile)')">
+    <Copy SourceFiles="$(ArkApiSurfaceGeneratedFile)" DestinationFiles="$(ArkApiSurfaceCurrentFile)" />
+  </Target>
+
+  <Target Name="ArkApiSurfaceCompare"
+          AfterTargets="ArkApiSurfaceWriteCurrent"
+          Condition="'$(ArkApiSurfaceEnabled)' == 'true'">
+    <Error Code="ARKAPI001"
+           Text="ArkApiSurface.txt does not exist. Copy $(ArkApiSurfaceCurrentFile) to $(MSBuildProjectDirectory)/ArkApiSurface.txt."
+           Condition="!Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')" />
+    <Error Code="ARKAPI002"
+           Text="ArkApiSurface.txt differs from $(ArkApiSurfaceCurrentFile). Copy the generated file to accept the API change."
+           Condition="Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt') And '$([System.IO.File]::ReadAllText(&quot;$(MSBuildProjectDirectory)/ArkApiSurface.txt&quot;))' != '$([System.IO.File]::ReadAllText(&quot;$(ArkApiSurfaceCurrentFile)&quot;))'" />
+  </Target>
+</Project>
