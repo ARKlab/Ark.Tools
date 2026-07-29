@@ -15,6 +15,69 @@ namespace Ark.Tools.MediatorFramework.MinimalApi;
 [SuppressMessage("Naming", "CA1711", Justification = "The Ex suffix is part of the public Ark extension API naming convention.")]
 public static class ArkOpenApiEx
 {
+    /// <summary>Adds XML documentation from generated mediator contracts to OpenAPI.</summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkXmlDocumentation(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddOperationTransformer((operation, context, _) =>
+        {
+            var metadata = context.Description.ActionDescriptor.EndpointMetadata
+                .OfType<ArkDocumentationMetadata>()
+                .FirstOrDefault();
+            if (metadata is null)
+                return Task.CompletedTask;
+
+            if (string.IsNullOrWhiteSpace(operation.Summary))
+                operation.Summary = metadata.Summary;
+            if (string.IsNullOrWhiteSpace(operation.Description))
+                operation.Description = metadata.Remarks;
+
+            if (operation.Parameters is not null)
+            {
+                foreach (var parameter in operation.Parameters.OfType<OpenApiParameter>())
+                {
+                    if (parameter.Name is { } parameterName
+                        && metadata.PropertyDescriptions.TryGetValue(parameterName, out var description)
+                        && string.IsNullOrWhiteSpace(parameter.Description))
+                        parameter.Description = description;
+                }
+            }
+
+            ApplySchemaDescriptions(operation.RequestBody?.Content?.Values.Select(content => content.Schema), metadata);
+            foreach (var response in operation.Responses?.Values.OfType<OpenApiResponse>() ?? [])
+                ApplySchemaDescriptions(response.Content?.Values.Select(content => content.Schema), metadata);
+            return Task.CompletedTask;
+        });
+
+        return options;
+    }
+
+    private static void ApplySchemaDescriptions(
+        IEnumerable<IOpenApiSchema?>? schemas,
+        ArkDocumentationMetadata metadata)
+    {
+        if (schemas is null)
+            return;
+
+        foreach (var schema in schemas.Select(ResolveSchema).OfType<OpenApiSchema>())
+        {
+            foreach (var property in schema.Properties ?? new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal))
+            {
+                if (metadata.PropertyDescriptions.TryGetValue(property.Key, out var description)
+                    && property.Value is OpenApiSchema mutable
+                    && string.IsNullOrWhiteSpace(mutable.Description))
+                    mutable.Description = description;
+            }
+        }
+
+    }
+
+    private static IOpenApiSchema? ResolveSchema(IOpenApiSchema? schema)
+        => schema is OpenApiSchemaReference reference ? reference.Target : schema;
+
     /// <summary>
     /// Excludes properties marked with <see cref="ServerSetAttribute"/> from generated schemas.
     /// </summary>

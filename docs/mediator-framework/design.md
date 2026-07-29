@@ -627,6 +627,9 @@ Recurring Minimal API hosting concerns are **library features**
   `UseOneOfForPolymorphism`/`SelectSubTypesUsing` consume) and emits the
   OpenAPI `oneOf` + `discriminator` schema for it, so application developers
   never hand-write schema transformers.
+- `AddArkXmlDocumentation()` — applies documentation metadata emitted by the
+  generator to OpenAPI operations, parameters and schemas. It is additive:
+  descriptions already supplied by host transformers are retained.
 - Multipart mapping: generated from the contract (see *Generated multipart
   upload*); `MapArkAttachmentUpload` stays as the manual escape hatch.
 - MessagePack serde: **no specialized `Map*` method.** The `[HttpEndpoint]`
