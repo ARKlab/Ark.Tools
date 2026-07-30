@@ -1,22 +1,48 @@
 # Attachments
 
-Use `IArkAttachment` for upload and download contracts. A single attachment is
-bound to one multipart file; an attachment collection preserves form order and
-can enforce `MaxFileCount`. Download handlers return `IArkAttachment`.
+`IArkAttachment` keeps file handling transport-neutral. It supplies a name,
+content type, and readable stream without exposing `IFormFile` or gRPC stream
+types to the handler.
+
+## Accept a multipart upload
 
 ```csharp
-[HttpEndpoint("POST", "/api/v{version}/greeting-cards/{id}/batch", MaxFileCount = 4)]
-public sealed record UploadGreetingCardsRequest : IRequest<UploadBatchResponse>
+[HttpEndpoint(
+    "POST",
+    "/api/v{version}/greeting-cards/{id}",
+    MaxRequestBodySizeBytes = 10_000_000,
+    MaxFileCount = 4,
+    AllowedContentTypes = ["image/png", "image/jpeg"])]
+public sealed record UploadGreetingCardsRequest : IRequest<UploadCardsResponse>
 {
     public Guid Id { get; init; }
     public IReadOnlyList<IArkAttachment> Attachments { get; init; } = [];
 }
 ```
 
-Source: [`AttachmentContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/AttachmentContracts.cs).
+Send `multipart/form-data` with the files and route value. The generated
+endpoint rejects too many files, an oversized request, or a content type outside
+the declared allow-list before the handler is invoked.
 
-The sample stores streams through `DocumentStore`; enforce size/count limits,
-sanitize names, and never trust client paths or content types. gRPC uploads use
-the handwritten streaming service. If generated binding does not fit, use
-`MapArkAttachmentUpload` or a handwritten endpoint. Rationale:
-[`design.md`](../design.md).
+**Outcome:** the handler receives ordered, readable attachments and can store
+them without knowing whether the caller used an HTTP form or generated gRPC
+upload stream.
+
+## Handle file data safely
+
+Treat `Name` and `ContentType` as untrusted metadata. Generate a storage name,
+validate the content rather than trusting MIME labels, enforce service-level
+size quotas while copying the stream, and dispose streams promptly. Never join a
+client filename directly to a filesystem path.
+
+Return `IArkAttachment` for a generated download. Generated gRPC support
+transfers attachments as chunks; HTTP writes the appropriate download response.
+
+## Custom multipart shape
+
+Use `MapArkAttachmentUpload<TRequest, TResponse>` when one `file` form part
+must be converted to an application request with custom logic. Write a
+hand-crafted endpoint for multiple named form parts, metadata validation that
+depends on the file content, or resumable upload protocols.
+
+Architecture rationale: [design.md](../design.md).

@@ -1,24 +1,46 @@
 # Streaming
 
-Return `IAsyncEnumerable<T>` to stream results on HTTP and gRPC without
-materializing the complete sequence. Honor cancellation at each iteration.
-MessagePack responses are deliberately buffered and have a configured ceiling;
-use JSON or gRPC when true incremental delivery is required.
+Return `IAsyncEnumerable<T>` from a query handler when results should be
+produced incrementally. Generated HTTP and gRPC endpoints preserve the stream
+and stop enumerating when the caller disconnects or cancels.
+
+## Stream from the handler
 
 ```csharp
-public sealed class GetGreetingsStreamHandler : IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>
+public sealed class WatchGreetingsHandler
+    : IQueryHandler<WatchGreetingsQuery, IAsyncEnumerable<GreetingEvent>>
 {
-    public async Task<IAsyncEnumerable<GreetingStreamItem>> ExecuteAsync(GetGreetingsStreamQuery query, CancellationToken ctk = default)
+    public async Task<IAsyncEnumerable<GreetingEvent>> ExecuteAsync(
+        WatchGreetingsQuery query,
+        CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(query);
         await Task.CompletedTask.ConfigureAwait(false);
-        return StreamAsync(query, ctk);
+        return ReadEventsAsync(query, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<GreetingEvent> ReadEventsAsync(
+        WatchGreetingsQuery query,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (var item in _events.ReadAsync(query.Id, cancellationToken))
+            yield return item;
     }
 }
 ```
 
-Source: [`GreetingHandlers.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/GreetingHandlers.cs).
+**Outcome:** HTTP JSON and gRPC clients start receiving items without waiting
+for the complete sequence, and the cancellation token stops the upstream read.
 
-The iterator calls `ThrowIfCancellationRequested` and passes the token to
-`Task.Delay`. A handwritten streaming adapter is the escape hatch for a wire
-format with different framing. Rationale: [`design.md`](../design.md).
+## Choose a suitable representation
+
+Use gRPC or HTTP JSON for genuine incremental delivery. MessagePack responses
+are intentionally buffered into one array because the format needs a top-level
+length. Set `MaxMessagePackStreamedItems` to a safe ceiling when MessagePack is
+enabled; exceeding it returns a server error instead of exhausting memory.
+
+Rebus does not support streaming responses. Represent asynchronous work as a
+message plus durable status instead. Use a custom transport adapter when the
+consumer requires a framing protocol or bidirectional stream not provided by
+generated endpoints.
+
+Architecture rationale: [design.md](../design.md).

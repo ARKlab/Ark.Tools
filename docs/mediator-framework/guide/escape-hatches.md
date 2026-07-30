@@ -1,20 +1,44 @@
 # Escape hatches
 
-Generated wiring is the default, not a restriction. Use a handwritten adapter
-when the transport has behavior that cannot be expressed by a contract
-attribute, while keeping the core handler reusable.
+Generated wiring is the default for ordinary request/response operations. Keep
+the application contract and handler transport-neutral, then add a hand-written
+adapter only for behavior the declarative surface cannot express.
 
-| Need | Escape hatch |
+| Requirement | Use |
 | --- | --- |
-| Custom HTTP binding | Hand-written Minimal API mapping |
-| Custom gRPC behavior | Hand-written method in the generated `partial` or service |
-| Legacy bus handler | Hand-written `IHandleMessages<T>` |
-| Existing MVC surface | Keep controllers and migrate incrementally |
-| Multipart shape outside generated binding | `MapArkAttachmentUpload` |
+| Custom HTTP parsing or response | Hand-written Minimal API mapping |
+| One-file multipart conversion | `MapArkAttachmentUpload` |
+| Existing or custom gRPC protocol | Hand-written service or generated partial |
+| Legacy message routing | Hand-written `IHandleMessages<T>` |
+| Existing controllers | MVC coexistence during migration |
 
-The sample demonstrates a handwritten gRPC service:
-[`DocumentsGrpcService.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/DocumentsGrpcService.cs),
-and a compatibility MessagePack controller:
-[`MessagePackGreetingController.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/MessagePackGreetingController.cs).
-For MVC coexistence, follow [`migration-from-mvc.md`](../migration-from-mvc.md).
-Rationale: [`design.md`](../design.md).
+## Preserve the handler boundary
+
+```csharp
+app.MapPost("/legacy/greeting", async (
+    LegacyGreetingDto body,
+    IRequestHandler<CreateGreetingRequest, GreetingResponse> handler,
+    CancellationToken cancellationToken) =>
+{
+    var response = await handler.ExecuteAsync(
+        new CreateGreetingRequest { Name = body.Text },
+        cancellationToken).ConfigureAwait(false);
+    return Results.Ok(response);
+});
+```
+
+**Outcome:** the legacy endpoint owns its unusual binding and response, while
+the application operation retains its normal validation, authorization, and
+business implementation.
+
+## Decide before escaping
+
+First check whether a route template, query binding, status property, attachment
+option, version attribute, or serializer configuration already expresses the
+need. Use the smallest adapter when it does not. Document its public behavior,
+apply the same authorization and error mapping as generated endpoints, and add
+boundary tests because the generator no longer protects that surface.
+
+For incremental controller migration, see
+[migration from MVC](../migration-from-mvc.md). Architecture rationale:
+[design.md](../design.md).

@@ -1,16 +1,32 @@
 # API-surface snapshots
 
-The build can gate public contract, route, and gRPC method changes with an API
-snapshot. This makes an accidental wire change visible before release: review
-the generated diff, decide whether the change is intentional, and update the
-approved snapshot with the repository's snapshot command.
+The API-surface generator prevents a contract, route, or gRPC signature from
+changing unnoticed. It compares the current generated surface with the accepted
+`ArkApiSurface.txt` baseline when `ArkApiSurfaceEnabled` is enabled.
 
-Snapshots distinguish shipped from unshipped surface. Additive changes usually
-require a deliberate snapshot update; breaking changes should be versioned or
-supersede a contract. The sample's generated API is the review fixture:
-[`GreetingContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs).
+## Establish and review the baseline
 
-This guide intentionally does not prescribe a command name where the project
-configuration is authoritative; use the analyzer/build output in your branch
-to regenerate. The escape hatch is an explicit baseline approval in review, not
-silencing the analyzer. Rationale: [`design.md`](../design.md).
+1. Enable the API-surface build property for the application project.
+2. Build once and copy the generated surface to `ArkApiSurface.txt` in the
+   project directory.
+3. Include that file as an additional file and commit it.
+4. On later builds, review every `ARKAPI002` change before updating the baseline.
+
+**Outcome:** adding, removing, or changing a route, version range, gRPC method,
+message member, or Rebus route fails the build until the approved baseline
+records the intentional change.
+
+## Decide before accepting a diff
+
+Classify the change first. An additive change may be acceptable in the current
+version. A changed HTTP route, changed protobuf number/type, removed message
+member, or altered public behavior requires a compatibility decision and often
+a new version. Update `ArkApiSurface.txt` only after that decision and consumer
+impact are documented in review.
+
+The snapshot is an approval gate, not a compatibility tool. Do not disable it
+to bypass a change. For an unshipped service, establish the first baseline after
+the initial public surface is ready; for a shipped service, treat it as part of
+the release process.
+
+Architecture rationale: [design.md](../design.md).
