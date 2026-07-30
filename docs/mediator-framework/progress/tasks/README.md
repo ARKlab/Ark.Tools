@@ -120,7 +120,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [FW-07](framework/FW-07-multifile-uploads.md)
    [x] [GEN-09](generator-dx/GEN-09-xml-documentation.md)
    [x] [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md)
-   [ ] [DOC-01](docs/DOC-01-user-documentation.md)
+   [x] [DOC-01](docs/DOC-01-user-documentation.md)
 8. Post-release:
    [ ] [NET-02](aspnetcore/NET-02-openapi-operation-transformers.md)
    [ ] [NET-03](aspnetcore/NET-03-json-patch.md)

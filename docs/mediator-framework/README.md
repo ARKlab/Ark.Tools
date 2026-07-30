@@ -25,6 +25,8 @@ The end-user guide (getting started + per-feature documentation) is delivered by
 task [`DOC-01`](progress/tasks/docs/DOC-01-user-documentation.md) and will live
 in `docs/mediator-framework/guide/`.
 
+Start with the [Mediator Framework user guide](guide/README.md).
+
 ### Progress and tracking
 
 | Document | Purpose |
