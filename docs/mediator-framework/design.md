@@ -168,7 +168,7 @@ marked with `[RebusMessage(OwnerQueue = "...")]` are sent to that queue and
 return `202 Accepted`. Generated gRPC command methods return
 `google.protobuf.Empty`, while Rebus wrappers invoke the command handler.
 
-The `IntroducedIn` and exclusive `RetiredIn` properties on `HttpEndpointAttribute`
+The `Introduced` and exclusive `Retired` properties on `VersioningAttribute`
 expand a `{version}` route once per active version. The generator applies the
 same lifetime rules to `[GrpcMethod]`, emitting one version-suffixed service per
 `[GrpcService]` and retaining only methods active in that version.
@@ -509,11 +509,11 @@ retirement, mirroring how `Asp.Versioning` treats versions:
 
 - The HTTP route template contains only the **placeholder**:
   `[HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]`.
-- The lifetime is declared on the transport attribute:
-  `IntroducedIn` (int, required, e.g. `1`) and `RetiredIn` (int, optional,
-  exclusive: the first version the contract is *not* part of).
+- The lifetime is declared on the contract with `[Versioning]`:
+  `Introduced` (int, default `1`) and `Retired` (int, optional; `0` means
+  never, otherwise exclusive: the first version the contract is *not* part of).
 - The host declares the set of versions it serves. For each hosted version `v`
-  where `IntroducedIn <= v` and (`RetiredIn` unset or `v < RetiredIn`), the
+  where `Introduced <= v` and (`Retired` unset or `v < Retired`), the
   generator registers the route with `{version}` substituted (e.g.
   `/api/v1/greetings/{id}` **and** `/api/v2/greetings/{id}` from a single
   contract).
@@ -527,7 +527,7 @@ retirement, mirroring how `Asp.Versioning` treats versions:
   test both together.
 
 Superseding a contract in a later version = retire the old contract at version
-`n` and introduce the replacement with `IntroducedIn = n`.
+`n` and introduce the replacement with `Introduced = n`.
 
 ## Polymorphism across transports
 

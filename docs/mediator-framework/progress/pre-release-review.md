@@ -57,7 +57,7 @@ Task breakdown: see [`tasks/README.md`](tasks/README.md).
 | G9 | App Insights, config layering, IClock/NodaTime demo, richer test infra | SAMPLE |
 | G10 | File download | SAMPLE + FRAMEWORK |
 
-Reverse gaps (sample > ReferenceProject, keep as-is): gRPC code-first + proto export, MessagePack negotiation, single-handler/three-transports, `IntroducedIn`/`RetiredIn` versioning, polymorphic contracts, dead-letter demo, attachment abstraction.
+Reverse gaps (sample > ReferenceProject, keep as-is): gRPC code-first + proto export, MessagePack negotiation, single-handler/three-transports, `Versioning(Introduced, Retired)` versioning, polymorphic contracts, dead-letter demo, attachment abstraction.
 
 ## Part 3 — ASP.NET Core (≤ .NET 10) improvements
 

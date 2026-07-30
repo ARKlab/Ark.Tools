@@ -28,10 +28,12 @@ route; declare when the contract was introduced (and, if ever, retired)
 instead:
 
 ```csharp
-[HttpEndpoint("POST", "/api/v{version}/greetings", IntroducedIn = 1)]
+[Versioning(Introduced = 1)]
+[HttpEndpoint("POST", "/api/v{version}/greetings")]
 public sealed record CreateGreeting(string Name) : IRequest<GreetingResponse>;
 
-[HttpEndpoint("GET", "/api/v{version}/greetings/{id}", IntroducedIn = 1, RetiredIn = 3)]
+[Versioning(Introduced = 1, Retired = 3)]
+[HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
 public sealed record GetGreeting(Guid Id) : IQuery<GreetingResponse>;
 ```
 
@@ -76,7 +78,7 @@ default because they are designed for bearer-token APIs. Set
 declare upload limits and accepted file types. Uploaded names are sanitized to
 a leaf name before handlers receive them.
 
-For API versions, declare the contract's lifetime (`IntroducedIn`/`RetiredIn`)
+For API versions, declare the contract's lifetime with `[Versioning]`
 and use the `/api/v{version}/...` placeholder route. The generator emits one
 route per active version and partitions the OpenAPI documents accordingly;
 retiring an action in a new version is a contract-lifetime change, not a route

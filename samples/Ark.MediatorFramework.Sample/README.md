@@ -135,7 +135,7 @@ The emitted `.proto` now generates a dedicated client assembly used by the
 behavioral tests, and the gRPC rich-error interceptor is covered there. The
 2026-07 review revisions — NodaTime via `NodaTime.Serialization.Protobuf`,
 ProblemDetails with `BusinessRuleViolation` (HTTP and gRPC), gRPC
-client-streaming upload, version lifetime (`IntroducedIn`/`RetiredIn`) with the
+client-streaming upload, version lifetime (`Versioning(Introduced, Retired)`) with the
 `/api/v{version}/…` placeholder, the per-transport package split and the
 framework test project under `tests/` — are specified with acceptance criteria
 in [`docs/mediator-framework/progress/tasks.md`](../../docs/mediator-framework/progress/tasks.md)

@@ -637,6 +637,21 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void VersioningDefaultsToTheInitialUnretiredVersion()
+    {
+        var versioning = new VersioningAttribute();
+
+        versioning.Introduced.Should().Be(1);
+        versioning.Retired.Should().Be(0);
+        var usage = (AttributeUsageAttribute)typeof(VersioningAttribute)
+            .GetCustomAttributes(typeof(AttributeUsageAttribute), inherit: false)
+            .Single();
+        usage.ValidOn.Should().Be(AttributeTargets.Class);
+        usage.AllowMultiple.Should().BeFalse();
+        usage.Inherited.Should().BeFalse();
+    }
+
+    [TestMethod]
     public void RebusGeneratorReportsInvalidOwnerQueue()
     {
         var result = RunGeneratorResult<ArkRebusEndpointGenerator>(

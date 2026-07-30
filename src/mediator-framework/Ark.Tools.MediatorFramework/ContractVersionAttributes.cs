@@ -8,8 +8,8 @@ namespace Ark.MediatorFramework;
 public sealed class VersioningAttribute : Attribute
 {
     /// <summary>Gets the inclusive first API version.</summary>
-    public int Introduced { get; set; }
+    public int Introduced { get; set; } = 1;
 
-    /// <summary>Gets the exclusive first retired API version.</summary>
+    /// <summary>Gets the exclusive first retired API version, or zero when the contract is never retired.</summary>
     public int Retired { get; set; }
 }

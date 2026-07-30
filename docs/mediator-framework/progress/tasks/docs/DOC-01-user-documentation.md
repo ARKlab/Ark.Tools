@@ -30,7 +30,7 @@ Snippets must be copied from compiled sample code, never invented, so they canno
 | `guide/http-endpoints.md` | `[HttpEndpoint]`: verb/template, envelope binding (route/query/body), `[BindFromQuery]`, `[ServerSet]`, status semantics (`SuccessStatusCode`, `NullResultStatusCode`), route groups. |
 | `guide/grpc.md` | `[GrpcMethod]`, `[ServiceGroup]`, proto export on build, consuming the exported protos, gRPCui. |
 | `guide/rebus.md` | `[RebusMessage]`, owner queues + generated routing, per-message scope, cancellation, HTTP→bus composition. |
-| `guide/versioning.md` | `IntroducedIn`/`RetiredIn`, `{version}` expansion, per-version documents and gRPC services, superseding a contract. |
+| `guide/versioning.md` | `Versioning(Introduced, Retired)`, `{version}` expansion, per-version documents and gRPC services, superseding a contract. |
 | `guide/errors.md` | Domain exceptions → ProblemDetails / `Google.Rpc.Status`, `BusinessRuleViolation`, standard 400/403/500 responses, what is never leaked. |
 | `guide/validation-and-authorization.md` | FluentValidation decorators, the transport-agnostic policy decorator, secure-by-default endpoints and `AllowAnonymous`. |
 | `guide/serialization.md` | JSON (Ark defaults, STJ source generation), MessagePack negotiation + required resolver, protobuf/NodaTime surrogates, polymorphism across the three wires. |

@@ -77,7 +77,7 @@ the graph produces a visible diff.
    generators actually emit.
 3. Surface format rules:
    - Ordinal sort (deterministic across OSes and compilations).
-   - Version-expanded: one set of entries per active `IntroducedIn`/`RetiredIn` version.
+   - Version-expanded: one set of entries per active `Versioning(Introduced, Retired)` version.
    - Recursive nested type traversal: every leaf field produces its own line, with the full
      dotted path (e.g. `CONTRACT Outer.Inner.Field : type`); collection members use `[]`
      notation (e.g. `CONTRACT Outer.Items[].Field : type`).

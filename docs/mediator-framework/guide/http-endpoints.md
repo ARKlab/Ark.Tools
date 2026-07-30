@@ -20,8 +20,8 @@ route is declared with the contract, while the handler remains HTTP-free.
 | `AllowedContentTypes` | `[]` | Exact multipart MIME allow-list; empty means all types. |
 | `MaxMessagePackStreamedItems` | `0` | Maximum buffered items for a streaming response negotiated as MessagePack; `0` means unlimited. |
 
-Version lifetime is declared independently with `[IntroducedIn]` and
-`[RetiredIn]`; see [versioning](versioning.md). `ApiGroup` is a separate
+Version lifetime is declared independently with `[Versioning]`; see
+[versioning](versioning.md). `ApiGroup` is a separate
 attribute that groups HTTP routes and OpenAPI operations.
 
 ## Binding workflow

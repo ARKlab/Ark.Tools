@@ -136,7 +136,7 @@ project builds under the repo's strict settings and its self-tests pass with
 - [x] **T8.5** Version lifetime (introduced/retired) with `{version}` route
   placeholder.
   - *Accept:* `[HttpEndpoint]` routes declare only `/api/v{version}/…`;
-    `IntroducedIn`/`RetiredIn` on the attribute drive generation of one route
+    `Versioning(Introduced, Retired)` drives generation of one route
     per active version; self-tests call the same contract on two versions and
     assert a retired contract is absent from later versions; a route-parameter
     (`{id}`) test passes on every generated version; gRPC generates one

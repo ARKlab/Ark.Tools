@@ -11,7 +11,7 @@
 
 The mediator sample uses `Microsoft.AspNetCore.OpenApi` (`AddOpenApi`) but:
 1. OpenAPI **3.1** schema output of generator-emitted endpoints is unverified (nullable handling,
-   `IntroducedIn`/`RetiredIn` per-version docs, polymorphic contracts).
+   `Versioning(Introduced, Retired)` per-version docs, polymorphic contracts).
 2. Both Swashbuckle.SwaggerUI and Scalar are present — decide deliberately.
 
 Files: `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs`
@@ -21,7 +21,7 @@ Files: `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.We
 ## Steps
 
 1. Verify 3.1 output: snapshot-test the generated document for one contract per feature: nullable
-   property, NodaTime type, polymorphic contract, versioned endpoint (`IntroducedIn`), multipart
+   property, NodaTime type, polymorphic contract, versioned endpoint (`Versioning`), multipart
    endpoint. Fix framework transformers where the schema is wrong.
 2. YAML endpoint: expose the document in YAML too if trivially supported by `MapOpenApi` (it is:
    `/openapi/{documentName}.yaml`); document the route.
