@@ -4,30 +4,22 @@
     <ArkApiSurfaceCurrentFile>$(IntermediateOutputPath)ArkApiSurface.current.txt</ArkApiSurfaceCurrentFile>
   </PropertyGroup>
 
+  <!-- Make the property visible to the Roslyn analyzer -->
+  <ItemGroup Condition="'$(ArkApiSurfaceEnabled)' != 'false'">
+    <CompilerVisibleProperty Include="ArkApiSurfaceEnabled" />
+  </ItemGroup>
+
+  <!-- Pass the baseline snapshot to the analyzer when it exists -->
+  <ItemGroup Condition="'$(ArkApiSurfaceEnabled)' == 'true' And Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">
+    <AdditionalFiles Include="$(MSBuildProjectDirectory)/ArkApiSurface.txt" />
+  </ItemGroup>
+
+  <!-- Copy the generated snapshot to obj/ as a dev convenience only; diagnostics come from the analyzer -->
   <Target Name="ArkApiSurfaceWriteCurrent"
           AfterTargets="CoreCompile"
           Condition="'$(ArkApiSurfaceEnabled)' == 'true'">
     <Copy SourceFiles="$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs"
           DestinationFiles="$(ArkApiSurfaceCurrentFile)"
           Condition="Exists('$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs')" />
-  </Target>
-
-  <Target Name="ArkApiSurfaceCompare"
-          AfterTargets="ArkApiSurfaceWriteCurrent"
-          Condition="'$(ArkApiSurfaceEnabled)' == 'true'">
-    <Error Code="ARKAPI001"
-           Text="ArkApiSurface.txt does not exist. Copy $(ArkApiSurfaceCurrentFile) to $(MSBuildProjectDirectory)/ArkApiSurface.txt."
-           Condition="!Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')" />
-    <GetFileHash Files="$(MSBuildProjectDirectory)/ArkApiSurface.txt"
-                 Condition="Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">
-      <Output TaskParameter="Hash" PropertyName="_ArkApiSurfaceBaselineHash" />
-    </GetFileHash>
-    <GetFileHash Files="$(ArkApiSurfaceCurrentFile)"
-                 Condition="Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">
-      <Output TaskParameter="Hash" PropertyName="_ArkApiSurfaceCurrentHash" />
-    </GetFileHash>
-    <Error Code="ARKAPI002"
-           Text="ArkApiSurface.txt differs from $(ArkApiSurfaceCurrentFile). Copy the generated file to accept the API change."
-           Condition="Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt') And '$(_ArkApiSurfaceBaselineHash)' != '$(_ArkApiSurfaceCurrentHash)'" />
   </Target>
 </Project>

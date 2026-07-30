@@ -4,13 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
-using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace Ark.MediatorFramework.ApiSurface;
 
-/// <summary>Generates the deterministic transport API surface consumed by the build target.</summary>
+/// <summary>Generates the deterministic transport API surface and emits per-contract diagnostics when the snapshot drifts.</summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 {
@@ -21,20 +21,132 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string ApiGroup = "Ark.MediatorFramework.ApiGroupAttribute";
     private const string ServerSet = "Ark.MediatorFramework.ServerSetAttribute";
 
+    private static readonly DiagnosticDescriptor MissingSnapshot = new(
+        "ARKAPI001",
+        "API surface snapshot missing",
+        "ArkApiSurface.txt is missing. Copy the generated snapshot to $(MSBuildProjectDirectory)/ArkApiSurface.txt and commit it.",
+        "Ark.MediatorFramework",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    private static readonly DiagnosticDescriptor ContractChanged = new(
+        "ARKAPI002",
+        "API surface contract changed",
+        "Contract '{0}' has changed since the last accepted snapshot. Update ArkApiSurface.txt to accept this change.",
+        "Ark.MediatorFramework",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        context.RegisterSourceOutput(context.CompilationProvider, static (spc, compilation) =>
-        {
-            var lines = new List<string>();
-            foreach (var type in AllTypes(compilation.Assembly.GlobalNamespace))
-                AddType(lines, type);
+        var surfaceProvider = context.CompilationProvider
+            .Select(static (compilation, _) => BuildSurface(compilation));
 
-            var orderedLines = lines.Distinct(StringComparer.Ordinal).OrderBy(line => line, StringComparer.Ordinal).ToArray();
-            var text = string.Join("\n", orderedLines) + (orderedLines.Length == 0 ? string.Empty : "\n");
+        // Emit the .g.cs snapshot file (unchanged behaviour)
+        context.RegisterSourceOutput(surfaceProvider, static (spc, surface) =>
+        {
+            var (lines, _) = surface;
+            var text = string.Join("\n", lines) + (lines.Length == 0 ? string.Empty : "\n");
             spc.AddSource("ArkApiSurface.g.cs", "/*\n" + text.Replace("*/", "* /") + "*/\n");
         });
+
+        // Read baseline from AdditionalFiles
+        var baselineProvider = context.AdditionalTextsProvider
+            .Where(static f => string.Equals(Path.GetFileName(f.Path), "ArkApiSurface.txt", StringComparison.OrdinalIgnoreCase))
+            .Collect();
+
+        // Read opt-out flag from MSBuild global properties
+        var enabledProvider = context.AnalyzerConfigOptionsProvider
+            .Select(static (opts, _) =>
+            {
+                opts.GlobalOptions.TryGetValue("build_property.ArkApiSurfaceEnabled", out var v);
+                // Only enable when the MSBuild property is explicitly set to "true"
+                // (propagated via CompilerVisibleProperty in the buildTransitive .targets).
+                // Absent means the project did not opt in or the .targets was not imported.
+                return string.Equals(v, "true", StringComparison.OrdinalIgnoreCase);
+            });
+
+        // Emit per-contract diagnostics when baseline drifts
+        context.RegisterSourceOutput(
+            surfaceProvider.Combine(baselineProvider).Combine(enabledProvider),
+            static (spc, combined) =>
+            {
+                var ((surface, baselineFiles), isEnabled) = combined;
+                var (currentLines, locations) = surface;
+                if (!isEnabled)
+                    return;
+
+                if (baselineFiles.IsEmpty)
+                {
+                    // Only require a snapshot when there are actual contracts to track
+                    if (currentLines.Length > 0)
+                        spc.ReportDiagnostic(Diagnostic.Create(MissingSnapshot, Location.None));
+                    return;
+                }
+
+                var baselineText = baselineFiles[0].GetText(spc.CancellationToken)?.ToString() ?? string.Empty;
+                var baselineSet = ParseSnapshotLines(baselineText);
+                var currentSet = new HashSet<string>(currentLines, StringComparer.Ordinal);
+
+                var changedOwners = new SortedSet<string>(StringComparer.Ordinal);
+                foreach (var line in currentSet.Except(baselineSet, StringComparer.Ordinal)
+                    .Concat(baselineSet.Except(currentSet, StringComparer.Ordinal)))
+                    changedOwners.Add(ContractOwner(line));
+
+                foreach (var name in changedOwners)
+                {
+                    var loc = locations.TryGetValue(name, out var l) ? l : Location.None;
+                    spc.ReportDiagnostic(Diagnostic.Create(ContractChanged, loc, name));
+                }
+            });
     }
+
+    // Builds the sorted, deduplicated surface lines and a contract-name → Location index.
+    private static (ImmutableArray<string> Lines, ImmutableDictionary<string, Location> Locations) BuildSurface(Compilation compilation)
+    {
+        var lines = new List<string>();
+        var locBuilder = ImmutableDictionary.CreateBuilder<string, Location>(StringComparer.Ordinal);
+
+        foreach (var type in AllTypes(compilation.Assembly.GlobalNamespace))
+        {
+            // ponytail: MinimallyQualifiedFormat == Name for non-generic non-nested types; generic
+            // response types are interfaces/collections and never get a CONTRACT header, so mismatch
+            // is not reachable in practice. Upgrade path: use FullyQualifiedFormat + strip namespace.
+            var key = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            if (!locBuilder.ContainsKey(key))
+                locBuilder[key] = type.Locations.FirstOrDefault() ?? Location.None;
+            AddType(lines, type);
+        }
+
+        var ordered = lines.Distinct(StringComparer.Ordinal)
+            .OrderBy(l => l, StringComparer.Ordinal)
+            .ToImmutableArray();
+        return (ordered, locBuilder.ToImmutable());
+    }
+
+    private static HashSet<string> ParseSnapshotLines(string text) =>
+        new(
+            text.TrimStart('\ufeff')
+                .Split('\n')
+                .Select(static l => l.TrimEnd('\r'))
+                .Where(static l => l.Length > 0 && l != "/*" && l != "*/"),
+            StringComparer.Ordinal);
+
+    // Extracts the contract owner name from a snapshot line.
+    // "CONTRACT Foo -> ..."   → "Foo"
+    // "CONTRACT Foo.Bar : T"  → "Foo"
+    // "REBUS Foo -> queue:x"  → "Foo"
+    private static string ContractOwner(string line)
+    {
+        var start = line.IndexOf(' ') + 1;
+        if (start <= 0 || start >= line.Length)
+            return line;
+        var end = line.IndexOfAny(_ownerTerminators, start);
+        return end < 0 ? line[start..] : line[start..end];
+    }
+
+    private static readonly char[] _ownerTerminators = { ' ', '.', '[' };
 
     private static void AddType(List<string> lines, INamedTypeSymbol type)
     {
