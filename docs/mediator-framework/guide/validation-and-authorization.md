@@ -30,7 +30,7 @@ structured status.
 [HttpEndpoint("POST", "/api/v{version}/greetings", Policy = "greetings.write")]
 [GrpcMethod("CreateGreeting")]
 [GrpcService("Greetings")]
-[RequireScopePolicy("greetings.write")]
+[PolicyAuthorize("greetings.write")]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 ```
 
@@ -38,6 +38,12 @@ Configure the host's authentication and default/fallback policy, then register
 the transport-agnostic authorization decorator. Generated endpoints are secure
 by default. Use `AllowAnonymous = true` only when the operation is intentionally
 public and tests prove that choice.
+
+`PolicyAuthorizeAttribute` is the framework attribute; it accepts a named
+policy or an `IAuthorizationPolicy` type. Derive a domain-specific attribute
+when a policy needs parameters, such as a required scope. `Policy` on
+`HttpEndpointAttribute` is the HTTP endpoint policy; use the contract attribute
+when the same policy must be enforced by gRPC and Rebus.
 
 ## Workflow
 

@@ -2,15 +2,14 @@
 
 The API-surface generator prevents a contract, route, or gRPC signature from
 changing unnoticed. It compares the current generated surface with the accepted
-`ArkApiSurface.txt` baseline when `ArkApiSurfaceEnabled` is enabled.
+`ArkApiSurface.txt` baseline in the application project directory.
 
 ## Establish and review the baseline
 
-1. Enable the API-surface build property for the application project.
-2. Build once and copy the generated surface to `ArkApiSurface.txt` in the
+1. Build once and copy the generated surface to `ArkApiSurface.txt` in the
    project directory.
-3. Include that file as an additional file and commit it.
-4. On later builds, review every `ARKAPI002` change before updating the baseline.
+2. Commit the file; the package's build assets supply it as an additional file.
+3. On later builds, review every `ARKAPI002` change before updating the baseline.
 
 **Outcome:** adding, removing, or changing a route, version range, gRPC method,
 message member, or Rebus route fails the build until the approved baseline

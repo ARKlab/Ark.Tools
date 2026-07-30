@@ -1,8 +1,8 @@
 # Errors
 
 Handlers report expected domain failures with domain exceptions. The host
-converts them into the appropriate public error representation: RFC 7807
-Problem Details for HTTP and `Google.Rpc.Status` for gRPC.
+converts them into RFC 7807 Problem Details for HTTP and `Google.Rpc.Status`
+for gRPC.
 
 ## Return a business failure
 
@@ -20,7 +20,22 @@ pipeline.
 
 **Outcome:** callers receive a stable, machine-readable business error rather
 than a successful response, an unstructured exception string, or a server stack
-trace. Generated OpenAPI describes standard 400, 403, and 500 responses.
+trace.
+
+## Know the public mappings
+
+| Failure | HTTP | gRPC |
+| --- | --- | --- |
+| FluentValidation input error | 400 | `InvalidArgument` |
+| Business rule violation | 400 | `FailedPrecondition` |
+| Policy authorization failure | 403 | `PermissionDenied` |
+| Optimistic concurrency conflict | 409 | `Aborted` |
+| ETag precondition mismatch | 412 | `FailedPrecondition` |
+| Unhandled exception | 500 | `Internal` |
+
+Configure `ArkGrpcErrorOptions.IncludeExceptionDetails` only for trusted
+diagnostic environments. Development includes details automatically; production
+responses must not expose exception messages or stack traces.
 
 ## Design public failures deliberately
 
