@@ -1,8 +1,10 @@
 # Validation and authorization
 
-FluentValidation validators are discovered as decorators and run before the
-handler. Authorization is transport-agnostic: decorate the contract with a
-policy, while endpoint middleware and Rebus/gRPC adapters enforce it.
+Validation and authorization run before a handler so every enabled transport
+enforces the same application rules. Validators describe input validity;
+policies describe whether the current user may perform the operation.
+
+## Validate the contract
 
 ```csharp
 public sealed class SearchGreetingsValidator : AbstractValidator<SearchGreetingsQuery>
@@ -15,27 +17,35 @@ public sealed class SearchGreetingsValidator : AbstractValidator<SearchGreetings
 }
 ```
 
-Source: [`GreetingValidators.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/GreetingValidators.cs).
+Register validators from the application assembly and the validation decorator
+with the container.
+
+**Outcome:** invalid requests do not enter the handler. HTTP callers receive a
+validation Problem Details response and gRPC callers receive the corresponding
+structured status.
+
+## Require an authenticated scope
 
 ```csharp
-[HttpEndpoint("POST", "/api/v{version}/greetings", AcceptsMessagePack = true, SuccessStatusCode = 201)]
-[RebusMessage]
+[HttpEndpoint("POST", "/api/v{version}/greetings", Policy = "greetings.write")]
 [GrpcMethod("CreateGreeting")]
 [GrpcService("Greetings")]
-[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
-[ProtoContract]
-[MessagePackObject(true)]
-public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
-{
-    /// <summary>Gets the name to greet.</summary>
-    [ProtoMember(1)]
-    public string Name { get; init; } = string.Empty;
-}
+[RequireScopePolicy("greetings.write")]
+public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 ```
 
-Source: [`GreetingContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs).
+Configure the host's authentication and default/fallback policy, then register
+the transport-agnostic authorization decorator. Generated endpoints are secure
+by default. Use `AllowAnonymous = true` only when the operation is intentionally
+public and tests prove that choice.
 
-Configure an authenticated default/fallback policy. Generated endpoints are
-secure by default; `[AllowAnonymous]` is the explicit escape hatch for public
-operations. For custom rules, implement an authorization decorator/policy.
-Rationale: [`design.md`](../design.md).
+## Workflow
+
+1. Validate syntax, ranges, and invariants in a validator.
+2. Put permission requirements on the contract.
+3. Keep ownership checks that require application data in the authorization
+   decorator or handler policy service.
+4. Test both allowed and denied public calls for each exposed transport.
+
+Use a custom decorator or policy provider for rules that cannot be expressed by
+the supplied policy attributes. Architecture rationale: [design.md](../design.md).

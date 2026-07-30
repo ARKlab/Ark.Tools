@@ -1,30 +1,54 @@
 # Rebus
 
-`[RebusMessage]` turns a request or command into a generated Rebus handler.
-`OwnerQueue` fixes ownership; otherwise generated routing follows the message
-contract. Each delivery gets a per-message scope, and cancellation flows into
-the handler.
+`[RebusMessage]` makes a request or command available to generated Rebus
+handlers. Delivery creates a message scope and then invokes the same
+transport-neutral handler used by HTTP or gRPC.
+
+## Declare ownership
 
 ```csharp
-[RebusMessage(OwnerQueue = "ark.mediator.sample")]
-public sealed record CompleteGreetingCompositionRequest : IRequest<GreetingResponse>
+[RebusMessage(OwnerQueue = "greetings")]
+public sealed record CompleteGreetingCommand : ICommand
 {
-    public Guid Id { get; init; }
-    public string Name { get; init; } = string.Empty;
+    public required Guid Id { get; init; }
 }
 ```
 
-Source: [`GreetingContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs).
+`OwnerQueue` names the queue responsible for handling the message. Leave it
+unset only when the application's generated routing convention is sufficient.
+Do not use a blank queue name.
 
-Compose HTTP and bus work by giving the HTTP request only `[HttpEndpoint]` and
-having its handler send the Rebus message:
+**Outcome:** sending `CompleteGreetingCommand` routes it to `greetings`; the
+receiver creates its scoped dependencies, calls
+`ICommandHandler<CompleteGreetingCommand>`, and propagates delivery
+cancellation to that handler.
+
+## Compose synchronous and asynchronous work
+
+Keep an immediate HTTP operation and delayed bus work as separate contracts:
 
 ```csharp
-await _bus.SendLocal(new CompleteGreetingCompositionRequest { Id = id, Name = Request.Name }).ConfigureAwait(false);
+public async Task<GreetingResponse> ExecuteAsync(
+    CreateGreetingRequest request,
+    CancellationToken cancellationToken = default)
+{
+    var greeting = await _store.CreateAsync(request.Name, cancellationToken)
+        .ConfigureAwait(false);
+    await _bus.SendLocal(new CompleteGreetingCommand { Id = greeting.Id })
+        .ConfigureAwait(false);
+    return greeting;
+}
 ```
 
-Source: [`GreetingHandlers.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/GreetingHandlers.cs).
+The HTTP caller receives the created greeting. A worker later performs the
+completion work under normal Rebus retry and error-queue behavior. Use an
+outbox when persistence and sending must be atomic.
 
-The escape hatch is a handwritten `IHandleMessages<T>` implementation when
-legacy routing or bus behavior is required. Rationale:
-[`design.md`](../design.md).
+## Limits and escape hatch
+
+Rebus messages are not streaming responses: an `IAsyncEnumerable<T>` result
+cannot be meaningfully delivered and is rejected. Use a command plus durable
+state for long-running work. Write `IHandleMessages<T>` directly for a legacy
+message shape, custom retry policy, or bus behavior outside generated routing.
+
+Architecture rationale: [design.md](../design.md).
