@@ -3,32 +3,13 @@
 
 namespace Ark.MediatorFramework;
 
-/// <summary>Declares the first API version in which a contract is available.</summary>
+/// <summary>Declares the API version lifetime of a contract.</summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class IntroducedInAttribute : Attribute
+public sealed class VersioningAttribute : Attribute
 {
-    /// <summary>Initializes a new instance of the <see cref="IntroducedInAttribute"/> class.</summary>
-    /// <param name="version">The inclusive first API version.</param>
-    public IntroducedInAttribute(int version)
-    {
-        Version = version;
-    }
-
     /// <summary>Gets the inclusive first API version.</summary>
-    public int Version { get; }
-}
-
-/// <summary>Declares the first API version in which a contract is unavailable.</summary>
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class RetiredInAttribute : Attribute
-{
-    /// <summary>Initializes a new instance of the <see cref="RetiredInAttribute"/> class.</summary>
-    /// <param name="version">The exclusive first retired API version.</param>
-    public RetiredInAttribute(int version)
-    {
-        Version = version;
-    }
+    public int Introduced { get; set; }
 
     /// <summary>Gets the exclusive first retired API version.</summary>
-    public int Version { get; }
+    public int Retired { get; set; }
 }

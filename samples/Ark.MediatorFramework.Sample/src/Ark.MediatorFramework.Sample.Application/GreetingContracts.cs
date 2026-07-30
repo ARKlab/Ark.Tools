@@ -166,7 +166,7 @@ public sealed record GreetingCreatedNotification : ICommand
 /// Pure transport-agnostic query (read). Declared with <see cref="HttpEndpointAttribute"/> only,
 /// so the generator exposes it as an HTTP GET (a query is a read, not a bus message).
 /// </summary>
-[RetiredIn(2)]
+[Versioning(Introduced = 1, Retired = 2)]
 [HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
 [GrpcMethod("GetGreeting")]
 [GrpcService("Greetings")]
@@ -199,7 +199,7 @@ public sealed record GreetingResponseV2
 /// Version 2 read exposed under the versioned replacement route. The generator expands the route
 /// once for each active API version and places it in the corresponding OpenAPI document.
 /// </summary>
-[IntroducedIn(2)]
+[Versioning(Introduced = 2)]
 [HttpEndpoint("GET", "/api/v{version}/greetings-v2/{id}")]
 [GrpcMethod("GetGreeting")]
 [GrpcService("Greetings")]

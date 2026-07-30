@@ -150,8 +150,7 @@ public sealed class GeneratorSnapshotTests
             using ProtoBuf;
             public sealed record Response(Inner Value);
             public sealed record Inner([property: ProtoMember(1)] string Name);
-            [IntroducedIn(1)]
-            [RetiredIn(3)]
+            [Versioning(Introduced = 1, Retired = 3)]
             [HttpEndpoint("GET", "/v{version}/items")]
             [GrpcMethod("GetItem")]
             public sealed class GetItem : IQuery<Response>
@@ -222,8 +221,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
-            [IntroducedIn(1)]
-            [RetiredIn(3)]
+            [Versioning(Introduced = 1, Retired = 3)]
             [HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
             public sealed class GetGreeting : IQuery<string>
             {
@@ -662,14 +660,13 @@ public sealed class GeneratorSnapshotTests
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
             [GrpcService("Greetings")]
-            [IntroducedIn(1)]
-            [RetiredIn(2)]
+            [Versioning(Introduced = 1, Retired = 2)]
             [GrpcMethod("GetGreeting")]
             public sealed class GetGreeting : IQuery<string>
             {
             }
             [GrpcService("Greetings")]
-            [IntroducedIn(2)]
+            [Versioning(Introduced = 2)]
             [GrpcMethod("CreateGreeting")]
             public sealed class CreateGreeting : IRequest<string>
             {
