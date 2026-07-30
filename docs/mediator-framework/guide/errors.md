@@ -14,6 +14,32 @@ if (await _store.ExistsAsync(request.Name, cancellationToken).ConfigureAwait(fal
 }
 ```
 
+Create a violation by deriving from `BusinessRuleViolation`. Its public
+properties are safe, structured data returned to clients, so make them
+client-actionable and never include secrets or exception text:
+
+```csharp
+using Ark.Tools.Core.BusinessRuleViolation;
+
+public sealed class GreetingAlreadyExistsViolation : BusinessRuleViolation
+{
+    public GreetingAlreadyExistsViolation(string name)
+        : base("GREETING_ALREADY_EXISTS")
+    {
+        Name = name;
+        Detail = "A greeting with this name already exists.";
+    }
+
+    public string Name { get; }
+}
+```
+
+Throw `BusinessRuleViolationException` from the handler as shown above. The
+HTTP problem-details mapper and gRPC interceptor expose the base `Status`,
+`Title`, `Detail`, and safe public derived properties. Use FluentValidation for
+malformed input; use a violation for valid input that cannot be accepted by a
+business rule.
+
 Register `AddArkProblemDetailsExceptionHandler()` and place
 `UseArkProblemDetailsExceptionHandler()` at the outer edge of the HTTP
 pipeline.
@@ -32,6 +58,71 @@ trace.
 | Optimistic concurrency conflict | 409 | `Aborted` |
 | ETag precondition mismatch | 412 | `FailedPrecondition` |
 | Unhandled exception | 500 | `Internal` |
+
+## Inspect HTTP error responses
+
+A business-rule failure is an RFC 7807 response. For the violation above:
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+```
+
+```json
+{
+  "type": "https://httpstatuses.com/400",
+  "title": "GREETING_ALREADY_EXISTS",
+  "status": 400,
+  "detail": "A greeting with this name already exists.",
+  "name": "hello"
+}
+```
+
+A FluentValidation failure is HTTP 400 and identifies invalid input fields.
+For example, a missing name can produce:
+
+```json
+{
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "errors": {
+    "Name": ["'Name' must not be empty."]
+  }
+}
+```
+
+Exact validation text depends on the application's validators. Clients should
+branch on stable error codes/statuses rather than parsing human-readable
+`detail` text.
+
+## Inspect gRPC error responses
+
+gRPC returns a non-OK status and rich `google.rpc.Status` details. A business
+violation maps to `FailedPrecondition` and has an
+`ark.mediator.ArkBusinessRuleViolation` detail:
+
+```text
+code: FAILED_PRECONDITION
+message: "GREETING_ALREADY_EXISTS"
+details {
+  type_url: "type.googleapis.com/ark.mediator.ArkBusinessRuleViolation"
+  value: { type: "GreetingAlreadyExistsViolation", title: "GREETING_ALREADY_EXISTS",
+           status: 400, detail: "A greeting with this name already exists.",
+           extensions: { "Name": "\"hello\"" } }
+}
+```
+
+FluentValidation maps to `InvalidArgument` with a `google.rpc.BadRequest`
+detail. Each invalid member is a `field_violations` entry:
+
+```text
+code: INVALID_ARGUMENT
+message: "Validation failed"
+details {
+  type_url: "type.googleapis.com/google.rpc.BadRequest"
+  value: { field_violations: [{ field: "Name", description: "'Name' must not be empty." }] }
+}
+```
 
 Configure `ArkGrpcErrorOptions.IncludeExceptionDetails` only for trusted
 diagnostic environments. Development includes details automatically; production

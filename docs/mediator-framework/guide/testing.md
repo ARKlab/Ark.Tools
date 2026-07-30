@@ -15,6 +15,53 @@ mapping, and handler dispatch together.
 4. Run Rebus handlers with the configured message scope and assert the durable
    business result.
 
+The sample's
+`samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Hooks/SampleTestContext.cs`
+is the source to copy for a TestServer host. It builds the production container,
+uses the normal startup registration/mapping, starts an in-process host, and
+provides both an `HttpClient` and a gRPC message handler.
+
+```csharp
+using var context = new SampleTestContext();
+context.Client.DefaultRequestHeaders.Authorization =
+    new AuthenticationHeaderValue("Bearer", token);
+
+using var response = await context.Client.GetAsync("/api/v1/greetings/" + id);
+response.StatusCode.Should().Be(HttpStatusCode.OK);
+```
+
+The generated proto should be consumed by a separate test client project. The
+sample's
+`samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient/Ark.MediatorFramework.Sample.GrpcClient.csproj`
+uses `Grpc.Tools` with `GrpcServices="Client"` and references the exported
+schema. Create the in-process gRPC client from the test host:
+
+```csharp
+using var context = new SampleTestContext();
+using var channel = GrpcChannel.ForAddress(
+    "http://localhost",
+    new GrpcChannelOptions { HttpHandler = context.CreateGrpcHandler() });
+var client = new GreetingsV1.GreetingsV1Client(channel);
+
+var reply = await client.GetGreetingAsync(
+    new GetGreetingQuery { Id = ByteString.CopyFrom(id.ToByteArray()) },
+    new Metadata { { "Authorization", "Bearer " + token } }).ResponseAsync;
+
+reply.Message.Should().Be("Hello Ada");
+```
+
+The channel is disposed with the test, requests never leave the process, and
+the call follows the generated protobuf contract. Test a gRPC failure with an
+`RpcException`:
+
+```csharp
+var action = async () => await client.GetGreetingAsync(
+    new GetGreetingQuery { Id = ByteString.Empty }).ResponseAsync;
+
+var exception = await action.Should().ThrowAsync<RpcException>();
+exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
+```
+
 ```csharp
 var response = await client.GetAsync("/api/v1/greetings/" + greetingId);
 response.StatusCode.Should().Be(HttpStatusCode.OK);

@@ -23,6 +23,40 @@ receiver creates its scoped dependencies, calls
 `ICommandHandler<CompleteGreetingCommand>`, and propagates delivery
 cancellation to that handler.
 
+## Generate type-based routing
+
+The generator also emits `ConfigureArkRebusRouting<TAssemblyMarker>`. Call it
+while configuring the Rebus transport so every `[RebusMessage(OwnerQueue = ...)]`
+contract is mapped to the declared destination:
+
+```csharp
+Configure.With(activator)
+    .Transport(t => t.UseInMemoryTransport(network, "sender"))
+    .Routing(r => r.ConfigureArkRebusRouting<ApplicationAssemblyMarker>())
+    .Start();
+```
+
+Generated routing is type based. The declaration below produces the equivalent
+of `typeBased.Map<CompleteGreetingCommand>("greetings")`:
+
+```csharp
+[RebusMessage(OwnerQueue = "greetings")]
+public sealed record CompleteGreetingCommand : ICommand;
+```
+
+| `OwnerQueue` value | Generated routing | Use case |
+| --- | --- | --- |
+| `"greetings"` | Maps this message type to `greetings`. | One owned worker queue. |
+| `null`/omitted | No explicit type map. | A local message or an application-specific routing convention. |
+| Empty/whitespace | Invalid. | Never valid; choose a queue or omit the property. |
+
+Call `RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>` in the receiving
+application to register generated handlers, and call
+`ConfigureArkRebusRouting<TAssemblyMarker>` in sending applications. A process
+that both sends and receives normally calls both. Copy the generated routing
+method rather than manually duplicating route maps; the source generator keeps
+it synchronized with contract ownership.
+
 ## Compose synchronous and asynchronous work
 
 Keep an immediate HTTP operation and delayed bus work as separate contracts:

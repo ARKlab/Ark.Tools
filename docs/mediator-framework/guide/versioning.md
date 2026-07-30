@@ -1,19 +1,24 @@
 # Versioning
 
 Version contracts rather than silently changing a released route, protobuf
-field, or response shape. `IntroducedIn` is inclusive and `RetiredIn` is the
-first version in which an endpoint is unavailable.
+field, or response shape. `[IntroducedIn(version)]` is a transport-independent,
+inclusive contract lifetime. `[RetiredIn(version)]` is the first version in
+which the contract is unavailable. Apply them once to a contract exposed over
+one or more transports.
 
 ## Supersede an operation
 
 ```csharp
-[HttpEndpoint("GET", "/api/v{version}/greetings/{id}", RetiredIn = 2)]
-[GrpcMethod("GetGreeting", RetiredIn = 2)]
+[IntroducedIn(1)]
+[RetiredIn(2)]
+[HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
+[GrpcMethod("GetGreeting")]
 [GrpcService("Greetings")]
 public sealed record GetGreetingV1Query : IQuery<GreetingResponseV1>;
 
-[HttpEndpoint("GET", "/api/v{version}/greetings/{id}", IntroducedIn = 2)]
-[GrpcMethod("GetGreeting", IntroducedIn = 2)]
+[IntroducedIn(2)]
+[HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
+[GrpcMethod("GetGreeting")]
 [GrpcService("Greetings")]
 public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>;
 ```
@@ -22,6 +27,16 @@ public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>;
 2 exposes the replacement. The generator expands `{version}` in HTTP routes,
 builds version-specific OpenAPI documents, and emits version-specific gRPC
 service shapes.
+
+| Attribute | Default | Meaning |
+| --- | --- | --- |
+| `[IntroducedIn(1)]` | Version 1 | First version that exposes the contract. |
+| `[RetiredIn(2)]` | Never retired | First version that no longer exposes the contract. `RetiredIn(2)` therefore serves version 1 only. |
+
+The lifetime applies consistently to every generated transport on that
+contract. Do not place a version lifetime on a particular route or gRPC method:
+if two transports deliberately need different lifetimes, model separate
+contracts and explicitly migrate consumers.
 
 ## Decide whether a new version is required
 

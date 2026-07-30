@@ -150,7 +150,9 @@ public sealed class GeneratorSnapshotTests
             using ProtoBuf;
             public sealed record Response(Inner Value);
             public sealed record Inner([property: ProtoMember(1)] string Name);
-            [HttpEndpoint("GET", "/v{version}/items", IntroducedIn = 1, RetiredIn = 3)]
+            [IntroducedIn(1)]
+            [RetiredIn(3)]
+            [HttpEndpoint("GET", "/v{version}/items")]
             [GrpcMethod("GetItem")]
             public sealed class GetItem : IQuery<Response>
             {
@@ -164,7 +166,7 @@ public sealed class GeneratorSnapshotTests
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
-        first.Should().Contain("CONTRACT GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1+]");
+        first.Should().Contain("CONTRACT GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
         first.Should().Contain("CONTRACT Response");
         first.Should().NotContain("GRPC-FIELD");
         first.Should().NotContain("HTTP GET");
@@ -220,7 +222,9 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
-            [HttpEndpoint("GET", "/api/v{version}/greetings/{id}", IntroducedIn = 1, RetiredIn = 3)]
+            [IntroducedIn(1)]
+            [RetiredIn(3)]
+            [HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
             public sealed class GetGreeting : IQuery<string>
             {
                 public string Id { get; set; } = string.Empty;
@@ -658,12 +662,15 @@ public sealed class GeneratorSnapshotTests
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
             [GrpcService("Greetings")]
-            [GrpcMethod("GetGreeting", IntroducedIn = 1, RetiredIn = 2)]
+            [IntroducedIn(1)]
+            [RetiredIn(2)]
+            [GrpcMethod("GetGreeting")]
             public sealed class GetGreeting : IQuery<string>
             {
             }
             [GrpcService("Greetings")]
-            [GrpcMethod("CreateGreeting", IntroducedIn = 2)]
+            [IntroducedIn(2)]
+            [GrpcMethod("CreateGreeting")]
             public sealed class CreateGreeting : IRequest<string>
             {
             }

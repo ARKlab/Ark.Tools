@@ -25,12 +25,6 @@ public sealed class HttpEndpointAttribute : Attribute
     /// <summary>Gets the route template.</summary>
     public string Template { get; }
 
-    /// <summary>Gets or sets the first API version in which the endpoint is available.</summary>
-    public int IntroducedIn { get; set; } = 1;
-
-    /// <summary>Gets or sets the exclusive API version in which the endpoint is retired, or zero if never.</summary>
-    public int RetiredIn { get; set; }
-
     /// <summary>
     /// Gets or sets the success status code. Zero selects the handler-kind default:
     /// <c>200 OK</c> for requests and queries.

@@ -3,6 +3,27 @@
 `[HttpEndpoint]` generates a Minimal API endpoint for a request or query. The
 route is declared with the contract, while the handler remains HTTP-free.
 
+## Attribute reference
+
+| Property | Type/default | Effect |
+| --- | --- | --- |
+| Constructor `verb` | required `string` | HTTP method passed to Minimal API, for example `GET`, `POST`, `PUT`, `PATCH`, or `DELETE`. |
+| Constructor `template` | required `string` | Route template. `{propertyName}` binds a matching property; `{version}` expands for each active API version. |
+| `SuccessStatusCode` | `0` | Status for a non-null successful result. `0` uses `200 OK`. Use `201` for creation or another documented success response. |
+| `NullResultStatusCode` | `0` | Status for a null result. `0` is `404 Not Found` for queries and `204 No Content` for requests. |
+| `AcceptsMessagePack` | `false` | Enables MessagePack negotiation in addition to JSON for supported endpoint shapes. |
+| `Policy` | `null` | Named ASP.NET Core authorization policy required by the endpoint. |
+| `AllowAnonymous` | `false` | Explicitly removes the normal authorization requirement. Use only for intentionally public operations. |
+| `RequireAntiforgery` | `false` | Requires antiforgery validation for generated multipart uploads. |
+| `MaxRequestBodySizeBytes` | `0` | Multipart request limit in bytes; `0` leaves the host default. |
+| `MaxFileCount` | `0` | Maximum multipart files; `0` means unlimited. |
+| `AllowedContentTypes` | `[]` | Exact multipart MIME allow-list; empty means all types. |
+| `MaxMessagePackStreamedItems` | `0` | Maximum buffered items for a streaming response negotiated as MessagePack; `0` means unlimited. |
+
+Version lifetime is declared independently with `[IntroducedIn]` and
+`[RetiredIn]`; see [versioning](versioning.md). `ApiGroup` is a separate
+attribute that groups HTTP routes and OpenAPI operations.
+
 ## Binding workflow
 
 Route placeholders bind to properties with the same name. Mark values that must
@@ -56,5 +77,20 @@ limits, accepted media types, and antiforgery are configured on
 Use a hand-written Minimal API mapping for custom route parsing, a nonstandard
 request shape, or a response that cannot use generated status/serialization
 rules. See [escape hatches](escape-hatches.md).
+
+For example, the following public status behavior is explicit:
+
+```csharp
+[ApiGroup("Greetings")]
+[HttpEndpoint(
+    "POST",
+    "/api/v{version}/greetings",
+    SuccessStatusCode = StatusCodes.Status201Created,
+    Policy = "greetings.write")]
+public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
+```
+
+A successful handler response becomes `201 Created`. A caller who does not
+satisfy `greetings.write` receives `403 Forbidden`; the handler is not invoked.
 
 Architecture rationale: [design.md](../design.md).

@@ -20,11 +20,6 @@ public sealed class GrpcMethodAttribute : Attribute
     /// <summary>Gets the explicit gRPC method name, or <see langword="null"/> to use the contract type name.</summary>
     public string? Name { get; }
 
-    /// <summary>Gets or sets the first API version in which the method is available.</summary>
-    public int IntroducedIn { get; set; } = 1;
-
-    /// <summary>Gets or sets the exclusive API version in which the method is retired, or zero if never.</summary>
-    public int RetiredIn { get; set; }
 }
 
 /// <summary>

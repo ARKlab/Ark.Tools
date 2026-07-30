@@ -28,6 +28,8 @@ namespace Ark.MediatorFramework.Generators
         private const string GrpcMethodAttribute = "Ark.MediatorFramework.GrpcMethodAttribute";
         private const string GrpcServiceAttribute = "Ark.MediatorFramework.GrpcServiceAttribute";
         private const string ApiGroupAttribute = "Ark.MediatorFramework.ApiGroupAttribute";
+        private const string IntroducedInAttribute = "Ark.MediatorFramework.IntroducedInAttribute";
+        private const string RetiredInAttribute = "Ark.MediatorFramework.RetiredInAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
@@ -217,8 +219,8 @@ namespace Ark.MediatorFramework.Generators
                     ? AttachmentRequestKind.Collection
                     : AttachmentRequestKind.Single;
             var grpcMethod = grpc.ConstructorArguments.FirstOrDefault().Value as string ?? type.Name;
-            var grpcIntroducedIn = NamedInt(grpc, "IntroducedIn", 1);
-            var grpcRetiredIn = NamedInt(grpc, "RetiredIn", 0);
+            var grpcIntroducedIn = Version(type, IntroducedInAttribute, 1);
+            var grpcRetiredIn = Version(type, RetiredInAttribute, 0);
             var apiGroup = apiGroupAttribute is null
                 ? null
                 : type.GetAttributes()
@@ -255,6 +257,15 @@ namespace Ark.MediatorFramework.Generators
         {
             var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
             return argument.Value.Value is int value ? value : defaultValue;
+        }
+
+        private static int Version(INamedTypeSymbol type, string attributeName, int defaultValue)
+        {
+            var attribute = type.GetAttributes().FirstOrDefault(
+                candidate => candidate.AttributeClass?.ToDisplayString() == attributeName);
+            return attribute?.ConstructorArguments.FirstOrDefault().Value is int version
+                ? version
+                : defaultValue;
         }
 
         private static bool IsAttachmentType(ITypeSymbol type, INamedTypeSymbol? attachmentType)

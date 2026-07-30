@@ -36,11 +36,72 @@ usable over HTTP or Rebus when those attributes are also present.
 ## Export and consume the schema
 
 The build exports generated `.proto` files without launching the application.
-Set `ArkExportProtoDir` to choose the output directory; set
-`ArkExportProto=false` to disable export, and use `ArkAdditionalProto` for
-hand-written shared proto files. Treat the exported schema as a release
-artifact: generate clients from it, commit or publish it according to the
-consumer's workflow, and review every field-number change as a wire change.
+
+| MSBuild setting | Default | Meaning |
+| --- | --- | --- |
+| `ArkExportProtoDir` | package-defined output | Directory receiving generated `.proto` files. Use a source-controlled directory when another project generates clients from the schema. |
+| `ArkExportProto` | `true` | Set to `false` to skip schema export. Generated server endpoints still work. |
+| `ArkAdditionalProto` | empty item list | Additional hand-written proto files available during export, for shared messages or a hand-written service. |
+
+```xml
+<PropertyGroup>
+  <ArkExportProtoDir>$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
+</PropertyGroup>
+<ItemGroup>
+  <ArkAdditionalProto Include="proto/common.proto" />
+</ItemGroup>
+```
+
+For the contracts above, generated output is equivalent to:
+
+```proto
+syntax = "proto3";
+package greetings.v1;
+
+service GreetingsV1 {
+  rpc GetGreeting(GetGreetingQuery) returns (GreetingResponse);
+}
+
+message GetGreetingQuery {
+  bytes id = 1;
+}
+
+message GreetingResponse {
+  string message = 1;
+}
+```
+
+The actual namespace, message encoding, imported well-known files, and service
+suffix follow the exported contract. Treat the exported file—not this
+illustration—as the source of truth. The sample's generated schemas are written
+to `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/proto`
+when it builds; its `GrpcClient` test project shows the exact client setup to
+copy.
+
+Generate a strongly typed C# client in a consumer or test project:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="Grpc.Net.Client" />
+  <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+  <Protobuf Include="../MyApplication/proto/Greetings.proto"
+            GrpcServices="Client" />
+</ItemGroup>
+```
+
+```csharp
+using var channel = GrpcChannel.ForAddress("https://api.example.test");
+var client = new GreetingsV1.GreetingsV1Client(channel);
+var reply = await client.GetGreetingAsync(
+    new GetGreetingQuery { Id = ByteString.CopyFrom(id.ToByteArray()) });
+
+Console.WriteLine(reply.Message);
+```
+
+The client call sends `GetGreetingQuery`, waits for one `GreetingResponse`, and
+throws `RpcException` for a non-success gRPC status. Pin, publish, or commit
+the exported schema according to the consumer workflow, and review every
+field-number change as a wire change.
 
 Enable server reflection only where operator tools need it. Clients send normal
 gRPC authorization metadata; authentication remains a host concern.

@@ -31,6 +31,8 @@ namespace Ark.MediatorFramework.Generators
         private const string ETagAttribute = "Ark.MediatorFramework.ETagAttribute";
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
         private const string ApiGroupAttribute = "Ark.MediatorFramework.ApiGroupAttribute";
+        private const string IntroducedInAttribute = "Ark.MediatorFramework.IntroducedInAttribute";
+        private const string RetiredInAttribute = "Ark.MediatorFramework.RetiredInAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private const string List = "System.Collections.Generic.List`1";
@@ -298,8 +300,8 @@ namespace Ark.MediatorFramework.Generators
             verb = verb!.ToUpperInvariant();
             if (verb is not ("GET" or "POST" or "PUT" or "DELETE" or "PATCH"))
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.UnknownHttpVerb, type.Name, GetLocation(http), verb));
-            var httpIntroducedIn = NamedInt(http, "IntroducedIn", 1);
-            var httpRetiredIn = NamedInt(http, "RetiredIn", 0);
+            var httpIntroducedIn = Version(type, IntroducedInAttribute, 1);
+            var httpRetiredIn = Version(type, RetiredInAttribute, 0);
             var successStatusCode = NamedInt(http, "SuccessStatusCode", 0);
             var nullResultStatusCode = NamedInt(http, "NullResultStatusCode", 0);
             var acceptsMessagePack = NamedBool(http, "AcceptsMessagePack");
@@ -436,6 +438,15 @@ namespace Ark.MediatorFramework.Generators
         {
             var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
             return argument.Value.Value is int value ? value : defaultValue;
+        }
+
+        private static int Version(INamedTypeSymbol type, string attributeName, int defaultValue)
+        {
+            var attribute = type.GetAttributes().FirstOrDefault(
+                candidate => candidate.AttributeClass?.ToDisplayString() == attributeName);
+            return attribute?.ConstructorArguments.FirstOrDefault().Value is int version
+                ? version
+                : defaultValue;
         }
 
         private static bool NamedBool(AttributeData attribute, string name)
