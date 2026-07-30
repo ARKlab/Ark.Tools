@@ -13,6 +13,7 @@ using System.Reflection;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -137,6 +138,36 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF019");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorIsDeterministicAndIncludesNestedFields()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            public sealed record Response(Inner Value);
+            public sealed record Inner([property: ProtoMember(1)] string Name);
+            [HttpEndpoint("GET", "/v{version}/items", IntroducedIn = 1, RetiredIn = 3)]
+            [GrpcMethod("GetItem")]
+            public sealed class GetItem : IQuery<Response>
+            {
+                [ProtoMember(1)]
+                public int Id { get; set; }
+            }
+            """;
+
+        var first = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var second = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        first.Should().Be(second);
+        first.Should().Contain("CONTRACT Response.Value.Name");
+        first.Should().Contain("CONTRACT GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1+]");
+        first.Should().Contain("CONTRACT Response");
+        first.Should().NotContain("GRPC-FIELD");
+        first.Should().NotContain("HTTP GET");
     }
 
     [TestMethod]
@@ -1148,5 +1179,142 @@ public sealed class GeneratorSnapshotTests
             Environment.NewLine,
             result.Results.SelectMany(generator => generator.GeneratedSources).Select(generator => generator.SourceText.ToString())),
             result.Diagnostics);
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorEmitsMissingSnapshotDiagnosticWhenEnabled()
+    {
+        var result = RunApiSurfaceGeneratorResult(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
+            """,
+            baseline: null,
+            enabled: true);
+
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI001");
+        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorEmitsPerContractDiagnosticsWhenSnapshotDiffers()
+    {
+        const string source = """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
+            """;
+
+        // A stale baseline with a different field on GetItem
+        const string staleBaseline = "/*\nCONTRACT GetItem -> string [group=Ark] [http=GET /items/{id}] [version=1+]\nCONTRACT GetItem.OldField : int\n*/\n";
+
+        var result = RunApiSurfaceGeneratorResult(source, baseline: staleBaseline, enabled: true);
+
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002" && d.GetMessage().Contains("GetItem"));
+        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorEmitsNoDiagnosticsWhenSnapshotMatches()
+    {
+        const string source = """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
+            """;
+
+        // Get the actual current snapshot from the generator
+        var snapshot = RunApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
+
+        var result = RunApiSurfaceGeneratorResult(source, baseline: snapshot, enabled: true);
+
+        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
+        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorSkipsComparisonWhenDisabled()
+    {
+        var result = RunApiSurfaceGeneratorResult(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
+            """,
+            baseline: null,
+            enabled: false);
+
+        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
+        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
+    }
+
+    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) RunApiSurfaceGeneratorResult(
+        string source,
+        string? baseline,
+        bool enabled)
+    {
+        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(path => MetadataReference.CreateFromFile(path))
+            .Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
+            ]);
+        var compilation = CSharpCompilation.Create(
+            "ApiSurfaceTest",
+            [CSharpSyntaxTree.ParseText(source)],
+            references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        AdditionalText[] additionalTexts = baseline is null
+            ? []
+            : [new TestAdditionalText("ArkApiSurface.txt", baseline)];
+
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator().AsSourceGenerator()],
+            additionalTexts: additionalTexts,
+            optionsProvider: new TestAnalyzerConfigOptionsProvider(
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["build_property.ArkApiSurfaceEnabled"] = enabled ? "true" : "false"
+                }));
+
+        driver = driver.RunGenerators(compilation);
+        var result = driver.GetRunResult();
+        return (
+            string.Join(Environment.NewLine,
+                result.Results.SelectMany(r => r.GeneratedSources).Select(s => s.SourceText.ToString())),
+            result.Diagnostics);
+    }
+
+    private sealed class TestAdditionalText(string path, string content) : AdditionalText
+    {
+        public override string Path => path;
+        public override Microsoft.CodeAnalysis.Text.SourceText? GetText(CancellationToken cancellationToken = default)
+            => Microsoft.CodeAnalysis.Text.SourceText.From(content, System.Text.Encoding.UTF8);
+    }
+
+    private sealed class TestAnalyzerConfigOptionsProvider(IReadOnlyDictionary<string, string> globalOptions)
+        : AnalyzerConfigOptionsProvider
+    {
+        private static readonly IReadOnlyDictionary<string, string> _empty = new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly TestGlobalOptions _global = new(globalOptions);
+        public override AnalyzerConfigOptions GlobalOptions => _global;
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => new TestGlobalOptions(_empty);
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => new TestGlobalOptions(_empty);
+
+        private sealed class TestGlobalOptions(IReadOnlyDictionary<string, string> opts) : AnalyzerConfigOptions
+        {
+            public override bool TryGetValue(string key, out string value)
+                => opts.TryGetValue(key, out value!);
+        }
     }
 }

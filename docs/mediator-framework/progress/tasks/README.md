@@ -119,7 +119,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [FW-06](framework/FW-06-async-enumerable-streaming.md)
    [x] [FW-07](framework/FW-07-multifile-uploads.md)
    [x] [GEN-09](generator-dx/GEN-09-xml-documentation.md)
-   [ ] [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md)
+   [x] [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md)
    [ ] [DOC-01](docs/DOC-01-user-documentation.md)
 8. Post-release:
    [ ] [NET-02](aspnetcore/NET-02-openapi-operation-transformers.md)

@@ -12,6 +12,10 @@
   <!-- Remove this development-only import when ejecting the sample; the NuGet package supplies these targets transitively. -->
   <Import Project="$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
           Condition="Exists('$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets')" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props')" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets')" />
 
   <PropertyGroup Label="Continuous Integration Build Detection">
     <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
