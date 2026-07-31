@@ -26,7 +26,6 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
-        private const string BindFromQueryAttribute = "Ark.MediatorFramework.BindFromQueryAttribute";
         private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
         private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
@@ -144,7 +143,6 @@ namespace Ark.MediatorFramework.Generators
                 type,
                 http,
                 compilation.GetTypeByMetadataName(HttpQueryAttribute),
-                compilation.GetTypeByMetadataName(HttpQueryAttribute),
                 compilation.GetTypeByMetadataName(HttpRouteAttribute),
                 compilation.GetTypeByMetadataName(ServerSetAttribute),
                 compilation.GetTypeByMetadataName(ETagAttribute),
@@ -191,7 +189,6 @@ namespace Ark.MediatorFramework.Generators
                 return ImmutableArray<EndpointModel>.Empty;
 
             var runtimeAssembly = httpAttr.ContainingAssembly;
-            var bindFromQueryAttr = compilation.GetTypeByMetadataName(HttpQueryAttribute);
             var httpQueryAttr = compilation.GetTypeByMetadataName(HttpQueryAttribute);
             var httpRouteAttr = compilation.GetTypeByMetadataName(HttpRouteAttribute);
             var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
@@ -219,7 +216,6 @@ namespace Ark.MediatorFramework.Generators
                     var model = Extract(
                         type,
                         http,
-                        bindFromQueryAttr,
                         httpQueryAttr,
                         httpRouteAttr,
                         serverSetAttr,
@@ -273,7 +269,6 @@ namespace Ark.MediatorFramework.Generators
         private static EndpointModel? Extract(
             INamedTypeSymbol type,
             AttributeData http,
-            INamedTypeSymbol? bindFromQueryAttr,
             INamedTypeSymbol? httpQueryAttr,
             INamedTypeSymbol? httpRouteAttr,
             INamedTypeSymbol? serverSetAttr,
@@ -394,7 +389,7 @@ namespace Ark.MediatorFramework.Generators
                         routeName
                             ?? routeNames.FirstOrDefault(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase))
                             ?? property.Name,
-                        HasAttribute(property, bindFromQueryAttr, httpQueryAttr),
+                        HasAttribute(property, httpQueryAttr),
                         serverSetAttr is not null && property.GetAttributes().Any(attribute =>
                             SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
                         etagAttr is not null && property.GetAttributes().Any(attribute =>
@@ -488,11 +483,9 @@ namespace Ark.MediatorFramework.Generators
 
         private static bool HasAttribute(
             IPropertySymbol property,
-            INamedTypeSymbol? legacyAttribute,
-            INamedTypeSymbol? currentAttribute)
+            INamedTypeSymbol? attributeType)
             => property.GetAttributes().Any(attribute =>
-                (legacyAttribute is not null && SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, legacyAttribute))
-                || (currentAttribute is not null && SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, currentAttribute)));
+                attributeType is not null && SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, attributeType));
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
         {

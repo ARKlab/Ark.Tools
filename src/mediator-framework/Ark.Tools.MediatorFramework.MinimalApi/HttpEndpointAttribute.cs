@@ -87,14 +87,6 @@ public sealed class HttpQueryAttribute : Attribute
 }
 
 /// <summary>
-/// Compatibility alias for <see cref="HttpQueryAttribute"/>.
-/// </summary>
-[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-public sealed class BindFromQueryAttribute : Attribute
-{
-}
-
-/// <summary>
 /// Marks a request property as an HTTP route value. The optional name overrides
 /// the property name used in the route template.
 /// </summary>
