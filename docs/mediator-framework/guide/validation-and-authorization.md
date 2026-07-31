@@ -20,30 +20,152 @@ public sealed class SearchGreetingsValidator : AbstractValidator<SearchGreetings
 Register validators from the application assembly and the validation decorator
 with the container.
 
+```csharp
+container.Register(
+    typeof(IValidator<>),
+    container.GetTypesToRegister(typeof(IValidator<>), new[] { applicationAssembly })
+        .Where(type => type.IsPublic),
+    Lifestyle.Singleton);
+container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, c => !c.Handled);
+container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryFluentValidateDecorator<,>));
+container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestFluentValidateDecorator<,>));
+container.RegisterDecorator(typeof(ICommandHandler<>), typeof(CommandFluentValidateDecorator<>));
+```
+
 **Outcome:** invalid requests do not enter the handler. HTTP callers receive a
 validation Problem Details response and gRPC callers receive the corresponding
 structured status.
 
-## Require an authenticated scope
+## Put authorization on the contract
+
+Prefer transport-agnostic authorization attributes when the same rule must apply
+to HTTP, gRPC, and Rebus.
 
 ```csharp
-[HttpEndpoint("POST", "/api/v{version}/greetings", Policy = "greetings.write")]
+[HttpEndpoint("POST", "/api/v{version}/greetings")]
 [GrpcMethod("CreateGreeting")]
 [GrpcService("Greetings")]
-[PolicyAuthorize("greetings.write")]
+[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 ```
 
-Configure the host's authentication and default/fallback policy, then register
-the transport-agnostic authorization decorator. Generated endpoints are secure
-by default. Use `AllowAnonymous = true` only when the operation is intentionally
-public and tests prove that choice.
+This is different from `Policy` on `HttpEndpointAttribute`:
 
-`PolicyAuthorizeAttribute` is the framework attribute; it accepts a named
-policy or an `IAuthorizationPolicy` type. Derive a domain-specific attribute
-when a policy needs parameters, such as a required scope. `Policy` on
-`HttpEndpointAttribute` is the HTTP endpoint policy; use the contract attribute
-when the same policy must be enforced by gRPC and Rebus.
+| Mechanism | Applies to | Use it for |
+| --- | --- | --- |
+| `PolicyAuthorizeAttribute` / custom wrapper such as `RequireScopePolicyAttribute` | HTTP, gRPC, Rebus | Real application permission rules |
+| `HttpEndpointAttribute.Policy` | HTTP only | Compatibility or host-only HTTP metadata |
+| `HttpEndpointAttribute.AllowAnonymous` | HTTP only | Explicit public HTTP endpoints |
+
+## Create a custom policy
+
+The sample's scope policy is the reference pattern:
+
+```csharp
+public sealed class RequireScopePolicy : IAuthorizationPolicy
+{
+    public RequireScopePolicy(string scope)
+    {
+        Scope = scope;
+        var builder = new AuthorizationPolicyBuilder(nameof(RequireScopePolicy));
+        builder.AddRequirements(new ScopeAuthorizationRequirement(Scope));
+        var policy = builder.Build();
+        Name = policy.Name;
+        Requirements = policy.Requirements;
+    }
+
+    public string Scope { get; }
+    public string Name { get; }
+    public IReadOnlyList<IAuthorizationRequirement> Requirements { get; }
+}
+
+public sealed class RequireScopePolicyAttribute : PolicyAuthorizeAttribute
+{
+    public RequireScopePolicyAttribute(string scope)
+        : base(typeof(RequireScopePolicy), scope)
+    {
+    }
+}
+```
+
+The authorization handler evaluates the requirement against the current user:
+
+```csharp
+public sealed class ScopeAuthorizationHandler : AuthorizationHandler<ScopeAuthorizationRequirement>
+{
+    protected override Task HandleRequirementAsync(
+        AuthorizationContext context,
+        ScopeAuthorizationRequirement requirement,
+        CancellationToken ctk = default)
+    {
+        if (context.User.Claims.Any(claim =>
+            string.Equals(claim.Type, "scope", StringComparison.OrdinalIgnoreCase)
+            && claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Contains(requirement.Scope, StringComparer.Ordinal)))
+        {
+            context.Succeed(requirement);
+        }
+
+        return Task.CompletedTask;
+    }
+}
+```
+
+Register the authorization services in the application container:
+
+```csharp
+container.RegisterAuthorization();
+container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
+```
+
+## Host authentication still matters
+
+The application policy decides whether an authenticated user may call the
+operation. The ASP.NET Core host still decides how a caller becomes
+authenticated in the first place.
+
+The sample host sets:
+
+```csharp
+services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+```
+
+This means every generated HTTP endpoint is authenticated by default even when
+the contract carries no extra permission attribute. `AllowAnonymous = true` is
+the explicit opt-out for a route that should stay public.
+
+## What callers see on denial
+
+| Failure | HTTP | gRPC |
+| --- | --- | --- |
+| Missing or malformed bearer token | `401 Unauthorized` | `Unauthenticated` |
+| Authenticated but missing required application policy/scope | `403 Forbidden` | `PermissionDenied` |
+| Validation failure | `400 Bad Request` | `InvalidArgument` |
+
+Example HTTP assertion from the sample:
+
+```csharp
+var response = await context.Client.PostAsync(new Uri("/api/v1/greetings", UriKind.Relative), content);
+response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+```
+
+Example gRPC assertion from the sample:
+
+```csharp
+var action = async () => await client.GetGreetingAsync(
+    new GetGreetingQuery { Id = ByteString.Empty }).ResponseAsync;
+
+var exception = await action.Should().ThrowAsync<RpcException>();
+exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
+```
 
 ## Workflow
 
@@ -51,7 +173,8 @@ when the same policy must be enforced by gRPC and Rebus.
 2. Put permission requirements on the contract.
 3. Keep ownership checks that require application data in the authorization
    decorator or handler policy service.
-4. Test both allowed and denied public calls for each exposed transport.
+4. Configure host authentication and the default/fallback authenticated-user policy.
+5. Test both allowed and denied public calls for each exposed transport.
 
 Use a custom decorator or policy provider for rules that cannot be expressed by
 the supplied policy attributes. Architecture rationale: [design.md](../design.md).

@@ -3,6 +3,20 @@
 `[GrpcMethod]` exposes a protobuf-compatible contract through a generated
 code-first gRPC service. `[GrpcService]` selects the service that owns the
 method; without an explicit method name, the contract type name is used.
+gRPC is the best fit when consumers want strongly typed clients, rich status
+codes, compact protobuf payloads, or streaming.
+
+## Contract attributes
+
+| Attribute or setting | Default | Meaning | Use it when |
+| --- | --- | --- | --- |
+| `[GrpcMethod()]` | Contract type name | Exposes the contract as a generated gRPC method | A contract should be callable over gRPC |
+| `[GrpcMethod("GetGreeting")]` | — | Overrides the gRPC method name | The public method name must stay stable while the C# type name changes |
+| `[GrpcService("Greetings")]` | Namespace / `ApiGroup` fallback | Places the method into a named generated service | Multiple methods belong in the same client-facing service |
+| `[ProtoContract]` and `[ProtoMember(n)]` | none | Defines protobuf wire shape | The contract or response crosses gRPC |
+| `ArkExportProto` | `true` | Enables `.proto` export after build | Clients or tests should consume the generated schema |
+| `ArkExportProtoDir` | `$(MSBuildProjectDirectory)/proto` | Output directory for exported `.proto` files | You want generated schema in a specific folder |
+| `ArkAdditionalProto` | empty | Additional hand-written `.proto` files copied into the export folder | Generated services import shared or manual proto definitions |
 
 ## Define and map a method
 
@@ -25,34 +39,61 @@ public sealed record GreetingResponse
 ```
 
 ```csharp
-services.AddCodeFirstGrpc();
-app.MapArkGrpcServicesFromAssembly<ApplicationAssemblyMarker>();
+RuntimeTypeModel.Default.AddNodaTimeSurrogates();
+services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
+services.AddCodeFirstGrpcReflection();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapArkGrpcServicesFromAssembly<ApplicationAssemblyMarker>();
+    endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
+});
 ```
 
 **Outcome:** the host exposes `Greetings/GetGreeting`, dispatches it to
-`IQueryHandler<GetGreetingQuery, GreetingResponse>`, and keeps the contract
-usable over HTTP or Rebus when those attributes are also present.
+`IQueryHandler<GetGreetingQuery, GreetingResponse>`, and keeps the same
+contract usable over HTTP or Rebus when those attributes are also present.
+
+## Naming and versioning rules
+
+| Input | Generated public name |
+| --- | --- |
+| `[GrpcService("Greetings")]` + version 1 | `GreetingsV1` |
+| `[GrpcService("Greetings")]` + version 2 | `GreetingsV2` |
+| `[GrpcMethod("GetGreeting")]` | `GetGreeting` |
+| `[GrpcMethod()]` on `CreateGreetingRequest` | `CreateGreetingRequest` |
+
+If a contract is versioned, the gRPC method remains the same public method
+name inside the version-specific service. The sample does this with:
+
+- `GetGreetingQuery` — active only in v1;
+- `GetGreetingV2Query` — active from v2 onward;
+- both still expose `GetGreeting`, but under `GreetingsV1` and `GreetingsV2`.
 
 ## Export and consume the schema
 
 The build exports generated `.proto` files without launching the application.
-
-| MSBuild setting | Default | Meaning |
-| --- | --- | --- |
-| `ArkExportProtoDir` | package-defined output | Directory receiving generated `.proto` files. Use a source-controlled directory when another project generates clients from the schema. |
-| `ArkExportProto` | `true` | Set to `false` to skip schema export. Generated server endpoints still work. |
-| `ArkAdditionalProto` | empty item list | Additional hand-written proto files available during export, for shared messages or a hand-written service. |
+The sample sets:
 
 ```xml
 <PropertyGroup>
-  <ArkExportProtoDir>$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
+  <ArkExportProtoDir>$(MSBuildThisFileDirectory)src/Ark.MediatorFramework.Sample.WebInterface/proto</ArkExportProtoDir>
 </PropertyGroup>
 <ItemGroup>
-  <ArkAdditionalProto Include="proto/common.proto" />
+  <ArkAdditionalProto Include="$(MSBuildThisFileDirectory)src/Ark.MediatorFramework.Sample.WebInterface/proto/Documents.proto" />
 </ItemGroup>
 ```
 
-For the contracts above, generated output is equivalent to:
+What each MSBuild setting does:
+
+| Setting | Typical value | Expected result |
+| --- | --- | --- |
+| `ArkExportProto=true` | default | Generated `.proto` files appear after build |
+| `ArkExportProto=false` | opt-out | Server still works; no export folder update happens |
+| `ArkExportProtoDir=.../proto` | source-controlled folder | Consumer/test projects can reference exported schema |
+| `ArkAdditionalProto Include="proto/common.proto"` | one or more items | Shared hand-written proto files are copied beside the generated ones |
+
+For the simple contract above, generated output is equivalent to:
 
 ```proto
 syntax = "proto3";
@@ -71,47 +112,79 @@ message GreetingResponse {
 }
 ```
 
-The actual namespace, message encoding, imported well-known files, and service
-suffix follow the exported contract. Treat the exported file—not this
-illustration—as the source of truth. The sample's generated schemas are written
-to `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/proto`
-when it builds; its `GrpcClient` test project shows the exact client setup to
-copy.
+Treat the exported file as the source of truth. It can include additional
+imports, NodaTime mappings, attachment messages, or versioned services beyond
+this simplified illustration.
 
-Generate a strongly typed C# client in a consumer or test project:
+## Generate a client for production or tests
+
+The sample keeps the generated-client project in
+`samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient/`.
+Its `.csproj` is the exact pattern to copy:
 
 ```xml
 <ItemGroup>
   <PackageReference Include="Grpc.Net.Client" />
   <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
-  <Protobuf Include="../MyApplication/proto/Greetings.proto"
+  <Protobuf Include="../../src/Ark.MediatorFramework.Sample.WebInterface/proto/Greetings.proto"
             GrpcServices="Client" />
 </ItemGroup>
 ```
+
+Consumer code:
 
 ```csharp
 using var channel = GrpcChannel.ForAddress("https://api.example.test");
 var client = new GreetingsV1.GreetingsV1Client(channel);
 var reply = await client.GetGreetingAsync(
-    new GetGreetingQuery { Id = ByteString.CopyFrom(id.ToByteArray()) });
+    new GetGreetingQuery { Id = ByteString.CopyFrom(id.ToByteArray()) },
+    new Metadata { { "authorization", "Bearer " + token } }).ResponseAsync;
 
 Console.WriteLine(reply.Message);
 ```
 
-The client call sends `GetGreetingQuery`, waits for one `GreetingResponse`, and
-throws `RpcException` for a non-success gRPC status. Pin, publish, or commit
-the exported schema according to the consumer workflow, and review every
-field-number change as a wire change.
+Expected output for the sample data:
 
-Enable server reflection only where operator tools need it. Clients send normal
-gRPC authorization metadata; authentication remains a host concern.
+```text
+Hello Ada
+```
+
+The client call sends `GetGreetingQuery`, waits for one `GreetingResponse`, and
+throws `RpcException` for a non-success gRPC status.
+
+## What failures look like to callers
+
+A denied or invalid call does not return a successful payload. It throws
+`RpcException` with the mapped gRPC status:
+
+```csharp
+var action = async () => await client.GetGreetingAsync(
+    new GetGreetingQuery { Id = ByteString.Empty }).ResponseAsync;
+
+var exception = await action.Should().ThrowAsync<RpcException>();
+exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
+```
+
+Common mappings are documented in [errors](errors.md). In practice, a client
+should branch on `StatusCode` and only inspect richer details when it needs
+field-level or business-rule data.
+
+## Reflection and operator tooling
+
+`AddCodeFirstGrpcReflection()` and `MapCodeFirstGrpcReflectionService()` are
+optional. Enable them where operators or test tools need service discovery.
+They do not replace exported `.proto` files for production clients.
 
 ## When to write the service yourself
 
 Generated methods cover unary requests, generated attachment upload/download,
 and `IAsyncEnumerable<T>` server streams. Use a hand-written service or a method
-in the generated partial type for bidirectional conversations, custom metadata,
-or an existing proto contract that must not change. See
-[escape hatches](escape-hatches.md).
+in the generated partial type for:
+
+- a locked existing `.proto` contract you cannot reshape from C#;
+- bidi or custom metadata workflows not covered by the generator;
+- transport-specific behavior that should not leak into the shared contract.
+
+See [escape hatches](escape-hatches.md).
 
 Architecture rationale: [design.md](../design.md).

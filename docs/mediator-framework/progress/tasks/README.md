@@ -69,8 +69,10 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [GEN-06](generator-dx/GEN-06-grpc-user-context-interceptor.md) | gRPC user-context interceptor (A5) | generator-dx |
 | [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md) | Rename HTTP binding attributes to transport-specific names | generator-dx |
 | [GEN-12](generator-dx/GEN-12-evolvable-enums.md) | Evolve enum contracts without breaking strict clients | generator-dx |
+| [FW-10](framework/FW-10-remove-http-auth-metadata.md) | Remove authentication and authorization metadata from HTTP contracts | framework |
+| [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md) | Configure the common version route prefix at mapping time | framework |
 
-## Post-release
+## Future improvements
 
 | Task | Title | Category |
 |---|---|---|
@@ -78,8 +80,6 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [NET-03](aspnetcore/NET-03-json-patch.md) | PATCH support via System.Text.Json JSON Patch (N7) | aspnetcore |
 | [NET-04](aspnetcore/NET-04-auth-metrics.md) | Auth/Identity metrics in the sample (N8) | aspnetcore |
 | [NET-05](aspnetcore/NET-05-sse-transport-spike.md) | SSE transport spike (N5) | aspnetcore |
-| [FW-10](framework/FW-10-remove-http-auth-metadata.md) | Remove authentication and authorization metadata from HTTP contracts | framework |
-| [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md) | Configure the common version route prefix at mapping time | framework |
 
 Also see [`../future-improvements.md`](../future-improvements.md) (WebApplicationFactory auth substitution, AoT sample, N6, N9).
 
@@ -125,12 +125,13 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [GEN-09](generator-dx/GEN-09-xml-documentation.md)
    [x] [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md)
    [x] [DOC-01](docs/DOC-01-user-documentation.md)
-8. Post-release:
+8. Additional pre-release improvements:
+   [ ] [FW-10](framework/FW-10-remove-http-auth-metadata.md)
+   [ ] [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md)
+   [ ] [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md)
+   [ ] [GEN-12](generator-dx/GEN-12-evolvable-enums.md)
+9. Future improvements:
    [ ] [NET-02](aspnetcore/NET-02-openapi-operation-transformers.md)
    [ ] [NET-03](aspnetcore/NET-03-json-patch.md)
    [ ] [NET-04](aspnetcore/NET-04-auth-metrics.md)
    [ ] [NET-05](aspnetcore/NET-05-sse-transport-spike.md)
-    [ ] [FW-10](framework/FW-10-remove-http-auth-metadata.md)
-    [ ] [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md)
-    [ ] [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md)
-    [ ] [GEN-12](generator-dx/GEN-12-evolvable-enums.md)
