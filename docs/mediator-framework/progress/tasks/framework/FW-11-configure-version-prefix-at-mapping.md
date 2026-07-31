@@ -1,6 +1,6 @@
 # FW-11 — Configure the version route prefix at mapping time
 
-**Status**: Draft · **Category**: framework · **Priority**: Post-release
+**Status**: Completed · **Category**: framework · **Priority**: Post-release
 
 ## Problem
 
@@ -16,9 +16,9 @@ preserving contract-local route fragments and generated version expansion.
 
 ## Acceptance
 
-- [ ] Add a mapping configuration option for the version prefix.
-- [ ] Apply it consistently to generated HTTP routes and OpenAPI documents.
-- [ ] Define precedence and migration behavior for explicit prefixes.
-- [ ] Add generator and integration tests.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Add a mapping configuration option for the version prefix.
+- [x] Apply it consistently to generated HTTP routes and OpenAPI documents.
+- [x] Define precedence and migration behavior for explicit prefixes.
+- [x] Add generator and integration tests.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

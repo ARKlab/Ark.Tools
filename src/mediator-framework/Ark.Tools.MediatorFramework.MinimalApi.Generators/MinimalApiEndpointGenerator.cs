@@ -594,8 +594,10 @@ namespace Ark.MediatorFramework.Generators
                         }
                     }
                 }
+                var endpointIndex = 0;
                 foreach (var e in items)
                 {
+                    var currentEndpointIndex = endpointIndex++;
                     foreach (var diagnostic in e.Diagnostics)
                         spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
                     if (!e.IsValid)
@@ -631,28 +633,29 @@ namespace Ark.MediatorFramework.Generators
                     foreach (var version in ActiveVersions(e, maxVersion))
                     {
                         var map = MapMethod(e.Verb);
-                        sb.AppendLine("            var template = VersionedRoute(versionPrefix, "
+                        var templateVariable = "template" + currentEndpointIndex + "V" + version;
+                        sb.AppendLine("            var " + templateVariable + " = VersionedRoute(versionPrefix, "
                             + Literal(e.Template) + ", " + e.IsVersioned.ToString().ToLowerInvariant() + ", " + version + ");");
                         if (e.Kind == HandlerKind.Command)
                         {
-                            EmitCommandEndpoint(sb, e, map, "template", version, maxVersion);
+                            EmitCommandEndpoint(sb, e, map, templateVariable, version, maxVersion);
                             continue;
                         }
                         if (e.AttachmentCount == 1)
                         {
-                            EmitMultipartEndpoint(sb, e, handlerService, map, "template", version, maxVersion);
+                            EmitMultipartEndpoint(sb, e, handlerService, map, templateVariable, version, maxVersion);
                             continue;
                         }
 
                         if (e.AttachmentResponse)
                         {
-                            EmitDownloadEndpoint(sb, e, handlerService, map, "template", version, maxVersion);
+                            EmitDownloadEndpoint(sb, e, handlerService, map, templateVariable, version, maxVersion);
                             continue;
                         }
 
                         if (e.AcceptsMessagePack)
                         {
-                            sb.AppendLine("            group." + map + "(template, static async (");
+                            sb.AppendLine("            group." + map + "(" + templateVariable + ", static async (");
                             if (explicitBindings)
                             {
                                 foreach (var property in e.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
@@ -720,7 +723,7 @@ namespace Ark.MediatorFramework.Generators
                                 + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                             continue;
                         }
-                        sb.AppendLine("            group." + map + "(template, static async (");
+                        sb.AppendLine("            group." + map + "(" + templateVariable + ", static async (");
                         if (explicitBindings)
                         {
                             foreach (var property in e.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))

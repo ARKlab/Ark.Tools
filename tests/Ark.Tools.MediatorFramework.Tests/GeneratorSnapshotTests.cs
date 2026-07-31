@@ -461,7 +461,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null");
         generated.Should().Contain("var group = endpoints.MapGroup(string.Empty);");
-        generated.Should().Contain("group.MapGet(template");
+        generated.Should().Contain("group.MapGet(template0V1");
         generated.Should().Contain(".RequireAuthorization()");
         generated.Should().NotContain(".RequireAuthorization(\"admin\")");
         generated.Should().Contain(".AllowAnonymous()");
