@@ -78,12 +78,43 @@ public sealed class HttpEndpointAttribute : Attribute
 }
 
 /// <summary>
-/// Marks a request property that must be read from the query string when the
-/// endpoint also has a request body.
+/// Marks a request property that must be read from the HTTP query string when
+/// the endpoint also has a request body.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-public sealed class BindFromQueryAttribute : Attribute
+public class HttpQueryAttribute : Attribute
 {
+}
+
+/// <summary>
+/// Compatibility alias for <see cref="HttpQueryAttribute"/>.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class BindFromQueryAttribute : HttpQueryAttribute
+{
+}
+
+/// <summary>
+/// Marks a request property as an HTTP route value. The optional name overrides
+/// the property name used in the route template.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class HttpRouteAttribute : Attribute
+{
+    /// <summary>Initializes a new instance of the <see cref="HttpRouteAttribute"/> class.</summary>
+    public HttpRouteAttribute()
+    {
+    }
+
+    /// <summary>Initializes a new instance with a route parameter name.</summary>
+    /// <param name="name">The route parameter name.</param>
+    public HttpRouteAttribute(string name)
+    {
+        Name = name;
+    }
+
+    /// <summary>Gets the route parameter name override.</summary>
+    public string? Name { get; }
 }
 
 /// <summary>

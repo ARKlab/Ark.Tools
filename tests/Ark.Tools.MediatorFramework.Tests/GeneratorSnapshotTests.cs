@@ -763,7 +763,7 @@ public sealed class GeneratorSnapshotTests
             public sealed record UpdateGreeting : IRequest<string>
             {
                 public System.Guid Id { get; init; }
-                [BindFromQuery]
+                [HttpQuery]
                 public string Audit { get; init; } = string.Empty;
                 public string Message { get; init; } = string.Empty;
             }
@@ -785,7 +785,7 @@ public sealed class GeneratorSnapshotTests
             [HttpEndpoint("GET", "/audits")]
             public sealed class GetAudits : IQuery<string>
             {
-                [BindFromQuery]
+                [HttpQuery]
                 public List<string> Sort { get; init; } = [];
             }
             """);
@@ -808,7 +808,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetAudits : IQuery<string>
             {
                 public ExternalTimestamp AtTimestamp { get; init; }
-                [BindFromQuery]
+                [HttpQuery]
                 public ExternalTimestamp? FromTimestamp { get; init; }
             }
             """);
@@ -831,11 +831,11 @@ public sealed class GeneratorSnapshotTests
             {
                 public int Count { get; init; }
                 public double Ratio { get; init; }
-                [BindFromQuery]
+                [HttpQuery]
                 public bool Enabled { get; init; }
-                [BindFromQuery]
+                [HttpQuery]
                 public decimal Amount { get; init; }
-                [BindFromQuery]
+                [HttpQuery]
                 public System.Guid Id { get; init; }
             }
             """);
@@ -864,7 +864,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetItems : IQuery<string>
             {
                 public Status RouteStatus { get; init; }
-                [BindFromQuery]
+                [HttpQuery]
                 public Status? QueryStatus { get; init; }
             }
             """);
@@ -942,7 +942,7 @@ public sealed class GeneratorSnapshotTests
             public sealed record Upload : IRequest<string>
             {
                 public System.Guid Id { get; init; }
-                [BindFromQuery]
+                [HttpQuery]
                 public string Label { get; init; } = string.Empty;
                 public IArkAttachment Attachment { get; init; } = null!;
             }

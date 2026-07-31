@@ -27,7 +27,7 @@ Snippets must be copied from compiled sample code, never invented, so they canno
 | `guide/README.md` | Index + when to use this framework vs `Ark.Tools.AspNetCore` MVC. |
 | `guide/getting-started.md` | New project: reference the packages, write one contract + handler, host it on Minimal API, call it; then add gRPC and Rebus by adding attributes only. Includes the SimpleInjector wiring and the run/test commands. |
 | `guide/contracts-and-handlers.md` | `IRequest`/`IQuery`/`ICommand`, pure handler rules, records, `[ProtoContract]`/`[ProtoMember]` numbering rules. |
-| `guide/http-endpoints.md` | `[HttpEndpoint]`: verb/template, envelope binding (route/query/body), `[BindFromQuery]`, `[ServerSet]`, status semantics (`SuccessStatusCode`, `NullResultStatusCode`), route groups. |
+| `guide/http-endpoints.md` | `[HttpEndpoint]`: verb/template, envelope binding (route/query/body), `[HttpQuery]`, `[ServerSet]`, status semantics (`SuccessStatusCode`, `NullResultStatusCode`), route groups. |
 | `guide/grpc.md` | `[GrpcMethod]`, `[ServiceGroup]`, proto export on build, consuming the exported protos, gRPCui. |
 | `guide/rebus.md` | `[RebusMessage]`, owner queues + generated routing, per-message scope, cancellation, HTTP→bus composition. |
 | `guide/versioning.md` | `Versioning(Introduced, Retired)`, `{version}` expansion, per-version documents and gRPC services, superseding a contract. |

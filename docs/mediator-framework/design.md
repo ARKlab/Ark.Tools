@@ -191,7 +191,7 @@ Binding rules applied by the generator, per property of the contract:
    version placeholder and never binds a property.
 2. **Query** — for body-less verbs (GET/DELETE), every remaining property
    binds from the query string. For verbs with a body, a property opts into
-   the query string with `[BindFromQuery]` (a transport-metadata attribute in
+   the query string with `[HttpQuery]` (a transport-metadata attribute in
    the core package so Application assemblies don't reference ASP.NET).
 3. **Body** — for verbs with a body, the payload deserializes into the
    envelope type itself (JSON or MessagePack per content negotiation); the

@@ -4,7 +4,7 @@
 
 ## Problem
 
-`BindFromQuery` and route binding conventions expose HTTP concepts without
+`HttpQuery` and route binding conventions expose HTTP concepts without
 making the transport explicit in the attribute names. Rename them to
 `HttpQuery` and the corresponding `HttpRoute` marker while keeping contracts
 clear and migration-safe.
