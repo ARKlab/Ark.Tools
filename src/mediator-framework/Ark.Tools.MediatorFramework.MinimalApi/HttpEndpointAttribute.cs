@@ -12,7 +12,7 @@ public sealed class HttpEndpointAttribute : Attribute
 {
     /// <summary>Initializes a new instance of the <see cref="HttpEndpointAttribute"/> class.</summary>
     /// <param name="verb">The HTTP verb, for example <c>GET</c> or <c>POST</c>.</param>
-    /// <param name="template">The route template, for example <c>/api/v{version}/greetings</c>.</param>
+    /// <param name="template">The route template, for example <c>/greetings</c> or <c>/api/v{version}/greetings</c>.</param>
     public HttpEndpointAttribute(string verb, string template)
     {
         Verb = verb;

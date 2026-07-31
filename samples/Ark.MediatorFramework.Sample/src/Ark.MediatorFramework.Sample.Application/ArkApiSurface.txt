@@ -34,7 +34,7 @@ CONTRACT GetAuditsQuery.ToTimestamp : Instant?
 CONTRACT GetAuditsQuery.UserId : string?
 CONTRACT GetDocumentQuery -> IArkAttachment [group=Ark] [grpc-group=GeneratedDocuments] [http=GET /api/v{version}/greeting-cards/{id}/download] [version=1+] [grpc=Download] [grpc-version=1+]
 CONTRACT GetDocumentQuery.Id : Guid
-CONTRACT GetGreetingQuery -> GreetingResponse [group=Ark] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/{id}] [version=1-1] [grpc=GetGreeting] [grpc-version=1-1]
+CONTRACT GetGreetingQuery -> GreetingResponse [group=Ark] [grpc-group=Greetings] [http=GET /greetings/{id}] [version=1-1] [grpc=GetGreeting] [grpc-version=1-1]
 CONTRACT GetGreetingQuery.Id : Guid
 CONTRACT GetGreetingV2Query -> GreetingResponseV2 [group=Ark] [grpc-group=Greetings] [http=GET /api/v{version}/greetings-v2/{id}] [version=2+] [grpc=GetGreeting] [grpc-version=2+]
 CONTRACT GetGreetingV2Query.Id : Guid

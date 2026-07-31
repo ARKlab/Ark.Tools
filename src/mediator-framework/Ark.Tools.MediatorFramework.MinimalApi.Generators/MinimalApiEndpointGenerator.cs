@@ -73,16 +73,25 @@ namespace Ark.MediatorFramework.Generators
             "Ark.MediatorFramework",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
+        private static readonly DiagnosticDescriptor VersionPrefixMissingToken = new DiagnosticDescriptor(
+            "ARKMF020",
+            "Version prefix is missing the version token",
+            "The version prefix must contain the '{version}' token",
+            "Ark.MediatorFramework",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
+            var endpointMappings = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax invocation
                         && invocation.Expression.ToString().Contains("MapArkEndpointsFromAssembly", StringComparison.Ordinal),
-                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkEndpointsFromAssembly"))
-                .Where(static assemblyName => assemblyName is not null)
-                .Select(static (assemblyName, _) => assemblyName!)
+                    static (syntaxContext, _) => GetAssemblyMapping(syntaxContext, "MapArkEndpointsFromAssembly"))
+                .Where(static mapping => mapping is not null)
+                .Select(static (mapping, _) => mapping!.Value);
+            var endpointAssemblies = endpointMappings
+                .Select(static (mapping, _) => mapping.AssemblyName)
                 .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     HttpEndpointAttribute,
@@ -94,11 +103,22 @@ namespace Ark.MediatorFramework.Generators
                 .Combine(endpointAssemblies)
                 .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
 
-            var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect());
+            var collected = sourceEndpoints.Collect()
+                .Combine(referencedEndpoints.Collect())
+                .Combine(endpointMappings.Collect());
 
             context.RegisterSourceOutput(
                 collected,
-                static (spc, pair) => Emit(spc, pair.Left.AddRange(pair.Right)));
+                static (spc, pair) =>
+                {
+                    foreach (var mapping in pair.Right)
+                    {
+                        if (mapping.InvalidVersionPrefixLocation is not null)
+                            spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
+                    }
+
+                    Emit(spc, pair.Left.Left.AddRange(pair.Left.Right));
+                });
         }
 
         private static void EmitResponseETagAssignment(StringBuilder sb, EndpointModel endpoint)
@@ -134,7 +154,7 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(ReadOnlyCollection));
         }
 
-        private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
+        private static EndpointAssemblyMapping? GetAssemblyMapping(GeneratorSyntaxContext context, string methodName)
         {
             var invocation = (InvocationExpressionSyntax)context.Node;
             var genericName = invocation.Expression.DescendantNodesAndSelf()
@@ -143,7 +163,19 @@ namespace Ark.MediatorFramework.Generators
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
                 return null;
 
-            return context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+            var assemblyName = context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+            if (assemblyName is null)
+                return null;
+
+            var versionPrefix = invocation.ArgumentList.Arguments
+                .FirstOrDefault(argument => argument.NameColon?.Name.Identifier.ValueText == "versionPrefix")
+                ?? (invocation.ArgumentList.Arguments.Count > 1 ? invocation.ArgumentList.Arguments[1] : null);
+            var invalidVersionPrefixLocation = versionPrefix is not null
+                && context.SemanticModel.GetConstantValue(versionPrefix.Expression) is { HasValue: true, Value: string prefix }
+                && !prefix.Contains("{version}", StringComparison.OrdinalIgnoreCase)
+                    ? versionPrefix.Expression.GetLocation()
+                    : null;
+            return new EndpointAssemblyMapping(assemblyName, invalidVersionPrefixLocation);
         }
 
         private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
@@ -299,6 +331,8 @@ namespace Ark.MediatorFramework.Generators
             verb = verb!.ToUpperInvariant();
             if (verb is not ("GET" or "POST" or "PUT" or "DELETE" or "PATCH"))
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.UnknownHttpVerb, type.Name, GetLocation(http), verb));
+            var versioning = type.GetAttributes().FirstOrDefault(
+                candidate => candidate.AttributeClass?.ToDisplayString() == VersioningAttribute);
             var httpIntroducedIn = Version(type, "Introduced", 1);
             var httpRetiredIn = Version(type, "Retired", 0);
             var successStatusCode = NamedInt(http, "SuccessStatusCode", 0);
@@ -394,6 +428,7 @@ namespace Ark.MediatorFramework.Generators
                 apiGroup ?? defaultTag,
                 verb,
                 template!,
+                versioning is not null,
                 response ?? "global::System.Void",
                 kind,
                 httpIntroducedIn,
@@ -534,7 +569,7 @@ namespace Ark.MediatorFramework.Generators
 
             // MapArkEndpointsFromAssembly is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint. TAssemblyMarker selects the assembly scanned for attributed contracts.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null, string? versionPrefix = null)");
             sb.AppendLine("        {");
             sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
@@ -591,8 +626,10 @@ namespace Ark.MediatorFramework.Generators
                         }
                     }
                 }
+                var endpointIndex = 0;
                 foreach (var e in items)
                 {
+                    var currentEndpointIndex = endpointIndex++;
                     foreach (var diagnostic in e.Diagnostics)
                         spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
                     if (!e.IsValid)
@@ -628,27 +665,29 @@ namespace Ark.MediatorFramework.Generators
                     foreach (var version in ActiveVersions(e, maxVersion))
                     {
                         var map = MapMethod(e.Verb);
-                        var template = e.Template.Replace("{version}", version.ToString());
+                        var templateVariable = "template" + currentEndpointIndex + "V" + version;
+                        sb.AppendLine("            var " + templateVariable + " = VersionedRoute(versionPrefix, "
+                            + Literal(e.Template) + ", " + e.IsVersioned.ToString().ToLowerInvariant() + ", " + version + ");");
                         if (e.Kind == HandlerKind.Command)
                         {
-                            EmitCommandEndpoint(sb, e, map, template, version, maxVersion);
+                            EmitCommandEndpoint(sb, e, map, templateVariable, version, maxVersion);
                             continue;
                         }
                         if (e.AttachmentCount == 1)
                         {
-                            EmitMultipartEndpoint(sb, e, handlerService, map, template, version, maxVersion);
+                            EmitMultipartEndpoint(sb, e, handlerService, map, templateVariable, version, maxVersion);
                             continue;
                         }
 
                         if (e.AttachmentResponse)
                         {
-                            EmitDownloadEndpoint(sb, e, handlerService, map, template, version, maxVersion);
+                            EmitDownloadEndpoint(sb, e, handlerService, map, templateVariable, version, maxVersion);
                             continue;
                         }
 
                         if (e.AcceptsMessagePack)
                         {
-                            sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
+                            sb.AppendLine("            group." + map + "(" + templateVariable + ", static async (");
                             if (explicitBindings)
                             {
                                 foreach (var property in e.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
@@ -716,7 +755,7 @@ namespace Ark.MediatorFramework.Generators
                                 + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                             continue;
                         }
-                        sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
+                        sb.AppendLine("            group." + map + "(" + templateVariable + ", static async (");
                         if (explicitBindings)
                         {
                             foreach (var property in e.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
@@ -775,6 +814,19 @@ namespace Ark.MediatorFramework.Generators
 
             sb.AppendLine("            configure?.Invoke(group);");
             sb.AppendLine("            return group;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private static string VersionedRoute(string? versionPrefix, string template, bool isVersioned, int version)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (template.Contains(\"{version}\", global::System.StringComparison.OrdinalIgnoreCase))");
+            sb.AppendLine("                return template.Replace(\"{version}\", version.ToString(global::System.Globalization.CultureInfo.InvariantCulture), global::System.StringComparison.OrdinalIgnoreCase);");
+            sb.AppendLine("            if (!isVersioned)");
+            sb.AppendLine("                return template;");
+            sb.AppendLine("            var prefixTemplate = versionPrefix ?? \"/api/v{version}\";");
+            sb.AppendLine("            if (!prefixTemplate.Contains(\"{version}\", global::System.StringComparison.OrdinalIgnoreCase))");
+            sb.AppendLine("                throw new global::System.ArgumentException(\"The version prefix must contain the '{version}' token.\", nameof(versionPrefix));");
+            sb.AppendLine("            var prefix = prefixTemplate.TrimEnd('/').Replace(\"{version}\", version.ToString(global::System.Globalization.CultureInfo.InvariantCulture), global::System.StringComparison.OrdinalIgnoreCase);");
+            sb.AppendLine("            return prefix + \"/\" + template.TrimStart('/');");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        private static void VerifyMinimalApiHandlerRegistration(global::System.IServiceProvider services, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
@@ -914,14 +966,14 @@ namespace Ark.MediatorFramework.Generators
             EndpointModel endpoint,
             string handlerService,
             string map,
-            string template,
+            string templateExpression,
             int version,
             int maxVersion)
         {
             var attachment = endpoint.Properties.Single(property =>
                 property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment" || property.IsAttachmentCollection);
             var bindings = endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet).ToArray();
-            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             foreach (var property in bindings)
             {
                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
@@ -994,12 +1046,12 @@ namespace Ark.MediatorFramework.Generators
             EndpointModel endpoint,
             string handlerService,
             string map,
-            string template,
+            string templateExpression,
             int version,
             int maxVersion)
         {
             var bindings = endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet).ToArray();
-            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             foreach (var property in bindings)
             {
                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
@@ -1035,13 +1087,13 @@ namespace Ark.MediatorFramework.Generators
             StringBuilder sb,
             EndpointModel endpoint,
             string map,
-            string template,
+            string templateExpression,
             int version,
             int maxVersion)
         {
             var bodyVerb = endpoint.Verb != "GET" && endpoint.Verb != "DELETE";
             var explicitBindings = bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery);
-            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             if (explicitBindings)
             {
                 foreach (var property in endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
@@ -1214,6 +1266,8 @@ namespace Ark.MediatorFramework.Generators
             Command = 3,
         }
 
+        private readonly record struct EndpointAssemblyMapping(string AssemblyName, Location? InvalidVersionPrefixLocation);
+
         private readonly record struct EndpointModel
         {
             public EndpointModel(
@@ -1224,6 +1278,7 @@ namespace Ark.MediatorFramework.Generators
                 string apiGroup,
                 string verb,
                 string template,
+                bool isVersioned,
                 string response,
                 HandlerKind kind,
                 int httpIntroducedIn,
@@ -1258,6 +1313,7 @@ namespace Ark.MediatorFramework.Generators
                 ApiGroup = apiGroup;
                 Verb = verb;
                 Template = template;
+                IsVersioned = isVersioned;
                 Response = response;
                 Kind = kind;
                 HttpIntroducedIn = httpIntroducedIn;
@@ -1299,6 +1355,7 @@ namespace Ark.MediatorFramework.Generators
                 IsValid = false;
                 Verb = string.Empty;
                 Template = string.Empty;
+                IsVersioned = false;
                 Response = string.Empty;
                 Kind = HandlerKind.None;
                 AllowedContentTypes = ImmutableArray<string>.Empty;
@@ -1324,6 +1381,7 @@ namespace Ark.MediatorFramework.Generators
             public string ApiGroup { get; }
             public string Verb { get; }
             public string Template { get; }
+            public bool IsVersioned { get; }
             public string Response { get; }
             public HandlerKind Kind { get; }
             public int HttpIntroducedIn { get; }

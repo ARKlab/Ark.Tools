@@ -230,13 +230,55 @@ public sealed class GeneratorSnapshotTests
 
             """);
 
-        result.Generated.Should().Contain("MapGet(\"/api/v1/greetings/{id}\"");
-        result.Generated.Should().Contain("MapGet(\"/api/v2/greetings/{id}\"");
-        result.Generated.Should().NotContain("MapGet(\"/api/v3/greetings/{id}\"");
+        result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 1)");
+        result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 2)");
+        result.Generated.Should().NotContain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 3)");
         result.Generated.Should().Contain("WithGroupName(\"v1\")");
         result.Generated.Should().Contain("WithTags(\"Ark\")");
         result.Generated.Should().Contain("WithName(\"GetGreeting_v1\")");
         result.Generated.Should().Contain("WithName(\"GetGreeting_v2\")");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorConfiguresVersionPrefixAtMappingTime()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Versioning(Introduced = 1, Retired = 3)]
+            [HttpEndpoint("GET", "/items")]
+            public sealed class GetItem : IQuery<string> { }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("string? versionPrefix = null");
+        result.Generated.Should().Contain("versionPrefix ?? \"/api/v{version}\"");
+        result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/items\", true, 1)");
+        result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/items\", true, 2)");
+
+        var explicitTemplate = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Versioning(Introduced = 1)]
+            [HttpEndpoint("GET", "/legacy/v{version}/items")]
+            public sealed class GetLegacyItem : IQuery<string> { }
+            """);
+
+        explicitTemplate.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/legacy/v{version}/items\", true, 1)");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsVersionPrefixWithoutToken()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            MapArkEndpointsFromAssembly<Marker>(versionPrefix: "/api/v1");
+            public sealed class Marker;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
     }
 
     [TestMethod]
@@ -432,7 +474,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null");
         generated.Should().Contain("var group = endpoints.MapGroup(string.Empty);");
-        generated.Should().Contain("group.MapGet(\"/secure\"");
+        generated.Should().Contain("group.MapGet(template0V1");
         generated.Should().Contain(".RequireAuthorization()");
         generated.Should().NotContain(".RequireAuthorization(\"admin\")");
         generated.Should().Contain(".AllowAnonymous()");
