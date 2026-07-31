@@ -73,16 +73,25 @@ namespace Ark.MediatorFramework.Generators
             "Ark.MediatorFramework",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
+        private static readonly DiagnosticDescriptor VersionPrefixMissingToken = new DiagnosticDescriptor(
+            "ARKMF020",
+            "Version prefix is missing the version token",
+            "The version prefix must contain the '{version}' token",
+            "Ark.MediatorFramework",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
+            var endpointMappings = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax invocation
                         && invocation.Expression.ToString().Contains("MapArkEndpointsFromAssembly", StringComparison.Ordinal),
-                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkEndpointsFromAssembly"))
-                .Where(static assemblyName => assemblyName is not null)
-                .Select(static (assemblyName, _) => assemblyName!)
+                    static (syntaxContext, _) => GetAssemblyMapping(syntaxContext, "MapArkEndpointsFromAssembly"))
+                .Where(static mapping => mapping is not null)
+                .Select(static (mapping, _) => mapping!.Value);
+            var endpointAssemblies = endpointMappings
+                .Select(static (mapping, _) => mapping.AssemblyName)
                 .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     HttpEndpointAttribute,
@@ -94,11 +103,22 @@ namespace Ark.MediatorFramework.Generators
                 .Combine(endpointAssemblies)
                 .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
 
-            var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect());
+            var collected = sourceEndpoints.Collect()
+                .Combine(referencedEndpoints.Collect())
+                .Combine(endpointMappings.Collect());
 
             context.RegisterSourceOutput(
                 collected,
-                static (spc, pair) => Emit(spc, pair.Left.AddRange(pair.Right)));
+                static (spc, pair) =>
+                {
+                    foreach (var mapping in pair.Right)
+                    {
+                        if (mapping.InvalidVersionPrefixLocation is not null)
+                            spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
+                    }
+
+                    Emit(spc, pair.Left.Left.AddRange(pair.Left.Right));
+                });
         }
 
         private static void EmitResponseETagAssignment(StringBuilder sb, EndpointModel endpoint)
@@ -134,7 +154,7 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(ReadOnlyCollection));
         }
 
-        private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
+        private static EndpointAssemblyMapping? GetAssemblyMapping(GeneratorSyntaxContext context, string methodName)
         {
             var invocation = (InvocationExpressionSyntax)context.Node;
             var genericName = invocation.Expression.DescendantNodesAndSelf()
@@ -143,7 +163,19 @@ namespace Ark.MediatorFramework.Generators
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
                 return null;
 
-            return context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+            var assemblyName = context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+            if (assemblyName is null)
+                return null;
+
+            var versionPrefix = invocation.ArgumentList.Arguments
+                .FirstOrDefault(argument => argument.NameColon?.Name.Identifier.ValueText == "versionPrefix")
+                ?? (invocation.ArgumentList.Arguments.Count > 1 ? invocation.ArgumentList.Arguments[1] : null);
+            var invalidVersionPrefixLocation = versionPrefix is not null
+                && context.SemanticModel.GetConstantValue(versionPrefix.Expression) is { HasValue: true, Value: string prefix }
+                && !prefix.Contains("{version}", StringComparison.OrdinalIgnoreCase)
+                    ? versionPrefix.Expression.GetLocation()
+                    : null;
+            return new EndpointAssemblyMapping(assemblyName, invalidVersionPrefixLocation);
         }
 
         private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
@@ -788,9 +820,12 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("        {");
             sb.AppendLine("            if (template.Contains(\"{version}\", global::System.StringComparison.OrdinalIgnoreCase))");
             sb.AppendLine("                return template.Replace(\"{version}\", version.ToString(global::System.Globalization.CultureInfo.InvariantCulture), global::System.StringComparison.OrdinalIgnoreCase);");
-            sb.AppendLine("            if (!isVersioned || string.IsNullOrWhiteSpace(versionPrefix))");
+            sb.AppendLine("            if (!isVersioned)");
             sb.AppendLine("                return template;");
-            sb.AppendLine("            var prefix = versionPrefix.TrimEnd('/').Replace(\"{version}\", version.ToString(global::System.Globalization.CultureInfo.InvariantCulture), global::System.StringComparison.OrdinalIgnoreCase);");
+            sb.AppendLine("            var prefixTemplate = versionPrefix ?? \"/api/v{version}\";");
+            sb.AppendLine("            if (!prefixTemplate.Contains(\"{version}\", global::System.StringComparison.OrdinalIgnoreCase))");
+            sb.AppendLine("                throw new global::System.ArgumentException(\"The version prefix must contain the '{version}' token.\", nameof(versionPrefix));");
+            sb.AppendLine("            var prefix = prefixTemplate.TrimEnd('/').Replace(\"{version}\", version.ToString(global::System.Globalization.CultureInfo.InvariantCulture), global::System.StringComparison.OrdinalIgnoreCase);");
             sb.AppendLine("            return prefix + \"/\" + template.TrimStart('/');");
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -1230,6 +1265,8 @@ namespace Ark.MediatorFramework.Generators
             Query = 2,
             Command = 3,
         }
+
+        private readonly record struct EndpointAssemblyMapping(string AssemblyName, Location? InvalidVersionPrefixLocation);
 
         private readonly record struct EndpointModel
         {

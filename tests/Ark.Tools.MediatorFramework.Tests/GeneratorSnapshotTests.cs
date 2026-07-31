@@ -253,6 +253,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().BeEmpty();
         result.Generated.Should().Contain("string? versionPrefix = null");
+        result.Generated.Should().Contain("versionPrefix ?? \"/api/v{version}\"");
         result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/items\", true, 1)");
         result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/items\", true, 2)");
 
@@ -266,6 +267,18 @@ public sealed class GeneratorSnapshotTests
             """);
 
         explicitTemplate.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/legacy/v{version}/items\", true, 1)");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsVersionPrefixWithoutToken()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            MapArkEndpointsFromAssembly<Marker>(versionPrefix: "/api/v1");
+            public sealed class Marker;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
     }
 
     [TestMethod]
