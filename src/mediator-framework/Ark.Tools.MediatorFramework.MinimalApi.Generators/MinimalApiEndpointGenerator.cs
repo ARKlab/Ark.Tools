@@ -720,7 +720,7 @@ namespace Ark.MediatorFramework.Generators
                                 + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                             continue;
                         }
-                        sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
+                        sb.AppendLine("            group." + map + "(template, static async (");
                         if (explicitBindings)
                         {
                             foreach (var property in e.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
