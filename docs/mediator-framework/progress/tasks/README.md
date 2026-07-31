@@ -127,7 +127,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [DOC-01](docs/DOC-01-user-documentation.md)
 8. Additional pre-release improvements:
    [x] [FW-10](framework/FW-10-remove-http-auth-metadata.md)
-   [ ] [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md)
+   [x] [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md)
    [ ] [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md)
    [ ] [GEN-12](generator-dx/GEN-12-evolvable-enums.md)
 9. Future improvements:

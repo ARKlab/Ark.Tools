@@ -299,6 +299,8 @@ namespace Ark.MediatorFramework.Generators
             verb = verb!.ToUpperInvariant();
             if (verb is not ("GET" or "POST" or "PUT" or "DELETE" or "PATCH"))
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.UnknownHttpVerb, type.Name, GetLocation(http), verb));
+            var versioning = type.GetAttributes().FirstOrDefault(
+                candidate => candidate.AttributeClass?.ToDisplayString() == VersioningAttribute);
             var httpIntroducedIn = Version(type, "Introduced", 1);
             var httpRetiredIn = Version(type, "Retired", 0);
             var successStatusCode = NamedInt(http, "SuccessStatusCode", 0);
@@ -394,6 +396,7 @@ namespace Ark.MediatorFramework.Generators
                 apiGroup ?? defaultTag,
                 verb,
                 template!,
+                versioning is not null,
                 response ?? "global::System.Void",
                 kind,
                 httpIntroducedIn,
@@ -534,7 +537,7 @@ namespace Ark.MediatorFramework.Generators
 
             // MapArkEndpointsFromAssembly is always emitted so callers can unconditionally invoke it.
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint. TAssemblyMarker selects the assembly scanned for attributed contracts.</summary>");
-            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null)");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null, string? versionPrefix = null)");
             sb.AppendLine("        {");
             sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
@@ -628,27 +631,28 @@ namespace Ark.MediatorFramework.Generators
                     foreach (var version in ActiveVersions(e, maxVersion))
                     {
                         var map = MapMethod(e.Verb);
-                        var template = e.Template.Replace("{version}", version.ToString());
+                        sb.AppendLine("            var template = VersionedRoute(versionPrefix, "
+                            + Literal(e.Template) + ", " + e.IsVersioned.ToString().ToLowerInvariant() + ", " + version + ");");
                         if (e.Kind == HandlerKind.Command)
                         {
-                            EmitCommandEndpoint(sb, e, map, template, version, maxVersion);
+                            EmitCommandEndpoint(sb, e, map, "template", version, maxVersion);
                             continue;
                         }
                         if (e.AttachmentCount == 1)
                         {
-                            EmitMultipartEndpoint(sb, e, handlerService, map, template, version, maxVersion);
+                            EmitMultipartEndpoint(sb, e, handlerService, map, "template", version, maxVersion);
                             continue;
                         }
 
                         if (e.AttachmentResponse)
                         {
-                            EmitDownloadEndpoint(sb, e, handlerService, map, template, version, maxVersion);
+                            EmitDownloadEndpoint(sb, e, handlerService, map, "template", version, maxVersion);
                             continue;
                         }
 
                         if (e.AcceptsMessagePack)
                         {
-                            sb.AppendLine("            group." + map + "(" + Literal(template) + ", static async (");
+                            sb.AppendLine("            group." + map + "(template, static async (");
                             if (explicitBindings)
                             {
                                 foreach (var property in e.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
@@ -775,6 +779,16 @@ namespace Ark.MediatorFramework.Generators
 
             sb.AppendLine("            configure?.Invoke(group);");
             sb.AppendLine("            return group;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private static string VersionedRoute(string? versionPrefix, string template, bool isVersioned, int version)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (template.Contains(\"{version}\", global::System.StringComparison.OrdinalIgnoreCase))");
+            sb.AppendLine("                return template.Replace(\"{version}\", version.ToString(global::System.Globalization.CultureInfo.InvariantCulture), global::System.StringComparison.OrdinalIgnoreCase);");
+            sb.AppendLine("            if (!isVersioned || string.IsNullOrWhiteSpace(versionPrefix))");
+            sb.AppendLine("                return template;");
+            sb.AppendLine("            var prefix = versionPrefix.TrimEnd('/').Replace(\"{version}\", version.ToString(global::System.Globalization.CultureInfo.InvariantCulture), global::System.StringComparison.OrdinalIgnoreCase);");
+            sb.AppendLine("            return prefix + \"/\" + template.TrimStart('/');");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        private static void VerifyMinimalApiHandlerRegistration(global::System.IServiceProvider services, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
@@ -914,14 +928,14 @@ namespace Ark.MediatorFramework.Generators
             EndpointModel endpoint,
             string handlerService,
             string map,
-            string template,
+            string templateExpression,
             int version,
             int maxVersion)
         {
             var attachment = endpoint.Properties.Single(property =>
                 property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment" || property.IsAttachmentCollection);
             var bindings = endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet).ToArray();
-            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             foreach (var property in bindings)
             {
                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
@@ -994,12 +1008,12 @@ namespace Ark.MediatorFramework.Generators
             EndpointModel endpoint,
             string handlerService,
             string map,
-            string template,
+            string templateExpression,
             int version,
             int maxVersion)
         {
             var bindings = endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet).ToArray();
-            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             foreach (var property in bindings)
             {
                 var source = property.IsRoute ? "FromRoute" : "FromQuery";
@@ -1035,13 +1049,13 @@ namespace Ark.MediatorFramework.Generators
             StringBuilder sb,
             EndpointModel endpoint,
             string map,
-            string template,
+            string templateExpression,
             int version,
             int maxVersion)
         {
             var bodyVerb = endpoint.Verb != "GET" && endpoint.Verb != "DELETE";
             var explicitBindings = bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery);
-            sb.Append("            group.").Append(map).Append("(").Append(Literal(template)).AppendLine(", static async (");
+            sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             if (explicitBindings)
             {
                 foreach (var property in endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
@@ -1224,6 +1238,7 @@ namespace Ark.MediatorFramework.Generators
                 string apiGroup,
                 string verb,
                 string template,
+                bool isVersioned,
                 string response,
                 HandlerKind kind,
                 int httpIntroducedIn,
@@ -1258,6 +1273,7 @@ namespace Ark.MediatorFramework.Generators
                 ApiGroup = apiGroup;
                 Verb = verb;
                 Template = template;
+                IsVersioned = isVersioned;
                 Response = response;
                 Kind = kind;
                 HttpIntroducedIn = httpIntroducedIn;
@@ -1299,6 +1315,7 @@ namespace Ark.MediatorFramework.Generators
                 IsValid = false;
                 Verb = string.Empty;
                 Template = string.Empty;
+                IsVersioned = false;
                 Response = string.Empty;
                 Kind = HandlerKind.None;
                 AllowedContentTypes = ImmutableArray<string>.Empty;
@@ -1324,6 +1341,7 @@ namespace Ark.MediatorFramework.Generators
             public string ApiGroup { get; }
             public string Verb { get; }
             public string Template { get; }
+            public bool IsVersioned { get; }
             public string Response { get; }
             public HandlerKind Kind { get; }
             public int HttpIntroducedIn { get; }

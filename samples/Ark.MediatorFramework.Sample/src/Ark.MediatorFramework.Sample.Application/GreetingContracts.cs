@@ -167,7 +167,7 @@ public sealed record GreetingCreatedNotification : ICommand
 /// so the generator exposes it as an HTTP GET (a query is a read, not a bus message).
 /// </summary>
 [Versioning(Introduced = 1, Retired = 2)]
-[HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
+[HttpEndpoint("GET", "/greetings/{id}")]
 [GrpcMethod("GetGreeting")]
 [GrpcService("Greetings")]
 [ProtoContract]

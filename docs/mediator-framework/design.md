@@ -63,7 +63,10 @@ public sealed class CreateOrderHandler : IRequestHandler<CreateOrderRequest, Ord
 Routing/metadata is expressed with **explicit, per-transport** attributes on the
 request type. Each transport is opt-in and declared independently:
 
-- `[HttpEndpoint("POST", "/api/v{version}/orders")]` — expose over Minimal API for each active version.
+- `[HttpEndpoint("POST", "/orders")]` — expose over Minimal API for each active version; the host
+  configures the common prefix once with
+  `MapArkEndpointsFromAssembly<T>(versionPrefix: "/api/v{version}")`.
+  Existing templates containing `{version}` remain authoritative for migration.
 - `[GrpcMethod]` (optionally `[GrpcMethod("CreateOrder")]`) — expose as a
   code-first gRPC method; defaults to the contract type name. `[GrpcService("Orders")]` groups the service.
 - `[RebusMessage(OwnerQueue = "orders")]` — expose as a Rebus message and,

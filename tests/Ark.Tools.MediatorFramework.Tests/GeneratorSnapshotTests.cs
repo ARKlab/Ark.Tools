@@ -240,6 +240,35 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorConfiguresVersionPrefixAtMappingTime()
+    {
+        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Versioning(Introduced = 1, Retired = 3)]
+            [HttpEndpoint("GET", "/items")]
+            public sealed class GetItem : IQuery<string> { }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("string? versionPrefix = null");
+        result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/items\", true, 1)");
+        result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/items\", true, 2)");
+
+        var explicitTemplate = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Versioning(Introduced = 1)]
+            [HttpEndpoint("GET", "/legacy/v{version}/items")]
+            public sealed class GetLegacyItem : IQuery<string> { }
+            """);
+
+        explicitTemplate.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/legacy/v{version}/items\", true, 1)");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorPropagatesXmlDocumentation()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
