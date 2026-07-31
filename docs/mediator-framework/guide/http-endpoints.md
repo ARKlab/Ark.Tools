@@ -12,8 +12,6 @@ route is declared with the contract, while the handler remains HTTP-free.
 | `SuccessStatusCode` | `0` | Status for a non-null successful result. `0` uses `200 OK`. Use `201` for creation or another documented success response. |
 | `NullResultStatusCode` | `0` | Status for a null result. `0` is `404 Not Found` for queries and `204 No Content` for requests. |
 | `AcceptsMessagePack` | `false` | Enables MessagePack negotiation in addition to JSON for supported endpoint shapes. |
-| `Policy` | `null` | Named ASP.NET Core authorization policy required by the endpoint. |
-| `AllowAnonymous` | `false` | Explicitly removes the normal authorization requirement. Use only for intentionally public operations. |
 | `RequireAntiforgery` | `false` | Requires antiforgery validation for generated multipart uploads. |
 | `MaxRequestBodySizeBytes` | `0` | Multipart request limit in bytes; `0` leaves the host default. |
 | `MaxFileCount` | `0` | Maximum multipart files; `0` means unlimited. |
@@ -69,9 +67,10 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 
 ## Security and unsupported shapes
 
-Endpoints require authorization by default. Set `Policy` for a named policy or
-`AllowAnonymous = true` only for a deliberately public operation. Multipart
-limits, accepted media types, and antiforgery are configured on
+Authentication is an ASP.NET Core host concern. Configure schemes and
+authentication middleware in the host. Authorization is applied by
+`Ark.Tools.Authorization` decorators and policies, not by HTTP contract
+metadata. Multipart limits, accepted media types, and antiforgery are configured on
 `HttpEndpointAttribute`; see [attachments](attachments.md).
 
 Use a hand-written Minimal API mapping for custom route parsing, a nonstandard
@@ -85,12 +84,17 @@ For example, the following public status behavior is explicit:
 [HttpEndpoint(
     "POST",
     "/api/v{version}/greetings",
-    SuccessStatusCode = StatusCodes.Status201Created,
-    Policy = "greetings.write")]
+    SuccessStatusCode = StatusCodes.Status201Created)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 ```
 
-A successful handler response becomes `201 Created`. A caller who does not
-satisfy `greetings.write` receives `403 Forbidden`; the handler is not invoked.
+A successful handler response becomes `201 Created`. The host authenticates the
+caller, and an authorization decorator can reject a caller before the handler
+is invoked with the framework's standard authorization error.
+
+The current `Policy` and `AllowAnonymous` properties are retained for
+compatibility. Their removal and the migration to transport-independent
+authorization are tracked in
+[FW-10](../progress/tasks/framework/FW-10-remove-http-auth-metadata.md).
 
 Architecture rationale: [design.md](../design.md).

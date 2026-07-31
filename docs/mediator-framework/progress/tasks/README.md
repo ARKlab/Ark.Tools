@@ -67,6 +67,8 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [GEN-03](generator-dx/GEN-03-startup-handler-verification.md) | Startup handler-registration verification (B4) | generator-dx |
 | [GEN-05](generator-dx/GEN-05-rebus-cancellation-token.md) | Flow `CancellationToken` through Rebus wrappers (A10) | generator-dx |
 | [GEN-06](generator-dx/GEN-06-grpc-user-context-interceptor.md) | gRPC user-context interceptor (A5) | generator-dx |
+| [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md) | Rename HTTP binding attributes to transport-specific names | generator-dx |
+| [GEN-12](generator-dx/GEN-12-evolvable-enums.md) | Evolve enum contracts without breaking strict clients | generator-dx |
 
 ## Post-release
 
@@ -76,6 +78,8 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [NET-03](aspnetcore/NET-03-json-patch.md) | PATCH support via System.Text.Json JSON Patch (N7) | aspnetcore |
 | [NET-04](aspnetcore/NET-04-auth-metrics.md) | Auth/Identity metrics in the sample (N8) | aspnetcore |
 | [NET-05](aspnetcore/NET-05-sse-transport-spike.md) | SSE transport spike (N5) | aspnetcore |
+| [FW-10](framework/FW-10-remove-http-auth-metadata.md) | Remove authentication and authorization metadata from HTTP contracts | framework |
+| [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md) | Configure the common version route prefix at mapping time | framework |
 
 Also see [`../future-improvements.md`](../future-improvements.md) (WebApplicationFactory auth substitution, AoT sample, N6, N9).
 
