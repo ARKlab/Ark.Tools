@@ -19,8 +19,9 @@ principal used by transport-agnostic authorization decorators.
 
 ## Implementation steps
 
-1. Add registration/options APIs for the decided authentication profile without
-   embedding tenant, audience, keys or secrets in the framework.
+1. Add registration/options APIs for direct bearer authentication and the separate
+   Easy Auth opt-in profile without embedding tenant, audience, keys or secrets in
+   the framework. Use direct bearer authentication in the sample.
 2. For `AllowAnonymous = false`, invoke the configured ASP.NET Core authentication
    service before binding/dispatch. On no result/failure, produce 401 and the
    correct challenge headers without invoking the handler.
@@ -31,7 +32,7 @@ principal used by transport-agnostic authorization decorators.
    scope.
 5. Prove transport-agnostic `[RequireScopePolicy]` decorators run unchanged and
    map authenticated-but-forbidden callers to 403.
-6. If Easy Auth is approved, isolate header parsing in a profile-specific service,
+6. Isolate Easy Auth header parsing in a profile-specific service,
    validate the trusted deployment precondition, reject malformed/oversized
    payloads, and never accept raw identity headers in the direct-bearer profile.
 7. Add structured NLog messages for authentication failures without interpolation,

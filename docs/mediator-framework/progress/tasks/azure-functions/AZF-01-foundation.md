@@ -25,8 +25,10 @@ Copying semantic analysis would create two definitions of binding and versioning
 2. Match the existing runtime/analyzer package layout: generator targets
    `netstandard2.0`, runtime targets the approved TFM, and package consumption
    applies the analyzer transitively.
-3. Add the approved assembly-level host opt-in/configuration API to the runtime
-   package with complete XML documentation and validation.
+3. Add the approved shared assembly-level HTTP host opt-in/configuration API to the
+   runtime package with complete XML documentation and validation. Make the Minimal
+   API generator honor the same marker and version prefix while preserving its
+   existing mapping API.
 4. Extract or introduce one internal immutable HTTP endpoint semantic model
    consumed by Minimal API and Functions analysis. It must represent handler kind,
    request/response symbols, verb, original template, effective version prefix,
@@ -58,6 +60,8 @@ Copying semantic analysis would create two definitions of binding and versioning
 
 - Existing Minimal API generator snapshots remain byte-for-byte unchanged unless a
   reviewed deterministic ordering correction is unavoidable.
+- Minimal API tests prove the shared marker applies the same version prefix and the
+  existing mapping API remains backward compatible.
 - Shared-model tests cover every metadata field listed above.
 - Missing/duplicate host marker and invalid prefix produce stable diagnostics.
 - A compilation without the host marker emits no Functions source and no noise.
@@ -76,6 +80,7 @@ Copying semantic analysis would create two definitions of binding and versioning
 - [ ] AZD-01, AZD-02 and AZD-09 are recorded as decided.
 - [ ] New public APIs have XML docs and API-surface baselines.
 - [ ] Existing Minimal API snapshots and behavior remain unchanged.
+- [ ] Both HTTP generators support the shared assembly marker and version prefix.
 - [ ] Generator absence/marker diagnostics are deterministic and tested.
 - [ ] NuGet package contains its analyzer and no unintended implementation assets.
 - [ ] Changed package versions have advisory review and regenerated lock files.

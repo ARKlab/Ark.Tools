@@ -12,8 +12,7 @@ on Application contracts.
 ## Prerequisites
 
 - AZF-08 merged.
-- AZD-05 decided in favor of OpenAPI parity. If deferred, replace this task with a
-  documented limitation and remove it from the release gate.
+- AZD-05 decided in favor of OpenAPI parity.
 - Review existing OpenAPI tests, tags/operation names, XML documentation,
   server-set filtering, attachment schemas, standard responses and security setup.
 

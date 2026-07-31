@@ -34,7 +34,8 @@ source.
    source must not use reflection-based mediator dispatch.
 8. Report diagnostics at the source contract/host marker for invalid verbs,
    templates, versions, duplicate routes, duplicate Function names and unsupported
-   handler kinds. Invalid endpoints emit no partial source.
+   handler kinds. Report a compile-time error for `AcceptsMessagePack = true`.
+   Invalid endpoints emit no partial source.
 9. Add the generated external route to API-surface snapshot output using a stable
    `FUNCTION` line that includes Function name, verb, route and version.
 
@@ -46,8 +47,8 @@ source.
 - Azure Functions `host.json` route prefix is host-wide. Generated contract routes
   must not rely on per-function host-prefix variation.
 - Function discovery metadata must consist of compile-time constants.
-- Keep MessagePack flags out of the emitted trigger; JSON remains available and
-  MessagePack is out of scope.
+- MessagePack is unsupported; do not emit a Function for a contract that opts into
+  it.
 
 ## Required test coverage
 
@@ -58,8 +59,8 @@ source.
 - Stable source snapshot proves attributes, method signature, async/await and typed
   dispatch call.
 - Duplicate expanded route and sanitized Function-name collision diagnostics.
-- `AcceptsMessagePack = true` does not suppress JSON trigger generation or emit
-  MessagePack handling.
+- `AcceptsMessagePack = true` produces a stable error diagnostic and no generated
+  Function.
 - API-surface snapshot changes are explicit and reviewed.
 
 ## Outcomes
@@ -73,6 +74,7 @@ source.
 - [ ] Every sample `[HttpEndpoint]` has an expected generated Function route in a test fixture.
 - [ ] Function names and routes are deterministic across repeated generator runs.
 - [ ] Unsupported/duplicate contracts fail at compile time with stable diagnostics.
+- [ ] MessagePack-enabled contracts fail at compile time with a stable diagnostic.
 - [ ] No Minimal API runtime type appears in generated Function source.
 - [ ] API-surface snapshots record Function endpoints.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.

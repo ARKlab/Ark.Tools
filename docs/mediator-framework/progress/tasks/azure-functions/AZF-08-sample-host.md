@@ -36,8 +36,10 @@ transport logic leaking into handlers.
    projects.
 7. Reuse `ApplicationComposition` so FluentValidation, scope authorization,
    auditing, SQL/in-memory stores, clock and handlers are identical.
-8. Ensure every in-scope sample `[HttpEndpoint]` is generated. Add no handwritten
-   Function methods for parity endpoints.
+8. Ensure every in-scope sample `[HttpEndpoint]` without
+   `AcceptsMessagePack = true` is generated. Assert that MessagePack-enabled
+   contracts produce the approved diagnostic. Add no handwritten Function methods
+   for parity endpoints.
 9. Add one shared `[HttpEndpoint(AllowAnonymous = true)]` health contract to the
    Application project so both HTTP hosts expose the same readiness endpoint.
 10. Demonstrate versioned read/write, mixed binding, validation, auth, ProblemDetails,
@@ -77,7 +79,7 @@ transport logic leaking into handlers.
 
 - [ ] Project was scaffolded from an official isolated-worker template.
 - [ ] Same Application contracts/handlers are used with no Function annotations.
-- [ ] Every supported JSON HTTP endpoint is generated with the same external route.
+- [ ] Every supported JSON-only HTTP endpoint is generated with the same external route.
 - [ ] Host excludes MessagePack, gRPC and Rebus receive processing.
 - [ ] README local-run instructions work from a clean checkout with documented prerequisites.
 - [ ] Changed files pass secret scanning.

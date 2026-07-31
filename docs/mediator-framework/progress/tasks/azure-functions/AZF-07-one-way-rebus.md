@@ -19,8 +19,10 @@ generated routing without accidentally registering receivers or starting workers
 ## Implementation steps
 
 1. Place the approved drainable in-memory one-way transport support in the narrowest
-   reusable test-only location. Do not expose production public API solely for the
-   sample if an internal test project reference is sufficient.
+   reusable test-only location without changing its existing behavior. If the
+   Functions scenario needs incompatible semantics, add a separately named
+   `DrainableV2`. Do not expose production public API solely for the sample if an
+   internal test project reference is sufficient.
 2. Add a Function-host composition method that configures Rebus routing through
    `ConfigureArkRebusRouting<TAssemblyMarker>()` but never calls
    `RegisterArkRebusHandlersFromAssembly`.
@@ -45,6 +47,8 @@ generated routing without accidentally registering receivers or starting workers
 - Azure Service Bus has no Azurite emulator; do not pretend an unrelated emulator
   validates transport behavior.
 - A mocked `IBus` does not satisfy the routing demonstration.
+- Preserve existing drainable behavior and tests; do not introduce a breaking
+  semantic change for the Functions host.
 - Do not start the sample SQL outbox processor in the Function host. If atomic
   outbox sending is required later, it needs a separate lifecycle design.
 - Never commit Azure Service Bus connection strings or credentials.
@@ -71,6 +75,7 @@ generated routing without accidentally registering receivers or starting workers
 - [ ] AZD-08 is recorded as decided.
 - [ ] Function composition has no input queue or receive handlers.
 - [ ] Routing/payload are verified by a separate receiver, not an `IBus` mock.
+- [ ] Existing drainable behavior remains backward compatible.
 - [ ] Managed identity is the documented Azure default; no secret is committed.
 - [ ] Lifecycle and unsupported request/reply behavior are documented.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.

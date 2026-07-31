@@ -1,8 +1,8 @@
 # Azure Functions hosting — decision log
 
-Status: **review requested**. Comment on each `OPEN` item before implementation.
-Accepted answers are copied into [`../azure-functions-design.md`](../azure-functions-design.md)
-and the affected task before that task starts.
+Status: **decided**. All decisions below were accepted on 2026-07-31 and are
+reflected in [`../azure-functions-design.md`](../azure-functions-design.md) and
+the affected tasks.
 
 ## How to review
 
@@ -14,8 +14,8 @@ and the affected task before that task starts.
 
 ### AZD-01 — Target only .NET 10 isolated worker
 
-- **Status:** OPEN
-- **Recommendation:** target `net10.0`, matching the current Minimal API package
+- **Status:** DECIDED
+- **Decision:** target `net10.0`, matching the current Minimal API package
   and sample. Use Azure Functions runtime v4 with the Microsoft-documented minimum
   Worker/Worker.Sdk versions for .NET 10.
 - **Alternative:** multi-target the Functions runtime package for `net8.0` and
@@ -27,9 +27,11 @@ and the affected task before that task starts.
 
 ### AZD-02 — Compile-time host opt-in and version prefix
 
-- **Status:** OPEN
-- **Recommendation:** require one assembly-level Azure Functions host marker with
-  `VersionPrefix = "/api/v{version}"`. The generator emits nothing without it.
+- **Status:** DECIDED
+- **Decision:** require one shared assembly-level HTTP host marker with
+  `VersionPrefix = "/api/v{version}"`. The Functions generator emits nothing
+  without it. The Minimal API generator supports the same marker and prefix while
+  preserving its existing mapping API for backward compatibility.
 - **Alternative:** expose MSBuild analyzer properties, or generate automatically
   from every runtime package reference.
 - **Why this needs review:** Functions routes live in attributes and cannot receive
@@ -39,8 +41,8 @@ and the affected task before that task starts.
 
 ### AZD-03 — Trigger authorization level versus application authentication
 
-- **Status:** OPEN
-- **Recommendation:** emit `AuthorizationLevel.Anonymous` for all generated
+- **Status:** DECIDED
+- **Decision:** emit `AuthorizationLevel.Anonymous` for all generated
   triggers and enforce `AllowAnonymous` through ASP.NET Core authentication in the
   runtime helper. This preserves the Minimal API bearer-token contract. Document
   Function keys and Easy Auth as optional perimeter controls.
@@ -55,22 +57,20 @@ and the affected task before that task starts.
 
 ### AZD-04 — Supported authentication profiles
 
-- **Status:** OPEN
-- **Recommendation:** ship a bearer profile using registered ASP.NET Core
+- **Status:** DECIDED
+- **Decision:** ship a bearer profile using registered ASP.NET Core
   `IAuthenticationService`; treat Easy Auth identity reconstruction as a separately
   tested opt-in profile. Never trust `X-MS-CLIENT-PRINCIPAL` merely because a
-  caller supplied the header.
+  caller supplied the header. The first sample uses direct bearer authentication;
+  Easy Auth coverage exercises the opt-in profile.
 - **Alternative:** support Easy Auth only and leave direct bearer validation to
   API Management.
-- **Questions for reviewer:** Must the first sample run with direct Entra bearer
-  validation, Easy Auth, or both? Is local Core Tools testing expected to emulate
-  Easy Auth headers?
 - **Blocked tasks:** AZF-05, AZF-08.
 
 ### AZD-05 — OpenAPI parity
 
-- **Status:** OPEN
-- **Recommendation:** include generated OpenAPI metadata/document production in
+- **Status:** DECIDED
+- **Decision:** include generated OpenAPI metadata/document production in
   scope, with one document per API version and the same routes, schemas, standard
   responses, tags, operation names and security requirements. Do not use an
   extension that requires duplicating annotations on generated functions.
@@ -83,8 +83,8 @@ and the affected task before that task starts.
 
 ### AZD-06 — JSON streaming release gate
 
-- **Status:** OPEN
-- **Recommendation:** require a Core Tools proof that the first JSON item reaches
+- **Status:** DECIDED
+- **Decision:** require a Core Tools proof that the first JSON item reaches
   the client before the producer completes and that disconnect cancellation
   reaches the handler. If either fails, stop the streaming task and record Azure
   Functions streaming as unsupported rather than buffer silently.
@@ -97,23 +97,22 @@ and the affected task before that task starts.
 
 ### AZD-07 — Functions boundary-test execution
 
-- **Status:** OPEN
-- **Recommendation:** install/pin Azure Functions Core Tools in CI and run a
-  dedicated boundary-test job. Unit/helper tests remain in the normal solution
-  test command; the boundary job may be selected by category but may not silently
-  skip.
+- **Status:** DECIDED
+- **Decision:** install/pin Azure Functions Core Tools in CI and run the complete
+  dedicated boundary-test job on every pull request. Unit/helper tests remain in
+  the normal solution test command; the boundary job may be selected by category
+  but may not silently skip.
 - **Alternative:** use a Functions runtime container in CI.
-- **Questions for reviewer:** Is adding Core Tools to the standard CI image
-  acceptable? Must the complete boundary suite run on every PR or only mediator
-  paths?
 - **Blocked tasks:** AZF-08, AZF-09.
 
 ### AZD-08 — One-way Rebus transport in local sample tests
 
-- **Status:** OPEN
-- **Recommendation:** promote the existing drainable in-memory one-way transport
-  test helper into an appropriate reusable test surface, while Azure configuration
-  uses `UseAzureServiceBusAsOneWayClient`. The Function host never registers Rebus
+- **Status:** DECIDED
+- **Decision:** promote the existing drainable in-memory one-way transport test
+  helper into an appropriate reusable test surface without changing its existing
+  behavior. Add a separately named `DrainableV2` only if the Functions scenario
+  requires incompatible semantics. Azure configuration uses
+  `UseAzureServiceBusAsOneWayClient`. The Function host never registers Rebus
   receivers.
 - **Alternative:** use Azurite-equivalent infrastructure where possible (Azure
   Service Bus has no Azurite emulator), or restrict the demonstration to a mocked
@@ -125,11 +124,11 @@ and the affected task before that task starts.
 
 ### AZD-09 — Scope of “same endpoints”
 
-- **Status:** OPEN
-- **Recommendation:** generate every sample `[HttpEndpoint]` except MessagePack
-  wire handling. `AcceptsMessagePack = true` endpoints still serve JSON. gRPC-only,
-  Rebus-only, controllers and handwritten escape hatches are not Function
-  endpoints.
+- **Status:** DECIDED
+- **Decision:** generate every sample `[HttpEndpoint]` except contracts with
+  `AcceptsMessagePack = true`, which produce a compile-time error diagnostic in an
+  Azure Functions host. gRPC-only, Rebus-only, controllers and handwritten escape
+  hatches are not Function endpoints.
 - **Alternative:** select a representative subset for the first sample.
 - **Why this needs review:** endpoint-by-endpoint parity is achievable only if
   streaming and OpenAPI decisions pass. A subset demonstrates capabilities but

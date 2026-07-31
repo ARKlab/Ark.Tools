@@ -10,7 +10,7 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 
 ## Prerequisites
 
-- AZF-01 through AZF-09 merged, or AZF-09 formally deferred by AZD-05.
+- AZF-01 through AZF-09 merged.
 - AZD-06, AZD-07 and AZD-09 decided.
 - Verify the pinned Azure Functions Core Tools version against Microsoft local
   development guidance.
@@ -35,8 +35,9 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 7. Commit a parity matrix listing every sample `[HttpEndpoint]`, its active
    versions, capabilities and exact test method(s) proving Minimal API and
    Functions behavior.
-8. Add/pin Core Tools in CI according to AZD-07. The job fails when tools are
-   unavailable; it does not mark tests passed through an internal skip.
+8. Add/pin Core Tools in CI according to AZD-07. Run the complete boundary suite on
+   every pull request. The job fails when tools are unavailable; it does not mark
+   tests passed through an internal skip.
 9. Add an Azure Functions guide covering package installation, host marker,
    startup, JSON configuration, auth profiles, one-way Rebus, local execution,
    tests, platform caveats and explicit MessagePack exclusion.
@@ -69,7 +70,8 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 ## Acceptance
 
 - [ ] AZD-06, AZD-07 and AZD-09 are recorded as decided.
-- [ ] Core Tools tests run in CI and fail loudly when the host cannot start.
+- [ ] The complete Core Tools suite runs on every pull request and fails loudly when
+  the host cannot start.
 - [ ] Every supported sample endpoint has a parity-matrix row and runnable tests.
 - [ ] Auth, errors, files, ETags, streaming decision and Rebus send are boundary-tested.
 - [ ] Documentation states all platform limitations and MessagePack exclusion.

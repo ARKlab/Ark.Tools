@@ -775,12 +775,12 @@ sample opts in and commits its snapshot, which becomes the release baseline.
 with a getting-started walkthrough and one page per feature, snippets cited from
 compiled sample code, all relative links verified.
 
-## Phase 11 — Azure Functions isolated-worker hosting (proposed)
+## Phase 11 — Azure Functions isolated-worker hosting
 
-This phase is decision-gated. Review
-[`azure-functions-decision-log.md`](azure-functions-decision-log.md) first and
-record each answer before starting a task. The architecture and parity definition
-are in [`../azure-functions-design.md`](../azure-functions-design.md). Authoritative
+The accepted decisions are recorded in
+[`azure-functions-decision-log.md`](azure-functions-decision-log.md). The
+architecture and parity definition are in
+[`../azure-functions-design.md`](../azure-functions-design.md). Authoritative
 implementation detail, tests, caveats, outcomes and acceptance live in the linked
 self-contained task documents.
 
@@ -799,11 +799,10 @@ self-contained task documents.
    AZF-05: files/streaming and outbound-only messaging do not depend on each other.
 7. [AZF-08](tasks/azure-functions/AZF-08-sample-host.md): scaffold and compose the
    sibling sample Function app over the existing Application package.
-8. [AZF-09](tasks/azure-functions/AZF-09-openapi.md): versioned OpenAPI if AZD-05
-   keeps it in scope.
+8. [AZF-09](tasks/azure-functions/AZF-09-openapi.md): versioned OpenAPI.
 9. [AZF-10](tasks/azure-functions/AZF-10-boundary-parity.md): Core Tools boundary
    suite, endpoint parity matrix, CI gate and user documentation.
 
 Every implementation task ends with the full-solution build/test gate and updates
 locked dependency files when applicable. MessagePack content negotiation remains
-out of scope for the complete phase.
+out of scope; the Functions generator rejects opted-in contracts with a diagnostic.

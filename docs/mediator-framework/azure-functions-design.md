@@ -1,6 +1,6 @@
 # Azure Functions isolated-worker hosting specification
 
-Status: **proposed** — implementation is blocked on the decisions in
+Status: **approved for implementation** — decisions are recorded in
 [`progress/azure-functions-decision-log.md`](progress/azure-functions-decision-log.md).
 
 ## Goal and scope
@@ -15,6 +15,7 @@ request/response translation that cannot be generated economically.
 In scope:
 
 - .NET isolated worker with ASP.NET Core HTTP integration;
+- `net10.0` and Azure Functions runtime v4;
 - JSON HTTP endpoints generated from the existing `[HttpEndpoint]`,
   `[Versioning]`, `[BindFromQuery]`, `[ServerSet]` and `[ETag]` metadata;
 - route, query, JSON body and multipart binding;
@@ -28,7 +29,8 @@ In scope:
 Out of scope:
 
 - MessagePack, including MessagePack content negotiation and buffered MessagePack
-  streaming;
+  streaming; a contract with `AcceptsMessagePack = true` is rejected by the
+  Functions generator;
 - hosting Rebus workers or generated Rebus receive handlers in the Function app;
 - gRPC endpoints in the Function app;
 - non-HTTP Azure Functions bindings generated from mediator contracts;
@@ -81,8 +83,10 @@ surface required by generated code. It does not reference the Minimal API runtim
 sharing behavior by calling Minimal API results or route builders would couple the
 new host to APIs that Azure Functions does not execute.
 
-The Function host opts in once with compile-time host metadata. The marker carries
-the version prefix because trigger attributes must contain compile-time constants.
+The Function host opts in once with shared assembly-level HTTP host metadata. The
+marker carries the version prefix because trigger attributes must contain
+compile-time constants. The Minimal API generator supports the same marker and
+prefix while its existing mapping API remains available for backward compatibility.
 No Azure Functions attribute is added to the Application assembly.
 
 ## Generation model
@@ -93,6 +97,8 @@ The generator reuses the existing HTTP contract semantics but owns its emission:
 2. Validate the same handler kinds, verbs, route placeholders, version lifetimes,
    attachment shapes, ETag shapes and duplicate operation constraints as the
    Minimal API generator.
+   Report a compile-time error and emit no Function for a contract with
+   `AcceptsMessagePack = true`.
 3. Apply the host's version prefix to templates that do not already contain a
    `{version}` segment, preserving authoritative explicit templates.
 4. Expand `Introduced`/exclusive `Retired` lifetimes into concrete trigger routes.
@@ -170,8 +176,9 @@ Platform protection remains composable:
 - injected platform identity headers are not trusted unless the documented App
   Service Authentication integration is explicitly enabled and tested.
 
-The exact Easy Auth/JWT strategy remains a decision because isolated worker does
-not automatically reproduce an ASP.NET Core middleware pipeline.
+The sample uses direct bearer authentication. Easy Auth identity reconstruction is
+a separately registered and tested opt-in profile; it never trusts a caller-supplied
+identity header without the documented trusted deployment precondition.
 
 ## Responses and parity matrix
 
@@ -186,7 +193,7 @@ not automatically reproduce an ASP.NET Core middleware pipeline.
 | Upload | Single/multiple multipart files with the existing hardening rules |
 | Download | Stream, sanitized filename and content type; null is 404 |
 | JSON stream | Incremental JSON array and cancellation if the Functions ASP.NET Core response path proves it does not buffer |
-| MessagePack | Not supported; JSON remains available even when `AcceptsMessagePack` is true |
+| MessagePack | Not supported; `AcceptsMessagePack = true` is a compile-time error |
 
 Streaming parity is evidence-based: the implementation task must first prove
 first-item flush and cancellation through Core Tools. If the platform buffers the
@@ -198,7 +205,9 @@ The sample Function app configures Rebus as an outbound-only client:
 
 - Azure deployment uses `UseAzureServiceBusAsOneWayClient` and generated
   `ConfigureArkRebusRouting<TAssemblyMarker>()`;
-- tests use the repository's drainable in-memory one-way transport;
+- tests use the repository's drainable in-memory one-way transport without changing
+  its existing behavior; incompatible semantics require a separately named
+  `DrainableV2`;
 - it does not call generated Rebus handler registration;
 - it does not configure an input queue, workers, subscriptions, retry processing
   or an outbox processor;
@@ -229,9 +238,9 @@ Testing has three layers:
    semantically with the Minimal API host and prove route discovery, host
    configuration, serialization, authorization and streaming behavior.
 
-Core Tools availability must be explicit in CI. Tests may skip only through a
-documented outer CI condition; the test assembly itself must not silently pass
-when the host was never started.
+Core Tools availability must be explicit in CI. The complete Functions boundary
+suite runs on every pull request and fails if Core Tools or the host is unavailable;
+the test assembly must not silently pass when the host was never started.
 
 ## Definition of feature parity
 

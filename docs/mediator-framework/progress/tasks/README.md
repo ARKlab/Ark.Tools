@@ -81,12 +81,12 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [NET-04](aspnetcore/NET-04-auth-metrics.md) | Auth/Identity metrics in the sample (N8) | aspnetcore |
 | [NET-05](aspnetcore/NET-05-sse-transport-spike.md) | SSE transport spike (N5) | aspnetcore |
 
-## Azure Functions hosting — proposed, decision-gated
+## Azure Functions hosting
 
-The design is in
-[`../../azure-functions-design.md`](../../azure-functions-design.md). Resolve the
-[`Azure Functions decision log`](../azure-functions-decision-log.md) before
-starting a blocked task.
+The approved design is in
+[`../../azure-functions-design.md`](../../azure-functions-design.md), with accepted
+decisions in the
+[`Azure Functions decision log`](../azure-functions-decision-log.md).
 
 | Task | Title | Depends on |
 |---|---|---|
@@ -99,16 +99,16 @@ starting a blocked task.
 | [AZF-07](azure-functions/AZF-07-one-way-rebus.md) | Outbound-only Rebus composition | AZF-05, AZD-08 |
 | [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | AZF-06, AZF-07 |
 | [AZF-09](azure-functions/AZF-09-openapi.md) | Versioned OpenAPI | AZF-08, AZD-05 |
-| [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix and guide | AZF-08, AZF-09 or documented deferral |
+| [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix and guide | AZF-08, AZF-09 |
 
 ### Recommended Azure Functions execution order
 
-1. [ ] Resolve AZD-01 through AZD-09 in the decision log.
+1. [x] Resolve AZD-01 through AZD-09 in the decision log.
 2. [ ] AZF-01 → AZF-02 → AZF-03.
 3. [ ] AZF-04 → AZF-05.
 4. [ ] AZF-06 and AZF-07 (independent after AZF-05).
 5. [ ] AZF-08.
-6. [ ] AZF-09, unless AZD-05 explicitly defers it.
+6. [ ] AZF-09.
 7. [ ] AZF-10.
 
 Also see [`../future-improvements.md`](../future-improvements.md) (WebApplicationFactory auth substitution, AoT sample, N6, N9).
