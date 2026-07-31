@@ -1,7 +1,6 @@
 <Project>
   <PropertyGroup>
     <ArkApiSurfaceEnabled Condition="'$(ArkApiSurfaceEnabled)' == ''">true</ArkApiSurfaceEnabled>
-    <ArkApiSurfaceCurrentFile>$(IntermediateOutputPath)ArkApiSurface.current.txt</ArkApiSurfaceCurrentFile>
   </PropertyGroup>
 
   <!-- Make the property visible to the Roslyn analyzer -->
@@ -19,7 +18,7 @@
           AfterTargets="CoreCompile"
           Condition="'$(ArkApiSurfaceEnabled)' == 'true'">
     <Copy SourceFiles="$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs"
-          DestinationFiles="$(ArkApiSurfaceCurrentFile)"
+          DestinationFiles="$(IntermediateOutputPath)ArkApiSurface.current.txt"
           Condition="Exists('$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs')" />
   </Target>
 </Project>

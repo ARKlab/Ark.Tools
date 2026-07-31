@@ -150,7 +150,8 @@ public sealed class GeneratorSnapshotTests
             using ProtoBuf;
             public sealed record Response(Inner Value);
             public sealed record Inner([property: ProtoMember(1)] string Name);
-            [HttpEndpoint("GET", "/v{version}/items", IntroducedIn = 1, RetiredIn = 3)]
+            [Versioning(Introduced = 1, Retired = 3)]
+            [HttpEndpoint("GET", "/v{version}/items")]
             [GrpcMethod("GetItem")]
             public sealed class GetItem : IQuery<Response>
             {
@@ -164,7 +165,7 @@ public sealed class GeneratorSnapshotTests
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
-        first.Should().Contain("CONTRACT GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1+]");
+        first.Should().Contain("CONTRACT GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
         first.Should().Contain("CONTRACT Response");
         first.Should().NotContain("GRPC-FIELD");
         first.Should().NotContain("HTTP GET");
@@ -220,7 +221,8 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
-            [HttpEndpoint("GET", "/api/v{version}/greetings/{id}", IntroducedIn = 1, RetiredIn = 3)]
+            [Versioning(Introduced = 1, Retired = 3)]
+            [HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
             public sealed class GetGreeting : IQuery<string>
             {
                 public string Id { get; set; } = string.Empty;
@@ -635,6 +637,21 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void VersioningDefaultsToTheInitialUnretiredVersion()
+    {
+        var versioning = new VersioningAttribute();
+
+        versioning.Introduced.Should().Be(1);
+        versioning.Retired.Should().Be(0);
+        var usage = (AttributeUsageAttribute)typeof(VersioningAttribute)
+            .GetCustomAttributes(typeof(AttributeUsageAttribute), inherit: false)
+            .Single();
+        usage.ValidOn.Should().Be(AttributeTargets.Class);
+        usage.AllowMultiple.Should().BeFalse();
+        usage.Inherited.Should().BeFalse();
+    }
+
+    [TestMethod]
     public void RebusGeneratorReportsInvalidOwnerQueue()
     {
         var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
@@ -658,12 +675,14 @@ public sealed class GeneratorSnapshotTests
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
             [GrpcService("Greetings")]
-            [GrpcMethod("GetGreeting", IntroducedIn = 1, RetiredIn = 2)]
+            [Versioning(Introduced = 1, Retired = 2)]
+            [GrpcMethod("GetGreeting")]
             public sealed class GetGreeting : IQuery<string>
             {
             }
             [GrpcService("Greetings")]
-            [GrpcMethod("CreateGreeting", IntroducedIn = 2)]
+            [Versioning(Introduced = 2)]
+            [GrpcMethod("CreateGreeting")]
             public sealed class CreateGreeting : IRequest<string>
             {
             }

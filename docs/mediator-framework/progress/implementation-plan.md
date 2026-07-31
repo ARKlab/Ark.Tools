@@ -187,12 +187,11 @@ generated client tests cover a two-chunk payload plus missing metadata.
 
 Design first (already specified in `design.md` §"API versioning"), then:
 
-1. Extend `TransportAttributes.cs`: add `int IntroducedIn` (default 1) and
-   `int RetiredIn` (default 0 = never, exclusive when set) to `HttpEndpointAttribute`
-   and `GrpcMethodAttribute`; change sample routes to the single-placeholder
+1. Add `VersioningAttribute` with `int Introduced` (default 1) and
+   `int Retired` (default 0 = never, exclusive when set); change sample routes to the single-placeholder
    form `/api/v{version}/…` (remove hard-coded `v1`/`v2` routes).
 2. Generator (`ArkEndpointGenerator.cs`): compute the hosted version set as
-   `1..max(IntroducedIn, RetiredIn-1)` across all contracts; for each contract
+   `1..max(Introduced, Retired-1)` across all contracts; for each contract
    and each active version, emit the route with `{version}` substituted and
    tag the endpoint with that version for OpenAPI partitioning (replace the
    current route-parsing inference). For gRPC, emit one service per

@@ -28,6 +28,7 @@ namespace Ark.MediatorFramework.Generators
         private const string GrpcMethodAttribute = "Ark.MediatorFramework.GrpcMethodAttribute";
         private const string GrpcServiceAttribute = "Ark.MediatorFramework.GrpcServiceAttribute";
         private const string ApiGroupAttribute = "Ark.MediatorFramework.ApiGroupAttribute";
+        private const string VersioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
@@ -217,8 +218,8 @@ namespace Ark.MediatorFramework.Generators
                     ? AttachmentRequestKind.Collection
                     : AttachmentRequestKind.Single;
             var grpcMethod = grpc.ConstructorArguments.FirstOrDefault().Value as string ?? type.Name;
-            var grpcIntroducedIn = NamedInt(grpc, "IntroducedIn", 1);
-            var grpcRetiredIn = NamedInt(grpc, "RetiredIn", 0);
+            var grpcIntroducedIn = Version(type, "Introduced", 1);
+            var grpcRetiredIn = Version(type, "Retired", 0);
             var apiGroup = apiGroupAttribute is null
                 ? null
                 : type.GetAttributes()
@@ -255,6 +256,13 @@ namespace Ark.MediatorFramework.Generators
         {
             var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name);
             return argument.Value.Value is int value ? value : defaultValue;
+        }
+
+        private static int Version(INamedTypeSymbol type, string propertyName, int defaultValue)
+        {
+            var attribute = type.GetAttributes().FirstOrDefault(
+                candidate => candidate.AttributeClass?.ToDisplayString() == VersioningAttribute);
+            return attribute is null ? defaultValue : NamedInt(attribute, propertyName, defaultValue);
         }
 
         private static bool IsAttachmentType(ITypeSymbol type, INamedTypeSymbol? attachmentType)

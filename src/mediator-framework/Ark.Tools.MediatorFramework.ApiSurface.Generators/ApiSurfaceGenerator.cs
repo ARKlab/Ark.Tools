@@ -20,6 +20,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string Rebus = "Ark.MediatorFramework.RebusMessageAttribute";
     private const string ApiGroup = "Ark.MediatorFramework.ApiGroupAttribute";
     private const string ServerSet = "Ark.MediatorFramework.ServerSetAttribute";
+    private const string Versioning = "Ark.MediatorFramework.VersioningAttribute";
 
     private static readonly DiagnosticDescriptor MissingSnapshot = new(
         "ARKAPI001",
@@ -160,21 +161,20 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var result = ResultType(type);
         var metadata = new List<string>();
         var group = StringArgument(Attribute(type, ApiGroup), 0) ?? "Ark";
+        var versioning = Attribute(type, Versioning);
+        var introduced = IntArgument(versioning, "Introduced", 1);
+        var retired = IntArgument(versioning, "Retired", 0);
         var grpcGroup = StringArgument(Attribute(type, GrpcService), 0);
         if (grpcGroup is not null)
             metadata.Add($"grpc-group={grpcGroup}");
         if (http is not null)
         {
-            var introduced = IntArgument(http, "IntroducedIn", 1);
-            var retired = IntArgument(http, "RetiredIn", 0);
             metadata.Add($"http={StringArgument(http, 0)} {StringArgument(http, 1)}");
             metadata.Add($"version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
 
         if (grpc is not null)
         {
-            var introduced = IntArgument(grpc, "IntroducedIn", 1);
-            var retired = IntArgument(grpc, "RetiredIn", 0);
             metadata.Add($"grpc={StringArgument(grpc, 0) ?? type.Name}");
             metadata.Add($"grpc-version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
@@ -276,8 +276,10 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static bool BoolNamed(AttributeData attribute, string name) =>
         attribute.NamedArguments.FirstOrDefault(x => x.Key == name).Value.Value as bool? == true;
 
-    private static int IntArgument(AttributeData attribute, string? name, int fallback)
+    private static int IntArgument(AttributeData? attribute, string? name, int fallback)
     {
+        if (attribute is null)
+            return fallback;
         if (name is not null)
             return attribute.NamedArguments.FirstOrDefault(x => x.Key == name).Value.Value as int? ?? fallback;
         return attribute.ConstructorArguments.Length == 0 ? fallback : attribute.ConstructorArguments[0].Value as int? ?? fallback;

@@ -67,8 +67,12 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [GEN-03](generator-dx/GEN-03-startup-handler-verification.md) | Startup handler-registration verification (B4) | generator-dx |
 | [GEN-05](generator-dx/GEN-05-rebus-cancellation-token.md) | Flow `CancellationToken` through Rebus wrappers (A10) | generator-dx |
 | [GEN-06](generator-dx/GEN-06-grpc-user-context-interceptor.md) | gRPC user-context interceptor (A5) | generator-dx |
+| [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md) | Rename HTTP binding attributes to transport-specific names | generator-dx |
+| [GEN-12](generator-dx/GEN-12-evolvable-enums.md) | Evolve enum contracts without breaking strict clients | generator-dx |
+| [FW-10](framework/FW-10-remove-http-auth-metadata.md) | Remove authentication and authorization metadata from HTTP contracts | framework |
+| [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md) | Configure the common version route prefix at mapping time | framework |
 
-## Post-release
+## Future improvements
 
 | Task | Title | Category |
 |---|---|---|
@@ -120,8 +124,13 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [FW-07](framework/FW-07-multifile-uploads.md)
    [x] [GEN-09](generator-dx/GEN-09-xml-documentation.md)
    [x] [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md)
-   [ ] [DOC-01](docs/DOC-01-user-documentation.md)
-8. Post-release:
+   [x] [DOC-01](docs/DOC-01-user-documentation.md)
+8. Additional pre-release improvements:
+   [ ] [FW-10](framework/FW-10-remove-http-auth-metadata.md)
+   [ ] [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md)
+   [ ] [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md)
+   [ ] [GEN-12](generator-dx/GEN-12-evolvable-enums.md)
+9. Future improvements:
    [ ] [NET-02](aspnetcore/NET-02-openapi-operation-transformers.md)
    [ ] [NET-03](aspnetcore/NET-03-json-patch.md)
    [ ] [NET-04](aspnetcore/NET-04-auth-metrics.md)

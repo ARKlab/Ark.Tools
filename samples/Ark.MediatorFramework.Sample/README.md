@@ -3,6 +3,18 @@
 A minimal, **verifiable** proof of the source-generated, MVC-free web-services
 architecture described in [`docs/mediator-framework`](../../docs/mediator-framework/README.md).
 
+## Documentation
+
+The [user guide](../../docs/mediator-framework/guide/README.md) maps the
+compiled sample to adoption topics:
+
+| Sample file | Guide |
+|---|---|
+| `src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs` | [contracts](../../docs/mediator-framework/guide/contracts-and-handlers.md), [HTTP](../../docs/mediator-framework/guide/http-endpoints.md), [versioning](../../docs/mediator-framework/guide/versioning.md) |
+| `src/Ark.MediatorFramework.Sample.Application/GreetingHandlers.cs` | [handlers](../../docs/mediator-framework/guide/contracts-and-handlers.md), [Rebus](../../docs/mediator-framework/guide/rebus.md), [streaming](../../docs/mediator-framework/guide/streaming.md) |
+| `src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs` | [OpenAPI](../../docs/mediator-framework/guide/openapi.md), [serialization](../../docs/mediator-framework/guide/serialization.md) |
+| `src/Ark.MediatorFramework.Sample.WebInterface/DocumentsGrpcService.cs` | [gRPC](../../docs/mediator-framework/guide/grpc.md), [attachments](../../docs/mediator-framework/guide/attachments.md), [escape hatches](../../docs/mediator-framework/guide/escape-hatches.md) |
+
 It demonstrates the core thesis: a single **pure, transport-agnostic**
 `Ark.Tools.Solid` handler is dispatched identically over two transports —
 ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by a
@@ -123,7 +135,7 @@ The emitted `.proto` now generates a dedicated client assembly used by the
 behavioral tests, and the gRPC rich-error interceptor is covered there. The
 2026-07 review revisions — NodaTime via `NodaTime.Serialization.Protobuf`,
 ProblemDetails with `BusinessRuleViolation` (HTTP and gRPC), gRPC
-client-streaming upload, version lifetime (`IntroducedIn`/`RetiredIn`) with the
+client-streaming upload, version lifetime (`Versioning(Introduced, Retired)`) with the
 `/api/v{version}/…` placeholder, the per-transport package split and the
 framework test project under `tests/` — are specified with acceptance criteria
 in [`docs/mediator-framework/progress/tasks.md`](../../docs/mediator-framework/progress/tasks.md)
