@@ -17,7 +17,8 @@ reviews — lives in [`progress/`](progress/README.md).
 
 | Document | Purpose |
 | --- | --- |
-| [`design.md`](design.md) | Target architecture: pure handlers, Roslyn incremental generator, the three transports, DI, error handling, user context, attachments. |
+| [`design.md`](design.md) | Target architecture: pure handlers, Roslyn incremental generators, transports, DI, error handling, user context, attachments. |
+| [`azure-functions-design.md`](azure-functions-design.md) | Proposed .NET isolated Azure Functions HTTP hosting architecture and parity contract. |
 | [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
 | [`migration-from-mvc.md`](migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
 
@@ -32,6 +33,7 @@ Start with the [Mediator Framework user guide](guide/README.md).
 | [`progress/tasks.md`](progress/tasks.md) | Verifiable task breakdown with explicit acceptance criteria (epics). |
 | [`progress/tasks/README.md`](progress/tasks/README.md) | Task board: one self-contained task document per item, organized by category, with Outcomes and Acceptance criteria. |
 | [`progress/pre-release-review.md`](progress/pre-release-review.md) | Adversarial pre-release review (DX + security), feature-gap analysis vs Ark.ReferenceProject, and recorded decisions. |
+| [`progress/azure-functions-decision-log.md`](progress/azure-functions-decision-log.md) | Reviewable open decisions that block Azure Functions implementation tasks. |
 | [`progress/future-improvements.md`](progress/future-improvements.md) | Explicitly deferred post-1.0 items. |
 
 ## Relationship with existing Ark.Tools building blocks
