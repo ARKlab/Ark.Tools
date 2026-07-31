@@ -230,9 +230,9 @@ public sealed class GeneratorSnapshotTests
 
             """);
 
-        result.Generated.Should().Contain("MapGet(\"/api/v1/greetings/{id}\"");
-        result.Generated.Should().Contain("MapGet(\"/api/v2/greetings/{id}\"");
-        result.Generated.Should().NotContain("MapGet(\"/api/v3/greetings/{id}\"");
+        result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 1)");
+        result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 2)");
+        result.Generated.Should().NotContain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 3)");
         result.Generated.Should().Contain("WithGroupName(\"v1\")");
         result.Generated.Should().Contain("WithTags(\"Ark\")");
         result.Generated.Should().Contain("WithName(\"GetGreeting_v1\")");
@@ -461,7 +461,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null");
         generated.Should().Contain("var group = endpoints.MapGroup(string.Empty);");
-        generated.Should().Contain("group.MapGet(\"/secure\"");
+        generated.Should().Contain("group.MapGet(template");
         generated.Should().Contain(".RequireAuthorization()");
         generated.Should().NotContain(".RequireAuthorization(\"admin\")");
         generated.Should().Contain(".AllowAnonymous()");
