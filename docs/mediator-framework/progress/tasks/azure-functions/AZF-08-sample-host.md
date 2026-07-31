@@ -38,10 +38,12 @@ transport logic leaking into handlers.
    auditing, SQL/in-memory stores, clock and handlers are identical.
 8. Ensure every in-scope sample `[HttpEndpoint]` is generated. Add no handwritten
    Function methods for parity endpoints.
-9. Demonstrate versioned read/write, mixed binding, validation, auth, ProblemDetails,
-   ETag concurrency, paging, polymorphic JSON, single/multi upload, download,
-   approved streaming behavior and an HTTP-to-Rebus send.
-10. Update the sample README with local Core Tools startup, required configuration,
+9. Add one shared `[HttpEndpoint(AllowAnonymous = true)]` health contract to the
+   Application project so both HTTP hosts expose the same readiness endpoint.
+10. Demonstrate versioned read/write, mixed binding, validation, auth, ProblemDetails,
+    ETag concurrency, paging, polymorphic JSON, single/multi upload, download,
+    approved streaming behavior and an HTTP-to-Rebus send.
+11. Update the sample README with local Core Tools startup, required configuration,
     route examples, auth profile and the separate Rebus consumer requirement.
 
 ## Caveats
