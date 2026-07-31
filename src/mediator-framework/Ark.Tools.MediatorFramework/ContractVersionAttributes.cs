@@ -7,9 +7,9 @@ namespace Ark.MediatorFramework;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class VersioningAttribute : Attribute
 {
-    /// <summary>Gets the inclusive first API version.</summary>
+    /// <summary>Gets or sets the inclusive first API version.</summary>
     public int Introduced { get; set; } = 1;
 
-    /// <summary>Gets the exclusive first retired API version, or zero when the contract is never retired.</summary>
+    /// <summary>Gets or sets the exclusive first retired API version, or zero when the contract is never retired.</summary>
     public int Retired { get; set; }
 }
