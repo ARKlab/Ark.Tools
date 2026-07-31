@@ -1,6 +1,6 @@
 # FW-10 — Remove HTTP policy metadata
 
-**Status**: Draft · **Category**: framework · **Priority**: Post-release
+**Status**: Complete · **Category**: framework · **Priority**: Post-release
 
 ## Problem
 
@@ -23,13 +23,13 @@ transport-independent.
 
 ## Acceptance
 
-- [ ] Remove `Policy` from the public HTTP attribute.
-- [ ] Keep `AllowAnonymous` and document that it opts an endpoint out of the
+- [x] Remove `Policy` from the public HTTP attribute.
+- [x] Keep `AllowAnonymous` and document that it opts an endpoint out of the
       host default `RequireAuthenticatedUser()` policy.
-- [ ] Preserve secure-by-default behavior at the ASP.NET Core host level and
+- [x] Preserve secure-by-default behavior at the ASP.NET Core host level and
       through `Ark.Tools.Authorization`.
-- [ ] Document migration from `Policy` to host route-group policy and
+- [x] Document migration from `Policy` to host route-group policy and
       transport-independent authorization decorators.
-- [ ] Add HTTP and non-HTTP authorization coverage.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Add HTTP and non-HTTP authorization coverage.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

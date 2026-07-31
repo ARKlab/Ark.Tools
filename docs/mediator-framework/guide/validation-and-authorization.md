@@ -49,12 +49,10 @@ to HTTP, gRPC, and Rebus.
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 ```
 
-This is different from `Policy` on `HttpEndpointAttribute`:
-
 | Mechanism | Applies to | Use it for |
 | --- | --- | --- |
 | `PolicyAuthorizeAttribute` / custom wrapper such as `RequireScopePolicyAttribute` | HTTP, gRPC, Rebus | Real application permission rules |
-| `HttpEndpointAttribute.Policy` | HTTP only | Compatibility or host-only HTTP metadata |
+| Host route-group policy | HTTP only | Host-specific policy, filters, rate limiting, or other endpoint metadata |
 | `HttpEndpointAttribute.AllowAnonymous` | HTTP only | Explicit public HTTP endpoints |
 
 ## Create a custom policy
@@ -140,7 +138,10 @@ services.AddAuthorization(options =>
 
 This means every generated HTTP endpoint is authenticated by default even when
 the contract carries no extra permission attribute. `AllowAnonymous = true` is
-the explicit opt-out for a route that should stay public.
+the explicit opt-out for a route that should stay public. Configure any
+HTTP-only named policy on the route group returned by
+`MapArkEndpointsFromAssembly`; keep application permissions on
+`PolicyAuthorizeAttribute` decorators.
 
 ## What callers see on denial
 

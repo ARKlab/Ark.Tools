@@ -42,14 +42,9 @@ public sealed class HttpEndpointAttribute : Attribute
     public bool AcceptsMessagePack { get; set; }
 
     /// <summary>
-    /// Gets or sets the authorization policy required by this endpoint. Endpoints require
-    /// authorization by default when no policy or anonymous opt-out is specified.
-    /// </summary>
-    public string? Policy { get; set; }
-
-    /// <summary>
     /// Gets or sets a value indicating whether this endpoint explicitly permits anonymous access.
-    /// Endpoints are secure by default, so set this only for intentionally public endpoints.
+    /// The host's default <c>RequireAuthenticatedUser()</c> policy applies when this is
+    /// <see langword="false"/>.
     /// </summary>
     public bool AllowAnonymous { get; set; }
 

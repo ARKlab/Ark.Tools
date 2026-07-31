@@ -72,9 +72,10 @@ request type. Each transport is opt-in and declared independently:
   OpenAPI tag and the gRPC service-group fallback. `[GrpcService]` takes precedence
   over `[ApiGroup]` for gRPC service grouping.
 
-Generated HTTP endpoints require authorization by default. Set `Policy` on
-`[HttpEndpoint]` to select a named policy, or set `AllowAnonymous = true` for
-an intentionally public endpoint. `MapArkEndpointsFromAssembly` maps the generated routes
+Generated HTTP endpoints require authorization by default. Set `AllowAnonymous = true`
+only for an intentionally public endpoint. HTTP-only policies belong on the route group
+returned by `MapArkEndpointsFromAssembly`; transport-independent application permissions
+belong on authorization decorators. `MapArkEndpointsFromAssembly` maps the generated routes
 into one `RouteGroupBuilder`, invokes its optional configuration callback, and
 returns the group so hosts can apply shared metadata such as authorization,
 filters, rate limiting, CORS, or output caching.
@@ -734,7 +735,8 @@ command handlers with the policy check. The decorator resolves the current
 `ClaimsPrincipal` from `IContextProvider<ClaimsPrincipal>` and therefore applies
 the same policy to HTTP, gRPC and Rebus dispatch. Hosts must register the
 authorization services, policy provider and decorators once in the composition
-root, and register every named policy used by contracts.
+root. HTTP-only policies are configured by the host on the generated route group;
+application permissions remain on transport-independent authorization decorators.
 
 ## Packaging: one package per transport
 

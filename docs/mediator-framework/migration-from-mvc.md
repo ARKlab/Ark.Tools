@@ -68,11 +68,12 @@ Non-null query and request results return `200 OK` by default; null queries retu
 `SuccessStatusCode` and `NullResultStatusCode` on `HttpEndpointAttribute` when
 the MVC action used a different result mapping. The generated OpenAPI document
 contains both the success and null-result responses.
-Generated HTTP endpoints require authorization by default. Set `Policy` on
-`[HttpEndpoint]` for a named policy, or explicitly set `AllowAnonymous = true`
-for public endpoints. `MapArkEndpointsFromAssembly` also accepts a group configuration
-callback for shared authorization and other endpoint metadata such as filters,
-rate limiting, CORS, or output caching.
+Generated HTTP endpoints require authorization by default. Keep application
+permissions in transport-independent `PolicyAuthorizeAttribute` decorators, or
+configure an HTTP-only policy on the `RouteGroupBuilder` returned by
+`MapArkEndpointsFromAssembly`. Set `AllowAnonymous = true` only for intentionally
+public endpoints. The group configuration callback also accepts shared endpoint
+metadata such as filters, rate limiting, CORS, or output caching.
 
 For multipart endpoints, generated uploads disable antiforgery validation by
 default because they are designed for bearer-token APIs. Set

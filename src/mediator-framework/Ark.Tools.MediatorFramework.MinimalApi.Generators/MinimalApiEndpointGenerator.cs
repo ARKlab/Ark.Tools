@@ -304,7 +304,6 @@ namespace Ark.MediatorFramework.Generators
             var successStatusCode = NamedInt(http, "SuccessStatusCode", 0);
             var nullResultStatusCode = NamedInt(http, "NullResultStatusCode", 0);
             var acceptsMessagePack = NamedBool(http, "AcceptsMessagePack");
-            var policy = NamedString(http, "Policy");
             var allowAnonymous = NamedBool(http, "AllowAnonymous");
             var requireAntiforgery = NamedBool(http, "RequireAntiforgery");
             var maxRequestBodySizeBytes = NamedLong(http, "MaxRequestBodySizeBytes");
@@ -402,7 +401,6 @@ namespace Ark.MediatorFramework.Generators
                 successStatusCode,
                 nullResultStatusCode,
                 acceptsMessagePack,
-                policy,
                 allowAnonymous,
                 requireAntiforgery,
                 maxRequestBodySizeBytes,
@@ -1135,9 +1133,7 @@ namespace Ark.MediatorFramework.Generators
             if (endpoint.AllowAnonymous)
                 return ".AllowAnonymous()";
 
-            return string.IsNullOrWhiteSpace(endpoint.Policy)
-                ? ".RequireAuthorization()"
-                : ".RequireAuthorization(" + Literal(endpoint.Policy!) + ")";
+            return ".RequireAuthorization()";
         }
 
         private static string ProblemMetadata(EndpointModel endpoint)
@@ -1235,7 +1231,6 @@ namespace Ark.MediatorFramework.Generators
                 int successStatusCode,
                 int nullResultStatusCode,
                 bool acceptsMessagePack,
-                string? policy,
                 bool allowAnonymous,
                 bool requireAntiforgery,
                 long maxRequestBodySizeBytes,
@@ -1270,7 +1265,6 @@ namespace Ark.MediatorFramework.Generators
                 SuccessStatusCode = successStatusCode;
                 NullResultStatusCode = nullResultStatusCode;
                 AcceptsMessagePack = acceptsMessagePack;
-                Policy = policy;
                 AllowAnonymous = allowAnonymous;
                 RequireAntiforgery = requireAntiforgery;
                 MaxRequestBodySizeBytes = maxRequestBodySizeBytes;
@@ -1337,7 +1331,6 @@ namespace Ark.MediatorFramework.Generators
             public int SuccessStatusCode { get; }
             public int NullResultStatusCode { get; }
             public bool AcceptsMessagePack { get; }
-            public string? Policy { get; }
             public bool AllowAnonymous { get; }
 
             public bool RequireAntiforgery { get; }
