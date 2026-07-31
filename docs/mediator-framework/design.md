@@ -735,7 +735,8 @@ command handlers with the policy check. The decorator resolves the current
 `ClaimsPrincipal` from `IContextProvider<ClaimsPrincipal>` and therefore applies
 the same policy to HTTP, gRPC and Rebus dispatch. Hosts must register the
 authorization services, policy provider and decorators once in the composition
-root, and register every named policy used by contracts.
+root. HTTP-only policies are configured by the host on the generated route group;
+application permissions remain on transport-independent authorization decorators.
 
 ## Packaging: one package per transport
 
