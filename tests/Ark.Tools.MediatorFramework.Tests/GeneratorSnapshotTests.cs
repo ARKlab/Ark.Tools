@@ -413,7 +413,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MinimalApiGeneratorSecuresEndpointsAndSupportsOverrides()
+    public void MinimalApiGeneratorSecuresEndpointsAndSupportsAnonymousOptOut()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
             """
@@ -421,10 +421,6 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/secure")]
             public sealed class SecureEndpoint : IQuery<string>
-            {
-            }
-            [HttpEndpoint("GET", "/policy", Policy = "admin")]
-            public sealed class PolicyEndpoint : IQuery<string>
             {
             }
             [HttpEndpoint("GET", "/public", AllowAnonymous = true)]
@@ -438,7 +434,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("var group = endpoints.MapGroup(string.Empty);");
         generated.Should().Contain("group.MapGet(\"/secure\"");
         generated.Should().Contain(".RequireAuthorization()");
-        generated.Should().Contain(".RequireAuthorization(\"admin\")");
+        generated.Should().NotContain(".RequireAuthorization(\"admin\")");
         generated.Should().Contain(".AllowAnonymous()");
         generated.Should().Contain("configure?.Invoke(group);");
         generated.Should().Contain("return group;");

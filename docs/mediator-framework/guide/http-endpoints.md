@@ -14,7 +14,6 @@ access and the request fits a route/query/body envelope.
 | `SuccessStatusCode` | `0` | Success status for a non-null result | The default `200 OK` is wrong, for example create = `201` | Successful HTTP response uses your code |
 | `NullResultStatusCode` | `0` | Success-path status when the handler returns `null` | A `null` result is a documented outcome | Queries default to `404`; requests default to `204` |
 | `AcceptsMessagePack` | `false` | Whether HTTP MessagePack negotiation is enabled | The same contract must support JSON and `application/x-msgpack` | Request/response can negotiate MessagePack |
-| `Policy` | `null` | Endpoint-specific ASP.NET Core policy metadata | You need a host-only HTTP policy for compatibility | Generated endpoint requires that named policy |
 | `AllowAnonymous` | `false` | HTTP opt-out from the host's default auth requirement | The route is intentionally public | Generated route carries anonymous metadata |
 | `RequireAntiforgery` | `false` | Multipart antiforgery validation | Cookie-authenticated browser forms must post files safely | Missing/invalid antiforgery token rejects the upload |
 | `MaxRequestBodySizeBytes` | `0` | Multipart request body size limit | Uploads need a per-endpoint size ceiling | Oversized request is rejected before handler dispatch |
@@ -26,12 +25,16 @@ Version lifetime is declared independently with `[Versioning]`; see
 [versioning](versioning.md). `ApiGroup` is a separate attribute that groups HTTP
 routes and OpenAPI operations.
 
-`Policy` and `AllowAnonymous` are current compatibility properties on the HTTP
-attribute. Prefer transport-agnostic contract authorization such as
+`AllowAnonymous` is the explicit opt-out from the host's default
+`RequireAuthenticatedUser()` policy. Prefer transport-agnostic contract authorization such as
 `PolicyAuthorizeAttribute` or a domain-specific wrapper when the same permission
 must apply to gRPC and Rebus too. The removal of HTTP-only authorization
 metadata is tracked in
 [FW-10](../progress/tasks/framework/FW-10-remove-http-auth-metadata.md).
+
+For an HTTP-only policy, configure the route group returned by
+`MapArkEndpointsFromAssembly` in the host. Do not add policy names to application
+contracts.
 
 ## Binding workflow
 
