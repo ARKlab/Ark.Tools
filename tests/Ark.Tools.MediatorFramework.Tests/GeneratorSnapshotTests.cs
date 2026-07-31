@@ -762,6 +762,7 @@ public sealed class GeneratorSnapshotTests
             [HttpEndpoint("POST", "/api/v{version}/greetings/{id}")]
             public sealed record UpdateGreeting : IRequest<string>
             {
+                [HttpRoute("id")]
                 public System.Guid Id { get; init; }
                 [HttpQuery]
                 public string Audit { get; init; } = string.Empty;

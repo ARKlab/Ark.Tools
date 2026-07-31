@@ -82,7 +82,7 @@ public sealed class HttpEndpointAttribute : Attribute
 /// the endpoint also has a request body.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-public class HttpQueryAttribute : Attribute
+public sealed class HttpQueryAttribute : Attribute
 {
 }
 
@@ -90,7 +90,7 @@ public class HttpQueryAttribute : Attribute
 /// Compatibility alias for <see cref="HttpQueryAttribute"/>.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
-public sealed class BindFromQueryAttribute : HttpQueryAttribute
+public sealed class BindFromQueryAttribute : Attribute
 {
 }
 

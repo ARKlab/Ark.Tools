@@ -26,7 +26,7 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
-        private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
+        private const string BindFromQueryAttribute = "Ark.MediatorFramework.BindFromQueryAttribute";
         private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
         private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";

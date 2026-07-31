@@ -38,9 +38,11 @@ contracts.
 
 ## Binding workflow
 
-Route placeholders bind to properties with the same name. Mark values that must
-come from the query string with `[HttpQuery]`; remaining client values bind
-from the request body. Mark server-owned values with `[ServerSet]`.
+Route placeholders bind to properties with the same name. Use `[HttpRoute]` to
+make route binding explicit or to override the placeholder name. Mark values
+that must come from the query string with `[HttpQuery]`; remaining client
+values bind from the request body. Mark server-owned values with `[ServerSet]`.
+`[BindFromQuery]` remains as a compatibility alias for `[HttpQuery]`.
 
 ### Binding rules by endpoint shape
 

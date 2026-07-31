@@ -1,6 +1,6 @@
 # GEN-11 — Rename HTTP binding attributes
 
-**Status**: Draft · **Category**: generator-dx · **Priority**: Post-release
+**Status**: Implemented · **Category**: generator-dx · **Priority**: Post-release
 
 ## Problem
 
@@ -17,9 +17,9 @@ clear and migration-safe.
 
 ## Acceptance
 
-- [ ] Define `HttpQuery` and `HttpRoute` semantics and XML documentation.
-- [ ] Update generators, diagnostics, samples, tests, and user documentation.
-- [ ] Decide and document obsolete aliases or a breaking-release migration.
-- [ ] Verify non-HTTP contracts do not gain ASP.NET Core dependencies.
+- [x] Define `HttpQuery` and `HttpRoute` semantics and XML documentation.
+- [x] Update generators, diagnostics, samples, tests, and user documentation.
+- [x] Keep `BindFromQuery` as a compatibility alias; no breaking migration is required.
+- [x] Verify non-HTTP contracts do not gain ASP.NET Core dependencies.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
