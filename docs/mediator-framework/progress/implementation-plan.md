@@ -774,3 +774,36 @@ sample opts in and commits its snapshot, which becomes the release baseline.
 [DOC-01](tasks/docs/DOC-01-user-documentation.md). `docs/mediator-framework/guide/`
 with a getting-started walkthrough and one page per feature, snippets cited from
 compiled sample code, all relative links verified.
+
+## Phase 11 — Azure Functions isolated-worker hosting (proposed)
+
+This phase is decision-gated. Review
+[`azure-functions-decision-log.md`](azure-functions-decision-log.md) first and
+record each answer before starting a task. The architecture and parity definition
+are in [`../azure-functions-design.md`](../azure-functions-design.md). Authoritative
+implementation detail, tests, caveats, outcomes and acceptance live in the linked
+self-contained task documents.
+
+1. [AZF-01](tasks/azure-functions/AZF-01-foundation.md): packages, host opt-in and
+   shared HTTP semantic model.
+2. [AZF-02](tasks/azure-functions/AZF-02-trigger-generator.md): Function/HTTP-trigger
+   source, routes, versions and diagnostics.
+3. [AZF-03](tasks/azure-functions/AZF-03-binding-dispatch.md): JSON/route/query
+   binding, server-set protection, SimpleInjector scope and typed dispatch.
+4. [AZF-04](tasks/azure-functions/AZF-04-auth-user-context.md): application
+   authentication, anonymous handling, authorization decorators and principal flow.
+5. [AZF-05](tasks/azure-functions/AZF-05-results-problems-etags.md): statuses,
+   ProblemDetails, exception safety and conditional ETags.
+6. Run [AZF-06](tasks/azure-functions/AZF-06-files-streaming.md) and
+   [AZF-07](tasks/azure-functions/AZF-07-one-way-rebus.md) independently after
+   AZF-05: files/streaming and outbound-only messaging do not depend on each other.
+7. [AZF-08](tasks/azure-functions/AZF-08-sample-host.md): scaffold and compose the
+   sibling sample Function app over the existing Application package.
+8. [AZF-09](tasks/azure-functions/AZF-09-openapi.md): versioned OpenAPI if AZD-05
+   keeps it in scope.
+9. [AZF-10](tasks/azure-functions/AZF-10-boundary-parity.md): Core Tools boundary
+   suite, endpoint parity matrix, CI gate and user documentation.
+
+Every implementation task ends with the full-solution build/test gate and updates
+locked dependency files when applicable. MessagePack content negotiation remains
+out of scope for the complete phase.

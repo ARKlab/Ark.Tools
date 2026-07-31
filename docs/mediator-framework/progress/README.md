@@ -12,6 +12,7 @@ reference documentation (what the framework *is*) stays one level up:
 | [`implementation-plan.md`](implementation-plan.md) | Phased delivery plan (Phases 1–10) with step-by-step instructions. |
 | [`pre-release-review.md`](pre-release-review.md) | Adversarial pre-release review (DX + security), gap analysis vs `Ark.ReferenceProject`, recorded decisions D1–D8. |
 | [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 items. |
+| [`azure-functions-decision-log.md`](azure-functions-decision-log.md) | Reviewable decisions for the proposed Azure Functions hosting workstream. |
 
 ## Working agreement
 
