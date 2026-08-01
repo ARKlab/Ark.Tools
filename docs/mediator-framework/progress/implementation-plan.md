@@ -784,9 +784,8 @@ architecture and parity definition are in
 implementation detail, tests, caveats, outcomes and acceptance live in the linked
 self-contained task documents.
 
-1. Resolve proposed host-composition decision AZD-10 and OpenAPI mechanism decision
-   AZD-11 in the
-   [decision log](azure-functions-decision-log.md).
+1. Apply accepted host-composition decision AZD-10 and OpenAPI exclusion decision
+   AZD-11 from the [decision log](azure-functions-decision-log.md).
 2. [AZF-01](tasks/azure-functions/AZF-01-foundation.md): packages, host opt-in and
    shared HTTP semantic model.
 3. [AZF-02](tasks/azure-functions/AZF-02-trigger-generator.md): Function/HTTP-trigger
@@ -803,11 +802,10 @@ self-contained task documents.
    AZF-05: files/streaming and outbound-only messaging do not depend on each other.
 8. [AZF-08](tasks/azure-functions/AZF-08-sample-host.md): scaffold and compose the
    sibling sample Function app over the existing Application package.
-9. [AZF-09](tasks/azure-functions/AZF-09-openapi.md): versioned OpenAPI from
-   generated descriptors and host JSON metadata.
-10. [AZF-10](tasks/azure-functions/AZF-10-boundary-parity.md): Core Tools boundary
-    suite, endpoint parity matrix, `.github/workflows/ci.yml` gate and user
-    documentation.
+9. [AZF-10](tasks/azure-functions/AZF-10-boundary-parity.md): Core Tools boundary
+   suite, endpoint parity matrix, `.github/workflows/ci.yml` gate and user
+   documentation. [AZF-09](tasks/azure-functions/AZF-09-openapi.md) remains deferred
+   until AZD-11 is reopened.
 
 Every implementation task ends with the full-solution build/test gate and updates
 locked dependency files when applicable. MessagePack content negotiation remains

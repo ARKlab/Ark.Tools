@@ -10,7 +10,7 @@ Copying semantic analysis would create two definitions of binding and versioning
 
 ## Prerequisites
 
-- Resolve AZD-01, AZD-02, AZD-09, AZD-10 and AZD-11 in the
+- Resolve AZD-01, AZD-02, AZD-09 and AZD-10 in the
   [decision log](../../azure-functions-decision-log.md).
 - Read `MinimalApiEndpointGenerator.cs`, `HttpEndpointAttribute.cs`,
   `GeneratorSnapshotTests.cs` and
@@ -46,9 +46,6 @@ Copying semantic analysis would create two definitions of binding and versioning
 8. Add generator tests proving the shared model gives the same analysis result for
    explicit-version and mapping-prefix routes, GET query binding, POST mixed
    binding, attachments, server-set and ETag properties.
-9. Define the immutable OpenAPI operation/type descriptor model required by AZD-11
-   in the shared analysis layer; do not add a second contract scanner.
-
 ## Caveats
 
 - Do not expose Roslyn symbols from the runtime package.
@@ -83,7 +80,7 @@ Copying semantic analysis would create two definitions of binding and versioning
 
 ## Acceptance
 
-- [ ] AZD-01, AZD-02, AZD-09, AZD-10 and AZD-11 are recorded as decided.
+- [ ] AZD-01, AZD-02, AZD-09 and AZD-10 are recorded as decided.
 - [ ] New public APIs have XML docs and API-surface baselines.
 - [ ] Existing Minimal API snapshots and behavior remain unchanged.
 - [ ] Both HTTP generators support the shared assembly marker and version prefix.

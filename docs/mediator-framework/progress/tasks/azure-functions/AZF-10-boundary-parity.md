@@ -10,8 +10,8 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 
 ## Prerequisites
 
-- AZF-01 through AZF-09 merged.
-- AZD-06, AZD-07, AZD-09, AZD-10 and AZD-11 decided.
+- AZF-01 through AZF-08 merged.
+- AZD-06, AZD-07, AZD-09 and AZD-10 decided.
 - Verify the pinned Azure Functions Core Tools version against Microsoft local
   development guidance.
 
@@ -44,7 +44,7 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
    passed through an internal skip.
 9. Add an Azure Functions guide covering package installation, host marker,
    startup, JSON configuration, auth profiles, one-way Rebus, local execution,
-   tests, platform caveats and explicit MessagePack exclusion.
+   tests, platform caveats and explicit MessagePack and OpenAPI exclusions.
 10. Update the mediator guide index, design, package table, task tracker and sample
     README. Check all relative links and code references.
 
@@ -78,14 +78,15 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 
 ## Acceptance
 
-- [ ] AZD-06, AZD-07, AZD-09, AZD-10 and AZD-11 are recorded as decided.
+- [ ] AZD-06, AZD-07, AZD-09 and AZD-10 are recorded as decided.
 - [ ] The complete Core Tools suite runs on every pull request and fails loudly when
   the host cannot start.
 - [ ] `.github/workflows/ci.yml` pins Core Tools, invokes the boundary suite and
   uploads sanitized host logs on failure.
 - [ ] Every supported sample endpoint has a parity-matrix row and runnable tests.
 - [ ] Auth, errors, files, ETags, streaming decision and Rebus send are boundary-tested.
-- [ ] Documentation states all platform limitations and MessagePack exclusion.
+- [ ] Documentation states all platform limitations and MessagePack and OpenAPI
+  exclusions.
 - [ ] Relative links and cited file/test names resolve.
 - [ ] Changed files pass secret scanning.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.

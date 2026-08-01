@@ -1,8 +1,7 @@
 # Azure Functions hosting — decision log
 
-Status: **review required**. AZD-01 through AZD-09 were accepted on 2026-07-31.
-AZD-10 and AZD-11 were added after implementation-mechanism review and must be
-accepted before their blocked tasks begin. Accepted decisions are reflected in
+Status: **decided**. AZD-01 through AZD-09 were accepted on 2026-07-31.
+AZD-10 and AZD-11 were decided on 2026-08-01. Accepted decisions are reflected in
 [`../azure-functions-design.md`](../azure-functions-design.md) and the affected
 tasks.
 
@@ -72,8 +71,8 @@ tasks.
 
 ### AZD-05 — OpenAPI parity
 
-- **Status:** DECIDED
-- **Decision:** include generated OpenAPI metadata/document production in
+- **Status:** SUPERSEDED by AZD-11
+- **Original decision:** include generated OpenAPI metadata/document production in
   scope, with one document per API version and the same routes, schemas, standard
   responses, tags, operation names and security requirements. Do not use an
   extension that requires duplicating annotations on generated functions.
@@ -82,7 +81,7 @@ tasks.
 - **Why this needs review:** ASP.NET Core endpoint metadata does not exist in a
   Functions app. Full parity therefore needs generator-owned document metadata or
   a compatible adapter and is a distinct deliverable.
-- **Blocked tasks:** AZF-07, AZF-09.
+- **Blocked tasks:** none; AZD-11 excludes OpenAPI from the workstream.
 
 ### AZD-06 — JSON streaming release gate
 
@@ -96,7 +95,7 @@ tasks.
 - **Why this needs review:** ASP.NET Core integration exposes request/response
   objects but not the complete ASP.NET Core server pipeline; platform buffering
   must be measured.
-- **Blocked tasks:** AZF-07, AZF-08, AZF-09.
+- **Blocked tasks:** AZF-07, AZF-08.
 
 ### AZD-07 — Functions boundary-test execution
 
@@ -106,7 +105,7 @@ tasks.
   the normal solution test command; the boundary job may be selected by category
   but may not silently skip.
 - **Alternative:** use a Functions runtime container in CI.
-- **Blocked tasks:** AZF-08, AZF-09.
+- **Blocked tasks:** AZF-08.
 
 ### AZD-08 — One-way Rebus transport in local sample tests
 
@@ -134,15 +133,15 @@ tasks.
   does not. gRPC-only, Rebus-only, controllers and handwritten escape hatches are
   not Function endpoints.
 - **Alternative:** select a representative subset for the first sample.
-- **Why this needs review:** endpoint-by-endpoint parity is achievable only if
-  streaming and OpenAPI decisions pass. A subset demonstrates capabilities but
-  does not satisfy literal same-surface parity.
-- **Blocked tasks:** AZF-03 through AZF-09.
+- **Why this needs review:** endpoint-by-endpoint callable-surface parity is
+  achievable only if the streaming decision passes. A subset demonstrates
+  capabilities but does not satisfy literal same-surface parity.
+- **Blocked tasks:** AZF-03 through AZF-08.
 
 ### AZD-10 — Host contract selection and composition
 
-- **Status:** PROPOSED — review required
-- **Recommendation:** allow one or more shared assembly-level HTTP host markers in
+- **Status:** DECIDED
+- **Decision:** allow one or more shared assembly-level HTTP host markers in
   each host assembly. Each marker selects a contract assembly through a marker
   `Type`, uses the host-wide `VersionPrefix`, and may provide exact
   `IncludedContracts` or `ExcludedContracts`; the two lists are mutually exclusive.
@@ -164,34 +163,27 @@ tasks.
 - **Why this needs review:** assembly-only discovery is simple and valid for one API
   surface, but it cannot compose multiple contract assemblies or exclude one
   unsupported contract for a sibling host.
-- **Blocked tasks:** AZF-01, AZF-02, AZF-08, AZF-09, AZF-10.
+- **Blocked tasks:** AZF-01, AZF-02, AZF-08, AZF-10.
 
 ### AZD-11 — Function App OpenAPI production mechanism
 
-- **Status:** PROPOSED — review required
-- **Recommendation:** do not use
-  `Microsoft.Azure.Functions.Worker.Extensions.OpenApi`. The Functions generator
-  emits immutable host-selected operation/type descriptors from the shared HTTP
-  semantic model. The Functions runtime package builds and caches one
-  OpenAPI 3.1 `Microsoft.OpenApi` document per API version from those descriptors
-  and the host's configured `JsonSerializerOptions`/`JsonTypeInfo`; generated
-  anonymous HTTP triggers serve `/openapi/v{version}.json` and optionally YAML.
-  Schema generation is host-neutral framework code shared with Ark OpenAPI
-  conventions, not a reflection scan for endpoint contracts.
+- **Status:** DECIDED
+- **Decision:** exclude OpenAPI from Azure Functions hosting until a suitable
+  Microsoft or community-supported mechanism is available. Do not build a custom
+  generator/runtime document pipeline and do not use
+  `Microsoft.Azure.Functions.Worker.Extensions.OpenApi`.
 - **Rationale:** the official Azure Functions OpenAPI extension is in maintenance
   mode, supports OpenAPI only through 3.0.1, and expects OpenAPI attributes on
   Function methods. That would duplicate generator-owned contract metadata and
   diverge from the current Minimal API OpenAPI surface. `Microsoft.AspNetCore.OpenApi`
   cannot be used directly because Functions does not build an ASP.NET Core endpoint
-  metadata graph; the already centrally pinned `Microsoft.OpenApi` object model and
-  writers do not have that dependency.
-- **Alternative A:** generate extension attributes on every Function and use the
-  maintenance-mode extension.
-- **Alternative B:** generate static JSON at compilation time. This cannot reliably
-  honor host-configured JSON metadata, converters and polymorphism.
-- **Alternative C:** omit OpenAPI from the first release, contradicting accepted
-  AZD-05.
-- **Blocked tasks:** AZF-01, AZF-09, AZF-10.
+  metadata graph.
+- **Reconsideration gate:** reopen this decision when a maintained Microsoft or
+  community solution supports the isolated worker and the repository's OpenAPI
+  requirements without duplicating contract metadata.
+- **Rejected alternative:** emit custom descriptors and maintain an Ark-specific
+  runtime document provider.
+- **Blocked tasks:** none; AZF-09 is deferred.
 
 ## Confirmed constraints from the request
 

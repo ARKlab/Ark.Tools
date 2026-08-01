@@ -24,7 +24,7 @@ bind the existing contract and invoke its exact decorated handler safely.
    complete invocation, including binding, handler execution and response writing.
 3. Bind route properties from `HttpRequest.RouteValues` using invariant,
    nullable-aware conversion equivalent to ASP.NET Core binding.
-4. Bind body-less verb properties and `[BindFromQuery]` properties from query
+4. Bind body-less verb properties and `[HttpQuery]` properties from query
    values, including repeated values/collections supported by Minimal API.
 5. For body verbs, deserialize the complete request envelope asynchronously using
    the host-configured ASP.NET Core JSON options. Reject empty/invalid bodies using

@@ -1,6 +1,6 @@
 # Azure Functions isolated-worker hosting specification
 
-Status: **review required for AZD-10 and AZD-11** — decisions are recorded in
+Status: **decided** — decisions are recorded in
 [`progress/azure-functions-decision-log.md`](progress/azure-functions-decision-log.md).
 
 ## Goal and scope
@@ -17,7 +17,7 @@ In scope:
 - .NET isolated worker with ASP.NET Core HTTP integration;
 - `net10.0` and Azure Functions runtime v4;
 - JSON HTTP endpoints generated from the existing `[HttpEndpoint]`,
-  `[Versioning]`, `[BindFromQuery]`, `[ServerSet]` and `[ETag]` metadata;
+  `[Versioning]`, `[HttpQuery]`, `[ServerSet]` and `[ETag]` metadata;
 - route, query, JSON body and multipart binding;
 - authentication, transport-agnostic authorization and user-context propagation;
 - validation and domain failures as the same `application/problem+json` shapes;
@@ -34,6 +34,7 @@ Out of scope:
 - hosting Rebus workers or generated Rebus receive handlers in the Function app;
 - gRPC endpoints in the Function app;
 - non-HTTP Azure Functions bindings generated from mediator contracts;
+- OpenAPI document generation and UI hosting;
 - replacing Azure Functions access keys, App Service Authentication, API
   Management, or platform authorization.
 
@@ -150,7 +151,7 @@ Binding parity:
 | Contract source | Azure Functions behavior |
 | --- | --- |
 | Route | Read from `HttpRequest.RouteValues`; use invariant conversion and reject invalid values with 400 |
-| Query | Follow the existing body-less and `[BindFromQuery]` rules, including collections |
+| Query | Follow the existing body-less and `[HttpQuery]` rules, including collections |
 | JSON body | Deserialize the complete envelope with host-configured ASP.NET Core JSON options, then overwrite route/query/server-owned members |
 | `[ServerSet]` | Never trust client input; reset after deserialization |
 | `[ETag]` | `If-Match`/`If-None-Match` override the model exactly as on Minimal API |
@@ -205,31 +206,22 @@ Streaming parity is evidence-based: the implementation task must first prove
 first-item flush and cancellation through Core Tools. If the platform buffers the
 response, that task stops and records the limitation rather than claiming parity.
 
-## OpenAPI production
+## OpenAPI exclusion
 
-The Functions host does not use `Microsoft.AspNetCore.OpenApi`: no ASP.NET Core
-endpoint metadata graph exists for it to inspect. It also does not use
+OpenAPI is excluded until a suitable Microsoft or community-supported Azure
+Functions mechanism is available. The Functions host does not use
+`Microsoft.AspNetCore.OpenApi`, because no ASP.NET Core endpoint metadata graph
+exists for it to inspect. It also does not use
 `Microsoft.Azure.Functions.Worker.Extensions.OpenApi`; that extension is in
 maintenance mode, supports OpenAPI only through 3.0.1, and requires duplicated
-OpenAPI attributes on Function methods.
+attributes on generated Function methods.
 
 Reference:
 [Azure Functions OpenAPI extension maintenance notice and supported versions](https://github.com/Azure/azure-functions-openapi-extension#azure-functions-openapi-extension).
 
-Instead, the Functions generator emits immutable operation and type descriptors
-from the same host-selected HTTP semantic model used for trigger generation. The
-runtime package combines those descriptors with the host's configured
-`JsonSerializerOptions`/`JsonTypeInfo`, applies host-neutral Ark schema conventions,
-and builds cached OpenAPI 3.1 `Microsoft.OpenApi` documents. Generated anonymous
-Functions serve one document per active version at `/openapi/v{version}.json`; YAML
-may be enabled without adding a UI dependency. This is not a runtime
-endpoint-contract scan: the generator supplies the complete operation inventory and
-CLR type handles.
-
-The document provider must cover operation names, tags, XML documentation,
-route/query/body/multipart schemas, ProblemDetails responses, bearer security,
-server-set omission, ETag headers, files and approved streaming. Functions and
-Minimal API normalized document snapshots are the parity gate.
+The framework does not maintain a custom generator/runtime OpenAPI pipeline.
+Callable endpoint parity remains required; OpenAPI parity is not part of this
+workstream.
 
 ## Rebus in a Function host
 
