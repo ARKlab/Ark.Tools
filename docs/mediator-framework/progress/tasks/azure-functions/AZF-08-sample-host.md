@@ -53,6 +53,9 @@ transport logic leaking into handlers.
 - Azure Functions cannot use ASP.NET Core endpoint middleware or
   `MapArkEndpointsFromAssembly`.
 - The Function project is a hosting sibling, not a replacement for WebInterface.
+- `samples/` showcases application capabilities and how an application can test its
+  composition. Framework-library and Core Tools E2E validation belongs under
+  `tests/`, not in the sample projects.
 - Do not import MessagePack formatter setup.
 - Do not register gRPC services, controllers, Scalar/Swagger middleware or a Rebus
   receive processor.

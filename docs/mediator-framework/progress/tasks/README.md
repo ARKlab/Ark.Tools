@@ -88,6 +88,11 @@ The approved design is in
 decisions in the
 [`Azure Functions decision log`](../azure-functions-decision-log.md).
 
+Framework tests, including Core Tools end-to-end tests that prove generated
+Functions work, live under `tests/`. Projects under `samples/` showcase application
+capabilities and how an application can test its own composition; they do not test
+the framework libraries.
+
 | Task | Title | Depends on |
 |---|---|---|
 | [AZF-01](azure-functions/AZF-01-foundation.md) | Package and shared HTTP model foundation | AZD-01, AZD-02, AZD-09 |

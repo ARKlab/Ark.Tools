@@ -17,8 +17,10 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 
 ## Implementation steps
 
-1. Add a dedicated boundary-test project or fixture that launches Core Tools from
-   the built Function sample directory on an allocated loopback port.
+1. Add a dedicated framework E2E boundary-test project under `tests/` that launches
+   Core Tools from the built Function sample directory on an allocated loopback
+   port. The generated sample Function is the test subject, not the location of the
+   framework tests.
 2. Capture process output, wait for a generated anonymous health endpoint with a
    bounded timeout, fail with useful logs on early exit, and terminate the complete
    process tree in cleanup.
@@ -51,6 +53,9 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 - Redact environment values and authorization headers from captured logs.
 - Core Tools is the local runtime, not proof of every Azure front-end behavior;
   record any deployment-only smoke test separately.
+- Keep framework-library and Core Tools E2E tests under `tests/`. Keep `samples/`
+  focused on showcasing application capabilities and how an application can test
+  its own composition.
 - A parity matrix row without a runnable test reference is incomplete.
 
 ## Required test coverage

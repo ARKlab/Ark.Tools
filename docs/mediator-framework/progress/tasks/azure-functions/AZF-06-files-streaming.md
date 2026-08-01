@@ -30,9 +30,11 @@ Functions host behavior rather than ordinary JSON result serialization.
 6. Define and test stream/attachment disposal ownership. The invocation scope and
    source stream must remain alive until response copy completes and close exactly
    once on success, error or disconnect.
-7. Before enabling generated `IAsyncEnumerable<T>` endpoints, add a Core Tools
-   proof that writes a JSON array incrementally, flushes after the first item and
-   observes client disconnect cancellation.
+7. Before enabling generated `IAsyncEnumerable<T>` endpoints, add a framework E2E
+   test under `tests/` that launches the generated Function through Core Tools,
+   writes a JSON array incrementally, flushes after the first item and observes
+   client disconnect cancellation. Do not place this framework proof under
+   `samples/`.
 8. If the proof passes, implement JSON streaming without full buffering and with
    valid delimiters for zero/one/many items and mid-stream failure handling.
 9. If the proof fails, emit the approved compile-time diagnostic for streaming
