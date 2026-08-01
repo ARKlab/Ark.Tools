@@ -6,7 +6,11 @@
     <Project Path="src/common/Ark.Tools.Auth0/Ark.Tools.Auth0.csproj" />
     <Project Path="src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
     <Project Path="src/common/Ark.Tasks/Ark.Tasks.csproj" />
+    <Project Path="src/common/Ark.Tools.Core.Analyzers/Ark.Tools.Core.Analyzers.csproj" />
     <Project Path="src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
+    <Project Path="src/common/Ark.Tools.Dapper/Ark.Tools.Dapper.csproj" />
+    <Project Path="src/common/Ark.Tools.MessagePack/Ark.Tools.MessagePack.csproj" />
+    <Project Path="src/common/Ark.Tools.Protobuf/Ark.Tools.Protobuf.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.RavenDb/Ark.Tools.EventSourcing.RavenDb.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.Rebus/Ark.Tools.EventSourcing.Rebus.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.SimpleInjector/Ark.Tools.EventSourcing.SimpleInjector.csproj" />
@@ -122,7 +126,11 @@
     <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample.Tests/Ark.ResourceWatcher.Sample.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Ark.Tools.Core.Analyzers.Tests/Ark.Tools.Core.Analyzers.Tests.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/Ark.Tools.AspNetCore.ProblemDetails.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Dapper.Tests/Ark.Tools.Dapper.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.MessagePack.Tests/Ark.Tools.MessagePack.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Protobuf.Tests/Ark.Tools.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Core.Tests/Ark.Tools.Core.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Tests/Ark.Tools.MediatorFramework.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Protobuf.Tests/Ark.Tools.Nodatime.Protobuf.Tests.csproj" />

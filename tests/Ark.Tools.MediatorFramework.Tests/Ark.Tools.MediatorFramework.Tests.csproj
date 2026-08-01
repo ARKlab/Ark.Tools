@@ -20,6 +20,7 @@
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Rebus/Ark.Tools.MediatorFramework.Rebus.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Rebus.Generators/Ark.Tools.MediatorFramework.Rebus.Generators.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
   </ItemGroup>
 
   <!-- The repo-wide MSTest packages are injected through Directory.Build.targets.

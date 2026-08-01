@@ -708,6 +708,8 @@ namespace Ark.MediatorFramework.Generators
                 return ProtoTypeName(array.ElementType, contracts);
             if (type is INamedTypeSymbol named && named.IsGenericType && named.Name == "Nullable")
                 return ProtoTypeName(named.TypeArguments[0], contracts);
+            if (type is INamedTypeSymbol evolvableEnum && IsEvolvableEnum(evolvableEnum))
+                return EvolvableEnumProtoType(evolvableEnum);
 
             var contract = contracts.FirstOrDefault(item => SymbolEqualityComparer.Default.Equals(item.Type, type));
             if (contract is not null)
@@ -783,6 +785,32 @@ namespace Ark.MediatorFramework.Generators
             var separator = value.LastIndexOf('.');
             return separator < 0 ? value : value[(separator + 1)..];
         }
+
+        // Detects Ark.Tools.Core.EvolvableEnum by name/arity/namespace (no compile-time
+        // reference to Ark.Tools.Core is required, matching this generator's convention of
+        // recognizing well-known types by their fully-qualified name/shape).
+        private static bool IsEvolvableEnum(INamedTypeSymbol named) =>
+            named.IsGenericType && named.Arity is 1 or 2
+            && named.OriginalDefinition.Name == "EvolvableEnum"
+            && named.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Core";
+
+        private static string EvolvableEnumProtoType(INamedTypeSymbol type)
+        {
+            var backing = type.Arity == 1 ? SpecialType.System_Int32 : type.TypeArguments[1].SpecialType;
+            return ProtoIntegerType(backing)
+                ?? ProtoIntegerType((type.TypeArguments[0] as INamedTypeSymbol)?.EnumUnderlyingType?.SpecialType)
+                ?? "int32";
+        }
+
+        private static string? ProtoIntegerType(SpecialType? backing)
+            => backing switch
+            {
+                SpecialType.System_SByte or SpecialType.System_Int16 or SpecialType.System_Int32 => "int32",
+                SpecialType.System_Byte or SpecialType.System_UInt16 or SpecialType.System_UInt32 => "uint32",
+                SpecialType.System_Int64 => "int64",
+                SpecialType.System_UInt64 => "uint64",
+                _ => null,
+            };
 
         private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
         {

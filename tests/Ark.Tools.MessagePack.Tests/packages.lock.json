@@ -155,6 +155,16 @@
         "resolved": "11.0.1",
         "contentHash": "9Jqm26Yb5D833BSU6rH3taFB8Y+A67Y3GJRC6XFEBKc2ueQSfd0B4bU3cAGsUNrWUJd1V9Sgm5U7I8SNG5zJvA=="
       },
+      "MessagePack.Annotations": {
+        "type": "Transitive",
+        "resolved": "3.1.8",
+        "contentHash": "SitOtZ4tOlAZZPF7p52M7143F+Cuz7o/aU0MrtAXX0+ZkPXzDNroOFhzzE2ogMFThsoEW/E6akXVVcBFM9ZKaw=="
+      },
+      "MessagePackAnalyzer": {
+        "type": "Transitive",
+        "resolved": "3.1.8",
+        "contentHash": "Vm4g0cR4YRKRchEOmMJ0uVFU6yxdg7cJa2KHv3SUAHEsdYKvMpHMF5A1hZfsix89ymD5cmuzRnw9a6dKMcvq+Q=="
+      },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
         "resolved": "18.8.1",
@@ -187,6 +197,11 @@
         "type": "Transitive",
         "resolved": "9.0.4",
         "contentHash": "05Lh2ItSk4mzTdDWATW9nEcSybwprN8Tz42Fs5B+jwdXUpauktdAQUI1Am4sUQi2C63E5hvQp8gXvfwfg9mQGQ=="
+      },
+      "Microsoft.NET.StringTools": {
+        "type": "Transitive",
+        "resolved": "17.11.4",
+        "contentHash": "mudqUHhNpeqIdJoUx2YDWZO/I9uEDYVowan89R6wsomfnUJQk6HteoQTlNjZDixhT2B4IXMkMtgZtoceIjLRmA=="
       },
       "Microsoft.Testing.Extensions.Telemetry": {
         "type": "Transitive",
@@ -243,32 +258,23 @@
           "NodaTime": "[3.3.3, )"
         }
       },
-      "ark.tools.nodatime": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )"
-        }
-      },
-      "ark.tools.nodatime.systemtextjson": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Nodatime": "[1.0.0, )",
-          "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
-        }
-      },
-      "ark.tools.systemtextjson": {
+      "ark.tools.messagepack": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Macross.Json.Extensions": "[3.0.0, )"
+          "MessagePack": "[3.1.8, )"
         }
       },
-      "Macross.Json.Extensions": {
+      "MessagePack": {
         "type": "CentralTransitive",
-        "requested": "[3.0.0, )",
-        "resolved": "3.0.0",
-        "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
+        "requested": "[3.1.8, )",
+        "resolved": "3.1.8",
+        "contentHash": "Qk2q+9FVxnMSp+NQ9y3SLz3HqWe7Rg3KRMHhBX28FkKUoOeP9YIU86mA4pFOxDDjUIRA9e7Ssbxs/LwWUcAzPw==",
+        "dependencies": {
+          "MessagePack.Annotations": "3.1.8",
+          "MessagePackAnalyzer": "3.1.8",
+          "Microsoft.NET.StringTools": "17.11.4"
+        }
       },
       "Microsoft.ApplicationInsights": {
         "type": "CentralTransitive",
@@ -296,15 +302,6 @@
         "requested": "[3.3.3, )",
         "resolved": "3.3.3",
         "contentHash": "EwouHZv99j5hraq34yQqvCQGDR59dynxPHlxFm2vY/sw2N2aR8cFel29ZxPqohjBWp9Qsnld7QCY+7uZ2PESGg=="
-      },
-      "NodaTime.Serialization.SystemTextJson": {
-        "type": "CentralTransitive",
-        "requested": "[1.4.0, )",
-        "resolved": "1.4.0",
-        "contentHash": "jGe0WLNAoRb3efOgsa5iecmMuzP+LNdtw2Rs4N9+2pS4YN+kg8e9Z48Jk47WWebcpqF81YdWT2KNInbXZXTS7w==",
-        "dependencies": {
-          "NodaTime": "[3.0.0, 4.0.0)"
-        }
       }
     }
   }

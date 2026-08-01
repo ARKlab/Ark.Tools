@@ -237,38 +237,23 @@
           "Microsoft.TestPlatform.ObjectModel": "18.8.1"
         }
       },
+      "protobuf-net.Core": {
+        "type": "Transitive",
+        "resolved": "3.2.56",
+        "contentHash": "d6QOukTpDzs7zZv9tPnBZMtvHDNeHJQXUhMx54g4urUQsXK3oo9U70H9HvklYq7hlQ4A7AHJl7EVEqyCXXIl8Q=="
+      },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
           "NodaTime": "[3.3.3, )"
         }
       },
-      "ark.tools.nodatime": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )"
-        }
-      },
-      "ark.tools.nodatime.systemtextjson": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Nodatime": "[1.0.0, )",
-          "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
-        }
-      },
-      "ark.tools.systemtextjson": {
+      "ark.tools.protobuf": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Macross.Json.Extensions": "[3.0.0, )"
+          "protobuf-net": "[3.2.56, )"
         }
-      },
-      "Macross.Json.Extensions": {
-        "type": "CentralTransitive",
-        "requested": "[3.0.0, )",
-        "resolved": "3.0.0",
-        "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
       },
       "Microsoft.ApplicationInsights": {
         "type": "CentralTransitive",
@@ -297,13 +282,13 @@
         "resolved": "3.3.3",
         "contentHash": "EwouHZv99j5hraq34yQqvCQGDR59dynxPHlxFm2vY/sw2N2aR8cFel29ZxPqohjBWp9Qsnld7QCY+7uZ2PESGg=="
       },
-      "NodaTime.Serialization.SystemTextJson": {
+      "protobuf-net": {
         "type": "CentralTransitive",
-        "requested": "[1.4.0, )",
-        "resolved": "1.4.0",
-        "contentHash": "jGe0WLNAoRb3efOgsa5iecmMuzP+LNdtw2Rs4N9+2pS4YN+kg8e9Z48Jk47WWebcpqF81YdWT2KNInbXZXTS7w==",
+        "requested": "[3.2.56, )",
+        "resolved": "3.2.56",
+        "contentHash": "4IPJeTYAMNewlN8MDaFkcmR/9hLhJeo9eARnTh104zh7mf+vXT2gu5MUfUnkSQU+CH578Q6vcdU7LQDQPG6eaw==",
         "dependencies": {
-          "NodaTime": "[3.0.0, 4.0.0)"
+          "protobuf-net.Core": "3.2.56"
         }
       }
     }

@@ -172,6 +172,54 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorEmitsExplicitEntriesForStrictEnumMembers()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            public enum Status { NOT_SET = 0, Active = 1, Archived = 2 }
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<Status>
+            {
+                public int Id { get; set; }
+            }
+            """;
+
+        var generated = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("ENUM Status.NOT_SET=0");
+        generated.Should().Contain("ENUM Status.Active=1");
+        generated.Should().Contain("ENUM Status.Archived=2");
+        generated.Should().NotContain("EVOLVABLE-ENUM");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorEmitsExplicitEntriesForEvolvableEnumMembers()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Ark.Tools.Core;
+            public enum Status : byte { NOT_SET = 0, Active = 1, Archived = 2 }
+            public sealed record Response(EvolvableEnum<Status, byte> Status);
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<Response>
+            {
+                public int Id { get; set; }
+            }
+            """;
+
+        var generated = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("EVOLVABLE-ENUM Status.NOT_SET=0");
+        generated.Should().Contain("EVOLVABLE-ENUM Status.Active=1");
+        generated.Should().Contain("EVOLVABLE-ENUM Status.Archived=2");
+        generated.Should().NotContain("\nENUM Status.");
+    }
+
+    [TestMethod]
     public void ResponseETagIsEmittedOnlyForMarkedResponses()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
@@ -1114,6 +1162,74 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorMapsEvolvableEnumsToBackingTypeProtoScalars()
+    {
+        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            namespace Test;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Ark.Tools.Core;
+            using ProtoBuf;
+            public enum Status : byte { NOT_SET = 0, Active = 1, Archived = 2 }
+            public enum DefaultStatus { NOT_SET = 0, Active = 1 }
+            public enum LongStatus : long { NOT_SET = 0, Active = 1 }
+            public enum ULongStatus : ulong { NOT_SET = 0, Active = 1 }
+            [GrpcMethod("GetItem")]
+            [ProtoContract]
+            public sealed class GetItem : IQuery<ItemResponse>
+            {
+                [ProtoMember(1)]
+                public int Id { get; set; }
+            }
+            [ProtoContract]
+            public sealed class ItemResponse
+            {
+                [ProtoMember(1)]
+                public EvolvableEnum<Status, byte> Status { get; set; }
+                [ProtoMember(2)]
+                public EvolvableEnum<DefaultStatus> DefaultStatus { get; set; }
+                [ProtoMember(3)]
+                public EvolvableEnum<LongStatus, long> LongStatus { get; set; }
+                [ProtoMember(4)]
+                public EvolvableEnum<ULongStatus, ulong> ULongStatus { get; set; }
+            }
+            """);
+
+        generated.Should().Contain("uint32 status = 1;");
+        generated.Should().Contain("int32 default_status = 2;");
+        generated.Should().Contain("int64 long_status = 3;");
+        generated.Should().Contain("uint64 u_long_status = 4;");
+        generated.Should().NotContain("EvolvableEnum");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorDoesNotCrashForInvalidEvolvableEnumBackingType()
+    {
+        var result = RunGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            namespace Test;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Ark.Tools.Core;
+            using ProtoBuf;
+            public enum Status : byte { NOT_SET = 0, Active = 1 }
+            [GrpcMethod("GetItem")]
+            [ProtoContract]
+            public sealed class GetItem : IQuery<ItemResponse> { }
+            [ProtoContract]
+            public sealed class ItemResponse
+            {
+                [ProtoMember(1)]
+                public EvolvableEnum<Status, string> Status { get; set; }
+            }
+            """);
+
+        result.Diagnostics.Should().NotContain(item => item.Id == "CS8785");
+        result.Generated.Should().Contain("uint32 status = 1;");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorReportsUnknownVerb()
     {
         var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
@@ -1222,6 +1338,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Ark.Tools.Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "GeneratorSnapshot",
@@ -1325,6 +1442,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Ark.Tools.Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "ApiSurfaceTest",

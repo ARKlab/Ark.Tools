@@ -786,6 +786,56 @@ only to its own attribute, so adding a transport never re-runs the others.
   `ProjectReference` paths — including the analyzers, which reach the sample
   as analyzer assets of their runtime package.
 
+## Evolvable enums
+
+Adding a C# enum member is a breaking wire change for strict clients that
+reject unrecognized values. `Ark.Tools.Core.EvolvableEnum` is an opt-in
+`readonly struct` that lets a contract member carry unknown enum values safely:
+
+- `EvolvableEnum<TEnum>` defaults the backing type to `int`, matching C#'s
+  default enum backing type. Enums with another backing type use
+  `EvolvableEnum<TEnum, TBacking>`, for example
+  `EvolvableEnum<CompactStatus, byte>`.
+- `TBacking` must exactly equal `Enum.GetUnderlyingType(TEnum)`. The wrapper
+  stores that type directly and numeric JSON, Dapper, MessagePack, and
+  protobuf-net adapters retain its signedness and width. Runtime checks remain
+  for analyzer-disabled builds.
+- The `Ark.Tools.Core` analyzer reports backing mismatches (`ARKCORE001`) and a
+  missing or non-zero `NOT_SET` (`ARKCORE002`) as compile-time errors.
+- Both forms reject `[Flags]` and require an explicit `NOT_SET = 0`, making an
+  omitted non-nullable value a safe defined default.
+- **Unknown values are retained, not rejected.** A JSON string or numeric
+  value that has no matching `TEnum` member deserializes into an
+  `EvolvableEnum<TEnum>` carrying that raw name or number, `IsDefined ==
+  false`. `HasNumericValue` reports whether a numeric representation exists
+  (an unrecognized name deserialized from a name-only transport has none).
+- **Cross-form conversion is explicit-or-fail, never silently corrupting.**
+  Converting a name-only unknown value to a transport that requires a number
+  (or vice-versa) throws `EvolvableEnumConversionException` instead of
+  inventing a value.
+
+**Per-transport wire rules** (`EvolvableEnumWireFormat.Name` is always the
+default; `.Number` is an explicit opt-in where the format supports both):
+
+| Transport | Package | Default | Explicit opt-in | Registration |
+| --- | --- | --- | --- | --- |
+| HTTP JSON (`System.Text.Json`) | `Ark.Tools.SystemTextJson` | symbolic name (string) | exact backing integer, via `EvolvableEnumIntegerJsonConverterFactory` | none — `ConfigureArkDefaults()` auto-detects both wrapper forms |
+| SQL (Dapper) | `Ark.Tools.Dapper` | symbolic name (string) | exact boxed backing type and matching `DbType` | explicit per closed type: `EvolvableEnumDapper.Register<TEnum[, TBacking]>(format)` |
+| Protobuf / gRPC (protobuf-net) | `Ark.Tools.Protobuf` | exact CLR backing type in the surrogate | n/a | explicit per closed type: `model.AddEvolvableEnumSurrogate<TEnum[, TBacking]>()` |
+| MessagePack | `Ark.Tools.MessagePack` | exact backing integer | n/a | none — `options.WithEvolvableEnumSupport()` supports both wrapper forms |
+| Rebus | `Ark.Tools.MediatorFramework.Rebus` | inherits the configured body serializer | inherits the configured body serializer | same as the underlying STJ or protobuf-net serializer — no separate Rebus adapter is needed |
+| gRPC exported `.proto` / generated clients | `Ark.Tools.MediatorFramework.Grpc.Generators` | `int32`/`uint32`/`int64`/`uint64`, never proto `enum` | — | none — 8/16-bit CLR types use protobuf's corresponding signed/unsigned 32-bit scalar |
+
+Only JSON and MessagePack achieve full zero-registration seamlessness because
+both resolve formatters/converters generically per concrete type at
+(de)serialization time; Dapper and protobuf-net build a static per-type model
+ahead of time and therefore require one explicit registration call per
+wrapped enum type — this mirrors those libraries' existing handling of any
+other custom value type, not a limitation specific to `EvolvableEnum<TEnum>`.
+
+Existing strict (plain) enum contract members are entirely unaffected — they
+keep serializing exactly as before on every transport.
+
 ## API surface snapshots
 
 The public wire surface must not change by accident. The framework ships a
@@ -802,6 +852,11 @@ snapshot differs from what is committed.
   true, and source-level default values.
   Nested types are expanded recursively so a change to any nested field produces
   a visible diff.
+- Enum members reached from a contract: every member name and its numeric
+  constant value, so adding, removing, or renumbering a member is a visible
+  diff. Plain (`strict`) enums produce `ENUM Type.Member=value` lines;
+  `EvolvableEnum<TEnum>` members produce `EVOLVABLE-ENUM Type.Member=value`
+  lines for the wrapped `TEnum`.
 
 **Workflow:**
 
@@ -840,7 +895,11 @@ snapshot is the gate at every stage of the pipeline.
 CONTRACT GetGreetingQuery -> GreetingDto [group=Greetings] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/{id}] [version=1+] [grpc=GetGreeting] [grpc-version=1+]
 CONTRACT GetGreetingQuery.Id : Guid
 CONTRACT GreetingDto.Name : string?
+CONTRACT GreetingDto.Status : EvolvableEnum<GreetingStatus>
 CONTRACT GreetingDto.Tags[].Value : string
+EVOLVABLE-ENUM GreetingStatus.NOT_SET=0
+EVOLVABLE-ENUM GreetingStatus.Active=1
+EVOLVABLE-ENUM GreetingStatus.Archived=2
 REBUS RefreshGreetingCommand -> queue:greetings
 ```
 

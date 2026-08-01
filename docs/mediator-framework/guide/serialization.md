@@ -106,4 +106,81 @@ For NodaTime:
 - gRPC uses `RuntimeTypeModel.Default.AddNodaTimeSurrogates()`.
 - MessagePack must use a resolver that knows the NodaTime types you expose.
 
+## Evolvable enums
+
+Wrap a contract member in `EvolvableEnum<TEnum>` when the enum may gain members
+after clients have shipped. This form defaults to an `int` backing type. For
+any other enum backing type, specify it explicitly:
+`EvolvableEnum<TEnum, TBacking>`. The analyzer reports a mismatch and a missing
+`NOT_SET = 0` at compile time. `[Flags]` enums are not supported.
+
+```csharp
+public enum GreetingStatus
+{
+    NOT_SET = 0,
+    Active = 1,
+    Archived = 2,
+}
+
+public sealed record GreetingResponse
+{
+    public EvolvableEnum<GreetingStatus> Status { get; init; }
+}
+
+public enum CompactStatus : byte
+{
+    NOT_SET = 0,
+    Active = 1,
+}
+
+public sealed record CompactResponse(
+    EvolvableEnum<CompactStatus, byte> Status);
+```
+
+Use `Value` to switch as on the original enum. Unknown names and numbers expose
+`Value == null`, so the `null` arm is the forward-compatible fallback:
+
+```csharp
+var action = response.Status.Value switch
+{
+    GreetingStatus.NOT_SET => "missing",
+    GreetingStatus.Active => "show",
+    GreetingStatus.Archived => "hide",
+    null => $"unknown:{response.Status.Name ?? response.Status.ToNumber().ToString()}",
+    _ => throw new UnreachableException(),
+};
+```
+
+`Parse`/`TryParse` accept known names, unknown names, and in-range invariant
+numbers, enabling route and query-string binding. `TypeConverter` supports the
+same string conversion plus conversion from/to the exact backing type:
+
+```csharp
+var routeValue = EvolvableEnum<GreetingStatus>.Parse("Active");
+var futureValue = EvolvableEnum<CompactStatus, byte>.Parse("255");
+```
+
+Per-transport wiring (see [design.md](../design.md) → *Evolvable enums* for
+the full rules table):
+
+- **JSON** (`Ark.Tools.SystemTextJson`): zero setup — `ConfigureArkDefaults()`
+  already registers the converter factory. Members serialize as the symbolic
+  name by default; opt into the numeric wire form per-property with
+  `[JsonConverter(typeof(EvolvableEnumIntegerJsonConverterFactory))]` or by
+  registering `EvolvableEnumIntegerJsonConverterFactory` directly.
+- **Dapper** (`Ark.Tools.Dapper`): call
+  `EvolvableEnumDapper.Register<GreetingStatus>()` once at startup (add
+  `EvolvableEnumWireFormat.Number` for the integer column form).
+- **protobuf-net / gRPC** (`Ark.Tools.Protobuf`): call
+  `RuntimeTypeModel.Default.AddEvolvableEnumSurrogate<GreetingStatus>()` once
+  at startup, per wrapped enum type (protobuf-net cannot auto-apply a
+  surrogate registered on the open generic type definition). The generated
+  `.proto` field is the matching `int32`, `uint32`, `int64`, or `uint64`.
+- **MessagePack** (`Ark.Tools.MessagePack`): compose
+  `options.WithEvolvableEnumSupport()` into the serializer options once — the
+  resolver supports every wrapped enum type automatically, no per-type call
+  needed.
+- **Rebus**: whichever body serializer the host configures (STJ or
+  protobuf-net) applies the same rules above; no separate Rebus-specific setup.
+
 Architecture rationale: [design.md](../design.md).
