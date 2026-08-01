@@ -154,6 +154,8 @@
 	  <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.21.0" />
 	  <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.10" />
 	  <PackageVersion Include="Azure.Identity" Version="1.21.0" />
+	  <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
+	  <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.1" />
 	  
 	  <!-- REBUS -->
 	  <PackageVersion Include="Rebus" Version="8.9.2" />

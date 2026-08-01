@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Description>Azure Functions isolated-worker HTTP transport runtime for Ark.Tools MediatorFramework.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mediator;Azure;Functions;Source Generator</PackageTags>
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework.AzureFunctions.Generators\Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <None Include="buildTransitive/Ark.Tools.MediatorFramework.AzureFunctions.props" Pack="true"
+          PackagePath="buildTransitive" />
+  </ItemGroup>
+
+  <Target Name="IncludeGeneratorInPackage" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.AzureFunctions.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.AzureFunctions.Generators.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false"
+            Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.AzureFunctions.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.AzureFunctions.Generators.dll')" />
+    </ItemGroup>
+  </Target>
+
+</Project>
