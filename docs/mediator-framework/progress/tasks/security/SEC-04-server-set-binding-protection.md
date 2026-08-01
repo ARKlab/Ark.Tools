@@ -13,14 +13,14 @@ natural, because handlers and bus consumers need it — silently makes it **clie
 There is no way to mark a property as server-populated, and no warning.
 
 Files: `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/HttpEndpointAttribute.cs`
-(binding attributes live next to `BindFromQueryAttribute`),
+(binding attributes live next to `HttpQueryAttribute`),
 `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/MinimalApiEndpointGenerator.cs`.
 
 ## Steps
 
-1. Add `ServerSetAttribute` (property-level, `AttributeUsage(AttributeTargets.Property)`) in the same file/namespace as `BindFromQueryAttribute`. XML doc: "Property is populated server-side; never bound from client input and excluded from OpenAPI request schemas."
+1. Add `ServerSetAttribute` (property-level, `AttributeUsage(AttributeTargets.Property)`) in the same file/namespace as `HttpQueryAttribute`. XML doc: "Property is populated server-side; never bound from client input and excluded from OpenAPI request schemas."
 2. MinimalApi generator:
-   - Route/query binding (GET/DELETE and `[BindFromQuery]` paths): skip `[ServerSet]` properties entirely.
+   - Route/query binding (GET/DELETE and `[HttpQuery]` paths): skip `[ServerSet]` properties entirely.
    - Body binding: after deserialization, emitted code must reset `[ServerSet]` properties to their default (`body = body with { Prop = default }` for records, or property assignment) so client-supplied values can never flow into the handler. Emit a `ARKMFxxx` diagnostic (error) if a `[ServerSet]` property on a body-bound record has no accessible `init/set` needed for the reset.
    - OpenAPI: exclude `[ServerSet]` properties from the request schema (via a schema transformer registered by the framework, or `[JsonIgnore]`-equivalent metadata emission — pick the least invasive that works with `Microsoft.AspNetCore.OpenApi`).
 3. gRPC generator: exclude `[ServerSet]` properties from the generated request proto messages (they remain in responses if present there).

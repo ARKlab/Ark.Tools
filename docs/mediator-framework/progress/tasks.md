@@ -253,7 +253,7 @@ Debug`) before the task is marked complete.
     proto-generated sample client still compiles and all gRPC tests pass.
 - [x] **T10.3** HTTP envelope binding: route + query + body combinable.
   - *Accept:* a `[HttpEndpoint]` contract can bind members from the route
-    (name matches placeholder), the query string (`[BindFromQuery]` on
+    (name matches placeholder), the query string (`[HttpQuery]` on
     body-verbs; all remaining members on GET/DELETE) and the body
     (deserialized into the envelope, then bound members overwritten) **in the
     same request**; a body-only contract needs no annotations; a sample
