@@ -797,16 +797,20 @@ namespace Ark.MediatorFramework.Generators
         private static string EvolvableEnumProtoType(INamedTypeSymbol type)
         {
             var backing = type.Arity == 1 ? SpecialType.System_Int32 : type.TypeArguments[1].SpecialType;
-            return backing switch
+            return ProtoIntegerType(backing)
+                ?? ProtoIntegerType((type.TypeArguments[0] as INamedTypeSymbol)?.EnumUnderlyingType?.SpecialType)
+                ?? "int32";
+        }
+
+        private static string? ProtoIntegerType(SpecialType? backing)
+            => backing switch
             {
                 SpecialType.System_SByte or SpecialType.System_Int16 or SpecialType.System_Int32 => "int32",
                 SpecialType.System_Byte or SpecialType.System_UInt16 or SpecialType.System_UInt32 => "uint32",
                 SpecialType.System_Int64 => "int64",
                 SpecialType.System_UInt64 => "uint64",
-                _ => throw new InvalidOperationException(
-                    $"Unsupported evolvable enum backing type '{type.TypeArguments[type.Arity - 1]}'."),
+                _ => null,
             };
-        }
 
         private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
         {

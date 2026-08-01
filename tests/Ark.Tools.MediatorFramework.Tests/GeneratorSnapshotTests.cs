@@ -1204,6 +1204,32 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorDoesNotCrashForInvalidEvolvableEnumBackingType()
+    {
+        var result = RunGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            namespace Test;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Ark.Tools.Core;
+            using ProtoBuf;
+            public enum Status : byte { NOT_SET = 0, Active = 1 }
+            [GrpcMethod("GetItem")]
+            [ProtoContract]
+            public sealed class GetItem : IQuery<ItemResponse> { }
+            [ProtoContract]
+            public sealed class ItemResponse
+            {
+                [ProtoMember(1)]
+                public EvolvableEnum<Status, string> Status { get; set; }
+            }
+            """);
+
+        result.Diagnostics.Should().NotContain(item => item.Id == "CS8785");
+        result.Generated.Should().Contain("uint32 status = 1;");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorReportsUnknownVerb()
     {
         var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
