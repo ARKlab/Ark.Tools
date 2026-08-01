@@ -76,5 +76,5 @@ the same bytes with no special handling.
 - [x] Preserve unknown values on supported transports where the wire format allows.
 - [x] Generate client types and tests for known and unknown values.
 - [x] Document when strict enums remain appropriate.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
