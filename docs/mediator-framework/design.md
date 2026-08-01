@@ -789,25 +789,21 @@ only to its own attribute, so adding a transport never re-runs the others.
 ## Evolvable enums
 
 Adding a C# enum member is a breaking wire change for strict clients that
-reject unrecognized values. `Ark.Tools.Core.EvolvableEnum<TEnum>` is an opt-in
-wrapper that lets a contract member carry unknown enum values safely instead:
+reject unrecognized values. `Ark.Tools.Core.EvolvableEnum` is an opt-in
+`readonly struct` that lets a contract member carry unknown enum values safely:
 
-- **`EvolvableEnum<TEnum>`** is a `public readonly partial struct` with exactly
-  one type parameter, constrained to `enum`. A static constructor validates
-  `TEnum` once per closed type and throws (wrapped in
-  `TypeInitializationException`, standard CLR static-constructor-failure
-  semantics) if `TEnum` is a `[Flags]` enum, or if it does not declare an
-  explicit member with value `0` named `NOT_SET`. The `NOT_SET` requirement
-  guarantees `default(EvolvableEnum<TEnum>)` — i.e. an **omitted non-nullable**
-  contract member — always decodes to a defined, safe value instead of an
-  ambiguous zero.
-- The wrapper preserves `TEnum`'s exact backing integral type, including width
-  and signedness (`byte` through `ulong`), via a single bit-pattern `long`
-  field: `ToInt64()`/`FromValue(long)` round-trip the raw bits, while
-  `ToUInt64()`/`FromValue(ulong)` interpret the same bits as an unsigned
-  magnitude — both are valid, interoperable views of the same storage, so a
-  `ulong`-backed enum's `ulong.MaxValue` member never suffers sign corruption
-  on any transport.
+- `EvolvableEnum<TEnum>` defaults the backing type to `int`, matching C#'s
+  default enum backing type. Enums with another backing type use
+  `EvolvableEnum<TEnum, TBacking>`, for example
+  `EvolvableEnum<CompactStatus, byte>`.
+- `TBacking` must exactly equal `Enum.GetUnderlyingType(TEnum)`. The wrapper
+  stores that type directly and numeric JSON, Dapper, MessagePack, and
+  protobuf-net adapters retain its signedness and width. Runtime checks remain
+  for analyzer-disabled builds.
+- The `Ark.Tools.Core` analyzer reports backing mismatches (`ARKCORE001`) and a
+  missing or non-zero `NOT_SET` (`ARKCORE002`) as compile-time errors.
+- Both forms reject `[Flags]` and require an explicit `NOT_SET = 0`, making an
+  omitted non-nullable value a safe defined default.
 - **Unknown values are retained, not rejected.** A JSON string or numeric
   value that has no matching `TEnum` member deserializes into an
   `EvolvableEnum<TEnum>` carrying that raw name or number, `IsDefined ==
@@ -823,12 +819,12 @@ default; `.Number` is an explicit opt-in where the format supports both):
 
 | Transport | Package | Default | Explicit opt-in | Registration |
 | --- | --- | --- | --- | --- |
-| HTTP JSON (`System.Text.Json`) | `Ark.Tools.SystemTextJson` | symbolic name (string) | integer, via `EvolvableEnumIntegerJsonConverterFactory` | none — `EvolvableEnumJsonConverterFactory` is wired into `ConfigureArkDefaults()` and auto-detects every closed `EvolvableEnum<TEnum>` |
-| SQL (Dapper) | `Ark.Tools.Core.Dapper` | symbolic name (string) | integer (`long`, or `decimal` for `ulong` values beyond `long.MaxValue`) | explicit, once per `TEnum`: `EvolvableEnumDapper.Register<TEnum>(format)` |
-| Protobuf / gRPC (protobuf-net) | `Ark.Tools.Core.Protobuf` | integer (`int64`) — the only wire shape protobuf supports | n/a | explicit, once per `TEnum`: `model.AddEvolvableEnumSurrogate<TEnum>()`. protobuf-net does not support registering a surrogate on an open generic type definition for arbitrary closed instantiations (tracked upstream as [protobuf-net#802](https://github.com/protobuf-net/protobuf-net/issues/802)), so — like Dapper's type handlers — each wrapped enum type needs one explicit registration call |
-| MessagePack | `Ark.Tools.Core.MessagePack` | integer (`int64`) | n/a | none — `EvolvableEnumFormatterResolver` resolves formatters per concrete type at serialization time (`IFormatterResolver.GetFormatter<T>()`), so a single `EvolvableEnumFormatterResolver.Instance` (composed via `options.WithEvolvableEnumSupport()`) transparently supports every wrapped enum type without per-type registration |
+| HTTP JSON (`System.Text.Json`) | `Ark.Tools.SystemTextJson` | symbolic name (string) | exact backing integer, via `EvolvableEnumIntegerJsonConverterFactory` | none — `ConfigureArkDefaults()` auto-detects both wrapper forms |
+| SQL (Dapper) | `Ark.Tools.Dapper` | symbolic name (string) | exact boxed backing type and matching `DbType` | explicit per closed type: `EvolvableEnumDapper.Register<TEnum[, TBacking]>(format)` |
+| Protobuf / gRPC (protobuf-net) | `Ark.Tools.Protobuf` | exact CLR backing type in the surrogate | n/a | explicit per closed type: `model.AddEvolvableEnumSurrogate<TEnum[, TBacking]>()` |
+| MessagePack | `Ark.Tools.MessagePack` | exact backing integer | n/a | none — `options.WithEvolvableEnumSupport()` supports both wrapper forms |
 | Rebus | `Ark.Tools.MediatorFramework.Rebus` | inherits the configured body serializer | inherits the configured body serializer | same as the underlying STJ or protobuf-net serializer — no separate Rebus adapter is needed |
-| gRPC exported `.proto` / generated clients | `Ark.Tools.MediatorFramework.Grpc.Generators` | `int64` field, never a proto `enum` | — | none — the generator maps `EvolvableEnum<TEnum>` members to `int64` in the exported `.proto` text, matching the protobuf-net surrogate's wire shape exactly, so exported clients decode the same bytes |
+| gRPC exported `.proto` / generated clients | `Ark.Tools.MediatorFramework.Grpc.Generators` | `int32`/`uint32`/`int64`/`uint64`, never proto `enum` | — | none — 8/16-bit CLR types use protobuf's corresponding signed/unsigned 32-bit scalar |
 
 Only JSON and MessagePack achieve full zero-registration seamlessness because
 both resolve formatters/converters generically per concrete type at

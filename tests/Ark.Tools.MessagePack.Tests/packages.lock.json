@@ -258,7 +258,7 @@
           "NodaTime": "[3.3.3, )"
         }
       },
-      "ark.tools.core.messagepack": {
+      "ark.tools.messagepack": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",

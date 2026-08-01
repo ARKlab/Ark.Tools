@@ -3,12 +3,14 @@
 
 using AwesomeAssertions;
 
+using Ark.Tools.Core;
+
 using ProtoBuf;
 using ProtoBuf.Meta;
 
 [assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
 
-namespace Ark.Tools.Core.Protobuf.Tests;
+namespace Ark.Tools.Protobuf.Tests;
 
 /// <summary>
 /// Round-trip tests proving the <see cref="EvolvableEnumSurrogate{TEnum}"/> open-generic surrogate
@@ -42,14 +44,14 @@ public sealed class EvolvableEnumSurrogateTests
     private sealed class ULongWrapper
     {
         [ProtoMember(1)]
-        public EvolvableEnum<ULongStatus> Status { get; set; }
+        public EvolvableEnum<ULongStatus, ulong> Status { get; set; }
     }
 
     private static RuntimeTypeModel CreateModel()
     {
         var model = RuntimeTypeModel.Create();
         model.AddEvolvableEnumSurrogate<Status>();
-        model.AddEvolvableEnumSurrogate<ULongStatus>();
+        model.AddEvolvableEnumSurrogate<ULongStatus, ulong>();
         model.Add(typeof(Wrapper), true);
         model.Add(typeof(ULongWrapper), true);
         return model;
@@ -80,7 +82,7 @@ public sealed class EvolvableEnumSurrogateTests
     {
         // Arrange
         var model = CreateModel();
-        var original = new Wrapper { Status = EvolvableEnum<Status>.FromNumber(999L) };
+        var original = new Wrapper { Status = EvolvableEnum<Status>.FromNumber(999) };
 
         // Act
         using var stream = new MemoryStream();
@@ -90,7 +92,7 @@ public sealed class EvolvableEnumSurrogateTests
 
         // Assert
         result.Status.IsDefined.Should().BeFalse();
-        result.Status.ToInt64().Should().Be(999);
+        result.Status.ToNumber().Should().Be(999);
     }
 
     /// <summary>Verifies that a ulong-backed enum's maximum value round-trips without sign corruption.</summary>
@@ -99,7 +101,10 @@ public sealed class EvolvableEnumSurrogateTests
     {
         // Arrange
         var model = CreateModel();
-        var original = new ULongWrapper { Status = EvolvableEnum<ULongStatus>.FromValue(ULongStatus.Huge) };
+        var original = new ULongWrapper
+        {
+            Status = EvolvableEnum<ULongStatus, ulong>.FromValue(ULongStatus.Huge),
+        };
 
         // Act
         using var stream = new MemoryStream();
@@ -109,7 +114,7 @@ public sealed class EvolvableEnumSurrogateTests
 
         // Assert
         result.Status.Value.Should().Be(ULongStatus.Huge);
-        result.Status.ToUInt64().Should().Be(ulong.MaxValue);
+        result.Status.ToNumber().Should().Be(ulong.MaxValue);
     }
 
     /// <summary>

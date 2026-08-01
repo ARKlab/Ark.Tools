@@ -3,9 +3,11 @@
 
 using AwesomeAssertions;
 
+using Ark.Tools.Core;
+
 using System.Data;
 
-namespace Ark.Tools.Core.Dapper.Tests;
+namespace Ark.Tools.Dapper.Tests;
 
 /// <summary>
 /// Tests for <see cref="EvolvableEnumTypeHandler{TEnum}"/> covering the default symbolic-name SQL
@@ -52,7 +54,7 @@ public class EvolvableEnumTypeHandlerTests
         var parameter = new FakeDbDataParameter();
 
         // Act
-        var act = () => handler.SetValue(parameter, EvolvableEnum<Status>.FromNumber(999L));
+        var act = () => handler.SetValue(parameter, EvolvableEnum<Status>.FromNumber(999));
 
         // Assert
         act.Should().Throw<EvolvableEnumConversionException>();
@@ -70,22 +72,24 @@ public class EvolvableEnumTypeHandlerTests
         handler.SetValue(parameter, EvolvableEnum<Status>.FromValue(Status.Archived));
 
         // Assert
-        parameter.Value.Should().Be(2L);
+        parameter.Value.Should().Be(2);
+        parameter.DbType.Should().Be(DbType.Int32);
     }
 
-    /// <summary>Verifies that a ulong value beyond long.MaxValue is written as decimal to avoid sign corruption.</summary>
+    /// <summary>Verifies that a ulong value is written using its exact CLR and database type.</summary>
     [TestMethod]
-    public void SetValue_NumberFormat_HugeULong_ShouldWriteAsDecimalWithoutSignCorruption()
+    public void SetValue_NumberFormat_HugeULong_ShouldUseExactBackingType()
     {
         // Arrange
-        var handler = new EvolvableEnumTypeHandler<ULongStatus>(EvolvableEnumWireFormat.Number);
+        var handler = new EvolvableEnumTypeHandler<ULongStatus, ulong>(EvolvableEnumWireFormat.Number);
         var parameter = new FakeDbDataParameter();
 
         // Act
-        handler.SetValue(parameter, EvolvableEnum<ULongStatus>.FromValue(ULongStatus.Huge));
+        handler.SetValue(parameter, EvolvableEnum<ULongStatus, ulong>.FromValue(ULongStatus.Huge));
 
         // Assert
-        parameter.Value.Should().Be((decimal)ulong.MaxValue);
+        parameter.Value.Should().Be(ulong.MaxValue);
+        parameter.DbType.Should().Be(DbType.UInt64);
     }
 
     /// <summary>Verifies that writing an unknown-name-only value with the Number format fails explicitly.</summary>
@@ -170,7 +174,7 @@ public class EvolvableEnumTypeHandlerTests
 
         // Assert
         value.IsDefined.Should().BeFalse();
-        value.ToInt64().Should().Be(999);
+        value.ToNumber().Should().Be(999);
     }
 
     /// <summary>Verifies that a huge decimal column value round-trips a ulong-backed enum's maximum value.</summary>
@@ -178,7 +182,7 @@ public class EvolvableEnumTypeHandlerTests
     public void Parse_HugeDecimal_ShouldRoundtripULongMaxValue()
     {
         // Arrange
-        var handler = new EvolvableEnumTypeHandler<ULongStatus>();
+        var handler = new EvolvableEnumTypeHandler<ULongStatus, ulong>();
 
         // Act
         var value = handler.Parse((decimal)ulong.MaxValue);

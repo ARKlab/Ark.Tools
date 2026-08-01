@@ -248,7 +248,7 @@
           "NodaTime": "[3.3.3, )"
         }
       },
-      "ark.tools.core.protobuf": {
+      "ark.tools.protobuf": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",

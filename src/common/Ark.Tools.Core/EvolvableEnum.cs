@@ -1,205 +1,100 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
-// Licensed under the MIT License. See LICENSE file for license information. 
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using System.ComponentModel;
+using System.Numerics;
+
 namespace Ark.Tools.Core;
 
 /// <summary>
-/// A transport-neutral wrapper around a strict <typeparamref name="TEnum"/> that lets a contract add
-/// new members later without breaking clients that were built against an older member set.
+/// Wraps an <see cref="int"/>-backed enum so unknown names and values can round-trip safely.
 /// </summary>
+/// <typeparam name="TEnum">The wrapped <see cref="int"/>-backed enum type.</typeparam>
 /// <remarks>
-/// <para>
-/// A plain C# enum property is a <em>strict</em> contract member: every transport validates the
-/// value against the declared members, and an unrecognized value is a deserialization error. Wrap
-/// the property type in <see cref="EvolvableEnum{TEnum}"/> to opt into an <em>evolvable</em>
-/// representation instead: unknown values never throw. A newly added server-side member simply
-/// arrives as <see cref="IsDefined"/> <see langword="false"/> to an older client, which can still
-/// read the raw <see cref="Name"/> or numeric value and decide how to handle it.
-/// </para>
-/// <para>
-/// <typeparamref name="TEnum"/> must declare an explicit zero-valued member named <c>NOT_SET</c> so
-/// that <see langword="default"/>(<see cref="EvolvableEnum{TEnum}"/>) — the value produced when a
-/// non-nullable property is omitted from a payload — always resolves to a defined, intentional
-/// value instead of an arbitrary member. <typeparamref name="TEnum"/> must not be a
-/// <see cref="FlagsAttribute"/> enum: combined bit flags cannot round-trip through a single
-/// evolvable value. Both rules are enforced the first time <see cref="EvolvableEnum{TEnum}"/> is
-/// used for a given <typeparamref name="TEnum"/>.
-/// </para>
-/// <para>
-/// The wrapper preserves the wrapped enum's own underlying integral type (signed or unsigned, any
-/// width from <see cref="sbyte"/>/<see cref="byte"/> to <see cref="long"/>/<see cref="ulong"/>), so a
-/// numeric representation never loses sign or magnitude. Binary transports (protobuf, MessagePack)
-/// always carry the numeric value; JSON and SQL default to the symbolic name and can opt into the
-/// numeric value explicitly. Converting to a representation that is not available (for example,
-/// asking for the numeric value of a value that was produced from an unrecognized name) throws
-/// <see cref="EvolvableEnumConversionException"/> rather than silently corrupting data.
-/// </para>
+/// Use <see cref="EvolvableEnum{TEnum,TBacking}"/> when the enum has a backing type other than
+/// <see cref="int"/>. The enum must declare <c>NOT_SET = 0</c> and must not use
+/// <see cref="FlagsAttribute"/>.
 /// </remarks>
-/// <typeparam name="TEnum">
-/// The wrapped enum type. Must declare an explicit zero-valued member named <c>NOT_SET</c> and must
-/// not be decorated with <see cref="FlagsAttribute"/>.
-/// </typeparam>
-[SuppressMessage("Design", "CA2225:Operator overloads have named alternates", Justification = "FromValue/explicit cast to TEnum are the named alternates for the implicit/explicit conversion operators.")]
-[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "The 'Enum' suffix is the intentional, spec-mandated name for this enum-wrapping value type (analogous to Nullable<T>).")]
-public readonly partial struct EvolvableEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum> : IEquatable<EvolvableEnum<TEnum>>
+[TypeConverter(typeof(EvolvableEnumTypeConverter))]
+[SuppressMessage("Design", "CA2225:Operator overloads have named alternates", Justification = "FromValue and Value are the named alternatives.")]
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Enum is the intentional name for this enum wrapper.")]
+public readonly struct EvolvableEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum> :
+    IEquatable<EvolvableEnum<TEnum>>,
+    IParsable<EvolvableEnum<TEnum>>
     where TEnum : struct, Enum
 {
-    // Bit-pattern of the numeric value, stored using the wrapped enum's own width via a
-    // sign/zero-extending widen to Int64 (see ToBits/FromBits). Meaningful only when !_isNameOnly.
-    private readonly long _bits;
+    private readonly EvolvableEnum<TEnum, int> _value;
 
-    // Set only when this value was produced from a symbolic name that does not map to any
-    // declared member of TEnum (an "unknown-string" value): there is no numeric representation.
-    private readonly string? _unknownName;
-
-    // Discriminates the two "unknown" states. Defaults to false so that default(EvolvableEnum<TEnum>)
-    // is the numeric zero value (NOT_SET), never the name-only state.
-    private readonly bool _isNameOnly;
-
-    private static readonly TypeCode _underlyingTypeCode;
-    private static readonly Dictionary<long, string> _bitsToName;
-    private static readonly Dictionary<string, long> _nameToBits;
-
-    [SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline", Justification = "The static constructor validates TEnum (rejecting [Flags] enums and enums without NOT_SET) before building the lookup tables; the two concerns must run in this order.")]
-    [SuppressMessage("Usage", "CA2207:Initialize value type static fields inline", Justification = "Static fields depend on TEnum validation that must run first; see justification above.")]
-    [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "Failing fast the first time an invalid TEnum is used (missing NOT_SET or [Flags]) is the intended contract-validation behavior of this type.")]
-    static EvolvableEnum()
+    private EvolvableEnum(EvolvableEnum<TEnum, int> value)
     {
-        var enumType = typeof(TEnum);
-
-        if (enumType.IsDefined(typeof(FlagsAttribute), inherit: false))
-            throw new NotSupportedException(
-                $"EvolvableEnum<{enumType.Name}> does not support [Flags] enums: combined bit flags cannot round-trip through a single evolvable value.");
-
-        _underlyingTypeCode = Type.GetTypeCode(Enum.GetUnderlyingType(enumType));
-
-        var names = Enum.GetNames(enumType);
-        var values = (TEnum[])Enum.GetValues(enumType);
-        _bitsToName = new Dictionary<long, string>(names.Length);
-        _nameToBits = new Dictionary<string, long>(names.Length, StringComparer.Ordinal);
-        for (var i = 0; i < names.Length; i++)
-        {
-            var bits = ToBits(values[i]);
-            _bitsToName.TryAdd(bits, names[i]); // first declared alias wins for display
-            _nameToBits[names[i]] = bits;
-        }
-
-        if (!_nameToBits.TryGetValue("NOT_SET", out var notSetBits) || notSetBits != 0)
-            throw new InvalidOperationException(
-                $"EvolvableEnum<{enumType.Name}> requires an explicit zero-valued member named 'NOT_SET' so that omitted non-nullable values default safely.");
+        _value = value;
     }
 
-    private EvolvableEnum(long bits)
-    {
-        _bits = bits;
-        _unknownName = null;
-        _isNameOnly = false;
-    }
-
-    private EvolvableEnum(string unknownName)
-    {
-        _bits = 0;
-        _unknownName = unknownName;
-        _isNameOnly = true;
-    }
-
-    /// <summary>Gets the zero-valued, always-defined <c>NOT_SET</c> value, the safe default for an omitted non-nullable value.</summary>
+    /// <summary>Gets the defined <c>NOT_SET</c> value.</summary>
     public static EvolvableEnum<TEnum> NotSet => default;
 
-    /// <summary>Gets a value indicating whether the underlying integral type of <typeparamref name="TEnum"/> is unsigned.</summary>
-    public static bool IsUnsignedUnderlyingType => _underlyingTypeCode is TypeCode.Byte or TypeCode.UInt16 or TypeCode.UInt32 or TypeCode.UInt64;
+    /// <summary>Gets whether this value maps to a declared enum member.</summary>
+    public bool IsDefined => _value.IsDefined;
 
-    /// <summary>Gets a value indicating whether this value corresponds to a member declared on <typeparamref name="TEnum"/>.</summary>
-    public bool IsDefined => !_isNameOnly && _bitsToName.ContainsKey(_bits);
+    /// <summary>Gets whether this value has a numeric representation.</summary>
+    public bool HasNumericValue => _value.HasNumericValue;
 
-    /// <summary>
-    /// Gets a value indicating whether a numeric representation is available for this value. This is
-    /// <see langword="false"/> only for a value produced from a symbolic name that does not map to any
-    /// declared member (for example, an unrecognized name read from a JSON payload).
-    /// </summary>
-    public bool HasNumericValue => !_isNameOnly;
+    /// <summary>Gets the declared enum value, or <see langword="null"/> for an unknown value.</summary>
+    public TEnum? Value => _value.Value;
 
-    /// <summary>Gets the strict enum value when <see cref="IsDefined"/> is <see langword="true"/>; otherwise <see langword="null"/>.</summary>
-    public TEnum? Value => IsDefined ? FromBits(_bits) : null;
+    /// <summary>Gets the known or preserved unknown symbolic name.</summary>
+    public string? Name => _value.Name;
 
-    /// <summary>
-    /// Gets the symbolic name: the declared member name when <see cref="IsDefined"/> is
-    /// <see langword="true"/>, or the preserved unrecognized name when this value was produced from an
-    /// unknown string. Returns <see langword="null"/> only for an unknown numeric value that has no
-    /// associated name.
-    /// </summary>
-    public string? Name => _isNameOnly ? _unknownName : (_bitsToName.TryGetValue(_bits, out var name) ? name : null);
-
-    /// <summary>Wraps a strict enum value as its evolvable equivalent.</summary>
+    /// <summary>Wraps a strict enum value.</summary>
     public static implicit operator EvolvableEnum<TEnum>(TEnum value) => FromValue(value);
 
-    /// <summary>
-    /// Converts back to the strict enum type. Throws <see cref="EvolvableEnumConversionException"/>
-    /// when the value is not <see cref="IsDefined"/>.
-    /// </summary>
-    public static explicit operator TEnum(EvolvableEnum<TEnum> value) => value.Value
-        ?? throw new EvolvableEnumConversionException($"Cannot convert '{value}' to {typeof(TEnum).Name}: the value does not match a declared member.");
+    /// <summary>Converts a known value to the strict enum type.</summary>
+    public static explicit operator TEnum(EvolvableEnum<TEnum> value) => (TEnum)value._value;
 
-    /// <summary>Wraps a strict enum value as its evolvable equivalent.</summary>
-    /// <param name="value">The strict enum value.</param>
-    public static EvolvableEnum<TEnum> FromValue(TEnum value) => new(ToBits(value));
+    /// <summary>Wraps a strict enum value.</summary>
+    public static EvolvableEnum<TEnum> FromValue(TEnum value) => new(EvolvableEnum<TEnum, int>.FromValue(value));
 
-    /// <summary>
-    /// Wraps a raw signed numeric value. The result is <see cref="IsDefined"/> when the number matches
-    /// a declared member; otherwise it is retained as an unknown numeric value.
-    /// </summary>
-    /// <param name="number">The numeric wire value.</param>
-    public static EvolvableEnum<TEnum> FromNumber(long number) => new(number);
+    /// <summary>Wraps a numeric value using the enum's exact <see cref="int"/> backing type.</summary>
+    public static EvolvableEnum<TEnum> FromNumber(int number) => new(EvolvableEnum<TEnum, int>.FromNumber(number));
 
-    /// <summary>
-    /// Wraps a raw unsigned numeric value. The result is <see cref="IsDefined"/> when the number
-    /// matches a declared member; otherwise it is retained as an unknown numeric value.
-    /// </summary>
-    /// <param name="number">The numeric wire value.</param>
-    public static EvolvableEnum<TEnum> FromNumber(ulong number) => new(unchecked((long)number));
+    /// <summary>Wraps a known or unknown symbolic name.</summary>
+    public static EvolvableEnum<TEnum> FromName(string name) => new(EvolvableEnum<TEnum, int>.FromName(name));
 
-    /// <summary>
-    /// Wraps a symbolic name. The result is <see cref="IsDefined"/> when the name matches a declared
-    /// member; otherwise the name is retained verbatim as an unknown-string value with no numeric
-    /// representation.
-    /// </summary>
-    /// <param name="name">The symbolic wire name.</param>
-    public static EvolvableEnum<TEnum> FromName(string name)
+    /// <summary>Gets the numeric value using the enum's exact <see cref="int"/> backing type.</summary>
+    public int ToNumber() => _value.ToNumber();
+
+    /// <summary>Parses a known name, unknown name, or invariant numeric value.</summary>
+    public static EvolvableEnum<TEnum> Parse(string s, IFormatProvider? provider)
+        => new(EvolvableEnum<TEnum, int>.Parse(s, provider));
+
+    /// <summary>Tries to parse a known name, unknown name, or invariant numeric value.</summary>
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, out EvolvableEnum<TEnum> result)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        return _nameToBits.TryGetValue(name, out var bits) ? new EvolvableEnum<TEnum>(bits) : new EvolvableEnum<TEnum>(name);
+        if (EvolvableEnum<TEnum, int>.TryParse(s, provider, out var parsed))
+        {
+            result = new EvolvableEnum<TEnum>(parsed);
+            return true;
+        }
+
+        result = default;
+        return false;
     }
 
-    /// <summary>Gets the numeric value as a signed 64-bit integer.</summary>
-    /// <exception cref="EvolvableEnumConversionException">The value has no numeric representation (<see cref="HasNumericValue"/> is <see langword="false"/>).</exception>
-    /// <remarks>For an unsigned underlying type whose value exceeds <see cref="long.MaxValue"/>, prefer <see cref="ToUInt64"/>.</remarks>
-    public long ToInt64() => HasNumericValue
-        ? _bits
-        : throw new EvolvableEnumConversionException($"Cannot convert '{this}' to a number: the value has no numeric representation.");
+    /// <summary>Parses a known name, unknown name, or invariant numeric value.</summary>
+    public static EvolvableEnum<TEnum> Parse(string s) => Parse(s, CultureInfo.InvariantCulture);
 
-    /// <summary>Gets the numeric value as an unsigned 64-bit integer, preserving magnitude for unsigned underlying types.</summary>
-    /// <exception cref="EvolvableEnumConversionException">The value has no numeric representation (<see cref="HasNumericValue"/> is <see langword="false"/>).</exception>
-    public ulong ToUInt64() => HasNumericValue
-        ? unchecked((ulong)_bits)
-        : throw new EvolvableEnumConversionException($"Cannot convert '{this}' to a number: the value has no numeric representation.");
-
-    /// <summary>
-    /// Gets the numeric value boxed as the wrapped enum's own underlying integral type (for example
-    /// <see cref="byte"/> or <see cref="uint"/>), preserving its exact sign and width.
-    /// </summary>
-    /// <exception cref="EvolvableEnumConversionException">The value has no numeric representation (<see cref="HasNumericValue"/> is <see langword="false"/>).</exception>
-    public object ToUnderlyingNumber() => HasNumericValue
-        ? BitsToUnderlyingBoxed(_bits)
-        : throw new EvolvableEnumConversionException($"Cannot convert '{this}' to a number: the value has no numeric representation.");
+    /// <summary>Tries to parse a known name, unknown name, or invariant numeric value.</summary>
+    public static bool TryParse([NotNullWhen(true)] string? s, out EvolvableEnum<TEnum> result)
+        => TryParse(s, CultureInfo.InvariantCulture, out result);
 
     /// <inheritdoc />
-    public bool Equals(EvolvableEnum<TEnum> other) => _isNameOnly == other._isNameOnly
-        && (_isNameOnly ? string.Equals(_unknownName, other._unknownName, StringComparison.Ordinal) : _bits == other._bits);
+    public bool Equals(EvolvableEnum<TEnum> other) => _value.Equals(other._value);
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is EvolvableEnum<TEnum> other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => _isNameOnly ? HashCode.Combine(true, _unknownName) : HashCode.Combine(false, _bits);
+    public override int GetHashCode() => _value.GetHashCode();
 
     /// <summary>Determines whether two values are equal.</summary>
     public static bool operator ==(EvolvableEnum<TEnum> left, EvolvableEnum<TEnum> right) => left.Equals(right);
@@ -208,39 +103,210 @@ public readonly partial struct EvolvableEnum<[DynamicallyAccessedMembers(Dynamic
     public static bool operator !=(EvolvableEnum<TEnum> left, EvolvableEnum<TEnum> right) => !left.Equals(right);
 
     /// <inheritdoc />
-    public override string ToString() => Name ?? (IsUnsignedUnderlyingType
-        ? ToUInt64().ToString(CultureInfo.InvariantCulture)
-        : ToInt64().ToString(CultureInfo.InvariantCulture));
+    public override string ToString() => _value.ToString();
+}
 
-    // Widens the enum's own underlying-typed value into a 64-bit container. Byte/UInt16/UInt32 widen
-    // by magnitude (they always fit); only UInt64 needs an unchecked bit-pattern reinterpretation
-    // because ulong.MaxValue exceeds long.MaxValue. FromBits/BitsToUnderlyingBoxed reverse this
-    // exactly by truncating back to the original width, so the round trip is always bit-exact.
-    private static long ToBits(TEnum value) => _underlyingTypeCode switch
+/// <summary>
+/// Wraps an enum using its exact integral backing type so unknown names and values can round-trip
+/// safely.
+/// </summary>
+/// <typeparam name="TEnum">The wrapped enum type.</typeparam>
+/// <typeparam name="TBacking">The enum's exact integral backing type.</typeparam>
+/// <remarks>
+/// <typeparamref name="TBacking"/> must exactly match the backing type declared by
+/// <typeparamref name="TEnum"/>. The enum must declare <c>NOT_SET = 0</c> and must not use
+/// <see cref="FlagsAttribute"/>.
+/// </remarks>
+[TypeConverter(typeof(EvolvableEnumTypeConverter))]
+[SuppressMessage("Design", "CA2225:Operator overloads have named alternates", Justification = "FromValue and Value are the named alternatives.")]
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Enum is the intentional name for this enum wrapper.")]
+public readonly struct EvolvableEnum<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum,
+    TBacking> :
+    IEquatable<EvolvableEnum<TEnum, TBacking>>,
+    IParsable<EvolvableEnum<TEnum, TBacking>>
+    where TEnum : struct, Enum
+    where TBacking : struct, IBinaryInteger<TBacking>
+{
+    private readonly TBacking _number;
+    private readonly string? _unknownName;
+    private readonly bool _isNameOnly;
+
+    private static readonly Dictionary<TBacking, string> _numberToName;
+    private static readonly Dictionary<string, TBacking> _nameToNumber;
+
+    [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "Runtime validation remains required when analyzers are disabled.")]
+    [SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline", Justification = "Lookup creation follows generic argument validation.")]
+    [SuppressMessage("Usage", "CA2207:Initialize value type static fields inline", Justification = "Lookup creation follows generic argument validation.")]
+    static EvolvableEnum()
     {
-        TypeCode.SByte => (sbyte)(object)value,
-        TypeCode.Byte => (byte)(object)value,
-        TypeCode.Int16 => (short)(object)value,
-        TypeCode.UInt16 => (ushort)(object)value,
-        TypeCode.Int32 => (int)(object)value,
-        TypeCode.UInt32 => (uint)(object)value,
-        TypeCode.Int64 => (long)(object)value,
-        TypeCode.UInt64 => unchecked((long)(ulong)(object)value),
-        _ => throw new NotSupportedException($"EvolvableEnum<{typeof(TEnum).Name}> does not support underlying type {_underlyingTypeCode}."),
-    };
+        var enumType = typeof(TEnum);
+        var backingType = Enum.GetUnderlyingType(enumType);
 
-    private static TEnum FromBits(long bits) => (TEnum)Enum.ToObject(typeof(TEnum), BitsToUnderlyingBoxed(bits));
+        if (backingType != typeof(TBacking))
+            throw new InvalidOperationException(
+                $"EvolvableEnum<{enumType.Name}, {typeof(TBacking).Name}> requires {backingType.Name}, the enum's exact backing type.");
 
-    private static object BitsToUnderlyingBoxed(long bits) => _underlyingTypeCode switch
+        if (enumType.IsDefined(typeof(FlagsAttribute), inherit: false))
+            throw new NotSupportedException(
+                $"EvolvableEnum<{enumType.Name}, {typeof(TBacking).Name}> does not support [Flags] enums.");
+
+        var names = Enum.GetNames(enumType);
+        var values = (TEnum[])Enum.GetValues(enumType);
+        _numberToName = new Dictionary<TBacking, string>(names.Length);
+        _nameToNumber = new Dictionary<string, TBacking>(names.Length, StringComparer.Ordinal);
+
+        for (var i = 0; i < names.Length; i++)
+        {
+            var number = (TBacking)Convert.ChangeType(values[i], typeof(TBacking), CultureInfo.InvariantCulture);
+            _numberToName.TryAdd(number, names[i]);
+            _nameToNumber[names[i]] = number;
+        }
+
+        if (!_nameToNumber.TryGetValue("NOT_SET", out var notSet) || notSet != TBacking.Zero)
+            throw new InvalidOperationException(
+                $"EvolvableEnum<{enumType.Name}, {typeof(TBacking).Name}> requires an explicit zero-valued member named 'NOT_SET'.");
+    }
+
+    private EvolvableEnum(TBacking number)
     {
-        TypeCode.SByte => (sbyte)bits,
-        TypeCode.Byte => (byte)bits,
-        TypeCode.Int16 => (short)bits,
-        TypeCode.UInt16 => (ushort)bits,
-        TypeCode.Int32 => (int)bits,
-        TypeCode.UInt32 => (uint)bits,
-        TypeCode.Int64 => bits,
-        TypeCode.UInt64 => unchecked((ulong)bits),
-        _ => throw new NotSupportedException($"EvolvableEnum<{typeof(TEnum).Name}> does not support underlying type {_underlyingTypeCode}."),
-    };
+        _number = number;
+        _unknownName = null;
+        _isNameOnly = false;
+    }
+
+    private EvolvableEnum(string unknownName)
+    {
+        _number = TBacking.Zero;
+        _unknownName = unknownName;
+        _isNameOnly = true;
+    }
+
+    /// <summary>Gets the defined <c>NOT_SET</c> value.</summary>
+    public static EvolvableEnum<TEnum, TBacking> NotSet => default;
+
+    /// <summary>Gets whether this value maps to a declared enum member.</summary>
+    public bool IsDefined => !_isNameOnly && _numberToName.ContainsKey(_number);
+
+    /// <summary>Gets whether this value has a numeric representation.</summary>
+    public bool HasNumericValue => !_isNameOnly;
+
+    /// <summary>Gets the declared enum value, or <see langword="null"/> for an unknown value.</summary>
+    public TEnum? Value => IsDefined ? (TEnum)Enum.ToObject(typeof(TEnum), _number) : null;
+
+    /// <summary>Gets the known or preserved unknown symbolic name.</summary>
+    public string? Name => _isNameOnly
+        ? _unknownName
+        : (_numberToName.TryGetValue(_number, out var name) ? name : null);
+
+    /// <summary>Wraps a strict enum value.</summary>
+    public static implicit operator EvolvableEnum<TEnum, TBacking>(TEnum value) => FromValue(value);
+
+    /// <summary>Converts a known value to the strict enum type.</summary>
+    public static explicit operator TEnum(EvolvableEnum<TEnum, TBacking> value) => value.Value
+        ?? throw new EvolvableEnumConversionException(
+            $"Cannot convert '{value}' to {typeof(TEnum).Name}: the value does not match a declared member.");
+
+    /// <summary>Wraps a strict enum value.</summary>
+    public static EvolvableEnum<TEnum, TBacking> FromValue(TEnum value)
+        => new((TBacking)Convert.ChangeType(value, typeof(TBacking), CultureInfo.InvariantCulture));
+
+    /// <summary>Wraps a numeric value using the enum's exact backing type.</summary>
+    public static EvolvableEnum<TEnum, TBacking> FromNumber(TBacking number) => new(number);
+
+    /// <summary>Wraps a known or unknown symbolic name.</summary>
+    public static EvolvableEnum<TEnum, TBacking> FromName(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        return _nameToNumber.TryGetValue(name, out var number)
+            ? new EvolvableEnum<TEnum, TBacking>(number)
+            : new EvolvableEnum<TEnum, TBacking>(name);
+    }
+
+    /// <summary>Gets the numeric value using the enum's exact backing type.</summary>
+    public TBacking ToNumber() => HasNumericValue
+        ? _number
+        : throw new EvolvableEnumConversionException(
+            $"Cannot convert '{this}' to {typeof(TBacking).Name}: the value has no numeric representation.");
+
+    /// <summary>Parses a known name, unknown name, or invariant numeric value.</summary>
+    public static EvolvableEnum<TEnum, TBacking> Parse(string s, IFormatProvider? provider)
+    {
+        ArgumentNullException.ThrowIfNull(s);
+        if (!TryParse(s, provider, out var result))
+            throw new FormatException($"'{s}' is not a valid {typeof(EvolvableEnum<TEnum, TBacking>)} value.");
+
+        return result;
+    }
+
+    /// <summary>Tries to parse a known name, unknown name, or invariant numeric value.</summary>
+    public static bool TryParse(
+        [NotNullWhen(true)] string? s,
+        IFormatProvider? provider,
+        out EvolvableEnum<TEnum, TBacking> result)
+    {
+        if (string.IsNullOrWhiteSpace(s))
+        {
+            result = default;
+            return false;
+        }
+
+        if (_nameToNumber.TryGetValue(s, out var knownNumber))
+        {
+            result = new EvolvableEnum<TEnum, TBacking>(knownNumber);
+            return true;
+        }
+
+        if (TBacking.TryParse(s, NumberStyles.Integer, provider ?? CultureInfo.InvariantCulture, out var number))
+        {
+            result = new EvolvableEnum<TEnum, TBacking>(number);
+            return true;
+        }
+
+        if (char.IsDigit(s[0]) || s[0] is '+' or '-')
+        {
+            result = default;
+            return false;
+        }
+
+        result = new EvolvableEnum<TEnum, TBacking>(s);
+        return true;
+    }
+
+    /// <summary>Parses a known name, unknown name, or invariant numeric value.</summary>
+    public static EvolvableEnum<TEnum, TBacking> Parse(string s)
+        => Parse(s, CultureInfo.InvariantCulture);
+
+    /// <summary>Tries to parse a known name, unknown name, or invariant numeric value.</summary>
+    public static bool TryParse(
+        [NotNullWhen(true)] string? s,
+        out EvolvableEnum<TEnum, TBacking> result)
+        => TryParse(s, CultureInfo.InvariantCulture, out result);
+
+    /// <inheritdoc />
+    public bool Equals(EvolvableEnum<TEnum, TBacking> other) => _isNameOnly == other._isNameOnly
+        && (_isNameOnly
+            ? string.Equals(_unknownName, other._unknownName, StringComparison.Ordinal)
+            : _number == other._number);
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+        => obj is EvolvableEnum<TEnum, TBacking> other && Equals(other);
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+        => _isNameOnly ? HashCode.Combine(true, _unknownName) : HashCode.Combine(false, _number);
+
+    /// <summary>Determines whether two values are equal.</summary>
+    public static bool operator ==(
+        EvolvableEnum<TEnum, TBacking> left,
+        EvolvableEnum<TEnum, TBacking> right) => left.Equals(right);
+
+    /// <summary>Determines whether two values are different.</summary>
+    public static bool operator !=(
+        EvolvableEnum<TEnum, TBacking> left,
+        EvolvableEnum<TEnum, TBacking> right) => !left.Equals(right);
+
+    /// <inheritdoc />
+    public override string ToString() => Name ?? ToNumber().ToString(null, CultureInfo.InvariantCulture);
 }

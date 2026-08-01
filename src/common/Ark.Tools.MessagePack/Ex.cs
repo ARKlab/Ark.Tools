@@ -3,7 +3,9 @@
 using MessagePack;
 using MessagePack.Resolvers;
 
-namespace Ark.Tools.Core.MessagePack;
+using Ark.Tools.Core;
+
+namespace Ark.Tools.MessagePack;
 
 /// <summary>Extension methods wiring <see cref="EvolvableEnumFormatterResolver"/> into MessagePack serialization.</summary>
 public static class Ex

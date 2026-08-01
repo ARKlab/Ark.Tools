@@ -3,7 +3,7 @@
 
 using System.Data;
 
-namespace Ark.Tools.Core.Dapper.Tests;
+namespace Ark.Tools.Dapper.Tests;
 
 /// <summary>
 /// Minimal in-memory <see cref="IDbDataParameter"/> used to unit test

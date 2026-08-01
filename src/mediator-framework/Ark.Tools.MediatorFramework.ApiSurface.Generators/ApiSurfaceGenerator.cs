@@ -271,7 +271,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     // convention used throughout this generator).
     private static bool TryUnwrapEvolvableEnum(INamedTypeSymbol named, out INamedTypeSymbol enumType)
     {
-        if (named.IsGenericType && named.Arity == 1
+        if (named.IsGenericType && named.Arity is 1 or 2
             && named.OriginalDefinition.Name == "EvolvableEnum"
             && named.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Core"
             && named.TypeArguments[0] is INamedTypeSymbol argument && argument.TypeKind == TypeKind.Enum)

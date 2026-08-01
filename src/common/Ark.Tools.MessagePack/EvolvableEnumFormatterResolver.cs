@@ -3,7 +3,9 @@
 using MessagePack;
 using MessagePack.Formatters;
 
-namespace Ark.Tools.Core.MessagePack;
+using Ark.Tools.Core;
+
+namespace Ark.Tools.MessagePack;
 
 /// <summary>
 /// MessagePack <see cref="IFormatterResolver"/> that detects any closed
@@ -33,11 +35,18 @@ public sealed class EvolvableEnumFormatterResolver : IFormatterResolver
         private static IMessagePackFormatter<T>? Create()
         {
             var type = typeof(T);
-            if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(EvolvableEnum<>))
+            if (!type.IsGenericType)
                 return null;
 
-            var enumType = type.GetGenericArguments()[0];
-            var formatterType = typeof(EvolvableEnumFormatter<>).MakeGenericType(enumType);
+            var definition = type.GetGenericTypeDefinition();
+            if (definition != typeof(EvolvableEnum<>) && definition != typeof(EvolvableEnum<,>))
+                return null;
+
+            var arguments = type.GetGenericArguments();
+            var formatterDefinition = arguments.Length == 1
+                ? typeof(EvolvableEnumFormatter<>)
+                : typeof(EvolvableEnumFormatter<,>);
+            var formatterType = formatterDefinition.MakeGenericType(arguments);
             return (IMessagePackFormatter<T>)Activator.CreateInstance(formatterType)!;
         }
     }

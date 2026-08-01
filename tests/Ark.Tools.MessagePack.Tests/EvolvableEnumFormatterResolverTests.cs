@@ -3,11 +3,13 @@
 
 using AwesomeAssertions;
 
+using Ark.Tools.Core;
+
 using MessagePack;
 
 [assembly: Parallelize(Scope = ExecutionScope.MethodLevel)]
 
-namespace Ark.Tools.Core.MessagePack.Tests;
+namespace Ark.Tools.MessagePack.Tests;
 
 /// <summary>
 /// Round-trip tests proving <see cref="EvolvableEnumFormatterResolver"/> preserves defined and
@@ -55,7 +57,7 @@ public sealed class EvolvableEnumFormatterResolverTests
     public void Roundtrips_UnknownNumber()
     {
         // Arrange
-        var original = EvolvableEnum<Status>.FromNumber(999L);
+        var original = EvolvableEnum<Status>.FromNumber(999);
 
         // Act
         var bytes = MessagePackSerializer.Serialize(original, s_options);
@@ -63,7 +65,7 @@ public sealed class EvolvableEnumFormatterResolverTests
 
         // Assert
         result.IsDefined.Should().BeFalse();
-        result.ToInt64().Should().Be(999);
+        result.ToNumber().Should().Be(999);
     }
 
     /// <summary>Verifies that a ulong-backed enum's maximum value round-trips without sign corruption.</summary>
@@ -71,15 +73,15 @@ public sealed class EvolvableEnumFormatterResolverTests
     public void Roundtrips_ULongMaxValue_WithoutSignCorruption()
     {
         // Arrange
-        var original = EvolvableEnum<ULongStatus>.FromValue(ULongStatus.Huge);
+        var original = EvolvableEnum<ULongStatus, ulong>.FromValue(ULongStatus.Huge);
 
         // Act
         var bytes = MessagePackSerializer.Serialize(original, s_options);
-        var result = MessagePackSerializer.Deserialize<EvolvableEnum<ULongStatus>>(bytes, s_options);
+        var result = MessagePackSerializer.Deserialize<EvolvableEnum<ULongStatus, ulong>>(bytes, s_options);
 
         // Assert
         result.Value.Should().Be(ULongStatus.Huge);
-        result.ToUInt64().Should().Be(ulong.MaxValue);
+        result.ToNumber().Should().Be(ulong.MaxValue);
     }
 
     /// <summary>
@@ -111,7 +113,7 @@ public sealed class EvolvableEnumFormatterResolverTests
     {
         // Arrange
         var status = EvolvableEnum<Status>.FromValue(Status.Active);
-        var uLongStatus = EvolvableEnum<ULongStatus>.FromValue(ULongStatus.Huge);
+        var uLongStatus = EvolvableEnum<ULongStatus, ulong>.FromValue(ULongStatus.Huge);
 
         // Act
         var statusBytes = MessagePackSerializer.Serialize(status, s_options);
@@ -119,6 +121,6 @@ public sealed class EvolvableEnumFormatterResolverTests
 
         // Assert
         MessagePackSerializer.Deserialize<EvolvableEnum<Status>>(statusBytes, s_options).Should().Be(status);
-        MessagePackSerializer.Deserialize<EvolvableEnum<ULongStatus>>(uLongStatusBytes, s_options).Should().Be(uLongStatus);
+        MessagePackSerializer.Deserialize<EvolvableEnum<ULongStatus, ulong>>(uLongStatusBytes, s_options).Should().Be(uLongStatus);
     }
 }

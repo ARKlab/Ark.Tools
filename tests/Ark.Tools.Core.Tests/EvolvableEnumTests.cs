@@ -116,7 +116,7 @@ public class EvolvableEnumTests
         value.IsDefined.Should().BeTrue();
         value.Value.Should().Be(Status.NOT_SET);
         value.Name.Should().Be("NOT_SET");
-        value.ToInt64().Should().Be(0);
+        value.ToNumber().Should().Be(0);
     }
 
     /// <summary>Verifies that a defined value round-trips through implicit/explicit conversions.</summary>
@@ -131,7 +131,7 @@ public class EvolvableEnumTests
         wrapped.HasNumericValue.Should().BeTrue();
         wrapped.Value.Should().Be(Status.Active);
         wrapped.Name.Should().Be("Active");
-        wrapped.ToInt64().Should().Be(1);
+        wrapped.ToNumber().Should().Be(1);
         ((Status)wrapped).Should().Be(Status.Active);
     }
 
@@ -140,14 +140,14 @@ public class EvolvableEnumTests
     public void UnknownNumber_ShouldBeRetainedWithoutName()
     {
         // Act
-        var value = EvolvableEnum<Status>.FromNumber(999L);
+        var value = EvolvableEnum<Status>.FromNumber(999);
 
         // Assert
         value.IsDefined.Should().BeFalse();
         value.HasNumericValue.Should().BeTrue();
         value.Value.Should().BeNull();
         value.Name.Should().BeNull();
-        value.ToInt64().Should().Be(999);
+        value.ToNumber().Should().Be(999);
         value.ToString().Should().Be("999");
     }
 
@@ -168,13 +168,13 @@ public class EvolvableEnumTests
 
     /// <summary>Verifies that converting an unknown-name value to a number fails explicitly instead of defaulting.</summary>
     [TestMethod]
-    public void UnknownName_ToInt64_ShouldThrowExplicitly()
+    public void UnknownName_ToNumber_ShouldThrowExplicitly()
     {
         // Arrange
         var value = EvolvableEnum<Status>.FromName("SomeFutureMember");
 
         // Act
-        var act = () => value.ToInt64();
+        var act = () => value.ToNumber();
 
         // Assert
         act.Should().Throw<EvolvableEnumConversionException>();
@@ -182,13 +182,13 @@ public class EvolvableEnumTests
 
     /// <summary>Verifies that converting an unknown-name value to a number fails explicitly instead of defaulting.</summary>
     [TestMethod]
-    public void UnknownName_ToUnderlyingNumber_ShouldThrowExplicitly()
+    public void UnknownName_ToNumberAgain_ShouldThrowExplicitly()
     {
         // Arrange
         var value = EvolvableEnum<Status>.FromName("SomeFutureMember");
 
         // Act
-        var act = () => value.ToUnderlyingNumber();
+        var act = () => value.ToNumber();
 
         // Assert
         act.Should().Throw<EvolvableEnumConversionException>();
@@ -199,7 +199,7 @@ public class EvolvableEnumTests
     public void UndefinedValue_ExplicitCast_ShouldThrowExplicitly()
     {
         // Arrange
-        var value = EvolvableEnum<Status>.FromNumber(999L);
+        var value = EvolvableEnum<Status>.FromNumber(999);
 
         // Act
         var act = () => (Status)value;
@@ -218,7 +218,7 @@ public class EvolvableEnumTests
         // Assert
         value.IsDefined.Should().BeTrue();
         value.Value.Should().Be(Status.Active);
-        value.ToInt64().Should().Be(1);
+        value.ToNumber().Should().Be(1);
     }
 
     /// <summary>Verifies equality semantics for defined, unknown-numeric, and unknown-name values.</summary>
@@ -227,11 +227,11 @@ public class EvolvableEnumTests
     {
         // Assert
         EvolvableEnum<Status>.FromValue(Status.Active).Should().Be(EvolvableEnum<Status>.FromValue(Status.Active));
-        EvolvableEnum<Status>.FromNumber(999L).Should().Be(EvolvableEnum<Status>.FromNumber(999L));
+        EvolvableEnum<Status>.FromNumber(999).Should().Be(EvolvableEnum<Status>.FromNumber(999));
         EvolvableEnum<Status>.FromName("X").Should().Be(EvolvableEnum<Status>.FromName("X"));
         EvolvableEnum<Status>.FromName("X").Should().NotBe(EvolvableEnum<Status>.FromName("Y"));
         // FromName resolves declared names to their defined numeric value, so it is equal to the same value produced numerically.
-        EvolvableEnum<Status>.FromNumber(1L).Should().Be(EvolvableEnum<Status>.FromName("Active"));
+        EvolvableEnum<Status>.FromNumber(1).Should().Be(EvolvableEnum<Status>.FromName("Active"));
         (EvolvableEnum<Status>.FromValue(Status.Active) == EvolvableEnum<Status>.FromValue(Status.Active)).Should().BeTrue();
         (EvolvableEnum<Status>.FromValue(Status.Active) != EvolvableEnum<Status>.FromValue(Status.Archived)).Should().BeTrue();
     }
@@ -241,12 +241,10 @@ public class EvolvableEnumTests
     public void ByteBackedEnum_ShouldPreserveWidthAndMagnitude()
     {
         // Act
-        var value = EvolvableEnum<ByteStatus>.FromValue(ByteStatus.High);
+        var value = EvolvableEnum<ByteStatus, byte>.FromValue(ByteStatus.High);
 
         // Assert
-        EvolvableEnum<ByteStatus>.IsUnsignedUnderlyingType.Should().BeTrue();
-        value.ToUnderlyingNumber().Should().Be((byte)200);
-        value.ToUInt64().Should().Be(200UL);
+        value.ToNumber().Should().Be((byte)200);
     }
 
     /// <summary>Verifies that a signed byte-backed enum preserves negative values exactly.</summary>
@@ -254,12 +252,10 @@ public class EvolvableEnumTests
     public void SByteBackedEnum_ShouldPreserveSign()
     {
         // Act
-        var value = EvolvableEnum<SByteStatus>.FromValue(SByteStatus.Negative);
+        var value = EvolvableEnum<SByteStatus, sbyte>.FromValue(SByteStatus.Negative);
 
         // Assert
-        EvolvableEnum<SByteStatus>.IsUnsignedUnderlyingType.Should().BeFalse();
-        value.ToUnderlyingNumber().Should().Be((sbyte)-5);
-        value.ToInt64().Should().Be(-5);
+        value.ToNumber().Should().Be((sbyte)-5);
     }
 
     /// <summary>Verifies that a ulong-backed enum round-trips its maximum value without sign corruption.</summary>
@@ -267,16 +263,14 @@ public class EvolvableEnumTests
     public void ULongBackedEnum_ShouldRoundtripMaxValueWithoutSignCorruption()
     {
         // Act
-        var value = EvolvableEnum<ULongStatus>.FromValue(ULongStatus.Huge);
+        var value = EvolvableEnum<ULongStatus, ulong>.FromValue(ULongStatus.Huge);
 
         // Assert
-        EvolvableEnum<ULongStatus>.IsUnsignedUnderlyingType.Should().BeTrue();
-        value.ToUInt64().Should().Be(ulong.MaxValue);
-        value.ToUnderlyingNumber().Should().Be(ulong.MaxValue);
+        value.ToNumber().Should().Be(ulong.MaxValue);
         value.IsDefined.Should().BeTrue();
 
         // A numeric value read back from the wire as ulong.MaxValue must resolve to the same defined member.
-        var fromNumber = EvolvableEnum<ULongStatus>.FromNumber(ulong.MaxValue);
+        var fromNumber = EvolvableEnum<ULongStatus, ulong>.FromNumber(ulong.MaxValue);
         fromNumber.Should().Be(value);
         fromNumber.Value.Should().Be(ULongStatus.Huge);
     }
@@ -286,25 +280,26 @@ public class EvolvableEnumTests
     public void LongBackedEnum_ShouldRoundtripMinAndMaxValue()
     {
         // Act
-        var min = EvolvableEnum<LongStatus>.FromValue(LongStatus.Min);
-        var max = EvolvableEnum<LongStatus>.FromValue(LongStatus.Max);
+        var min = EvolvableEnum<LongStatus, long>.FromValue(LongStatus.Min);
+        var max = EvolvableEnum<LongStatus, long>.FromValue(LongStatus.Max);
 
         // Assert
-        min.ToInt64().Should().Be(long.MinValue);
-        max.ToInt64().Should().Be(long.MaxValue);
+        min.ToNumber().Should().Be(long.MinValue);
+        max.ToNumber().Should().Be(long.MaxValue);
         min.Value.Should().Be(LongStatus.Min);
         max.Value.Should().Be(LongStatus.Max);
     }
 
     /// <summary>Verifies that FromNumber(ulong) applied to a signed enum does not corrupt values that fit signed range.</summary>
     [TestMethod]
-    public void FromNumber_UInt64Overload_ShouldMatchFromValue()
+    public void ExplicitBackingType_ShouldBeRequired()
     {
         // Act
-        var value = EvolvableEnum<Status>.FromNumber(1UL);
+        var act = () => EvolvableEnum<ByteStatus, int>.FromValue(ByteStatus.Low);
 
         // Assert
-        value.Should().Be(EvolvableEnum<Status>.FromValue(Status.Active));
+        act.Should().Throw<TypeInitializationException>()
+            .WithInnerException<InvalidOperationException>();
     }
 
     /// <summary>Verifies that ToString renders the declared name for a defined value.</summary>

@@ -1,57 +1,54 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
-// Licensed under the MIT License. See LICENSE file for license information. 
+// Licensed under the MIT License. See LICENSE file for license information.
+
 using Ark.Tools.Core;
 
+using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Ark.Tools.SystemTextJson;
 
-/// <summary>
-/// Default JSON converter factory for <see cref="EvolvableEnum{TEnum}"/>: serializes using the
-/// symbolic member name, matching the strict-enum default. Registered automatically by
-/// <see cref="Extensions.ConfigureArkDefaults(JsonSerializerOptions)"/>.
-/// </summary>
+/// <summary>Serializes evolvable enums by symbolic name.</summary>
 public class EvolvableEnumJsonConverterFactory : JsonConverterFactory
 {
     /// <inheritdoc />
-    public override bool CanConvert(Type typeToConvert)
-        => typeToConvert.IsGenericType
-        && typeToConvert.GetGenericTypeDefinition() == typeof(EvolvableEnum<>);
+    public override bool CanConvert(Type typeToConvert) => EvolvableEnumJsonConverter.IsSupported(typeToConvert);
 
     /// <inheritdoc />
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         => EvolvableEnumJsonConverter.Create(typeToConvert, EvolvableEnumWireFormat.Name);
 }
 
-/// <summary>
-/// Opt-in JSON converter factory for <see cref="EvolvableEnum{TEnum}"/> that serializes using the
-/// numeric underlying value instead of the default symbolic name. Apply explicitly to a property
-/// via <c>[JsonConverter(typeof(EvolvableEnumIntegerJsonConverterFactory))]</c> when a contract
-/// intentionally stores the numeric wire value in JSON.
-/// </summary>
+/// <summary>Serializes evolvable enums using their exact numeric backing type.</summary>
 public class EvolvableEnumIntegerJsonConverterFactory : JsonConverterFactory
 {
     /// <inheritdoc />
-    public override bool CanConvert(Type typeToConvert)
-        => typeToConvert.IsGenericType
-        && typeToConvert.GetGenericTypeDefinition() == typeof(EvolvableEnum<>);
+    public override bool CanConvert(Type typeToConvert) => EvolvableEnumJsonConverter.IsSupported(typeToConvert);
 
     /// <inheritdoc />
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         => EvolvableEnumJsonConverter.Create(typeToConvert, EvolvableEnumWireFormat.Number);
 }
 
-/// <summary>Non-generic helper that constructs the closed generic converter via reflection.</summary>
 internal static class EvolvableEnumJsonConverter
 {
-    [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType", Justification = "enumType is a runtime Enum type extracted from a closed EvolvableEnum<TEnum>; its public fields (the enum members) are always available for a concrete enum type.")]
-    public static JsonConverter Create(Type typeToConvert, EvolvableEnumWireFormat format)
+    public static bool IsSupported(Type type)
     {
-        var enumType = typeToConvert.GetGenericArguments()[0];
-        var converterType = typeof(Converter<>).MakeGenericType(enumType);
+        if (!type.IsGenericType)
+            return false;
 
+        var definition = type.GetGenericTypeDefinition();
+        return definition == typeof(EvolvableEnum<>) || definition == typeof(EvolvableEnum<,>);
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType", Justification = "Arguments come from a closed EvolvableEnum type.")]
+    public static JsonConverter Create(Type type, EvolvableEnumWireFormat format)
+    {
+        var arguments = type.GetGenericArguments();
+        var converterDefinition = arguments.Length == 1 ? typeof(DefaultConverter<>) : typeof(Converter<,>);
+        var converterType = converterDefinition.MakeGenericType(arguments);
         return (JsonConverter)Activator.CreateInstance(
             converterType,
             BindingFlags.Instance | BindingFlags.Public,
@@ -60,9 +57,49 @@ internal static class EvolvableEnumJsonConverter
             culture: null)!;
     }
 
-    [UnconditionalSuppressMessage("ReflectionAnalysis", "CA1812", Justification = "Instantiated via reflection in Create method")]
-    private sealed class Converter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum> : JsonConverter<EvolvableEnum<TEnum>>
+    private sealed class DefaultConverter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum> :
+        JsonConverter<EvolvableEnum<TEnum>>
         where TEnum : struct, Enum
+    {
+        private readonly EvolvableEnumWireFormat _format;
+
+        public DefaultConverter(EvolvableEnumWireFormat format)
+        {
+            _format = format;
+        }
+
+        public override EvolvableEnum<TEnum> Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options) => reader.TokenType switch
+            {
+                JsonTokenType.String => EvolvableEnum<TEnum>.FromName(reader.GetString()!),
+                JsonTokenType.Number => EvolvableEnum<TEnum>.FromNumber(reader.GetInt32()),
+                _ => throw UnexpectedToken<TEnum>(reader.TokenType),
+            };
+
+        public override void Write(
+            Utf8JsonWriter writer,
+            EvolvableEnum<TEnum> value,
+            JsonSerializerOptions options)
+        {
+            if (_format == EvolvableEnumWireFormat.Number)
+            {
+                writer.WriteNumberValue(value.ToNumber());
+                return;
+            }
+
+            WriteName(writer, value.Name, value);
+        }
+    }
+
+    private sealed class Converter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum,
+        TBacking> :
+        JsonConverter<EvolvableEnum<TEnum, TBacking>>
+        where TEnum : struct, Enum
+        where TBacking : struct, IBinaryInteger<TBacking>
     {
         private readonly EvolvableEnumWireFormat _format;
 
@@ -71,51 +108,92 @@ internal static class EvolvableEnumJsonConverter
             _format = format;
         }
 
-        public override EvolvableEnum<TEnum> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            switch (reader.TokenType)
+        public override EvolvableEnum<TEnum, TBacking> Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options) => reader.TokenType switch
             {
-                case JsonTokenType.String:
-                    return EvolvableEnum<TEnum>.FromName(reader.GetString()!);
+                JsonTokenType.String => EvolvableEnum<TEnum, TBacking>.FromName(reader.GetString()!),
+                JsonTokenType.Number => EvolvableEnum<TEnum, TBacking>.FromNumber(ReadNumber<TBacking>(ref reader)),
+                _ => throw UnexpectedToken<TEnum>(reader.TokenType),
+            };
 
-                case JsonTokenType.Number:
-                    return EvolvableEnum<TEnum>.IsUnsignedUnderlyingType
-                        ? EvolvableEnum<TEnum>.FromNumber(reader.GetUInt64())
-                        : EvolvableEnum<TEnum>.FromNumber(reader.GetInt64());
-
-                default:
-                    throw new JsonException($"Cannot deserialize {typeof(EvolvableEnum<TEnum>)}: expected a JSON string or number, found {reader.TokenType}.");
-            }
-        }
-
-        public override void Write(Utf8JsonWriter writer, EvolvableEnum<TEnum> value, JsonSerializerOptions options)
+        public override void Write(
+            Utf8JsonWriter writer,
+            EvolvableEnum<TEnum, TBacking> value,
+            JsonSerializerOptions options)
         {
             if (_format == EvolvableEnumWireFormat.Number)
             {
-                WriteNumber(writer, value);
+                WriteNumber(writer, value.ToNumber());
                 return;
             }
 
-            var name = value.Name;
-            if (name is not null)
-            {
-                writer.WriteStringValue(name);
-                return;
-            }
-
-            // The value is an unknown number with no symbolic name (typically produced by an
-            // upstream binary transport such as protobuf or MessagePack). There is no safe string
-            // representation that preserves it, so fail explicitly instead of corrupting the value.
-            throw new EvolvableEnumConversionException(
-                $"Cannot serialize '{value}' as a JSON string: the value has no symbolic name. Use {nameof(EvolvableEnumIntegerJsonConverterFactory)} to serialize the numeric value instead.");
+            WriteName(writer, value.Name, value);
         }
+    }
 
-        private static void WriteNumber(Utf8JsonWriter writer, EvolvableEnum<TEnum> value)
+    private static JsonException UnexpectedToken<TEnum>(JsonTokenType token)
+        => new($"Cannot deserialize EvolvableEnum<{typeof(TEnum).Name}> from {token}.");
+
+    private static void WriteName(Utf8JsonWriter writer, string? name, object value)
+    {
+        if (name is null)
+            throw new EvolvableEnumConversionException(
+                $"Cannot serialize '{value}' as a JSON string because it has no symbolic name.");
+
+        writer.WriteStringValue(name);
+    }
+
+    private static TBacking ReadNumber<TBacking>(ref Utf8JsonReader reader)
+        where TBacking : struct, IBinaryInteger<TBacking>
+    {
+        object value = Type.GetTypeCode(typeof(TBacking)) switch
         {
-            if (EvolvableEnum<TEnum>.IsUnsignedUnderlyingType)
-                writer.WriteNumberValue(value.ToUInt64());
-            else
-                writer.WriteNumberValue(value.ToInt64());
+            TypeCode.SByte => checked((sbyte)reader.GetInt32()),
+            TypeCode.Byte => checked((byte)reader.GetUInt32()),
+            TypeCode.Int16 => checked((short)reader.GetInt32()),
+            TypeCode.UInt16 => checked((ushort)reader.GetUInt32()),
+            TypeCode.Int32 => reader.GetInt32(),
+            TypeCode.UInt32 => reader.GetUInt32(),
+            TypeCode.Int64 => reader.GetInt64(),
+            TypeCode.UInt64 => reader.GetUInt64(),
+            _ => throw new NotSupportedException($"Unsupported evolvable enum backing type {typeof(TBacking)}."),
+        };
+        return (TBacking)value;
+    }
+
+    private static void WriteNumber<TBacking>(Utf8JsonWriter writer, TBacking value)
+        where TBacking : struct, IBinaryInteger<TBacking>
+    {
+        switch (value)
+        {
+            case sbyte number:
+                writer.WriteNumberValue(number);
+                break;
+            case byte number:
+                writer.WriteNumberValue(number);
+                break;
+            case short number:
+                writer.WriteNumberValue(number);
+                break;
+            case ushort number:
+                writer.WriteNumberValue(number);
+                break;
+            case int number:
+                writer.WriteNumberValue(number);
+                break;
+            case uint number:
+                writer.WriteNumberValue(number);
+                break;
+            case long number:
+                writer.WriteNumberValue(number);
+                break;
+            case ulong number:
+                writer.WriteNumberValue(number);
+                break;
+            default:
+                throw new NotSupportedException($"Unsupported evolvable enum backing type {typeof(TBacking)}.");
         }
     }
 }

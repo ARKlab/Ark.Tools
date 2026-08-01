@@ -14,19 +14,19 @@ See `docs/mediator-framework/design.md` → *Evolvable enums* for the full
 per-transport rules table, and `docs/mediator-framework/guide/serialization.md`
 → *Evolvable enums* for the consumer-facing usage guide.
 
-`Ark.Tools.Core.EvolvableEnum<TEnum>` is a transport-neutral, opt-in wrapper —
-a `public readonly partial struct` with exactly one type parameter constrained
-to `enum`. Most of the implementation lives outside
+`Ark.Tools.Core.EvolvableEnum<TEnum>` is a transport-neutral, opt-in readonly
+struct defaulting to an `int` backing type. `EvolvableEnum<TEnum, TBacking>`
+selects another exact enum backing type. Most of the implementation lives outside
 `Ark.Tools.MediatorFramework`, in `Ark.Tools.Core` (the value type itself) and
 a set of small adapter packages, one per transport that needs custom wiring:
 
 | Package | Contents |
 | --- | --- |
-| `Ark.Tools.Core` | `EvolvableEnum<TEnum>`, `EvolvableEnumWireFormat`, `EvolvableEnumConversionException` |
+| `Ark.Tools.Core` | both `EvolvableEnum` forms, type converter, analyzer diagnostics, wire format, conversion exception |
 | `Ark.Tools.SystemTextJson` | `EvolvableEnumJsonConverterFactory` (default, name) / `EvolvableEnumIntegerJsonConverterFactory` (opt-in, number); wired into `ConfigureArkDefaults()` |
-| `Ark.Tools.Core.Dapper` | `EvolvableEnumTypeHandler<TEnum>` + `EvolvableEnumDapper.Register<TEnum>(format)` |
-| `Ark.Tools.Core.Protobuf` | `EvolvableEnumSurrogate<TEnum>` + `RuntimeTypeModel.AddEvolvableEnumSurrogate<TEnum>()` |
-| `Ark.Tools.Core.MessagePack` | `EvolvableEnumFormatterResolver` + `MessagePackSerializerOptions.WithEvolvableEnumSupport()` |
+| `Ark.Tools.Dapper` | type handlers and explicit registration for both wrapper forms |
+| `Ark.Tools.Protobuf` | exact-backing surrogates and explicit registration for both wrapper forms |
+| `Ark.Tools.MessagePack` | resolver and formatter support for both wrapper forms |
 
 Key rules (enforced by a static constructor per closed `TEnum`, failing fast —
 wrapped in `TypeInitializationException` per standard CLR semantics):
@@ -35,8 +35,8 @@ wrapped in `TypeInitializationException` per standard CLR semantics):
 - `TEnum` **must** declare an explicit `NOT_SET = 0` member, so
   `default(EvolvableEnum<TEnum>)` — an omitted non-nullable contract member —
   always decodes to a safe, defined value.
-- The exact backing integral type of `TEnum` (width and signedness, `byte`
-  through `ulong`) is preserved bit-for-bit via a single `long` storage field.
+- `TBacking` must exactly match the enum backing type and is stored directly;
+  the one-argument form selects `int`.
 - Unknown symbolic names and unknown numeric values are retained on
   deserialization (`IsDefined == false`), never rejected.
 - Converting a value to a wire form it cannot represent (e.g. an unknown name
@@ -58,10 +58,8 @@ type, exactly like any other custom value type on those libraries.
 and `EVOLVABLE-ENUM Type.Member=value` (the `TEnum` wrapped by an
 `EvolvableEnum<TEnum>` contract member) lines for every enum reached from a
 contract, so member additions/removals/renumbering are caught as snapshot
-drift. `GrpcEndpointGenerator` maps `EvolvableEnum<TEnum>` contract members to
-`int64` in generated `.proto` text (never a proto `enum`), matching the
-protobuf-net surrogate's wire shape exactly — exported proto clients decode
-the same bytes with no special handling.
+drift. `GrpcEndpointGenerator` maps the exact backing category to
+`int32`, `uint32`, `int64`, or `uint64` in generated `.proto` text.
 
 ## Outcomes
 

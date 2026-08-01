@@ -31,4 +31,14 @@
 		<PackageReference Include="System.Linq.Async" />
 	</ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Core.Analyzers\Ark.Tools.Core.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <None Include="..\Ark.Tools.Core.Analyzers\bin\$(Configuration)\netstandard2.0\Ark.Tools.Core.Analyzers.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
+  </ItemGroup>
+
 	</Project>

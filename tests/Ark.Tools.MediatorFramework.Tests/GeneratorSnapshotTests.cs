@@ -203,7 +203,7 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.Solid;
             using Ark.Tools.Core;
             public enum Status : byte { NOT_SET = 0, Active = 1, Archived = 2 }
-            public sealed record Response(EvolvableEnum<Status> Status);
+            public sealed record Response(EvolvableEnum<Status, byte> Status);
             [HttpEndpoint("GET", "/items/{id}")]
             public sealed class GetItem : IQuery<Response>
             {
@@ -1162,7 +1162,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void GrpcGeneratorMapsEvolvableEnumMemberToProtoInt64()
+    public void GrpcGeneratorMapsEvolvableEnumsToBackingTypeProtoScalars()
     {
         var generated = RunGenerator<ArkGrpcEndpointGenerator>(
             """
@@ -1172,6 +1172,9 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.Core;
             using ProtoBuf;
             public enum Status : byte { NOT_SET = 0, Active = 1, Archived = 2 }
+            public enum DefaultStatus { NOT_SET = 0, Active = 1 }
+            public enum LongStatus : long { NOT_SET = 0, Active = 1 }
+            public enum ULongStatus : ulong { NOT_SET = 0, Active = 1 }
             [GrpcMethod("GetItem")]
             [ProtoContract]
             public sealed class GetItem : IQuery<ItemResponse>
@@ -1183,11 +1186,20 @@ public sealed class GeneratorSnapshotTests
             public sealed class ItemResponse
             {
                 [ProtoMember(1)]
-                public EvolvableEnum<Status> Status { get; set; }
+                public EvolvableEnum<Status, byte> Status { get; set; }
+                [ProtoMember(2)]
+                public EvolvableEnum<DefaultStatus> DefaultStatus { get; set; }
+                [ProtoMember(3)]
+                public EvolvableEnum<LongStatus, long> LongStatus { get; set; }
+                [ProtoMember(4)]
+                public EvolvableEnum<ULongStatus, ulong> ULongStatus { get; set; }
             }
             """);
 
-        generated.Should().Contain("int64 status = 1;");
+        generated.Should().Contain("uint32 status = 1;");
+        generated.Should().Contain("int32 default_status = 2;");
+        generated.Should().Contain("int64 long_status = 3;");
+        generated.Should().Contain("uint64 u_long_status = 4;");
         generated.Should().NotContain("EvolvableEnum");
     }
 

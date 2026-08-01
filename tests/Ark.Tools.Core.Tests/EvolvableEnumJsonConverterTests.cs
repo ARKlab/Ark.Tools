@@ -102,7 +102,7 @@ public class EvolvableEnumJsonConverterTests
     {
         // Arrange
         var options = CreateDefaultOptions();
-        var value = EvolvableEnum<Status>.FromNumber(999L);
+        var value = EvolvableEnum<Status>.FromNumber(999);
 
         // Act
         var act = () => JsonSerializer.Serialize(value, options);
@@ -155,7 +155,7 @@ public class EvolvableEnumJsonConverterTests
 
         // Assert
         result.IsDefined.Should().BeFalse();
-        result.ToInt64().Should().Be(999);
+        result.ToNumber().Should().Be(999);
         json.Should().Be("999");
     }
 

@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using ProtoBuf.Meta;
 
-namespace Ark.Tools.Core.Protobuf;
+using Ark.Tools.Core;
+
+namespace Ark.Tools.Protobuf;
 
 /// <summary>
 /// Registration helper wiring <see cref="EvolvableEnumSurrogate{TEnum}"/> into a protobuf-net
@@ -32,5 +34,25 @@ public static class Ex
 
         return model;
     }
-}
 
+    /// <summary>Registers a surrogate using the enum's exact integral backing type.</summary>
+    /// <typeparam name="TEnum">The wrapped enum type.</typeparam>
+    /// <typeparam name="TBacking">The enum's exact integral backing type.</typeparam>
+    /// <param name="model">The protobuf-net runtime type model to configure.</param>
+    /// <returns>The same <paramref name="model"/> for chaining.</returns>
+    public static RuntimeTypeModel AddEvolvableEnumSurrogate<TEnum, TBacking>(
+        this RuntimeTypeModel model)
+        where TEnum : struct, Enum
+        where TBacking : struct, System.Numerics.IBinaryInteger<TBacking>
+    {
+        ArgumentNullException.ThrowIfNull(model);
+
+        if (!model.IsDefined(typeof(EvolvableEnum<TEnum, TBacking>)))
+        {
+            model.Add(typeof(EvolvableEnum<TEnum, TBacking>), false)
+                .SetSurrogate(typeof(EvolvableEnumSurrogate<TEnum, TBacking>));
+        }
+
+        return model;
+    }
+}
