@@ -106,4 +106,53 @@ For NodaTime:
 - gRPC uses `RuntimeTypeModel.Default.AddNodaTimeSurrogates()`.
 - MessagePack must use a resolver that knows the NodaTime types you expose.
 
+## Evolvable enums
+
+Wrap a contract member in `Ark.Tools.Core.EvolvableEnum<TEnum>` when the enum
+may gain members after clients have shipped. Unknown values are preserved
+instead of throwing on deserialization; converting an unknown value to a
+transport that cannot represent it (e.g. an unrecognized name to a
+number-only wire format) throws `EvolvableEnumConversionException` explicitly
+rather than corrupting the value. `TEnum` must not be a `[Flags]` enum and
+must declare an explicit `NOT_SET = 0` member (the static constructor throws,
+wrapped in `TypeInitializationException`, otherwise) — this guarantees an
+omitted non-nullable member always decodes to a safe, defined default.
+
+```csharp
+public enum GreetingStatus
+{
+    NOT_SET = 0,
+    Active = 1,
+    Archived = 2,
+}
+
+public sealed record GreetingResponse
+{
+    public EvolvableEnum<GreetingStatus> Status { get; init; }
+}
+```
+
+Per-transport wiring (see [design.md](../design.md) → *Evolvable enums* for
+the full rules table):
+
+- **JSON** (`Ark.Tools.SystemTextJson`): zero setup — `ConfigureArkDefaults()`
+  already registers the converter factory. Members serialize as the symbolic
+  name by default; opt into the numeric wire form per-property with
+  `[JsonConverter(typeof(EvolvableEnumIntegerJsonConverterFactory))]` or by
+  registering `EvolvableEnumIntegerJsonConverterFactory` directly.
+- **Dapper** (`Ark.Tools.Core.Dapper`): call
+  `EvolvableEnumDapper.Register<GreetingStatus>()` once at startup (add
+  `EvolvableEnumWireFormat.Number` for the integer column form).
+- **protobuf-net / gRPC** (`Ark.Tools.Core.Protobuf`): call
+  `RuntimeTypeModel.Default.AddEvolvableEnumSurrogate<GreetingStatus>()` once
+  at startup, per wrapped enum type (protobuf-net cannot auto-apply a
+  surrogate registered on the open generic type definition). The generated
+  `.proto` field is `int64`, matching the surrogate's wire shape.
+- **MessagePack** (`Ark.Tools.Core.MessagePack`): compose
+  `options.WithEvolvableEnumSupport()` into the serializer options once — the
+  resolver supports every wrapped enum type automatically, no per-type call
+  needed.
+- **Rebus**: whichever body serializer the host configures (STJ or
+  protobuf-net) applies the same rules above; no separate Rebus-specific setup.
+
 Architecture rationale: [design.md](../design.md).

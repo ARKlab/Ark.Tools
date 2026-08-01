@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -192,6 +193,12 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             foreach (var member in resultType.GetMembers().OfType<IPropertySymbol>())
                 AddContract(lines, resultType.Name, member, string.Empty, visited);
         }
+        else
+        {
+            // The result type is returned directly (not wrapped in a response class), e.g. an
+            // enum or an EvolvableEnum<TEnum>: still emit its explicit member entries.
+            AddEnumEntries(lines, result);
+        }
 
         if (rebus is not null)
             lines.Add($"REBUS {request} -> queue:{StringNamed(rebus, "OwnerQueue") ?? "default"}");
@@ -213,9 +220,12 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             visited.Remove(named);
         }
         else
+        {
             lines.Add($"CONTRACT {owner}.{path}{(collection ? "[]" : string.Empty)} : {TypeName(property.Type)}"
                 + (serverSet ? " server-set=true" : string.Empty)
                 + DefaultValue(property));
+            AddEnumEntries(lines, type);
+        }
     }
 
     private static ITypeSymbol ResultType(INamedTypeSymbol type)
@@ -236,6 +246,49 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             return named.TypeArguments[0];
         }
         return type;
+    }
+
+    // Emits explicit member/value entries for enum types reached from contract members, either
+    // used directly ("strict enum") or wrapped in Ark.Tools.Core.EvolvableEnum<TEnum> ("evolvable
+    // enum"), so that adding/removing/renumbering members is caught as an API surface drift.
+    private static void AddEnumEntries(List<string> lines, ITypeSymbol type)
+    {
+        if (type is not INamedTypeSymbol named)
+            return;
+
+        if (named.TypeKind == TypeKind.Enum)
+        {
+            AddEnumMembers(lines, "ENUM", named);
+        }
+        else if (TryUnwrapEvolvableEnum(named, out var enumType))
+        {
+            AddEnumMembers(lines, "EVOLVABLE-ENUM", enumType);
+        }
+    }
+
+    // Detects Ark.Tools.Core.EvolvableEnum<TEnum> by name/arity/namespace (no compile-time
+    // reference to Ark.Tools.Core is required, matching the existing attribute-name-matching
+    // convention used throughout this generator).
+    private static bool TryUnwrapEvolvableEnum(INamedTypeSymbol named, out INamedTypeSymbol enumType)
+    {
+        if (named.IsGenericType && named.Arity == 1
+            && named.OriginalDefinition.Name == "EvolvableEnum"
+            && named.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Core"
+            && named.TypeArguments[0] is INamedTypeSymbol argument && argument.TypeKind == TypeKind.Enum)
+        {
+            enumType = argument;
+            return true;
+        }
+
+        enumType = null!;
+        return false;
+    }
+
+    private static void AddEnumMembers(List<string> lines, string kind, INamedTypeSymbol enumType)
+    {
+        var name = TypeName(enumType);
+        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>().Where(static f => f.HasConstantValue))
+            lines.Add($"{kind} {name}.{field.Name}={Convert.ToString(field.ConstantValue, CultureInfo.InvariantCulture)}");
     }
 
     private static IEnumerable<INamedTypeSymbol> AllTypes(INamespaceSymbol ns)

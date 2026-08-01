@@ -50,12 +50,19 @@ CONTRACT CreateGreetingRequest.Name : string
 CONTRACT GreetingResponse
 CONTRACT GreetingResponse.Id : Guid
 CONTRACT GreetingResponse.Message : string
+CONTRACT GreetingResponse.Status : EvolvableEnum<GreetingStatus>
+EVOLVABLE-ENUM GreetingStatus.NOT_SET=0
+EVOLVABLE-ENUM GreetingStatus.Active=1
 REBUS CreateGreetingRequest -> queue:greetings
 ```
 
 The `CONTRACT` line identifies the request, result, route, gRPC method, group,
 and version range. Following lines describe public members and protobuf tags.
-The `REBUS` line describes the generated queue route. The baseline covers:
+`ENUM Type.Member=value` and `EVOLVABLE-ENUM Type.Member=value` lines list
+every member and numeric value of a plain enum or an
+`EvolvableEnum<TEnum>`-wrapped enum reached from a contract, so adding,
+removing, or renumbering a member is a visible diff. The `REBUS` line
+describes the generated queue route. The baseline covers:
 
 | Change | Detected | Typical decision |
 | --- | --- | --- |
@@ -63,6 +70,7 @@ The `REBUS` line describes the generated queue route. The baseline covers:
 | Change an HTTP or gRPC version range | Yes | Confirm the retirement and migration plan. |
 | Add, remove, rename, or change the type of a public contract member | Yes | Preserve released protobuf tags; use a new optional tag for additive data. |
 | Change only a protobuf member number | No | Review generated proto/schema changes separately; snapshots record the public contract shape, not protobuf tag numbers. |
+| Add, remove, rename, or renumber an `enum`/`EvolvableEnum<TEnum>` member | Yes | For a strict enum this is a breaking wire change; for an evolvable enum, adding a member is safe for unknown-value-tolerant clients, but removing or renumbering one is not. |
 | Change the gRPC service/method name or API group | Yes | Treat it as a consumer-visible wire change. |
 | Change a `RebusMessage` owner queue | Yes | Plan routing and consumer deployment together. |
 | Change handler implementation only | No | No public generated surface has changed. |

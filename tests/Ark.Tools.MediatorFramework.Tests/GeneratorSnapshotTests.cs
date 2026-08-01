@@ -172,6 +172,54 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorEmitsExplicitEntriesForStrictEnumMembers()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            public enum Status { NOT_SET = 0, Active = 1, Archived = 2 }
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<Status>
+            {
+                public int Id { get; set; }
+            }
+            """;
+
+        var generated = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("ENUM Status.NOT_SET=0");
+        generated.Should().Contain("ENUM Status.Active=1");
+        generated.Should().Contain("ENUM Status.Archived=2");
+        generated.Should().NotContain("EVOLVABLE-ENUM");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorEmitsExplicitEntriesForEvolvableEnumMembers()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Ark.Tools.Core;
+            public enum Status : byte { NOT_SET = 0, Active = 1, Archived = 2 }
+            public sealed record Response(EvolvableEnum<Status> Status);
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<Response>
+            {
+                public int Id { get; set; }
+            }
+            """;
+
+        var generated = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("EVOLVABLE-ENUM Status.NOT_SET=0");
+        generated.Should().Contain("EVOLVABLE-ENUM Status.Active=1");
+        generated.Should().Contain("EVOLVABLE-ENUM Status.Archived=2");
+        generated.Should().NotContain("\nENUM Status.");
+    }
+
+    [TestMethod]
     public void ResponseETagIsEmittedOnlyForMarkedResponses()
     {
         var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
@@ -1114,6 +1162,36 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorMapsEvolvableEnumMemberToProtoInt64()
+    {
+        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+            """
+            namespace Test;
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Ark.Tools.Core;
+            using ProtoBuf;
+            public enum Status : byte { NOT_SET = 0, Active = 1, Archived = 2 }
+            [GrpcMethod("GetItem")]
+            [ProtoContract]
+            public sealed class GetItem : IQuery<ItemResponse>
+            {
+                [ProtoMember(1)]
+                public int Id { get; set; }
+            }
+            [ProtoContract]
+            public sealed class ItemResponse
+            {
+                [ProtoMember(1)]
+                public EvolvableEnum<Status> Status { get; set; }
+            }
+            """);
+
+        generated.Should().Contain("int64 status = 1;");
+        generated.Should().NotContain("EvolvableEnum");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorReportsUnknownVerb()
     {
         var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
@@ -1222,6 +1300,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Ark.Tools.Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "GeneratorSnapshot",
@@ -1325,6 +1404,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Ark.Tools.Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "ApiSurfaceTest",

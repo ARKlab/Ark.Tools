@@ -708,6 +708,11 @@ namespace Ark.MediatorFramework.Generators
                 return ProtoTypeName(array.ElementType, contracts);
             if (type is INamedTypeSymbol named && named.IsGenericType && named.Name == "Nullable")
                 return ProtoTypeName(named.TypeArguments[0], contracts);
+            if (type is INamedTypeSymbol evolvableEnum && IsEvolvableEnum(evolvableEnum))
+                // EvolvableEnum<TEnum> always carries its numeric value on the wire (mirroring
+                // Ark.Tools.Core.Protobuf's EvolvableEnumSurrogate<TEnum>, a single int64 field),
+                // never a proto enum reference.
+                return "int64";
 
             var contract = contracts.FirstOrDefault(item => SymbolEqualityComparer.Default.Equals(item.Type, type));
             if (contract is not null)
@@ -783,6 +788,14 @@ namespace Ark.MediatorFramework.Generators
             var separator = value.LastIndexOf('.');
             return separator < 0 ? value : value[(separator + 1)..];
         }
+
+        // Detects Ark.Tools.Core.EvolvableEnum<TEnum> by name/arity/namespace (no compile-time
+        // reference to Ark.Tools.Core is required, matching this generator's convention of
+        // recognizing well-known types by their fully-qualified name/shape).
+        private static bool IsEvolvableEnum(INamedTypeSymbol named) =>
+            named.IsGenericType && named.Arity == 1
+            && named.OriginalDefinition.Name == "EvolvableEnum"
+            && named.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Core";
 
         private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
         {

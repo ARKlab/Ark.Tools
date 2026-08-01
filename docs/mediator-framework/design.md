@@ -786,6 +786,60 @@ only to its own attribute, so adding a transport never re-runs the others.
   `ProjectReference` paths — including the analyzers, which reach the sample
   as analyzer assets of their runtime package.
 
+## Evolvable enums
+
+Adding a C# enum member is a breaking wire change for strict clients that
+reject unrecognized values. `Ark.Tools.Core.EvolvableEnum<TEnum>` is an opt-in
+wrapper that lets a contract member carry unknown enum values safely instead:
+
+- **`EvolvableEnum<TEnum>`** is a `public readonly partial struct` with exactly
+  one type parameter, constrained to `enum`. A static constructor validates
+  `TEnum` once per closed type and throws (wrapped in
+  `TypeInitializationException`, standard CLR static-constructor-failure
+  semantics) if `TEnum` is a `[Flags]` enum, or if it does not declare an
+  explicit member with value `0` named `NOT_SET`. The `NOT_SET` requirement
+  guarantees `default(EvolvableEnum<TEnum>)` — i.e. an **omitted non-nullable**
+  contract member — always decodes to a defined, safe value instead of an
+  ambiguous zero.
+- The wrapper preserves `TEnum`'s exact backing integral type, including width
+  and signedness (`byte` through `ulong`), via a single bit-pattern `long`
+  field: `ToInt64()`/`FromValue(long)` round-trip the raw bits, while
+  `ToUInt64()`/`FromValue(ulong)` interpret the same bits as an unsigned
+  magnitude — both are valid, interoperable views of the same storage, so a
+  `ulong`-backed enum's `ulong.MaxValue` member never suffers sign corruption
+  on any transport.
+- **Unknown values are retained, not rejected.** A JSON string or numeric
+  value that has no matching `TEnum` member deserializes into an
+  `EvolvableEnum<TEnum>` carrying that raw name or number, `IsDefined ==
+  false`. `HasNumericValue` reports whether a numeric representation exists
+  (an unrecognized name deserialized from a name-only transport has none).
+- **Cross-form conversion is explicit-or-fail, never silently corrupting.**
+  Converting a name-only unknown value to a transport that requires a number
+  (or vice-versa) throws `EvolvableEnumConversionException` instead of
+  inventing a value.
+
+**Per-transport wire rules** (`EvolvableEnumWireFormat.Name` is always the
+default; `.Number` is an explicit opt-in where the format supports both):
+
+| Transport | Package | Default | Explicit opt-in | Registration |
+| --- | --- | --- | --- | --- |
+| HTTP JSON (`System.Text.Json`) | `Ark.Tools.SystemTextJson` | symbolic name (string) | integer, via `EvolvableEnumIntegerJsonConverterFactory` | none — `EvolvableEnumJsonConverterFactory` is wired into `ConfigureArkDefaults()` and auto-detects every closed `EvolvableEnum<TEnum>` |
+| SQL (Dapper) | `Ark.Tools.Core.Dapper` | symbolic name (string) | integer (`long`, or `decimal` for `ulong` values beyond `long.MaxValue`) | explicit, once per `TEnum`: `EvolvableEnumDapper.Register<TEnum>(format)` |
+| Protobuf / gRPC (protobuf-net) | `Ark.Tools.Core.Protobuf` | integer (`int64`) — the only wire shape protobuf supports | n/a | explicit, once per `TEnum`: `model.AddEvolvableEnumSurrogate<TEnum>()`. protobuf-net does not support registering a surrogate on an open generic type definition for arbitrary closed instantiations (tracked upstream as [protobuf-net#802](https://github.com/protobuf-net/protobuf-net/issues/802)), so — like Dapper's type handlers — each wrapped enum type needs one explicit registration call |
+| MessagePack | `Ark.Tools.Core.MessagePack` | integer (`int64`) | n/a | none — `EvolvableEnumFormatterResolver` resolves formatters per concrete type at serialization time (`IFormatterResolver.GetFormatter<T>()`), so a single `EvolvableEnumFormatterResolver.Instance` (composed via `options.WithEvolvableEnumSupport()`) transparently supports every wrapped enum type without per-type registration |
+| Rebus | `Ark.Tools.MediatorFramework.Rebus` | inherits the configured body serializer | inherits the configured body serializer | same as the underlying STJ or protobuf-net serializer — no separate Rebus adapter is needed |
+| gRPC exported `.proto` / generated clients | `Ark.Tools.MediatorFramework.Grpc.Generators` | `int64` field, never a proto `enum` | — | none — the generator maps `EvolvableEnum<TEnum>` members to `int64` in the exported `.proto` text, matching the protobuf-net surrogate's wire shape exactly, so exported clients decode the same bytes |
+
+Only JSON and MessagePack achieve full zero-registration seamlessness because
+both resolve formatters/converters generically per concrete type at
+(de)serialization time; Dapper and protobuf-net build a static per-type model
+ahead of time and therefore require one explicit registration call per
+wrapped enum type — this mirrors those libraries' existing handling of any
+other custom value type, not a limitation specific to `EvolvableEnum<TEnum>`.
+
+Existing strict (plain) enum contract members are entirely unaffected — they
+keep serializing exactly as before on every transport.
+
 ## API surface snapshots
 
 The public wire surface must not change by accident. The framework ships a
@@ -802,6 +856,11 @@ snapshot differs from what is committed.
   true, and source-level default values.
   Nested types are expanded recursively so a change to any nested field produces
   a visible diff.
+- Enum members reached from a contract: every member name and its numeric
+  constant value, so adding, removing, or renumbering a member is a visible
+  diff. Plain (`strict`) enums produce `ENUM Type.Member=value` lines;
+  `EvolvableEnum<TEnum>` members produce `EVOLVABLE-ENUM Type.Member=value`
+  lines for the wrapped `TEnum`.
 
 **Workflow:**
 
@@ -840,7 +899,11 @@ snapshot is the gate at every stage of the pipeline.
 CONTRACT GetGreetingQuery -> GreetingDto [group=Greetings] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/{id}] [version=1+] [grpc=GetGreeting] [grpc-version=1+]
 CONTRACT GetGreetingQuery.Id : Guid
 CONTRACT GreetingDto.Name : string?
+CONTRACT GreetingDto.Status : EvolvableEnum<GreetingStatus>
 CONTRACT GreetingDto.Tags[].Value : string
+EVOLVABLE-ENUM GreetingStatus.NOT_SET=0
+EVOLVABLE-ENUM GreetingStatus.Active=1
+EVOLVABLE-ENUM GreetingStatus.Archived=2
 REBUS RefreshGreetingCommand -> queue:greetings
 ```
 
