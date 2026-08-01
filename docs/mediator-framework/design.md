@@ -3,7 +3,7 @@
 ## Goals
 
 - Author business logic once as a **pure, transport-agnostic handler** and host
-  it over Minimal API, code-first gRPC and Rebus simultaneously.
+  it over Minimal API, Azure Functions HTTP, code-first gRPC and Rebus.
 - Replace runtime reflection (MVC model binding, dynamic mediator dispatch) with
   **compile-time source generation**.
 - Keep dependency resolution inside **SimpleInjector** (non-conforming,
@@ -28,13 +28,22 @@
              ^ resolved from SimpleInjector async scope
 +-----------------------------------------------------------+
 |  Generated transport adapters (source generator output)   |
-|  Minimal API endpoints | gRPC service impl | Rebus handler|
+|  Minimal API | Azure Functions HTTP | gRPC | Rebus       |
 +-----------------------------------------------------------+
              ^ thin runtime support (this framework)
 +-----------------------------------------------------------+
-|  Transports: Kestrel HTTP/1.1+2 | gRPC HTTP/2 | Rebus bus |
+|  Transports: Kestrel | Functions | gRPC HTTP/2 | Rebus    |
 +-----------------------------------------------------------+
 ```
+
+Azure Functions is a separate generated HTTP adapter rather than a reuse of the
+Minimal API output because isolated-worker ASP.NET Core integration does not expose
+the ASP.NET Core middleware or endpoint-routing pipeline. Its proposed package
+shape, invocation pipeline, parity definition, platform constraints and testing
+strategy are specified in
+[`azure-functions-design.md`](azure-functions-design.md). Implementation remains
+blocked on the reviewable
+[`Azure Functions decision log`](progress/azure-functions-decision-log.md).
 
 ## Contracts (C# as IDL)
 

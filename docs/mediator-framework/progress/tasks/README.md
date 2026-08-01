@@ -81,6 +81,41 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [NET-04](aspnetcore/NET-04-auth-metrics.md) | Auth/Identity metrics in the sample (N8) | aspnetcore |
 | [NET-05](aspnetcore/NET-05-sse-transport-spike.md) | SSE transport spike (N5) | aspnetcore |
 
+## Azure Functions hosting
+
+The design is in
+[`../../azure-functions-design.md`](../../azure-functions-design.md), with accepted
+decisions in the
+[`Azure Functions decision log`](../azure-functions-decision-log.md).
+
+Framework tests, including Core Tools end-to-end tests that prove generated
+Functions work, live under `tests/`. Projects under `samples/` showcase application
+capabilities and how an application can test its own composition; they do not test
+the framework libraries.
+
+| Task | Title | Depends on |
+|---|---|---|
+| [AZF-01](azure-functions/AZF-01-foundation.md) | Package and shared HTTP model foundation | AZD-01, AZD-02, AZD-09, AZD-10 |
+| [AZF-02](azure-functions/AZF-02-trigger-generator.md) | Trigger generation, routing and version expansion | AZF-01 |
+| [AZF-03](azure-functions/AZF-03-binding-dispatch.md) | JSON/route/query binding and scoped dispatch | AZF-02 |
+| [AZF-04](azure-functions/AZF-04-auth-user-context.md) | Authentication, authorization and user context | AZF-03, AZD-03, AZD-04 |
+| [AZF-05](azure-functions/AZF-05-results-problems-etags.md) | Results, ProblemDetails and ETags | AZF-04 |
+| [AZF-06](azure-functions/AZF-06-files-streaming.md) | Uploads, downloads and JSON streaming | AZF-05, AZD-06 |
+| [AZF-07](azure-functions/AZF-07-one-way-rebus.md) | Outbound-only Rebus composition | AZF-05, AZD-08 |
+| [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | AZF-06, AZF-07, AZD-10 |
+| [AZF-09](azure-functions/AZF-09-openapi.md) | OpenAPI (deferred by AZD-11) | — |
+| [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix and guide | AZF-08, AZD-10 |
+
+### Recommended Azure Functions execution order
+
+1. [x] Resolve AZD-01 through AZD-09 in the decision log.
+2. [x] Resolve AZD-10 and AZD-11.
+3. [ ] AZF-01 → AZF-02 → AZF-03.
+4. [ ] AZF-04 → AZF-05.
+5. [ ] AZF-06 and AZF-07 (independent after AZF-05).
+6. [ ] AZF-08.
+7. [ ] AZF-10. AZF-09 remains deferred until AZD-11 is reopened.
+
 Also see [`../future-improvements.md`](../future-improvements.md) (WebApplicationFactory auth substitution, AoT sample, N6, N9).
 
 ## Recommended execution order

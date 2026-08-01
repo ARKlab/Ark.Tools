@@ -774,3 +774,39 @@ sample opts in and commits its snapshot, which becomes the release baseline.
 [DOC-01](tasks/docs/DOC-01-user-documentation.md). `docs/mediator-framework/guide/`
 with a getting-started walkthrough and one page per feature, snippets cited from
 compiled sample code, all relative links verified.
+
+## Phase 11 — Azure Functions isolated-worker hosting
+
+The accepted decisions are recorded in
+[`azure-functions-decision-log.md`](azure-functions-decision-log.md). The
+architecture and parity definition are in
+[`../azure-functions-design.md`](../azure-functions-design.md). Authoritative
+implementation detail, tests, caveats, outcomes and acceptance live in the linked
+self-contained task documents.
+
+1. Apply accepted host-composition decision AZD-10 and OpenAPI exclusion decision
+   AZD-11 from the [decision log](azure-functions-decision-log.md).
+2. [AZF-01](tasks/azure-functions/AZF-01-foundation.md): packages, host opt-in and
+   shared HTTP semantic model.
+3. [AZF-02](tasks/azure-functions/AZF-02-trigger-generator.md): Function/HTTP-trigger
+   source, routes, versions and diagnostics.
+4. [AZF-03](tasks/azure-functions/AZF-03-binding-dispatch.md): JSON/route/query
+   binding, server-set protection, SimpleInjector scope and typed dispatch.
+5. [AZF-04](tasks/azure-functions/AZF-04-auth-user-context.md): application
+   authentication, anonymous handling, authorization decorators, principal flow and
+   sample NLog/Azure Functions logging.
+6. [AZF-05](tasks/azure-functions/AZF-05-results-problems-etags.md): statuses,
+   ProblemDetails, exception safety and conditional ETags.
+7. Run [AZF-06](tasks/azure-functions/AZF-06-files-streaming.md) and
+   [AZF-07](tasks/azure-functions/AZF-07-one-way-rebus.md) independently after
+   AZF-05: files/streaming and outbound-only messaging do not depend on each other.
+8. [AZF-08](tasks/azure-functions/AZF-08-sample-host.md): scaffold and compose the
+   sibling sample Function app over the existing Application package.
+9. [AZF-10](tasks/azure-functions/AZF-10-boundary-parity.md): Core Tools boundary
+   suite, endpoint parity matrix, `.github/workflows/ci.yml` gate and user
+   documentation. [AZF-09](tasks/azure-functions/AZF-09-openapi.md) remains deferred
+   until AZD-11 is reopened.
+
+Every implementation task ends with the full-solution build/test gate and updates
+locked dependency files when applicable. MessagePack content negotiation remains
+out of scope; the Functions generator rejects opted-in contracts with a diagnostic.
