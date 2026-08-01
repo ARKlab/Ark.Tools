@@ -21,6 +21,8 @@ public sealed class HttpHostAttribute : Attribute
     {
         ContractAssemblyMarker = contractAssemblyMarker ?? throw new ArgumentNullException(nameof(contractAssemblyMarker));
         VersionPrefix = versionPrefix ?? throw new ArgumentNullException(nameof(versionPrefix));
+        if (!VersionPrefix.Contains("{version}", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("The version prefix must contain the '{version}' token.", nameof(versionPrefix));
     }
 
     /// <summary>Gets the type that identifies the contract assembly.</summary>
