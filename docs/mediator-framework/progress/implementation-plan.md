@@ -784,24 +784,30 @@ architecture and parity definition are in
 implementation detail, tests, caveats, outcomes and acceptance live in the linked
 self-contained task documents.
 
-1. [AZF-01](tasks/azure-functions/AZF-01-foundation.md): packages, host opt-in and
+1. Resolve proposed host-composition decision AZD-10 and OpenAPI mechanism decision
+   AZD-11 in the
+   [decision log](azure-functions-decision-log.md).
+2. [AZF-01](tasks/azure-functions/AZF-01-foundation.md): packages, host opt-in and
    shared HTTP semantic model.
-2. [AZF-02](tasks/azure-functions/AZF-02-trigger-generator.md): Function/HTTP-trigger
+3. [AZF-02](tasks/azure-functions/AZF-02-trigger-generator.md): Function/HTTP-trigger
    source, routes, versions and diagnostics.
-3. [AZF-03](tasks/azure-functions/AZF-03-binding-dispatch.md): JSON/route/query
+4. [AZF-03](tasks/azure-functions/AZF-03-binding-dispatch.md): JSON/route/query
    binding, server-set protection, SimpleInjector scope and typed dispatch.
-4. [AZF-04](tasks/azure-functions/AZF-04-auth-user-context.md): application
-   authentication, anonymous handling, authorization decorators and principal flow.
-5. [AZF-05](tasks/azure-functions/AZF-05-results-problems-etags.md): statuses,
+5. [AZF-04](tasks/azure-functions/AZF-04-auth-user-context.md): application
+   authentication, anonymous handling, authorization decorators, principal flow and
+   sample NLog/Azure Functions logging.
+6. [AZF-05](tasks/azure-functions/AZF-05-results-problems-etags.md): statuses,
    ProblemDetails, exception safety and conditional ETags.
-6. Run [AZF-06](tasks/azure-functions/AZF-06-files-streaming.md) and
+7. Run [AZF-06](tasks/azure-functions/AZF-06-files-streaming.md) and
    [AZF-07](tasks/azure-functions/AZF-07-one-way-rebus.md) independently after
    AZF-05: files/streaming and outbound-only messaging do not depend on each other.
-7. [AZF-08](tasks/azure-functions/AZF-08-sample-host.md): scaffold and compose the
+8. [AZF-08](tasks/azure-functions/AZF-08-sample-host.md): scaffold and compose the
    sibling sample Function app over the existing Application package.
-8. [AZF-09](tasks/azure-functions/AZF-09-openapi.md): versioned OpenAPI.
-9. [AZF-10](tasks/azure-functions/AZF-10-boundary-parity.md): Core Tools boundary
-   suite, endpoint parity matrix, CI gate and user documentation.
+9. [AZF-09](tasks/azure-functions/AZF-09-openapi.md): versioned OpenAPI from
+   generated descriptors and host JSON metadata.
+10. [AZF-10](tasks/azure-functions/AZF-10-boundary-parity.md): Core Tools boundary
+    suite, endpoint parity matrix, `.github/workflows/ci.yml` gate and user
+    documentation.
 
 Every implementation task ends with the full-solution build/test gate and updates
 locked dependency files when applicable. MessagePack content negotiation remains

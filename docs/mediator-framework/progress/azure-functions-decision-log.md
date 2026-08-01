@@ -1,8 +1,10 @@
 # Azure Functions hosting — decision log
 
-Status: **decided**. All decisions below were accepted on 2026-07-31 and are
-reflected in [`../azure-functions-design.md`](../azure-functions-design.md) and
-the affected tasks.
+Status: **review required**. AZD-01 through AZD-09 were accepted on 2026-07-31.
+AZD-10 and AZD-11 were added after implementation-mechanism review and must be
+accepted before their blocked tasks begin. Accepted decisions are reflected in
+[`../azure-functions-design.md`](../azure-functions-design.md) and the affected
+tasks.
 
 ## How to review
 
@@ -31,7 +33,8 @@ the affected tasks.
 - **Decision:** require one shared assembly-level HTTP host marker with
   `VersionPrefix = "/api/v{version}"`. The Functions generator emits nothing
   without it. The Minimal API generator supports the same marker and prefix while
-  preserving its existing mapping API for backward compatibility.
+  preserving its existing mapping API for backward compatibility. AZD-10 refines
+  how the marker selects contract assemblies and contracts.
 - **Alternative:** expose MSBuild analyzer properties, or generate automatically
   from every runtime package reference.
 - **Why this needs review:** Functions routes live in attributes and cannot receive
@@ -125,15 +128,70 @@ the affected tasks.
 ### AZD-09 — Scope of “same endpoints”
 
 - **Status:** DECIDED
-- **Decision:** generate every sample `[HttpEndpoint]` except contracts with
-  `AcceptsMessagePack = true`, which produce a compile-time error diagnostic in an
-  Azure Functions host. gRPC-only, Rebus-only, controllers and handwritten escape
-  hatches are not Function endpoints.
+- **Decision:** generate every host-selected sample `[HttpEndpoint]`. A selected
+  contract with `AcceptsMessagePack = true` produces a compile-time error diagnostic
+  in an Azure Functions host; a contract explicitly excluded by the host selection
+  does not. gRPC-only, Rebus-only, controllers and handwritten escape hatches are
+  not Function endpoints.
 - **Alternative:** select a representative subset for the first sample.
 - **Why this needs review:** endpoint-by-endpoint parity is achievable only if
   streaming and OpenAPI decisions pass. A subset demonstrates capabilities but
   does not satisfy literal same-surface parity.
 - **Blocked tasks:** AZF-03 through AZF-09.
+
+### AZD-10 — Host contract selection and composition
+
+- **Status:** PROPOSED — review required
+- **Recommendation:** allow one or more shared assembly-level HTTP host markers in
+  each host assembly. Each marker selects a contract assembly through a marker
+  `Type`, uses the host-wide `VersionPrefix`, and may provide exact
+  `IncludedContracts` or `ExcludedContracts`; the two lists are mutually exclusive.
+  Empty inclusion/exclusion lists select every `[HttpEndpoint]` in that contract
+  assembly, preserving assembly-wide API surfaces. Multiple markers compose
+  contracts from multiple assemblies; all markers in one host must agree on the
+  version prefix. The Minimal API and Functions generators consume the same
+  selection model, while the existing Minimal API mapping API remains backward
+  compatible.
+- **Diagnostic rule:** validate unknown, duplicate, cross-assembly and conflicting
+  selections. Report unsupported-transport diagnostics, including MessagePack, only
+  for contracts selected into the current host. This permits a Minimal API host to
+  expose a MessagePack-enabled contract while a sibling Functions host explicitly
+  excludes it.
+- **Alternative A:** keep assembly-only selection. This forces a separate contract
+  assembly whenever two hosts need different surfaces.
+- **Alternative B:** put transport-specific exposure attributes on Application
+  contracts. This couples contracts to hosts and is rejected.
+- **Why this needs review:** assembly-only discovery is simple and valid for one API
+  surface, but it cannot compose multiple contract assemblies or exclude one
+  unsupported contract for a sibling host.
+- **Blocked tasks:** AZF-01, AZF-02, AZF-08, AZF-09, AZF-10.
+
+### AZD-11 — Function App OpenAPI production mechanism
+
+- **Status:** PROPOSED — review required
+- **Recommendation:** do not use
+  `Microsoft.Azure.Functions.Worker.Extensions.OpenApi`. The Functions generator
+  emits immutable host-selected operation/type descriptors from the shared HTTP
+  semantic model. The Functions runtime package builds and caches one
+  OpenAPI 3.1 `Microsoft.OpenApi` document per API version from those descriptors
+  and the host's configured `JsonSerializerOptions`/`JsonTypeInfo`; generated
+  anonymous HTTP triggers serve `/openapi/v{version}.json` and optionally YAML.
+  Schema generation is host-neutral framework code shared with Ark OpenAPI
+  conventions, not a reflection scan for endpoint contracts.
+- **Rationale:** the official Azure Functions OpenAPI extension is in maintenance
+  mode, supports OpenAPI only through 3.0.1, and expects OpenAPI attributes on
+  Function methods. That would duplicate generator-owned contract metadata and
+  diverge from the current Minimal API OpenAPI surface. `Microsoft.AspNetCore.OpenApi`
+  cannot be used directly because Functions does not build an ASP.NET Core endpoint
+  metadata graph; the already centrally pinned `Microsoft.OpenApi` object model and
+  writers do not have that dependency.
+- **Alternative A:** generate extension attributes on every Function and use the
+  maintenance-mode extension.
+- **Alternative B:** generate static JSON at compilation time. This cannot reliably
+  honor host-configured JSON metadata, converters and polymorphism.
+- **Alternative C:** omit OpenAPI from the first release, contradicting accepted
+  AZD-05.
+- **Blocked tasks:** AZF-01, AZF-09, AZF-10.
 
 ## Confirmed constraints from the request
 

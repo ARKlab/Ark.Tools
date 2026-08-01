@@ -11,7 +11,7 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 ## Prerequisites
 
 - AZF-01 through AZF-09 merged.
-- AZD-06, AZD-07 and AZD-09 decided.
+- AZD-06, AZD-07, AZD-09, AZD-10 and AZD-11 decided.
 - Verify the pinned Azure Functions Core Tools version against Microsoft local
   development guidance.
 
@@ -37,9 +37,11 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 7. Commit a parity matrix listing every sample `[HttpEndpoint]`, its active
    versions, capabilities and exact test method(s) proving Minimal API and
    Functions behavior.
-8. Add/pin Core Tools in CI according to AZD-07. Run the complete boundary suite on
-   every pull request. The job fails when tools are unavailable; it does not mark
-   tests passed through an internal skip.
+8. Update `.github/workflows/ci.yml` to install an exact Core Tools version and run
+   the complete boundary suite in a dedicated job or explicit step on every pull
+   request. Cache only the pinned tool installation, archive sanitized Function host
+   logs on failure, and fail when the tool or host is unavailable; do not mark tests
+   passed through an internal skip.
 9. Add an Azure Functions guide covering package installation, host marker,
    startup, JSON configuration, auth profiles, one-way Rebus, local execution,
    tests, platform caveats and explicit MessagePack exclusion.
@@ -66,6 +68,8 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
   approved.
 - Boundary tests prove generated routes are discovered from Function metadata.
 - CI test verifies zero silent skips and archives sanitized host logs on failure.
+- Workflow review proves `.github/workflows/ci.yml` invokes the boundary project on
+  pull requests rather than relying on its presence in the solution.
 
 ## Outcomes
 
@@ -74,9 +78,11 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 
 ## Acceptance
 
-- [ ] AZD-06, AZD-07 and AZD-09 are recorded as decided.
+- [ ] AZD-06, AZD-07, AZD-09, AZD-10 and AZD-11 are recorded as decided.
 - [ ] The complete Core Tools suite runs on every pull request and fails loudly when
   the host cannot start.
+- [ ] `.github/workflows/ci.yml` pins Core Tools, invokes the boundary suite and
+  uploads sanitized host logs on failure.
 - [ ] Every supported sample endpoint has a parity-matrix row and runnable tests.
 - [ ] Auth, errors, files, ETags, streaming decision and Rebus send are boundary-tested.
 - [ ] Documentation states all platform limitations and MessagePack exclusion.

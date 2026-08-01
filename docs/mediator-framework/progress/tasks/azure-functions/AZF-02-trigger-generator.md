@@ -12,7 +12,7 @@ source.
 ## Prerequisites
 
 - AZF-01 merged.
-- AZD-02, AZD-03 and AZD-09 decided.
+- AZD-02, AZD-03, AZD-09 and AZD-10 decided.
 - Use the exact Worker attribute APIs selected by AZF-01; do not infer signatures
   from memory.
 
@@ -34,8 +34,10 @@ source.
    source must not use reflection-based mediator dispatch.
 8. Report diagnostics at the source contract/host marker for invalid verbs,
    templates, versions, duplicate routes, duplicate Function names and unsupported
-   handler kinds. Report a compile-time error for `AcceptsMessagePack = true`.
-   Invalid endpoints emit no partial source.
+   handler kinds. Report a compile-time error for `AcceptsMessagePack = true` only
+   when that contract is selected into the current Functions host. Invalid selected
+   endpoints emit no partial source; excluded contracts emit neither source nor
+   unsupported-transport diagnostics.
 9. Add the generated external route to API-surface snapshot output using a stable
    `FUNCTION` line that includes Function name, verb, route and version.
 
@@ -59,8 +61,9 @@ source.
 - Stable source snapshot proves attributes, method signature, async/await and typed
   dispatch call.
 - Duplicate expanded route and sanitized Function-name collision diagnostics.
-- `AcceptsMessagePack = true` produces a stable error diagnostic and no generated
-  Function.
+- A selected `AcceptsMessagePack = true` contract produces a stable error diagnostic
+  and no generated Function; an explicitly excluded one produces no Functions
+  diagnostic.
 - API-surface snapshot changes are explicit and reviewed.
 
 ## Outcomes
@@ -74,7 +77,8 @@ source.
 - [ ] Every sample `[HttpEndpoint]` has an expected generated Function route in a test fixture.
 - [ ] Function names and routes are deterministic across repeated generator runs.
 - [ ] Unsupported/duplicate contracts fail at compile time with stable diagnostics.
-- [ ] MessagePack-enabled contracts fail at compile time with a stable diagnostic.
+- [ ] Selected MessagePack-enabled contracts fail at compile time; excluded
+  MessagePack contracts do not block the host.
 - [ ] No Minimal API runtime type appears in generated Function source.
 - [ ] API-surface snapshots record Function endpoints.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.

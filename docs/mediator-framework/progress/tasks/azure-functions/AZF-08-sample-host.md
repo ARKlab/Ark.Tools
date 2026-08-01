@@ -11,7 +11,7 @@ transport logic leaking into handlers.
 ## Prerequisites
 
 - AZF-01 through AZF-07 merged.
-- AZD-01, AZD-03, AZD-04, AZD-06, AZD-08 and AZD-09 decided.
+- AZD-01, AZD-03, AZD-04, AZD-06, AZD-08, AZD-09 and AZD-10 decided.
 - Use the Azure Functions project scaffolding tool/template approved for the pinned
   SDK, then reduce generated boilerplate. Do not hand-author an approximate
   Functions project.
@@ -23,8 +23,9 @@ transport logic leaking into handlers.
    setup.
 2. Reference the same Application package and the new Functions transport package.
    Do not reference `WebInterface` or duplicate contracts/handlers.
-3. Add the assembly host marker and configure the same external
-   `/api/v{version}` surface.
+3. Add the assembly host marker, select the Application contract assembly, exclude
+   its MessagePack-enabled contract, and configure the same external
+   `/api/v{version}` surface for every selected contract.
 4. Configure `FunctionsApplication.CreateBuilder(args)` and
    `ConfigureFunctionsWebApplication()`, Ark JSON options, authentication,
    authorization services, shared ProblemDetails helpers, SimpleInjector and
@@ -46,7 +47,8 @@ transport logic leaking into handlers.
     ETag concurrency, paging, polymorphic JSON, single/multi upload, download,
     approved streaming behavior and an HTTP-to-Rebus send.
 11. Update the sample README with local Core Tools startup, required configuration,
-    route examples, auth profile and the separate Rebus consumer requirement.
+    route examples, auth profile, NLog/Azure logging configuration and the separate
+    Rebus consumer requirement.
 
 ## Caveats
 
@@ -70,6 +72,8 @@ transport logic leaking into handlers.
   sample host lacks a supported generated route.
 - No generated Rebus receive handler is registered in the Function container.
 - Configuration contains no secrets and missing required values fail clearly.
+- Local Core Tools output contains structured NLog application events and the Azure
+  logging configuration does not duplicate them.
 
 ## Outcomes
 

@@ -1,6 +1,6 @@
 # Azure Functions isolated-worker hosting specification
 
-Status: **approved for implementation** — decisions are recorded in
+Status: **review required for AZD-10 and AZD-11** — decisions are recorded in
 [`progress/azure-functions-decision-log.md`](progress/azure-functions-decision-log.md).
 
 ## Goal and scope
@@ -83,22 +83,28 @@ surface required by generated code. It does not reference the Minimal API runtim
 sharing behavior by calling Minimal API results or route builders would couple the
 new host to APIs that Azure Functions does not execute.
 
-The Function host opts in once with shared assembly-level HTTP host metadata. The
-marker carries the version prefix because trigger attributes must contain
-compile-time constants. The Minimal API generator supports the same marker and
-prefix while its existing mapping API remains available for backward compatibility.
-No Azure Functions attribute is added to the Application assembly.
+The Function host opts in with one or more shared assembly-level HTTP host markers.
+Each marker selects a contract assembly through a marker type and may include or
+exclude exact contracts. Empty include/exclude lists preserve assembly-wide
+discovery; multiple markers compose one host surface from multiple contract
+assemblies. All markers in a host carry the same version prefix because trigger
+attributes require compile-time constants. The Minimal API generator supports the
+same selection model and prefix while its existing mapping API remains available
+for backward compatibility. No Azure Functions attribute is added to the
+Application assembly.
 
 ## Generation model
 
 The generator reuses the existing HTTP contract semantics but owns its emission:
 
-1. Find the host opt-in marker and all reachable `[HttpEndpoint]` contracts.
+1. Find the host opt-in markers and resolve their selected contract assemblies,
+   inclusions and exclusions. Diagnose invalid or conflicting selections.
 2. Validate the same handler kinds, verbs, route placeholders, version lifetimes,
    attachment shapes, ETag shapes and duplicate operation constraints as the
    Minimal API generator.
-   Report a compile-time error and emit no Function for a contract with
-   `AcceptsMessagePack = true`.
+   Report a compile-time error and emit no Function for a selected contract with
+   `AcceptsMessagePack = true`. An unselected contract produces no Functions
+   diagnostic.
 3. Apply the host's version prefix to templates that do not already contain a
    `{version}` segment, preserving authoritative explicit templates.
 4. Expand `Introduced`/exclusive `Retired` lifetimes into concrete trigger routes.
@@ -193,11 +199,37 @@ identity header without the documented trusted deployment precondition.
 | Upload | Single/multiple multipart files with the existing hardening rules |
 | Download | Stream, sanitized filename and content type; null is 404 |
 | JSON stream | Incremental JSON array and cancellation if the Functions ASP.NET Core response path proves it does not buffer |
-| MessagePack | Not supported; `AcceptsMessagePack = true` is a compile-time error |
+| MessagePack | Not supported; a selected `AcceptsMessagePack = true` contract is a compile-time error |
 
 Streaming parity is evidence-based: the implementation task must first prove
 first-item flush and cancellation through Core Tools. If the platform buffers the
 response, that task stops and records the limitation rather than claiming parity.
+
+## OpenAPI production
+
+The Functions host does not use `Microsoft.AspNetCore.OpenApi`: no ASP.NET Core
+endpoint metadata graph exists for it to inspect. It also does not use
+`Microsoft.Azure.Functions.Worker.Extensions.OpenApi`; that extension is in
+maintenance mode, supports OpenAPI only through 3.0.1, and requires duplicated
+OpenAPI attributes on Function methods.
+
+Reference:
+[Azure Functions OpenAPI extension maintenance notice and supported versions](https://github.com/Azure/azure-functions-openapi-extension#azure-functions-openapi-extension).
+
+Instead, the Functions generator emits immutable operation and type descriptors
+from the same host-selected HTTP semantic model used for trigger generation. The
+runtime package combines those descriptors with the host's configured
+`JsonSerializerOptions`/`JsonTypeInfo`, applies host-neutral Ark schema conventions,
+and builds cached OpenAPI 3.1 `Microsoft.OpenApi` documents. Generated anonymous
+Functions serve one document per active version at `/openapi/v{version}.json`; YAML
+may be enabled without adding a UI dependency. This is not a runtime
+endpoint-contract scan: the generator supplies the complete operation inventory and
+CLR type handles.
+
+The document provider must cover operation names, tags, XML documentation,
+route/query/body/multipart schemas, ProblemDetails responses, bearer security,
+server-set omission, ETag headers, files and approved streaming. Functions and
+Minimal API normalized document snapshots are the parity gate.
 
 ## Rebus in a Function host
 
@@ -240,7 +272,10 @@ Testing has three layers:
 
 Core Tools availability must be explicit in CI. The complete Functions boundary
 suite runs on every pull request and fails if Core Tools or the host is unavailable;
-the test assembly must not silently pass when the host was never started.
+the test assembly must not silently pass when the host was never started. The
+implementation updates `.github/workflows/ci.yml` with a pinned Core Tools install
+and a dedicated boundary-test job or step; adding tests without wiring that workflow
+is incomplete.
 
 ## Definition of feature parity
 

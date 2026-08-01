@@ -10,7 +10,7 @@ Copying semantic analysis would create two definitions of binding and versioning
 
 ## Prerequisites
 
-- Resolve AZD-01, AZD-02 and AZD-09 in the
+- Resolve AZD-01, AZD-02, AZD-09, AZD-10 and AZD-11 in the
   [decision log](../../azure-functions-decision-log.md).
 - Read `MinimalApiEndpointGenerator.cs`, `HttpEndpointAttribute.cs`,
   `GeneratorSnapshotTests.cs` and
@@ -25,10 +25,12 @@ Copying semantic analysis would create two definitions of binding and versioning
 2. Match the existing runtime/analyzer package layout: generator targets
    `netstandard2.0`, runtime targets the approved TFM, and package consumption
    applies the analyzer transitively.
-3. Add the approved shared assembly-level HTTP host opt-in/configuration API to the
-   runtime package with complete XML documentation and validation. Make the Minimal
-   API generator honor the same marker and version prefix while preserving its
-   existing mapping API.
+3. Add the approved repeatable assembly-level HTTP host opt-in/configuration API to
+   the runtime package with complete XML documentation and validation. Each marker
+   selects a contract assembly by marker type and supports exact include/exclude
+   lists; multiple markers compose one host surface and must agree on the version
+   prefix. Make the Minimal API generator honor the same selection model while
+   preserving its existing mapping API.
 4. Extract or introduce one internal immutable HTTP endpoint semantic model
    consumed by Minimal API and Functions analysis. It must represent handler kind,
    request/response symbols, verb, original template, effective version prefix,
@@ -44,6 +46,8 @@ Copying semantic analysis would create two definitions of binding and versioning
 8. Add generator tests proving the shared model gives the same analysis result for
    explicit-version and mapping-prefix routes, GET query binding, POST mixed
    binding, attachments, server-set and ETag properties.
+9. Define the immutable OpenAPI operation/type descriptor model required by AZD-11
+   in the shared analysis layer; do not add a second contract scanner.
 
 ## Caveats
 
@@ -64,6 +68,8 @@ Copying semantic analysis would create two definitions of binding and versioning
   existing mapping API remains backward compatible.
 - Shared-model tests cover every metadata field listed above.
 - Missing/duplicate host marker and invalid prefix produce stable diagnostics.
+- Multiple contract assemblies compose deterministically; exact inclusions and
+  exclusions are validated, and conflicting prefixes fail compilation.
 - A compilation without the host marker emits no Functions source and no noise.
 - Package-content test proves the Functions generator is under
   `analyzers/dotnet/cs`.
@@ -77,10 +83,12 @@ Copying semantic analysis would create two definitions of binding and versioning
 
 ## Acceptance
 
-- [ ] AZD-01, AZD-02 and AZD-09 are recorded as decided.
+- [ ] AZD-01, AZD-02, AZD-09, AZD-10 and AZD-11 are recorded as decided.
 - [ ] New public APIs have XML docs and API-surface baselines.
 - [ ] Existing Minimal API snapshots and behavior remain unchanged.
 - [ ] Both HTTP generators support the shared assembly marker and version prefix.
+- [ ] Host selection composes assemblies and supports validated exact
+  inclusion/exclusion.
 - [ ] Generator absence/marker diagnostics are deterministic and tested.
 - [ ] NuGet package contains its analyzer and no unintended implementation assets.
 - [ ] Changed package versions have advisory review and regenerated lock files.

@@ -40,6 +40,12 @@ principal used by transport-agnostic authorization decorators.
    `CultureInfo.InvariantCulture`.
 8. Document the difference between trigger authorization level, application bearer
    authentication, Easy Auth and API Management.
+9. In the sample, configure `Ark.Tools.NLog` through the isolated worker builder so
+   structured application logs reach the Functions console/Core Tools and the
+   configured Azure sink without interpolation or duplicate providers. Read
+   Application Insights settings from Functions configuration, never source, and
+   preserve useful worker log levels according to Microsoft's isolated-worker
+   logging guidance.
 
 ## Caveats
 
@@ -62,6 +68,8 @@ principal used by transport-agnostic authorization decorators.
 - No handler/decorator side effect occurs after authentication failure.
 - Profile-specific tests prove untrusted Easy Auth headers are not accepted.
 - Logs contain no token or secret material.
+- Core Tools captures a structured sample log with its named properties; configured
+  Azure logging has no duplicate application event.
 
 ## Outcomes
 
@@ -76,5 +84,7 @@ principal used by transport-agnostic authorization decorators.
 - [ ] `AllowAnonymous` has explicit tested behavior.
 - [ ] User identity flows into handlers and auditing.
 - [ ] Identity inputs and logs pass security review.
+- [ ] The sample demonstrates documented NLog configuration appropriate for local
+  Core Tools and Azure Functions hosting.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
