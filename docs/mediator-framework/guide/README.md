@@ -32,7 +32,7 @@ and states the observable request, response, or generated output to expect.
 | Capability | What you write | What the framework generates or enforces | Read | Sample source to inspect |
 | --- | --- | --- | --- | --- |
 | Versioning | `[Versioning(Introduced, Retired)]` | Versioned HTTP routes, OpenAPI documents, gRPC services, API-surface lifetime entries | [Versioning](versioning.md) | `src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs` |
-| HTTP binding | `[HttpEndpoint]`, `[BindFromQuery]`, `[ServerSet]` | Minimal API route/query/body binding, status codes, multipart handling | [HTTP endpoints](http-endpoints.md) | `src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs`, `AttachmentContracts.cs` |
+| HTTP binding | `[HttpEndpoint]`, `[HttpQuery]`, `[ServerSet]` | Minimal API route/query/body binding, status codes, multipart handling | [HTTP endpoints](http-endpoints.md) | `src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs`, `AttachmentContracts.cs` |
 | gRPC | `[GrpcMethod]`, `[GrpcService]`, `[ProtoContract]` | Code-first services, `.proto` export, rich error mapping | [gRPC](grpc.md) | `src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs`, `test/Ark.MediatorFramework.Sample.GrpcClient` |
 | Rebus | `[RebusMessage]` | Rebus handlers, type-based routing helpers, scoped message execution | [Rebus](rebus.md) | `src/Ark.MediatorFramework.Sample.WebInterface/SampleComposition.cs` |
 | Validation and authorization | Validators, `PolicyAuthorizeAttribute`, host auth | Decorator-enforced validation and transport-agnostic authorization | [Validation and authorization](validation-and-authorization.md) | `src/Ark.MediatorFramework.Sample.Application/GreetingAuthorizationPolicy.cs` |

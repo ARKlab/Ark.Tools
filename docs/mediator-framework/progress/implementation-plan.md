@@ -493,11 +493,11 @@ envelope before dispatch. The sample and generator tests cover the combined
 route/query/body case.
 
 1. `src/mediator-framework/Ark.Tools.MediatorFramework/`: add
-   `BindFromQueryAttribute` (property-level, transport-metadata only, XML
+   `HttpQueryAttribute` (property-level, transport-metadata only, XML
    docs) next to the existing transport attributes.
 2. `MinimalApiEndpointGenerator`: per contract compute the binding plan —
    route properties = case-insensitive match with template placeholders
-   (excluding `{version}`); query properties = `[BindFromQuery]` (body verbs)
+   (excluding `{version}`); query properties = `[HttpQuery]` (body verbs)
    or all remaining (GET/DELETE); body = the envelope itself for body verbs.
    Emit a lambda taking `[FromRoute]`/`[FromQuery]` parameters plus (for body
    verbs) the deserialized envelope, then rebuild the envelope with an object
@@ -505,7 +505,7 @@ route/query/body case.
    dispatch. GET/DELETE keep `[AsParameters]` only when no explicit plan is
    needed.
 3. Sample: extend one contract (e.g. `UpdateGreetingRequest`) to combine a
-   `{id}` route member, a `[BindFromQuery]` member and body members; add
+   `{id}` route member, a `[HttpQuery]` member and body members; add
    generator snapshot coverage in `tests/Ark.Tools.MediatorFramework.Tests`
    and a behavioral test asserting all three sources arrive in the handler.
 4. **Full solution build** + tests.

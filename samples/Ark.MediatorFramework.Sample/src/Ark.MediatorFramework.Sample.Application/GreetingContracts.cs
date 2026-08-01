@@ -60,6 +60,7 @@ public sealed record GreetingResponse
 public sealed record UpdateGreetingMessageRequest : IRequest<GreetingResponse>
 {
     /// <summary>Gets the greeting identifier.</summary>
+    [HttpRoute("id")]
     [ProtoMember(1)]
     public Guid Id { get; init; }
 
@@ -219,22 +220,22 @@ public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>
 public sealed record SearchGreetingsQuery : IQuery<GreetingPage>, IQueryPaged
 {
     /// <summary>Gets the optional message filter.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     [ProtoMember(1)]
     public string? MessageContains { get; init; }
 
     /// <inheritdoc />
-    [BindFromQuery]
+    [HttpQuery]
     [ProtoMember(2)]
     public int Skip { get; set; }
 
     /// <inheritdoc />
-    [BindFromQuery]
+    [HttpQuery]
     [ProtoMember(3)]
     public int Limit { get; init; } = 25;
 
     /// <inheritdoc />
-    [BindFromQuery]
+    [HttpQuery]
     [ProtoMember(4)]
     public IEnumerable<string> Sort { get; init; } = [];
 }
@@ -261,12 +262,12 @@ public sealed record GreetingStreamItem
 public sealed record GetGreetingsStreamQuery : IQuery<IAsyncEnumerable<GreetingStreamItem>>
 {
     /// <summary>Gets the number of items to yield.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     [ProtoMember(1)]
     public int Count { get; init; }
 
     /// <summary>Gets the delay between yielded items in milliseconds.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     [ProtoMember(2)]
     public int DelayMilliseconds { get; init; }
 }
@@ -313,7 +314,7 @@ public sealed record UpdateGreetingRequest : IRequest<EnvelopeBindingResponse>
     public Guid Id { get; init; }
 
     /// <summary>Gets the query value.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     public string Audit { get; init; } = string.Empty;
 
     /// <summary>Gets the body value.</summary>

@@ -38,13 +38,14 @@ contracts.
 
 ## Binding workflow
 
-Route placeholders bind to properties with the same name. Mark values that must
-come from the query string with `[BindFromQuery]`; remaining client values bind
-from the request body. Mark server-owned values with `[ServerSet]`.
+Route placeholders bind to properties with the same name. Use `[HttpRoute]` to
+make route binding explicit or to override the placeholder name. Mark values
+that must come from the query string with `[HttpQuery]`; remaining client
+values bind from the request body. Mark server-owned values with `[ServerSet]`.
 
 ### Binding rules by endpoint shape
 
-| Endpoint shape | Route-matching properties | `[BindFromQuery]` properties | Remaining properties |
+| Endpoint shape | Route-matching properties | `[HttpQuery]` properties | Remaining properties |
 | --- | --- | --- | --- |
 | `GET` / `DELETE` with no body | Route values | Query string | Query string |
 | `POST` / `PUT` / `PATCH` with a body | Route values override body | Query string overrides body | JSON or MessagePack body |
@@ -58,7 +59,7 @@ public sealed record UpdateGreetingRequest : IRequest<GreetingResponse>
 {
     public Guid Id { get; init; }
 
-    [BindFromQuery]
+    [HttpQuery]
     public bool Notify { get; init; }
 
     public required string Message { get; init; }

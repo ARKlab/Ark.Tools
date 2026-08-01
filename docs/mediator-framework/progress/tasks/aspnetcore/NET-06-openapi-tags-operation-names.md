@@ -28,7 +28,7 @@ See `docs/mediator-framework/design.md` → *OpenAPI operation grouping, naming 
   document.
 - Override: new `[ApiGroup("Greetings")]` attribute (class-level, `AttributeTargets.Class`), placed in
   the transport-neutral core package `Ark.Tools.MediatorFramework` so Application assemblies do not
-  reference ASP.NET Core (same rule as `[BindFromQuery]`/`[ServerSet]`).
+  reference ASP.NET Core (same rule as `[HttpQuery]`/`[ServerSet]`).
 - The gRPC generator uses the same `[ApiGroup]` value as the service-group fallback when
   `[GrpcService]` is absent, so both transports group identically. An explicit `[GrpcService]`
   still wins for gRPC.

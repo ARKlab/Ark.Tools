@@ -66,34 +66,34 @@ public sealed record AuditRecord
 public sealed record GetAuditsQuery : IQuery<PagedResult<AuditRecord>>, IQueryPaged
 {
     /// <summary>Gets the user identifier filter.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     public string? UserId { get; init; }
 
     /// <summary>Gets the entity type filter.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     public string? EntityType { get; init; }
 
     /// <summary>Gets the entity identifier filter.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     public string? Identifier { get; init; }
 
     /// <summary>Gets the inclusive lower timestamp filter.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     public Instant? FromTimestamp { get; init; }
 
     /// <summary>Gets the inclusive upper timestamp filter.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     public Instant? ToTimestamp { get; init; }
 
     /// <inheritdoc />
-    [BindFromQuery]
+    [HttpQuery]
     public int Skip { get; set; }
 
     /// <inheritdoc />
-    [BindFromQuery]
+    [HttpQuery]
     public int Limit { get; init; } = 25;
 
     /// <inheritdoc />
-    [BindFromQuery]
+    [HttpQuery]
     public IEnumerable<string> Sort { get; init; } = [];
 }

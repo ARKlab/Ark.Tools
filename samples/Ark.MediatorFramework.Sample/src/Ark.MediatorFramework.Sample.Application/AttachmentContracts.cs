@@ -38,7 +38,7 @@ public sealed record UploadGreetingCardRequest : IRequest<UploadResponse>
     public Guid Id { get; init; }
 
     /// <summary>Gets the upload label supplied in the query string.</summary>
-    [BindFromQuery]
+    [HttpQuery]
     public string Label { get; init; } = string.Empty;
 
     /// <summary>Gets the uploaded attachment.</summary>

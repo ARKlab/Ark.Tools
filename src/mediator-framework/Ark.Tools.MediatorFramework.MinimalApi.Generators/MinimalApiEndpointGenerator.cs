@@ -26,7 +26,8 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
-        private const string BindFromQueryAttribute = "Ark.MediatorFramework.BindFromQueryAttribute";
+        private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
+        private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string ETagAttribute = "Ark.MediatorFramework.ETagAttribute";
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
@@ -141,7 +142,8 @@ namespace Ark.MediatorFramework.Generators
             return Extract(
                 type,
                 http,
-                compilation.GetTypeByMetadataName(BindFromQueryAttribute),
+                compilation.GetTypeByMetadataName(HttpQueryAttribute),
+                compilation.GetTypeByMetadataName(HttpRouteAttribute),
                 compilation.GetTypeByMetadataName(ServerSetAttribute),
                 compilation.GetTypeByMetadataName(ETagAttribute),
                 compilation.GetTypeByMetadataName(ArkAttachment),
@@ -187,7 +189,8 @@ namespace Ark.MediatorFramework.Generators
                 return ImmutableArray<EndpointModel>.Empty;
 
             var runtimeAssembly = httpAttr.ContainingAssembly;
-            var bindFromQueryAttr = compilation.GetTypeByMetadataName(BindFromQueryAttribute);
+            var httpQueryAttr = compilation.GetTypeByMetadataName(HttpQueryAttribute);
+            var httpRouteAttr = compilation.GetTypeByMetadataName(HttpRouteAttribute);
             var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
             var etagAttr = compilation.GetTypeByMetadataName(ETagAttribute);
             var rebusMessageAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
@@ -213,7 +216,8 @@ namespace Ark.MediatorFramework.Generators
                     var model = Extract(
                         type,
                         http,
-                        bindFromQueryAttr,
+                        httpQueryAttr,
+                        httpRouteAttr,
                         serverSetAttr,
                         etagAttr,
                         attachmentType,
@@ -265,7 +269,8 @@ namespace Ark.MediatorFramework.Generators
         private static EndpointModel? Extract(
             INamedTypeSymbol type,
             AttributeData http,
-            INamedTypeSymbol? bindFromQueryAttr,
+            INamedTypeSymbol? httpQueryAttr,
+            INamedTypeSymbol? httpRouteAttr,
             INamedTypeSymbol? serverSetAttr,
             INamedTypeSymbol? etagAttr,
             INamedTypeSymbol? attachmentType,
@@ -367,26 +372,36 @@ namespace Ark.MediatorFramework.Generators
                 , StringComparer.OrdinalIgnoreCase);
             var properties = AllProperties(type)
                 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
-                .Select(property => new PropertyModel(
-                    property.Name,
-                    property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                    XmlDocumentation.Summary(property),
-                    property.Type.SpecialType == SpecialType.System_String,
-                    routeNames.Contains(property.Name),
-                    routeNames.FirstOrDefault(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase)) ?? property.Name,
-                    bindFromQueryAttr is not null && property.GetAttributes().Any(attribute =>
-                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, bindFromQueryAttr)),
-                    serverSetAttr is not null && property.GetAttributes().Any(attribute =>
-                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
-                    etagAttr is not null && property.GetAttributes().Any(attribute =>
-                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, etagAttr)),
-                    property.NullableAnnotation == NullableAnnotation.Annotated
-                        || property.Type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
-                    property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
-                    IsStringCollection(property.Type, enumerableType),
-                    !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type),
-                    IsAttachmentCollection(property.Type, attachmentType, enumerableType, listType, readOnlyListType, readOnlyCollectionType),
-                    IsAttachmentArray(property.Type, attachmentType)))
+                .Select(property =>
+                {
+                    var routeAttribute = httpRouteAttr is null
+                        ? null
+                        : property.GetAttributes().FirstOrDefault(attribute =>
+                            SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, httpRouteAttr));
+                    var routeName = routeAttribute?.ConstructorArguments.FirstOrDefault().Value as string;
+                    var isRoute = routeAttribute is not null || routeNames.Contains(property.Name);
+                    return new PropertyModel(
+                        property.Name,
+                        property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        XmlDocumentation.Summary(property),
+                        property.Type.SpecialType == SpecialType.System_String,
+                        isRoute,
+                        routeName
+                            ?? routeNames.FirstOrDefault(name => string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase))
+                            ?? property.Name,
+                        HasAttribute(property, httpQueryAttr),
+                        serverSetAttr is not null && property.GetAttributes().Any(attribute =>
+                            SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, serverSetAttr)),
+                        etagAttr is not null && property.GetAttributes().Any(attribute =>
+                            SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, etagAttr)),
+                        property.NullableAnnotation == NullableAnnotation.Annotated
+                            || property.Type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
+                        property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
+                        IsStringCollection(property.Type, enumerableType),
+                        !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type),
+                        IsAttachmentCollection(property.Type, attachmentType, enumerableType, listType, readOnlyListType, readOnlyCollectionType),
+                        IsAttachmentArray(property.Type, attachmentType));
+                })
                 .ToImmutableArray();
             var etagProperties = properties.Where(property => property.IsETag).ToArray();
             var responseETagProperties = responseType is INamedTypeSymbol namedResponse && etagAttr is not null
@@ -465,6 +480,12 @@ namespace Ark.MediatorFramework.Generators
                 type.Locations.FirstOrDefault(),
                 diagnostics);
         }
+
+        private static bool HasAttribute(
+            IPropertySymbol property,
+            INamedTypeSymbol? attributeType)
+            => property.GetAttributes().Any(attribute =>
+                attributeType is not null && SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, attributeType));
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
         {
