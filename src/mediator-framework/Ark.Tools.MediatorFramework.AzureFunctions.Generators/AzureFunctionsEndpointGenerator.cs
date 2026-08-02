@@ -226,21 +226,35 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         // Route value binding (per-property, no runtime reflection)
         foreach (var prop in routeProperties)
         {
-            var varName = "_route_" + prop.Name;
-            source.Append("        if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvert<").Append(prop.TypeFullName).Append(">(request.RouteValues[").Append(Literal(prop.BindingName)).Append("]?.ToString(), out var ").Append(varName).AppendLine("))");
-            source.Append("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Route value '").Append(prop.BindingName).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
-            source.Append("        body.").Append(prop.Name).Append(" = ").Append(varName).AppendLine(";");
+            if (prop.IsString)
+            {
+                source.Append("        body.").Append(prop.Name).Append(" = request.RouteValues[").Append(Literal(prop.BindingName)).AppendLine("]?.ToString();");
+            }
+            else
+            {
+                var varName = "_route_" + prop.Name;
+                source.Append("        if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(request.RouteValues[").Append(Literal(prop.BindingName)).Append("]?.ToString(), out var ").Append(varName).AppendLine("))");
+                source.Append("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Route value '").Append(prop.BindingName).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+                source.Append("        body.").Append(prop.Name).Append(" = ").Append(varName).AppendLine(";");
+            }
         }
 
         // Query string binding (per-property, no runtime reflection)
         foreach (var prop in queryProperties)
         {
-            var varName = "_query_" + prop.Name;
             source.Append("        if (request.Query.TryGetValue(").Append(Literal(prop.Name)).Append(", out var _qs_").Append(prop.Name).AppendLine("))");
             source.AppendLine("        {");
-            source.Append("            if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvert<").Append(prop.TypeFullName).Append(">(_qs_").Append(prop.Name).Append(", out var ").Append(varName).AppendLine("))");
-            source.Append("                return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '").Append(prop.Name).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
-            source.Append("            body.").Append(prop.Name).Append(" = ").Append(varName).AppendLine(";");
+            if (prop.IsString)
+            {
+                source.Append("            body.").Append(prop.Name).Append(" = (string?)_qs_").Append(prop.Name).AppendLine(";");
+            }
+            else
+            {
+                var varName = "_query_" + prop.Name;
+                source.Append("            if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(_qs_").Append(prop.Name).Append(", out var ").Append(varName).AppendLine("))");
+                source.Append("                return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '").Append(prop.Name).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+                source.Append("            body.").Append(prop.Name).Append(" = ").Append(varName).AppendLine(";");
+            }
             source.AppendLine("        }");
         }
 
@@ -347,13 +361,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
                 var isQuery = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == HttpQueryAttribute);
                 var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ServerSetAttribute);
+                var isString = p.Type.SpecialType == SpecialType.System_String;
                 return new PropertyInfo(
                     p.Name,
                     p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     isRoute,
                     bindingName,
                     isQuery,
-                    isServerSet);
+                    isServerSet,
+                    isString);
             })
             .ToImmutableArray();
 
@@ -467,7 +483,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         bool IsRoute,
         string BindingName,
         bool IsQuery,
-        bool IsServerSet);
+        bool IsServerSet,
+        bool IsString);
 
     private readonly record struct Endpoint(
         string TypeName,

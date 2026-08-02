@@ -155,7 +155,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void AzureFunctionsGeneratorEmitsRouteBindingWithTryConvert()
+    public void AzureFunctionsGeneratorEmitsRouteBindingWithTryConvertSafe()
     {
         var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
@@ -170,8 +170,31 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Generated.Should().Contain("ArkTypeConverter.TryConvert<int>");
+        result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>");
+        result.Generated.Should().NotContain("ArkTypeConverter.TryConvert<int>");
         result.Generated.Should().Contain("BINDING_FAILURE");
+        result.Generated.Should().NotContain("InvokeQueryAsync");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorSkipsConverterForStringBinding()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/items/{name}")]
+            public sealed class GetItem : IQuery<string>
+            {
+                [HttpRoute("name")]
+                public string Name { get; set; }
+            }
+            """);
+
+        result.Generated.Should().NotContain("ArkTypeConverter");
+        result.Generated.Should().Contain("?.ToString()");
         result.Generated.Should().NotContain("InvokeQueryAsync");
     }
 
