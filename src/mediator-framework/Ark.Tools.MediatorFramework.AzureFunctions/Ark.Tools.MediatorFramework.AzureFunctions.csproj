@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
     <Description>Azure Functions isolated-worker HTTP transport runtime for Ark.Tools MediatorFramework.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;Azure;Functions;Source Generator</PackageTags>
