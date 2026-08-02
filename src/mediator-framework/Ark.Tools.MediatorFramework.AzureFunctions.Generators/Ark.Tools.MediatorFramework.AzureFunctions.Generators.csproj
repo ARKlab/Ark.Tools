@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <NoWarn>$(NoWarn);RS2008</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Description>Source generator for Ark.Tools MediatorFramework Azure Functions HTTP triggers.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;Azure;Functions;Source Generator;Roslyn</PackageTags>

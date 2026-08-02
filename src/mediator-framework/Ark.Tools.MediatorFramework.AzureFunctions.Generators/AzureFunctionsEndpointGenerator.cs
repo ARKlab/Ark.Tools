@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -87,8 +88,20 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             }
         }
 
+        var maxVersion = endpoints.Count == 0
+            ? 1
+            : endpoints.Max(item => item.Retired > 0 ? item.Retired - 1 : item.Introduced);
+        var expanded = endpoints.SelectMany(endpoint =>
+            Enumerable.Range(endpoint.Introduced, Math.Max(1, maxVersion - endpoint.Introduced + 1))
+                .Where(version => endpoint.Retired == 0 || version < endpoint.Retired)
+                .Select(version => endpoint with
+                {
+                    Route = ExpandRoute(endpoint.Prefix, endpoint.Template, version),
+                    FunctionName = Sanitize(endpoint.TypeName + "_v" + version.ToString(CultureInfo.InvariantCulture)),
+                }));
+
         var valid = new List<Endpoint>();
-        foreach (var endpoint in endpoints.OrderBy(item => item.FunctionName, StringComparer.Ordinal))
+        foreach (var endpoint in expanded.OrderBy(item => item.FunctionName, StringComparer.Ordinal))
         {
             if (endpoint.MessagePack)
             {
@@ -154,34 +167,29 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         string prefix,
         Compilation compilation)
     {
-        var verb = attribute.ConstructorArguments.ElementAtOrDefault(0).Value as string;
-        var template = attribute.ConstructorArguments.ElementAtOrDefault(1).Value as string;
-        if (string.IsNullOrWhiteSpace(verb) || string.IsNullOrWhiteSpace(template))
+        if (attribute.ConstructorArguments.ElementAtOrDefault(0).Value is not string verb
+            || attribute.ConstructorArguments.ElementAtOrDefault(1).Value is not string template
+            || string.IsNullOrWhiteSpace(verb)
+            || string.IsNullOrWhiteSpace(template))
             return null;
 
         var versioning = type.GetAttributes()
             .FirstOrDefault(item => item.AttributeClass?.ToDisplayString() == VersioningAttribute);
         var introduced = GetNamedInt(versioning, "Introduced", 1);
         var retired = GetNamedInt(versioning, "Retired", 0);
-        var version = Math.Max(1, introduced);
-        if (retired > 0 && version >= retired)
-            return null;
-
-        var route = template.Contains("{version}", StringComparison.OrdinalIgnoreCase)
-            ? template.Replace("{version}", version.ToString(), StringComparison.OrdinalIgnoreCase)
-            : Combine(prefix.Replace("{version}", version.ToString(), StringComparison.OrdinalIgnoreCase), template);
-        route = route.Trim('/');
-
         var messagePack = GetNamedBool(attribute, "AcceptsMessagePack");
-        var functionName = Sanitize(type.Name + "_v" + version);
         return new Endpoint(
             type.Name,
             type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             verb.ToUpperInvariant(),
-            route,
-            functionName,
+            string.Empty,
+            string.Empty,
             messagePack,
-            attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation());
+            type.Locations.FirstOrDefault(),
+            prefix,
+            template,
+            Math.Max(1, introduced),
+            retired);
     }
 
     private static bool IsSelected(
@@ -226,8 +234,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private static int GetNamedInt(AttributeData? attribute, string name, int fallback)
     {
-        var value = attribute?.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        return value?.Value is int number ? number : fallback;
+        if (attribute is null)
+            return fallback;
+
+        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
+        return value.Value is int number ? number : fallback;
     }
 
     private static bool GetNamedBool(AttributeData attribute, string name)
@@ -250,6 +261,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private static string Escape(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
+    private static string ExpandRoute(string prefix, string template, int version)
+    {
+        var versionText = version.ToString(CultureInfo.InvariantCulture);
+        var route = template.Contains("{version}", StringComparison.OrdinalIgnoreCase)
+            ? template.Replace("{version}", versionText)
+            : Combine(prefix.Replace("{version}", versionText), template);
+        return route.Trim('/');
+    }
+
     private readonly record struct Endpoint(
         string TypeName,
         string FullyQualifiedType,
@@ -257,5 +277,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         string Route,
         string FunctionName,
         bool MessagePack,
-        Location? Location);
+        Location? Location,
+        string Prefix,
+        string Template,
+        int Introduced,
+        int Retired);
 }
