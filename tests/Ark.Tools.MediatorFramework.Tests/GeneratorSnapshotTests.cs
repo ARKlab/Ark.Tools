@@ -142,6 +142,8 @@ public sealed class GeneratorSnapshotTests
 
         result.Should().Contain("Function(\"GetGreeting_v1\")");
         result.Should().Contain("Route = \"api/v1/greetings/{id}\"");
+        result.Should().Contain("Function(\"GetGreeting_v2\")");
+        result.Should().Contain("Route = \"api/v2/greetings/{id}\"");
         result.Should().Contain("AuthorizationLevel.Anonymous");
         result.Should().Contain("InvokeAsync<global::GetGreeting>");
     }
