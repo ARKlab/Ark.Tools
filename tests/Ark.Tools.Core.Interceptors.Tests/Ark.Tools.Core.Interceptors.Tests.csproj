@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+
+    <!--
+    Unlike Ark.Tools.Core.Tests (which only references Ark.Tools.Core and therefore never
+    sees the interceptor generator - ProjectReference-as-Analyzer metadata does not flow
+    transitively - this project explicitly wires the generator, exactly like a real NuGet
+    consumer of the Ark.Tools.Core package would get automatically), so that ToDataTableArk()
+    calls with a compile-time-known, eligible T are actually intercepted here.
+    -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Core.Analyzers/Ark.Tools.Core.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exclude the generator's own output folder from being treated as project source. -->
+    <Compile Remove="Generated/**/*.cs" />
+  </ItemGroup>
+
+</Project>

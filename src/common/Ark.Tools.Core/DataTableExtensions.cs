@@ -3,6 +3,7 @@
 
 using System.Collections.Frozen;
 using System.Data;
+using System.Linq.Expressions;
 using System.Reflection;
 
 using NodaTime;
@@ -59,16 +60,69 @@ public static class DataTableExtensions
         return ShredObjectToDataTable<T>.Shred(source, null, null);
     }
 
-    // Internal implementation class
+    // Internal implementation class.
+    //
+    // Performance: the field/property list, the derived DataColumn schema, and the per-member
+    // "get + convert" logic are all resolved via reflection exactly once per closed generic type T,
+    // in the static constructor (see BuildPlan/_plan below). Each member's accessor is a compiled
+    // Expression-tree delegate (Func&lt;T, object?&gt;) that both reads the field/property AND applies
+    // the enum/NodaTime conversion in a single call, so per-row shredding no longer performs any
+    // reflection invocation (FieldInfo.GetValue/PropertyInfo.GetValue), boxed-value type inspection,
+    // or enum/NodaTime type-switching: it is a plain array iteration of pre-compiled delegates.
     private static class ShredObjectToDataTable<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T>
     {
-        private static readonly FieldInfo[] _fi = typeof(T).GetFields();
-        private static readonly PropertyInfo[] _pi = typeof(T).GetProperties();
+        // A single cached column: its name, its derived DataColumn type, and a compiled delegate that
+        // reads the member from an instance of T and returns the already-converted column value.
+        private readonly record struct ColumnPlan(string Name, Type ColumnType, Func<T, object?> Accessor);
+
+        // NOTE: static field initializers run in declaration order, and BuildPlan() (used by _plan
+        // below) calls DeriveColumnType/BuildNonNullableConversion, which read the following fields.
+        // They must therefore be declared - and thus initialized - before _plan.
+        private static readonly FrozenSet<Type> _datetimeTypes = new[]
+        {
+            typeof(LocalDate),
+            typeof(LocalDateTime),
+            typeof(Instant),
+        }.ToFrozenSet();
+
+        private static readonly FrozenSet<Type> _datetimeOffsetTypes = new[]
+        {
+            typeof(OffsetDateTime),
+            typeof(OffsetDate)
+        }.ToFrozenSet();
+
+        private static readonly FrozenSet<Type> _timeTypes = new[]
+        {
+            typeof(LocalTime)
+        }.ToFrozenSet();
+
+        // Cached MethodInfo/PropertyInfo used to build the compiled conversion expressions below.
+        // Resolved once (per closed T) instead of doing value.GetType() + type-switch on every row.
+        private static readonly MethodInfo _objectToString = typeof(object).GetMethod(nameof(ToString), Type.EmptyTypes)!;
+        private static readonly MethodInfo _localDateToDateTimeUnspecified = typeof(LocalDate).GetMethod(nameof(LocalDate.ToDateTimeUnspecified), Type.EmptyTypes)!;
+        private static readonly MethodInfo _localDateTimeToDateTimeUnspecified = typeof(LocalDateTime).GetMethod(nameof(LocalDateTime.ToDateTimeUnspecified), Type.EmptyTypes)!;
+        private static readonly MethodInfo _instantToDateTimeUtc = typeof(Instant).GetMethod(nameof(Instant.ToDateTimeUtc), Type.EmptyTypes)!;
+        private static readonly MethodInfo _offsetDateTimeToDateTimeOffset = typeof(OffsetDateTime).GetMethod(nameof(OffsetDateTime.ToDateTimeOffset), Type.EmptyTypes)!;
+        private static readonly MethodInfo _offsetDateAt = typeof(OffsetDate).GetMethod(nameof(OffsetDate.At), [typeof(LocalTime)])!;
+        private static readonly PropertyInfo _localTimeMidnight = typeof(LocalTime).GetProperty(nameof(LocalTime.Midnight))!;
+        private static readonly PropertyInfo _localTimeTickOfDay = typeof(LocalTime).GetProperty(nameof(LocalTime.TickOfDay))!;
+        private static readonly MethodInfo _timeSpanFromTicks = typeof(TimeSpan).GetMethod(nameof(TimeSpan.FromTicks), [typeof(long)])!;
+
+        private static readonly bool _isPrimitive = typeof(T).IsPrimitive;
+        private static readonly ColumnPlan[] _plan = BuildPlan();
+
+        // Reference-type instances can legitimately be null in the source sequence. Reflection's
+        // FieldInfo/PropertyInfo.GetValue(null) throws TargetException("Non-static method requires a
+        // target.") in that case; the compiled accessors below would otherwise throw a plain
+        // NullReferenceException instead, so this flag lets Shred* preserve the historical exception
+        // type/message exactly. Value types (T being a struct) can never be a C# null reference, so no
+        // check is needed for them; and a type with zero shredded members never dereferences instance.
+        private static readonly bool _requiresInstanceNullCheck = !typeof(T).IsValueType && _plan.Length > 0;
 
         public static DataTable Shred(IEnumerable<T> source, DataTable? table, LoadOption? options)
         {
             // Load the table from the scalar sequence if T is a primitive type.
-            if (typeof(T).IsPrimitive)
+            if (_isPrimitive)
             {
                 return ShredPrimitive(source, table, options);
             }
@@ -85,7 +139,7 @@ public static class DataTableExtensions
                 {
                     while (e.MoveNext())
                     {
-                        var values = ShredObjectSequential(table, e.Current);
+                        var values = ShredObjectSequential(e.Current);
 
                         if (options is not null)
                         {
@@ -166,64 +220,53 @@ public static class DataTableExtensions
 
         private static object?[] ShredObject(DataTable table, T? instance, FrozenDictionary<string, int> ordinalMap)
         {
-            // Add the property and field values of the instance to an array.
-            var values = new object?[table.Columns.Count];
-            
-            foreach (var f in _fi)
-            {
-                values[ordinalMap[f.Name]] = ConvertColumnValue(f.GetValue(instance));
-            }
+            RequireNonNullInstance(instance);
 
-            foreach (var p in _pi)
+            // Add the cached, already-converted column values of the instance to an array.
+            var values = new object?[table.Columns.Count];
+
+            foreach (var column in _plan)
             {
-                values[ordinalMap[p.Name]] = ConvertColumnValue(p.GetValue(instance, null));
+                values[ordinalMap[column.Name]] = column.Accessor(instance!);
             }
 
             return values;
         }
 
-        private static object?[] ShredObjectSequential(DataTable table, T? instance)
+        private static object?[] ShredObjectSequential(T? instance)
         {
-            // Fast path: fields then properties in sequential order
-            var values = new object?[table.Columns.Count];
-            var index = 0;
-            
-            foreach (var f in _fi)
-            {
-                values[index++] = ConvertColumnValue(f.GetValue(instance));
-            }
+            RequireNonNullInstance(instance);
 
-            foreach (var p in _pi)
+            // Fast path: columns are already in fields-then-properties sequential order.
+            var values = new object?[_plan.Length];
+
+            for (var i = 0; i < _plan.Length; i++)
             {
-                values[index++] = ConvertColumnValue(p.GetValue(instance, null));
+                values[i] = _plan[i].Accessor(instance!);
             }
 
             return values;
+        }
+
+        private static void RequireNonNullInstance(T? instance)
+        {
+            if (_requiresInstanceNullCheck && instance is null)
+            {
+                // Matches the message historically raised by FieldInfo/PropertyInfo.GetValue(null).
+                throw new TargetException("Non-static method requires a target.");
+            }
         }
 
         private static void InitializeNewTable(DataTable table)
         {
-            // Add fields first, then properties (preserves sequential ordering)
-            foreach (var f in _fi)
+            // Columns are added in the cached fields-then-properties sequential order.
+            foreach (var column in _plan)
             {
-                if (!table.Columns.Contains(f.Name))
+                if (!table.Columns.Contains(column.Name))
                 {
-                    var columnType = DeriveColumnType(f.FieldType);
                     // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
                     #pragma warning disable IL2072
-                    table.Columns.Add(f.Name, columnType);
-                    #pragma warning restore IL2072
-                }
-            }
-
-            foreach (var p in _pi)
-            {
-                if (!table.Columns.Contains(p.Name))
-                {
-                    var columnType = DeriveColumnType(p.PropertyType);
-                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
-                    #pragma warning disable IL2072
-                    table.Columns.Add(p.Name, columnType);
+                    table.Columns.Add(column.Name, column.ColumnType);
                     #pragma warning restore IL2072
                 }
             }
@@ -234,62 +277,24 @@ public static class DataTableExtensions
             // For existing tables, build ordinal map and add missing columns
             var ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
 
-            // Add fields as columns (or get existing ordinals)
-            foreach (var f in _fi)
+            foreach (var column in _plan)
             {
-                if (!table.Columns.Contains(f.Name))
+                if (!table.Columns.Contains(column.Name))
                 {
-                    var columnType = DeriveColumnType(f.FieldType);
                     // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
                     #pragma warning disable IL2072
-                    var dc = table.Columns.Add(f.Name, columnType);
+                    var dc = table.Columns.Add(column.Name, column.ColumnType);
                     #pragma warning restore IL2072
-                    ordinalMap.Add(f.Name, dc.Ordinal);
+                    ordinalMap.Add(column.Name, dc.Ordinal);
                 }
                 else
                 {
-                    ordinalMap.Add(f.Name, table.Columns[f.Name]!.Ordinal);
-                }
-            }
-
-            // Add properties as columns (or get existing ordinals)
-            foreach (var p in _pi)
-            {
-                if (!table.Columns.Contains(p.Name))
-                {
-                    var columnType = DeriveColumnType(p.PropertyType);
-                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
-                    #pragma warning disable IL2072
-                    var dc = table.Columns.Add(p.Name, columnType);
-                    #pragma warning restore IL2072
-                    ordinalMap.Add(p.Name, dc.Ordinal);
-                }
-                else
-                {
-                    ordinalMap.Add(p.Name, table.Columns[p.Name]!.Ordinal);
+                    ordinalMap.Add(column.Name, table.Columns[column.Name]!.Ordinal);
                 }
             }
 
             return ordinalMap.ToFrozenDictionary();
         }
-
-        private static readonly FrozenSet<Type> _datetimeTypes = new[]
-        {
-            typeof(LocalDate),
-            typeof(LocalDateTime),
-            typeof(Instant),
-        }.ToFrozenSet();
-
-        private static readonly FrozenSet<Type> _datetimeOffsetTypes = new[]
-        {
-            typeof(OffsetDateTime),
-            typeof(OffsetDate)
-        }.ToFrozenSet();
-
-        private static readonly FrozenSet<Type> _timeTypes = new[]
-        {
-            typeof(LocalTime)
-        }.ToFrozenSet();
 
         private static Type DeriveColumnType(Type elementType)
         {
@@ -314,38 +319,109 @@ public static class DataTableExtensions
             return elementType;
         }
 
-        private static object? ConvertColumnValue(object? value)
+        // Builds the cached column plan (name + DataColumn type + compiled accessor) for every public
+        // field and property of T (fields-then-properties declaration order), matching the reflection
+        // fallback's historical behavior of also including public static/const fields or properties
+        // (Type.GetFields()/GetProperties() return both instance and static members by default). For
+        // a static member the compiled accessor ignores the per-row instance, exactly like
+        // FieldInfo/PropertyInfo.GetValue(instance) does for static members. This method (and the
+        // reflection it performs) runs exactly once per closed generic type T, since it is only ever
+        // invoked from the static field initializer above.
+        [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+            Justification = "T is annotated with DynamicallyAccessedMembers on the enclosing generic type, preserving public fields/properties for reflection.")]
+        private static ColumnPlan[] BuildPlan()
         {
-            if (value == null) return value;
+            var fields = typeof(T).GetFields();
+            var properties = typeof(T).GetProperties();
+            var plan = new ColumnPlan[fields.Length + properties.Length];
+            var param = Expression.Parameter(typeof(T), "instance");
 
-            var elementType = value.GetType();
-
-            var nullableType = Nullable.GetUnderlyingType(elementType);
-            if (nullableType is not null)
+            var index = 0;
+            foreach (var f in fields)
             {
-                elementType = nullableType;
+                var receiver = f.IsStatic ? null : param;
+                plan[index++] = BuildColumnPlan(f.Name, f.FieldType, Expression.Field(receiver, f), param);
             }
 
-            if (elementType.IsEnum)
-                return value.ToString();
-
-            switch (value)
+            foreach (var p in properties)
             {
-                case LocalDate ld:
-                    return ld.ToDateTimeUnspecified();
-                case LocalDateTime ldt:
-                    return ldt.ToDateTimeUnspecified();
-                case Instant i:
-                    return i.ToDateTimeUtc();
-                case OffsetDateTime odt:
-                    return odt.ToDateTimeOffset();
-                case OffsetDate od:
-                    return od.At(LocalTime.Midnight).ToDateTimeOffset();
-                case LocalTime lt:
-                    return TimeSpan.FromTicks(lt.TickOfDay);
+                var isStatic = (p.GetMethod ?? p.SetMethod)?.IsStatic ?? false;
+                var receiver = isStatic ? null : param;
+                plan[index++] = BuildColumnPlan(p.Name, p.PropertyType, Expression.Property(receiver, p), param);
             }
 
-            return value;
+            return plan;
+        }
+
+        // Suppress IL2072: DeriveColumnType returns known-safe types (DateTime, DateTimeOffset, TimeSpan, string, or the member's own type).
+        [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
+            Justification = "DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives).")]
+        private static ColumnPlan BuildColumnPlan(string name, Type memberType, MemberExpression access, ParameterExpression param)
+        {
+            var columnType = DeriveColumnType(memberType);
+            var valueExpression = BuildValueExpression(access, memberType);
+            var accessor = Expression.Lambda<Func<T, object?>>(valueExpression, param).Compile();
+            return new ColumnPlan(name, columnType, accessor);
+        }
+
+        // Builds an Expression that reads `access` (a field/property of the compiled T parameter) and
+        // returns the boxed, already-converted column value - equivalent to the historical
+        // ConvertColumnValue(f.GetValue(instance)) but with no runtime type inspection.
+        [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+            Justification = "System.Nullable<T> always exposes public HasValue/Value instance properties regardless of T; trimming cannot remove them.")]
+        private static Expression BuildValueExpression(Expression access, Type memberType)
+        {
+            var nullableUnderlying = Nullable.GetUnderlyingType(memberType);
+            if (nullableUnderlying is not null)
+            {
+                // Nullable<X>: only convert/box when HasValue, matching the CLR's own boxing rule
+                // that a Nullable<X> without a value boxes to a null reference. The PropertyInfo
+                // overload of Expression.Property is used (instead of the string-name overload) so
+                // that building this expression does not itself require unreferenced code.
+                var hasValueProperty = memberType.GetProperty(nameof(Nullable<int>.HasValue))!;
+                var valueProperty = memberType.GetProperty(nameof(Nullable<int>.Value))!;
+                var hasValue = Expression.Property(access, hasValueProperty);
+                var value = Expression.Property(access, valueProperty);
+                var convertedValue = Expression.Convert(BuildNonNullableConversion(value, nullableUnderlying), typeof(object));
+                var nullConstant = Expression.Constant(null, typeof(object));
+                return Expression.Condition(hasValue, convertedValue, nullConstant);
+            }
+
+            return Expression.Convert(BuildNonNullableConversion(access, memberType), typeof(object));
+        }
+
+        private static Expression BuildNonNullableConversion(Expression access, Type memberType)
+        {
+            if (memberType.IsEnum)
+                return Expression.Call(access, _objectToString);
+
+            if (memberType == typeof(LocalDate))
+                return Expression.Call(access, _localDateToDateTimeUnspecified);
+
+            if (memberType == typeof(LocalDateTime))
+                return Expression.Call(access, _localDateTimeToDateTimeUnspecified);
+
+            if (memberType == typeof(Instant))
+                return Expression.Call(access, _instantToDateTimeUtc);
+
+            if (memberType == typeof(OffsetDateTime))
+                return Expression.Call(access, _offsetDateTimeToDateTimeOffset);
+
+            if (memberType == typeof(OffsetDate))
+            {
+                var midnight = Expression.Property(null, _localTimeMidnight);
+                var at = Expression.Call(access, _offsetDateAt, midnight);
+                return Expression.Call(at, _offsetDateTimeToDateTimeOffset);
+            }
+
+            if (memberType == typeof(LocalTime))
+            {
+                var tickOfDay = Expression.Property(access, _localTimeTickOfDay);
+                return Expression.Call(_timeSpanFromTicks, tickOfDay);
+            }
+
+            // Direct passthrough: the caller boxes this via Expression.Convert(..., typeof(object)).
+            return access;
         }
     }
 }

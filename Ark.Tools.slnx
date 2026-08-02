@@ -127,6 +127,9 @@
     <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample/Ark.ResourceWatcher.Sample.csproj" />
     <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample.Tests/Ark.ResourceWatcher.Sample.Tests.csproj" />
   </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Ark.Tools.Core.Benchmarks/Ark.Tools.Core.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ark.Tools.Core.Analyzers.Tests/Ark.Tools.Core.Analyzers.Tests.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/Ark.Tools.AspNetCore.ProblemDetails.Tests.csproj" />
@@ -134,6 +137,7 @@
     <Project Path="tests/Ark.Tools.MessagePack.Tests/Ark.Tools.MessagePack.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Protobuf.Tests/Ark.Tools.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Core.Tests/Ark.Tools.Core.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Core.Interceptors.Tests/Ark.Tools.Core.Interceptors.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Tests/Ark.Tools.MediatorFramework.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Protobuf.Tests/Ark.Tools.Nodatime.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Tests/Ark.Tools.Nodatime.Tests.csproj" />
