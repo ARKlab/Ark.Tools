@@ -24,6 +24,12 @@
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
+  <PropertyGroup Label="SourceLink">
+    <!-- Set ARK_DISABLE_SOURCELINK=true when repository metadata is unavailable. -->
+    <EnableSourceControlManagerQueries Condition="'$(ARK_DISABLE_SOURCELINK)' == 'true'">false</EnableSourceControlManagerQueries>
+    <EnableSourceLink Condition="'$(ARK_DISABLE_SOURCELINK)' == 'true'">false</EnableSourceLink>
+  </PropertyGroup>
+
   <PropertyGroup Label="Common Build Settings">
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
