@@ -25,9 +25,9 @@
   </PropertyGroup>
 
   <PropertyGroup Label="SourceLink">
-    <!-- Set ARK_DISABLE_SOURCELINK=true when repository metadata is unavailable. -->
-    <EnableSourceControlManagerQueries Condition="'$(ARK_DISABLE_SOURCELINK)' == 'true'">false</EnableSourceControlManagerQueries>
-    <EnableSourceLink Condition="'$(ARK_DISABLE_SOURCELINK)' == 'true'">false</EnableSourceLink>
+    <!-- Copilot coding agent sandboxes do not expose repository metadata to SourceLink. -->
+    <EnableSourceControlManagerQueries Condition="'$(COPILOT_AGENT_ACTION)' != ''">false</EnableSourceControlManagerQueries>
+    <EnableSourceLink Condition="'$(COPILOT_AGENT_ACTION)' != ''">false</EnableSourceLink>
   </PropertyGroup>
 
   <PropertyGroup Label="Common Build Settings">
