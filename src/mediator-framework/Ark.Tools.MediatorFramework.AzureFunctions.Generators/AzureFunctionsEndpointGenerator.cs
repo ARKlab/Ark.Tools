@@ -54,10 +54,17 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .Where(static host => host is not null)
             .Select(static (host, _) => host!.Value)
             .Collect();
+        var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
+                EndpointAttribute,
+                static (_, _) => true,
+                static (attributeContext, _) => new EndpointCandidate(
+                    (INamedTypeSymbol)attributeContext.TargetSymbol,
+                    attributeContext.Attributes[0]))
+            .Collect();
 
         context.RegisterSourceOutput(
-            hosts.Combine(context.CompilationProvider),
-            static (productionContext, pair) => Emit(productionContext, pair.Right, pair.Left));
+            hosts.Combine(sourceEndpoints),
+            static (productionContext, pair) => Emit(productionContext, pair.Left, pair.Right));
     }
 
     private static HostInfo? ExtractHost(GeneratorAttributeSyntaxContext context)
@@ -73,28 +80,32 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private static void Emit(
         SourceProductionContext context,
-        Compilation compilation,
-        ImmutableArray<HostInfo> hosts)
+        ImmutableArray<HostInfo> hosts,
+        ImmutableArray<EndpointCandidate> sourceEndpoints)
     {
-        var hostAttribute = compilation.GetTypeByMetadataName(HostAttribute);
-        var endpointAttribute = compilation.GetTypeByMetadataName(EndpointAttribute);
-        if (hostAttribute is null || endpointAttribute is null)
-            return;
-
         if (hosts.IsDefaultOrEmpty)
             return;
 
         var endpoints = new List<Endpoint>();
         foreach (var host in hosts)
         {
-            foreach (var type in AllTypes(host.Marker.ContainingAssembly.GlobalNamespace))
+            var hasSourceAssembly = sourceEndpoints.Any(candidate =>
+                SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly));
+            var candidates = hasSourceAssembly
+                ? sourceEndpoints.Where(candidate =>
+                    SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly))
+                : AllTypes(host.Marker.ContainingAssembly.GlobalNamespace)
+                    .Select(type => new EndpointCandidate(
+                        type,
+                        type.GetAttributes().FirstOrDefault(attribute =>
+                            attribute.AttributeClass?.ToDisplayString() == EndpointAttribute)))
+                    .Where(candidate => candidate.Attribute is not null);
+            foreach (var candidate in candidates)
             {
-                var attribute = type.GetAttributes()
-                    .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(candidate.AttributeClass, endpointAttribute));
-                if (attribute is null || !IsSelected(type, host.Marker.ContainingAssembly, host.Included, host.Excluded))
+                if (!IsSelected(candidate.Type, host.Marker.ContainingAssembly, host.Included, host.Excluded))
                     continue;
 
-                var endpoint = CreateEndpoint(type, attribute, host.Prefix, compilation);
+                var endpoint = CreateEndpoint(candidate.Type, candidate.Attribute!, host.Prefix);
                 if (endpoint is not null)
                     endpoints.Add(endpoint.Value);
             }
@@ -179,11 +190,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         ImmutableArray<INamedTypeSymbol> Included,
         ImmutableArray<INamedTypeSymbol> Excluded);
 
+    private readonly record struct EndpointCandidate(INamedTypeSymbol Type, AttributeData? Attribute);
+
     private static Endpoint? CreateEndpoint(
         INamedTypeSymbol type,
         AttributeData attribute,
-        string prefix,
-        Compilation compilation)
+        string prefix)
     {
         if (attribute.ConstructorArguments.ElementAtOrDefault(0).Value is not string verb
             || attribute.ConstructorArguments.ElementAtOrDefault(1).Value is not string template
