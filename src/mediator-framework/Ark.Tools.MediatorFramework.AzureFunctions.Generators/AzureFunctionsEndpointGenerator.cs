@@ -187,7 +187,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 source.Append("InvokeCommandAsync<").Append(endpoint.FullyQualifiedType);
             else
                 source.Append(endpoint.Kind == HandlerKind.Query ? "InvokeQueryAsync<" : "InvokeRequestAsync<")
-                    .Append(endpoint.FullyQualifiedType).Append(",").Append(endpoint.ResponseType);
+                    .Append(endpoint.FullyQualifiedType).Append(',').Append(endpoint.ResponseType);
             source.AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("    }");
         }
@@ -356,6 +356,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private enum HandlerKind
     {
+        None,
         Request,
         Query,
         Command

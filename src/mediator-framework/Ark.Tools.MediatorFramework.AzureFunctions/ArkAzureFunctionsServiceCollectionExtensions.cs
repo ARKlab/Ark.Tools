@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using SimpleInjector;
+using System.Text.Json;
 
 namespace Ark.MediatorFramework.AzureFunctions;
 
@@ -14,9 +15,11 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The service collection to configure.</param>
     /// <returns>The same service collection.</returns>
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Azure Functions ASP.NET Core integration requires MVC JSON configuration.")]
     public static IServiceCollection AddArkAzureFunctions(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.AddMvc().AddJsonOptions(options => options.JsonSerializerOptions.ConfigureArkDefaults());
         return services;
     }
 

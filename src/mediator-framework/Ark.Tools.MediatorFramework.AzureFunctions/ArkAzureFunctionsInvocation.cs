@@ -4,11 +4,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleInjector;
-using System.ComponentModel;
-using System.Globalization;
+using SimpleInjector.Lifestyles;
 using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Ark.Tools.Solid;
 
 namespace Ark.MediatorFramework.AzureFunctions;
@@ -20,10 +18,13 @@ public static class ArkAzureFunctionsInvocation
     /// Invokes the generated mediator pipeline for a request.
     /// </summary>
     /// <typeparam name="TRequest">The generated contract request type.</typeparam>
+    /// <typeparam name="TResponse">The request response type.</typeparam>
     /// <param name="request">The incoming ASP.NET Core request.</param>
     /// <param name="cancellationToken">The invocation cancellation token.</param>
     /// <returns>The HTTP result produced by the mediator pipeline.</returns>
-    public static async Task<IResult> InvokeRequestAsync<TRequest, TResponse>(
+    public static async Task<IResult> InvokeRequestAsync<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)] TRequest,
+        TResponse>(
         HttpRequest request,
         CancellationToken cancellationToken)
         where TRequest : IRequest<TResponse>
@@ -33,10 +34,13 @@ public static class ArkAzureFunctionsInvocation
         if (!binding.Succeeded)
             return Results.BadRequest();
 
-        using var scope = BeginScope(request);
-        var handler = scope.Container.GetInstance<IRequestHandler<TRequest, TResponse>>();
-        var result = await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
-        return result is null ? Results.NoContent() : Results.Ok(result);
+        var (container, scope) = BeginScope(request);
+        await using (scope.ConfigureAwait(false))
+        {
+            var handler = container.GetInstance<IRequestHandler<TRequest, TResponse>>();
+            var result = await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
+            return result is null ? Results.NoContent() : Results.Ok(result);
+        }
     }
 
     /// <summary>Invokes a generated query through the application container.</summary>
@@ -45,7 +49,9 @@ public static class ArkAzureFunctionsInvocation
     /// <param name="request">The incoming ASP.NET Core request.</param>
     /// <param name="cancellationToken">The invocation cancellation token.</param>
     /// <returns>The HTTP result produced by the query handler.</returns>
-    public static async Task<IResult> InvokeQueryAsync<TQuery, TResponse>(
+    public static async Task<IResult> InvokeQueryAsync<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)] TQuery,
+        TResponse>(
         HttpRequest request,
         CancellationToken cancellationToken)
         where TQuery : IQuery<TResponse>
@@ -55,10 +61,13 @@ public static class ArkAzureFunctionsInvocation
         if (!binding.Succeeded)
             return Results.BadRequest();
 
-        using var scope = BeginScope(request);
-        var handler = scope.Container.GetInstance<IQueryHandler<TQuery, TResponse>>();
-        var result = await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
-        return result is null ? Results.NotFound() : Results.Ok(result);
+        var (container, scope) = BeginScope(request);
+        await using (scope.ConfigureAwait(false))
+        {
+            var handler = container.GetInstance<IQueryHandler<TQuery, TResponse>>();
+            var result = await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
     }
 
     /// <summary>Invokes a generated command through the application container.</summary>
@@ -66,7 +75,8 @@ public static class ArkAzureFunctionsInvocation
     /// <param name="request">The incoming ASP.NET Core request.</param>
     /// <param name="cancellationToken">The invocation cancellation token.</param>
     /// <returns>The HTTP result produced by the command handler.</returns>
-    public static async Task<IResult> InvokeCommandAsync<TCommand>(
+    public static async Task<IResult> InvokeCommandAsync<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(
         HttpRequest request,
         CancellationToken cancellationToken)
         where TCommand : ICommand
@@ -76,34 +86,36 @@ public static class ArkAzureFunctionsInvocation
         if (!binding.Succeeded)
             return Results.BadRequest();
 
-        using var scope = BeginScope(request);
-        var handler = scope.Container.GetInstance<ICommandHandler<TCommand>>();
-        await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
-        return Results.NoContent();
+        var (container, scope) = BeginScope(request);
+        await using (scope.ConfigureAwait(false))
+        {
+            var handler = container.GetInstance<ICommandHandler<TCommand>>();
+            await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
+            return Results.NoContent();
+        }
     }
 
-    private static ScopedLifestyle.Scope BeginScope(HttpRequest request)
+    private static (Container Container, Scope Scope) BeginScope(HttpRequest request)
     {
         var container = request.HttpContext.RequestServices.GetService<Container>()
             ?? throw new InvalidOperationException(
                 "The Azure Functions mediator container is not registered. Call AddArkAzureFunctions with the application container.");
-        return AsyncScopedLifestyle.BeginScope(container);
+        return (container, AsyncScopedLifestyle.BeginScope(container));
     }
 
-    private static async Task<BindingResult<T>> BindAsync<T>(
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Generated contract types are preserved by the source generator.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "Generated contract types are preserved by the source generator.")]
+    private static async Task<BindingResult<T>> BindAsync<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)] T>(
         HttpRequest request,
         CancellationToken cancellationToken)
     {
         T? value;
-        if (request.ContentLength is > 0 || request.Headers.ContentType.Any(value => value.Contains("json", StringComparison.OrdinalIgnoreCase)))
+        if (request.ContentLength is > 0 || request.Headers.ContentType.ToString().Contains("json", StringComparison.OrdinalIgnoreCase))
         {
             try
             {
-                value = await request.ReadFromJsonAsync<T>(new JsonSerializerOptions(JsonSerializerDefaults.Web)
-                {
-                    PropertyNameCaseInsensitive = true,
-                    Converters = { new JsonStringEnumConverter() }
-                }, cancellationToken).ConfigureAwait(false);
+                value = await request.ReadFromJsonAsync<T>(cancellationToken).ConfigureAwait(false);
             }
             catch (JsonException)
             {
@@ -116,7 +128,7 @@ public static class ArkAzureFunctionsInvocation
             {
                 value = Activator.CreateInstance<T>();
             }
-            catch (Exception) when (Activator.CreateInstance(typeof(T)) is null)
+            catch (MissingMethodException)
             {
                 return BindingResult<T>.Failed;
             }
@@ -127,22 +139,23 @@ public static class ArkAzureFunctionsInvocation
 
         foreach (var property in typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public))
         {
-            if (property.GetCustomAttribute<ServerSetAttribute>() is not null)
+            if (HasAttribute(property, "Ark.MediatorFramework.ServerSetAttribute"))
             {
                 if (property.CanWrite)
-                    property.SetValue(value, property.PropertyType.IsValueType ? Activator.CreateInstance(property.PropertyType) : null);
+                    property.SetValue(value, null);
                 continue;
             }
 
-            var name = property.GetCustomAttribute<HttpRouteAttribute>()?.Name ?? property.Name;
-            if (property.GetCustomAttribute<HttpRouteAttribute>() is not null && request.RouteValues.TryGetValue(name, out var route))
+            var routeAttribute = GetAttribute(property, "Ark.MediatorFramework.HttpRouteAttribute");
+            var name = routeAttribute?.ConstructorArguments.FirstOrDefault().Value as string ?? property.Name;
+            if (request.RouteValues.TryGetValue(name, out var route))
             {
                 if (!TryConvert(route?.ToString(), property.PropertyType, out var converted))
                     return BindingResult<T>.Failed;
                 property.SetValue(value, converted);
             }
 
-            if (property.GetCustomAttribute<HttpQueryAttribute>() is not null
+            if (HasAttribute(property, "Ark.MediatorFramework.HttpQueryAttribute")
                 && request.Query.TryGetValue(property.Name, out var query))
             {
                 if (!TryConvert(query, property.PropertyType, out var converted))
@@ -154,7 +167,12 @@ public static class ArkAzureFunctionsInvocation
         return new BindingResult<T>(value, true);
     }
 
-    private static bool TryConvert(string? input, Type type, out object? value)
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "HTTP scalar types are selected by generated contract metadata.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "HTTP scalar types are selected by generated contract metadata.")]
+    private static bool TryConvert(
+        string? input,
+        Type type,
+        out object? value)
     {
         if (input is null)
         {
@@ -171,15 +189,31 @@ public static class ArkAzureFunctionsInvocation
                 return true;
             }
 
-            var converter = TypeDescriptor.GetConverter(target);
-            value = converter.ConvertFromString(null, CultureInfo.InvariantCulture, input);
+            var converter = System.ComponentModel.TypeDescriptor.GetConverter(target);
+            value = converter.ConvertFromString(null, System.Globalization.CultureInfo.InvariantCulture, input);
             return true;
         }
-        catch (Exception) when (true)
+        catch (FormatException)
         {
             value = null;
             return false;
         }
+        catch (NotSupportedException)
+        {
+            value = null;
+            return false;
+        }
+    }
+
+    private static bool HasAttribute(PropertyInfo property, string metadataName)
+    {
+        return GetAttribute(property, metadataName) is not null;
+    }
+
+    private static CustomAttributeData? GetAttribute(PropertyInfo property, string metadataName)
+    {
+        return property.CustomAttributes.FirstOrDefault(attribute =>
+            string.Equals(attribute.AttributeType.FullName, metadataName, StringComparison.Ordinal));
     }
 
     private readonly record struct BindingResult<T>(T? Value, bool Succeeded)
