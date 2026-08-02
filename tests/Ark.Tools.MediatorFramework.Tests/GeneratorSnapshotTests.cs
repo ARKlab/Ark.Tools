@@ -228,7 +228,8 @@ public sealed class GeneratorSnapshotTests
             new System.Security.Claims.ClaimsIdentity(
                 [new System.Security.Claims.Claim("sub", "caller")],
                 "test"));
-        var authentication = new StubAuthenticationService(AuthenticateResult.Success(principal));
+        var authentication = new StubAuthenticationService(
+            AuthenticateResult.Success(new AuthenticationTicket(principal, "test")));
         var services = new ServiceCollection()
             .AddArkAzureFunctionsAuthentication(options => options.Scheme = "test")
             .AddSingleton<IAuthenticationService>(authentication)
