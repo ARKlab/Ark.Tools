@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework;
+using Ark.MediatorFramework.AzureFunctions.Generators;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.MediatorFramework.Generators;
 using Ark.Tools.Solid;
@@ -123,6 +124,28 @@ public sealed class GeneratorSnapshotTests
             """);
         grpc.Should().Contain("IAsyncEnumerable<string> GetStreamAsync");
         grpc.Should().Contain("returns (stream string)");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorEmitsVersionedHttpTrigger()
+    {
+        var result = RunGenerator<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/greetings/{id}")]
+            [Versioning(Introduced = 1, Retired = 3)]
+            public sealed class GetGreeting : IQuery<string> { }
+            """);
+
+        result.Should().Contain("Function(\"GetGreeting_v1\")");
+        result.Should().Contain("Route = \"api/v1/greetings/{id}\"");
+        result.Should().Contain("Function(\"GetGreeting_v2\")");
+        result.Should().Contain("Route = \"api/v2/greetings/{id}\"");
+        result.Should().Contain("AuthorizationLevel.Anonymous");
+        result.Should().Contain("InvokeAsync<global::GetGreeting>");
     }
 
     [TestMethod]
