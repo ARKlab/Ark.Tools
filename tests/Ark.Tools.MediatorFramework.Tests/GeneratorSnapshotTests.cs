@@ -1529,6 +1529,23 @@ public sealed class GeneratorSnapshotTests
         {
             return Task.CompletedTask;
         }
+
+        public Task SignInAsync(
+            HttpContext context,
+            string? scheme,
+            System.Security.Claims.ClaimsPrincipal principal,
+            AuthenticationProperties? properties)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task SignOutAsync(
+            HttpContext context,
+            string? scheme,
+            AuthenticationProperties? properties)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     private sealed record UnformattableMessage;
