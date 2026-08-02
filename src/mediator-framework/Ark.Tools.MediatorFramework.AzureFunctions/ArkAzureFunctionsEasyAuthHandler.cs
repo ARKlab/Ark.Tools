@@ -6,12 +6,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using System.Security.Claims;
-using System.Text;
 using System.Text.Json;
 
 namespace Ark.MediatorFramework.AzureFunctions;
 
-internal sealed class ArkAzureFunctionsEasyAuthHandler(
+internal sealed partial class ArkAzureFunctionsEasyAuthHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory logger,
     System.Text.Encodings.Web.UrlEncoder encoder)
@@ -36,7 +35,7 @@ internal sealed class ArkAzureFunctionsEasyAuthHandler(
             : 16 * 1024;
         if (limit <= 0 || encoded.Length > limit)
         {
-            _logger.LogWarning("Easy Auth principal header was rejected because it exceeded the configured size limit.");
+            HeaderTooLarge(_logger);
             return Task.FromResult(AuthenticateResult.Fail("The Easy Auth principal is invalid."));
         }
 
@@ -74,13 +73,25 @@ internal sealed class ArkAzureFunctionsEasyAuthHandler(
         }
         catch (FormatException)
         {
-            _logger.LogWarning("Easy Auth principal header was rejected because it was not valid base64.");
+            InvalidBase64(_logger);
             return Task.FromResult(AuthenticateResult.Fail("The Easy Auth principal is invalid."));
         }
         catch (JsonException)
         {
-            _logger.LogWarning("Easy Auth principal header was rejected because it was not valid JSON.");
+            InvalidJson(_logger);
             return Task.FromResult(AuthenticateResult.Fail("The Easy Auth principal is invalid."));
         }
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning,
+        Message = "Easy Auth principal header was rejected because it exceeded the configured size limit.")]
+    private static partial void HeaderTooLarge(ILogger logger);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning,
+        Message = "Easy Auth principal header was rejected because it was not valid base64.")]
+    private static partial void InvalidBase64(ILogger logger);
+
+    [LoggerMessage(EventId = 3, Level = LogLevel.Warning,
+        Message = "Easy Auth principal header was rejected because it was not valid JSON.")]
+    private static partial void InvalidJson(ILogger logger);
 }

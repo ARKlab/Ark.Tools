@@ -27,7 +27,11 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
         Action<AuthenticationOptions>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return services.AddAuthentication(configure);
+        if (configure is null)
+            services.AddAuthentication();
+        else
+            services.AddAuthentication(configure);
+        return services;
     }
 
     /// <summary>

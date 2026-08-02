@@ -12,7 +12,6 @@ using AwesomeAssertions;
 
 using System.Collections.Immutable;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 
 using Microsoft.CodeAnalysis;
@@ -292,10 +291,18 @@ public sealed class GeneratorSnapshotTests
             result.Succeeded.Should().BeTrue();
             result.Principal!.FindFirst("sub")!.Value.Should().Be("caller");
 
-            context.Request.Headers["X-MS-CLIENT-PRINCIPAL"] = "not-base64";
-            var malformed = await context.RequestServices
+            var malformedServices = new ServiceCollection()
+                .AddLogging()
+                .AddArkAzureFunctionsEasyAuthAuthentication()
+                .BuildServiceProvider();
+            var malformedContext = new DefaultHttpContext
+            {
+                RequestServices = malformedServices,
+            };
+            malformedContext.Request.Headers["X-MS-CLIENT-PRINCIPAL"] = "!";
+            var malformed = await malformedContext.RequestServices
                 .GetRequiredService<IAuthenticationService>()
-                .AuthenticateAsync(context, "ArkAzureFunctionsEasyAuth");
+                .AuthenticateAsync(malformedContext, "ArkAzureFunctionsEasyAuth");
             malformed.Succeeded.Should().BeFalse();
         }
         finally
