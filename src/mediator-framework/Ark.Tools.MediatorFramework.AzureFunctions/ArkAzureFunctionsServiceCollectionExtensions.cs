@@ -3,6 +3,12 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
+using SimpleInjector;
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+
 namespace Ark.MediatorFramework.AzureFunctions;
 
 /// <summary>Registers the runtime services used by generated Azure Functions.</summary>
@@ -10,12 +16,60 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
 {
     /// <summary>
     /// Registers the Azure Functions mediator runtime services.
+    /// Configures HTTP JSON binding with Ark defaults (camelCase, NodaTime, enum-as-member).
     /// </summary>
     /// <param name="services">The service collection to configure.</param>
+    /// <param name="additionalContexts">
+    /// Optional source-generated <see cref="JsonSerializerContext"/> instances to include in the
+    /// type-info resolver chain. When provided, types in these contexts are resolved without
+    /// reflection. A <see cref="DefaultJsonTypeInfoResolver"/> fallback is always appended.
+    /// </param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkAzureFunctions(this IServiceCollection services)
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "DefaultJsonTypeInfoResolver is only used as a fallback for types not covered by the supplied source-generated contexts.")]
+    public static IServiceCollection AddArkAzureFunctions(
+        this IServiceCollection services,
+        params JsonSerializerContext[] additionalContexts)
     {
         ArgumentNullException.ThrowIfNull(services);
+
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.ConfigureArkDefaults();
+            IJsonTypeInfoResolver resolver = new DefaultJsonTypeInfoResolver();
+            if (additionalContexts.Length > 0)
+            {
+                var resolvers = new IJsonTypeInfoResolver[additionalContexts.Length + 1];
+                for (var i = 0; i < additionalContexts.Length; i++)
+                    resolvers[i] = additionalContexts[i];
+                resolvers[additionalContexts.Length] = new DefaultJsonTypeInfoResolver();
+                resolver = JsonTypeInfoResolver.Combine(resolvers);
+            }
+
+            options.SerializerOptions.TypeInfoResolver = resolver;
+        });
+
         return services;
+    }
+
+    /// <summary>
+    /// Registers the Azure Functions mediator runtime services and the application container.
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    /// <param name="container">The application Simple Injector container.</param>
+    /// <param name="additionalContexts">
+    /// Optional source-generated <see cref="JsonSerializerContext"/> instances to include in the
+    /// type-info resolver chain.
+    /// </param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkAzureFunctions(
+        this IServiceCollection services,
+        Container container,
+        params JsonSerializerContext[] additionalContexts)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(container);
+        services.AddSingleton(container);
+        return services.AddArkAzureFunctions(additionalContexts);
     }
 }

@@ -145,11 +145,57 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("Function(\"GetGreeting_v2\")");
         result.Generated.Should().Contain("Route = \"api/v2/greetings/{id}\"");
         result.Generated.Should().Contain("AuthorizationLevel.Anonymous");
-        result.Generated.Should().Contain("InvokeAsync<global::GetGreeting>");
+        result.Generated.Should().Contain("IQueryHandler<global::GetGreeting");
+        result.Generated.Should().Contain("new global::GetGreeting()");
+        result.Generated.Should().NotContain("InvokeQueryAsync");
         result.Diagnostics.Should().NotContain(
             diagnostic => diagnostic.Id == "ARKMF030"
                 || diagnostic.Id == "ARKMF031"
                 || diagnostic.Id == "ARKMF032");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorEmitsRouteBindingWithTryConvertSafe()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<string>
+            {
+                public int Id { get; set; }
+            }
+            """);
+
+        result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>");
+        result.Generated.Should().NotContain("ArkTypeConverter.TryConvert<int>");
+        result.Generated.Should().Contain("BINDING_FAILURE");
+        result.Generated.Should().NotContain("InvokeQueryAsync");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorSkipsConverterForStringBinding()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/items/{name}")]
+            public sealed class GetItem : IQuery<string>
+            {
+                [HttpRoute("name")]
+                public string Name { get; set; }
+            }
+            """);
+
+        result.Generated.Should().NotContain("ArkTypeConverter");
+        result.Generated.Should().Contain("?.ToString()");
+        result.Generated.Should().NotContain("InvokeQueryAsync");
     }
 
     [TestMethod]

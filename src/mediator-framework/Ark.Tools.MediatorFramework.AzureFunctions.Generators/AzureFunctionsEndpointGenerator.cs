@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using Microsoft.CodeAnalysis;
 
@@ -16,9 +17,17 @@ namespace Ark.MediatorFramework.AzureFunctions.Generators;
 [Generator(LanguageNames.CSharp)]
 public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 {
+    // ponytail: [GeneratedRegex] is not available for netstandard2.0 targets; static field compiles and caches once.
+    private static readonly Regex _routeParamRegex = new Regex(@"\{(?<param>[^}:]+)(?::[^}]+)?\}", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
     private const string HostAttribute = "Ark.MediatorFramework.HttpHostAttribute";
     private const string EndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
     private const string VersioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
+    private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
+    private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
+    private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
+    private const string SolidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
+    private const string SolidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
+    private const string SolidCommand = "global::Ark.Tools.Solid.ICommand";
 
     private static readonly DiagnosticDescriptor MessagePackNotSupported = new(
         "ARKMF030",
@@ -168,23 +177,117 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("{");
         foreach (var endpoint in valid)
         {
-            source.Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
-                .Append(endpoint.FunctionName).AppendLine("\")]");
-            source.Append("    public static async global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Http.IResult> ")
-                .Append(endpoint.FunctionName).AppendLine("(");
-            source.Append("        [global::Microsoft.Azure.Functions.Worker.HttpTrigger(")
-                .Append("global::Microsoft.Azure.Functions.Worker.AuthorizationLevel.Anonymous, \"")
-                .Append(endpoint.Verb.ToLowerInvariant()).Append("\", Route = \"")
-                .Append(Escape(endpoint.Route)).AppendLine("\")]");
-            source.AppendLine("        global::Microsoft.AspNetCore.Http.HttpRequest request,");
-            source.AppendLine("        global::System.Threading.CancellationToken cancellationToken)");
-            source.AppendLine("    {");
-            source.Append("        return await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsInvocation.InvokeAsync<")
-                .Append(endpoint.FullyQualifiedType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
-            source.AppendLine("    }");
+            EmitFunction(source, endpoint);
         }
         source.AppendLine("}");
         context.AddSource("ArkGeneratedFunctions.g.cs", source.ToString());
+    }
+
+    private static void EmitFunction(StringBuilder source, Endpoint endpoint)
+    {
+        var hasBody = endpoint.Verb is "POST" or "PUT" or "PATCH";
+        var routeProperties = endpoint.Properties.Where(p => p.IsRoute && !p.IsServerSet).ToArray();
+        var queryProperties = endpoint.Properties.Where(p => p.IsQuery && !p.IsServerSet).ToArray();
+        var serverSetProperties = endpoint.Properties.Where(p => p.IsServerSet).ToArray();
+
+        source.Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
+            .Append(endpoint.FunctionName).AppendLine("\")]");
+        source.Append("    public static async global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Http.IResult> ")
+            .Append(endpoint.FunctionName).AppendLine("(");
+        source.Append("        [global::Microsoft.Azure.Functions.Worker.HttpTrigger(")
+            .Append("global::Microsoft.Azure.Functions.Worker.AuthorizationLevel.Anonymous, \"")
+            .Append(endpoint.Verb.ToLowerInvariant()).Append("\", Route = \"")
+            .Append(Escape(endpoint.Route)).AppendLine("\")]");
+        source.AppendLine("        global::Microsoft.AspNetCore.Http.HttpRequest request,");
+        source.AppendLine("        global::System.Threading.CancellationToken cancellationToken)");
+        source.AppendLine("    {");
+
+        // Body or default-instance binding
+        if (hasBody)
+        {
+            source.Append("        ").Append(endpoint.FullyQualifiedType).AppendLine("? _bodyNullable;");
+            source.AppendLine("        try");
+            source.AppendLine("        {");
+            source.Append("            _bodyNullable = await request.ReadFromJsonAsync<").Append(endpoint.FullyQualifiedType).AppendLine(">(cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        }");
+            source.AppendLine("        catch (global::System.Text.Json.JsonException ex)");
+            source.AppendLine("        {");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: ex.Message);");
+            source.AppendLine("        }");
+            source.AppendLine("        if (_bodyNullable is null)");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
+            source.AppendLine("        var body = _bodyNullable;");
+        }
+        else
+        {
+            source.Append("        var body = new ").Append(endpoint.FullyQualifiedType).AppendLine("();");
+        }
+
+        // Route value binding (per-property, no runtime reflection)
+        foreach (var prop in routeProperties)
+        {
+            if (prop.IsString)
+            {
+                source.Append("        body.").Append(prop.Name).Append(" = request.RouteValues[").Append(Literal(prop.BindingName)).AppendLine("]?.ToString();");
+            }
+            else
+            {
+                var varName = "_route_" + prop.Name;
+                source.Append("        if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(request.RouteValues[").Append(Literal(prop.BindingName)).Append("]?.ToString(), out var ").Append(varName).AppendLine("))");
+                source.Append("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Route value '").Append(prop.BindingName).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+                source.Append("        body.").Append(prop.Name).Append(" = ").Append(varName).AppendLine(";");
+            }
+        }
+
+        // Query string binding (per-property, no runtime reflection)
+        foreach (var prop in queryProperties)
+        {
+            source.Append("        if (request.Query.TryGetValue(").Append(Literal(prop.Name)).Append(", out var _qs_").Append(prop.Name).AppendLine("))");
+            source.AppendLine("        {");
+            if (prop.IsString)
+            {
+                source.Append("            body.").Append(prop.Name).Append(" = (string?)_qs_").Append(prop.Name).AppendLine(";");
+            }
+            else
+            {
+                var varName = "_query_" + prop.Name;
+                source.Append("            if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(_qs_").Append(prop.Name).Append(", out var ").Append(varName).AppendLine("))");
+                source.Append("                return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '").Append(prop.Name).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+                source.Append("            body.").Append(prop.Name).Append(" = ").Append(varName).AppendLine(";");
+            }
+            source.AppendLine("        }");
+        }
+
+        // Server-set property reset (per-property, no runtime reflection)
+        foreach (var prop in serverSetProperties)
+        {
+            source.Append("        body.").Append(prop.Name).AppendLine(" = default;");
+        }
+
+        // Dispatch via Simple Injector scope
+        source.AppendLine("        var _container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(request.HttpContext.RequestServices);");
+        source.AppendLine("        await using var _scope = global::SimpleInjector.Lifestyles.AsyncScopedLifestyle.BeginScope(_container);");
+
+        if (endpoint.Kind == HandlerKind.Command)
+        {
+            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<").Append(endpoint.FullyQualifiedType).AppendLine(">>();");
+            source.AppendLine("        await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.NoContent();");
+        }
+        else if (endpoint.Kind == HandlerKind.Query)
+        {
+            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IQueryHandler<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">>();");
+            source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        return _result is null ? global::Microsoft.AspNetCore.Http.Results.NotFound() : global::Microsoft.AspNetCore.Http.Results.Ok(_result);");
+        }
+        else
+        {
+            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IRequestHandler<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">>();");
+            source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        return _result is null ? global::Microsoft.AspNetCore.Http.Results.NoContent() : global::Microsoft.AspNetCore.Http.Results.Ok(_result);");
+        }
+
+        source.AppendLine("    }");
     }
 
     private readonly record struct HostInfo(
@@ -212,6 +315,64 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var introduced = GetNamedInt(versioning, "Introduced", 1);
         var retired = GetNamedInt(versioning, "Retired", 0);
         var messagePack = GetNamedBool(attribute, "AcceptsMessagePack");
+        var kind = HandlerKind.None;
+        string? responseType = null;
+        foreach (var iface in type.AllInterfaces)
+        {
+            var definition = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            if (definition == SolidRequest)
+            {
+                kind = HandlerKind.Request;
+                responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                break;
+            }
+            if (definition == SolidQuery)
+            {
+                kind = HandlerKind.Query;
+                responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                break;
+            }
+            if (definition == SolidCommand)
+            {
+                kind = HandlerKind.Command;
+                break;
+            }
+        }
+        if (kind == HandlerKind.None)
+            return null;
+
+        // Extract route parameter names from the template
+        var routeNames = new HashSet<string>(
+            _routeParamRegex.Matches(template!)
+                .Cast<Match>()
+                .Select(m => m.Groups["param"].Value)
+                .Where(n => !string.Equals(n, "version", StringComparison.OrdinalIgnoreCase)),
+            StringComparer.OrdinalIgnoreCase);
+
+        // Extract per-property binding info at generation time (no runtime reflection per request)
+        var properties = AllProperties(type)
+            .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic
+                && p.SetMethod is { DeclaredAccessibility: Accessibility.Public })
+            .Select(p =>
+            {
+                var routeAttr = p.GetAttributes()
+                    .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == HttpRouteAttribute);
+                var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
+                var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
+                var isQuery = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == HttpQueryAttribute);
+                var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ServerSetAttribute);
+                var isString = p.Type.SpecialType == SpecialType.System_String;
+                return new PropertyInfo(
+                    p.Name,
+                    p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    isRoute,
+                    bindingName,
+                    isQuery,
+                    isServerSet,
+                    isString);
+            })
+            .ToImmutableArray();
+
         return new Endpoint(
             type.Name,
             type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -223,7 +384,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             prefix,
             template,
             Math.Max(1, introduced),
-            retired);
+            retired,
+            kind,
+            responseType ?? "global::System.Void",
+            properties);
     }
 
     private static bool IsSelected(
@@ -266,6 +430,13 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
     }
 
+    private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+            foreach (var member in current.GetMembers().OfType<IPropertySymbol>())
+                yield return member;
+    }
+
     private static int GetNamedInt(AttributeData? attribute, string name, int fallback)
     {
         if (attribute is null)
@@ -295,6 +466,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private static string Escape(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
+    private static string Literal(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+
     private static string ExpandRoute(string prefix, string template, int version)
     {
         var versionText = version.ToString(CultureInfo.InvariantCulture);
@@ -303,6 +476,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             : Combine(prefix.Replace("{version}", versionText), template);
         return route.Trim('/');
     }
+
+    private readonly record struct PropertyInfo(
+        string Name,
+        string TypeFullName,
+        bool IsRoute,
+        string BindingName,
+        bool IsQuery,
+        bool IsServerSet,
+        bool IsString);
 
     private readonly record struct Endpoint(
         string TypeName,
@@ -315,5 +497,16 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         string Prefix,
         string Template,
         int Introduced,
-        int Retired);
+        int Retired,
+        HandlerKind Kind,
+        string ResponseType,
+        ImmutableArray<PropertyInfo> Properties);
+
+    private enum HandlerKind
+    {
+        None,
+        Request,
+        Query,
+        Command
+    }
 }
