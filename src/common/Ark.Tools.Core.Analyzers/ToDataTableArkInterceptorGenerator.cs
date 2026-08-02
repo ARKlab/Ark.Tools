@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
@@ -52,21 +51,14 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
         var languageVersionSupported = context.CompilationProvider.Select(static (compilation, _) =>
             compilation is CSharpCompilation csharpCompilation
-            && csharpCompilation.LanguageVersion >= LanguageVersion.CSharp14);
+            && (int)csharpCompilation.LanguageVersion >= 1400);
 
-        var namespaceOptedIn = context.AnalyzerConfigOptionsProvider.Select(static (options, _) =>
-        {
-            options.GlobalOptions.TryGetValue("build_property.InterceptorsNamespaces", out var a);
-            options.GlobalOptions.TryGetValue("build_property.InterceptorsPreviewNamespaces", out var b);
-            return SplitNamespaceList(a).Concat(SplitNamespaceList(b)).Contains(GeneratedNamespace, StringComparer.Ordinal);
-        });
-
-        var combined = callSites.Combine(languageVersionSupported).Combine(namespaceOptedIn);
+        var combined = callSites.Combine(languageVersionSupported);
 
         context.RegisterSourceOutput(combined, static (spc, data) =>
         {
-            var ((sites, languageOk), namespaceOk) = data;
-            if (!languageOk || !namespaceOk || sites.IsDefaultOrEmpty)
+            var (sites, languageOk) = data;
+            if (!languageOk || sites.IsDefaultOrEmpty)
                 return;
 
             var source = Emit(sites);
@@ -74,11 +66,6 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
                 spc.AddSource("ToDataTableArkInterceptors.g.cs", source);
         });
     }
-
-    private static IEnumerable<string> SplitNamespaceList(string? value) =>
-        string.IsNullOrEmpty(value)
-            ? []
-            : value!.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(static s => s.Trim());
 
     private static bool IsCandidateInvocation(SyntaxNode node)
     {
@@ -105,7 +92,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         if (symbolInfo.Symbol is not IMethodSymbol method)
             return null;
 
-        var original = method.OriginalDefinition;
+        var original = (method.ReducedFrom ?? method).OriginalDefinition;
         if (original.Name != TargetMethodName
             || original.ContainingType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)) != TargetContainingType
             || original.TypeParameters.Length != 1
@@ -137,7 +124,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     // public getter. Anything else is left for the reflection-based fallback to handle.
     private static TypeModel? BuildTypeModel(INamedTypeSymbol type)
     {
-        if (!IsGloballyAccessible(type))
+        if (type.IsAnonymousType || !IsGloballyAccessible(type))
             return null;
 
         if (type.TypeKind == TypeKind.Struct)
@@ -155,29 +142,41 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             return null; // Interfaces, enums-as-T, delegates, etc. are not supported; fall back safely.
         }
 
-        var members = ImmutableArray.CreateBuilder<MemberModel>();
+        var fields = ImmutableArray.CreateBuilder<MemberModel>();
+        var properties = ImmutableArray.CreateBuilder<MemberModel>();
         foreach (var member in type.GetMembers())
         {
             switch (member)
             {
-                case IFieldSymbol { DeclaredAccessibility: Accessibility.Public, IsStatic: false, IsImplicitlyDeclared: false } field:
-                    members.Add(BuildMemberModel(field.Name, field.Type));
+                case IFieldSymbol { DeclaredAccessibility: Accessibility.Public, IsImplicitlyDeclared: false } field:
+                    if (field.IsStatic || RequiresRuntimeValueConversion(field.Type))
+                        return null;
+                    fields.Add(BuildMemberModel(field.Name, field.Type));
                     break;
-
-                case IPropertySymbol { DeclaredAccessibility: Accessibility.Public, IsStatic: false, IsIndexer: false } property:
-                    if (property.GetMethod is not { DeclaredAccessibility: Accessibility.Public })
+                case IPropertySymbol { DeclaredAccessibility: Accessibility.Public } property:
+                    if (property.IsStatic
+                        || property.IsIndexer
+                        || RequiresRuntimeValueConversion(property.Type)
+                        || property.GetMethod is not { DeclaredAccessibility: Accessibility.Public })
+                    {
                         return null; // Matches a property reflection would include but GetValue would throw on; stay safe and fall back.
-                    members.Add(BuildMemberModel(property.Name, property.Type));
+                    }
+                    properties.Add(BuildMemberModel(property.Name, property.Type));
                     break;
             }
         }
 
         return new TypeModel(
             type.ToFullyQualifiedString(),
-            type.Name,
+            type.MetadataName,
             IsReferenceType: type.TypeKind == TypeKind.Class,
             IsPrimitiveScalar: false,
-            Members: members.ToImmutable());
+            Members: fields.ToImmutable().AddRange(properties));
+    }
+
+    private static bool RequiresRuntimeValueConversion(ITypeSymbol type)
+    {
+        return type.SpecialType == SpecialType.System_Object || type.TypeKind == TypeKind.Interface;
     }
 
     private static MemberModel BuildMemberModel(string name, ITypeSymbol declaredType)
@@ -269,6 +268,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine("namespace System.Runtime.CompilerServices");
         sb.AppendLine("{");
+        sb.AppendLine("    [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = true)]");
         sb.AppendLine("    file sealed class InterceptsLocationAttribute : System.Attribute");
         sb.AppendLine("    {");
         sb.AppendLine("        public InterceptsLocationAttribute(int version, string data) { }");

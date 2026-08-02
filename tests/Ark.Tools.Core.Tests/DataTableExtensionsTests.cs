@@ -83,6 +83,11 @@ public class DataTableExtensionsTests
     {
     }
 
+    private sealed class RuntimeTypedEntity
+    {
+        public object? Value { get; set; }
+    }
+
     /// <summary>All 10 mixed-type columns are created with the expected .NET column types.</summary>
     [TestMethod]
     public void ToDataTableArk_WithMixedTypeProperties_CreatesExpectedColumnSchema()
@@ -175,6 +180,22 @@ public class DataTableExtensionsTests
         table.Columns["NullableEnum"]!.DataType.Should().Be<string>();
         table.Rows[0]["NullableEnum"].Should().Be("Active");
         table.Rows[1].IsNull("NullableEnum").Should().BeTrue();
+    }
+
+    /// <summary>Runtime enum and NodaTime values retain historical conversions when declared as object.</summary>
+    [TestMethod]
+    public void ToDataTableArk_WithRuntimeTypedValues_ConvertsValues()
+    {
+        var entities = new[]
+        {
+            new RuntimeTypedEntity { Value = Status.Active },
+            new RuntimeTypedEntity { Value = new LocalDate(2024, 5, 1) },
+        };
+
+        using var table = entities.ToDataTableArk();
+
+        table.Rows[0]["Value"].Should().Be("Active");
+        table.Rows[1]["Value"].Should().Be(new DateTime(2024, 5, 1));
     }
 
     /// <summary>Plain nullable value types (not enums, not NodaTime) round-trip both null and non-null values.</summary>

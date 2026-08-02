@@ -81,6 +81,41 @@ public class InterceptorRuntimeTests
         table.Rows[1]["Y"].Should().Be(4);
     }
 
+    /// <summary>Interceptor columns preserve the reflection fallback's fields-before-properties order.</summary>
+    [TestMethod]
+    public void ToDataTableArk_WithMixedMembers_OrdersFieldsBeforeProperties()
+    {
+        var entities = new[] { new MixedMemberEntity { Property = 1, Field = 2 } };
+
+        using var table = entities.ToDataTableArk();
+
+        table.Columns[0].ColumnName.Should().Be("Field");
+        table.Columns[1].ColumnName.Should().Be("Property");
+    }
+
+    /// <summary>Types with static members retain fallback behavior instead of using an incompatible interceptor.</summary>
+    [TestMethod]
+    public void ToDataTableArk_WithStaticMember_UsesFallback()
+    {
+        var entities = new[] { new StaticMemberEntity { Value = 1 } };
+
+        using var table = entities.ToDataTableArk();
+
+        table.Columns["Constant"].Should().NotBeNull();
+        table.Rows[0]["Constant"].Should().Be(7);
+    }
+
+    /// <summary>Anonymous types remain valid call sites by using the reflection fallback.</summary>
+    [TestMethod]
+    public void ToDataTableArk_WithAnonymousType_UsesFallback()
+    {
+        var entities = new[] { new { Id = 1 } };
+
+        using var table = entities.ToDataTableArk();
+
+        table.Rows[0]["Id"].Should().Be(1);
+    }
+
     /// <summary>
     /// A type with a custom base class is deliberately ineligible for interception; the call still
     /// produces correct results via the safe reflection fallback.
@@ -134,8 +169,11 @@ public class InterceptorRuntimeTests
         var entityMethodIndex = generated.IndexOf("global::Ark.Tools.Core.Interceptors.Tests.InterceptedEntity> source", StringComparison.Ordinal);
         entityMethodIndex.Should().BeGreaterThan(0);
         var precedingBlock = generated[..entityMethodIndex];
-        var lastAttributeBlockStart = precedingBlock.LastIndexOf("        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute", StringComparison.Ordinal);
-        var attributeCount = CountOccurrences(precedingBlock[lastAttributeBlockStart..], "InterceptsLocationAttribute");
+        var signatureStart = precedingBlock.LastIndexOf('\n') + 1;
+        var attributeCount = precedingBlock[..signatureStart].TrimEnd().Split('\n')
+            .Reverse()
+            .TakeWhile(static line => line.Contains("InterceptsLocationAttribute", StringComparison.Ordinal))
+            .Count();
         attributeCount.Should().Be(2);
     }
 
@@ -152,19 +190,6 @@ public class InterceptorRuntimeTests
         generated.Should().NotContain("GenericFallbackHelper");
     }
 
-    private static int CountOccurrences(string text, string value)
-    {
-        var count = 0;
-        var index = 0;
-        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
-        {
-            count++;
-            index += value.Length;
-        }
-
-        return count;
-    }
-
     private static async Task<string> ReadGeneratedInterceptorSourceAsync()
     {
         var directory = Path.GetDirectoryName(GetThisFilePath())!;
@@ -176,4 +201,5 @@ public class InterceptorRuntimeTests
     }
 
     private static string GetThisFilePath([CallerFilePath] string path = "") => path;
+
 }

@@ -64,6 +64,27 @@ public record struct InterceptedPoint
     public int Y { get; set; }
 }
 
+/// <summary>A public type with mixed members used to verify fields-before-properties ordering.</summary>
+public sealed class MixedMemberEntity
+{
+    /// <summary>Gets or sets the property value.</summary>
+    public int Property { get; set; }
+
+    /// <summary>The field value.</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1051:Do not declare visible instance fields", Justification = "Required to verify DataTable field ordering.")]
+    public int Field;
+}
+
+/// <summary>A public type with a static member that must use the reflection fallback.</summary>
+public sealed class StaticMemberEntity
+{
+    /// <summary>The constant value included by the reflection fallback.</summary>
+    public const int Constant = 7;
+
+    /// <summary>Gets or sets the instance value.</summary>
+    public int Value { get; set; }
+}
+
 /// <summary>
 /// A type deriving from a custom base class, deliberately ineligible for interception (the
 /// generator only intercepts "flat" classes deriving directly from <see cref="object"/>), used to

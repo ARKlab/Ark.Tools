@@ -107,6 +107,7 @@ public static class DataTableExtensions
         private static readonly PropertyInfo _localTimeMidnight = typeof(LocalTime).GetProperty(nameof(LocalTime.Midnight))!;
         private static readonly PropertyInfo _localTimeTickOfDay = typeof(LocalTime).GetProperty(nameof(LocalTime.TickOfDay))!;
         private static readonly MethodInfo _timeSpanFromTicks = typeof(TimeSpan).GetMethod(nameof(TimeSpan.FromTicks), [typeof(long)])!;
+        private static readonly MethodInfo _convertColumnValue = typeof(ShredObjectToDataTable<T>).GetMethod(nameof(ConvertColumnValue), BindingFlags.Static | BindingFlags.NonPublic)!;
 
         private static readonly bool _isPrimitive = typeof(T).IsPrimitive;
         private static readonly ColumnPlan[] _plan = BuildPlan();
@@ -392,6 +393,9 @@ public static class DataTableExtensions
 
         private static Expression BuildNonNullableConversion(Expression access, Type memberType)
         {
+            if (memberType == typeof(object) || memberType.IsInterface)
+                return Expression.Call(_convertColumnValue, Expression.Convert(access, typeof(object)));
+
             if (memberType.IsEnum)
                 return Expression.Call(access, _objectToString);
 
@@ -422,6 +426,26 @@ public static class DataTableExtensions
 
             // Direct passthrough: the caller boxes this via Expression.Convert(..., typeof(object)).
             return access;
+        }
+
+        private static object? ConvertColumnValue(object? value)
+        {
+            if (value is null)
+                return null;
+
+            if (value.GetType().IsEnum)
+                return value.ToString();
+
+            return value switch
+            {
+                LocalDate localDate => localDate.ToDateTimeUnspecified(),
+                LocalDateTime localDateTime => localDateTime.ToDateTimeUnspecified(),
+                Instant instant => instant.ToDateTimeUtc(),
+                OffsetDateTime offsetDateTime => offsetDateTime.ToDateTimeOffset(),
+                OffsetDate offsetDate => offsetDate.At(LocalTime.Midnight).ToDateTimeOffset(),
+                LocalTime localTime => TimeSpan.FromTicks(localTime.TickOfDay),
+                _ => value,
+            };
         }
     }
 }
