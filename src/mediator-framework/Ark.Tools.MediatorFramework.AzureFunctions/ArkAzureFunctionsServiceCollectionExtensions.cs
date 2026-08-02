@@ -49,7 +49,7 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
         services.AddOptions<ArkAzureFunctionsAuthenticationOptions>();
         if (configure is not null)
             services.Configure(configure);
-        services.AddAuthentication(options => options.DefaultAuthenticateScheme = "ArkAzureFunctionsEasyAuth")
+        services.AddAuthentication(options => options.DefaultScheme = "ArkAzureFunctionsEasyAuth")
             .AddScheme<AuthenticationSchemeOptions, ArkAzureFunctionsEasyAuthHandler>(
                 "ArkAzureFunctionsEasyAuth",
                 _ => { });
