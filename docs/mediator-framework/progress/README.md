@@ -13,6 +13,7 @@ reference documentation (what the framework *is*) stays one level up:
 | [`pre-release-review.md`](pre-release-review.md) | Adversarial pre-release review (DX + security), gap analysis vs `Ark.ReferenceProject`, recorded decisions D1–D8. |
 | [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 items. |
 | [`azure-functions-decision-log.md`](azure-functions-decision-log.md) | Reviewable decisions for the proposed Azure Functions hosting workstream. |
+| [`aspnetcore-hosting-gap-analysis.md`](aspnetcore-hosting-gap-analysis.md) | Reviewable 2026 gap analysis and implementation tasks for Minimal API hosting and sample startup parity. |
 
 ## Working agreement
 
