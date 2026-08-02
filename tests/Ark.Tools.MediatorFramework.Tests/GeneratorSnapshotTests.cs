@@ -129,7 +129,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorEmitsVersionedHttpTrigger()
     {
-        var result = RunGenerator<AzureFunctionsEndpointGenerator>(
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -140,12 +140,74 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetGreeting : IQuery<string> { }
             """);
 
-        result.Should().Contain("Function(\"GetGreeting_v1\")");
-        result.Should().Contain("Route = \"api/v1/greetings/{id}\"");
-        result.Should().Contain("Function(\"GetGreeting_v2\")");
-        result.Should().Contain("Route = \"api/v2/greetings/{id}\"");
-        result.Should().Contain("AuthorizationLevel.Anonymous");
-        result.Should().Contain("InvokeAsync<global::GetGreeting>");
+        result.Generated.Should().Contain("Function(\"GetGreeting_v1\")");
+        result.Generated.Should().Contain("Route = \"api/v1/greetings/{id}\"");
+        result.Generated.Should().Contain("Function(\"GetGreeting_v2\")");
+        result.Generated.Should().Contain("Route = \"api/v2/greetings/{id}\"");
+        result.Generated.Should().Contain("AuthorizationLevel.Anonymous");
+        result.Generated.Should().Contain("InvokeAsync<global::GetGreeting>");
+        result.Diagnostics.Should().NotContain(
+            diagnostic => diagnostic.Id == "ARKMF030"
+                || diagnostic.Id == "ARKMF031"
+                || diagnostic.Id == "ARKMF032");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorReportsMessagePackEndpoints()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/messages", AcceptsMessagePack = true)]
+            public sealed class GetMessages : IQuery<string> { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF030");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorReportsDuplicateRoutes()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/messages")]
+            public sealed class GetMessages : IQuery<string> { }
+            [HttpEndpoint("GET", "/messages")]
+            public sealed class ListMessages : IQuery<string> { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF031");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorReportsDuplicateNames()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            namespace First
+            {
+                [HttpEndpoint("GET", "/messages")]
+                public sealed class GetMessages : IQuery<string> { }
+            }
+            namespace Second
+            {
+                [HttpEndpoint("POST", "/messages")]
+                public sealed class GetMessages : IQuery<string> { }
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF032");
     }
 
     [TestMethod]

@@ -47,42 +47,68 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var hosts = context.SyntaxProvider.ForAttributeWithMetadataName(
+                HostAttribute,
+                static (_, _) => true,
+                static (attributeContext, _) => ExtractHost(attributeContext))
+            .Where(static host => host is not null)
+            .Select(static (host, _) => host!.Value)
+            .Collect();
+        var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
+                EndpointAttribute,
+                static (_, _) => true,
+                static (attributeContext, _) => new EndpointCandidate(
+                    (INamedTypeSymbol)attributeContext.TargetSymbol,
+                    attributeContext.Attributes[0]))
+            .Collect();
+
         context.RegisterSourceOutput(
-            context.CompilationProvider,
-            static (productionContext, compilation) => Emit(productionContext, compilation));
+            hosts.Combine(sourceEndpoints),
+            static (productionContext, pair) => Emit(productionContext, pair.Left, pair.Right));
     }
 
-    private static void Emit(SourceProductionContext context, Compilation compilation)
+    private static HostInfo? ExtractHost(GeneratorAttributeSyntaxContext context)
     {
-        var hostAttribute = compilation.GetTypeByMetadataName(HostAttribute);
-        var endpointAttribute = compilation.GetTypeByMetadataName(EndpointAttribute);
-        if (hostAttribute is null || endpointAttribute is null)
-            return;
+        var host = context.Attributes[0];
+        if (host.ConstructorArguments.Length < 2
+            || host.ConstructorArguments[0].Value is not INamedTypeSymbol marker
+            || host.ConstructorArguments[1].Value is not string prefix)
+            return null;
 
-        var hosts = compilation.Assembly.GetAttributes()
-            .Where(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, hostAttribute))
-            .ToArray();
-        if (hosts.Length == 0)
+        return new HostInfo(
+            marker,
+            prefix,
+            GetTypes(host, "IncludedContracts"),
+            GetTypes(host, "ExcludedContracts"),
+            marker.Locations.Any(location => location.IsInSource));
+    }
+
+    private static void Emit(
+        SourceProductionContext context,
+        ImmutableArray<HostInfo> hosts,
+        ImmutableArray<EndpointCandidate> sourceEndpoints)
+    {
+        if (hosts.IsDefaultOrEmpty)
             return;
 
         var endpoints = new List<Endpoint>();
         foreach (var host in hosts)
         {
-            if (host.ConstructorArguments.Length < 2
-                || host.ConstructorArguments[0].Value is not INamedTypeSymbol marker
-                || host.ConstructorArguments[1].Value is not string prefix)
-                continue;
-
-            var included = GetTypes(host, "IncludedContracts");
-            var excluded = GetTypes(host, "ExcludedContracts");
-            foreach (var type in AllTypes(marker.ContainingAssembly.GlobalNamespace))
+            var candidates = host.MarkerIsInSource
+                ? sourceEndpoints.Where(candidate =>
+                    SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly))
+                : AllTypes(host.Marker.ContainingAssembly.GlobalNamespace)
+                    .Select(type => new EndpointCandidate(
+                        type,
+                        type.GetAttributes().FirstOrDefault(attribute =>
+                            attribute.AttributeClass?.ToDisplayString() == EndpointAttribute)))
+                    .Where(candidate => candidate.Attribute is not null);
+            foreach (var candidate in candidates)
             {
-                var attribute = type.GetAttributes()
-                    .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(candidate.AttributeClass, endpointAttribute));
-                if (attribute is null || !IsSelected(type, marker.ContainingAssembly, included, excluded))
+                if (!IsSelected(candidate.Type, host.Marker.ContainingAssembly, host.Included, host.Excluded))
                     continue;
 
-                var endpoint = CreateEndpoint(type, attribute, prefix, compilation);
+                var endpoint = CreateEndpoint(candidate.Type, candidate.Attribute!, host.Prefix);
                 if (endpoint is not null)
                     endpoints.Add(endpoint.Value);
             }
@@ -161,11 +187,19 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         context.AddSource("ArkGeneratedFunctions.g.cs", source.ToString());
     }
 
+    private readonly record struct HostInfo(
+        INamedTypeSymbol Marker,
+        string Prefix,
+        ImmutableArray<INamedTypeSymbol> Included,
+        ImmutableArray<INamedTypeSymbol> Excluded,
+        bool MarkerIsInSource);
+
+    private readonly record struct EndpointCandidate(INamedTypeSymbol Type, AttributeData? Attribute);
+
     private static Endpoint? CreateEndpoint(
         INamedTypeSymbol type,
         AttributeData attribute,
-        string prefix,
-        Compilation compilation)
+        string prefix)
     {
         if (attribute.ConstructorArguments.ElementAtOrDefault(0).Value is not string verb
             || attribute.ConstructorArguments.ElementAtOrDefault(1).Value is not string template
