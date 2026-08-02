@@ -19,6 +19,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private const string HostAttribute = "Ark.MediatorFramework.HttpHostAttribute";
     private const string EndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
     private const string VersioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
+    private const string SolidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
+    private const string SolidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
+    private const string SolidCommand = "global::Ark.Tools.Solid.ICommand";
 
     private static readonly DiagnosticDescriptor MessagePackNotSupported = new(
         "ARKMF030",
@@ -179,8 +182,13 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.AppendLine("        global::Microsoft.AspNetCore.Http.HttpRequest request,");
             source.AppendLine("        global::System.Threading.CancellationToken cancellationToken)");
             source.AppendLine("    {");
-            source.Append("        return await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsInvocation.InvokeAsync<")
-                .Append(endpoint.FullyQualifiedType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
+            source.Append("        return await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsInvocation.");
+            if (endpoint.Kind == HandlerKind.Command)
+                source.Append("InvokeCommandAsync<").Append(endpoint.FullyQualifiedType);
+            else
+                source.Append(endpoint.Kind == HandlerKind.Query ? "InvokeQueryAsync<" : "InvokeRequestAsync<")
+                    .Append(endpoint.FullyQualifiedType).Append(",").Append(endpoint.ResponseType);
+            source.AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("    }");
         }
         source.AppendLine("}");
@@ -212,6 +220,31 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var introduced = GetNamedInt(versioning, "Introduced", 1);
         var retired = GetNamedInt(versioning, "Retired", 0);
         var messagePack = GetNamedBool(attribute, "AcceptsMessagePack");
+        var kind = HandlerKind.None;
+        string? responseType = null;
+        foreach (var iface in type.AllInterfaces)
+        {
+            var definition = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            if (definition == SolidRequest)
+            {
+                kind = HandlerKind.Request;
+                responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                break;
+            }
+            if (definition == SolidQuery)
+            {
+                kind = HandlerKind.Query;
+                responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                break;
+            }
+            if (definition == SolidCommand)
+            {
+                kind = HandlerKind.Command;
+                break;
+            }
+        }
+        if (kind == HandlerKind.None)
+            return null;
         return new Endpoint(
             type.Name,
             type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -223,7 +256,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             prefix,
             template,
             Math.Max(1, introduced),
-            retired);
+            retired,
+            kind,
+            responseType ?? "global::System.Void");
     }
 
     private static bool IsSelected(
@@ -315,5 +350,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         string Prefix,
         string Template,
         int Introduced,
-        int Retired);
+        int Retired,
+        HandlerKind Kind,
+        string ResponseType);
+
+    private enum HandlerKind
+    {
+        Request,
+        Query,
+        Command
+    }
 }
