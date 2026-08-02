@@ -164,9 +164,10 @@ provided:
 ### HSD-04 — Trusted proxy contract
 
 - **Status:** ACCEPTED
-- **Recommended:** accept only an explicitly configured path prefix. Normalize
-  and validate it as an absolute path-only value: it starts with one `/`, is not
-  `/`, has no trailing slash, query, fragment, scheme, authority, backslash,
+- **Recommended:** the default Ark startup profile accepts any configured path
+  prefix that passes strict validation; applications may opt out. Normalize and
+  validate the prefix as an absolute path-only value: it starts with one `/`, is
+  not `/`, has no trailing slash, query, fragment, scheme, authority, backslash,
   control character, empty segment, dot segment, encoded slash/backslash or
   percent-encoded dot segment. Reject invalid configuration at startup. Do not
   bind the feature to known proxies/networks or trust a request header.
