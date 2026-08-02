@@ -145,7 +145,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("Function(\"GetGreeting_v2\")");
         result.Generated.Should().Contain("Route = \"api/v2/greetings/{id}\"");
         result.Generated.Should().Contain("AuthorizationLevel.Anonymous");
-        result.Generated.Should().Contain("InvokeAsync<global::GetGreeting>");
+        result.Generated.Should().Contain("InvokeQueryAsync<global::GetGreeting");
         result.Diagnostics.Should().NotContain(
             diagnostic => diagnostic.Id == "ARKMF030"
                 || diagnostic.Id == "ARKMF031"
