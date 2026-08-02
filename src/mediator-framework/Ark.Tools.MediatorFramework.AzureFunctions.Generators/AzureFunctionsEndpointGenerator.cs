@@ -75,7 +75,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             || host.ConstructorArguments[1].Value is not string prefix)
             return null;
 
-        return new HostInfo(marker, prefix, GetTypes(host, "IncludedContracts"), GetTypes(host, "ExcludedContracts"));
+        return new HostInfo(
+            marker,
+            prefix,
+            GetTypes(host, "IncludedContracts"),
+            GetTypes(host, "ExcludedContracts"),
+            marker.Locations.Any(location => location.IsInSource));
     }
 
     private static void Emit(
@@ -89,9 +94,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var endpoints = new List<Endpoint>();
         foreach (var host in hosts)
         {
-            var hasSourceAssembly = sourceEndpoints.Any(candidate =>
-                SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly));
-            var candidates = hasSourceAssembly
+            var candidates = host.MarkerIsInSource
                 ? sourceEndpoints.Where(candidate =>
                     SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly))
                 : AllTypes(host.Marker.ContainingAssembly.GlobalNamespace)
@@ -188,7 +191,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         INamedTypeSymbol Marker,
         string Prefix,
         ImmutableArray<INamedTypeSymbol> Included,
-        ImmutableArray<INamedTypeSymbol> Excluded);
+        ImmutableArray<INamedTypeSymbol> Excluded,
+        bool MarkerIsInSource);
 
     private readonly record struct EndpointCandidate(INamedTypeSymbol Type, AttributeData? Attribute);
 
