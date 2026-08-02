@@ -10,4 +10,9 @@ public sealed class ArkAzureFunctionsAuthenticationOptions
     /// Gets or sets the authentication scheme. <see langword="null"/> uses the host default scheme.
     /// </summary>
     public string? Scheme { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum size of the Easy Auth principal header.
+    /// </summary>
+    public int EasyAuthHeaderLimit { get; set; } = 16 * 1024;
 }

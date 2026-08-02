@@ -12,6 +12,8 @@ using AwesomeAssertions;
 
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Text;
+using System.Text.Json;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -259,6 +261,76 @@ public sealed class GeneratorSnapshotTests
 
         challenge.Should().NotBeNull();
         challenge.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ChallengeHttpResult>();
+    }
+
+    [TestMethod]
+    public async Task AzureFunctionsEasyAuthRequiresTrustedPlatformAndRejectsMalformedHeaders()
+    {
+        var previous = Environment.GetEnvironmentVariable("WEBSITE_AUTH_ENABLED");
+        try
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_AUTH_ENABLED", "true");
+            var services = new ServiceCollection()
+                .AddLogging()
+                .AddArkAzureFunctionsEasyAuthAuthentication()
+                .BuildServiceProvider();
+            var context = new DefaultHttpContext
+            {
+                RequestServices = services,
+            };
+            context.Request.Headers["X-MS-CLIENT-PRINCIPAL"] = Convert.ToBase64String(
+                Encoding.UTF8.GetBytes(
+                    JsonSerializer.Serialize(new
+                    {
+                        claims = new[] { new { typ = "sub", val = "caller" } },
+                    })));
+
+            var result = await context.RequestServices
+                .GetRequiredService<IAuthenticationService>()
+                .AuthenticateAsync(context, "ArkAzureFunctionsEasyAuth");
+
+            result.Succeeded.Should().BeTrue();
+            result.Principal!.FindFirst("sub")!.Value.Should().Be("caller");
+
+            context.Request.Headers["X-MS-CLIENT-PRINCIPAL"] = "not-base64";
+            var malformed = await context.RequestServices
+                .GetRequiredService<IAuthenticationService>()
+                .AuthenticateAsync(context, "ArkAzureFunctionsEasyAuth");
+            malformed.Succeeded.Should().BeFalse();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_AUTH_ENABLED", previous);
+        }
+    }
+
+    [TestMethod]
+    public async Task AzureFunctionsEasyAuthRejectsHeaderWhenPlatformAuthenticationIsDisabled()
+    {
+        var previous = Environment.GetEnvironmentVariable("WEBSITE_AUTH_ENABLED");
+        try
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_AUTH_ENABLED", "false");
+            var services = new ServiceCollection()
+                .AddLogging()
+                .AddArkAzureFunctionsEasyAuthAuthentication()
+                .BuildServiceProvider();
+            var context = new DefaultHttpContext
+            {
+                RequestServices = services,
+            };
+            context.Request.Headers["X-MS-CLIENT-PRINCIPAL"] = "ignored";
+
+            var result = await context.RequestServices
+                .GetRequiredService<IAuthenticationService>()
+                .AuthenticateAsync(context, "ArkAzureFunctionsEasyAuth");
+
+            result.Succeeded.Should().BeFalse();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_AUTH_ENABLED", previous);
+        }
     }
 
     [TestMethod]
