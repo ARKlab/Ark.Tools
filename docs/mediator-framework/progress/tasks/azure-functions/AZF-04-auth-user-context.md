@@ -86,5 +86,5 @@ principal used by transport-agnostic authorization decorators.
 - [x] Identity inputs and logs pass security review.
 - [ ] The sample demonstrates documented NLog configuration appropriate for local
   Core Tools and Azure Functions hosting.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
