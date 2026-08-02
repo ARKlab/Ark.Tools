@@ -81,7 +81,7 @@ Authoritative 2026 checks used for the verdicts:
 | **HSG-01 — No reusable Minimal API host composition contract** | `SampleStartup` manually repeats `AddSimpleInjector`, container-locking registration, `UseSimpleInjector`, authentication/authorization defaults and endpoint ordering. A sample is not a reusable Ark default. | **Yes.** Modern hosting removes the need for an inheritance-heavy `Startup` base, not for a consistent composition contract. | Design optional composable host defaults, including the existing secure authentication/authorization baseline; do not copy MVC/OData startup wholesale. |
 | **HSG-02 — Complete SimpleInjector verification is coupled to Rebus startup** | Generated mapping verifies mediator handlers, while `SampleBusHostedService.StartAsync` performs full `Container.Verify()`. A host without that service has no full-composition guarantee. | **Yes.** The framework must build and verify the container during startup after registration is complete and before any request. It must not inspect or start external services. | Make verification an explicit framework host-composition phase. Separately demonstrate in the sample that its one-way Rebus bus starts before requests can be handled. |
 | **HSG-03 — No Ark-default security-header/HSTS profile** | `ArkStartupBase` registers NetEscapades default API/Swagger policies, removes `Server`, and calls `UseSecurityHeaders` plus `UseHsts`. The mediator sample does none of these. | **Yes.** Ark hosting does not permit TLS-free deployment, including inside an mTLS service mesh. | Provide an optional Ark-default startup helper that enables the current WebApiCommon security headers and HSTS behavior. Direct composition without the helper remains supported. |
-| **HSG-04 — No strict path-base profile** | `ArkStartupBase` accepts custom `X-Forwarded-PathBase` without validating the value. The mediator sample has no equivalent. | **Yes for prefixed deployments.** The path prefix is application configuration, not a reason to trust request-controlled forwarding metadata. | Accept an explicitly configured, strictly validated absolute path prefix and apply it as `PathBase`; do not trust proxy/network headers for this feature. |
+| **HSG-04 — No strict forwarded-prefix profile** | `ArkStartupBase` accepts custom `X-Forwarded-PathBase` without validating the value. The mediator sample has no equivalent. | **Yes for prefixed deployments.** Preserve forwarded-prefix behavior while rejecting malformed input before it can affect routing or downstream middleware. | By default, accept `X-Forwarded-Prefix`, strictly sanitize and validate it, and prepend it to `PathBase`. Reject an invalid request before the remaining pipeline runs; allow applications to opt out. |
 | **HSG-05 — No default health endpoint** | `ArkStartupWebApiCommon` adds and maps `/healthCheck`; the mediator sample exposes no health endpoint. The existing optional UI/history registration is separate from the endpoint contract. | **Yes.** Preserve the established `/healthCheck` endpoint contract as an Ark default. | Include only the endpoint by default. Do not register or expose HealthChecks UI or history by default. |
 | **HSG-06 — Response compression default is missing** | `ArkStartupWebApiCommon` enables Brotli/Gzip and `EnableForHttps = true`; the mediator sample has no response-compression middleware. | **Yes.** The existing response-compression default is accepted despite the documented BREACH trade-off. | Enable response compression by default, retain gRPC compression when supported, and bypass HTTP compression only for streaming responses when buffering would delay emitted items. |
 | **HSG-07 — Application Insights parity is partial** | `Program.cs` already calls `AddApplicationInsithsTelemetryForWebHostArk`; therefore “Application Insights is absent” is inaccurate. Unlike `ArkStartupBase`, the sample omits `WebApiUserTelemetryInitializer`, `WebApi4xxAsSuccessTelemetryInitializer`, other classic Ark defaults and SimpleInjector integration. | **Yes.** Complete the classic setup now, treating 4xx responses as client outcomes rather than server failures. | Reuse the current Ark setup without duplicate registration and skip only Snapshot Debugger. OpenTelemetry migration is future work. |
@@ -105,7 +105,7 @@ provided:
 | Permissive CORS from `ArkStartupWebApiCommon` | `AllowCredentials`, every origin, every method/header and exposed `*` is not a safe default to port. CORS must be application opt-in with named origins. |
 | Static files | Not hosting them is an accepted, safer Minimal API default. Applications may opt in explicitly. |
 | Request localization | Application concern, not an API host default. Applications may opt in explicitly. |
-| Request-controlled `X-Forwarded-PathBase` middleware | Replaced by strict configured-prefix handling; see HSG-04. |
+| Unvalidated `X-Forwarded-PathBase` middleware | Replaced by strict `X-Forwarded-Prefix` handling; see HSG-04. |
 | `GlobalInit.InitStatics()` | The mediator sample already registers NodaTime JSON/protobuf support and injects `IClock`. Process-wide culture mutation and ReferenceProject-specific Dapper setup should not be copied. |
 
 ### ASP.NET Core subpackage disposition
@@ -161,16 +161,18 @@ provided:
   directly without selecting the Ark defaults.
 - **Blocked tasks:** HST-02.
 
-### HSD-04 — Trusted proxy contract
+### HSD-04 — Forwarded-prefix contract
 
 - **Status:** ACCEPTED
-- **Recommended:** the default Ark startup profile accepts any configured path
-  prefix that passes strict validation; applications may opt out. Normalize and
-  validate the prefix as an absolute path-only value: it starts with one `/`, is
-  not `/`, has no trailing slash, query, fragment, scheme, authority, backslash,
-  control character, empty segment, dot segment, encoded slash/backslash or
-  percent-encoded dot segment. Reject invalid configuration at startup. Do not
-  bind the feature to known proxies/networks or trust a request header.
+- **Recommended:** the default Ark startup profile accepts
+  `X-Forwarded-Prefix`; applications may opt out. Require exactly one header
+  value, strictly sanitize and validate it as an absolute path-only prefix, then
+  prepend it to `PathBase`. It starts with one `/`, is not `/`, and has no
+  trailing slash, query, fragment, scheme, authority, backslash, control
+  character, whitespace, empty segment, dot segment, encoded slash/backslash or
+  percent-encoded dot segment. Reject malformed or ambiguous values before the
+  remaining request pipeline executes. The feature does not require configured
+  prefixes or known proxy/network lists.
 - **Blocked tasks:** HST-03.
 
 ### HSD-05 — Health endpoint contract
@@ -237,7 +239,7 @@ Each executable task is maintained as a self-contained file:
 | --- | --- |
 | [HST-01](tasks/aspnetcore/HST-01-composable-minimal-api-startup.md) | Composable Minimal API startup |
 | [HST-02](tasks/aspnetcore/HST-02-security-headers-hsts-profile.md) | Security headers and HSTS defaults |
-| [HST-03](tasks/aspnetcore/HST-03-path-base-validation.md) | Strict path-base configuration |
+| [HST-03](tasks/aspnetcore/HST-03-path-base-validation.md) | Strict forwarded-prefix handling |
 | [HST-04](tasks/aspnetcore/HST-04-health-endpoint.md) | Default health endpoint |
 | [HST-05](tasks/aspnetcore/HST-05-response-compression.md) | Default response compression |
 | [HST-06](tasks/aspnetcore/HST-06-nlog-process-boundary.md) | NLog process boundary |

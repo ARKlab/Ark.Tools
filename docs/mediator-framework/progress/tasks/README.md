@@ -90,7 +90,7 @@ Decisions and evidence are recorded in
 |---|---|
 | [HST-01](aspnetcore/HST-01-composable-minimal-api-startup.md) | Composable Minimal API startup |
 | [HST-02](aspnetcore/HST-02-security-headers-hsts-profile.md) | Security headers and HSTS defaults |
-| [HST-03](aspnetcore/HST-03-path-base-validation.md) | Strict path-base configuration |
+| [HST-03](aspnetcore/HST-03-path-base-validation.md) | Strict forwarded-prefix handling |
 | [HST-04](aspnetcore/HST-04-health-endpoint.md) | Default health endpoint |
 | [HST-05](aspnetcore/HST-05-response-compression.md) | Default response compression |
 | [HST-06](aspnetcore/HST-06-nlog-process-boundary.md) | NLog process boundary |
