@@ -32,23 +32,27 @@ public static class ArkAzureFunctionsInvocation
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (allowAnonymous)
+        var authentication = context.RequestServices.GetService<IAuthenticationService>();
+
+        if (authentication is null)
         {
-            context.User ??= new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity());
+            if (!allowAnonymous)
+                throw new InvalidOperationException(
+                    "The Azure Functions authentication service is not registered. Configure ASP.NET Core authentication.");
             return null;
         }
 
-        var authentication = context.RequestServices.GetService<IAuthenticationService>()
-            ?? throw new InvalidOperationException(
-                "The Azure Functions authentication service is not registered. Configure ASP.NET Core authentication.");
         var options = context.RequestServices.GetService<IOptions<ArkAzureFunctionsAuthenticationOptions>>()?.Value;
         var scheme = options?.Scheme;
         var result = await authentication.AuthenticateAsync(context, scheme).ConfigureAwait(false);
-        if (!result.Succeeded || result.Principal is null)
+
+        if (result.Succeeded && result.Principal is not null)
+            context.User = result.Principal;
+
+        if (!result.Succeeded && !allowAnonymous)
             return Results.Challenge(
                 authenticationSchemes: scheme is null ? null : new[] { scheme });
 
-        context.User = result.Principal;
         return null;
     }
 
