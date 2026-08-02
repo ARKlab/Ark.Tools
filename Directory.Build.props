@@ -20,6 +20,12 @@
 		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
+	<PropertyGroup Label="SourceLink">
+		<!-- Copilot coding agent sandboxes do not expose repository metadata to SourceLink. -->
+		<EnableSourceControlManagerQueries Condition="'$(COPILOT_AGENT_ACTION)' != ''">false</EnableSourceControlManagerQueries>
+		<EnableSourceLink Condition="'$(COPILOT_AGENT_ACTION)' != ''">false</EnableSourceLink>
+	</PropertyGroup>
+
 	<PropertyGroup Label="Common Build Settings">
 		<IsPackable>true</IsPackable>
 		<Nullable>enable</Nullable>
