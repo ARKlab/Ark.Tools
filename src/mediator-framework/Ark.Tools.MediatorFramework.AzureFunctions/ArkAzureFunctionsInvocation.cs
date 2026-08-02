@@ -1,13 +1,16 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Solid;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
+
 using System.Reflection;
 using System.Text.Json;
-using Ark.Tools.Solid;
 
 namespace Ark.MediatorFramework.AzureFunctions;
 
@@ -32,7 +35,7 @@ public static class ArkAzureFunctionsInvocation
         ArgumentNullException.ThrowIfNull(request);
         var binding = await BindAsync<TRequest>(request, cancellationToken).ConfigureAwait(false);
         if (!binding.Succeeded)
-            return Results.BadRequest();
+            return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
         var (container, scope) = BeginScope(request);
         await using (scope.ConfigureAwait(false))
@@ -59,7 +62,7 @@ public static class ArkAzureFunctionsInvocation
         ArgumentNullException.ThrowIfNull(request);
         var binding = await BindAsync<TQuery>(request, cancellationToken).ConfigureAwait(false);
         if (!binding.Succeeded)
-            return Results.BadRequest();
+            return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
         var (container, scope) = BeginScope(request);
         await using (scope.ConfigureAwait(false))
@@ -84,7 +87,7 @@ public static class ArkAzureFunctionsInvocation
         ArgumentNullException.ThrowIfNull(request);
         var binding = await BindAsync<TCommand>(request, cancellationToken).ConfigureAwait(false);
         if (!binding.Succeeded)
-            return Results.BadRequest();
+            return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
         var (container, scope) = BeginScope(request);
         await using (scope.ConfigureAwait(false))
@@ -103,6 +106,8 @@ public static class ArkAzureFunctionsInvocation
         return (container, AsyncScopedLifestyle.BeginScope(container));
     }
 
+    // ponytail: reflection on typeof(T) is performed once per T via the static generic cache PropertyCache<T>;
+    // upgrade path is the source generator which emits per-property code with zero runtime reflection.
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Generated contract types are preserved by the source generator.")]
     [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "Generated contract types are preserved by the source generator.")]
     private static async Task<BindingResult<T>> BindAsync<
@@ -117,9 +122,9 @@ public static class ArkAzureFunctionsInvocation
             {
                 value = await request.ReadFromJsonAsync<T>(cancellationToken).ConfigureAwait(false);
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                return BindingResult<T>.Failed;
+                return BindingResult<T>.Fail("Request body could not be deserialized: " + ex.Message);
             }
         }
         else
@@ -130,54 +135,62 @@ public static class ArkAzureFunctionsInvocation
             }
             catch (MissingMethodException)
             {
-                return BindingResult<T>.Failed;
+                return BindingResult<T>.Fail("Contract type '" + typeof(T).Name + "' does not have a public parameterless constructor.");
             }
         }
 
         if (value is null)
-            return BindingResult<T>.Failed;
+            return BindingResult<T>.Fail("Request body deserialized to null.");
 
-        foreach (var property in typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public))
+        foreach (var entry in PropertyCache<T>.Entries)
         {
-            if (HasAttribute(property, "Ark.MediatorFramework.ServerSetAttribute"))
+            if (entry.IsServerSet)
             {
-                if (property.CanWrite)
-                    property.SetValue(value, null);
+                // Only reset writable properties; skip non-nullable value types to avoid InvalidCastException.
+                if (entry.Property.CanWrite && entry.IsNullableOrReference)
+                    entry.Property.SetValue(value, null);
+                else if (entry.Property.CanWrite)
+                    entry.Property.SetValue(value, entry.DefaultValue);
                 continue;
             }
 
-            var routeAttribute = GetAttribute(property, "Ark.MediatorFramework.HttpRouteAttribute");
-            var name = routeAttribute?.ConstructorArguments.FirstOrDefault().Value as string ?? property.Name;
-            if (request.RouteValues.TryGetValue(name, out var route))
+            var bindingName = entry.BindingName;
+            if (entry.IsRoute && request.RouteValues.TryGetValue(bindingName, out var route))
             {
-                if (!TryConvert(route?.ToString(), property.PropertyType, out var converted))
-                    return BindingResult<T>.Failed;
-                property.SetValue(value, converted);
+                if (!TryConvertObject(route?.ToString(), entry.Property.PropertyType, out var converted, out var convertError))
+                    return BindingResult<T>.Fail("Route value '" + bindingName + "' could not be bound: " + convertError);
+                entry.Property.SetValue(value, converted);
             }
 
-            if (HasAttribute(property, "Ark.MediatorFramework.HttpQueryAttribute")
-                && request.Query.TryGetValue(property.Name, out var query))
+            if (entry.IsQuery && request.Query.TryGetValue(entry.Property.Name, out var query))
             {
-                if (!TryConvert(query, property.PropertyType, out var converted))
-                    return BindingResult<T>.Failed;
-                property.SetValue(value, converted);
+                if (!TryConvertObject(query, entry.Property.PropertyType, out var converted, out var convertError))
+                    return BindingResult<T>.Fail("Query value '" + entry.Property.Name + "' could not be bound: " + convertError);
+                entry.Property.SetValue(value, converted);
             }
         }
 
-        return new BindingResult<T>(value, true);
+        return new BindingResult<T>(value, true, null);
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "HTTP scalar types are selected by generated contract metadata.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "HTTP scalar types are selected by generated contract metadata.")]
-    private static bool TryConvert(
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "HTTP scalar types are handled by cached TypeConverter lookups; generated code uses ArkTypeConverter.TryConvert<T> with known types.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "HTTP scalar types are handled by cached TypeConverter lookups; generated code uses ArkTypeConverter.TryConvert<T> with known types.")]
+    private static bool TryConvertObject(
         string? input,
         Type type,
-        out object? value)
+        out object? value,
+        out string? error)
     {
         if (input is null)
         {
             value = null;
-            return !type.IsValueType || Nullable.GetUnderlyingType(type) is not null;
+            error = null;
+            if (type.IsValueType && Nullable.GetUnderlyingType(type) is null)
+            {
+                error = "null is not valid for non-nullable type '" + type.Name + "'.";
+                return false;
+            }
+            return true;
         }
 
         var target = Nullable.GetUnderlyingType(type) ?? type;
@@ -186,38 +199,77 @@ public static class ArkAzureFunctionsInvocation
             if (target == typeof(string))
             {
                 value = input;
+                error = null;
                 return true;
             }
 
             var converter = System.ComponentModel.TypeDescriptor.GetConverter(target);
             value = converter.ConvertFromString(null, System.Globalization.CultureInfo.InvariantCulture, input);
+            error = null;
             return true;
         }
-        catch (FormatException)
+        catch (Exception ex) when (ex is FormatException
+                                        or NotSupportedException
+                                        or InvalidCastException
+                                        or OverflowException
+                                        or ArgumentException)
         {
             value = null;
+            error = "'" + input + "' cannot be converted to " + target.Name + ": " + ex.Message;
             return false;
         }
-        catch (NotSupportedException)
+    }
+
+    // Static generic cache: typeof(T).GetProperties() runs exactly once per T.
+    private static class PropertyCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>
+    {
+        public static readonly PropertyEntry[] Entries = Build();
+
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "PropertyCache<T> is only used for T types preserved by the source generator.")]
+        [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "PropertyInfo.PropertyType refers to types preserved by the source generator.")]
+        private static PropertyEntry[] Build()
         {
-            value = null;
-            return false;
+            return typeof(T)
+                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Select(p =>
+                {
+                    var routeAttr = p.CustomAttributes.FirstOrDefault(a =>
+                        string.Equals(a.AttributeType.FullName, "Ark.MediatorFramework.HttpRouteAttribute", StringComparison.Ordinal));
+                    var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
+                    var isRoute = routeAttr is not null;
+                    var isQuery = p.CustomAttributes.Any(a =>
+                        string.Equals(a.AttributeType.FullName, "Ark.MediatorFramework.HttpQueryAttribute", StringComparison.Ordinal));
+                    var isServerSet = p.CustomAttributes.Any(a =>
+                        string.Equals(a.AttributeType.FullName, "Ark.MediatorFramework.ServerSetAttribute", StringComparison.Ordinal));
+                    var propType = p.PropertyType;
+                    var isNullableOrRef = !propType.IsValueType || Nullable.GetUnderlyingType(propType) is not null;
+                    var defaultValue = propType.IsValueType ? Activator.CreateInstance(propType) : null;
+                    return new PropertyEntry(p, bindingName, isRoute, isQuery, isServerSet, isNullableOrRef, defaultValue);
+                })
+                .ToArray();
         }
     }
 
-    private static bool HasAttribute(PropertyInfo property, string metadataName)
+    private sealed class PropertyEntry(
+        PropertyInfo property,
+        string bindingName,
+        bool isRoute,
+        bool isQuery,
+        bool isServerSet,
+        bool isNullableOrReference,
+        object? defaultValue)
     {
-        return GetAttribute(property, metadataName) is not null;
+        public PropertyInfo Property { get; } = property;
+        public string BindingName { get; } = bindingName;
+        public bool IsRoute { get; } = isRoute;
+        public bool IsQuery { get; } = isQuery;
+        public bool IsServerSet { get; } = isServerSet;
+        public bool IsNullableOrReference { get; } = isNullableOrReference;
+        public object? DefaultValue { get; } = defaultValue;
     }
 
-    private static CustomAttributeData? GetAttribute(PropertyInfo property, string metadataName)
+    private readonly record struct BindingResult<T>(T? Value, bool Succeeded, string? Error)
     {
-        return property.CustomAttributes.FirstOrDefault(attribute =>
-            string.Equals(attribute.AttributeType.FullName, metadataName, StringComparison.Ordinal));
-    }
-
-    private readonly record struct BindingResult<T>(T? Value, bool Succeeded)
-    {
-        public static BindingResult<T> Failed => new(default, false);
+        public static BindingResult<T> Fail(string error) => new(default, false, error);
     }
 }

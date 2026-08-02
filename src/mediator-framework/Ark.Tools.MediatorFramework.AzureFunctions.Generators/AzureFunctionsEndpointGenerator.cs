@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using Microsoft.CodeAnalysis;
 
@@ -19,6 +20,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private const string HostAttribute = "Ark.MediatorFramework.HttpHostAttribute";
     private const string EndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
     private const string VersioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
+    private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
+    private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
+    private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
     private const string SolidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
     private const string SolidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
     private const string SolidCommand = "global::Ark.Tools.Solid.ICommand";
@@ -171,28 +175,103 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("{");
         foreach (var endpoint in valid)
         {
-            source.Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
-                .Append(endpoint.FunctionName).AppendLine("\")]");
-            source.Append("    public static async global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Http.IResult> ")
-                .Append(endpoint.FunctionName).AppendLine("(");
-            source.Append("        [global::Microsoft.Azure.Functions.Worker.HttpTrigger(")
-                .Append("global::Microsoft.Azure.Functions.Worker.AuthorizationLevel.Anonymous, \"")
-                .Append(endpoint.Verb.ToLowerInvariant()).Append("\", Route = \"")
-                .Append(Escape(endpoint.Route)).AppendLine("\")]");
-            source.AppendLine("        global::Microsoft.AspNetCore.Http.HttpRequest request,");
-            source.AppendLine("        global::System.Threading.CancellationToken cancellationToken)");
-            source.AppendLine("    {");
-            source.Append("        return await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsInvocation.");
-            if (endpoint.Kind == HandlerKind.Command)
-                source.Append("InvokeCommandAsync<").Append(endpoint.FullyQualifiedType);
-            else
-                source.Append(endpoint.Kind == HandlerKind.Query ? "InvokeQueryAsync<" : "InvokeRequestAsync<")
-                    .Append(endpoint.FullyQualifiedType).Append(',').Append(endpoint.ResponseType);
-            source.AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
-            source.AppendLine("    }");
+            EmitFunction(source, endpoint);
         }
         source.AppendLine("}");
         context.AddSource("ArkGeneratedFunctions.g.cs", source.ToString());
+    }
+
+    private static void EmitFunction(StringBuilder source, Endpoint endpoint)
+    {
+        var hasBody = endpoint.Verb is "POST" or "PUT" or "PATCH";
+        var routeProperties = endpoint.Properties.Where(p => p.IsRoute && !p.IsServerSet).ToArray();
+        var queryProperties = endpoint.Properties.Where(p => p.IsQuery && !p.IsServerSet).ToArray();
+        var serverSetProperties = endpoint.Properties.Where(p => p.IsServerSet).ToArray();
+
+        source.Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
+            .Append(endpoint.FunctionName).AppendLine("\")]");
+        source.Append("    public static async global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Http.IResult> ")
+            .Append(endpoint.FunctionName).AppendLine("(");
+        source.Append("        [global::Microsoft.Azure.Functions.Worker.HttpTrigger(")
+            .Append("global::Microsoft.Azure.Functions.Worker.AuthorizationLevel.Anonymous, \"")
+            .Append(endpoint.Verb.ToLowerInvariant()).Append("\", Route = \"")
+            .Append(Escape(endpoint.Route)).AppendLine("\")]");
+        source.AppendLine("        global::Microsoft.AspNetCore.Http.HttpRequest request,");
+        source.AppendLine("        global::System.Threading.CancellationToken cancellationToken)");
+        source.AppendLine("    {");
+
+        // Body or default-instance binding
+        if (hasBody)
+        {
+            source.AppendLine("        " + endpoint.FullyQualifiedType + "? _bodyNullable;");
+            source.AppendLine("        try");
+            source.AppendLine("        {");
+            source.AppendLine("            _bodyNullable = await request.ReadFromJsonAsync<" + endpoint.FullyQualifiedType + ">(cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        }");
+            source.AppendLine("        catch (global::System.Text.Json.JsonException ex)");
+            source.AppendLine("        {");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: ex.Message);");
+            source.AppendLine("        }");
+            source.AppendLine("        if (_bodyNullable is null)");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
+            source.AppendLine("        var body = _bodyNullable;");
+        }
+        else
+        {
+            source.AppendLine("        var body = new " + endpoint.FullyQualifiedType + "();");
+        }
+
+        // Route value binding (per-property, no runtime reflection)
+        foreach (var prop in routeProperties)
+        {
+            var varName = "_route_" + prop.Name;
+            source.AppendLine("        if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvert<" + prop.TypeFullName + ">(request.RouteValues[" + Literal(prop.BindingName) + "]?.ToString(), out var " + varName + "))");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Route value '" + prop.BindingName + "' could not be bound to type '" + prop.TypeFullName + "'.\");");
+            source.AppendLine("        body." + prop.Name + " = " + varName + ";");
+        }
+
+        // Query string binding (per-property, no runtime reflection)
+        foreach (var prop in queryProperties)
+        {
+            var varName = "_query_" + prop.Name;
+            source.AppendLine("        if (request.Query.TryGetValue(" + Literal(prop.Name) + ", out var _qs_" + prop.Name + "))");
+            source.AppendLine("        {");
+            source.AppendLine("            if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvert<" + prop.TypeFullName + ">(_qs_" + prop.Name + ", out var " + varName + "))");
+            source.AppendLine("                return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '" + prop.Name + "' could not be bound to type '" + prop.TypeFullName + "'.\");");
+            source.AppendLine("            body." + prop.Name + " = " + varName + ";");
+            source.AppendLine("        }");
+        }
+
+        // Server-set property reset (per-property, no runtime reflection)
+        foreach (var prop in serverSetProperties)
+        {
+            source.AppendLine("        body." + prop.Name + " = default;");
+        }
+
+        // Dispatch via Simple Injector scope
+        source.AppendLine("        var _container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(request.HttpContext.RequestServices);");
+        source.AppendLine("        await using var _scope = global::SimpleInjector.Lifestyles.AsyncScopedLifestyle.BeginScope(_container);");
+
+        if (endpoint.Kind == HandlerKind.Command)
+        {
+            source.AppendLine("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<" + endpoint.FullyQualifiedType + ">>();");
+            source.AppendLine("        await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.NoContent();");
+        }
+        else if (endpoint.Kind == HandlerKind.Query)
+        {
+            source.AppendLine("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IQueryHandler<" + endpoint.FullyQualifiedType + ", " + endpoint.ResponseType + ">>();");
+            source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        return _result is null ? global::Microsoft.AspNetCore.Http.Results.NotFound() : global::Microsoft.AspNetCore.Http.Results.Ok(_result);");
+        }
+        else
+        {
+            source.AppendLine("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IRequestHandler<" + endpoint.FullyQualifiedType + ", " + endpoint.ResponseType + ">>();");
+            source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        return _result is null ? global::Microsoft.AspNetCore.Http.Results.NoContent() : global::Microsoft.AspNetCore.Http.Results.Ok(_result);");
+        }
+
+        source.AppendLine("    }");
     }
 
     private readonly record struct HostInfo(
@@ -245,6 +324,37 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         if (kind == HandlerKind.None)
             return null;
+
+        // Extract route parameter names from the template
+        var routeNames = new HashSet<string>(
+            Regex.Matches(template!, "\\{([^}:]+)(?::[^}]+)?\\}")
+                .Cast<Match>()
+                .Select(m => m.Groups[1].Value)
+                .Where(n => !string.Equals(n, "version", StringComparison.OrdinalIgnoreCase)),
+            StringComparer.OrdinalIgnoreCase);
+
+        // Extract per-property binding info at generation time (no runtime reflection per request)
+        var properties = AllProperties(type)
+            .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic
+                && p.SetMethod is { DeclaredAccessibility: Accessibility.Public })
+            .Select(p =>
+            {
+                var routeAttr = p.GetAttributes()
+                    .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == HttpRouteAttribute);
+                var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
+                var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
+                var isQuery = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == HttpQueryAttribute);
+                var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ServerSetAttribute);
+                return new PropertyInfo(
+                    p.Name,
+                    p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    isRoute,
+                    bindingName,
+                    isQuery,
+                    isServerSet);
+            })
+            .ToImmutableArray();
+
         return new Endpoint(
             type.Name,
             type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -258,7 +368,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             Math.Max(1, introduced),
             retired,
             kind,
-            responseType ?? "global::System.Void");
+            responseType ?? "global::System.Void",
+            properties);
     }
 
     private static bool IsSelected(
@@ -301,6 +412,13 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
     }
 
+    private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+            foreach (var member in current.GetMembers().OfType<IPropertySymbol>())
+                yield return member;
+    }
+
     private static int GetNamedInt(AttributeData? attribute, string name, int fallback)
     {
         if (attribute is null)
@@ -330,6 +448,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private static string Escape(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
+    private static string Literal(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+
     private static string ExpandRoute(string prefix, string template, int version)
     {
         var versionText = version.ToString(CultureInfo.InvariantCulture);
@@ -338,6 +458,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             : Combine(prefix.Replace("{version}", versionText), template);
         return route.Trim('/');
     }
+
+    private readonly record struct PropertyInfo(
+        string Name,
+        string TypeFullName,
+        bool IsRoute,
+        string BindingName,
+        bool IsQuery,
+        bool IsServerSet);
 
     private readonly record struct Endpoint(
         string TypeName,
@@ -352,7 +480,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         int Introduced,
         int Retired,
         HandlerKind Kind,
-        string ResponseType);
+        string ResponseType,
+        ImmutableArray<PropertyInfo> Properties);
 
     private enum HandlerKind
     {
