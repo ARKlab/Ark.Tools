@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework;
+using Ark.MediatorFramework.AzureFunctions;
 using Ark.MediatorFramework.AzureFunctions.Generators;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.MediatorFramework.Generators;
@@ -16,7 +17,9 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 using MessagePack;
 using MessagePack.Resolvers;
@@ -196,6 +199,66 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("ArkTypeConverter");
         result.Generated.Should().Contain("?.ToString()");
         result.Generated.Should().NotContain("InvokeQueryAsync");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorHonorsAnonymousEndpointMetadata()
+    {
+        var anonymous = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/public", AllowAnonymous = true)]
+            public sealed class PublicEndpoint : IQuery<string> { }
+            [HttpEndpoint("GET", "/private")]
+            public sealed class PrivateEndpoint : IQuery<string> { }
+            """);
+
+        anonymous.Generated.Should().Contain(
+            "AuthenticateAsync(request.HttpContext, true)");
+        anonymous.Generated.Should().Contain(
+            "AuthenticateAsync(request.HttpContext, false)");
+    }
+
+    [TestMethod]
+    public async Task AzureFunctionsAuthenticationUsesConfiguredPrincipalAndChallengesFailures()
+    {
+        var principal = new System.Security.Claims.ClaimsPrincipal(
+            new System.Security.Claims.ClaimsIdentity(
+                [new System.Security.Claims.Claim("sub", "caller")],
+                "test"));
+        var authentication = new StubAuthenticationService(AuthenticateResult.Success(principal));
+        var services = new ServiceCollection()
+            .AddArkAzureFunctionsAuthentication(options => options.Scheme = "test")
+            .AddSingleton<IAuthenticationService>(authentication)
+            .BuildServiceProvider();
+        var context = new DefaultHttpContext
+        {
+            RequestServices = services,
+        };
+
+        var result = await ArkAzureFunctionsInvocation.AuthenticateAsync(context, allowAnonymous: false);
+
+        result.Should().BeNull();
+        context.User.Should().BeSameAs(principal);
+
+        var failureServices = new ServiceCollection()
+            .AddArkAzureFunctionsAuthentication(options => options.Scheme = "test")
+            .AddSingleton<IAuthenticationService>(new StubAuthenticationService(
+                AuthenticateResult.Fail("invalid")))
+            .BuildServiceProvider();
+        var failureContext = new DefaultHttpContext
+        {
+            RequestServices = failureServices,
+        };
+
+        var challenge = await ArkAzureFunctionsInvocation.AuthenticateAsync(
+            failureContext, allowAnonymous: false);
+
+        challenge.Should().NotBeNull();
+        challenge.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ChallengeHttpResult>();
     }
 
     [TestMethod]
@@ -1443,6 +1506,30 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF011");
+    }
+
+    private sealed class StubAuthenticationService(AuthenticateResult result) : IAuthenticationService
+    {
+        public Task<AuthenticateResult> AuthenticateAsync(HttpContext context, string? scheme)
+        {
+            return Task.FromResult(result);
+        }
+
+        public Task ChallengeAsync(
+            HttpContext context,
+            string? scheme,
+            AuthenticationProperties? properties)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task ForbidAsync(
+            HttpContext context,
+            string? scheme,
+            AuthenticationProperties? properties)
+        {
+            return Task.CompletedTask;
+        }
     }
 
     private sealed record UnformattableMessage;

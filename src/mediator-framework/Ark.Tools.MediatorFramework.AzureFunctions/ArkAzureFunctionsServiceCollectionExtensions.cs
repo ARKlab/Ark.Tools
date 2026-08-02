@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 using SimpleInjector;
 
@@ -14,6 +15,24 @@ namespace Ark.MediatorFramework.AzureFunctions;
 /// <summary>Registers the runtime services used by generated Azure Functions.</summary>
 public static class ArkAzureFunctionsServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers the authentication profile used by generated Functions endpoints.
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    /// <param name="configure">The authentication profile configuration.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkAzureFunctionsAuthentication(
+        this IServiceCollection services,
+        Action<ArkAzureFunctionsAuthenticationOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.AddOptions<ArkAzureFunctionsAuthenticationOptions>();
+        if (configure is not null)
+            services.Configure(configure);
+        services.AddAuthentication();
+        return services;
+    }
+
     /// <summary>
     /// Registers the Azure Functions mediator runtime services.
     /// Configures HTTP JSON binding with Ark defaults (camelCase, NodaTime, enum-as-member).

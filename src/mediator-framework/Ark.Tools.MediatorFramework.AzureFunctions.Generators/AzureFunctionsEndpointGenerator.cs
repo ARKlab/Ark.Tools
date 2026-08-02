@@ -201,6 +201,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("        global::Microsoft.AspNetCore.Http.HttpRequest request,");
         source.AppendLine("        global::System.Threading.CancellationToken cancellationToken)");
         source.AppendLine("    {");
+        source.Append("        var _authentication = await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsInvocation.AuthenticateAsync(request.HttpContext, ")
+            .Append(endpoint.AllowAnonymous ? "true" : "false")
+            .AppendLine(").ConfigureAwait(false);");
+        source.AppendLine("        if (_authentication is not null)");
+        source.AppendLine("            return _authentication;");
 
         // Body or default-instance binding
         if (hasBody)
@@ -387,7 +392,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             retired,
             kind,
             responseType ?? "global::System.Void",
-            properties);
+            properties,
+            GetNamedBool(attribute, "AllowAnonymous"));
     }
 
     private static bool IsSelected(
@@ -500,7 +506,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         int Retired,
         HandlerKind Kind,
         string ResponseType,
-        ImmutableArray<PropertyInfo> Properties);
+        ImmutableArray<PropertyInfo> Properties,
+        bool AllowAnonymous);
 
     private enum HandlerKind
     {

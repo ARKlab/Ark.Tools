@@ -4,7 +4,9 @@
 using Ark.Tools.Solid;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -17,6 +19,38 @@ namespace Ark.MediatorFramework.AzureFunctions;
 /// <summary>Provides the typed invocation boundary used by generated Functions.</summary>
 public static class ArkAzureFunctionsInvocation
 {
+    /// <summary>
+    /// Authenticates a generated endpoint and returns a challenge result when authentication fails.
+    /// </summary>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="allowAnonymous">Whether the endpoint permits anonymous access.</param>
+    /// <returns>
+    /// <see langword="null"/> when the request may continue; otherwise a result that challenges
+    /// the caller.
+    /// </returns>
+    public static async Task<IResult?> AuthenticateAsync(HttpContext context, bool allowAnonymous)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (allowAnonymous)
+        {
+            context.User ??= new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity());
+            return null;
+        }
+
+        var authentication = context.RequestServices.GetService<IAuthenticationService>()
+            ?? throw new InvalidOperationException(
+                "The Azure Functions authentication service is not registered. Configure ASP.NET Core authentication.");
+        var options = context.RequestServices.GetService<IOptions<ArkAzureFunctionsAuthenticationOptions>>()?.Value;
+        var scheme = options?.Scheme;
+        var result = await authentication.AuthenticateAsync(context, scheme).ConfigureAwait(false);
+        if (!result.Succeeded || result.Principal is null)
+            return Results.Challenge(scheme is null ? null : [scheme]);
+
+        context.User = result.Principal;
+        return null;
+    }
+
     /// <summary>
     /// Invokes the generated mediator pipeline for a request.
     /// </summary>
