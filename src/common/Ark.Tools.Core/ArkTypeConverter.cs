@@ -25,7 +25,8 @@ public static class ArkTypeConverter
     /// <see langword="false"/> if <paramref name="input"/> is <see langword="null"/> and
     /// <typeparamref name="T"/> is a non-nullable value type, or if the conversion failed.
     /// </returns>
-    public static bool TryConvert<T>(string? input, out T value)
+    [RequiresUnreferencedCode("TypeDescriptor.GetConverter is not trim-safe. Ensure T and its TypeConverter are preserved.")]
+    public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>(string? input, out T value)
     {
         if (input is null)
         {
@@ -51,14 +52,11 @@ public static class ArkTypeConverter
         }
     }
 
-    private static class ConverterCache<T>
+    [RequiresUnreferencedCode("TypeDescriptor.GetConverter is not trim-safe. Ensure T and its TypeConverter are preserved.")]
+    private static class ConverterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
     {
         private static readonly Func<string, T> _convert = Build();
 
-        [UnconditionalSuppressMessage("Trimming", "IL2026",
-            Justification = "TryConvert<T> is called from generated code where T is a known contract scalar type preserved by the source generator.")]
-        [UnconditionalSuppressMessage("Trimming", "IL2087",
-            Justification = "TryConvert<T> is called from generated code where T is a known contract scalar type preserved by the source generator.")]
         private static Func<string, T> Build()
         {
             var type = typeof(T);

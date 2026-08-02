@@ -9,11 +9,6 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <RunAnalyzers>false</RunAnalyzers>
-    <EnableNETAnalyzers>false</EnableNETAnalyzers>
-    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <GenerateSBOM>false</GenerateSBOM>
     <Description>Source generator for Ark.Tools MediatorFramework Azure Functions HTTP triggers.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;Azure;Functions;Source Generator;Roslyn</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>
