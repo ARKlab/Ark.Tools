@@ -81,6 +81,23 @@ Delivery-tracking index: [`../README.md`](../README.md).
 | [NET-04](aspnetcore/NET-04-auth-metrics.md) | Auth/Identity metrics in the sample (N8) | aspnetcore |
 | [NET-05](aspnetcore/NET-05-sse-transport-spike.md) | SSE transport spike (N5) | aspnetcore |
 
+## Minimal API hosting defaults
+
+Decisions and evidence are recorded in
+[`../aspnetcore-hosting-gap-analysis.md`](../aspnetcore-hosting-gap-analysis.md).
+
+| Task | Title |
+|---|---|
+| [HST-01](aspnetcore/HST-01-composable-minimal-api-startup.md) | Composable Minimal API startup |
+| [HST-02](aspnetcore/HST-02-security-headers-hsts-profile.md) | Security headers and HSTS defaults |
+| [HST-03](aspnetcore/HST-03-path-base-validation.md) | Strict forwarded-prefix handling |
+| [HST-04](aspnetcore/HST-04-health-endpoint.md) | Default health endpoint |
+| [HST-05](aspnetcore/HST-05-response-compression.md) | Default response compression |
+| [HST-06](aspnetcore/HST-06-nlog-process-boundary.md) | NLog process boundary |
+| [HST-07](aspnetcore/HST-07-classic-application-insights.md) | Complete classic Application Insights defaults |
+| [HST-08](aspnetcore/HST-08-composition-root-tests.md) | Production composition-root tests |
+| [HST-09](aspnetcore/HST-09-startup-error-diagnostics.md) | Startup-error diagnostics |
+
 ## Azure Functions hosting
 
 The design is in
