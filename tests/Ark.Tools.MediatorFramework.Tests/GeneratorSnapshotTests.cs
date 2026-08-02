@@ -19,7 +19,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 using MessagePack;
 using MessagePack.Resolvers;

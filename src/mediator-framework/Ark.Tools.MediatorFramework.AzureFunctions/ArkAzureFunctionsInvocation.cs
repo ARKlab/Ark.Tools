@@ -45,7 +45,8 @@ public static class ArkAzureFunctionsInvocation
         var scheme = options?.Scheme;
         var result = await authentication.AuthenticateAsync(context, scheme).ConfigureAwait(false);
         if (!result.Succeeded || result.Principal is null)
-            return Results.Challenge(scheme is null ? null : [scheme]);
+            return Results.Challenge(
+                authenticationSchemes: scheme is null ? null : new[] { scheme });
 
         context.User = result.Principal;
         return null;
