@@ -51,6 +51,13 @@ The design follows Microsoft's isolated-worker guidance:
 - do not depend on ASP.NET Core middleware, route groups or the Minimal API
   endpoint pipeline: Microsoft explicitly states that ASP.NET Core integration
   does not expose those features;
+- Azure Functions isolated-worker middleware is available through
+  `FunctionContext`, but it is not an ASP.NET Core middleware pipeline. It does
+  not provide the generated endpoint's `HttpRequest`, route metadata or the
+  ASP.NET Core authentication execution context reliably enough to replace the
+  invocation helper. Authentication therefore remains at the generated
+  function boundary; worker middleware may be added later for concerns that
+  only need `FunctionContext`.
 - configure ASP.NET Core JSON through `AddMvc().AddJsonOptions(...)`; worker
   serializer options do not configure ASP.NET Core HTTP serialization;
 - remove the Functions default `api` prefix in `host.json` when generated routes

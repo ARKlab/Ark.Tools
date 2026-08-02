@@ -69,6 +69,25 @@ tasks.
   API Management.
 - **Blocked tasks:** AZF-05, AZF-08.
 
+### AZD-12 — Worker middleware versus generated authentication
+
+- **Status:** DECIDED
+- **Decision:** keep application authentication at the generated function
+  boundary using the ASP.NET Core `IAuthenticationService`. Azure Functions
+  isolated-worker middleware remains available for worker concerns that only
+  require `FunctionContext`, but it does not replace the generated invocation
+  helper because ASP.NET Core integration does not expose the ASP.NET Core
+  middleware pipeline and worker middleware does not reliably own the generated
+  `HttpRequest`, route binding, or result execution context.
+- **Why:** authentication must set the same `HttpContext.User` observed by the
+  existing user-context provider and must challenge through the ASP.NET Core
+  authentication service. Moving it to worker middleware would require an
+  unverified bridge between `FunctionContext` and `HttpContext` and could create
+  divergent behavior between generated Functions.
+- **Follow-up:** a worker middleware may be added for correlation, trusted
+  platform metadata, or logging after a concrete `FunctionContext` integration
+  test proves its lifecycle and response behavior.
+
 ### AZD-05 — OpenAPI parity
 
 - **Status:** SUPERSEDED by AZD-11
