@@ -47,42 +47,54 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var hosts = context.SyntaxProvider.ForAttributeWithMetadataName(
+                HostAttribute,
+                static (_, _) => true,
+                static (attributeContext, _) => ExtractHost(attributeContext))
+            .Where(static host => host is not null)
+            .Select(static (host, _) => host!.Value)
+            .Collect();
+
         context.RegisterSourceOutput(
-            context.CompilationProvider,
-            static (productionContext, compilation) => Emit(productionContext, compilation));
+            hosts.Combine(context.CompilationProvider),
+            static (productionContext, pair) => Emit(productionContext, pair.Right, pair.Left));
     }
 
-    private static void Emit(SourceProductionContext context, Compilation compilation)
+    private static HostInfo? ExtractHost(GeneratorAttributeSyntaxContext context)
+    {
+        var host = context.Attributes[0];
+        if (host.ConstructorArguments.Length < 2
+            || host.ConstructorArguments[0].Value is not INamedTypeSymbol marker
+            || host.ConstructorArguments[1].Value is not string prefix)
+            return null;
+
+        return new HostInfo(marker, prefix, GetTypes(host, "IncludedContracts"), GetTypes(host, "ExcludedContracts"));
+    }
+
+    private static void Emit(
+        SourceProductionContext context,
+        Compilation compilation,
+        ImmutableArray<HostInfo> hosts)
     {
         var hostAttribute = compilation.GetTypeByMetadataName(HostAttribute);
         var endpointAttribute = compilation.GetTypeByMetadataName(EndpointAttribute);
         if (hostAttribute is null || endpointAttribute is null)
             return;
 
-        var hosts = compilation.Assembly.GetAttributes()
-            .Where(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, hostAttribute))
-            .ToArray();
-        if (hosts.Length == 0)
+        if (hosts.IsDefaultOrEmpty)
             return;
 
         var endpoints = new List<Endpoint>();
         foreach (var host in hosts)
         {
-            if (host.ConstructorArguments.Length < 2
-                || host.ConstructorArguments[0].Value is not INamedTypeSymbol marker
-                || host.ConstructorArguments[1].Value is not string prefix)
-                continue;
-
-            var included = GetTypes(host, "IncludedContracts");
-            var excluded = GetTypes(host, "ExcludedContracts");
-            foreach (var type in AllTypes(marker.ContainingAssembly.GlobalNamespace))
+            foreach (var type in AllTypes(host.Marker.ContainingAssembly.GlobalNamespace))
             {
                 var attribute = type.GetAttributes()
                     .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(candidate.AttributeClass, endpointAttribute));
-                if (attribute is null || !IsSelected(type, marker.ContainingAssembly, included, excluded))
+                if (attribute is null || !IsSelected(type, host.Marker.ContainingAssembly, host.Included, host.Excluded))
                     continue;
 
-                var endpoint = CreateEndpoint(type, attribute, prefix, compilation);
+                var endpoint = CreateEndpoint(type, attribute, host.Prefix, compilation);
                 if (endpoint is not null)
                     endpoints.Add(endpoint.Value);
             }
@@ -160,6 +172,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("}");
         context.AddSource("ArkGeneratedFunctions.g.cs", source.ToString());
     }
+
+    private readonly record struct HostInfo(
+        INamedTypeSymbol Marker,
+        string Prefix,
+        ImmutableArray<INamedTypeSymbol> Included,
+        ImmutableArray<INamedTypeSymbol> Excluded);
 
     private static Endpoint? CreateEndpoint(
         INamedTypeSymbol type,

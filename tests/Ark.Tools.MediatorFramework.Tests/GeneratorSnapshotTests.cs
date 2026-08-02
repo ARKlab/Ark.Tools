@@ -129,7 +129,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorEmitsVersionedHttpTrigger()
     {
-        var result = RunGenerator<AzureFunctionsEndpointGenerator>(
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -143,9 +143,10 @@ public sealed class GeneratorSnapshotTests
         result.Should().Contain("Function(\"GetGreeting_v1\")");
         result.Should().Contain("Route = \"api/v1/greetings/{id}\"");
         result.Should().Contain("Function(\"GetGreeting_v2\")");
-        result.Should().Contain("Route = \"api/v2/greetings/{id}\"");
-        result.Should().Contain("AuthorizationLevel.Anonymous");
-        result.Should().Contain("InvokeAsync<global::GetGreeting>");
+        result.Generated.Should().Contain("Route = \"api/v2/greetings/{id}\"");
+        result.Generated.Should().Contain("AuthorizationLevel.Anonymous");
+        result.Generated.Should().Contain("InvokeAsync<global::GetGreeting>");
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id is "ARKMF030" or "ARKMF031" or "ARKMF032");
     }
 
     [TestMethod]
