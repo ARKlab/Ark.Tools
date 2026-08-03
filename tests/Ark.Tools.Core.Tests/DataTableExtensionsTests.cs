@@ -50,6 +50,13 @@ public class DataTableExtensionsTests
         public string PropValue { get; set; } = string.Empty;
     }
 
+    private sealed class EntityWithUnreadableProperties
+    {
+        public int Value { get; set; }
+        public int WriteOnly { set => Value = value; }
+        public int this[int index] => index;
+    }
+
     // Type.GetFields()/GetProperties() include public static/const members by default (not just
     // instance members); the reflection fallback has always shredded these too (with a constant
     // value repeated on every row), so this fixture guards that historical, if unusual, behavior.
@@ -293,6 +300,19 @@ public class DataTableExtensionsTests
         table.Columns[1].ColumnName.Should().Be("PropValue");
         table.Rows[0]["FieldValue"].Should().Be(3);
         table.Rows[0]["PropValue"].Should().Be("x");
+    }
+
+    /// <summary>Indexers and set-only properties are excluded from the reflection fallback.</summary>
+    [TestMethod]
+    public void ToDataTableArk_WithUnreadableProperties_ExcludesThem()
+    {
+        var entities = new[] { new EntityWithUnreadableProperties { Value = 3 } };
+
+        using var table = entities.ToDataTableArk();
+
+        table.Columns.Count.Should().Be(1);
+        table.Columns[0].ColumnName.Should().Be("Value");
+        table.Rows[0]["Value"].Should().Be(3);
     }
 
     /// <summary>

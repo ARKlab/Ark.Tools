@@ -3,8 +3,6 @@
 
 using AwesomeAssertions;
 
-using System.Runtime.CompilerServices;
-
 namespace Ark.Tools.Core.Interceptors.Tests;
 
 /// <summary>
@@ -195,14 +193,11 @@ public class InterceptorRuntimeTests
 
     private static async Task<string> ReadGeneratedInterceptorSourceAsync()
     {
-        var directory = Path.GetDirectoryName(GetThisFilePath())!;
-        var generatedRoot = Path.Combine(directory, "Generated");
+        var generatedRoot = Path.GetFullPath(Path.Join(AppContext.BaseDirectory, "..", "..", "..", "Generated"));
         var file = Directory.EnumerateFiles(generatedRoot, "ToDataTableArkInterceptors.g.cs", SearchOption.AllDirectories)
             .FirstOrDefault();
         file.Should().NotBeNull("the generator should have emitted ToDataTableArkInterceptors.g.cs under {0}", generatedRoot);
         return await File.ReadAllTextAsync(file!).ConfigureAwait(false);
     }
-
-    private static string GetThisFilePath([CallerFilePath] string path = "") => path;
 
 }

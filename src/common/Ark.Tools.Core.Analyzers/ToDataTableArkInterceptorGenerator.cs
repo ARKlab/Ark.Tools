@@ -159,7 +159,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
                         || RequiresRuntimeValueConversion(property.Type)
                         || property.GetMethod is not { DeclaredAccessibility: Accessibility.Public })
                     {
-                        return null; // Matches a property reflection would include but GetValue would throw on; stay safe and fall back.
+                        return null; // The runtime fallback safely excludes unreadable and indexed properties.
                     }
                     properties.Add(BuildMemberModel(property.Name, property.Type));
                     break;

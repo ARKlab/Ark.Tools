@@ -13,6 +13,7 @@
     -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+    <DisableErrorProneAnalyzers>true</DisableErrorProneAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>

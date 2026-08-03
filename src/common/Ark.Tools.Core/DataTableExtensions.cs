@@ -333,8 +333,8 @@ public static class DataTableExtensions
         }
 
         // Builds the cached column plan (name + DataColumn type + compiled accessor) for every public
-        // field and property of T (fields-then-properties declaration order), matching the reflection
-        // fallback's historical behavior of also including public static/const fields or properties
+        // field and readable, non-indexed property of T (fields-then-properties declaration order).
+        // It retains the reflection fallback's historical behavior of including public static/const fields or properties
         // (Type.GetFields()/GetProperties() return both instance and static members by default). For
         // a static member the compiled accessor ignores the per-row instance, exactly like
         // FieldInfo/PropertyInfo.GetValue(instance) does for static members. This method (and the
@@ -345,7 +345,9 @@ public static class DataTableExtensions
         private static ColumnPlan[] BuildPlan()
         {
             var fields = typeof(T).GetFields();
-            var properties = typeof(T).GetProperties();
+            var properties = typeof(T).GetProperties()
+                .Where(static property => property.CanRead && property.GetIndexParameters().Length == 0)
+                .ToArray();
             var plan = new ColumnPlan[fields.Length + properties.Length];
             var param = Expression.Parameter(typeof(T), "instance");
 
