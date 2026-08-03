@@ -57,6 +57,7 @@
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.CommaSeparatedParameters/Ark.Tools.AspNetCore.CommaSeparatedParameters.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.HealthChecks/Ark.Tools.AspNetCore.HealthChecks.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.MessagePack/Ark.Tools.AspNetCore.MessagePack.csproj" />
+    <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.MinimalApiComposition/Ark.Tools.AspNetCore.MinimalApiComposition.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.NestedStartup/Ark.Tools.AspNetCore.NestedStartup.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.RavenDb/Ark.Tools.AspNetCore.RavenDb.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.Swashbuckle/Ark.Tools.AspNetCore.Swashbuckle.csproj" />

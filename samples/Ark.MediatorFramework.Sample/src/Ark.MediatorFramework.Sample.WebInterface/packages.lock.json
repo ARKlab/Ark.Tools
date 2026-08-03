@@ -898,6 +898,13 @@
           "MessagePack": "[3.1.8, )"
         }
       },
+      "ark.tools.aspnetcore.minimalapicomposition": {
+        "type": "Project",
+        "dependencies": {
+          "SimpleInjector": "[5.6.0, )",
+          "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )"
+        }
+      },
       "ark.tools.aspnetcore.problemdetails": {
         "type": "Project",
         "dependencies": {

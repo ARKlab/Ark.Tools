@@ -6,6 +6,7 @@ using Ark.MediatorFramework.Sample.Application;
 
 using Ark.MediatorFramework.Sample.WebInterface.Auth;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
+using Ark.Tools.AspNetCore.MinimalApiComposition;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
@@ -15,8 +16,6 @@ using Ark.Tools.Nodatime.Protobuf;
 using MessagePack.Resolvers;
 
 using Scalar.AspNetCore;
-
-using Microsoft.AspNetCore.Authorization;
 
 using Rebus.Transport.InMem;
 
@@ -101,29 +100,12 @@ public sealed class SampleStartup
         {
             services.ConfigureAuthentication(_configuration);
         }
-        services.AddAuthorization(options =>
+        services.AddArkMinimalApiHost(_container, options =>
         {
-            options.DefaultPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-            if (_configureFallbackPolicy)
-            {
-                options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .Build();
-            }
+            options.RequireAuthenticatedUser = _configureFallbackPolicy;
+            options.CrossWireContainer = (container, serviceProvider) =>
+                container.RegisterInstance(serviceProvider.GetRequiredService<IHttpContextAccessor>());
         });
-
-        services.AddSimpleInjector(_container, options =>
-        {
-            options.AddAspNetCore();
-            _container.Options.ContainerLocking += (_, _) =>
-            {
-                _container.RegisterInstance(
-                    options.ApplicationServices.GetRequiredService<IHttpContextAccessor>());
-            };
-        });
-        services.AddHttpContextAccessor();
 
         // The InMemNetwork is registered in Microsoft DI so both the API container and the
         // processor hosted service can access it without depending on each other.
@@ -185,7 +167,7 @@ public sealed class SampleStartup
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.UseSimpleInjector(_container);
+        app.UseArkMinimalApiHost(_container);
 
         app.UseSwaggerUI(options =>
         {

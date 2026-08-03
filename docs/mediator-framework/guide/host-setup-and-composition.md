@@ -125,8 +125,7 @@ separate purpose:
 | Step | Why it exists | Sample code |
 | --- | --- | --- |
 | `services.ConfigureAuthentication(configuration)` | Chooses bearer authentication schemes | `AuthenticationEx.cs` |
-| `services.AddAuthorization(...)` | Sets `RequireAuthenticatedUser()` as the default and optional fallback policy | `SampleStartup.cs` |
-| `services.AddSimpleInjector(container, ...)` | Bridges Microsoft DI and SimpleInjector | `SampleStartup.cs` |
+| `services.AddArkMinimalApiHost(container, ...)` | Sets the secure authorization baseline, bridges Microsoft DI and SimpleInjector, and verifies the container during host startup | `SampleStartup.cs` |
 | `services.AddMessagePackFormatter(...)` | Enables HTTP MessagePack negotiation for contracts that opt in | `SampleStartup.cs` |
 | `services.ConfigureHttpJsonOptions(...)` | Applies Ark JSON defaults and source-generated metadata | `SampleStartup.cs` |
 | `services.AddArkProblemDetailsExceptionHandler()` | Maps domain exceptions to RFC 7807 | `SampleStartup.cs` |
@@ -137,23 +136,10 @@ separate purpose:
 A condensed sample setup:
 
 ```csharp
-services.AddAuthorization(options =>
+services.AddArkMinimalApiHost(container, options =>
 {
-    options.DefaultPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-    options.FallbackPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-});
-
-services.AddSimpleInjector(container, options =>
-{
-    options.AddAspNetCore();
-    container.Options.ContainerLocking += (_, _) =>
-    {
-        container.RegisterInstance(options.ApplicationServices.GetRequiredService<IHttpContextAccessor>());
-    };
+    options.CrossWireContainer = (container, serviceProvider) =>
+        container.RegisterInstance(serviceProvider.GetRequiredService<IHttpContextAccessor>());
 });
 
 services.AddMessagePackFormatter(messagePackResolver);
@@ -182,7 +168,7 @@ Order is observable. The sample uses this sequence:
 | 2 | `UseRouting()` | Selects the endpoint and route values |
 | 3 | `UseAuthentication()` | Builds the caller principal |
 | 4 | `UseAuthorization()` | Enforces host-level auth policy |
-| 5 | `UseSimpleInjector(container)` | Makes the scoped application graph available to handlers |
+| 5 | `UseArkMinimalApiHost(container)` | Makes the scoped application graph available to handlers |
 | 6 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
 
 ```csharp

@@ -7,9 +7,7 @@ using SimpleInjector;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
-/// <summary>
-/// Hosted service that owns the API container lifecycle: verification, bus start-up, and disposal.
-/// </summary>
+/// <summary>Hosted service that starts the API container's outbound bus and disposes the container.</summary>
 internal sealed class SampleApiContainerHostedService : IHostedService
 {
     private readonly Container _container;
@@ -24,7 +22,6 @@ internal sealed class SampleApiContainerHostedService : IHostedService
     /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _container.Verify();
         _container.StartBus();
         await Task.CompletedTask.ConfigureAwait(false);
     }
