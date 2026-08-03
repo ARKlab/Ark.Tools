@@ -48,12 +48,6 @@
     <Project Path="src/common/Ark.Tools.Sql/Ark.Tools.Sql.csproj" />
     <Project Path="src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
   </Folder>
-  <Folder Name="/benchmarks/">
-    <Project Path="benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj" />
-  </Folder>
   <Folder Name="/src/aspnetcore/">
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
@@ -135,6 +129,7 @@
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Ark.Tools.Core.Benchmarks/Ark.Tools.Core.Benchmarks.csproj" />
+    <Project Path="benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ark.Tools.Core.Analyzers.Tests/Ark.Tools.Core.Analyzers.Tests.csproj" />
@@ -149,6 +144,7 @@
     <Project Path="tests/Ark.Tools.Nodatime.Tests/Ark.Tools.Nodatime.Tests.csproj" />
     <Project Path="tests/Ark.Tools.ResourceWatcher.Tests/Ark.Tools.ResourceWatcher.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Sql.Oracle.Tests/Ark.Tools.Sql.Oracle.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj" />
     <Project Path="tests/WebApplicationDemo.Tests/WebApplicationDemo.Tests.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
