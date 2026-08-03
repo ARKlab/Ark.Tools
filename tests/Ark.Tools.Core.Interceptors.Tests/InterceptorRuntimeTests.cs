@@ -49,6 +49,7 @@ public class InterceptorRuntimeTests
         table.Rows[0]["Name"].Should().Be("Widget");
         table.Rows[0]["Status"].Should().Be("Active");
         table.Rows[0]["EffectiveDate"].Should().Be(entities[0].EffectiveDate.ToDateTimeUnspecified());
+        table.Rows[0].RowState.Should().Be(System.Data.DataRowState.Unchanged);
     }
 
     /// <summary>

@@ -140,6 +140,7 @@ public class DataTableExtensionsTests
         row["State"].Should().Be("Active");
         row["CorrelationId"].Should().Be(entity.CorrelationId);
         row["EffectiveDate"].Should().Be(entity.EffectiveDate.ToDateTimeUnspecified());
+        row.RowState.Should().Be(DataRowState.Unchanged);
     }
 
     /// <summary>A null nullable-value property is stored as DBNull, not converted.</summary>
