@@ -8,6 +8,21 @@
 	<Version Condition="'$(Version)' == ''">999.9.9</Version>
   </PropertyGroup>
 
+	<PropertyGroup Label="C# 14 Interceptors">
+		<!--
+		Ark.Tools.Core ships a C# 14 interceptor generator (Ark.Tools.Core.Analyzers,
+		ToDataTableArkInterceptorGenerator) that replaces compile-time-known
+		ToDataTableArk<T>() calls with a direct, reflection-free DataTable construction.
+		Published consumers get this automatically via the buildTransitive props packed
+		into the Ark.Tools.Core NuGet package; monorepo projects that reference
+		Ark.Tools.Core via ProjectReference (which does not flow NuGet build assets) need
+		the namespace allow-listed here instead. Listing the namespace is inert unless a
+		generator actually emits interceptors into it - see the interceptors.md spec at
+		https://github.com/dotnet/roslyn/blob/main/docs/features/interceptors.md.
+		-->
+		<InterceptorsNamespaces>$(InterceptorsNamespaces);Ark.Tools.Core.Generated</InterceptorsNamespaces>
+	</PropertyGroup>
+
 	<PropertyGroup Label="Continuous Integration Build Detection">
 		<!-- Azure Pipelines / DevOpsServer -->
 		<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
