@@ -57,9 +57,6 @@ public class DataTableExtensionsTests
         public int this[int index] => index;
     }
 
-    // Type.GetFields()/GetProperties() include public static/const members by default (not just
-    // instance members); the reflection fallback has always shredded these too (with a constant
-    // value repeated on every row), so this fixture guards that historical, if unusual, behavior.
     private sealed class EntityWithStaticMember
     {
         public const int Constant = 7;
@@ -315,13 +312,9 @@ public class DataTableExtensionsTests
         table.Rows[0]["Value"].Should().Be(3);
     }
 
-    /// <summary>
-    /// Public static/const members (which Type.GetFields()/GetProperties() include by default) are
-    /// shredded as extra columns holding their constant value on every row, matching the historical
-    /// reflection behavior (FieldInfo/PropertyInfo.GetValue ignores the instance for static members).
-    /// </summary>
+    /// <summary>Public static and const members are excluded from the generated table.</summary>
     [TestMethod]
-    public void ToDataTableArk_WithStaticMembers_ShredsConstantValueOnEveryRow()
+    public void ToDataTableArk_WithStaticMembers_ExcludesThem()
     {
         var entities = new[]
         {
@@ -331,10 +324,8 @@ public class DataTableExtensionsTests
 
         using var table = entities.ToDataTableArk();
 
-        table.Columns.Count.Should().Be(3);
-        table.Rows[0]["Constant"].Should().Be(7);
-        table.Rows[1]["Constant"].Should().Be(7);
-        table.Rows[0]["StaticProperty"].Should().Be("static-value");
+        table.Columns.Count.Should().Be(1);
+        table.Columns[0].ColumnName.Should().Be("InstanceValue");
         table.Rows[0]["InstanceValue"].Should().Be(1);
         table.Rows[1]["InstanceValue"].Should().Be(2);
     }

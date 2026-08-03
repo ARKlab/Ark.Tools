@@ -333,20 +333,20 @@ public static class DataTableExtensions
         }
 
         // Builds the cached column plan (name + DataColumn type + compiled accessor) for every public
-        // field and readable, non-indexed property of T (fields-then-properties declaration order).
-        // It retains the reflection fallback's historical behavior of including public static/const fields or properties
-        // (Type.GetFields()/GetProperties() return both instance and static members by default). For
-        // a static member the compiled accessor ignores the per-row instance, exactly like
-        // FieldInfo/PropertyInfo.GetValue(instance) does for static members. This method (and the
-        // reflection it performs) runs exactly once per closed generic type T, since it is only ever
-        // invoked from the static field initializer above.
+        // instance field and readable, non-indexed instance property of T (fields-then-properties
+        // declaration order). This method (and the reflection it performs) runs exactly once per
+        // closed generic type T, since it is only ever invoked from the static field initializer above.
         [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
             Justification = "T is annotated with DynamicallyAccessedMembers on the enclosing generic type, preserving public fields/properties for reflection.")]
         private static ColumnPlan[] BuildPlan()
         {
-            var fields = typeof(T).GetFields();
+            var fields = typeof(T).GetFields()
+                .Where(static field => !field.IsStatic)
+                .ToArray();
             var properties = typeof(T).GetProperties()
-                .Where(static property => property.CanRead && property.GetIndexParameters().Length == 0)
+                .Where(static property => property.CanRead
+                    && property.GetMethod is { IsStatic: false }
+                    && property.GetIndexParameters().Length == 0)
                 .ToArray();
             var plan = new ColumnPlan[fields.Length + properties.Length];
             var param = Expression.Parameter(typeof(T), "instance");
@@ -354,15 +354,12 @@ public static class DataTableExtensions
             var index = 0;
             foreach (var f in fields)
             {
-                var receiver = f.IsStatic ? null : param;
-                plan[index++] = BuildColumnPlan(f.Name, f.FieldType, Expression.Field(receiver, f), param);
+                plan[index++] = BuildColumnPlan(f.Name, f.FieldType, Expression.Field(param, f), param);
             }
 
             foreach (var p in properties)
             {
-                var isStatic = (p.GetMethod ?? p.SetMethod)?.IsStatic ?? false;
-                var receiver = isStatic ? null : param;
-                plan[index++] = BuildColumnPlan(p.Name, p.PropertyType, Expression.Property(receiver, p), param);
+                plan[index++] = BuildColumnPlan(p.Name, p.PropertyType, Expression.Property(param, p), param);
             }
 
             return plan;

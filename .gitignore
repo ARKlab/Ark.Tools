@@ -37,7 +37,6 @@ bld/
 
 # Visual Studio 2017 auto generated files
 Generated\ Files/
-tests/Ark.Tools.Core.Interceptors.Tests/Generated/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/

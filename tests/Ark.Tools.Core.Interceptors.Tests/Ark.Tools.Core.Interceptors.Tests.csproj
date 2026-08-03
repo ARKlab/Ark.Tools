@@ -12,7 +12,8 @@
     calls with a compile-time-known, eligible T are actually intercepted here.
     -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)$(Configuration)/$(TargetFramework)/Generated</CompilerGeneratedFilesOutputPath>
+    <!-- ErrorProne.NET does not support intercepted call sites, so opt out only in this generator integration project. -->
     <DisableErrorProneAnalyzers>true</DisableErrorProneAnalyzers>
   </PropertyGroup>
 
@@ -22,10 +23,4 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
   </ItemGroup>
-
-  <ItemGroup>
-    <!-- Exclude the generator's own output folder from being treated as project source. -->
-    <Compile Remove="Generated/**/*.cs" />
-  </ItemGroup>
-
 </Project>

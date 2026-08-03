@@ -92,7 +92,7 @@ public class InterceptorRuntimeTests
         table.Columns[1].ColumnName.Should().Be("Property");
     }
 
-    /// <summary>Types with static members retain fallback behavior instead of using an incompatible interceptor.</summary>
+    /// <summary>Types with static members use the fallback, which excludes those members.</summary>
     [TestMethod]
     public void ToDataTableArk_WithStaticMember_UsesFallback()
     {
@@ -100,8 +100,9 @@ public class InterceptorRuntimeTests
 
         using var table = entities.ToDataTableArk();
 
-        table.Columns["Constant"].Should().NotBeNull();
-        table.Rows[0]["Constant"].Should().Be(7);
+        table.Columns.Count.Should().Be(1);
+        table.Columns[0].ColumnName.Should().Be("Value");
+        table.Rows[0]["Value"].Should().Be(1);
     }
 
     /// <summary>Anonymous types remain valid call sites by using the reflection fallback.</summary>
@@ -193,7 +194,16 @@ public class InterceptorRuntimeTests
 
     private static async Task<string> ReadGeneratedInterceptorSourceAsync()
     {
-        var generatedRoot = Path.GetFullPath(Path.Join(AppContext.BaseDirectory, "..", "..", "..", "Generated"));
+        var outputDirectory = new DirectoryInfo(AppContext.BaseDirectory);
+        var generatedRoot = Path.GetFullPath(Path.Join(
+            AppContext.BaseDirectory,
+            "..",
+            "..",
+            "..",
+            "obj",
+            outputDirectory.Parent!.Name,
+            outputDirectory.Name,
+            "Generated"));
         var file = Directory.EnumerateFiles(generatedRoot, "ToDataTableArkInterceptors.g.cs", SearchOption.AllDirectories)
             .FirstOrDefault();
         file.Should().NotBeNull("the generator should have emitted ToDataTableArkInterceptors.g.cs under {0}", generatedRoot);

@@ -78,7 +78,7 @@ public sealed class MixedMemberEntity
 /// <summary>A public type with a static member that must use the reflection fallback.</summary>
 public sealed class StaticMemberEntity
 {
-    /// <summary>The constant value included by the reflection fallback.</summary>
+    /// <summary>The constant value excluded by the reflection fallback.</summary>
     public const int Constant = 7;
 
     /// <summary>Gets or sets the instance value.</summary>
