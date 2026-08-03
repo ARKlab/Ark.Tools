@@ -79,16 +79,9 @@ public static class ArkAzureFunctionsHttp
         ArgumentNullException.ThrowIfNull(items);
 
         response.ContentType = "application/json; charset=utf-8";
-        await response.WriteAsync("[", cancellationToken).ConfigureAwait(false);
-        var first = true;
-        await foreach (var item in items.WithCancellation(cancellationToken).ConfigureAwait(false))
-        {
-            if (!first)
-                await response.WriteAsync(",", cancellationToken).ConfigureAwait(false);
-            await global::System.Text.Json.JsonSerializer.SerializeAsync(response.Body, item, cancellationToken: cancellationToken).ConfigureAwait(false);
-            await response.Body.FlushAsync(cancellationToken).ConfigureAwait(false);
-            first = false;
-        }
-        await response.WriteAsync("]", cancellationToken).ConfigureAwait(false);
+        await global::System.Text.Json.JsonSerializer.SerializeAsync(
+            response.Body,
+            items,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 }
