@@ -36,10 +36,12 @@ public sealed class AzureFunctionsRebusTests
         Assert.IsNotNull(attribute);
         Assert.IsTrue(attribute.AllowAnonymous);
         Assert.AreEqual("GET", attribute.Verb);
-        Assert.AreEqual("/health", attribute.Template);
+        Assert.AreEqual("/healthCheck", attribute.Template);
 
         var response = await new HealthCheckHandler().ExecuteAsync(new HealthCheckQuery());
-        Assert.AreEqual("ok", response.Status);
+        Assert.AreEqual("Healthy", response.Status);
+        Assert.AreEqual("00:00:00", response.TotalDuration);
+        Assert.IsNotNull(response.Entries);
     }
 
     /// <summary>Rejects a Function host without its required outbound bus configuration.</summary>

@@ -13,14 +13,21 @@ using ProtoBuf;
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Returns the readiness state of an HTTP host.</summary>
-[HttpEndpoint("GET", "/health", AllowAnonymous = true)]
+[HttpEndpoint("GET", "/healthCheck", AllowAnonymous = true)]
 public sealed record HealthCheckQuery : IQuery<HealthCheckResponse>;
 
 /// <summary>Readiness response returned by both HTTP hosts.</summary>
 public sealed record HealthCheckResponse
 {
     /// <summary>Gets the readiness state.</summary>
-    public string Status { get; init; } = "ok";
+    public string Status { get; init; } = "Healthy";
+
+    /// <summary>Gets the health check duration.</summary>
+    public string TotalDuration { get; init; } = "00:00:00";
+
+    /// <summary>Gets the individual health check results.</summary>
+    public IReadOnlyDictionary<string, string> Entries { get; init; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
 }
 
 /// <summary>Response returned by the greeting operations.</summary>
