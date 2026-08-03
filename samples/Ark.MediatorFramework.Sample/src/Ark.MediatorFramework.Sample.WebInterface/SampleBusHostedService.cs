@@ -19,11 +19,11 @@ internal sealed class SampleBusHostedService : IHostedService
     {
         _container = container;
         var network = container.GetInstance<InMemNetwork>();
-        var store = container.GetInstance<IGreetingStore>();
+        var sqlConfig = container.GetRegistration<SampleDataContextConfig>()?.GetInstance() as SampleDataContextConfig;
         _processorContainer = RebusProcessorComposition.BuildContainer(
             network,
-            useSqlStore: store is SqlGreetingStore,
-            greetingStore: store,
+            useSqlStore: sqlConfig is not null,
+            connectionString: sqlConfig?.ConnectionString,
             registerHandlers: SampleRebusEndpoints.RegisterHandlers,
             configureRouting: SampleRebusEndpoints.ConfigureRouting);
     }

@@ -14,7 +14,10 @@ using NodaTime;
 
 using Rebus.Config;
 using Rebus.Routing;
+using Rebus.Serialization.Json;
 using Rebus.Transport;
+
+using System.Text.Json;
 
 using SimpleInjector;
 
@@ -46,6 +49,7 @@ public static class ApplicationComposition
         {
             config.Transport(configureTransport);
             config.Routing(configureRouting);
+            config.Serialization(serialization => serialization.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()));
             config.Options(options => options.AutomaticallyFlowUserContext(container));
         });
     }
