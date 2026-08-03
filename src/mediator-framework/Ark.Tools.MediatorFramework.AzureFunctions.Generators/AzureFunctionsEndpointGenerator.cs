@@ -25,6 +25,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
     private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
     private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
+    private const string ETagAttribute = "Ark.MediatorFramework.ETagAttribute";
     private const string SolidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
     private const string SolidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
     private const string SolidCommand = "global::Ark.Tools.Solid.ICommand";
@@ -268,8 +269,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         {
             source.Append("        body.").Append(prop.Name).AppendLine(" = default;");
         }
+        foreach (var prop in endpoint.Properties.Where(p => p.IsETag))
+        {
+            source.AppendLine("        var _etag = global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.ReadPrecondition(request.HttpContext);");
+            source.Append("        if (_etag is not null) body.").Append(prop.Name).AppendLine(" = _etag;");
+        }
 
         // Dispatch via Simple Injector scope
+        source.AppendLine("        try");
+        source.AppendLine("        {");
         source.AppendLine("        var _container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(request.HttpContext.RequestServices);");
         source.AppendLine("        await using var _scope = global::SimpleInjector.Lifestyles.AsyncScopedLifestyle.BeginScope(_container);");
 
@@ -277,22 +285,50 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         {
             source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<").Append(endpoint.FullyQualifiedType).AppendLine(">>();");
             source.AppendLine("        await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
-            source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.NoContent();");
+            source.Append("        return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
+                .Append(endpoint.SuccessStatusCode == 200 ? "204" : endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture))
+                .AppendLine(");");
         }
         else if (endpoint.Kind == HandlerKind.Query)
         {
             source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IQueryHandler<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">>();");
             source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
-            source.AppendLine("        return _result is null ? global::Microsoft.AspNetCore.Http.Results.NotFound() : global::Microsoft.AspNetCore.Http.Results.Ok(_result);");
+            source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
+                .Append(endpoint.NullResultStatusCode == 0 ? "404" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
+                .AppendLine(");");
+            EmitResponseETag(source, endpoint, "_result");
+            source.Append("        return global::Microsoft.AspNetCore.Http.Results.Json(_result, statusCode: ")
+                .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
         }
         else
         {
             source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IRequestHandler<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">>();");
             source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
-            source.AppendLine("        return _result is null ? global::Microsoft.AspNetCore.Http.Results.NoContent() : global::Microsoft.AspNetCore.Http.Results.Ok(_result);");
+            source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
+                .Append(endpoint.NullResultStatusCode == 0 ? "204" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
+                .AppendLine(");");
+            EmitResponseETag(source, endpoint, "_result");
+            source.Append("        return global::Microsoft.AspNetCore.Http.Results.Json(_result, statusCode: ")
+                .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
         }
 
+        source.AppendLine("        }");
+        source.AppendLine("        catch (global::System.Exception _exception)");
+        source.AppendLine("        {");
+        source.AppendLine("            return global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.FromException(_exception);");
+        source.AppendLine("        }");
         source.AppendLine("    }");
+    }
+
+    private static void EmitResponseETag(StringBuilder source, Endpoint endpoint, string resultName)
+    {
+        if (endpoint.ResponseETagProperty is null)
+            return;
+
+        source.Append("        var _etagResult = global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.ApplyResponseETag(request.HttpContext, ")
+            .Append(resultName).Append('.').Append(endpoint.ResponseETagProperty)
+            .Append(", ").Append(endpoint.Verb == "GET" ? "true" : "false").AppendLine(");");
+        source.AppendLine("        if (_etagResult is not null) return _etagResult;");
     }
 
     private readonly record struct HostInfo(
@@ -320,8 +356,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var introduced = GetNamedInt(versioning, "Introduced", 1);
         var retired = GetNamedInt(versioning, "Retired", 0);
         var messagePack = GetNamedBool(attribute, "AcceptsMessagePack");
+        var successStatusCode = GetNamedInt(attribute, "SuccessStatusCode", 200);
+        var nullResultStatusCode = GetNamedInt(attribute, "NullResultStatusCode", 0);
         var kind = HandlerKind.None;
         string? responseType = null;
+        INamedTypeSymbol? responseSymbol = null;
         foreach (var iface in type.AllInterfaces)
         {
             var definition = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -329,12 +368,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             {
                 kind = HandlerKind.Request;
                 responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }
             if (definition == SolidQuery)
             {
                 kind = HandlerKind.Query;
                 responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }
             if (definition == SolidCommand)
@@ -366,6 +407,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
                 var isQuery = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == HttpQueryAttribute);
                 var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ServerSetAttribute);
+                var isETag = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ETagAttribute);
                 var isString = p.Type.SpecialType == SpecialType.System_String;
                 return new PropertyInfo(
                     p.Name,
@@ -374,9 +416,16 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                     bindingName,
                     isQuery,
                     isServerSet,
-                    isString);
+                    isString,
+                    isETag);
             })
             .ToImmutableArray();
+        var responseETagProperty = responseSymbol is null
+            ? null
+            : AllProperties(responseSymbol)
+                .FirstOrDefault(property => property.GetAttributes().Any(attribute =>
+                    attribute.AttributeClass?.ToDisplayString() == ETagAttribute))
+                ?.Name;
 
         return new Endpoint(
             type.Name,
@@ -393,7 +442,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             kind,
             responseType ?? "global::System.Void",
             properties,
-            GetNamedBool(attribute, "AllowAnonymous"));
+            GetNamedBool(attribute, "AllowAnonymous"),
+            successStatusCode,
+            nullResultStatusCode,
+            responseETagProperty);
     }
 
     private static bool IsSelected(
@@ -490,7 +542,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         string BindingName,
         bool IsQuery,
         bool IsServerSet,
-        bool IsString);
+        bool IsString,
+        bool IsETag);
 
     private readonly record struct Endpoint(
         string TypeName,
@@ -507,7 +560,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         HandlerKind Kind,
         string ResponseType,
         ImmutableArray<PropertyInfo> Properties,
-        bool AllowAnonymous);
+        bool AllowAnonymous,
+        int SuccessStatusCode,
+        int NullResultStatusCode,
+        string? ResponseETagProperty);
 
     private enum HandlerKind
     {
