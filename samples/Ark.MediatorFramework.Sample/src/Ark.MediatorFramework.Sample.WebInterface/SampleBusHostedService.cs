@@ -39,7 +39,6 @@ internal sealed class SampleBusHostedService : IHostedService
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        await _container.DisposeAsync().ConfigureAwait(false);
         await _processorContainer.DisposeAsync().ConfigureAwait(false);
     }
 }
