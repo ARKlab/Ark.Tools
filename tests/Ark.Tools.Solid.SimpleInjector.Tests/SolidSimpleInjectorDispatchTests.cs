@@ -18,11 +18,11 @@ public sealed class SolidSimpleInjectorDispatchTests
         using var container = CreateContainer(calls);
         var dispatcher = new TestDispatcher();
 
-        var requestResult = await new SimpleInjectorRequestProcessor(container, dispatcher)
+        var requestResult = await SimpleInjectorRequestProcessor.Create(container, dispatcher)
             .ExecuteAsync(new TestRequest("request"), CancellationToken.None);
-        var queryResult = await new SimpleInjectorQueryProcessor(container, dispatcher)
+        var queryResult = await SimpleInjectorQueryProcessor.Create(container, dispatcher)
             .ExecuteAsync(new TestQuery("query"), CancellationToken.None);
-        await new SimpleInjectorCommandProcessor(container, dispatcher)
+        await SimpleInjectorCommandProcessor.Create(container, dispatcher)
             .ExecuteAsync(new TestCommand("command"), CancellationToken.None);
 
         requestResult.Should().Be("request-handled");
@@ -42,12 +42,12 @@ public sealed class SolidSimpleInjectorDispatchTests
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        var act = async () => await new SimpleInjectorRequestProcessor(container, dispatcher)
+        var act = async () => await SimpleInjectorRequestProcessor.Create(container, dispatcher)
             .ExecuteAsync(new TestRequest("cancel"), cancellation.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
 
-        var exceptionAct = async () => await new SimpleInjectorQueryProcessor(container, dispatcher)
+        var exceptionAct = async () => await SimpleInjectorQueryProcessor.Create(container, dispatcher)
             .ExecuteAsync(new TestQuery("error"), CancellationToken.None);
 
         await exceptionAct.Should().ThrowAsync<InvalidOperationException>();

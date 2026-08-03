@@ -12,19 +12,26 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
     private readonly ISolidSimpleInjectorDispatcher? _dispatcher;
 
     public SimpleInjectorCommandProcessor(Container container)
-        : this(container, dispatcher: null)
-    {
-    }
-
-    /// <summary>
-    /// Initializes a command processor with an optional generated dispatcher.
-    /// </summary>
-    /// <param name="container">The verified SimpleInjector container.</param>
-    /// <param name="dispatcher">The generated dispatcher, or <see langword="null"/> to use the compatibility fallback.</param>
-    public SimpleInjectorCommandProcessor(Container container, ISolidSimpleInjectorDispatcher? dispatcher)
     {
         ArgumentNullException.ThrowIfNull(container);
         _container = container;
+    }
+
+    /// <summary>
+    /// Creates a command processor using generated dispatch when available.
+    /// </summary>
+    /// <param name="container">The verified SimpleInjector container.</param>
+    /// <param name="dispatcher">The generated dispatcher.</param>
+    /// <returns>A command processor using the generated dispatcher.</returns>
+    public static SimpleInjectorCommandProcessor Create(Container container, ISolidSimpleInjectorDispatcher dispatcher)
+    {
+        ArgumentNullException.ThrowIfNull(dispatcher);
+        return new SimpleInjectorCommandProcessor(container, dispatcher, privateConstruction: true);
+    }
+
+    private SimpleInjectorCommandProcessor(Container container, ISolidSimpleInjectorDispatcher dispatcher, bool privateConstruction)
+        : this(container)
+    {
         _dispatcher = dispatcher;
     }
 

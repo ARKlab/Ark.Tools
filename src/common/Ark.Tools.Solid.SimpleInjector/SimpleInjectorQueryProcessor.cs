@@ -12,19 +12,26 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
     private readonly ISolidSimpleInjectorDispatcher? _dispatcher;
 
     public SimpleInjectorQueryProcessor(Container container)
-        : this(container, dispatcher: null)
-    {
-    }
-
-    /// <summary>
-    /// Initializes a query processor with an optional generated dispatcher.
-    /// </summary>
-    /// <param name="container">The verified SimpleInjector container.</param>
-    /// <param name="dispatcher">The generated dispatcher, or <see langword="null"/> to use the compatibility fallback.</param>
-    public SimpleInjectorQueryProcessor(Container container, ISolidSimpleInjectorDispatcher? dispatcher)
     {
         ArgumentNullException.ThrowIfNull(container);
         _container = container;
+    }
+
+    /// <summary>
+    /// Creates a query processor using generated dispatch when available.
+    /// </summary>
+    /// <param name="container">The verified SimpleInjector container.</param>
+    /// <param name="dispatcher">The generated dispatcher.</param>
+    /// <returns>A query processor using the generated dispatcher.</returns>
+    public static SimpleInjectorQueryProcessor Create(Container container, ISolidSimpleInjectorDispatcher dispatcher)
+    {
+        ArgumentNullException.ThrowIfNull(dispatcher);
+        return new SimpleInjectorQueryProcessor(container, dispatcher, privateConstruction: true);
+    }
+
+    private SimpleInjectorQueryProcessor(Container container, ISolidSimpleInjectorDispatcher dispatcher, bool privateConstruction)
+        : this(container)
+    {
         _dispatcher = dispatcher;
     }
 

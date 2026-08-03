@@ -44,9 +44,9 @@ public class SolidDispatchBenchmarks : IDisposable
         _fallbackQuery = new(_container);
         _fallbackCommand = new(_container);
         var dispatcher = new TestDispatcher();
-        _generatedRequest = new(_container, dispatcher);
-        _generatedQuery = new(_container, dispatcher);
-        _generatedCommand = new(_container, dispatcher);
+        _generatedRequest = Ark.Tools.Solid.SimpleInjector.SimpleInjectorRequestProcessor.Create(_container, dispatcher);
+        _generatedQuery = Ark.Tools.Solid.SimpleInjector.SimpleInjectorQueryProcessor.Create(_container, dispatcher);
+        _generatedCommand = Ark.Tools.Solid.SimpleInjector.SimpleInjectorCommandProcessor.Create(_container, dispatcher);
     }
 
     [Benchmark(Baseline = true)]

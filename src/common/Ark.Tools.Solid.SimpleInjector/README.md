@@ -13,7 +13,7 @@ analyzer, mark statically known contracts with
 
 ```csharp
 var dispatcher = new SolidSimpleInjectorGeneratedDispatcher();
-var processor = new SimpleInjectorRequestProcessor(container, dispatcher);
+var processor = SimpleInjectorRequestProcessor.Create(container, dispatcher);
 ```
 
 Generated branches resolve the closed handler service through SimpleInjector,

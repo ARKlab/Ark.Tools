@@ -12,19 +12,26 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
     private readonly ISolidSimpleInjectorDispatcher? _dispatcher;
 
     public SimpleInjectorRequestProcessor(Container container)
-        : this(container, dispatcher: null)
-    {
-    }
-
-    /// <summary>
-    /// Initializes a request processor with an optional generated dispatcher.
-    /// </summary>
-    /// <param name="container">The verified SimpleInjector container.</param>
-    /// <param name="dispatcher">The generated dispatcher, or <see langword="null"/> to use the compatibility fallback.</param>
-    public SimpleInjectorRequestProcessor(Container container, ISolidSimpleInjectorDispatcher? dispatcher)
     {
         ArgumentNullException.ThrowIfNull(container);
         _container = container;
+    }
+
+    /// <summary>
+    /// Creates a request processor using generated dispatch when available.
+    /// </summary>
+    /// <param name="container">The verified SimpleInjector container.</param>
+    /// <param name="dispatcher">The generated dispatcher.</param>
+    /// <returns>A request processor using the generated dispatcher.</returns>
+    public static SimpleInjectorRequestProcessor Create(Container container, ISolidSimpleInjectorDispatcher dispatcher)
+    {
+        ArgumentNullException.ThrowIfNull(dispatcher);
+        return new SimpleInjectorRequestProcessor(container, dispatcher, privateConstruction: true);
+    }
+
+    private SimpleInjectorRequestProcessor(Container container, ISolidSimpleInjectorDispatcher dispatcher, bool privateConstruction)
+        : this(container)
+    {
         _dispatcher = dispatcher;
     }
 
