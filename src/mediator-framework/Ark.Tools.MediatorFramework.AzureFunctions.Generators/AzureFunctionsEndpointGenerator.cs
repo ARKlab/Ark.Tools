@@ -26,6 +26,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
     private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
     private const string ETagAttribute = "Ark.MediatorFramework.ETagAttribute";
+    private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
+    private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
     private const string SolidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
     private const string SolidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
     private const string SolidCommand = "global::Ark.Tools.Solid.ICommand";
@@ -190,6 +192,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var routeProperties = endpoint.Properties.Where(p => p.IsRoute && !p.IsServerSet).ToArray();
         var queryProperties = endpoint.Properties.Where(p => p.IsQuery && !p.IsServerSet).ToArray();
         var serverSetProperties = endpoint.Properties.Where(p => p.IsServerSet).ToArray();
+        var attachment = endpoint.Properties.FirstOrDefault(p => p.IsAttachment || p.IsAttachmentCollection);
+        var hasAttachment = attachment.IsAttachment || attachment.IsAttachmentCollection;
 
         source.Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
             .Append(endpoint.FunctionName).AppendLine("\")]");
@@ -209,7 +213,30 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("            return _authentication;");
 
         // Body or default-instance binding
-        if (hasBody)
+        if (hasAttachment)
+        {
+            source.AppendLine("        global::System.Collections.Generic.IReadOnlyList<global::Ark.MediatorFramework.IArkAttachment> _attachments;");
+            source.AppendLine("        try");
+            source.AppendLine("        {");
+            source.Append("            _attachments = await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.ReadAttachmentsAsync(request, ")
+                .Append(endpoint.MaxFileCount.ToString(CultureInfo.InvariantCulture))
+                .Append(", new[] { ")
+                .Append(string.Join(", ", endpoint.AllowedContentTypes.Select(Literal)))
+                .AppendLine(" }, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        }");
+            source.AppendLine("        catch (global::System.NotSupportedException)");
+            source.AppendLine("        {");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.StatusCode(415);");
+            source.AppendLine("        }");
+            source.AppendLine("        catch (global::System.InvalidDataException _formException)");
+            source.AppendLine("        {");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_MULTIPART\", detail: _formException.Message);");
+            source.AppendLine("        }");
+            source.Append("        if (_attachments.Count ").Append(attachment.IsAttachmentCollection ? " == 0" : " != 1").AppendLine(")");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_FILE_COUNT\", detail: \"The uploaded file count is invalid.\");");
+        }
+
+        if (hasBody && !hasAttachment)
         {
             source.Append("        ").Append(endpoint.FullyQualifiedType).AppendLine("? _bodyNullable;");
             source.AppendLine("        try");
@@ -224,9 +251,16 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
             source.AppendLine("        var body = _bodyNullable;");
         }
+        else if (!hasAttachment)
+        {
+            source.Append("        var body = new ").Append(endpoint.FullyQualifiedType).AppendLine("();");
+        }
         else
         {
             source.Append("        var body = new ").Append(endpoint.FullyQualifiedType).AppendLine("();");
+            source.Append("        body.").Append(attachment.Name).Append(" = ")
+                .Append(attachment.IsAttachmentCollection ? "_attachments" : "_attachments[0]")
+                .AppendLine(";");
         }
 
         // Route value binding (per-property, no runtime reflection)
@@ -299,8 +333,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 .Append(endpoint.NullResultStatusCode == 0 ? "404" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
             EmitResponseETag(source, endpoint, "_result");
-            source.Append("        return global::Microsoft.AspNetCore.Http.Results.Json(_result, statusCode: ")
-                .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
+            EmitResponse(source, endpoint);
         }
         else
         {
@@ -310,8 +343,26 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 .Append(endpoint.NullResultStatusCode == 0 ? "204" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
             EmitResponseETag(source, endpoint, "_result");
-            source.Append("        return global::Microsoft.AspNetCore.Http.Results.Json(_result, statusCode: ")
-                .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
+            EmitResponse(source, endpoint);
+        }
+
+        private static void EmitResponse(StringBuilder source, Endpoint endpoint)
+        {
+            if (endpoint.ResponseType == "global::Ark.MediatorFramework.IArkAttachment")
+            {
+                source.AppendLine("        await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteAttachmentAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
+                source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
+            }
+            else if (endpoint.IsStreaming)
+            {
+                source.AppendLine("        await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteJsonStreamAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
+                source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
+            }
+            else
+            {
+                source.Append("        return global::Microsoft.AspNetCore.Http.Results.Json(_result, statusCode: ")
+                    .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
+            }
         }
 
         source.AppendLine("        }");
@@ -364,6 +415,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var messagePack = GetNamedBool(attribute, "AcceptsMessagePack");
         var successStatusCode = GetNamedInt(attribute, "SuccessStatusCode", 200);
         var nullResultStatusCode = GetNamedInt(attribute, "NullResultStatusCode", 0);
+        var maxFileCount = GetNamedInt(attribute, "MaxFileCount", 0);
+        var allowedContentTypes = GetNamedStrings(attribute, "AllowedContentTypes");
         var kind = HandlerKind.None;
         string? responseType = null;
         INamedTypeSymbol? responseSymbol = null;
@@ -415,6 +468,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ServerSetAttribute);
                 var isETag = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ETagAttribute);
                 var isString = p.Type.SpecialType == SpecialType.System_String;
+                var isAttachment = p.Type.ToDisplayString() == ArkAttachment;
+                var isAttachmentCollection = p.Type is INamedTypeSymbol collection
+                    && collection.AllInterfaces.Any(item => item.ToDisplayString().StartsWith("System.Collections.Generic.IEnumerable<", StringComparison.Ordinal))
+                    && collection.TypeArguments.Length == 1
+                    && collection.TypeArguments[0].ToDisplayString() == ArkAttachment;
                 return new PropertyInfo(
                     p.Name,
                     p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -423,7 +481,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                     isQuery,
                     isServerSet,
                     isString,
-                    isETag);
+                    isETag,
+                    isAttachment,
+                    isAttachmentCollection);
             })
             .ToImmutableArray();
         var responseETagProperty = responseSymbol is null
@@ -451,7 +511,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             GetNamedBool(attribute, "AllowAnonymous"),
             successStatusCode,
             nullResultStatusCode,
-            responseETagProperty);
+            responseETagProperty,
+            maxFileCount,
+            allowedContentTypes,
+            responseSymbol is INamedTypeSymbol responseNamed
+                && responseNamed.OriginalDefinition.ToDisplayString() == AsyncEnumerable);
     }
 
     private static bool IsSelected(
@@ -515,6 +579,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         return attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value.Value is true;
     }
 
+    private static ImmutableArray<string> GetNamedStrings(AttributeData attribute, string name)
+    {
+        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
+        return value.Kind == TypedConstantKind.Array
+            ? value.Values.Where(item => item.Value is string).Select(item => (string)item.Value!).ToImmutableArray()
+            : ImmutableArray<string>.Empty;
+    }
+
     private static string Combine(string prefix, string template)
     {
         return prefix.TrimEnd('/') + "/" + template.TrimStart('/');
@@ -549,7 +621,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         bool IsQuery,
         bool IsServerSet,
         bool IsString,
-        bool IsETag);
+        bool IsETag,
+        bool IsAttachment,
+        bool IsAttachmentCollection);
 
     private readonly record struct Endpoint(
         string TypeName,
@@ -569,7 +643,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         bool AllowAnonymous,
         int SuccessStatusCode,
         int NullResultStatusCode,
-        string? ResponseETagProperty);
+        string? ResponseETagProperty,
+        int MaxFileCount,
+        ImmutableArray<string> AllowedContentTypes,
+        bool IsStreaming);
 
     private enum HandlerKind
     {
