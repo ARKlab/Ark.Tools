@@ -1,15 +1,18 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.RebusProcessor;
 
+using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
 
 using Rebus.Activation;
 using Rebus.Config;
+using Rebus.Serialization.Json;
 using Rebus.Transport.InMem;
+using System.Text.Json;
 
 using SimpleInjector;
 
@@ -32,7 +35,7 @@ public sealed class AzureFunctionsRebusTests
         ApplicationComposition.RegisterOutboundRebus(
             sender,
             transport => transport.UseDrainableInMemoryTransportAsOneWayClient(network),
-            ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>);
+            SampleRebusEndpoints.ConfigureRouting);
 
         var received = new TaskCompletionSource<CompleteGreetingCompositionRequest>(
             TaskCreationOptions.RunContinuationsAsynchronously);
@@ -44,6 +47,8 @@ public sealed class AzureFunctionsRebusTests
         });
         using var receiver = Configure.With(activator)
             .Transport(transport => transport.UseInMemoryTransport(network, "ark.mediator.sample"))
+            .Serialization(serialization => serialization.UseSystemTextJson(
+                new JsonSerializerOptions().ConfigureArkDefaults()))
             .Start();
 
         sender.Verify();

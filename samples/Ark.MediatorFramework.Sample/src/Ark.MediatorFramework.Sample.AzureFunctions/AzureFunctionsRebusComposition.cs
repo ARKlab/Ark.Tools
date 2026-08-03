@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
-using Ark.MediatorFramework.Generated;
+using Ark.MediatorFramework.Sample.RebusProcessor;
 
 using Azure.Identity;
 
@@ -34,7 +34,7 @@ public static class AzureFunctionsRebusComposition
         ApplicationComposition.RegisterOutboundRebus(
             container,
             transport => ConfigureTransport(transport, serviceBusConnectionString),
-            ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>);
+            SampleRebusEndpoints.ConfigureRouting);
         return container;
     }
 
