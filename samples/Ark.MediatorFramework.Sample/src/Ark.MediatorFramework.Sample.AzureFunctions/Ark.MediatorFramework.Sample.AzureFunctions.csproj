@@ -15,7 +15,6 @@
                       OutputItemType="Analyzer"
                       PrivateAssets="all" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" />
-    <PackageReference Include="SimpleInjector" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
     <ProjectReference Include="..\..\..\..\src\mediator-framework\Ark.Tools.MediatorFramework.AzureFunctions\Ark.Tools.MediatorFramework.AzureFunctions.csproj" />
   </ItemGroup>

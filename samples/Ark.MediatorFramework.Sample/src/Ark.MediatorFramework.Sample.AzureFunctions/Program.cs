@@ -2,12 +2,14 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.AzureFunctions;
 
 using Ark.Tools.Solid;
 
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -23,21 +25,30 @@ using System.Security.Claims;
         typeof(DescribeShapeRequest),
     })]
 
-var builder = FunctionsApplication.CreateBuilder(args);
-builder.ConfigureFunctionsWebApplication();
+namespace Ark.MediatorFramework.Sample.AzureFunctions;
 
-var container = new Container();
-container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-ApplicationComposition.Register(container, useSqlStore: false);
+public static class Program
+{
+    public static void Main(string[] args)
+    {
+        var builder = FunctionsApplication.CreateBuilder(args);
+        builder.ConfigureFunctionsWebApplication();
 
-var httpContextAccessor = new HttpContextAccessor();
-container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(
-    new FunctionsUserContextProvider(httpContextAccessor));
-builder.Services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
-builder.Services.AddArkAzureFunctions(container);
-builder.Services.AddArkAzureFunctionsBearerAuthentication();
+        using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        ApplicationComposition.Register(container, useSqlStore: false);
 
-builder.Build().Run();
+        var httpContextAccessor = new HttpContextAccessor();
+        container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(
+            new FunctionsUserContextProvider(httpContextAccessor));
+        builder.Services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
+        builder.Services.AddSingleton(container);
+        builder.Services.AddArkAzureFunctions();
+        builder.Services.AddArkAzureFunctionsBearerAuthentication();
+
+        builder.Build().Run();
+    }
+}
 
 internal sealed class FunctionsUserContextProvider : IContextProvider<ClaimsPrincipal>
 {
@@ -48,12 +59,6 @@ internal sealed class FunctionsUserContextProvider : IContextProvider<ClaimsPrin
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public ClaimsPrincipal Current
-    {
-        get
-        {
-            return _httpContextAccessor.HttpContext?.User
-                ?? new ClaimsPrincipal(new ClaimsIdentity());
-        }
-    }
+    public ClaimsPrincipal Current => _httpContextAccessor.HttpContext?.User
+        ?? new ClaimsPrincipal(new ClaimsIdentity());
 }
