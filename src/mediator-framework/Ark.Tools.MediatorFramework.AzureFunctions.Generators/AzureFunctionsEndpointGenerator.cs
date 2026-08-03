@@ -269,10 +269,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         {
             source.Append("        body.").Append(prop.Name).AppendLine(" = default;");
         }
-        foreach (var prop in endpoint.Properties.Where(p => p.IsETag))
+        var _etagProperties = endpoint.Properties.Where(p => p.IsETag).ToArray();
+        if (_etagProperties.Length > 0)
         {
             source.AppendLine("        var _etag = global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.ReadPrecondition(request.HttpContext);");
-            source.Append("        if (_etag is not null) body.").Append(prop.Name).AppendLine(" = _etag;");
+            foreach (var prop in _etagProperties)
+                source.Append("        if (_etag is not null) body.").Append(prop.Name).AppendLine(" = _etag;");
         }
 
         // Dispatch via Simple Injector scope
@@ -312,6 +314,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
         }
 
+        source.AppendLine("        }");
+        source.AppendLine("        catch (global::System.OperationCanceledException)");
+        source.AppendLine("        {");
+        source.AppendLine("            throw;");
         source.AppendLine("        }");
         source.AppendLine("        catch (global::System.Exception _exception)");
         source.AppendLine("        {");

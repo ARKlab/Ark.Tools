@@ -48,7 +48,13 @@ public static class ArkAzureFunctionsResults
         if (string.IsNullOrEmpty(token))
             return null;
         if (!IsValidToken(token))
-            throw new InvalidOperationException("ETag token contains an invalid character.");
+        {
+            var position = token.Select((character, index) => (character, index))
+                .First(item => item.character == '"' || item.character == '\\'
+                    || item.character < '\u0020' || item.character == '\u007f')
+                .index;
+            throw new InvalidOperationException($"ETag token contains an invalid character at position {position}.");
+        }
 
         context.Response.Headers.ETag = "\"" + token + "\"";
         if (!conditionalGet)
