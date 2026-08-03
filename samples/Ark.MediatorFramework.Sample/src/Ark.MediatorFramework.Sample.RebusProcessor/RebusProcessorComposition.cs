@@ -15,14 +15,12 @@ using NodaTime;
 using Rebus.Config;
 using Rebus.Handlers;
 using Rebus.Routing;
-using Rebus.Serialization.Json;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace Ark.MediatorFramework.Sample.RebusProcessor;
 
@@ -36,7 +34,6 @@ public static class RebusProcessorComposition
     /// <param name="useSqlStore">Whether to use SQL persistence and the outbox.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
-    /// <param name="greetingStore">Optional store shared with the API container.</param>
     /// <param name="registerHandlers">Registers generated Rebus message handlers.</param>
     /// <param name="configureRouting">Configures generated Rebus message routing.</param>
     /// <returns>An isolated processor container.</returns>
@@ -45,7 +42,6 @@ public static class RebusProcessorComposition
         bool useSqlStore = true,
         string? connectionString = null,
         IClock? clock = null,
-        IGreetingStore? greetingStore = null,
         Action<Container>? registerHandlers = null,
         Action<StandardConfigurer<IRouter>>? configureRouting = null)
     {
@@ -53,7 +49,7 @@ public static class RebusProcessorComposition
 
         var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        ApplicationComposition.Register(container, useSqlStore, connectionString, clock, greetingStore);
+        ApplicationComposition.Register(container, useSqlStore, connectionString, clock);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
@@ -61,6 +57,7 @@ public static class RebusProcessorComposition
         (registerHandlers ?? ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<RefreshGreetingCommand>)(container);
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
 
+        var routing = configureRouting ?? ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>;
         container.ConfigureRebus(cfg =>
         {
             cfg.Transport(transport =>
@@ -75,12 +72,9 @@ public static class RebusProcessorComposition
                     });
                 }
             });
-            cfg.Routing(configureRouting ?? ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>);
-            cfg.Serialization(serialization => serialization.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()));
-            cfg.Options(options =>
+            ApplicationComposition.ConfigureRebusCommon(cfg, container, routing, options =>
             {
                 options.SetNumberOfWorkers(1);
-                options.AutomaticallyFlowUserContext(container);
                 options.ArkRetryStrategy(maxDeliveryAttempts: 1);
             });
         });

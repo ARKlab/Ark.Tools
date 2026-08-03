@@ -31,6 +31,33 @@ namespace Ark.MediatorFramework.Sample.Application;
 public static class ApplicationComposition
 {
     /// <summary>
+    /// Configures routing, serialization, and user-context propagation that must be identical
+    /// between outbound-only and full-processor Rebus configurations.
+    /// </summary>
+    /// <param name="config">The Rebus configurer.</param>
+    /// <param name="container">The SimpleInjector container used for user-context flow.</param>
+    /// <param name="configureRouting">Configures generated owner routing.</param>
+    /// <param name="configureOptions">Optional extra options applied after the common ones.</param>
+    public static void ConfigureRebusCommon(
+        RebusConfigurer config,
+        Container container,
+        Action<StandardConfigurer<IRouter>> configureRouting,
+        Action<OptionsConfigurer>? configureOptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(configureRouting);
+
+        config.Routing(configureRouting);
+        config.Serialization(s => s.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()));
+        config.Options(options =>
+        {
+            options.AutomaticallyFlowUserContext(container);
+            configureOptions?.Invoke(options);
+        });
+    }
+
+    /// <summary>
     /// Registers Rebus as an outbound-only client using the generated owner routing.
     /// </summary>
     /// <param name="container">The SimpleInjector container to register into.</param>
@@ -48,9 +75,7 @@ public static class ApplicationComposition
         container.ConfigureRebus(config =>
         {
             config.Transport(configureTransport);
-            config.Routing(configureRouting);
-            config.Serialization(serialization => serialization.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()));
-            config.Options(options => options.AutomaticallyFlowUserContext(container));
+            ConfigureRebusCommon(config, container, configureRouting);
         });
     }
 

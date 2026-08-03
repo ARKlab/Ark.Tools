@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Rebus;
-using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 using Rebus.Transport.InMem;
 
@@ -10,35 +9,43 @@ using SimpleInjector;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
+/// <summary>
+/// Hosted service that owns the Rebus processor container: it builds it from Microsoft
+/// hosting services (no reference to the API SimpleInjector container), then manages its
+/// lifecycle independently.
+/// </summary>
 internal sealed class SampleBusHostedService : IHostedService
 {
-    private readonly Container _container;
     private readonly Container _processorContainer;
 
-    public SampleBusHostedService(Container container)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SampleBusHostedService"/> class.
+    /// </summary>
+    /// <param name="network">The shared in-memory Rebus transport network (from Microsoft DI).</param>
+    /// <param name="useSqlStore">Whether the processor should use SQL persistence and the outbox.</param>
+    /// <param name="connectionString">Optional SQL Server connection string.</param>
+    public SampleBusHostedService(InMemNetwork network, bool useSqlStore, string? connectionString)
     {
-        _container = container;
-        var network = container.GetInstance<InMemNetwork>();
-        var sqlConfig = container.GetRegistration<SampleDataContextConfig>()?.GetInstance() as SampleDataContextConfig;
         _processorContainer = RebusProcessorComposition.BuildContainer(
             network,
-            useSqlStore: sqlConfig is not null,
-            connectionString: sqlConfig?.ConnectionString,
+            useSqlStore: useSqlStore,
+            connectionString: connectionString,
             registerHandlers: SampleRebusEndpoints.RegisterHandlers,
             configureRouting: SampleRebusEndpoints.ConfigureRouting);
     }
 
+    /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _container.Verify();
-        _container.StartBus();
         _processorContainer.Verify();
         _processorContainer.StartBus();
         await Task.CompletedTask.ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         await _processorContainer.DisposeAsync().ConfigureAwait(false);
     }
 }
+

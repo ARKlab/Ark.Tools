@@ -48,8 +48,9 @@ public sealed class SampleTestContext : IDisposable
             "1",
             StringComparison.Ordinal);
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
+        var network = new InMemNetwork();
         var container = SampleComposition.BuildContainer(
-            new InMemNetwork(),
+            network,
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString,
             clock: Clock);
@@ -64,7 +65,13 @@ public sealed class SampleTestContext : IDisposable
                 ["ASPNETCORE_ENVIRONMENT"] = "IntegrationTests",
             })
             .Build();
-        var startup = new SampleStartup(container, configuration, configureFallbackPolicy);
+        var startup = new SampleStartup(
+            container,
+            network,
+            configuration,
+            useSqlStore: useSqlStore,
+            connectionString: DatabaseHooks.ConnectionString,
+            configureFallbackPolicy: configureFallbackPolicy);
         _host = new HostBuilder()
             .ConfigureWebHost(web => web
                 .UseTestServer()

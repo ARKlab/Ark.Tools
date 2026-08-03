@@ -18,6 +18,8 @@ using Scalar.AspNetCore;
 
 using Microsoft.AspNetCore.Authorization;
 
+using Rebus.Transport.InMem;
+
 using SimpleInjector;
 
 using ProtoBuf.Grpc.Server;
@@ -36,20 +38,32 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 public sealed class SampleStartup
 {
     private readonly Container _container;
+    private readonly InMemNetwork _network;
+    private readonly bool _useSqlStore;
+    private readonly string? _connectionString;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
     private readonly IConfiguration _configuration;
     private readonly bool _configureFallbackPolicy;
 
     /// <summary>Initializes a new instance of the <see cref="SampleStartup"/> class.</summary>
     /// <param name="container">The application dependency injection container.</param>
+    /// <param name="network">The in-memory Rebus transport network.</param>
     /// <param name="configuration">Optional application configuration.</param>
+    /// <param name="useSqlStore">Whether the processor should use SQL persistence.</param>
+    /// <param name="connectionString">Optional SQL Server connection string for the processor.</param>
     /// <param name="configureFallbackPolicy">Whether to configure the defense-in-depth fallback policy.</param>
     public SampleStartup(
         Container container,
+        InMemNetwork network,
         IConfiguration? configuration = null,
+        bool useSqlStore = true,
+        string? connectionString = null,
         bool configureFallbackPolicy = true)
     {
         _container = container;
+        _network = network;
+        _useSqlStore = useSqlStore;
+        _connectionString = connectionString;
         _configuration = configuration ?? new ConfigurationBuilder().Build();
         _configureFallbackPolicy = configureFallbackPolicy;
         var instance = _configuration["EntraId:Instance"]!;
@@ -102,7 +116,21 @@ public sealed class SampleStartup
             };
         });
         services.AddHttpContextAccessor();
-        services.AddSingleton<IHostedService>(_ => new SampleBusHostedService(_container));
+
+        // The InMemNetwork is registered in Microsoft DI so both the API container and the
+        // processor hosted service can access it without depending on each other.
+        services.AddSingleton(_network);
+
+        // API container lifecycle: Verify, StartBus, and Dispose are managed here.
+        services.AddSingleton<IHostedService>(_ => new SampleApiContainerHostedService(_container));
+
+        // Processor container is built and managed independently from the API container;
+        // the only shared resource is InMemNetwork resolved from Microsoft DI.
+        services.AddSingleton<IHostedService>(sp => new SampleBusHostedService(
+            sp.GetRequiredService<InMemNetwork>(),
+            useSqlStore: _useSqlStore,
+            connectionString: _connectionString));
+
         services.AddRouting();
         services.AddControllers();
 

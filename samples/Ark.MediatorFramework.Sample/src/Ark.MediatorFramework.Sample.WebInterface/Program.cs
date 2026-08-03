@@ -17,7 +17,7 @@ if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
     builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
 }
 builder.Host.AddApplicationInsithsTelemetryForWebHostArk();
-var startup = new SampleStartup(container, builder.Configuration);
+var startup = new SampleStartup(container, network, builder.Configuration);
 startup.ConfigureServices(builder.Services);
 
 var app = builder.Build();
