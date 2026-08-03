@@ -9,10 +9,23 @@ namespace Ark.Tools.Solid.SimpleInjector;
 public class SimpleInjectorRequestProcessor : IRequestProcessor
 {
     private readonly Container _container;
+    private readonly ISolidSimpleInjectorDispatcher? _dispatcher;
 
     public SimpleInjectorRequestProcessor(Container container)
+        : this(container, dispatcher: null)
     {
+    }
+
+    /// <summary>
+    /// Initializes a request processor with an optional generated dispatcher.
+    /// </summary>
+    /// <param name="container">The verified SimpleInjector container.</param>
+    /// <param name="dispatcher">The generated dispatcher, or <see langword="null"/> to use the compatibility fallback.</param>
+    public SimpleInjectorRequestProcessor(Container container, ISolidSimpleInjectorDispatcher? dispatcher)
+    {
+        ArgumentNullException.ThrowIfNull(container);
         _container = container;
+        _dispatcher = dispatcher;
     }
 
     private object _getHandlerInstance<TResponse>(IRequest<TResponse> request)
@@ -36,7 +49,13 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        if (_dispatcher?.TryExecuteRequest(_container, request, ctk, out var generatedExecution) == true)
+        {
+            return await generatedExecution!.ConfigureAwait(false);
+        }
+
         dynamic requestHandler = _getHandlerInstance(request);
-        return await requestHandler.ExecuteAsync((dynamic)request, ctk);
+        return await requestHandler.ExecuteAsync((dynamic)request, ctk).ConfigureAwait(false);
     }
 }

@@ -2,13 +2,29 @@
 
 Extension to use Ark.Tools.Solid framework with SimpleInjector dependency injection.
 
-## Trimming Support
+## Dispatch and trimming support
 
-**Status**: ❌ NOT TRIMMABLE
+**Status**: generated dispatch is trim-friendly; the compatibility fallback is not.
+
+Install/reference `Ark.Tools.Solid.SimpleInjector.Generators` as a Roslyn
+analyzer, mark statically known contracts with
+`[GenerateSolidSimpleInjectorDispatch]`, and pass the generated
+`SolidSimpleInjectorGeneratedDispatcher` to the processor constructor:
+
+```csharp
+var dispatcher = new SolidSimpleInjectorGeneratedDispatcher();
+var processor = new SimpleInjectorRequestProcessor(container, dispatcher);
+```
+
+Generated branches resolve the closed handler service through SimpleInjector,
+so decorators, lifestyles, cancellation, and exceptions behave exactly as
+they do through the normal container registration. Contracts not marked for
+generation (including dynamically loaded contracts) use the existing
+reflection/dynamic compatibility fallback.
 
 ### Reason
 
-This library fundamentally relies on dynamic invocation to call handler methods. The implementation uses:
+The compatibility fallback relies on dynamic invocation to call handler methods. The implementation uses:
 
 1. **Runtime Type Construction**: `MakeGenericType` to construct handler types at runtime
 2. **Dynamic Invocation**: C# `dynamic` keyword to invoke handler methods without compile-time type information
@@ -25,7 +41,7 @@ This pattern requires the C# dynamic binder, which uses `RequiresUnreferencedCod
 
 ### Impact
 
-Applications using this library cannot be fully trimmed. The trimmer may remove:
+Applications that use the fallback cannot be fully trimmed. The trimmer may remove:
 - Handler types that are only referenced through the container
 - Handler method implementations
 - Dynamic binder metadata

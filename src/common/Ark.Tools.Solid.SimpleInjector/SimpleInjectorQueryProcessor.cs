@@ -9,10 +9,23 @@ namespace Ark.Tools.Solid.SimpleInjector;
 public class SimpleInjectorQueryProcessor : IQueryProcessor
 {
     private readonly Container _container;
+    private readonly ISolidSimpleInjectorDispatcher? _dispatcher;
 
     public SimpleInjectorQueryProcessor(Container container)
+        : this(container, dispatcher: null)
     {
+    }
+
+    /// <summary>
+    /// Initializes a query processor with an optional generated dispatcher.
+    /// </summary>
+    /// <param name="container">The verified SimpleInjector container.</param>
+    /// <param name="dispatcher">The generated dispatcher, or <see langword="null"/> to use the compatibility fallback.</param>
+    public SimpleInjectorQueryProcessor(Container container, ISolidSimpleInjectorDispatcher? dispatcher)
+    {
+        ArgumentNullException.ThrowIfNull(container);
         _container = container;
+        _dispatcher = dispatcher;
     }
 
     private object _getHandlerInstance<TResult>(IQuery<TResult> query)
@@ -36,8 +49,14 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
     {
+        ArgumentNullException.ThrowIfNull(query);
+        if (_dispatcher?.TryExecuteQuery(_container, query, ctk, out var generatedExecution) == true)
+        {
+            return await generatedExecution!.ConfigureAwait(false);
+        }
+
         dynamic queryHandler = _getHandlerInstance(query);
-        TResult res = await queryHandler.ExecuteAsync((dynamic)query, ctk);
+        TResult res = await queryHandler.ExecuteAsync((dynamic)query, ctk).ConfigureAwait(false);
         return res;
     }
 }

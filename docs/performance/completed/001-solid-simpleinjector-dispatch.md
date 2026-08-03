@@ -47,6 +47,21 @@ preserving handler decoration, scoping, cancellation, exceptions, and public
   baseline; publish the result markdown in the benchmark artifact/output, not
   as a source-controlled performance claim.
 
+## Decision record
+
+- Added an opt-in incremental source generator and dispatcher seam rather than
+  changing the public processor interfaces or requiring generated code in every
+  application.
+- Generated dispatch resolves the same closed handler service from the
+  SimpleInjector container on every call, preserving decorators and lifetimes.
+- Processors retain the existing reflection/dynamic path when no generated
+  dispatcher handles a contract, including dynamically loaded contracts.
+- Benchmarks compare fallback and generated request, query, and command paths;
+  benchmark output remains an artifact rather than a source-controlled claim.
+- Smoke results on .NET 10.0.10: request 363.04 ns/464 B versus 54.85 ns/192 B,
+  query 367.27 ns/464 B versus 56.56 ns/192 B, and command 274.68 ns/200 B
+  versus 38.65 ns/48 B. Raw output is in `BenchmarkDotNet.Artifacts/results/`.
+
 ## Verification
 
 1. Run the focused processor and decorator tests, then
@@ -56,4 +71,3 @@ preserving handler decoration, scoping, cancellation, exceptions, and public
 3. Run the BenchmarkDotNet dispatch benchmarks in Release outside a debugger,
    with the baseline and candidate on the same machine and SDK. Retain raw
    BenchmarkDotNet artifacts with the change review.
-
