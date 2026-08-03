@@ -25,16 +25,6 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class AzureFunctionsRebusTests
 {
-    /// <summary>Verifies the readiness handler used by the function host.</summary>
-    [TestMethod]
-    public async Task HealthContractIsAvailableToFunctionHost()
-    {
-        var response = await new HealthCheckHandler().ExecuteAsync(new HealthCheckQuery());
-        Assert.AreEqual("Healthy", response.Status);
-        Assert.AreEqual("00:00:00", response.TotalDuration);
-        Assert.IsNotNull(response.Entries);
-    }
-
     /// <summary>Rejects a Function host without its required outbound bus configuration.</summary>
     [TestMethod]
     public void MissingOutboundBusConfigurationFailsClearly()

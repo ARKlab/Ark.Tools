@@ -16,20 +16,6 @@ using NodaTime;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
-/// <summary>Handles the anonymous host readiness query.</summary>
-public sealed class HealthCheckHandler : IQueryHandler<HealthCheckQuery, HealthCheckResponse>
-{
-    /// <inheritdoc />
-    public async Task<HealthCheckResponse> ExecuteAsync(
-        HealthCheckQuery query,
-        CancellationToken ctk = default)
-    {
-        ArgumentNullException.ThrowIfNull(query);
-        await Task.CompletedTask.ConfigureAwait(false);
-        return new HealthCheckResponse();
-    }
-}
-
 /// <summary>Handles the synchronous refresh command.</summary>
 public sealed class RefreshGreetingHandler : ICommandHandler<RefreshGreetingCommand>
 {

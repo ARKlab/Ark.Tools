@@ -156,7 +156,6 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>, CompleteGreetingCompositionHandler>();
         container.Register<IQueryHandler<GetGreetingQuery, GreetingResponse>, GetGreetingHandler>();
         container.Register<IQueryHandler<GetGreetingV2Query, GreetingResponseV2>, GetGreetingV2Handler>();
-        container.Register<IQueryHandler<HealthCheckQuery, HealthCheckResponse>, HealthCheckHandler>();
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();
         container.Register<IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>, GetGreetingsStreamHandler>();
