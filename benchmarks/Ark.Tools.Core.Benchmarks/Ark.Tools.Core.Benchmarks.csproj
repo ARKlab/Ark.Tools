@@ -4,10 +4,6 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
-    <!-- Benchmarks intentionally do not opt into the compile-time interceptors
-         so that the harness always measures the reflection-based fallback in
-         DataTableExtensions.ShredObjectToDataTable<T>. See Program.cs remarks
-         for how the interceptor path is measured separately. -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <TieredPGO>true</TieredPGO>
@@ -17,6 +13,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\..\src\common\Ark.Tools.Core.Analyzers\Ark.Tools.Core.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

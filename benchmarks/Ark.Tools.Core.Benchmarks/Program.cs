@@ -1,52 +1,52 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Data;
 using System.Diagnostics;
 
 using Ark.Tools.Core;
 using Ark.Tools.Core.Benchmarks;
 
-// Dependency-free micro-benchmark harness for DataTableExtensions.ToDataTableArk.
+// Dependency-free comparison of intercepted and reflection-fallback ToDataTableArk calls.
 //
 // Intentionally does NOT depend on BenchmarkDotNet or any other 3rd party
 // package: it measures wall-clock elapsed time via Stopwatch and managed
 // allocations via GC.GetAllocatedBytesForCurrentThread(), which are both part
-// of the BCL. This project purposefully does NOT reference the
-// Ark.Tools.Core.Analyzers generator project as an analyzer, so every call to
-// ToDataTableArk() below always goes through the reflection-based fallback in
-// Ark.Tools.Core.DataTableExtensions (ShredObjectToDataTable<T>), regardless of
-// whether the C# 14 interceptor generator is active elsewhere in the solution.
-// This lets the same harness be run unmodified before and after the fallback
-// optimization to produce directly comparable baseline/optimized numbers.
+// of the BCL. InterceptedConvert has a compile-time-known element type and is
+// replaced by the generator. GenericFallbackConvert has an open type parameter,
+// which is ineligible for interception and therefore calls the runtime fallback.
 //
-// Usage: dotnet run -c Release --project benchmarks/Ark.Tools.Core.Benchmarks -- [label]
-// "label" (e.g. "baseline" or "optimized") is only used to title the output.
+// Usage: dotnet run -c Release --project benchmarks/Ark.Tools.Core.Benchmarks
 
-var label = args.Length > 0 ? args[0] : "run";
 const int WarmupIterations = 50;
 const int MeasuredIterations = 20;
 int[] sizes = [1, 100, 10_000];
 
-Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "ToDataTableArk benchmark ({0})", label));
+Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0}", "ToDataTableArk interceptor comparison"));
 Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "Warmup iterations: {0}, Measured iterations: {1}", WarmupIterations, MeasuredIterations));
 Console.WriteLine();
 
-var rows = new List<BenchmarkRow>();
+var fallbackRows = new List<BenchmarkRow>();
+var interceptedRows = new List<BenchmarkRow>();
 foreach (var size in sizes)
 {
-    rows.Add(Measure(size, WarmupIterations, MeasuredIterations));
+    var data = BenchmarkEntity.CreateMany(size);
+    fallbackRows.Add(Measure(data, WarmupIterations, MeasuredIterations, GenericFallbackConvert));
+    interceptedRows.Add(Measure(data, WarmupIterations, MeasuredIterations, InterceptedConvert));
 }
 
-PrintMarkdownTable(label, rows);
+PrintMarkdownTable(fallbackRows, interceptedRows);
 
-static BenchmarkRow Measure(int count, int warmupIterations, int measuredIterations)
+static BenchmarkRow Measure(
+    BenchmarkEntity[] data,
+    int warmupIterations,
+    int measuredIterations,
+    Func<BenchmarkEntity[], DataTable> convert)
 {
-    var data = BenchmarkEntity.CreateMany(count);
-
     // Warmup: lets tiered JIT reach steady state and avoids measuring first-call costs.
     for (var i = 0; i < warmupIterations; i++)
     {
-        using var warmupTable = data.ToDataTableArk();
+        using var warmupTable = convert(data);
     }
 
     var elapsedTicks = new long[measuredIterations];
@@ -61,7 +61,7 @@ static BenchmarkRow Measure(int count, int warmupIterations, int measuredIterati
         var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
         var sw = Stopwatch.StartNew();
 
-        using var table = data.ToDataTableArk();
+        using var table = convert(data);
 
         sw.Stop();
         var allocatedAfter = GC.GetAllocatedBytesForCurrentThread();
@@ -78,25 +78,41 @@ static BenchmarkRow Measure(int count, int warmupIterations, int measuredIterati
     var medianAllocated = allocatedBytes[measuredIterations / 2];
     var meanAllocated = (long)allocatedBytes.Average();
 
-    return new BenchmarkRow(count, medianElapsedMs, meanElapsedMs, medianAllocated, meanAllocated);
+    return new BenchmarkRow(data.Length, medianElapsedMs, meanElapsedMs, medianAllocated, meanAllocated);
 }
 
-static void PrintMarkdownTable(string label, IReadOnlyList<BenchmarkRow> rows)
+static void PrintMarkdownTable(
+    IReadOnlyList<BenchmarkRow> fallbackRows,
+    IReadOnlyList<BenchmarkRow> interceptedRows)
 {
-    Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "### Results: {0}", label));
-    Console.WriteLine();
-    Console.WriteLine("| Objects | Median time (ms) | Mean time (ms) | Median allocated (bytes) | Mean allocated (bytes) | Allocated/object (bytes) |");
-    Console.WriteLine("|---:|---:|---:|---:|---:|---:|");
-    foreach (var row in rows)
+    Console.WriteLine("| Objects | Fallback median (ms) | Interceptor median (ms) | Time reduction | Fallback allocated (bytes) | Interceptor allocated (bytes) | Allocation reduction |");
+    Console.WriteLine("|---:|---:|---:|---:|---:|---:|---:|");
+    for (var i = 0; i < fallbackRows.Count; i++)
     {
+        var fallback = fallbackRows[i];
+        var intercepted = interceptedRows[i];
+        var timeReduction = 1 - intercepted.MedianElapsedMs / fallback.MedianElapsedMs;
+        var allocationReduction = 1 - (double)intercepted.MedianAllocatedBytes / fallback.MedianAllocatedBytes;
+
         Console.WriteLine(string.Format(
             CultureInfo.InvariantCulture,
-            "| {0} | {1:F4} | {2:F4} | {3:N0} | {4:N0} | {5:N1} |",
-            row.Count,
-            row.MedianElapsedMs,
-            row.MeanElapsedMs,
-            row.MedianAllocatedBytes,
-            row.MeanAllocatedBytes,
-            row.Count == 0 ? 0 : (double)row.MedianAllocatedBytes / row.Count));
+            "| {0} | {1:F4} | {2:F4} | {3:P1} | {4:N0} | {5:N0} | {6:P1} |",
+            fallback.Count,
+            fallback.MedianElapsedMs,
+            intercepted.MedianElapsedMs,
+            timeReduction,
+            fallback.MedianAllocatedBytes,
+            intercepted.MedianAllocatedBytes,
+            allocationReduction));
     }
+}
+
+static DataTable InterceptedConvert(BenchmarkEntity[] source)
+{
+    return source.ToDataTableArk();
+}
+
+static DataTable GenericFallbackConvert<T>(T[] source)
+{
+    return source.ToDataTableArk();
 }
