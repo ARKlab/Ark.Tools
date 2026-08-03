@@ -5,10 +5,15 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Jobs;
+
+using Microsoft.AspNetCore.Mvc;
 
 namespace Ark.Tools.Benchmarks;
 
-[MemoryDiagnoser]
+[Config(typeof(BenchmarkConfig))]
 public class ExceptionProblemDetailsBenchmarks
 {
     private readonly BusinessRuleViolationException _empty = new(new EmptyViolation());
@@ -70,7 +75,15 @@ public class ExceptionProblemDetailsBenchmarks
         payload["type"] = violation.GetType().Name;
         payload["title"] = violation.Title;
         payload["status"] = violation.Status;
-        return payload;
+        var problemDetails = new ProblemDetails
+        {
+            Type = $"https://httpstatuses.com/{violation.Status}",
+            Status = violation.Status,
+            Title = violation.Title,
+            Detail = violation.Detail,
+        };
+        problemDetails.Extensions["businessRuleViolation"] = payload;
+        return problemDetails;
     }
 
     private sealed class EmptyViolation() : BusinessRuleViolation("empty");
@@ -85,5 +98,17 @@ public class ExceptionProblemDetailsBenchmarks
         public int Count { get; set; }
         public bool Enabled { get; set; }
         public string? Name { get; set; }
+    }
+
+    public sealed class BenchmarkConfig : ManualConfig
+    {
+        public BenchmarkConfig()
+        {
+            AddJob(Job.InProcess
+                .WithLaunchCount(1)
+                .WithWarmupCount(1)
+                .WithIterationCount(3));
+            AddDiagnoser(MemoryDiagnoser.Default);
+        }
     }
 }

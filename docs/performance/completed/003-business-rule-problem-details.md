@@ -63,3 +63,13 @@ current problem-details wire shape for every business-rule violation type.
   violation shapes. A source-generated registry was evaluated but not added:
   the runtime cache preserves the existing public API and supplies the required
   fallback for arbitrary application-defined violation types.
+- BenchmarkDotNet now runs the exception benchmarks with an explicit
+  in-process .NET 10 job, avoiding the repository's incompatible generated
+  net8 benchmark project. The completed run produced these baseline/candidate
+  results (mean, allocated bytes):
+
+  | Shape | Reflection | Cached |
+  | --- | ---: | ---: |
+  | Empty | 372.6 ns, 784 B | 222.7 ns, 688 B |
+  | Single property | 387.3 ns, 1040 B | 319.4 ns, 936 B |
+  | Several properties | 512.7 ns, 1104 B | 354.3 ns, 984 B |
