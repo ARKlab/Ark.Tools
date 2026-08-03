@@ -9,6 +9,7 @@ using BenchmarkDotNet.Attributes;
 
 namespace Ark.Tools.Benchmarks;
 
+[MemoryDiagnoser]
 public class PolicyAuthorizationMetadataBenchmarks
 {
     [Benchmark]
