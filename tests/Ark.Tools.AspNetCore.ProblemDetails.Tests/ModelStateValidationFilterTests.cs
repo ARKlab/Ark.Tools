@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 
+using System.Reflection;
+
 namespace Ark.Tools.AspNetCore.ProblemDetails.Tests;
 
 /// <summary>Verifies model-state validation filter metadata and outcomes.</summary>
@@ -48,19 +50,23 @@ public sealed class ModelStateValidationFilterTests
     public void SupportsDistinctActionMethodsConcurrently()
     {
         var filter = new Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute();
-        var contexts = new[]
-        {
-            CreateContext(nameof(TestController.UnmarkedAction), isValid: false),
-            CreateContext(nameof(TestController.MarkedAction), isValid: false),
-        };
 
         Parallel.For(0, 100, index =>
         {
-            filter.OnActionExecuting(contexts[index % contexts.Length]);
+            var actionName = index % 2 == 0
+                ? nameof(TestController.UnmarkedAction)
+                : nameof(TestController.MarkedAction);
+            var context = CreateContext(actionName, isValid: false);
+            filter.OnActionExecuting(context);
+            if (index % 2 == 0)
+            {
+                context.Result.Should().BeOfType<BadRequestObjectResult>();
+            }
+            else
+            {
+                context.Result.Should().BeNull();
+            }
         });
-
-        contexts[0].Result.Should().BeOfType<BadRequestObjectResult>();
-        contexts[1].Result.Should().BeNull();
     }
 
     private static ActionExecutingContext CreateContext(string actionName, bool isValid)
@@ -78,8 +84,8 @@ public sealed class ModelStateValidationFilterTests
         var context = new ActionExecutingContext(
             actionContext,
             Array.Empty<IFilterMetadata>(),
-            new Dictionary<string, object?>(),
-            new TestController());
+            new Dictionary<string, object?>(StringComparer.Ordinal),
+            null!);
 
         if (!isValid)
         {

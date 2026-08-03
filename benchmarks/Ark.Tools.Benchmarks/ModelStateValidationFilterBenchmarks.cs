@@ -77,8 +77,8 @@ public sealed class ModelStateValidationFilterBenchmarks
         return new ActionExecutingContext(
             actionContext,
             Array.Empty<IFilterMetadata>(),
-            new Dictionary<string, object?>(),
-            new TestController());
+            new Dictionary<string, object?>(StringComparer.Ordinal),
+            null!);
     }
 
     private sealed class TestController : Controller
