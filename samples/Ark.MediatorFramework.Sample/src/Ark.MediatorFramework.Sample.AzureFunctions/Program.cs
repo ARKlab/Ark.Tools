@@ -6,9 +6,7 @@ using Ark.MediatorFramework.AzureFunctions;
 
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Hosting;
-
-using SimpleInjector;
-using SimpleInjector.Lifestyles;
+using Microsoft.Extensions.Configuration;
 
 [assembly: Ark.MediatorFramework.HttpHost(
     typeof(ApplicationComposition),
@@ -28,12 +26,11 @@ public static class Program
         var builder = FunctionsApplication.CreateBuilder(args);
         builder.ConfigureFunctionsWebApplication();
 
-        using var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        ApplicationComposition.Register(container, useSqlStore: false);
-
-        builder.Services.AddArkAzureFunctions(container);
+        var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
+        var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(serviceBusConnectionString);
+        builder.Services.AddArkAzureFunctions(rebusContainer);
         builder.Services.AddArkAzureFunctionsBearerAuthentication();
+        builder.Services.AddHostedService(_ => new AzureFunctionsRebusHostedService(rebusContainer));
 
         builder.Build().Run();
     }

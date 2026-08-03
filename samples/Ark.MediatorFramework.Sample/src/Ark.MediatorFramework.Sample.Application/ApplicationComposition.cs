@@ -83,6 +83,29 @@ public static class ApplicationComposition
         });
     }
 
+    /// <summary>
+    /// Registers Rebus as an outbound-only client. This composition never registers handlers,
+    /// an input queue, workers, subscriptions, or an outbox processor.
+    /// </summary>
+    /// <param name="container">The application container.</param>
+    /// <param name="configureTransport">Configures the outbound transport.</param>
+    /// <param name="configureRouting">Configures generated owner routing.</param>
+    public static void RegisterOutboundRebus(
+        Container container,
+        Action<StandardConfigurer<ITransport>> configureTransport,
+        Action<StandardConfigurer<IRouter>> configureRouting)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(configureTransport);
+        ArgumentNullException.ThrowIfNull(configureRouting);
+
+        container.ConfigureRebus(config =>
+        {
+            config.Transport(configureTransport);
+            ConfigureRebusCommon(config, container, configureRouting);
+        });
+    }
+
     /// <summary>Registers the pure domain graph into the given container.</summary>
     /// <param name="container">The SimpleInjector container to register into.</param>
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
