@@ -85,7 +85,7 @@ Rebus client. Use a namespace with `DefaultAzureCredential` in managed
 environments, or a connection string from external configuration for local use.
 The Function process has no input queue, workers, subscriptions, handlers, or
 request/reply bus semantics; messages are consumed by the separate processor.
-The anonymous readiness endpoint is `/healthCheck`.
+The anonymous readiness endpoint is `/healthCheck`, using the shared ASP.NET Core health check middleware.
 
 ## gRPC operations panel
 

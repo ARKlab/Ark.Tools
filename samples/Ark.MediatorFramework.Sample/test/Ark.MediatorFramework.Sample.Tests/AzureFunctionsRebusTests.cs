@@ -25,19 +25,10 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class AzureFunctionsRebusTests
 {
-    /// <summary>Verifies the shared anonymous readiness contract and handler.</summary>
+    /// <summary>Verifies the readiness handler used by the function host.</summary>
     [TestMethod]
     public async Task HealthContractIsAvailableToFunctionHost()
     {
-        var attribute = (Ark.MediatorFramework.HttpEndpointAttribute?)Attribute.GetCustomAttribute(
-            typeof(HealthCheckQuery),
-            typeof(Ark.MediatorFramework.HttpEndpointAttribute));
-
-        Assert.IsNotNull(attribute);
-        Assert.IsTrue(attribute.AllowAnonymous);
-        Assert.AreEqual("GET", attribute.Verb);
-        Assert.AreEqual("/healthCheck", attribute.Template);
-
         var response = await new HealthCheckHandler().ExecuteAsync(new HealthCheckQuery());
         Assert.AreEqual("Healthy", response.Status);
         Assert.AreEqual("00:00:00", response.TotalDuration);
