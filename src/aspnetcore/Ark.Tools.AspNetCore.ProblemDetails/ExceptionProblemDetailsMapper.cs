@@ -79,8 +79,10 @@ public static class ExceptionProblemDetailsMapper
     private static MvcProblemDetails CreateBusinessRuleViolation(BusinessRuleViolationException exception)
     {
         var violation = exception.BusinessRuleViolation;
-        var payload = BusinessRuleViolationAccessors
-            .GetOrAdd(violation.GetType(), type => CreateAccessors(type))
+        var violationType = violation.GetType();
+        if (!BusinessRuleViolationAccessors.TryGetValue(violationType, out var accessors))
+            accessors = BusinessRuleViolationAccessors.GetOrAdd(violationType, CreateAccessors(violationType));
+        var payload = accessors
             .ToDictionary(
                 accessor => accessor.Name,
                 accessor => accessor.GetValue(violation),
@@ -100,11 +102,7 @@ public static class ExceptionProblemDetailsMapper
         return problemDetails;
     }
 
-    [UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2070: 'this' argument does not satisfy 'DynamicallyAccessedMemberTypes.PublicProperties'",
-        Justification = "BusinessRuleViolation requires public properties to remain available for this runtime mapping.")]
-    private static Accessor[] CreateAccessors(Type violationType)
+    private static Accessor[] CreateAccessors([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type violationType)
     {
         return violationType
             .GetProperties()
