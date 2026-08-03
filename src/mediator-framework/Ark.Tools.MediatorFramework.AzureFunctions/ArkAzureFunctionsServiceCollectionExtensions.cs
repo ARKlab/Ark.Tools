@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication;
 
 using SimpleInjector;
 
@@ -14,6 +15,47 @@ namespace Ark.MediatorFramework.AzureFunctions;
 /// <summary>Registers the runtime services used by generated Azure Functions.</summary>
 public static class ArkAzureFunctionsServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers application authentication for generated Functions endpoints.
+    /// Configure a bearer handler, such as JWT bearer authentication, separately.
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    /// <param name="configure">The ASP.NET Core authentication configuration.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkAzureFunctionsBearerAuthentication(
+        this IServiceCollection services,
+        Action<AuthenticationOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        if (configure is null)
+            services.AddAuthentication();
+        else
+            services.AddAuthentication(configure);
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the explicitly opted-in App Service Easy Auth profile.
+    /// The platform authentication switch must be enabled at runtime.
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    /// <param name="configure">Optional Ark Functions authentication options.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkAzureFunctionsEasyAuthAuthentication(
+        this IServiceCollection services,
+        Action<ArkAzureFunctionsAuthenticationOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.AddOptions<ArkAzureFunctionsAuthenticationOptions>();
+        if (configure is not null)
+            services.Configure(configure);
+        services.AddAuthentication(options => options.DefaultScheme = "ArkAzureFunctionsEasyAuth")
+            .AddScheme<AuthenticationSchemeOptions, ArkAzureFunctionsEasyAuthHandler>(
+                "ArkAzureFunctionsEasyAuth",
+                _ => { });
+        return services;
+    }
+
     /// <summary>
     /// Registers the authentication profile used by generated Functions endpoints.
     /// </summary>

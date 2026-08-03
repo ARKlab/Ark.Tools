@@ -194,6 +194,15 @@ The sample uses direct bearer authentication. Easy Auth identity reconstruction 
 a separately registered and tested opt-in profile; it never trusts a caller-supplied
 identity header without the documented trusted deployment precondition.
 
+`AddArkAzureFunctionsBearerAuthentication` registers the application authentication
+builder; the host configures its JWT bearer handler and validation parameters. The
+alternative `AddArkAzureFunctionsEasyAuthAuthentication` registers a separate
+scheme that accepts `X-MS-CLIENT-PRINCIPAL` only when the Functions deployment has
+`WEBSITE_AUTH_ENABLED=true`. The profile bounds and validates the base64 JSON
+claims payload, never logs its contents, and returns no principal when the platform
+authentication switch is absent. These profiles are mutually exclusive choices for
+a host.
+
 ## Responses and parity matrix
 
 | Capability | Required Functions behavior |
