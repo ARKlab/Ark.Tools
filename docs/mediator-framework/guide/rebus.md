@@ -113,10 +113,12 @@ Hosts that must not run a Rebus processor, such as Azure Functions, register onl
 the generated owner routing and configure a one-way transport:
 
 ```csharp
-ApplicationComposition.RegisterOutboundRebus(container, transport =>
-{
-    transport.UseAzureServiceBusAsOneWayClient(connectionString, new DefaultAzureCredential());
-});
+ApplicationComposition.RegisterOutboundRebus(
+    container,
+    transport => transport.UseAzureServiceBusAsOneWayClient(
+        connectionString,
+        new DefaultAzureCredential()),
+    ArkGeneratedEndpoints.ConfigureArkRebusRouting<ApplicationAssemblyMarker>);
 ```
 
 Do not register generated Rebus handlers, an input queue, subscriptions, workers,

@@ -6,12 +6,14 @@ using Ark.Tools.Core;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 using Ark.Tools.Outbox;
+using Ark.Tools.Rebus;
 
 using FluentValidation;
 
 using NodaTime;
 
 using Rebus.Config;
+using Rebus.Routing;
 using Rebus.Transport;
 
 using SimpleInjector;
@@ -30,17 +32,20 @@ public static class ApplicationComposition
     /// </summary>
     /// <param name="container">The SimpleInjector container to register into.</param>
     /// <param name="configureTransport">Configures the one-way transport.</param>
+    /// <param name="configureRouting">Configures generated owner routing.</param>
     public static void RegisterOutboundRebus(
         Container container,
-        Action<StandardConfigurer<ITransport>> configureTransport)
+        Action<StandardConfigurer<ITransport>> configureTransport,
+        Action<StandardConfigurer<IRouter>> configureRouting)
     {
         ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(configureTransport);
+        ArgumentNullException.ThrowIfNull(configureRouting);
 
         container.ConfigureRebus(config =>
         {
             config.Transport(configureTransport);
-            config.Routing(ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>);
+            config.Routing(configureRouting);
         });
     }
 
