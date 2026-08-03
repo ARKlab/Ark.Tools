@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.AzureFunctions;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
 using Ark.Tools.Rebus;
@@ -24,6 +25,33 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class AzureFunctionsRebusTests
 {
+    /// <summary>Verifies the shared anonymous readiness contract and handler.</summary>
+    [TestMethod]
+    public async Task HealthContractIsAvailableToFunctionHost()
+    {
+        var attribute = (Ark.MediatorFramework.HttpEndpointAttribute?)Attribute.GetCustomAttribute(
+            typeof(HealthCheckQuery),
+            typeof(Ark.MediatorFramework.HttpEndpointAttribute));
+
+        Assert.IsNotNull(attribute);
+        Assert.IsTrue(attribute.AllowAnonymous);
+        Assert.AreEqual("GET", attribute.Verb);
+        Assert.AreEqual("/health", attribute.Template);
+
+        var response = await new HealthCheckHandler().ExecuteAsync(new HealthCheckQuery());
+        Assert.AreEqual("ok", response.Status);
+    }
+
+    /// <summary>Rejects a Function host without its required outbound bus configuration.</summary>
+    [TestMethod]
+    public void MissingOutboundBusConfigurationFailsClearly()
+    {
+        var exception = Assert.ThrowsException<InvalidOperationException>(
+            () => AzureFunctionsRebusComposition.BuildContainer(null));
+
+        StringAssert.Contains(exception.Message, "Azure Service Bus configuration is required");
+    }
+
     /// <summary>Routes and delivers a typed message to an independently hosted receiver.</summary>
     [TestMethod]
     public async Task OutboundCompositionRoutesToOwnerQueue()

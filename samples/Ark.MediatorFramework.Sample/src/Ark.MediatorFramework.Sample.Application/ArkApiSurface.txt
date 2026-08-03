@@ -75,6 +75,9 @@ CONTRACT GreetingResponseV2
 CONTRACT GreetingResponseV2.Id : Guid
 CONTRACT GreetingResponseV2.Message : string
 CONTRACT GreetingResponseV2.MessageLength : int
+CONTRACT HealthCheckQuery -> HealthCheckResponse [group=Ark] [http=GET /health] [version=1+]
+CONTRACT HealthCheckResponse
+CONTRACT HealthCheckResponse.Status : string default="ok"
 CONTRACT PagedResult
 CONTRACT PagedResult.Count : long
 CONTRACT PagedResult.IsCountPartial : bool
