@@ -6,3 +6,4 @@ using BenchmarkDotNet.Running;
 using Ark.Tools.Benchmarks;
 
 BenchmarkRunner.Run<ProcessorDispatchBenchmarks>();
+BenchmarkRunner.Run<PolicyAuthorizationMetadataBenchmarks>();
