@@ -23,7 +23,13 @@ public class PolicyAuthorizeOrLogicRequestDecorator<TRequest, TResult> : IReques
         _authSvc = authSvc;
         _currentUser = currentUser;
         _container = container;
-        _policies = typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
+        _policies = PolicyMetadata.Policies;
+    }
+
+    private static class PolicyMetadata
+    {
+        internal static readonly PolicyAuthorizeAttribute[] Policies =
+            typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
     }
 
     public async Task<TResult> ExecuteAsync(TRequest request, CancellationToken ctk = default)

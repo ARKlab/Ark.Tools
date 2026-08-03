@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
+    <ProjectReference Include="../../samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
   </ItemGroup>
 
 </Project>
