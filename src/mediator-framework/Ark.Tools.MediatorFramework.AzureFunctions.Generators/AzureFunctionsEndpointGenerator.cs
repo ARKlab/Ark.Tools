@@ -315,7 +315,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
 
         source.AppendLine("        }");
-        source.AppendLine("        catch (global::System.OperationCanceledException)");
+        source.AppendLine("        catch (global::System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)");
         source.AppendLine("        {");
         source.AppendLine("            throw;");
         source.AppendLine("        }");

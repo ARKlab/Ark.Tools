@@ -235,7 +235,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetItems : IQuery<string> { }
             """);
 
-        result.Generated.Should().Contain("catch (global::System.OperationCanceledException)");
+        result.Generated.Should().Contain("catch (global::System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)");
         result.Generated.Should().Contain("throw;");
         result.Generated.Should().Contain("catch (global::System.Exception _exception)");
         result.Generated.Should().Contain("ArkAzureFunctionsResults.FromException(_exception)");
