@@ -79,7 +79,7 @@ CONTRACT HealthCheckQuery -> HealthCheckResponse [group=Ark] [http=GET /healthCh
 CONTRACT HealthCheckResponse
 CONTRACT HealthCheckResponse.Status : string default="Healthy"
 CONTRACT HealthCheckResponse.TotalDuration : string default="00:00:00"
-CONTRACT HealthCheckResponse.Entries : IReadOnlyDictionary<string, string>
+CONTRACT HealthCheckResponse.Entries : IReadOnlyDictionary<string,string> default=new Dictionary<string, string>(StringComparer.Ordinal)
 CONTRACT PagedResult
 CONTRACT PagedResult.Count : long
 CONTRACT PagedResult.IsCountPartial : bool
