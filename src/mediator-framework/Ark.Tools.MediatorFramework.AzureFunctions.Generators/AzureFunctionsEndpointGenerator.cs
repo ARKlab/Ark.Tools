@@ -346,25 +346,6 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             EmitResponse(source, endpoint);
         }
 
-        private static void EmitResponse(StringBuilder source, Endpoint endpoint)
-        {
-            if (endpoint.ResponseType == "global::Ark.MediatorFramework.IArkAttachment")
-            {
-                source.AppendLine("        await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteAttachmentAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
-                source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
-            }
-            else if (endpoint.IsStreaming)
-            {
-                source.AppendLine("        await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteJsonStreamAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
-                source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
-            }
-            else
-            {
-                source.Append("        return global::Microsoft.AspNetCore.Http.Results.Json(_result, statusCode: ")
-                    .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
-            }
-        }
-
         source.AppendLine("        }");
         source.AppendLine("        catch (global::System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)");
         source.AppendLine("        {");
@@ -375,6 +356,25 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("            return global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.FromException(_exception);");
         source.AppendLine("        }");
         source.AppendLine("    }");
+    }
+
+    private static void EmitResponse(StringBuilder source, Endpoint endpoint)
+    {
+        if (endpoint.ResponseType == "global::Ark.MediatorFramework.IArkAttachment")
+        {
+            source.AppendLine("        await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteAttachmentAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
+        }
+        else if (endpoint.IsStreaming)
+        {
+            source.AppendLine("        await global::Ark.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteJsonStreamAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
+        }
+        else
+        {
+            source.Append("        return global::Microsoft.AspNetCore.Http.Results.Json(_result, statusCode: ")
+                .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
+        }
     }
 
     private static void EmitResponseETag(StringBuilder source, Endpoint endpoint, string resultName)

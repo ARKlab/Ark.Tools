@@ -1,10 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Text.Json;
-
-using Ark.MediatorFramework;
-
 using Microsoft.AspNetCore.Http;
 
 namespace Ark.MediatorFramework.AzureFunctions;
@@ -58,8 +54,11 @@ public static class ArkAzureFunctionsHttp
         response.ContentType = attachment.ContentType;
         response.Headers.ContentDisposition =
             "attachment; filename=\"" + ArkAttachmentName.Sanitize(attachment.Name).Replace("\"", string.Empty, StringComparison.Ordinal) + "\"";
-        await using var stream = attachment.OpenRead();
-        await stream.CopyToAsync(response.Body, cancellationToken).ConfigureAwait(false);
+        var stream = attachment.OpenRead();
+        await using (stream.ConfigureAwait(false))
+        {
+            await stream.CopyToAsync(response.Body, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <summary>Writes an async sequence as a JSON array without buffering the sequence.</summary>
@@ -67,6 +66,10 @@ public static class ArkAzureFunctionsHttp
     /// <param name="response">The current response.</param>
     /// <param name="items">The response sequence.</param>
     /// <param name="cancellationToken">The invocation cancellation token.</param>
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "The generated endpoint preserves the statically selected response element type.")]
     public static async Task WriteJsonStreamAsync<T>(
         HttpResponse response,
         IAsyncEnumerable<T> items,
@@ -82,7 +85,7 @@ public static class ArkAzureFunctionsHttp
         {
             if (!first)
                 await response.WriteAsync(",", cancellationToken).ConfigureAwait(false);
-            await JsonSerializer.SerializeAsync(response.Body, item, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await global::System.Text.Json.JsonSerializer.SerializeAsync(response.Body, item, cancellationToken: cancellationToken).ConfigureAwait(false);
             await response.Body.FlushAsync(cancellationToken).ConfigureAwait(false);
             first = false;
         }
