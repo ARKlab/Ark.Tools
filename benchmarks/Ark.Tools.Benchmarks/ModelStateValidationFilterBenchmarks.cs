@@ -42,7 +42,7 @@ public class ModelStateValidationFilterBenchmarks
     public bool CachedMarked()
     {
         _filter.OnActionExecuting(_markedContext);
-        return true;
+        return _markedContext.Result is null;
     }
 
     [Benchmark]
@@ -55,7 +55,7 @@ public class ModelStateValidationFilterBenchmarks
     public bool CachedUnmarked()
     {
         _filter.OnActionExecuting(_unmarkedContext);
-        return true;
+        return _unmarkedContext.Result is null;
     }
 
     private static bool HasSkipAttribute(MethodInfo methodInfo)

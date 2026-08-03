@@ -39,7 +39,7 @@ public sealed class ModelStateValidationFilterAttribute : ActionFilterAttribute
         var decision = _skipValidationByMethod.GetOrAdd(
             methodInfo,
             static method => new Lazy<bool>(
-                () => method.GetCustomAttributes(typeof(SkipModelStateValidationFilterAttribute), true).Length > 0,
+                () => method.IsDefined(typeof(SkipModelStateValidationFilterAttribute), inherit: false),
                 LazyThreadSafetyMode.ExecutionAndPublication));
 
         return decision.Value;

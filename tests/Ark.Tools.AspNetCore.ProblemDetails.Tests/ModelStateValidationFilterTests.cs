@@ -47,6 +47,16 @@ public sealed class ModelStateValidationFilterTests
     }
 
     [TestMethod]
+    public void SkipsValidModelStateForMarkedAction()
+    {
+        var context = CreateContext(nameof(TestController.MarkedAction), isValid: true);
+
+        new Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute().OnActionExecuting(context);
+
+        context.Result.Should().BeNull();
+    }
+
+    [TestMethod]
     public void SupportsDistinctActionMethodsConcurrently()
     {
         var filter = new Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute();
