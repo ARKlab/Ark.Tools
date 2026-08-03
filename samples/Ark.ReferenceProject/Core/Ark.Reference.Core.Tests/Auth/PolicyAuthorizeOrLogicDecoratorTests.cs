@@ -32,7 +32,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     [TestMethod]
     public async Task FirstPolicySuccessStopsEvaluation()
     {
-        using var container = CreateContainer<AuthorizedRequest, TestPolicy>();
+        await using var container = CreateContainer<AuthorizedRequest, TestPolicy>();
         var auth = new AuthorizationService(true);
         var inner = new RequestHandler();
         var decorator = new PolicyAuthorizeOrLogicRequestDecorator<AuthorizedRequest, object>(inner, auth, new UserContext(), container);
@@ -46,7 +46,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     [TestMethod]
     public async Task AllPoliciesFailurePreservesPolicyMessages()
     {
-        using var container = CreateContainer<DeniedRequest, TestPolicy>();
+        await using var container = CreateContainer<DeniedRequest, TestPolicy>();
         var decorator = new PolicyAuthorizeOrLogicRequestDecorator<DeniedRequest, object>(
             new RequestHandler(), new AuthorizationService(false), new UserContext(), container);
 
@@ -147,7 +147,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
         public ClaimsPrincipal Current { get; } = new(new ClaimsIdentity());
     }
 
-    private sealed class ResourceHandler<TRequest, TPolicy> : IAuthorizationResourceHandler<TRequest, TPolicy>
+    public sealed class ResourceHandler<TRequest, TPolicy> : IAuthorizationResourceHandler<TRequest, TPolicy>
         where TRequest : class
         where TPolicy : class, IAuthorizationPolicy
     {
@@ -157,7 +157,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
         }
     }
 
-    private sealed class TestPolicy : IAuthorizationPolicy
+    public sealed class TestPolicy : IAuthorizationPolicy
     {
         public TestPolicy()
         {
@@ -178,13 +178,13 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     }
 
     [PolicyAuthorize(typeof(TestPolicy))]
-    private sealed class AuthorizedRequest : IRequest<object>
+    public sealed class AuthorizedRequest : IRequest<object>
     {
     }
 
     [PolicyAuthorize("one")]
     [PolicyAuthorize("two")]
-    private sealed class DeniedRequest : IRequest<object>
+    public sealed class DeniedRequest : IRequest<object>
     {
     }
 
