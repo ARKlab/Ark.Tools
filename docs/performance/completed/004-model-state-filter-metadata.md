@@ -48,3 +48,18 @@ invalid-model responses.
 3. Inspect benchmark output and tests to confirm the cache does not retain
    request-scoped objects.
 
+## Decisions
+
+- Added a process-wide `ConcurrentDictionary<MethodInfo, Lazy<bool>>` so each
+  action method's skip decision is evaluated once with thread-safe publication.
+- Kept request contexts, model state, action results, and controller instances
+  out of the cache.
+- Added marked, unmarked, valid, invalid, and concurrent filter tests.
+- Added BenchmarkDotNet comparisons for reflection and cached filter invocation
+  on marked and unmarked controller actions.
+- The Release in-process .NET 10 benchmark run produced these results:
+
+  | Case | Reflection | Cached |
+  | --- | ---: | ---: |
+  | Marked | 717.83 ns, 176 B | 14.13 ns, 0 B |
+  | Unmarked | 292.99 ns, 72 B | 19.30 ns, 0 B |

@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore/Ark.Tools.AspNetCore.csproj" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
   </ItemGroup>
 
