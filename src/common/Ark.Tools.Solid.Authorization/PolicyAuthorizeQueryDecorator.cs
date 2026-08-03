@@ -21,7 +21,13 @@ public class PolicyAuthorizeQueryDecorator<TQuery, TResult> : IQueryHandler<TQue
         _authSvc = authSvc;
         _currentUser = currentUser;
         _container = container;
-        _policies = typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
+        _policies = PolicyMetadata.Policies;
+    }
+
+    private static class PolicyMetadata
+    {
+        internal static readonly PolicyAuthorizeAttribute[] Policies =
+            typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
     [RequiresUnreferencedCode("Uses dynamic invocation for authorization resource handler dispatch. Handler types must be preserved.")]
