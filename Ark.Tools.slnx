@@ -48,6 +48,12 @@
     <Project Path="src/common/Ark.Tools.Sql/Ark.Tools.Sql.csproj" />
     <Project Path="src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
   </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/aspnetcore/">
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />

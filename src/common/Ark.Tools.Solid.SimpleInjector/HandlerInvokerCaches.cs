@@ -3,6 +3,7 @@
 
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
+using System.Reflection;
 
 using SimpleInjector;
 
@@ -10,6 +11,7 @@ namespace Ark.Tools.Solid.SimpleInjector;
 
 internal static class QueryHandlerInvokerCache<TResult>
 {
+    private static readonly MethodInfo _getInstance = typeof(Container).GetMethod(nameof(Container.GetInstance), [typeof(Type)])!;
     private static readonly ConcurrentDictionary<Type, Func<Container, object, CancellationToken, Task<TResult>>> _invokers = new();
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
@@ -27,7 +29,7 @@ internal static class QueryHandlerInvokerCache<TResult>
         var query = Expression.Parameter(typeof(object), "query");
         var cancellationToken = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
         var handler = Expression.Convert(
-            Expression.Call(container, nameof(Container.GetInstance), [typeof(Type)], Expression.Constant(handlerType)),
+            Expression.Call(container, _getInstance, Expression.Constant(handlerType)),
             handlerType);
         var execute = Expression.Call(
             handler,
@@ -46,6 +48,7 @@ internal static class QueryHandlerInvokerCache<TResult>
 
 internal static class RequestHandlerInvokerCache<TResponse>
 {
+    private static readonly MethodInfo _getInstance = typeof(Container).GetMethod(nameof(Container.GetInstance), [typeof(Type)])!;
     private static readonly ConcurrentDictionary<Type, Func<Container, object, CancellationToken, Task<TResponse>>> _invokers = new();
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
@@ -63,7 +66,7 @@ internal static class RequestHandlerInvokerCache<TResponse>
         var request = Expression.Parameter(typeof(object), "request");
         var cancellationToken = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
         var handler = Expression.Convert(
-            Expression.Call(container, nameof(Container.GetInstance), [typeof(Type)], Expression.Constant(handlerType)),
+            Expression.Call(container, _getInstance, Expression.Constant(handlerType)),
             handlerType);
         var execute = Expression.Call(
             handler,
@@ -82,6 +85,7 @@ internal static class RequestHandlerInvokerCache<TResponse>
 
 internal static class CommandHandlerInvokerCache
 {
+    private static readonly MethodInfo _getInstance = typeof(Container).GetMethod(nameof(Container.GetInstance), [typeof(Type)])!;
     private static readonly ConcurrentDictionary<Type, Func<Container, object, CancellationToken, Task>> _invokers = new();
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
@@ -99,7 +103,7 @@ internal static class CommandHandlerInvokerCache
         var command = Expression.Parameter(typeof(object), "command");
         var cancellationToken = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
         var handler = Expression.Convert(
-            Expression.Call(container, nameof(Container.GetInstance), [typeof(Type)], Expression.Constant(handlerType)),
+            Expression.Call(container, _getInstance, Expression.Constant(handlerType)),
             handlerType);
         var execute = Expression.Call(
             handler,
