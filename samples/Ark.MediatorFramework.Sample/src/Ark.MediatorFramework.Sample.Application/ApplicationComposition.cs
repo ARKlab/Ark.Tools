@@ -11,6 +11,9 @@ using FluentValidation;
 
 using NodaTime;
 
+using Rebus.Config;
+using Rebus.Transport;
+
 using SimpleInjector;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -22,6 +25,25 @@ namespace Ark.MediatorFramework.Sample.Application;
 /// </summary>
 public static class ApplicationComposition
 {
+    /// <summary>
+    /// Registers Rebus as an outbound-only client using the generated owner routing.
+    /// </summary>
+    /// <param name="container">The SimpleInjector container to register into.</param>
+    /// <param name="configureTransport">Configures the one-way transport.</param>
+    public static void RegisterOutboundRebus(
+        Container container,
+        Action<StandardConfigurer<ITransport>> configureTransport)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(configureTransport);
+
+        container.ConfigureRebus(config =>
+        {
+            config.Transport(configureTransport);
+            config.Routing(ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>);
+        });
+    }
+
     /// <summary>Registers the pure domain graph into the given container.</summary>
     /// <param name="container">The SimpleInjector container to register into.</param>
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>

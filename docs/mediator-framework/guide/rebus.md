@@ -90,7 +90,7 @@ A handler or decorator can enqueue follow-up work:
 ```csharp
 var greeting = await _store.CreateAsync(request.Name, cancellationToken)
     .ConfigureAwait(false);
-await _bus.SendLocal(new CompleteGreetingCommand { Id = greeting.Id })
+await _bus.Send(new CompleteGreetingCommand { Id = greeting.Id })
     .ConfigureAwait(false);
 return greeting;
 ```
@@ -106,6 +106,22 @@ Public outcome:
 When `ConfigureArkRebusRouting<TAssemblyMarker>()` is in use, changing
 `OwnerQueue` on a contract is a public operational change. The API-surface
 snapshot records it and should be reviewed like any other queue-boundary change.
+
+## Outbound-only hosts
+
+Hosts that must not run a Rebus processor, such as Azure Functions, register only
+the generated owner routing and configure a one-way transport:
+
+```csharp
+ApplicationComposition.RegisterOutboundRebus(container, transport =>
+{
+    transport.UseAzureServiceBusAsOneWayClient(connectionString, new DefaultAzureCredential());
+});
+```
+
+Do not register generated Rebus handlers, an input queue, subscriptions, workers,
+or an outbox processor in an outbound-only host. Send owned messages with
+`IBus.Send`; `SendLocal` requires a receiver in the current process.
 
 Example snapshot line:
 

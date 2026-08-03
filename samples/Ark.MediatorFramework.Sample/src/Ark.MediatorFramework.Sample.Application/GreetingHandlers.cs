@@ -128,7 +128,7 @@ public sealed class ComposeGreetingHandler : IRequestHandler<ComposeGreetingRequ
             throw new ValidationException([new ValidationFailure(nameof(Request.Name), "Name must not be empty.")]);
 
         var id = Guid.NewGuid();
-        await _bus.SendLocal(new CompleteGreetingCompositionRequest
+        await _bus.Send(new CompleteGreetingCompositionRequest
         {
             Id = id,
             Name = Request.Name,
