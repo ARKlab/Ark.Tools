@@ -312,8 +312,9 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.Append("            var table = new global::System.Data.DataTable(\"").Append(type.SimpleName).AppendLine("\");");
         sb.Append("            table.Columns.Add(\"Value\", typeof(").Append(type.FullyQualifiedName).AppendLine("));");
         sb.AppendLine("            table.BeginLoadData();");
-        sb.AppendLine("            using (var e = source.GetEnumerator())");
+        sb.AppendLine("            try");
         sb.AppendLine("            {");
+        sb.AppendLine("                using var e = source.GetEnumerator();");
         sb.AppendLine("                var values = new object?[1];");
         sb.AppendLine("                while (e.MoveNext())");
         sb.AppendLine("                {");
@@ -321,7 +322,10 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.AppendLine("                    table.LoadDataRow(values, true);");
         sb.AppendLine("                }");
         sb.AppendLine("            }");
-        sb.AppendLine("            table.EndLoadData();");
+        sb.AppendLine("            finally");
+        sb.AppendLine("            {");
+        sb.AppendLine("                table.EndLoadData();");
+        sb.AppendLine("            }");
         sb.AppendLine("            return table;");
     }
 
@@ -334,8 +338,9 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         }
 
         sb.AppendLine("            table.BeginLoadData();");
-        sb.AppendLine("            using (var e = source.GetEnumerator())");
+        sb.AppendLine("            try");
         sb.AppendLine("            {");
+        sb.AppendLine("                using var e = source.GetEnumerator();");
         sb.AppendLine("                while (e.MoveNext())");
         sb.AppendLine("                {");
         sb.AppendLine("                    var it = e.Current;");
@@ -355,7 +360,10 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.AppendLine("                    table.LoadDataRow(values, true);");
         sb.AppendLine("                }");
         sb.AppendLine("            }");
-        sb.AppendLine("            table.EndLoadData();");
+        sb.AppendLine("            finally");
+        sb.AppendLine("            {");
+        sb.AppendLine("                table.EndLoadData();");
+        sb.AppendLine("            }");
         sb.AppendLine("            return table;");
     }
 

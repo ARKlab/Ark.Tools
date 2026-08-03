@@ -406,6 +406,23 @@ public class DataTableExtensionsTests
         result.Rows[0]["EffectiveDate"].Should().Be(entity.EffectiveDate.ToDateTimeUnspecified());
     }
 
+    /// <summary>An enumeration failure still ends bulk-load mode and restores row-change notifications.</summary>
+    [TestMethod]
+    public void ToDataTable_WhenEnumerationThrows_RestoresNotifications()
+    {
+        using var table = new DataTable();
+
+        var act = () => ThrowAfterFirst().ToDataTable(table, null);
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("Enumeration failed.");
+
+        var rowChangedCount = 0;
+        table.RowChanged += (_, _) => rowChangedCount++;
+        table.Rows.Add(table.NewRow());
+
+        rowChangedCount.Should().Be(1);
+    }
+
     /// <summary>
     /// Invoking ToDataTableArk via reflection (MethodInfo.MakeGenericMethod().Invoke) guarantees the
     /// call site is invisible to any C# 14 interceptor (which can only intercept calls that are
@@ -464,5 +481,11 @@ public class DataTableExtensionsTests
         first.Rows.Count.Should().Be(1);
         second.Rows.Count.Should().Be(2);
         second.Rows[1]["Id"].Should().Be(3);
+    }
+
+    private static IEnumerable<Entity> ThrowAfterFirst()
+    {
+        yield return new Entity { Id = 1 };
+        throw new InvalidOperationException("Enumeration failed.");
     }
 }

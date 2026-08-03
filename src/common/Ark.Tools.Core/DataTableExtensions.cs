@@ -136,8 +136,9 @@ public static class DataTableExtensions
 
                 // Enumerate the source sequence using fast sequential path
                 table.BeginLoadData();
-                using (var e = source.GetEnumerator())
+                try
                 {
+                    using var e = source.GetEnumerator();
                     while (e.MoveNext())
                     {
                         var values = ShredObjectSequential(e.Current);
@@ -152,7 +153,10 @@ public static class DataTableExtensions
                         }
                     }
                 }
-                table.EndLoadData();
+                finally
+                {
+                    table.EndLoadData();
+                }
 
                 return table;
             }
@@ -161,8 +165,9 @@ public static class DataTableExtensions
             var ordinalMap = GetOrdinalMap(table);
 
             table.BeginLoadData();
-            using (var e = source.GetEnumerator())
+            try
             {
+                using var e = source.GetEnumerator();
                 while (e.MoveNext())
                 {
                     var values = ShredObject(table, e.Current, ordinalMap);
@@ -177,7 +182,10 @@ public static class DataTableExtensions
                     }
                 }
             }
-            table.EndLoadData();
+            finally
+            {
+                table.EndLoadData();
+            }
 
             return table;
         }
@@ -197,8 +205,9 @@ public static class DataTableExtensions
 
             // Enumerate the source sequence and load the scalar values into rows.
             table.BeginLoadData();
-            using (var e = source.GetEnumerator())
+            try
             {
+                using var e = source.GetEnumerator();
                 var values = new object?[table.Columns.Count];
                 while (e.MoveNext())
                 {
@@ -214,7 +223,10 @@ public static class DataTableExtensions
                     }
                 }
             }
-            table.EndLoadData();
+            finally
+            {
+                table.EndLoadData();
+            }
 
             return table;
         }

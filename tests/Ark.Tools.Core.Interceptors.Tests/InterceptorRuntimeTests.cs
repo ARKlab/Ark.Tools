@@ -164,6 +164,8 @@ public class InterceptorRuntimeTests
         generated.Should().Contain("InterceptedEntity");
         generated.Should().Contain("\"Status\", typeof(global::System.String)");
         generated.Should().Contain("\"EffectiveDate\", typeof(global::System.DateTime)");
+        generated.Should().Contain("finally");
+        generated.Should().Contain("table.EndLoadData();");
 
         // Both InterceptedEntity call sites above must share one method with two location attributes.
         var entityMethodIndex = generated.IndexOf("global::Ark.Tools.Core.Interceptors.Tests.InterceptedEntity> source", StringComparison.Ordinal);

@@ -6,8 +6,8 @@ namespace Ark.Tools.Core.Generated
     [global::System.CodeDom.Compiler.GeneratedCode("Ark.Tools.Core.Analyzers.ToDataTableArkInterceptorGenerator", "1.0.0")]
     file static class ToDataTableArkInterceptors
     {
-        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "QorfDY5PaQpZJfF++jhDy9cGAABJbnRlcmNlcHRvclJ1bnRpbWVUZXN0cy5jcw==")]
-        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "QorfDY5PaQpZJfF++jhDy8gKAABJbnRlcmNlcHRvclJ1bnRpbWVUZXN0cy5jcw==")]
+        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "tO+7J4RD7lAZXJ9j7C5xWdcGAABJbnRlcmNlcHRvclJ1bnRpbWVUZXN0cy5jcw==")]
+        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "tO+7J4RD7lAZXJ9j7C5xWcgKAABJbnRlcmNlcHRvclJ1bnRpbWVUZXN0cy5jcw==")]
         internal static global::System.Data.DataTable ToDataTableArk_0(this global::System.Collections.Generic.IEnumerable<global::Ark.Tools.Core.Interceptors.Tests.InterceptedEntity> source)
         {
             var table = new global::System.Data.DataTable("InterceptedEntity");
@@ -22,8 +22,9 @@ namespace Ark.Tools.Core.Generated
             table.Columns.Add("CorrelationId", typeof(global::System.Guid));
             table.Columns.Add("EffectiveDate", typeof(global::System.DateTime));
             table.BeginLoadData();
-            using (var e = source.GetEnumerator())
+            try
             {
+                using var e = source.GetEnumerator();
                 while (e.MoveNext())
                 {
                     var it = e.Current;
@@ -43,19 +44,23 @@ namespace Ark.Tools.Core.Generated
                     table.LoadDataRow(values, true);
                 }
             }
-            table.EndLoadData();
+            finally
+            {
+                table.EndLoadData();
+            }
             return table;
         }
 
-        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "QorfDY5PaQpZJfF++jhDy5gMAABJbnRlcmNlcHRvclJ1bnRpbWVUZXN0cy5jcw==")]
+        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "tO+7J4RD7lAZXJ9j7C5xWZgMAABJbnRlcmNlcHRvclJ1bnRpbWVUZXN0cy5jcw==")]
         internal static global::System.Data.DataTable ToDataTableArk_1(this global::System.Collections.Generic.IEnumerable<global::Ark.Tools.Core.Interceptors.Tests.InterceptedPoint> source)
         {
             var table = new global::System.Data.DataTable("InterceptedPoint");
             table.Columns.Add("X", typeof(int));
             table.Columns.Add("Y", typeof(int));
             table.BeginLoadData();
-            using (var e = source.GetEnumerator())
+            try
             {
+                using var e = source.GetEnumerator();
                 while (e.MoveNext())
                 {
                     var it = e.Current;
@@ -65,19 +70,23 @@ namespace Ark.Tools.Core.Generated
                     table.LoadDataRow(values, true);
                 }
             }
-            table.EndLoadData();
+            finally
+            {
+                table.EndLoadData();
+            }
             return table;
         }
 
-        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "QorfDY5PaQpZJfF++jhDy4QOAABJbnRlcmNlcHRvclJ1bnRpbWVUZXN0cy5jcw==")]
+        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(1, "tO+7J4RD7lAZXJ9j7C5xWYQOAABJbnRlcmNlcHRvclJ1bnRpbWVUZXN0cy5jcw==")]
         internal static global::System.Data.DataTable ToDataTableArk_2(this global::System.Collections.Generic.IEnumerable<global::Ark.Tools.Core.Interceptors.Tests.MixedMemberEntity> source)
         {
             var table = new global::System.Data.DataTable("MixedMemberEntity");
             table.Columns.Add("Field", typeof(int));
             table.Columns.Add("Property", typeof(int));
             table.BeginLoadData();
-            using (var e = source.GetEnumerator())
+            try
             {
+                using var e = source.GetEnumerator();
                 while (e.MoveNext())
                 {
                     var it = e.Current;
@@ -89,7 +98,10 @@ namespace Ark.Tools.Core.Generated
                     table.LoadDataRow(values, true);
                 }
             }
-            table.EndLoadData();
+            finally
+            {
+                table.EndLoadData();
+            }
             return table;
         }
 

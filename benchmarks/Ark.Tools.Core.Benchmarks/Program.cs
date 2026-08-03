@@ -7,14 +7,17 @@ using System.Diagnostics;
 using Ark.Tools.Core;
 using Ark.Tools.Core.Benchmarks;
 
-// Dependency-free comparison of intercepted and reflection-fallback ToDataTableArk calls.
+// Dependency-free comparison of historical, optimized fallback, and intercepted
+// ToDataTableArk implementations, plus MoreLINQ-style row insertion.
 //
 // Intentionally does NOT depend on BenchmarkDotNet or any other 3rd party
 // package: it measures wall-clock elapsed time via Stopwatch and managed
 // allocations via GC.GetAllocatedBytesForCurrentThread(), which are both part
-// of the BCL. InterceptedConvert has a compile-time-known element type and is
-// replaced by the generator. GenericFallbackConvert has an open type parameter,
-// which is ineligible for interception and therefore calls the runtime fallback.
+// of the BCL. HistoricalBaselineConverter reproduces the pre-optimization
+// reflection implementation. InterceptedConvert has a compile-time-known element
+// type and is replaced by the generator. GenericFallbackConvert has an open type
+// parameter and calls the optimized runtime fallback. RowsAddConverter isolates
+// the MoreLINQ-style NewRow/ItemArray/Rows.Add insertion path.
 //
 // Usage: dotnet run -c Release --project benchmarks/Ark.Tools.Core.Benchmarks
 
@@ -26,16 +29,20 @@ Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0}", "ToDataTabl
 Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "Warmup iterations: {0}, Measured iterations: {1}", WarmupIterations, MeasuredIterations));
 Console.WriteLine();
 
+var baselineRows = new List<BenchmarkRow>();
 var fallbackRows = new List<BenchmarkRow>();
 var interceptedRows = new List<BenchmarkRow>();
+var rowsAddRows = new List<BenchmarkRow>();
 foreach (var size in sizes)
 {
     var data = BenchmarkEntity.CreateMany(size);
+    baselineRows.Add(Measure(data, WarmupIterations, MeasuredIterations, HistoricalBaselineConverter<BenchmarkEntity>.Convert));
     fallbackRows.Add(Measure(data, WarmupIterations, MeasuredIterations, GenericFallbackConvert));
     interceptedRows.Add(Measure(data, WarmupIterations, MeasuredIterations, InterceptedConvert));
+    rowsAddRows.Add(Measure(data, WarmupIterations, MeasuredIterations, RowsAddConverter.Convert));
 }
 
-PrintMarkdownTable(fallbackRows, interceptedRows);
+PrintMarkdownTable(baselineRows, fallbackRows, interceptedRows, rowsAddRows);
 
 static BenchmarkRow Measure(
     BenchmarkEntity[] data,
@@ -82,28 +89,47 @@ static BenchmarkRow Measure(
 }
 
 static void PrintMarkdownTable(
+    IReadOnlyList<BenchmarkRow> baselineRows,
     IReadOnlyList<BenchmarkRow> fallbackRows,
-    IReadOnlyList<BenchmarkRow> interceptedRows)
+    IReadOnlyList<BenchmarkRow> interceptedRows,
+    IReadOnlyList<BenchmarkRow> rowsAddRows)
 {
-    Console.WriteLine("| Objects | Fallback median (ms) | Interceptor median (ms) | Time reduction | Fallback allocated (bytes) | Interceptor allocated (bytes) | Allocation reduction |");
+    Console.WriteLine("| Objects | Historical baseline (ms) | Optimized fallback (ms) | Interceptor LoadDataRow (ms) | Direct Rows.Add (ms) | Interceptor vs baseline | Rows.Add vs LoadDataRow |");
     Console.WriteLine("|---:|---:|---:|---:|---:|---:|---:|");
     for (var i = 0; i < fallbackRows.Count; i++)
     {
+        var baseline = baselineRows[i];
         var fallback = fallbackRows[i];
         var intercepted = interceptedRows[i];
-        var timeReduction = 1 - intercepted.MedianElapsedMs / fallback.MedianElapsedMs;
-        var allocationReduction = 1 - (double)intercepted.MedianAllocatedBytes / fallback.MedianAllocatedBytes;
+        var rowsAdd = rowsAddRows[i];
+        var interceptorReduction = 1 - intercepted.MedianElapsedMs / baseline.MedianElapsedMs;
+        var rowsAddReduction = 1 - rowsAdd.MedianElapsedMs / intercepted.MedianElapsedMs;
 
         Console.WriteLine(string.Format(
             CultureInfo.InvariantCulture,
-            "| {0} | {1:F4} | {2:F4} | {3:P1} | {4:N0} | {5:N0} | {6:P1} |",
+            "| {0} | {1:F4} | {2:F4} | {3:F4} | {4:F4} | {5:P1} | {6:P1} |",
             fallback.Count,
+            baseline.MedianElapsedMs,
             fallback.MedianElapsedMs,
             intercepted.MedianElapsedMs,
-            timeReduction,
-            fallback.MedianAllocatedBytes,
-            intercepted.MedianAllocatedBytes,
-            allocationReduction));
+            rowsAdd.MedianElapsedMs,
+            interceptorReduction,
+            rowsAddReduction));
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("| Objects | Historical allocated (bytes) | Fallback allocated (bytes) | Interceptor allocated (bytes) | Rows.Add allocated (bytes) |");
+    Console.WriteLine("|---:|---:|---:|---:|---:|");
+    for (var i = 0; i < fallbackRows.Count; i++)
+    {
+        Console.WriteLine(string.Format(
+            CultureInfo.InvariantCulture,
+            "| {0} | {1:N0} | {2:N0} | {3:N0} | {4:N0} |",
+            baselineRows[i].Count,
+            baselineRows[i].MedianAllocatedBytes,
+            fallbackRows[i].MedianAllocatedBytes,
+            interceptedRows[i].MedianAllocatedBytes,
+            rowsAddRows[i].MedianAllocatedBytes));
     }
 }
 
