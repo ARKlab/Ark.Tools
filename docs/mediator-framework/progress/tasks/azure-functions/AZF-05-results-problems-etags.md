@@ -69,10 +69,10 @@ safe error mapping without duplicating domain-exception policy.
 
 ## Acceptance
 
-- [ ] Status and null-result matrix matches `HttpEndpointAttribute`.
-- [ ] Validation/authorization/domain/unhandled errors have parity tests.
-- [ ] ETag and conditional GET behavior matches Minimal API.
-- [ ] Production errors and logs pass security review.
-- [ ] MessagePack remains absent and JSON negotiation behavior is documented.
+- [x] Status and null-result matrix matches `HttpEndpointAttribute`.
+- [x] Validation/authorization/domain/unhandled errors have parity tests.
+- [x] ETag and conditional GET behavior matches Minimal API.
+- [x] Production errors and logs pass security review.
+- [x] MessagePack remains absent and JSON negotiation behavior is documented.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
