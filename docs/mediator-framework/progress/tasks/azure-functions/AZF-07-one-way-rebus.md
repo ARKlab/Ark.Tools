@@ -72,7 +72,7 @@ generated routing without accidentally registering receivers or starting workers
 
 ## Acceptance
 
-- [ ] AZD-08 is recorded as decided.
+- [x] AZD-08 is recorded as decided.
 - [ ] Function composition has no input queue or receive handlers.
 - [ ] Routing/payload are verified by a separate receiver, not an `IBus` mock.
 - [ ] Existing drainable behavior remains backward compatible.

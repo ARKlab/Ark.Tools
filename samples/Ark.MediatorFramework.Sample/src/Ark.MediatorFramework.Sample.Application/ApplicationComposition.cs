@@ -6,10 +6,18 @@ using Ark.Tools.Core;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 using Ark.Tools.Outbox;
+using Ark.Tools.Rebus;
 
 using FluentValidation;
 
 using NodaTime;
+
+using Rebus.Config;
+using Rebus.Routing;
+using Rebus.Serialization.Json;
+using Rebus.Transport;
+
+using System.Text.Json;
 
 using SimpleInjector;
 
@@ -22,20 +30,77 @@ namespace Ark.MediatorFramework.Sample.Application;
 /// </summary>
 public static class ApplicationComposition
 {
+    /// <summary>
+    /// Configures the Rebus outbox on a transport configurer. Both outbound-only and full-processor
+    /// compositions use the outbox; only the processor sets <paramref name="startProcessor"/> to
+    /// <see langword="true"/>.
+    /// </summary>
+    /// <param name="transport">The transport configurer to attach the outbox to.</param>
+    /// <param name="container">The container used to resolve <see cref="IOutboxAsyncContextFactory"/>.</param>
+    /// <param name="startProcessor">
+    /// <see langword="true"/> to start the background outbox processor (full-processor host only);
+    /// <see langword="false"/> for outbound-only hosts that only need to enqueue messages.
+    /// </param>
+    public static void ConfigureRebusOutbox(
+        StandardConfigurer<ITransport> transport,
+        Container container,
+        bool startProcessor)
+    {
+        ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(container);
+
+        transport.Outbox(outbox =>
+        {
+            outbox.OutboxAsyncContextFactory(factory => factory.Use(container.GetInstance<IOutboxAsyncContextFactory>()));
+            outbox.OutboxOptions(options => options.StartProcessor = startProcessor);
+        });
+    }
+
+    /// <summary>
+    /// Configures routing, serialization, and user-context propagation that must be identical
+    /// between outbound-only and full-processor Rebus configurations.
+    /// </summary>
+    /// <param name="config">The Rebus configurer.</param>
+    /// <param name="container">The SimpleInjector container used for user-context flow.</param>
+    /// <param name="configureRouting">Configures generated owner routing.</param>
+    /// <param name="configureOptions">Optional extra options applied after the common ones.</param>
+    public static void ConfigureRebusCommon(
+        RebusConfigurer config,
+        Container container,
+        Action<StandardConfigurer<IRouter>> configureRouting,
+        Action<OptionsConfigurer>? configureOptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(configureRouting);
+
+        config.Routing(configureRouting);
+        config.Serialization(s => s.UseSystemTextJson(new JsonSerializerOptions().ConfigureArkDefaults()));
+        config.Options(options =>
+        {
+            options.AutomaticallyFlowUserContext(container);
+            configureOptions?.Invoke(options);
+        });
+    }
+
     /// <summary>Registers the pure domain graph into the given container.</summary>
     /// <param name="container">The SimpleInjector container to register into.</param>
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
+    /// <param name="greetingStore">Optional store shared with another host container.</param>
     public static void Register(
         Container container,
         bool useSqlStore = true,
         string? connectionString = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        IGreetingStore? greetingStore = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
-        if (useSqlStore)
+        if (greetingStore is not null)
+            container.RegisterInstance(greetingStore);
+        else if (useSqlStore)
         {
             // Register SQL Server mappings for LocalDate, LocalDateTime, and OffsetDateTime.
             NodaTimeDapperSqlServer.Setup();

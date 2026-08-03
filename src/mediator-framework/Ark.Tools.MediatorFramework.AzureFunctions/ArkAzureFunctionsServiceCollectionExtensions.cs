@@ -3,9 +3,12 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 
+using Ark.Tools.Solid;
 using SimpleInjector;
 
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -129,7 +132,24 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(container);
+        var httpContextAccessor = new HttpContextAccessor();
+        services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
         services.AddSingleton(container);
+        container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(
+            new ArkAzureFunctionsUserContextProvider(httpContextAccessor));
         return services.AddArkAzureFunctions(additionalContexts);
     }
+}
+
+internal sealed class ArkAzureFunctionsUserContextProvider : IContextProvider<ClaimsPrincipal>
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public ArkAzureFunctionsUserContextProvider(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public ClaimsPrincipal Current => _httpContextAccessor.HttpContext?.User
+        ?? new ClaimsPrincipal(new ClaimsIdentity());
 }

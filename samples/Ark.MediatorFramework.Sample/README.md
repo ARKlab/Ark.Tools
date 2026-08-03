@@ -14,6 +14,7 @@ compiled sample to adoption topics:
 | `src/Ark.MediatorFramework.Sample.Application/GreetingHandlers.cs` | [handlers](../../docs/mediator-framework/guide/contracts-and-handlers.md), [Rebus](../../docs/mediator-framework/guide/rebus.md), [streaming](../../docs/mediator-framework/guide/streaming.md) |
 | `src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs` | [OpenAPI](../../docs/mediator-framework/guide/openapi.md), [serialization](../../docs/mediator-framework/guide/serialization.md) |
 | `src/Ark.MediatorFramework.Sample.WebInterface/DocumentsGrpcService.cs` | [gRPC](../../docs/mediator-framework/guide/grpc.md), [attachments](../../docs/mediator-framework/guide/attachments.md), [escape hatches](../../docs/mediator-framework/guide/escape-hatches.md) |
+| `src/Ark.MediatorFramework.Sample.AzureFunctions/Program.cs` | Azure Functions isolated-worker host and generated HTTP trigger selection |
 
 It demonstrates the core thesis: a single **pure, transport-agnostic**
 `Ark.Tools.Solid` handler is dispatched identically over two transports —
@@ -65,6 +66,21 @@ The SQL-backed sample uses SQL Server on `localhost:1433`. Build the database pr
 `src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj` before running SQL-backed scenarios.
 Greeting writes and their Rebus notifications share one SQL transaction; set
 `ARK_SAMPLE_SQL_TESTS=1` to run the SQL-backed Reqnroll path.
+
+### Azure Functions host
+
+The isolated-worker sample uses the same Application contracts and excludes the two
+MessagePack endpoints, which are unsupported by the Functions transport. Start it with
+Azure Functions Core Tools from the project directory:
+
+```bash
+cp local.settings.json.example local.settings.json
+func start
+```
+
+The host uses an empty Functions route prefix; generated routes therefore remain
+`/api/v1/...`. `local.settings.json` is local-only and must not contain committed
+credentials.
 
 ## gRPC operations panel
 
