@@ -79,12 +79,12 @@ principal used by transport-agnostic authorization decorators.
 
 ## Acceptance
 
-- [ ] AZD-03 and AZD-04 are recorded as decided.
-- [ ] 401/403/success parity is covered through the runtime helper.
-- [ ] `AllowAnonymous` has explicit tested behavior.
-- [ ] User identity flows into handlers and auditing.
-- [ ] Identity inputs and logs pass security review.
+- [x] AZD-03 and AZD-04 are recorded as decided.
+- [x] 401/403/success parity is covered through the runtime helper.
+- [x] `AllowAnonymous` has explicit tested behavior.
+- [x] User identity flows into handlers and auditing.
+- [x] Identity inputs and logs pass security review.
 - [ ] The sample demonstrates documented NLog configuration appropriate for local
   Core Tools and Azure Functions hosting.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

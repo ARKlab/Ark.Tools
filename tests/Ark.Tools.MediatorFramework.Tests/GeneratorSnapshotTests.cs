@@ -12,6 +12,7 @@ using AwesomeAssertions;
 
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Text.Json;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -222,6 +223,70 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorEmitsExceptionMappingWithCancellationRethrow()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/items")]
+            public sealed class GetItems : IQuery<string> { }
+            """);
+
+        result.Generated.Should().Contain("catch (global::System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)");
+        result.Generated.Should().Contain("throw;");
+        result.Generated.Should().Contain("catch (global::System.Exception _exception)");
+        result.Generated.Should().Contain("ArkAzureFunctionsResults.FromException(_exception)");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorEmitsStatusOverridesForQueryAndRequest()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/queries", SuccessStatusCode = 200, NullResultStatusCode = 404)]
+            public sealed class GetQuery : IQuery<string> { }
+            [HttpEndpoint("POST", "/requests", SuccessStatusCode = 201, NullResultStatusCode = 200)]
+            public sealed class PostRequest : IRequest<string> { }
+            """);
+
+        result.Generated.Should().Contain("Results.Json(_result, statusCode: 200");
+        result.Generated.Should().Contain("Results.Json(_result, statusCode: 201");
+        result.Generated.Should().Contain("Results.StatusCode(404)");
+        result.Generated.Should().Contain("Results.StatusCode(200)");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorBindsETagPreconditionAndEmitsResponseETag()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            public sealed class ItemResponse { [ETag] public string? Version { get; set; } }
+            [HttpEndpoint("PUT", "/items/{id}")]
+            public sealed class UpdateItem : IRequest<ItemResponse>
+            {
+                public string Id { get; set; } = string.Empty;
+                [ETag] public string? ETag { get; set; }
+            }
+            """);
+
+        result.Generated.Should().Contain("ArkAzureFunctionsResults.ReadPrecondition(request.HttpContext)");
+        result.Generated.Should().Contain("body.ETag = _etag");
+        result.Generated.Should().Contain("ArkAzureFunctionsResults.ApplyResponseETag(request.HttpContext");
+        result.Generated.Should().Contain("_result.Version");
+    }
+
+    [TestMethod]
     public async Task AzureFunctionsAuthenticationUsesConfiguredPrincipalAndChallengesFailures()
     {
         var principal = new System.Security.Claims.ClaimsPrincipal(
@@ -259,6 +324,84 @@ public sealed class GeneratorSnapshotTests
 
         challenge.Should().NotBeNull();
         challenge.Should().BeOfType<Microsoft.AspNetCore.Http.HttpResults.ChallengeHttpResult>();
+    }
+
+    [TestMethod]
+    public async Task AzureFunctionsEasyAuthRequiresTrustedPlatformAndRejectsMalformedHeaders()
+    {
+        var previous = Environment.GetEnvironmentVariable("WEBSITE_AUTH_ENABLED");
+        try
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_AUTH_ENABLED", "true");
+            var services = new ServiceCollection()
+                .AddLogging()
+                .AddArkAzureFunctionsEasyAuthAuthentication()
+                .BuildServiceProvider();
+            var context = new DefaultHttpContext
+            {
+                RequestServices = services,
+            };
+            context.Request.Headers["X-MS-CLIENT-PRINCIPAL"] = Convert.ToBase64String(
+                Encoding.UTF8.GetBytes(
+                    JsonSerializer.Serialize(new
+                    {
+                        claims = new[] { new { typ = "sub", val = "caller" } },
+                    })));
+
+            var result = await context.RequestServices
+                .GetRequiredService<IAuthenticationService>()
+                .AuthenticateAsync(context, "ArkAzureFunctionsEasyAuth");
+
+            result.Succeeded.Should().BeTrue();
+            result.Principal!.FindFirst("sub")!.Value.Should().Be("caller");
+
+            var malformedServices = new ServiceCollection()
+                .AddLogging()
+                .AddArkAzureFunctionsEasyAuthAuthentication()
+                .BuildServiceProvider();
+            var malformedContext = new DefaultHttpContext
+            {
+                RequestServices = malformedServices,
+            };
+            malformedContext.Request.Headers["X-MS-CLIENT-PRINCIPAL"] = "!";
+            var malformed = await malformedContext.RequestServices
+                .GetRequiredService<IAuthenticationService>()
+                .AuthenticateAsync(malformedContext, "ArkAzureFunctionsEasyAuth");
+            malformed.Succeeded.Should().BeFalse();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_AUTH_ENABLED", previous);
+        }
+    }
+
+    [TestMethod]
+    public async Task AzureFunctionsEasyAuthRejectsHeaderWhenPlatformAuthenticationIsDisabled()
+    {
+        var previous = Environment.GetEnvironmentVariable("WEBSITE_AUTH_ENABLED");
+        try
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_AUTH_ENABLED", "false");
+            var services = new ServiceCollection()
+                .AddLogging()
+                .AddArkAzureFunctionsEasyAuthAuthentication()
+                .BuildServiceProvider();
+            var context = new DefaultHttpContext
+            {
+                RequestServices = services,
+            };
+            context.Request.Headers["X-MS-CLIENT-PRINCIPAL"] = "ignored";
+
+            var result = await context.RequestServices
+                .GetRequiredService<IAuthenticationService>()
+                .AuthenticateAsync(context, "ArkAzureFunctionsEasyAuth");
+
+            result.Succeeded.Should().BeFalse();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_AUTH_ENABLED", previous);
+        }
     }
 
     [TestMethod]
