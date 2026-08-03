@@ -115,7 +115,11 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         {
             throw new RpcException(new global::Grpc.Core.Status(StatusCode.Aborted, exception.Message));
         }
-        catch (Exception exception) when (exception is not RpcException and not OperationCanceledException)
+        catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is not RpcException)
         {
             Logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
             var status = new Google.Rpc.Status

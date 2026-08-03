@@ -223,6 +223,70 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorEmitsExceptionMappingWithCancellationRethrow()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/items")]
+            public sealed class GetItems : IQuery<string> { }
+            """);
+
+        result.Generated.Should().Contain("catch (global::System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)");
+        result.Generated.Should().Contain("throw;");
+        result.Generated.Should().Contain("catch (global::System.Exception _exception)");
+        result.Generated.Should().Contain("ArkAzureFunctionsResults.FromException(_exception)");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorEmitsStatusOverridesForQueryAndRequest()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/queries", SuccessStatusCode = 200, NullResultStatusCode = 404)]
+            public sealed class GetQuery : IQuery<string> { }
+            [HttpEndpoint("POST", "/requests", SuccessStatusCode = 201, NullResultStatusCode = 200)]
+            public sealed class PostRequest : IRequest<string> { }
+            """);
+
+        result.Generated.Should().Contain("Results.Json(_result, statusCode: 200");
+        result.Generated.Should().Contain("Results.Json(_result, statusCode: 201");
+        result.Generated.Should().Contain("Results.StatusCode(404)");
+        result.Generated.Should().Contain("Results.StatusCode(200)");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorBindsETagPreconditionAndEmitsResponseETag()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            public sealed class ItemResponse { [ETag] public string? Version { get; set; } }
+            [HttpEndpoint("PUT", "/items/{id}")]
+            public sealed class UpdateItem : IRequest<ItemResponse>
+            {
+                public string Id { get; set; } = string.Empty;
+                [ETag] public string? ETag { get; set; }
+            }
+            """);
+
+        result.Generated.Should().Contain("ArkAzureFunctionsResults.ReadPrecondition(request.HttpContext)");
+        result.Generated.Should().Contain("body.ETag = _etag");
+        result.Generated.Should().Contain("ArkAzureFunctionsResults.ApplyResponseETag(request.HttpContext");
+        result.Generated.Should().Contain("_result.Version");
+    }
+
+    [TestMethod]
     public async Task AzureFunctionsAuthenticationUsesConfiguredPrincipalAndChallengesFailures()
     {
         var principal = new System.Security.Claims.ClaimsPrincipal(

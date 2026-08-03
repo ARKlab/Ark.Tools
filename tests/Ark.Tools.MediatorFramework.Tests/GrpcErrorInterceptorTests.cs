@@ -82,6 +82,39 @@ public sealed class GrpcErrorInterceptorTests
         optimistic.Which.StatusCode.Should().Be(StatusCode.Aborted);
     }
 
+    [TestMethod]
+    public async Task RethrowsOperationCanceledExceptionWhenClientCancelled()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor();
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+        var context = new TestServerCallContext(cts.Token);
+
+        Func<Task> action = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            context,
+            (_, _) => Task.FromException<Empty>(new OperationCanceledException(cts.Token)));
+
+        await action.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [TestMethod]
+    public async Task MapsInternalTimeoutOperationCanceledExceptionToInternalError()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor(
+            new TestHostEnvironment(Environments.Production),
+            Options.Create(new ArkGrpcErrorOptions()));
+
+        // CancellationToken.None means IsCancellationRequested = false → internal timeout scenario
+        Func<Task> action = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(CancellationToken.None),
+            (_, _) => Task.FromException<Empty>(new OperationCanceledException()));
+
+        var exception = await action.Should().ThrowAsync<RpcException>();
+        exception.Which.StatusCode.Should().Be(StatusCode.Internal);
+    }
+
     private sealed class TestHostEnvironment : IHostEnvironment
     {
         public TestHostEnvironment(string environmentName)
@@ -121,13 +154,19 @@ internal static class GrpcErrorInterceptorTestExtensions
 internal sealed class TestServerCallContext : ServerCallContext
 {
     private Status _status;
+    private readonly CancellationToken _cancellationToken;
+
+    public TestServerCallContext(CancellationToken cancellationToken = default)
+    {
+        _cancellationToken = cancellationToken;
+    }
 
     protected override string MethodCore => "test";
     protected override string HostCore => "localhost";
     protected override string PeerCore => "localhost";
     protected override DateTime DeadlineCore => DateTime.UtcNow.AddMinutes(1);
     protected override Metadata RequestHeadersCore => new();
-    protected override CancellationToken CancellationTokenCore => CancellationToken.None;
+    protected override CancellationToken CancellationTokenCore => _cancellationToken;
     protected override Metadata ResponseTrailersCore { get; } = new();
     protected override Status StatusCore
     {
