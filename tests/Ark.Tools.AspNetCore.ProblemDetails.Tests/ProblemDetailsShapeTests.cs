@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Core;
+using Ark.Tools.Core.BusinessRuleViolation;
 
 using AwesomeAssertions;
 
@@ -10,6 +11,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails.Tests;
@@ -27,6 +29,69 @@ public sealed class ProblemDetailsShapeTests
         problemDetails.Type.Should().Be("https://httpstatuses.com/404");
         Uri.TryCreate(problemDetails.Type!, UriKind.Absolute, out var typeUri).Should().BeTrue();
         typeUri!.IsAbsoluteUri.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void MapsBusinessRuleViolationWithTheSamePayloadAsReflection()
+    {
+        var violations = new BusinessRuleViolation[]
+        {
+            new EmptyViolation(),
+            new SinglePropertyViolation { Property = "value" },
+            new SeveralPropertiesViolation { Count = 7, Enabled = true, Name = "name" },
+        };
+
+        foreach (var violation in violations)
+        {
+            var problemDetails = ExceptionProblemDetailsMapper.Map(new BusinessRuleViolationException(violation));
+            var expected = violation
+                .GetType()
+                .GetProperties()
+                .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
+                .ToDictionary(
+                    property => property.Name,
+                    property => property.GetValue(violation),
+                    StringComparer.Ordinal);
+            expected["type"] = violation.GetType().Name;
+            expected["title"] = violation.Title;
+            expected["status"] = violation.Status;
+
+            problemDetails.Status.Should().Be(violation.Status);
+            problemDetails.Title.Should().Be(violation.Title);
+            problemDetails.Detail.Should().Be(violation.Detail);
+            problemDetails.Type.Should().Be($"https://httpstatuses.com/{violation.Status}");
+            problemDetails.Extensions["businessRuleViolation"].Should().BeEquivalentTo(expected);
+        }
+    }
+
+    [TestMethod]
+    public void MapsBusinessRuleViolationsConcurrentlyForNewTypes()
+    {
+        var violations = new BusinessRuleViolation[]
+        {
+            new EmptyViolation(),
+            new SinglePropertyViolation { Property = "value" },
+            new SeveralPropertiesViolation { Count = 7, Enabled = true, Name = "name" },
+        };
+        var failures = new ConcurrentBag<Exception>();
+
+        Parallel.For(0, 100, index =>
+        {
+            try
+            {
+                var payload = ExceptionProblemDetailsMapper
+                    .Map(new BusinessRuleViolationException(violations[index % violations.Length]))
+                    .Extensions["businessRuleViolation"];
+                payload.Should().NotBeNull();
+                ((IDictionary<string, object?>)payload!).Should().ContainKey("type");
+            }
+            catch (Exception exception)
+            {
+                failures.Add(exception);
+            }
+        });
+
+        failures.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -129,5 +194,19 @@ public sealed class ProblemDetailsShapeTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
         public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
         public string EnvironmentName { get; set; }
+    }
+
+    private sealed class EmptyViolation() : BusinessRuleViolation("empty");
+
+    private sealed class SinglePropertyViolation() : BusinessRuleViolation("single")
+    {
+        public string? Property { get; set; }
+    }
+
+    private sealed class SeveralPropertiesViolation() : BusinessRuleViolation("several")
+    {
+        public int Count { get; set; }
+        public bool Enabled { get; set; }
+        public string? Name { get; set; }
     }
 }
