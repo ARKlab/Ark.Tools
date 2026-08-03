@@ -15,6 +15,7 @@
     <PackageReference Include="Reqnroll.MsTest" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
     <PackageReference Include="NodaTime.Testing" />
+    <PackageReference Include="Ark.Tools.Rebus" />
   </ItemGroup>
 
   <ItemGroup>
