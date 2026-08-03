@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.AzureFunctions;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,6 +33,12 @@ public static class Program
 #pragma warning restore CA2000
         builder.Services.AddArkAzureFunctions(rebusContainer);
         builder.Services.AddArkAzureFunctionsBearerAuthentication();
+        builder.Services.AddAuthorization(options =>
+        {
+            options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+        });
         builder.Services.AddHostedService(_ => new AzureFunctionsRebusHostedService(rebusContainer));
 
         builder.Build().Run();

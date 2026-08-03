@@ -12,6 +12,17 @@ using ProtoBuf;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
+/// <summary>Returns the readiness state of an HTTP host.</summary>
+[HttpEndpoint("GET", "/health", AllowAnonymous = true)]
+public sealed record HealthCheckQuery : IQuery<HealthCheckResponse>;
+
+/// <summary>Readiness response returned by both HTTP hosts.</summary>
+public sealed record HealthCheckResponse
+{
+    /// <summary>Gets the readiness state.</summary>
+    public string Status { get; init; } = "ok";
+}
+
 /// <summary>Response returned by the greeting operations.</summary>
 [ProtoContract]
 [MessagePackObject(true)]
