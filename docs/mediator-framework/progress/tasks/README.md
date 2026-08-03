@@ -129,7 +129,7 @@ the framework libraries.
 2. [x] Resolve AZD-10 and AZD-11.
 3. [x] AZF-01 → [x] AZF-02 → [x] AZF-03.
 4. [x] AZF-04 → [x] AZF-05.
-5. [x] [AZF-06](azure-functions/AZF-06-files-streaming.md) → [ ] [AZF-07](azure-functions/AZF-07-one-way-rebus.md) (independent after AZF-05).
+5. [x] [AZF-06](azure-functions/AZF-06-files-streaming.md) → [x] [AZF-07](azure-functions/AZF-07-one-way-rebus.md) (independent after AZF-05).
 6. [ ] AZF-08.
 7. [ ] AZF-10. AZF-09 remains deferred until AZD-11 is reopened.
 

@@ -5,10 +5,8 @@ using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.AzureFunctions;
 
 using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
-using SimpleInjector;
-using SimpleInjector.Lifestyles;
 
 [assembly: Ark.MediatorFramework.HttpHost(
     typeof(ApplicationComposition),
@@ -28,12 +26,13 @@ public static class Program
         var builder = FunctionsApplication.CreateBuilder(args);
         builder.ConfigureFunctionsWebApplication();
 
-        using var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        ApplicationComposition.Register(container, useSqlStore: false);
-
-        builder.Services.AddArkAzureFunctions(container);
+#pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
+        var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
+        var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(serviceBusConnectionString);
+#pragma warning restore CA2000
+        builder.Services.AddArkAzureFunctions(rebusContainer);
         builder.Services.AddArkAzureFunctionsBearerAuthentication();
+        builder.Services.AddHostedService(_ => new AzureFunctionsRebusHostedService(rebusContainer));
 
         builder.Build().Run();
     }
