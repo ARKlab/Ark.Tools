@@ -8,8 +8,6 @@ using Ark.Tools.Solid.Authorization;
 
 using AwesomeAssertions;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 using SimpleInjector;
 
 using System.Collections.Concurrent;
@@ -34,7 +32,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     [TestMethod]
     public async Task FirstPolicySuccessStopsEvaluation()
     {
-        var container = CreateContainer<AuthorizedRequest, TestPolicy>();
+        using var container = CreateContainer<AuthorizedRequest, TestPolicy>();
         var auth = new AuthorizationService(true);
         var inner = new RequestHandler();
         var decorator = new PolicyAuthorizeOrLogicRequestDecorator<AuthorizedRequest, object>(inner, auth, new UserContext(), container);
@@ -48,7 +46,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     [TestMethod]
     public async Task AllPoliciesFailurePreservesPolicyMessages()
     {
-        var container = CreateContainer<DeniedRequest, TestPolicy>();
+        using var container = CreateContainer<DeniedRequest, TestPolicy>();
         var decorator = new PolicyAuthorizeOrLogicRequestDecorator<DeniedRequest, object>(
             new RequestHandler(), new AuthorizationService(false), new UserContext(), container);
 
