@@ -3,6 +3,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Collections.Concurrent;
+using System.Reflection;
 
 
 namespace Ark.Tools.AspNetCore;
@@ -14,10 +16,12 @@ public sealed class SkipModelStateValidationFilterAttribute : Attribute
 
 public sealed class ModelStateValidationFilterAttribute : ActionFilterAttribute
 {
+    private static readonly ConcurrentDictionary<MethodInfo, Lazy<bool>> _skipValidationByMethod = new();
+
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         if (context.ActionDescriptor is ControllerActionDescriptor cad &&
-            cad.MethodInfo.GetCustomAttributes(typeof(SkipModelStateValidationFilterAttribute), true).Length > 0)
+            ShouldSkipValidation(cad.MethodInfo))
             return;
 
         if (!context.ModelState.IsValid)
@@ -28,5 +32,16 @@ public sealed class ModelStateValidationFilterAttribute : ActionFilterAttribute
         }
 
         base.OnActionExecuting(context);
+    }
+
+    private static bool ShouldSkipValidation(MethodInfo methodInfo)
+    {
+        var decision = _skipValidationByMethod.GetOrAdd(
+            methodInfo,
+            static method => new Lazy<bool>(
+                () => method.IsDefined(typeof(SkipModelStateValidationFilterAttribute), inherit: false),
+                LazyThreadSafetyMode.ExecutionAndPublication));
+
+        return decision.Value;
     }
 }
