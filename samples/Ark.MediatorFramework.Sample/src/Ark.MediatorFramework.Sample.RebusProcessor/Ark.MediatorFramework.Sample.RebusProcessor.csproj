@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
+    <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
+    <PackageReference Include="Ark.Tools.Outbox" />
+    <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.Solid.Authorization" />
+    <PackageReference Include="Ark.Tools.SystemTextJson" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
+    <ProjectReference Include="..\..\..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <Analyzer Include="..\..\..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Rebus.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Rebus.Generators.dll"
+              Condition="Exists('..\..\..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Rebus.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Rebus.Generators.dll')" />
+  </ItemGroup>
+
+</Project>

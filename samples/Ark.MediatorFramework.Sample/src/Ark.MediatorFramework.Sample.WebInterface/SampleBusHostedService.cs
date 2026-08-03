@@ -2,6 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Rebus;
+using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.RebusProcessor;
+using Rebus.Transport.InMem;
 
 using SimpleInjector;
 
@@ -10,21 +13,33 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 internal sealed class SampleBusHostedService : IHostedService
 {
     private readonly Container _container;
+    private readonly Container _processorContainer;
 
     public SampleBusHostedService(Container container)
     {
         _container = container;
+        var network = container.GetInstance<InMemNetwork>();
+        var store = container.GetInstance<IGreetingStore>();
+        _processorContainer = RebusProcessorComposition.BuildContainer(
+            network,
+            useSqlStore: store is SqlGreetingStore,
+            greetingStore: store,
+            registerHandlers: SampleRebusEndpoints.RegisterHandlers,
+            configureRouting: SampleRebusEndpoints.ConfigureRouting);
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         _container.Verify();
         _container.StartBus();
+        _processorContainer.Verify();
+        _processorContainer.StartBus();
         await Task.CompletedTask.ConfigureAwait(false);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         await _container.DisposeAsync().ConfigureAwait(false);
+        await _processorContainer.DisposeAsync().ConfigureAwait(false);
     }
 }

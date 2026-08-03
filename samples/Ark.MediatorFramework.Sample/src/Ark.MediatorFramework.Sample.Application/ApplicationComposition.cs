@@ -46,6 +46,7 @@ public static class ApplicationComposition
         {
             config.Transport(configureTransport);
             config.Routing(configureRouting);
+            config.Options(options => options.AutomaticallyFlowUserContext(container));
         });
     }
 
@@ -54,15 +55,19 @@ public static class ApplicationComposition
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
+    /// <param name="greetingStore">Optional store shared with another host container.</param>
     public static void Register(
         Container container,
         bool useSqlStore = true,
         string? connectionString = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        IGreetingStore? greetingStore = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
-        if (useSqlStore)
+        if (greetingStore is not null)
+            container.RegisterInstance(greetingStore);
+        else if (useSqlStore)
         {
             // Register SQL Server mappings for LocalDate, LocalDateTime, and OffsetDateTime.
             NodaTimeDapperSqlServer.Setup();
