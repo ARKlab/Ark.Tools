@@ -12,8 +12,8 @@ using System.Reflection;
 
 namespace Ark.Tools.Benchmarks;
 
-[MemoryDiagnoser]
-public sealed class ModelStateValidationFilterBenchmarks
+[Config(typeof(ExceptionProblemDetailsBenchmarks.BenchmarkConfig))]
+public class ModelStateValidationFilterBenchmarks
 {
     private readonly Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute _filter = new();
     private ActionExecutingContext _markedContext = null!;
