@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
+using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
@@ -53,10 +54,11 @@ public static class SampleComposition
         // SimpleInjector container locks, after ASP.NET Core has built its service provider.
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, HostUserContextProvider>();
 
-        ApplicationComposition.RegisterOutboundRebus(
-            container,
-            transport => transport.UseDrainableInMemoryTransportAsOneWayClient(network),
-            SampleRebusEndpoints.ConfigureRouting);
+        container.ConfigureRebus(cfg =>
+        {
+            cfg.Transport(t => t.UseDrainableInMemoryTransportAsOneWayClient(network));
+            ApplicationComposition.ConfigureRebusCommon(cfg, container, SampleRebusEndpoints.ConfigureRouting);
+        });
 
         return container;
     }

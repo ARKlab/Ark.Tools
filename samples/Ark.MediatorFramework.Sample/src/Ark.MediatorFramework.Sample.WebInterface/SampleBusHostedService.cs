@@ -30,8 +30,7 @@ internal sealed class SampleBusHostedService : IHostedService
             network,
             useSqlStore: useSqlStore,
             connectionString: connectionString,
-            registerHandlers: SampleRebusEndpoints.RegisterHandlers,
-            configureRouting: SampleRebusEndpoints.ConfigureRouting);
+            registerHandlers: SampleRebusEndpoints.RegisterHandlers);
     }
 
     /// <inheritdoc />

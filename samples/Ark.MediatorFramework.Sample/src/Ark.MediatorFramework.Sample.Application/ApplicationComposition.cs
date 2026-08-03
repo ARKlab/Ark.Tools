@@ -15,7 +15,6 @@ using NodaTime;
 using Rebus.Config;
 using Rebus.Routing;
 using Rebus.Serialization.Json;
-using Rebus.Transport;
 
 using System.Text.Json;
 
@@ -54,28 +53,6 @@ public static class ApplicationComposition
         {
             options.AutomaticallyFlowUserContext(container);
             configureOptions?.Invoke(options);
-        });
-    }
-
-    /// <summary>
-    /// Registers Rebus as an outbound-only client using the generated owner routing.
-    /// </summary>
-    /// <param name="container">The SimpleInjector container to register into.</param>
-    /// <param name="configureTransport">Configures the one-way transport.</param>
-    /// <param name="configureRouting">Configures generated owner routing.</param>
-    public static void RegisterOutboundRebus(
-        Container container,
-        Action<StandardConfigurer<ITransport>> configureTransport,
-        Action<StandardConfigurer<IRouter>> configureRouting)
-    {
-        ArgumentNullException.ThrowIfNull(container);
-        ArgumentNullException.ThrowIfNull(configureTransport);
-        ArgumentNullException.ThrowIfNull(configureRouting);
-
-        container.ConfigureRebus(config =>
-        {
-            config.Transport(configureTransport);
-            ConfigureRebusCommon(config, container, configureRouting);
         });
     }
 

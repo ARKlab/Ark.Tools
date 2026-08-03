@@ -14,7 +14,6 @@ using NodaTime;
 
 using Rebus.Config;
 using Rebus.Handlers;
-using Rebus.Routing;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -35,15 +34,13 @@ public static class RebusProcessorComposition
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
     /// <param name="registerHandlers">Registers generated Rebus message handlers.</param>
-    /// <param name="configureRouting">Configures generated Rebus message routing.</param>
     /// <returns>An isolated processor container.</returns>
     public static Container BuildContainer(
         InMemNetwork network,
         bool useSqlStore = true,
         string? connectionString = null,
         IClock? clock = null,
-        Action<Container>? registerHandlers = null,
-        Action<StandardConfigurer<IRouter>>? configureRouting = null)
+        Action<Container>? registerHandlers = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -57,7 +54,6 @@ public static class RebusProcessorComposition
         (registerHandlers ?? ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<RefreshGreetingCommand>)(container);
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
 
-        var routing = configureRouting ?? ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>;
         container.ConfigureRebus(cfg =>
         {
             cfg.Transport(transport =>
@@ -72,7 +68,7 @@ public static class RebusProcessorComposition
                     });
                 }
             });
-            ApplicationComposition.ConfigureRebusCommon(cfg, container, routing, options =>
+            ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>, options =>
             {
                 options.SetNumberOfWorkers(1);
                 options.ArkRetryStrategy(maxDeliveryAttempts: 1);
