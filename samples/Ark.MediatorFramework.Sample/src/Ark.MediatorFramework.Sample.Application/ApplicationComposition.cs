@@ -15,6 +15,7 @@ using NodaTime;
 using Rebus.Config;
 using Rebus.Routing;
 using Rebus.Serialization.Json;
+using Rebus.Transport;
 
 using System.Text.Json;
 
@@ -29,6 +30,32 @@ namespace Ark.MediatorFramework.Sample.Application;
 /// </summary>
 public static class ApplicationComposition
 {
+    /// <summary>
+    /// Configures the Rebus outbox on a transport configurer. Both outbound-only and full-processor
+    /// compositions use the outbox; only the processor sets <paramref name="startProcessor"/> to
+    /// <see langword="true"/>.
+    /// </summary>
+    /// <param name="transport">The transport configurer to attach the outbox to.</param>
+    /// <param name="container">The container used to resolve <see cref="IOutboxAsyncContextFactory"/>.</param>
+    /// <param name="startProcessor">
+    /// <see langword="true"/> to start the background outbox processor (full-processor host only);
+    /// <see langword="false"/> for outbound-only hosts that only need to enqueue messages.
+    /// </param>
+    public static void ConfigureRebusOutbox(
+        StandardConfigurer<ITransport> transport,
+        Container container,
+        bool startProcessor)
+    {
+        ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(container);
+
+        transport.Outbox(outbox =>
+        {
+            outbox.OutboxAsyncContextFactory(factory => factory.Use(container.GetInstance<IOutboxAsyncContextFactory>()));
+            outbox.OutboxOptions(options => options.StartProcessor = startProcessor);
+        });
+    }
+
     /// <summary>
     /// Configures routing, serialization, and user-context propagation that must be identical
     /// between outbound-only and full-processor Rebus configurations.

@@ -8,11 +8,9 @@ using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
-using Ark.Tools.Outbox;
 
 using NodaTime;
 
-using Rebus.Config;
 using Rebus.Handlers;
 using Rebus.Transport.InMem;
 
@@ -60,13 +58,7 @@ public static class RebusProcessorComposition
             {
                 transport.UseInMemoryTransport(network, "ark.mediator.sample");
                 if (useSqlStore)
-                {
-                    transport.Outbox(outbox =>
-                    {
-                        outbox.OutboxAsyncContextFactory(factory => factory.Use(container.GetInstance<IOutboxAsyncContextFactory>()));
-                        outbox.OutboxOptions(options => options.StartProcessor = true);
-                    });
-                }
+                    ApplicationComposition.ConfigureRebusOutbox(transport, container, startProcessor: true);
             });
             ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>, options =>
             {
