@@ -73,10 +73,10 @@ generated routing without accidentally registering receivers or starting workers
 ## Acceptance
 
 - [x] AZD-08 is recorded as decided.
-- [ ] Function composition has no input queue or receive handlers.
-- [ ] Routing/payload are verified by a separate receiver, not an `IBus` mock.
-- [ ] Existing drainable behavior remains backward compatible.
-- [ ] Managed identity is the documented Azure default; no secret is committed.
-- [ ] Lifecycle and unsupported request/reply behavior are documented.
+- [x] Function composition has no input queue or receive handlers.
+- [x] Routing/payload are verified by a separate receiver, not an `IBus` mock.
+- [x] Existing drainable behavior remains backward compatible.
+- [x] Managed identity is the documented Azure default; no secret is committed.
+- [x] Lifecycle and unsupported request/reply behavior are documented.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

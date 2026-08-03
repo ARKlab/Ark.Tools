@@ -1017,6 +1017,18 @@
           "Polly": "[8.7.0, )"
         }
       },
+      "ark.mediatorframework.sample.rebusprocessor": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.MediatorFramework.Sample.Application": "[0.9.1, )",
+          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
+          "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
+          "Ark.Tools.Outbox": "[1.0.0, )",
+          "Ark.Tools.Rebus": "[1.0.0, )",
+          "Ark.Tools.Solid.Authorization": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )"
+        }
+      },
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
