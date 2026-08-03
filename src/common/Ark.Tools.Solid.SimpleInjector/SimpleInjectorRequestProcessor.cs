@@ -15,14 +15,6 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
         _container = container;
     }
 
-    private object _getHandlerInstance<TResponse>(IRequest<TResponse> request)
-    {
-        var RequestType = request.GetType();
-        var handlerType = typeof(IRequestHandler<,>).MakeGenericType(RequestType, typeof(TResponse));
-
-        return _container.GetInstance(handlerType);
-    }
-
     [DebuggerStepThrough]
 #pragma warning disable CS0618 // Type or member is obsolete
     [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
@@ -36,7 +28,6 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
     {
-        dynamic requestHandler = _getHandlerInstance(request);
-        return await requestHandler.ExecuteAsync((dynamic)request, ctk);
+        return await RequestHandlerInvokerCache<TResponse>.ExecuteAsync(_container, request, ctk).ConfigureAwait(false);
     }
 }
