@@ -14,11 +14,17 @@ using Microsoft.Data.SqlClient;
 
 using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 
+using System.Collections.Concurrent;
+using System.Linq.Expressions;
+using System.Reflection;
+
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
 /// <summary>Maps application exceptions to RFC 7807 responses.</summary>
 public static class ExceptionProblemDetailsMapper
 {
+    private static readonly ConcurrentDictionary<Type, Accessor[]> BusinessRuleViolationAccessors = new();
+
     /// <summary>Creates a ProblemDetails response for an application exception.</summary>
     /// <param name="exception">The exception to map.</param>
     /// <returns>The mapped response.</returns>
@@ -73,12 +79,11 @@ public static class ExceptionProblemDetailsMapper
     private static MvcProblemDetails CreateBusinessRuleViolation(BusinessRuleViolationException exception)
     {
         var violation = exception.BusinessRuleViolation;
-        var payload = violation.GetType()
-            .GetProperties()
-            .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
+        var payload = BusinessRuleViolationAccessors
+            .GetOrAdd(violation.GetType(), CreateAccessors)
             .ToDictionary(
-                property => property.Name,
-                property => property.GetValue(violation),
+                accessor => accessor.Name,
+                accessor => accessor.GetValue(violation),
                 StringComparer.Ordinal);
         payload["type"] = violation.GetType().Name;
         payload["title"] = violation.Title;
@@ -94,4 +99,24 @@ public static class ExceptionProblemDetailsMapper
         problemDetails.Extensions["businessRuleViolation"] = payload;
         return problemDetails;
     }
+
+    private static Accessor[] CreateAccessors(Type violationType)
+    {
+        return violationType
+            .GetProperties()
+            .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
+            .Select(property => new Accessor(property.Name, CreateGetter(violationType, property)))
+            .ToArray();
+    }
+
+    private static Func<BusinessRuleViolation, object?> CreateGetter(Type violationType, PropertyInfo property)
+    {
+        var violation = Expression.Parameter(typeof(BusinessRuleViolation), "violation");
+        var typedViolation = Expression.Convert(violation, violationType);
+        var value = Expression.Property(typedViolation, property);
+        var boxedValue = Expression.Convert(value, typeof(object));
+        return Expression.Lambda<Func<BusinessRuleViolation, object?>>(boxedValue, violation).Compile();
+    }
+
+    private sealed record Accessor(string Name, Func<BusinessRuleViolation, object?> GetValue);
 }
