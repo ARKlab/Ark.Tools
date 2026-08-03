@@ -23,7 +23,13 @@ public class PolicyAuthorizeOrLogicCommandDecorator<TCommand> : ICommandHandler<
         _authSvc = authSvc;
         _currentUser = currentUser;
         _container = container;
-        _policies = typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
+        _policies = PolicyMetadata.Policies;
+    }
+
+    private static class PolicyMetadata
+    {
+        internal static readonly PolicyAuthorizeAttribute[] Policies =
+            typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
     }
 
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
