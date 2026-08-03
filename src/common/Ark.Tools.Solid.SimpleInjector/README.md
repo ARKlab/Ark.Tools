@@ -6,14 +6,11 @@ Extension to use Ark.Tools.Solid framework with SimpleInjector dependency inject
 
 **Status**: generated dispatch is trim-friendly; the compatibility fallback is not.
 
-Install/reference `Ark.Tools.Solid.SimpleInjector.Generators` as a Roslyn
-analyzer, mark statically known contracts with
-`[GenerateSolidSimpleInjectorDispatch]`, and pass the generated
-`SolidSimpleInjectorGeneratedDispatcher` to the processor constructor:
+The package applies its dispatcher generator transitively. Existing processor
+registrations and constructor calls remain unchanged:
 
 ```csharp
-var dispatcher = new SolidSimpleInjectorGeneratedDispatcher();
-var processor = SimpleInjectorRequestProcessor.Create(container, dispatcher);
+var processor = new SimpleInjectorRequestProcessor(container);
 ```
 
 Generated branches resolve the closed handler service through SimpleInjector,
@@ -21,6 +18,10 @@ so decorators, lifestyles, cancellation, and exceptions behave exactly as
 they do through the normal container registration. Contracts not marked for
 generation (including dynamically loaded contracts) use the existing
 reflection/dynamic compatibility fallback.
+
+If an application used the interim `Create(container, dispatcher)` API, the
+transitive analyzer reports warning `SOLID001` and offers a code fix to restore
+the normal constructor call.
 
 ### Reason
 

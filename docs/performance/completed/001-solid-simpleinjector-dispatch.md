@@ -49,13 +49,21 @@ preserving handler decoration, scoping, cancellation, exceptions, and public
 
 ## Decision record
 
-- Added an opt-in incremental source generator and dispatcher seam rather than
-  changing the public processor interfaces or requiring generated code in every
-  application.
+- Added a transitive incremental source generator and module initializer, so
+  existing processor registrations and constructor calls automatically use the
+  generated dispatcher without application changes.
 - Generated dispatch resolves the same closed handler service from the
   SimpleInjector container on every call, preserving decorators and lifetimes.
 - Processors retain the existing reflection/dynamic path when no generated
   dispatcher handles a contract, including dynamically loaded contracts.
+- C# 14 call-site interception was not used: processor calls commonly target
+  public interfaces, and replacing those calls would not preserve custom
+  processor implementations or a safe original-call fallback. The generated
+  module initializer provides the same seamless behavior at processor creation.
+- Added warning `SOLID001` with an IDE code fix for the interim
+  `SimpleInjector*Processor.Create(container, dispatcher)` API, so consumers
+  that adopted the incremental shape can return to the unchanged constructor
+  without manual edits.
 - Benchmarks compare fallback and generated request, query, and command paths;
   benchmark output remains an artifact rather than a source-controlled claim.
 - Smoke results on .NET 10.0.10: request 363.04 ns/464 B versus 54.85 ns/192 B,

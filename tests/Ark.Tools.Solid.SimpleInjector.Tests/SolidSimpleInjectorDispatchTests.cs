@@ -17,13 +17,15 @@ public sealed class SolidSimpleInjectorDispatchTests
         var calls = new List<string>();
         using var container = CreateContainer(calls);
         var dispatcher = new TestDispatcher();
+        SolidSimpleInjectorDispatchRegistry.Current = dispatcher;
 
-        var requestResult = await SimpleInjectorRequestProcessor.Create(container, dispatcher)
+        var requestResult = await new SimpleInjectorRequestProcessor(container)
             .ExecuteAsync(new TestRequest("request"), CancellationToken.None);
-        var queryResult = await SimpleInjectorQueryProcessor.Create(container, dispatcher)
+        var queryResult = await new SimpleInjectorQueryProcessor(container)
             .ExecuteAsync(new TestQuery("query"), CancellationToken.None);
-        await SimpleInjectorCommandProcessor.Create(container, dispatcher)
+        await new SimpleInjectorCommandProcessor(container)
             .ExecuteAsync(new TestCommand("command"), CancellationToken.None);
+        SolidSimpleInjectorDispatchRegistry.Current = null;
 
         requestResult.Should().Be("request-handled");
         queryResult.Should().Be("query-handled");
@@ -39,18 +41,20 @@ public sealed class SolidSimpleInjectorDispatchTests
         var calls = new List<string>();
         using var container = CreateContainer(calls);
         var dispatcher = new TestDispatcher();
+        SolidSimpleInjectorDispatchRegistry.Current = dispatcher;
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        var act = async () => await SimpleInjectorRequestProcessor.Create(container, dispatcher)
+        var act = async () => await new SimpleInjectorRequestProcessor(container)
             .ExecuteAsync(new TestRequest("cancel"), cancellation.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
 
-        var exceptionAct = async () => await SimpleInjectorQueryProcessor.Create(container, dispatcher)
+        var exceptionAct = async () => await new SimpleInjectorQueryProcessor(container)
             .ExecuteAsync(new TestQuery("error"), CancellationToken.None);
 
         await exceptionAct.Should().ThrowAsync<InvalidOperationException>();
+        SolidSimpleInjectorDispatchRegistry.Current = null;
     }
 
     [TestMethod]

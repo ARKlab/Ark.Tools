@@ -9,12 +9,13 @@ namespace Ark.Tools.Solid.SimpleInjector;
 public class SimpleInjectorQueryProcessor : IQueryProcessor
 {
     private readonly Container _container;
-    private readonly ISolidSimpleInjectorDispatcher? _dispatcher;
+    private ISolidSimpleInjectorDispatcher? _dispatcher;
 
     public SimpleInjectorQueryProcessor(Container container)
     {
         ArgumentNullException.ThrowIfNull(container);
         _container = container;
+        _dispatcher = SolidSimpleInjectorDispatchRegistry.Current;
     }
 
     /// <summary>
@@ -26,13 +27,17 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
     public static SimpleInjectorQueryProcessor Create(Container container, ISolidSimpleInjectorDispatcher dispatcher)
     {
         ArgumentNullException.ThrowIfNull(dispatcher);
-        return new SimpleInjectorQueryProcessor(container, dispatcher, privateConstruction: true);
+        return new SimpleInjectorQueryProcessor(container) { Dispatcher = dispatcher };
     }
 
-    private SimpleInjectorQueryProcessor(Container container, ISolidSimpleInjectorDispatcher dispatcher, bool privateConstruction)
-        : this(container)
+    /// <summary>
+    /// Gets or sets the optional generated dispatcher.
+    /// </summary>
+    /// <value>The generated dispatcher, or <see langword="null"/> to use the compatibility fallback.</value>
+    public ISolidSimpleInjectorDispatcher? Dispatcher
     {
-        _dispatcher = dispatcher;
+        get => _dispatcher;
+        set => _dispatcher = value;
     }
 
     private object _getHandlerInstance<TResult>(IQuery<TResult> query)

@@ -9,12 +9,13 @@ namespace Ark.Tools.Solid.SimpleInjector;
 public class SimpleInjectorCommandProcessor : ICommandProcessor
 {
     private readonly Container _container;
-    private readonly ISolidSimpleInjectorDispatcher? _dispatcher;
+    private ISolidSimpleInjectorDispatcher? _dispatcher;
 
     public SimpleInjectorCommandProcessor(Container container)
     {
         ArgumentNullException.ThrowIfNull(container);
         _container = container;
+        _dispatcher = SolidSimpleInjectorDispatchRegistry.Current;
     }
 
     /// <summary>
@@ -26,13 +27,17 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
     public static SimpleInjectorCommandProcessor Create(Container container, ISolidSimpleInjectorDispatcher dispatcher)
     {
         ArgumentNullException.ThrowIfNull(dispatcher);
-        return new SimpleInjectorCommandProcessor(container, dispatcher, privateConstruction: true);
+        return new SimpleInjectorCommandProcessor(container) { Dispatcher = dispatcher };
     }
 
-    private SimpleInjectorCommandProcessor(Container container, ISolidSimpleInjectorDispatcher dispatcher, bool privateConstruction)
-        : this(container)
+    /// <summary>
+    /// Gets or sets the optional generated dispatcher.
+    /// </summary>
+    /// <value>The generated dispatcher, or <see langword="null"/> to use the compatibility fallback.</value>
+    public ISolidSimpleInjectorDispatcher? Dispatcher
     {
-        _dispatcher = dispatcher;
+        get => _dispatcher;
+        set => _dispatcher = value;
     }
 
     private object _getHandlerInstance(object command)
