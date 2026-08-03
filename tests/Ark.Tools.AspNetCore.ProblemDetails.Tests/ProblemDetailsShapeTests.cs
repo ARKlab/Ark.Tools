@@ -12,7 +12,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 using System.Collections.Concurrent;
-using System.Reflection;
 using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails.Tests;

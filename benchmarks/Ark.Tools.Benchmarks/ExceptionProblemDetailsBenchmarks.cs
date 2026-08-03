@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.AspNetCore.ProblemDetails;
-using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using BenchmarkDotNet.Attributes;
@@ -21,7 +20,7 @@ public class ExceptionProblemDetailsBenchmarks
         Name = "name",
     });
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public object ReflectionEmpty()
     {
         return MapWithReflection(_empty);
@@ -33,7 +32,7 @@ public class ExceptionProblemDetailsBenchmarks
         return ExceptionProblemDetailsMapper.Map(_empty);
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public object ReflectionSingle()
     {
         return MapWithReflection(_single);
@@ -45,7 +44,7 @@ public class ExceptionProblemDetailsBenchmarks
         return ExceptionProblemDetailsMapper.Map(_single);
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public object ReflectionSeveral()
     {
         return MapWithReflection(_several);

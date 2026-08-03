@@ -80,7 +80,7 @@ public static class ExceptionProblemDetailsMapper
     {
         var violation = exception.BusinessRuleViolation;
         var payload = BusinessRuleViolationAccessors
-            .GetOrAdd(violation.GetType(), CreateAccessors)
+            .GetOrAdd(violation.GetType(), type => CreateAccessors(type))
             .ToDictionary(
                 accessor => accessor.Name,
                 accessor => accessor.GetValue(violation),
@@ -100,6 +100,10 @@ public static class ExceptionProblemDetailsMapper
         return problemDetails;
     }
 
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2070: 'this' argument does not satisfy 'DynamicallyAccessedMemberTypes.PublicProperties'",
+        Justification = "BusinessRuleViolation requires public properties to remain available for this runtime mapping.")]
     private static Accessor[] CreateAccessors(Type violationType)
     {
         return violationType

@@ -7,3 +7,4 @@ using Ark.Tools.Benchmarks;
 
 BenchmarkRunner.Run<ProcessorDispatchBenchmarks>();
 BenchmarkRunner.Run<PolicyAuthorizationMetadataBenchmarks>();
+BenchmarkRunner.Run<ExceptionProblemDetailsBenchmarks>();
