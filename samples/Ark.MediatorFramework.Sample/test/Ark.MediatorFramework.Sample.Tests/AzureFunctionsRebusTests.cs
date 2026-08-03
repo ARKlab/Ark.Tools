@@ -46,10 +46,13 @@ public sealed class AzureFunctionsRebusTests
     [TestMethod]
     public void MissingOutboundBusConfigurationFailsClearly()
     {
-        var exception = Assert.ThrowsException<InvalidOperationException>(
+        var exception = Assert.Throws<InvalidOperationException>(
             () => AzureFunctionsRebusComposition.BuildContainer(null));
 
-        StringAssert.Contains(exception.Message, "Azure Service Bus configuration is required");
+        StringAssert.Contains(
+            exception.Message,
+            "Azure Service Bus configuration is required",
+            StringComparison.Ordinal);
     }
 
     /// <summary>Routes and delivers a typed message to an independently hosted receiver.</summary>
