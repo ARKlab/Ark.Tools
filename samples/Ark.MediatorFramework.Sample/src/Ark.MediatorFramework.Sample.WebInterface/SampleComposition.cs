@@ -31,12 +31,17 @@ public static class SampleComposition
     /// <param name="useSqlStore">Whether to use SQL persistence and the outbox.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
+    /// <param name="greetingStore">
+    /// Optional pre-built store shared with the processor container. When <see langword="null"/>
+    /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory store is created.
+    /// </param>
     /// <returns>The configured container. Hosting verifies it and starts the bus after integration.</returns>
     public static Container BuildContainer(
         InMemNetwork network,
         bool useSqlStore = true,
         string? connectionString = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        IGreetingStore? greetingStore = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -45,7 +50,7 @@ public static class SampleComposition
         container.RegisterInstance(network);
 
         // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
-        ApplicationComposition.Register(container, useSqlStore, connectionString, clock);
+        ApplicationComposition.Register(container, useSqlStore, connectionString, clock, greetingStore);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 

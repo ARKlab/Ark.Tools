@@ -49,11 +49,15 @@ public sealed class SampleTestContext : IDisposable
             StringComparison.Ordinal);
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
         var network = new InMemNetwork();
+        // When not using SQL, share one InMemoryGreetingStore between the API container and the
+        // processor container so both operate on the same data (same pattern as InMemNetwork).
+        var sharedStore = useSqlStore ? null : (IGreetingStore)new InMemoryGreetingStore();
         var container = SampleComposition.BuildContainer(
             network,
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString,
-            clock: Clock);
+            clock: Clock,
+            greetingStore: sharedStore);
         // Test-only: inject deterministic concurrency failures via a store decorator.
         container.RegisterSingleton<ConcurrencyFaultInjector>();
         container.RegisterDecorator<IGreetingStore, FaultInjectingGreetingStoreDecorator>(Lifestyle.Singleton);
@@ -71,7 +75,8 @@ public sealed class SampleTestContext : IDisposable
             configuration,
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString,
-            configureFallbackPolicy: configureFallbackPolicy);
+            configureFallbackPolicy: configureFallbackPolicy,
+            sharedStore: sharedStore);
         _host = new HostBuilder()
             .ConfigureWebHost(web => web
                 .UseTestServer()

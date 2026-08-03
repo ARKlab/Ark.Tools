@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Rebus;
+using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 using Rebus.Transport.InMem;
 
@@ -24,12 +25,17 @@ internal sealed class SampleBusHostedService : IHostedService
     /// <param name="network">The shared in-memory Rebus transport network (from Microsoft DI).</param>
     /// <param name="useSqlStore">Whether the processor should use SQL persistence and the outbox.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
-    public SampleBusHostedService(InMemNetwork network, bool useSqlStore, string? connectionString)
+    /// <param name="sharedStore">
+    /// Optional in-memory store shared with the API container. <see langword="null"/> when
+    /// <paramref name="useSqlStore"/> is <see langword="true"/> (both containers share the database).
+    /// </param>
+    public SampleBusHostedService(InMemNetwork network, bool useSqlStore, string? connectionString, IGreetingStore? sharedStore)
     {
         _processorContainer = RebusProcessorComposition.BuildContainer(
             network,
             useSqlStore: useSqlStore,
             connectionString: connectionString,
+            greetingStore: sharedStore,
             registerHandlers: SampleRebusEndpoints.RegisterHandlers);
     }
 
