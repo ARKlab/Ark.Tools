@@ -25,6 +25,7 @@ public sealed class ArkMinimalApiSecurityTests
         using var response = await client.GetAsync(new Uri("https://localhost/")).ConfigureAwait(false);
 
         response.Headers.Server.ToString().Should().BeEmpty();
+        response.Headers.Contains("Strict-Transport-Security").Should().BeTrue();
         response.Headers.GetValues("X-Content-Type-Options").Should().ContainSingle("nosniff");
         response.Headers.GetValues("X-Frame-Options").Should().ContainSingle("DENY");
     }
