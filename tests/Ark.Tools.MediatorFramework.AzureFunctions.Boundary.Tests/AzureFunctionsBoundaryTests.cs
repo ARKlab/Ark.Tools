@@ -16,24 +16,90 @@ namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests;
 [TestClass]
 public sealed class AzureFunctionsBoundaryTests
 {
+    private static FunctionHost? _host;
+    private static HttpClient? _client;
+
     public TestContext TestContext { get; set; } = null!;
+
+    [ClassInitialize]
+    public static async Task ClassInitialize(TestContext context)
+    {
+        _host = await FunctionHost.StartAsync(context.CancellationToken).ConfigureAwait(false);
+        _client = new HttpClient { BaseAddress = _host.BaseAddress };
+    }
+
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        _client?.Dispose();
+        if (_host is not null)
+            await _host.DisposeAsync().ConfigureAwait(false);
+    }
 
     [TestMethod]
     [TestCategory("AzureFunctionsBoundary")]
     public async Task HealthEndpointIsDiscoveredByCoreTools()
     {
-        await using var host = await FunctionHost.StartAsync(TestContext.CancellationToken).ConfigureAwait(false);
-        using var client = new HttpClient
-        {
-            BaseAddress = host.BaseAddress,
-        };
-
-        using var response = await client.GetAsync(
+        using var response = await _client!.GetAsync(
             new Uri("healthCheck", UriKind.Relative),
             TestContext.CancellationToken).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task UnauthenticatedRequestIsChallenged()
+    {
+        using var response = await _client!.GetAsync(
+            new Uri("api/v1/greetings", UriKind.Relative),
+            TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task AuthenticatedQueryReturnsOkJson()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri("api/v1/greetings", UriKind.Relative));
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
+
+        using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task ValidationFailureProducesProblemDetails()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri("api/v1/greetings?Limit=0", UriKind.Relative));
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
+
+        using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        var body = await response.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        body.Should().Contain("Limit");
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task BindingFailureProducesProblemDetails()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri("api/v1/greetings?Skip=not-a-number", UriKind.Relative));
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
+
+        using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        var body = await response.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        body.Should().Contain("BINDING_FAILURE");
     }
 
     [TestMethod]
@@ -135,6 +201,7 @@ public sealed class AzureFunctionsBoundaryTests
             process.StartInfo.Environment["AzureServiceBus__ConnectionString"] =
                 "Endpoint=sb://boundary.invalid/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
             process.StartInfo.Environment["AzureFunctionsJobHost__Logging__Console__IsEnabled"] = "true";
+            process.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "IntegrationTests";
 
             try
             {

@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <ProjectReference Include="../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
   </ItemGroup>
 

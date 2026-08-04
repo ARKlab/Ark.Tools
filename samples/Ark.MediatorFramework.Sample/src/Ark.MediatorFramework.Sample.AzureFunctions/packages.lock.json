@@ -14,6 +14,15 @@
         "resolved": "3.0.125",
         "contentHash": "CexelZXr4mqLJGy9LGthGnAKUkz/Uh5U4Brh0FnbO+VAI7/TUoPoHKXA+8LLJ8kId7DagSWeuAP3KvCiTvPhgQ=="
       },
+      "Microsoft.AspNetCore.Authentication.JwtBearer": {
+        "type": "Direct",
+        "requested": "[10.0.10, )",
+        "resolved": "10.0.10",
+        "contentHash": "VAcqS42zb9WJd9DjPdkVTS5YrQENmNzPNJuRu8VAW7x3TEWUipc4d4hHzVJdFB0h/KLdr4XcXZzRHcUOKVanMQ==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
+        }
+      },
       "Microsoft.Azure.Functions.Worker.Sdk": {
         "type": "Direct",
         "requested": "[2.0.5, )",

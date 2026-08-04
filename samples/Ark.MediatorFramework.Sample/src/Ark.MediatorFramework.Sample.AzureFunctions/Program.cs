@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 
 [assembly: Ark.MediatorFramework.HttpHost(
     typeof(ApplicationComposition),
@@ -34,7 +35,24 @@ public static class Program
 #pragma warning restore CA2000
         builder.Services.AddArkAzureFunctions(rebusContainer);
         builder.Services.AddArkHealthChecks();
-        builder.Services.AddArkAzureFunctionsBearerAuthentication();
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
+        {
+            builder.Services.AddArkAzureFunctionsBearerAuthentication(options => options.DefaultScheme = "IntegrationTests")
+                .AddAuthentication()
+                .AddJwtBearer("IntegrationTests", options =>
+                {
+                    options.Audience = "API";
+#pragma warning disable CA5404 // Integration-test-only scheme with a symmetric key: issuer validation is intentionally disabled.
+                    options.TokenValidationParameters.ValidateIssuer = false;
+#pragma warning restore CA5404
+                    options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.ASCII.GetBytes("IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLong"));
+                });
+        }
+        else
+        {
+            builder.Services.AddArkAzureFunctionsBearerAuthentication();
+        }
         builder.Services.AddAuthorization(options =>
         {
             options.DefaultPolicy = new AuthorizationPolicyBuilder()

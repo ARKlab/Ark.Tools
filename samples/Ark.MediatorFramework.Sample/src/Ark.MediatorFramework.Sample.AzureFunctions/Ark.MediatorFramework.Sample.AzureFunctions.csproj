@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk"
                       OutputItemType="Analyzer"
                       PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.Rebus" />

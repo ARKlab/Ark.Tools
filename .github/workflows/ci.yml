@@ -47,7 +47,10 @@ jobs:
       uses: actions/setup-dotnet@v6
       with:
         global-json-file: global.json
-      
+
+    - name: 'Install Azure Functions Core Tools'
+      run: npm install --global azure-functions-core-tools@4.12.1
+
     - name: 'Restore packages'
       run: dotnet restore --locked-mode
 
@@ -81,45 +84,11 @@ jobs:
     - name: Write to Job Summary
       run: cat CodeCoverage/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
 
-  azure-functions-boundary:
-    name: 'Azure Functions Core Tools boundary'
-    runs-on: 'ubuntu-latest'
-    needs: build
-    steps:
-    - name: 'Checkout'
-      uses: actions/checkout@v7
-
-    - name: 'Install dotnet'
-      uses: actions/setup-dotnet@v6
-      with:
-        global-json-file: global.json
-
-    - name: 'Start Azurite'
-      run: |
-        docker run -d \
-          -p 10000:10000 \
-          -p 10001:10001 \
-          -p 10002:10002 \
-          mcr.microsoft.com/azure-storage/azurite:latest \
-          azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
-
-    - name: 'Install Azure Functions Core Tools'
-      run: npm install --global azure-functions-core-tools@4.12.1
-
-    - name: 'Restore'
-      run: dotnet restore --locked-mode
-
-    - name: 'Build sample host'
-      run: dotnet build samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj --no-restore --configuration Debug
-
-    - name: 'Run boundary tests'
-      run: dotnet test tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests --configuration Debug --minimum-expected-tests 1
-
     - name: 'Upload sanitized Function host logs'
       if: failure()
       uses: actions/upload-artifact@v7
       with:
         name: azure-functions-boundary-logs
         path: '/tmp/ark-azf-*.log'
-        if-no-files-found: error
+        if-no-files-found: ignore
     

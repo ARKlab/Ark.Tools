@@ -155,6 +155,16 @@
         "resolved": "11.0.1",
         "contentHash": "9Jqm26Yb5D833BSU6rH3taFB8Y+A67Y3GJRC6XFEBKc2ueQSfd0B4bU3cAGsUNrWUJd1V9Sgm5U7I8SNG5zJvA=="
       },
+      "System.IdentityModel.Tokens.Jwt": {
+        "type": "Direct",
+        "requested": "[8.21.0, )",
+        "resolved": "8.21.0",
+        "contentHash": "dKsTkmlpUf/I6g1Aw9joWaZAahXvC0gWGQvkXW1IjZLSefC/4LhQI0tL0VIs64/NZQbl4XnQvLQyu6c7z1pMxg==",
+        "dependencies": {
+          "Microsoft.IdentityModel.JsonWebTokens": "8.21.0",
+          "Microsoft.IdentityModel.Tokens": "8.21.0"
+        }
+      },
       "AspNetCore.HealthChecks.UI.Core": {
         "type": "Transitive",
         "resolved": "9.0.0",
@@ -763,7 +773,8 @@
           "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
-          "Ark.Tools.Rebus": "[1.0.0, )"
+          "Ark.Tools.Rebus": "[1.0.0, )",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.10, )"
         }
       },
       "ark.mediatorframework.sample.rebusprocessor": {
@@ -1235,6 +1246,15 @@
         "dependencies": {
           "Microsoft.ApplicationInsights": "2.23.0",
           "System.IO.FileSystem.AccessControl": "4.7.0"
+        }
+      },
+      "Microsoft.AspNetCore.Authentication.JwtBearer": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.10, )",
+        "resolved": "10.0.10",
+        "contentHash": "VAcqS42zb9WJd9DjPdkVTS5YrQENmNzPNJuRu8VAW7x3TEWUipc4d4hHzVJdFB0h/KLdr4XcXZzRHcUOKVanMQ==",
+        "dependencies": {
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
         }
       },
       "Microsoft.AspNetCore.OpenApi": {
@@ -1712,16 +1732,6 @@
         "dependencies": {
           "System.Diagnostics.EventLog": "10.0.10",
           "System.Security.Cryptography.ProtectedData": "10.0.10"
-        }
-      },
-      "System.IdentityModel.Tokens.Jwt": {
-        "type": "CentralTransitive",
-        "requested": "[8.21.0, )",
-        "resolved": "8.21.0",
-        "contentHash": "dKsTkmlpUf/I6g1Aw9joWaZAahXvC0gWGQvkXW1IjZLSefC/4LhQI0tL0VIs64/NZQbl4XnQvLQyu6c7z1pMxg==",
-        "dependencies": {
-          "Microsoft.IdentityModel.JsonWebTokens": "8.21.0",
-          "Microsoft.IdentityModel.Tokens": "8.21.0"
         }
       },
       "System.Security.Cryptography.Xml": {
