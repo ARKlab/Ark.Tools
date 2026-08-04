@@ -9,17 +9,20 @@ using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests;
 
 [TestClass]
 public sealed class AzureFunctionsBoundaryTests
 {
+    public TestContext TestContext { get; set; } = null!;
+
     [TestMethod]
     [TestCategory("AzureFunctionsBoundary")]
-    public async Task HealthEndpointIsDiscoveredByCoreTools(TestContext context)
+    public async Task HealthEndpointIsDiscoveredByCoreTools()
     {
-        await using var host = await FunctionHost.StartAsync(context.CancellationToken).ConfigureAwait(false);
+        await using var host = await FunctionHost.StartAsync(TestContext.CancellationToken).ConfigureAwait(false);
         using var client = new HttpClient
         {
             BaseAddress = host.BaseAddress,
@@ -27,7 +30,7 @@ public sealed class AzureFunctionsBoundaryTests
 
         using var response = await client.GetAsync(
             new Uri("healthCheck", UriKind.Relative),
-            context.CancellationToken).ConfigureAwait(false);
+            TestContext.CancellationToken).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
@@ -85,12 +88,22 @@ public sealed class AzureFunctionsBoundaryTests
         private readonly Process _process;
         private readonly StreamWriter _log;
         private readonly string _logPath;
+        private readonly Channel<string> _logLines;
+        private readonly Task _logPumpTask;
 
-        private FunctionHost(Process process, StreamWriter log, string logPath, Uri baseAddress)
+        private FunctionHost(
+            Process process,
+            StreamWriter log,
+            string logPath,
+            Channel<string> logLines,
+            Task logPumpTask,
+            Uri baseAddress)
         {
             _process = process;
             _log = log;
             _logPath = logPath;
+            _logLines = logLines;
+            _logPumpTask = logPumpTask;
             BaseAddress = baseAddress;
         }
 
@@ -119,15 +132,44 @@ public sealed class AzureFunctionsBoundaryTests
             };
             process.StartInfo.Environment["AzureWebJobsScriptRoot"] = appDirectory;
             process.StartInfo.Environment["AzureServiceBus__ConnectionString"] =
-                "boundary.invalid";
+                "Endpoint=sb://boundary.invalid/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
             process.StartInfo.Environment["AzureFunctionsJobHost__Logging__Console__IsEnabled"] = "true";
 
-            if (!process.Start())
-                throw new InvalidOperationException("Azure Functions Core Tools did not start.");
+            try
+            {
+                if (!process.Start())
+                    throw new InvalidOperationException("Azure Functions Core Tools did not start.");
+            }
+            catch (Exception exception)
+            {
+                process.Dispose();
+                await log.DisposeAsync().ConfigureAwait(false);
+                throw new InvalidOperationException("Failed to start Azure Functions Core Tools. Ensure `func` is installed and available on PATH.", exception);
+            }
 
-            _ = CaptureAsync(process.StandardOutput, log);
-            _ = CaptureAsync(process.StandardError, log);
-            var host = new FunctionHost(process, log, logPath, new Uri($"http://127.0.0.1:{port}/"));
+            var logLines = Channel.CreateUnbounded<string>();
+#pragma warning disable CA2025
+            var logPumpTask = PumpLogsAsync(log, logLines.Reader, cancellationToken);
+#pragma warning restore CA2025
+            var host = new FunctionHost(
+                process,
+                log,
+                logPath,
+                logLines,
+                logPumpTask,
+                new Uri($"http://127.0.0.1:{port}/"));
+            process.OutputDataReceived += (_, args) =>
+            {
+                if (args.Data is not null)
+                    logLines.Writer.TryWrite(args.Data);
+            };
+            process.ErrorDataReceived += (_, args) =>
+            {
+                if (args.Data is not null)
+                    logLines.Writer.TryWrite(args.Data);
+            };
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
             try
             {
                 await host.WaitForReadinessAsync(cancellationToken).ConfigureAwait(false);
@@ -135,7 +177,9 @@ public sealed class AzureFunctionsBoundaryTests
             }
             catch
             {
+#pragma warning disable VSTHRD003
                 await host.DisposeAsync().ConfigureAwait(false);
+#pragma warning restore VSTHRD003
                 throw;
             }
         }
@@ -144,14 +188,32 @@ public sealed class AzureFunctionsBoundaryTests
         {
             if (!_process.HasExited)
                 _process.Kill(entireProcessTree: true);
-            await _process.WaitForExitAsync().ConfigureAwait(false);
+
+            _process.CancelOutputRead();
+            _process.CancelErrorRead();
+            await _process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+            _logLines.Writer.TryComplete();
+#pragma warning disable VSTHRD003
+            await _logPumpTask.ConfigureAwait(false);
+#pragma warning restore VSTHRD003
             await _log.DisposeAsync().ConfigureAwait(false);
+            _process.Dispose();
+        }
+
+        private static async Task PumpLogsAsync(
+            StreamWriter log,
+            ChannelReader<string> logLines,
+            CancellationToken cancellationToken)
+        {
+            await foreach (var line in logLines.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+                await log.WriteLineAsync(SecretPattern.Replace(line, "$1[REDACTED]"), cancellationToken).ConfigureAwait(false);
         }
 
         private async Task WaitForReadinessAsync(CancellationToken cancellationToken)
         {
             using var client = new HttpClient { BaseAddress = BaseAddress };
-            var deadline = Stopwatch.GetTimestamp() + StartupTimeout.Ticks * (Stopwatch.Frequency / TimeSpan.TicksPerSecond);
+            var startupTimeoutTimestampDelta = (long)(StartupTimeout.TotalSeconds * Stopwatch.Frequency);
+            var deadline = Stopwatch.GetTimestamp() + startupTimeoutTimestampDelta;
             while (Stopwatch.GetTimestamp() < deadline)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -174,12 +236,6 @@ public sealed class AzureFunctionsBoundaryTests
             }
 
             throw new TimeoutException($"Azure Functions health endpoint was not ready within {StartupTimeout}.");
-        }
-
-        private static async Task CaptureAsync(StreamReader reader, StreamWriter log)
-        {
-            while (await reader.ReadLineAsync().ConfigureAwait(false) is { } line)
-                await log.WriteLineAsync(SecretPattern.Replace(line, "$1[REDACTED]")).ConfigureAwait(false);
         }
 
         private static string FindFunctionAppDirectory()
