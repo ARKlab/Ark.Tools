@@ -13,6 +13,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="SimpleInjector" />
     <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" />
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.HealthChecks\Ark.Tools.AspNetCore.HealthChecks.csproj" />
   </ItemGroup>
 
 </Project>

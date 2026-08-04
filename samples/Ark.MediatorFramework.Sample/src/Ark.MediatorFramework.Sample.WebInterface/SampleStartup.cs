@@ -8,7 +8,6 @@ using Ark.MediatorFramework.Sample.WebInterface.Auth;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
-using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Rebus;
@@ -130,7 +129,6 @@ public sealed class SampleStartup
 
         services.AddRouting();
         services.AddControllers();
-        services.AddArkHealthChecks();
 
         var messagePackResolver = CompositeResolver.Create(
             MessagePack.NodaTime.NodatimeResolver.Instance,
@@ -183,7 +181,7 @@ public sealed class SampleStartup
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
             endpoints.MapArkEndpointsFromAssembly<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>(
                 versionPrefix: "/api/v{version}");
-            endpoints.MapArkHealthChecks();
+            endpoints.MapArkMinimalApiHost();
             endpoints.MapArkGrpcServicesFromAssembly<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>();
             endpoints.MapGrpcService<DocumentsGrpcService>();
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();

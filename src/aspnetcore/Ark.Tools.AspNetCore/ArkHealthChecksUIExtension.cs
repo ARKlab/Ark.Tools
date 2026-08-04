@@ -27,9 +27,9 @@ public static class ArkHealthChecksUIExtension
 
         services.AddArkHealthChecksUIOptions(o =>
         {
-            if (File.Exists(Path.Combine(Environment.CurrentDirectory, "UIHealthChecks.css")))
+            if (File.Exists(Path.Join(Environment.CurrentDirectory, "UIHealthChecks.css")))
                 o.AddCustomStylesheet("UIHealthChecks.css");
-            var binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css");
+            var binPath = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css");
             if (File.Exists(binPath))
                 o.AddCustomStylesheet(binPath);
         });

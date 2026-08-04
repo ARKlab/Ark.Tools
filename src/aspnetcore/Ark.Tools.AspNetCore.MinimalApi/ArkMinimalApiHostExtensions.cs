@@ -3,8 +3,11 @@
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
+using Ark.Tools.AspNetCore.HealthChecks;
 
 using SimpleInjector;
 
@@ -55,6 +58,7 @@ public static class ArkMinimalApiHostExtensions
 
         services.AddHttpContextAccessor();
         services.AddAuthentication();
+        services.AddArkHealthChecks();
         services.AddAuthorization(authorization =>
         {
             if (options.RequireAuthenticatedUser)
@@ -105,6 +109,17 @@ public static class ArkMinimalApiHostExtensions
         app.UseAuthorization();
         app.UseSimpleInjector(container);
         return app;
+    }
+
+    /// <summary>Maps standard Ark Minimal API endpoints.</summary>
+    /// <param name="endpoints">The application endpoint route builder.</param>
+    /// <returns>The original endpoint route builder.</returns>
+    public static IEndpointRouteBuilder MapArkMinimalApiHost(this IEndpointRouteBuilder endpoints)
+    {
+        ArgumentNullException.ThrowIfNull(endpoints);
+
+        endpoints.MapArkHealthChecks();
+        return endpoints;
     }
 
     private sealed class SimpleInjectorVerificationHostedService : IHostedService

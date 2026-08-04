@@ -31,7 +31,7 @@ public static class ArkHealthCheckExtension
         {
             Predicate = _ => true,
             ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponseNoExceptionDetails,
-        });
+        }).AllowAnonymous();
 
         return endpoints;
     }
