@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.AzureFunctions;
+using Ark.Tools.AspNetCore.HealthChecks;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.Functions.Worker.Builder;
@@ -32,6 +33,7 @@ public static class Program
         var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(serviceBusConnectionString);
 #pragma warning restore CA2000
         builder.Services.AddArkAzureFunctions(rebusContainer);
+        builder.Services.AddArkHealthChecks();
         builder.Services.AddArkAzureFunctionsBearerAuthentication();
         builder.Services.AddAuthorization(options =>
         {

@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.AspNetCore.HealthChecks;
+using HealthChecks.UI.Client;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -108,7 +108,7 @@ public static class ArkAzureFunctionsHttp
             httpContext.Response.Headers.CacheControl = "no-store, no-cache";
             httpContext.Response.Headers.Pragma = "no-cache";
             httpContext.Response.Headers.Expires = "Thu, 01 Jan 1970 00:00:00 GMT";
-            await ArkHealthCheckResponseWriter.WriteResponseAsync(httpContext, report).ConfigureAwait(false);
+            await UIResponseWriter.WriteHealthCheckUIResponseNoExceptionDetails(httpContext, report).ConfigureAwait(false);
         });
     }
 
