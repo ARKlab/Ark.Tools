@@ -282,6 +282,11 @@ Host.CreateDefaultBuilder(args)
 - For Newtonsoft.Json: use `useNewtonsoftJson: true` in base constructor
 - Use `Ark.Tools.SystemTextJson.JsonPolymorphicConverter` for polymorphic serialization
 
+## Source Generators
+
+- All projects emit generated code to the intermediate output folder: `obj/$(Configuration)/$(TargetFramework)/generated/<GeneratorAssembly>/<GeneratorName>/`
+- **When developing or changing a Generator**: after building, ALWAYS inspect the emitted `.g.cs` files in the consuming samples/tests projects (e.g., `samples/Ark.MediatorFramework.Sample/src/*/obj/Debug/net10.0/generated/`) to verify the generated code is correct and compilable
+
 ## Project Structure
 
 - `src/common/` - Core packages (Ark.Tools.Core, Ark.Tools.NLog, Ark.Tools.Sql, etc.)

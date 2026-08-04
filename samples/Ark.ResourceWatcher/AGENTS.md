@@ -158,6 +158,11 @@ throw new TransformException($"CSV parsing error: {ex.Message}", ex);
 throw new InvalidOperationException("Sink API rejected the payload");
 ```
 
+## Source Generators
+
+- Generated code is emitted to the intermediate output folder: `obj/$(Configuration)/$(TargetFramework)/generated/<GeneratorAssembly>/<GeneratorName>/`
+- **When developing or changing a Generator**: after building, ALWAYS inspect the emitted `.g.cs` files under this project's `obj/.../generated/` folders to verify the generated code is correct and compilable
+
 ## ResourceWatcher Patterns
 
 ### Worker Host Structure
