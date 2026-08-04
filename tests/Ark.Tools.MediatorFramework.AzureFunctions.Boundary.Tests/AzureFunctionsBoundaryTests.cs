@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework;
-using Ark.MediatorFramework.Sample.Application;
-using Ark.MediatorFramework.Sample.AzureFunctions;
 
 using AwesomeAssertions;
 
@@ -17,31 +15,19 @@ namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests;
 [TestClass]
 public sealed class AzureFunctionsBoundaryTests
 {
-    private static FunctionHost? _host;
-
-    [ClassInitialize]
-    public static async Task StartHost(TestContext context)
-    {
-        _host = await FunctionHost.StartAsync(context.CancellationToken);
-    }
-
-    [ClassCleanup]
-    public static async Task StopHost()
-    {
-        if (_host is not null)
-            await _host.DisposeAsync();
-    }
-
     [TestMethod]
     [TestCategory("AzureFunctionsBoundary")]
-    public async Task HealthEndpointIsDiscoveredByCoreTools()
+    public async Task HealthEndpointIsDiscoveredByCoreTools(TestContext context)
     {
+        await using var host = await FunctionHost.StartAsync(context.CancellationToken).ConfigureAwait(false);
         using var client = new HttpClient
         {
-            BaseAddress = _host!.BaseAddress,
+            BaseAddress = host.BaseAddress,
         };
 
-        using var response = await client.GetAsync("healthCheck");
+        using var response = await client.GetAsync(
+            new Uri("healthCheck", UriKind.Relative),
+            context.CancellationToken).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
@@ -51,10 +37,10 @@ public sealed class AzureFunctionsBoundaryTests
     [TestCategory("AzureFunctionsBoundary")]
     public void SelectedApplicationEndpointsMatchTheParityMatrix()
     {
-        var hostMarker = typeof(Program).Assembly
+        var hostMarker = typeof(Ark.MediatorFramework.Sample.AzureFunctions.Program).Assembly
             .GetCustomAttributes<HttpHostAttribute>()
             .Single();
-        var excluded = hostMarker.ExcludedContracts.ToHashSet();
+        var excluded = hostMarker.ExcludedContracts.ToHashSet(EqualityComparer<Type>.Default);
         var actual = hostMarker.ContractAssemblyMarker.Assembly
             .GetTypes()
             .Select(type => (Type: type, Attribute: type.GetCustomAttribute<HttpEndpointAttribute>()))
@@ -63,10 +49,10 @@ public sealed class AzureFunctionsBoundaryTests
                 item.Type.Name,
                 item.Attribute!.Verb,
                 item.Attribute.Template))
-            .OrderBy(row => row.TypeName)
+            .OrderBy(row => row.TypeName, StringComparer.Ordinal)
             .ToArray();
 
-        actual.Should().Equal(ExpectedEndpoints.OrderBy(row => row.TypeName));
+        actual.Should().Equal(ExpectedEndpoints.OrderBy(row => row.TypeName, StringComparer.Ordinal));
     }
 
     private static readonly EndpointRow[] ExpectedEndpoints =
@@ -92,14 +78,19 @@ public sealed class AzureFunctionsBoundaryTests
         private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(60);
         private static readonly Regex SecretPattern = new(
             "(?i)(authorization\\s*:\\s*|connectionstring\\s*[=:]\\s*)[^\\s,;]+",
-            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+            RegexOptions.Compiled
+                | RegexOptions.CultureInvariant
+                | RegexOptions.ExplicitCapture
+                | RegexOptions.NonBacktracking);
         private readonly Process _process;
         private readonly StreamWriter _log;
+        private readonly string _logPath;
 
-        private FunctionHost(Process process, StreamWriter log, Uri baseAddress)
+        private FunctionHost(Process process, StreamWriter log, string logPath, Uri baseAddress)
         {
             _process = process;
             _log = log;
+            _logPath = logPath;
             BaseAddress = baseAddress;
         }
 
@@ -136,15 +127,15 @@ public sealed class AzureFunctionsBoundaryTests
 
             _ = CaptureAsync(process.StandardOutput, log);
             _ = CaptureAsync(process.StandardError, log);
-            var host = new FunctionHost(process, log, new Uri($"http://127.0.0.1:{port}/"));
+            var host = new FunctionHost(process, log, logPath, new Uri($"http://127.0.0.1:{port}/"));
             try
             {
-                await host.WaitForReadinessAsync(cancellationToken);
+                await host.WaitForReadinessAsync(cancellationToken).ConfigureAwait(false);
                 return host;
             }
             catch
             {
-                await host.DisposeAsync();
+                await host.DisposeAsync().ConfigureAwait(false);
                 throw;
             }
         }
@@ -154,7 +145,7 @@ public sealed class AzureFunctionsBoundaryTests
             if (!_process.HasExited)
                 _process.Kill(entireProcessTree: true);
             await _process.WaitForExitAsync().ConfigureAwait(false);
-            await _log.DisposeAsync();
+            await _log.DisposeAsync().ConfigureAwait(false);
         }
 
         private async Task WaitForReadinessAsync(CancellationToken cancellationToken)
@@ -165,10 +156,13 @@ public sealed class AzureFunctionsBoundaryTests
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (_process.HasExited)
-                    throw new InvalidOperationException($"Azure Functions host exited with code {_process.ExitCode}.");
+                    throw new InvalidOperationException(
+                        $"Azure Functions host exited with code {_process.ExitCode}. Log: {_logPath}");
                 try
                 {
-                    using var response = await client.GetAsync("healthCheck", cancellationToken);
+                    using var response = await client.GetAsync(
+                        new Uri("healthCheck", UriKind.Relative),
+                        cancellationToken).ConfigureAwait(false);
                     if (response.StatusCode == HttpStatusCode.OK)
                         return;
                 }
@@ -176,7 +170,7 @@ public sealed class AzureFunctionsBoundaryTests
                 {
                 }
 
-                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
             }
 
             throw new TimeoutException($"Azure Functions health endpoint was not ready within {StartupTimeout}.");
