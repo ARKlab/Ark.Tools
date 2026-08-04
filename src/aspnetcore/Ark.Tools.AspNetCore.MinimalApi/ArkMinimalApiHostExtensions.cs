@@ -3,6 +3,7 @@
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -33,6 +34,11 @@ public sealed class ArkMinimalApiHostOptions
     /// authenticated user.
     /// </summary>
     public bool RequireAuthenticatedUser { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether the host accepts and validates the <c>X-Forwarded-Prefix</c> header.
+    /// </summary>
+    public bool UseForwardedPrefix { get; set; } = true;
 }
 
 /// <summary>Provides composable Minimal API host defaults.</summary>
@@ -104,6 +110,27 @@ public static class ArkMinimalApiHostExtensions
         ArgumentNullException.ThrowIfNull(app);
         ArgumentNullException.ThrowIfNull(container);
 
+        var options = app.ApplicationServices.GetService<ArkMinimalApiHostOptions>();
+        if (options?.UseForwardedPrefix == true)
+        {
+            app.Use((context, next) =>
+            {
+                if (context.Request.Headers.TryGetValue("X-Forwarded-Prefix", out var values))
+                {
+                    if (values.Count != 1 || !TryGetForwardedPrefix(values[0], out var prefix))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                        return Task.CompletedTask;
+                    }
+
+                    context.Request.PathBase = new PathString(
+                        prefix + context.Request.PathBase.Value);
+                }
+
+                return next();
+            });
+        }
+
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -120,6 +147,66 @@ public static class ArkMinimalApiHostExtensions
 
         endpoints.MapArkHealthChecks();
         return endpoints;
+    }
+
+    private static bool TryGetForwardedPrefix(string? value, out string prefix)
+    {
+        prefix = string.Empty;
+        if (string.IsNullOrEmpty(value)
+            || value.Length < 2
+            || value[0] != '/'
+            || value[1] == '/'
+            || value[^1] == '/'
+            || value.Contains(',', StringComparison.Ordinal)
+            || value.Contains('\\', StringComparison.Ordinal)
+            || value.Contains('?', StringComparison.Ordinal)
+            || value.Contains('#', StringComparison.Ordinal)
+            || value.Contains(':', StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var segments = value.Split('/');
+        for (var segmentIndex = 1; segmentIndex < segments.Length; segmentIndex++)
+        {
+            var segment = segments[segmentIndex];
+            if (segment.Length == 0 || segment is "." or "..")
+            {
+                return false;
+            }
+
+            for (var index = 0; index < segment.Length; index++)
+            {
+                if (segment[index] == '%')
+                {
+                    if (index + 2 >= segment.Length
+                        || !Uri.IsHexDigit(segment[index + 1])
+                        || !Uri.IsHexDigit(segment[index + 2]))
+                    {
+                        return false;
+                    }
+
+                    index += 2;
+                }
+                else if (char.IsWhiteSpace(segment[index]) || char.IsControl(segment[index]))
+                {
+                    return false;
+                }
+            }
+
+            var decodedSegment = Uri.UnescapeDataString(segment);
+            if (decodedSegment is "." or ".."
+                || decodedSegment.Contains('/', StringComparison.Ordinal)
+                || decodedSegment.Contains('\\', StringComparison.Ordinal)
+                || decodedSegment.Any(char.IsWhiteSpace)
+                || decodedSegment.Any(char.IsControl))
+            {
+                return false;
+            }
+        }
+
+        prefix = value;
+        return true;
     }
 
     private sealed class SimpleInjectorVerificationHostedService : IHostedService

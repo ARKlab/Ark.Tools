@@ -30,10 +30,10 @@ unvalidated forwarding header, while the mediator sample has no equivalent.
 
 ## Acceptance
 
-- [ ] The default profile accepts a valid `X-Forwarded-Prefix` and prepends it to
+- [x] The default profile accepts a valid `X-Forwarded-Prefix` and prepends it to
       `PathBase`, unless the application opts out.
-- [ ] Invalid or multiple values produce a client error before downstream
+- [x] Invalid or multiple values produce a client error before downstream
       middleware runs.
-- [ ] No configured prefix or known proxy/network list is required.
+- [x] No configured prefix or known proxy/network list is required.
 - [ ] Prefix routing and generated links work end to end.
 - [ ] Full solution build and tests pass with zero warnings.

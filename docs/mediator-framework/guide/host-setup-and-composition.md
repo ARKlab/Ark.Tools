@@ -139,6 +139,7 @@ A condensed sample setup:
 ```csharp
 services.AddArkMinimalApiHost(container, options =>
 {
+    options.UseForwardedPrefix = true;
     options.CrossWireContainer = (container, serviceProvider) =>
         container.RegisterInstance(serviceProvider.GetRequiredService<IHttpContextAccessor>());
     // Invoked after Verify(), while the host starts and before the server accepts requests.
@@ -170,7 +171,7 @@ Order is observable. The sample uses this sequence:
 | --- | --- | --- |
 | 1 | `UseArkMinimalApiSecurity()` | Applies security headers and HSTS before anything else writes the response |
 | 2 | `UseArkProblemDetailsExceptionHandler()` | Converts unhandled domain exceptions |
-| 3 | `UseArkMinimalApiHost(container)` | Selects endpoints, builds the caller principal, enforces host-level authorization, and makes the scoped application graph available to handlers |
+| 3 | `UseArkMinimalApiHost(container)` | Validates `X-Forwarded-Prefix`, selects endpoints, builds the caller principal, enforces host-level authorization, and makes the scoped application graph available to handlers |
 | 4 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
 
 ```csharp
@@ -189,7 +190,10 @@ app.UseEndpoints(endpoints =>
 `UseArkMinimalApiHost` applies routing, authentication, authorization, and
 SimpleInjector middleware in that order. Keep it before endpoint mapping so
 generated endpoints see the authenticated caller and authorization runs before
-they execute.
+they execute. A valid `X-Forwarded-Prefix` is prepended to `PathBase`; malformed
+or ambiguous values are rejected with `400` before downstream middleware runs.
+Set `UseForwardedPrefix` to `false` when the deployment handles this header
+outside the application.
 
 ## Map generated endpoints from a marker type
 
