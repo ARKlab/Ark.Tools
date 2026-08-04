@@ -14,7 +14,7 @@ compiled sample to adoption topics:
 | `src/Ark.MediatorFramework.Sample.Application/GreetingHandlers.cs` | [handlers](../../docs/mediator-framework/guide/contracts-and-handlers.md), [Rebus](../../docs/mediator-framework/guide/rebus.md), [streaming](../../docs/mediator-framework/guide/streaming.md) |
 | `src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs` | [OpenAPI](../../docs/mediator-framework/guide/openapi.md), [serialization](../../docs/mediator-framework/guide/serialization.md) |
 | `src/Ark.MediatorFramework.Sample.WebInterface/DocumentsGrpcService.cs` | [gRPC](../../docs/mediator-framework/guide/grpc.md), [attachments](../../docs/mediator-framework/guide/attachments.md), [escape hatches](../../docs/mediator-framework/guide/escape-hatches.md) |
-| `src/Ark.MediatorFramework.Sample.AzureFunctions/Program.cs` | Azure Functions isolated-worker host and generated HTTP trigger selection |
+| `src/Ark.MediatorFramework.Sample.AzureFunctions/Program.cs` | [Azure Functions isolated-worker host](../../docs/mediator-framework/guide/azure-functions.md) and generated HTTP trigger selection |
 
 It demonstrates the core thesis: a single **pure, transport-agnostic**
 `Ark.Tools.Solid` handler is dispatched identically over two transports —

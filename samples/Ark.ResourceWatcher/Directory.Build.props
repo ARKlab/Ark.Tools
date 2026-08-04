@@ -73,6 +73,7 @@
 
 	<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(MSBuildProjectDirectory)/obj/$(Configuration)/$(TargetFramework)/generated</CompilerGeneratedFilesOutputPath>
 
   </PropertyGroup>
 

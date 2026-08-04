@@ -12,6 +12,7 @@ using Rebus.Config;
 using Rebus.Transport;
 
 using SimpleInjector;
+using SimpleInjector.Lifestyles;
 
 namespace Ark.MediatorFramework.Sample.AzureFunctions;
 
@@ -32,6 +33,7 @@ public static class AzureFunctionsRebusComposition
                 "Azure Service Bus configuration is required for the Functions outbound bus.");
 
         var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         ApplicationComposition.Register(container, useSqlStore: false);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
