@@ -1,7 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using HealthChecks.UI.Client;
+
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Ark.MediatorFramework.AzureFunctions;
 
@@ -83,5 +86,45 @@ public static class ArkAzureFunctionsHttp
             response.Body,
             items,
             cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Executes registered health checks and returns their HTTP status result.</summary>
+    /// <param name="healthChecks">The health-check service.</param>
+    /// <param name="cancellationToken">The invocation cancellation token.</param>
+    /// <returns>An HTTP result representing the health-check status.</returns>
+    public static async Task<IResult> CheckHealthAsync(
+        HealthCheckService healthChecks,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(healthChecks);
+
+        var report = await healthChecks.CheckHealthAsync(cancellationToken).ConfigureAwait(false);
+
+        return new DelegateResult(async httpContext =>
+        {
+            httpContext.Response.StatusCode = report.Status == HealthStatus.Unhealthy
+                ? StatusCodes.Status503ServiceUnavailable
+                : StatusCodes.Status200OK;
+            httpContext.Response.Headers.CacheControl = "no-store, no-cache";
+            httpContext.Response.Headers.Pragma = "no-cache";
+            httpContext.Response.Headers.Expires = "Thu, 01 Jan 1970 00:00:00 GMT";
+            await UIResponseWriter.WriteHealthCheckUIResponseNoExceptionDetails(httpContext, report).ConfigureAwait(false);
+        });
+    }
+
+    private sealed class DelegateResult : IResult
+    {
+        private readonly Func<HttpContext, Task> _writer;
+
+        public DelegateResult(Func<HttpContext, Task> writer)
+        {
+            _writer = writer;
+        }
+
+        public async Task ExecuteAsync(HttpContext httpContext)
+        {
+            ArgumentNullException.ThrowIfNull(httpContext);
+            await _writer(httpContext).ConfigureAwait(false);
+        }
     }
 }

@@ -158,6 +158,23 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorEmitsAnonymousHealthCheck()
+    {
+        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            """);
+
+        result.Generated.Should().Contain("Function(\"ArkHealthCheck\")");
+        result.Generated.Should().Contain(
+            "AuthorizationLevel.Anonymous, \"get\", Route = \"healthCheck\"");
+        result.Generated.Should().Contain("HealthCheckService>(request.HttpContext.RequestServices)");
+        result.Generated.Should().Contain("ArkAzureFunctionsHttp.CheckHealthAsync");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorEmitsRouteBindingWithTryConvertSafe()
     {
         var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(

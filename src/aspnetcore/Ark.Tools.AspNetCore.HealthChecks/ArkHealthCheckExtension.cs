@@ -1,7 +1,6 @@
 using HealthChecks.Network;
 using HealthChecks.Network.Core;
 using HealthChecks.UI.Client;
-using HealthChecks.UI.Configuration;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -14,6 +13,7 @@ using SimpleInjector;
 
 namespace Ark.Tools.AspNetCore.HealthChecks;
 
+
 public static class ArkHealthCheckExtension
 {
     public static IServiceCollection AddArkHealthChecks(this IServiceCollection services)
@@ -25,52 +25,13 @@ public static class ArkHealthCheckExtension
         return services;
     }
 
-    public static IServiceCollection AddArkHealthChecksUI(this IServiceCollection services)
-    {
-        services.AddHealthChecksUI(setupSettings: setup =>
-        {
-            setup.SetEvaluationTimeInSeconds(60);
-            setup.MaximumHistoryEntriesPerEndpoint(50);
-            setup.AddHealthCheckEndpoint("Health Checks", "/healthCheck");
-        }
-        ).AddInMemoryStorage();
-
-        services.AddArkHealthChecksUIOptions(o =>
-        {
-            if (File.Exists(Path.Combine(Environment.CurrentDirectory, "UIHealthChecks.css")))
-                o.AddCustomStylesheet("UIHealthChecks.css");
-            var binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css");
-            if (File.Exists(binPath))
-                o.AddCustomStylesheet(binPath);
-        });
-
-        return services;
-    }
-
-    public static IServiceCollection AddArkHealthChecksUIOptions(this IServiceCollection services, Action<Options> setup)
-    {
-        return services.AddSingleton(setup);
-    }
-
     public static IEndpointRouteBuilder MapArkHealthChecks(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapHealthChecks("/healthCheck", new HealthCheckOptions
         {
             Predicate = _ => true,
-            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
-        });
-
-        return endpoints;
-    }
-
-    public static IEndpointRouteBuilder MapArkHealthChecksUI(this IEndpointRouteBuilder endpoints)
-    {
-        endpoints.MapHealthChecksUI(setup =>
-        {
-            var configurers = endpoints.ServiceProvider.GetServices<Action<Options>>();
-            foreach (var c in configurers)
-                c?.Invoke(setup);
-        });
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponseNoExceptionDetails,
+        }).AllowAnonymous();
 
         return endpoints;
     }

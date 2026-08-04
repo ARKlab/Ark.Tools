@@ -37,26 +37,16 @@
 		<PackageReference Include="AspNetCore.HealthChecks.Oracle" />
 		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" />
 		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
 		<PackageReference Include="Azure.Messaging.ServiceBus" />
 		<PackageReference Include="Azure.Identity" />
 		<PackageReference Include="Microsoft.ApplicationInsights" />
-		<!-- Needed due to vulnerabilities from dependency AspNetCore.HealthChecks.UI that is not updated  -->
-		<PackageReference Include="KubernetesClient" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
 	  <ProjectReference Include="..\..\common\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
 	  <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="UIHealthChecks.css">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
 	</ItemGroup>
 
 </Project>

@@ -4,6 +4,8 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
+using Ark.Tools.Solid.Authorization;
+
 using Azure.Identity;
 
 using Rebus.Config;
@@ -31,6 +33,8 @@ public static class AzureFunctionsRebusComposition
 
         var container = new Container();
         ApplicationComposition.Register(container, useSqlStore: false);
+        container.RegisterAuthorization();
+        container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         ApplicationComposition.RegisterOutboundRebus(
             container,
             transport => ConfigureTransport(transport, serviceBusConnectionString),

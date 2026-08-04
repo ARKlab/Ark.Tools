@@ -181,6 +181,7 @@ public sealed class SampleStartup
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
             endpoints.MapArkEndpointsFromAssembly<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>(
                 versionPrefix: "/api/v{version}");
+            endpoints.MapArkMinimalApiHost();
             endpoints.MapArkGrpcServicesFromAssembly<global::Ark.MediatorFramework.Sample.Application.RefreshGreetingCommand>();
             endpoints.MapGrpcService<DocumentsGrpcService>();
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();

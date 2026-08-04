@@ -12,6 +12,8 @@ using Microsoft.Extensions.Hosting;
 
 using SimpleInjector;
 
+using System.Net;
+
 namespace Ark.Tools.AspNetCore.MinimalApi.Tests;
 
 /// <summary>Verifies that container verification gates host startup.</summary>
@@ -73,10 +75,27 @@ public sealed class ArkMinimalApiHostVerificationTests
         response.Should().Be("pong");
     }
 
+    [TestMethod]
+    public async Task HealthChecksAreAnonymousWhenAuthenticationIsRequired()
+    {
+        await using var container = new Container();
+        using var host = await CreateHostAsync(
+            container,
+            start: true,
+            requireAuthenticatedUser: true).ConfigureAwait(false);
+
+        using var client = host.GetTestClient();
+        using var response = await client.GetAsync(
+            new Uri("/healthCheck", UriKind.Relative)).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
     private static async Task<IHost> CreateHostAsync(
         Container container,
         bool start,
-        Action<ArkMinimalApiHostOptions>? configure = null)
+        Action<ArkMinimalApiHostOptions>? configure = null,
+        bool requireAuthenticatedUser = false)
     {
         var host = new HostBuilder()
             .ConfigureWebHost(web =>
@@ -84,13 +103,15 @@ public sealed class ArkMinimalApiHostVerificationTests
                 web.UseTestServer();
                 web.ConfigureServices(services => services.AddRouting().AddArkMinimalApiHost(container, options =>
                 {
-                    options.RequireAuthenticatedUser = false;
+                    options.RequireAuthenticatedUser = requireAuthenticatedUser;
                     configure?.Invoke(options);
                 }));
                 web.Configure(app =>
                 {
                     app.UseArkMinimalApiHost(container);
-                    app.UseEndpoints(endpoints => endpoints.MapGet("/ping", ([FromServices] StartupProbe? probe) =>
+                    app.UseEndpoints(endpoints => endpoints
+                        .MapArkMinimalApiHost()
+                        .MapGet("/ping", ([FromServices] StartupProbe? probe) =>
                     {
                         probe?.Started.Should().BeTrue();
                         return "pong";
