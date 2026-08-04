@@ -36,6 +36,7 @@ public sealed class ArkMinimalApiSecurityTests
             .ConfigureWebHost(web =>
             {
                 web.UseTestServer();
+                web.UseEnvironment(Environments.Production);
                 web.ConfigureServices(services =>
                 {
                     services.AddRouting();
