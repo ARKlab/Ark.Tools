@@ -1,15 +1,14 @@
 using HealthChecks.Network;
 using HealthChecks.Network.Core;
 using HealthChecks.UI.Client;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 using SimpleInjector;
-
 
 namespace Ark.Tools.AspNetCore.HealthChecks;
 
@@ -30,10 +29,27 @@ public static class ArkHealthCheckExtension
         endpoints.MapHealthChecks("/healthCheck", new HealthCheckOptions
         {
             Predicate = _ => true,
-            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponseNoExceptionDetails,
+            ResponseWriter = WriteHealthCheckResponse,
         }).AllowAnonymous();
 
         return endpoints;
+    }
+
+    private static async Task WriteHealthCheckResponse(HttpContext context, HealthReport report)
+    {
+        var entries = report.Entries.ToDictionary(
+            entry => entry.Key,
+            entry => new HealthReportEntry(
+                entry.Value.Status,
+                null,
+                entry.Value.Duration,
+                entry.Value.Exception,
+                entry.Value.Data,
+                entry.Value.Tags),
+            StringComparer.Ordinal);
+        var sanitizedReport = new HealthReport(entries, report.Status, report.TotalDuration);
+        await UIResponseWriter.WriteHealthCheckUIResponseNoExceptionDetails(context, sanitizedReport)
+            .ConfigureAwait(false);
     }
 
     public static IHealthChecksBuilder AddSimpleInjectorCheck<T>(this IHealthChecksBuilder builder, string name, HealthStatus? failureStatus = null, IEnumerable<string>? tags = null, TimeSpan? timeout = null) where T : class, IHealthCheck

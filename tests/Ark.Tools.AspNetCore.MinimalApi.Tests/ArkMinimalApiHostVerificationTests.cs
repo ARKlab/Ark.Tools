@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 
 using SimpleInjector;
@@ -91,21 +92,69 @@ public sealed class ArkMinimalApiHostVerificationTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
+    [TestMethod]
+    public async Task HealthCheckReportsDependencyFailureWithoutExceptionDetails()
+    {
+        await using var container = new Container();
+        using var host = await CreateHostAsync(
+            container,
+            start: true,
+            configureServices: services => services
+                .AddHealthChecks()
+                .AddCheck("database", () => HealthCheckResult.Unhealthy("secret-connection-details",
+                    new InvalidOperationException("secret-exception-details")))).ConfigureAwait(false);
+
+        using var client = host.GetTestClient();
+        using var response = await client.GetAsync(new Uri("/healthCheck", UriKind.Relative)).ConfigureAwait(false);
+        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        body.Should().Contain("\"status\":\"Unhealthy\"");
+        body.Should().Contain("\"database\"");
+        body.Should().NotContain("secret-connection-details");
+        body.Should().NotContain("secret-exception-details");
+        body.Should().NotContain("InvalidOperationException");
+    }
+
+    [TestMethod]
+    public async Task DefaultHealthChecksDoNotRegisterUiOrHistoryServices()
+    {
+        await using var container = new Container();
+        using var host = await CreateHostAsync(
+            container,
+            start: true,
+            configureServices: services =>
+            {
+                services
+                    .Where(service => service.ServiceType.FullName is not null)
+                    .Select(service => service.ServiceType.FullName!)
+                    .Should()
+                    .NotContain(typeName => typeName.Contains("HealthChecks.UI", StringComparison.Ordinal));
+            }).ConfigureAwait(false);
+
+        host.Should().NotBeNull();
+    }
+
     private static async Task<IHost> CreateHostAsync(
         Container container,
         bool start,
         Action<ArkMinimalApiHostOptions>? configure = null,
-        bool requireAuthenticatedUser = false)
+        bool requireAuthenticatedUser = false,
+        Action<IServiceCollection>? configureServices = null)
     {
         var host = new HostBuilder()
             .ConfigureWebHost(web =>
             {
                 web.UseTestServer();
-                web.ConfigureServices(services => services.AddRouting().AddArkMinimalApiHost(container, options =>
+                web.ConfigureServices(services =>
                 {
-                    options.RequireAuthenticatedUser = requireAuthenticatedUser;
-                    configure?.Invoke(options);
-                }));
+                    services.AddRouting().AddArkMinimalApiHost(container, options =>
+                    {
+                        options.RequireAuthenticatedUser = requireAuthenticatedUser;
+                        configure?.Invoke(options);
+                    });
+                    configureServices?.Invoke(services);
+                });
                 web.Configure(app =>
                 {
                     app.UseArkMinimalApiHost(container);
