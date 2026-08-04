@@ -130,6 +130,7 @@ separate purpose:
 | `services.AddMessagePackFormatter(...)` | Enables HTTP MessagePack negotiation for contracts that opt in | `SampleStartup.cs` |
 | `services.ConfigureHttpJsonOptions(...)` | Applies Ark JSON defaults and source-generated metadata | `SampleStartup.cs` |
 | `services.AddArkProblemDetailsExceptionHandler()` | Maps domain exceptions to RFC 7807 | `SampleStartup.cs` |
+| `endpoints.MapArkMinimalApiHost()` | Maps the anonymous `/healthCheck` endpoint without enabling HealthChecks UI or history | `SampleStartup.cs` |
 | `RuntimeTypeModel.Default.AddNodaTimeSurrogates()` | Enables NodaTime protobuf mappings before gRPC use | `SampleStartup.cs` |
 | `services.AddCodeFirstGrpc(...)` | Hosts generated gRPC services and rich error interceptor | `SampleStartup.cs` |
 | `services.AddOpenApi("v1", ...)` per version | Publishes one OpenAPI document for each active HTTP API version | `SampleStartup.cs` |
