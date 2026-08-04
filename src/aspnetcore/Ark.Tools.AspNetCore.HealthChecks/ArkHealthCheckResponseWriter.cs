@@ -31,8 +31,7 @@ public static class ArkHealthCheckResponseWriter
                 jsonWriter.WriteStartObject(entry.Key);
                 jsonWriter.WriteString("status", entry.Value.Status.ToString());
                 jsonWriter.WriteString("description", entry.Value.Description);
-                if (entry.Value.Exception is not null)
-                    jsonWriter.WriteString("exception", entry.Value.Exception.Message);
+                // Intentionally omit exception details from the HTTP response.
                 jsonWriter.WriteStartObject("data");
 
                 foreach (var item in entry.Value.Data)
