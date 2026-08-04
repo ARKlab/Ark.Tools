@@ -44,6 +44,11 @@ public sealed class ArkMinimalApiSecurityTests
                 });
                 web.Configure(app =>
                 {
+                    app.Use((context, next) =>
+                    {
+                        context.Request.Scheme = "https";
+                        return next();
+                    });
                     app.UseArkMinimalApiSecurity();
                     app.UseRouting();
                     app.UseEndpoints(endpoints => endpoints.MapGet("/", () => "ok"));
