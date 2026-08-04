@@ -1645,7 +1645,7 @@
           "Ark.MediatorFramework.Sample.RebusProcessor": "[0.9.1, )",
           "Ark.Tools.AspNetCore.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.AspNetCore.MessagePack": "[1.0.0, )",
-          "Ark.Tools.AspNetCore.MinimalApiComposition": "[1.0.0, )",
+          "Ark.Tools.AspNetCore.MinimalApi": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
@@ -1683,7 +1683,7 @@
           "MessagePack": "[3.1.8, )"
         }
       },
-      "ark.tools.aspnetcore.minimalapicomposition": {
+      "ark.tools.aspnetcore.minimalapi": {
         "type": "Project",
         "dependencies": {
           "SimpleInjector": "[5.6.0, )",

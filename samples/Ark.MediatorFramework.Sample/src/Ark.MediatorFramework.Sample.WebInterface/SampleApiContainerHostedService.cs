@@ -1,13 +1,11 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.Rebus;
-
 using SimpleInjector;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
-/// <summary>Hosted service that starts the API container's outbound bus and disposes the container.</summary>
+/// <summary>Hosted service that disposes the API container on shutdown.</summary>
 internal sealed class SampleApiContainerHostedService : IHostedService
 {
     private readonly Container _container;
@@ -22,7 +20,6 @@ internal sealed class SampleApiContainerHostedService : IHostedService
     /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _container.StartBus();
         await Task.CompletedTask.ConfigureAwait(false);
     }
 

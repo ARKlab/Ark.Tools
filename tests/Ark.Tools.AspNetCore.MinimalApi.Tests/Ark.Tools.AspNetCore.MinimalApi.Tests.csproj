@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks></TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.MinimalApi/Ark.Tools.AspNetCore.MinimalApi.csproj" />
+  </ItemGroup>
+
+</Project>

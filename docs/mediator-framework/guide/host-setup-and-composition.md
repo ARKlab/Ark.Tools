@@ -125,7 +125,7 @@ separate purpose:
 | Step | Why it exists | Sample code |
 | --- | --- | --- |
 | `services.ConfigureAuthentication(configuration)` | Chooses bearer authentication schemes | `AuthenticationEx.cs` |
-| `services.AddArkMinimalApiHost(container, ...)` | Sets the secure authorization baseline, bridges Microsoft DI and SimpleInjector, and verifies the container during host startup | `SampleStartup.cs` |
+| `services.AddArkMinimalApiHost(container, ...)` | Sets the secure authorization baseline (default and fallback policies) and bridges Microsoft DI and SimpleInjector | `SampleStartup.cs` |
 | `services.AddMessagePackFormatter(...)` | Enables HTTP MessagePack negotiation for contracts that opt in | `SampleStartup.cs` |
 | `services.ConfigureHttpJsonOptions(...)` | Applies Ark JSON defaults and source-generated metadata | `SampleStartup.cs` |
 | `services.AddArkProblemDetailsExceptionHandler()` | Maps domain exceptions to RFC 7807 | `SampleStartup.cs` |
@@ -140,6 +140,8 @@ services.AddArkMinimalApiHost(container, options =>
 {
     options.CrossWireContainer = (container, serviceProvider) =>
         container.RegisterInstance(serviceProvider.GetRequiredService<IHttpContextAccessor>());
+    // Invoked after Verify(), while the host starts and before the server accepts requests.
+    options.OnContainerVerified = container => container.StartBus();
 });
 
 services.AddMessagePackFormatter(messagePackResolver);
@@ -168,7 +170,7 @@ Order is observable. The sample uses this sequence:
 | 2 | `UseRouting()` | Selects the endpoint and route values |
 | 3 | `UseAuthentication()` | Builds the caller principal |
 | 4 | `UseAuthorization()` | Enforces host-level auth policy |
-| 5 | `UseArkMinimalApiHost(container)` | Makes the scoped application graph available to handlers |
+| 5 | `UseArkMinimalApiHost(container)` | Makes the scoped application graph available to handlers, verifies the container, and runs `OnContainerVerified` before the server accepts requests |
 | 6 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
 
 ```csharp

@@ -35,4 +35,4 @@ SimpleInjector verification is coupled to the sample's Rebus hosted service.
 - [x] Verification completes before any request and does not probe external services.
 - [x] The sample starts Rebus before serving requests.
 - [x] Public APIs have XML documentation and the design/guide is updated.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] Full solution build and tests pass with zero warnings.

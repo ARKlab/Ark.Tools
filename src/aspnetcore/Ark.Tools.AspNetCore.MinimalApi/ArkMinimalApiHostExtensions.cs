@@ -4,10 +4,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+
 using SimpleInjector;
 
-namespace Ark.Tools.AspNetCore.MinimalApiComposition;
+namespace Ark.Tools.AspNetCore.MinimalApi;
 
 /// <summary>Options for the composable Ark Minimal API host integration.</summary>
 public sealed class ArkMinimalApiHostOptions
@@ -18,7 +18,16 @@ public sealed class ArkMinimalApiHostOptions
     /// <summary>Gets or sets the callback used for cross-wiring after Microsoft DI is built.</summary>
     public Action<Container, IServiceProvider>? CrossWireContainer { get; set; }
 
-    /// <summary>Gets or sets whether the authorization fallback policy requires authentication.</summary>
+    /// <summary>
+    /// Gets or sets the callback invoked after the container has been verified and before the
+    /// server starts accepting requests. Use it to start application resources (for example a bus).
+    /// </summary>
+    public Action<Container>? OnContainerVerified { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the authorization default and fallback policies require an
+    /// authenticated user.
+    /// </summary>
     public bool RequireAuthenticatedUser { get; set; } = true;
 }
 
@@ -26,7 +35,7 @@ public sealed class ArkMinimalApiHostOptions
 public static class ArkMinimalApiHostExtensions
 {
     /// <summary>
-    /// Adds Ark Minimal API integration, authorization defaults, and startup container verification.
+    /// Adds Ark Minimal API integration and authorization defaults.
     /// </summary>
     /// <param name="services">The application service collection.</param>
     /// <param name="container">The application SimpleInjector container.</param>
@@ -66,13 +75,18 @@ public static class ArkMinimalApiHostExtensions
         });
 
         options.RegisterContainer?.Invoke(container);
-        services.AddSingleton<IHostedService>(new SimpleInjectorVerificationHostedService(container));
+        services.AddSingleton(options);
         return services;
     }
 
     /// <summary>
-    /// Adds SimpleInjector middleware to the application pipeline.
+    /// Adds SimpleInjector middleware to the application pipeline and verifies the container.
     /// </summary>
+    /// <remarks>
+    /// The pipeline is built by the web host while starting, before the server accepts
+    /// connections, so a verification failure aborts host startup and no request is ever served.
+    /// The container lifetime remains owned by the application.
+    /// </remarks>
     /// <param name="app">The application builder.</param>
     /// <param name="container">The application SimpleInjector container.</param>
     /// <returns>The original application builder.</returns>
@@ -82,27 +96,10 @@ public static class ArkMinimalApiHostExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
         ArgumentNullException.ThrowIfNull(container);
-        return app.UseSimpleInjector(container);
-    }
 
-    private sealed class SimpleInjectorVerificationHostedService : IHostedService
-    {
-        private readonly Container _container;
-
-        public SimpleInjectorVerificationHostedService(Container container)
-        {
-            _container = container;
-        }
-
-        public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            _container.Verify();
-            await Task.CompletedTask.ConfigureAwait(false);
-        }
-
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            await _container.DisposeAsync().ConfigureAwait(false);
-        }
+        app.UseSimpleInjector(container);
+        container.Verify();
+        app.ApplicationServices.GetService<ArkMinimalApiHostOptions>()?.OnContainerVerified?.Invoke(container);
+        return app;
     }
 }

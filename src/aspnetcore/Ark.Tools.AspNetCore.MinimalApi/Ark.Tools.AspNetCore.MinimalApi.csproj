@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <Description>Composable Ark hosting defaults for ASP.NET Core Minimal API applications</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Minimal API;Hosting</PackageTags>
     <Version>$(AspNetCoreGroupVersion)</Version>
