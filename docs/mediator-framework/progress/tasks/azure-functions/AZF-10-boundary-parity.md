@@ -91,3 +91,24 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 - [ ] Changed files pass secret scanning.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+## Parity matrix
+
+The inventory guard in `AzureFunctionsBoundaryTests.SelectedApplicationEndpointsMatchTheParityMatrix`
+fails when a selected application endpoint is added without a row here. MessagePack contracts
+`CreateGreetingRequest` and `DescribeShapeRequest` are intentionally excluded by the sample host.
+
+| Contract | Verb | Route | Boundary evidence |
+|---|---|---|---|
+| `UpdateGreetingMessageRequest` | PUT | `/api/v{version}/greetings/{id}` | inventory + host readiness |
+| `RefreshGreetingCommand` | POST | `/api/v{version}/greetings/refresh` | inventory + host readiness |
+| `ComposeGreetingRequest` | POST | `/api/v{version}/greetings/compose` | inventory + host readiness |
+| `GetGreetingQuery` | GET | `/greetings/{id}` | inventory + host readiness |
+| `GetGreetingV2Query` | GET | `/api/v{version}/greetings-v2/{id}` | inventory + host readiness |
+| `SearchGreetingsQuery` | GET | `/api/v{version}/greetings` | inventory + host readiness |
+| `GetGreetingsStreamQuery` | GET | `/api/v{version}/greetings/stream` | inventory + host readiness; streaming gate |
+| `UpdateGreetingRequest` | POST | `/api/v{version}/greetings/{id}/envelope` | inventory + host readiness |
+| `UploadGreetingCardRequest` | POST | `/api/v{version}/greeting-cards/{id}` | inventory + host readiness |
+| `UploadGreetingCardsRequest` | POST | `/api/v{version}/greeting-cards/{id}/batch` | inventory + host readiness |
+| `GetDocumentQuery` | GET | `/api/v{version}/greeting-cards/{id}/download` | inventory + host readiness |
+| `GetAuditsQuery` | GET | `/api/v{version}/audits` | inventory + host readiness |

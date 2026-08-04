@@ -43,6 +43,7 @@ and states the observable request, response, or generated output to expect.
 | OpenAPI | XML docs plus OpenAPI setup | Versioned documents, OAuth, NodaTime, polymorphism, server-set schema cleanup | [OpenAPI](openapi.md) | `SampleStartup.cs` |
 | API-surface review | `ArkApiSurface.txt` baseline | Build-time contract drift detection | [API-surface snapshots](api-surface-snapshots.md) | `src/Ark.MediatorFramework.Sample.Application/ArkApiSurface.txt` |
 | Boundary testing | Test host + generated clients | Verified public behavior, auth, errors, and serialization | [Testing](testing.md) | `test/Ark.MediatorFramework.Sample.Tests/Hooks/SampleTestContext.cs` |
+| Azure Functions | `[HttpHost]` and isolated worker | Generated Functions triggers, bearer auth, outbound Rebus, and Core Tools boundary tests | [Azure Functions](azure-functions.md) | `src/Ark.MediatorFramework.Sample.AzureFunctions/Program.cs` |
 | Escape hatches | Hand-written adapter where needed | Reuse of the same pure handler with custom transport glue | [Escape hatches](escape-hatches.md) | `migration-from-mvc.md` |
 
 ## Sample source map
