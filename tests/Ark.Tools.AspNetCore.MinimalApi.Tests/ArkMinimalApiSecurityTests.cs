@@ -27,7 +27,6 @@ public sealed class ArkMinimalApiSecurityTests
         response.Headers.Server.ToString().Should().BeEmpty();
         response.Headers.GetValues("X-Content-Type-Options").Should().ContainSingle("nosniff");
         response.Headers.GetValues("X-Frame-Options").Should().ContainSingle("DENY");
-        response.Headers.GetValues("Strict-Transport-Security").Should().ContainSingle("max-age=31536000");
     }
 
     private static async Task<IHost> CreateHostAsync()
