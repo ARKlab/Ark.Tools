@@ -125,8 +125,11 @@ public sealed class ArkMinimalApiHostVerificationTests
             start: true,
             configureServices: services =>
             {
-                services.Should().NotContain(service => service.ServiceType.FullName?.Contains(
-                    "HealthChecks.UI", StringComparison.Ordinal) == true);
+                services
+                    .Where(service => service.ServiceType.FullName is not null)
+                    .Select(service => service.ServiceType.FullName!)
+                    .Should()
+                    .NotContain(typeName => typeName.Contains("HealthChecks.UI", StringComparison.Ordinal));
             }).ConfigureAwait(false);
 
         host.Should().NotBeNull();
