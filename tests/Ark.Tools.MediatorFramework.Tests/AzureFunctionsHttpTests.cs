@@ -85,7 +85,7 @@ public sealed class AzureFunctionsHttpTests
         context.Response.Body.Position = 0;
         var json = await JsonNode.ParseAsync(context.Response.Body, cancellationToken: CancellationToken.None);
         json!["status"]!.GetValue<string>().Should().Be("Healthy");
-        json!["results"]!.AsObject().Should().BeEmpty();
+        json!["entries"]!.AsObject().Should().BeEmpty();
     }
 
     [TestMethod]
@@ -115,9 +115,9 @@ public sealed class AzureFunctionsHttpTests
         context.Response.Body.Position = 0;
         var json = await JsonNode.ParseAsync(context.Response.Body, cancellationToken: CancellationToken.None);
         json!["status"]!.GetValue<string>().Should().Be("Unhealthy");
-        json["results"]!["failing"]!["status"]!.GetValue<string>().Should().Be("Unhealthy");
-        json["results"]!["failing"]!["description"]!.GetValue<string>().Should().Be("broken");
-        json["results"]!["failing"]!["data"]!["answer"]!.GetValue<int>().Should().Be(42);
+        json["entries"]!["failing"]!["status"]!.GetValue<string>().Should().Be("Unhealthy");
+        json["entries"]!["failing"]!["description"]!.GetValue<string>().Should().Be("broken");
+        json["entries"]!["failing"]!["data"]!["answer"]!.GetValue<int>().Should().Be(42);
     }
 
     private static async IAsyncEnumerable<int> Values()
