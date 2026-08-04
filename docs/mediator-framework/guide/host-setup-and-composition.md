@@ -193,6 +193,8 @@ SimpleInjector middleware in that order. Keep it before endpoint mapping so
 generated endpoints see the authenticated caller and authorization runs before
 they execute. A valid `X-Forwarded-Prefix` is prepended to `PathBase`; malformed
 or ambiguous values are rejected with `400` before downstream middleware runs.
+The prefix is applied before generated OpenAPI endpoints execute, so prefixed
+deployments retain their generated document paths and links.
 Set `UseForwardedPrefix` to `false` when the deployment handles this header
 outside the application.
 

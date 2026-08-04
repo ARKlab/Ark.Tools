@@ -6,6 +6,7 @@ using Ark.MediatorFramework.Sample.Tests.Hooks;
 using AwesomeAssertions;
 
 using System.Net;
+using System.Text.Json.Nodes;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
@@ -50,5 +51,22 @@ public sealed class ForwardedPrefixTests
         var response = await context.Client.SendAsync(request).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>Valid prefixes preserve generated OpenAPI routing and document paths.</summary>
+    [TestMethod]
+    public async Task ValidPrefixPreservesGeneratedOpenApiRouting()
+    {
+        using var context = new SampleTestContext();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/openapi/v1.json");
+        request.Headers.Add("X-Forwarded-Prefix", "/gateway");
+
+        using var response = await context.Client.SendAsync(request).ConfigureAwait(false);
+        var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, responseBody);
+        var document = JsonNode.Parse(responseBody)
+            ?? throw new InvalidOperationException("The OpenAPI document was not valid JSON.");
+        document["paths"]?["/api/v1/greetings/{id}"]?["get"].Should().NotBeNull();
     }
 }
