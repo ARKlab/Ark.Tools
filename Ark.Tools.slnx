@@ -57,6 +57,7 @@
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.CommaSeparatedParameters/Ark.Tools.AspNetCore.CommaSeparatedParameters.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.HealthChecks/Ark.Tools.AspNetCore.HealthChecks.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.MessagePack/Ark.Tools.AspNetCore.MessagePack.csproj" />
+    <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.MinimalApi/Ark.Tools.AspNetCore.MinimalApi.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.NestedStartup/Ark.Tools.AspNetCore.NestedStartup.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.RavenDb/Ark.Tools.AspNetCore.RavenDb.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.Swashbuckle/Ark.Tools.AspNetCore.Swashbuckle.csproj" />
@@ -135,6 +136,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ark.Tools.Core.Analyzers.Tests/Ark.Tools.Core.Analyzers.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.AspNetCore.MinimalApi.Tests/Ark.Tools.AspNetCore.MinimalApi.Tests.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/Ark.Tools.AspNetCore.ProblemDetails.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Dapper.Tests/Ark.Tools.Dapper.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MessagePack.Tests/Ark.Tools.MessagePack.Tests.csproj" />
