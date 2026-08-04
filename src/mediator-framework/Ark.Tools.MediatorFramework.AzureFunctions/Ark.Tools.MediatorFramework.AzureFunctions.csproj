@@ -24,6 +24,7 @@
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.AzureFunctions.Generators\Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <Compile Include="..\..\aspnetcore\Ark.Tools.AspNetCore.HealthChecks\ArkHealthCheckResponseWriter.cs" Link="ArkHealthCheckResponseWriter.cs" />
     <None Include="buildTransitive/Ark.Tools.MediatorFramework.AzureFunctions.props" Pack="true"
           PackagePath="buildTransitive" />
   </ItemGroup>

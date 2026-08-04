@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.AspNetCore.HealthChecks;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -97,8 +99,32 @@ public static class ArkAzureFunctionsHttp
         ArgumentNullException.ThrowIfNull(healthChecks);
 
         var report = await healthChecks.CheckHealthAsync(cancellationToken).ConfigureAwait(false);
-        return Results.StatusCode(report.Status == HealthStatus.Healthy
-            ? StatusCodes.Status200OK
-            : StatusCodes.Status503ServiceUnavailable);
+
+        return new DelegateResult(async httpContext =>
+        {
+            httpContext.Response.StatusCode = report.Status == HealthStatus.Unhealthy
+                ? StatusCodes.Status503ServiceUnavailable
+                : StatusCodes.Status200OK;
+            httpContext.Response.Headers.CacheControl = "no-store, no-cache";
+            httpContext.Response.Headers.Pragma = "no-cache";
+            httpContext.Response.Headers.Expires = "Thu, 01 Jan 1970 00:00:00 GMT";
+            await ArkHealthCheckResponseWriter.WriteResponseAsync(httpContext, report).ConfigureAwait(false);
+        });
+    }
+
+    private sealed class DelegateResult : IResult
+    {
+        private readonly Func<HttpContext, Task> _writer;
+
+        public DelegateResult(Func<HttpContext, Task> writer)
+        {
+            _writer = writer;
+        }
+
+        public async Task ExecuteAsync(HttpContext httpContext)
+        {
+            ArgumentNullException.ThrowIfNull(httpContext);
+            await _writer(httpContext).ConfigureAwait(false);
+        }
     }
 }

@@ -1,6 +1,5 @@
 using HealthChecks.Network;
 using HealthChecks.Network.Core;
-using HealthChecks.UI.Client;
 using HealthChecks.UI.Configuration;
 
 using Microsoft.AspNetCore.Builder;
@@ -13,6 +12,7 @@ using SimpleInjector;
 
 
 namespace Ark.Tools.AspNetCore.HealthChecks;
+
 
 public static class ArkHealthCheckExtension
 {
@@ -57,7 +57,7 @@ public static class ArkHealthCheckExtension
         endpoints.MapHealthChecks("/healthCheck", new HealthCheckOptions
         {
             Predicate = _ => true,
-            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
+            ResponseWriter = ArkHealthCheckResponseWriter.WriteResponseAsync,
         });
 
         return endpoints;

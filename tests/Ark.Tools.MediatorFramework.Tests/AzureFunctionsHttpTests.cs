@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
+using System.Text.Json.Nodes;
+
 namespace Ark.Tools.MediatorFramework.Tests;
 
 /// <summary>Verifies Azure Functions file and streaming helpers.</summary>
@@ -67,6 +69,7 @@ public sealed class AzureFunctionsHttpTests
         {
             RequestServices = provider,
         };
+        context.Response.Body = new MemoryStream();
 
         var result = await ArkAzureFunctionsHttp.CheckHealthAsync(
             provider.GetRequiredService<HealthCheckService>(),
@@ -75,6 +78,46 @@ public sealed class AzureFunctionsHttpTests
         await result.ExecuteAsync(context);
 
         context.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
+        context.Response.Headers.CacheControl.ToString().Should().Be("no-store, no-cache");
+        context.Response.Headers.Pragma.ToString().Should().Be("no-cache");
+        context.Response.Headers.Expires.ToString().Should().Be("Thu, 01 Jan 1970 00:00:00 GMT");
+
+        context.Response.Body.Position = 0;
+        var json = await JsonNode.ParseAsync(context.Response.Body, cancellationToken: CancellationToken.None);
+        json!["status"]!.GetValue<string>().Should().Be("Healthy");
+        json!["results"]!.AsObject().Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task HealthCheckWritesFailedCheckDetails()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddHealthChecks()
+            .AddCheck("failing", () => HealthCheckResult.Unhealthy("broken", data: new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                ["answer"] = 42,
+            }));
+        await using var provider = services.BuildServiceProvider();
+        var context = new DefaultHttpContext
+        {
+            RequestServices = provider,
+        };
+        context.Response.Body = new MemoryStream();
+
+        var result = await ArkAzureFunctionsHttp.CheckHealthAsync(
+            provider.GetRequiredService<HealthCheckService>(),
+            CancellationToken.None);
+
+        await result.ExecuteAsync(context);
+
+        context.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+        context.Response.Body.Position = 0;
+        var json = await JsonNode.ParseAsync(context.Response.Body, cancellationToken: CancellationToken.None);
+        json!["status"]!.GetValue<string>().Should().Be("Unhealthy");
+        json["results"]!["failing"]!["status"]!.GetValue<string>().Should().Be("Unhealthy");
+        json["results"]!["failing"]!["description"]!.GetValue<string>().Should().Be("broken");
+        json["results"]!["failing"]!["data"]!["answer"]!.GetValue<int>().Should().Be(42);
     }
 
     private static async IAsyncEnumerable<int> Values()
