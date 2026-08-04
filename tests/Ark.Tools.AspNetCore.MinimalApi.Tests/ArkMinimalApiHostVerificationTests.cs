@@ -110,7 +110,7 @@ public sealed class ArkMinimalApiHostVerificationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         body.Should().Contain("\"status\":\"Unhealthy\"");
-        body.Should().Contain("\"name\":\"database\"");
+        body.Should().Contain("\"database\"");
         body.Should().NotContain("secret-connection-details");
         body.Should().NotContain("secret-exception-details");
         body.Should().NotContain("InvalidOperationException");

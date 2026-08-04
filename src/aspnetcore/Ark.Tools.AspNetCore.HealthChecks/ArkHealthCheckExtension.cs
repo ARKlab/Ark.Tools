@@ -1,5 +1,6 @@
 using HealthChecks.Network;
 using HealthChecks.Network.Core;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
@@ -8,8 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 using SimpleInjector;
-
-using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.HealthChecks;
 
@@ -38,27 +37,19 @@ public static class ArkHealthCheckExtension
 
     private static async Task WriteHealthCheckResponse(HttpContext context, HealthReport report)
     {
-        context.Response.ContentType = "application/json";
-        var response = new
-        {
-            status = report.Status.ToString(),
-            totalDuration = report.TotalDuration,
-            entries = report.Entries.ToDictionary(
-                entry => entry.Key,
-                entry => new
-                {
-                    data = entry.Value.Data,
-                    description = entry.Value.Status == HealthStatus.Healthy
-                        ? null
-                        : "Health check failed.",
-                    duration = entry.Value.Duration,
-                    exception = entry.Value.Exception is null ? null : "Exception Occurred.",
-                    status = entry.Value.Status.ToString(),
-                    tags = entry.Value.Tags,
-                }),
-        };
-
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response)).ConfigureAwait(false);
+        var entries = report.Entries.ToDictionary(
+            entry => entry.Key,
+            entry => new HealthReportEntry(
+                entry.Value.Status,
+                null,
+                entry.Value.Duration,
+                entry.Value.Exception,
+                entry.Value.Data,
+                entry.Value.Tags),
+            StringComparer.Ordinal);
+        var sanitizedReport = new HealthReport(entries, report.Status, report.TotalDuration);
+        await UIResponseWriter.WriteHealthCheckUIResponseNoExceptionDetails(context, sanitizedReport)
+            .ConfigureAwait(false);
     }
 
     public static IHealthChecksBuilder AddSimpleInjectorCheck<T>(this IHealthChecksBuilder builder, string name, HealthStatus? failureStatus = null, IEnumerable<string>? tags = null, TimeSpan? timeout = null) where T : class, IHealthCheck
