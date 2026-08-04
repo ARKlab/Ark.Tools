@@ -126,6 +126,7 @@ separate purpose:
 | --- | --- | --- |
 | `services.ConfigureAuthentication(configuration)` | Chooses bearer authentication schemes | `AuthenticationEx.cs` |
 | `services.AddArkMinimalApiHost(container, ...)` | Sets the secure authorization baseline (default and fallback policies) and bridges Microsoft DI and SimpleInjector | `SampleStartup.cs` |
+| `services.AddArkMinimalApiSecurity()` | Adds Ark security-header policies for API, documentation and gRPC reflection responses | `SampleStartup.cs` |
 | `services.AddMessagePackFormatter(...)` | Enables HTTP MessagePack negotiation for contracts that opt in | `SampleStartup.cs` |
 | `services.ConfigureHttpJsonOptions(...)` | Applies Ark JSON defaults and source-generated metadata | `SampleStartup.cs` |
 | `services.AddArkProblemDetailsExceptionHandler()` | Maps domain exceptions to RFC 7807 | `SampleStartup.cs` |
@@ -143,6 +144,7 @@ services.AddArkMinimalApiHost(container, options =>
     // Invoked after Verify(), while the host starts and before the server accepts requests.
     options.OnContainerVerified = container => container.StartBus();
 });
+services.AddArkMinimalApiSecurity();
 
 services.AddMessagePackFormatter(messagePackResolver);
 services.ConfigureHttpJsonOptions(options =>
@@ -166,11 +168,13 @@ Order is observable. The sample uses this sequence:
 
 | Order | Middleware | Why |
 | --- | --- | --- |
-| 1 | `UseArkProblemDetailsExceptionHandler()` | Converts unhandled domain exceptions before anything else writes the response |
-| 2 | `UseArkMinimalApiHost(container)` | Selects endpoints, builds the caller principal, enforces host-level authorization, and makes the scoped application graph available to handlers |
-| 3 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
+| 1 | `UseArkMinimalApiSecurity()` | Applies security headers and HSTS before anything else writes the response |
+| 2 | `UseArkProblemDetailsExceptionHandler()` | Converts unhandled domain exceptions |
+| 3 | `UseArkMinimalApiHost(container)` | Selects endpoints, builds the caller principal, enforces host-level authorization, and makes the scoped application graph available to handlers |
+| 4 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
 
 ```csharp
+app.UseArkMinimalApiSecurity();
 app.UseArkProblemDetailsExceptionHandler();
 app.UseArkMinimalApiHost(container);
 

@@ -493,6 +493,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
+          "NetEscapades.AspNetCore.SecurityHeaders": "[1.3.1, )",
           "SimpleInjector": "[5.6.0, )",
           "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )"
         }
@@ -741,6 +742,12 @@
         "requested": "[2.3.2, )",
         "resolved": "2.3.2",
         "contentHash": "FuJgIEfNU+rFHJYGhuqA8uup+3cryJ1N67Tijqo01Jd5xAr28ptz0aXkFfSqK3MhAUmGsrPpgQ92+3+0oXv8AA=="
+      },
+      "NetEscapades.AspNetCore.SecurityHeaders": {
+        "type": "CentralTransitive",
+        "requested": "[1.3.1, )",
+        "resolved": "1.3.1",
+        "contentHash": "wccVMVSGq9nQ43SjJl1s/VaAo+iWauJYWiZy/Hkvszk2vCQdq7aRn7GL3LTBMsnHuI13JRMfCi9Lk8747+njUg=="
       },
       "NodaTime": {
         "type": "CentralTransitive",
