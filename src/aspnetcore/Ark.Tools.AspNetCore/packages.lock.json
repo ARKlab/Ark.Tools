@@ -30,6 +30,27 @@
           "Asp.Versioning.OData": "10.0.0-rc.1"
         }
       },
+      "AspNetCore.HealthChecks.UI": {
+        "type": "Direct",
+        "requested": "[9.0.0, )",
+        "resolved": "9.0.0",
+        "contentHash": "r/bGIiFDm/Bv+S/OCcE1/YzM4Zul1nEKGRA42xcGqxaYmaQf1T+gFEReNNA+5nHXuXt5TRuBuVag1emXuwqe6w==",
+        "dependencies": {
+          "AspNetCore.HealthChecks.UI.Data": "9.0.0",
+          "KubernetesClient": "15.0.1",
+          "Microsoft.EntityFrameworkCore.Design": "8.0.11"
+        }
+      },
+      "AspNetCore.HealthChecks.UI.InMemory.Storage": {
+        "type": "Direct",
+        "requested": "[9.0.0, )",
+        "resolved": "9.0.0",
+        "contentHash": "xuq+HBH8Ckz9r5d+yP1pk7cgIbPLBqCGfYu0MxtvbtsxIo7cv5nQoUCJsdgqN5/a4ndVUJZco6GjWFk6r4xN1w==",
+        "dependencies": {
+          "AspNetCore.HealthChecks.UI.Data": "9.0.0",
+          "Microsoft.EntityFrameworkCore.InMemory": "8.0.11"
+        }
+      },
       "ErrorProne.NET.CoreAnalyzers": {
         "type": "Direct",
         "requested": "[0.1.2, )",
@@ -656,12 +677,9 @@
           "AspNetCore.HealthChecks.Oracle": "[9.0.0, )",
           "AspNetCore.HealthChecks.Publisher.ApplicationInsights": "[9.0.0, )",
           "AspNetCore.HealthChecks.SqlServer": "[9.0.0, )",
-          "AspNetCore.HealthChecks.UI": "[9.0.0, )",
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
-          "AspNetCore.HealthChecks.UI.InMemory.Storage": "[9.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
-          "KubernetesClient": "[19.0.2, )",
           "Microsoft.ApplicationInsights": "[2.23.0, )"
         }
       },
@@ -851,17 +869,6 @@
           "Microsoft.Data.SqlClient": "5.2.2"
         }
       },
-      "AspNetCore.HealthChecks.UI": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "r/bGIiFDm/Bv+S/OCcE1/YzM4Zul1nEKGRA42xcGqxaYmaQf1T+gFEReNNA+5nHXuXt5TRuBuVag1emXuwqe6w==",
-        "dependencies": {
-          "AspNetCore.HealthChecks.UI.Data": "9.0.0",
-          "KubernetesClient": "15.0.1",
-          "Microsoft.EntityFrameworkCore.Design": "8.0.11"
-        }
-      },
       "AspNetCore.HealthChecks.UI.Client": {
         "type": "CentralTransitive",
         "requested": "[9.0.0, )",
@@ -869,16 +876,6 @@
         "contentHash": "1Ub3Wvvbz7CMuFNWgLEc9qqQibiMoovDML/WHrwr5J83RPgtI20giCR92s/ipLgu7IIuqw+W/y7WpIeHqAICxg==",
         "dependencies": {
           "AspNetCore.HealthChecks.UI.Core": "9.0.0"
-        }
-      },
-      "AspNetCore.HealthChecks.UI.InMemory.Storage": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "xuq+HBH8Ckz9r5d+yP1pk7cgIbPLBqCGfYu0MxtvbtsxIo7cv5nQoUCJsdgqN5/a4ndVUJZco6GjWFk6r4xN1w==",
-        "dependencies": {
-          "AspNetCore.HealthChecks.UI.Data": "9.0.0",
-          "Microsoft.EntityFrameworkCore.InMemory": "8.0.11"
         }
       },
       "Auth0.AuthenticationApi": {

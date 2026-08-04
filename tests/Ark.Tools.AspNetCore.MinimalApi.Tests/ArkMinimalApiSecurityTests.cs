@@ -30,6 +30,34 @@ public sealed class ArkMinimalApiSecurityTests
         response.Headers.GetValues("X-Frame-Options").Should().ContainSingle("DENY");
     }
 
+    [TestMethod]
+    public async Task ApiPolicy_HasSameOriginCrossOriginOpenerPolicy()
+    {
+        using var host = await CreateHostAsync().ConfigureAwait(false);
+        using var client = host.GetTestClient();
+        client.BaseAddress = new Uri("https://localhost");
+
+        using var response = await client.GetAsync(new Uri("https://localhost/")).ConfigureAwait(false);
+
+        response.Headers.GetValues("Cross-Origin-Opener-Policy").Should().ContainSingle("same-origin");
+    }
+
+    [DataTestMethod]
+    [DataRow("/scalar")]
+    [DataRow("/scalar/v1")]
+    [DataRow("/swagger")]
+    [DataRow("/openapi")]
+    public async Task DocumentationPolicy_HasUnsafeNoneCrossOriginOpenerPolicy(string path)
+    {
+        using var host = await CreateHostAsync().ConfigureAwait(false);
+        using var client = host.GetTestClient();
+        client.BaseAddress = new Uri("https://localhost");
+
+        using var response = await client.GetAsync(new Uri($"https://localhost{path}")).ConfigureAwait(false);
+
+        response.Headers.GetValues("Cross-Origin-Opener-Policy").Should().ContainSingle("unsafe-none");
+    }
+
     private static async Task<IHost> CreateHostAsync()
     {
         var host = new HostBuilder()
@@ -51,7 +79,13 @@ public sealed class ArkMinimalApiSecurityTests
                     });
                     app.UseArkMinimalApiSecurity();
                     app.UseRouting();
-                    app.UseEndpoints(endpoints => endpoints.MapGet("/", () => "ok"));
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/", () => "ok");
+                        endpoints.MapGet("/scalar/{**path}", () => "scalar ui");
+                        endpoints.MapGet("/swagger/{**path}", () => "swagger ui");
+                        endpoints.MapGet("/openapi/{**path}", () => "openapi ui");
+                    });
                 });
             })
             .Build();

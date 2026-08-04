@@ -3,7 +3,9 @@
 
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.AzureFunctions;
+using Ark.Tools.AspNetCore.HealthChecks;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,7 +33,14 @@ public static class Program
         var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(serviceBusConnectionString);
 #pragma warning restore CA2000
         builder.Services.AddArkAzureFunctions(rebusContainer);
+        builder.Services.AddArkHealthChecks();
         builder.Services.AddArkAzureFunctionsBearerAuthentication();
+        builder.Services.AddAuthorization(options =>
+        {
+            options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+        });
         builder.Services.AddHostedService(_ => new AzureFunctionsRebusHostedService(rebusContainer));
 
         builder.Build().Run();

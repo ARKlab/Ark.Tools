@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.AzureFunctions;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
 using Ark.Tools.Rebus;
@@ -24,6 +25,19 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class AzureFunctionsRebusTests
 {
+    /// <summary>Rejects a Function host without its required outbound bus configuration.</summary>
+    [TestMethod]
+    public void MissingOutboundBusConfigurationFailsClearly()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => AzureFunctionsRebusComposition.BuildContainer(null));
+
+        StringAssert.Contains(
+            exception.Message,
+            "Azure Service Bus configuration is required",
+            StringComparison.Ordinal);
+    }
+
     /// <summary>Routes and delivers a typed message to an independently hosted receiver.</summary>
     [TestMethod]
     public async Task OutboundCompositionRoutesToOwnerQueue()

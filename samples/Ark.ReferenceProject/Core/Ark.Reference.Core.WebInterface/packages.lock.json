@@ -356,15 +356,6 @@
         "resolved": "2.14.1",
         "contentHash": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw=="
       },
-      "KubernetesClient": {
-        "type": "Transitive",
-        "resolved": "19.0.2",
-        "contentHash": "0m8FuzCDBygaXMbsb7qVapNZzTm4ftM7ECp/waTRh/XOUQziRF2rKJCRmsvYbBXgJkQvU+FBbkoa40hexzDC+g==",
-        "dependencies": {
-          "Fractions": "7.3.0",
-          "YamlDotNet": "16.3.0"
-        }
-      },
       "Macross.Json.Extensions": {
         "type": "Transitive",
         "resolved": "3.0.0",
@@ -1354,6 +1345,8 @@
           "Asp.Versioning.Http": "[10.0.0, )",
           "Asp.Versioning.Mvc.ApiExplorer": "[10.0.0, )",
           "Asp.Versioning.OData.ApiExplorer": "[10.0.0-rc.1, )",
+          "AspNetCore.HealthChecks.UI": "[9.0.0, )",
+          "AspNetCore.HealthChecks.UI.InMemory.Storage": "[9.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "Microsoft.AspNetCore.OData": "[10.0.0-preview.2, )",
@@ -1393,12 +1386,9 @@
           "AspNetCore.HealthChecks.Oracle": "[9.0.0, )",
           "AspNetCore.HealthChecks.Publisher.ApplicationInsights": "[9.0.0, )",
           "AspNetCore.HealthChecks.SqlServer": "[9.0.0, )",
-          "AspNetCore.HealthChecks.UI": "[9.0.0, )",
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
-          "AspNetCore.HealthChecks.UI.InMemory.Storage": "[9.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
-          "KubernetesClient": "[19.0.2, )",
           "Microsoft.ApplicationInsights": "[2.23.0, )"
         }
       },
@@ -1639,6 +1629,16 @@
         "dependencies": {
           "Azure.Core": "1.55.0",
           "Azure.Storage.Common": "12.28.0"
+        }
+      },
+      "KubernetesClient": {
+        "type": "CentralTransitive",
+        "requested": "[19.0.2, )",
+        "resolved": "19.0.2",
+        "contentHash": "0m8FuzCDBygaXMbsb7qVapNZzTm4ftM7ECp/waTRh/XOUQziRF2rKJCRmsvYbBXgJkQvU+FBbkoa40hexzDC+g==",
+        "dependencies": {
+          "Fractions": "7.3.0",
+          "YamlDotNet": "16.3.0"
         }
       },
       "MailKit": {
