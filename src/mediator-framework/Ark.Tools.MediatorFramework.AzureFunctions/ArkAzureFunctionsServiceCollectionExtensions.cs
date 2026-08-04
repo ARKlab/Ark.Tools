@@ -111,6 +111,7 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
 
             options.SerializerOptions.TypeInfoResolver = resolver;
         });
+        services.AddHealthChecks();
 
         return services;
     }

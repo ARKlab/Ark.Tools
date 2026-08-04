@@ -6,6 +6,8 @@ using Ark.MediatorFramework.AzureFunctions;
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -52,6 +54,27 @@ public sealed class AzureFunctionsHttpTests
         context.Response.Body.Position = 0;
         using var reader = new StreamReader(context.Response.Body);
         (await reader.ReadToEndAsync(CancellationToken.None)).Should().Be("[1,2]");
+    }
+
+    [TestMethod]
+    public async Task HealthCheckUsesRegisteredService()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddArkAzureFunctions();
+        await using var provider = services.BuildServiceProvider();
+        var context = new DefaultHttpContext
+        {
+            RequestServices = provider,
+        };
+
+        var result = await ArkAzureFunctionsHttp.CheckHealthAsync(
+            provider.GetRequiredService<HealthCheckService>(),
+            CancellationToken.None);
+
+        await result.ExecuteAsync(context);
+
+        context.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
     }
 
     private static async IAsyncEnumerable<int> Values()

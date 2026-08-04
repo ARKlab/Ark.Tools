@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Ark.MediatorFramework.AzureFunctions;
 
@@ -83,5 +84,21 @@ public static class ArkAzureFunctionsHttp
             response.Body,
             items,
             cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Executes registered health checks and returns their HTTP status result.</summary>
+    /// <param name="healthChecks">The health-check service.</param>
+    /// <param name="cancellationToken">The invocation cancellation token.</param>
+    /// <returns>An HTTP result representing the health-check status.</returns>
+    public static async Task<IResult> CheckHealthAsync(
+        HealthCheckService healthChecks,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(healthChecks);
+
+        var report = await healthChecks.CheckHealthAsync(cancellationToken).ConfigureAwait(false);
+        return Results.StatusCode(report.Status == HealthStatus.Healthy
+            ? StatusCodes.Status200OK
+            : StatusCodes.Status503ServiceUnavailable);
     }
 }
