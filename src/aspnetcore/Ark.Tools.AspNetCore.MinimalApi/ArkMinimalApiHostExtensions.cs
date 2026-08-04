@@ -82,9 +82,10 @@ public static class ArkMinimalApiHostExtensions
     }
 
     /// <summary>
-    /// Adds SimpleInjector middleware to the application pipeline.
+    /// Adds required Minimal API and SimpleInjector middleware to the application pipeline.
     /// </summary>
     /// <remarks>
+    /// This method adds routing, authentication, authorization, and SimpleInjector middleware.
     /// Container verification and application startup callbacks run in a hosted service during
     /// <see cref="IHostedService.StartAsync(CancellationToken)"/>, before the server starts
     /// accepting requests. The container lifetime remains owned by the application.
@@ -99,6 +100,9 @@ public static class ArkMinimalApiHostExtensions
         ArgumentNullException.ThrowIfNull(app);
         ArgumentNullException.ThrowIfNull(container);
 
+        app.UseRouting();
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.UseSimpleInjector(container);
         return app;
     }

@@ -167,18 +167,12 @@ Order is observable. The sample uses this sequence:
 | Order | Middleware | Why |
 | --- | --- | --- |
 | 1 | `UseArkProblemDetailsExceptionHandler()` | Converts unhandled domain exceptions before anything else writes the response |
-| 2 | `UseRouting()` | Selects the endpoint and route values |
-| 3 | `UseAuthentication()` | Builds the caller principal |
-| 4 | `UseAuthorization()` | Enforces host-level auth policy |
-| 5 | `UseArkMinimalApiHost(container)` | Makes the scoped application graph available to handlers, verifies the container, and runs `OnContainerVerified` before the server accepts requests |
-| 6 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
+| 2 | `UseArkMinimalApiHost(container)` | Selects endpoints, builds the caller principal, enforces host-level authorization, and makes the scoped application graph available to handlers |
+| 3 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
 
 ```csharp
 app.UseArkProblemDetailsExceptionHandler();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseSimpleInjector(container);
+app.UseArkMinimalApiHost(container);
 
 app.UseEndpoints(endpoints =>
 {
@@ -188,9 +182,10 @@ app.UseEndpoints(endpoints =>
 });
 ```
 
-If `UseSimpleInjector` runs too early, it cannot depend on a populated
-`HttpContext.User`. If `UseAuthorization` runs after endpoint execution, the
-generated endpoints are already too late to reject the caller.
+`UseArkMinimalApiHost` applies routing, authentication, authorization, and
+SimpleInjector middleware in that order. Keep it before endpoint mapping so
+generated endpoints see the authenticated caller and authorization runs before
+they execute.
 
 ## Map generated endpoints from a marker type
 

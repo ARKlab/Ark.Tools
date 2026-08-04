@@ -90,7 +90,6 @@ public sealed class ArkMinimalApiHostVerificationTests
                 web.Configure(app =>
                 {
                     app.UseArkMinimalApiHost(container);
-                    app.UseRouting();
                     app.UseEndpoints(endpoints => endpoints.MapGet("/ping", ([FromServices] StartupProbe? probe) =>
                     {
                         probe?.Started.Should().BeTrue();

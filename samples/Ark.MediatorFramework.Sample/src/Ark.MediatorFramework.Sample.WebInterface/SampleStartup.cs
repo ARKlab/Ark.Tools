@@ -115,8 +115,8 @@ public sealed class SampleStartup
         // processor hosted service can access it without depending on each other.
         services.AddSingleton(_network);
 
-        // API container disposal. Verification and bus startup happen while the host starts,
-        // in AddArkMinimalApiHost/UseArkMinimalApiHost.
+        // API container disposal. Host composition verifies the container and starts the bus;
+        // this service solely owns disposal during host shutdown.
         services.AddSingleton<IHostedService>(_ => new SampleApiContainerHostedService(_container));
 
         // Processor container is built and managed independently from the API container;
@@ -167,10 +167,6 @@ public sealed class SampleStartup
 
         // Outermost middleware: map unhandled domain exceptions to RFC 7807 ProblemDetails responses.
         app.UseArkProblemDetailsExceptionHandler();
-
-        app.UseRouting();
-        app.UseAuthentication();
-        app.UseAuthorization();
 
         app.UseArkMinimalApiHost(_container);
 
