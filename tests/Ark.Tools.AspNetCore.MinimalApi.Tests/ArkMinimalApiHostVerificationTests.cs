@@ -5,6 +5,7 @@ using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,6 +27,11 @@ public sealed class ArkMinimalApiHostVerificationTests
 
     private sealed class WorkingService;
 
+    private sealed class StartupProbe
+    {
+        public bool Started { get; set; }
+    }
+
     [TestMethod]
     public async Task StartFailsWhenContainerVerificationFails()
     {
@@ -42,26 +48,29 @@ public sealed class ArkMinimalApiHostVerificationTests
     }
 
     [TestMethod]
-    public async Task VerificationCompletesBeforeFirstRequest()
+    public async Task VerificationAndStartupCallbackCompleteBeforeFirstRequest()
     {
         await using var container = new Container();
-        var verified = false;
+        var probe = new StartupProbe();
 
         using var host = await CreateHostAsync(
             container,
             start: true,
             options =>
             {
-                options.RegisterContainer = c => c.Register<WorkingService>();
-                options.OnContainerVerified = _ => verified = true;
+                options.RegisterContainer = c => c.RegisterInstance(probe);
+                options.OnContainerVerified = c =>
+                {
+                    c.GetInstance<StartupProbe>().Started = true;
+                };
             }).ConfigureAwait(false);
 
-        verified.Should().BeTrue();
+        probe.Started.Should().BeTrue();
 
         using var client = host.GetTestClient();
-        var response = await client.GetAsync(new Uri("/ping", UriKind.Relative)).ConfigureAwait(false);
+        var response = await client.GetStringAsync(new Uri("/ping", UriKind.Relative)).ConfigureAwait(false);
 
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.Should().Be("pong");
     }
 
     private static async Task<IHost> CreateHostAsync(
@@ -82,7 +91,11 @@ public sealed class ArkMinimalApiHostVerificationTests
                 {
                     app.UseArkMinimalApiHost(container);
                     app.UseRouting();
-                    app.UseEndpoints(endpoints => endpoints.MapGet("/ping", () => "pong"));
+                    app.UseEndpoints(endpoints => endpoints.MapGet("/ping", ([FromServices] StartupProbe? probe) =>
+                    {
+                        probe?.Started.Should().BeTrue();
+                        return "pong";
+                    }));
                 });
             })
             .Build();
