@@ -2,9 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-
-using NetEscapades.AspNetCore.SecurityHeaders;
 
 namespace Ark.Tools.AspNetCore.MinimalApi;
 
@@ -32,7 +31,7 @@ public static class ArkMinimalApiSecurityExtensions
                 .RemoveServerHeader())
             .SetPolicySelector(context =>
             {
-                var path = context.HttpContext.Request.Path.Value;
+                var path = context.HttpContext.Request.Path;
 
                 if (path?.StartsWithSegments("/scalar", StringComparison.OrdinalIgnoreCase) == true
                     || path?.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase) == true
@@ -66,12 +65,12 @@ public static class ArkMinimalApiSecurityExtensions
         return app;
     }
 
-    private static void ConfigureDocumentationPolicy(SecurityHeadersPolicy policy)
+    private static void ConfigureDocumentationPolicy(HeaderPolicyCollection policy)
     {
         policy
             .AddDefaultSecurityHeaders()
-            .RemoveServerHeader()
-            .Remove("Cross-Origin-Opener-Policy")
-            .AddCrossOriginOpenerPolicy(options => options.UnsafeNone());
+            .RemoveServerHeader();
+        policy.Remove("Cross-Origin-Opener-Policy");
+        policy.AddCrossOriginOpenerPolicy(options => options.UnsafeNone());
     }
 }

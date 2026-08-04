@@ -110,6 +110,7 @@ public sealed class SampleStartup
             // server accepts requests.
             options.OnContainerVerified = container => container.StartBus();
         });
+        services.AddArkMinimalApiSecurity();
 
         // The InMemNetwork is registered in Microsoft DI so both the API container and the
         // processor hosted service can access it without depending on each other.
@@ -165,7 +166,10 @@ public sealed class SampleStartup
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        // Outermost middleware: map unhandled domain exceptions to RFC 7807 ProblemDetails responses.
+        // Outermost middleware: apply security headers before any response is written.
+        app.UseArkMinimalApiSecurity();
+
+        // Map unhandled domain exceptions to RFC 7807 ProblemDetails responses.
         app.UseArkProblemDetailsExceptionHandler();
 
         app.UseArkMinimalApiHost(_container);
