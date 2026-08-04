@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.ResponseCompression;
 
 using Ark.Tools.AspNetCore.HealthChecks;
 
@@ -65,6 +66,12 @@ public static class ArkMinimalApiHostExtensions
         services.AddHttpContextAccessor();
         services.AddAuthentication();
         services.AddArkHealthChecks();
+        services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
         services.AddAuthorization(authorization =>
         {
             if (options.RequireAuthenticatedUser)
@@ -135,6 +142,7 @@ public static class ArkMinimalApiHostExtensions
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseSimpleInjector(container);
+        app.UseResponseCompression();
         return app;
     }
 
