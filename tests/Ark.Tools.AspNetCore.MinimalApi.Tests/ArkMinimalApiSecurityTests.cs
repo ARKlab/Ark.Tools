@@ -5,6 +5,7 @@ using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -42,7 +43,7 @@ public sealed class ArkMinimalApiSecurityTests
         response.Headers.GetValues("Cross-Origin-Opener-Policy").Should().ContainSingle("same-origin");
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("/scalar")]
     [DataRow("/scalar/v1")]
     [DataRow("/swagger")]
@@ -69,6 +70,7 @@ public sealed class ArkMinimalApiSecurityTests
                 {
                     services.AddRouting();
                     services.AddArkMinimalApiSecurity();
+                    services.Configure<HstsOptions>(o => o.ExcludedHosts.Clear());
                 });
                 web.Configure(app =>
                 {
