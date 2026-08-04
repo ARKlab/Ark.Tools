@@ -121,7 +121,7 @@ public sealed class AzureFunctionsBoundaryTests
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "func",
-                    Arguments = $"start --port {port} --verbose",
+                    Arguments = $"start --port {port} --dotnet-isolated --verbose",
                     WorkingDirectory = appDirectory,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -131,6 +131,7 @@ public sealed class AzureFunctionsBoundaryTests
                 EnableRaisingEvents = true,
             };
             process.StartInfo.Environment["AzureWebJobsScriptRoot"] = appDirectory;
+            process.StartInfo.Environment["AzureWebJobsStorage"] = "UseDevelopmentStorage=true";
             process.StartInfo.Environment["AzureServiceBus__ConnectionString"] =
                 "Endpoint=sb://boundary.invalid/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
             process.StartInfo.Environment["AzureFunctionsJobHost__Logging__Console__IsEnabled"] = "true";

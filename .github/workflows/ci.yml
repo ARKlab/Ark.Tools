@@ -94,6 +94,15 @@ jobs:
       with:
         global-json-file: global.json
 
+    - name: 'Start Azurite'
+      run: |
+        docker run -d \
+          -p 10000:10000 \
+          -p 10001:10001 \
+          -p 10002:10002 \
+          mcr.microsoft.com/azure-storage/azurite:latest \
+          azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+
     - name: 'Install Azure Functions Core Tools'
       run: npm install --global azure-functions-core-tools@4.12.1
 
