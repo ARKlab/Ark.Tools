@@ -31,8 +31,8 @@ SimpleInjector verification is coupled to the sample's Rebus hosted service.
 
 ## Acceptance
 
-- [ ] Authentication and authorization defaults match the existing Ark baseline.
-- [ ] Verification completes before any request and does not probe external services.
-- [ ] The sample starts Rebus before serving requests.
-- [ ] Public APIs have XML documentation and the design/guide is updated.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] Authentication and authorization defaults match the existing Ark baseline.
+- [x] Verification completes before any request and does not probe external services.
+- [x] The sample starts Rebus before serving requests.
+- [x] Public APIs have XML documentation and the design/guide is updated.
+- [x] Full solution build and tests pass with zero warnings.

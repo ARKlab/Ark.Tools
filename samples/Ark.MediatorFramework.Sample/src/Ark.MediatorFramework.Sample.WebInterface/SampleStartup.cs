@@ -6,17 +6,17 @@ using Ark.MediatorFramework.Sample.Application;
 
 using Ark.MediatorFramework.Sample.WebInterface.Auth;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
+using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
+using Ark.Tools.Rebus;
 using Ark.Tools.Nodatime;
 using Ark.Tools.Nodatime.Protobuf;
 
 using MessagePack.Resolvers;
 
 using Scalar.AspNetCore;
-
-using Microsoft.AspNetCore.Authorization;
 
 using Rebus.Transport.InMem;
 
@@ -101,35 +101,22 @@ public sealed class SampleStartup
         {
             services.ConfigureAuthentication(_configuration);
         }
-        services.AddAuthorization(options =>
+        services.AddArkMinimalApiHost(_container, options =>
         {
-            options.DefaultPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-            if (_configureFallbackPolicy)
-            {
-                options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .Build();
-            }
+            options.RequireAuthenticatedUser = _configureFallbackPolicy;
+            options.CrossWireContainer = (container, serviceProvider) =>
+                container.RegisterInstance(serviceProvider.GetRequiredService<IHttpContextAccessor>());
+            // Started right after verification, while the host is starting and before the
+            // server accepts requests.
+            options.OnContainerVerified = container => container.StartBus();
         });
-
-        services.AddSimpleInjector(_container, options =>
-        {
-            options.AddAspNetCore();
-            _container.Options.ContainerLocking += (_, _) =>
-            {
-                _container.RegisterInstance(
-                    options.ApplicationServices.GetRequiredService<IHttpContextAccessor>());
-            };
-        });
-        services.AddHttpContextAccessor();
 
         // The InMemNetwork is registered in Microsoft DI so both the API container and the
         // processor hosted service can access it without depending on each other.
         services.AddSingleton(_network);
 
-        // API container lifecycle: Verify, StartBus, and Dispose are managed here.
+        // API container disposal. Host composition verifies the container and starts the bus;
+        // this service solely owns disposal during host shutdown.
         services.AddSingleton<IHostedService>(_ => new SampleApiContainerHostedService(_container));
 
         // Processor container is built and managed independently from the API container;
@@ -181,11 +168,7 @@ public sealed class SampleStartup
         // Outermost middleware: map unhandled domain exceptions to RFC 7807 ProblemDetails responses.
         app.UseArkProblemDetailsExceptionHandler();
 
-        app.UseRouting();
-        app.UseAuthentication();
-        app.UseAuthorization();
-
-        app.UseSimpleInjector(_container);
+        app.UseArkMinimalApiHost(_container);
 
         app.UseSwaggerUI(options =>
         {

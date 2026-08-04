@@ -125,8 +125,7 @@ separate purpose:
 | Step | Why it exists | Sample code |
 | --- | --- | --- |
 | `services.ConfigureAuthentication(configuration)` | Chooses bearer authentication schemes | `AuthenticationEx.cs` |
-| `services.AddAuthorization(...)` | Sets `RequireAuthenticatedUser()` as the default and optional fallback policy | `SampleStartup.cs` |
-| `services.AddSimpleInjector(container, ...)` | Bridges Microsoft DI and SimpleInjector | `SampleStartup.cs` |
+| `services.AddArkMinimalApiHost(container, ...)` | Sets the secure authorization baseline (default and fallback policies) and bridges Microsoft DI and SimpleInjector | `SampleStartup.cs` |
 | `services.AddMessagePackFormatter(...)` | Enables HTTP MessagePack negotiation for contracts that opt in | `SampleStartup.cs` |
 | `services.ConfigureHttpJsonOptions(...)` | Applies Ark JSON defaults and source-generated metadata | `SampleStartup.cs` |
 | `services.AddArkProblemDetailsExceptionHandler()` | Maps domain exceptions to RFC 7807 | `SampleStartup.cs` |
@@ -137,23 +136,12 @@ separate purpose:
 A condensed sample setup:
 
 ```csharp
-services.AddAuthorization(options =>
+services.AddArkMinimalApiHost(container, options =>
 {
-    options.DefaultPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-    options.FallbackPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-});
-
-services.AddSimpleInjector(container, options =>
-{
-    options.AddAspNetCore();
-    container.Options.ContainerLocking += (_, _) =>
-    {
-        container.RegisterInstance(options.ApplicationServices.GetRequiredService<IHttpContextAccessor>());
-    };
+    options.CrossWireContainer = (container, serviceProvider) =>
+        container.RegisterInstance(serviceProvider.GetRequiredService<IHttpContextAccessor>());
+    // Invoked after Verify(), while the host starts and before the server accepts requests.
+    options.OnContainerVerified = container => container.StartBus();
 });
 
 services.AddMessagePackFormatter(messagePackResolver);
@@ -179,18 +167,12 @@ Order is observable. The sample uses this sequence:
 | Order | Middleware | Why |
 | --- | --- | --- |
 | 1 | `UseArkProblemDetailsExceptionHandler()` | Converts unhandled domain exceptions before anything else writes the response |
-| 2 | `UseRouting()` | Selects the endpoint and route values |
-| 3 | `UseAuthentication()` | Builds the caller principal |
-| 4 | `UseAuthorization()` | Enforces host-level auth policy |
-| 5 | `UseSimpleInjector(container)` | Makes the scoped application graph available to handlers |
-| 6 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
+| 2 | `UseArkMinimalApiHost(container)` | Selects endpoints, builds the caller principal, enforces host-level authorization, and makes the scoped application graph available to handlers |
+| 3 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
 
 ```csharp
 app.UseArkProblemDetailsExceptionHandler();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseSimpleInjector(container);
+app.UseArkMinimalApiHost(container);
 
 app.UseEndpoints(endpoints =>
 {
@@ -200,9 +182,10 @@ app.UseEndpoints(endpoints =>
 });
 ```
 
-If `UseSimpleInjector` runs too early, it cannot depend on a populated
-`HttpContext.User`. If `UseAuthorization` runs after endpoint execution, the
-generated endpoints are already too late to reject the caller.
+`UseArkMinimalApiHost` applies routing, authentication, authorization, and
+SimpleInjector middleware in that order. Keep it before endpoint mapping so
+generated endpoints see the authenticated caller and authorization runs before
+they execute.
 
 ## Map generated endpoints from a marker type
 
